@@ -62,6 +62,10 @@ pub struct ModelSpec {
     pub weight_bytes: f64,
     /// Bytes per KV cache element.
     pub kv_bytes: f64,
+    /// Multi-token prediction: expected extra accepted tokens per decode step
+    /// (0 = MTP off; DeepSeek/GLM report ~0.7-0.85 with one MTP layer).
+    #[serde(default)]
+    pub mtp_accept: f64,
 }
 
 impl ModelSpec {
@@ -187,6 +191,7 @@ impl ModelSpec {
         };
         let sparse_attention = g("index_topk").map(|k| SparseAttention { index_top_k: k });
         Ok(ModelSpec {
+            mtp_accept: 0.0, // acceptance is a deployment choice, not a config fact
             name: name.into(),
             layers,
             hidden,
@@ -250,6 +255,29 @@ pub struct HardwareSpec {
     pub step_sync_us: f64,
     pub tdp_w: f64,
     pub unit_cost_usd: f64,
+    /// Effective per-GPU collective bandwidth for TP/EP traffic, GB/s
+    /// (NVLink allreduce effective, or scaled-down IB for cross-node EP).
+    #[serde(default)]
+    pub interconnect_gbs: Option<f64>,
+    #[serde(default)]
+    pub interconnect_latency_us: f64,
+}
+
+/// Parallelism layout. Perf accounting is per-GPU: `WorkloadSpec` batch terms
+/// are per-GPU, throughput is tok/s/GPU, cost is $/GPU — so $/Mtok composes.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ParallelSpec {
+    pub tp: usize,
+    /// Expert-parallel group size; the EP group shares a combined batch.
+    pub ep: usize,
+    /// Activation bytes on the wire (2.0 bf16, 1.0 fp8 comms).
+    pub act_bytes: f64,
+}
+
+impl Default for ParallelSpec {
+    fn default() -> Self {
+        Self { tp: 1, ep: 1, act_bytes: 2.0 }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -312,6 +340,8 @@ pub struct StackConfig {
     pub kernel: KernelSpec,
     pub serving: ServingSpec,
     pub workload: WorkloadSpec,
+    #[serde(default)]
+    pub parallel: ParallelSpec,
     #[serde(default)]
     pub cost: CostSpec,
 }

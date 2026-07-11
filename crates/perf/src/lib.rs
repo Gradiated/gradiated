@@ -91,13 +91,16 @@ pub fn decode_step_s(cfg: &StackConfig, b: usize, ctx: f64, bk: &mut Breakdown) 
         None => ctx,
     };
 
-    // Attention projections per layer.
-    let qkv_cols = ((m.heads + 2 * m.kv_heads) * m.head_dim) as f64;
+    let p = &cfg.parallel;
+    let (tp, ep) = (p.tp.max(1) as f64, p.ep.max(1));
+    // Attention projections per layer, column/row-sharded across TP ranks.
+    let qkv_cols = ((m.heads + 2 * m.kv_heads) * m.head_dim) as f64 / tp;
     let t_qkv = gemm_s(hw, k, bf, qkv_cols, d, m.weight_bytes);
-    let t_o = gemm_s(hw, k, bf, d, (m.heads * m.head_dim) as f64, m.weight_bytes);
-    // FFN per layer: dense width or expected-active expert width.
+    let t_o = gemm_s(hw, k, bf, d, (m.heads * m.head_dim) as f64 / tp, m.weight_bytes);
+    // FFN per layer: dense width (TP-sharded) or this GPU's share of the
+    // experts activated by the EP group's combined batch.
     let (ffn_width, moe_layers, dense_layers) = match &m.ffn {
-        Ffn::Dense => (m.intermediate as f64, 0.0, m.layers as f64),
+        Ffn::Dense => (m.intermediate as f64 / tp, 0.0, m.layers as f64),
         Ffn::Moe {
             experts,
             top_k,
@@ -105,7 +108,9 @@ pub fn decode_step_s(cfg: &StackConfig, b: usize, ctx: f64, bk: &mut Breakdown) 
             moe_intermediate,
             first_k_dense,
         } => {
-            let active = expected_active_experts(*experts, *top_k, b) + *shared_experts as f64;
+            let group_batch = b * ep;
+            let active = expected_active_experts(*experts, *top_k, group_batch) / ep as f64
+                + *shared_experts as f64;
             (
                 active * *moe_intermediate as f64,
                 (m.layers - first_k_dense) as f64,
@@ -113,9 +118,24 @@ pub fn decode_step_s(cfg: &StackConfig, b: usize, ctx: f64, bk: &mut Breakdown) 
             )
         }
     };
-    let dense_width = m.intermediate as f64;
+    let dense_width = m.intermediate as f64 / tp;
     let ffn_layer = |w: f64| {
         gemm_s(hw, k, bf, 2.0 * w, d, m.weight_bytes) + gemm_s(hw, k, bf, d, w, m.weight_bytes)
+    };
+    // Communication per layer (does not overlap in v1 — conservative).
+    let ic = hw.interconnect_gbs.unwrap_or(f64::INFINITY) * 1e9;
+    let lat = hw.interconnect_latency_us * 1e-6;
+    let t_tp_comm = if p.tp > 1 {
+        2.0 * (bf * d * p.act_bytes * 2.0 * (tp - 1.0) / tp / ic + lat)
+    } else {
+        0.0
+    };
+    let t_ep_comm = |top_k: f64| {
+        if ep > 1 {
+            2.0 * (bf * top_k * d * p.act_bytes * (ep as f64 - 1.0) / ep as f64 / ic + lat)
+        } else {
+            0.0
+        }
     };
     // KV read for attention (the per-sequence term paging/kernels fight over).
     let kv_bytes_layer = bf * eff_ctx * m.kv_bytes_per_token() / m.layers as f64;
@@ -126,9 +146,14 @@ pub fn decode_step_s(cfg: &StackConfig, b: usize, ctx: f64, bk: &mut Breakdown) 
     let t_small = small_ops * floor.max(act_bytes / (hw.mem_bw_gbs * 1e9))
         * (1.0 + k.unfused_activation_traffic);
 
-    let per_moe_layer = t_qkv + t_o + ffn_layer(ffn_width) + t_attn + t_small;
-    let per_dense_layer = t_qkv + t_o + ffn_layer(dense_width) + t_attn + t_small;
-    let t_head = gemm_s(hw, k, bf, m.vocab as f64, d, m.weight_bytes);
+    let moe_topk = match &m.ffn {
+        Ffn::Moe { top_k, .. } => *top_k as f64,
+        Ffn::Dense => 0.0,
+    };
+    let per_moe_layer =
+        t_qkv + t_o + ffn_layer(ffn_width) + t_attn + t_small + t_tp_comm + t_ep_comm(moe_topk);
+    let per_dense_layer = t_qkv + t_o + ffn_layer(dense_width) + t_attn + t_small + t_tp_comm;
+    let t_head = gemm_s(hw, k, bf, m.vocab as f64 / tp, d, m.weight_bytes);
     let t_fixed = k.dispatches_fixed * floor;
 
     let device = moe_layers * per_moe_layer + dense_layers * per_dense_layer + t_head + t_fixed;
@@ -202,12 +227,14 @@ pub fn simulate(cfg: &StackConfig) -> PerfReport {
 
     let mut waiting = w.num_requests;
     let mut prefilling: Vec<usize> = vec![]; // remaining prompt tokens per admitted seq
-    let mut decoding: Vec<(usize, f64)> = vec![]; // (remaining output tokens, ctx so far)
+    let mut decoding: Vec<(f64, f64)> = vec![]; // (remaining output tokens, ctx so far)
     let mut wall = 0.0f64;
     let mut steps = 0u64;
     let mut batch_sum = 0u64;
-    let mut out_tokens = 0u64;
+    let mut out_tokens = 0.0f64;
     let mut bk = Breakdown::default();
+    // MTP: expected tokens accepted per sequence per decode step.
+    let tps = 1.0 + cfg.model.mtp_accept;
 
     while waiting > 0 || !prefilling.is_empty() || !decoding.is_empty() {
         // Admission under prefill budget, bounded by batch capacity.
@@ -226,12 +253,13 @@ pub fn simulate(cfg: &StackConfig) -> PerfReport {
             let avg_ctx: f64 = decoding.iter().map(|(_, c)| *c).sum::<f64>() / b as f64;
             wall += decode_step_s(cfg, b, avg_ctx, &mut bk);
             batch_sum += b as u64;
-            out_tokens += b as u64;
             for d in decoding.iter_mut() {
-                d.0 -= 1;
-                d.1 += 1.0;
+                let take = tps.min(d.0);
+                out_tokens += take;
+                d.0 -= take;
+                d.1 += take;
             }
-            decoding.retain(|(rem, _)| *rem > 0);
+            decoding.retain(|(rem, _)| *rem > 0.0);
         }
         // Prefill chunks under shared budget (each its own forward pass).
         let mut budget = s.prefill_chunk;
@@ -245,9 +273,9 @@ pub fn simulate(cfg: &StackConfig) -> PerfReport {
             if prefilling[i] == 0 {
                 // completes: first output token sampled from prefill logits
                 prefilling.remove(i);
-                out_tokens += 1;
+                out_tokens += 1.0;
                 if w.output_len > 1 {
-                    decoding.push((w.output_len - 1, w.input_len as f64 + 1.0));
+                    decoding.push(((w.output_len - 1) as f64, w.input_len as f64 + 1.0));
                 }
             } else {
                 i += 1;
@@ -264,14 +292,13 @@ pub fn simulate(cfg: &StackConfig) -> PerfReport {
     }
 
     let total_prompt = (w.num_requests * w.input_len) as f64;
-    debug_assert_eq!(out_tokens, (w.num_requests * w.output_len) as u64);
     let device_busy = bk.compute_s.max(bk.memory_s) + bk.prefill_s;
     PerfReport {
         wall_s: wall,
         steps,
         avg_decode_batch: batch_sum as f64 / steps.max(1) as f64,
-        output_tok_per_s: out_tokens as f64 / wall,
-        total_tok_per_s: (total_prompt + out_tokens as f64) / wall,
+        output_tok_per_s: out_tokens / wall,
+        total_tok_per_s: (total_prompt + out_tokens) / wall,
         energy_j: cfg.hardware.tdp_w * wall * (0.35 + 0.65 * (device_busy / wall).min(1.0)),
         breakdown: bk,
         device_busy_frac: (device_busy / wall).min(1.0),

@@ -1,0 +1,24 @@
+GLM-5.2 @EP32 b=136: batch=136 EP=32
+  resident/GPU: hot 17.3GB (43% of resident) + routed 22.6GB
+  read/step:  hot  17.3GB (43.2%)  routed  22.6GB (56.4%)  KV   0.2GB ( 0.4%)
+  hot bytes/step per resident-byte: hot 1.0/step vs routed 1.00/step
+  -> 17GB of 'always-hot' weights (2.3% of ALL params) causes 43% of traffic
+
+GLM-5.2 @EP144 b=96: batch=96 EP=144
+  resident/GPU: hot 17.3GB (77% of resident) + routed 5.0GB
+  read/step:  hot  17.3GB (77.1%)  routed   5.0GB (22.4%)  KV   0.1GB ( 0.5%)
+  hot bytes/step per resident-byte: hot 1.0/step vs routed 1.00/step
+  -> 17GB of 'always-hot' weights (2.3% of ALL params) causes 77% of traffic
+
+Kimi-K2 @EP32 b=128: batch=128 EP=32
+  resident/GPU: hot 10.4GB (25% of resident) + routed 31.7GB
+  read/step:  hot  10.4GB (24.6%)  routed  31.7GB (75.1%)  KV   0.2GB ( 0.4%)
+  hot bytes/step per resident-byte: hot 1.0/step vs routed 1.00/step
+  -> 10GB of 'always-hot' weights (1.0% of ALL params) causes 25% of traffic
+
+Kimi-K2 @EP16 b=64 (small deploy): batch=64 EP=16
+  resident/GPU: hot 10.4GB (14% of resident) + routed 63.4GB
+  read/step:  hot  10.4GB (14.1%)  routed  63.4GB (85.8%)  KV   0.1GB ( 0.1%)
+  hot bytes/step per resident-byte: hot 1.0/step vs routed 1.00/step
+  -> 10GB of 'always-hot' weights (1.0% of ALL params) causes 14% of traffic
+

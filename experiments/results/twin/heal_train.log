@@ -11,3 +11,8 @@ step 250 loss 2.8279 lr 9.86e-05 2886 tok/s
 step 300 loss 2.8300 lr 9.76e-05 2765 tok/s
 step 350 loss 2.6792 lr 9.62e-05 2764 tok/s
 step 400 loss 2.6465 lr 9.46e-05 2818 tok/s
+step 450 loss 2.6277 lr 9.27e-05 2857 tok/s
+step 500 loss 2.6422 lr 9.06e-05 2890 tok/s
+{"step": 500, "val_ppl": 15.2948, "wall_s": 1470.5}
+step 550 loss 2.6488 lr 8.82e-05 2760 tok/s
+step 600 loss 2.6267 lr 8.55e-05 2759 tok/s

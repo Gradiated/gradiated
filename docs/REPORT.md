@@ -51,6 +51,23 @@ At n=64 saturation test, average decode batch was 31.7/64 — one-prompt-per-ste
 | L7 | Tiered KV, prefix cache economics | serving | pending (sim) | [lit] 1.75–5× |
 | L8 | Hardware spec sweeps (LPDDR vs HBM, per-family ASIC) | hardware | pending (sim) | [lit] ~2–3× |
 
+### E5. Weight-bandwidth concentration + architecture round 2 (2026-07-11 late)
+- **"Do a few weights dominate bandwidth?" — yes, structurally**: GLM-5.2 at
+  EP144, the always-hot set (attn+shared+dense+head = 2.3% of params, 17GB
+  replicated/GPU) causes **77% of per-GPU memory traffic** (43% at EP32).
+  Kimi-K2 (thin attention, 384 experts): only 14-25% — per-model divergence.
+- Negative finding: at saturation batch ALL experts activate every step →
+  cold-expert offload to slow memory does NOT work at high load; the hot-set
+  levers are architectural shrinkage and amortization (batch × MTP). This is
+  why KV-shrinking surgery compounds: KV ↓ → batch ↑ → hot-GB/token ↓.
+- Architecture round 2 on the co-designed optimum: thin returns (+2-6% for
+  TP-attn, latent 384, MTP-2) — **the co-design converges**; expert
+  consolidation (64×8192 top-2) is NEGATIVE (0.59×) under the current model.
+- **Kimi-K2 dossier (new model, same pipeline)**: provider-best $0.474/Mtok
+  (1T params, ships without MTP/DSA); surgery incl. family-proven retrofits
+  2.96×; co-designed **11.5×** ($0.041). Headroom is model-dependent — the
+  machine's job is finding which models have the most recoverable margin.
+
 ## Verdict status (updated 2026-07-11 night — Monte Carlo)
 
 **The thesis holds under compound uncertainty.** Monte Carlo over the moat

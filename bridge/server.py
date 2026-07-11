@@ -237,6 +237,9 @@ class H(BaseHTTPRequestHandler):
                 "chat": chat[:50],
                 "lablog": list(reversed(read_jsonl(self.lablog_path)))[:200],
             }))
+        elif self.path == "/sartor-report.html":
+            p = os.path.join(DIR, "..", "docs", "sartor-report.html")
+            self._send(200, open(p).read(), "text/html; charset=utf-8")
         elif self.path == "/report":
             try:
                 import markdown

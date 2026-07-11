@@ -1,0 +1,14 @@
+{
+  "ppl": 15.907678706422452,
+  "nll_per_token": 2.7668019301602436,
+  "n_scored_tokens": 304985,
+  "window": 1024,
+  "stride": 512,
+  "eval_seconds": 65.1,
+  "model": "/Users/js/dev/sartor/models/smollm2-135m-pruned-h6-healed",
+  "split": "test",
+  "dtype": "float32",
+  "device": "mps",
+  "total_tokens": 304986,
+  "wall_seconds": 65.1
+}

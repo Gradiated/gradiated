@@ -151,11 +151,30 @@ group size 3 → 2: in each KV group, drop the weakest Q-head), by slicing
 |---|---|---|
 | baseline `smollm2-135m-instruct` | **16.60** | — |
 | pruned h9→h6, unhealed | **82.48** | +65.9 (5.0x) |
-| pruned + healed (1500 steps) | **TBD** | TBD |
-| baseline + identical finetune (control) | **TBD** | TBD |
+| pruned + healed (1500 steps, 12.3M tokens) | **15.91** | **−0.69** |
+| baseline + identical finetune (control) | **TBD (running)** | TBD |
 
-Healing curve (validation ppl vs step): `experiments/results/twin/healing_curve.json`.
-Healing wall time: **TBD**.
+**Healing cost: 1500 steps / 12.3M tokens / 123.9 min wall** on MPS fp32
+(1300–1800 tok/s under external memory pressure — see incident note — so
+treat wall time as an upper bound; run 1 sustained ~2800 tok/s on a quiet
+machine, which would put the same schedule at ~75 min).
+
+Recovery curve (val ppl; wikitext-2 validation, w1024/s1024, 100k tokens;
+the un-tuned baseline scores **19.01** on this protocol):
+
+| step | 0 | 250 | 500 | 750 | 1000 | 1250 | 1500 |
+|---|---|---|---|---|---|---|---|
+| val ppl | 101.25 | 15.81 | 15.26 | 15.35 | 15.79 | 15.74 | 16.15 |
+
+Recovery is essentially complete by **step 500 (~4M tokens, ~40 min)**;
+beyond that the model mildly overfits the small train set (2.57M tokens ≈
+4.8 epochs by step 1500). Full curve:
+`experiments/results/twin/healing_curve.json`.
+
+The headline row is deliberately read with caution: healed (15.91) beats the
+original baseline (16.60) on wikitext-2 test, but part of that is wikitext
+domain adaptation rather than pure repair — hence the matched control; the
+honest surgery cost is `healed − control` at matched token budget.
 
 ---
 
@@ -221,11 +240,18 @@ Ranking (most int4-tolerant first):
 Read-out: sensitivity is graded, not bimodal. Early layers (0, 3–8) and the
 final layers (28–29) tolerate int4 KV nearly for free; a band of mid/late
 layers (19, 16, 13, 12) plus the outlier L1 carries most of the damage. The
-sum of single-layer deltas (≈ +3.7) is below the joint all-int4 delta
-(+5.1), i.e. errors compound mildly super-additively. Obvious follow-up for
-co-design: mixed-precision KV — int4 on the ~20 tolerant layers, int8 on the
-~10 sensitive ones — cutting KV bytes ~33% vs all-int8 at a projected
-sub-1-ppl cost (verified jointly below, given the super-additivity).
+sum of all 30 single-layer deltas (≈ +3.7) is below the joint all-int4 delta
+(+5.1), i.e. errors compound mildly super-additively at full stack depth.
+
+**Mixed-precision KV, verified jointly** (`twin/kv_mixed.py`,
+`experiments/results/twin/kv_mixed.json`): int4 on the 20 most tolerant
+layers + int8 on the 10 most sensitive (1, 10, 12, 13, 16, 18, 19, 22, 23,
+27) → ppl **21.35 = +1.65** vs fp32, removing **68% of the all-int4 damage**
+while cutting KV bytes **33% vs all-int8** (2/3 of the way to all-int4's
+50%). The joint mixed delta (+1.65) is close to the sum of its 20 single
+deltas (+1.49), so the tolerant set composes near-additively — layer-wise
+sensitivity is a usable planning signal for KV placement/precision
+co-design.
 
 ---
 
@@ -238,8 +264,9 @@ twin/granite_routing.py      task 1 capture
 twin/analyze_routing.py      task 1 statistics
 twin/head_importance.py      task 2 importance
 twin/prune_heads.py          task 2 surgery
-twin/heal.py                 task 2 healing
-twin/kv_sensitivity.py       task 4
-experiments/results/twin/    all JSON/npy/npz/jsonl results
+twin/heal.py                 task 2 healing + control (CLI: --src/--dst/--steps)
+twin/kv_sensitivity.py       task 4 sweep
+twin/kv_mixed.py             task 4 mixed-precision verification
+experiments/results/twin/    all JSON/npy/npz/jsonl results + train logs
 models/smollm2-135m-pruned-h6[-healed]/   surgered checkpoints
 ```

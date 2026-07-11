@@ -109,15 +109,39 @@ group size 3 → 2: in each KV group, drop the weakest Q-head), by slicing
 3. **Healing** (`twin/heal.py`): finetune the pruned model on wikitext-2
    train. AdamW (β=0.9/0.95, wd 0.01 on matrices only), lr 1e-4 cosine → 1e-5
    with 100-step linear warmup, grad-clip 1.0, seq 1024, batch 8 (packed
-   non-overlapping windows, reshuffled per epoch), fp32 on MPS, **2000 steps
-   = 16.4M tokens**. Validation ppl (wikitext-2 validation, first 100k tokens,
-   window 1024 stride 1024) every 250 steps. Optimizer state discarded; only
-   final weights saved to `models/smollm2-135m-pruned-h6-healed/`.
+   non-overlapping windows, reshuffled per epoch), fp32 on MPS, seed 0,
+   **1500 steps = 12.3M tokens**. Validation ppl (wikitext-2 validation,
+   first 100k tokens, window 1024 stride 1024) + weight checkpoint every 250
+   steps. Optimizer state never written to disk; final weights in
+   `models/smollm2-135m-pruned-h6-healed/`.
+
+   *Incident note (reproducibility):* the first attempt used 2000 steps with
+   an end-only save and was killed by the OS around step 900 after ~60 min —
+   MPS memory footprint and swap grew steadily (throughput decayed 2890 →
+   2104 tok/s; ~10 GB of swap). Log preserved at
+   `experiments/results/twin/heal_train_run1_crashed.log`; its curve
+   (val ppl 101.25 → 15.79 @250 → 15.29 @500 → 15.48 @750) shows convergence
+   by ~step 500, so the restarted run was sized at 1500 steps and hardened
+   with `torch.mps.empty_cache()` every 100 steps and checkpointing every
+   250. Run 2 reproduced run 1's loss trajectory exactly (seed 0).
+
+4. **Control for domain adaptation**: wikitext-2 finetuning helps *any* model
+   on wikitext (the instruct baseline was never wikitext-tuned): the unpruned
+   baseline scores 19.01 on the healing val protocol while the healed pruned
+   model is already at ~15.3 — better than the un-tuned baseline. So "healed
+   ppl vs original ppl" alone overstates recovery. We therefore ran the
+   **identical finetune (same hyperparams, steps, seed, data order) on the
+   unpruned baseline** (`models/smollm2-135m-control-healed/`,
+   `experiments/results/twin/control_curve.json`); the honest surgery cost is
+   healed-pruned vs healed-baseline at matched token budget.
 
 ```bash
 /Users/js/dev/vllm-study/.venv/bin/python head_importance.py
 /Users/js/dev/vllm-study/.venv/bin/python prune_heads.py
-/Users/js/dev/vllm-study/.venv/bin/python heal.py
+/Users/js/dev/vllm-study/.venv/bin/python heal.py --steps 1500
+/Users/js/dev/vllm-study/.venv/bin/python heal.py --steps 1500 \
+    --src models/smollm2-135m-instruct --dst models/smollm2-135m-control-healed \
+    --curve control_curve.json --force-head-dim 0
 /Users/js/dev/vllm-study/.venv/bin/python eval_ppl.py --model <dir> --tag <tag>
 ```
 
@@ -127,7 +151,8 @@ group size 3 → 2: in each KV group, drop the weakest Q-head), by slicing
 |---|---|---|
 | baseline `smollm2-135m-instruct` | **16.60** | — |
 | pruned h9→h6, unhealed | **82.48** | +65.9 (5.0x) |
-| pruned + healed (2000 steps) | **TBD** | TBD |
+| pruned + healed (1500 steps) | **TBD** | TBD |
+| baseline + identical finetune (control) | **TBD** | TBD |
 
 Healing curve (validation ppl vs step): `experiments/results/twin/healing_curve.json`.
 Healing wall time: **TBD**.

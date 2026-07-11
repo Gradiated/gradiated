@@ -22,6 +22,7 @@ _ap = argparse.ArgumentParser()
 _ap.add_argument("--src", default=str(MODELS / "smollm2-135m-pruned-h6"))
 _ap.add_argument("--dst", default=str(MODELS / "smollm2-135m-pruned-h6-healed"))
 _ap.add_argument("--curve", default="healing_curve.json")
+_ap.add_argument("--steps", type=int, default=1500)
 _ap.add_argument("--force-head-dim", type=int, default=64,
                  help="head_dim written into saved config.json (0 = leave config alone)")
 _args = _ap.parse_args()
@@ -31,7 +32,7 @@ DST = MODELS.parent / _args.dst if not _args.dst.startswith("/") else type(MODEL
 DEVICE = "mps"
 SEQ = 1024
 BATCH = 8
-STEPS = 2000
+STEPS = _args.steps
 WARMUP = 100
 LR = 1e-4
 LR_MIN = 1e-5
@@ -70,14 +71,26 @@ def main():
     log = []
     t0 = time.time()
 
-    def evaluate(step):
+    def save_weights():
+        DST.mkdir(exist_ok=True)
+        model.save_pretrained(DST, safe_serialization=True)
+        if _args.force_head_dim:
+            saved_cfg = json.loads((DST / "config.json").read_text())
+            saved_cfg["head_dim"] = _args.force_head_dim
+            (DST / "config.json").write_text(json.dumps(saved_cfg, indent=2))
+
+    def evaluate(step, checkpoint=True):
         model.eval()
-        r = strided_perplexity(model, val_ids, window=SEQ, stride=SEQ, device=DEVICE)
+        r = strided_perplexity(model, val_ids, window=SEQ, stride=SEQ,
+                               batch_windows=4, device=DEVICE)
         model.train()
         entry = {"step": step, "val_ppl": round(r["ppl"], 4),
                  "wall_s": round(time.time() - t0, 1)}
         log.append(entry)
         print(json.dumps(entry), flush=True)
+        if checkpoint and step > 0:
+            save_weights()
+        torch.mps.empty_cache()
 
     evaluate(0)
     model.train()
@@ -97,6 +110,9 @@ def main():
         opt.step()
         opt.zero_grad(set_to_none=True)
         running += out.loss.item()
+        del out
+        if (step + 1) % 100 == 0:
+            torch.mps.empty_cache()
         if (step + 1) % 50 == 0:
             print(f"step {step+1} loss {running/50:.4f} lr {lr_at(step):.2e} "
                   f"{(step+1)*BATCH*SEQ/(time.time()-t0):.0f} tok/s", flush=True)
@@ -106,13 +122,7 @@ def main():
 
     del opt
     wall = time.time() - t0
-    model.to("cpu")
-    DST.mkdir(exist_ok=True)
-    model.save_pretrained(DST, safe_serialization=True)
-    if _args.force_head_dim:
-        saved = json.loads((DST / "config.json").read_text())
-        saved["head_dim"] = _args.force_head_dim
-        (DST / "config.json").write_text(json.dumps(saved, indent=2))
+    save_weights()
     import shutil
     for f in ["tokenizer.json", "tokenizer_config.json", "special_tokens_map.json",
               "generation_config.json"]:

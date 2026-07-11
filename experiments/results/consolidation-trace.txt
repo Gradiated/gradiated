@@ -1,0 +1,33 @@
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+== co-designed base (fine-grained 256x2048 top-6) @b=226 ==
+decode step: model=glm-5.2-surgered hw=glm-asic-4stk b=226 ctx=8200 | step 22.60ms -> 17001 tok/s/GPU
+op                                count      GFLOP        wMB       kvMB    time_us    pct  bound
+moe.experts.gate_up (grouped)      1200    6824.97   16609.44       0.00     8549.6  37.8%  math
+moe.experts.down (grouped)         1200    3412.49    8304.72       0.00     4271.8  18.9%  math
+mla.o_proj                           78    2661.74    3238.84       0.00     2378.3  10.5%  math
+attn.core(score+value)               78    1885.40       0.00    5198.71     1683.4   7.4%  math
+comm.ep_all2all                      75       0.00       0.00       0.00      977.6   4.3%  interconnect
+mla.q_up                             78     887.25    1079.61       0.00      792.5   3.5%  math
+moe.shared.gate_up                   75     853.12    1038.09       0.00      762.5   3.4%  math
+host.sched+stream                     1       0.00       0.00       0.00      726.0   3.2%  host
+moe.router+dispatch                  75       0.00       0.00       0.00      420.0   1.9%  dispatch
+mla.q_down                           78     443.62     539.81       0.00      396.9   1.8%  math
+lm_head                               1     430.12     523.37       0.00      384.0   1.7%  math
+moe.shared.down                      75     426.56     519.05       0.00      381.1   1.7%  math
+mla.absorb_v            
+== consolidated (64x8192 top-2, no shared) @b=226 ==
+decode step: model=glm-5.2-surgered hw=glm-asic-4stk b=226 ctx=8200 | step 20.83ms -> 18448 tok/s/GPU
+op                                count      GFLOP        wMB       kvMB    time_us    pct  bound
+moe.experts.gate_up (grouped)       300    6824.97   16609.44       0.00     8535.8  41.0%  math
+moe.experts.down (grouped)          300    3412.49    8304.72       0.00     4271.8  20.5%  math
+mla.o_proj                           78    2661.74    3238.84       0.00     2378.3  11.4%  math
+attn.core(score+value)               78    1885.40       0.00    5198.71     1683.4   8.1%  math
+mla.q_up                             78     887.25    1079.61       0.00      792.5   3.8%  math
+host.sched+stream                     1       0.00       0.00       0.00      726.0   3.5%  host
+moe.router+dispatch                  75       0.00       0.00       0.00      420.0   2.0%  dispatch
+mla.q_down                           78     443.62     539.81       0.00      396.9   1.9%  math
+lm_head                               1     430.12     523.37       0.00      384.0   1.8%  math
+comm.ep_all2all                      75       0.00       0.00       0.00      362.5   1.7%  interconnect
+mla.absorb_v                         78     221.81       5.62       0.00      198.1   1.0%  math
+ffn.dense.gate_up                     3     204.75     249.14       0.00      182.8   0.9%  math
+mla.kv_down             

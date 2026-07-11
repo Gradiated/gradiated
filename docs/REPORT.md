@@ -77,6 +77,12 @@ Calibration discipline: lab anchors ±11.5% (measured by us), GB200 peak anchor
 gives realization factor 0.73, DeepSeek daily-average reconciles at duty 0.53
 (docs/calibration.md). Ratios above are realization-invariant.
 
+**Prior-robustness** (the MC's weakest input is the lever-survival priors —
+so stress them): halving every survival probability still gives median 3.19×,
+P10 2.43×, P(≥3×)=0.60; base priors 4.13× / P(≥3×)=0.92; optimistic 4.55× /
+0.99. The verdict does not hinge on surgery optimism — the hardware tier is
+prior-independent and the strongest levers have production precedent.
+
 **What would change this verdict**: real-GPU profiling contradicting the
 traffic map (rental campaign, ~$15k); healing failing at scale on a mid-size
 MoE (~$50k campaign); HBM/NRE costs far above the sampled ranges.

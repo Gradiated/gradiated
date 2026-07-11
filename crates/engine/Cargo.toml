@@ -1,0 +1,25 @@
+[package]
+name = "barge"
+version = "0.1.0"
+edition = "2021"
+description = "A cost-first LLM serving engine: maximum tokens per dollar, latency is not a goal."
+license = "Apache-2.0"
+
+[dependencies]
+candle-core = { version = "0.9", features = ["metal", "accelerate"] }
+candle-nn = { version = "0.9", features = ["metal", "accelerate"] }
+tokenizers = "0.21"
+axum = "0.8"
+tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1"
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+clap = { workspace = true }
+rand = { workspace = true }
+rayon = "1"
+half = "2"
+sartor-spec = { path = "../spec" }
+
+[dev-dependencies]
+candle-transformers = { version = "0.9", features = ["metal", "accelerate"] }

@@ -1,0 +1,7 @@
+/target
+/models
+/vendor
+/data
+*.parts/
+.venv
+__pycache__/

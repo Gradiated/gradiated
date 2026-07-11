@@ -11,6 +11,7 @@ DIR = os.path.dirname(os.path.abspath(__file__))
 INBOX = os.path.join(DIR, "inbox.jsonl")
 OUTBOX = os.path.join(DIR, "outbox.jsonl")
 STATUS = os.path.join(DIR, "status.json")
+LABLOG = os.path.join(DIR, "lablog.jsonl")
 REPORT = os.path.join(DIR, "..", "docs", "REPORT.md")
 
 PAGE = """<!doctype html><html><head><meta charset="utf-8">
@@ -30,6 +31,7 @@ button{background:#238636;color:#fff;border:0;border-radius:8px;padding:10px 18p
 <button onclick="send()">send</button>
 <h2>status</h2><div class="card" id="status">loading…</div>
 <h2>conversation</h2><div id="chat"></div>
+<h2>lab log (newest first)</h2><div id="lablog"></div>
 <h2>full report (auto-updates)</h2><div class="card" id="report" style="white-space:normal">loading…</div>
 <style>#report table{border-collapse:collapse;margin:8px 0;display:block;overflow-x:auto}
 #report td,#report th{border:1px solid #30363d;padding:4px 8px;font-size:13px}
@@ -43,6 +45,8 @@ async function refresh(){
     document.getElementById('chat').innerHTML=d.chat.map(m=>
       `<div class="card ${m.who}"><span class="ts">${m.ts} — ${m.who}</span>\n${m.text
         .replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`).join('');
+    document.getElementById('lablog').innerHTML=d.lablog.map(e=>
+      `<div class="card"><span class="ts">${e.ts} · ${e.kind}</span>\n${e.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`).join('');
   }catch(e){document.getElementById('stat').textContent='· reconnecting…'}
 }
 async function send(){
@@ -94,6 +98,7 @@ class H(BaseHTTPRequestHandler):
                 "status_text": st.get("text", ""),
                 "updated": st.get("updated", "-"),
                 "chat": chat[:50],
+                "lablog": list(reversed(read_jsonl(LABLOG)))[:200],
             }))
         elif self.path == "/report":
             try:

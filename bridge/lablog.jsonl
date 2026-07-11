@@ -1,0 +1,29 @@
+{"ts": "2026-07-11 10:30", "kind": "finding", "text": "vLLM dissection (12-agent audit): 1-5ms/step Python tax, 2.5-7ms/step serialization at B=256, ~10% VRAM idled."}
+{"ts": "2026-07-11 12:55", "kind": "finding", "text": "llama.cpp baseline on M4: 8,530 tok/s @B=128 Metal; CPU beats Metal single-stream on 135M (dispatch overhead)."}
+{"ts": "2026-07-11 13:18", "kind": "commit", "text": "sartor: workspace, barge engine e2e (G0), vLLM+research dissections, baselines"}
+{"ts": "2026-07-11 13:20", "kind": "result", "text": "barge engine G0: correct generation end-to-end; parity vs candle-transformers 1e-5; batch-invariant."}
+{"ts": "2026-07-11 13:36", "kind": "commit", "text": "sim v1 (spec/perf/cost/cli) + calibration loop + parity tests + bench harness"}
+{"ts": "2026-07-11 13:41", "kind": "commit", "text": "sim: TP/EP parallelism + interconnect + MTP terms; measured model ladder"}
+{"ts": "2026-07-11 13:42", "kind": "commit", "text": "calibration: cross-regime ladder \u2014 0.5B +10.0%, 4B +10.2%, 135M +68.7% outlier"}
+{"ts": "2026-07-11 14:01", "kind": "commit", "text": "GLM-5.2 co-design study v1: 6.8x (2.7x sw+model, 2.5x ASIC tier)"}
+{"ts": "2026-07-11 14:08", "kind": "commit", "text": "sim: capability flags (prefill_packing, grouped_moe, ep_imbalance)"}
+{"ts": "2026-07-11 14:20", "kind": "commit", "text": "moat study v1: surgery 1.84x, fitted ASIC 3.12x, co-designed 6.54x, synergy 1.14"}
+{"ts": "2026-07-11 14:26", "kind": "commit", "text": "moat sensitivity analysis + twin interim data"}
+{"ts": "2026-07-11 14:30", "kind": "result", "text": "Measured ladder M4: 135M 977 / 0.5B 966 / 4B 112 out tok/s. Sim fitted on 135M probe predicts 0.5B +10.0%, 4B +10.2%."}
+{"ts": "2026-07-11 14:55", "kind": "commit", "text": "MC moat distribution + GB200 anchor + calibration doctrine + workload panel"}
+{"ts": "2026-07-11 15:09", "kind": "commit", "text": "L1 measured: barge 2.1x vLLM-CPU like-for-like (525 vs 246 out tok/s)"}
+{"ts": "2026-07-11 15:10", "kind": "finding", "text": "DeepSeek H800 anchor +13%; GB200 peak anchor -> realization 0.73; daily-avg reconciles at duty 0.53."}
+{"ts": "2026-07-11 15:11", "kind": "commit", "text": "MC prior-robustness: verdict stable under halved lever-survival priors"}
+{"ts": "2026-07-11 15:21", "kind": "commit", "text": "concentration analysis + arch round 2 + Kimi-K2 dossier (11.5x)"}
+{"ts": "2026-07-11 15:30", "kind": "result", "text": "Moat study: provider-best $0.285 -> co-designed $0.044 (6.54x); synergy 1.14 via HBM-stack cliff (7->4 stacks)."}
+{"ts": "2026-07-11 15:50", "kind": "result", "text": "MC-1000: co-design median 3.91x [2.98, 5.17], P(>=3x)=90%. Prior stress: halved priors still 3.19x median."}
+{"ts": "2026-07-11 15:53", "kind": "commit", "text": "headroom league v2 (honest baselines) + bridge live at slackhog.ngrok.dev"}
+{"ts": "2026-07-11 16:00", "kind": "finding", "text": "Hot-set analysis: 2.3% of GLM-5.2 params = 77% of memory traffic at EP144. Cold-expert tiering fails at saturation."}
+{"ts": "2026-07-11 16:10", "kind": "result", "text": "League: Qwen3-235B 10.8x / MiniMax-M2 14.3x / gpt-oss 12.2x / K2 11.5x / GLM-5.2 6.5x headroom."}
+{"ts": "2026-07-11 16:18", "kind": "commit", "text": "G3 closed (sim 1.05x vs measured 1.051x head-prune); int8-KV free (measured); consolidation false-negative caught by trace-diff"}
+{"ts": "2026-07-11 16:21", "kind": "commit", "text": "MC-1000 (median 3.91x, P>=3x 0.90) + NRE break-even (2.9k-14.5k chips) + E6 loop closures"}
+{"ts": "2026-07-11 16:25", "kind": "result", "text": "L1 measured: barge 2.1x vLLM-CPU like-for-like (525 vs 246 tok/s)."}
+{"ts": "2026-07-11 16:40", "kind": "result", "text": "G3 CLOSED: sim predicted head-prune 1.05x; real surgery measured 1.051x. int8-KV free on real weights (+0.06% ppl)."}
+{"ts": "2026-07-11 16:46", "kind": "commit", "text": "workload frontier grid: 5.7-7.7x across (cache x ctx), max at long-context agents"}
+{"ts": "2026-07-11 16:50", "kind": "result", "text": "NRE break-even: ASIC rational at 2.9k-14.5k chips (~1T tok/day fleet). Workload frontier: 5.7-7.7x everywhere, max long-ctx agents."}
+{"ts": "2026-07-11 17:09", "kind": "commit", "text": "bridge: drop oauth, serve rendered REPORT.md on the public page"}

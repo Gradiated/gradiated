@@ -11,6 +11,7 @@ DIR = os.path.dirname(os.path.abspath(__file__))
 INBOX = os.path.join(DIR, "inbox.jsonl")
 OUTBOX = os.path.join(DIR, "outbox.jsonl")
 STATUS = os.path.join(DIR, "status.json")
+REPORT = os.path.join(DIR, "..", "docs", "REPORT.md")
 
 PAGE = """<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -29,6 +30,10 @@ button{background:#238636;color:#fff;border:0;border-radius:8px;padding:10px 18p
 <button onclick="send()">send</button>
 <h2>status</h2><div class="card" id="status">loading…</div>
 <h2>conversation</h2><div id="chat"></div>
+<h2>full report (auto-updates)</h2><div class="card" id="report" style="white-space:normal">loading…</div>
+<style>#report table{border-collapse:collapse;margin:8px 0;display:block;overflow-x:auto}
+#report td,#report th{border:1px solid #30363d;padding:4px 8px;font-size:13px}
+#report h1,#report h2,#report h3{margin:14px 0 6px}#report code{background:#0d1117;padding:1px 4px;border-radius:4px}</style>
 <script>
 async function refresh(){
   try{
@@ -45,7 +50,8 @@ async function send(){
   await fetch('/prompt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})});
   document.getElementById('t').value='';setTimeout(refresh,300);
 }
-refresh();setInterval(refresh,8000);
+async function loadReport(){try{const r=await fetch('/report');document.getElementById('report').innerHTML=await r.text();}catch(e){}}
+refresh();setInterval(refresh,8000);loadReport();setInterval(loadReport,60000);
 </script></body></html>"""
 
 def read_jsonl(p):
@@ -89,6 +95,13 @@ class H(BaseHTTPRequestHandler):
                 "updated": st.get("updated", "-"),
                 "chat": chat[:50],
             }))
+        elif self.path == "/report":
+            try:
+                import markdown
+                html = markdown.markdown(open(REPORT).read(), extensions=["tables", "fenced_code"])
+            except Exception as e:
+                html = "<pre>" + open(REPORT).read().replace("&", "&amp;").replace("<", "&lt;") + "</pre>"
+            self._send(200, html, "text/html; charset=utf-8")
         else:
             self._send(404, "{}")
 

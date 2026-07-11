@@ -1,3 +1,4 @@
+pub mod bench;
 pub mod config;
 pub mod detok;
 pub mod engine;
@@ -6,6 +7,7 @@ pub mod model;
 pub mod probe;
 pub mod sample;
 pub mod sched;
+pub mod server;
 
 use anyhow::{bail, Result};
 use candle_core::{DType, Device};

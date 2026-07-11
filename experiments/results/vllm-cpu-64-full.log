@@ -1,0 +1,213 @@
+INFO 07-11 13:35:37 [importing.py:88] Triton not installed or not compatible; certain GPU-related functions will not be available.
+objc[20710]: Class SDLApplication is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60890) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e187c88). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class SDLAppDelegate is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e608e0) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e187cd8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class SDLTranslatorResponder is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60958) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e187d50). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class SDLMessageBoxPresenter is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60980) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e187d78). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class SDL_cocoametalview is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e609d0) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e187dc8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class SDLOpenGLContext is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60a20) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e187e18). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class SDL_ShapeData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60a98) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e187e90). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class SDL_CocoaClosure is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60ae8) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e187ee0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class SDL_VideoData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60b38) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e187f30). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class SDL_WindowData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60b88) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e187f80). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class SDLWindow is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60bb0) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e187fa8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class Cocoa_WindowListener is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60bd8) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e187fd0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class SDLView is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60c50) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e188048). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class METAL_RenderData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60cc8) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e1880c0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class METAL_TextureData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60d18) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e188110). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class SDL_RumbleMotor is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60d40) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e188138). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class SDL_RumbleContext is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x153e60d90) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16e188188). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class AVFFrameReceiver is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libavdevice.61.3.100.dylib (0x1303f43a8) and /opt/homebrew/Cellar/ffmpeg/7.1.1_2/lib/libavdevice.61.3.100.dylib (0x1532c4328). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20710]: Class AVFAudioReceiver is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libavdevice.61.3.100.dylib (0x1303f43f8) and /opt/homebrew/Cellar/ffmpeg/7.1.1_2/lib/libavdevice.61.3.100.dylib (0x1532c4378). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+WARNING 07-11 13:35:39 [cpu.py:454] Failed to import from vllm._C: ImportError("dlopen(/Users/js/dev/vllm-study/vllm/_C.abi3.so, 0x0002): symbol not found in flat namespace '__Z13cpu_fused_moeRN2at6TensorERKS0_S3_S3_RKNSt3__18optionalIS0_EES8_S3_S3_bRKNS4_12basic_stringIcNS4_11char_traitsIcEENS4_9allocatorIcEEEESG_'")
+/Users/js/dev/vllm-study/vllm/benchmarks/throughput.py:1159: UserWarning: Both --input-len and --random-input-len are specified. The random version (--random-input-len) will be preferred in this run.
+  validate_args(args)
+/Users/js/dev/vllm-study/vllm/benchmarks/throughput.py:1159: UserWarning: Both --output-len and --random-output-len are specified. The random version (--random-output-len) will be preferred in this run.
+  validate_args(args)
+/Users/js/dev/vllm-study/vllm/benchmarks/throughput.py:1159: UserWarning: Both --prefix-len and --random-prefix-len are specified. The random version (--random-prefix-len) will be preferred in this run.
+  validate_args(args)
+When dataset path is not set, it will default to random dataset
+INFO 07-11 13:35:40 [utils.py:90] Sampling input_len from [1024, 1024] and output_len from [128, 128]
+INFO 07-11 13:35:40 [api_utils.py:273] non-default args: {'tokenizer': '/Users/js/dev/sartor/models/smollm2-135m-instruct', 'dtype': 'bfloat16', 'max_model_len': 2048, 'enable_lora': None, 'reasoning_parser_plugin': '', 'model': '/Users/js/dev/sartor/models/smollm2-135m-instruct'}
+INFO 07-11 13:35:40 [model.py:619] Resolved architecture: LlamaForCausalLM
+INFO 07-11 13:35:40 [model.py:1776] Using max model len 2048
+INFO 07-11 13:35:40 [scheduler.py:252] Chunked prefill is enabled with max_num_batched_tokens=4096.
+INFO 07-11 13:35:40 [vllm.py:1090] Asynchronous scheduling is enabled.
+INFO 07-11 13:35:40 [kernel.py:292] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+WARNING 07-11 13:35:40 [vllm.py:558] Model Runner V2 requires Triton; using the V1 model runner instead.
+objc[20733]: Class SDLApplication is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eec890) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b7c88). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class SDLAppDelegate is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eec8e0) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b7cd8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class SDLTranslatorResponder is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eec958) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b7d50). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class SDLMessageBoxPresenter is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eec980) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b7d78). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class SDL_cocoametalview is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eec9d0) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b7dc8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class SDLOpenGLContext is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eeca20) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b7e18). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class SDL_ShapeData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eeca98) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b7e90). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class SDL_CocoaClosure is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eecae8) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b7ee0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class SDL_VideoData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eecb38) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b7f30). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class SDL_WindowData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eecb88) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b7f80). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class SDLWindow is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eecbb0) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b7fa8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class Cocoa_WindowListener is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eecbd8) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b7fd0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class SDLView is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eecc50) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b8048). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class METAL_RenderData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eeccc8) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b80c0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class METAL_TextureData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eecd18) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b8110). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class SDL_RumbleMotor is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eecd40) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b8138). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class SDL_RumbleContext is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x133eecd90) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x1433b8188). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class AVFFrameReceiver is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libavdevice.61.3.100.dylib (0x1142243a8) and /opt/homebrew/Cellar/ffmpeg/7.1.1_2/lib/libavdevice.61.3.100.dylib (0x133a78328). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20733]: Class AVFAudioReceiver is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libavdevice.61.3.100.dylib (0x1142243f8) and /opt/homebrew/Cellar/ffmpeg/7.1.1_2/lib/libavdevice.61.3.100.dylib (0x133a78378). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+INFO 07-11 13:35:43 [importing.py:88] Triton not installed or not compatible; certain GPU-related functions will not be available.
+(EngineCore pid=20733) INFO 07-11 13:35:44 [core.py:114] Initializing a V1 LLM engine (v0.1.dev1+gbec0a4ede.d20260711) with config: model='/Users/js/dev/sartor/models/smollm2-135m-instruct', speculative_config=None, tokenizer='/Users/js/dev/sartor/models/smollm2-135m-instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=2048, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=None, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cpu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=/Users/js/dev/sartor/models/smollm2-135m-instruct, enable_prefix_caching=True, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.DYNAMO_TRACE_ONCE: 2>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none', '+gelu', '+gelu_tanh', '+gelu_and_mul'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': [4096], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'dce': True, 'nan_asserts': False, 'epilogue_fusion': True, 'cpp.dynamic_threads': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': [], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False}, 'max_cudagraph_capture_size': None, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, moe_backend='auto', linear_backend='auto')
+(EngineCore pid=20733) INFO 07-11 13:35:44 [multiproc_executor.py:140] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=10.5.0.2 (local), world_size=1, local_world_size=1
+(EngineCore pid=20733) INFO 07-11 13:35:44 [ompmultiprocessing.py:185] OpenMP thread binding info: 
+(EngineCore pid=20733) INFO 07-11 13:35:44 [ompmultiprocessing.py:185] 	VLLM_CPU_OMP_THREADS_BIND='auto', auto_setup=True, skip_setup=False
+(EngineCore pid=20733) INFO 07-11 13:35:44 [ompmultiprocessing.py:185] 	local_world_size=1, reserve_cpu_num=1
+(EngineCore pid=20733) INFO 07-11 13:35:44 [ompmultiprocessing.py:185] 	local_rank=0, core ids=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+(EngineCore pid=20733) INFO 07-11 13:35:44 [ompmultiprocessing.py:185] 	reserved_cpus=[13]
+INFO 07-11 13:35:46 [importing.py:88] Triton not installed or not compatible; certain GPU-related functions will not be available.
+objc[20743]: Class SDLApplication is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84890) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dbc88). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class SDLAppDelegate is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac848e0) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dbcd8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class SDLTranslatorResponder is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84958) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dbd50). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class SDLMessageBoxPresenter is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84980) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dbd78). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class SDL_cocoametalview is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac849d0) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dbdc8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class SDLOpenGLContext is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84a20) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dbe18). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class SDL_ShapeData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84a98) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dbe90). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class SDL_CocoaClosure is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84ae8) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dbee0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class SDL_VideoData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84b38) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dbf30). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class SDL_WindowData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84b88) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dbf80). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class SDLWindow is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84bb0) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dbfa8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class Cocoa_WindowListener is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84bd8) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dbfd0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class SDLView is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84c50) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dc048). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class METAL_RenderData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84cc8) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dc0c0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class METAL_TextureData is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84d18) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dc110). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class SDL_RumbleMotor is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84d40) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dc138). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class SDL_RumbleContext is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x14ac84d90) and /opt/homebrew/Cellar/sdl2/2.32.6/lib/libSDL2-2.0.0.dylib (0x16d7dc188). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class AVFFrameReceiver is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libavdevice.61.3.100.dylib (0x12adc03a8) and /opt/homebrew/Cellar/ffmpeg/7.1.1_2/lib/libavdevice.61.3.100.dylib (0x13ffe8328). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[20743]: Class AVFAudioReceiver is implemented in both /Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/cv2/.dylibs/libavdevice.61.3.100.dylib (0x12adc03f8) and /opt/homebrew/Cellar/ffmpeg/7.1.1_2/lib/libavdevice.61.3.100.dylib (0x13ffe8378). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+WARNING 07-11 13:35:46 [cpu.py:454] Failed to import from vllm._C: ImportError("dlopen(/Users/js/dev/vllm-study/vllm/_C.abi3.so, 0x0002): symbol not found in flat namespace '__Z13cpu_fused_moeRN2at6TensorERKS0_S3_S3_RKNSt3__18optionalIS0_EES8_S3_S3_bRKNS4_12basic_stringIcNS4_11char_traitsIcEENS4_9allocatorIcEEEESG_'")
+WARNING 07-11 13:35:47 [cpu.py:454] Failed to import from vllm._C: ImportError("dlopen(/Users/js/dev/vllm-study/vllm/_C.abi3.so, 0x0002): symbol not found in flat namespace '__Z13cpu_fused_moeRN2at6TensorERKS0_S3_S3_RKNSt3__18optionalIS0_EES8_S3_S3_bRKNS4_12basic_stringIcNS4_11char_traitsIcEENS4_9allocatorIcEEEESG_'")
+WARNING 07-11 13:35:47 [cpu.py:454] Failed to import from vllm._C: ImportError("dlopen(/Users/js/dev/vllm-study/vllm/_C.abi3.so, 0x0002): symbol not found in flat namespace '__Z13cpu_fused_moeRN2at6TensorERKS0_S3_S3_RKNSt3__18optionalIS0_EES8_S3_S3_bRKNS4_12basic_stringIcNS4_11char_traitsIcEENS4_9allocatorIcEEEESG_'")
+WARNING 07-11 13:35:47 [cpu.py:454] Failed to import from vllm._C: ImportError("dlopen(/Users/js/dev/vllm-study/vllm/_C.abi3.so, 0x0002): symbol not found in flat namespace '__Z13cpu_fused_moeRN2at6TensorERKS0_S3_S3_RKNSt3__18optionalIS0_EES8_S3_S3_bRKNS4_12basic_stringIcNS4_11char_traitsIcEENS4_9allocatorIcEEEESG_'")
+ERROR 07-11 13:35:47 [multiproc_executor.py:901] WorkerProc failed to start.
+ERROR 07-11 13:35:47 [multiproc_executor.py:901] Traceback (most recent call last):
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]   File "/Users/js/dev/vllm-study/vllm/v1/executor/multiproc_executor.py", line 868, in worker_main
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]     worker = WorkerProc(*args, **kwargs)
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]   File "/Users/js/dev/vllm-study/vllm/tracing/otel.py", line 178, in sync_wrapper
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]     return func(*args, **kwargs)
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]            ^^^^^^^^^^^^^^^^^^^^^
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]   File "/Users/js/dev/vllm-study/vllm/v1/executor/multiproc_executor.py", line 621, in __init__
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]     wrapper.init_worker(all_kwargs)
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]   File "/Users/js/dev/vllm-study/vllm/tracing/otel.py", line 178, in sync_wrapper
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]     return func(*args, **kwargs)
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]            ^^^^^^^^^^^^^^^^^^^^^
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]   File "/Users/js/dev/vllm-study/vllm/v1/worker/worker_base.py", line 319, in init_worker
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]     self.worker = worker_class(**kwargs)
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]                   ^^^^^^^^^^^^^^^^^^^^^^
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]   File "/Users/js/dev/vllm-study/vllm/v1/worker/cpu_worker.py", line 58, in __init__
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]     torch.ops._C.init_cpu_memory_env([cpu_core.numa_node])
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]   File "/Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/torch/_ops.py", line 1379, in __getattr__
+ERROR 07-11 13:35:47 [multiproc_executor.py:901]     raise AttributeError(
+ERROR 07-11 13:35:47 [multiproc_executor.py:901] AttributeError: '_OpNamespace' '_C' object has no attribute 'init_cpu_memory_env'
+(EngineCore pid=20733) INFO 07-11 13:35:47 [multiproc_executor.py:429] [shutdown] Executor: waiting for worker exit count=1
+(EngineCore pid=20733) INFO 07-11 13:35:48 [multiproc_executor.py:436] [shutdown] Executor: all workers exited gracefully
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231] EngineCore failed to start.
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231] Traceback (most recent call last):
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]   File "/Users/js/dev/vllm-study/vllm/v1/engine/core.py", line 1200, in run_engine_core
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]   File "/Users/js/dev/vllm-study/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]     return func(*args, **kwargs)
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]   File "/Users/js/dev/vllm-study/vllm/v1/engine/core.py", line 966, in __init__
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]     super().__init__(
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]   File "/Users/js/dev/vllm-study/vllm/v1/engine/core.py", line 123, in __init__
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]     self.model_executor = executor_class(vllm_config)
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]   File "/Users/js/dev/vllm-study/vllm/v1/executor/multiproc_executor.py", line 108, in __init__
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]     super().__init__(vllm_config)
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]   File "/Users/js/dev/vllm-study/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]     return func(*args, **kwargs)
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]   File "/Users/js/dev/vllm-study/vllm/v1/executor/abstract.py", line 109, in __init__
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]     self._init_executor()
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]   File "/Users/js/dev/vllm-study/vllm/v1/executor/multiproc_executor.py", line 201, in _init_executor
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]     self.workers = WorkerProc.wait_for_ready(unready_workers)
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]   File "/Users/js/dev/vllm-study/vllm/v1/executor/multiproc_executor.py", line 765, in wait_for_ready
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231]     raise e from None
+(EngineCore pid=20733) ERROR 07-11 13:35:48 [core.py:1231] Exception: WorkerProc initialization failed due to an exception in a background process. See stack trace for root cause.
+(EngineCore pid=20733) Process EngineCore:
+(EngineCore pid=20733) Traceback (most recent call last):
+(EngineCore pid=20733)   File "/Users/js/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+(EngineCore pid=20733)     self.run()
+(EngineCore pid=20733)   File "/Users/js/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/multiprocessing/process.py", line 108, in run
+(EngineCore pid=20733)     self._target(*self._args, **self._kwargs)
+(EngineCore pid=20733)   File "/Users/js/dev/vllm-study/vllm/v1/engine/core.py", line 1235, in run_engine_core
+(EngineCore pid=20733)     raise e
+(EngineCore pid=20733)   File "/Users/js/dev/vllm-study/vllm/v1/engine/core.py", line 1200, in run_engine_core
+(EngineCore pid=20733)     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+(EngineCore pid=20733)                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=20733)   File "/Users/js/dev/vllm-study/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=20733)     return func(*args, **kwargs)
+(EngineCore pid=20733)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=20733)   File "/Users/js/dev/vllm-study/vllm/v1/engine/core.py", line 966, in __init__
+(EngineCore pid=20733)     super().__init__(
+(EngineCore pid=20733)   File "/Users/js/dev/vllm-study/vllm/v1/engine/core.py", line 123, in __init__
+(EngineCore pid=20733)     self.model_executor = executor_class(vllm_config)
+(EngineCore pid=20733)                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=20733)   File "/Users/js/dev/vllm-study/vllm/v1/executor/multiproc_executor.py", line 108, in __init__
+(EngineCore pid=20733)     super().__init__(vllm_config)
+(EngineCore pid=20733)   File "/Users/js/dev/vllm-study/vllm/tracing/otel.py", line 178, in sync_wrapper
+(EngineCore pid=20733)     return func(*args, **kwargs)
+(EngineCore pid=20733)            ^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=20733)   File "/Users/js/dev/vllm-study/vllm/v1/executor/abstract.py", line 109, in __init__
+(EngineCore pid=20733)     self._init_executor()
+(EngineCore pid=20733)   File "/Users/js/dev/vllm-study/vllm/v1/executor/multiproc_executor.py", line 201, in _init_executor
+(EngineCore pid=20733)     self.workers = WorkerProc.wait_for_ready(unready_workers)
+(EngineCore pid=20733)                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(EngineCore pid=20733)   File "/Users/js/dev/vllm-study/vllm/v1/executor/multiproc_executor.py", line 765, in wait_for_ready
+(EngineCore pid=20733)     raise e from None
+(EngineCore pid=20733) Exception: WorkerProc initialization failed due to an exception in a background process. See stack trace for root cause.
+Traceback (most recent call last):
+  File "/Users/js/dev/vllm-study/.venv/bin/vllm", line 10, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/Users/js/dev/vllm-study/vllm/entrypoints/cli/main.py", line 95, in main
+    args.dispatch_function(args)
+  File "/Users/js/dev/vllm-study/vllm/entrypoints/cli/benchmark/throughput.py", line 22, in cmd
+    main(args)
+  File "/Users/js/dev/vllm-study/vllm/benchmarks/throughput.py", line 1199, in main
+    elapsed_time, request_outputs = run_vllm(
+                                    ^^^^^^^^^
+  File "/Users/js/dev/vllm-study/vllm/benchmarks/throughput.py", line 61, in run_vllm
+    llm = LLM.from_engine_args(engine_args)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/js/dev/vllm-study/vllm/entrypoints/llm.py", line 389, in from_engine_args
+    return cls(**vars(engine_args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/js/dev/vllm-study/vllm/entrypoints/llm.py", line 349, in __init__
+    self.llm_engine = LLMEngine.from_engine_args(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/js/dev/vllm-study/vllm/v1/engine/llm_engine.py", line 179, in from_engine_args
+    return cls(
+           ^^^^
+  File "/Users/js/dev/vllm-study/vllm/v1/engine/llm_engine.py", line 105, in __init__
+    self.engine_core = EngineCoreClient.make_client(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/js/dev/vllm-study/vllm/v1/engine/core_client.py", line 103, in make_client
+    return SyncMPClient(vllm_config, executor_class, log_stats)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/js/dev/vllm-study/vllm/tracing/otel.py", line 178, in sync_wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/js/dev/vllm-study/vllm/v1/engine/core_client.py", line 786, in __init__
+    super().__init__(
+  File "/Users/js/dev/vllm-study/vllm/v1/engine/core_client.py", line 573, in __init__
+    with launch_core_engines(
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/js/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/contextlib.py", line 144, in __exit__
+    next(self.gen)
+  File "/Users/js/dev/vllm-study/vllm/v1/engine/utils.py", line 1213, in launch_core_engines
+    wait_for_engine_startup(
+  File "/Users/js/dev/vllm-study/vllm/v1/engine/utils.py", line 1272, in wait_for_engine_startup
+    raise RuntimeError(
+RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {'EngineCore': 1}

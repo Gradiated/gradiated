@@ -2,7 +2,7 @@ use crate::config::EngineConfig;
 use crate::kv::KvCache;
 use crate::model::Model;
 use crate::sample::sample_batch;
-use crate::sched::{FinishReason, Out, PrefillChunk, Scheduler, Sequence};
+use crate::sched::{FinishReason, Out, Scheduler, Sequence};
 use anyhow::Result;
 use std::sync::mpsc::Receiver;
 use std::time::Instant;
@@ -44,7 +44,7 @@ impl Engine {
             model.dtype,
             &model.device,
         )?;
-        let sched = Scheduler::new(ecfg.max_slots, ecfg.max_ctx, ecfg.prefill_chunk);
+        let sched = Scheduler::new(ecfg.max_slots, ecfg.max_ctx, ecfg.prefill_chunk, 8);
         let eos = model.cfg.eos_token_id.clone();
         Ok(Self {
             model,
@@ -160,31 +160,30 @@ impl Engine {
             }
         }
 
-        // --- prefill chunk ---
-        if let Some(PrefillChunk {
-            slot,
-            start,
-            tokens,
-            completes,
-        }) = self.sched.prefill_plan()
-        {
+        // --- prefill chunks (several prompts per step under one token budget) ---
+        let plans = self.sched.prefill_plans();
+        let mut completed_idx = vec![];
+        for plan in &plans {
+            let p = &self.sched.prefilling[plan.idx];
+            let tokens = p.seq.prompt[plan.start..plan.start + plan.len].to_vec();
             let tp = Instant::now();
             let logits = self
                 .model
-                .prefill(&self.kv, slot, start, &tokens, completes)?;
+                .prefill(&self.kv, plan.slot, plan.start, &tokens, plan.completes)?;
             if trace {
                 eprintln!(
-                    "  prefill fwd t={} start={start}: {:.1}ms",
-                    tokens.len(),
+                    "  prefill fwd t={} start={} slot={}: {:.1}ms",
+                    plan.len,
+                    plan.start,
+                    plan.slot,
                     tp.elapsed().as_secs_f64() * 1e3
                 );
             }
-            self.stats.prefill_tokens += tokens.len() as u64;
-            let mut seq = self.sched.prefilling.take().unwrap();
-            seq.computed += tokens.len();
-            if completes {
-                let logits = logits.unwrap();
-                let flat: Vec<f32> = logits.flatten_all()?.to_vec1()?;
+            self.stats.prefill_tokens += plan.len as u64;
+            let seq = &mut self.sched.prefilling[plan.idx].seq;
+            seq.computed += plan.len;
+            if plan.completes {
+                let flat: Vec<f32> = logits.unwrap().flatten_all()?.to_vec1()?;
                 let params = seq.params.clone();
                 let tok = sample_batch(
                     &flat,
@@ -194,18 +193,24 @@ impl Engine {
                 )[0];
                 seq.out.push(tok);
                 let _ = seq.tx.send(Out::Token(tok));
-                // Move KV from the prefill slot into the decode region.
-                let dest = self.sched.decoding.len();
-                self.kv.move_slot(slot, dest, seq.computed)?;
-                if !seq.params.ignore_eos && self.eos.contains(&tok) || seq.params.max_tokens <= 1 {
-                    let _ = seq.tx.send(Out::Done {
-                        finish: FinishReason::Stop,
-                    });
-                } else {
-                    self.sched.decoding.push(seq);
-                }
+                completed_idx.push(plan.idx);
+            }
+        }
+        // Move completed prefills into the decode region (descending index so
+        // swap_remove doesn't disturb pending removals).
+        for &idx in completed_idx.iter().rev() {
+            let pre = self.sched.prefilling.swap_remove(idx);
+            let (slot, seq) = (pre.slot, pre.seq);
+            let dest = self.sched.decoding.len();
+            self.kv.move_slot(slot, dest, seq.computed)?;
+            self.sched.release_prefill_slot(slot);
+            let last = *seq.out.last().unwrap();
+            if (!seq.params.ignore_eos && self.eos.contains(&last)) || seq.params.max_tokens <= 1 {
+                let _ = seq.tx.send(Out::Done {
+                    finish: FinishReason::Stop,
+                });
             } else {
-                self.sched.prefilling = Some(seq);
+                self.sched.decoding.push(seq);
             }
         }
 

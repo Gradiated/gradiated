@@ -1867,6 +1867,7 @@ name = "sartor-cost"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "sartor-perf",
  "sartor-spec",
  "serde",
  "serde_json",

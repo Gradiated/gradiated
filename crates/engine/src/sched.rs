@@ -51,49 +51,63 @@ impl Sequence {
     }
 }
 
+/// A prefilling sequence parked in a dedicated top slot.
+pub struct Prefilling {
+    pub seq: Sequence,
+    pub slot: usize,
+}
+
 pub struct PrefillChunk {
-    /// KV slot the prefilling sequence occupies (always the top slot).
+    /// Index into `prefilling`.
+    pub idx: usize,
     pub slot: usize,
     pub start: usize,
-    pub tokens: Vec<u32>,
+    pub len: usize,
     /// True when this chunk completes the prompt — sample from its logits.
     pub completes: bool,
 }
 
 /// Throughput-first continuous batching.
 ///
-/// Slot discipline: decoding sequences occupy slots [0, n_dec) — always
-/// compacted, so decode-batch KV reads are pure views. At most one sequence
-/// prefills at a time (a chunk of `prefill_chunk` tokens per step saturates
-/// compute by itself), parked in the top slot; on completion its KV moves
-/// into the decode region (one copy, amortized per request).
+/// Slot discipline: decoding sequences occupy slots [0, n_dec), always
+/// compacted (swap-remove on completion) so decode-batch KV reads are pure
+/// views. The top `prefill_slots` slots are a dedicated prefill region;
+/// several prompts can prefill in one step under a shared token budget
+/// (`prefill_chunk`), each as its own forward. On completion a sequence's KV
+/// moves into the decode region — one copy, amortized per request.
 ///
-/// No preemption, no priorities, no fairness: admission control guarantees a
-/// sequence admitted never OOMs (prompt + max_tokens <= max_ctx budget), and
-/// FCFS maximizes batch fullness, which is the only thing $/token cares about.
+/// No preemption, no priorities, no fairness: admission control guarantees an
+/// admitted sequence never OOMs (prompt + max_tokens <= max_ctx), and FCFS
+/// maximizes batch fullness, which is the only thing $/token cares about.
 pub struct Scheduler {
     pub waiting: VecDeque<Sequence>,
     pub decoding: Vec<Sequence>,
-    pub prefilling: Option<Sequence>,
+    pub prefilling: Vec<Prefilling>,
+    free_prefill_slots: Vec<usize>,
+    /// Fixed size of the top prefill region; decode capacity is the rest.
+    prefill_region: usize,
     pub max_slots: usize,
     pub max_ctx: usize,
     pub prefill_chunk: usize,
 }
 
 impl Scheduler {
-    pub fn new(max_slots: usize, max_ctx: usize, prefill_chunk: usize) -> Self {
+    pub fn new(max_slots: usize, max_ctx: usize, prefill_chunk: usize, prefill_slots: usize) -> Self {
+        let prefill_region = prefill_slots.clamp(1, max_slots / 2);
         Self {
             waiting: VecDeque::new(),
             decoding: vec![],
-            prefilling: None,
+            prefilling: vec![],
+            free_prefill_slots: (max_slots - prefill_region..max_slots).collect(),
+            prefill_region,
             max_slots,
             max_ctx,
             prefill_chunk,
         }
     }
 
-    pub fn top_slot(&self) -> usize {
-        self.max_slots - 1
+    pub fn decode_capacity(&self) -> usize {
+        self.max_slots - self.prefill_region
     }
 
     pub fn submit(&mut self, seq: Sequence) -> Result<(), Sequence> {
@@ -105,29 +119,54 @@ impl Scheduler {
     }
 
     pub fn has_work(&self) -> bool {
-        !self.waiting.is_empty() || !self.decoding.is_empty() || self.prefilling.is_some()
+        !self.waiting.is_empty() || !self.decoding.is_empty() || !self.prefilling.is_empty()
     }
 
-    /// Admit the next waiting sequence into the prefill slot if it's free.
+    /// Admit waiting sequences into free prefill slots, bounded by the step's
+    /// prefill token budget (so admissions don't starve ongoing prefills) and
+    /// by decode capacity (an admitted sequence must have a decode slot when
+    /// its prefill completes).
     pub fn admit(&mut self) {
-        if self.prefilling.is_none() && self.decoding.len() + 1 < self.max_slots {
-            if let Some(seq) = self.waiting.pop_front() {
-                self.prefilling = Some(seq);
-            }
+        let mut backlog: usize = self
+            .prefilling
+            .iter()
+            .map(|p| p.seq.prompt.len() - p.seq.computed)
+            .sum();
+        while !self.free_prefill_slots.is_empty()
+            && !self.waiting.is_empty()
+            && backlog < self.prefill_chunk
+            && self.decoding.len() + self.prefilling.len() < self.decode_capacity()
+        {
+            let seq = self.waiting.pop_front().unwrap();
+            backlog += seq.prompt.len();
+            let slot = self.free_prefill_slots.pop().unwrap();
+            self.prefilling.push(Prefilling { seq, slot });
         }
     }
 
-    /// The next prefill chunk to run this step, if any.
-    pub fn prefill_plan(&self) -> Option<PrefillChunk> {
-        let seq = self.prefilling.as_ref()?;
-        let remaining = seq.prompt.len() - seq.computed;
-        let take = remaining.min(self.prefill_chunk);
-        let tokens = seq.prompt[seq.computed..seq.computed + take].to_vec();
-        Some(PrefillChunk {
-            slot: self.top_slot(),
-            start: seq.computed,
-            tokens,
-            completes: take == remaining,
-        })
+    /// Plan this step's prefill chunks, FCFS under the shared token budget.
+    pub fn prefill_plans(&self) -> Vec<PrefillChunk> {
+        let mut budget = self.prefill_chunk;
+        let mut plans = vec![];
+        for (idx, p) in self.prefilling.iter().enumerate() {
+            if budget == 0 {
+                break;
+            }
+            let remaining = p.seq.prompt.len() - p.seq.computed;
+            let take = remaining.min(budget);
+            budget -= take;
+            plans.push(PrefillChunk {
+                idx,
+                slot: p.slot,
+                start: p.seq.computed,
+                len: take,
+                completes: take == remaining,
+            });
+        }
+        plans
+    }
+
+    pub fn release_prefill_slot(&mut self, slot: usize) {
+        self.free_prefill_slots.push(slot);
     }
 }

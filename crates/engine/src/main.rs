@@ -46,6 +46,51 @@ enum Cmd {
         #[arg(long, default_value_t = false)]
         chat: bool,
     },
+    /// Offline throughput benchmark (vLLM benchmark_throughput-compatible).
+    Bench {
+        #[arg(long)]
+        model: PathBuf,
+        #[arg(long, default_value = "metal")]
+        device: String,
+        #[arg(long, default_value = "f16")]
+        dtype: String,
+        #[arg(long, default_value_t = 64)]
+        num_requests: usize,
+        /// Synthetic prompt length (ignored when --dataset given).
+        #[arg(long)]
+        input_len: Option<usize>,
+        #[arg(long, default_value_t = 128)]
+        output_len: usize,
+        /// ShareGPT-format JSON path.
+        #[arg(long)]
+        dataset: Option<PathBuf>,
+        #[arg(long, default_value_t = 64)]
+        max_slots: usize,
+        #[arg(long, default_value_t = 2048)]
+        max_ctx: usize,
+        #[arg(long, default_value_t = 512)]
+        prefill_chunk: usize,
+        /// Append JSONL result here.
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
+    /// OpenAI-compatible HTTP server.
+    Serve {
+        #[arg(long)]
+        model: PathBuf,
+        #[arg(long, default_value = "metal")]
+        device: String,
+        #[arg(long, default_value = "f16")]
+        dtype: String,
+        #[arg(long, default_value_t = 8080)]
+        port: u16,
+        #[arg(long, default_value_t = 64)]
+        max_slots: usize,
+        #[arg(long, default_value_t = 2048)]
+        max_ctx: usize,
+        #[arg(long, default_value_t = 512)]
+        prefill_chunk: usize,
+    },
     /// Op-level microbenchmarks on engine shapes (device fingerprinting).
     Probe {
         #[arg(long)]
@@ -165,6 +210,52 @@ fn main() -> Result<()> {
                 s.decode_tokens as f64 / wall,
                 (s.prefill_tokens + s.decode_tokens) as f64 / wall,
             );
+        }
+        Cmd::Bench {
+            model,
+            device,
+            dtype,
+            num_requests,
+            input_len,
+            output_len,
+            dataset,
+            max_slots,
+            max_ctx,
+            prefill_chunk,
+            out,
+        } => {
+            let cfg = barge::bench::BenchConfig {
+                model: model.display().to_string(),
+                device,
+                dtype,
+                num_requests,
+                input_len,
+                output_len,
+                dataset: dataset.as_ref().map(|d| d.display().to_string()),
+                max_slots,
+                max_ctx,
+                prefill_chunk,
+            };
+            barge::bench::run_bench(&model, cfg, dataset, out)?;
+        }
+        Cmd::Serve {
+            model,
+            device,
+            dtype,
+            port,
+            max_slots,
+            max_ctx,
+            prefill_chunk,
+        } => {
+            barge::server::serve(barge::server::ServeArgs {
+                model,
+                device,
+                dtype,
+                port,
+                max_slots,
+                max_ctx,
+                prefill_chunk,
+            })?;
         }
         Cmd::Probe {
             model,

@@ -73,6 +73,16 @@ fn gemm_s(hw: &HardwareSpec, k: &KernelSpec, m_rows: f64, n_cols: f64, k_inner: 
     (hw.dispatch_us * 1e-6).max(math).max(stream)
 }
 
+/// Per-expert slice inside a grouped-GEMM MoE kernel: no per-expert dispatch
+/// floor (the group launches once), but per-expert occupancy still applies.
+fn gemm_grouped_s(hw: &HardwareSpec, k: &KernelSpec, m_rows: f64, n_cols: f64, k_inner: f64, wbytes: f64) -> f64 {
+    let flops = 2.0 * m_rows * n_cols * k_inner;
+    let eff = k.gemm_eff(m_rows * n_cols).max(1e-3);
+    let math = flops / (hw.tflops * 1e12 * eff);
+    let stream = n_cols * k_inner * wbytes / (hw.mem_bw_gbs * 1e9);
+    math.max(stream)
+}
+
 /// One decode step: batch `b` sequences at average context `ctx`.
 /// Per-op roofline: each kernel costs max(dispatch floor, its own math time,
 /// its own memory time) — small ops are pure dispatch, the LM head is compute,
@@ -139,8 +149,13 @@ pub fn decode_step_s(cfg: &StackConfig, b: usize, ctx: f64, bk: &mut Breakdown) 
                 .max(1e-9);
             let pairs = bf * (*top_k as f64); // this GPU's routed token-expert pairs
             let w = *moe_intermediate as f64;
-            let per_expert = gemm_s(hw, k, pairs / active, 2.0 * w, d, m.weight_bytes)
-                + gemm_s(hw, k, pairs / active, d, w, m.weight_bytes);
+            let per_expert = if k.grouped_moe {
+                gemm_grouped_s(hw, k, pairs / active, 2.0 * w, d, m.weight_bytes)
+                    + gemm_grouped_s(hw, k, pairs / active, d, w, m.weight_bytes)
+            } else {
+                gemm_s(hw, k, pairs / active, 2.0 * w, d, m.weight_bytes)
+                    + gemm_s(hw, k, pairs / active, d, w, m.weight_bytes)
+            };
             let shared = if *shared_experts > 0 {
                 let ws = *shared_experts as f64 * w;
                 gemm_s(hw, k, bf, 2.0 * ws, d, m.weight_bytes)
@@ -149,7 +164,8 @@ pub fn decode_step_s(cfg: &StackConfig, b: usize, ctx: f64, bk: &mut Breakdown) 
                 0.0
             };
             (
-                active * per_expert + shared,
+                cfg.parallel.ep_imbalance
+                    * (2.0 * hw.dispatch_us * 1e-6 + active * per_expert + shared),
                 (m.layers - first_k_dense) as f64,
                 *first_k_dense as f64,
             )
@@ -256,8 +272,13 @@ pub fn prefill_s(cfg: &StackConfig, t: usize, past: f64, bk: &mut Breakdown) -> 
             let active = expected_active_experts(*experts, *top_k, t).max(1e-9);
             let pairs = tf * *top_k as f64;
             let w = *moe_intermediate as f64;
-            let per_expert = gemm_s(hw, k, pairs / active, 2.0 * w, d, m.weight_bytes)
-                + gemm_s(hw, k, pairs / active, d, w, m.weight_bytes);
+            let per_expert = if k.grouped_moe {
+                gemm_grouped_s(hw, k, pairs / active, 2.0 * w, d, m.weight_bytes)
+                    + gemm_grouped_s(hw, k, pairs / active, d, w, m.weight_bytes)
+            } else {
+                gemm_s(hw, k, pairs / active, 2.0 * w, d, m.weight_bytes)
+                    + gemm_s(hw, k, pairs / active, d, w, m.weight_bytes)
+            };
             let shared = if *shared_experts > 0 {
                 let ws = *shared_experts as f64 * w;
                 gemm_s(hw, k, tf, 2.0 * ws, d, m.weight_bytes)
@@ -265,7 +286,8 @@ pub fn prefill_s(cfg: &StackConfig, t: usize, past: f64, bk: &mut Breakdown) -> 
             } else {
                 0.0
             };
-            active * per_expert + shared
+            cfg.parallel.ep_imbalance
+                * (2.0 * hw.dispatch_us * 1e-6 + active * per_expert + shared)
         }
     };
     let attn_flops = 4.0 * tf * (eff_past + tf / 2.0) * score_dim;
@@ -326,13 +348,22 @@ pub fn simulate(cfg: &StackConfig) -> PerfReport {
             }
             decoding.retain(|(rem, _)| *rem > 0.0);
         }
-        // Prefill chunks under shared budget (each its own forward pass).
+        // Prefill fragments under shared budget, packed into one forward per
+        // step (engines batch prefill across requests; attention still costs
+        // per-fragment past-context, approximated by each fragment's own past).
         let mut budget = s.prefill_chunk;
         let mut i = 0;
+        let mut packed_tokens = 0usize;
+        let mut packed_past = 0.0f64;
         while i < prefilling.len() && budget > 0 {
             let take = prefilling[i].min(budget);
             let past = (effective_input - prefilling[i]) as f64;
-            wall += prefill_s(cfg, take, past, &mut bk);
+            if s.prefill_packing {
+                packed_tokens += take;
+                packed_past += past * take as f64;
+            } else {
+                wall += prefill_s(cfg, take, past, &mut bk);
+            }
             prefilling[i] -= take;
             budget -= take;
             if prefilling[i] == 0 {
@@ -345,6 +376,10 @@ pub fn simulate(cfg: &StackConfig) -> PerfReport {
             } else {
                 i += 1;
             }
+        }
+        if packed_tokens > 0 {
+            let avg_past = packed_past / packed_tokens as f64;
+            wall += prefill_s(cfg, packed_tokens, avg_past, &mut bk);
         }
         // Idle-step guard (nothing running): shouldn't happen, but don't loop.
         if b == 0 && prefilling.is_empty() && waiting == 0 && decoding.is_empty() {

@@ -51,6 +51,7 @@ gemm_peak_efficiency = 0.60
 gemm_occupancy_half_cells = 5e3
 attn_bw_efficiency = 0.60
 unfused_activation_traffic = 0.05
+grouped_moe = true
 
 [serving]
 name = "sglang-ep"
@@ -59,6 +60,7 @@ prefill_chunk = 4096
 sched_overhead_us = 500.0 # async scheduling overlaps most of it
 per_token_host_us = 1.0
 prefix_cache_hit = 0.99   # decode-instance proxy: prefill nearly elided
+prefill_packing = true
 sampling = "device"
 
 [workload]
@@ -72,6 +74,7 @@ tp = 1
 ep = 144
 act_bytes = 1.0 # fp8 comms
 comm_overlap = 0.75 # dual-microbatch pipelining (DeepSeek-style)
+ep_imbalance = 1.8 # EPLB-managed straggler factor + daily-average duty proxy
 
 [cost]
 amortization_months = 36.0

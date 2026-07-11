@@ -267,6 +267,10 @@ pub struct KernelSpec {
     /// path carries extra activation traffic (measured: candle-metal ~3x).
     #[serde(default = "one")]
     pub prefill_overhead_mult: f64,
+    /// Grouped-GEMM MoE kernels (one launch for all experts). Without it,
+    /// every expert pays the dispatch floor.
+    #[serde(default)]
+    pub grouped_moe: bool,
 }
 
 fn one() -> f64 {
@@ -314,11 +318,19 @@ pub struct ParallelSpec {
     /// pipelining etc.). DeepSeek-style decode ~0.75.
     #[serde(default)]
     pub comm_overlap: f64,
+    /// Straggler multiplier on MoE layer time from expert load imbalance
+    /// (step time = slowest EP rank; EPLB-managed production ~1.5-2.0).
+    #[serde(default = "one_f")]
+    pub ep_imbalance: f64,
+}
+
+fn one_f() -> f64 {
+    1.0
 }
 
 impl Default for ParallelSpec {
     fn default() -> Self {
-        Self { tp: 1, ep: 1, act_bytes: 2.0, comm_overlap: 0.0 }
+        Self { tp: 1, ep: 1, act_bytes: 2.0, comm_overlap: 0.0, ep_imbalance: 1.0 }
     }
 }
 
@@ -347,6 +359,10 @@ pub struct ServingSpec {
     pub sampling: SamplingPlacement,
     /// Fraction of prompt tokens served from prefix cache (skipped prefill).
     pub prefix_cache_hit: f64,
+    /// Pack prefill fragments from many requests into one forward per step
+    /// (SGLang-class engines: true; barge today: false).
+    #[serde(default)]
+    pub prefill_packing: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

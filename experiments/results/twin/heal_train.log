@@ -16,3 +16,12 @@ step 500 loss 2.6422 lr 9.06e-05 2890 tok/s
 {"step": 500, "val_ppl": 15.2948, "wall_s": 1470.5}
 step 550 loss 2.6488 lr 8.82e-05 2760 tok/s
 step 600 loss 2.6267 lr 8.55e-05 2759 tok/s
+step 650 loss 2.5368 lr 8.27e-05 2615 tok/s
+step 700 loss 2.4277 lr 7.97e-05 2466 tok/s
+step 750 loss 2.4514 lr 7.65e-05 2379 tok/s
+{"step": 750, "val_ppl": 15.4827, "wall_s": 2619.8}
+step 800 loss 2.4137 lr 7.31e-05 2267 tok/s
+step 850 loss 2.4600 lr 6.97e-05 2193 tok/s
+step 900 loss 2.4428 lr 6.61e-05 2104 tok/s
+/Users/js/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

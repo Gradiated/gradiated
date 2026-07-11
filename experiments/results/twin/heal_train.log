@@ -32,3 +32,18 @@ step 1000 loss 2.3266 lr 3.56e-05 1608 tok/s
 Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  4.11it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  4.10it/s]
 step 1050 loss 2.2888 lr 3.11e-05 1597 tok/s
 step 1100 loss 2.3274 lr 2.70e-05 1589 tok/s
+step 1150 loss 2.3318 lr 2.33e-05 1581 tok/s
+step 1200 loss 2.3083 lr 1.99e-05 1574 tok/s
+step 1250 loss 2.3087 lr 1.70e-05 1573 tok/s
+{"step": 1250, "val_ppl": 15.7351, "wall_s": 6529.7}
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:01<00:00,  1.72s/it]Writing model shards: 100%|██████████| 1/1 [00:01<00:00,  1.72s/it]
+step 1300 loss 2.2428 lr 1.45e-05 1572 tok/s
+step 1350 loss 2.2671 lr 1.26e-05 1580 tok/s
+step 1400 loss 2.2357 lr 1.12e-05 1604 tok/s
+step 1450 loss 2.2634 lr 1.03e-05 1628 tok/s
+step 1500 loss 2.2432 lr 1.00e-05 1656 tok/s
+{"step": 1500, "val_ppl": 16.1461, "wall_s": 7431.6}
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  5.16it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  5.16it/s]
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  3.85it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  3.84it/s]
+wrote /Users/js/dev/sartor/experiments/results/twin/healing_curve.json
+healing wall time: 123.9 min; saved to /Users/js/dev/sartor/models/smollm2-135m-pruned-h6-healed

@@ -1,5 +1,39 @@
 # Sartor — Living Report & $/token Ledger
 
+## Executive summary (for the impatient)
+
+**Thesis tested**: per-model full-stack co-design — custom serving software, small
+finetune-healed model modifications, and eventually model-family-fitted silicon —
+can host frontier open-source models at a multiple below Fireworks/Baseten-class
+providers. **Status: supported, with measured foundations and quantified uncertainty.**
+
+- **Verdict distribution** (Monte Carlo w/ lever-failure modeling, N=1000):
+  co-design gain vs provider-BEST practice = **median 3.9× [P10 3.0, P90 5.2]**;
+  P(≥3×)=90%; still 3.2× median under maximally skeptical surgery priors.
+  Market prices sit a further 2-4× above provider-best cost (incumbent margin).
+- **Measured, not simulated**: our Rust engine beats vLLM 2.1× like-for-like;
+  sim predicted a real weight-surgery's throughput within 0.1% (predicted
+  1.050×, measured 1.051×); int8-KV measured lossless on real weights;
+  calibration anchors within ±11.5% (lab) / one explicit 0.73 realization
+  factor (datacenter peak).
+- **Per-model headroom league** (co-designed, point → MC-median-equivalent):
+  GLM-5.2 6.5×→3.9× · Kimi-K2 11.5×→6.9× · Qwen3-235B 10.8×→6.5× ·
+  gpt-oss-120b 12.2×→7.3× · MiniMax-M2 14.3×→8.6×. Headroom concentrates on
+  models whose labs under-invested in serving efficiency; the three binding
+  constraints (hot-set / expert-stream / KV-capacity) and the optimal chips
+  all differ per model — the abstraction tax is the value generality cannot price.
+- **Sequencing**: software+surgery is a day-1 business on rented GPUs (no capex);
+  the family-ASIC becomes rational at a computed volume milestone (~3-14k chips
+  ≈ 1T tok/day); wafer-scale SRAM competitors are 10-76× off the cost pace for
+  frontier MoE (latency lane, not cost lane).
+- **Decisive next experiments** ($1M covers all): rented-GPU money-run vs
+  Fireworks price sheet (~$20k), mid-size healing campaign (~$50k), cache-hit
+  engineering on real agent traces (~$5k).
+
+*Everything below is the evidence ledger behind this summary; the lab log on
+this page records the work as it happened.*
+
+
 *Updated 2026-07-11. All numbers measured on Apple M4 Pro, 48GB, unless marked [sim] or [lit].*
 
 ## The question

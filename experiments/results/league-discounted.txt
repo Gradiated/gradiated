@@ -1,0 +1,9 @@
+model            S pt  S~med   H pt  H~med  S+H pt  S+H~med
+GLM-5.2         1.84x  1.61x  3.12x  2.40x   6.54x    3.92x
+Kimi-K2         2.96x  2.59x  4.33x  3.33x  11.50x    6.90x
+Qwen3-235B      2.64x  2.31x  4.71x  3.63x  10.75x    6.45x
+gpt-oss-120b    2.69x  2.35x  5.04x  3.88x  12.24x    7.34x
+MiniMax-M2      2.94x  2.57x  5.72x  4.40x  14.30x    8.58x
+
+~med = MC-median-equivalent (GLM uncertainty structure applied; per-model MC pending)
+Even discounted: every model >=3.9x co-designed; K2/M2/235B >=6.5x.

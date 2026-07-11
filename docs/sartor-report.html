@@ -32,10 +32,10 @@
 <body>
 
 <h1>Sartor: can we host AI models far cheaper than Fireworks &amp; Baseten?</h1>
-<p class="sub">Findings from a one-day intensive research sprint · 11 July 2026 · prepared for James — written to be readable without a deep technical background; expandable sections carry the detail (this document is self-contained, so you can also paste it into Claude and ask questions about it).</p>
+<p class="sub">Findings from a one-day research sprint · 11 July 2026 · input to a decision on whether to found a company on this thesis. Expandable sections carry the technical detail; the document is self-contained and can be pasted into an AI assistant for follow-up questions.</p>
 
 <div class="tldr">
-<strong>TL;DR:</strong> We tested whether a company that customises <em>everything</em> — the serving software, small modifications to the AI models themselves, and eventually its own chips — can host open-source AI models at a fraction of what today's providers charge. After building a working prototype engine, a calibrated cost simulator, and running it against five frontier models, the answer is: <span class="big">~4× cheaper</span> is the realistic central estimate versus today's <em>best possible</em> practice (with an 88–90% probability of at least 3×), and market <em>prices</em> sit another 2–4× above that. The strategy works in stages: software first (profitable from day one on rented GPUs), custom chips later once volume justifies them.
+<strong>TL;DR:</strong> We tested whether a company that customises <em>everything</em> — the serving software, small modifications to the AI models themselves, and eventually its own chips — can host open-source AI models at a fraction of what today's providers charge. After building a working prototype engine, a calibrated cost simulator, and running it against five frontier models, the central estimate is <span class="big">~4× cheaper</span> versus today's <em>best possible</em> practice (with an 88–90% probability of at least 3×), and market <em>prices</em> sit another 2–4× above that. The strategy works in stages: software first (profitable from day one on rented GPUs), custom chips later once volume justifies them.
 </div>
 
 <h2>1. The idea, in plain terms</h2>
@@ -51,7 +51,7 @@
 <div class="card"><strong>Calibration discipline</strong>: the simulator is only trusted where it matches measurements — ours locally, plus published production numbers from DeepSeek and NVIDIA-class hardware benchmarks.</div>
 </div>
 
-<details><summary>How the simulator works (for the technically curious)</summary>
+<details><summary>How the simulator works</summary>
 <p>A simulation run is a pure function over five specifications: the model's architecture (layers, attention type, mixture-of-experts structure), the hardware (compute speed, memory bandwidth and capacity, interconnect, price, power), the maturity of the compute kernels, the serving policy (batching, caching), and the workload (request sizes). It walks a single decoding step operation-by-operation — every matrix multiplication is costed as the worst of: launch overhead, arithmetic time at a shape-dependent efficiency, or the time to stream its weights from memory. On top sits a replay of a realistic serving loop (requests arriving, batching, memory filling up). It reproduces our local measurements within ~11% across three model sizes, predicted the speed effect of a real model surgery within 0.1%, and matches published datacentre benchmarks once a single explicit "reality factor" of 0.73 is applied (real systems achieve ~73% of an idealised model — we measured that gap rather than hiding it).</p>
 <p>It was also wrong five times today — each error caught within hours by the calibration anchors. That's the point of the method: it self-corrects against reality.</p>
 </details>
@@ -67,7 +67,7 @@
 </table>
 <p>Combined effect vs best-practice cost: <strong>median ~3.9×</strong>, with a 90% chance of ≥3× (from a 1,000-sample uncertainty analysis that assumes many individual optimisations <em>fail</em>). Even under maximally pessimistic assumptions about the model-surgery ideas, the floor is ~2.4×.</p>
 
-<details><summary>Dig in: what "surgery" means and what we actually measured</summary>
+<details><summary>What "surgery" means and what was measured</summary>
 <ul>
 <li><strong>Measured on real models today:</strong> compressing the model's short-term memory (the "KV cache") to 8-bit cost essentially zero quality (+0.06% on the standard quality metric). Cutting 33% of attention heads out of a real model and re-benchmarking it: our simulator predicted a 1.050× speedup; the measurement was 1.051×.</li>
 <li><strong>Strong precedent:</strong> one frontier lab (Moonshot/Kimi) already ships its flagship model in 4-bit weights — the industry accepts these techniques.</li>
@@ -76,7 +76,7 @@
 </details>
 
 <h3>3.2 Different models hide different amounts of recoverable cost</h3>
-<p>We ran the full pipeline on five frontier open-source models. The recoverable headroom differs hugely — and <em>that variance is the business</em>: a general-purpose provider can't chase value that's different for every model.</p>
+<p>We ran the full pipeline on five frontier open-source models. The recoverable headroom differs substantially per model; a general-purpose provider cannot capture value that requires different interventions for every model.</p>
 <table>
 <tr><th>Model</th><th>Why it's expensive today</th><th>Co-designed saving (optimistic → realistic)</th></tr>
 <tr><td>GLM-5.2</td><td>Already highly optimised by its lab</td><td class="num">6.5× → ~3.9×</td></tr>
@@ -85,7 +85,7 @@
 <tr><td>gpt-oss-120b</td><td>Similar story, smaller model</td><td class="num">12.2× → ~7.3×</td></tr>
 <tr><td>MiniMax-M2</td><td>Extremely memory-heavy per token</td><td class="num">14.3× → ~8.6×</td></tr>
 </table>
-<details><summary>Dig in: why the fixes are different for each model</summary>
+<details><summary>Why the fixes differ per model</summary>
 <p>Tracing where every byte moves during generation showed three different bottlenecks: GLM-5.2 spends 77% of its memory traffic on just 2.3% of its weights (the parts every token must touch — so the fix is amortising them over bigger batches); Kimi-K2's cost is streaming its enormous "expert" weights (fix: compression and retrofitting features like multi-token prediction that DeepSeek already proved on the same architecture); MiniMax-M2 is strangled by its per-token memory footprint (fix: memory-sharing surgery, which roughly doubles how many requests fit on a chip). Same toolkit, three different prescriptions — and the best chip design came out different for each model too (different amounts of expensive HBM memory). This is the concrete form of the "abstraction tax" argument.</p>
 </details>
 
@@ -95,12 +95,12 @@
 <h3>3.4 We checked the radical alternative: putting the whole model in ultra-fast on-chip memory (the Cerebras approach)</h3>
 <p>Simulated on identical workloads: <strong>76× more expensive per token</strong> than our approach for frontier-scale models (still 11× if their hardware were four times cheaper). The physics: their memory type (SRAM) costs 20–50× more per gigabyte, today's frontier models are enormous but only use a small fraction of themselves per token — the worst possible shape for that design. Their niche is speed-at-any-price; ours is cost. The industry's direction of travel (bigger, sparser models) widens this gap in our favour.</p>
 
-<h2>4. Where the opportunity lies</h2>
+<h2>4. Structure of the opportunity</h2>
 <ul>
-<li><strong>The wedge:</strong> background/batch AI traffic (agents, pipelines) — the fastest-growing token pool, latency-tolerant, and structurally suited to a high-utilisation, low-cost fleet.</li>
-<li><strong>The edge:</strong> priced 2–3× below incumbents while remaining profitable, from layer 1+2 alone — before any custom hardware.</li>
-<li><strong>The moat:</strong> reaching the co-designed cost point requires model weights + re-training capability + per-model analysis machinery + (later) silicon — a <em>conjunction</em> of capabilities. Each competitor class has one; almost none has all. And the target keeps moving with every model release, which favours whoever automated the analysis (that automation is exactly what we built the prototype of today).</li>
-<li><strong>The proof style:</strong> everything is either measured locally, anchored to published production data, or carried with explicit error bars — an evidence standard we can put in front of investors.</li>
+<li><strong>Target traffic:</strong> background/batch AI workloads (agents, pipelines) — a fast-growing token pool, latency-tolerant, and structurally suited to a high-utilisation fleet. Utilisation is one of the largest cost factors in this business, and queueable traffic makes high utilisation achievable by construction.</li>
+<li><strong>Cost position:</strong> layers 1+2 alone (no custom hardware) put modelled cost 2–3× below current market prices at sustainable margins.</li>
+<li><strong>Defensibility:</strong> reaching the co-designed cost point requires model weights + re-training capability + per-model analysis machinery + (later) silicon — a <em>conjunction</em> of capabilities. Each competitor class has one; almost none has all. And the target keeps moving with every model release, which favours whoever has automated the analysis; today's prototype is a first version of that automation.</li>
+<li><strong>Evidence standard:</strong> every number here is measured locally, anchored to published production data, or carried with explicit error bars, and is labelled as such.</li>
 </ul>
 
 <h2>5. What we're <em>not</em> sure about yet (honest list)</h2>
@@ -148,7 +148,7 @@
 </ul>
 </details>
 <details><summary>Provenance</summary>
-<p>Produced by an automated research environment ("sartor") over one working day (11 July 2026): a Rust serving engine and simulator built from scratch; vLLM's codebase audited; 131-source economics research corpus; five model dossiers; all under version control with every claim tagged measured / anchored / simulated. Prepared with Claude. Contact: Josh.</p>
+<p>Produced by an automated research environment ("sartor") over one working day (11 July 2026): a Rust serving engine and simulator built from scratch; vLLM's codebase audited; a 131-source economics research corpus; five model dossiers; all under version control with every claim tagged measured / anchored / simulated.</p>
 </details>
 
 </body>

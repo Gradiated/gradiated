@@ -124,6 +124,18 @@ At n=64 saturation test, average decode batch was 31.7/64 — one-prompt-per-ste
   6.5×, Kimi-K2 11.5×, Qwen3-235B 10.8×, gpt-oss-120b 12.2×, MiniMax-M2 14.3×
   — margin concentrates on models whose labs under-invested in efficiency.
 
+### E7. Spot/interruptible economics (2026-07-11 eve)
+Batch traffic tolerates preemption → it can use spot capacity that training and
+interactive serving structurally cannot. Measured-parameter model: typical spot
+(−55%) costs 5–9% in preemption overhead (EP-group blast radius included) →
+**2.09× net cost advantage** stacking on the software tier; break-even tolerance
+is 34–69 preemptions/node/DAY (real rates: 0.2–3). Synergy: surgery shrinks
+memory/GPU → smaller EP groups → smaller blast radius → spot gets safer.
+Caveats: hybrid fleet required (reserved base + spot surge); multi-node coherent
+spot groups are thinner markets. FRAMING CORRECTION (from Josh): incumbent
+margin is not counted as a "saving" — cost advantage is the claim; pricing
+(undercut vs margin-for-capex) is a strategic choice on top.
+
 ## Verdict status (updated 2026-07-11 night — Monte Carlo)
 
 **The thesis holds under compound uncertainty.** Monte Carlo over the moat

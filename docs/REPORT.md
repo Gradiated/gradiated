@@ -68,6 +68,28 @@ At n=64 saturation test, average decode batch was 31.7/64 — one-prompt-per-ste
   2.96×; co-designed **11.5×** ($0.041). Headroom is model-dependent — the
   machine's job is finding which models have the most recoverable margin.
 
+### E6. Loop closures + economics (2026-07-11 eve, heartbeat rounds)
+- **G3 closed (the company mechanism works end-to-end)**: sim predicted
+  head-prune surgery = 1.05× throughput on M4; real surgery on real weights,
+  benched in barge: **1.051×** (1,308 vs 1,244 tok/s, 3-run means).
+- **Twin measurements**: int8 KV = free on real weights (+0.06% ppl) — the
+  strongest surgery lever is now measured, not assumed; int4 KV needs
+  per-layer selectivity (+26% ppl if global). Healing run converging.
+- **Trace-diff overturned the consolidation negative**: at equal batch/chip,
+  64×8192-top2 is +8.5% (EP comm ÷2.7) — earlier 0.59× was a fitter artifact;
+  the loop caught its own false negative.
+- **At the co-designed optimum the step is compute-bound in expert GEMMs
+  (57%)** — the remaining frontier is active-param reduction (quality-gated)
+  or cheaper FLOPs.
+- **MC N=1000**: co-design median 3.91× [P10 2.98, P90 5.17], P(≥3×)=0.90,
+  P(surgered chip cheaper)=0.98.
+- **NRE break-even**: family-ASIC beats surgery-on-rented at fleet ≥ ~2.9k
+  chips (NRE $100M) / 7.2k ($250M) / 14.5k ($500M); 5k chips ≈ 1T tok/day ≈
+  one-large-provider scale. Silicon is a volume-earned milestone, not a bet.
+- **Headroom league** (point estimates, MC-discount before quoting): GLM-5.2
+  6.5×, Kimi-K2 11.5×, Qwen3-235B 10.8×, gpt-oss-120b 12.2×, MiniMax-M2 14.3×
+  — margin concentrates on models whose labs under-invested in efficiency.
+
 ## Verdict status (updated 2026-07-11 night — Monte Carlo)
 
 **The thesis holds under compound uncertainty.** Monte Carlo over the moat

@@ -5,3 +5,4 @@ train tokens=2568237 windows=2508
 step 50 loss 3.8974 lr 5.00e-05 1301 tok/s
 step 100 loss 3.1527 lr 1.00e-04 1353 tok/s
 step 150 loss 2.9388 lr 9.97e-05 1424 tok/s
+step 200 loss 2.9157 lr 9.89e-05 1440 tok/s

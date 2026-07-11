@@ -1,0 +1,5 @@
+    fitted ASIC: 5 HBM stacks (120GB, 6.0TB/s, $16000/unit) batch 185
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 252
+M2 provider-best: $0.411 | surgery(GQA+CLA): 2.94x | surgery w/ MLA-retrofit: 4.13x
+co-designed: CLA-path 14.30x | MLA-retrofit path 18.46x
+(MLA retrofit = TransMLA-style conversion + heal; highest-risk surgery tier, DeepSeek-proven target arch)

@@ -11,6 +11,10 @@ providers. **Status: supported, with measured foundations and quantified uncerta
   co-design gain vs provider-BEST practice = **median 3.9× [P10 3.0, P90 5.2]**;
   P(≥3×)=90%; still 3.2× median under maximally skeptical surgery priors.
   Market prices sit a further 2-4× above provider-best cost (incumbent margin).
+- **The full surgery loop is measured**: predict (1.050×) → cut 33% of heads →
+  heal 124min on a laptop → verify (1.051× speed, ppl 15.91 vs 16.60 baseline —
+  quality fully recovered, on-domain). With measured priors the MC verdict
+  rises to **median 4.07× [P10 3.09], P(≥3×)=93%**.
 - **Measured, not simulated**: our Rust engine beats vLLM 2.1× like-for-like;
   sim predicted a real weight-surgery's throughput within 0.1% (predicted
   1.050×, measured 1.051×); int8-KV measured lossless on real weights;

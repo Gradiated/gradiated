@@ -30,6 +30,15 @@ enum Cmd {
         #[arg(long)]
         out: Option<PathBuf>,
     },
+    /// Byte-exact per-op trace of one decode step: where memory moves.
+    Trace {
+        #[arg(long)]
+        config: PathBuf,
+        #[arg(long)]
+        batch: Option<usize>,
+        #[arg(long)]
+        ctx: Option<f64>,
+    },
     /// Run anchor configs and compare simulated vs measured throughput.
     Calibrate {
         /// JSONL: {"config": "path.toml", "measured_output_tok_per_s": 977.0, "note": "..."}
@@ -131,6 +140,36 @@ fn main() -> Result<()> {
                     .collect::<Vec<_>>());
                 emit(&res, &out)?;
             }
+        }
+        Cmd::Trace { config, batch, ctx } => {
+            let cfg = StackConfig::from_toml(&std::fs::read_to_string(&config)?)?;
+            let b = batch.unwrap_or(cfg.serving.max_batch);
+            let c = ctx.unwrap_or(cfg.workload.input_len as f64 + cfg.workload.output_len as f64 / 2.0);
+            let t = sartor_perf::trace::trace_decode(&cfg, b, c);
+            println!(
+                "decode step: model={} hw={} b={} ctx={:.0} | step {:.2}ms -> {:.0} tok/s/GPU",
+                cfg.model.name, cfg.hardware.name, b, c,
+                t.step_us / 1e3,
+                t.tokens_per_step / (t.step_us * 1e-6)
+            );
+            println!(
+                "{:<32} {:>6} {:>10} {:>10} {:>10} {:>10} {:>6}  {}",
+                "op", "count", "GFLOP", "wMB", "kvMB", "time_us", "pct", "bound"
+            );
+            for r in &t.rows {
+                println!(
+                    "{:<32} {:>6.0} {:>10.2} {:>10.2} {:>10.2} {:>10.1} {:>5.1}%  {}",
+                    r.op, r.count, r.flops / 1e9, r.weight_bytes / 1e6, r.kv_bytes / 1e6,
+                    r.time_us, r.pct, r.bound
+                );
+            }
+            let wsum: f64 = t.rows.iter().map(|r| r.weight_bytes).sum();
+            let kvsum: f64 = t.rows.iter().map(|r| r.kv_bytes).sum();
+            let fsum: f64 = t.rows.iter().map(|r| r.flops).sum();
+            println!(
+                "totals: {:.1} GFLOP | weights {:.1} MB | kv {:.1} MB per step; arithmetic intensity {:.1} FLOP/B",
+                fsum / 1e9, wsum / 1e6, kvsum / 1e6, fsum / (wsum + kvsum)
+            );
         }
         Cmd::Calibrate { anchors } => {
             let raw = std::fs::read_to_string(&anchors)?;

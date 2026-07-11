@@ -72,6 +72,24 @@ pub struct ModelSpec {
     /// (0 = MTP off; DeepSeek/GLM report ~0.7-0.85 with one MTP layer).
     #[serde(default)]
     pub mtp_accept: f64,
+    // --- surgery knobs: model modifications that require finetune-healing ---
+    /// Fraction of routed tokens that must leave the local EP rank after
+    /// routing-locality finetuning (1.0 = random routing). Grounded by
+    /// measured expert co-activation statistics (twin experiments).
+    #[serde(default = "one")]
+    pub expert_locality: f64,
+    /// Adjacent layers sharing one KV latent/cache (CLA-style, healed).
+    /// 1 = no sharing; 2 = pairs (halves KV bytes and kv_down weights).
+    #[serde(default = "one_u")]
+    pub kv_share_layers: usize,
+    /// MoE top_k used for prompt tokens only (asymmetric routing: prompts
+    /// route through fewer experts than generation; healed). None = same.
+    #[serde(default)]
+    pub prefill_top_k: Option<usize>,
+}
+
+fn one_u() -> usize {
+    1
 }
 
 impl ModelSpec {
@@ -179,7 +197,7 @@ impl ModelSpec {
                 ..
             } => (*kv_lora_rank + *qk_rope_dim) as f64,
         };
-        per_layer * self.layers as f64 * self.kv_bytes
+        per_layer * self.layers as f64 * self.kv_bytes / self.kv_share_layers.max(1) as f64
     }
 
     pub fn weight_bytes_total(&self) -> f64 {
@@ -222,6 +240,9 @@ impl ModelSpec {
         let sparse_attention = g("index_topk").map(|k| SparseAttention { index_top_k: k });
         Ok(ModelSpec {
             mtp_accept: 0.0, // acceptance is a deployment choice, not a config fact
+            expert_locality: 1.0,
+            kv_share_layers: 1,
+            prefill_top_k: None,
             name: name.into(),
             layers,
             hidden,

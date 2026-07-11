@@ -6,6 +6,8 @@
 //! (barge probe/bench on M4, public anchors for datacenter parts). Where the
 //! model must guess, it guesses conservatively and says so in comments.
 
+pub mod trace;
+
 use sartor_spec::*;
 use serde::Serialize;
 
@@ -33,7 +35,7 @@ pub struct PerfReport {
 }
 
 /// Expected distinct MoE experts hit by a batch of B tokens choosing top_k of E.
-fn expected_active_experts(experts: usize, top_k: usize, batch: usize) -> f64 {
+pub(crate) fn expected_active_experts(experts: usize, top_k: usize, batch: usize) -> f64 {
     let e = experts as f64;
     let draws = (batch * top_k) as f64;
     e * (1.0 - (1.0 - 1.0 / e).powf(draws))
@@ -65,22 +67,37 @@ fn step_weight_bytes(m: &ModelSpec, batch: usize) -> f64 {
 /// Time for one GEMM producing m_rows x n_cols from k_inner, weights streamed
 /// from memory: max(dispatch floor, math at occupancy-adjusted efficiency,
 /// weight-streaming time).
-fn gemm_s(hw: &HardwareSpec, k: &KernelSpec, m_rows: f64, n_cols: f64, k_inner: f64, wbytes: f64) -> f64 {
+/// Shared GEMM cost with the binding resource labeled. `grouped` skips the
+/// per-op dispatch floor (grouped-GEMM MoE kernels launch once per layer).
+pub(crate) fn gemm_bound(
+    hw: &HardwareSpec,
+    k: &KernelSpec,
+    m_rows: f64,
+    n_cols: f64,
+    k_inner: f64,
+    wbytes: f64,
+    grouped: bool,
+) -> (f64, &'static str) {
     let flops = 2.0 * m_rows * n_cols * k_inner;
     let eff = k.gemm_eff(m_rows * n_cols).max(1e-3);
     let math = flops / (hw.tflops * 1e12 * eff);
     let stream = n_cols * k_inner * wbytes / (hw.mem_bw_gbs * 1e9);
-    (hw.dispatch_us * 1e-6).max(math).max(stream)
+    let floor = if grouped { 0.0 } else { hw.dispatch_us * 1e-6 };
+    if stream >= math && stream >= floor {
+        (stream, "weight-stream")
+    } else if math >= floor {
+        (math, "math")
+    } else {
+        (floor, "dispatch")
+    }
 }
 
-/// Per-expert slice inside a grouped-GEMM MoE kernel: no per-expert dispatch
-/// floor (the group launches once), but per-expert occupancy still applies.
+fn gemm_s(hw: &HardwareSpec, k: &KernelSpec, m_rows: f64, n_cols: f64, k_inner: f64, wbytes: f64) -> f64 {
+    gemm_bound(hw, k, m_rows, n_cols, k_inner, wbytes, false).0
+}
+
 fn gemm_grouped_s(hw: &HardwareSpec, k: &KernelSpec, m_rows: f64, n_cols: f64, k_inner: f64, wbytes: f64) -> f64 {
-    let flops = 2.0 * m_rows * n_cols * k_inner;
-    let eff = k.gemm_eff(m_rows * n_cols).max(1e-3);
-    let math = flops / (hw.tflops * 1e12 * eff);
-    let stream = n_cols * k_inner * wbytes / (hw.mem_bw_gbs * 1e9);
-    math.max(stream)
+    gemm_bound(hw, k, m_rows, n_cols, k_inner, wbytes, true).0
 }
 
 /// One decode step: batch `b` sequences at average context `ctx`.
@@ -185,7 +202,8 @@ pub fn decode_step_s(cfg: &StackConfig, b: usize, ctx: f64, bk: &mut Breakdown) 
     };
     let t_ep_comm = |top_k: f64| {
         if ep > 1 {
-            expose * 2.0 * (bf * top_k * d * p.act_bytes * (ep as f64 - 1.0) / ep as f64 / ic + lat)
+            let cross = m.expert_locality * (ep as f64 - 1.0) / ep as f64;
+            expose * 2.0 * (bf * top_k * d * p.act_bytes * cross / ic + lat)
         } else {
             0.0
         }
@@ -269,8 +287,10 @@ pub fn prefill_s(cfg: &StackConfig, t: usize, past: f64, bk: &mut Breakdown) -> 
             ..
         } => {
             // Token-expert pairs through per-expert GEMMs (see decode path).
-            let active = expected_active_experts(*experts, *top_k, t).max(1e-9);
-            let pairs = tf * *top_k as f64;
+            // Asymmetric routing: prompt tokens may use a reduced top_k.
+            let tk = m.prefill_top_k.unwrap_or(*top_k);
+            let active = expected_active_experts(*experts, tk, t).max(1e-9);
+            let pairs = tf * tk as f64;
             let w = *moe_intermediate as f64;
             let per_expert = if k.grouped_moe {
                 gemm_grouped_s(hw, k, pairs / active, 2.0 * w, d, m.weight_bytes)

@@ -42,11 +42,7 @@ fn expected_active_experts(experts: usize, top_k: usize, batch: usize) -> f64 {
 /// Weight bytes that must be read for one decode step at batch B.
 fn step_weight_bytes(m: &ModelSpec, batch: usize) -> f64 {
     let d = m.hidden as f64;
-    let attn = m.layers as f64 * {
-        let qo = 2.0 * d * (m.heads * m.head_dim) as f64;
-        let kv = 2.0 * d * (m.kv_heads * m.head_dim) as f64;
-        qo + kv
-    };
+    let attn = m.layers as f64 * m.attn_params_per_layer();
     let head = (m.vocab * m.hidden) as f64;
     let ffn = match &m.ffn {
         Ffn::Dense => m.layers as f64 * 3.0 * d * m.intermediate as f64,
@@ -94,13 +90,43 @@ pub fn decode_step_s(cfg: &StackConfig, b: usize, ctx: f64, bk: &mut Breakdown) 
     let p = &cfg.parallel;
     let (tp, ep) = (p.tp.max(1) as f64, p.ep.max(1));
     // Attention projections per layer, column/row-sharded across TP ranks.
-    let qkv_cols = ((m.heads + 2 * m.kv_heads) * m.head_dim) as f64 / tp;
-    let t_qkv = gemm_s(hw, k, bf, qkv_cols, d, m.weight_bytes);
-    let t_o = gemm_s(hw, k, bf, d, (m.heads * m.head_dim) as f64 / tp, m.weight_bytes);
-    // FFN per layer: dense width (TP-sharded) or this GPU's share of the
-    // experts activated by the EP group's combined batch.
-    let (ffn_width, moe_layers, dense_layers) = match &m.ffn {
-        Ffn::Dense => (m.intermediate as f64 / tp, 0.0, m.layers as f64),
+    // For MLA: absorbed-decode GEMM chain + per-head latent score/value
+    // compute (heads x latent dim per context token — the compute side of
+    // MLA's memory trade).
+    let (t_attn_proj, attn_score_flops_per_ctx) = match &m.attention {
+        Attention::Gqa => {
+            let qkv_cols = ((m.heads + 2 * m.kv_heads) * m.head_dim) as f64 / tp;
+            let t_qkv = gemm_s(hw, k, bf, qkv_cols, d, m.weight_bytes);
+            let t_o = gemm_s(hw, k, bf, d, (m.heads * m.head_dim) as f64 / tp, m.weight_bytes);
+            (t_qkv + t_o, 4.0 * bf * (m.heads * m.head_dim) as f64)
+        }
+        Attention::Mla {
+            kv_lora_rank,
+            qk_rope_dim,
+            q_lora_rank,
+            qk_nope_head_dim,
+            v_head_dim,
+        } => {
+            let h = m.heads as f64 / tp;
+            let (r_kv, r_q) = (*kv_lora_rank as f64, *q_lora_rank as f64);
+            let (nope, rope, vh) = (*qk_nope_head_dim as f64, *qk_rope_dim as f64, *v_head_dim as f64);
+            let t = gemm_s(hw, k, bf, r_q, d, m.weight_bytes) // q down
+                + gemm_s(hw, k, bf, h * (nope + rope), r_q, m.weight_bytes) // q up
+                + gemm_s(hw, k, bf, r_kv + rope, d, m.weight_bytes) // kv down
+                + gemm_s(hw, k, bf * h, r_kv, nope, m.weight_bytes) // absorb q x W_UK
+                + gemm_s(hw, k, bf * h, vh, r_kv, m.weight_bytes) // absorb out x W_UV
+                + gemm_s(hw, k, bf, d, h * vh, m.weight_bytes); // o
+            // scores against latent (r_kv+rope) + values from latent (r_kv), per head
+            (t, 2.0 * bf * h * (r_kv + rope) + 2.0 * bf * h * r_kv)
+        }
+    };
+    // FFN per layer. Dense: one TP-sharded pair of GEMMs. MoE: token-expert
+    // PAIRS route through per-expert GEMMs — compute scales with top_k per
+    // token, weights stream per activated expert, and each expert's GEMM has
+    // few rows (fine-grained MoE's occupancy cost, mitigated by grouped
+    // kernels which amortize the dispatch).
+    let (t_ffn_moe, moe_layers, dense_layers) = match &m.ffn {
+        Ffn::Dense => (0.0, 0.0, m.layers as f64),
         Ffn::Moe {
             experts,
             top_k,
@@ -109,37 +135,51 @@ pub fn decode_step_s(cfg: &StackConfig, b: usize, ctx: f64, bk: &mut Breakdown) 
             first_k_dense,
         } => {
             let group_batch = b * ep;
-            let active = expected_active_experts(*experts, *top_k, group_batch) / ep as f64
-                + *shared_experts as f64;
+            let active = (expected_active_experts(*experts, *top_k, group_batch) / ep as f64)
+                .max(1e-9);
+            let pairs = bf * (*top_k as f64); // this GPU's routed token-expert pairs
+            let w = *moe_intermediate as f64;
+            let per_expert = gemm_s(hw, k, pairs / active, 2.0 * w, d, m.weight_bytes)
+                + gemm_s(hw, k, pairs / active, d, w, m.weight_bytes);
+            let shared = if *shared_experts > 0 {
+                let ws = *shared_experts as f64 * w;
+                gemm_s(hw, k, bf, 2.0 * ws, d, m.weight_bytes)
+                    + gemm_s(hw, k, bf, d, ws, m.weight_bytes)
+            } else {
+                0.0
+            };
             (
-                active * *moe_intermediate as f64,
+                active * per_expert + shared,
                 (m.layers - first_k_dense) as f64,
                 *first_k_dense as f64,
             )
         }
     };
     let dense_width = m.intermediate as f64 / tp;
-    let ffn_layer = |w: f64| {
-        gemm_s(hw, k, bf, 2.0 * w, d, m.weight_bytes) + gemm_s(hw, k, bf, d, w, m.weight_bytes)
-    };
+    let ffn_dense = gemm_s(hw, k, bf, 2.0 * dense_width, d, m.weight_bytes)
+        + gemm_s(hw, k, bf, d, dense_width, m.weight_bytes);
     // Communication per layer (does not overlap in v1 — conservative).
     let ic = hw.interconnect_gbs.unwrap_or(f64::INFINITY) * 1e9;
     let lat = hw.interconnect_latency_us * 1e-6;
+    let expose = 1.0 - p.comm_overlap.clamp(0.0, 1.0);
     let t_tp_comm = if p.tp > 1 {
-        2.0 * (bf * d * p.act_bytes * 2.0 * (tp - 1.0) / tp / ic + lat)
+        expose * 2.0 * (bf * d * p.act_bytes * 2.0 * (tp - 1.0) / tp / ic + lat)
     } else {
         0.0
     };
     let t_ep_comm = |top_k: f64| {
         if ep > 1 {
-            2.0 * (bf * top_k * d * p.act_bytes * (ep as f64 - 1.0) / ep as f64 / ic + lat)
+            expose * 2.0 * (bf * top_k * d * p.act_bytes * (ep as f64 - 1.0) / ep as f64 / ic + lat)
         } else {
             0.0
         }
     };
-    // KV read for attention (the per-sequence term paging/kernels fight over).
+    // Attention core: KV latent/cache read vs score+value compute, per layer.
     let kv_bytes_layer = bf * eff_ctx * m.kv_bytes_per_token() / m.layers as f64;
-    let t_attn = 2.0 * floor.max(kv_bytes_layer / (hw.mem_bw_gbs * 1e9 * k.attn_bw_efficiency) / 2.0);
+    let attn_read_s = kv_bytes_layer / (hw.mem_bw_gbs * 1e9 * k.attn_bw_efficiency);
+    let attn_math_s =
+        attn_score_flops_per_ctx * eff_ctx / (hw.tflops * 1e12 * k.gemm_peak_efficiency);
+    let t_attn = (2.0 * floor).max(attn_read_s).max(attn_math_s);
     // Elementwise/norm/rope ops: pure dispatch floor, plus their activation traffic.
     let small_ops = (k.dispatches_per_layer - 6.0).max(0.0);
     let act_bytes = bf * d * 4.0 * 2.0; // one read+write per elementwise op, f32-equivalent
@@ -151,8 +191,8 @@ pub fn decode_step_s(cfg: &StackConfig, b: usize, ctx: f64, bk: &mut Breakdown) 
         Ffn::Dense => 0.0,
     };
     let per_moe_layer =
-        t_qkv + t_o + ffn_layer(ffn_width) + t_attn + t_small + t_tp_comm + t_ep_comm(moe_topk);
-    let per_dense_layer = t_qkv + t_o + ffn_layer(dense_width) + t_attn + t_small + t_tp_comm;
+        t_attn_proj + t_ffn_moe + t_attn + t_small + t_tp_comm + t_ep_comm(moe_topk);
+    let per_dense_layer = t_attn_proj + ffn_dense + t_attn + t_small + t_tp_comm;
     let t_head = gemm_s(hw, k, bf, m.vocab as f64 / tp, d, m.weight_bytes);
     let t_fixed = k.dispatches_fixed * floor;
 
@@ -165,7 +205,8 @@ pub fn decode_step_s(cfg: &StackConfig, b: usize, ctx: f64, bk: &mut Breakdown) 
             }
             _ => 0.0,
         };
-    let sched_s = s.sched_overhead_us * 1e-6 + bf * s.per_token_host_us * 1e-6;
+    let sched_s =
+        (s.sched_overhead_us + s.step_overhead_us) * 1e-6 + bf * s.per_token_host_us * 1e-6;
 
     // Attribution for the report: compute vs memory character of the step.
     let weights = step_weight_bytes(m, b);
@@ -187,31 +228,55 @@ pub fn prefill_s(cfg: &StackConfig, t: usize, past: f64, bk: &mut Breakdown) -> 
         Some(sa) => past.min(sa.index_top_k as f64),
         None => past,
     };
-    // Same per-op model with m_rows = t; attention has the quadratic term.
-    let qkv_cols = ((m.heads + 2 * m.kv_heads) * m.head_dim) as f64;
-    let t_qkv = gemm_s(hw, k, tf, qkv_cols, d, m.weight_bytes);
-    let t_o = gemm_s(hw, k, tf, d, (m.heads * m.head_dim) as f64, m.weight_bytes);
-    let ffn_width = match &m.ffn {
-        Ffn::Dense => m.intermediate as f64,
+    // Same per-op model with m_rows = t. Attention projections approximated
+    // as one weight-equivalent GEMM (prefill is large-m, occupancy is fine);
+    // the quadratic term uses the architecture's true score dimension.
+    let t_attn_proj = gemm_s(hw, k, tf, m.attn_params_per_layer() / d, d, m.weight_bytes);
+    let score_dim = match &m.attention {
+        Attention::Gqa => (m.heads * m.head_dim) as f64,
+        Attention::Mla {
+            qk_rope_dim,
+            qk_nope_head_dim,
+            ..
+        } => (m.heads * (qk_rope_dim + qk_nope_head_dim)) as f64,
+    };
+    let t_ffn = match &m.ffn {
+        Ffn::Dense => {
+            let w = m.intermediate as f64;
+            gemm_s(hw, k, tf, 2.0 * w, d, m.weight_bytes) + gemm_s(hw, k, tf, d, w, m.weight_bytes)
+        }
         Ffn::Moe {
             experts,
             top_k,
             shared_experts,
             moe_intermediate,
             ..
-        } => (expected_active_experts(*experts, *top_k, t) + *shared_experts as f64)
-            * *moe_intermediate as f64,
+        } => {
+            // Token-expert pairs through per-expert GEMMs (see decode path).
+            let active = expected_active_experts(*experts, *top_k, t).max(1e-9);
+            let pairs = tf * *top_k as f64;
+            let w = *moe_intermediate as f64;
+            let per_expert = gemm_s(hw, k, pairs / active, 2.0 * w, d, m.weight_bytes)
+                + gemm_s(hw, k, pairs / active, d, w, m.weight_bytes);
+            let shared = if *shared_experts > 0 {
+                let ws = *shared_experts as f64 * w;
+                gemm_s(hw, k, tf, 2.0 * ws, d, m.weight_bytes)
+                    + gemm_s(hw, k, tf, d, ws, m.weight_bytes)
+            } else {
+                0.0
+            };
+            active * per_expert + shared
+        }
     };
-    let t_ffn = gemm_s(hw, k, tf, 2.0 * ffn_width, d, m.weight_bytes)
-        + gemm_s(hw, k, tf, d, ffn_width, m.weight_bytes);
-    let attn_flops = 4.0 * tf * (eff_past + tf / 2.0) * (m.heads * m.head_dim) as f64;
+    let attn_flops = 4.0 * tf * (eff_past + tf / 2.0) * score_dim;
     let t_attn = (2.0 * floor).max(attn_flops / (hw.tflops * 1e12 * k.gemm_eff(tf * (eff_past + tf))));
     let small_ops = (k.dispatches_per_layer - 6.0).max(0.0);
     let act_bytes = tf * d * 4.0 * 2.0;
     let t_small = small_ops * floor.max(act_bytes / (hw.mem_bw_gbs * 1e9))
         * (1.0 + k.unfused_activation_traffic);
-    let device = m.layers as f64 * (t_qkv + t_o + t_ffn + t_attn + t_small)
-        + k.dispatches_fixed * floor;
+    let device = (m.layers as f64 * (t_attn_proj + t_ffn + t_attn + t_small)
+        + k.dispatches_fixed * floor)
+        * k.prefill_overhead_mult;
     bk.prefill_s += device;
     device
 }

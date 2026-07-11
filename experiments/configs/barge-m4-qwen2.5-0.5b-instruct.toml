@@ -39,7 +39,7 @@ unfused_activation_traffic = 0.3
 name = "barge"
 max_batch = 64
 prefill_chunk = 512
-sched_overhead_us = 30.0  # Rust engine loop, measured negligible
+sched_overhead_us = 30.0
 per_token_host_us = 2.0   # CPU sampling + channel send
 prefix_cache_hit = 0.0
 

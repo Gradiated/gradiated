@@ -15,9 +15,15 @@ pub enum Attention {
     Gqa,
     /// Multi-head latent attention (DeepSeek/GLM-5 family): KV cached as a
     /// shared latent of `kv_lora_rank` + `qk_rope_dim` per token per layer.
+    /// Decode uses absorbed matmuls: scores/values run against the latent
+    /// directly (per-head compute scales with the latent dim — MLA's
+    /// deliberate compute-for-memory trade).
     Mla {
         kv_lora_rank: usize,
         qk_rope_dim: usize,
+        q_lora_rank: usize,
+        qk_nope_head_dim: usize,
+        v_head_dim: usize,
     },
 }
 
@@ -70,11 +76,31 @@ pub struct ModelSpec {
 
 impl ModelSpec {
     /// Attention block parameter count per layer (q/k/v/o projections).
-    fn attn_params_per_layer(&self) -> f64 {
+    pub fn attn_params_per_layer(&self) -> f64 {
         let d = self.hidden as f64;
-        let qo = 2.0 * d * (self.heads * self.head_dim) as f64;
-        let kv = 2.0 * d * (self.kv_heads * self.head_dim) as f64;
-        qo + kv
+        match &self.attention {
+            Attention::Gqa => {
+                let qo = 2.0 * d * (self.heads * self.head_dim) as f64;
+                let kv = 2.0 * d * (self.kv_heads * self.head_dim) as f64;
+                qo + kv
+            }
+            Attention::Mla {
+                kv_lora_rank,
+                qk_rope_dim,
+                q_lora_rank,
+                qk_nope_head_dim,
+                v_head_dim,
+            } => {
+                let h = self.heads as f64;
+                let (r_kv, r_q) = (*kv_lora_rank as f64, *q_lora_rank as f64);
+                let (nope, rope, vh) = (*qk_nope_head_dim as f64, *qk_rope_dim as f64, *v_head_dim as f64);
+                d * r_q // q down
+                    + r_q * h * (nope + rope) // q up
+                    + d * (r_kv + rope) // kv down
+                    + r_kv * h * (nope + vh) // kv up (absorbed at decode)
+                    + h * vh * d // o
+            }
+        }
     }
 
     fn ffn_params_active_per_layer(&self) -> f64 {
@@ -150,6 +176,7 @@ impl ModelSpec {
             Attention::Mla {
                 kv_lora_rank,
                 qk_rope_dim,
+                ..
             } => (*kv_lora_rank + *qk_rope_dim) as f64,
         };
         per_layer * self.layers as f64 * self.kv_bytes
@@ -176,6 +203,9 @@ impl ModelSpec {
             Some(r) => Attention::Mla {
                 kv_lora_rank: r,
                 qk_rope_dim: g("qk_rope_head_dim").unwrap_or(64),
+                q_lora_rank: g("q_lora_rank").unwrap_or(hidden / 4),
+                qk_nope_head_dim: g("qk_nope_head_dim").unwrap_or(128),
+                v_head_dim: g("v_head_dim").unwrap_or(128),
             },
             None => Attention::Gqa,
         };
@@ -233,6 +263,14 @@ pub struct KernelSpec {
     /// Extra bytes moved per parameter due to unfused elementwise chains
     /// (activations re-read/written between kernels). 0 = perfectly fused.
     pub unfused_activation_traffic: f64,
+    /// Multiplier on modeled prefill chunk time for runtimes whose prefill
+    /// path carries extra activation traffic (measured: candle-metal ~3x).
+    #[serde(default = "one")]
+    pub prefill_overhead_mult: f64,
+}
+
+fn one() -> f64 {
+    1.0
 }
 
 impl KernelSpec {
@@ -272,11 +310,15 @@ pub struct ParallelSpec {
     pub ep: usize,
     /// Activation bytes on the wire (2.0 bf16, 1.0 fp8 comms).
     pub act_bytes: f64,
+    /// Fraction of collective time hidden under compute (dual-microbatch
+    /// pipelining etc.). DeepSeek-style decode ~0.75.
+    #[serde(default)]
+    pub comm_overlap: f64,
 }
 
 impl Default for ParallelSpec {
     fn default() -> Self {
-        Self { tp: 1, ep: 1, act_bytes: 2.0 }
+        Self { tp: 1, ep: 1, act_bytes: 2.0, comm_overlap: 0.0 }
     }
 }
 
@@ -295,6 +337,11 @@ pub struct ServingSpec {
     /// Host-side engine work per step (scheduling, bookkeeping, serialization),
     /// microseconds. Measured: vLLM 1000-7000, barge ~10-50.
     pub sched_overhead_us: f64,
+    /// Runtime churn per live step not visible in static-shape microbenchmarks
+    /// (buffer-pool misses on varying shapes, per-step uploads, KV compaction).
+    /// CUDA-graph-style capture drives this toward 0; candle-metal ~10-15ms.
+    #[serde(default)]
+    pub step_overhead_us: f64,
     /// Per-token host work on the response path (detok, streaming).
     pub per_token_host_us: f64,
     pub sampling: SamplingPlacement,

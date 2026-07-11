@@ -133,39 +133,44 @@ def apply_asic(cfg):
     print(f"    fitted ASIC: {n} HBM stacks ({24*n}GB, {1.2*n:.1f}TB/s, ${7000+1800*n}/unit) batch {batch:.0f}")
     return c
 
-print("=== GLM-5.2 moat study (agent workload 8k/400, cache 0.90) ===")
-b_cfg = copy.deepcopy(BASE); b_cfg["serving"]["max_batch"]=kv_batch(b_cfg,22)
-B = run(b_cfg, "B    provider-best generic (H800, SGLang-class)")
+def main():
+    print("=== GLM-5.2 moat study (agent workload 8k/400, cache 0.90) ===")
+    b_cfg = copy.deepcopy(BASE); b_cfg["serving"]["max_batch"]=kv_batch(b_cfg,22)
+    B = run(b_cfg, "B    provider-best generic (H800, SGLang-class)")
+    
+    s_cfg = apply_surgery(b_cfg); s_cfg["serving"]["max_batch"]=kv_batch(s_cfg,19)
+    S = run(s_cfg, "B+S  + model surgery w/ healing (same rented H800s)")
+    
+    print("  -- surgery lever attribution (each solo on H800, vs B) --")
+    SOLO = [
+      ("int4 experts (QAT)",      {"weight_bytes":0.55}),
+      ("fp8 KV latent",           {"kv_bytes":1.0}),
+      ("cross-layer latent share",{"kv_share_layers":2}),
+      ("expert-locality finetune",{"expert_locality":0.5}),
+      ("asym prefill top-k 4",    {"prefill_top_k":4}),
+      ("head prune 64->48",       {"heads":48}),
+      ("per-layer DSA 1024",      {"sparse_attention":{"index_top_k":1024}}),
+    ]
+    for name, patch in SOLO:
+        c = copy.deepcopy(b_cfg); c["model"].update(patch)
+        c["serving"]["max_batch"] = kv_batch(c, 19)
+        cost, tps, batch = run_quiet(c)
+        print(f"    {name:<28} {B/cost:>5.2f}x   (batch {batch:.0f})")
+    
+    h_cfg = apply_asic(b_cfg)
+    H = run(h_cfg, "B+H  + fitted family ASIC, vanilla model")
+    
+    sh_cfg = apply_asic(s_cfg)
+    SH = run(sh_cfg, "B+S+H co-designed: surgered model on fitted ASIC")
+    
+    gs, gh, gsh = B/S, B/H, B/SH
+    print(f"\ngain(surgery only)   = {gs:.2f}x")
+    print(f"gain(hardware only)  = {gh:.2f}x")
+    print(f"gain(co-designed)    = {gsh:.2f}x")
+    print(f"synergy = joint / (s*h) = {gsh/(gs*gh):.2f}  (>1 => super-additive moat)")
+    print(f"\nmoat vs generic-on-rented: co-designed is {gsh:.1f}x cheaper; "
+          f"surgery alone (no silicon) {gs:.1f}x")
+    
 
-s_cfg = apply_surgery(b_cfg); s_cfg["serving"]["max_batch"]=kv_batch(s_cfg,19)
-S = run(s_cfg, "B+S  + model surgery w/ healing (same rented H800s)")
-
-print("  -- surgery lever attribution (each solo on H800, vs B) --")
-SOLO = [
-  ("int4 experts (QAT)",      {"weight_bytes":0.55}),
-  ("fp8 KV latent",           {"kv_bytes":1.0}),
-  ("cross-layer latent share",{"kv_share_layers":2}),
-  ("expert-locality finetune",{"expert_locality":0.5}),
-  ("asym prefill top-k 4",    {"prefill_top_k":4}),
-  ("head prune 64->48",       {"heads":48}),
-  ("per-layer DSA 1024",      {"sparse_attention":{"index_top_k":1024}}),
-]
-for name, patch in SOLO:
-    c = copy.deepcopy(b_cfg); c["model"].update(patch)
-    c["serving"]["max_batch"] = kv_batch(c, 19)
-    cost, tps, batch = run_quiet(c)
-    print(f"    {name:<28} {B/cost:>5.2f}x   (batch {batch:.0f})")
-
-h_cfg = apply_asic(b_cfg)
-H = run(h_cfg, "B+H  + fitted family ASIC, vanilla model")
-
-sh_cfg = apply_asic(s_cfg)
-SH = run(sh_cfg, "B+S+H co-designed: surgered model on fitted ASIC")
-
-gs, gh, gsh = B/S, B/H, B/SH
-print(f"\ngain(surgery only)   = {gs:.2f}x")
-print(f"gain(hardware only)  = {gh:.2f}x")
-print(f"gain(co-designed)    = {gsh:.2f}x")
-print(f"synergy = joint / (s*h) = {gsh/(gs*gh):.2f}  (>1 => super-additive moat)")
-print(f"\nmoat vs generic-on-rented: co-designed is {gsh:.1f}x cheaper; "
-      f"surgery alone (no silicon) {gs:.1f}x")
+if __name__ == "__main__":
+    main()

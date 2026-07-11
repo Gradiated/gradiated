@@ -69,13 +69,17 @@ def greedy_balanced_groups(affinity: np.ndarray, n_groups: int) -> np.ndarray:
     return groups
 
 
-def refine_groups(topk: np.ndarray, groups: np.ndarray, n_groups: int, iters: int = 10) -> np.ndarray:
+def refine_groups(
+    topk: np.ndarray, groups: np.ndarray, n_groups: int, iters: int = 10,
+    max_tokens: int = 20_000, seed: int = 0,
+) -> np.ndarray:
     """Balanced local search: swap pairs of experts across groups if it reduces
-    the mean number of distinct groups touched per token."""
+    the mean number of distinct groups touched per token (on a token subsample
+    for speed; final metrics are recomputed on all tokens by the caller)."""
     E = groups.size
-
-    def mean_groups(g):
-        return np.take(g, topk).astype(np.int64), None
+    if topk.shape[0] > max_tokens:
+        rng = np.random.default_rng(seed)
+        topk = topk[rng.choice(topk.shape[0], max_tokens, replace=False)]
 
     def cost(g):
         tok_groups = np.take(g, topk)  # (T, k)

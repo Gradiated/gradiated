@@ -51,5 +51,34 @@ At n=64 saturation test, average decode batch was 31.7/64 — one-prompt-per-ste
 | L7 | Tiered KV, prefix cache economics | serving | pending (sim) | [lit] 1.75–5× |
 | L8 | Hardware spec sweeps (LPDDR vs HBM, per-family ASIC) | hardware | pending (sim) | [lit] ~2–3× |
 
-## Verdict status
-Too early. The two measured facts so far both support the thesis directionally: (1) framework abstraction taxes are large and structural, (2) hand-specialized kernels beat general frameworks by integer factors on identical silicon. The decisive tests are L1 (vs vLLM), the simulator calibration (G2), and the sim-driven co-design loop closing (G3).
+## Verdict status (updated 2026-07-11 night — Monte Carlo)
+
+**The thesis holds under compound uncertainty.** Monte Carlo over the moat
+study (150 samples: baseline stack params, ASIC BOM, kernel quality drawn
+from ranges; each surgery lever given a probability of surviving quality
+evals — the auto-research loop only ships survivors):
+
+| metric | P10 | median | P90 |
+|---|---|---|---|
+| surgery gain (rented GPUs) | 1.29× | **1.61×** | 1.81× |
+| fitted-ASIC gain (vanilla model) | 1.94× | **2.33×** | 2.95× |
+| **co-design gain (the company)** | 2.95× | **3.85×** | 5.15× |
+| synergy | 0.92 | 1.05 | 1.16 |
+
+P(co-design ≥ 2×) = 100% · P(≥3×) = 88% · P(≥4×) = 42% · P(≥5×) = 13%.
+P(surgered model fits a cheaper chip) = 96% (the physical co-design mechanism
+is near-certain even where the $-synergy is noisy).
+
+Robust across workload shapes (agent 6.5× / chat 5.7× / batch 6.2× at base
+params) — and the optimal chip differs per model×workload, which is the
+product thesis in one line.
+
+Calibration discipline: lab anchors ±11.5% (measured by us), GB200 peak anchor
+gives realization factor 0.73, DeepSeek daily-average reconciles at duty 0.53
+(docs/calibration.md). Ratios above are realization-invariant.
+
+**What would change this verdict**: real-GPU profiling contradicting the
+traffic map (rental campaign, ~$15k); healing failing at scale on a mid-size
+MoE (~$50k campaign); HBM/NRE costs far above the sampled ranges.
+
+Earlier status: The two measured facts so far both support the thesis directionally: (1) framework abstraction taxes are large and structural, (2) hand-specialized kernels beat general frameworks by integer factors on identical silicon. The decisive tests are L1 (vs vLLM), the simulator calibration (G2), and the sim-driven co-design loop closing (G3).

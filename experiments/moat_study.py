@@ -17,7 +17,8 @@ Moat metrics: gains vs B; synergy = gain(S+H) / (gain(S) * gain(H)).
 Note: absolute $/Mtok inherits sim idealizations (peak-duty, see anchors);
 RATIOS are the trustworthy output — both sides share the idealizations.
 """
-import json, subprocess, copy, sys
+import json, subprocess, copy, sys, os
+TMP = f"/tmp/moat-{os.getpid()}.toml"
 
 BASE = {
  "model": {"name":"glm-5.2","layers":78,"hidden":6144,"heads":64,"kv_heads":64,"head_dim":192,
@@ -61,8 +62,8 @@ def toml_of(cfg):
     return emit(cfg)
 
 def run(cfg, label):
-    open('/tmp/moat.toml','w').write(toml_of(cfg))
-    r = subprocess.run(['./target/release/sartor','run','--config','/tmp/moat.toml'],capture_output=True,text=True)
+    open(TMP,'w').write(toml_of(cfg))
+    r = subprocess.run(['./target/release/sartor','run','--config',TMP],capture_output=True,text=True)
     if r.returncode:
         print(label, "ERR", r.stderr[-400:]); sys.exit(1)
     d = json.loads(r.stdout)
@@ -104,8 +105,8 @@ def asic_variant(cfg, n_stacks):
     return c
 
 def run_quiet(cfg):
-    open('/tmp/moat.toml','w').write(toml_of(cfg))
-    r = subprocess.run(['./target/release/sartor','run','--config','/tmp/moat.toml'],capture_output=True,text=True)
+    open(TMP,'w').write(toml_of(cfg))
+    r = subprocess.run(['./target/release/sartor','run','--config',TMP],capture_output=True,text=True)
     if r.returncode: print("ERR", r.stderr[-300:]); sys.exit(1)
     d = json.loads(r.stdout)
     return d['cost']['usd_per_mtok_output'], d['perf']['output_tok_per_s'], d['perf']['avg_decode_batch']

@@ -1,0 +1,26 @@
+{
+  "smollm2-135m-instruct": {
+    "runs": 3,
+    "output_tok_per_s": [
+      1248.0,
+      1240.5,
+      1243.6
+    ],
+    "output_tok_per_s_mean": 1244.1,
+    "total_tok_per_s_mean": 2488.2,
+    "wall_s_mean": 13.17
+  },
+  "smollm2-135m-pruned-h6": {
+    "runs": 3,
+    "output_tok_per_s": [
+      1305.8,
+      1313.6,
+      1305.2
+    ],
+    "output_tok_per_s_mean": 1308.2,
+    "total_tok_per_s_mean": 2616.4,
+    "wall_s_mean": 12.52
+  },
+  "speedup_output_tok_per_s": 1.0515,
+  "cmd": "barge bench --model <dir> --device metal --dtype f16 --num-requests 128 --input-len 128 --output-len 128 --max-slots 72"
+}

@@ -42,7 +42,7 @@ At n=64 saturation test, average decode batch was 31.7/64 — one-prompt-per-ste
 
 | # | Lever | Layer | Status | Effect |
 |---|---|---|---|---|
-| L1 | Kill Python/IPC serving tax (barge vs vLLM-CPU) | serving | awaiting vLLM build | — |
+| L1 | Kill Python/IPC serving tax (barge vs vLLM-CPU) | serving | **measured** | 2.1× (525 vs 246 out tok/s, same HW/model/workload; barge f32 vs vLLM bf16 — tax is structural: Python engine + multiproc executor. Caveat: vLLM macOS ARM backend untuned; CUDA-path tax is the smaller audited 1–7ms/step) |
 | L2 | Batch saturation curve (b=1→64) | serving | **measured** | 10.4× (103→1,075 tok/s) |
 | L3 | Prefill packing (fix admission starvation) | serving | designed | — |
 | L4 | Fused kernels (llama.cpp gap = headroom) | kernel | **measured (gap)** | 6.7× headroom at b=64 |

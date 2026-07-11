@@ -8,6 +8,7 @@ tokens, window 1024 stride 1024) every 250 steps. Only model weights are
 saved; optimizer state is discarded.
 """
 
+import argparse
 import json
 import math
 import time
@@ -17,8 +18,16 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from common import MODELS, RESULTS, save_json, strided_perplexity, tokenize_wikitext
 
-SRC = MODELS / "smollm2-135m-pruned-h6"
-DST = MODELS / "smollm2-135m-pruned-h6-healed"
+_ap = argparse.ArgumentParser()
+_ap.add_argument("--src", default=str(MODELS / "smollm2-135m-pruned-h6"))
+_ap.add_argument("--dst", default=str(MODELS / "smollm2-135m-pruned-h6-healed"))
+_ap.add_argument("--curve", default="healing_curve.json")
+_ap.add_argument("--force-head-dim", type=int, default=64,
+                 help="head_dim written into saved config.json (0 = leave config alone)")
+_args = _ap.parse_args()
+
+SRC = MODELS.parent / _args.src if not _args.src.startswith("/") else type(MODELS)(_args.src)
+DST = MODELS.parent / _args.dst if not _args.dst.startswith("/") else type(MODELS)(_args.dst)
 DEVICE = "mps"
 SEQ = 1024
 BATCH = 8
@@ -100,9 +109,10 @@ def main():
     model.to("cpu")
     DST.mkdir(exist_ok=True)
     model.save_pretrained(DST, safe_serialization=True)
-    saved = json.loads((DST / "config.json").read_text())
-    saved["head_dim"] = 64
-    (DST / "config.json").write_text(json.dumps(saved, indent=2))
+    if _args.force_head_dim:
+        saved = json.loads((DST / "config.json").read_text())
+        saved["head_dim"] = _args.force_head_dim
+        (DST / "config.json").write_text(json.dumps(saved, indent=2))
     import shutil
     for f in ["tokenizer.json", "tokenizer_config.json", "special_tokens_map.json",
               "generation_config.json"]:
@@ -113,8 +123,8 @@ def main():
         {"steps": STEPS, "batch": BATCH, "seq": SEQ, "lr": LR, "lr_min": LR_MIN,
          "warmup": WARMUP, "tokens_seen": STEPS * BATCH * SEQ,
          "wall_seconds": round(wall, 1), "device": DEVICE, "dtype": "float32",
-         "curve": log},
-        RESULTS / "healing_curve.json",
+         "src": str(SRC), "dst": str(DST), "curve": log},
+        RESULTS / _args.curve,
     )
     print(f"healing wall time: {wall/60:.1f} min; saved to {DST}")
 

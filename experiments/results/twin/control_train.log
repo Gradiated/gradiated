@@ -41,3 +41,9 @@ step 1300 loss 2.0854 lr 1.45e-05 394 tok/s
 step 1350 loss 2.1113 lr 1.26e-05 407 tok/s
 step 1400 loss 2.0871 lr 1.12e-05 419 tok/s
 step 1450 loss 2.1098 lr 1.03e-05 432 tok/s
+step 1500 loss 2.0952 lr 1.00e-05 441 tok/s
+{"step": 1500, "val_ppl": 14.9331, "wall_s": 27851.7}
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.50it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.50it/s]
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:01<00:00,  1.11s/it]Writing model shards: 100%|██████████| 1/1 [00:01<00:00,  1.11s/it]
+wrote /Users/js/dev/sartor/experiments/results/twin/control_curve.json
+healing wall time: 464.2 min; saved to /Users/js/dev/sartor/models/smollm2-135m-control-healed

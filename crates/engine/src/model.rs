@@ -1,8 +1,9 @@
 use crate::config::ModelConfig;
 use crate::kv::KvCache;
 use anyhow::{bail, Context, Result};
-use candle_core::{DType, Device, Tensor, D};
+use candle_core::{DType, Device, Tensor};
 use candle_nn::ops::{rms_norm, silu, softmax_last_dim};
+use candle_nn::rotary_emb::rope;
 use candle_nn::{Linear, Module, VarBuilder};
 use std::path::Path;
 
@@ -137,8 +138,8 @@ impl Model {
         // Causal mask for the merged (group, time) query dim: [1, 1, g*t, l_ctx].
         let mask = causal_mask(t, start, g, &self.device)?;
         // cos/sin for positions [start, start+t): broadcast over [1, kv, g, t, hd/2].
-        let cos = self.cos.narrow(0, start, t)?.reshape((1, 1, 1, t, hd / 2))?;
-        let sin = self.sin.narrow(0, start, t)?.reshape((1, 1, 1, t, hd / 2))?;
+        let cos = self.cos.narrow(0, start, t)?;
+        let sin = self.sin.narrow(0, start, t)?;
 
         for (li, layer) in self.layers.iter().enumerate() {
             let h = rms_norm(&x, &layer.ln1, self.eps)?;
@@ -147,13 +148,13 @@ impl Model {
             let k = qkv.narrow(1, nkv * g * hd, nkv * hd)?;
             let v = qkv.narrow(1, nkv * (g + 1) * hd, nkv * hd)?;
 
-            // q: [t, kv*g*hd] -> [1, kv, g, t, hd]
+            // q: [t, kv*g*hd] -> [1, kv*g, t, hd] (fused rope wants rank-4 contiguous)
             let q = q
                 .reshape((t, nkv, g, hd))?
                 .permute((1, 2, 0, 3))?
                 .contiguous()?
-                .reshape((1, nkv, g, t, hd))?;
-            let q = apply_rope(&q, &cos, &sin)?;
+                .reshape((1, nkv * g, t, hd))?;
+            let q = rope(&q, &cos, &sin)?;
             // k,v: [t, kv*hd] -> [1, kv, t, hd]
             let k = k
                 .reshape((t, nkv, hd))?
@@ -165,9 +166,7 @@ impl Model {
                 .transpose(0, 1)?
                 .contiguous()?
                 .reshape((1, nkv, t, hd))?;
-            let k = apply_rope(&k.reshape((1, nkv, 1, t, hd))?, &cos, &sin)?
-                .reshape((1, nkv, t, hd))?
-                .contiguous()?;
+            let k = rope(&k, &cos, &sin)?;
             kv.write_prefill(li, slot, start, &k, &v)?;
 
             let (kw, vw) = kv.slot_window(li, slot, l_ctx)?;
@@ -207,33 +206,39 @@ impl Model {
         let ids = Tensor::from_slice(tokens, b, &self.device)?;
         let mut x = self.embed.index_select(&ids, 0)?; // [b, d]
 
-        let mask = length_mask(positions, l_ctx, &self.device)?; // [b, 1, 1, l_ctx] f32
+        // [b, 1, 1, l_ctx] in model dtype: softmax_last_dim handles f16 with
+        // f32 exp-sum accumulation on Metal, so no f32 round-trip is needed.
+        let mask = length_mask(positions, l_ctx, &self.device)?.to_dtype(self.dtype)?;
         let pos_ids = Tensor::from_vec(
             positions.iter().map(|&p| p as u32).collect::<Vec<_>>(),
             b,
             &self.device,
         )?;
-        let cos = self.cos.index_select(&pos_ids, 0)?.reshape((b, 1, 1, hd / 2))?;
-        let sin = self.sin.index_select(&pos_ids, 0)?.reshape((b, 1, 1, hd / 2))?;
+        // Rank-3 [b, 1, hd/2]: per-slot positions via the rope kernel's batched cos path.
+        let cos = self.cos.index_select(&pos_ids, 0)?.reshape((b, 1, hd / 2))?;
+        let sin = self.sin.index_select(&pos_ids, 0)?.reshape((b, 1, hd / 2))?;
 
         for (li, layer) in self.layers.iter().enumerate() {
             let h = rms_norm(&x, &layer.ln1, self.eps)?;
             let qkv = layer.qkv.forward(&h)?;
-            let q = qkv.narrow(1, 0, nkv * g * hd)?.reshape((b, nkv, g, hd))?;
+            let q = qkv
+                .narrow(1, 0, nkv * g * hd)?
+                .reshape((b, nkv * g, 1, hd))?
+                .contiguous()?;
             let k = qkv
                 .narrow(1, nkv * g * hd, nkv * hd)?
-                .reshape((b, nkv, 1, hd))?;
+                .reshape((b, nkv, 1, hd))?
+                .contiguous()?;
             let v = qkv
                 .narrow(1, nkv * (g + 1) * hd, nkv * hd)?
                 .reshape((b, nkv, hd))?;
-            let q = apply_rope(&q, &cos, &sin)?;
-            let k = apply_rope(&k, &cos, &sin)?.reshape((b, nkv, hd))?.contiguous()?;
+            let q = rope(&q, &cos, &sin)?.reshape((b, nkv, g, hd))?;
+            let k = rope(&k, &cos, &sin)?.reshape((b, nkv, hd))?;
             kv.write_decode(li, positions, &k, &v.contiguous()?)?;
 
             let (kw, vw) = kv.window(li, b, l_ctx)?;
             let att = (q.matmul(&kw.transpose(2, 3)?)? * (1.0 / (hd as f64).sqrt()))?; // [b, kv, g, l]
-            let att = att.to_dtype(DType::F32)?.broadcast_add(&mask)?;
-            let att = softmax_last_dim(&att)?.to_dtype(self.dtype)?;
+            let att = softmax_last_dim(&att.broadcast_add(&mask)?)?;
             let out = att.matmul(&vw)?.reshape((b, nkv * g * hd))?;
             x = (x + layer.o.forward(&out)?)?;
 
@@ -246,17 +251,6 @@ impl Model {
         let x = rms_norm(&x, &self.norm, self.eps)?;
         Ok(self.lm_head.forward(&x)?.to_dtype(DType::F32)?)
     }
-}
-
-/// Non-interleaved (rotate-half) RoPE. x: [..., seq_or_1, hd]; cos/sin
-/// broadcastable to x's shape with last dim hd/2.
-fn apply_rope(x: &Tensor, cos: &Tensor, sin: &Tensor) -> Result<Tensor> {
-    let hd = x.dim(D::Minus1)?;
-    let x1 = x.narrow(D::Minus1, 0, hd / 2)?;
-    let x2 = x.narrow(D::Minus1, hd / 2, hd / 2)?;
-    let r1 = (x1.broadcast_mul(cos)? - x2.broadcast_mul(sin)?)?;
-    let r2 = (x2.broadcast_mul(cos)? + x1.broadcast_mul(sin)?)?;
-    Ok(Tensor::cat(&[&r1, &r2], D::Minus1)?)
 }
 
 fn rope_tables(cfg: &ModelConfig, max_ctx: usize, dtype: DType, dev: &Device) -> Result<(Tensor, Tensor)> {

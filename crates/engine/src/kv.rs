@@ -1,5 +1,6 @@
 use anyhow::Result;
 use candle_core::{DType, Device, Tensor};
+use std::sync::Mutex;
 
 /// Slot-based preallocated KV cache.
 ///
@@ -19,6 +20,9 @@ pub struct KvCache {
     pub max_ctx: usize,
     kv_heads: usize,
     head_dim: usize,
+    /// Decode scatter rows are identical for every layer within a step:
+    /// cache the uploaded index tensor keyed by the positions that built it.
+    decode_idx: Mutex<Option<(Vec<usize>, Tensor)>>,
 }
 
 impl KvCache {
@@ -43,6 +47,7 @@ impl KvCache {
             max_ctx,
             kv_heads,
             head_dim,
+            decode_idx: Mutex::new(None),
         })
     }
 
@@ -62,7 +67,26 @@ impl KvCache {
     pub fn write_decode(&self, layer: usize, positions: &[usize], k: &Tensor, v: &Tensor) -> Result<()> {
         let b = positions.len();
         let (kc, vc) = &self.layers[layer];
-        let dev = kc.device();
+        let idx = self.decode_index(positions, kc.device())?;
+        let flat_dims = (self.max_slots * self.kv_heads * self.max_ctx, self.head_dim);
+        let src_k = k.reshape((b * self.kv_heads, self.head_dim))?;
+        let src_v = v.reshape((b * self.kv_heads, self.head_dim))?;
+        kc.reshape(flat_dims)?.scatter_set(&idx, &src_k, 0)?;
+        vc.reshape(flat_dims)?.scatter_set(&idx, &src_v, 0)?;
+        Ok(())
+    }
+
+    /// Build (or reuse) the scatter row-index tensor for a decode step. All
+    /// layers of one step share identical positions, so the CPU build + upload
+    /// happens once per step instead of once per layer.
+    fn decode_index(&self, positions: &[usize], dev: &Device) -> Result<Tensor> {
+        let mut cache = self.decode_idx.lock().unwrap();
+        if let Some((pos, idx)) = cache.as_ref() {
+            if pos == positions {
+                return Ok(idx.clone());
+            }
+        }
+        let b = positions.len();
         let mut rows = Vec::with_capacity(b * self.kv_heads);
         for (slot, &pos) in positions.iter().enumerate() {
             for h in 0..self.kv_heads {
@@ -72,12 +96,8 @@ impl KvCache {
         let idx = Tensor::from_vec(rows, (b * self.kv_heads, 1), dev)?
             .broadcast_as((b * self.kv_heads, self.head_dim))?
             .contiguous()?;
-        let flat_dims = (self.max_slots * self.kv_heads * self.max_ctx, self.head_dim);
-        let src_k = k.reshape((b * self.kv_heads, self.head_dim))?;
-        let src_v = v.reshape((b * self.kv_heads, self.head_dim))?;
-        kc.reshape(flat_dims)?.scatter_set(&idx, &src_k, 0)?;
-        vc.reshape(flat_dims)?.scatter_set(&idx, &src_v, 0)?;
-        Ok(())
+        *cache = Some((positions.to_vec(), idx.clone()));
+        Ok(idx)
     }
 
     /// Views over the first `b` slots, positions [0, upto): [b, kv_heads, upto, head_dim].

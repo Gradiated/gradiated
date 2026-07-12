@@ -152,7 +152,17 @@ group size 3 → 2: in each KV group, drop the weakest Q-head), by slicing
 | baseline `smollm2-135m-instruct` | **16.60** | — |
 | pruned h9→h6, unhealed | **82.48** | +65.9 (5.0x) |
 | pruned + healed (1500 steps, 12.3M tokens) | **15.91** | **−0.69** |
-| baseline + identical finetune (control) | **TBD (running)** | TBD |
+| baseline + identical finetune (control) | **14.64** | −1.96 |
+
+**Honest surgery cost (healed − control, matched token budget): +1.27 ppl
+(+8.7%)** for −4.9% params / −33% attention Q/O compute / +5.2% measured
+engine throughput. The naive reading ("healed beats baseline by 0.69") is
+pure domain adaptation: the same finetune moves the unpruned baseline from
+16.60 to 14.64. Control curve (same val protocol): 19.01 → 13.57 @250 →
+13.53 @500 → 14.93 @1500 (same shape as the healed run: converged by ~500,
+mild overfit after; `experiments/results/twin/control_curve.json`). The
+control's 464-min wall figure is not comparable — it ran overnight against
+heavy external machine load.
 
 **Healing cost: 1500 steps / 12.3M tokens / 123.9 min wall** on MPS fp32
 (1300–1800 tok/s under external memory pressure — see incident note — so
@@ -171,10 +181,20 @@ beyond that the model mildly overfits the small train set (2.57M tokens ≈
 4.8 epochs by step 1500). Full curve:
 `experiments/results/twin/healing_curve.json`.
 
-The headline row is deliberately read with caution: healed (15.91) beats the
-original baseline (16.60) on wikitext-2 test, but part of that is wikitext
-domain adaptation rather than pure repair — hence the matched control; the
-honest surgery cost is `healed − control` at matched token budget.
+### Instruct sanity check (qualitative)
+
+12 chat prompts through the SmolLM2 chat template, greedy decode, baseline
+vs healed side by side (`twin/instruct_sanity.py`,
+`experiments/results/twin/instruct_sanity.json`). Verdict: **FAIL relative
+to baseline.** The healed model remains fluent but has visibly lost chat
+behaviour: it slips into wikitext register (including literal " @-@ "
+tokenisation artefacts), repeats itself, pads answers with encyclopedic
+filler, and degenerates on one prompt (haiku → punctuation loop). The
+baseline 135M is itself weak (e.g. "17+25=42"), but it answers *directly*.
+Conclusion: **healing data must match the deployment distribution** — raw
+wikitext healing repairs perplexity while eroding instruct behaviour
+(catastrophic forgetting). Round-2+ healing recipes should blend instruct
+data (or use distillation from the unpruned model) rather than raw LM text.
 
 ---
 
@@ -267,6 +287,8 @@ twin/prune_heads.py          task 2 surgery
 twin/heal.py                 task 2 healing + control (CLI: --src/--dst/--steps)
 twin/kv_sensitivity.py       task 4 sweep
 twin/kv_mixed.py             task 4 mixed-precision verification
+twin/instruct_sanity.py      qualitative chat-behaviour check
 experiments/results/twin/    all JSON/npy/npz/jsonl results + train logs
+models/smollm2-135m-control-healed/       control checkpoint
 models/smollm2-135m-pruned-h6[-healed]/   surgered checkpoints
 ```

@@ -25,6 +25,8 @@ _ap.add_argument("--curve", default="healing_curve.json")
 _ap.add_argument("--steps", type=int, default=1500)
 _ap.add_argument("--force-head-dim", type=int, default=64,
                  help="head_dim written into saved config.json (0 = leave config alone)")
+_ap.add_argument("--cla", action="store_true",
+                 help="apply pairwise cross-layer KV sharing to the loaded model before healing")
 _args = _ap.parse_args()
 
 SRC = MODELS.parent / _args.src if not _args.src.startswith("/") else type(MODELS)(_args.src)
@@ -50,7 +52,12 @@ def lr_at(step):
 def main():
     torch.manual_seed(0)
     tok = AutoTokenizer.from_pretrained(SRC)
-    model = AutoModelForCausalLM.from_pretrained(SRC, dtype=torch.float32).to(DEVICE)
+    model = AutoModelForCausalLM.from_pretrained(SRC, dtype=torch.float32)
+    if _args.cla:
+        from cla import apply_cla
+        apply_cla(model)
+        print(f"CLA applied: {sum(p.numel() for p in model.parameters())/1e6:.2f}M params")
+    model = model.to(DEVICE)
 
     train_ids = tokenize_wikitext(tok, "train")
     val_ids = tokenize_wikitext(tok, "validation", VAL_TOKENS)

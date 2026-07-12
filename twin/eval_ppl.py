@@ -24,12 +24,18 @@ def main():
     ap.add_argument("--device", default="mps")
     ap.add_argument("--dtype", default="float32")
     ap.add_argument("--tag", default=None)
+    ap.add_argument("--cla", action="store_true",
+                    help="apply pairwise cross-layer KV sharing after load")
     args = ap.parse_args()
 
     tok = AutoTokenizer.from_pretrained(args.model)
     model = AutoModelForCausalLM.from_pretrained(
         args.model, dtype=getattr(torch, args.dtype)
-    ).to(args.device)
+    )
+    if args.cla:
+        from cla import apply_cla
+        apply_cla(model)
+    model = model.to(args.device)
     ids = tokenize_wikitext(tok, args.split, args.max_tokens)
     print(f"{args.model}: {ids.numel()} tokens ({args.split})")
 

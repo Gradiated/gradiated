@@ -40,6 +40,10 @@ pub enum Ffn {
         moe_intermediate: usize,
         /// Layers 0..first_k_dense use the dense FFN instead.
         first_k_dense: usize,
+        /// Width of EACH shared expert (decoupled from routed width);
+        /// None = same as moe_intermediate.
+        #[serde(default)]
+        shared_intermediate: Option<usize>,
     },
 }
 
@@ -129,8 +133,12 @@ impl ModelSpec {
                 top_k,
                 shared_experts,
                 moe_intermediate,
+                shared_intermediate,
                 ..
-            } => 3.0 * d * *moe_intermediate as f64 * (*top_k + *shared_experts) as f64,
+            } => {
+                let sw = shared_intermediate.unwrap_or(*moe_intermediate) as f64;
+                3.0 * d * (*moe_intermediate as f64 * *top_k as f64 + sw * *shared_experts as f64)
+            }
         }
     }
 
@@ -142,8 +150,12 @@ impl ModelSpec {
                 experts,
                 shared_experts,
                 moe_intermediate,
+                shared_intermediate,
                 ..
-            } => 3.0 * d * *moe_intermediate as f64 * (*experts + *shared_experts) as f64,
+            } => {
+                let sw = shared_intermediate.unwrap_or(*moe_intermediate) as f64;
+                3.0 * d * (*moe_intermediate as f64 * *experts as f64 + sw * *shared_experts as f64)
+            }
         }
     }
 
@@ -234,6 +246,7 @@ impl ModelSpec {
                 shared_experts: g("n_shared_experts").unwrap_or(0),
                 moe_intermediate: g("moe_intermediate_size").unwrap_or(intermediate),
                 first_k_dense: g("first_k_dense_replace").unwrap_or(0),
+                shared_intermediate: None,
             },
             None => Ffn::Dense,
         };

@@ -54,11 +54,17 @@ fn step_weight_bytes(m: &ModelSpec, batch: usize) -> f64 {
             shared_experts,
             moe_intermediate,
             first_k_dense,
+            shared_intermediate,
         } => {
             let dense = *first_k_dense as f64 * 3.0 * d * m.intermediate as f64;
             let moe_layers = (m.layers - first_k_dense) as f64;
-            let active = expected_active_experts(*experts, *top_k, batch) + *shared_experts as f64;
-            dense + moe_layers * active * 3.0 * d * *moe_intermediate as f64
+            let active = expected_active_experts(*experts, *top_k, batch);
+            let sw = shared_intermediate.unwrap_or(*moe_intermediate) as f64;
+            dense
+                + moe_layers
+                    * 3.0
+                    * d
+                    * (active * *moe_intermediate as f64 + *shared_experts as f64 * sw)
         }
     };
     (attn + head + ffn) * m.weight_bytes
@@ -160,6 +166,7 @@ pub fn decode_step_s(cfg: &StackConfig, b: usize, ctx: f64, bk: &mut Breakdown) 
             shared_experts,
             moe_intermediate,
             first_k_dense,
+            shared_intermediate,
         } => {
             let group_batch = b * ep;
             let active = (expected_active_experts(*experts, *top_k, group_batch) / ep as f64)
@@ -174,7 +181,8 @@ pub fn decode_step_s(cfg: &StackConfig, b: usize, ctx: f64, bk: &mut Breakdown) 
                     + gemm_s(hw, k, pairs / active, d, w, m.weight_bytes)
             };
             let shared = if *shared_experts > 0 {
-                let ws = *shared_experts as f64 * w;
+                let ws = *shared_experts as f64
+                    * shared_intermediate.unwrap_or(*moe_intermediate) as f64;
                 gemm_s(hw, k, bf, 2.0 * ws, d, m.weight_bytes)
                     + gemm_s(hw, k, bf, d, ws, m.weight_bytes)
             } else {
@@ -284,6 +292,7 @@ pub fn prefill_s(cfg: &StackConfig, t: usize, past: f64, bk: &mut Breakdown) -> 
             top_k,
             shared_experts,
             moe_intermediate,
+            shared_intermediate,
             ..
         } => {
             // Token-expert pairs through per-expert GEMMs (see decode path).
@@ -300,7 +309,8 @@ pub fn prefill_s(cfg: &StackConfig, t: usize, past: f64, bk: &mut Breakdown) -> 
                     + gemm_s(hw, k, pairs / active, d, w, m.weight_bytes)
             };
             let shared = if *shared_experts > 0 {
-                let ws = *shared_experts as f64 * w;
+                let ws = *shared_experts as f64
+                    * shared_intermediate.unwrap_or(*moe_intermediate) as f64;
                 gemm_s(hw, k, tf, 2.0 * ws, d, m.weight_bytes)
                     + gemm_s(hw, k, tf, d, ws, m.weight_bytes)
             } else {

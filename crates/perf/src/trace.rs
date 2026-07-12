@@ -163,6 +163,7 @@ pub fn trace_decode(cfg: &StackConfig, b: usize, ctx: f64) -> Trace {
             shared_experts,
             moe_intermediate,
             first_k_dense,
+            shared_intermediate,
         } => {
             let moe_l = (m.layers - first_k_dense) as f64;
             let dense_l = *first_k_dense as f64;
@@ -198,7 +199,8 @@ pub fn trace_decode(cfg: &StackConfig, b: usize, ctx: f64) -> Trace {
             dn.time_us *= imb;
             rows.push(dn);
             if *shared_experts > 0 {
-                let ws = *shared_experts as f64 * w;
+                let ws = *shared_experts as f64
+                    * shared_intermediate.unwrap_or(*moe_intermediate) as f64;
                 rows.push(gemm_row("moe.shared.gate_up", moe_l, hw, k, bf, 2.0 * ws, d, m.weight_bytes, false));
                 rows.push(gemm_row("moe.shared.down", moe_l, hw, k, bf, d, ws, m.weight_bytes, false));
             }

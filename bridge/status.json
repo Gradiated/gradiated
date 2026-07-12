@@ -1,1 +1,1 @@
-{"updated": "2026-07-12 03:07", "text": "Overnight: engine kernel round measured (2.9x combined, now 31% of llama.cpp); per-model MC league done \u2014 MiniMax-M2 median 7.0x co-design with P10 4.4x. CLA architecture-surgery healing still running (the decisive experiment). Morning summary coming ~07:30."}
+{"updated": "2026-07-12 03:33", "text": "Report refreshed with overnight results. Awaiting the CLA architecture-surgery healed evaluation (checkpoint saved, eval in flight) \u2014 last decisive datapoint before the morning summary."}

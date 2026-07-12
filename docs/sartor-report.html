@@ -78,14 +78,15 @@
 </details>
 
 <h3>3.2 Different models hide different amounts of recoverable cost</h3>
+<p><em>Numbers are per-model Monte-Carlo medians with [10th–90th percentile] ranges, allowing individual optimisations to fail.</em></p>
 <p>We ran the full pipeline on five frontier open-source models. The recoverable headroom differs substantially per model; a general-purpose provider cannot capture value that requires different interventions for every model.</p>
 <table>
 <tr><th>Model</th><th>Why it's expensive today</th><th>Co-designed saving (optimistic → realistic)</th></tr>
-<tr><td>GLM-5.2</td><td>Already highly optimised by its lab</td><td class="num">6.5× → ~3.9×</td></tr>
-<tr><td>Qwen3-235B</td><td>Memory-hungry attention design</td><td class="num">10.8× → ~6.5×</td></tr>
-<tr><td>Kimi-K2</td><td>Ships <em>without</em> efficiency features its own architecture family already proved</td><td class="num">11.5× → ~6.9×</td></tr>
-<tr><td>gpt-oss-120b</td><td>Similar story, smaller model</td><td class="num">12.2× → ~7.3×</td></tr>
-<tr><td>MiniMax-M2</td><td>Extremely memory-heavy per token</td><td class="num">14.3× → ~8.6×</td></tr>
+<tr><td>GLM-5.2</td><td>Already highly optimised by its lab</td><td class="num">4.1× [3.1–5.3]</td></tr>
+<tr><td>Qwen3-235B</td><td>Memory-hungry attention design</td><td class="num">5.1× [3.6–7.7]</td></tr>
+<tr><td>Kimi-K2</td><td>Ships <em>without</em> efficiency features its own architecture family already proved</td><td class="num">~6.9× (point 11.5×)</td></tr>
+<tr><td>gpt-oss-120b</td><td>Similar story, smaller model</td><td class="num">5.9× [3.8–8.9]</td></tr>
+<tr><td>MiniMax-M2</td><td>Extremely memory-heavy per token</td><td class="num">7.0× [4.4–10.7]</td></tr>
 </table>
 <details><summary>Why the fixes differ per model</summary>
 <p>Tracing where every byte moves during generation showed three different bottlenecks: GLM-5.2 spends 77% of its memory traffic on just 2.3% of its weights (the parts every token must touch — so the fix is amortising them over bigger batches); Kimi-K2's cost is streaming its enormous "expert" weights (fix: compression and retrofitting features like multi-token prediction that DeepSeek already proved on the same architecture); MiniMax-M2 is strangled by its per-token memory footprint (fix: memory-sharing surgery, which roughly doubles how many requests fit on a chip). Same toolkit, three different prescriptions — and the best chip design came out different for each model too (different amounts of expensive HBM memory). This is the concrete form of the "abstraction tax" argument.</p>
@@ -97,6 +98,14 @@
 <h3>3.4 We checked the radical alternative: putting the whole model in ultra-fast on-chip memory (the Cerebras approach)</h3>
 <p>Simulated on identical workloads: <strong>76× more expensive per token</strong> than our approach for frontier-scale models (still 11× if their hardware were four times cheaper). The physics: their memory type (SRAM) costs 20–50× more per gigabyte, today's frontier models are enormous but only use a small fraction of themselves per token — the worst possible shape for that design. Their niche is speed-at-any-price; ours is cost. The industry's direction of travel (bigger, sparser models) widens this gap in our favour.</p>
 
+<h3>3.5 Robustness checks (overnight round)</h3>
+<ul>
+<li><strong>Does the edge survive next-generation incumbent hardware?</strong> Against a tuned Blackwell-era (B200) incumbent, the co-design advantage is 3.8× (model surgery alone on <em>their</em> hardware: 1.75×). Compressed from the Hopper-era 6.5×, still well above the 3× viability bar.</li>
+<li><strong>Does it survive incumbent software improving?</strong> At 10–30%/yr incumbent improvement, the rented-phase edge decays from ~3.7× to 3.2–3.5× over three years; the durable floor (~2.9×) is the part incumbents structurally can't copy — per-model surgery and the batch-shaped fleet.</li>
+<li><strong>Fleet economics, computed not asserted:</strong> deferrable traffic alone is worth 1.78× (99% vs 56% hardware utilisation in a 14-day demand simulation); adding interruptible ("spot") capacity brings the fleet factor to 2.27× with deadlines met — capacity that latency-bound providers structurally cannot use.</li>
+<li><strong>Our own software keeps compounding:</strong> a second optimisation round on the prototype engine (fusing compute kernels) measured 2.9× further throughput, moving it from ~14% to ~31% of the best hand-tuned reference on the same hardware — evidence the custom-software layer is deep, not a one-off.</li>
+<li><strong>Business phases:</strong> at half of incumbent list prices, modelled gross margins run 77% (day-1, rented GPUs) → 86% (hybrid fleet) → 90% (owned) → 94% (custom chip); each capex phase is gated by a volume milestone, not a bet.</li>
+</ul>
 <h2>4. Structure of the opportunity</h2>
 <ul>
 <li><strong>Target traffic:</strong> background/batch AI workloads (agents, pipelines) — a fast-growing token pool, latency-tolerant, and structurally suited to a high-utilisation fleet. Utilisation is one of the largest cost factors in this business, and queueable traffic makes high utilisation achievable by construction.</li>

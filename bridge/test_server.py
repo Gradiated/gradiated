@@ -66,6 +66,9 @@ class BridgeIntegrationTests(unittest.TestCase):
         (docs / "OVERNIGHT_REPORT_2026-07-12.md").write_text(
             "# Overnight decision report\n", encoding="utf-8"
         )
+        (docs / "WAKEUP_BRIEF_2026-07-12.md").write_text(
+            "# Wake-up brief\n", encoding="utf-8"
+        )
         (docs / "GLM_CO_DESIGN.md").write_text(
             "# GLM co-design dossier\n", encoding="utf-8"
         )
@@ -228,6 +231,7 @@ class BridgeIntegrationTests(unittest.TestCase):
 
     def test_codex_decision_dossier_routes_render(self):
         routes = {
+            "/codex/wakeup": b"Wake-up brief",
             "/codex/overnight": b"Overnight decision report",
             "/codex/glm": b"GLM co-design dossier",
             "/codex/business": b"Business validation dossier",

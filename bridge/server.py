@@ -125,6 +125,9 @@ class H(BaseHTTPRequestHandler):
     codex_overnight_path = os.path.join(
         CODEX_ROOT, "docs", "OVERNIGHT_REPORT_2026-07-12.md"
     )
+    codex_wakeup_path = os.path.join(
+        CODEX_ROOT, "docs", "WAKEUP_BRIEF_2026-07-12.md"
+    )
     codex_glm_path = os.path.join(CODEX_ROOT, "docs", "GLM_CO_DESIGN.md")
     codex_business_path = os.path.join(
         CODEX_ROOT, "docs", "BUSINESS_VALIDATION.md"
@@ -239,6 +242,7 @@ class H(BaseHTTPRequestHandler):
                 "text/html; charset=utf-8",
             )
         elif self.path in (
+            "/codex/wakeup",
             "/codex/overnight",
             "/codex/glm",
             "/codex/business",
@@ -247,6 +251,7 @@ class H(BaseHTTPRequestHandler):
             "/codex/hardware",
         ):
             path, label = {
+                "/codex/wakeup": (self.codex_wakeup_path, "Codex wake-up brief"),
                 "/codex/overnight": (self.codex_overnight_path, "Codex overnight report"),
                 "/codex/glm": (self.codex_glm_path, "Codex GLM dossier"),
                 "/codex/business": (self.codex_business_path, "Codex business dossier"),
@@ -384,6 +389,9 @@ def handler_for_roots(
     RootedHandler.codex_validation_path = os.path.join(codex_root, "validation", "README.md")
     RootedHandler.codex_overnight_path = os.path.join(
         codex_root, "docs", "OVERNIGHT_REPORT_2026-07-12.md"
+    )
+    RootedHandler.codex_wakeup_path = os.path.join(
+        codex_root, "docs", "WAKEUP_BRIEF_2026-07-12.md"
     )
     RootedHandler.codex_glm_path = os.path.join(codex_root, "docs", "GLM_CO_DESIGN.md")
     RootedHandler.codex_business_path = os.path.join(

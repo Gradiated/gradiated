@@ -53,7 +53,7 @@ cd /Users/js/dev/sartor/twin
 |---|---|
 | baseline | 16.60 |
 | CLA-2 retrofit, unhealed | **133,120** |
-| CLA-2 + healed (2000 steps) | TBD (running) |
+| CLA-2 + healed (2000 steps, 16.4M tokens) | **23.85** |
 | round-1 control (baseline + wikitext finetune, 1500 steps) | 14.64 |
 
 Unhealed CLA is catastrophic (ppl 133k ≈ random-ish attention for odd
@@ -68,8 +68,37 @@ steps = 16.4M tokens** (vs 1500 for head-prune healing) since the damage is
 orders of magnitude larger. Checkpoint + val every 250 steps. Curve:
 `experiments/results/twin/cla_healing_curve.json`.
 
-TBD: healing curve table, final healed ppl, comparison against control,
-verdict.
+Healing curve (val protocol as round 1; un-tuned baseline = 19.01 on it):
+
+| step | 0 | 250 | 500 | 750 | 1000 | 1250 | 1500 | 1750 | 2000 |
+|---|---|---|---|---|---|---|---|---|---|
+| val ppl | 142,127 | 30.29 | 24.22 | 22.78 | 22.57 | **22.16** | 22.72 | 23.35 | 23.64 |
+
+**Healing cost: 2000 steps / 16.4M tokens / 150.7 min wall** (MPS fp32,
+~1800-2000 tok/s). Best val was at step 1250; the tail of the schedule
+overfits the small train set (6.4 epochs) — future runs should keep the
+best-val checkpoint rather than the last (checkpoints are overwritten in
+this run, so the saved model is step-2000).
+
+### Verdict
+
+- **Recovery is real but partial**: 133k → 23.85 test ppl recovers ~4 nats
+  of the ~4.4-nat damage in one short wikitext finetune — the shared-KV
+  geometry is learnable post hoc; consumers re-aim their queries into the
+  producers' key space within ~250 steps (142k → 30).
+- **But the gap to quality parity is large**: +43.7% ppl vs baseline
+  (16.60), +63% vs the matched control (14.64). Compare round 1's head
+  pruning: +8.7% vs control. **A CLA retrofit is a much deeper surgery than
+  Q-head pruning** — as expected, since it invalidates half the layers'
+  attention geometry rather than removing redundant heads.
+- Not within the ~5% band that would justify engine-side integration now.
+  The curve was still shallowly improving mid-schedule and the healing
+  corpus is tiny (2.57M unique tokens) and off-distribution; plausible next
+  steps ranked by expected value: (1) KL-distillation from the unpruned
+  parent (targets the exact behaviour, avoids the domain-shift tax measured
+  in round 1's instruct sanity), (2) 10-50x more diverse healing tokens,
+  (3) gentler sharing (share K only, or share every 3rd layer), (4)
+  consumer-side learned linear adapter on shared K/V (cheap, engine-friendly).
 
 ## barge / engine note
 

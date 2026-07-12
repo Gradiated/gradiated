@@ -1,5 +1,28 @@
 # Sartor — Living Report & $/token Ledger
 
+## Morning summary — overnight run of 2026-07-12
+
+Completed overnight, all committed, all on this page's lab log:
+- **Real surgery science with matched controls** (the twin workstream corrected
+  our own optimism): int8-KV free (measured), mixed int4/int8 KV −33% bytes at
+  +1.65 ppl, head-prune honest cost +8.7% (not "better than baseline" — that
+  was domain adaptation, exposed by a control run), CLA retrofit learnable
+  (133k→23.85 ppl!) but +63% vs control → fails the ship gate at this scale;
+  granite MoE shows **no free expert locality** (needs routing-aware training).
+- **Verdict stability**: across three generations of priors (guessed →
+  optimistic-measured → twin-corrected), the co-design median stayed 3.85-4.07×;
+  final: **3.94× [P10 2.93, P90 5.04], P(≥3×)=88%**.
+- **Robustness round**: edge vs tuned Blackwell-era incumbents 3.80×; 3-year
+  incumbent-improvement erosion floor ~2.9×; consolidation confirmed negative;
+  wafer-SRAM rivals 11-76× off the cost pace.
+- **Fleet & business**: deferability alone = 1.78× (99% vs 56% utilization,
+  simulated demand), hybrid+spot = 2.27×; unit economics: 77%→94% gross margin
+  phase path at half-incumbent pricing, capex gated by volume milestones.
+- **Per-model MC league**: MiniMax-M2 7.0× median [P10 4.4], gpt-oss 5.9×,
+  Qwen3-235B 5.1×, GLM-5.2 4.1× — target the under-optimized models.
+- **Engine compounding measured**: fused-kernel round = 2.9× further (now ~31%
+  of llama.cpp's hand-tuned reference, from ~14%), parity green throughout.
+
 ## Executive summary (for the impatient)
 
 **Thesis tested**: per-model full-stack co-design — custom serving software, small

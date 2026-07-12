@@ -132,6 +132,12 @@ class H(BaseHTTPRequestHandler):
     codex_simulators_path = os.path.join(
         CODEX_ROOT, "docs", "SIMULATOR_LANDSCAPE.md"
     )
+    codex_decisions_path = os.path.join(
+        CODEX_ROOT, "docs", "OPTIMIZATION_DECISIONS.md"
+    )
+    codex_hardware_path = os.path.join(
+        CODEX_ROOT, "docs", "CUSTOM_HARDWARE_FEASIBILITY.md"
+    )
 
     def log_message(self, *a):
         pass
@@ -237,6 +243,8 @@ class H(BaseHTTPRequestHandler):
             "/codex/glm",
             "/codex/business",
             "/codex/simulators",
+            "/codex/decisions",
+            "/codex/hardware",
         ):
             path, label = {
                 "/codex/overnight": (self.codex_overnight_path, "Codex overnight report"),
@@ -245,6 +253,14 @@ class H(BaseHTTPRequestHandler):
                 "/codex/simulators": (
                     self.codex_simulators_path,
                     "Codex simulator landscape",
+                ),
+                "/codex/decisions": (
+                    self.codex_decisions_path,
+                    "Codex optimization decisions",
+                ),
+                "/codex/hardware": (
+                    self.codex_hardware_path,
+                    "Codex custom hardware feasibility audit",
                 ),
             }[self.path]
             self._send(
@@ -375,6 +391,12 @@ def handler_for_roots(
     )
     RootedHandler.codex_simulators_path = os.path.join(
         codex_root, "docs", "SIMULATOR_LANDSCAPE.md"
+    )
+    RootedHandler.codex_decisions_path = os.path.join(
+        codex_root, "docs", "OPTIMIZATION_DECISIONS.md"
+    )
+    RootedHandler.codex_hardware_path = os.path.join(
+        codex_root, "docs", "CUSTOM_HARDWARE_FEASIBILITY.md"
     )
     return RootedHandler
 

@@ -71,7 +71,7 @@
 
 <details><summary>What "surgery" means and what was measured</summary>
 <ul>
-<li><strong>Measured on real models today:</strong> compressing the model's short-term memory (the "KV cache") to 8-bit cost essentially zero quality (+0.06% on the standard quality metric). Cutting 33% of attention heads out of a real model and re-benchmarking it: our simulator predicted a 1.050× speedup; the measurement was 1.051×.</li>
+<li><strong>Measured on real models (with matched controls):</strong> 8-bit KV-cache compression is free (+0.01 perplexity); a mixed 4-/8-bit per-layer plan cuts KV memory a further 33% for +1.65 perplexity. Cutting 33% of attention heads: simulator predicted 1.050× speedup, measured 1.051×; after re-training, the honest quality cost (vs an identically-finetuned unmodified control) is +8.7% perplexity at this small scale — above our ship gate, informative for the healing-recipe design (distillation + deployment-matched data next).</li>
 <li><strong>Strong precedent:</strong> one frontier lab (Moonshot/Kimi) already ships its flagship model in 4-bit weights — the industry accepts these techniques.</li>
 <li><strong>Still to prove:</strong> the more ambitious changes (sharing memory between layers, rerouting the model's internal "experts") need a proper re-training and evaluation campaign on a mid-size model (~$50k of compute) before we'd claim them.</li>
 </ul>
@@ -139,7 +139,7 @@
 <ul>
 <li>Our Rust engine vs vLLM (the industry-standard open-source server), identical hardware/model/workload: <strong>2.1× faster</strong> (525 vs 246 tokens/sec output).</li>
 <li>Simulator accuracy: +2.7% on the model it was tuned on; +10.0% and +10.2% on two models it had never seen (out-of-sample); prediction of a real surgery's speed effect: 1.050× predicted vs 1.051× measured.</li>
-<li>Real-weights surgery: 8-bit KV cache lossless (+0.06% perplexity); global 4-bit KV harmful (+26%) — so per-layer selectivity is required; head-pruning destroys quality <em>before</em> healing (perplexity 16.6→82.5), demonstrating that the re-training step is where all the value lives.</li>
+<li>Real-weights surgery (matched-control methodology): int8 KV free (+0.012 ppl); per-layer int4/int8 mix −33% KV bytes at +1.65 ppl; head-prune healed 15.91 vs control 14.64 (+8.7% honest cost); cross-layer KV-sharing retrofit recovered from ppl 133,120 to 23.85 by healing (learnable) but +63% vs control — fails the ship gate at this scale/recipe; expert routing in a balanced-trained MoE shows no free locality (Gini 0.28). Priors updated bidirectionally; headline verdict stable (median 3.94×).</li>
 <li>Monte-Carlo verdict (1,000 samples, individual optimisations allowed to fail): co-design median 3.91× [10th pct 2.98, 90th pct 5.17]; P(≥3×)=0.90; the surgically-modified model needs a cheaper chip in 98% of samples.</li>
 <li>Anchors: DeepSeek's published production throughput (H800 GPUs) and SGLang's published GB200 benchmark are both consistent with the simulator under one explicit realisation factor (0.73) and a fleet duty factor (~0.53).</li>
 </ul>

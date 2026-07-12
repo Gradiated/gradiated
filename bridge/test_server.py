@@ -75,6 +75,12 @@ class BridgeIntegrationTests(unittest.TestCase):
         (docs / "SIMULATOR_LANDSCAPE.md").write_text(
             "# Simulator landscape\n", encoding="utf-8"
         )
+        (docs / "OPTIMIZATION_DECISIONS.md").write_text(
+            "# Model-specific optimization decisions\n", encoding="utf-8"
+        )
+        (docs / "CUSTOM_HARDWARE_FEASIBILITY.md").write_text(
+            "# Custom hardware feasibility audit\n", encoding="utf-8"
+        )
 
         handler = server.handler_for_roots(
             bridge_root=str(self.bridge_root),
@@ -226,6 +232,8 @@ class BridgeIntegrationTests(unittest.TestCase):
             "/codex/glm": b"GLM co-design dossier",
             "/codex/business": b"Business validation dossier",
             "/codex/simulators": b"Simulator landscape",
+            "/codex/decisions": b"Model-specific optimization decisions",
+            "/codex/hardware": b"Custom hardware feasibility audit",
         }
         for route, expected in routes.items():
             status, body, headers = self.request(route)

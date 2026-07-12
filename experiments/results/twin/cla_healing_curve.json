@@ -1,0 +1,61 @@
+{
+  "steps": 2000,
+  "batch": 8,
+  "seq": 1024,
+  "lr": 0.0001,
+  "lr_min": 1e-05,
+  "warmup": 100,
+  "tokens_seen": 16384000,
+  "wall_seconds": 9042.2,
+  "device": "mps",
+  "dtype": "float32",
+  "src": "/Users/js/dev/sartor/models/smollm2-135m-instruct",
+  "dst": "/Users/js/dev/sartor/models/smollm2-135m-cla2-healed",
+  "curve": [
+    {
+      "step": 0,
+      "val_ppl": 142126.8562,
+      "wall_s": 14.7
+    },
+    {
+      "step": 250,
+      "val_ppl": 30.2876,
+      "wall_s": 1284.0
+    },
+    {
+      "step": 500,
+      "val_ppl": 24.2209,
+      "wall_s": 2207.5
+    },
+    {
+      "step": 750,
+      "val_ppl": 22.7788,
+      "wall_s": 3171.7
+    },
+    {
+      "step": 1000,
+      "val_ppl": 22.5712,
+      "wall_s": 4016.9
+    },
+    {
+      "step": 1250,
+      "val_ppl": 22.158,
+      "wall_s": 5469.4
+    },
+    {
+      "step": 1500,
+      "val_ppl": 22.7223,
+      "wall_s": 6606.7
+    },
+    {
+      "step": 1750,
+      "val_ppl": 23.345,
+      "wall_s": 7832.2
+    },
+    {
+      "step": 2000,
+      "val_ppl": 23.6377,
+      "wall_s": 9041.5
+    }
+  ]
+}

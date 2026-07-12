@@ -122,6 +122,13 @@ class H(BaseHTTPRequestHandler):
         CODEX_ROOT, "experiments", "qwen3-8b", "README.md"
     )
     codex_validation_path = os.path.join(CODEX_ROOT, "validation", "README.md")
+    codex_overnight_path = os.path.join(
+        CODEX_ROOT, "docs", "OVERNIGHT_REPORT_2026-07-12.md"
+    )
+    codex_glm_path = os.path.join(CODEX_ROOT, "docs", "GLM_CO_DESIGN.md")
+    codex_business_path = os.path.join(
+        CODEX_ROOT, "docs", "BUSINESS_VALIDATION.md"
+    )
 
     def log_message(self, *a):
         pass
@@ -220,6 +227,17 @@ class H(BaseHTTPRequestHandler):
             self._send(
                 200,
                 render_markdown(self.codex_validation_path, "Codex validation"),
+                "text/html; charset=utf-8",
+            )
+        elif self.path in ("/codex/overnight", "/codex/glm", "/codex/business"):
+            path, label = {
+                "/codex/overnight": (self.codex_overnight_path, "Codex overnight report"),
+                "/codex/glm": (self.codex_glm_path, "Codex GLM dossier"),
+                "/codex/business": (self.codex_business_path, "Codex business dossier"),
+            }[self.path]
+            self._send(
+                200,
+                render_markdown(path, label),
                 "text/html; charset=utf-8",
             )
         elif self.path == "/api/state":
@@ -336,6 +354,13 @@ def handler_for_roots(
         codex_root, "experiments", "qwen3-8b", "README.md"
     )
     RootedHandler.codex_validation_path = os.path.join(codex_root, "validation", "README.md")
+    RootedHandler.codex_overnight_path = os.path.join(
+        codex_root, "docs", "OVERNIGHT_REPORT_2026-07-12.md"
+    )
+    RootedHandler.codex_glm_path = os.path.join(codex_root, "docs", "GLM_CO_DESIGN.md")
+    RootedHandler.codex_business_path = os.path.join(
+        codex_root, "docs", "BUSINESS_VALIDATION.md"
+    )
     return RootedHandler
 
 if __name__ == "__main__":

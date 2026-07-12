@@ -66,8 +66,62 @@ NOT REVERTED.
 
 ## Results
 
-(interleaved A/B results inserted below)
+### Interleaved A/B, SmolLM2-135M f16 Metal (output tok/s)
 
-## Ladder re-run
+| round | base (HEAD) | +rope (s1) | +scatter cache (s12) | +f16 softmax (full) |
+|---|---|---|---|---|
+| 1 | 515.2 | 988.3 | 1829.9 | 1502.3 |
+| 2 | 512.3 | 823.6 | 839.1 | 996.5 |
+| 3 | 385.9 | 1458.6 | 2271.9 | 2255.6 |
+| **median** | **512.3** | **988.3** | **1829.9** | **1502.3** |
 
-(ladder results inserted below)
+Per-round speedups vs base (immune to slow load drift within a round):
+
+| round | s1/base | s12/base | full/base | s12/s1 | full/s12 |
+|---|---|---|---|---|---|
+| 1 | 1.92x | 3.55x | 2.92x | 1.85x | 0.82x |
+| 2 | 1.61x | 1.64x | 1.94x | 1.02x | 1.19x |
+| 3 | 3.78x | 5.89x | 5.84x | 1.56x | 0.99x |
+| **median** | **1.92x** | **3.55x** | **2.92x** | **1.56x** | **0.99x** |
+
+Read: fused RoPE ≈ **1.9x**, scatter-index cache ≈ a further **1.6x**,
+f16 softmax ≈ **neutral within noise (0.99x median)** — kept anyway (2 fewer
+dispatches/layer, no parity cost; it never hurts outside noise).
+Combined median **~2.9x**; the least-loaded round shows **5.8x** (386 → 2,256).
+
+Best observed absolute (round 3, load momentarily low): **2,256 tok/s** vs
+llama.cpp reference **7,186 tok/s** → barge now at **~31% of llama.cpp**
+(was ~14–17% at the unloaded 977–1,244 baseline; a quiet-machine rerun is
+needed for a clean absolute).
+
+### Probe deltas (b=64; caution: after-probe ran under much heavier ambient load — dispatch floor 7.0 → 48.2 us)
+
+| op | before | after |
+|---|---|---|
+| FULL decode step (all layers) | 45,062 us | **27,628 us** (−39% despite ~7x higher ambient load) |
+| kv write_decode (1 layer) | 433 us | 805 us (isolated-op probe defeats the per-step cache; in-engine cost is paid once per 30 layers) |
+| softmax (decode dtype path) | 71.4 us (f32) | 18.9 us |
+| lm_head GEMM | 616 us | 609 us (unchanged, as expected) |
+
+## Ladder re-run (2026-07-12, sibling MPS training active — numbers load-suppressed; compare timestamps, not absolutes)
+
+3-run medians; median-run JSON rows appended to experiments/results/ladder.jsonl:
+
+| model | params | prior row (unloaded) | this run (loaded) |
+|---|---|---|---|
+| smollm2-135m-instruct | n=128, in/out=128, slots=72 | — (baseline quote 977–1,244) | 585.0 [579.1, 585.0, 602.5] |
+| qwen2.5-0.5b-instruct | n=128, in/out=128, slots=72 | 965.9 | 509.8 [504.4, 509.8, 515.5] |
+| qwen3-4b-instruct | n=48, in/out=128, slots=24, ctx=1024 | 112.5 | 119.0 first run; later runs >10 min each under load (prior row: 55 s wall) |
+
+The ladder deltas are not interpretable this session: the interleaved A/B above
+is the controlled result. Re-run the ladder on a quiet machine before quoting
+absolutes.
+
+## Verdict
+
+- Fused RoPE: **kept** (median 1.9x, parity 6/6).
+- Scatter-index cache: **kept** (median 1.56x on top, parity 6/6).
+- f16 decode softmax: **kept** (0.99x median — neutral, not reverted; parity
+  6/6, Metal f16 generation coherent and batch-invariant, Metal kernel
+  accumulates exp-sum in f32).
+- No reverted steps.

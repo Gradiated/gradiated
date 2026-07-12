@@ -61,6 +61,17 @@ class BridgeIntegrationTests(unittest.TestCase):
             json.dumps({"status": "measured"}), encoding="utf-8"
         )
         (validation / "README.md").write_text("# Validation report\n", encoding="utf-8")
+        docs = self.codex_root / "docs"
+        docs.mkdir()
+        (docs / "OVERNIGHT_REPORT_2026-07-12.md").write_text(
+            "# Overnight decision report\n", encoding="utf-8"
+        )
+        (docs / "GLM_CO_DESIGN.md").write_text(
+            "# GLM co-design dossier\n", encoding="utf-8"
+        )
+        (docs / "BUSINESS_VALIDATION.md").write_text(
+            "# Business validation dossier\n", encoding="utf-8"
+        )
 
         handler = server.handler_for_roots(
             bridge_root=str(self.bridge_root),
@@ -205,6 +216,18 @@ class BridgeIntegrationTests(unittest.TestCase):
         status, body, _ = self.request("/codex/validation")
         self.assertEqual(status, 200)
         self.assertIn(b"not available", body.lower())
+
+    def test_codex_decision_dossier_routes_render(self):
+        routes = {
+            "/codex/overnight": b"Overnight decision report",
+            "/codex/glm": b"GLM co-design dossier",
+            "/codex/business": b"Business validation dossier",
+        }
+        for route, expected in routes.items():
+            status, body, headers = self.request(route)
+            self.assertEqual(status, 200)
+            self.assertIn(expected, body)
+            self.assertIn("text/html", headers["Content-Type"])
 
     def test_existing_claude_prompt_route_still_uses_only_claude_inbox(self):
         codex_before = (self.codex_root / "dashboard" / "inbox.jsonl").read_bytes()

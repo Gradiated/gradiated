@@ -72,6 +72,9 @@ class BridgeIntegrationTests(unittest.TestCase):
         (docs / "BUSINESS_VALIDATION.md").write_text(
             "# Business validation dossier\n", encoding="utf-8"
         )
+        (docs / "SIMULATOR_LANDSCAPE.md").write_text(
+            "# Simulator landscape\n", encoding="utf-8"
+        )
 
         handler = server.handler_for_roots(
             bridge_root=str(self.bridge_root),
@@ -222,6 +225,7 @@ class BridgeIntegrationTests(unittest.TestCase):
             "/codex/overnight": b"Overnight decision report",
             "/codex/glm": b"GLM co-design dossier",
             "/codex/business": b"Business validation dossier",
+            "/codex/simulators": b"Simulator landscape",
         }
         for route, expected in routes.items():
             status, body, headers = self.request(route)

@@ -129,6 +129,9 @@ class H(BaseHTTPRequestHandler):
     codex_business_path = os.path.join(
         CODEX_ROOT, "docs", "BUSINESS_VALIDATION.md"
     )
+    codex_simulators_path = os.path.join(
+        CODEX_ROOT, "docs", "SIMULATOR_LANDSCAPE.md"
+    )
 
     def log_message(self, *a):
         pass
@@ -229,11 +232,20 @@ class H(BaseHTTPRequestHandler):
                 render_markdown(self.codex_validation_path, "Codex validation"),
                 "text/html; charset=utf-8",
             )
-        elif self.path in ("/codex/overnight", "/codex/glm", "/codex/business"):
+        elif self.path in (
+            "/codex/overnight",
+            "/codex/glm",
+            "/codex/business",
+            "/codex/simulators",
+        ):
             path, label = {
                 "/codex/overnight": (self.codex_overnight_path, "Codex overnight report"),
                 "/codex/glm": (self.codex_glm_path, "Codex GLM dossier"),
                 "/codex/business": (self.codex_business_path, "Codex business dossier"),
+                "/codex/simulators": (
+                    self.codex_simulators_path,
+                    "Codex simulator landscape",
+                ),
             }[self.path]
             self._send(
                 200,
@@ -360,6 +372,9 @@ def handler_for_roots(
     RootedHandler.codex_glm_path = os.path.join(codex_root, "docs", "GLM_CO_DESIGN.md")
     RootedHandler.codex_business_path = os.path.join(
         codex_root, "docs", "BUSINESS_VALIDATION.md"
+    )
+    RootedHandler.codex_simulators_path = os.path.join(
+        codex_root, "docs", "SIMULATOR_LANDSCAPE.md"
     )
     return RootedHandler
 

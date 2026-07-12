@@ -111,7 +111,7 @@ needed for a clean absolute).
 |---|---|---|---|
 | smollm2-135m-instruct | n=128, in/out=128, slots=72 | — (baseline quote 977–1,244) | 585.0 [579.1, 585.0, 602.5] |
 | qwen2.5-0.5b-instruct | n=128, in/out=128, slots=72 | 965.9 | 509.8 [504.4, 509.8, 515.5] |
-| qwen3-4b-instruct | n=48, in/out=128, slots=24, ctx=1024 | 112.5 | 119.0 first run; later runs >10 min each under load (prior row: 55 s wall) |
+| qwen3-4b-instruct | n=48, in/out=128, slots=24, ctx=1024 | 112.5 | 121.7 [119.0, 121.7 — 2 runs; run 3 abandoned after >20 min under load (prior row: 55 s wall)] |
 
 The ladder deltas are not interpretable this session: the interleaved A/B above
 is the controlled result. Re-run the ladder on a quiet machine before quoting

@@ -42,3 +42,16 @@ two explicit factors rather than hidden tuning:
 3. Prefill modeled GPU-local (no EP sharding of prefill).
 4. Quality effects of model surgery are evidence-tiered, not yet all measured
    (twin workstream running).
+
+
+## Quality-adjusted objective (policy)
+
+Surgery levers are gated, not discounted: a lever ships only if it passes the
+eval suite at ≤0.5% aggregate quality regression (perplexity + instruct suite;
+agentic benchmarks at scale). Levers that pass are priced at full value; levers
+that fail are dropped — this is exactly the lever-survival modeling in the
+Monte Carlo, so no additional quality discount is applied to $/Mtok. The one
+residual risk this leaves: eval suites under-measuring real-workload quality.
+Mitigation: per-customer shadow evals before cutover (serve x% of traffic on
+the surgered model, compare outcomes), which the serving layer supports by
+construction (same API, model variant routing).

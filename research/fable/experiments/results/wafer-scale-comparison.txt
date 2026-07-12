@@ -1,0 +1,7 @@
+provider-best H800 baseline:        $ 0.285/Mtok
+wafer-SRAM 22x (batch 13):          $ 3.301/Mtok  (11893 tok/s/wafer)
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+our co-designed HBM ASIC (batch 226): $ 0.044/Mtok  (5384 tok/s/chip)
+
+wafer-SRAM vs ours: 76x more expensive per token
+wafer at $625k + 4x KV room:        $ 0.486/Mtok  — still 11x ours

@@ -1,0 +1,49 @@
+case                                        S      H    S+H  synergy
+    fitted ASIC: 7 HBM stacks (168GB, 8.4TB/s, $19600/unit) batch 107
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+baseline (as studied)                   1.84x  3.12x  6.54x    1.14
+    fitted ASIC: 7 HBM stacks (168GB, 8.4TB/s, $19600/unit) batch 107
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+EP imbalance 1.4 (better EPLB)          1.87x  2.71x  5.68x    1.12
+    fitted ASIC: 7 HBM stacks (168GB, 8.4TB/s, $19600/unit) batch 107
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+EP imbalance 2.2 (worse)                1.81x  3.53x  7.39x    1.16
+    fitted ASIC: 7 HBM stacks (168GB, 8.4TB/s, $19600/unit) batch 107
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+comm overlap 0.6 (worse)                1.86x  3.26x  6.83x    1.13
+    fitted ASIC: 7 HBM stacks (168GB, 8.4TB/s, $19600/unit) batch 107
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+H800 kernels better (0.7/0.7)           1.87x  2.96x  6.21x    1.12
+    fitted ASIC: 6 HBM stacks (144GB, 7.2TB/s, $17800/unit) batch 75
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 225
+cache hit 0.80                          1.80x  3.13x  6.45x    1.14
+    fitted ASIC: 7 HBM stacks (168GB, 8.4TB/s, $19600/unit) batch 107
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+cache hit 0.95                          1.95x  3.36x  6.89x    1.05
+    fitted ASIC: 7 HBM stacks (168GB, 8.4TB/s, $19600/unit) batch 107
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+locality weak 0.8 (granite evidence)    1.79x  3.12x  6.51x    1.16
+    fitted ASIC: 7 HBM stacks (168GB, 8.4TB/s, $19600/unit) batch 107
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 120
+no CLA latent share (fails heal)        1.74x  3.12x  6.33x    1.17
+    fitted ASIC: 7 HBM stacks (168GB, 8.4TB/s, $19600/unit) batch 107
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+no head prune (fails heal)              1.72x  3.12x  5.92x    1.10
+    fitted ASIC: 7 HBM stacks (168GB, 8.4TB/s, $19600/unit) batch 107
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+HBM stack $2.5k                         1.84x  2.53x  5.52x    1.19
+    fitted ASIC: 7 HBM stacks (168GB, 8.4TB/s, $19600/unit) batch 107
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+die+board $10k (NRE @20k units)         1.84x  2.73x  5.46x    1.09
+    fitted ASIC: 7 HBM stacks (168GB, 8.4TB/s, $19600/unit) batch 107
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+ASIC kernels only GPU-grade             1.84x  2.62x  5.38x    1.12
+    fitted ASIC: 7 HBM stacks (168GB, 8.4TB/s, $19600/unit) batch 107
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+ASIC util 0.7 (not 0.85)                1.84x  2.60x  5.44x    1.14
+    fitted ASIC: 7 HBM stacks (168GB, 8.4TB/s, $19600/unit) batch 107
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+ASIC fabric 100GB/s only                1.84x  3.09x  6.48x    1.14
+
+co-design gain range: 5.4x - 7.4x (base 6.5x)
+synergy range:        1.05 - 1.19 (base 1.14)

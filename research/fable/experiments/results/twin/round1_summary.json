@@ -1,0 +1,217 @@
+{
+  "date": "2026-07-11",
+  "granite_routing": {
+    "corpus_tokens": 198656,
+    "wiki_tokens": 149504,
+    "code_tokens": 49152,
+    "gini_mean": 0.2844,
+    "gini_range": [
+      0.1965,
+      0.533
+    ],
+    "hot_set_80_mean": 20.2,
+    "hot_set_95_mean": 28.2,
+    "G4_frac_tokens_gt1_group": 0.9925,
+    "G4_mean_groups_per_token": 2.868,
+    "G8_mean_groups_per_token": 4.24,
+    "hot80_jaccard_wiki_vs_code": 0.611,
+    "verdict": "load-balanced routing; no exploitable expert locality in granite-1b-a400m"
+  },
+  "smollm2_surgery": {
+    "ppl_protocol": "wikitext-2 test, window 1024, stride 512, fp32",
+    "baseline_ppl": 16.595,
+    "pruned_unhealed_ppl": 82.478,
+    "pruned_healed_ppl": 15.908,
+    "params_m": {
+      "baseline": 134.52,
+      "pruned": 127.88
+    },
+    "healing": {
+      "steps": 1500,
+      "tokens": 12288000,
+      "wall_minutes": 123.9,
+      "curve": [
+        {
+          "step": 0,
+          "val_ppl": 101.2483,
+          "wall_s": 27.1
+        },
+        {
+          "step": 250,
+          "val_ppl": 15.8126,
+          "wall_s": 1422.6
+        },
+        {
+          "step": 500,
+          "val_ppl": 15.2557,
+          "wall_s": 2458.0
+        },
+        {
+          "step": 750,
+          "val_ppl": 15.3531,
+          "wall_s": 3478.3
+        },
+        {
+          "step": 1000,
+          "val_ppl": 15.7891,
+          "wall_s": 5116.0
+        },
+        {
+          "step": 1250,
+          "val_ppl": 15.7351,
+          "wall_s": 6529.7
+        },
+        {
+          "step": 1500,
+          "val_ppl": 16.1461,
+          "wall_s": 7431.6
+        }
+      ],
+      "note": "converged by step 500 (~4M tokens); healed beats baseline via wikitext domain adaptation; matched control run for honest surgery cost",
+      "baseline_val_protocol_ppl": 19.014
+    },
+    "control_ppl": 14.636,
+    "honest_surgery_cost_ppl": 1.272,
+    "control_curve": [
+      {
+        "step": 0,
+        "val_ppl": 19.0143,
+        "wall_s": 13.0
+      },
+      {
+        "step": 250,
+        "val_ppl": 13.5727,
+        "wall_s": 878.9
+      },
+      {
+        "step": 500,
+        "val_ppl": 13.53,
+        "wall_s": 2350.7
+      },
+      {
+        "step": 750,
+        "val_ppl": 13.9226,
+        "wall_s": 3597.0
+      },
+      {
+        "step": 1000,
+        "val_ppl": 14.4941,
+        "wall_s": 19336.1
+      },
+      {
+        "step": 1250,
+        "val_ppl": 14.4563,
+        "wall_s": 26884.6
+      },
+      {
+        "step": 1500,
+        "val_ppl": 14.9331,
+        "wall_s": 27851.7
+      }
+    ],
+    "instruct_sanity": {
+      "verdict": "FAIL vs baseline: fluent but lost chat behaviour (wikitext register, @-@ artifacts, repetition); healing data must match deployment distribution",
+      "file": "instruct_sanity.json"
+    }
+  },
+  "barge_throughput": {
+    "smollm2-135m-instruct": {
+      "runs": 3,
+      "output_tok_per_s": [
+        1248.0,
+        1240.5,
+        1243.6
+      ],
+      "output_tok_per_s_mean": 1244.1,
+      "total_tok_per_s_mean": 2488.2,
+      "wall_s_mean": 13.17
+    },
+    "smollm2-135m-pruned-h6": {
+      "runs": 3,
+      "output_tok_per_s": [
+        1305.8,
+        1313.6,
+        1305.2
+      ],
+      "output_tok_per_s_mean": 1308.2,
+      "total_tok_per_s_mean": 2616.4,
+      "wall_s_mean": 12.52
+    },
+    "speedup_output_tok_per_s": 1.0515,
+    "cmd": "barge bench --model <dir> --device metal --dtype f16 --num-requests 128 --input-len 128 --output-len 128 --max-slots 72"
+  },
+  "kv_sensitivity": {
+    "baseline_ppl": 19.695441250381936,
+    "all_int8_ppl": 19.707785711035132,
+    "all_int4_ppl": 24.815913521253425,
+    "single_layer_int4_delta": {
+      "0": -0.0053,
+      "1": 0.2791,
+      "2": 0.1307,
+      "3": 0.0733,
+      "4": 0.0541,
+      "5": 0.0378,
+      "6": 0.035,
+      "7": 0.0419,
+      "8": 0.023,
+      "9": 0.1109,
+      "10": 0.1457,
+      "11": 0.1366,
+      "12": 0.1743,
+      "13": 0.1903,
+      "14": 0.0895,
+      "15": 0.0779,
+      "16": 0.3021,
+      "17": 0.1184,
+      "18": 0.1478,
+      "19": 0.4435,
+      "20": 0.0866,
+      "21": 0.0532,
+      "22": 0.1563,
+      "23": 0.1859,
+      "24": 0.0887,
+      "25": 0.1127,
+      "26": 0.1182,
+      "27": 0.1523,
+      "28": 0.0646,
+      "29": 0.045
+    },
+    "ranking_most_tolerant_first": [
+      0,
+      8,
+      6,
+      5,
+      7,
+      29,
+      21,
+      4,
+      28,
+      3,
+      15,
+      20,
+      24,
+      14,
+      9,
+      25,
+      26,
+      17,
+      2,
+      11,
+      10,
+      18,
+      27,
+      22,
+      12,
+      23,
+      13,
+      1,
+      16,
+      19
+    ],
+    "mixed_20xint4_10xint8": {
+      "ppl": 21.349101254182198,
+      "delta": 1.6537,
+      "kv_bytes_vs_all_int8": 0.6667
+    }
+  }
+}

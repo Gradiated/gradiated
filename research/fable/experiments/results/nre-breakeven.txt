@@ -1,0 +1,15 @@
+(all $/Mtok at realization 0.73; provider-best 0.390, surgery-on-rented 0.214)
+fleet size    NRE $100M    NRE $250M    NRE $500M
+      1000      0.501✗      1.161✗      2.259✗
+      2500      0.238✗      0.501✗      0.941✗
+      5000      0.150✓      0.282✗      0.501✗
+     10000      0.106✓      0.172✓      0.282✗
+     25000      0.080✓      0.106✓      0.150✓
+     50000      0.071✓      0.084✓      0.106✓
+    100000      0.066✓      0.073✓      0.084✓
+
+per chip: 0.3B tok/day -> 5,000 chips ≈ 1T tok/day
+(DeepSeek disclosed ~ hundreds of B tok/day across their fleet, for scale)
+NRE $100M: ASIC beats surgery-on-rented at fleet >= 2,898 chips
+NRE $250M: ASIC beats surgery-on-rented at fleet >= 7,245 chips
+NRE $500M: ASIC beats surgery-on-rented at fleet >= 14,489 chips

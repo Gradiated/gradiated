@@ -1,0 +1,64 @@
+Loading weights:   0%|          | 0/272 [00:00<?, ?it/s]Loading weights: 100%|██████████| 272/272 [00:00<00:00, 32571.54it/s]
+CLA applied: 131.20M params
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (2568237 > 8192). Running this sequence through the model will result in indexing errors
+train tokens=2568237 windows=2508
+{"step": 0, "val_ppl": 142126.8562, "wall_s": 14.7}
+step 50 loss 8.4242 lr 5.00e-05 1923 tok/s
+step 100 loss 5.3623 lr 1.00e-04 1521 tok/s
+step 150 loss 4.1696 lr 9.99e-05 1726 tok/s
+step 200 loss 3.7720 lr 9.94e-05 1511 tok/s
+step 250 loss 3.5329 lr 9.86e-05 1616 tok/s
+{"step": 250, "val_ppl": 30.2876, "wall_s": 1284.0}
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:02<00:00,  2.75s/it]Writing model shards: 100%|██████████| 1/1 [00:02<00:00,  2.75s/it]
+step 300 loss 3.4581 lr 9.76e-05 1678 tok/s
+step 350 loss 3.2738 lr 9.62e-05 1748 tok/s
+step 400 loss 3.2229 lr 9.46e-05 1802 tok/s
+step 450 loss 3.1657 lr 9.27e-05 1850 tok/s
+step 500 loss 3.1608 lr 9.06e-05 1867 tok/s
+{"step": 500, "val_ppl": 24.2209, "wall_s": 2207.5}
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.28it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.28it/s]
+step 550 loss 3.1521 lr 8.82e-05 1818 tok/s
+step 600 loss 3.1077 lr 8.55e-05 1848 tok/s
+step 650 loss 3.0016 lr 8.27e-05 1883 tok/s
+step 700 loss 2.8905 lr 7.97e-05 1918 tok/s
+step 750 loss 2.9117 lr 7.65e-05 1946 tok/s
+{"step": 750, "val_ppl": 22.7788, "wall_s": 3171.7}
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it]Writing model shards: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it]
+step 800 loss 2.8647 lr 7.31e-05 1962 tok/s
+step 850 loss 2.8950 lr 6.97e-05 1986 tok/s
+step 900 loss 2.8886 lr 6.61e-05 2006 tok/s
+step 950 loss 2.8389 lr 6.25e-05 2027 tok/s
+step 1000 loss 2.7069 lr 5.88e-05 2046 tok/s
+{"step": 1000, "val_ppl": 22.5712, "wall_s": 4016.9}
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:01<00:00,  1.11s/it]Writing model shards: 100%|██████████| 1/1 [00:01<00:00,  1.11s/it]
+step 1050 loss 2.6851 lr 5.51e-05 1995 tok/s
+step 1100 loss 2.7248 lr 5.14e-05 1947 tok/s
+step 1150 loss 2.7230 lr 4.77e-05 1911 tok/s
+step 1200 loss 2.6998 lr 4.40e-05 1895 tok/s
+step 1250 loss 2.7038 lr 4.05e-05 1881 tok/s
+{"step": 1250, "val_ppl": 22.158, "wall_s": 5469.4}
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.10it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.10it/s]
+step 1300 loss 2.5681 lr 3.70e-05 1862 tok/s
+step 1350 loss 2.5953 lr 3.36e-05 1859 tok/s
+step 1400 loss 2.5725 lr 3.04e-05 1857 tok/s
+step 1450 loss 2.6051 lr 2.74e-05 1856 tok/s
+step 1500 loss 2.5877 lr 2.46e-05 1864 tok/s
+{"step": 1500, "val_ppl": 22.7223, "wall_s": 6606.7}
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.28it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.28it/s]
+step 1550 loss 2.5810 lr 2.19e-05 1870 tok/s
+step 1600 loss 2.5228 lr 1.95e-05 1864 tok/s
+step 1650 loss 2.4896 lr 1.74e-05 1856 tok/s
+step 1700 loss 2.5051 lr 1.55e-05 1846 tok/s
+step 1750 loss 2.4901 lr 1.38e-05 1836 tok/s
+{"step": 1750, "val_ppl": 23.345, "wall_s": 7832.2}
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.38it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.38it/s]
+step 1800 loss 2.5022 lr 1.25e-05 1821 tok/s
+step 1850 loss 2.5028 lr 1.14e-05 1816 tok/s
+step 1900 loss 2.4939 lr 1.06e-05 1814 tok/s
+step 1950 loss 2.4522 lr 1.02e-05 1814 tok/s
+step 2000 loss 2.4179 lr 1.00e-05 1816 tok/s
+{"step": 2000, "val_ppl": 23.6377, "wall_s": 9041.5}
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.52it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.52it/s]
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.94it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.94it/s]
+wrote /Users/js/dev/sartor/experiments/results/twin/cla_healing_curve.json
+healing wall time: 150.7 min; saved to /Users/js/dev/sartor/models/smollm2-135m-cla2-healed

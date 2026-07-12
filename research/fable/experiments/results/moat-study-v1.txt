@@ -1,0 +1,12 @@
+=== GLM-5.2 moat study (agent workload 8k/400, cache 0.90) ===
+B    provider-best generic (H800, SGLang-class)               2060 tok/s/GPU  $0.285/Mtok  batch 75
+B+S  + model surgery w/ healing (same rented H800s)           3781 tok/s/GPU  $0.156/Mtok  batch 289
+B+H  + fitted family ASIC, vanilla model                      2895 tok/s/GPU  $0.080/Mtok  batch 93
+B+S+H co-designed: surgered model on fitted ASIC              5482 tok/s/GPU  $0.042/Mtok  batch 383
+
+gain(surgery only)   = 1.84x
+gain(hardware only)  = 3.57x
+gain(co-designed)    = 6.76x
+synergy = joint / (s*h) = 1.03  (>1 => super-additive moat)
+
+moat vs generic-on-rented: co-designed is 6.8x cheaper; surgery alone (no silicon) 1.8x

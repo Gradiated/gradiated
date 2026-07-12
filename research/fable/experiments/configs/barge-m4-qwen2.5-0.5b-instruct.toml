@@ -1,0 +1,60 @@
+# barge on M4 Pro Metal serving SmolLM2-135M f16 — the primary calibration
+# config. Every number annotated with its measurement source (2026-07-11).
+
+[model]
+name = "qwen2.5-0.5b-instruct"
+layers = 24
+hidden = 896
+heads = 14
+kv_heads = 2
+head_dim = 64
+intermediate = 4864
+vocab = 151936
+tied_embeddings = true
+attention = "gqa"
+ffn = "dense"
+weight_bytes = 2.0
+kv_bytes = 2.0
+
+[hardware]
+name = "m4-pro-metal"
+tflops = 9.2        # M4 Pro 20-core GPU peak f16 (est.; f16==f32 rate on Apple)
+mem_bw_gbs = 273.0  # LPDDR5X unified
+mem_capacity_gb = 36.0 # GPU-usable share of 48
+dispatch_us = 15.0  # probe: dispatch floor 11.7us (b=1) - 19.1us (b=64)
+step_sync_us = 600.0 # probe: logits-to-host 117us(b=1)-717us(b=64) incl. flush
+tdp_w = 45.0        # GPU package power under load (est.)
+unit_cost_usd = 2000.0 # M4 Pro Mac mini class
+
+[kernel]
+name = "candle-metal-unfused"
+dispatches_per_layer = 25.0 # rope chains ~14, gemms 4, attn 4, norms 2, kv write 1
+dispatches_fixed = 10.0
+gemm_peak_efficiency = 0.56       # probe: lm_head 3.6GFLOP/768us at 3.1M cells
+gemm_occupancy_half_cells = 2.0e5 # probe: qkv GEMM 15% of peak at 110k cells
+attn_bw_efficiency = 0.42 # probe: qk+av 220us vs 92us roofline at b=64,l=512
+unfused_activation_traffic = 0.3
+
+[serving]
+name = "barge"
+max_batch = 64
+prefill_chunk = 512
+sched_overhead_us = 30.0
+per_token_host_us = 2.0   # CPU sampling + channel send
+prefix_cache_hit = 0.0
+
+[serving.sampling.host]
+logits_copy = true
+
+[workload]
+name = "synthetic-128x128-n256"
+num_requests = 128
+input_len = 128
+output_len = 128
+
+[cost]
+amortization_months = 36.0
+utilization = 0.7
+power_usd_per_kwh = 0.09
+pue = 1.0 # a Mac mini on a desk
+system_overhead_frac = 0.1

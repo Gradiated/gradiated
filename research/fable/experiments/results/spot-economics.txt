@@ -1,0 +1,12 @@
+scenario               EP nodes  eff loss  $/GPU-hr   $/Mtok vs on-demand
+on-demand baseline            2      0.0%      2.30    0.231        1.00x
+on-demand baseline            4      0.0%      2.30    0.231        1.00x
+mild spot (-40%)              2      5.4%      1.38    0.147        1.58x
+mild spot (-40%)              4      5.7%      1.38    0.147        1.57x
+typical spot (-55%)           2      5.7%      1.03    0.110        2.09x
+typical spot (-55%)           4      6.5%      1.03    0.111        2.08x
+deep spot (-65%)              2      7.2%      0.80    0.087        2.65x
+deep spot (-65%)              4      9.4%      0.80    0.089        2.59x
+
+EP 2 nodes: spot(-55%) still beats on-demand up to ~69 preemptions/node/DAY
+EP 4 nodes: spot(-55%) still beats on-demand up to ~34 preemptions/node/DAY

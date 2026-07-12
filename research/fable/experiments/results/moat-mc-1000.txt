@@ -1,0 +1,11 @@
+surgery gain     P10 1.35  median 1.61  P90 1.79
+hardware gain    P10 1.93  median 2.41  P90 2.95
+co-design gain   P10 2.98  median 3.91  P90 5.17
+synergy          P10 0.91  median 1.04  P90 1.16
+P(co-design gain >= 2x) = 1.00
+P(co-design gain >= 3x) = 0.90
+P(co-design gain >= 4x) = 0.45
+P(co-design gain >= 5x) = 0.14
+P(co-design gain >= 6.5x) = 0.00
+P(synergy > 1) = 0.62
+P(surgered chip needs fewer HBM stacks) = 0.98

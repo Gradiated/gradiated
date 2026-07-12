@@ -1,0 +1,8 @@
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+    fitted ASIC: 3 HBM stacks (72GB, 3.6TB/s, $12400/unit) batch 119
+consolidation (64x6144 top-2, lean shared, refit chip): $0.063 vs co-designed $0.044 -> 0.69x
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+
+Blackwell-era incumbent (B200+tuned stack): $0.166/Mtok  (H800-era was $0.285)
+our surgery on THEIR B200s: 1.75x | our surgered model + our fitted ASIC vs their B200: 3.80x
+(H800-era co-design gain was 6.54x — the edge persists into the Blackwell generation)

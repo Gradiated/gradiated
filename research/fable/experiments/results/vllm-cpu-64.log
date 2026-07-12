@@ -1,0 +1,30 @@
+  File "/Users/js/dev/vllm-study/vllm/entrypoints/llm.py", line 389, in from_engine_args
+    return cls(**vars(engine_args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/js/dev/vllm-study/vllm/entrypoints/llm.py", line 349, in __init__
+    self.llm_engine = LLMEngine.from_engine_args(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/js/dev/vllm-study/vllm/v1/engine/llm_engine.py", line 179, in from_engine_args
+    return cls(
+           ^^^^
+  File "/Users/js/dev/vllm-study/vllm/v1/engine/llm_engine.py", line 105, in __init__
+    self.engine_core = EngineCoreClient.make_client(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/js/dev/vllm-study/vllm/v1/engine/core_client.py", line 103, in make_client
+    return SyncMPClient(vllm_config, executor_class, log_stats)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/js/dev/vllm-study/vllm/tracing/otel.py", line 178, in sync_wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/js/dev/vllm-study/vllm/v1/engine/core_client.py", line 786, in __init__
+    super().__init__(
+  File "/Users/js/dev/vllm-study/vllm/v1/engine/core_client.py", line 573, in __init__
+    with launch_core_engines(
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/js/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/contextlib.py", line 144, in __exit__
+    next(self.gen)
+  File "/Users/js/dev/vllm-study/vllm/v1/engine/utils.py", line 1213, in launch_core_engines
+    wait_for_engine_startup(
+  File "/Users/js/dev/vllm-study/vllm/v1/engine/utils.py", line 1272, in wait_for_engine_startup
+    raise RuntimeError(
+RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {'EngineCore': 1}

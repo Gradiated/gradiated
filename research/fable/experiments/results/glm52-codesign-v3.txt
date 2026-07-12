@@ -1,0 +1,12 @@
+L0 baseline: GLM-5.2, H800+SGLang norm (mtp,dsa,overlap on)        830 tok/s/GPU  $0.709/Mtok  batch 75
+L1 +agent-aware prefix caching 0.60->0.95 [serving]               1316 tok/s/GPU  $0.447/Mtok  batch 76
+L2 +fp8 KV latent, batch ceiling x2 [model]                       1413 tok/s/GPU  $0.416/Mtok  batch 146
+L3 +int4 experts (Kimi-K2 precedent) [model]                      2024 tok/s/GPU  $0.291/Mtok  batch 157
+L4 +top-k 8->6 routing (needs quality healing) [model-arch]       2072 tok/s/GPU  $0.284/Mtok  batch 157
+L5 +bespoke GLM-family kernels [kernel]                           2180 tok/s/GPU  $0.270/Mtok  batch 157
+L6 +co-designed EP32 layout, overlap 0.9 [serving/kernel]         2224 tok/s/GPU  $0.264/Mtok  batch 136
+L7 +memory-config hw 141GB/4.8TBs (rentable) [hardware]           2585 tok/s/GPU  $0.286/Mtok  batch 288
+L8 +family ASIC (speculative tier) [hardware]                     2403 tok/s/GPU  $0.104/Mtok  batch 288
+
+cumulative: $0.709 -> $0.104 = 6.8x total
+through L7 (no custom silicon): 2.5x | software+model only (L6, same H800s): 2.7x

@@ -1,0 +1,12 @@
+[package]
+name = "sartor-cost"
+version = "0.1.0"
+edition = "2021"
+description = "Cost model: hardware BOM, amortization, power -> $/Mtok given perf results."
+
+[dependencies]
+sartor-spec = { path = "../spec" }
+sartor-perf = { path = "../perf" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }

@@ -1,0 +1,16 @@
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+co-designed base (from moat study): $0.044/Mtok = 6.54x vs provider-best
+
+variant                                                $/Mtok vs codesign vs provider
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+a1 TP=2 attn (halve hot reads, +allreduce)              0.042       1.03x       6.74x
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 288
+a2 latent 512->384 + fewer attn params                  0.043       1.02x       6.70x
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
+a3 dense layers -> MoE (first_k_dense=0)                0.044       0.99x       6.50x
+    fitted ASIC: 3 HBM stacks (72GB, 3.6TB/s, $12400/unit) batch 119
+a4 expert consolidation 256x2048t8 -> 64x8192t2         0.089       0.49x       3.20x
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 225
+a5 MTP 2-layer (accept 0.7->1.05)                       0.041       1.06x       6.92x
+    fitted ASIC: 3 HBM stacks (72GB, 3.6TB/s, $12400/unit) batch 119
+a6 consolidation + MTP2 combined                        0.086       0.51x       3.31x

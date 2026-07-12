@@ -1,0 +1,20 @@
+  20/120 samples
+  40/120 samples
+  60/120 samples
+  80/120 samples
+  100/120 samples
+  120/120 samples
+surgery gain     P10 1.27  median 1.59  P90 1.82
+hardware gain    P10 1.95  median 2.33  P90 2.93
+co-design gain   P10 2.95  median 3.82  P90 5.05
+synergy          P10 0.93  median 1.05  P90 1.16
+P(co-design gain >= 2x) = 1.00
+P(co-design gain >= 3x) = 0.88
+P(co-design gain >= 4x) = 0.41
+P(co-design gain >= 5x) = 0.12
+P(co-design gain >= 6.5x) = 0.00
+P(synergy > 1) = 0.65
+P(surgered chip needs fewer HBM stacks) = 0.95
+qwen3-235b     co-design: P10 3.6x  median 5.1x  P90 7.7x  P(>=4x)=0.82
+minimax-m2     co-design: P10 4.4x  median 7.0x  P90 10.7x  P(>=4x)=0.95
+gpt-oss-120b   co-design: P10 3.8x  median 5.9x  P90 8.9x  P(>=4x)=0.90

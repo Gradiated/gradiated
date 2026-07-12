@@ -1,0 +1,22 @@
+co-design gain (B+S+H vs provider-best) across workload space, GLM-5.2:
+input_len | cache=0.2  cache=0.5  cache=0.8  cache=0.95
+    fitted ASIC: 3 HBM stacks (72GB, 3.6TB/s, $12400/unit) batch 359
+    fitted ASIC: 3 HBM stacks (72GB, 3.6TB/s, $12400/unit) batch 404
+    fitted ASIC: 3 HBM stacks (72GB, 3.6TB/s, $12400/unit) batch 463
+    fitted ASIC: 3 HBM stacks (72GB, 3.6TB/s, $12400/unit) batch 497
+     1000 |     5.67x     5.71x     5.78x     5.87x
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 189
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 248
+    fitted ASIC: 3 HBM stacks (72GB, 3.6TB/s, $12400/unit) batch 168
+    fitted ASIC: 3 HBM stacks (72GB, 3.6TB/s, $12400/unit) batch 170
+     4000 |     5.79x     5.88x     5.98x     6.32x
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 116
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 164
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 169
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 170
+     8000 |     5.82x     5.79x     6.14x     6.50x
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 35
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 54
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 60
+    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 63
+    32000 |     5.75x     5.91x     6.62x     7.72x

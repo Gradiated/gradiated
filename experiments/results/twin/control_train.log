@@ -19,3 +19,22 @@ step 500 loss 2.4921 lr 8.31e-05 1761 tok/s
 step 550 loss 2.4949 lr 7.90e-05 1714 tok/s
 step 600 loss 2.4784 lr 7.46e-05 1695 tok/s
 step 650 loss 2.3913 lr 7.00e-05 1673 tok/s
+step 700 loss 2.2849 lr 6.51e-05 1688 tok/s
+step 750 loss 2.3053 lr 6.01e-05 1717 tok/s
+{"step": 750, "val_ppl": 13.9226, "wall_s": 3597.0}
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  2.65it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  2.65it/s]
+step 800 loss 2.2755 lr 5.51e-05 1713 tok/s
+step 850 loss 2.3116 lr 5.01e-05 369 tok/s
+step 900 loss 2.3043 lr 4.51e-05 388 tok/s
+step 950 loss 2.2709 lr 4.02e-05 406 tok/s
+step 1000 loss 2.1714 lr 3.56e-05 424 tok/s
+{"step": 1000, "val_ppl": 14.4941, "wall_s": 19336.1}
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  2.30it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  2.30it/s]
+step 1050 loss 2.1428 lr 3.11e-05 441 tok/s
+step 1100 loss 2.1742 lr 2.70e-05 459 tok/s
+step 1150 loss 2.1803 lr 2.33e-05 387 tok/s
+step 1200 loss 2.1591 lr 1.99e-05 368 tok/s
+step 1250 loss 2.1587 lr 1.70e-05 381 tok/s
+{"step": 1250, "val_ppl": 14.4563, "wall_s": 26884.6}
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.23it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.23it/s]
+step 1300 loss 2.0854 lr 1.45e-05 394 tok/s

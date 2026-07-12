@@ -1,0 +1,3959 @@
+{
+  "schema_version": 1,
+  "content_id": "205c1c7157d104179e066ecfde311107ca7f160f941a8a97e7058e8e1fd80729",
+  "result": {
+    "study_id": "glm-5.2-parallel-mapping-control-v1",
+    "sources": {
+      "storage_report_content_id": "3216cdd0e8c0988ccc7c779f9df9c7d0b8099f11375e7bdb441ab7463d9bc174",
+      "route_report_content_id": "a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2",
+      "dsa_report_content_id": "ed372a7fbf9c0bc338ab66b107b7f188edae3fc63bc8bb68943b79082eeb8fe0",
+      "lowering_report_content_id": "de14e9be74e0f3a89baf3c09a94714d8a0aa72bde6221affe2235a5b74544845",
+      "lower_action_ledger_content_id": "685a946a02499d65dfaeb436a753fd4e917c85cc890f75f17e8833a8652076f6"
+    },
+    "mechanism_evidence": [
+      {
+        "kind": "published_mechanism",
+        "source_artifact_id": "https://fireworks.ai/blog/glm-5p2-fast",
+        "basis": "Mechanism evidence only: independent expert and attention parallelism, topology-local expert groups, and data-parallel attention that keeps each request's compressed MLA cache local. No vendor timing or cost number is imported."
+      }
+    ],
+    "variant_id": "glm-5.2-nvidia-nvfp4-expert-selective",
+    "checkpoint_model_id": "nvidia/GLM-5.2-NVFP4",
+    "checkpoint_revision": "aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa",
+    "checkpoint_payload_bytes": 464794806272,
+    "routed_expert_resident_bytes": {
+      "lower": 362387865600,
+      "upper": 464794806272
+    },
+    "source_semantic_cache_bytes_per_token": 89856,
+    "semantic_cache": {
+      "format_id": "modeled-fp8-semantic-mla",
+      "bytes_per_token": 44928,
+      "evidence": {
+        "kind": "published_specification",
+        "source_artifact_id": "https://recipes.vllm.ai/zai-org/GLM-5.2#fp8-kv-cache",
+        "basis": "78 layers times 576 semantic-plus-rotary values times one byte. Scale storage, alignment, block metadata, and indexer cache are excluded from this partial semantic payload and bounded separately where the storage artifact permits."
+      }
+    },
+    "topology": {
+      "topology_id": "modeled-two-domain-b200-16x",
+      "device_count": 16,
+      "domains": [
+        {
+          "domain_id": "domain-0",
+          "ordered_device_ids": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ]
+        },
+        {
+          "domain_id": "domain-1",
+          "ordered_device_ids": [
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ]
+        }
+      ],
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "modeled-assumption:two-physical-8-device-domains-on-16-b200-v1",
+        "basis": "Device IDs and domain membership are a mechanism fixture. Link bandwidth, latency, switching, and physical B200 fabric realization are not asserted."
+      }
+    },
+    "device_profile_id": "fireworks-b200-180gb-16x",
+    "usable_memory_bytes_per_device": 164000000000,
+    "network_workload": {
+      "source_lowering_id": "glm-5.2-nvidia-nvfp4-whole-decode-lowering-v1",
+      "batch_size_per_repetition": 8,
+      "context_tokens_per_request": 16384,
+      "candidate_tokens_per_repetition": 16,
+      "integer_repetitions": 2,
+      "aggregate_batch_size": 16,
+      "aggregate_candidate_tokens": 32,
+      "hidden_payload_bytes_per_repetition": 196608,
+      "token_count_scope": "each repetition is the exact aggregate-across-batch lowerer workload; repetitions are integer work units and are never fractional route scaling"
+    },
+    "residency_context_tokens_per_request": 16384,
+    "plans": [
+      {
+        "plan_id": "coupled-tp16",
+        "attention_parallelism": "tensor_parallel",
+        "attention_groups": [
+          {
+            "group_id": "attention-tp16",
+            "ordered_device_ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ]
+          }
+        ],
+        "expert_parallelism": "tensor_parallel",
+        "expert_groups": [
+          {
+            "group_id": "expert-tp16",
+            "ordered_device_ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ]
+          }
+        ],
+        "semantic_cache_placement": "attention_group_local",
+        "non_routed_weight_mapping": "attention_groups_exact",
+        "expert_network_model": "tensor_parallel_collective",
+        "routed_weight_replication_factor": 1,
+        "non_routed_weight_replication_factor": 1,
+        "network": {
+          "actions": [
+            {
+              "kind": "attention_tensor_parallel",
+              "layer_count": 78,
+              "collectives_or_route_repetitions": 156,
+              "endpoint_payload_bytes": {
+                "lower": 920125440,
+                "upper": 920125440
+              },
+              "endpoint_message_count": {
+                "lower": 74880,
+                "upper": 74880
+              },
+              "network_hop_payload_bytes": {
+                "lower": 920125440,
+                "upper": 920125440
+              },
+              "network_hop_message_count": {
+                "lower": 74880,
+                "upper": 74880
+              },
+              "cross_domain_payload_bytes": {
+                "lower": 115015680,
+                "upper": 115015680
+              },
+              "cross_domain_message_count": {
+                "lower": 9360,
+                "upper": 9360
+              },
+              "cross_domain_accounting": "exact"
+            },
+            {
+              "kind": "moe_tensor_parallel",
+              "layer_count": 75,
+              "collectives_or_route_repetitions": 150,
+              "endpoint_payload_bytes": {
+                "lower": 884736000,
+                "upper": 884736000
+              },
+              "endpoint_message_count": {
+                "lower": 72000,
+                "upper": 72000
+              },
+              "network_hop_payload_bytes": {
+                "lower": 884736000,
+                "upper": 884736000
+              },
+              "network_hop_message_count": {
+                "lower": 72000,
+                "upper": 72000
+              },
+              "cross_domain_payload_bytes": {
+                "lower": 110592000,
+                "upper": 110592000
+              },
+              "cross_domain_message_count": {
+                "lower": 9000,
+                "upper": 9000
+              },
+              "cross_domain_accounting": "exact"
+            }
+          ],
+          "total": {
+            "endpoint_payload_bytes": {
+              "lower": 1804861440,
+              "upper": 1804861440
+            },
+            "endpoint_message_count": {
+              "lower": 146880,
+              "upper": 146880
+            },
+            "network_hop_payload_bytes": {
+              "lower": 1804861440,
+              "upper": 1804861440
+            },
+            "network_hop_message_count": {
+              "lower": 146880,
+              "upper": 146880
+            },
+            "cross_domain_payload_bytes": {
+              "lower": 225607680,
+              "upper": 225607680
+            },
+            "cross_domain_message_count": {
+              "lower": 18360,
+              "upper": 18360
+            }
+          }
+        },
+        "residency": [
+          {
+            "concurrent_requests": 16,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 16,
+              "semantic_cache_bytes_on_max_device": 11777605632,
+              "total_bytes_on_max_device": {
+                "lower": 34426847232,
+                "upper": 40827281024
+              },
+              "cluster_total_bytes": {
+                "lower": 550829555712,
+                "upper": 653236496384
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 29049675392
+              },
+              "semantic_cache_bytes_on_max_device": 11777605632,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 10737418240
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 41827281024,
+                "upper": 52564699264
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 6274092154,
+                "upper": 7884704890
+              },
+              "total_bytes_on_max_device": {
+                "lower": 48101373178,
+                "upper": 60449404154
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 32,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 32,
+              "semantic_cache_bytes_on_max_device": 23555211264,
+              "total_bytes_on_max_device": {
+                "lower": 46204452864,
+                "upper": 52604886656
+              },
+              "cluster_total_bytes": {
+                "lower": 739271245824,
+                "upper": 841678186496
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 29049675392
+              },
+              "semantic_cache_bytes_on_max_device": 23555211264,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 21474836480
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 53604886656,
+                "upper": 75079723136
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8040732999,
+                "upper": 11261958471
+              },
+              "total_bytes_on_max_device": {
+                "lower": 61645619655,
+                "upper": 86341681607
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 33,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 33,
+              "semantic_cache_bytes_on_max_device": 24291311616,
+              "total_bytes_on_max_device": {
+                "lower": 46940553216,
+                "upper": 53340987008
+              },
+              "cluster_total_bytes": {
+                "lower": 751048851456,
+                "upper": 853455792128
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 29049675392
+              },
+              "semantic_cache_bytes_on_max_device": 24291311616,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 22145925120
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54340987008,
+                "upper": 76486912128
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8151148052,
+                "upper": 11473036820
+              },
+              "total_bytes_on_max_device": {
+                "lower": 62492135060,
+                "upper": 87959948948
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 34,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 34,
+              "semantic_cache_bytes_on_max_device": 25027411968,
+              "total_bytes_on_max_device": {
+                "lower": 47676653568,
+                "upper": 54077087360
+              },
+              "cluster_total_bytes": {
+                "lower": 762826457088,
+                "upper": 865233397760
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 29049675392
+              },
+              "semantic_cache_bytes_on_max_device": 25027411968,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 22817013760
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 55077087360,
+                "upper": 77894101120
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8261563104,
+                "upper": 11684115168
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63338650464,
+                "upper": 89578216288
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 42,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 42,
+              "semantic_cache_bytes_on_max_device": 30916214784,
+              "total_bytes_on_max_device": {
+                "lower": 53565456384,
+                "upper": 59965890176
+              },
+              "cluster_total_bytes": {
+                "lower": 857047302144,
+                "upper": 959454242816
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 29049675392
+              },
+              "semantic_cache_bytes_on_max_device": 30916214784,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 28185722880
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 60965890176,
+                "upper": 89151613056
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 9144883527,
+                "upper": 13372741959
+              },
+              "total_bytes_on_max_device": {
+                "lower": 70110773703,
+                "upper": 102524355015
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 43,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 43,
+              "semantic_cache_bytes_on_max_device": 31652315136,
+              "total_bytes_on_max_device": {
+                "lower": 54301556736,
+                "upper": 60701990528
+              },
+              "cluster_total_bytes": {
+                "lower": 868824907776,
+                "upper": 971231848448
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 29049675392
+              },
+              "semantic_cache_bytes_on_max_device": 31652315136,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 28856811520
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 61701990528,
+                "upper": 90558802048
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 9255298580,
+                "upper": 13583820308
+              },
+              "total_bytes_on_max_device": {
+                "lower": 70957289108,
+                "upper": 104142622356
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 48,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 48,
+              "semantic_cache_bytes_on_max_device": 35332816896,
+              "total_bytes_on_max_device": {
+                "lower": 57982058496,
+                "upper": 64382492288
+              },
+              "cluster_total_bytes": {
+                "lower": 927712935936,
+                "upper": 1030119876608
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 29049675392
+              },
+              "semantic_cache_bytes_on_max_device": 35332816896,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 32212254720
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 65382492288,
+                "upper": 97594747008
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 9807373844,
+                "upper": 14639212052
+              },
+              "total_bytes_on_max_device": {
+                "lower": 75189866132,
+                "upper": 112233959060
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 64,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 64,
+              "semantic_cache_bytes_on_max_device": 47110422528,
+              "total_bytes_on_max_device": {
+                "lower": 69759664128,
+                "upper": 76160097920
+              },
+              "cluster_total_bytes": {
+                "lower": 1116154626048,
+                "upper": 1218561566720
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 29049675392
+              },
+              "semantic_cache_bytes_on_max_device": 47110422528,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 42949672960
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 77160097920,
+                "upper": 120109770880
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 11574014688,
+                "upper": 18016465632
+              },
+              "total_bytes_on_max_device": {
+                "lower": 88734112608,
+                "upper": 138126236512
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 96,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 96,
+              "semantic_cache_bytes_on_max_device": 70665633792,
+              "total_bytes_on_max_device": {
+                "lower": 93314875392,
+                "upper": 99715309184
+              },
+              "cluster_total_bytes": {
+                "lower": 1493038006272,
+                "upper": 1595444946944
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 29049675392
+              },
+              "semantic_cache_bytes_on_max_device": 70665633792,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 64424509440
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 100715309184,
+                "upper": 165139818624
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 15107296378,
+                "upper": 24770972794
+              },
+              "total_bytes_on_max_device": {
+                "lower": 115822605562,
+                "upper": 189910791418
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          }
+        ]
+      },
+      {
+        "plan_id": "decoupled-dp-attention-ep8",
+        "attention_parallelism": "data_parallel_local",
+        "attention_groups": [
+          {
+            "group_id": "attention-dp-0",
+            "ordered_device_ids": [
+              0
+            ]
+          },
+          {
+            "group_id": "attention-dp-1",
+            "ordered_device_ids": [
+              1
+            ]
+          },
+          {
+            "group_id": "attention-dp-2",
+            "ordered_device_ids": [
+              2
+            ]
+          },
+          {
+            "group_id": "attention-dp-3",
+            "ordered_device_ids": [
+              3
+            ]
+          },
+          {
+            "group_id": "attention-dp-4",
+            "ordered_device_ids": [
+              4
+            ]
+          },
+          {
+            "group_id": "attention-dp-5",
+            "ordered_device_ids": [
+              5
+            ]
+          },
+          {
+            "group_id": "attention-dp-6",
+            "ordered_device_ids": [
+              6
+            ]
+          },
+          {
+            "group_id": "attention-dp-7",
+            "ordered_device_ids": [
+              7
+            ]
+          },
+          {
+            "group_id": "attention-dp-8",
+            "ordered_device_ids": [
+              8
+            ]
+          },
+          {
+            "group_id": "attention-dp-9",
+            "ordered_device_ids": [
+              9
+            ]
+          },
+          {
+            "group_id": "attention-dp-10",
+            "ordered_device_ids": [
+              10
+            ]
+          },
+          {
+            "group_id": "attention-dp-11",
+            "ordered_device_ids": [
+              11
+            ]
+          },
+          {
+            "group_id": "attention-dp-12",
+            "ordered_device_ids": [
+              12
+            ]
+          },
+          {
+            "group_id": "attention-dp-13",
+            "ordered_device_ids": [
+              13
+            ]
+          },
+          {
+            "group_id": "attention-dp-14",
+            "ordered_device_ids": [
+              14
+            ]
+          },
+          {
+            "group_id": "attention-dp-15",
+            "ordered_device_ids": [
+              15
+            ]
+          }
+        ],
+        "expert_parallelism": "expert_parallel",
+        "expert_groups": [
+          {
+            "group_id": "expert-ep8-domain-0",
+            "ordered_device_ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          {
+            "group_id": "expert-ep8-domain-1",
+            "ordered_device_ids": [
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ]
+          }
+        ],
+        "semantic_cache_placement": "attention_group_local",
+        "non_routed_weight_mapping": "opaque_global_shard_to_attention_replication",
+        "expert_network_model": "pinned_lowerer_route",
+        "routed_weight_replication_factor": 2,
+        "non_routed_weight_replication_factor": 16,
+        "network": {
+          "actions": [
+            {
+              "kind": "expert_dispatch",
+              "layer_count": 75,
+              "collectives_or_route_repetitions": 2,
+              "endpoint_payload_bytes": {
+                "lower": 255197184,
+                "upper": 255246336
+              },
+              "endpoint_message_count": {
+                "lower": 130,
+                "upper": 132
+              },
+              "network_hop_payload_bytes": {
+                "lower": 255197184,
+                "upper": 255246336
+              },
+              "network_hop_message_count": {
+                "lower": 130,
+                "upper": 132
+              },
+              "cross_domain_payload_bytes": {
+                "lower": 0,
+                "upper": 0
+              },
+              "cross_domain_message_count": {
+                "lower": 0,
+                "upper": 0
+              },
+              "cross_domain_accounting": "exact"
+            }
+          ],
+          "total": {
+            "endpoint_payload_bytes": {
+              "lower": 255197184,
+              "upper": 255246336
+            },
+            "endpoint_message_count": {
+              "lower": 130,
+              "upper": 132
+            },
+            "network_hop_payload_bytes": {
+              "lower": 255197184,
+              "upper": 255246336
+            },
+            "network_hop_message_count": {
+              "lower": 130,
+              "upper": 132
+            },
+            "cross_domain_payload_bytes": {
+              "lower": 0,
+              "upper": 0
+            },
+            "cross_domain_message_count": {
+              "lower": 0,
+              "upper": 0
+            }
+          }
+        },
+        "residency": [
+          {
+            "concurrent_requests": 16,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 1,
+              "semantic_cache_bytes_on_max_device": 736100352,
+              "total_bytes_on_max_device": {
+                "lower": 46034583552,
+                "upper": 58835451136
+              },
+              "cluster_total_bytes": {
+                "lower": 736553336832,
+                "upper": 941367218176
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 736100352,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 671088640
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 53435017344,
+                "upper": 150112612864
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8015252602,
+                "upper": 22516891930
+              },
+              "total_bytes_on_max_device": {
+                "lower": 61450269946,
+                "upper": 172629504794
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 32,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 2,
+              "semantic_cache_bytes_on_max_device": 1472200704,
+              "total_bytes_on_max_device": {
+                "lower": 46770683904,
+                "upper": 59571551488
+              },
+              "cluster_total_bytes": {
+                "lower": 748330942464,
+                "upper": 953144823808
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 1472200704,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 1342177280
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54171117696,
+                "upper": 151519801856
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8125667655,
+                "upper": 22727970279
+              },
+              "total_bytes_on_max_device": {
+                "lower": 62296785351,
+                "upper": 174247772135
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 33,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 749067042816,
+                "upper": 953880924160
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 34,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 749803143168,
+                "upper": 954617024512
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 42,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 755691945984,
+                "upper": 960505827328
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 43,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 756428046336,
+                "upper": 961241927680
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 48,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 760108548096,
+                "upper": 964922429440
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 64,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 4,
+              "semantic_cache_bytes_on_max_device": 2944401408,
+              "total_bytes_on_max_device": {
+                "lower": 48242884608,
+                "upper": 61043752192
+              },
+              "cluster_total_bytes": {
+                "lower": 771886153728,
+                "upper": 976700035072
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2944401408,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2684354560
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 55643318400,
+                "upper": 154334179840
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8346497760,
+                "upper": 23150126976
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63989816160,
+                "upper": 177484306816
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 96,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 6,
+              "semantic_cache_bytes_on_max_device": 4416602112,
+              "total_bytes_on_max_device": {
+                "lower": 49715085312,
+                "upper": 62515952896
+              },
+              "cluster_total_bytes": {
+                "lower": 795441364992,
+                "upper": 1000255246336
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 4416602112,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 4026531840
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 57115519104,
+                "upper": 157148557824
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8567327866,
+                "upper": 23572283674
+              },
+              "total_bytes_on_max_device": {
+                "lower": 65682846970,
+                "upper": 180720841498
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          }
+        ]
+      },
+      {
+        "plan_id": "control-decoupled-forced-mla-replication",
+        "attention_parallelism": "data_parallel_local",
+        "attention_groups": [
+          {
+            "group_id": "attention-dp-0",
+            "ordered_device_ids": [
+              0
+            ]
+          },
+          {
+            "group_id": "attention-dp-1",
+            "ordered_device_ids": [
+              1
+            ]
+          },
+          {
+            "group_id": "attention-dp-2",
+            "ordered_device_ids": [
+              2
+            ]
+          },
+          {
+            "group_id": "attention-dp-3",
+            "ordered_device_ids": [
+              3
+            ]
+          },
+          {
+            "group_id": "attention-dp-4",
+            "ordered_device_ids": [
+              4
+            ]
+          },
+          {
+            "group_id": "attention-dp-5",
+            "ordered_device_ids": [
+              5
+            ]
+          },
+          {
+            "group_id": "attention-dp-6",
+            "ordered_device_ids": [
+              6
+            ]
+          },
+          {
+            "group_id": "attention-dp-7",
+            "ordered_device_ids": [
+              7
+            ]
+          },
+          {
+            "group_id": "attention-dp-8",
+            "ordered_device_ids": [
+              8
+            ]
+          },
+          {
+            "group_id": "attention-dp-9",
+            "ordered_device_ids": [
+              9
+            ]
+          },
+          {
+            "group_id": "attention-dp-10",
+            "ordered_device_ids": [
+              10
+            ]
+          },
+          {
+            "group_id": "attention-dp-11",
+            "ordered_device_ids": [
+              11
+            ]
+          },
+          {
+            "group_id": "attention-dp-12",
+            "ordered_device_ids": [
+              12
+            ]
+          },
+          {
+            "group_id": "attention-dp-13",
+            "ordered_device_ids": [
+              13
+            ]
+          },
+          {
+            "group_id": "attention-dp-14",
+            "ordered_device_ids": [
+              14
+            ]
+          },
+          {
+            "group_id": "attention-dp-15",
+            "ordered_device_ids": [
+              15
+            ]
+          }
+        ],
+        "expert_parallelism": "expert_parallel",
+        "expert_groups": [
+          {
+            "group_id": "expert-ep8-domain-0",
+            "ordered_device_ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          {
+            "group_id": "expert-ep8-domain-1",
+            "ordered_device_ids": [
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ]
+          }
+        ],
+        "semantic_cache_placement": "replicated_across_all_devices",
+        "non_routed_weight_mapping": "opaque_global_shard_to_attention_replication",
+        "expert_network_model": "pinned_lowerer_route",
+        "routed_weight_replication_factor": 2,
+        "non_routed_weight_replication_factor": 16,
+        "network": {
+          "actions": [
+            {
+              "kind": "expert_dispatch",
+              "layer_count": 75,
+              "collectives_or_route_repetitions": 2,
+              "endpoint_payload_bytes": {
+                "lower": 255197184,
+                "upper": 255246336
+              },
+              "endpoint_message_count": {
+                "lower": 130,
+                "upper": 132
+              },
+              "network_hop_payload_bytes": {
+                "lower": 255197184,
+                "upper": 255246336
+              },
+              "network_hop_message_count": {
+                "lower": 130,
+                "upper": 132
+              },
+              "cross_domain_payload_bytes": {
+                "lower": 0,
+                "upper": 0
+              },
+              "cross_domain_message_count": {
+                "lower": 0,
+                "upper": 0
+              },
+              "cross_domain_accounting": "exact"
+            }
+          ],
+          "total": {
+            "endpoint_payload_bytes": {
+              "lower": 255197184,
+              "upper": 255246336
+            },
+            "endpoint_message_count": {
+              "lower": 130,
+              "upper": 132
+            },
+            "network_hop_payload_bytes": {
+              "lower": 255197184,
+              "upper": 255246336
+            },
+            "network_hop_message_count": {
+              "lower": 130,
+              "upper": 132
+            },
+            "cross_domain_payload_bytes": {
+              "lower": 0,
+              "upper": 0
+            },
+            "cross_domain_message_count": {
+              "lower": 0,
+              "upper": 0
+            }
+          }
+        },
+        "residency": [
+          {
+            "concurrent_requests": 16,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 16,
+              "semantic_cache_bytes_on_max_device": 11777605632,
+              "total_bytes_on_max_device": {
+                "lower": 57076088832,
+                "upper": 69876956416
+              },
+              "cluster_total_bytes": {
+                "lower": 913217421312,
+                "upper": 1118031302656
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 11777605632,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 10737418240
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 64476522624,
+                "upper": 171220447744
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 9671478394,
+                "upper": 25683067162
+              },
+              "total_bytes_on_max_device": {
+                "lower": 74148001018,
+                "upper": 196903514906
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 32,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 32,
+              "semantic_cache_bytes_on_max_device": 23555211264,
+              "total_bytes_on_max_device": {
+                "lower": 68853694464,
+                "upper": 81654562048
+              },
+              "cluster_total_bytes": {
+                "lower": 1101659111424,
+                "upper": 1306472992768
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 23555211264,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 21474836480
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 76254128256,
+                "upper": 193735471616
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 11438119239,
+                "upper": 29060320743
+              },
+              "total_bytes_on_max_device": {
+                "lower": 87692247495,
+                "upper": 222795792359
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 33,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 33,
+              "semantic_cache_bytes_on_max_device": 24291311616,
+              "total_bytes_on_max_device": {
+                "lower": 69589794816,
+                "upper": 82390662400
+              },
+              "cluster_total_bytes": {
+                "lower": 1113436717056,
+                "upper": 1318250598400
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 24291311616,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 22145925120
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 76990228608,
+                "upper": 195142660608
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 11548534292,
+                "upper": 29271399092
+              },
+              "total_bytes_on_max_device": {
+                "lower": 88538762900,
+                "upper": 224414059700
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 34,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 34,
+              "semantic_cache_bytes_on_max_device": 25027411968,
+              "total_bytes_on_max_device": {
+                "lower": 70325895168,
+                "upper": 83126762752
+              },
+              "cluster_total_bytes": {
+                "lower": 1125214322688,
+                "upper": 1330028204032
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 25027411968,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 22817013760
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 77726328960,
+                "upper": 196549849600
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 11658949344,
+                "upper": 29482477440
+              },
+              "total_bytes_on_max_device": {
+                "lower": 89385278304,
+                "upper": 226032327040
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 42,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 42,
+              "semantic_cache_bytes_on_max_device": 30916214784,
+              "total_bytes_on_max_device": {
+                "lower": 76214697984,
+                "upper": 89015565568
+              },
+              "cluster_total_bytes": {
+                "lower": 1219435167744,
+                "upper": 1424249049088
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 30916214784,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 28185722880
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 83615131776,
+                "upper": 207807361536
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 12542269767,
+                "upper": 31171104231
+              },
+              "total_bytes_on_max_device": {
+                "lower": 96157401543,
+                "upper": 238978465767
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 43,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 43,
+              "semantic_cache_bytes_on_max_device": 31652315136,
+              "total_bytes_on_max_device": {
+                "lower": 76950798336,
+                "upper": 89751665920
+              },
+              "cluster_total_bytes": {
+                "lower": 1231212773376,
+                "upper": 1436026654720
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 31652315136,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 28856811520
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 84351232128,
+                "upper": 209214550528
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 12652684820,
+                "upper": 31382182580
+              },
+              "total_bytes_on_max_device": {
+                "lower": 97003916948,
+                "upper": 240596733108
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 48,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 48,
+              "semantic_cache_bytes_on_max_device": 35332816896,
+              "total_bytes_on_max_device": {
+                "lower": 80631300096,
+                "upper": 93432167680
+              },
+              "cluster_total_bytes": {
+                "lower": 1290100801536,
+                "upper": 1494914682880
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 35332816896,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 32212254720
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 88031733888,
+                "upper": 216250495488
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 13204760084,
+                "upper": 32437574324
+              },
+              "total_bytes_on_max_device": {
+                "lower": 101236493972,
+                "upper": 248688069812
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 64,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 64,
+              "semantic_cache_bytes_on_max_device": 47110422528,
+              "total_bytes_on_max_device": {
+                "lower": 92408905728,
+                "upper": 105209773312
+              },
+              "cluster_total_bytes": {
+                "lower": 1478542491648,
+                "upper": 1683356372992
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 47110422528,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 42949672960
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 99809339520,
+                "upper": 238765519360
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 14971400928,
+                "upper": 35814827904
+              },
+              "total_bytes_on_max_device": {
+                "lower": 114780740448,
+                "upper": 274580347264
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 96,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 96,
+              "semantic_cache_bytes_on_max_device": 70665633792,
+              "total_bytes_on_max_device": {
+                "lower": 115964116992,
+                "upper": 128764984576
+              },
+              "cluster_total_bytes": {
+                "lower": 1855425871872,
+                "upper": 2060239753216
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 70665633792,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 64424509440
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 123364550784,
+                "upper": 283795567104
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 18504682618,
+                "upper": 42569335066
+              },
+              "total_bytes_on_max_device": {
+                "lower": 141869233402,
+                "upper": 326364902170
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          }
+        ]
+      },
+      {
+        "plan_id": "control-decoupled-zero-remote",
+        "attention_parallelism": "data_parallel_local",
+        "attention_groups": [
+          {
+            "group_id": "attention-dp-0",
+            "ordered_device_ids": [
+              0
+            ]
+          },
+          {
+            "group_id": "attention-dp-1",
+            "ordered_device_ids": [
+              1
+            ]
+          },
+          {
+            "group_id": "attention-dp-2",
+            "ordered_device_ids": [
+              2
+            ]
+          },
+          {
+            "group_id": "attention-dp-3",
+            "ordered_device_ids": [
+              3
+            ]
+          },
+          {
+            "group_id": "attention-dp-4",
+            "ordered_device_ids": [
+              4
+            ]
+          },
+          {
+            "group_id": "attention-dp-5",
+            "ordered_device_ids": [
+              5
+            ]
+          },
+          {
+            "group_id": "attention-dp-6",
+            "ordered_device_ids": [
+              6
+            ]
+          },
+          {
+            "group_id": "attention-dp-7",
+            "ordered_device_ids": [
+              7
+            ]
+          },
+          {
+            "group_id": "attention-dp-8",
+            "ordered_device_ids": [
+              8
+            ]
+          },
+          {
+            "group_id": "attention-dp-9",
+            "ordered_device_ids": [
+              9
+            ]
+          },
+          {
+            "group_id": "attention-dp-10",
+            "ordered_device_ids": [
+              10
+            ]
+          },
+          {
+            "group_id": "attention-dp-11",
+            "ordered_device_ids": [
+              11
+            ]
+          },
+          {
+            "group_id": "attention-dp-12",
+            "ordered_device_ids": [
+              12
+            ]
+          },
+          {
+            "group_id": "attention-dp-13",
+            "ordered_device_ids": [
+              13
+            ]
+          },
+          {
+            "group_id": "attention-dp-14",
+            "ordered_device_ids": [
+              14
+            ]
+          },
+          {
+            "group_id": "attention-dp-15",
+            "ordered_device_ids": [
+              15
+            ]
+          }
+        ],
+        "expert_parallelism": "expert_parallel",
+        "expert_groups": [
+          {
+            "group_id": "expert-ep8-domain-0",
+            "ordered_device_ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          {
+            "group_id": "expert-ep8-domain-1",
+            "ordered_device_ids": [
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ]
+          }
+        ],
+        "semantic_cache_placement": "attention_group_local",
+        "non_routed_weight_mapping": "opaque_global_shard_to_attention_replication",
+        "expert_network_model": "zero_remote_analytical_lower_bound",
+        "routed_weight_replication_factor": 2,
+        "non_routed_weight_replication_factor": 16,
+        "network": {
+          "actions": [
+            {
+              "kind": "expert_dispatch",
+              "layer_count": 75,
+              "collectives_or_route_repetitions": 2,
+              "endpoint_payload_bytes": {
+                "lower": 0,
+                "upper": 0
+              },
+              "endpoint_message_count": {
+                "lower": 0,
+                "upper": 0
+              },
+              "network_hop_payload_bytes": {
+                "lower": 0,
+                "upper": 0
+              },
+              "network_hop_message_count": {
+                "lower": 0,
+                "upper": 0
+              },
+              "cross_domain_payload_bytes": {
+                "lower": 0,
+                "upper": 0
+              },
+              "cross_domain_message_count": {
+                "lower": 0,
+                "upper": 0
+              },
+              "cross_domain_accounting": "exact"
+            }
+          ],
+          "total": {
+            "endpoint_payload_bytes": {
+              "lower": 0,
+              "upper": 0
+            },
+            "endpoint_message_count": {
+              "lower": 0,
+              "upper": 0
+            },
+            "network_hop_payload_bytes": {
+              "lower": 0,
+              "upper": 0
+            },
+            "network_hop_message_count": {
+              "lower": 0,
+              "upper": 0
+            },
+            "cross_domain_payload_bytes": {
+              "lower": 0,
+              "upper": 0
+            },
+            "cross_domain_message_count": {
+              "lower": 0,
+              "upper": 0
+            }
+          }
+        },
+        "residency": [
+          {
+            "concurrent_requests": 16,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 1,
+              "semantic_cache_bytes_on_max_device": 736100352,
+              "total_bytes_on_max_device": {
+                "lower": 46034583552,
+                "upper": 58835451136
+              },
+              "cluster_total_bytes": {
+                "lower": 736553336832,
+                "upper": 941367218176
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 736100352,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 671088640
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 53435017344,
+                "upper": 150112612864
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8015252602,
+                "upper": 22516891930
+              },
+              "total_bytes_on_max_device": {
+                "lower": 61450269946,
+                "upper": 172629504794
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 32,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 2,
+              "semantic_cache_bytes_on_max_device": 1472200704,
+              "total_bytes_on_max_device": {
+                "lower": 46770683904,
+                "upper": 59571551488
+              },
+              "cluster_total_bytes": {
+                "lower": 748330942464,
+                "upper": 953144823808
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 1472200704,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 1342177280
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54171117696,
+                "upper": 151519801856
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8125667655,
+                "upper": 22727970279
+              },
+              "total_bytes_on_max_device": {
+                "lower": 62296785351,
+                "upper": 174247772135
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 33,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 749067042816,
+                "upper": 953880924160
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 34,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 749803143168,
+                "upper": 954617024512
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 42,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 755691945984,
+                "upper": 960505827328
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 43,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 756428046336,
+                "upper": 961241927680
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 48,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 760108548096,
+                "upper": 964922429440
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 64,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 4,
+              "semantic_cache_bytes_on_max_device": 2944401408,
+              "total_bytes_on_max_device": {
+                "lower": 48242884608,
+                "upper": 61043752192
+              },
+              "cluster_total_bytes": {
+                "lower": 771886153728,
+                "upper": 976700035072
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2944401408,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2684354560
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 55643318400,
+                "upper": 154334179840
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8346497760,
+                "upper": 23150126976
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63989816160,
+                "upper": 177484306816
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 96,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 6,
+              "semantic_cache_bytes_on_max_device": 4416602112,
+              "total_bytes_on_max_device": {
+                "lower": 49715085312,
+                "upper": 62515952896
+              },
+              "cluster_total_bytes": {
+                "lower": 795441364992,
+                "upper": 1000255246336
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 4416602112,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 4026531840
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 57115519104,
+                "upper": 157148557824
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8567327866,
+                "upper": 23572283674
+              },
+              "total_bytes_on_max_device": {
+                "lower": 65682846970,
+                "upper": 180720841498
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          }
+        ]
+      },
+      {
+        "plan_id": "control-decoupled-cross-domain-ep8",
+        "attention_parallelism": "data_parallel_local",
+        "attention_groups": [
+          {
+            "group_id": "attention-dp-0",
+            "ordered_device_ids": [
+              0
+            ]
+          },
+          {
+            "group_id": "attention-dp-1",
+            "ordered_device_ids": [
+              1
+            ]
+          },
+          {
+            "group_id": "attention-dp-2",
+            "ordered_device_ids": [
+              2
+            ]
+          },
+          {
+            "group_id": "attention-dp-3",
+            "ordered_device_ids": [
+              3
+            ]
+          },
+          {
+            "group_id": "attention-dp-4",
+            "ordered_device_ids": [
+              4
+            ]
+          },
+          {
+            "group_id": "attention-dp-5",
+            "ordered_device_ids": [
+              5
+            ]
+          },
+          {
+            "group_id": "attention-dp-6",
+            "ordered_device_ids": [
+              6
+            ]
+          },
+          {
+            "group_id": "attention-dp-7",
+            "ordered_device_ids": [
+              7
+            ]
+          },
+          {
+            "group_id": "attention-dp-8",
+            "ordered_device_ids": [
+              8
+            ]
+          },
+          {
+            "group_id": "attention-dp-9",
+            "ordered_device_ids": [
+              9
+            ]
+          },
+          {
+            "group_id": "attention-dp-10",
+            "ordered_device_ids": [
+              10
+            ]
+          },
+          {
+            "group_id": "attention-dp-11",
+            "ordered_device_ids": [
+              11
+            ]
+          },
+          {
+            "group_id": "attention-dp-12",
+            "ordered_device_ids": [
+              12
+            ]
+          },
+          {
+            "group_id": "attention-dp-13",
+            "ordered_device_ids": [
+              13
+            ]
+          },
+          {
+            "group_id": "attention-dp-14",
+            "ordered_device_ids": [
+              14
+            ]
+          },
+          {
+            "group_id": "attention-dp-15",
+            "ordered_device_ids": [
+              15
+            ]
+          }
+        ],
+        "expert_parallelism": "expert_parallel",
+        "expert_groups": [
+          {
+            "group_id": "expert-ep8-cross-0",
+            "ordered_device_ids": [
+              0,
+              2,
+              4,
+              6,
+              8,
+              10,
+              12,
+              14
+            ]
+          },
+          {
+            "group_id": "expert-ep8-cross-1",
+            "ordered_device_ids": [
+              1,
+              3,
+              5,
+              7,
+              9,
+              11,
+              13,
+              15
+            ]
+          }
+        ],
+        "semantic_cache_placement": "attention_group_local",
+        "non_routed_weight_mapping": "opaque_global_shard_to_attention_replication",
+        "expert_network_model": "pinned_lowerer_route",
+        "routed_weight_replication_factor": 2,
+        "non_routed_weight_replication_factor": 16,
+        "network": {
+          "actions": [
+            {
+              "kind": "expert_dispatch",
+              "layer_count": 75,
+              "collectives_or_route_repetitions": 2,
+              "endpoint_payload_bytes": {
+                "lower": 255197184,
+                "upper": 255246336
+              },
+              "endpoint_message_count": {
+                "lower": 130,
+                "upper": 132
+              },
+              "network_hop_payload_bytes": {
+                "lower": 255197184,
+                "upper": 255246336
+              },
+              "network_hop_message_count": {
+                "lower": 130,
+                "upper": 132
+              },
+              "cross_domain_payload_bytes": {
+                "lower": 0,
+                "upper": 255246336
+              },
+              "cross_domain_message_count": {
+                "lower": 0,
+                "upper": 132
+              },
+              "cross_domain_accounting": "unresolved_without_partitioned_flow_histogram"
+            }
+          ],
+          "total": {
+            "endpoint_payload_bytes": {
+              "lower": 255197184,
+              "upper": 255246336
+            },
+            "endpoint_message_count": {
+              "lower": 130,
+              "upper": 132
+            },
+            "network_hop_payload_bytes": {
+              "lower": 255197184,
+              "upper": 255246336
+            },
+            "network_hop_message_count": {
+              "lower": 130,
+              "upper": 132
+            },
+            "cross_domain_payload_bytes": {
+              "lower": 0,
+              "upper": 255246336
+            },
+            "cross_domain_message_count": {
+              "lower": 0,
+              "upper": 132
+            }
+          }
+        },
+        "residency": [
+          {
+            "concurrent_requests": 16,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 1,
+              "semantic_cache_bytes_on_max_device": 736100352,
+              "total_bytes_on_max_device": {
+                "lower": 46034583552,
+                "upper": 58835451136
+              },
+              "cluster_total_bytes": {
+                "lower": 736553336832,
+                "upper": 941367218176
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 736100352,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 671088640
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 53435017344,
+                "upper": 150112612864
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8015252602,
+                "upper": 22516891930
+              },
+              "total_bytes_on_max_device": {
+                "lower": 61450269946,
+                "upper": 172629504794
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 32,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 2,
+              "semantic_cache_bytes_on_max_device": 1472200704,
+              "total_bytes_on_max_device": {
+                "lower": 46770683904,
+                "upper": 59571551488
+              },
+              "cluster_total_bytes": {
+                "lower": 748330942464,
+                "upper": 953144823808
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 1472200704,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 1342177280
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54171117696,
+                "upper": 151519801856
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8125667655,
+                "upper": 22727970279
+              },
+              "total_bytes_on_max_device": {
+                "lower": 62296785351,
+                "upper": 174247772135
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 33,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 749067042816,
+                "upper": 953880924160
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 34,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 749803143168,
+                "upper": 954617024512
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 42,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 755691945984,
+                "upper": 960505827328
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 43,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 756428046336,
+                "upper": 961241927680
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 48,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 47506784256,
+                "upper": 60307651840
+              },
+              "cluster_total_bytes": {
+                "lower": 760108548096,
+                "upper": 964922429440
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 54907218048,
+                "upper": 152926990848
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8236082708,
+                "upper": 22939048628
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63143300756,
+                "upper": 175866039476
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 64,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 4,
+              "semantic_cache_bytes_on_max_device": 2944401408,
+              "total_bytes_on_max_device": {
+                "lower": 48242884608,
+                "upper": 61043752192
+              },
+              "cluster_total_bytes": {
+                "lower": 771886153728,
+                "upper": 976700035072
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 2944401408,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2684354560
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 55643318400,
+                "upper": 154334179840
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8346497760,
+                "upper": 23150126976
+              },
+              "total_bytes_on_max_device": {
+                "lower": 63989816160,
+                "upper": 177484306816
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          },
+          {
+            "concurrent_requests": 96,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 45298483200,
+                "upper": 58099350784
+              },
+              "semantic_cache_copies_on_max_device": 6,
+              "semantic_cache_bytes_on_max_device": 4416602112,
+              "total_bytes_on_max_device": {
+                "lower": 49715085312,
+                "upper": 62515952896
+              },
+              "cluster_total_bytes": {
+                "lower": 795441364992,
+                "upper": 1000255246336
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 51698916992,
+                "upper": 147705423872
+              },
+              "semantic_cache_bytes_on_max_device": 4416602112,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 4026531840
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 57115519104,
+                "upper": 157148557824
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 8567327866,
+                "upper": 23572283674
+              },
+              "total_bytes_on_max_device": {
+                "lower": 65682846970,
+                "upper": 180720841498
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "uncertain"
+            }
+          }
+        ]
+      },
+      {
+        "plan_id": "control-local-attention-expert-tp16",
+        "attention_parallelism": "data_parallel_local",
+        "attention_groups": [
+          {
+            "group_id": "attention-dp-0",
+            "ordered_device_ids": [
+              0
+            ]
+          },
+          {
+            "group_id": "attention-dp-1",
+            "ordered_device_ids": [
+              1
+            ]
+          },
+          {
+            "group_id": "attention-dp-2",
+            "ordered_device_ids": [
+              2
+            ]
+          },
+          {
+            "group_id": "attention-dp-3",
+            "ordered_device_ids": [
+              3
+            ]
+          },
+          {
+            "group_id": "attention-dp-4",
+            "ordered_device_ids": [
+              4
+            ]
+          },
+          {
+            "group_id": "attention-dp-5",
+            "ordered_device_ids": [
+              5
+            ]
+          },
+          {
+            "group_id": "attention-dp-6",
+            "ordered_device_ids": [
+              6
+            ]
+          },
+          {
+            "group_id": "attention-dp-7",
+            "ordered_device_ids": [
+              7
+            ]
+          },
+          {
+            "group_id": "attention-dp-8",
+            "ordered_device_ids": [
+              8
+            ]
+          },
+          {
+            "group_id": "attention-dp-9",
+            "ordered_device_ids": [
+              9
+            ]
+          },
+          {
+            "group_id": "attention-dp-10",
+            "ordered_device_ids": [
+              10
+            ]
+          },
+          {
+            "group_id": "attention-dp-11",
+            "ordered_device_ids": [
+              11
+            ]
+          },
+          {
+            "group_id": "attention-dp-12",
+            "ordered_device_ids": [
+              12
+            ]
+          },
+          {
+            "group_id": "attention-dp-13",
+            "ordered_device_ids": [
+              13
+            ]
+          },
+          {
+            "group_id": "attention-dp-14",
+            "ordered_device_ids": [
+              14
+            ]
+          },
+          {
+            "group_id": "attention-dp-15",
+            "ordered_device_ids": [
+              15
+            ]
+          }
+        ],
+        "expert_parallelism": "tensor_parallel",
+        "expert_groups": [
+          {
+            "group_id": "expert-tp16",
+            "ordered_device_ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ]
+          }
+        ],
+        "semantic_cache_placement": "attention_group_local",
+        "non_routed_weight_mapping": "opaque_global_shard_to_attention_replication",
+        "expert_network_model": "tensor_parallel_collective",
+        "routed_weight_replication_factor": 1,
+        "non_routed_weight_replication_factor": 16,
+        "network": {
+          "actions": [
+            {
+              "kind": "moe_tensor_parallel",
+              "layer_count": 75,
+              "collectives_or_route_repetitions": 150,
+              "endpoint_payload_bytes": {
+                "lower": 884736000,
+                "upper": 884736000
+              },
+              "endpoint_message_count": {
+                "lower": 72000,
+                "upper": 72000
+              },
+              "network_hop_payload_bytes": {
+                "lower": 884736000,
+                "upper": 884736000
+              },
+              "network_hop_message_count": {
+                "lower": 72000,
+                "upper": 72000
+              },
+              "cross_domain_payload_bytes": {
+                "lower": 110592000,
+                "upper": 110592000
+              },
+              "cross_domain_message_count": {
+                "lower": 9000,
+                "upper": 9000
+              },
+              "cross_domain_accounting": "exact"
+            }
+          ],
+          "total": {
+            "endpoint_payload_bytes": {
+              "lower": 884736000,
+              "upper": 884736000
+            },
+            "endpoint_message_count": {
+              "lower": 72000,
+              "upper": 72000
+            },
+            "network_hop_payload_bytes": {
+              "lower": 884736000,
+              "upper": 884736000
+            },
+            "network_hop_message_count": {
+              "lower": 72000,
+              "upper": 72000
+            },
+            "cross_domain_payload_bytes": {
+              "lower": 110592000,
+              "upper": 110592000
+            },
+            "cross_domain_message_count": {
+              "lower": 9000,
+              "upper": 9000
+            }
+          }
+        },
+        "residency": [
+          {
+            "concurrent_requests": 16,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 1,
+              "semantic_cache_bytes_on_max_device": 736100352,
+              "total_bytes_on_max_device": {
+                "lower": 23385341952,
+                "upper": 29785775744
+              },
+              "cluster_total_bytes": {
+                "lower": 374165471232,
+                "upper": 476572411904
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 125056182272
+              },
+              "semantic_cache_bytes_on_max_device": 736100352,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 671088640
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 30785775744,
+                "upper": 127463371264
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 4617866362,
+                "upper": 19119505690
+              },
+              "total_bytes_on_max_device": {
+                "lower": 35403642106,
+                "upper": 146582876954
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 32,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 2,
+              "semantic_cache_bytes_on_max_device": 1472200704,
+              "total_bytes_on_max_device": {
+                "lower": 24121442304,
+                "upper": 30521876096
+              },
+              "cluster_total_bytes": {
+                "lower": 385943076864,
+                "upper": 488350017536
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 125056182272
+              },
+              "semantic_cache_bytes_on_max_device": 1472200704,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 1342177280
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 31521876096,
+                "upper": 128870560256
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 4728281415,
+                "upper": 19330584039
+              },
+              "total_bytes_on_max_device": {
+                "lower": 36250157511,
+                "upper": 148201144295
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 33,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 24857542656,
+                "upper": 31257976448
+              },
+              "cluster_total_bytes": {
+                "lower": 386679177216,
+                "upper": 489086117888
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 125056182272
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 32257976448,
+                "upper": 130277749248
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 4838696468,
+                "upper": 19541662388
+              },
+              "total_bytes_on_max_device": {
+                "lower": 37096672916,
+                "upper": 149819411636
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 34,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 24857542656,
+                "upper": 31257976448
+              },
+              "cluster_total_bytes": {
+                "lower": 387415277568,
+                "upper": 489822218240
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 125056182272
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 32257976448,
+                "upper": 130277749248
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 4838696468,
+                "upper": 19541662388
+              },
+              "total_bytes_on_max_device": {
+                "lower": 37096672916,
+                "upper": 149819411636
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 42,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 24857542656,
+                "upper": 31257976448
+              },
+              "cluster_total_bytes": {
+                "lower": 393304080384,
+                "upper": 495711021056
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 125056182272
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 32257976448,
+                "upper": 130277749248
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 4838696468,
+                "upper": 19541662388
+              },
+              "total_bytes_on_max_device": {
+                "lower": 37096672916,
+                "upper": 149819411636
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 43,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 24857542656,
+                "upper": 31257976448
+              },
+              "cluster_total_bytes": {
+                "lower": 394040180736,
+                "upper": 496447121408
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 125056182272
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 32257976448,
+                "upper": 130277749248
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 4838696468,
+                "upper": 19541662388
+              },
+              "total_bytes_on_max_device": {
+                "lower": 37096672916,
+                "upper": 149819411636
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 48,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 3,
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "total_bytes_on_max_device": {
+                "lower": 24857542656,
+                "upper": 31257976448
+              },
+              "cluster_total_bytes": {
+                "lower": 397720682496,
+                "upper": 500127623168
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 125056182272
+              },
+              "semantic_cache_bytes_on_max_device": 2208301056,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2013265920
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 32257976448,
+                "upper": 130277749248
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 4838696468,
+                "upper": 19541662388
+              },
+              "total_bytes_on_max_device": {
+                "lower": 37096672916,
+                "upper": 149819411636
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 64,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 4,
+              "semantic_cache_bytes_on_max_device": 2944401408,
+              "total_bytes_on_max_device": {
+                "lower": 25593643008,
+                "upper": 31994076800
+              },
+              "cluster_total_bytes": {
+                "lower": 409498288128,
+                "upper": 511905228800
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 125056182272
+              },
+              "semantic_cache_bytes_on_max_device": 2944401408,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 2684354560
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 32994076800,
+                "upper": 131684938240
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 4949111520,
+                "upper": 19752740736
+              },
+              "total_bytes_on_max_device": {
+                "lower": 37943188320,
+                "upper": 151437678976
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          },
+          {
+            "concurrent_requests": 96,
+            "context_tokens_per_request": 16384,
+            "partial": {
+              "scope": "routed_weights_plus_semantic_cache_only",
+              "routed_weight_bytes_on_max_device": {
+                "lower": 22649241600,
+                "upper": 29049675392
+              },
+              "semantic_cache_copies_on_max_device": 6,
+              "semantic_cache_bytes_on_max_device": 4416602112,
+              "total_bytes_on_max_device": {
+                "lower": 27065843712,
+                "upper": 33466277504
+              },
+              "cluster_total_bytes": {
+                "lower": 433053499392,
+                "upper": 535460440064
+              }
+            },
+            "full": {
+              "checkpoint_weight_bytes_on_max_device": {
+                "lower": 29049675392,
+                "upper": 125056182272
+              },
+              "semantic_cache_bytes_on_max_device": 4416602112,
+              "extra_and_indexer_cache_bytes_on_max_device": {
+                "lower": 0,
+                "upper": 4026531840
+              },
+              "fixed_runtime_bytes_on_device": 1000000000,
+              "unfragmented_bytes_on_max_device": {
+                "lower": 34466277504,
+                "upper": 134499316224
+              },
+              "fragmentation_overhead_bytes_on_max_device": {
+                "lower": 5169941626,
+                "upper": 20174897434
+              },
+              "total_bytes_on_max_device": {
+                "lower": 39636219130,
+                "upper": 154674213658
+              },
+              "usable_memory_bytes_per_device": 164000000000,
+              "capacity_status": "feasible"
+            }
+          }
+        ]
+      }
+    ],
+    "network_comparison": {
+      "baseline_plan_id": "coupled-tp16",
+      "candidate_plan_id": "decoupled-dp-attention-ep8",
+      "candidate_minus_baseline_network_hop_payload_bytes": {
+        "lower": -1549664256,
+        "upper": -1549615104
+      },
+      "network_hop_payload_dominance": "candidate_lower",
+      "candidate_minus_baseline_network_hop_message_count": {
+        "lower": -146750,
+        "upper": -146748
+      },
+      "network_hop_message_dominance": "candidate_lower",
+      "candidate_minus_baseline_cross_domain_payload_bytes": {
+        "lower": -225607680,
+        "upper": -225607680
+      },
+      "cross_domain_payload_dominance": "candidate_lower"
+    },
+    "partial_comparisons": [
+      {
+        "concurrent_requests": 16,
+        "candidate_minus_baseline_cluster_total_bytes": {
+          "lower": 185723781120,
+          "upper": 288130721792
+        },
+        "cluster_total_partial_dominance": "baseline_lower",
+        "candidate_minus_baseline_max_device_bytes": {
+          "lower": 11607736320,
+          "upper": 18008170112
+        },
+        "max_device_partial_dominance": "baseline_lower"
+      },
+      {
+        "concurrent_requests": 32,
+        "candidate_minus_baseline_cluster_total_bytes": {
+          "lower": 9059696640,
+          "upper": 111466637312
+        },
+        "cluster_total_partial_dominance": "baseline_lower",
+        "candidate_minus_baseline_max_device_bytes": {
+          "lower": 566231040,
+          "upper": 6966664832
+        },
+        "max_device_partial_dominance": "baseline_lower"
+      },
+      {
+        "concurrent_requests": 33,
+        "candidate_minus_baseline_cluster_total_bytes": {
+          "lower": -1981808640,
+          "upper": 100425132032
+        },
+        "cluster_total_partial_dominance": "bounds_overlap",
+        "candidate_minus_baseline_max_device_bytes": {
+          "lower": 566231040,
+          "upper": 6966664832
+        },
+        "max_device_partial_dominance": "baseline_lower"
+      },
+      {
+        "concurrent_requests": 34,
+        "candidate_minus_baseline_cluster_total_bytes": {
+          "lower": -13023313920,
+          "upper": 89383626752
+        },
+        "cluster_total_partial_dominance": "bounds_overlap",
+        "candidate_minus_baseline_max_device_bytes": {
+          "lower": -169869312,
+          "upper": 6230564480
+        },
+        "max_device_partial_dominance": "bounds_overlap"
+      },
+      {
+        "concurrent_requests": 42,
+        "candidate_minus_baseline_cluster_total_bytes": {
+          "lower": -101355356160,
+          "upper": 1051584512
+        },
+        "cluster_total_partial_dominance": "bounds_overlap",
+        "candidate_minus_baseline_max_device_bytes": {
+          "lower": -6058672128,
+          "upper": 341761664
+        },
+        "max_device_partial_dominance": "bounds_overlap"
+      },
+      {
+        "concurrent_requests": 43,
+        "candidate_minus_baseline_cluster_total_bytes": {
+          "lower": -112396861440,
+          "upper": -9989920768
+        },
+        "cluster_total_partial_dominance": "candidate_lower",
+        "candidate_minus_baseline_max_device_bytes": {
+          "lower": -6794772480,
+          "upper": -394338688
+        },
+        "max_device_partial_dominance": "candidate_lower"
+      },
+      {
+        "concurrent_requests": 48,
+        "candidate_minus_baseline_cluster_total_bytes": {
+          "lower": -167604387840,
+          "upper": -65197447168
+        },
+        "cluster_total_partial_dominance": "candidate_lower",
+        "candidate_minus_baseline_max_device_bytes": {
+          "lower": -10475274240,
+          "upper": -4074840448
+        },
+        "max_device_partial_dominance": "candidate_lower"
+      },
+      {
+        "concurrent_requests": 64,
+        "candidate_minus_baseline_cluster_total_bytes": {
+          "lower": -344268472320,
+          "upper": -241861531648
+        },
+        "cluster_total_partial_dominance": "candidate_lower",
+        "candidate_minus_baseline_max_device_bytes": {
+          "lower": -21516779520,
+          "upper": -15116345728
+        },
+        "max_device_partial_dominance": "candidate_lower"
+      },
+      {
+        "concurrent_requests": 96,
+        "candidate_minus_baseline_cluster_total_bytes": {
+          "lower": -697596641280,
+          "upper": -595189700608
+        },
+        "cluster_total_partial_dominance": "candidate_lower",
+        "candidate_minus_baseline_max_device_bytes": {
+          "lower": -43599790080,
+          "upper": -37199356288
+        },
+        "max_device_partial_dominance": "candidate_lower"
+      }
+    ],
+    "partial_crossover": {
+      "baseline_plan_id": "coupled-tp16",
+      "candidate_plan_id": "decoupled-dp-attention-ep8",
+      "search_min_concurrency": 1,
+      "search_max_concurrency": 96,
+      "cluster_total_regions": [
+        {
+          "start_concurrency": 1,
+          "end_concurrency": 32,
+          "dominance": "baseline_lower"
+        },
+        {
+          "start_concurrency": 33,
+          "end_concurrency": 42,
+          "dominance": "bounds_overlap"
+        },
+        {
+          "start_concurrency": 43,
+          "end_concurrency": 96,
+          "dominance": "candidate_lower"
+        }
+      ],
+      "max_device_regions": [
+        {
+          "start_concurrency": 1,
+          "end_concurrency": 33,
+          "dominance": "baseline_lower"
+        },
+        {
+          "start_concurrency": 34,
+          "end_concurrency": 42,
+          "dominance": "bounds_overlap"
+        },
+        {
+          "start_concurrency": 43,
+          "end_concurrency": 96,
+          "dominance": "candidate_lower"
+        }
+      ]
+    },
+    "claims": {
+      "partial_residency_accounting_permitted": true,
+      "modeled_capacity_arithmetic_permitted": true,
+      "end_to_end_latency_claim_permitted": false,
+      "throughput_claim_permitted": false,
+      "cost_per_token_claim_permitted": false,
+      "quality_claim_permitted": false,
+      "blockers": [
+        "route_histogram_is_synthetic",
+        "checkpoint_expert_layout_is_opaque",
+        "cache_scale_and_metadata_are_excluded",
+        "collective_timing_is_not_calibrated",
+        "cross_domain_link_performance_is_not_measured",
+        "runtime_distribution_is_modeled",
+        "serving_and_contention_are_not_modeled",
+        "quality_contract_is_not_provided"
+      ]
+    }
+  }
+}

@@ -1,0 +1,251 @@
+{
+  "backend_result": {
+    "command": [
+      "/Users/js/dev/vllm-study/.venv/bin/timeloop",
+      "mapper",
+      "/Users/js/dev/inference-foundry/configs/timeloop/qwen3-0.6b-o-proj-bf16-external-arch-v1.yaml",
+      "/Users/js/dev/inference-foundry/configs/timeloop/qwen3-0.6b-o-proj-bf16-external-mapper-v1.yaml",
+      "/Users/js/dev/inference-foundry/experiments/qwen3-0.6b/timeloop-o-proj-bf16-decode-b1-v1.yaml",
+      "-o",
+      "experiments/qwen3-0.6b/timeloop-external-smoke-v1/raw/native-output"
+    ],
+    "executable_name": "timeloop-mapper",
+    "executable_path": null,
+    "frontend_cli_exit_code": 1,
+    "frontend_cli_path": "/Users/js/dev/vllm-study/.venv/bin/timeloop",
+    "native_exit_code_observed_in_frontend_output": 127,
+    "runtime_nanoseconds": 122628500,
+    "status": "executable_not_found",
+    "timeout_seconds": 30
+  },
+  "claims": {
+    "area_claim_permitted": false,
+    "blockers": [
+      "timeloop_mapper_executable_unavailable",
+      "native_dependency_missing:barvinok",
+      "native_dependency_missing:isl",
+      "native_dependency_missing:libconfig++",
+      "native_dependency_missing:ntl",
+      "native_dependency_missing:polylibgmp",
+      "native_dependency_missing:yaml-cpp",
+      "native_output_not_normalized",
+      "bf16_semantics_not_bound_to_the_official_integer_mac_architecture",
+      "architecture_not_calibrated_to_local_or_deployed_hardware",
+      "cycles_energy_area_and_cost_unmeasured"
+    ],
+    "calibration_claim_permitted": false,
+    "cost_claim_permitted": false,
+    "cycle_claim_permitted": false,
+    "energy_claim_permitted": false,
+    "frontend_parse_claim_permitted": true,
+    "native_mapping_claim_permitted": false,
+    "performance_claim_permitted": false,
+    "problem_contract_claim_permitted": true,
+    "utilization_claim_permitted": false
+  },
+  "content_identity_sha256": "5dd5a235ef2229c39b7d8deee4efbaff01282673c80f9b0effcce404c8f1f874",
+  "environment": {
+    "installation": {
+      "accelergy": {
+        "direct_url_path": "/Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/accelergy-0.4.dist-info/direct_url.json",
+        "name": "accelergy",
+        "repository": "https://github.com/Accelergy-Project/accelergy.git",
+        "revision": "6911d15686ee7efdceba7d95605102df4472ae3a",
+        "version": "0.4"
+      },
+      "frontend": {
+        "direct_url_path": "/Users/js/dev/vllm-study/.venv/lib/python3.12/site-packages/timeloopfe-0.4.dist-info/direct_url.json",
+        "name": "timeloopfe",
+        "repository": "https://github.com/Accelergy-Project/timeloopfe.git",
+        "revision": "5603893c0ff75183b5ffd6839aba33774fc3b6fe",
+        "version": "0.4"
+      }
+    },
+    "machine": "arm64",
+    "native_dependency_probe": {
+      "barvinok": {
+        "found": false,
+        "probe": "pkg-config --modversion barvinok",
+        "version": null
+      },
+      "gmp": {
+        "found": true,
+        "probe": "pkg-config --modversion gmp",
+        "version": "6.3.0"
+      },
+      "isl": {
+        "found": false,
+        "probe": "pkg-config --modversion isl",
+        "version": null
+      },
+      "libconfig++": {
+        "found": false,
+        "probe": "pkg-config --modversion libconfig++",
+        "version": null
+      },
+      "ntl": {
+        "found": false,
+        "probe": "pkg-config --modversion ntl",
+        "version": null
+      },
+      "polylibgmp": {
+        "found": false,
+        "probe": "pkg-config --modversion polylibgmp",
+        "version": null
+      },
+      "yaml-cpp": {
+        "found": false,
+        "probe": "pkg-config --modversion yaml-cpp",
+        "version": null
+      }
+    },
+    "platform": "macOS-15.6.1-arm64-arm-64bit",
+    "python": "3.12.12",
+    "python_executable": "/Users/js/dev/vllm-study/.venv/bin/python",
+    "release": "24.6.0",
+    "system": "Darwin"
+  },
+  "input_artifacts": [
+    {
+      "bytes": 1865,
+      "name": "architecture",
+      "path": "/Users/js/dev/inference-foundry/configs/timeloop/qwen3-0.6b-o-proj-bf16-external-arch-v1.yaml",
+      "sha256": "445cca46ccff01f24a55b4229d00b11af147dd429a63307b4d65930ca2d5bc08"
+    },
+    {
+      "bytes": 195,
+      "name": "mapper",
+      "path": "/Users/js/dev/inference-foundry/configs/timeloop/qwen3-0.6b-o-proj-bf16-external-mapper-v1.yaml",
+      "sha256": "f912be9d1fb41fc3c341fa541d6960426fecf1e3716cca776c107d3f9a3df16d"
+    },
+    {
+      "bytes": 453,
+      "name": "problem_yaml",
+      "path": "/Users/js/dev/inference-foundry/experiments/qwen3-0.6b/timeloop-o-proj-bf16-decode-b1-v1.yaml",
+      "sha256": "f109b1a8a607ba52bd038604fb8d6f88fa274e228651457976929d40e80e2e51"
+    }
+  ],
+  "problem": {
+    "dimensions": [
+      "B",
+      "M",
+      "N",
+      "K"
+    ],
+    "instance": {
+      "B": 1,
+      "K": 2048,
+      "M": 1,
+      "N": 1024
+    },
+    "shape_name": "FoundryGemmBMNK",
+    "tensor_types": {
+      "accumulator": "fp32",
+      "input": "bf16",
+      "output": "bf16",
+      "weight": "bf16"
+    }
+  },
+  "raw_artifacts": [
+    {
+      "bytes": 0,
+      "path": "experiments/qwen3-0.6b/timeloop-external-smoke-v1/raw/dependencies.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 143,
+      "path": "experiments/qwen3-0.6b/timeloop-external-smoke-v1/raw/dependencies.stdout",
+      "sha256": "7e6b388451e966a107044f4922f7e42b951bd444ce39d3799d9e3eee08aada3f"
+    },
+    {
+      "bytes": 0,
+      "path": "experiments/qwen3-0.6b/timeloop-external-smoke-v1/raw/frontend.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 165,
+      "path": "experiments/qwen3-0.6b/timeloop-external-smoke-v1/raw/frontend.stdout",
+      "sha256": "aacfa2d700b9aa9fd4875b4e2faafe2e4ffcad03e6c4cc620763eebf18f4f53e"
+    },
+    {
+      "bytes": 0,
+      "path": "experiments/qwen3-0.6b/timeloop-external-smoke-v1/raw/installation.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 657,
+      "path": "experiments/qwen3-0.6b/timeloop-external-smoke-v1/raw/installation.stdout",
+      "sha256": "24abed185bdefd4ead7a884bb9eb1f402a7a093872dd4e10d13dc2c1548dec23"
+    },
+    {
+      "bytes": 8576,
+      "path": "experiments/qwen3-0.6b/timeloop-external-smoke-v1/raw/native-output/parsed-processed-input.yaml",
+      "sha256": "6f9ed8e06090c6d310e3f3174bfb15117fcac5ac732b6f07dd259addec1df158"
+    },
+    {
+      "bytes": 1380,
+      "path": "experiments/qwen3-0.6b/timeloop-external-smoke-v1/raw/native.stderr",
+      "sha256": "f814d219680452507559f5bd89a99ec9e711ee23288cc1daece30301aa4a2a0b"
+    },
+    {
+      "bytes": 94,
+      "path": "experiments/qwen3-0.6b/timeloop-external-smoke-v1/raw/native.stdout",
+      "sha256": "992867cc63c6cc0e4a7acec666319c2d36b59f5ef82d181a84737752b312619b"
+    }
+  ],
+  "reconciliation": {
+    "exact_match": true,
+    "flops": 4194304,
+    "frontend_instance": {
+      "B": 1,
+      "K": 2048,
+      "M": 1,
+      "N": 1024
+    },
+    "input_bytes": 4096,
+    "input_elements": 2048,
+    "multiply_accumulates": 2097152,
+    "output_bytes": 2048,
+    "output_elements": 1024,
+    "total_tensor_bytes": 4200448,
+    "weight_bytes": 4194304,
+    "weight_elements": 2097152
+  },
+  "request_id": "qwen3-0.6b-o-proj-bf16-external-smoke-v1",
+  "runtime": {
+    "frontend_parse_nanoseconds": 62411542,
+    "native_probe_nanoseconds": 122628500
+  },
+  "schema_version": "inference-foundry.timeloop-external-smoke-report.v1",
+  "source_identity": {
+    "probe_path": "experiments/qwen3-0.6b/timeloop-external-smoke-v1/probe.json",
+    "probe_sha256": "660151c1f7f87a058f632d59aa17caf8e186c5902086631937e859f208d9b7f0",
+    "problem_export_content_id": "f88f03ed0d8ae74a571d4dd21126663d3557b55263eaf87f40b50f9fe385f8bd",
+    "problem_export_path": "/Users/js/dev/inference-foundry/experiments/qwen3-0.6b/timeloop-o-proj-bf16-decode-b1-v1.json",
+    "problem_export_sha256": "9e3f458939012cbd88772988be4be853bbd2140a564cbca24e467bead9de3375",
+    "request_path": "configs/timeloop/qwen3-0.6b-o-proj-bf16-external-smoke-v1.json",
+    "request_sha256": "af1bd95a8c7b52a330e908aff187d6a207df464a37d186ce0657977cfefa6bb1"
+  },
+  "status": "native_backend_blocked",
+  "tool_identity": {
+    "accelergy": {
+      "name": "accelergy",
+      "repository": "https://github.com/Accelergy-Project/accelergy",
+      "revision": "6911d15686ee7efdceba7d95605102df4472ae3a",
+      "version": "0.4"
+    },
+    "frontend": {
+      "name": "timeloopfe",
+      "repository": "https://github.com/Accelergy-Project/timeloopfe",
+      "revision": "5603893c0ff75183b5ffd6839aba33774fc3b6fe",
+      "version": "0.4"
+    },
+    "native_backend": {
+      "executable": "timeloop-mapper",
+      "name": "timeloop-mapper",
+      "repository": "https://github.com/NVlabs/timeloop",
+      "requested_revision": "32370826fdf1aa3c8deb0c93e6b2a2fc7cf053aa",
+      "timeout_seconds": 30
+    }
+  }
+}

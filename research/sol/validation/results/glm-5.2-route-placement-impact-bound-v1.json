@@ -1,0 +1,83 @@
+{
+  "schema_version": "inference-foundry.derived-impact-bound.v1",
+  "evidence_kind": "derived_from_synthetic_route_simulation",
+  "model_id": "zai-org/GLM-5.2",
+  "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+  "source_artifact": "experiments/glm-5.2/moe-route-skew-v1.json",
+  "scenario": "synthetic-source-affine-hotset",
+  "intervention": "traffic-aware-primary-placement-without-expert-replication",
+  "observed_simulation_delta": {
+    "fully_connected_8x_remote_dispatch_reduction_fraction": 0.3553292410714286,
+    "fully_connected_8x_remote_endpoint_byte_reduction_fraction": 0.3553292410714286,
+    "bidirectional_ring_8x_network_hop_byte_reduction_fraction": 0.6212895584106446,
+    "additional_expert_storage_bytes": 0
+  },
+  "bound": {
+    "formula": "speedup = 1 / (1 - network_time_fraction * network_traffic_reduction_fraction)",
+    "assumptions": [
+      "Network service time is proportional to the selected traffic-byte metric.",
+      "Placement has no compute, memory-capacity, routing-control, batching, quality, or utilization penalty.",
+      "All non-network latency remains unchanged and hourly system cost remains fixed.",
+      "The synthetic source-affine route distribution remains stable enough for the placement to stay valid."
+    ],
+    "fully_connected_endpoint_rows": [
+      {
+        "network_time_fraction": 0.25,
+        "maximum_speedup": 1.0974928229665073,
+        "maximum_cost_reduction_percent": 8.883231026785715
+      },
+      {
+        "network_time_fraction": 0.5,
+        "maximum_speedup": 1.2160488591059462,
+        "maximum_cost_reduction_percent": 17.76646205357143
+      },
+      {
+        "network_time_fraction": 0.75,
+        "maximum_speedup": 1.3633208121344682,
+        "maximum_cost_reduction_percent": 26.649693080357146
+      },
+      {
+        "network_time_fraction": 1.0,
+        "maximum_speedup": 1.551179398398615,
+        "maximum_cost_reduction_percent": 35.53292410714286
+      }
+    ],
+    "ring_hop_rows": [
+      {
+        "network_time_fraction": 0.25,
+        "maximum_speedup": 1.1838836352364035,
+        "maximum_cost_reduction_percent": 15.532238960266115
+      },
+      {
+        "network_time_fraction": 0.5,
+        "maximum_speedup": 1.450630922686298,
+        "maximum_cost_reduction_percent": 31.06447792053223
+      },
+      {
+        "network_time_fraction": 0.75,
+        "maximum_speedup": 1.8725440489639866,
+        "maximum_cost_reduction_percent": 46.59671688079835
+      },
+      {
+        "network_time_fraction": 1.0,
+        "maximum_speedup": 2.640539816655817,
+        "maximum_cost_reduction_percent": 62.12895584106446
+      }
+    ]
+  },
+  "replication_tradeoff": {
+    "additional_replica_count": 1024,
+    "additional_expert_storage_bytes": 77309411328,
+    "expert_storage_overhead_fraction": 0.05333333333333334,
+    "incremental_remote_dispatch_reduction_fraction_after_placement": 0.04118011974320135,
+    "uniform_route_remote_dispatch_reduction_fraction": 0.007619047619047636
+  },
+  "conclusion": "Synthetic source-affine routing makes traffic-aware primary placement a stronger first hypothesis than replication: it removes 35.53% of fully connected endpoint traffic at zero added expert storage. The ideal overall ceiling is only 1.55x even if endpoint network service were the entire runtime. Ring hop traffic has a larger 2.64x all-network ceiling, but neither result transfers without measured GLM route histograms, calibrated topology contention, serving SLOs, and placement-stability evidence.",
+  "unsupported_claims": [
+    "Measured GLM-5.2 route locality or stability",
+    "Measured network latency or throughput improvement",
+    "End-to-end serving speedup",
+    "Dollars-per-token reduction",
+    "Provider or custom-hardware advantage"
+  ]
+}

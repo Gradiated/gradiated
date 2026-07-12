@@ -1,0 +1,247 @@
+{
+  "schema_version": 2,
+  "experiment_name": "qwen3-8b-agentic-custom-asic",
+  "model": {
+    "model_id": "Qwen/Qwen3-8B",
+    "model_revision": "b968826d9c46dd6066d109eabc6255188de91218",
+    "architecture": "dense_decoder",
+    "parameter_count": 8200000000,
+    "layer_count": 36,
+    "hidden_size": 4096,
+    "intermediate_size": 12288,
+    "attention_head_count": 32,
+    "kv_head_count": 8,
+    "head_dimension": 128,
+    "vocabulary_size": 151936,
+    "max_sequence_length": 32768,
+    "weight_precision": "int4",
+    "quantized_weight_storage": {
+      "coverage": {
+        "kind": "fraction",
+        "numerator": 1,
+        "denominator": 1
+      },
+      "group_size": 128,
+      "code_bits": 4,
+      "scale_bits": 16,
+      "unquantized_bits": 16,
+      "fixed_metadata_bytes": 0
+    },
+    "kv_precision": "fp8"
+  },
+  "quality_suite_id": "agentic-v1",
+  "workload": {
+    "seed": 20260711,
+    "request_count": 512,
+    "arrival_rate_per_second": 2.0,
+    "request_classes": [
+      {
+        "name": "tool_turn",
+        "share": 0.25,
+        "input_tokens": 2048,
+        "output_tokens": 256,
+        "prefix_cache_hit_ratio": 0.4
+      },
+      {
+        "name": "coding_turn",
+        "share": 0.45,
+        "input_tokens": 16384,
+        "output_tokens": 1024,
+        "prefix_cache_hit_ratio": 0.85
+      },
+      {
+        "name": "long_agent_turn",
+        "share": 0.3,
+        "input_tokens": 28672,
+        "output_tokens": 2048,
+        "prefix_cache_hit_ratio": 0.92
+      }
+    ]
+  },
+  "hardware": {
+    "name": "qwen3-model-specific-v0",
+    "fidelity": "architecture",
+    "physical_device_count": 1,
+    "aggregate": null,
+    "design": {
+      "process": {
+        "node_nanometers": 4.0,
+        "transistor_density_million_per_square_millimeter": 200.0,
+        "wafer_diameter_millimeters": 300.0,
+        "wafer_cost_usd": 20000.0
+      },
+      "die": {
+        "die_count": 1,
+        "area_square_millimeters": 600.0
+      },
+      "package": {
+        "package_type": "2.5d_hbm",
+        "interposer_area_square_millimeters": 1200.0,
+        "package_cost_usd": 2500.0
+      },
+      "compute": {
+        "array_count": 64,
+        "array": {
+          "rows": 128,
+          "columns": 128
+        },
+        "frequency_hz": 1500000000.0,
+        "arithmetic": [
+          {
+            "precision": "bf16",
+            "operations_per_cycle_per_element": 2.0,
+            "energy_picojoules_per_operation": 0.8
+          },
+          {
+            "precision": "fp8",
+            "operations_per_cycle_per_element": 8.0,
+            "energy_picojoules_per_operation": 0.2
+          },
+          {
+            "precision": "int8",
+            "operations_per_cycle_per_element": 8.0,
+            "energy_picojoules_per_operation": 0.15
+          },
+          {
+            "precision": "int4",
+            "operations_per_cycle_per_element": 16.0,
+            "energy_picojoules_per_operation": 0.08
+          }
+        ]
+      },
+      "on_chip_memory": [
+        {
+          "name": "weight_and_kv_sram",
+          "kind": "sram",
+          "capacity_bytes": 268435456,
+          "bandwidth_bytes_per_second": 60000000000000.0,
+          "energy_picojoules_per_byte": 0.5,
+          "area_square_millimeters": 120.0
+        }
+      ],
+      "off_chip_memory": [
+        {
+          "name": "hbm3e",
+          "kind": "hbm",
+          "capacity_bytes": 64000000000,
+          "bandwidth_bytes_per_second": 8000000000000.0,
+          "energy_picojoules_per_byte": 5.0,
+          "area_square_millimeters": 120.0,
+          "controller_latency_nanoseconds": 50.0
+        }
+      ],
+      "network": {
+        "topology": "mesh",
+        "bisection_bandwidth_bytes_per_second": 30000000000000.0,
+        "hop_latency_nanoseconds": 1.0,
+        "energy_picojoules_per_byte_per_hop": 0.1,
+        "area_square_millimeters": 40.0
+      },
+      "interconnect": {
+        "scale_up": [
+          {
+            "name": "scale_up",
+            "link_count": 8,
+            "bandwidth_bytes_per_second_per_link": 112500000000.0,
+            "latency_nanoseconds": 100.0,
+            "energy_picojoules_per_byte": 2.0
+          }
+        ],
+        "scale_out": [
+          {
+            "name": "scale_out",
+            "link_count": 2,
+            "bandwidth_bytes_per_second_per_link": 50000000000.0,
+            "latency_nanoseconds": 1000.0,
+            "energy_picojoules_per_byte": 8.0
+          }
+        ]
+      },
+      "power_thermal": {
+        "idle_power_watts": 40.0,
+        "thermal_design_power_watts": 450.0,
+        "cooling_capacity_watts": 500.0,
+        "maximum_junction_temperature_celsius": 95.0
+      },
+      "manufacturing": {
+        "defect_density_per_square_centimeter": 0.1,
+        "die_yield": 0.65,
+        "package_yield": 0.9,
+        "assembly_cost_usd": 500.0,
+        "test_cost_usd": 250.0,
+        "non_recurring_engineering_cost_usd": 300000000.0,
+        "amortization_units": 100000
+      }
+    },
+    "accelerator_hourly_cost_usd": 0.8,
+    "host_hourly_cost_usd": 0.25
+  },
+  "kernel": {
+    "backend": "rust",
+    "attention": "paged",
+    "fusion": "full_layer",
+    "tile_rows": 128,
+    "tile_columns": 128
+  },
+  "mapping": {
+    "tensor_parallelism": 1,
+    "pipeline_parallelism": 1,
+    "data_parallelism": 1,
+    "prefill_decode_disaggregated": false
+  },
+  "serving": {
+    "max_batch_size": 64,
+    "prefill_chunk_tokens": 512,
+    "prefill_interleave_decode_steps": 8,
+    "kv_cache_memory_fraction": 0.8,
+    "max_concurrent_requests": 256,
+    "ttft_slo_milliseconds": 5000.0,
+    "tpot_slo_milliseconds": 50.0
+  },
+  "economics": {
+    "electricity_usd_per_kwh": 0.12,
+    "power_usage_effectiveness": 1.2,
+    "target_gross_margin": 0.5,
+    "provider_overhead_usd_per_hour": 0.25
+  },
+  "quality_constraints": [
+    {
+      "metric": "agentic_task_success",
+      "baseline_score": 1.0,
+      "minimum_score": 0.99
+    }
+  ],
+  "search_space": {
+    "weight_precisions": ["bf16", "fp8", "int8", "int4"],
+    "quantized_weight_storage": {
+      "coverage": {
+        "kind": "fraction",
+        "numerator": 1,
+        "denominator": 1
+      },
+      "group_size": 128,
+      "code_bits": 4,
+      "scale_bits": 16,
+      "unquantized_bits": 16,
+      "fixed_metadata_bytes": 0
+    },
+    "kv_precisions": ["fp16", "fp8", "int8", "int4"],
+    "max_batch_sizes": [16, 32, 64, 128],
+    "prefill_chunk_tokens": [256, 512, 1024, 2048],
+    "kernel": {
+      "attention_kernels": ["standard", "flash", "paged"],
+      "fusion_policies": ["none", "attention_and_mlp", "full_layer"],
+      "tile_rows": [64, 128, 256],
+      "tile_columns": [64, 128, 256]
+    },
+    "hardware": {
+      "compute_array_counts": [32, 64, 96, 128],
+      "on_chip_memory_capacities_bytes": [67108864, 134217728, 268435456, 536870912],
+      "off_chip_memory_bandwidth_bytes_per_second": [4000000000000.0, 8000000000000.0, 12000000000000.0]
+    },
+    "mapping": {
+      "tensor_parallelism": [1, 2, 4],
+      "pipeline_parallelism": [1, 2]
+    }
+  }
+}

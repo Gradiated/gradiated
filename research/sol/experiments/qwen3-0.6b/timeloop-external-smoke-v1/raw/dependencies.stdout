@@ -1,0 +1,7 @@
+libconfig++	missing	None
+yaml-cpp	missing	None
+isl	missing	None
+barvinok	missing	None
+ntl	missing	None
+polylibgmp	missing	None
+gmp	found	6.3.0

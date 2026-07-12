@@ -1,0 +1,1195 @@
+{
+  "schema_version": "inference-foundry.simulator-predictive-validity-gate.v1",
+  "as_of_date": "2026-07-12",
+  "question": "Does the simulator predict held-out model-specific intervention effects accurately enough to promote cost claims?",
+  "gate_spec": {
+    "required_distinct_interventions": 3,
+    "required_context_regimes": 2,
+    "maximum_relative_effect_size_error": 0.15,
+    "minimum_spearman_rank_correlation": 0.8,
+    "effect_size_definition": "fractional_candidate_change_from_each_baseline_oriented_positive_is_better",
+    "relative_effect_size_error_definition": "absolute_predicted_minus_measured_benefit_effect_divided_by_absolute_measured_benefit_effect",
+    "rank_correlation_definition": "spearman_of_predicted_and_measured_benefit_effects_with_average_tie_ranks",
+    "pair_contract_version": "inference-foundry.predictive-pair.v1",
+    "exact_scope_fields": [
+      "model_id",
+      "model_revision",
+      "workload_id",
+      "workload_revision",
+      "context_regime",
+      "hardware_id",
+      "hardware_revision",
+      "software_id",
+      "software_revision",
+      "intervention_id",
+      "intervention_revision",
+      "metric_id",
+      "metric_unit",
+      "higher_is_better"
+    ],
+    "exact_cost_execution_scope_fields": [
+      "model_id",
+      "model_revision",
+      "workload_id",
+      "workload_revision",
+      "context_regime",
+      "hardware_id",
+      "hardware_revision",
+      "software_id",
+      "software_revision",
+      "intervention_id",
+      "intervention_revision"
+    ],
+    "artifact_binding_fields": [
+      "artifact_path",
+      "artifact_sha256",
+      "artifact_content_id",
+      "artifact_content_id_json_path",
+      "artifact_scope_json_path"
+    ],
+    "observation_value_binding_fields": [
+      "baseline_json_path",
+      "candidate_json_path"
+    ],
+    "cost_criterion_binding_fields": [
+      "criterion_id_json_path",
+      "criterion_revision_json_path",
+      "passed_json_path"
+    ],
+    "artifact_binding_verification": "safe_workspace_relative_file_sha256_and_in_file_json_content_id",
+    "require_all_directions_correct": true,
+    "require_at_least_one_predicted_regression": true,
+    "require_blinded_holdout": true,
+    "require_prediction_locked_before_measurement": true,
+    "require_global_calibration_holdout_nonoverlap": true,
+    "require_exact_scope_identity": true,
+    "require_exact_quality_and_slo_for_cost_promotion": true
+  },
+  "evidence_policy": {
+    "exact_scope_identity_required": true,
+    "prediction_locked_before_measurement_required": true,
+    "blinded_holdout_required": true,
+    "global_calibration_holdout_nonoverlap_required": true,
+    "simulation_only_is_not_measurement": true,
+    "analytical_bound_is_not_a_prediction_pair": true,
+    "repeat_measurement_is_not_a_prediction": true,
+    "frontend_parse_is_not_measurement": true,
+    "cross_model_transfer_is_not_same_scope": true,
+    "exact_quality_and_slo_required_for_cost_promotion": true
+  },
+  "audit_inventory": {
+    "selection": {
+      "roots": [
+        "experiments",
+        "validation/results"
+      ],
+      "workspace_json_snapshot": true,
+      "exclusions": [
+        {
+          "path": "validation/results/simulator-predictive-validity-gate-2026-07-12.json",
+          "reason": "gate output excluded to prevent self-reference"
+        },
+        {
+          "path": "validation/results/model-stack-business-decision-2026-07-12.json",
+          "reason": "downstream decision synthesis excluded to prevent circular identity"
+        }
+      ]
+    },
+    "artifact_count": 61,
+    "inventory_identity_sha256": "29de1aee27a532a659136c8880fc30c2512e52bf83110da1e9f56ab5fa29d8ab",
+    "artifacts": [
+      {
+        "path": "experiments/glm-5.2/agentic-mapping-screen-v1.json",
+        "file_sha256": "0e87a43ea19ca45b286b6bf8f0b588a3854c85ae3609cccc13517790f73906e8",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "f501dd1a2beba380f605c080ef0a6f405b506efb832c98374cfa043da092e5a5"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware",
+          "simulated_serving"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/chakra-decode-representable-v1.json",
+        "file_sha256": "8d3ef78ea0d6b2294806ac1497d9a64e9810bacb539cf8b0f939809cf097d353",
+        "declared_content_ids": [
+          {
+            "json_path": "binary_content_id",
+            "value": "1e8212424f8f5bb0a2615510dc530a1eb2543092ed694278c4fee91107b6d4ac"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware",
+          "tool_contract"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/current-cost-claim-composition-v1.json",
+        "file_sha256": "41066a33113744a9bf887755a6a09656514a5e09d5ad2cc84fc110351c0d91f5",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "8dbc8cf34334a86c42c76259912f914490b5755166195a375893059459b0edf9"
+          },
+          {
+            "json_path": "composition_id",
+            "value": "glm-5.2-current-cost-claim-composition-v1"
+          }
+        ],
+        "evidence_roles": [
+          "modeled_economics",
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/decode-action-ledger-inspection-v1.json",
+        "file_sha256": "4fc3a43b2d2bd404efc47b8a479e2fd1ddeb248f184b852efa6fbfdf9b3a4a16",
+        "declared_content_ids": [
+          {
+            "json_path": "ledger_content_id",
+            "value": "04d22a1951d83e860c2f21d39b5c1587dc5cd9583bf5ac494e3c3bb6b2f69978"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware",
+          "tool_contract"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/decode-ledger-roofline-v1.json",
+        "file_sha256": "95d9e18cf0642a7485d83113b2cc8078ee3b072022d4987d14edc5c8b99dff5a",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "3daa7c802c47d39baeac32b846a717200a81050d745b75ebe804ef6ef9738be3"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/dsa-indexshare-sweep-v1.json",
+        "file_sha256": "78e76d43f768171bdd68bd8f11eee138fe96b43aa1a7daef985bd53f2c89187c",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "ed372a7fbf9c0bc338ab66b107b7f188edae3fc63bc8bb68943b79082eeb8fe0"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/economic-robustness-frontier-v1.json",
+        "file_sha256": "880356569787f4d7f28095f0ca232ae7360f6fbbf44e4569f835b85178ed3664",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "fb0efb13d0e112dc8a1c025fbe3d6aff7aa8a410b79c6446f11e3bf173e6ba77"
+          }
+        ],
+        "evidence_roles": [
+          "modeled_economics",
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/exact-ledger-serving-v1.json",
+        "file_sha256": "faef155c142a40f69a1da6e83222983384f7bac6500b4ebd01251059a34ee680",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "simulated_hardware",
+          "simulated_serving",
+          "tool_contract"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/h200-optimistic-deployment-screen-v1.json",
+        "file_sha256": "ebfe2c41e5454a67dcb60d15a9ef3897b5185b6451feda2da4016649bf215d78",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "07017590792feee5b1376711e0c716fdaed2af67b9b288f908cd35f918e820c4"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/moe-route-skew-v1.json",
+        "file_sha256": "60c579dd28a5ab75325ac4ffe4b3f5de289877749182ee744ee8f6cfa82407ef",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/mtp-sweep-v1.json",
+        "file_sha256": "0cca011c4f39255953160563592840195b64d9fd5fa65a6c61fb503bb9970817",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "38e8f17675bdbb271990915018be375da926952b34e69ab61b6a5dccef84a49e"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/nvfp4-blackwell-roofline-lower-v1.json",
+        "file_sha256": "6d2c983abb300bed2c53a995477f2ca66cfde0ff2d150e724568b4ac070b822f",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "df1218793c14fd749e208cd2005730f1a7aa27d108be75f6f0150b85d960960e"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/nvfp4-blackwell-roofline-upper-v1.json",
+        "file_sha256": "9d712c6d6c42f5781d4af0cfff11fa5b186b2b985054140d423ed980260a8849",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "8c245b30dbfc4a764ea4786f342c71f6cab11855422d6926bc45058171410d37"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/nvfp4-fp8-kv-four-b200-frontier-v1.json",
+        "file_sha256": "a86d2b04cf66adde2bb6dd057c7bb592589799ce393f21fa06fb51f44d1607f0",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "708257b73d32cb8228e7ebd467de5c2e606755f2aedb71a93570a9149c10a04a"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/nvfp4-whole-decode-lowering-90k-control-v1.json",
+        "file_sha256": "910eca9d10ab0b61a2c396cdcf9480c9bd66d5775688764bcb9faca3dcf4e66f",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "f40f41c1d67b909783c40073f475f08906e77ccb05673f2beb630a496b0c7cd3"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/nvfp4-whole-decode-lowering-v1.json",
+        "file_sha256": "178b503fdd26eae0005e5684f60425f80e03b50456cdd0817a7d1729a282cccf",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "de14e9be74e0f3a89baf3c09a94714d8a0aa72bde6221affe2235a5b74544845"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/parallel-mapping-90k-control-v1.json",
+        "file_sha256": "548bfe7501a8795aa2618a672ad32f89764b7dbcaa4c5c94442001e5d93d8711",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "0f61e4f6ebec52b35fb5046ab1ba7bbb9506516dba23f94b694c65085bc0f48a"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware",
+          "simulated_serving"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/parallel-mapping-context-frontier-v1.json",
+        "file_sha256": "680ffeb3ff694c5fe134940b97d6e79e7cabdd8adf52d206e191e0db1ff2fdbf",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "727c79eb3ec827b12a45b9311d114cd7f33beb15fc72f1698940e975e774b09c"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware",
+          "simulated_serving"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/parallel-mapping-control-v1.json",
+        "file_sha256": "efdab50dcefa2ed484b2a513ec8753ee7a7a2b477b01b3dde6f0363d75b523b9",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "205c1c7157d104179e066ecfde311107ca7f160f941a8a97e7058e8e1fd80729"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware",
+          "simulated_serving"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/pd-serving-control-v1.json",
+        "file_sha256": "8f65d7c796fe4eadbeedfe10bd0ab9ed59516762ffacc11098cb99324a72b334",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "c83ec178319e944168b4192adab0f4e02dbb039d8e1d3685232d16925e504a20"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware",
+          "simulated_serving"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/storage-envelope-v1.json",
+        "file_sha256": "ba5ad5cde16220786f3d16abdae3a9da51a1a8f99cf3d4242621f2cd4763018c",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "3216cdd0e8c0988ccc7c779f9df9c7d0b8099f11375e7bdb441ab7463d9bc174"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/tiered-prefix-cache-v1.json",
+        "file_sha256": "0154950742cdcffb1c2b62d0614a761fcd8a5d61430b98ab2256fea1c526c15d",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "703fb359ead5576585db3e27104f339aac15142cc54dd74a4f33dd0cc77ddde2"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware",
+          "simulated_serving"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/whole-decode-ledger-roofline-v1.json",
+        "file_sha256": "dafb99eb271f24f51c486e728d978ff6c3b5f40e2bf8636eb16b7a18adf6c958",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "d22802d34a9c40d06dc9338000a8fd20e8cdeaef697cefdd79488b0e002c4105"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/whole-decode-lower-bound-throughput-counterfactual-v1.json",
+        "file_sha256": "81f801a21f020542c977d6eca75bc9a2c2b48a61a58a546c73878792ad1b3815",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "a143eade5e99a685e6fd311f233dbc567dacca6abf0affe8102af931f40a59df"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware",
+          "simulated_serving"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/whole-decode-lowering-v1.json",
+        "file_sha256": "f55586219d19970657d2fa9ecc99ba4cd0eb72fd761c23e2a10700a20ad5fb04",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "ad1ed16e0100ac4a936fad83233b8b047ce6f1823328d6f15be01508b5a5d7dc"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "experiments/glm-5.2/whole-decode-throughput-counterfactual-v1.json",
+        "file_sha256": "4fbb2191d1f6d5bcfb10b2a45419819c30caba31698d39aa9f518648fdcc92fe",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "8a33f8417091fe6cdab9b6ccb1d0ddf4292e04b09c6ba4e675e0959f948b546f"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware",
+          "simulated_serving"
+        ]
+      },
+      {
+        "path": "experiments/qwen3-0.6b/int4-aarch64-neon-v1.json",
+        "file_sha256": "2428ccbbf26adc3c993c4b0aa12491be2d10ae395e2473470fb67134d8686e62",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "5494727ab064f8c189f89e88794bbd7c9234baf23ab657c11bae62eaa6f35d40"
+          }
+        ],
+        "evidence_roles": [
+          "measured_hardware"
+        ]
+      },
+      {
+        "path": "experiments/qwen3-0.6b/int4-packed-batch-frontier-v1.json",
+        "file_sha256": "80a7e32737b88fb851142c6371b852fc4b042c24fc4852514133c8393879950d",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "9151f5d066bfc4fbff8e855cc9d312d44377e060ecef0b796fa30ffef56ec7ad"
+          }
+        ],
+        "evidence_roles": [
+          "measured_hardware"
+        ]
+      },
+      {
+        "path": "experiments/qwen3-0.6b/int4-packed-kernel-smoke-v1.json",
+        "file_sha256": "861943394f1a308fe1b6e3c8e868fd41c2a8b6a180da103af066a24b1365c2fa",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "06c3789ef245d9275f0adf76b592ed6c2f812864bd95dcf80f5b669fe21d723c"
+          }
+        ],
+        "evidence_roles": [
+          "measured_hardware"
+        ]
+      },
+      {
+        "path": "experiments/qwen3-0.6b/timeloop-external-smoke-v1/probe.json",
+        "file_sha256": "660151c1f7f87a058f632d59aa17caf8e186c5902086631937e859f208d9b7f0",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "tool_probe"
+        ]
+      },
+      {
+        "path": "experiments/qwen3-0.6b/timeloop-external-smoke-v1/report.json",
+        "file_sha256": "b2eb8bb20e7caff35840d90fcacbbdb58c3f1a526dbbef0002165190df6e488c",
+        "declared_content_ids": [
+          {
+            "json_path": "content_identity_sha256",
+            "value": "5dd5a235ef2229c39b7d8deee4efbaff01282673c80f9b0effcce404c8f1f874"
+          }
+        ],
+        "evidence_roles": [
+          "tool_probe"
+        ]
+      },
+      {
+        "path": "experiments/qwen3-0.6b/timeloop-o-proj-bf16-decode-b1-v1.json",
+        "file_sha256": "9e3f458939012cbd88772988be4be853bbd2140a564cbca24e467bead9de3375",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "f88f03ed0d8ae74a571d4dd21126663d3557b55263eaf87f40b50f9fe385f8bd"
+          }
+        ],
+        "evidence_roles": [
+          "tool_contract"
+        ]
+      },
+      {
+        "path": "experiments/qwen3-8b/factorial-full-stack.json",
+        "file_sha256": "8c45f588ae3b37f30bbb28c68c8b616e7d32c26f6fa56580dedaba846e58dabe",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "simulated_hardware",
+          "simulated_serving"
+        ]
+      },
+      {
+        "path": "experiments/qwen3-8b/factorial-model-decisions.json",
+        "file_sha256": "14f6eb22695c1133deb29d38f3ff40175eba4b034e43b21bb7624c9e62e99305",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "simulated_hardware",
+          "simulated_serving"
+        ]
+      },
+      {
+        "path": "experiments/qwen3-8b/factorial-model-kernel.json",
+        "file_sha256": "05008e51f8da9fe3d1de57554af842ef6fcbb524bfe3a9af7e7e2a3280a0b51e",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "simulated_hardware",
+          "simulated_serving"
+        ]
+      },
+      {
+        "path": "experiments/qwen3-8b/summary-v0.json",
+        "file_sha256": "9d053b317a96e798a1d2c021207a3ffe29935fc00e3ec65dd2b3b978f724e03a",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "business_synthesis",
+          "simulated_hardware",
+          "simulated_serving"
+        ]
+      },
+      {
+        "path": "experiments/workloads/aa-agentperf-public-proxy-v1.json",
+        "file_sha256": "11077a458480b8ac5ee2f78f7fa75dc95076eedfb13a30f53bb8163ec2ede1a1",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "33fa1142172d5999b64ef7e7e73da49984c1f2f47bbcd2f8a9ad30615fb6b314"
+          }
+        ],
+        "evidence_roles": [
+          "synthetic_workload"
+        ]
+      },
+      {
+        "path": "validation/results/custom-hardware-feasibility-2026-07-12.json",
+        "file_sha256": "d97338f2c6533e346d36f033ee95438e018e7a99b341bc108328c928f99d1e58",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "business_synthesis"
+        ]
+      },
+      {
+        "path": "validation/results/glm-5.2-incumbent-stack-2026-07-12.json",
+        "file_sha256": "2932b476960c7f0a3e3a008ba488f97cdd087b701f034e5276de07b56009a2b4",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "external_claim_summary"
+        ]
+      },
+      {
+        "path": "validation/results/glm-5.2-route-placement-impact-bound-v1.json",
+        "file_sha256": "6a4f5ac55fe542c96387fc9e3557c27e20e3e1fea38525fbcd615e643ba6d12f",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "analytical_bound",
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "validation/results/inference-codesign-competitive-simulation-landscape-2026-07-12.json",
+        "file_sha256": "b3314e342f440a4139957c19af0a60106b7754ad616a1760c5dd549edd0e7f1c",
+        "declared_content_ids": [
+          {
+            "json_path": "content_identity_sha256",
+            "value": "bbffa8a7c236ab030f4f74a855fbd424f5e8362ca6f2b77fd90dafd503ab9464"
+          }
+        ],
+        "evidence_roles": [
+          "business_synthesis"
+        ]
+      },
+      {
+        "path": "validation/results/provider-economics-2026-07-12.json",
+        "file_sha256": "6403da1dde7402aff9e4bba454ff6fa7f92b545aea734bbf9c71e71a325d9247",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "modeled_economics"
+        ]
+      },
+      {
+        "path": "validation/results/qwen-kv-head-reduction-literature-2026-07-12.json",
+        "file_sha256": "31dfa55150b21285d03ad79551417257027192270156a839f56598b4646f8a72",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "measured_quality"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-int4-o-gate-up-bf16scale-wikitext2-sequential4096-v1.json",
+        "file_sha256": "01c93879711b6b7329ac8d7b39c2fca7beee043521351ff3ad60204922022578",
+        "declared_content_ids": [
+          {
+            "json_path": "content_identity_sha256",
+            "value": "c97aa7940890f43c946eb8b4d4a7e0bece482626933799cc8932a0fa86492c12"
+          }
+        ],
+        "evidence_roles": [
+          "measured_quality"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-int4-o-gate-up-bf16scale-wikitext2-test-v1.json",
+        "file_sha256": "357132aa87716441c20c5581db2227a45f97f787f13c13342de7c766cced9ebf",
+        "declared_content_ids": [
+          {
+            "json_path": "content_identity_sha256",
+            "value": "94b74bd8190d4f9f21e5ce46900d4ee32064f532b95ccc1521359bd234cd799c"
+          }
+        ],
+        "evidence_roles": [
+          "measured_quality"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-int4-o-gate-up-piqa256-bf16scale-v1.json",
+        "file_sha256": "5652b4d297c4ec72526c45e99592dc6fd62db10446622be9eb143d0217cfe441",
+        "declared_content_ids": [
+          {
+            "json_path": "content_identity_sha256",
+            "value": "165df94dfdb52f499513b89c38174b85681aa4b5390f65b8b76e2df3198fd619"
+          }
+        ],
+        "evidence_roles": [
+          "measured_quality"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-int4-o-gate-up-wikitext2-sequential4096-bf16-v1.json",
+        "file_sha256": "810201f17e88b4a1be625627ca98b7ffd42ee9e15ab2dbe42f4d6aa32cfe4a05",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "measured_quality"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-int4-o-gate-up-wikitext2-test-v1.json",
+        "file_sha256": "3d696e318162e5acf780591757030ddc7a1ef7f9559621405089e77244e9d9d9",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "measured_quality"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-int4-sweep-v1.json",
+        "file_sha256": "9af8a85b7309c33976b71b4ddd5243cb5e076596dc026f88c19a99b910e8c873",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "measured_quality"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-kv-head-dedup-quality-frontier-v1.json",
+        "file_sha256": "a0c73592929b2e5454d286b74ce09e4729ecc46b78773d5728dce69afee57334",
+        "declared_content_ids": [
+          {
+            "json_path": "content_identity_sha256",
+            "value": "49c67c0ea89d5a820c06333d83f253f59f7ae64a3c7ad829ca0762608c531d59"
+          }
+        ],
+        "evidence_roles": [
+          "measured_quality"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-kv-head-pair-mean-layer4-wikitext2-sequential4096-bf16-v1.json",
+        "file_sha256": "eb1fd42e452aadd5121bd13a5af7542b1baec594ba435ae9668c59eb6a8d3df5",
+        "declared_content_ids": [
+          {
+            "json_path": "content_identity_sha256",
+            "value": "ef72cb3fe4c5d4ff9fb5b638a0c15caf86b10d101969b408ec20274924ff0401"
+          }
+        ],
+        "evidence_roles": [
+          "measured_quality"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-kv-head-recovery-2k-v1.json",
+        "file_sha256": "0bfa0a1a99472a2b56b7daf6565a89c5172388c5f5a849285d9c7e82d250777b",
+        "declared_content_ids": [
+          {
+            "json_path": "content_identity_sha256",
+            "value": "fe585d9bd1d73faa9b1599f678f68b8b9326e1980e656d733214c546e51b2731"
+          }
+        ],
+        "evidence_roles": [
+          "measured_quality"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-selective-int4-impact-bound-v1.json",
+        "file_sha256": "ac42b62f35f35202cb2f891919254e797323b4623c8567e7e03843a33f069248",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "analytical_bound",
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-vllm-cpu-repeatability-v1.json",
+        "file_sha256": "4b84b13af21c140a9993de15d5966a74c6453a92989bfe8d8fc0ea0b633965ee",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "7b71feaf1820b3c97756ac6d09e56f775ab1e40ab4ae7f6f35dae2af8699989e"
+          }
+        ],
+        "evidence_roles": [
+          "measured_hardware"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-vllm-cpu-serving-c1-v1.json",
+        "file_sha256": "0c66f9b37ca743adedfc5014cd297552adb3937a46a61afcf9c3f683d91dff81",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "325134fdb044d0f09284f619ab8cb147d98328e4a1992e7c557307b9ce9ef133"
+          }
+        ],
+        "evidence_roles": [
+          "measured_hardware"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-vllm-cpu-serving-c2-v1.json",
+        "file_sha256": "6d2d345f7e9fa8af3801263c36fb72ec5b38b5eb6dfe9646e78a6b31506b705a",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "64738a63e51672aced37e74024ec9914778a8a4d641576c247901d1e3fb27bc7"
+          }
+        ],
+        "evidence_roles": [
+          "measured_hardware"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-vllm-cpu-serving-c4-v1.json",
+        "file_sha256": "2324ebddb3a14474d4fbfeff6d708a485d38f3ab63007310b90bcb42ddf4e505",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "afacda8a0495c60f8a0a41b0f02b9dca7902d4561d6ec6796b5442d833dba2c9"
+          }
+        ],
+        "evidence_roles": [
+          "measured_hardware"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-vllm-cpu-serving-c8-v1.json",
+        "file_sha256": "beabbc2c68d1bc23cde786d2068118c66b9cba5b08726b1e17d83a7725faad6e",
+        "declared_content_ids": [
+          {
+            "json_path": "content_id",
+            "value": "93cd84ad8247059841409d57f2a38af8ab898e0d2ed55641b1ed3a061ade62a6"
+          }
+        ],
+        "evidence_roles": [
+          "measured_hardware"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-0.6b-vllm-cpu-throughput-v1.json",
+        "file_sha256": "3dc2e07aef85d91c78607f9f68267c78f7e7512f11c820e024ac0d1c9ebd1177",
+        "declared_content_ids": [],
+        "evidence_roles": [
+          "measured_hardware"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-glm-ramulator2-hbm3-synthetic-irregular-v1.json",
+        "file_sha256": "ad3aaa4cedfe487d5b1fd78ac53412190d6397f9289abe077e329ecb2c492aa9",
+        "declared_content_ids": [
+          {
+            "json_path": "content_identity_sha256",
+            "value": "8215dbe19f3480cd8c9c3040aad9f9186a4b9a1e84a52e637663e7abb6d72c0b"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      },
+      {
+        "path": "validation/results/qwen3-glm-scalesim-v3-gemm-sweep-v1.json",
+        "file_sha256": "489592b48cf16403f2dcca95b869e245769972eb172d2423e47b5df27fbd4cf4",
+        "declared_content_ids": [
+          {
+            "json_path": "content_identity_sha256",
+            "value": "ab42fa90e0c0233f900269ade11597528362e3e2609c0424fc8e3f5944231a0f"
+          }
+        ],
+        "evidence_roles": [
+          "simulated_hardware"
+        ]
+      }
+    ]
+  },
+  "candidate_pair_audits": [
+    {
+      "audit_id": "glm_model_hardware_serving_simulations",
+      "artifact_paths": [
+        "experiments/glm-5.2/agentic-mapping-screen-v1.json",
+        "experiments/glm-5.2/chakra-decode-representable-v1.json",
+        "experiments/glm-5.2/current-cost-claim-composition-v1.json",
+        "experiments/glm-5.2/decode-action-ledger-inspection-v1.json",
+        "experiments/glm-5.2/decode-ledger-roofline-v1.json",
+        "experiments/glm-5.2/dsa-indexshare-sweep-v1.json",
+        "experiments/glm-5.2/economic-robustness-frontier-v1.json",
+        "experiments/glm-5.2/exact-ledger-serving-v1.json",
+        "experiments/glm-5.2/h200-optimistic-deployment-screen-v1.json",
+        "experiments/glm-5.2/moe-route-skew-v1.json",
+        "experiments/glm-5.2/mtp-sweep-v1.json",
+        "experiments/glm-5.2/nvfp4-blackwell-roofline-lower-v1.json",
+        "experiments/glm-5.2/nvfp4-blackwell-roofline-upper-v1.json",
+        "experiments/glm-5.2/nvfp4-fp8-kv-four-b200-frontier-v1.json",
+        "experiments/glm-5.2/nvfp4-whole-decode-lowering-90k-control-v1.json",
+        "experiments/glm-5.2/nvfp4-whole-decode-lowering-v1.json",
+        "experiments/glm-5.2/parallel-mapping-90k-control-v1.json",
+        "experiments/glm-5.2/parallel-mapping-context-frontier-v1.json",
+        "experiments/glm-5.2/parallel-mapping-control-v1.json",
+        "experiments/glm-5.2/pd-serving-control-v1.json",
+        "experiments/glm-5.2/storage-envelope-v1.json",
+        "experiments/glm-5.2/tiered-prefix-cache-v1.json",
+        "experiments/glm-5.2/whole-decode-ledger-roofline-v1.json",
+        "experiments/glm-5.2/whole-decode-lower-bound-throughput-counterfactual-v1.json",
+        "experiments/glm-5.2/whole-decode-lowering-v1.json",
+        "experiments/glm-5.2/whole-decode-throughput-counterfactual-v1.json"
+      ],
+      "admission_status": "REJECTED",
+      "same_scope_pair_count": 0,
+      "pair_ids": [],
+      "rejection_codes": [
+        "no_predeclared_prediction",
+        "no_prediction_timestamp",
+        "no_measured_holdout",
+        "no_blinded_holdout",
+        "calibration_holdout_split_missing",
+        "simulation_to_simulation_not_valid",
+        "quality_slo_evidence_missing"
+      ],
+      "finding": "The GLM artifacts are locally executed models, bounds, and simulations, including the agentic mapping screen, but no exact GLM hardware or serving holdout was measured after a blinded precommit."
+    },
+    {
+      "audit_id": "qwen_historical_packed_int4_bound_and_kernel_measurements",
+      "artifact_paths": [
+        "experiments/qwen3-0.6b/int4-packed-batch-frontier-v1.json",
+        "experiments/qwen3-0.6b/int4-packed-kernel-smoke-v1.json",
+        "validation/results/qwen3-0.6b-selective-int4-impact-bound-v1.json"
+      ],
+      "admission_status": "REJECTED",
+      "same_scope_pair_count": 0,
+      "pair_ids": [],
+      "rejection_codes": [
+        "no_predeclared_prediction",
+        "no_prediction_timestamp",
+        "analytical_bound_not_same_metric",
+        "no_blinded_holdout",
+        "calibration_holdout_split_missing",
+        "insufficient_interventions",
+        "insufficient_context_regimes",
+        "quality_slo_evidence_missing"
+      ],
+      "finding": "The historical storage bound and scalar or matched-loop timings were not predictions locked before independent timing holdouts."
+    },
+    {
+      "audit_id": "qwen_aarch64_neon_prospective_holdout",
+      "artifact_paths": [
+        "experiments/qwen3-0.6b/int4-aarch64-neon-v1.json"
+      ],
+      "admission_status": "ADMITTED",
+      "same_scope_pair_count": 1,
+      "pair_ids": [
+        "qwen3-0.6b-int4-aarch64-neon-v1"
+      ],
+      "rejection_codes": [],
+      "finding": "The locked NEON prediction and later exact-scope holdout form one admissible prospective pair. Direction is correct, but 44.747% relative effect-size error exceeds the predeclared 15% limit."
+    },
+    {
+      "audit_id": "native_scalesim_and_ramulator_outputs",
+      "artifact_paths": [
+        "validation/results/qwen3-glm-ramulator2-hbm3-synthetic-irregular-v1.json",
+        "validation/results/qwen3-glm-scalesim-v3-gemm-sweep-v1.json"
+      ],
+      "admission_status": "REJECTED",
+      "same_scope_pair_count": 0,
+      "pair_ids": [],
+      "rejection_codes": [
+        "no_predeclared_prediction",
+        "no_prediction_timestamp",
+        "no_measured_holdout",
+        "simulation_to_simulation_not_valid",
+        "hardware_scope_mismatch",
+        "quality_slo_evidence_missing"
+      ],
+      "finding": "SCALE-Sim cycles and the drained Ramulator2 HBM3 sensitivity sweep are real native simulator executions, but neither is calibrated against an exact physical hardware or serving holdout."
+    },
+    {
+      "audit_id": "timeloop_contract_and_frontend_outputs",
+      "artifact_paths": [
+        "experiments/qwen3-0.6b/timeloop-external-smoke-v1/probe.json",
+        "experiments/qwen3-0.6b/timeloop-external-smoke-v1/report.json",
+        "experiments/qwen3-0.6b/timeloop-o-proj-bf16-decode-b1-v1.json"
+      ],
+      "admission_status": "REJECTED",
+      "same_scope_pair_count": 0,
+      "pair_ids": [],
+      "rejection_codes": [
+        "no_predeclared_prediction",
+        "no_prediction_timestamp",
+        "no_measured_holdout",
+        "frontend_parse_only",
+        "hardware_scope_mismatch",
+        "quality_slo_evidence_missing"
+      ],
+      "finding": "The Timeloop artifacts establish a problem contract and frontend parse only; no native mapping result or exact silicon measurement exists."
+    },
+    {
+      "audit_id": "qwen_vllm_cpu_measurements_and_repeatability",
+      "artifact_paths": [
+        "validation/results/qwen3-0.6b-vllm-cpu-repeatability-v1.json",
+        "validation/results/qwen3-0.6b-vllm-cpu-serving-c1-v1.json",
+        "validation/results/qwen3-0.6b-vllm-cpu-serving-c2-v1.json",
+        "validation/results/qwen3-0.6b-vllm-cpu-serving-c4-v1.json",
+        "validation/results/qwen3-0.6b-vllm-cpu-serving-c8-v1.json",
+        "validation/results/qwen3-0.6b-vllm-cpu-throughput-v1.json"
+      ],
+      "admission_status": "REJECTED",
+      "same_scope_pair_count": 0,
+      "pair_ids": [],
+      "rejection_codes": [
+        "no_predeclared_prediction",
+        "no_prediction_timestamp",
+        "measurement_repeat_not_prediction",
+        "no_blinded_holdout",
+        "calibration_holdout_split_missing",
+        "insufficient_interventions",
+        "quality_slo_evidence_missing"
+      ],
+      "finding": "The vLLM artifacts contain measured Apple M4 CPU runs, but no matching simulator prediction was committed first; cold and warm repeat measurements are not predictions."
+    },
+    {
+      "audit_id": "qwen3_8b_factorial_cross_model_transfer",
+      "artifact_paths": [
+        "experiments/qwen3-8b/factorial-full-stack.json",
+        "experiments/qwen3-8b/factorial-model-decisions.json",
+        "experiments/qwen3-8b/factorial-model-kernel.json",
+        "experiments/qwen3-8b/summary-v0.json"
+      ],
+      "admission_status": "REJECTED",
+      "same_scope_pair_count": 0,
+      "pair_ids": [],
+      "rejection_codes": [
+        "no_predeclared_prediction",
+        "no_measured_holdout",
+        "cross_model_transfer_not_permitted",
+        "workload_scope_mismatch",
+        "hardware_scope_mismatch",
+        "quality_slo_evidence_missing"
+      ],
+      "finding": "The Qwen3-8B factorial is simulated, while referenced measured INT4 quality is Qwen3-0.6B proxy evidence and cannot form an exact-model predictive pair."
+    },
+    {
+      "audit_id": "qwen_measured_quality_without_performance_pair",
+      "artifact_paths": [
+        "validation/results/qwen3-0.6b-int4-o-gate-up-bf16scale-wikitext2-sequential4096-v1.json",
+        "validation/results/qwen3-0.6b-int4-o-gate-up-bf16scale-wikitext2-test-v1.json",
+        "validation/results/qwen3-0.6b-int4-o-gate-up-piqa256-bf16scale-v1.json",
+        "validation/results/qwen3-0.6b-int4-o-gate-up-wikitext2-sequential4096-bf16-v1.json",
+        "validation/results/qwen3-0.6b-int4-o-gate-up-wikitext2-test-v1.json",
+        "validation/results/qwen3-0.6b-int4-sweep-v1.json",
+        "validation/results/qwen3-0.6b-kv-head-dedup-quality-frontier-v1.json",
+        "validation/results/qwen3-0.6b-kv-head-pair-mean-layer4-wikitext2-sequential4096-bf16-v1.json",
+        "validation/results/qwen3-0.6b-kv-head-recovery-2k-v1.json"
+      ],
+      "admission_status": "REJECTED",
+      "same_scope_pair_count": 0,
+      "pair_ids": [],
+      "rejection_codes": [
+        "no_predeclared_prediction",
+        "metric_scope_mismatch",
+        "no_blinded_holdout",
+        "insufficient_interventions",
+        "insufficient_context_regimes",
+        "quality_slo_evidence_missing"
+      ],
+      "finding": "The Qwen artifacts measure teacher-forced, frozen-task, or KV-recovery quality; they do not measure the performance effects predicted by the stack simulators."
+    },
+    {
+      "audit_id": "synthetic_agent_workload_contract",
+      "artifact_paths": [
+        "experiments/workloads/aa-agentperf-public-proxy-v1.json"
+      ],
+      "admission_status": "REJECTED",
+      "same_scope_pair_count": 0,
+      "pair_ids": [],
+      "rejection_codes": [
+        "synthetic_workload_not_measured",
+        "no_predeclared_prediction",
+        "no_measured_holdout",
+        "quality_slo_evidence_missing"
+      ],
+      "finding": "The public agent-workload proxy is a frozen synthetic contract, not a measured workload result or a predictive-validation pair."
+    },
+    {
+      "audit_id": "business_market_literature_and_economic_synthesis",
+      "artifact_paths": [
+        "validation/results/custom-hardware-feasibility-2026-07-12.json",
+        "validation/results/glm-5.2-incumbent-stack-2026-07-12.json",
+        "validation/results/glm-5.2-route-placement-impact-bound-v1.json",
+        "validation/results/inference-codesign-competitive-simulation-landscape-2026-07-12.json",
+        "validation/results/provider-economics-2026-07-12.json",
+        "validation/results/qwen-kv-head-reduction-literature-2026-07-12.json"
+      ],
+      "admission_status": "REJECTED",
+      "same_scope_pair_count": 0,
+      "pair_ids": [],
+      "rejection_codes": [
+        "business_summary_not_pair_evidence",
+        "public_or_vendor_evidence_not_local_pair",
+        "no_predeclared_prediction",
+        "no_measured_holdout",
+        "quality_slo_evidence_missing"
+      ],
+      "finding": "Business inputs, public vendor evidence, literature analogs, feasibility arithmetic, and modeled economics do not substitute for local exact-scope predicted-versus-measured holdouts."
+    }
+  ],
+  "admitted_pairs": [
+    {
+      "pair_id": "qwen3-0.6b-int4-aarch64-neon-v1",
+      "prediction_scope": {
+        "model_id": "Qwen/Qwen3-0.6B",
+        "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+        "workload_id": "qwen3-0.6b-layer0-o-gate-up-packed-matvec",
+        "workload_revision": "8c9f38791aea1e54178371a6aa41c0da5dda4c39b2640c778bbb044bfbd4165d",
+        "context_regime": "decode-batch1-three-layer0-tensors",
+        "hardware_id": "Apple M4 Pro",
+        "hardware_revision": "Mac16,7-Apple-M4-Pro-14c-48GB",
+        "software_id": "foundry-qwen-int4-aarch64-neon",
+        "software_revision": "qwen-int4-aarch64-neon-v1",
+        "intervention_id": "aarch64-neon-group8-packed-matvec",
+        "intervention_revision": "v1",
+        "metric_id": "summed_three_tensor_median_seconds",
+        "metric_unit": "seconds",
+        "higher_is_better": false
+      },
+      "measurement_scope": {
+        "model_id": "Qwen/Qwen3-0.6B",
+        "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+        "workload_id": "qwen3-0.6b-layer0-o-gate-up-packed-matvec",
+        "workload_revision": "8c9f38791aea1e54178371a6aa41c0da5dda4c39b2640c778bbb044bfbd4165d",
+        "context_regime": "decode-batch1-three-layer0-tensors",
+        "hardware_id": "Apple M4 Pro",
+        "hardware_revision": "Mac16,7-Apple-M4-Pro-14c-48GB",
+        "software_id": "foundry-qwen-int4-aarch64-neon",
+        "software_revision": "qwen-int4-aarch64-neon-v1",
+        "intervention_id": "aarch64-neon-group8-packed-matvec",
+        "intervention_revision": "v1",
+        "metric_id": "summed_three_tensor_median_seconds",
+        "metric_unit": "seconds",
+        "higher_is_better": false
+      },
+      "protocol": {
+        "prediction_locked_at_unix_ms": 1783843333000,
+        "measurement_started_at_unix_ms": 1783843360279,
+        "prediction_commit_id": "4b7b172ea4ee66b3e49629d1155b0907c7fdcc89",
+        "blinded_holdout": true,
+        "calibration_case_ids": [
+          "qwen3-0.6b-int4-packed-kernel-smoke-v1"
+        ],
+        "holdout_case_id": "qwen3-0.6b-int4-aarch64-neon-v1"
+      },
+      "prediction": {
+        "baseline": 0.005299750000000001,
+        "candidate": 0.003028428571428572,
+        "artifact_path": "validation/predictions/qwen3-0.6b-int4-aarch64-neon-v1.json",
+        "artifact_sha256": "8f34efb77565c73f3512c48dc34e772a27b936362a9dbf8857352df7b780b3a5",
+        "artifact_content_id": "beedae5f05e4d89a816ad508172b6a07b338855e6c0b68cc06ba16762cc39f72",
+        "artifact_content_id_json_path": "content_id",
+        "artifact_scope_json_path": "predictive_scope",
+        "baseline_json_path": "prediction.baseline_seconds",
+        "candidate_json_path": "prediction.candidate_seconds"
+      },
+      "measurement": {
+        "baseline": 0.004740665999999999,
+        "candidate": 0.0010635829999999999,
+        "artifact_path": "experiments/qwen3-0.6b/int4-aarch64-neon-v1.json",
+        "artifact_sha256": "2428ccbbf26adc3c993c4b0aa12491be2d10ae395e2473470fb67134d8686e62",
+        "artifact_content_id": "5494727ab064f8c189f89e88794bbd7c9234baf23ab657c11bae62eaa6f35d40",
+        "artifact_content_id_json_path": "content_id",
+        "artifact_scope_json_path": "result.predictive_scope",
+        "baseline_json_path": "result.aggregate.summed_scalar_packed_median_seconds",
+        "candidate_json_path": "result.aggregate.summed_neon_median_seconds"
+      },
+      "cost_evidence": {}
+    }
+  ],
+  "gate_result": {
+    "status": "NOT_MET",
+    "predictive_validity_met": false,
+    "admitted_pair_count": 1,
+    "rejected_pair_count": 0,
+    "distinct_intervention_count": 1,
+    "context_regime_count": 1,
+    "maximum_relative_effect_size_error": 0.44746583093174686,
+    "spearman_rank_correlation": null,
+    "all_directions_correct": true,
+    "predicted_regression_count": 0,
+    "quality_slo_exact_pair_count": 0,
+    "global_calibration_holdout_overlap_ids": [],
+    "cost_promotion_permitted": false,
+    "reasons": [
+      "insufficient_admitted_pairs",
+      "insufficient_distinct_interventions",
+      "insufficient_context_regimes",
+      "effect_size_error_above_limit",
+      "rank_correlation_unavailable",
+      "predicted_regression_missing"
+    ],
+    "cost_promotion_blockers": [
+      "predictive_validity_gate_not_met",
+      "exact_quality_slo_evidence_missing"
+    ],
+    "pairs": [
+      {
+        "pair_id": "qwen3-0.6b-int4-aarch64-neon-v1",
+        "admission_status": "ADMITTED",
+        "rejection_codes": [],
+        "predicted_benefit_effect": 0.4285714285714285,
+        "measured_benefit_effect": 0.7756469238710342,
+        "relative_effect_size_error": 0.44746583093174686,
+        "direction_correct": true,
+        "exact_quality_slo_evidence": false
+      }
+    ]
+  },
+  "claim_permissions": {
+    "cost_promotion": false,
+    "custom_silicon_underwriting": false,
+    "model_specific_codesign_advantage": false,
+    "provider_competitiveness": false,
+    "simulator_predictive_validity": false
+  },
+  "conclusion": {
+    "current_status": "NOT_MET",
+    "admissible_pair_count": 1,
+    "decision": "Admit the prospective NEON pair as evidence, but do not claim predictive validity or promote any cost reduction.",
+    "next_required_evidence": "Run a new precommitted campaign with at least three interventions across two context regimes, including a predicted regression, and recalibrate magnitude prediction until every held-out effect error is at most 15 percent."
+  },
+  "content_identity_sha256": "83921cf8311aab4ecb4a3d180766d4b18610393a259476c663b3ae634bf63e42"
+}
+
+

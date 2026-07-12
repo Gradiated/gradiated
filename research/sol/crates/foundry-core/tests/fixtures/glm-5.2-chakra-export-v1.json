@@ -1,0 +1,89 @@
+{
+  "provenance": {
+    "exporter_id": "foundry-core/chakra-export",
+    "exporter_version": "1",
+    "schema_tag": "v0.0.4",
+    "schema_commit": "8b20269327725ad078483ce85d5f6dbb1cbfa611",
+    "global_metadata_version": "0.0.4",
+    "source_ledger_content_id": "aecbfa68d669b30b6cb85885bb956b6e04667a390bf041059c67f82fbb47015b",
+    "source_producer_name": "foundry-core-chakra-fixture",
+    "source_producer_version": "1",
+    "model_id": "zai-org/GLM-5.2",
+    "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+    "phase": "decode",
+    "batch_size": 2,
+    "context_tokens": 8192,
+    "candidate_tokens": 4,
+    "committed_tokens": 3,
+    "semantics": "interchange_only_no_timing",
+    "compute_num_ops_lowering": "flops_plus_non_flop_operations",
+    "collective_size_lowering": "aggregate_bytes_as_comm_size",
+    "message_count_lowering": "foundry_attribute_only",
+    "dependency_lowering": "canonical_dependencies_as_data_deps",
+    "rank_semantics": "aggregate_phase_no_rank_assignment"
+  },
+  "accounting": {
+    "flops": 171966464,
+    "non_flop_operations": 8192,
+    "network_bytes": 24576,
+    "messages": 56,
+    "compute_nodes": 5,
+    "collective_nodes": 1
+  },
+  "binary_content_id": "1e8212424f8f5bb0a2615510dc530a1eb2543092ed694278c4fee91107b6d4ac",
+  "encoded_bytes": 3084,
+  "nodes": [
+    {
+      "node_id": 1,
+      "action_id": "dsa_index_scan",
+      "name": "foundry:dsa_index_scan:dsa_lightning_index_scan",
+      "kind": "compute",
+      "data_dependencies": []
+    },
+    {
+      "node_id": 2,
+      "action_id": "dsa_topk",
+      "name": "foundry:dsa_topk:dsa_top_2048_selection",
+      "kind": "compute",
+      "data_dependencies": [
+        1
+      ]
+    },
+    {
+      "node_id": 3,
+      "action_id": "moe_dispatch",
+      "name": "foundry:moe_dispatch:all_to_all",
+      "kind": "collective",
+      "data_dependencies": [
+        2
+      ]
+    },
+    {
+      "node_id": 4,
+      "action_id": "moe_experts",
+      "name": "foundry:moe_experts:top8_routed_expert_mlp",
+      "kind": "compute",
+      "data_dependencies": [
+        3
+      ]
+    },
+    {
+      "node_id": 5,
+      "action_id": "mtp_draft",
+      "name": "foundry:mtp_draft:shared_parameter_mtp_draft",
+      "kind": "compute",
+      "data_dependencies": [
+        4
+      ]
+    },
+    {
+      "node_id": 6,
+      "action_id": "mtp_verify",
+      "name": "foundry:mtp_verify:mtp_verify_candidates",
+      "kind": "compute",
+      "data_dependencies": [
+        5
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "axis": "model",
+  "name": "rotation-assisted INT4 weights",
+  "model_specific_reason": "Qwen3-8B reads dense weights on every decode step, but the quality sensitivity of its channels must be measured before four-bit storage is accepted.",
+  "mechanism": "An equivalent orthogonal rotation candidate is paired with INT4 weight storage so a re-sized accelerator can reduce resident weight capacity and weight-read bandwidth.",
+  "confidence": 0.2,
+  "evidence_artifacts": [
+    "configs/variants/qwen3-8b-w4.json",
+    "configs/hardware-sizing-agentic-v0.json"
+  ]
+}

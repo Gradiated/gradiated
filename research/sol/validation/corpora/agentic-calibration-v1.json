@@ -1,0 +1,46 @@
+{
+  "schema_version": "inference-foundry.corpus.v1",
+  "description": "Small deterministic hand-authored continuations that exercise coding, tool use, structured output, retrieval, and reasoning. This is a calibration corpus, not a standard quality benchmark.",
+  "examples": [
+    {
+      "id": "tool-selection",
+      "prompt": "You are an agent with tools named read_file and web_search. The user asks for the contents of a local file named settings.json. Choose the tool and give a one-line reason.\nAnswer:",
+      "completion": " Use read_file because the requested data is local and no internet lookup is needed."
+    },
+    {
+      "id": "structured-tool-call",
+      "prompt": "Return only JSON for a tool call that reads lines 20 through 40 from src/main.rs. Use keys tool, path, start_line, and end_line.\nJSON:",
+      "completion": " {\"tool\":\"read_file\",\"path\":\"src/main.rs\",\"start_line\":20,\"end_line\":40}"
+    },
+    {
+      "id": "python-fix",
+      "prompt": "Fix this Python function so it returns a new list and does not mutate its input. Return only the function.\n\ndef append_zero(values):\n    values.append(0)\n    return values\n\nFixed function:",
+      "completion": "\n\ndef append_zero(values):\n    return [*values, 0]"
+    },
+    {
+      "id": "rust-result",
+      "prompt": "Complete the Rust function without panicking.\n\nfn parse_port(value: &str) -> Result<u16, std::num::ParseIntError> {\n",
+      "completion": "    value.parse::<u16>()\n}"
+    },
+    {
+      "id": "debugging",
+      "prompt": "A service leaks memory only when request cancellation occurs. State the first controlled experiment to distinguish a retained task from an allocator high-water mark.\nAnswer:",
+      "completion": " Measure live allocations after forcing cancellation and a full idle period, then compare them with resident memory in the same process."
+    },
+    {
+      "id": "repository-plan",
+      "prompt": "Give three concise steps for changing a parser with test-driven development.\nSteps:",
+      "completion": "\n1. Add a failing test for the desired parsing behavior.\n2. Implement the smallest change that passes it.\n3. Refactor while keeping the full suite green."
+    },
+    {
+      "id": "retrieval",
+      "prompt": "Context: The deployment guide says the health endpoint is /ready, it returns 204, and checks must run every 15 seconds.\nQuestion: Which path, status, and interval should the monitor use?\nAnswer:",
+      "completion": " Use /ready, require HTTP 204, and run the check every 15 seconds."
+    },
+    {
+      "id": "cost-reasoning",
+      "prompt": "A server costs $2 per hour and produces 4 million accepted output tokens per hour. Ignore all other costs. What is the cost per million accepted output tokens?\nAnswer:",
+      "completion": " The cost is $0.50 per million accepted output tokens."
+    }
+  ]
+}

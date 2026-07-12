@@ -1,0 +1,26 @@
+{
+  "axes": [
+    "w4_weights",
+    "fp8_kv",
+    "four_kv_heads",
+    "ffn_10240"
+  ],
+  "observations": [
+    { "enabled_axes": [], "study": "artifacts/qwen3-8b/model-factorial/case-0.json" },
+    { "enabled_axes": ["w4_weights"], "study": "artifacts/qwen3-8b/model-factorial/case-1.json" },
+    { "enabled_axes": ["fp8_kv"], "study": "artifacts/qwen3-8b/model-factorial/case-2.json" },
+    { "enabled_axes": ["w4_weights", "fp8_kv"], "study": "artifacts/qwen3-8b/model-factorial/case-3.json" },
+    { "enabled_axes": ["four_kv_heads"], "study": "artifacts/qwen3-8b/model-factorial/case-4.json" },
+    { "enabled_axes": ["w4_weights", "four_kv_heads"], "study": "artifacts/qwen3-8b/model-factorial/case-5.json" },
+    { "enabled_axes": ["fp8_kv", "four_kv_heads"], "study": "artifacts/qwen3-8b/model-factorial/case-6.json" },
+    { "enabled_axes": ["w4_weights", "fp8_kv", "four_kv_heads"], "study": "artifacts/qwen3-8b/model-factorial/case-7.json" },
+    { "enabled_axes": ["ffn_10240"], "study": "artifacts/qwen3-8b/model-factorial/case-8.json" },
+    { "enabled_axes": ["w4_weights", "ffn_10240"], "study": "artifacts/qwen3-8b/model-factorial/case-9.json" },
+    { "enabled_axes": ["fp8_kv", "ffn_10240"], "study": "artifacts/qwen3-8b/model-factorial/case-10.json" },
+    { "enabled_axes": ["w4_weights", "fp8_kv", "ffn_10240"], "study": "artifacts/qwen3-8b/model-factorial/case-11.json" },
+    { "enabled_axes": ["four_kv_heads", "ffn_10240"], "study": "artifacts/qwen3-8b/model-factorial/case-12.json" },
+    { "enabled_axes": ["w4_weights", "four_kv_heads", "ffn_10240"], "study": "artifacts/qwen3-8b/model-factorial/case-13.json" },
+    { "enabled_axes": ["fp8_kv", "four_kv_heads", "ffn_10240"], "study": "artifacts/qwen3-8b/model-factorial/case-14.json" },
+    { "enabled_axes": ["w4_weights", "fp8_kv", "four_kv_heads", "ffn_10240"], "study": "artifacts/qwen3-8b/model-factorial/case-15.json" }
+  ]
+}

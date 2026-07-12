@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "contract_id": "qwen3-agentic-class-slo-v2",
+  "identity": {
+    "model_id": "Qwen/Qwen3-8B",
+    "model_revision": "b968826d9c46dd6066d109eabc6255188de91218",
+    "tokenizer_id": "Qwen/Qwen3-8B",
+    "tokenizer_revision": "b968826d9c46dd6066d109eabc6255188de91218"
+  },
+  "class_objectives": [
+    {
+      "class": "tool",
+      "ttft": {
+        "percentile": 95.0,
+        "maximum_milliseconds": 2000.0
+      },
+      "tpot": {
+        "percentile": 95.0,
+        "maximum_milliseconds": 50.0
+      }
+    },
+    {
+      "class": "coding",
+      "ttft": {
+        "percentile": 95.0,
+        "maximum_milliseconds": 5000.0
+      },
+      "tpot": {
+        "percentile": 95.0,
+        "maximum_milliseconds": 50.0
+      }
+    },
+    {
+      "class": "long_agent",
+      "ttft": {
+        "percentile": 95.0,
+        "maximum_milliseconds": 10000.0
+      },
+      "tpot": {
+        "percentile": 95.0,
+        "maximum_milliseconds": 70.0
+      }
+    }
+  ]
+}

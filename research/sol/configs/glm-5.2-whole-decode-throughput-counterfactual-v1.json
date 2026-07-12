@@ -1,0 +1,358 @@
+{
+  "schema_version": 1,
+  "study_id": "glm-5.2-whole-decode-throughput-only-counterfactual-v1",
+  "baseline_hardware_id": "h200-published-peak-component",
+  "hardware": [
+    {
+      "hardware_id": "h200-published-peak-component",
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "validation/results/custom-hardware-feasibility-2026-07-12.json#commodity_baselines/nvidia_h200_sxm+common-control-counterfactual"
+      },
+      "compute_engines": [
+        {
+          "class": "matrix_multiply",
+          "flops_per_second": 989500000000000.0,
+          "non_flop_operations_per_second": 1000000000000.0,
+          "fixed_latency_seconds": 0.000004,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "nvidia-h200-dense-bf16-derived+common-fixed-latency"
+          }
+        },
+        {
+          "class": "attention_score",
+          "flops_per_second": 989500000000000.0,
+          "non_flop_operations_per_second": 500000000000.0,
+          "fixed_latency_seconds": 0.000004,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "nvidia-h200-dense-bf16-derived+common-fixed-latency"
+          }
+        },
+        {
+          "class": "top_k",
+          "flops_per_second": 100000000000000.0,
+          "non_flop_operations_per_second": 50000000000.0,
+          "fixed_latency_seconds": 0.000005,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "common-uncalibrated-topk-counterfactual"
+          }
+        },
+        {
+          "class": "elementwise",
+          "flops_per_second": 100000000000000.0,
+          "non_flop_operations_per_second": 500000000000.0,
+          "fixed_latency_seconds": 0.000004,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "common-uncalibrated-elementwise-counterfactual"
+          }
+        }
+      ],
+      "memory_paths": [
+        {
+          "source": "hbm",
+          "destination": "on_chip",
+          "bandwidth_bytes_per_second": 4800000000000.0,
+          "fixed_latency_seconds": 0.000001,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "nvidia-h200-published-peak-hbm+common-fixed-latency"
+          }
+        },
+        {
+          "source": "on_chip",
+          "destination": "hbm",
+          "bandwidth_bytes_per_second": 4800000000000.0,
+          "fixed_latency_seconds": 0.000001,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "nvidia-h200-published-peak-hbm+common-fixed-latency"
+          }
+        }
+      ],
+      "cache_tiers": [
+        {
+          "tier": "on_chip",
+          "key_space": null,
+          "bandwidth_bytes_per_second": 50000000000000.0,
+          "fixed_latency_seconds": 0.0000002,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "common-uncalibrated-onchip-cache-counterfactual"
+          }
+        }
+      ],
+      "network": {
+        "aggregate_bandwidth_bytes_per_second": 900000000000.0,
+        "fixed_latency_seconds": 0.000001,
+        "latency_seconds_per_message": 0.0000003,
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "nvidia-h200-published-nvlink+common-coordination-latency"
+        }
+      },
+      "synchronization": {
+        "fixed_latency_seconds": 0.0000005,
+        "latency_seconds_per_participant": 0.00000005,
+        "supported_kinds": ["barrier", "event"],
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "common-uncalibrated-synchronization-counterfactual"
+        }
+      },
+      "scheduler": {
+        "fixed_latency_seconds": 0.000001,
+        "latency_seconds_per_request": 0.0000001,
+        "latency_seconds_per_token": 0.00000001,
+        "supported_decisions": [
+          "batch_formation",
+          "expert_routing",
+          "mtp_draft",
+          "mtp_verify",
+          "token_commit"
+        ],
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "common-uncalibrated-scheduler-counterfactual"
+        }
+      }
+    },
+    {
+      "hardware_id": "custom-original-throughput-component",
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "validation/results/custom-hardware-feasibility-2026-07-12.json#profile+common-control-counterfactual"
+      },
+      "compute_engines": [
+        {
+          "class": "matrix_multiply",
+          "flops_per_second": 2000000000000000.0,
+          "non_flop_operations_per_second": 1000000000000.0,
+          "fixed_latency_seconds": 0.000004,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "original-custom-matrix-rate+common-fixed-latency"
+          }
+        },
+        {
+          "class": "attention_score",
+          "flops_per_second": 2000000000000000.0,
+          "non_flop_operations_per_second": 500000000000.0,
+          "fixed_latency_seconds": 0.000004,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "original-custom-attention-rate+common-fixed-latency"
+          }
+        },
+        {
+          "class": "top_k",
+          "flops_per_second": 100000000000000.0,
+          "non_flop_operations_per_second": 50000000000.0,
+          "fixed_latency_seconds": 0.000005,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "common-uncalibrated-topk-counterfactual"
+          }
+        },
+        {
+          "class": "elementwise",
+          "flops_per_second": 100000000000000.0,
+          "non_flop_operations_per_second": 500000000000.0,
+          "fixed_latency_seconds": 0.000004,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "common-uncalibrated-elementwise-counterfactual"
+          }
+        }
+      ],
+      "memory_paths": [
+        {
+          "source": "hbm",
+          "destination": "on_chip",
+          "bandwidth_bytes_per_second": 12000000000000.0,
+          "fixed_latency_seconds": 0.000001,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "original-custom-hbm-rate+common-fixed-latency"
+          }
+        },
+        {
+          "source": "on_chip",
+          "destination": "hbm",
+          "bandwidth_bytes_per_second": 12000000000000.0,
+          "fixed_latency_seconds": 0.000001,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "original-custom-hbm-rate+common-fixed-latency"
+          }
+        }
+      ],
+      "cache_tiers": [
+        {
+          "tier": "on_chip",
+          "key_space": null,
+          "bandwidth_bytes_per_second": 50000000000000.0,
+          "fixed_latency_seconds": 0.0000002,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "common-uncalibrated-onchip-cache-counterfactual"
+          }
+        }
+      ],
+      "network": {
+        "aggregate_bandwidth_bytes_per_second": 1600000000000.0,
+        "fixed_latency_seconds": 0.000001,
+        "latency_seconds_per_message": 0.0000003,
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "original-custom-fabric-rate+common-coordination-latency"
+        }
+      },
+      "synchronization": {
+        "fixed_latency_seconds": 0.0000005,
+        "latency_seconds_per_participant": 0.00000005,
+        "supported_kinds": ["barrier", "event"],
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "common-uncalibrated-synchronization-counterfactual"
+        }
+      },
+      "scheduler": {
+        "fixed_latency_seconds": 0.000001,
+        "latency_seconds_per_request": 0.0000001,
+        "latency_seconds_per_token": 0.00000001,
+        "supported_decisions": [
+          "batch_formation",
+          "expert_routing",
+          "mtp_draft",
+          "mtp_verify",
+          "token_commit"
+        ],
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "common-uncalibrated-scheduler-counterfactual"
+        }
+      }
+    },
+    {
+      "hardware_id": "rubin-preliminary-peak-component",
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "validation/results/custom-hardware-feasibility-2026-07-12.json#commodity_baselines/nvidia_rubin_gpu+common-control-counterfactual"
+      },
+      "compute_engines": [
+        {
+          "class": "matrix_multiply",
+          "flops_per_second": 4000000000000000.0,
+          "non_flop_operations_per_second": 1000000000000.0,
+          "fixed_latency_seconds": 0.000004,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "nvidia-rubin-preliminary-dense-bf16+common-fixed-latency"
+          }
+        },
+        {
+          "class": "attention_score",
+          "flops_per_second": 4000000000000000.0,
+          "non_flop_operations_per_second": 500000000000.0,
+          "fixed_latency_seconds": 0.000004,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "nvidia-rubin-preliminary-dense-bf16+common-fixed-latency"
+          }
+        },
+        {
+          "class": "top_k",
+          "flops_per_second": 100000000000000.0,
+          "non_flop_operations_per_second": 50000000000.0,
+          "fixed_latency_seconds": 0.000005,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "common-uncalibrated-topk-counterfactual"
+          }
+        },
+        {
+          "class": "elementwise",
+          "flops_per_second": 100000000000000.0,
+          "non_flop_operations_per_second": 500000000000.0,
+          "fixed_latency_seconds": 0.000004,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "common-uncalibrated-elementwise-counterfactual"
+          }
+        }
+      ],
+      "memory_paths": [
+        {
+          "source": "hbm",
+          "destination": "on_chip",
+          "bandwidth_bytes_per_second": 22000000000000.0,
+          "fixed_latency_seconds": 0.000001,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "nvidia-rubin-preliminary-peak-hbm+common-fixed-latency"
+          }
+        },
+        {
+          "source": "on_chip",
+          "destination": "hbm",
+          "bandwidth_bytes_per_second": 22000000000000.0,
+          "fixed_latency_seconds": 0.000001,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "nvidia-rubin-preliminary-peak-hbm+common-fixed-latency"
+          }
+        }
+      ],
+      "cache_tiers": [
+        {
+          "tier": "on_chip",
+          "key_space": null,
+          "bandwidth_bytes_per_second": 50000000000000.0,
+          "fixed_latency_seconds": 0.0000002,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "common-uncalibrated-onchip-cache-counterfactual"
+          }
+        }
+      ],
+      "network": {
+        "aggregate_bandwidth_bytes_per_second": 3600000000000.0,
+        "fixed_latency_seconds": 0.000001,
+        "latency_seconds_per_message": 0.0000003,
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "nvidia-rubin-preliminary-nvlink+common-coordination-latency"
+        }
+      },
+      "synchronization": {
+        "fixed_latency_seconds": 0.0000005,
+        "latency_seconds_per_participant": 0.00000005,
+        "supported_kinds": ["barrier", "event"],
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "common-uncalibrated-synchronization-counterfactual"
+        }
+      },
+      "scheduler": {
+        "fixed_latency_seconds": 0.000001,
+        "latency_seconds_per_request": 0.0000001,
+        "latency_seconds_per_token": 0.00000001,
+        "supported_decisions": [
+          "batch_formation",
+          "expert_routing",
+          "mtp_draft",
+          "mtp_verify",
+          "token_commit"
+        ],
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "common-uncalibrated-scheduler-counterfactual"
+        }
+      }
+    }
+  ]
+}

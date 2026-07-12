@@ -1,0 +1,7 @@
+{
+  "backend": "rust",
+  "attention": "standard",
+  "fusion": "none",
+  "tile_rows": 128,
+  "tile_columns": 128
+}

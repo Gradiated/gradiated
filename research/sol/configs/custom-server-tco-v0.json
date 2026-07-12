@@ -1,0 +1,10 @@
+{
+  "accelerators_per_server": 1,
+  "memory_usd_per_accelerator": 0.0,
+  "board_usd_per_server": 10000.0,
+  "host_usd_per_server": 15000.0,
+  "network_usd_per_server": 20000.0,
+  "rack_usd_per_server": 5000.0,
+  "lifetime_hours": 26280.0,
+  "target_utilization": 0.7
+}

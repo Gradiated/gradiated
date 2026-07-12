@@ -1,0 +1,299 @@
+{
+  "schema_version": "inference-foundry.qwen-kv-recovery-summary.v1",
+  "as_of": "2026-07-12",
+  "content_identity_sha256": "fe585d9bd1d73faa9b1599f678f68b8b9326e1980e656d733214c546e51b2731",
+  "bottom_line": {
+    "outcome": "stop_after_2048_training_tokens",
+    "decision": "reject_this_exact_small_budget_recovery_recipe",
+    "reason": "Rank-8 Q/O adaptation recovered only 3.8025% of the zero-token NLL gap after 2,048 train targets. All five 512-target quality gates still fail by more than twice their allowed regression, and logit cosine similarity slightly worsened.",
+    "full_8192_token_run_started": false,
+    "confirmation_4096_target_holdout_run": false,
+    "scope_limit": "This rejects hard minimum-weight-distance K/V pair means plus frozen K/V and rank-8 Q/O-only adapters at this data and budget. It does not reject activation-aware initialization, trainable shared K/V projections, gradual fusion, different data, or literature-scale uptraining."
+  },
+  "provenance": {
+    "literature_dossier": {
+      "path": "validation/results/qwen-kv-head-reduction-literature-2026-07-12.json",
+      "sha256": "31dfa55150b21285d03ad79551417257027192270156a839f56598b4646f8a72"
+    },
+    "executed_config_snapshot": {
+      "path": "validation/qwen_kv_recovery/config/qwen3-0.6b-kv-recovery-rank8-wikitext2-2k-executed-v1.json",
+      "sha256": "f8e4bd472d39f3227187fc36dafbcd2718fe929516a181a263efb65d63a70485",
+      "note": "This immutable snapshot preserves the exact config bytes hashed by the raw run. The development config gained a zero-control pin while the already-loaded process was running."
+    },
+    "raw_run": {
+      "path": "artifacts/qwen3-0.6b/kv-recovery-rank8-wikitext2-2k-v1.json",
+      "sha256": "8fcacc51c28755447f7d0e7c46b79c84cc18f461b6a2e9dc5b9da4b9e1132f4b",
+      "content_identity_sha256": "abc94187ade89b1f20c51a014f0716abbfd04c6bf6c5fbf773585a87012ddb2c"
+    },
+    "adapter_checkpoint": {
+      "path": "artifacts/qwen3-0.6b/kv-recovery-rank8-wikitext2-2k-v1-adapter-2048.safetensors",
+      "bytes": 5517376,
+      "sha256": "a17b7489525f83fa7e408e6f558aba4bb118b88c0e6bfc953798fd8ffa25d67f"
+    },
+    "model": {
+      "model_id": "Qwen/Qwen3-0.6B",
+      "local_files_only": true,
+      "config_sha256": "660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd",
+      "weight_file": {
+        "name": "model.safetensors",
+        "bytes": 1503300328,
+        "sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b"
+      },
+      "dtype": "bfloat16"
+    },
+    "tokenizer": {
+      "class": "Qwen2Tokenizer",
+      "vocab_size": 151643,
+      "tokenizer_json_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "tokenizer_config_sha256": "d5d09f07b48c3086c508b30d1c9114bd1189145b74e982a265350c923acd8101",
+      "vocab_sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+      "merges_sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5"
+    },
+    "training_dataset": {
+      "dataset_id": "Salesforce/wikitext",
+      "dataset_config": "wikitext-2-raw-v1",
+      "split": "train",
+      "dataset_fingerprint": "5d4fb603254a7a5b",
+      "cached_builder_revision": "b08601e04326c79dfdd32d625aee71d232d685c3",
+      "dataset_row_count": 36718,
+      "cache_file_sha256": "57947bc7b58df4b19662c0609cc30651bc84328dab5fd588860b752072911789",
+      "stream_text_sha256": "aee724fa58bfbdeb3fc6803297fb6bab27b203d7c40b39ddef9b9770e5d52fe5",
+      "stream_token_ids_sha256": "9e56f4676783ca6f48e1201dcfcce17d1ade4475b8b762121c0bb39afedc6fd9",
+      "stream_token_count": 2518423,
+      "reserved_calibration_token_range": [
+        0,
+        4096
+      ],
+      "configured_training_target_range": [
+        4096,
+        12288
+      ],
+      "executed_training_target_range": [
+        4096,
+        6144
+      ]
+    },
+    "heldout_dataset": {
+      "dataset_id": "Salesforce/wikitext",
+      "dataset_config": "wikitext-2-raw-v1",
+      "split": "test",
+      "first_holdout_path": "artifacts/qwen3-0.6b/corpora/wikitext-2-test-v1.json",
+      "first_holdout_sha256": "bad296b44904bebae31ba4ace054aba59ac2885299a8b66db776afbcf004ba8e",
+      "first_holdout_target_tokens": 512,
+      "confirmation_holdout_path": "artifacts/qwen3-0.6b/corpora/wikitext-2-test-sequential-4096-v1.json",
+      "confirmation_holdout_sha256": "873121a5818e0d20d33c3184c1593268700c049f342fbf4a43ab10d5c6c6a90e",
+      "confirmation_holdout_target_tokens": 4096,
+      "train_test_split_is_disjoint": true
+    },
+    "software": {
+      "python": "3.12.12",
+      "torch": "2.11.0",
+      "transformers": "5.13.0",
+      "platform": "macOS-15.6.1-arm64-arm-64bit",
+      "device": "cpu",
+      "deterministic_algorithms": true,
+      "seed": 20260712,
+      "torch_threads": 4
+    }
+  },
+  "zero_token_control": {
+    "raw_path": "artifacts/qwen3-0.6b/kv-head-pair-mean-wikitext2-test-v1.json",
+    "raw_sha256": "9d676dfebc8195186201702646b88ea54f4e9207a44f175a752a7f82a9051489",
+    "content_identity_sha256": "a264069ac08fad3fc76e421ab08bf22ef0486eb4256bf4d4d491cedd1ef898d4",
+    "checked_frontier_path": "validation/results/qwen3-0.6b-kv-head-dedup-quality-frontier-v1.json",
+    "checked_frontier_sha256": "a0c73592929b2e5454d286b74ce09e4729ecc46b78773d5728dce69afee57334",
+    "checked_frontier_content_identity_sha256": "49c67c0ea89d5a820c06333d83f253f59f7ae64a3c7ad829ca0762608c531d59",
+    "exact_equivalence_assertions": {
+      "model_weight_identity_matches": true,
+      "bfloat16_dtype_matches": true,
+      "first_holdout_identity_matches": true,
+      "all_28_layer_pairings_match": true,
+      "four_pairs_per_layer_match": true,
+      "adapter_b_is_exactly_zero_at_initialization": true,
+      "zero_adapter_wrapper_preserves_base_output_bitwise_in_focused_test": true
+    },
+    "exactly_equivalent_to_recovery_initialization": true
+  },
+  "model_change": {
+    "layers": 28,
+    "logical_kv_heads_in_stock_tensor_geometry": 8,
+    "semantic_unique_kv_heads_after_exact_pair_sharing": 4,
+    "head_dim": 128,
+    "pair_selection": "minimum_joint_kv_weight_distance_independently_per_layer",
+    "shared_kv_weights_trainable": false,
+    "exact_pair_sharing_after_every_optimizer_step": true,
+    "exact_pair_sharing_after_training": true,
+    "adapter_targets": [
+      "q_proj",
+      "o_proj"
+    ],
+    "adapter_rank": 8,
+    "adapter_alpha": 8.0,
+    "adapter_target_module_count": 56,
+    "trainable_parameter_count": 1376256,
+    "total_parameter_count_after_adapters": 597426176,
+    "trainable_parameter_fraction": 0.0023036419482229046,
+    "trainable_parameter_percent": 0.23036419482229048,
+    "adapter_checkpoint_state": {
+      "tensor_count": 112,
+      "parameter_count": 1376256,
+      "l2_norm": 12.218989901944319,
+      "adapter_b_parameter_count": 688128,
+      "adapter_b_l2_norm": 0.19192980341724492,
+      "adapter_b_nonzero_values": 688128
+    }
+  },
+  "training": {
+    "optimizer": "AdamW",
+    "learning_rate": 0.00004,
+    "weight_decay": 0.05,
+    "loss": "0.7 * full-vocabulary teacher KL at temperature 2, including T squared, plus 0.3 * next-token cross entropy",
+    "teacher": "unmodified pinned local checkpoint",
+    "student_base_dtype": "bfloat16",
+    "adapter_and_optimizer_dtype": "float32",
+    "microbatch_sequences": 1,
+    "target_tokens_per_step": 128,
+    "completed_optimizer_steps": 16,
+    "completed_training_target_tokens": 2048,
+    "configured_training_target_tokens": 8192,
+    "planned_checkpoints": [
+      2048,
+      4096,
+      8192
+    ],
+    "completed_checkpoints": [
+      2048
+    ],
+    "loss_summary": {
+      "total_loss_first": 9.814135551452637,
+      "total_loss_last": 10.35887336730957,
+      "total_loss_minimum": 8.33194351196289,
+      "total_loss_maximum": 11.858124732971191,
+      "total_loss_mean": 10.399017572402954,
+      "first_four_total_loss_mean": 11.1532723903656,
+      "last_four_total_loss_mean": 9.99305272102356,
+      "teacher_kl_first": 9.20701789855957,
+      "teacher_kl_last": 9.496377944946289,
+      "teacher_kl_mean": 9.919362127780914,
+      "gradient_l2_norm_minimum": 20.156371593372956,
+      "gradient_l2_norm_maximum": 154.70255235662935,
+      "gradient_l2_norm_mean": 44.4217032490566,
+      "interpretation": "Per-step examples are non-overlapping text segments, so batch-loss variation is not a controlled monotonic recovery curve; the fixed holdout controls the decision."
+    },
+    "loss_trajectory": [
+      {"step": 1, "cumulative_target_tokens": 128, "total_loss": 9.814135551452637, "teacher_kl": 9.20701789855957, "next_token_cross_entropy": 11.230744361877441, "gradient_l2_norm": 20.29729475808956},
+      {"step": 2, "cumulative_target_tokens": 256, "total_loss": 11.858124732971191, "teacher_kl": 11.395075798034668, "next_token_cross_entropy": 12.93857192993164, "gradient_l2_norm": 23.228607114742555},
+      {"step": 3, "cumulative_target_tokens": 384, "total_loss": 11.692840576171875, "teacher_kl": 11.511191368103027, "next_token_cross_entropy": 12.116687774658203, "gradient_l2_norm": 43.609480155502176},
+      {"step": 4, "cumulative_target_tokens": 512, "total_loss": 11.2479887008667, "teacher_kl": 11.23675537109375, "next_token_cross_entropy": 11.274198532104492, "gradient_l2_norm": 36.15612747824325},
+      {"step": 5, "cumulative_target_tokens": 640, "total_loss": 10.291732788085938, "teacher_kl": 10.287016868591309, "next_token_cross_entropy": 10.302736282348633, "gradient_l2_norm": 20.156371593372956},
+      {"step": 6, "cumulative_target_tokens": 768, "total_loss": 10.788763999938965, "teacher_kl": 10.256290435791016, "next_token_cross_entropy": 12.031201362609863, "gradient_l2_norm": 154.70255235662935},
+      {"step": 7, "cumulative_target_tokens": 896, "total_loss": 8.33194351196289, "teacher_kl": 7.576183319091797, "next_token_cross_entropy": 10.095385551452637, "gradient_l2_norm": 47.80474390632841},
+      {"step": 8, "cumulative_target_tokens": 1024, "total_loss": 11.605363845825195, "teacher_kl": 11.327851295471191, "next_token_cross_entropy": 12.25289249420166, "gradient_l2_norm": 28.29794747500153},
+      {"step": 9, "cumulative_target_tokens": 1152, "total_loss": 10.38770866394043, "teacher_kl": 9.768218994140625, "next_token_cross_entropy": 11.833183288574219, "gradient_l2_norm": 34.28548050834672},
+      {"step": 10, "cumulative_target_tokens": 1280, "total_loss": 10.905288696289062, "teacher_kl": 10.340677261352539, "next_token_cross_entropy": 12.2227144241333, "gradient_l2_norm": 41.91837270185803},
+      {"step": 11, "cumulative_target_tokens": 1408, "total_loss": 9.891538619995117, "teacher_kl": 9.252326011657715, "next_token_cross_entropy": 11.383035659790039, "gradient_l2_norm": 25.695304203706232},
+      {"step": 12, "cumulative_target_tokens": 1536, "total_loss": 9.596640586853027, "teacher_kl": 8.737512588500977, "next_token_cross_entropy": 11.601272583007812, "gradient_l2_norm": 31.294825794219584},
+      {"step": 13, "cumulative_target_tokens": 1664, "total_loss": 9.870749473571777, "teacher_kl": 9.391277313232422, "next_token_cross_entropy": 10.989517211914062, "gradient_l2_norm": 32.11569614073668},
+      {"step": 14, "cumulative_target_tokens": 1792, "total_loss": 10.474462509155273, "teacher_kl": 10.082672119140625, "next_token_cross_entropy": 11.388639450073242, "gradient_l2_norm": 96.85555036450005},
+      {"step": 15, "cumulative_target_tokens": 1920, "total_loss": 9.268125534057617, "teacher_kl": 8.84334945678711, "next_token_cross_entropy": 10.259271621704102, "gradient_l2_norm": 36.07318354506742},
+      {"step": 16, "cumulative_target_tokens": 2048, "total_loss": 10.35887336730957, "teacher_kl": 9.496377944946289, "next_token_cross_entropy": 12.37136173248291, "gradient_l2_norm": 38.25571388856101}
+    ]
+  },
+  "quality": {
+    "first_holdout_target_tokens": 512,
+    "unmodified_baseline": {
+      "mean_nll": 3.5180107839405537,
+      "perplexity": 33.717290734053755
+    },
+    "zero_token_hard_shared_control": {
+      "mean_nll": 11.665687531232834,
+      "perplexity": 116504.77417985616,
+      "nll_delta_from_baseline": 8.14767674729228,
+      "perplexity_ratio": 3455.342100253292,
+      "logit_rmse": 4.582098142609707,
+      "logit_cosine_similarity": 0.3528169080122935,
+      "top1_agreement": 0.0078125,
+      "all_gates_passed": false
+    },
+    "after_2048_training_targets": {
+      "mean_nll": 11.355874925851822,
+      "perplexity": 85466.08639195791,
+      "nll_delta_from_baseline": 7.837864141911268,
+      "perplexity_ratio": 2534.7851067297934,
+      "logit_rmse": 4.415250806221513,
+      "logit_cosine_similarity": 0.3516097713355114,
+      "top1_agreement": 0.013671875,
+      "all_gates_passed": false
+    },
+    "change_from_zero_token_control": {
+      "mean_nll": -0.30981260538101196,
+      "nll_gap_fraction_recovered": 0.038024655983556546,
+      "perplexity": -31038.68778789825,
+      "perplexity_reduction_percent": 26.641558688386247,
+      "logit_rmse": -0.16684733638819438,
+      "logit_cosine_similarity": -0.0012071366767820724,
+      "top1_agreement": 0.005859375
+    },
+    "gate_thresholds": {
+      "maximum_nll_increase": 0.15,
+      "maximum_perplexity_ratio": 1.15,
+      "maximum_logit_rmse": 0.5,
+      "minimum_logit_cosine_similarity": 0.98,
+      "minimum_top1_agreement": 0.8
+    },
+    "remaining_regression_as_multiple_of_allowed_budget": {
+      "mean_nll": 52.25242761274179,
+      "perplexity": 16891.90071153196,
+      "logit_rmse": 8.830501612443026,
+      "logit_cosine_similarity": 32.41951143322443,
+      "top1_agreement": 4.931640625
+    },
+    "every_gate_more_than_twice_outside_budget": true,
+    "promotion_to_4096_target_holdout": false
+  },
+  "resources": {
+    "memory_limit_bytes": 19327352832,
+    "peak_rss_bytes": 6262685696,
+    "within_memory_bound": true,
+    "optimizer_step_wall_seconds": {
+      "minimum": 72.70690862496849,
+      "median": 78.11580870801117,
+      "maximum": 82.5401275419863,
+      "mean": 77.60511265612149
+    },
+    "first_2048_training_wall_seconds": 1242.6116865000222,
+    "first_holdout_wall_seconds": 26.966909499955364,
+    "total_run_wall_seconds": 1276.338815624942,
+    "projected_fresh_8192_training_wall_seconds": 4970.446746000089,
+    "projected_fresh_8192_training_minutes": 82.84077910000148,
+    "projection_basis": "Four times the measured first 16-step segment; excludes initialization and checkpoint holdouts."
+  },
+  "opportunity_if_quality_and_runtime_existed": {
+    "baseline_semantic_bf16_kv_bytes_per_token": 114688,
+    "four_unique_head_semantic_bf16_kv_bytes_per_token": 57344,
+    "semantic_kv_byte_reduction_percent": 50.0,
+    "deduplicated_projection_parameter_count": 29360128,
+    "baseline_unique_model_weight_bytes": 1192099840,
+    "estimated_merged_specialized_unique_weight_bytes": 1133379584,
+    "estimated_merged_weight_reduction_percent": 4.925783397471138,
+    "logical_heads_remain_in_stock_runtime": 8,
+    "stock_runtime_physically_realizes_cache_reduction": false,
+    "stock_runtime_physically_realizes_weight_reduction": false,
+    "custom_alias_attention_kernel_required": true,
+    "interpretation": "The model-side opportunity is exact arithmetic, but it is inadmissible because the tested recovered checkpoint fails quality. No runtime or cost saving may be credited."
+  },
+  "claims": {
+    "small_budget_recoverability_signal": false,
+    "quality_qualified_model_change": false,
+    "canonical_language_model_quality_validated": false,
+    "task_or_agent_quality_validated": false,
+    "runtime_alias_kernel_validated": false,
+    "runtime_kv_reduction_measured": false,
+    "runtime_weight_reduction_measured": false,
+    "serving_performance_measured": false,
+    "energy_measured": false,
+    "cost_reduction_measured": false,
+    "glm_5_2_transfer_validated": false,
+    "production_readiness_validated": false
+  }
+}

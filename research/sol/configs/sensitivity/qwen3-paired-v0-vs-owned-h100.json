@@ -1,0 +1,67 @@
+{
+  "assumptions": {
+    "cost_basis": "custom_silicon",
+    "ranges": {
+      "nre_amortization_units": {
+        "lower": 1000,
+        "nominal": 100000,
+        "upper": 1000000,
+        "provenance": {
+          "kind": "internal_estimate",
+          "source": "volume sensitivity spanning pilot to scaled deployment",
+          "artifact": "configs/hardware-sizing-agentic-v0.json"
+        }
+      },
+      "utilization": {
+        "lower": 0.4,
+        "nominal": 0.7,
+        "upper": 0.9,
+        "provenance": {
+          "kind": "internal_estimate",
+          "source": "deployment utilization sensitivity",
+          "artifact": "configs/custom-server-tco-v0.json"
+        }
+      },
+      "hbm_stack_cost_usd": {
+        "lower": 150.0,
+        "nominal": 300.0,
+        "upper": 1500.0,
+        "provenance": {
+          "kind": "internal_estimate",
+          "source": "placeholder HBM acquisition-cost sensitivity; vendor quote required",
+          "artifact": "configs/hardware-sizing-agentic-v0.json"
+        }
+      },
+      "wafer_cost_usd": {
+        "lower": 15000.0,
+        "nominal": 20000.0,
+        "upper": 30000.0,
+        "provenance": {
+          "kind": "internal_estimate",
+          "source": "placeholder advanced-node wafer sensitivity; foundry quote required",
+          "artifact": "configs/hardware-sizing-agentic-v0.json"
+        }
+      },
+      "effective_silicon_yield": {
+        "lower": 0.4,
+        "nominal": 0.8587793191340714,
+        "upper": 0.95,
+        "provenance": {
+          "kind": "foundry_model",
+          "source": "Poisson die-yield model multiplied by package yield",
+          "artifact": "crates/foundry-core/src/sizing.rs"
+        }
+      }
+    }
+  },
+  "provider_baseline": {
+    "name": "four-H100 owned-TCO sensitivity",
+    "input_usd_per_million_tokens": 0.09162802632339631,
+    "output_usd_per_million_tokens": 1.4068114440104544,
+    "provenance": {
+      "kind": "internal_estimate",
+      "source": "$10 per four-H100 group-hour sensitivity after SLO capacity planning",
+      "artifact": "configs/hardware-groups/h100-sxm-4x-owned-tco-sensitivity.json"
+    }
+  }
+}

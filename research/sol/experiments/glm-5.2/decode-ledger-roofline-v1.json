@@ -1,0 +1,391 @@
+{
+  "schema_version": 1,
+  "content_id": "3daa7c802c47d39baeac32b846a717200a81050d745b75ebe804ef6ef9738be3",
+  "result": {
+    "study_id": "glm-5.2-decode-ledger-hardware-roofline-v1",
+    "ledger_content_id": "04d22a1951d83e860c2f21d39b5c1587dc5cd9583bf5ac494e3c3bb6b2f69978",
+    "baseline_hardware_id": "h200-like-modeled",
+    "committed_tokens": 3,
+    "hardware": [
+      {
+        "hardware_id": "h200-like-modeled",
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-h200-like-ledger-timing-v1"
+        },
+        "action_timings": [
+          {
+            "action_id": "decode_batch",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 2.1999999999999998e-7,
+            "modeled_duration_seconds": 1.22e-6,
+            "earliest_start_seconds": 0.0,
+            "earliest_finish_seconds": 1.22e-6
+          },
+          {
+            "action_id": "dsa_index_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 3.1300776119402984e-7,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 1.31300776119403e-6,
+            "earliest_start_seconds": 1.22e-6,
+            "earliest_finish_seconds": 2.5330077611940297e-6
+          },
+          {
+            "action_id": "dsa_index_scan",
+            "fixed_component_seconds": 4e-6,
+            "throughput_component_seconds": 6.7108864e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 4.0671088639999995e-6,
+            "earliest_start_seconds": 2.5330077611940297e-6,
+            "earliest_finish_seconds": 6.600116625194029e-6
+          },
+          {
+            "action_id": "dsa_topk",
+            "fixed_component_seconds": 5e-6,
+            "throughput_component_seconds": 1.6384e-6,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 6.638400000000001e-6,
+            "earliest_start_seconds": 6.600116625194029e-6,
+            "earliest_finish_seconds": 0.00001323851662519403
+          },
+          {
+            "action_id": "indexshare_store",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 3.2768e-10,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 2.0032768e-7,
+            "earliest_start_seconds": 0.00001323851662519403,
+            "earliest_finish_seconds": 0.000013438844305194029
+          },
+          {
+            "action_id": "mla_kv_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 2.445373134328358e-9,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 1.0024453731343283e-6,
+            "earliest_start_seconds": 1.22e-6,
+            "earliest_finish_seconds": 2.2224453731343283e-6
+          },
+          {
+            "action_id": "mla_weights_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 7.336119402985074e-9,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 1.007336119402985e-6,
+            "earliest_start_seconds": 1.22e-6,
+            "earliest_finish_seconds": 2.227336119402985e-6
+          },
+          {
+            "action_id": "mla_decode",
+            "fixed_component_seconds": 4e-6,
+            "throughput_component_seconds": 5.0331648e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 4.050331648e-6,
+            "earliest_start_seconds": 2.227336119402985e-6,
+            "earliest_finish_seconds": 6.277667767402984e-6
+          },
+          {
+            "action_id": "expert_route",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 2.1999999999999998e-7,
+            "modeled_duration_seconds": 1.22e-6,
+            "earliest_start_seconds": 0.000013438844305194029,
+            "earliest_finish_seconds": 0.00001465884430519403
+          },
+          {
+            "action_id": "expert_weights_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 1.2520310447761193e-6,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 2.2520310447761195e-6,
+            "earliest_start_seconds": 0.00001465884430519403,
+            "earliest_finish_seconds": 0.000016910875349970147
+          },
+          {
+            "action_id": "moe_dispatch",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 5.461333333333333e-8,
+            "coordination_component_seconds": 0.0000168,
+            "modeled_duration_seconds": 0.000017854613333333332,
+            "earliest_start_seconds": 0.00001465884430519403,
+            "earliest_finish_seconds": 0.00003251345763852736
+          },
+          {
+            "action_id": "expert_ready",
+            "fixed_component_seconds": 5e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 4e-7,
+            "modeled_duration_seconds": 9e-7,
+            "earliest_start_seconds": 0.00003251345763852736,
+            "earliest_finish_seconds": 0.00003341345763852736
+          },
+          {
+            "action_id": "moe_experts",
+            "fixed_component_seconds": 4e-6,
+            "throughput_component_seconds": 1.00663296e-7,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 4.100663296e-6,
+            "earliest_start_seconds": 0.00003341345763852736,
+            "earliest_finish_seconds": 0.00003751412093452736
+          },
+          {
+            "action_id": "mtp_draft_schedule",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 2.4e-7,
+            "modeled_duration_seconds": 1.24e-6,
+            "earliest_start_seconds": 0.00003751412093452736,
+            "earliest_finish_seconds": 0.00003875412093452736
+          },
+          {
+            "action_id": "mtp_draft",
+            "fixed_component_seconds": 4e-6,
+            "throughput_component_seconds": 1.2582912e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 4.012582912e-6,
+            "earliest_start_seconds": 0.00003875412093452736,
+            "earliest_finish_seconds": 0.00004276670384652736
+          },
+          {
+            "action_id": "mtp_indexshare_lookup",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 3.2768e-10,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 2.0032768e-7,
+            "earliest_start_seconds": 0.00003875412093452736,
+            "earliest_finish_seconds": 0.00003895444861452736
+          },
+          {
+            "action_id": "mtp_verify_ready",
+            "fixed_component_seconds": 5e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 1e-7,
+            "modeled_duration_seconds": 6e-7,
+            "earliest_start_seconds": 0.00004276670384652736,
+            "earliest_finish_seconds": 0.000043366703846527364
+          },
+          {
+            "action_id": "mtp_verify",
+            "fixed_component_seconds": 4e-6,
+            "throughput_component_seconds": 2.5165824e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 4.025165824e-6,
+            "earliest_start_seconds": 0.000043366703846527364,
+            "earliest_finish_seconds": 0.000047391869670527366
+          },
+          {
+            "action_id": "token_commit",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 2.3e-7,
+            "modeled_duration_seconds": 1.2299999999999999e-6,
+            "earliest_start_seconds": 0.000047391869670527366,
+            "earliest_finish_seconds": 0.000048621869670527366
+          }
+        ],
+        "optimistic_critical_path_seconds": 0.000048621869670527366,
+        "serial_action_seconds": 0.0000571343415358408,
+        "optimistic_committed_tokens_per_second": 61700.63019642538,
+        "relative_ideal_speedup_vs_baseline": 1.0
+      },
+      {
+        "hardware_id": "glm-dsa-moe-custom-upper-bound",
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-glm-specific-custom-hardware-upper-bound-v1"
+        },
+        "action_timings": [
+          {
+            "action_id": "decode_batch",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 4.4000000000000004e-8,
+            "modeled_duration_seconds": 2.44e-7,
+            "earliest_start_seconds": 0.0,
+            "earliest_finish_seconds": 2.44e-7
+          },
+          {
+            "action_id": "dsa_index_read",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 8.738133333333334e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 2.8738133333333334e-7,
+            "earliest_start_seconds": 2.44e-7,
+            "earliest_finish_seconds": 5.313813333333334e-7
+          },
+          {
+            "action_id": "dsa_index_scan",
+            "fixed_component_seconds": 8e-7,
+            "throughput_component_seconds": 1.6777216e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 8.16777216e-7,
+            "earliest_start_seconds": 5.313813333333334e-7,
+            "earliest_finish_seconds": 1.3481585493333332e-6
+          },
+          {
+            "action_id": "dsa_topk",
+            "fixed_component_seconds": 5e-7,
+            "throughput_component_seconds": 1.6384e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 5.16384e-7,
+            "earliest_start_seconds": 1.3481585493333332e-6,
+            "earliest_finish_seconds": 1.8645425493333333e-6
+          },
+          {
+            "action_id": "indexshare_store",
+            "fixed_component_seconds": 5e-8,
+            "throughput_component_seconds": 1.0922666666666666e-10,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 5.0109226666666666e-8,
+            "earliest_start_seconds": 1.8645425493333333e-6,
+            "earliest_finish_seconds": 1.914651776e-6
+          },
+          {
+            "action_id": "mla_kv_read",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 6.826666666666667e-10,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 2.0068266666666666e-7,
+            "earliest_start_seconds": 2.44e-7,
+            "earliest_finish_seconds": 4.4468266666666667e-7
+          },
+          {
+            "action_id": "mla_weights_read",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 2.048e-9,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 2.0204799999999998e-7,
+            "earliest_start_seconds": 2.44e-7,
+            "earliest_finish_seconds": 4.46048e-7
+          },
+          {
+            "action_id": "mla_decode",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 2.5165824e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 1.025165824e-6,
+            "earliest_start_seconds": 4.46048e-7,
+            "earliest_finish_seconds": 1.4712138240000002e-6
+          },
+          {
+            "action_id": "expert_route",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 4.4000000000000004e-8,
+            "modeled_duration_seconds": 2.44e-7,
+            "earliest_start_seconds": 1.914651776e-6,
+            "earliest_finish_seconds": 2.158651776e-6
+          },
+          {
+            "action_id": "expert_weights_read",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 3.4952533333333334e-7,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 5.495253333333334e-7,
+            "earliest_start_seconds": 2.158651776e-6,
+            "earliest_finish_seconds": 2.7081771093333333e-6
+          },
+          {
+            "action_id": "moe_dispatch",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 1.536e-8,
+            "coordination_component_seconds": 2.8e-6,
+            "modeled_duration_seconds": 3.0153599999999997e-6,
+            "earliest_start_seconds": 2.158651776e-6,
+            "earliest_finish_seconds": 5.174011776e-6
+          },
+          {
+            "action_id": "expert_ready",
+            "fixed_component_seconds": 1e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 8e-8,
+            "modeled_duration_seconds": 1.8e-7,
+            "earliest_start_seconds": 5.174011776e-6,
+            "earliest_finish_seconds": 5.354011776e-6
+          },
+          {
+            "action_id": "moe_experts",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 5.0331648e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 1.050331648e-6,
+            "earliest_start_seconds": 5.354011776e-6,
+            "earliest_finish_seconds": 6.404343424000001e-6
+          },
+          {
+            "action_id": "mtp_draft_schedule",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 4.8e-8,
+            "modeled_duration_seconds": 2.48e-7,
+            "earliest_start_seconds": 6.404343424000001e-6,
+            "earliest_finish_seconds": 6.652343424000001e-6
+          },
+          {
+            "action_id": "mtp_draft",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 6.291456e-9,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 1.006291456e-6,
+            "earliest_start_seconds": 6.652343424000001e-6,
+            "earliest_finish_seconds": 7.658634880000001e-6
+          },
+          {
+            "action_id": "mtp_indexshare_lookup",
+            "fixed_component_seconds": 5e-8,
+            "throughput_component_seconds": 1.0922666666666666e-10,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 5.0109226666666666e-8,
+            "earliest_start_seconds": 6.652343424000001e-6,
+            "earliest_finish_seconds": 6.702452650666667e-6
+          },
+          {
+            "action_id": "mtp_verify_ready",
+            "fixed_component_seconds": 1e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 2e-8,
+            "modeled_duration_seconds": 1.2e-7,
+            "earliest_start_seconds": 7.658634880000001e-6,
+            "earliest_finish_seconds": 7.778634880000002e-6
+          },
+          {
+            "action_id": "mtp_verify",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 1.2582912e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 1.012582912e-6,
+            "earliest_start_seconds": 7.778634880000002e-6,
+            "earliest_finish_seconds": 8.791217792000002e-6
+          },
+          {
+            "action_id": "token_commit",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 4.6e-8,
+            "modeled_duration_seconds": 2.46e-7,
+            "earliest_start_seconds": 8.791217792000002e-6,
+            "earliest_finish_seconds": 9.037217792000002e-6
+          }
+        ],
+        "optimistic_critical_path_seconds": 9.037217792000002e-6,
+        "serial_action_seconds": 0.000011064748842666668,
+        "optimistic_committed_tokens_per_second": 331960.57338085666,
+        "relative_ideal_speedup_vs_baseline": 5.3801812448925155
+      }
+    ],
+    "claims": {
+      "end_to_end_latency_claim_permitted": false,
+      "energy_claim_permitted": false,
+      "cost_per_token_claim_permitted": false,
+      "blockers": [
+        "ledger_contains_assumptions",
+        "hardware_timing_is_not_calibrated",
+        "shared_resource_contention_is_not_modeled",
+        "serving_and_queueing_are_not_modeled"
+      ]
+    }
+  }
+}

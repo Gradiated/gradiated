@@ -1,0 +1,62 @@
+{
+  "accounting": {
+    "cache_actions": 2,
+    "cache_bytes": 32768,
+    "compute_actions": 6,
+    "flops": 222298112,
+    "memory_actions": 4,
+    "memory_bytes": 5275648,
+    "messages": 56,
+    "network_actions": 1,
+    "network_bytes": 24576,
+    "non_flop_operations": 8192,
+    "scheduler_actions": 4,
+    "synchronization_actions": 2
+  },
+  "calibrated_totals": {
+    "complete": false,
+    "cost_usd": null,
+    "energy_joules": null,
+    "latency_seconds": null
+  },
+  "ledger_content_id": "04d22a1951d83e860c2f21d39b5c1587dc5cd9583bf5ac494e3c3bb6b2f69978",
+  "provenance": {
+    "model": {
+      "model_id": "zai-org/GLM-5.2",
+      "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9"
+    },
+    "phase": {
+      "batch_size": 2,
+      "candidate_tokens": 4,
+      "committed_tokens": 3,
+      "context_tokens": 8192,
+      "phase": "decode"
+    },
+    "producer": {
+      "name": "foundry-core-test-fixture",
+      "version": "1"
+    }
+  },
+  "schema_version": 1,
+  "topological_action_ids": [
+    "decode_batch",
+    "dsa_index_read",
+    "dsa_index_scan",
+    "dsa_topk",
+    "indexshare_store",
+    "mla_kv_read",
+    "mla_weights_read",
+    "mla_decode",
+    "expert_route",
+    "expert_weights_read",
+    "moe_dispatch",
+    "expert_ready",
+    "moe_experts",
+    "mtp_draft_schedule",
+    "mtp_draft",
+    "mtp_indexshare_lookup",
+    "mtp_verify_ready",
+    "mtp_verify",
+    "token_commit"
+  ]
+}

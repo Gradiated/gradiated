@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "study_id": "glm-5.2-recursive-mtp-acceptance-work-envelope-v1",
+  "model": {
+    "model_id": "zai-org/GLM-5.2",
+    "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+    "architecture": {
+      "hybrid_moe_mla_dsa": {
+        "schema_version": 1,
+        "active_parameter_count": {
+          "kind": "approximate",
+          "parameters": 40000000000
+        },
+        "checkpoint_fixed_storage_bytes": 38912,
+        "dense_layer_count": 3,
+        "moe_layer_count": 75,
+        "moe": {
+          "routed_expert_count": 256,
+          "routed_experts_per_token": 8,
+          "shared_expert_count": 1,
+          "expert_intermediate_size": 2048,
+          "routed_expert_weight_precision": "bf16"
+        },
+        "mla": {
+          "query_low_rank_dimension": 2048,
+          "semantic_kv_dimension": 512,
+          "query_key_nope_dimension": 192,
+          "rotary_kv_dimension": 64,
+          "value_dimension": 256,
+          "rope_theta": 8000000
+        },
+        "dsa_indexer": {
+          "query_head_count": 32,
+          "query_head_dimension": 128,
+          "key_head_count": 1,
+          "key_head_dimension": 128,
+          "selected_token_count": 2048,
+          "full_layer_count": 21,
+          "shared_layer_count": 57
+        },
+        "mtp": {
+          "layer_count": 1,
+          "shared_parameters": true,
+          "shares_dsa_indices": true
+        }
+      }
+    },
+    "parameter_count": 753329940480,
+    "layer_count": 78,
+    "hidden_size": 6144,
+    "intermediate_size": 12288,
+    "attention_head_count": 64,
+    "kv_head_count": 0,
+    "head_dimension": 256,
+    "vocabulary_size": 154880,
+    "max_sequence_length": 1048576,
+    "weight_precision": "bf16",
+    "quantized_weight_storage": null,
+    "kv_precision": "bf16"
+  },
+  "work": {
+    "baseline_target_work_units_per_token": 1.0,
+    "draft_work_units_per_proposed_token": 0.22,
+    "verification_fixed_work_units_per_round": 0.78,
+    "verification_incremental_work_units_per_proposed_token": 0.07,
+    "scheduler_work_units_per_round": 0.03,
+    "evidence": {
+      "kind": "modeled_assumption",
+      "source_artifact_id": "docs/GLM_CO_DESIGN.md#e5-mtp-acceptance-and-verification-sweep"
+    },
+    "basis": "Illustrative normalized target-decode work units chosen to expose MTP break-even thresholds. These values are not measured GLM-5.2 kernel, hardware, latency, energy, or cost evidence."
+  },
+  "scenarios": [
+    {
+      "scenario_id": "low-decaying-acceptance",
+      "conditional_acceptance_probabilities": [
+        0.35,
+        0.30,
+        0.25,
+        0.20
+      ],
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "glm-5.2-mtp-synthetic-acceptance-envelope-v1"
+      },
+      "basis": "Synthetic downside acceptance path for identifying depths that regress; not sampled from GLM-5.2 outputs."
+    },
+    {
+      "scenario_id": "medium-decaying-acceptance",
+      "conditional_acceptance_probabilities": [
+        0.65,
+        0.60,
+        0.55,
+        0.50
+      ],
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "glm-5.2-mtp-synthetic-acceptance-envelope-v1"
+      },
+      "basis": "Synthetic middle acceptance path for experiment planning; not sampled from GLM-5.2 outputs."
+    },
+    {
+      "scenario_id": "high-decaying-acceptance",
+      "conditional_acceptance_probabilities": [
+        0.85,
+        0.80,
+        0.75,
+        0.70
+      ],
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "glm-5.2-mtp-synthetic-acceptance-envelope-v1"
+      },
+      "basis": "Synthetic upside acceptance path for bounding useful recursive depth; not sampled from GLM-5.2 outputs."
+    }
+  ]
+}

@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "study_id": "glm-5.2-public-price-economic-robustness-frontier-v1",
+  "source_deployment_screen_content_id": "07017590792feee5b1376711e0c716fdaed2af67b9b288f908cd35f918e820c4",
+  "benchmark_prices": [
+    {
+      "benchmark_id": "fireworks-glm-5.2-standard-public-list",
+      "provider": "Fireworks",
+      "serving_path": "standard_serverless",
+      "uncached_input_usd_per_million_tokens": 1.4,
+      "cached_input_usd_per_million_tokens": 0.14,
+      "output_usd_per_million_tokens": 4.4,
+      "evidence": {
+        "kind": "public_list_price",
+        "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#public_model_api_prices[Fireworks/GLM-5.2/standard]"
+      }
+    },
+    {
+      "benchmark_id": "baseten-glm-5.2-model-api-public-list",
+      "provider": "Baseten",
+      "serving_path": "model_api",
+      "uncached_input_usd_per_million_tokens": 1.4,
+      "cached_input_usd_per_million_tokens": 0.26,
+      "output_usd_per_million_tokens": 4.4,
+      "evidence": {
+        "kind": "public_list_price",
+        "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#public_model_api_prices[Baseten/GLM-5.2/model_api]"
+      }
+    }
+  ],
+  "customer_price_fraction_of_benchmark": 0.8,
+  "customer_price_evidence": {
+    "kind": "modeled_assumption",
+    "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case/list_price_discount"
+  },
+  "workload_mixes": [
+    {
+      "mix_id": "canonical-agent-cache-heavy",
+      "uncached_input_share": 0.11921568627450982,
+      "cached_input_share": 0.8161510530137982,
+      "output_share": 0.06463326071169209,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#canonical_agentic_mix"
+      }
+    },
+    {
+      "mix_id": "canonical-ratio-cache-poor",
+      "uncached_input_share": 0.46768336964415397,
+      "cached_input_share": 0.46768336964415397,
+      "output_share": 0.06463326071169209,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "modeled-sensitivity:canonical-input-output-ratio-with-50-percent-input-cache"
+      }
+    },
+    {
+      "mix_id": "shorter-agent-four-to-one-input-output",
+      "uncached_input_share": 0.2,
+      "cached_input_share": 0.6,
+      "output_share": 0.2,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "modeled-sensitivity:four-to-one-input-output-with-75-percent-input-cache"
+      }
+    }
+  ],
+  "useful_load_cases": [
+    {
+      "case_id": "low-load-40pct",
+      "useful_load_factor": 0.4,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case/eight_h200_load_and_availability_sensitivity"
+      }
+    },
+    {
+      "case_id": "working-load-65pct",
+      "useful_load_factor": 0.65,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case/useful_load_factor"
+      }
+    },
+    {
+      "case_id": "high-load-80pct",
+      "useful_load_factor": 0.8,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case/eight_h200_load_and_availability_sensitivity"
+      }
+    }
+  ],
+  "availability_cases": [
+    {
+      "case_id": "stressed-availability-95pct",
+      "availability_factor": 0.95,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case/eight_h200_load_and_availability_sensitivity"
+      }
+    },
+    {
+      "case_id": "working-availability-98pct",
+      "availability_factor": 0.98,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case/availability"
+      }
+    },
+    {
+      "case_id": "high-availability-99.5pct",
+      "availability_factor": 0.995,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case/eight_h200_load_and_availability_sensitivity"
+      }
+    }
+  ],
+  "accelerator_cost_cases": [
+    {
+      "case_id": "modeled-low-3-usd-device-hour",
+      "accelerator_usd_per_device_hour": 3.0,
+      "fixed_non_accelerator_usd_per_deployment_hour": 0.0,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "modeled-sensitivity:3-usd-per-device-hour-excluding-fixed-overhead-and-nre"
+      }
+    },
+    {
+      "case_id": "fireworks-h200-public-7-usd-device-hour",
+      "accelerator_usd_per_device_hour": 7.0,
+      "fixed_non_accelerator_usd_per_deployment_hour": 0.0,
+      "evidence": {
+        "kind": "public_list_price",
+        "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#public_dedicated_prices[Fireworks/H200-141GB]"
+      }
+    },
+    {
+      "case_id": "modeled-stress-10-usd-device-hour",
+      "accelerator_usd_per_device_hour": 10.0,
+      "fixed_non_accelerator_usd_per_deployment_hour": 0.0,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "modeled-sensitivity:10-usd-per-device-hour-excluding-fixed-overhead-and-nre"
+      }
+    }
+  ],
+  "gross_margin_cases": [
+    {
+      "case_id": "required-margin-50pct",
+      "required_gross_margin": 0.5
+    },
+    {
+      "case_id": "required-margin-60pct",
+      "required_gross_margin": 0.6
+    },
+    {
+      "case_id": "required-margin-70pct",
+      "required_gross_margin": 0.7
+    }
+  ],
+  "throughput_haircut_cases": [
+    {
+      "case_id": "stress-50pct-of-source-peak",
+      "throughput_haircut_factor": 0.5,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "modeled-sensitivity:50-percent-of-source-optimistic-peak"
+      }
+    },
+    {
+      "case_id": "base-75pct-of-source-peak",
+      "throughput_haircut_factor": 0.75,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "modeled-sensitivity:75-percent-of-source-optimistic-peak"
+      }
+    },
+    {
+      "case_id": "optimistic-100pct-of-source-peak",
+      "throughput_haircut_factor": 1.0,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "experiments/glm-5.2/h200-optimistic-deployment-screen-v1.json#result/roofline_optimistic_committed_output_tokens_per_second"
+      }
+    }
+  ],
+  "work_bound_cases": [
+    {
+      "case_id": "free-input-lower-work-bound",
+      "uncached_input_work_units_per_token": 0.0,
+      "cached_input_work_units_per_token": 0.0,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "optimistic-counterfactual:input-work-treated-as-free"
+      }
+    },
+    {
+      "case_id": "moderate-input-work-bound",
+      "uncached_input_work_units_per_token": 0.1,
+      "cached_input_work_units_per_token": 0.01,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "modeled-sensitivity:uncached-0.10-cached-0.01-relative-to-output-work"
+      }
+    },
+    {
+      "case_id": "conservative-input-work-bound",
+      "uncached_input_work_units_per_token": 0.25,
+      "cached_input_work_units_per_token": 0.05,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "modeled-sensitivity:uncached-0.25-cached-0.05-relative-to-output-work"
+      }
+    }
+  ],
+  "source_stack_feature_coverage": {
+    "shared_dsa": false,
+    "qualified_nvfp4": false,
+    "fp8_kv_cache": false,
+    "kv_aware_routing": false,
+    "prefill_decode_disaggregation": false,
+    "mtp": false,
+    "evidence": {
+      "kind": "modeled_assumption",
+      "source_artifact_id": "validation/results/glm-5.2-incumbent-stack-2026-07-12.json#baseten_public_stack+fireworks_public_stack+nvidia_public_nvfp4"
+    }
+  },
+  "configured_headroom_threshold": 1.25,
+  "assumptions_source_artifact_id": "validation/results/provider-economics-2026-07-12.json+experiments/glm-5.2/h200-optimistic-deployment-screen-v1.json"
+}

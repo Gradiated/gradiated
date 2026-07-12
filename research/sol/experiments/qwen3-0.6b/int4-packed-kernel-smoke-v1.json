@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "content_id": "06c3789ef245d9275f0adf76b592ed6c2f812864bd95dcf80f5b669fe21d723c",
+  "result": {
+    "study_id": "qwen3-0.6b-int4-o-gate-up-packed-kernel-smoke-v1",
+    "checkpoint": {
+      "model_id": "Qwen/Qwen3-0.6B",
+      "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+      "path": "models/Qwen3-0.6B/model.safetensors",
+      "expected_file_bytes": 1503300328,
+      "expected_sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b"
+    },
+    "quality_evidence": {
+      "path": "validation/results/qwen3-0.6b-int4-o-gate-up-wikitext2-sequential4096-bf16-v1.json",
+      "expected_sha256": "810201f17e88b4a1be625627ca98b7ffd42ee9e15ab2dbe42f4d6aa32cfe4a05",
+      "candidate": "o_proj plus gate_proj plus up_proj symmetric signed group-8 INT4",
+      "scope": "Teacher-forced BF16 QDQ quality proxy only; the run did not use persisted BF16 scales or packed codes."
+    },
+    "host": {
+      "hostname": "Joshuas-MacBook-Pro.local",
+      "operating_system": "Darwin 24.6.0 Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041",
+      "architecture": "aarch64",
+      "cpu_model": "Apple M4 Pro",
+      "available_parallelism": 14,
+      "benchmark_thread_count": 1,
+      "rust_profile": "release"
+    },
+    "benchmark": {
+      "seed": 20260712,
+      "group_size": 8,
+      "scale_storage": "bfloat16",
+      "thread_count": 1,
+      "warmup_iterations": 5,
+      "measured_iterations": 15,
+      "require_release_build": true
+    },
+    "source_verification": {
+      "checkpoint_file_size_verified": true,
+      "checkpoint_declared_sha256_recomputed": false,
+      "measured_tensor_blake3_pins_verified": true,
+      "quality_evidence_declared_sha256_recomputed": false
+    },
+    "reference_boundary": "The packed representation uses low-nibble-first signed two's-complement INT4 codes and one round-to-nearest-even BF16 scale per group of eight. The control is a one-thread scalar f32 matrix-vector multiply over independently materialized QDQ weights. It is intentionally matched to the scalar packed loop to isolate storage decoding, and is not a tuned BF16 kernel, BLAS, vLLM, llama.cpp, provider, or GPU baseline.",
+    "measurements": [
+      {
+        "family": "attention_output",
+        "tensor_name": "model.layers.0.self_attn.o_proj.weight",
+        "source_dtype": "BF16",
+        "rows": 1024,
+        "columns": 2048,
+        "parameter_count": 2097152,
+        "source_bytes_blake3": "88c9cc589476128bec96ece9d825422cbad162a70c16625119b2e132be518e1a",
+        "input_checksum_blake3": "007a892b65c9730999897f37e87949d62147172e188b7e604b7c9a20cc2b0d03",
+        "packed_checksum_blake3": "c478e30a89a9fe24db33bfddd4a6f8823cdf6c6183dbcc350a5a3a6aa3d1dd83",
+        "source_load_seconds": 0.001609167,
+        "pack_seconds": 0.002774584,
+        "storage": {
+          "source_bfloat16_bytes": 4194304,
+          "packed_code_bytes": 1048576,
+          "group_scale_bytes": 524288,
+          "total_packed_bytes": 1572864,
+          "scale_overhead_fraction_of_codes": 0.5,
+          "scale_fraction_of_packed_storage": 0.3333333333333333,
+          "packed_fraction_of_source_bfloat16": 0.375,
+          "logical_packed_weight_bytes_read_per_output": 1536,
+          "logical_f32_qdq_weight_bytes_read_per_output": 8192,
+          "logical_input_bytes_if_read_once_per_matvec": 8192,
+          "logical_output_write_bytes_per_matvec": 4096
+        },
+        "correctness": {
+          "packed_dequantized_weight_checksum_blake3": "16a9f2da130677b4143cc0ebbb66e88e6f090b96094a35998b996f73a77ce5fa",
+          "floating_qdq_weight_checksum_blake3": "16a9f2da130677b4143cc0ebbb66e88e6f090b96094a35998b996f73a77ce5fa",
+          "maximum_dequantized_weight_absolute_error": 0.0,
+          "dequantized_weight_rmse": 0.0,
+          "packed_output_checksum_blake3": "34d9ffd6d9a7c7ebb4084ee223483737d05eff7d87352c24beac307a66c07ef9",
+          "floating_reference_output_checksum_blake3": "34d9ffd6d9a7c7ebb4084ee223483737d05eff7d87352c24beac307a66c07ef9",
+          "maximum_absolute_error": 0.0,
+          "rmse": 0.0,
+          "checksum_match": true,
+          "passed": true
+        },
+        "packed_scalar": {
+          "iterations": 15,
+          "minimum_seconds": 0.001344875,
+          "median_seconds": 0.0013585,
+          "logical_bytes_per_call": 1585152,
+          "best_logical_effective_bandwidth_gbps": 1.1786612138674597,
+          "median_logical_effective_bandwidth_gbps": 1.16683989694516
+        },
+        "floating_qdq_scalar_reference": {
+          "iterations": 15,
+          "minimum_seconds": 0.000996083,
+          "median_seconds": 0.001027833,
+          "logical_bytes_per_call": 8400896,
+          "best_logical_effective_bandwidth_gbps": 8.433931710510068,
+          "median_logical_effective_bandwidth_gbps": 8.173405601882797
+        },
+        "raw_speed_ratio_reference_over_packed": 0.756594037541406,
+        "raw_time_ratio_packed_over_reference": 1.3217127685139511,
+        "boundary": "Single-thread scalar packed decode plus steady-state matvec versus single-thread scalar f32 QDQ steady-state matvec; one-shot quantization and packing time is reported separately and excluded from both timing distributions. No BLAS, vLLM, SIMD intrinsic, GPU, or provider control."
+      },
+      {
+        "family": "mlp_gate",
+        "tensor_name": "model.layers.0.mlp.gate_proj.weight",
+        "source_dtype": "BF16",
+        "rows": 3072,
+        "columns": 1024,
+        "parameter_count": 3145728,
+        "source_bytes_blake3": "8e9fffe22ba26c6f63da2e9c984ecd6f269a64034a04719340ec9d055c13fd0e",
+        "input_checksum_blake3": "ee31fb34925f50f52230ded48064bfe431b601ae7d2b44a04408f1cc11a12d4a",
+        "packed_checksum_blake3": "971892e72979dd8c52040554484c24fd422f1ec24c4b25edaff282b3a03e59d5",
+        "source_load_seconds": 0.002343167,
+        "pack_seconds": 0.004330167,
+        "storage": {
+          "source_bfloat16_bytes": 6291456,
+          "packed_code_bytes": 1572864,
+          "group_scale_bytes": 786432,
+          "total_packed_bytes": 2359296,
+          "scale_overhead_fraction_of_codes": 0.5,
+          "scale_fraction_of_packed_storage": 0.3333333333333333,
+          "packed_fraction_of_source_bfloat16": 0.375,
+          "logical_packed_weight_bytes_read_per_output": 768,
+          "logical_f32_qdq_weight_bytes_read_per_output": 4096,
+          "logical_input_bytes_if_read_once_per_matvec": 4096,
+          "logical_output_write_bytes_per_matvec": 12288
+        },
+        "correctness": {
+          "packed_dequantized_weight_checksum_blake3": "a5b63d3c365b8692c5e3d638744c199b36673300481f0f0abcfc63287d6d2118",
+          "floating_qdq_weight_checksum_blake3": "a5b63d3c365b8692c5e3d638744c199b36673300481f0f0abcfc63287d6d2118",
+          "maximum_dequantized_weight_absolute_error": 0.0,
+          "dequantized_weight_rmse": 0.0,
+          "packed_output_checksum_blake3": "cf979595c3fc5dfc6fe2296e9fdbc63cceaf40a353e3b9058b2f4282a9b2c9e5",
+          "floating_reference_output_checksum_blake3": "cf979595c3fc5dfc6fe2296e9fdbc63cceaf40a353e3b9058b2f4282a9b2c9e5",
+          "maximum_absolute_error": 0.0,
+          "rmse": 0.0,
+          "checksum_match": true,
+          "passed": true
+        },
+        "packed_scalar": {
+          "iterations": 15,
+          "minimum_seconds": 0.001965542,
+          "median_seconds": 0.001975417,
+          "logical_bytes_per_call": 2375680,
+          "best_logical_effective_bandwidth_gbps": 1.2086640733192169,
+          "median_logical_effective_bandwidth_gbps": 1.20262202866534
+        },
+        "floating_qdq_scalar_reference": {
+          "iterations": 15,
+          "minimum_seconds": 0.001434792,
+          "median_seconds": 0.001439042,
+          "logical_bytes_per_call": 12599296,
+          "best_logical_effective_bandwidth_gbps": 8.781270037747632,
+          "median_logical_effective_bandwidth_gbps": 8.755335841483431
+        },
+        "raw_speed_ratio_reference_over_packed": 0.7284750510904785,
+        "raw_time_ratio_packed_over_reference": 1.372730608279675,
+        "boundary": "Single-thread scalar packed decode plus steady-state matvec versus single-thread scalar f32 QDQ steady-state matvec; one-shot quantization and packing time is reported separately and excluded from both timing distributions. No BLAS, vLLM, SIMD intrinsic, GPU, or provider control."
+      },
+      {
+        "family": "mlp_up",
+        "tensor_name": "model.layers.0.mlp.up_proj.weight",
+        "source_dtype": "BF16",
+        "rows": 3072,
+        "columns": 1024,
+        "parameter_count": 3145728,
+        "source_bytes_blake3": "bcb34ecc8344764a96f5b21fafbcfd06166708de42dc91e409b957953037b595",
+        "input_checksum_blake3": "35863ec06d8fee658d721c3ef61abda6e007329b4be011f76cb3504213a17a9b",
+        "packed_checksum_blake3": "f645c72d8ace3238b9479177e27a88eded731d27a42a817602c2635601d3862c",
+        "source_load_seconds": 0.001815792,
+        "pack_seconds": 0.004276333,
+        "storage": {
+          "source_bfloat16_bytes": 6291456,
+          "packed_code_bytes": 1572864,
+          "group_scale_bytes": 786432,
+          "total_packed_bytes": 2359296,
+          "scale_overhead_fraction_of_codes": 0.5,
+          "scale_fraction_of_packed_storage": 0.3333333333333333,
+          "packed_fraction_of_source_bfloat16": 0.375,
+          "logical_packed_weight_bytes_read_per_output": 768,
+          "logical_f32_qdq_weight_bytes_read_per_output": 4096,
+          "logical_input_bytes_if_read_once_per_matvec": 4096,
+          "logical_output_write_bytes_per_matvec": 12288
+        },
+        "correctness": {
+          "packed_dequantized_weight_checksum_blake3": "ecf4af7869b4599c0fecb5c3d3642b75cdd8a83b490e5594436599d37cfcf1a2",
+          "floating_qdq_weight_checksum_blake3": "ecf4af7869b4599c0fecb5c3d3642b75cdd8a83b490e5594436599d37cfcf1a2",
+          "maximum_dequantized_weight_absolute_error": 0.0,
+          "dequantized_weight_rmse": 0.0,
+          "packed_output_checksum_blake3": "92b21493daf848ab6f35fabcaacab29b1b5fb98aa391c12b23b470f786ecebca",
+          "floating_reference_output_checksum_blake3": "92b21493daf848ab6f35fabcaacab29b1b5fb98aa391c12b23b470f786ecebca",
+          "maximum_absolute_error": 0.0,
+          "rmse": 0.0,
+          "checksum_match": true,
+          "passed": true
+        },
+        "packed_scalar": {
+          "iterations": 15,
+          "minimum_seconds": 0.001956459,
+          "median_seconds": 0.001965833,
+          "logical_bytes_per_call": 2375680,
+          "best_logical_effective_bandwidth_gbps": 1.2142753822083674,
+          "median_logical_effective_bandwidth_gbps": 1.2084851561653507
+        },
+        "floating_qdq_scalar_reference": {
+          "iterations": 15,
+          "minimum_seconds": 0.001331834,
+          "median_seconds": 0.001407708,
+          "logical_bytes_per_call": 12599296,
+          "best_logical_effective_bandwidth_gbps": 9.460109893575325,
+          "median_logical_effective_bandwidth_gbps": 8.950219789899611
+        },
+        "raw_speed_ratio_reference_over_packed": 0.7160872769965708,
+        "raw_time_ratio_packed_over_reference": 1.3964778206844035,
+        "boundary": "Single-thread scalar packed decode plus steady-state matvec versus single-thread scalar f32 QDQ steady-state matvec; one-shot quantization and packing time is reported separately and excluded from both timing distributions. No BLAS, vLLM, SIMD intrinsic, GPU, or provider control."
+      }
+    ],
+    "aggregate": {
+      "tensor_count": 3,
+      "parameter_count": 8388608,
+      "source_bfloat16_bytes": 16777216,
+      "total_packed_bytes": 6291456,
+      "summed_packed_median_seconds": 0.005299750000000001,
+      "summed_floating_reference_median_seconds": 0.003874583,
+      "raw_speed_ratio_reference_over_packed": 0.7310878815038444,
+      "raw_time_ratio_packed_over_reference": 1.3678246149327555,
+      "all_correctness_checks_passed": true
+    },
+    "claims": {
+      "local_packed_scalar_correctness_permitted": true,
+      "local_scalar_timing_observation_permitted": true,
+      "tuned_kernel_claim_permitted": false,
+      "blas_or_vllm_comparison_permitted": false,
+      "quality_equivalence_claim_permitted": false,
+      "serving_claim_permitted": false,
+      "energy_claim_permitted": false,
+      "cost_per_token_claim_permitted": false,
+      "production_claim_permitted": false
+    },
+    "limitations": [
+      "The quality run quantized with float32 scales and copied dequantized values into BF16 parameters; this smoke stores BF16 group scales, so kernel correctness does not transfer the prior quality verdict to the packed format.",
+      "The scalar implementation has no architecture-specific SIMD, tiling, threading, activation batching, fusion, or cache control.",
+      "Logical effective bandwidth divides declared representation bytes by wall time; it is not a hardware-counter measurement of DRAM traffic and tensors may interact with host caches.",
+      "Timing is a local host observation under uncontrolled system load and has no confidence interval beyond the retained minimum and median samples.",
+      "Only one layer-zero tensor from each selected Qwen family is measured; full-model scheduling and retained BF16 tensors are excluded.",
+      "The configured checkpoint and quality-evidence SHA-256 values are provenance labels, not recomputed by this dependency-minimal smoke. File size and every measured tensor's BLAKE3 pin are verified before packing."
+    ]
+  }
+}

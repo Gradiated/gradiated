@@ -1,0 +1,16 @@
+{
+  "name": "h100-sxm-4x-owned-tco-sensitivity",
+  "physical_device_count": 4,
+  "tensor_parallelism": 4,
+  "pipeline_parallelism": 1,
+  "scale_up_bandwidth_bytes_per_second": 3600000000000.0,
+  "scale_up_latency_nanoseconds": 1000.0,
+  "scale_up_energy_picojoules_per_byte": 2.0,
+  "accelerator_group_hourly_cost_usd": 10.0,
+  "host_hourly_cost_usd": 0.5,
+  "cost_basis": "$10 per four-H100 group-hour is an internal-cost sensitivity, not a measured purchase-price claim; link latency and energy are analytical assumptions",
+  "evidence_artifacts": [
+    "configs/SOURCES.md#nvidia-h100-sxm",
+    "assumption:h100-owned-group-hour-v0"
+  ]
+}

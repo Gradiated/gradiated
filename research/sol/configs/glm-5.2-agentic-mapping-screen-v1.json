@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "study_id": "glm-5.2-public-agentic-mapping-screen-v1",
+  "sources": {
+    "proxy": {
+      "path": "../experiments/workloads/aa-agentperf-public-proxy-v1.json",
+      "file_blake3": "de6a6ad7d76ded5e2d5bdc519e507516e3254628b5dcbd90a3672d18ae2f9c9e",
+      "report_content_id": "33fa1142172d5999b64ef7e7e73da49984c1f2f47bbcd2f8a9ad30615fb6b314"
+    },
+    "frontier_request": {
+      "path": "glm-5.2-parallel-mapping-context-frontier-v1.json",
+      "file_blake3": "b4583224d5e046fe896ab0fcd2c00924c883e24283f31e764018968cdb39be55"
+    },
+    "storage": {
+      "path": "../experiments/glm-5.2/storage-envelope-v1.json",
+      "file_blake3": "7032e9640533bd50d1cd56f688e1beb074523976bdd0315caf6d534db02c6cdd",
+      "report_content_id": "3216cdd0e8c0988ccc7c779f9df9c7d0b8099f11375e7bdb441ab7463d9bc174"
+    },
+    "mapping_16k": {
+      "path": "../experiments/glm-5.2/parallel-mapping-control-v1.json",
+      "file_blake3": "9f972ded6cccfbeeda63e3f5ebfe02faa01e949fe40ce597011ced4d860653c4",
+      "report_content_id": "205c1c7157d104179e066ecfde311107ca7f160f941a8a97e7058e8e1fd80729"
+    },
+    "mapping_90k": {
+      "path": "../experiments/glm-5.2/parallel-mapping-90k-control-v1.json",
+      "file_blake3": "6bafad1ba2877b9accd6b313ce4836b1b81edd5855a732ca6c9b799b546fa20a",
+      "report_content_id": "0f61e4f6ebec52b35fb5046ab1ba7bbb9506516dba23f94b694c65085bc0f48a"
+    },
+    "lowering_16k": {
+      "path": "../experiments/glm-5.2/nvfp4-whole-decode-lowering-v1.json",
+      "file_blake3": "2a67488ae539f2d1f672ed38c1a133f721020af7a1fd0e1fbdae7d46a18dbd94",
+      "report_content_id": "de14e9be74e0f3a89baf3c09a94714d8a0aa72bde6221affe2235a5b74544845"
+    },
+    "lowering_90k": {
+      "path": "../experiments/glm-5.2/nvfp4-whole-decode-lowering-90k-control-v1.json",
+      "file_blake3": "8a63732e03efd46dc1d1beffd89f8b3c1bb7705a5d0823baf298a8ef278cd29b",
+      "report_content_id": "f40f41c1d67b909783c40073f475f08906e77ccb05673f2beb630a496b0c7cd3"
+    }
+  },
+  "retargeting": {
+    "source_model_id": "synthetic/model-under-test",
+    "source_model_revision": "synthetic-public-agentic-proxy-v1",
+    "source_tokenizer_id": "synthetic/tokenizer-under-test",
+    "source_tokenizer_revision": "synthetic-public-agentic-proxy-v1",
+    "target_model_id": "nvidia/GLM-5.2-NVFP4",
+    "target_model_revision": "aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa",
+    "token_count_retarget_only": true,
+    "prompt_or_tokenizer_equivalence_claimed": false
+  },
+  "concurrency_points": [1, 8, 16, 32, 64],
+  "claims": {
+    "quality_claim_permitted": false,
+    "latency_claim_permitted": false,
+    "throughput_claim_permitted": false,
+    "slo_claim_permitted": false,
+    "network_effect_claim_permitted": false,
+    "energy_claim_permitted": false,
+    "cost_claim_permitted": false,
+    "provider_claim_permitted": false,
+    "nvidia_performance_claim_permitted": false,
+    "full_deployment_claim_permitted": false
+  }
+}

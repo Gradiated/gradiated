@@ -1,0 +1,2048 @@
+{
+  "schema_version": "inference-foundry.dashboard-status.v1",
+  "project": "Inference Foundry",
+  "updated": "2026-07-12 10:30 Europe/Madrid",
+  "dashboard_current": true,
+  "repository_privacy": {
+    "visibility": "local_only",
+    "public_remote_configured": false,
+    "remote": "gb-local:/Users/js/dev/inference-foundry",
+    "prompt_credentials_checked_in": false,
+    "gitbutler_branch": "js-branch-1",
+    "latest_private_local_checkpoint": "9106cad663dd086e1ea53c6b0a5af7a8eb8a92a6",
+    "checkpoint_pushed": false
+  },
+  "artifact_identity": {
+    "study_baseline_spec_id": "ad455511c1586cb9b4809b41e825be51afe5d618bcdab99f11299723a37b7496",
+    "selected_baseline_spec_id": "a4d77fdf0a6bdef2befb2c920c4425fd887e2c783d9d47ceada91b9b6626bc17",
+    "candidate_spec_id": "4115fa3ca56e3ac04b503459f8dd6d76d39df44bb1322c4d167d1ccbd631f073",
+    "trace_id": "simulation-4115fa3ca56e3ac04b503459f8dd6d76d39df44bb1322c4d167d1ccbd631f073"
+  },
+  "claim_status": {
+    "label": "Measured locally · analytical economics",
+    "tone": "warning",
+    "production_claim_permitted": false,
+    "conclusion_permitted": false,
+    "summary": "The easy differentiation story is falsified and current economics are fragile. Packed Qwen INT4 retains 37.5% of BF16 tensor bytes; scalar and matched batch paths regress, but a prospectively locked explicit-NEON path is 4.457x faster than scalar packed and 3.284x faster than scalar f32-QDQ on three exact tensors. Its locked 1.75x prediction misses magnitude by 44.7%, so the component win does not calibrate the predictor. Material 8-to-4 KV recovery restores only 3.80% of the NLL gap. A fully drained Ramulator2 sweep reverses logical-token sorting from 27.744% better at 32 bytes to 59.194% worse at a 1,152-byte record geometry. The expanded 30-source review shows that obvious sparse-attention, DSA, index, gather, and offload ideas are active categories. The surviving thesis is independently validated non-obvious model/hardware discovery beyond incumbent baselines, not simulator breadth."
+  },
+  "decision": {
+    "verdict": "continue_research_do_not_claim_provider_advantage_or_authorize_silicon",
+    "thesis_status": "plausible_but_unvalidated",
+    "custom_silicon_status": "not_justified",
+    "five_to_ten_x_status": "unsupported",
+    "positive_evidence": [
+      "A tensor-selective Qwen3-0.6B INT4 QDQ variant passed the declared narrow numerical gates on its selection corpus and 4,096 deterministic non-overlapping WikiText-2 targets, with 24.6289% estimated deployed weight-byte reduction.",
+      "The packed-format BF16-scale representation passes all five teacher-forced gates at 512 and 4,096 targets. Its corrected exact-source PIQA-256 rerun passes the declared two-point point gate, while the paired interval leaves confirmatory non-inferiority inconclusive.",
+      "An exact Rust packed-INT4 smoke stores three selected layer-zero tensors in 37.5% of their BF16 bytes and matches an independently materialized QDQ reference exactly, creating a real kernel-correctness boundary.",
+      "A tensor-derived Qwen3-0.6B KV-sharing change passed all five proxy gates over 4,096 targets, proving the harness can quality-gate an exact model-architecture/cache intervention.",
+      "Independent GLM attention/expert mapping removes 85.86% of modeled hop bytes on two exact work units and exposes a concurrency-dependent residency crossover.",
+      "Four request-level serving artifacts passed strict measured-hardware provenance import.",
+      "Released GLM-5.2 architecture exposes concrete model-specific cache, sparse-attention, expert-routing, MTP, and network hypotheses.",
+      "A strict GLM-5.2 capacity envelope now compares BF16, native FP8, and expert-selective NVFP4 while refusing unsupported latency and cost claims.",
+      "A canonical action ledger and tiered compound-cache simulator now expose cross-layer dependencies, transfer amplification, and missing calibration instead of treating cache hits as free.",
+      "A GLM-specific route engine shows a falsifiable distribution-dependent mechanism: traffic-aware primary placement beats expert replication on a source-affine synthetic hotset and gives no material win on the uniform negative control.",
+      "Provider pricing and gross-margin thresholds are now explicit."
+    ],
+    "negative_evidence": [
+      "Every naive full-weight INT4 group failed at least one numerical gate.",
+      "The first correct single-thread scalar packed-INT4 matvec is 1.368x slower than its matched scalar f32-QDQ control despite reading a smaller logical representation; compression needs a tuned batch/SIMD kernel before it can support speed or cost.",
+      "A corrected matched-loop batch frontier finds no packed win at B=1, 4, 16, or 64; packed remains 1.7-6.6% slower. A provisional positive was rejected because its f32 control used a different traversal.",
+      "The first material KV architecture-recovery recipe restored only 3.80% of the zero-token NLL gap after 2,048 training targets; all five gates remain extreme failures, so scaling the same run to 8,192 tokens was rejected.",
+      "The first real SCALE-Sim array/dataflow sweep ranks all five base architectures identically for Qwen and a GLM expert GEMM, and 4 MiB SRAM does not reduce native filter reads or core cycles; no model-specific hardware win appears in this slice.",
+      "The first PIQA-256 artifact was withdrawn because its loader stripped source trailing whitespace in 30 of 512 choices. The exact-source rerun passes the point gate, but its 95% interval crosses the non-inferiority margin.",
+      "The selective change is ideally capped at 1.327x through weight-byte reduction alone, far below the 5-10x thesis.",
+      "The maximum quality-passing one-shot KV-sharing point removes only 1.786% of cache bytes and is ideally capped at 1.018x; the next point fails and full sharing destroys quality.",
+      "Fixed-budget GLM P/D is 5.18% worse than aggregate under neutral effects; its 35.22% upside appears only after inserting uncalibrated interference and specialization assumptions.",
+      "No local CPU concurrency point passed every class objective.",
+      "First and second c1/c8 runs differed by 1.51x and 3.08x in output throughput. A frozen controlled campaign then terminated host-contamination blocked after 355 admission samples produced no clean streak; no resumed server was launched.",
+      "NVIDIA now publishes a Rust full-stack serving twin, silicon-backed deployment search, and hardware-friendly model-design rules; Etched says it already co-designs chips through racks around production-traffic simulation. Simulator breadth and the category thesis are not unique moats.",
+      "The Qwen3-8B checkpoint changes and custom hardware remain unmeasured.",
+      "Baseten already reports almost the full proposed GLM-5.2 software stack in production: custom shared DSA, in-house NVFP4, Blackwell, KV-aware routing, P/D disaggregation, and MTP.",
+      "Fireworks already reports the remaining deployment-search layer: independent GLM expert/attention mapping, DP attention, tiered agent cache, tuned speculation, P/D, and automatic hardware-model-software adaptation.",
+      "The 5.38x ledger-roofline result is only an engine smoke test; whole-decode work lowers it to an uncalibrated 3.592x dominated by assumed HBM traffic.",
+      "With common control assumptions, preliminary Rubin headline rates are 1.535x faster than the nominal custom profile, so the custom headline rates are not a launch-date moat.",
+      "The economic frontier finds zero of 54 regions robust across its full cost, load, availability, and margin sweep; the prior pass fails under a 25% peak haircut or modest input work.",
+      "On public NVFP4 work, nominal custom versus B200 throughput flips from 0.774x to 1.342x across opaque traffic bounds, and the custom profile lacks a native selective-NVFP4 execution contract."
+    ],
+    "report": "docs/OVERNIGHT_REPORT_2026-07-12.md"
+  },
+  "study": {
+    "model": "Qwen/Qwen3-8B",
+    "workload": "Synthetic agentic-v1",
+    "requests": 512,
+    "arrival_rate_per_second": 2.0,
+    "input_tokens": 8585216,
+    "output_tokens": 591872
+  },
+  "headline_metrics": [
+    {
+      "label": "Packed-format proxy quality",
+      "value": "Proxies + PIQA point pass",
+      "detail": "All five BF16-scale proxy gates pass at 512/4,096 targets; exact-source PIQA-256 is 174/256 baseline versus 175/256 candidate, but its interval crosses the two-point margin",
+      "evidence": "Measured held-out proxies and frozen task subset · confirmatory non-inferiority inconclusive"
+    },
+    {
+      "label": "Controlled serving repeatability",
+      "value": "Host blocked · 0 resumed pairs",
+      "detail": "355 five-second admission samples over 30 minutes produced no three-sample clean streak at the frozen 20% co-tenant threshold; one earlier c8 pair is insufficient",
+      "evidence": "Fail-closed local protocol · no calibration, GPU, provider, energy, or cost claim"
+    },
+    {
+      "label": "Public agentic workload contract",
+      "value": "64 requests · 8 sessions",
+      "detail": "Exact 5K-131K input bounds and 27K mean, dynamic prefixes, 56 tool delays with 1s median, and three synthetic SLO tiers",
+      "evidence": "Deterministic public-geometry proxy · not private AA-AgentPerf data or measured traffic"
+    },
+    {
+      "label": "Admissible combined GLM cost claims",
+      "value": "0 / 7",
+      "detail": "The Rust gate refuses to multiply cross-model bytes, component latency, network bytes, synthetic P/D cost, and analytical economics into output $/token",
+      "evidence": "Exact scope/intervention/metric/evidence-class policy"
+    },
+    {
+      "label": "Independent hardware-oracle sweep",
+      "value": "12 / 12 native runs",
+      "detail": "OS32 wins both exact GEMMs; base architecture rank is identical across Qwen and GLM, and 4 MiB SRAM provides no native cycle/read benefit",
+      "evidence": "Pinned SCALE-Sim v3 same-oracle cycles · not BF16, GPU time, energy, area, or cost"
+    },
+    {
+      "label": "Timeloop backend boundary",
+      "value": "Frontend pass · native blocked",
+      "detail": "Pinned v4 frontend processes the exact Qwen GEMM and reconciles all work/bytes; native mapper is absent with six required local dependencies missing",
+      "evidence": "Real external frontend run · no mapping, cycles, energy, area, or cost"
+    },
+    {
+      "label": "Full KV-sharing recovery at 2K targets",
+      "value": "3.80% gap recovered",
+      "detail": "Rank-8 Q/O-only recovery still has 2,535× baseline perplexity, fails all five gates, and does not justify the projected 83-minute 8K extension",
+      "evidence": "Measured CPU training/holdout · this exact recipe stopped"
+    },
+    {
+      "label": "Packed INT4 batch crossover",
+      "value": "None through B64",
+      "detail": "Exact matched traversal at B1/4/16/64 leaves packed 1.7-6.6% slower; three tensors still retain 37.5% of BF16 bytes and match QDQ exactly",
+      "evidence": "Measured Apple M4 Pro · not tuned, BLAS, vLLM, SIMD, GPU, energy, or cost"
+    },
+    {
+      "label": "Prospective ARM packed kernel",
+      "value": "4.457× local speedup",
+      "detail": "Explicit NEON is 4.457× over scalar packed and 3.284× over scalar f32-QDQ with all correctness gates passing; locked prediction was 1.75× and misses magnitude by 44.7%",
+      "evidence": "Prospective one-thread component result · not tuned BF16, full model, serving, energy, cost, or calibration"
+    },
+    {
+      "label": "Public-agentic GLM mapping screen",
+      "value": "C1 64/0/0 → C64 8/8/48",
+      "detail": "Coupled/overlap/decoupled partial-policy counts shift across 64 exact proxy token geometries; candidate full capacity is uncertain for every request at every concurrency",
+      "evidence": "Synthetic token-geometry retargeting · no tokenizer, latency, SLO, quality, network, or cost claim"
+    },
+    {
+      "label": "Simulator predictive validity",
+      "value": "NOT_MET · 1 pair",
+      "detail": "One prospective component pair is admitted and gets direction right, but 44.7% magnitude error fails the 15% bound; intervention, regime, regression, ranking, quality, and SLO gates remain incomplete",
+      "evidence": "Artifact-bound fail-closed gate · no calibration or cost promotion"
+    },
+    {
+      "label": "HBM3 locality fidelity",
+      "value": "−27.744% → +59.194%",
+      "detail": "Logical-token sorting helps the one-line probe but regresses the 36-line/1,152-byte BF16 record geometry after full callback drain",
+      "evidence": "Patched-native synthetic Ramulator2 · not GLM/GPU timing, energy, calibration, or cost"
+    },
+    {
+      "label": "Quality-passing Qwen KV-byte reduction",
+      "value": "1.786%",
+      "detail": "Four selected layer/pair aliases pass 512 and 4,096 targets; five layers fails; ideal cache-only ceiling is 1.018x",
+      "evidence": "Measured teacher-forced proxy · runtime alias kernel absent"
+    },
+    {
+      "label": "Independent GLM mapping hop bytes",
+      "value": "−85.86%",
+      "detail": "1.805 GB coupled TP16 to 0.255 GB DP-attention + local EP8; residency favors decoupling only at higher concurrency",
+      "evidence": "Exact conditional bytes · no latency or cost"
+    },
+    {
+      "label": "P/D raw cost direction",
+      "value": "+5.18% → −35.22%",
+      "detail": "Neutral versus explicit interference/specialization upside; transfer congestion can erase the gain",
+      "evidence": "Deterministic synthetic serving control · all cost/SLO claims false"
+    },
+    {
+      "label": "Four-B200 FP8-KV capacity gap",
+      "value": "5.268 GB → 104.052 GB",
+      "detail": "Lower-to-upper cache bounds; lower case fits 60×32K sequences but 61 fail",
+      "evidence": "Exact aggregate-capacity frontier · TP4/serving blocked"
+    },
+    {
+      "label": "Robust economic regions",
+      "value": "0 / 54",
+      "detail": "The prior BF16 pass falls to 0.810x at 75% peak and 0.824x when modest input work is restored",
+      "evidence": "4,374-point deterministic sensitivity · blocked source"
+    },
+    {
+      "label": "NVFP4 custom/B200 ranking",
+      "value": "0.774× → 1.342×",
+      "detail": "Lower-to-upper opaque traffic bounds reverse the sign; custom selective-NVFP4 execution is unsupported",
+      "evidence": "Native-Blackwell component roofline · not performance"
+    },
+    {
+      "label": "Fastest disclosed incumbent GLM path",
+      "value": "446 TPS/user peak",
+      "detail": "Fireworks reports about 2x its Standard path plus model-specific mapping/cache/speculation; aggregate capacity and COGS are undisclosed",
+      "evidence": "Vendor report via Artificial Analysis · not reproduced"
+    },
+    {
+      "label": "Incumbent GLM-5.2 vertical stack",
+      "value": "280+ TPS/user",
+      "detail": "Baseten also reports ~800 ms TTFT and a 2x P/D-disaggregation gain; aggregate capacity and COGS are undisclosed",
+      "evidence": "Vendor report via Artificial Analysis · not reproduced"
+    },
+    {
+      "label": "Best selective INT4 storage estimate",
+      "value": "−24.63%",
+      "detail": "Qwen3-0.6B o_proj + gate/up, group 8",
+      "evidence": "Measured proxy numerics · 155 selection + 4,096 held-out targets"
+    },
+    {
+      "label": "Selective INT4 ideal speedup ceiling",
+      "value": "1.327×",
+      "detail": "Impossible 100% weight-read bottleneck; real result must be lower",
+      "evidence": "Derived upper bound · first scalar packed kernel regresses"
+    },
+    {
+      "label": "GLM-5.2 H200 residency floor",
+      "value": "16–17 → 6–7",
+      "detail": "BF16 versus public expert-selective NVFP4 at 64 × 32K reserved tokens",
+      "evidence": "Executable capacity envelope · assumed cache/runtime bounds"
+    },
+    {
+      "label": "Tiered-cache recompute tokens",
+      "value": "249,856 → 94,208",
+      "detail": "Synthetic 15-access agent-prefix trace; tiering moves 40.6 GB",
+      "evidence": "Executable cache lifecycle · modeled links · not cost"
+    },
+    {
+      "label": "Synthetic route-aware remote traffic",
+      "value": "−35.53%",
+      "detail": "Traffic-aware primary placement, 8-device source-affine hotset, zero added storage",
+      "evidence": "Exact GLM geometry · synthetic routing · modeled topology"
+    },
+    {
+      "label": "Measured CPU serving contract",
+      "value": "0 / 4",
+      "detail": "No c1/c2/c4/c8 point passes all class SLOs",
+      "evidence": "Measured locally · tiny burst · repeatability failed"
+    },
+    {
+      "label": "Input cost reduction",
+      "value": "48.39%",
+      "detail": "$0.010987 → $0.005671 / 1M",
+      "evidence": "Analytical"
+    },
+    {
+      "label": "Output cost reduction",
+      "value": "31.16%",
+      "detail": "$0.622804 → $0.428709 / 1M",
+      "evidence": "Analytical"
+    },
+    {
+      "label": "Workload-weighted reduction",
+      "value": "34.67%",
+      "detail": "$0.050531 → $0.033013 / 1M",
+      "evidence": "Analytical"
+    },
+    {
+      "label": "Fleet reduction",
+      "value": "21 → 7",
+      "detail": "Three 7-device replicas → one",
+      "evidence": "Analytical"
+    }
+  ],
+  "cost_comparison": {
+    "baseline": {
+      "label": "Unchanged-model custom reference",
+      "input_usd_per_million": 0.010987474085048072,
+      "output_usd_per_million": 0.6228041920286397,
+      "workload_weighted_usd_per_million": 0.05053118352366799,
+      "replicas": 3,
+      "devices": 21,
+      "feasible": true
+    },
+    "candidate": {
+      "label": "Paired model + kernel + hardware",
+      "input_usd_per_million": 0.005670604463118069,
+      "output_usd_per_million": 0.428709361394776,
+      "workload_weighted_usd_per_million": 0.033012978731032046,
+      "minimum_input_price_at_50pct_margin": 0.011341208926236138,
+      "minimum_output_price_at_50pct_margin": 0.857418722789552,
+      "replicas": 1,
+      "devices": 7,
+      "feasible": true
+    },
+    "owned_h100_sensitivity": {
+      "label": "Owned four-H100-group sensitivity",
+      "input_usd_per_million": 0.09162802632339631,
+      "output_usd_per_million": 1.4068114440104544,
+      "input_ratio_vs_candidate": 16.158423130964284,
+      "output_ratio_vs_candidate": 3.2815039061276656,
+      "measured": false
+    },
+    "projected_reduction_fraction": {
+      "input": 0.48390281340142427,
+      "output": 0.3116466348783635,
+      "workload_weighted": 0.3466810704014225
+    }
+  },
+  "hardware": {
+    "baseline": {
+      "devices_per_replica": 7,
+      "replicas": 3,
+      "arrays_per_device": 1,
+      "hbm_gb_per_replica": 672,
+      "design_target_output_tokens_per_second": 5000
+    },
+    "candidate": {
+      "devices_per_replica": 7,
+      "replicas": 1,
+      "arrays_per_device": 3,
+      "hbm_gb_per_replica": 672,
+      "design_target_output_tokens_per_second": 20000,
+      "weight_storage_bytes": 3683127624,
+      "quantized_weight_group_size": 128,
+      "quantized_weight_code_bits": 4,
+      "quantized_weight_scale_bits": 16,
+      "effective_bits_per_quantized_weight": 4.125,
+      "quantized_storage_accounting_complete": true
+    },
+    "rejected_baseline_trial": "The unchanged model's 20,000-token/s trial was excluded: it required 26 devices with 16 allowed and seven HBM stacks per device with four allowed."
+  },
+  "simulated_slo": {
+    "label": "Simulated",
+    "all_requests_met": true,
+    "requests_met": 512,
+    "requests_total": 512,
+    "p95_ttft_milliseconds": 450.859,
+    "p95_tpot_milliseconds": 6.689300439667806,
+    "class_objectives_met": 3,
+    "class_objectives_total": 3,
+    "by_class": [
+      {
+        "class": "tool",
+        "requests": 120,
+        "p95_ttft_milliseconds": 238.613,
+        "p95_tpot_milliseconds": 6.867482352941176
+      },
+      {
+        "class": "coding",
+        "requests": 236,
+        "p95_ttft_milliseconds": 412.85,
+        "p95_tpot_milliseconds": 6.696609970674487
+      },
+      {
+        "class": "long_agent",
+        "requests": 156,
+        "p95_ttft_milliseconds": 520.96,
+        "p95_tpot_milliseconds": 6.617788959452858
+      }
+    ],
+    "candidate_spec_p95_ttft_milliseconds": 450.85927791623703,
+    "candidate_spec_p95_tpot_milliseconds": 6.689300063179384,
+    "candidate_trace_energy_joules_per_replica": 263839.9759252025,
+    "candidate_output_goodput_tokens_per_second": 2188.996461771956
+  },
+  "evidence": [
+    {
+      "label": "Tensor-selective Qwen3-0.6B INT4",
+      "kind": "Measured numerics · narrow pass",
+      "tone": "good",
+      "detail": "Group-8 QDQ on o_proj plus MLP gate/up passed all declared proxy gates on 155 selection tokens and an independently sourced 512-token WikiText-2 subset. The 24.63% weight-byte reduction is estimated; runtime storage remains uncompressed and no speedup is measured."
+    },
+    {
+      "label": "Qwen3-0.6B CPU serving concurrency",
+      "kind": "Measured · not repeatable",
+      "tone": "warning",
+      "detail": "Four Rust-imported c1/c2/c4/c8 points completed all requests but none passed all class SLOs. First versus second c1/c8 throughput differed by 1.51x and 3.08x under uncontrolled host state."
+    },
+    {
+      "label": "Qwen3-8B co-design economics",
+      "kind": "Analytical",
+      "tone": "warning",
+      "detail": "Level 0 roofline, serving, capacity, hardware sizing, and TCO projection with group-aware W4 storage. No measured speedup or cost claim."
+    },
+    {
+      "label": "Group-128 W4 storage accounting",
+      "kind": "Complete · analytical",
+      "tone": "info",
+      "detail": "Four-bit codes plus one 16-bit scale per 128 weights equal 4.125 effective bits/weight and 3,683,127,624 candidate weight bytes. This is storage accounting, not quality evidence."
+    },
+    {
+      "label": "Qwen3-0.6B naive INT4 numerics",
+      "kind": "Measured · failed",
+      "tone": "danger",
+      "detail": "CPU teacher-forced numerical sweep on 155 target tokens. No tested group size passed every declared gate."
+    },
+    {
+      "label": "GLM-5.2 co-design target",
+      "kind": "Released facts · executable capacity bounds",
+      "tone": "info",
+      "detail": "The typed hybrid contract and storage engine reconcile exact BF16 payload, cache residency, expert storage, and device minima. Under 64 × 32K reserved tokens, H200 minima are 16–17 BF16, 9–10 FP8, and 6–7 NVFP4. Latency, throughput, and cost claims remain locked."
+    },
+    {
+      "label": "GLM-5.2 recursive-MTP envelope",
+      "kind": "Executable · synthetic assumptions",
+      "tone": "warning",
+      "detail": "Conditional acceptance, committed/rejected tokens, draft/verify work, break-even acceptance, and depth selection are executable. Illustrative depth break-evens are 10.0%, 30.0%, 42.4%, and 51.0%; no exact-checkpoint acceptance or measured work is present."
+    },
+    {
+      "label": "Simulator integration strategy",
+      "kind": "Primary-source landscape",
+      "tone": "info",
+      "detail": "No reviewed tool natively validates GLM-5.2 end to end. Foundry will own semantics, serving, action ledger, uncertainty, and cost in Rust, with LLMServingSim, ASTRA/Chakra, Timeloop/Accelergy, and SCALE-Sim behind replaceable adapters."
+    },
+    {
+      "label": "Canonical GLM action ledger",
+      "kind": "Executable semantic contract",
+      "tone": "info",
+      "detail": "A 19-action decode fixture covers compute, memory, cache, network, synchronization, and scheduler work with checked units and a stable semantic ID. Latency, energy, and cost remain null until every action has calibrated adapter evidence."
+    },
+    {
+      "label": "GLM tiered compound-prefix cache",
+      "kind": "Executable · synthetic trace and timing",
+      "tone": "warning",
+      "detail": "HBM/host/NVMe raises hits from 2/15 to 10/15 and reduces recompute tokens 62.30% versus 4 GB HBM only, but causes 40.562 GB of movement and 2.658x transfer amplification. No cost claim is permitted."
+    },
+    {
+      "label": "Ledger hardware roofline smoke test",
+      "kind": "Executable · incomplete synthetic work",
+      "tone": "danger",
+      "detail": "An aggressive custom timing profile is 5.38x faster than an H200-like modeled profile on the 19-action fixture. The fixture has only 222M FLOPs and is dominated by assumed fixed/coordination time, so this is explicitly not GLM performance, a physics bound, or a silicon claim."
+    },
+    {
+      "label": "Chakra v0.0.4 interchange",
+      "kind": "Executable protobuf export",
+      "tone": "info",
+      "detail": "A pinned six-node compute/collective subset preserves exact FLOPs, operations, bytes, messages, and dependencies. It declares aggregate/no-rank semantics, emits no timing, and rejects unsupported actions instead of dropping them."
+    },
+    {
+      "label": "GLM MoE route-aware placement",
+      "kind": "Executable · synthetic route distributions",
+      "tone": "warning",
+      "detail": "On a source-affine 32-expert hotset, traffic-aware primary placement raises local dispatch from 12.50% to 43.59% and cuts remote bytes 35.53% without replication. Adding 5.33% expert storage then cuts only another 4.12%; the uniform negative control gets almost no benefit."
+    },
+    {
+      "label": "Commercial break-even boundary",
+      "kind": "Public price · modeled threshold",
+      "tone": "warning",
+      "detail": "At 20% below Fireworks GLM 5.2 Standard and 60% gross margin, the synthetic cache-heavy mix allows $0.181/M total-token COGS. This is a requirement, not achieved cost."
+    },
+    {
+      "label": "Provider-grade competitive baseline",
+      "kind": "Unmeasured",
+      "tone": "muted",
+      "detail": "Local Qwen3-0.6B CPU runs validate the import path only. The identical representative workload has not run on tuned GPU vLLM, SGLang, TensorRT-LLM, Fireworks, Baseten, or Z.AI."
+    },
+    {
+      "label": "Custom hardware",
+      "kind": "Unvalidated",
+      "tone": "muted",
+      "detail": "No independent architecture simulator, synthesis, place-and-route, FPGA, or silicon evidence yet."
+    }
+  ],
+  "int4_sweep": {
+    "status": "measured_failed",
+    "model": "Qwen/Qwen3-0.6B",
+    "mechanism": "Symmetric signed INT4 groupwise weight quantize-dequantize",
+    "device": "CPU",
+    "target_tokens": 155,
+    "is_standard_benchmark": false,
+    "rows": [
+      {
+        "group_size": 8,
+        "effective_bits": 6.0,
+        "nll_delta": -0.03143950431577647,
+        "perplexity_ratio": 0.969049577997814,
+        "logit_rmse": 0.7507141268026472,
+        "logit_cosine": 0.9748989610294508,
+        "top1_agreement": 0.8903225806451613,
+        "passed": false
+      },
+      {
+        "group_size": 16,
+        "effective_bits": 5.0,
+        "nll_delta": 0.0069693842241838055,
+        "perplexity_ratio": 1.006993726900712,
+        "logit_rmse": 0.8841497339909915,
+        "logit_cosine": 0.9649116520101617,
+        "top1_agreement": 0.8193548387096774,
+        "passed": false
+      },
+      {
+        "group_size": 32,
+        "effective_bits": 4.5,
+        "nll_delta": 0.04152834799981875,
+        "perplexity_ratio": 1.042402711464511,
+        "logit_rmse": 0.9891489345513275,
+        "logit_cosine": 0.9560979374988359,
+        "top1_agreement": 0.8,
+        "passed": false
+      },
+      {
+        "group_size": 64,
+        "effective_bits": 4.25,
+        "nll_delta": 0.13291259888679718,
+        "perplexity_ratio": 1.1421501687721551,
+        "logit_rmse": 1.1674655295618073,
+        "logit_cosine": 0.9380837314943191,
+        "top1_agreement": 0.7290322580645161,
+        "passed": false
+      },
+      {
+        "group_size": 128,
+        "effective_bits": 4.125,
+        "nll_delta": 0.20879045917141825,
+        "perplexity_ratio": 1.232186778038894,
+        "logit_rmse": 1.2727578871735912,
+        "logit_cosine": 0.9258855704155327,
+        "top1_agreement": 0.7419354838709677,
+        "passed": false
+      }
+    ],
+    "conclusion": "Naive INT4 is not validated. Group size 8 passed NLL, perplexity, and top-1 thresholds, but failed RMSE and cosine while requiring six effective bits per quantized weight. This does not validate Qwen3-8B or any KV, FFN, serving, kernel, or hardware change."
+  },
+  "selective_int4": {
+    "status": "measured_numerical_pass_storage_estimated",
+    "model": "Qwen/Qwen3-0.6B",
+    "artifact": "artifacts/qwen3-0.6b/int4-o-gate-up-group8-quality-v1.json",
+    "content_identity_sha256": "77f7ff07db5ebb0b8f52509f2fc8aebbcd615a955bf74be2154a0507e054bb50",
+    "mechanism": "Group-8 symmetric signed INT4 QDQ on attention output and MLP gate/up projections",
+    "quantized_parameters": 234881024,
+    "unique_parameters": 596049920,
+    "metrics": {
+      "nll_delta": 0.024133546890750868,
+      "perplexity_ratio": 1.0244271178122009,
+      "logit_rmse": 0.4737714310453464,
+      "logit_cosine_similarity": 0.9900444478169134,
+      "top1_agreement": 0.864516129032258,
+      "passed": true
+    },
+    "storage_estimate": {
+      "baseline_checkpoint_weight_bytes": 1192099840,
+      "estimated_deployed_weight_bytes": 898498560,
+      "estimated_weight_storage_reduction_percent": 24.62891698735569,
+      "estimated_whole_model_bits_per_parameter": 12.05937328202309,
+      "runtime_storage_compressed": false
+    },
+    "corpus": {
+      "examples": 8,
+      "target_tokens": 155,
+      "is_standard_benchmark": false
+    },
+    "held_out_validation": {
+      "artifact": "validation/results/qwen3-0.6b-int4-o-gate-up-wikitext2-test-v1.json",
+      "dataset": "Salesforce/wikitext:wikitext-2-raw-v1:test",
+      "corpus_sha256": "bad296b44904bebae31ba4ace054aba59ac2885299a8b66db776afbcf004ba8e",
+      "examples": 32,
+      "target_tokens": 512,
+      "nll_delta": 0.03239313140511513,
+      "perplexity_ratio": 1.0329235001622203,
+      "logit_rmse": 0.4620691443018911,
+      "logit_cosine_similarity": 0.9902492544432034,
+      "top1_agreement": 0.86328125,
+      "passed": true,
+      "is_standard_benchmark": false
+    },
+    "extended_held_out_validation": {
+      "artifact": "validation/results/qwen3-0.6b-int4-o-gate-up-wikitext2-sequential4096-bf16-v1.json",
+      "dataset": "Salesforce/wikitext:wikitext-2-raw-v1:test",
+      "corpus_sha256": "873121a5818e0d20d33c3184c1593268700c049f342fbf4a43ab10d5c6c6a90e",
+      "examples": 64,
+      "target_tokens": 4096,
+      "nll_delta": 0.06184198707342148,
+      "perplexity_ratio": 1.0637942382060255,
+      "logit_rmse": 0.4607013253503521,
+      "logit_cosine_similarity": 0.9899530091543737,
+      "top1_agreement": 0.861328125,
+      "passed": true,
+      "dtype": "bfloat16",
+      "runtime_storage_compressed": false,
+      "is_standard_benchmark": false
+    },
+    "supported_claim": "The exact Qwen3-0.6B tensor-selective QDQ variant passed the declared teacher-forced proxy thresholds on its selection corpus, a 512-token check, and 4,096 deterministic non-overlapping WikiText-2 targets.",
+    "unsupported_claims": [
+      "Standard task or safety non-inferiority",
+      "Packed INT4 memory use or speed",
+      "Qwen3-8B quality",
+      "Serving, energy, or cost reduction"
+    ]
+  },
+  "selective_int4_impact_bound": {
+    "artifact": "validation/results/qwen3-0.6b-selective-int4-impact-bound-v1.json",
+    "formula": "speedup = 1 / (1 - weight_read_time_fraction * weight_byte_reduction_fraction)",
+    "estimated_weight_byte_reduction_fraction": 0.24628916987355687,
+    "absolute_ideal_maximum_speedup": 1.3267687819110139,
+    "measured": false,
+    "conclusion": "This selective storage change cannot produce a 5-10x gain through weight traffic alone. A materially larger result requires a device-count, batch-capacity, utilization, serving, or independent co-design discontinuity."
+  },
+  "public_agentic_proxy": {
+    "content_id": "33fa1142172d5999b64ef7e7e73da49984c1f2f47bbcd2f8a9ad30615fb6b314",
+    "request_content_id": "fb005cf9e568558db99d7e214f9496584871d80c6754776071fe50832437759b",
+    "trace_content_id": "e6780efe7fe22c10110c26b61a1ad9e1fddd9c3fdacbdd2770218e28ee7d3b68",
+    "workload_contract_content_id": "5ab6c848fc7d92d59bc2dafe6d1914d79158d1ec463cded00757bda955c43981",
+    "synthetic": true,
+    "private_test_set_used": false,
+    "request_count": 64,
+    "session_count": 8,
+    "minimum_input_tokens": 5000,
+    "maximum_input_tokens": 131000,
+    "mean_input_tokens": 27000.0,
+    "total_input_tokens": 1728000,
+    "total_output_tokens": 15104,
+    "tool_call_count": 56,
+    "median_tool_delay_milliseconds": 1000,
+    "dynamic_prefix_session_count": 8,
+    "interleaved_session_switch_count": 63,
+    "trace_duration_milliseconds": 8875,
+    "disclaimer": "Uses only AA-AgentPerf public geometry. Session layout, turn mix, outputs, prefix ratios, detailed delays, arrivals, and SLO tiers are Foundry synthetic controls.",
+    "aa_score_measured_nvidia_provider_cost_claims_permitted": false
+  },
+  "measured_serving": {
+    "status": "host_contamination_blocked_repeatability_not_established",
+    "model": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "checkpoint_sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
+    "engine": "vLLM 0.1.dev1+gbec0a4ede.d20260711",
+    "engine_revision": "bec0a4ede621bc9f1ec7be39b79ed2e286da4ca1",
+    "hardware": "Apple M4 Pro 14-core CPU, 48 GB unified memory",
+    "trace": {
+      "trace_id": "qwen3-0.6b-vllm-cpu-burst-8x128x32-v1",
+      "trace_content_id": "119830fbb79803ec4d730914f9683c8f155f3912aeccf6328824d6631427a40c",
+      "requests": 8,
+      "arrival": "all_at_once",
+      "input_tokens_per_request": 128,
+      "output_tokens_per_request": 32,
+      "prefix_reused_tokens": 0,
+      "class_geometry_representative": false
+    },
+    "points": [
+      {
+        "max_concurrency": 1,
+        "content_id": "325134fdb044d0f09284f619ab8cb147d98328e4a1992e7c557307b9ce9ef133",
+        "run_id": "vllm-cpu-c1-rep2-20260712-020623",
+        "duration_seconds": 15.622932,
+        "output_tokens_per_second": 16.386168742205367,
+        "p95_ttft_milliseconds": 14183.359,
+        "p95_tpot_milliseconds": 47.250354838709676,
+        "successful_requests": 8,
+        "slo_met_requests": 3,
+        "class_objectives_met": 0
+      },
+      {
+        "max_concurrency": 2,
+        "content_id": "64738a63e51672aced37e74024ec9914778a8a4d641576c247901d1e3fb27bc7",
+        "run_id": "vllm-cpu-c2-20260712-020318",
+        "duration_seconds": 15.68692,
+        "output_tokens_per_second": 16.319328459633887,
+        "p95_ttft_milliseconds": 13959.292,
+        "p95_tpot_milliseconds": 107.62406451612902,
+        "successful_requests": 8,
+        "slo_met_requests": 0,
+        "class_objectives_met": 0
+      },
+      {
+        "max_concurrency": 4,
+        "content_id": "afacda8a0495c60f8a0a41b0f02b9dca7902d4561d6ec6796b5442d833dba2c9",
+        "run_id": "vllm-cpu-c4-20260712-020349",
+        "duration_seconds": 10.279371,
+        "output_tokens_per_second": 24.904247545885834,
+        "p95_ttft_milliseconds": 7856.463,
+        "p95_tpot_milliseconds": 145.8594516129032,
+        "successful_requests": 8,
+        "slo_met_requests": 0,
+        "class_objectives_met": 0
+      },
+      {
+        "max_concurrency": 8,
+        "content_id": "93cd84ad8247059841409d57f2a38af8ab898e0d2ed55641b1ed3a061ade62a6",
+        "run_id": "vllm-cpu-c8-rep2-20260712-020417",
+        "duration_seconds": 7.849906,
+        "output_tokens_per_second": 32.61185547954332,
+        "p95_ttft_milliseconds": 4864.991,
+        "p95_tpot_milliseconds": 232.4817741935484,
+        "successful_requests": 8,
+        "slo_met_requests": 0,
+        "class_objectives_met": 0
+      }
+    ],
+    "repeatability": {
+      "passed": false,
+      "c1_first_output_tokens_per_second": 10.878470698750899,
+      "c1_selected_rep2_output_tokens_per_second": 16.38595644013678,
+      "c1_rep2_over_first": 1.5062738958352178,
+      "c8_first_output_tokens_per_second": 10.584517980928712,
+      "c8_selected_rep2_output_tokens_per_second": 32.61121813255502,
+      "c8_rep2_over_first": 3.0810300659240437,
+      "detail": "First and second runs at c1 and c8 diverged materially. Uncontrolled concurrent local model-training and benchmark workloads, warm-up, cache state, compilation, thermals, and frequency are confounded; no exact cause is attributable. c2 and c4 lack retained repeats."
+    },
+    "controlled_repeatability_campaign": {
+      "content_id": "7b71feaf1820b3c97756ac6d09e56f775ab1e40ab4ae7f6f35dae2af8699989e",
+      "file_sha256": "4b84b13af21c140a9993de15d5966a74c6453a92989bfe8d8fc0ea0b633965ee",
+      "config_sha256": "68ff23fe9d5fe24547ee2c1fe944dc346dcb97a4f448180be8effefc723da4f7",
+      "terminal_classification": "host_contamination_blocked",
+      "blocker_threshold_cpu_percent": 20.0,
+      "required_consecutive_clean_samples": 3,
+      "sample_interval_seconds": 5,
+      "preflight_timeout_seconds": 1800,
+      "samples_observed": 355,
+      "final_clean_streak": 0,
+      "elapsed_seconds": 1802.788881125,
+      "accepted_pairs_before_resume": 1,
+      "accepted_runs_before_resume": 2,
+      "planned_pairs": 20,
+      "planned_runs": 40,
+      "resumed_pairs_executed": 0,
+      "sample_aggregate_content_id": "2511ea68551a38bda63f113222b098b22e7bb1dd4935ca41f3d70dde71a523fa",
+      "final_blocker": "mds_stores at 315.5% CPU",
+      "timeout_evidence_sha256": "e47957e32473b13549e425ccea590f3f3efbd55f7a5b6b05ecfa4a87d7f6e1ee",
+      "threshold_relaxed": false,
+      "calibration_provider_gpu_energy_cost_claims_permitted": false
+    },
+    "limitations": [
+      "The selected manifests are labeled warm but no controlled cold-versus-warm protocol exists.",
+      "The shared CPU host was not isolated and co-tenant process state was not captured.",
+      "Only eight identical-geometry requests were measured per point.",
+      "Imported TTFT includes client-side admission queue from the common trace arrival.",
+      "No prefix reuse, power, energy, cost, GPU, or provider evidence is present."
+    ]
+  },
+  "business_validation": {
+    "as_of": "2026-07-12",
+    "document": "docs/BUSINESS_VALIDATION.md",
+    "snapshot": "validation/results/provider-economics-2026-07-12.json",
+    "glm_5_2_public_price_usd_per_million": {
+      "fireworks_input": 1.4,
+      "fireworks_cached_input": 0.14,
+      "fireworks_output": 4.4,
+      "baseten_input": 1.4,
+      "baseten_cached_input": 0.26,
+      "baseten_output": 4.4,
+      "zai_input": 1.4,
+      "zai_cached_input": 0.26,
+      "zai_output": 4.4
+    },
+    "working_gate": {
+      "customer_discount_from_fireworks_standard": 0.2,
+      "target_gross_margin": 0.6,
+      "useful_load_factor": 0.65,
+      "availability": 0.98,
+      "maximum_cogs_usd_per_million_total_tokens_on_synthetic_mix": 0.18097582570806098,
+      "required_billable_tokens_per_second_per_usd_hour": 2409.5586409796933,
+      "illustrative_eight_h200_required_billable_tokens_per_second": 134935.28389486283
+    },
+    "nre_case": {
+      "assumed_infrastructure_cogs_usd_per_million": 0.1,
+      "remaining_nre_budget_usd_per_million": 0.08097582570806097,
+      "one_hundred_million_nre_required_lifetime_tokens": 1234936465612912.0,
+      "one_hundred_million_nre_three_year_average_tokens_per_second": 13053192.812583629
+    },
+    "conclusion": "The abstraction-tax story alone is not differentiated. The business needs a measured model-plus-stack interaction that survives provider pricing, utilization, failures, product parity, engineering, and NRE."
+  },
+  "competitive_simulation_landscape": {
+    "content_id": "bbffa8a7c236ab030f4f74a855fbd424f5e8362ca6f2b77fd90dafd503ab9464",
+    "file_sha256": "b3314e342f440a4139957c19af0a60106b7754ad616a1760c5dd549edd0e7f1c",
+    "primary_source_count": 30,
+    "required_competitive_entry_count": 19,
+    "source_scoped_claim_count": 32,
+    "occupied_layer_count": 12,
+    "promotion_kill_gate_count": 5,
+    "gates_met": 0,
+    "business_claims_permitted": 0,
+    "commoditized_or_occupied": [
+      "Rust full-stack serving discrete-event simulation",
+      "serving Pareto and deployment search",
+      "workload-specific hardware-model-software tuning",
+      "hardware-aware model dimensioning and precision",
+      "per-model compilation and presets on custom accelerators",
+      "tensor, network, energy, and area modeling",
+      "chip-to-rack vertical integration with internal simulation",
+      "cross-layer, temporal, hierarchical, and routed DSA",
+      "page-aware sparse attention and locality-trained KV offload",
+      "irregular sparse gather and sparse-attention accelerators"
+    ],
+    "surviving_wedge_status": "hypothesis_only",
+    "surviving_wedge": "Independently validated quality-aware model-to-hardware autoresearch that predicts held-out economics, transfers across scale, and retains a residual beyond incumbent-grade software.",
+    "measured_cost_provider_five_to_ten_x_moat_tapeout_claims_permitted": false
+  },
+  "predictive_validity": {
+    "content_id": "83921cf8311aab4ecb4a3d180766d4b18610393a259476c663b3ae634bf63e42",
+    "inventory_id": "29de1aee27a532a659136c8880fc30c2512e52bf83110da1e9f56ab5fa29d8ab",
+    "file_sha256": "d35cee28674afb0c0d0d8d0b50ba6b1967b69d7ad98316a99af2fd944a9c1acc",
+    "status": "NOT_MET",
+    "workspace_json_artifact_count": 61,
+    "candidate_audit_family_count": 10,
+    "artifact_role_count": 11,
+    "admitted_pair_count": 1,
+    "distinct_intervention_count": 1,
+    "context_regime_count": 1,
+    "maximum_relative_effect_size_error": 0.44746583093174686,
+    "all_directions_correct": true,
+    "predicted_regression_count": 0,
+    "spearman_rank_correlation": null,
+    "required_interventions": 3,
+    "required_context_regimes": 2,
+    "maximum_relative_effect_error": 0.15,
+    "minimum_spearman_rank_correlation": 0.8,
+    "actual_artifact_bindings_verified": true,
+    "calibration_cost_provider_codesign_claims_permitted": false
+  },
+  "glm_agentic_mapping": {
+    "content_id": "f501dd1a2beba380f605c080ef0a6f405b506efb832c98374cfa043da092e5a5",
+    "file_sha256": "0e87a43ea19ca45b286b6bf8f0b588a3854c85ae3609cccc13517790f73906e8",
+    "proxy_request_count": 64,
+    "unique_context_tokens": [5000, 10000, 16000, 22000, 27000, 32000, 45000, 48250, 131000],
+    "partial_policy_coupled_overlap_decoupled": {
+      "C1": [64, 0, 0],
+      "C8": [63, 0, 1],
+      "C16": [48, 0, 16],
+      "C32": [24, 0, 40],
+      "C64": [8, 8, 48]
+    },
+    "candidate_full_capacity_uncertain_requests_at_every_concurrency": 64,
+    "tokenizer_latency_throughput_quality_slo_network_cost_claims_permitted": false
+  },
+  "ramulator_hbm3_sensitivity": {
+    "content_id": "8215dbe19f3480cd8c9c3040aad9f9186a4b9a1e84a52e637663e7abb6d72c0b",
+    "file_sha256": "ad3aaa4cedfe487d5b1fd78ac53412190d6397f9289abe077e329ecb2c492aa9",
+    "source": "Ramulator2 v2.1.0 patched only for AppleClang dependent-template syntax",
+    "case_count": 18,
+    "replays_per_case": 2,
+    "completed_callback_count": 1363968,
+    "all_requests_drained_and_replays_exact": true,
+    "logical_sort_cycle_change_percent_32b": -27.74417291717074,
+    "logical_sort_cycle_change_percent_1152b": 59.19401792612828,
+    "cluster64_cycle_change_percent_32b": -50.56859424147109,
+    "cluster64_cycle_change_percent_1152b": 2.7087733734562303,
+    "boundary": "Within-geometry synthetic single-channel HBM3 sensitivity; not physical-address sorting, a full GLM trace, GPU or wall-clock time, calibration, energy, quality, cost, or provider evidence."
+  },
+  "small_model_proxy": {
+    "current_local_quality_proxy": "Qwen/Qwen3-0.6B@c1899de289a04d12100db370d81485cdf75e47ca",
+    "future_single_cuda_gpu_proxy": "openbmb/NOSA-1B@7bdc33fbc1bc80b76b29689ba35ff6a7991b7dee",
+    "secondary_sparse_control": "Idiap/gated-deltanet-nsa-1.4B-30B@db8866faafa86b49fcb7e0c9e8f193d9d9d1f89e",
+    "rejected_execution_proxy": "katuni4ka/tiny-random-deepseek_v32@38c8fb68c9911ca3e035d80b66421930f4c235c1",
+    "small_model_glm_transfer_claim_permitted": false
+  },
+  "competitive_incumbent": {
+    "as_of": "2026-07-12",
+    "snapshot": "validation/results/glm-5.2-incumbent-stack-2026-07-12.json",
+    "provider": "Baseten and Fireworks",
+    "model": "GLM-5.2",
+    "baseten": {
+      "reported_streaming_tokens_per_second_per_user_lower_bound": 280.0,
+      "reported_ttft_milliseconds": 800.0,
+      "reported_pd_disaggregation_throughput_multiplier": 2.0,
+      "stack": [
+        "custom shared-DSA runtime support",
+        "agent-calibrated in-house NVFP4",
+        "NVIDIA Blackwell",
+        "KV-aware routing",
+        "prefill-decode disaggregation with NIXL",
+        "MTP speculative decoding"
+      ]
+    },
+    "fireworks": {
+      "reported_peak_streaming_tokens_per_second_per_user": 446.0,
+      "reported_same_workload_fast_over_standard_multiplier": 2.0,
+      "reported_average_public_prompt_tokens": 90000,
+      "stack": [
+        "independent expert and attention sharding",
+        "data-parallel attention with local compressed MLA KV",
+        "multi-tier agent-prefix cache",
+        "quality-gated lower precision",
+        "GLM-tuned speculative decoding",
+        "prefill-decode separation"
+      ],
+      "optimizer_scope": [
+        "hardware mapping",
+        "model quantization and tuning",
+        "request, cache, and prefill-decode behavior"
+      ]
+    },
+    "shared_unknowns": [
+      "aggregate capacity",
+      "hardware topology and hourly cost",
+      "utilization",
+      "errors and retries",
+      "gross margin",
+      "exact reproducible comparison artifacts"
+    ],
+    "decision": "The incumbent control must include this combined stack. Full-stack customization is validated as important but falsified as unique differentiation; the surviving wedge is additional model/hardware co-design or materially faster automated discovery."
+  },
+  "glm_co_design": {
+    "status": "typed_architecture_and_capacity_envelopes_ready_not_local_performance_evidence",
+    "document": "docs/GLM_CO_DESIGN.md",
+    "model": "zai-org/GLM-5.2",
+    "bf16_tensor_parameters": 753329940480,
+    "backbone_layers": 78,
+    "sparse_layers": 75,
+    "routed_experts_per_sparse_layer": 256,
+    "selected_routed_experts_per_token": 8,
+    "routed_expert_fraction_of_parameters": 0.9621,
+    "native_context_tokens": 1048576,
+    "backbone_indexers": 21,
+    "semantic_bf16_main_cache_bytes_per_million_tokens": 89856000000,
+    "semantic_one_byte_main_cache_bytes_per_million_tokens": 44928000000,
+    "native_fp8_repository_bytes": 761025363709,
+    "nvidia_nvfp4_repository_bytes": 464865454030,
+    "schema_ready": true,
+    "remaining_blocker": "Storage/residency and MTP expected-work envelopes are executable. Exact route, MLA/DSA phase work, compound-cache lifecycle, collectives, calibrated latency, serving, and hardware implementation evidence remain unsupported or fail closed.",
+    "priority_hypotheses": [
+      "Selective expert quantization and device/topology thresholds against public NVFP4",
+      "IndexShare-aware DSA scan/top-k/gather datapath",
+      "Tiered lifecycle-correct MLA and indexer cache",
+      "Routing-aware expert placement and interconnect",
+      "Acceptance-aware MTP and verification",
+      "Prefill/decode disaggregation for 70K to 1M-token contexts"
+    ],
+    "conclusion": "GLM-5.2 strengthens the cross-layer co-design opportunity but raises the baseline: public FP8/NVFP4, IndexShare, MTP, context parallelism, expert parallelism, caching, and PD disaggregation must be beaten."
+  },
+  "glm_storage_envelope": {
+    "status": "executable_capacity_bound_not_performance_claim",
+    "request": "configs/glm-5.2-storage-envelope-v1.json",
+    "report": "experiments/glm-5.2/storage-envelope-v1.json",
+    "content_id": "3216cdd0e8c0988ccc7c779f9df9c7d0b8099f11375e7bdb441ab7463d9bc174",
+    "reserved_sequences": 64,
+    "reserved_tokens_per_sequence": 32768,
+    "semantic_mla_cache_bytes": 188441690112,
+    "h200_minimum_devices": {
+      "bf16": {
+        "checkpoint": 12,
+        "total_residency_lower": 16,
+        "total_residency_upper": 17
+      },
+      "native_fp8": {
+        "checkpoint": 6,
+        "total_residency_lower": 9,
+        "total_residency_upper": 10
+      },
+      "expert_selective_nvfp4": {
+        "checkpoint": 4,
+        "total_residency_lower": 6,
+        "total_residency_upper": 7
+      }
+    },
+    "claims": {
+      "latency": null,
+      "cost_per_million_tokens": null,
+      "reason": "Route traffic, effective bandwidth, and end-to-end serving evidence are not jointly measured."
+    }
+  },
+  "glm_residency_frontier": {
+    "status": "exact_conditional_capacity_threshold_topology_and_serving_blocked",
+    "request": "configs/glm-5.2-nvfp4-fp8-kv-four-b200-frontier-v1.json",
+    "report": "experiments/glm-5.2/nvfp4-fp8-kv-four-b200-frontier-v1.json",
+    "content_id": "708257b73d32cb8228e7ebd467de5c2e606755f2aedb71a93570a9149c10a04a",
+    "target_devices": 4,
+    "target_capacity_bytes": 656000000000,
+    "semantic_cache_bytes_per_token": {
+      "source_bf16": 89856,
+      "override_fp8": 44928
+    },
+    "semantic_cache_reduction_bytes": 94220845056,
+    "total_residency_reduction_bytes": 108353971814,
+    "lower_cache_bound": {
+      "total_resident_bytes": 661267999028,
+      "capacity_shortfall_bytes": 5267999028,
+      "maximum_32k_sequences": 60,
+      "first_infeasible_32k_sequences": 61,
+      "maximum_fragmentation_basis_points": 1408,
+      "first_infeasible_fragmentation_basis_points": 1409,
+      "maximum_fixed_runtime_bytes": 11419131280
+    },
+    "upper_cache_bound": {
+      "total_resident_bytes": 760052246836,
+      "capacity_shortfall_bytes": 104052246836,
+      "maximum_32k_sequences": 31,
+      "first_infeasible_32k_sequences": 32
+    },
+    "decision": "The four-device threshold is close only under zero-extra lower assumptions. Measure runtime and index-cache layout, then test independent expert/attention mapping; do not infer TP4, performance, or cost.",
+    "aggregate_capacity_arithmetic_permitted": true,
+    "topology_kernel_serving_or_cost_claim_permitted": false
+  },
+  "glm_mtp_sweep": {
+    "status": "executable_planning_model_synthetic_inputs",
+    "request": "configs/glm-5.2-mtp-sweep-v1.json",
+    "report": "experiments/glm-5.2/mtp-sweep-v1.json",
+    "content_id": "38e8f17675bdbb271990915018be375da926952b34e69ab61b6a5dccef84a49e",
+    "homogeneous_break_even_acceptance_by_depth": {
+      "1": 0.1,
+      "2": 0.3,
+      "3": 0.42399957106840025,
+      "4": 0.5098789908402777
+    },
+    "synthetic_best_depth": {
+      "low_decaying": 1,
+      "medium_decaying": 1,
+      "high_decaying": 2
+    },
+    "latency_cost_or_quality_claim_permitted": false
+  },
+  "simulator_strategy": {
+    "document": "docs/SIMULATOR_LANDSCAPE.md",
+    "decision": "Own semantic compilation, serving state, action ledger, uncertainty, and cost in Rust; use version-pinned external simulators as replaceable escalation adapters.",
+    "first_adapters": [
+      "LLMServingSim differential serving oracle",
+      "Chakra export and ASTRA-sim 2.2 analytical network",
+      "Timeloop plus Accelergy",
+      "SCALE-Sim"
+    ],
+    "finding": "No reviewed simulator natively validates the combined GLM-5.2 MoE, MLA, DSA/IndexShare, MTP, tiered-cache, and online-serving path."
+  },
+  "action_ledger": {
+    "status": "executable_semantic_contract_uncalibrated",
+    "fixture": "crates/foundry-core/tests/fixtures/glm-5.2-decode-ledger-v1.json",
+    "inspection": "experiments/glm-5.2/decode-action-ledger-inspection-v1.json",
+    "content_id": "04d22a1951d83e860c2f21d39b5c1587dc5cd9583bf5ac494e3c3bb6b2f69978",
+    "actions": 19,
+    "accounting": {
+      "compute_actions": 6,
+      "memory_actions": 4,
+      "cache_actions": 2,
+      "network_actions": 1,
+      "synchronization_actions": 2,
+      "scheduler_actions": 4,
+      "flops": 222298112,
+      "memory_bytes": 5275648,
+      "network_bytes": 24576,
+      "messages": 56
+    },
+    "calibrated_latency_energy_and_cost_complete": false
+  },
+  "glm_decode_lowering": {
+    "status": "whole_decode_structure_exact_ffn_other_work_bounded_claims_locked",
+    "request": "configs/glm-5.2-whole-decode-lowering-v1.json",
+    "report": "experiments/glm-5.2/whole-decode-lowering-v1.json",
+    "content_id": "ad1ed16e0100ac4a936fad83233b8b047ce6f1823328d6f15be01508b5a5d7dc",
+    "workload": {
+      "batch_size": 8,
+      "context_tokens_per_request": 16384,
+      "aggregate_candidate_tokens": 16,
+      "aggregate_committed_tokens": 12
+    },
+    "exact_ffn_flops": 837115969536,
+    "total_flop_bounds": {
+      "lower": 837115969536,
+      "upper": 3387115969536
+    },
+    "total_ffn_hbm_read_byte_bounds": {
+      "lower": 52319748096,
+      "upper": 731796996096
+    },
+    "hardware_study_actions": 29,
+    "route_evidence": "Pinned and scaled from the synthetic source-affine route experiment; not a production histogram",
+    "blockers": [
+      "Non-collapsed attention, DSA, other non-FFN, cache, route-residency, and MTP work bounds",
+      "Released whole-model active count remains approximate",
+      "Every action lacks measured calibration",
+      "The route trace is synthetic"
+    ],
+    "hardware_timing_or_cost_claim_permitted": false
+  },
+  "glm_nvfp4_decode_lowering": {
+    "status": "public_checkpoint_exact_compute_opaque_correlated_weight_bounds_claims_locked",
+    "request": "configs/glm-5.2-nvfp4-whole-decode-lowering-v1.json",
+    "report": "experiments/glm-5.2/nvfp4-whole-decode-lowering-v1.json",
+    "content_id": "de14e9be74e0f3a89baf3c09a94714d8a0aa72bde6221affe2235a5b74544845",
+    "lower_ledger_content_id": "685a946a02499d65dfaeb436a753fd4e917c85cc890f75f17e8833a8652076f6",
+    "upper_ledger_content_id": "01a2b3549b8c7d558dd4e920f77a02657b59c08b2e622bc6caf86efba322f021",
+    "checkpoint_payload_bytes": 464794806272,
+    "checkpoint_reduction_vs_bf16_fraction": 0.6915065,
+    "routed_resident_byte_bounds": {
+      "lower": 362387865600,
+      "upper": 464794806272
+    },
+    "ffn_hbm_read_byte_bounds": {
+      "lower": 0,
+      "upper": 464794806272
+    },
+    "upper_ffn_read_reduction_vs_bf16_fraction": 0.3648583,
+    "compute_bounds_unchanged": true,
+    "decision": "Public expert-selective NVFP4 is the incumbent representation. Zero lower traffic is opacity rather than eliminated work; exact tensor placement and reuse must be measured before ranking hardware.",
+    "hardware_timing_quality_or_cost_claim_permitted": false
+  },
+  "glm_dsa_sweep": {
+    "status": "exact_architecture_work_modeled_component_timing_claims_locked",
+    "request": "configs/glm-5.2-dsa-sweep-v1.json",
+    "report": "experiments/glm-5.2/dsa-indexshare-sweep-v1.json",
+    "content_id": "ed372a7fbf9c0bc338ab66b107b7f188edae3fc63bc8bb68943b79082eeb8fe0",
+    "contexts": [1024, 2048, 8192, 32768, 131072, 1048576],
+    "indexshare_scan_and_weight_set_reduction_fraction": 0.7307692307692307,
+    "dense_sparse_component_crossover": "Between 2,048 and 8,192 context tokens under both modeled component profiles",
+    "h200_component_ratios_at_1048576": {
+      "dense_attention_over_indexshare": 11.311664245747318,
+      "same_geometry_every_layer_indexing_over_indexshare": 3.653957101321422,
+      "indexshare_hbm_handoff_over_zero_hbm_upper_bound": 1.0000973748801947
+    },
+    "maximum_zero_hbm_selected_index_component_reduction_fraction": 0.0013662649448014,
+    "decision": "IndexShare is a material incumbent architecture optimization. Eliding selected-index HBM traffic alone is not: kill it as a standalone cost lever and focus on scan/top-k fusion and irregular compressed-cache gather.",
+    "end_to_end_latency_or_cost_claim_permitted": false
+  },
+  "glm_tiered_cache": {
+    "status": "executable_cache_lifecycle_synthetic_trace",
+    "request": "configs/glm-5.2-tiered-prefix-cache-v1.json",
+    "report": "experiments/glm-5.2/tiered-prefix-cache-v1.json",
+    "content_id": "703fb359ead5576585db3e27104f339aac15142cc54dd74a4f33dd0cc77ddde2",
+    "compound_bytes_per_token": 98048,
+    "hbm_only": {
+      "hit_requests": 2,
+      "requests": 15,
+      "hit_tokens": 8192,
+      "miss_recompute_tokens": 249856
+    },
+    "tiered": {
+      "hit_requests": 10,
+      "requests": 15,
+      "hit_tokens": 163840,
+      "miss_recompute_tokens": 94208,
+      "link_transfer_bytes": 40562065408,
+      "modeled_serial_transfer_seconds": 1.2616132232294526
+    },
+    "derived": {
+      "recompute_token_reduction_fraction": 0.6229508196721312,
+      "transfer_amplification_vs_avoided_state_bytes": 2.6578947368421053,
+      "break_even_recompute_microseconds_per_avoided_token": 8.105553705986923
+    },
+    "end_to_end_latency_or_cost_claim_permitted": false
+  },
+  "ledger_roofline": {
+    "status": "executable_smoke_test_incomplete_ledger_modeled_hardware",
+    "hardware_plan": "configs/glm-5.2-ledger-roofline-v1.json",
+    "report": "experiments/glm-5.2/decode-ledger-roofline-v1.json",
+    "content_id": "3daa7c802c47d39baeac32b846a717200a81050d745b75ebe804ef6ef9738be3",
+    "source_ledger_flops": 222298112,
+    "modeled_h200_like_critical_path_microseconds": 48.62186967052737,
+    "modeled_custom_critical_path_microseconds": 9.037217792000002,
+    "relative_ideal_speedup": 5.3801812448925155,
+    "baseline_serial_components_microseconds": {
+      "fixed": 35.4,
+      "throughput": 3.5243415358407955,
+      "coordination": 18.209999999999997
+    },
+    "interpretation": "Engine smoke test only. The ledger is a small mechanism fixture rather than full active GLM work, and both hardware timing profiles are modeled assumptions.",
+    "whole_decode_diagnostic": {
+      "report": "experiments/glm-5.2/whole-decode-ledger-roofline-v1.json",
+      "content_id": "d22802d34a9c40d06dc9338000a8fd20e8cdeaef697cefdd79488b0e002c4105",
+      "source_ledger_content_id": "97e283935a0a9a183a2c2ecbadcac4709f0c8a91127d9f80a3e97e4b6ff8082a",
+      "source_ledger_flops": 3387115969536,
+      "committed_tokens": 12,
+      "modeled_h200_like_critical_path_milliseconds": 252.94178122851352,
+      "modeled_custom_critical_path_milliseconds": 70.40852890026667,
+      "relative_component_time_ratio": 3.5924878019650754,
+      "dominant_h200_like_action": "Upper-bound routed-expert weight read at 216.352 ms using the plan's outdated 3.35 TB/s HBM assumption",
+      "interpretation": "Replacing the mechanism fixture reduces the nominal ratio from 5.38 to 3.59 and moves the result from fixed/message latency to assumed HBM traffic and bandwidth. This remains an optimistic dependency roofline on non-collapsed work bounds; the H200-like baseline is not a calibrated or current H200 deployment."
+    },
+    "throughput_only_launch_date_counterfactual": {
+      "config": "configs/glm-5.2-whole-decode-throughput-counterfactual-v1.json",
+      "report": "experiments/glm-5.2/whole-decode-throughput-counterfactual-v1.json",
+      "content_id": "8a33f8417091fe6cdab9b6ccb1d0ddf4292e04b09c6ba4e675e0959f948b546f",
+      "h200_published_peak_component_tokens_per_second": 65.52973642919504,
+      "custom_original_component_tokens_per_second": 140.459971220086,
+      "rubin_preliminary_peak_component_tokens_per_second": 215.5697669870963,
+      "custom_over_h200_component_time_ratio": 2.143453932122147,
+      "rubin_over_custom_component_throughput_ratio": 1.5347416428650775,
+      "controlled_terms": "Identical fixed, scheduler, synchronization, cache, top-k, elementwise, and per-message assumptions; only headline matrix, HBM, and fabric rates vary",
+      "decision": "The nominal 12 TB/s HBM and 2 PFLOP/s custom profile is not a launch-date hardware moat. Continue only if model/software work removal leaves a residual advantage beyond future commodity hardware."
+    },
+    "work_bound_uncertainty": {
+      "lower_work_report": "experiments/glm-5.2/whole-decode-lower-bound-throughput-counterfactual-v1.json",
+      "lower_work_report_content_id": "a143eade5e99a685e6fd311f233dbc567dacca6abf0affe8102af931f40a59df",
+      "optimistic_to_upper_work_throughput_ratio": {
+        "h200_published_peak_component": 17.975918661299193,
+        "custom_original_throughput_component": 20.562931137134267,
+        "rubin_preliminary_peak_component": 24.65633957380542
+      },
+      "decision": "Work uncertainty is larger than the modeled hardware differences. Collapse route-locality, attention/DSA, other non-FFN, and MTP bounds before using hardware ranking for a business decision."
+    },
+    "end_to_end_latency_energy_or_cost_claim_permitted": false
+  },
+  "nvfp4_blackwell_roofline": {
+    "status": "native_blackwell_counterfactual_ranking_flips_custom_execution_unsupported",
+    "config": "configs/glm-5.2-nvfp4-blackwell-roofline-v1.json",
+    "lower_report": "experiments/glm-5.2/nvfp4-blackwell-roofline-lower-v1.json",
+    "lower_content_id": "df1218793c14fd749e208cd2005730f1a7aa27d108be75f6f0150b85d960960e",
+    "upper_report": "experiments/glm-5.2/nvfp4-blackwell-roofline-upper-v1.json",
+    "upper_content_id": "8c245b30dbfc4a764ea4786f342c71f6cab11855422d6926bc45058171410d37",
+    "lower_work_tokens_per_second": {
+      "b200": 32344.12632390978,
+      "b300": 32344.12632390978,
+      "custom_nominal_unsupported": 25046.25241340679,
+      "custom_over_b200": 0.7743678763365399
+    },
+    "upper_work_tokens_per_second": {
+      "b200": 131.2087745768272,
+      "b300": 131.24729684759046,
+      "custom_nominal_unsupported": 176.0529892633718,
+      "custom_over_b200": 1.3417775589412795
+    },
+    "custom_execution_blocker": "required_model_format_not_natively_supported",
+    "decision": "The sign flips with opaque FFN traffic. Neither 12 TB/s nor Blackwell arithmetic can be ranked for investment until traffic is collapsed and the custom precision engine is implementable.",
+    "latency_energy_cost_quality_or_serving_claim_permitted": false
+  },
+  "exact_ledger_serving": {
+    "status": "one_atomic_fully_reused_quantum_queueing_mechanics_claims_locked",
+    "manifest": "configs/glm-5.2-exact-ledger-serving-v1.json",
+    "report": "experiments/glm-5.2/exact-ledger-serving-v1.json",
+    "hardware_output_tokens_per_second": {
+      "h200_published_peak_component": 63.1170347617069,
+      "custom_original_throughput_component": 129.82235973775883,
+      "rubin_preliminary_peak_component": 191.48834314711092
+    },
+    "blockers": [
+      "Prefill and prefix restoration are not modeled",
+      "Only one atomic decode quantum is replayed",
+      "Shared contention and a batch/context quantum table are absent",
+      "Intra-quantum token timing is absent",
+      "The SLO contract is a loose synthetic assumption"
+    ],
+    "latency_slo_or_cost_claim_permitted": false
+  },
+  "custom_hardware_feasibility": {
+    "status": "conditional_go_model_software_research_no_go_tapeout",
+    "document": "docs/CUSTOM_HARDWARE_FEASIBILITY.md",
+    "snapshot": "validation/results/custom-hardware-feasibility-2026-07-12.json",
+    "fixture_relative_ideal_speedup": 5.3801812448925155,
+    "throughput_only_serial_speedup": 1.0542801898038834,
+    "fixed_and_coordination_only_serial_speedup": 4.079176663630532,
+    "custom_serial_fixed_and_coordination_share": 0.9473378449668055,
+    "highest_risk_assumption": "50 ns per expert-fabric message on an incomplete 19-action mechanism fixture",
+    "commodity_moat_status": "not_established",
+    "tapeout_authorized": false,
+    "conclusion": "The nominal 12 TB/s HBM, 1.6 TB/s fabric, and 2 PFLOP/s targets are plausible but at or below commodity roadmaps. Prove work removal and fully loaded cost on commodity hardware before asking whether a residual silicon advantage repays schedule and NRE."
+  },
+  "optimistic_deployment_screen": {
+    "status": "hurdle_barely_cleared_claims_locked_not_viability_evidence",
+    "request": "configs/glm-5.2-h200-optimistic-deployment-screen-v1.json",
+    "report": "experiments/glm-5.2/h200-optimistic-deployment-screen-v1.json",
+    "content_id": "07017590792feee5b1376711e0c716fdaed2af67b9b288f908cd35f918e820c4",
+    "variant": "glm-5.2-bf16",
+    "deployment": "20 public-price H200 ranks",
+    "optimistic_peak_billable_tokens_per_second": 364504.96198917396,
+    "required_peak_billable_tokens_per_second": 337338.20973715704,
+    "optimistic_headroom_ratio": 1.0805326863896751,
+    "loss_fraction_that_erases_headroom": 0.07453054165233508,
+    "optimistic_assumptions": [
+      "Lower work bound",
+      "Input prefill is free",
+      "Published peak component rates",
+      "Perfect linear throughput scaling across 20 ranks",
+      "No contention or queueing loss"
+    ],
+    "candidate_rejected": false,
+    "business_viability_or_cost_claim_permitted": false,
+    "decision": "BF16 public H200 rental is too fragile to underwrite. The next screen must test public NVFP4 and retain robust downside headroom."
+  },
+  "economic_robustness_frontier": {
+    "status": "deterministic_sensitivity_zero_robust_regions_claims_locked",
+    "request": "configs/glm-5.2-economic-robustness-frontier-v1.json",
+    "report": "experiments/glm-5.2/economic-robustness-frontier-v1.json",
+    "content_id": "fb0efb13d0e112dc8a1c025fbe3d6aff7aa8a410b79c6446f11e3bf173e6ba77",
+    "point_count": 4374,
+    "region_count": 54,
+    "below_required_margin_points": 3104,
+    "fragile_margin_clear_points": 354,
+    "individual_headroom_threshold_clear_points": 916,
+    "regions_robust_across_full_sweep": 0,
+    "working_case": {
+      "optimistic_peak_free_input_headroom": 1.0805326863896756,
+      "seventy_five_percent_peak_free_input_headroom": 0.8103995147922566,
+      "optimistic_peak_moderate_input_work_headroom": 0.8243787554406958,
+      "minimum_source_peak_fraction": 0.9254694583476646,
+      "maximum_accelerator_usd_per_device_hour": 7.563728804727728,
+      "maximum_average_work_units_per_billable_token": 0.06983835082692894
+    },
+    "decision": "The BF16 optimistic non-rejection is fragile and cannot underwrite the business. Rerun only after the incumbent NVFP4/P-D/cache/mapping stack and measured SLO goodput are represented.",
+    "business_viability_provider_or_end_to_end_cost_claim_permitted": false
+  },
+  "chakra_export": {
+    "status": "interchange_ready_not_timing_validation",
+    "schema_tag": "v0.0.4",
+    "schema_commit": "8b20269327725ad078483ce85d5f6dbb1cbfa611",
+    "source_ledger": "crates/foundry-core/tests/fixtures/glm-5.2-chakra-ledger-v1.json",
+    "manifest": "experiments/glm-5.2/chakra-decode-representable-v1.json",
+    "protobuf": "experiments/glm-5.2/chakra-decode-representable-v1.et",
+    "binary_content_id": "1e8212424f8f5bb0a2615510dc530a1eb2543092ed694278c4fee91107b6d4ac",
+    "encoded_bytes": 3084,
+    "nodes": 6,
+    "timing_fields_emitted": false,
+    "rank_semantics": "aggregate_phase_no_rank_assignment"
+  },
+  "glm_moe_route": {
+    "status": "executable_exact_geometry_synthetic_routes",
+    "request": "configs/glm-5.2-moe-route-skew-v1.json",
+    "report": "experiments/glm-5.2/moe-route-skew-v1.json",
+    "content_id": "a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2",
+    "impact_bound": "validation/results/glm-5.2-route-placement-impact-bound-v1.json",
+    "geometry": {
+      "moe_layers": 75,
+      "routed_experts_per_layer": 256,
+      "top_k": 8,
+      "expert_storage_bytes": 75497472
+    },
+    "source_affine_hotset_fully_connected_8x": {
+      "uniform_local_dispatch_fraction": 0.125,
+      "traffic_aware_local_dispatch_fraction": 0.4359,
+      "remote_dispatch_reduction_fraction": 0.3553292410714286,
+      "additional_expert_storage_bytes": 0
+    },
+    "replication_tradeoff": {
+      "additional_expert_instances": 1024,
+      "additional_expert_storage_bytes": 77309411328,
+      "expert_storage_overhead_fraction": 0.05333333333333334,
+      "incremental_remote_dispatch_reduction_fraction": 0.04118011974320135,
+      "uniform_route_remote_dispatch_reduction_fraction": 0.007619047619047636
+    },
+    "ideal_fixed_cost_bounds": {
+      "fully_connected_at_50pct_network_time_speedup": 1.2160488591059462,
+      "fully_connected_absolute_maximum_speedup": 1.551179398398615,
+      "ring_at_50pct_network_time_speedup": 1.450630922686298,
+      "ring_absolute_maximum_speedup": 2.640539816655817
+    },
+    "end_to_end_latency_or_cost_claim_permitted": false
+  },
+  "sensitivity": {
+    "scenario_count": 243,
+    "input_scenarios_below_owned_h100": 243,
+    "output_scenarios_below_owned_h100": 162,
+    "output_scenarios_below_owned_h100_at_1000_units": 0,
+    "input_cost_lower": 0.004128691603962596,
+    "input_cost_nominal": 0.005670604463118069,
+    "input_cost_upper": 0.05334368163549136,
+    "output_cost_lower": 0.30988943759245496,
+    "output_cost_nominal": 0.428709361394776,
+    "output_cost_upper": 4.102400363716465,
+    "worst_input_advantage_fraction": 0.4178235221697603,
+    "worst_output_advantage_fraction": -1.9160982313461896
+  },
+  "falsification_gates": [
+    {
+      "id": "measurement_repeatability",
+      "status": "failed",
+      "pass_condition": "At least five isolated cold and warm repeats per point with host-state capture, confidence intervals, and bounded variance."
+    },
+    {
+      "id": "simulator_predictive_validity",
+      "status": "not_met_zero_admitted_pairs",
+      "pass_condition": "At least three blinded precommitted intervention deltas across two context regimes within 15%, rank correlation at least 0.8, every direction correct including one predicted regression, disjoint calibration/holdout cases, and exact artifact, quality, and SLO bindings."
+    },
+    {
+      "id": "executable_selective_compression",
+      "status": "open",
+      "pass_condition": "Packed kernel with measured bytes, speed, energy, and standard task/safety non-inferiority."
+    },
+    {
+      "id": "qwen3_8b_quality",
+      "status": "open",
+      "pass_condition": "Exact checkpoint and combined-change fingerprint pass individual and combined standard quality ablations."
+    },
+    {
+      "id": "tuned_same_hardware_baseline",
+      "status": "open",
+      "pass_condition": "Identical model, precision, trace, cache, quality, and SLO on current tuned vLLM, SGLang, and TensorRT-LLM where supported."
+    },
+    {
+      "id": "provider_comparison",
+      "status": "open",
+      "pass_condition": "Identical representative trace against provider endpoints with billed tokens, failures, task success, tails, cache hits, and a real quote."
+    },
+    {
+      "id": "two_model_transfer",
+      "status": "open",
+      "pass_condition": "At least 1.5x measured fully loaded cost reduction on two architectures."
+    },
+    {
+      "id": "glm_fidelity",
+      "status": "open",
+      "pass_condition": "Typed GLM contracts reproduce at least one released MoE/MLA/DSA/IndexShare/MTP deployment regime."
+    },
+    {
+      "id": "commercial_viability",
+      "status": "open",
+      "pass_condition": "20% below best provider quote at 60% gross margin and viable under private-discount, utilization, failure, and incumbent-improvement downside."
+    },
+    {
+      "id": "silicon_authorization",
+      "status": "open",
+      "pass_condition": "Calibrated architecture evidence, independent all-in cost, contracted volume, salvage path, at least 4x base and 2x joint-pessimistic launch advantage."
+    }
+  ],
+  "qwen_kv_dedup": {
+    "frontier_content_id": "49c67c0ea89d5a820c06333d83f253f59f7ae64a3c7ad829ca0762608c531d59",
+    "checked_4096_content_id": "ef72cb3fe4c5d4ff9fb5b638a0c15caf86b10d101969b408ec20274924ff0401",
+    "candidate_count": 9,
+    "maximum_passing_cache_reduction_percent": 1.7857142857142858,
+    "first_failing_cache_reduction_percent": 2.232142857142857,
+    "full_sharing_cache_reduction_percent": 50.0,
+    "ideal_passing_cache_only_speedup_upper_bound": 1.0181818181818183,
+    "checked_4096_metrics": {
+      "nll_delta": 0.0014089420437812805,
+      "perplexity_ratio": 1.0014099350689396,
+      "logit_rmse": 0.43881190997617764,
+      "logit_cosine_similarity": 0.9909300517710955,
+      "top1_agreement": 0.87646484375,
+      "passed": true
+    },
+    "runtime_cache_or_cost_claim_permitted": false
+  },
+  "qwen_kv_recovery": {
+    "content_id": "fe585d9bd1d73faa9b1599f678f68b8b9326e1980e656d733214c546e51b2731",
+    "outcome": "stop_after_2048_training_tokens",
+    "recipe": "exact full 8-to-4 pair sharing with frozen K/V and rank-8 Q/O adapters",
+    "trainable_parameters": 1376256,
+    "nll_gap_fraction_recovered": 0.038024655983556546,
+    "post_training_perplexity_ratio": 2534.7851067297934,
+    "post_training_logit_rmse": 4.415250806221513,
+    "post_training_logit_cosine": 0.3516097713355114,
+    "post_training_top1_agreement": 0.013671875,
+    "all_five_gates_passed": false,
+    "projected_fresh_8192_training_minutes": 82.84077910000148,
+    "full_8192_run_started": false,
+    "peak_rss_bytes": 6262685696,
+    "scope": "Rejects this small-budget hard-pair-mean plus frozen-K/V plus rank-8-Q/O recipe; other initializers, trainable shared K/V, gradual fusion, data, and literature-scale budgets remain open.",
+    "runtime_cache_weight_cost_claim_permitted": false
+  },
+  "qwen_int4_kernel_smoke": {
+    "content_id": "06c3789ef245d9275f0adf76b592ed6c2f812864bd95dcf80f5b669fe21d723c",
+    "model": "Qwen/Qwen3-0.6B",
+    "host": "Apple M4 Pro",
+    "tensor_count": 3,
+    "parameter_count": 8388608,
+    "source_bfloat16_bytes": 16777216,
+    "packed_int4_plus_bfloat16_scale_bytes": 6291456,
+    "packed_fraction_of_source": 0.375,
+    "scale_fraction_of_packed_storage": 0.3333333333333333,
+    "summed_packed_median_seconds": 0.005299750000000001,
+    "summed_f32_qdq_reference_median_seconds": 0.003874583,
+    "packed_over_reference_time_ratio": 1.3678246149327555,
+    "all_exact_correctness_checks_passed": true,
+    "boundary": "Single-thread scalar decode/matvec smoke against a matched scalar f32-QDQ control; not BF16 BLAS, vLLM, SIMD, GPU, full-model serving, energy, or cost.",
+    "tuned_kernel_or_cost_claim_permitted": false
+  },
+  "qwen_int4_batch_frontier": {
+    "content_id": "9151f5d066bfc4fbff8e855cc9d312d44377e060ecef0b796fa30ffef56ec7ad",
+    "batch_sizes": [
+      1,
+      4,
+      16,
+      64
+    ],
+    "packed_over_reference_time_ratios": {
+      "1": 1.0659766741179901,
+      "4": 1.0172964616725453,
+      "16": 1.0304572287647356,
+      "64": 1.0204410906602348
+    },
+    "observed_packed_win_batches": [],
+    "strict_no_crossover_in_sweep": true,
+    "all_twelve_tensor_batch_correctness_checks_passed": true,
+    "control": "Identical row/tile/group/pair/lane traversal and accumulation order over independently materialized f32-QDQ weights",
+    "provisional_mismatched_control_result_rejected": true,
+    "tuned_simd_blas_vllm_gpu_quality_serving_energy_cost_claims_permitted": false
+  },
+  "qwen_int4_aarch64_neon": {
+    "content_id": "5494727ab064f8c189f89e88794bbd7c9234baf23ab657c11bae62eaa6f35d40",
+    "file_sha256": "2428ccbbf26adc3c993c4b0aa12491be2d10ae395e2473470fb67134d8686e62",
+    "prediction_content_id": "beedae5f05e4d89a816ad508172b6a07b338855e6c0b68cc06ba16762cc39f72",
+    "prediction_lock_commit": "4b7b172ea4ee66b3e49629d1155b0907c7fdcc89",
+    "tensor_count": 3,
+    "parameter_count": 8388608,
+    "summed_neon_median_seconds": 0.0010635829999999999,
+    "summed_scalar_packed_median_seconds": 0.004740665999999999,
+    "summed_f32_qdq_median_seconds": 0.003493126,
+    "scalar_packed_over_neon_speed_ratio": 4.457260035182961,
+    "floating_qdq_over_neon_speed_ratio": 3.2843003319910156,
+    "predicted_speed_ratio": 1.75,
+    "predicted_time_reduction_fraction": 0.42857142857142855,
+    "measured_time_reduction_fraction": 0.775646923871034,
+    "relative_effect_size_error": 0.447465830931747,
+    "prediction_direction_correct": true,
+    "prediction_magnitude_gate_passed": false,
+    "all_work_correctness_and_allocation_checks_passed": true,
+    "boundary": "Prospective one-thread batch-one three-tensor local intrinsic result against scalar Rust controls; not tuned BF16/Accelerate, full model, vLLM, quality transfer, serving, energy, cost, provider, or calibration evidence."
+  },
+  "qwen_int4_task_quality": {
+    "representation": "group-8 INT4 codes derived with f32 scale, stored/dequantized with BF16 RNE scale, then materialized into BF16 model weights",
+    "piqa_status": "exact_source_rerun_complete_point_gate_pass_confirmatory_inconclusive",
+    "piqa_withdrawal_reason": "The provisional loader stripped source trailing whitespace in 30 of 512 selected choices; the pinned official dataset preserves it.",
+    "piqa_content_id": "165df94dfdb52f499513b89c38174b85681aa4b5390f65b8b76e2df3198fd619",
+    "piqa_file_sha256": "5652b4d297c4ec72526c45e99592dc6fd62db10446622be9eb143d0217cfe441",
+    "piqa_example_count": 256,
+    "piqa_baseline_accuracy": 0.6796875,
+    "piqa_candidate_accuracy": 0.68359375,
+    "piqa_accuracy_delta": 0.00390625,
+    "piqa_point_gate_passed": true,
+    "piqa_bootstrap_delta_95_percent": [
+      -0.0234375,
+      0.03125
+    ],
+    "piqa_confirmatory_non_inferiority_established": false,
+    "piqa_exact_source_strings_preserved": true,
+    "wikitext_512_content_id": "94b74bd8190d4f9f21e5ce46900d4ee32064f532b95ccc1521359bd234cd799c",
+    "wikitext_512_all_five_gates_passed": true,
+    "wikitext_4096_content_id": "c97aa7940890f43c946eb8b4d4a7e0bece482626933799cc8932a0fa86492c12",
+    "wikitext_4096_nll_delta": 0.05935213342308998,
+    "wikitext_4096_perplexity_ratio": 1.0611488409315066,
+    "wikitext_4096_logit_rmse": 0.46077665885978747,
+    "wikitext_4096_logit_cosine": 0.989947955728275,
+    "wikitext_4096_top1_agreement": 0.862548828125,
+    "wikitext_4096_all_five_gates_passed": true,
+    "full_benchmark_packed_kernel_serving_energy_cost_claims_permitted": false
+  },
+  "glm_parallel_mapping": {
+    "content_id": "205c1c7157d104179e066ecfde311107ca7f160f941a8a97e7058e8e1fd80729",
+    "coupled_hop_bytes": 1804861440,
+    "decoupled_hop_bytes_lower": 255197184,
+    "decoupled_hop_bytes_upper": 255246336,
+    "hop_byte_reduction_percent_lower": 85.8578431372549,
+    "hop_byte_reduction_percent_upper": 85.86056644880175,
+    "coupled_cross_domain_bytes": 225607680,
+    "decoupled_cross_domain_bytes": 0,
+    "partial_residency_crossover": "coupled C1-32; overlap C33-42; decoupled C43-96",
+    "latency_throughput_cost_claim_permitted": false
+  },
+  "glm_parallel_mapping_90k": {
+    "content_id": "0f61e4f6ebec52b35fb5046ab1ba7bbb9506516dba23f94b694c65085bc0f48a",
+    "lowerer_content_id": "f40f41c1d67b909783c40073f475f08906e77ccb05673f2beb630a496b0c7cd3",
+    "context_tokens": 90000,
+    "context_multiplier_over_16384": 5.4931640625,
+    "fp8_semantic_kv_bytes_per_request": 4043520000,
+    "partial_cluster_crossover": "coupled C1-5; overlap C6-7; decoupled C8+",
+    "partial_max_device_crossover": "coupled C1-6; overlap C7-8; decoupled C9+",
+    "full_capacity_at_concurrency_16": "coupled and decoupled uncertain",
+    "latency_throughput_cost_quality_claim_permitted": false
+  },
+  "glm_parallel_mapping_context_frontier": {
+    "content_id": "727c79eb3ec827b12a45b9311d114cd7f33beb15fc72f1698940e975e774b09c",
+    "context_count": 8,
+    "concurrency_range": "1-96",
+    "strict_partial_policy_regions": {
+      "16384": "coupled C1-32; unresolved C33-42; decoupled C43+",
+      "32768": "coupled C1-16; unresolved C17-21; decoupled C22+",
+      "65536": "coupled C1-8; unresolved C9-10; decoupled C11+",
+      "90000": "coupled C1-5; unresolved C6-8; decoupled C9+",
+      "131072": "coupled C1-4; unresolved C5; decoupled C6+",
+      "262144": "coupled C1-2; unresolved C3; decoupled C4+",
+      "524288": "coupled C1; unresolved C2; decoupled C3+",
+      "1000000": "unresolved C1; decoupled C2+"
+    },
+    "network_report_context_invariant": true,
+    "full_candidate_capacity_uncertain_through_context_262144": true,
+    "latency_throughput_quality_slo_cost_claims_permitted": false
+  },
+  "glm_pd_serving": {
+    "content_id": "c83ec178319e944168b4192adab0f4e02dbb039d8e1d3685232d16925e504a20",
+    "case_count": 21,
+    "fixed_fleet_hourly_cost_usd": 56.0,
+    "neutral_pd_cost_delta_percent": 5.178105154981768,
+    "explicit_upside_pd_cost_reduction_percent": 35.21953822971832,
+    "neutral_aggregate_raw_output_cost_per_million_usd": 450.2981165958953,
+    "all_end_to_end_slo_cost_provider_claims_permitted": false
+  },
+  "business_decision_synthesis": {
+    "content_id": "6801198aecdad0a46eb4b3b53502657cfc539fa563183e4b9c924f8d025a713e",
+    "artifact_sha256": "2176d579a21d94de8ab20bdee2369d625c204b3796f9eb52f6ae086e12ee8a86",
+    "source_count": 31,
+    "internal_content_id_bound_source_count": 27,
+    "evidence_fact_check_count": 100,
+    "arithmetic_check_count": 30,
+    "lever_decision_count": 20,
+    "measured_cost_per_token_improvement_permitted": false,
+    "material_improvement_permitted": false,
+    "five_to_ten_x_permitted": false,
+    "provider_superiority_permitted": false,
+    "calibrated_simulation_permitted": false,
+    "full_end_to_end_simulation_claim_permitted": false,
+    "buildable_custom_hardware_claim_permitted": false,
+    "silicon_tapeout_permitted": false,
+    "decision": "Continue architecture-specific kernel and falsification work; do not launch a provider, claim calibrated end-to-end simulation, or underwrite silicon on current evidence."
+  },
+  "claim_composition": {
+    "content_id": "8dbc8cf34334a86c42c76259912f914490b5755166195a375893059459b0edf9",
+    "request_content_id": "923d5240a0392608b3a5d3dc2b1dc029f45b26f0ae80ac5a21e2708b4c27ebbd",
+    "objective": "GLM-5.2 output cost per million tokens",
+    "requested_intervention_count": 6,
+    "evidence_count": 7,
+    "admissible_exact_joint_evidence_count": 0,
+    "combined_claim_permitted": false,
+    "blocker": "no_exact_joint_evidence",
+    "policy": "Only exact scope-matched joint measured-end-to-end evidence can unlock latency, throughput, energy, or cost; marginal and cross-model effects are never multiplied."
+  },
+  "timeloop_problem_export": {
+    "content_id": "f88f03ed0d8ae74a571d4dd21126663d3557b55263eaf87f40b50f9fe385f8bd",
+    "schema_version": "Timeloop v4 problem 0.4",
+    "kernel": "Qwen3-0.6B BF16 o_proj decode batch 1",
+    "m": 1,
+    "n": 1024,
+    "k": 2048,
+    "flops": 4194304,
+    "embedded_artifact_backend_parse_verified": false,
+    "same_yaml_processed_by_external_frontend": true,
+    "quantized_export_permitted": false,
+    "mapping_cycle_energy_area_cost_claims_permitted": false
+  },
+  "timeloop_external_smoke": {
+    "content_id": "5dd5a235ef2229c39b7d8deee4efbaff01282673c80f9b0effcce404c8f1f874",
+    "status": "native_backend_blocked",
+    "frontend": "TimeloopFE 0.4 @ 5603893c0ff75183b5ffd6839aba33774fc3b6fe",
+    "accelergy": "Accelergy 0.4 @ 6911d15686ee7efdceba7d95605102df4472ae3a",
+    "frontend_parse_and_process_succeeded": true,
+    "reconciled_multiply_accumulates": 2097152,
+    "reconciled_flops": 4194304,
+    "reconciled_total_tensor_bytes": 4200448,
+    "native_mapper_status": "executable_not_found",
+    "native_return_code": 127,
+    "missing_native_dependencies": [
+      "libconfig++",
+      "yaml-cpp",
+      "ISL",
+      "Barvinok",
+      "NTL",
+      "polylibgmp"
+    ],
+    "mapping_cycle_utilization_energy_area_cost_performance_claims_permitted": false
+  },
+  "scalesim_external_sweep": {
+    "content_id": "ab42fa90e0c0233f900269ade11597528362e3e2609c0424fc8e3f5944231a0f",
+    "status": "native_sweep_succeeded",
+    "tool": "SCALE-Sim v3.0.0 tag 7fd972e7c650e81c77294c9433143a282235c5e7",
+    "native_cases_succeeded": 12,
+    "native_cases_total": 12,
+    "workloads": {
+      "qwen_o_proj": {
+        "multiply_accumulates": 2097152,
+        "logical_tensor_bytes": 4200448,
+        "minimum_architecture": "os-32x32-sram64kb",
+        "minimum_cycles_including_prefetch": 70825,
+        "ws32_over_minimum_cycle_ratio": 2.8077373808683372
+      },
+      "glm_routed_expert_gate_bf16_reference": {
+        "multiply_accumulates": 12582912,
+        "logical_tensor_bytes": 25182208,
+        "minimum_architecture": "os-32x32-sram64kb",
+        "minimum_cycles_including_prefetch": 400521,
+        "ws32_over_minimum_cycle_ratio": 2.925334751486189
+      }
+    },
+    "base_architecture_rank_identical_across_workloads": true,
+    "larger_sram_reduced_native_filter_reads": false,
+    "larger_sram_reduced_core_cycles": false,
+    "model_specific_best_architecture_observed": false,
+    "bf16_gpu_latency_energy_area_cost_provider_claims_permitted": false
+  },
+  "blockers": [
+    {
+      "id": "kv_head_recovery_recipe_failed",
+      "title": "The first material KV-sharing recovery recipe failed",
+      "detail": "After 2,048 separate training targets, frozen shared K/V plus rank-8 Q/O adapters recovered only 3.80% of the NLL gap and failed all gates. Activation-aware initialization, trainable shared K/V, gradual fusion, or much larger budgets require new evidence before an alias kernel has value."
+    },
+    {
+      "id": "quality_unmeasured",
+      "title": "Qwen3-8B quality is unmeasured",
+      "detail": "The small selective INT4 pass does not transfer. Group-128 W4, FP8 KV, four KV heads, and the narrower FFN need exact checkpoint-level and standard task evidence."
+    },
+    {
+      "id": "serving_repeatability_failed",
+      "title": "Local serving is not repeatable",
+      "detail": "First versus second c1/c8 output throughput differed by 1.51x and 3.08x. The frozen cold/warm campaign could not pass host admission in 355 samples and launched no resumed server. It must be rerun unchanged on a quiescent host before calibration."
+    },
+    {
+      "id": "predictive_validity_not_met",
+      "title": "The first prospective prediction misses magnitude",
+      "detail": "One exact-scope component pair is admitted and gets direction right, but 44.7% effect error fails the 15% bound; the multi-intervention, multi-regime, regression, ranking, quality, and SLO gates remain unmet."
+    },
+    {
+      "id": "selective_int4_optimized_runtime_unmeasured",
+      "title": "Selective INT4 lacks a tuned full-model runtime",
+      "detail": "A correct three-tensor packed smoke retains 37.5% of BF16 bytes, but the corrected identical-loop B1/4/16/64 frontier has no crossover and remains 1.7-6.6% slower. Tuned SIMD/BLAS baselines, full-model resident memory, energy, serving, and production task quality remain unmeasured."
+    },
+    {
+      "id": "performance_fidelity_not_external",
+      "title": "Performance is not externally calibrated",
+      "detail": "Kernel, memory, interconnect, serving tails, and energy still depend on analytical models."
+    },
+    {
+      "id": "hardware_sizing_not_validated",
+      "title": "Hardware is not independently validated",
+      "detail": "Area, yield, HBM, packaging, power, thermals, NRE, and manufacturability remain assumptions."
+    },
+    {
+      "id": "provider_baseline_not_measured",
+      "title": "No competitive serving measurement",
+      "detail": "The same representative model, trace, cache, quality, and SLO contract must run on tuned GPU software and provider endpoints with a real cost source."
+    },
+    {
+      "id": "glm_performance_lowering_missing",
+      "title": "GLM-5.2 performance phases are only partially executable",
+      "detail": "Storage, MTP, action-ledger, cache, roofline, Chakra, and MoE route paths execute, but the ledger is not full active GLM work and route inputs are synthetic. Exact-checkpoint routes, DSA/indexer work, cache/serving integration, contention, calibrated latency/energy, and implementable hardware remain open."
+    }
+  ],
+  "recent_progress": [
+    {
+      "date": "2026-07-12",
+      "title": "Measured the first prospectively locked kernel intervention",
+      "detail": "Explicit AArch64 NEON is 4.457x faster than scalar packed and 3.284x faster than scalar f32-QDQ on three exact tensors. The 1.75x prediction got direction right but missed effect magnitude by 44.7%, so the kernel advances and the predictor does not."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Made predictive validity artifact-bound and fail closed",
+      "detail": "The gate inventories 61 JSON artifacts, verifies real bytes plus in-file scope/value identities, and admits one prospective component pair. Direction passes, magnitude and campaign coverage fail; predictive validity remains NOT_MET."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Found a cross-fidelity HBM3 sign reversal",
+      "detail": "All 1,363,968 synthetic Ramulator2 callbacks drain exactly. Logical sorting changes from 27.744% fewer cycles at 32 bytes to 59.194% more cycles at a 1,152-byte record, killing a geometry-insensitive locality claim."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Mapped every public-agentic token geometry into GLM residency",
+      "detail": "Partial preference shifts from 64 coupled requests at C1 to 48 decoupled plus eight overlaps at C64, but candidate full capacity remains uncertain for all requests and no deployment claim is permitted."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Expanded the competitive and proxy boundaries",
+      "detail": "Thirty primary sources show active DSA, sparse gather, page-locality, offload, and accelerator work. Qwen3-0.6B remains local; NOSA-1B is the future CUDA proxy; no small model approves GLM transfer."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Replaced short identical prompts with a public-agentic proxy contract",
+      "detail": "A deterministic 64-request/eight-session trace realizes public 5K-131K and 27K-mean geometry with dynamic prefixes, tool delays, and class SLOs. It contains no private benchmark data or performance claim."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Made serving measurement fail closed on host contamination",
+      "detail": "The frozen 20% admission gate observed 355 blocked samples over 30 minutes and launched no resumed server. One earlier c8 pair is retained but insufficient; all calibration and cost claims remain false."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Narrowed the business wedge against current simulators",
+      "detail": "NVIDIA DynoSim/AIConfigurator already cover Rust full-stack serving replay and autoresearch, NVIDIA publishes model/hardware design rules, and Etched claims silicon-through-rack co-design. The surviving asset must be validated non-obvious model/hardware discovery."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Completed the exact-source PIQA correction",
+      "detail": "After withdrawing a loader that lost official trailing whitespace in 30/512 choices, the frozen rerun scores 174/256 baseline versus 175/256 candidate. The point gate passes; the paired interval crosses the margin, so confirmatory non-inferiority remains inconclusive."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Made cross-stack cost composition fail closed in Rust",
+      "detail": "Seven current Qwen/GLM artifacts produce zero admissible combined GLM output-cost claims. Only exact scope-matched joint measured end-to-end evidence can unlock $/token."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Ran the first independent native hardware-design sweep",
+      "detail": "Twelve pinned SCALE-Sim cases expose 2.8-2.9x same-oracle mapping sensitivity, but Qwen and GLM rank base arrays identically and larger SRAM gives no native read/cycle benefit. No model-specific hardware advantage is observed."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Falsified the first packed-INT4 batch crossover",
+      "detail": "After rejecting a mismatched provisional control, identical traversal at B1/4/16/64 leaves packed 1.7-6.6% slower with exact work and outputs. Compression alone still does not yield speed."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Crossed the real Timeloop frontend boundary",
+      "detail": "Pinned TimeloopFE parses and processes the exact Qwen o_proj contract with reconciled MACs/FLOPs/bytes. Native mapping fails closed at missing timeloop-mapper and six probed dependencies; no cycles or energy are fabricated."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Stopped the first trained 50% KV-sharing recipe on evidence",
+      "detail": "A stable 2,048-target rank-8 Q/O recovery restored only 3.80% of the NLL gap; perplexity remains 2,535x baseline and all gates fail. The projected 83-minute 8K continuation was not run."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Measured the first real packed Qwen INT4 kernel boundary",
+      "detail": "Three layer-zero tensors retain 37.5% of BF16 bytes and match independent QDQ exactly, but the scalar packed loop is 1.368x slower. A batch/tiled frontier is now the next admissible runtime test."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Expanded GLM mapping into a context-by-concurrency policy surface",
+      "detail": "Across 16K to 1M contexts, the strict partial-residency decoupling threshold moves from C43 to C2. Full candidate capacity remains uncertain through 262K, so the surface is a filter rather than a deployment selector."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Added the first fail-closed Timeloop problem export",
+      "detail": "Exact Qwen BF16 o_proj geometry and byte/FLOP accounting now emit v4 schema 0.4. Backend mapping is not run, and INT4 rejects until scale/group metadata is typed."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Expanded the fail-closed business decision ledger",
+      "detail": "Thirty-one exact source files, 27 internal IDs, 100 fact checks, 30 arithmetic checks, and 20 lever decisions support no measured $/token, calibrated end-to-end simulation, provider, 5-10x, buildable-hardware, or tapeout claim."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Re-ran GLM mapping at an exact 90K agent context",
+      "detail": "FP8 semantic KV grows 0.736→4.044 GB/request and moves the partial-residency decoupling threshold from concurrency 43 at 16K to 8 at 90K. Full capacity remains uncertain."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Falsified one-shot KV-head sharing as a material Qwen lever",
+      "detail": "The maximum quality-passing point saves 1.786% of cache bytes and is ideally capped at 1.018x; it also passes 4,096 held-out targets. Five layers fails and full 50% sharing catastrophically fails."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Made independent GLM mapping a residency-aware control",
+      "detail": "DP-local attention plus topology-local EP8 removes 85.86% of modeled hop bytes, but coupled TP16 has lower partial residency through concurrency 32 and full decoupled capacity remains uncertain."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Showed P/D cost direction depends on measured phase effects",
+      "detail": "Neutral P/D is 5.18% more expensive than aggregate; an explicit interference/specialization scenario is 35.22% cheaper, while transfer congestion can erase the gain. All cost and SLO claims remain false."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Located the public-NVFP4 plus FP8-KV four-B200 threshold",
+      "detail": "FP8 semantic KV removes 108.354 GB of total modeled residency, but 64x32K still misses four modeled B200s by 5.268 GB under the lower cache bound and 104.052 GB under the upper. The lower case fits 60 sequences and fails at 61; TP4, kernels, serving, and cost remain blocked."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Found zero robust regions in the first economic frontier",
+      "detail": "Across 4,374 points and 54 regions, none clears required margin across the full cost/load/availability/margin sweep. The prior 1.0805x pass falls to 0.8104x at 75% peak and 0.8244x when modest input work is restored; all business claims remain locked."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Made the public-NVFP4 hardware ranking fail closed",
+      "detail": "A native B200/B300 roofline makes nominal custom/B200 throughput flip from 0.774x to 1.342x across opaque FFN traffic bounds. The custom profile cannot natively execute selective NVFP4, so exact traffic and an implementable precision contract now precede hardware ranking."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Connected a byte-pinned GLM ledger to exact one-quantum serving replay",
+      "detail": "The reproducible manifest binds trace, SLO, lowering, roofline, ledger, and hardware identities and reports queue/goodput mechanics for three hardware selections. Prefill, repeated decoding, contention, and intra-quantum timing remain explicit blockers."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Falsified full-stack customization as a unique GLM-5.2 moat",
+      "detail": "Baseten already reports custom shared DSA, agent-calibrated NVFP4, Blackwell, KV-aware routing, P/D disaggregation, and MTP in one production stack, with 280+ streaming token/s per user and a 2x disaggregation gain on observed shapes. Aggregate capacity and COGS remain undisclosed, so this sets the control rather than proving provider economics."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Lowered a whole GLM-5.2 decode step into the canonical action DAG",
+      "detail": "The 29-action upper-bound ledger now carries exact 837.116B FFN FLOPs for 16 aggregate candidates, 52.320–731.797 GB FFN reads, pinned synthetic route identity, and explicit attention/DSA/cache/MTP bounds. Timing and cost remain locked until bounds collapse and actions calibrate."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Falsified transfer of the 5.38x fixture ratio to whole-decode work",
+      "detail": "On the same modeled timing profiles, the nominal dependency-roofline ratio falls to 3.592x for the 3.387T-FLOP upper-bound ledger. Routed-expert weight traffic dominates; the old baseline uses an outdated 3.35 TB/s HBM assumption, so this is still not an H200, serving, or cost claim."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Killed selected-index HBM bypass as a standalone GLM lever",
+      "detail": "Exact IndexShare accounting removes 73.08% of indexer scans, but an impossible zero-HBM selected-index handoff changes modeled component time by only 0.01–0.14%. The remaining DSA opportunity is scan/top-k fusion and irregular compressed-cache gather, not the index list alone."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Showed the nominal custom rates lose to the launch-date incumbent",
+      "detail": "With identical uncalibrated control costs, custom headline throughput is 2.143x the published-peak H200 component model, but preliminary Rubin rates are 1.535x faster than custom on the same whole-decode work. The hardware thesis now requires work removal or a residual beyond commodity roadmaps."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Coupled GLM capacity, timing, and the commercial hurdle",
+      "detail": "The most optimistic BF16 20xH200 screen reaches 364.5K versus 337.3K required billable token/s, only 1.0805x headroom. It grants free prefill, peak rates, and perfect rank scaling; any 7.45% loss fails, so all viability and cost claims remain locked."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Found model-work uncertainty dominates hardware ranking",
+      "detail": "Lower-work versus upper-work throughput spans 17.98x on H200, 20.56x custom, and 24.66x Rubin—far larger than the modeled hardware gaps. Route locality and remaining DSA/non-FFN/MTP work now outrank peak-rate refinement."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Extended selective INT4 validation to 4,096 targets",
+      "detail": "The Qwen3-0.6B o_proj plus gate/up group-8 QDQ candidate passed all five configured BF16 teacher-forced gates on 64 deterministic non-overlapping WikiText-2 windows. NLL delta rose to +0.06184 and PPL ratio to 1.06379; task quality, packed runtime, serving, energy, and cost remain unproven."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Audited the custom hardware profile against physical reality",
+      "detail": "Verdict is conditional GO for model/software research and NO-GO for tapeout. Throughput-only substitution explains 1.054x, while fixed and coordination assumptions explain most of the 5.38x fixture; commodity roadmaps already meet or exceed its headline rates."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Simulated exact GLM MoE geometry under route skew",
+      "detail": "Synthetic source affinity makes primary placement cut remote traffic 35.53% at no added storage; replication has weak marginal value and uniform routing is a negative control. All latency and cost claims remain locked."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Added a strict action-ledger hardware roofline",
+      "detail": "Every action needs an explicit hardware path and dependency timing. An aggressive custom fixture profile reaches 5.38x, but the report locks all claims because the work ledger and hardware are incomplete assumptions."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Exported a pinned Chakra v0.0.4 protobuf trace",
+      "detail": "The representable GLM compute/collective subset preserves counts and dependencies with explicit aggregate/no-rank semantics; unsupported actions fail closed and no timing is emitted."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Built a canonical cross-backend action ledger",
+      "detail": "Six typed action classes, dependency validation, checked units, stable semantic identity, and fail-closed calibrated totals now provide the Rust-owned boundary for external simulator adapters."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Simulated GLM compound-prefix lifecycle across three memory tiers",
+      "detail": "Tiering reduced recompute tokens 62.30% on a synthetic trace but moved 40.562 GB, exposing 2.658x transfer amplification and a concrete recompute-versus-movement break-even."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Built the first executable GLM-5.2 hardware-capacity envelope",
+      "detail": "Exact checkpoint and semantic-cache accounting plus explicit cache/runtime bounds produce BF16, FP8, and NVFP4 device minima. Unsupported end-to-end latency and cost remain null."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Built a recursive-MTP acceptance and work sweep",
+      "detail": "The Rust engine accounts for conditional acceptance, committed and rejected tokens, draft/verify work, synchronization, break-even probability, and best depth while refusing claims from synthetic inputs."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Chose a Rust core plus replaceable simulator adapters",
+      "detail": "A 46-source landscape found no native end-to-end GLM simulator. The integration order is LLMServingSim, Chakra/ASTRA, Timeloop/Accelergy, and SCALE-Sim before selective detailed escalation."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Replicated the selective INT4 proxy pass on held-out text",
+      "detail": "The already-selected Qwen3-0.6B candidate passed all five configured teacher-forced gates on 512 deterministic WikiText-2 test tokens. A derived bound caps its ideal weight-traffic speedup at 1.327x; no packed runtime or production-quality claim exists."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Added a fail-closed typed GLM-5.2 model contract",
+      "detail": "Resident versus active parameters, MoE experts, MLA, DSA/IndexShare, MTP, and expert-selective storage now reconcile the 1,506,659,919,872-byte BF16 payload. Latency and sizing remain unsupported until phase lowering is implemented."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Published the overnight decision report",
+      "detail": "Measured, analytical, vendor, derived, and inferred evidence are separated with a current continue-but-do-not-claim verdict and ten falsification gates."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Found a narrow passing selective-INT4 variant",
+      "detail": "Qwen3-0.6B o_proj plus MLP gate/up group-8 QDQ passed the tiny numerical suite with 24.63% estimated weight-byte reduction; runtime compression and task quality remain open."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Imported four measured CPU serving points",
+      "detail": "c1/c2/c4/c8 request reports preserve exact provenance and queue-aware TTFT. No point passes all class SLOs, and c1/c8 repeats expose a material repeatability failure."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Quantified the commercial break-even boundary",
+      "detail": "A 20%-discount, 60%-gross-margin GLM-5.2 offer allows $0.181/M total-token COGS on the synthetic cache-heavy mix, subject to public-price and workload caveats."
+    },
+    {
+      "date": "2026-07-12",
+      "title": "Completed the GLM-5.2 co-design source dossier",
+      "detail": "Released MoE/MLA/DSA/IndexShare/MTP geometry, FP8/NVFP4 storage, cache bounds, baseline stack, and ordered experiments are now recorded."
+    },
+    {
+      "date": "2026-07-11",
+      "title": "Published the live Codex findings and prompt bridge",
+      "detail": "The existing ngrok dashboard now links to this evidence page. Prompt delivery is access-code protected, isolated from the Claude inbox, gitignored, and watched only while the Codex work session is active."
+    },
+    {
+      "date": "2026-07-11",
+      "title": "Completed quantized-weight storage accounting",
+      "detail": "All 32 factorial points were regenerated with explicit code, scale, group-size, coverage, and metadata storage. The selected candidate is group-128 W4 at exactly 4.125 effective bits/weight."
+    },
+    {
+      "date": "2026-07-11",
+      "title": "Measured the first small-model INT4 sweep",
+      "detail": "Five group sizes completed with weight-file provenance. None passed all numerical gates."
+    },
+    {
+      "date": "2026-07-11",
+      "title": "Enforced feasible hardware selection",
+      "detail": "Invalid sizing points are rejected before capacity planning and attribution; all 32 factorial cases were regenerated."
+    },
+    {
+      "date": "2026-07-11",
+      "title": "Reconciled exact five-axis attribution",
+      "detail": "Standalone and exact Shapley effects now use only feasible selected hardware points."
+    },
+    {
+      "date": "2026-07-11",
+      "title": "Evaluated economics and class SLOs",
+      "detail": "The candidate passes all 512 simulated requests; output cost loses every low-volume 1,000-unit sensitivity case."
+    }
+  ],
+  "durable_documents": [
+    {
+      "label": "Wake-up decision brief",
+      "path": "docs/WAKEUP_BRIEF_2026-07-12.md"
+    },
+    {
+      "label": "Overnight decision report",
+      "path": "docs/OVERNIGHT_REPORT_2026-07-12.md"
+    },
+    {
+      "label": "Business validation",
+      "path": "docs/BUSINESS_VALIDATION.md"
+    },
+    {
+      "label": "GLM-5.2 co-design dossier",
+      "path": "docs/GLM_CO_DESIGN.md"
+    },
+    {
+      "label": "Simulator landscape",
+      "path": "docs/SIMULATOR_LANDSCAPE.md"
+    },
+    {
+      "label": "Model-specific optimization decisions",
+      "path": "docs/OPTIMIZATION_DECISIONS.md"
+    },
+    {
+      "label": "Small-model proxy selection",
+      "path": "docs/SMALL_MODEL_PROXY_SELECTION.md"
+    },
+    {
+      "label": "Custom hardware feasibility audit",
+      "path": "docs/CUSTOM_HARDWARE_FEASIBILITY.md"
+    },
+    {
+      "label": "Qwen3-8B analytical dossier",
+      "path": "experiments/qwen3-8b/README.md"
+    }
+  ],
+  "documents": [
+    {
+      "label": "Wake-up decision brief",
+      "route": "/codex/wakeup"
+    },
+    {
+      "label": "Overnight decision report",
+      "route": "/codex/overnight"
+    },
+    {
+      "label": "GLM-5.2 co-design dossier",
+      "route": "/codex/glm"
+    },
+    {
+      "label": "Business validation and break-even",
+      "route": "/codex/business"
+    },
+    {
+      "label": "Simulator landscape and integration strategy",
+      "route": "/codex/simulators"
+    },
+    {
+      "label": "Model-specific optimization decisions",
+      "route": "/codex/decisions"
+    },
+    {
+      "label": "Custom hardware feasibility and kill gates",
+      "route": "/codex/hardware"
+    },
+    {
+      "label": "Full experiment dossier",
+      "route": "/codex/report"
+    },
+    {
+      "label": "Validation methodology and measured sweep",
+      "route": "/codex/validation"
+    }
+  ],
+  "codex": {
+    "state_route": "/api/codex-state",
+    "prompt_route": "/codex/prompt",
+    "poll_interval_milliseconds": 6000,
+    "availability_note": "The prompt inbox is polled only while Codex has an active work session. Sending a prompt does not start or wake a Codex session."
+  }
+}

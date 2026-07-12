@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "content_id": "8dbc8cf34334a86c42c76259912f914490b5755166195a375893059459b0edf9",
+  "request_content_id": "923d5240a0392608b3a5d3dc2b1dc029f45b26f0ae80ac5a21e2708b4c27ebbd",
+  "composition_id": "glm-5.2-current-cost-claim-composition-v1",
+  "scope": {
+    "model_id": "zai-org/GLM-5.2",
+    "model_revision": "ba978f7d347eaf65d22f1a86833408afdb953541",
+    "workload_id": "agentic-v1-90k",
+    "quality_contract_id": "glm-5.2-agent-quality-v1-unmeasured",
+    "slo_contract_id": "agentic-service-v1",
+    "baseline_stack_id": "incumbent-qualified-nvfp4-fp8kv-mapping-cache-pd-mtp-v1",
+    "candidate_stack_id": "foundry-joint-model-kernel-serving-hardware-v1"
+  },
+  "requested_intervention_ids": [
+    "fp8_semantic_kv",
+    "independent_attention_expert_mapping",
+    "model_specific_hardware",
+    "prefill_decode_disaggregation",
+    "public_nvfp4",
+    "tiered_agent_cache"
+  ],
+  "objective": "output_cost_per_million_tokens",
+  "evidence_count": 7,
+  "admissible_evidence_ids": [],
+  "exclusions": [
+    {
+      "evidence_id": "qwen_selective_int4_weight_bound",
+      "reasons": [
+        "scope_mismatch",
+        "metric_mismatch",
+        "intervention_set_mismatch",
+        "evidence_class_insufficient"
+      ]
+    },
+    {
+      "evidence_id": "qwen_packed_int4_batch_latency",
+      "reasons": [
+        "scope_mismatch",
+        "metric_mismatch",
+        "intervention_set_mismatch",
+        "evidence_class_insufficient"
+      ]
+    },
+    {
+      "evidence_id": "qwen_full_kv_recovery_quality",
+      "reasons": [
+        "scope_mismatch",
+        "metric_mismatch",
+        "intervention_set_mismatch",
+        "claim_not_permitted",
+        "evidence_class_insufficient"
+      ]
+    },
+    {
+      "evidence_id": "glm_independent_mapping_network_bytes",
+      "reasons": [
+        "scope_mismatch",
+        "metric_mismatch",
+        "intervention_set_mismatch",
+        "evidence_class_insufficient"
+      ]
+    },
+    {
+      "evidence_id": "glm_pd_synthetic_output_cost",
+      "reasons": [
+        "scope_mismatch",
+        "intervention_set_mismatch",
+        "claim_not_permitted",
+        "evidence_class_insufficient"
+      ]
+    },
+    {
+      "evidence_id": "glm_scalesim_same_oracle_cycles",
+      "reasons": [
+        "scope_mismatch",
+        "metric_mismatch",
+        "intervention_set_mismatch",
+        "evidence_class_insufficient"
+      ]
+    },
+    {
+      "evidence_id": "glm_current_economic_frontier",
+      "reasons": [
+        "claim_not_permitted",
+        "evidence_class_insufficient"
+      ]
+    }
+  ],
+  "blockers": [
+    "no_exact_joint_evidence"
+  ],
+  "relative_effect": null,
+  "combined_claim_permitted": false,
+  "conclusion": "Marginal, cross-model, component, simulated, analytical, or claim-locked effects cannot be multiplied into this objective."
+}

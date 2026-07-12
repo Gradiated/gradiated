@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "study_id": "glm-5.2-indexshare-dsa-context-hardware-envelope-v1",
+  "model": {
+    "model_id": "zai-org/GLM-5.2",
+    "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+    "architecture": {
+      "hybrid_moe_mla_dsa": {
+        "schema_version": 1,
+        "active_parameter_count": {
+          "kind": "approximate",
+          "parameters": 40000000000
+        },
+        "checkpoint_fixed_storage_bytes": 38912,
+        "dense_layer_count": 3,
+        "moe_layer_count": 75,
+        "moe": {
+          "routed_expert_count": 256,
+          "routed_experts_per_token": 8,
+          "shared_expert_count": 1,
+          "expert_intermediate_size": 2048,
+          "routed_expert_weight_precision": "bf16"
+        },
+        "mla": {
+          "query_low_rank_dimension": 2048,
+          "semantic_kv_dimension": 512,
+          "query_key_nope_dimension": 192,
+          "rotary_kv_dimension": 64,
+          "value_dimension": 256,
+          "rope_theta": 8000000
+        },
+        "dsa_indexer": {
+          "query_head_count": 32,
+          "query_head_dimension": 128,
+          "key_head_count": 1,
+          "key_head_dimension": 128,
+          "selected_token_count": 2048,
+          "full_layer_count": 21,
+          "shared_layer_count": 57
+        },
+        "mtp": {
+          "layer_count": 1,
+          "shared_parameters": true,
+          "shares_dsa_indices": true
+        }
+      }
+    },
+    "parameter_count": 753329940480,
+    "layer_count": 78,
+    "hidden_size": 6144,
+    "intermediate_size": 12288,
+    "attention_head_count": 64,
+    "kv_head_count": 0,
+    "head_dimension": 256,
+    "vocabulary_size": 154880,
+    "max_sequence_length": 1048576,
+    "weight_precision": "bf16",
+    "quantized_weight_storage": null,
+    "kv_precision": "bf16"
+  },
+  "batch_size": 1,
+  "context_tokens_per_request": [
+    1024,
+    2048,
+    8192,
+    32768,
+    131072,
+    1048576
+  ],
+  "selected_index_bytes": 4,
+  "full_indexer_layer_ids": [
+    0,
+    1,
+    2,
+    6,
+    10,
+    14,
+    18,
+    22,
+    26,
+    30,
+    34,
+    38,
+    42,
+    46,
+    50,
+    54,
+    58,
+    62,
+    66,
+    70,
+    74
+  ],
+  "index_key_cache_storage": {
+    "value_storage_bits_per_element": 16,
+    "metadata_bytes_per_token": 0,
+    "basis": "Explicit semantic BF16 index-key scenario with zero metadata bytes per token. This is a modeled storage scenario, not a provider runtime baseline.",
+    "evidence": {
+      "kind": "modeled_assumption",
+      "source_artifact_id": "modeled-glm-5.2-bf16-index-key-cache-v1"
+    }
+  },
+  "hardware": [
+    {
+      "profile_id": "h200-sxm-component-roofline",
+      "scope_basis": "One idealized H200 timing component using published peak HBM and derived dense BF16 tensor throughput. This is not a GLM-5.2 residency-feasible deployment or a measured kernel.",
+      "hbm_bytes_per_second": 4800000000000.0,
+      "indexer_flops_per_second": 989500000000000.0,
+      "attention_flops_per_second": 989500000000000.0,
+      "topk_score_candidates_per_second": 50000000000.0,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "validation/results/custom-hardware-feasibility-2026-07-12.json#commodity_baselines/nvidia_h200_sxm+modeled-topk"
+      }
+    },
+    {
+      "profile_id": "custom-dsa-component-upper-bound",
+      "scope_basis": "One aggressive hypothetical timing component matching the existing custom roofline assumptions. Capacity, topology, area, power, yield, and deployment cost are intentionally outside this slice.",
+      "hbm_bytes_per_second": 12000000000000.0,
+      "indexer_flops_per_second": 2000000000000000.0,
+      "attention_flops_per_second": 2000000000000000.0,
+      "topk_score_candidates_per_second": 500000000000.0,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "configs/glm-5.2-ledger-roofline-v1.json#glm-dsa-moe-custom-upper-bound"
+      }
+    }
+  ]
+}

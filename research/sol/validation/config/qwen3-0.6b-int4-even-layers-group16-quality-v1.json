@@ -1,0 +1,36 @@
+{
+  "schema_version": "inference-foundry.quality-run.v1",
+  "suite": "qwen3-0.6b-local-agentic-int4-even-layers-group16-v1",
+  "seed": 20260711,
+  "dtype": "float32",
+  "torch_threads": 4,
+  "quantization": {
+    "scheme": "symmetric_signed_int4_quantize_dequantize",
+    "granularity": "groupwise",
+    "group_size": 16,
+    "excluded_modules": [
+      "lm_head",
+      "model.layers.1.*",
+      "model.layers.3.*",
+      "model.layers.5.*",
+      "model.layers.7.*",
+      "model.layers.9.*",
+      "model.layers.11.*",
+      "model.layers.13.*",
+      "model.layers.15.*",
+      "model.layers.17.*",
+      "model.layers.19.*",
+      "model.layers.21.*",
+      "model.layers.23.*",
+      "model.layers.25.*",
+      "model.layers.27.*"
+    ]
+  },
+  "non_inferiority": {
+    "maximum_nll_increase": 0.15,
+    "maximum_perplexity_ratio": 1.15,
+    "maximum_logit_rmse": 0.5,
+    "minimum_logit_cosine_similarity": 0.98,
+    "minimum_top1_agreement": 0.8
+  }
+}

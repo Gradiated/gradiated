@@ -1,0 +1,1273 @@
+{
+  "schema_version": "inference-foundry.quality-sweep-summary.v2",
+  "status": "measured_mixed",
+  "scope": {
+    "model": "Qwen/Qwen3-0.6B",
+    "upstream_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "weight_sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
+    "device": "cpu",
+    "runtime_dtype": "float32",
+    "mechanism": "symmetric signed INT4 groupwise weight quantize-dequantize",
+    "corpus": "small deterministic hand-authored agent-style calibration corpus",
+    "target_tokens": 155,
+    "is_standard_benchmark": false
+  },
+  "thresholds": {
+    "maximum_nll_increase": 0.15,
+    "maximum_perplexity_ratio": 1.15,
+    "maximum_logit_rmse": 0.5,
+    "minimum_logit_cosine_similarity": 0.98,
+    "minimum_top1_agreement": 0.8
+  },
+  "experiment_design": {
+    "family_mask_bits": {
+      "qkv": 1,
+      "o_proj": 2,
+      "gate_up": 4,
+      "down": 8
+    },
+    "group8_four_family_factorial": {
+      "nonempty_masks": 15,
+      "measured_masks": 15,
+      "layer_scope": "all_layers"
+    },
+    "additional_group_size_sweeps": [
+      "all four families at group sizes 8, 16, 32, 64, and 128",
+      "down projection at group sizes 8, 16, 32, 64, and 128",
+      "QKV, attention, MLP, output-projection, and even-layer selections at group sizes 8, 16, and 128"
+    ]
+  },
+  "storage_accounting": {
+    "kind": "estimated_packed_mixed_precision_weights",
+    "unique_parameter_count": 596049920,
+    "tied_parameter_policy": "The tied input/output embedding parameter is counted exactly once.",
+    "baseline_checkpoint_bits_per_parameter": 16,
+    "baseline_checkpoint_weight_bytes": 1192099840,
+    "baseline_weight_bytes_semantics": "Unique logical BF16 parameter bytes, excluding duplicate aliases and container overhead; this is the reduction denominator.",
+    "checkpoint_weight_file_bytes": 1503300328,
+    "checkpoint_file_note": "The safetensors file stores both tied embedding aliases and includes container overhead, so its on-disk bytes are reported but not used as the deployment baseline.",
+    "packed_code_bits_per_quantized_parameter": 4,
+    "scale_bits_per_value": 16,
+    "retained_full_precision_bits_per_parameter": 16,
+    "embedded_storage_ledger_artifact_count": 6,
+    "backfilled_storage_ledger_artifact_count": 28,
+    "backfill_note": "Legacy artifact rows are recomputed from their measured parameter and scale counts with the same harness formula.",
+    "qdq_runtime": {
+      "runtime_storage_compressed": false,
+      "dtype": "float32",
+      "logical_unique_weight_bytes": 2384199680,
+      "packed_codes_materialized": false,
+      "persistent_scales_materialized": false,
+      "note": "The quality run copies dequantized weights into a float32 model. Packed codes, FP16 scales, deployed bytes, and reductions are arithmetic deployment estimates, not measured QDQ runtime storage."
+    }
+  },
+  "findings": {
+    "artifact_count": 34,
+    "passing_count": 8,
+    "all_linear_sweep_passing_count": 0,
+    "group8_factorial_passing_count": 7,
+    "best_passing_result": {
+      "variant": "o-gate-up-group8",
+      "report_id": "77f7ff07db5ebb0b8f52509f2fc8aebbcd615a955bf74be2154a0507e054bb50",
+      "quantized_parameter_count": 234881024,
+      "quantized_parameter_percent": 39.406267179769,
+      "estimated_deployed_weight_bytes": 898498560,
+      "estimated_whole_model_bits_per_parameter": 12.059373282023,
+      "estimated_weight_storage_reduction_percent": 24.628916987356,
+      "quality": {
+        "passed": true,
+        "nll_delta": 0.024133546890750868,
+        "perplexity_ratio": 1.0244271178122009,
+        "logit_rmse": 0.4737714310453464,
+        "logit_cosine_similarity": 0.9900444478169134,
+        "top1_agreement": 0.864516129032258
+      }
+    }
+  },
+  "held_out_validation": {
+    "checked_summary": "validation/results/qwen3-0.6b-int4-o-gate-up-wikitext2-sequential4096-bf16-v1.json",
+    "candidate": "o-gate-up-group8",
+    "comparison_dtype": "bfloat16",
+    "evaluation_strategy": "interleaved_models",
+    "dataset": "Salesforce/wikitext / wikitext-2-raw-v1 / test",
+    "dataset_fingerprint": "a46124b21ac53738",
+    "target_tokens": 4096,
+    "passed": true,
+    "nll_delta": 0.06184198707342148,
+    "perplexity_ratio": 1.0637942382060255,
+    "logit_rmse": 0.4607013253503521,
+    "logit_cosine_similarity": 0.9899530091543737,
+    "top1_agreement": 0.861328125,
+    "runtime_storage_compressed": false,
+    "interpretation": "The selected mask passed the same five gates on 4,096 contiguous held-out targets against the BF16 baseline. This validates teacher-forced behavior only; packed runtime and cost remain unmeasured."
+  },
+  "results": [
+    {
+      "variant": "qkv-only-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-qkv-only-group8-quality-v1.json",
+      "family_mask": 1,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv"
+      ],
+      "group_size": 8,
+      "module_count": 84,
+      "quantized_parameter_count": 117440512,
+      "quantized_parameter_percent": 19.703133589885,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 58720256,
+        "scale_bytes": 29360128,
+        "retained_full_precision_parameter_count": 478609408,
+        "retained_full_precision_bytes": 957218816,
+        "deployed_weight_bytes": 1045299200,
+        "whole_model_effective_bits_per_parameter": 14.029686641012,
+        "reduction_percent": 12.314458493678
+      },
+      "quality": {
+        "passed": true,
+        "nll_delta": -0.08976265691941787,
+        "perplexity_ratio": 0.9141481262578831,
+        "logit_rmse": 0.4368912907695902,
+        "logit_cosine_similarity": 0.9915928008063458,
+        "top1_agreement": 0.8903225806451613
+      },
+      "report_id": "a65450d8a60f554dd7e87a91cec3b41eb3f9daf64bb3333bb19c108008160ebe",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "qkv-only-group16",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-qkv-only-group16-quality-v1.json",
+      "family_mask": 1,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv"
+      ],
+      "group_size": 16,
+      "module_count": 84,
+      "quantized_parameter_count": 117440512,
+      "quantized_parameter_percent": 19.703133589885,
+      "quantized_subset_effective_bits_per_parameter": 5,
+      "estimated_storage": {
+        "packed_code_bytes": 58720256,
+        "scale_bytes": 14680064,
+        "retained_full_precision_parameter_count": 478609408,
+        "retained_full_precision_bytes": 957218816,
+        "deployed_weight_bytes": 1030619136,
+        "whole_model_effective_bits_per_parameter": 13.832655305113,
+        "reduction_percent": 13.545904343046
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": -0.07101888964253122,
+        "perplexity_ratio": 0.9314442973115987,
+        "logit_rmse": 0.5167795973467584,
+        "logit_cosine_similarity": 0.988142582222416,
+        "top1_agreement": 0.8774193548387097
+      },
+      "report_id": "16906f3c9591ba6782e70689fcd4da7074f03b699883efef14880b72196a8030",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "qkv-only",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-qkv-only-quality-v1.json",
+      "family_mask": 1,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv"
+      ],
+      "group_size": 128,
+      "module_count": 84,
+      "quantized_parameter_count": 117440512,
+      "quantized_parameter_percent": 19.703133589885,
+      "quantized_subset_effective_bits_per_parameter": 4.125,
+      "estimated_storage": {
+        "packed_code_bytes": 58720256,
+        "scale_bytes": 1835008,
+        "retained_full_precision_parameter_count": 478609408,
+        "retained_full_precision_bytes": 957218816,
+        "deployed_weight_bytes": 1017774080,
+        "whole_model_effective_bits_per_parameter": 13.660252886201,
+        "reduction_percent": 14.623419461242
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.17407544043756262,
+        "perplexity_ratio": 1.1901453475195147,
+        "logit_rmse": 0.7985029298896024,
+        "logit_cosine_similarity": 0.972666648066198,
+        "top1_agreement": 0.8387096774193549
+      },
+      "report_id": "65a019372d63a8fe7f8bf4c5edbde98e1a47581d6ccdcb9049a5a19b72910486",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "o-only-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-o-only-group8-quality-v1.json",
+      "family_mask": 2,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "o_proj"
+      ],
+      "group_size": 8,
+      "module_count": 28,
+      "quantized_parameter_count": 58720256,
+      "quantized_parameter_percent": 9.851566794942,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 29360128,
+        "scale_bytes": 14680064,
+        "retained_full_precision_parameter_count": 537329664,
+        "retained_full_precision_bytes": 1074659328,
+        "deployed_weight_bytes": 1118699520,
+        "whole_model_effective_bits_per_parameter": 15.014843320506,
+        "reduction_percent": 6.157229246839
+      },
+      "quality": {
+        "passed": true,
+        "nll_delta": 0.010972779796969423,
+        "perplexity_ratio": 1.0110332015411423,
+        "logit_rmse": 0.2486883043297597,
+        "logit_cosine_similarity": 0.9973170449776245,
+        "top1_agreement": 0.9483870967741935
+      },
+      "report_id": "f459586fcc0e49ffa51fb2f02e2c89db6389cbad39f8a111e66aabff257b382a",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "attention-only-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-attention-only-group8-quality-v1.json",
+      "family_mask": 3,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv",
+        "o_proj"
+      ],
+      "group_size": 8,
+      "module_count": 112,
+      "quantized_parameter_count": 176160768,
+      "quantized_parameter_percent": 29.554700384827,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 88080384,
+        "scale_bytes": 44040192,
+        "retained_full_precision_parameter_count": 419889152,
+        "retained_full_precision_bytes": 839778304,
+        "deployed_weight_bytes": 971898880,
+        "whole_model_effective_bits_per_parameter": 13.044529961517,
+        "reduction_percent": 18.471687740517
+      },
+      "quality": {
+        "passed": true,
+        "nll_delta": -0.0874225154999766,
+        "perplexity_ratio": 0.9162898671625498,
+        "logit_rmse": 0.4773097543569854,
+        "logit_cosine_similarity": 0.9898935335110143,
+        "top1_agreement": 0.896774193548387
+      },
+      "report_id": "c21e5c5408bba9be080f7b30e97025e5b4f5de67e8ed271bcb3ece5caeaf3acf",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "attention-only-group16",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-attention-only-group16-quality-v1.json",
+      "family_mask": 3,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv",
+        "o_proj"
+      ],
+      "group_size": 16,
+      "module_count": 112,
+      "quantized_parameter_count": 176160768,
+      "quantized_parameter_percent": 29.554700384827,
+      "quantized_subset_effective_bits_per_parameter": 5,
+      "estimated_storage": {
+        "packed_code_bytes": 88080384,
+        "scale_bytes": 22020096,
+        "retained_full_precision_parameter_count": 419889152,
+        "retained_full_precision_bytes": 839778304,
+        "deployed_weight_bytes": 949878784,
+        "whole_model_effective_bits_per_parameter": 12.748982957669,
+        "reduction_percent": 20.318856514568
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": -0.09109896075341029,
+        "perplexity_ratio": 0.9129273624492673,
+        "logit_rmse": 0.5984950573077413,
+        "logit_cosine_similarity": 0.9840687085077429,
+        "top1_agreement": 0.9032258064516129
+      },
+      "report_id": "67666bfc42118f96bc37f659206a41f41f8d4a5a82c33e872ec10783e3f0a2f3",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "attention-only",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-attention-only-quality-v1.json",
+      "family_mask": 3,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv",
+        "o_proj"
+      ],
+      "group_size": 128,
+      "module_count": 112,
+      "quantized_parameter_count": 176160768,
+      "quantized_parameter_percent": 29.554700384827,
+      "quantized_subset_effective_bits_per_parameter": 4.125,
+      "estimated_storage": {
+        "packed_code_bytes": 88080384,
+        "scale_bytes": 2752512,
+        "retained_full_precision_parameter_count": 419889152,
+        "retained_full_precision_bytes": 839778304,
+        "deployed_weight_bytes": 930611200,
+        "whole_model_effective_bits_per_parameter": 12.490379329302,
+        "reduction_percent": 21.935129191864
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.15221829875822968,
+        "perplexity_ratio": 1.1644143989067728,
+        "logit_rmse": 0.8988210843092409,
+        "logit_cosine_similarity": 0.9651779930095942,
+        "top1_agreement": 0.8
+      },
+      "report_id": "1794551804024d2077aff43ceb50ac3d78ad0ace71a25c5f6b3272087a1c2623",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "gate-up-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-gate-up-group8-quality-v1.json",
+      "family_mask": 4,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "gate_up"
+      ],
+      "group_size": 8,
+      "module_count": 56,
+      "quantized_parameter_count": 176160768,
+      "quantized_parameter_percent": 29.554700384827,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 88080384,
+        "scale_bytes": 44040192,
+        "retained_full_precision_parameter_count": 419889152,
+        "retained_full_precision_bytes": 839778304,
+        "deployed_weight_bytes": 971898880,
+        "whole_model_effective_bits_per_parameter": 13.044529961517,
+        "reduction_percent": 18.471687740517
+      },
+      "quality": {
+        "passed": true,
+        "nll_delta": 0.003888228631788504,
+        "perplexity_ratio": 1.0038957975995144,
+        "logit_rmse": 0.41455927317645563,
+        "logit_cosine_similarity": 0.9924161298462993,
+        "top1_agreement": 0.8903225806451613
+      },
+      "report_id": "882a7efe168876d3bc2e25c37e9920752dccc633b8c887335608b3f80ee99dd6",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "qkv-gate-up-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-qkv-gate-up-group8-quality-v1.json",
+      "family_mask": 5,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv",
+        "gate_up"
+      ],
+      "group_size": 8,
+      "module_count": 140,
+      "quantized_parameter_count": 293601280,
+      "quantized_parameter_percent": 49.257833974711,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 146800640,
+        "scale_bytes": 73400320,
+        "retained_full_precision_parameter_count": 302448640,
+        "retained_full_precision_bytes": 604897280,
+        "deployed_weight_bytes": 825098240,
+        "whole_model_effective_bits_per_parameter": 11.074216602529,
+        "reduction_percent": 30.786146234195
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": -0.08262156209638061,
+        "perplexity_ratio": 0.920699508891345,
+        "logit_rmse": 0.6045993042991383,
+        "logit_cosine_similarity": 0.9838598493231082,
+        "top1_agreement": 0.9032258064516129
+      },
+      "report_id": "0acf46ee4afec78e4233c721e4a7a526f042c3f6b4292bfa031a671856243140",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "o-gate-up-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-o-gate-up-group8-quality-v1.json",
+      "family_mask": 6,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "o_proj",
+        "gate_up"
+      ],
+      "group_size": 8,
+      "module_count": 84,
+      "quantized_parameter_count": 234881024,
+      "quantized_parameter_percent": 39.406267179769,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 117440512,
+        "scale_bytes": 58720256,
+        "retained_full_precision_parameter_count": 361168896,
+        "retained_full_precision_bytes": 722337792,
+        "deployed_weight_bytes": 898498560,
+        "whole_model_effective_bits_per_parameter": 12.059373282023,
+        "reduction_percent": 24.628916987356
+      },
+      "quality": {
+        "passed": true,
+        "nll_delta": 0.024133546890750868,
+        "perplexity_ratio": 1.0244271178122009,
+        "logit_rmse": 0.4737714310453464,
+        "logit_cosine_similarity": 0.9900444478169134,
+        "top1_agreement": 0.864516129032258
+      },
+      "report_id": "77f7ff07db5ebb0b8f52509f2fc8aebbcd615a955bf74be2154a0507e054bb50",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "attention-gate-up-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-attention-gate-up-group8-quality-v1.json",
+      "family_mask": 7,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv",
+        "o_proj",
+        "gate_up"
+      ],
+      "group_size": 8,
+      "module_count": 168,
+      "quantized_parameter_count": 352321536,
+      "quantized_parameter_percent": 59.109400769654,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 176160768,
+        "scale_bytes": 88080384,
+        "retained_full_precision_parameter_count": 243728384,
+        "retained_full_precision_bytes": 487456768,
+        "deployed_weight_bytes": 751697920,
+        "whole_model_effective_bits_per_parameter": 10.089059923035,
+        "reduction_percent": 36.943375481034
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": -0.07202688032580973,
+        "perplexity_ratio": 0.9305058831737257,
+        "logit_rmse": 0.6297033968124489,
+        "logit_cosine_similarity": 0.9823550197497072,
+        "top1_agreement": 0.896774193548387
+      },
+      "report_id": "0cb849b4752ef44591c5beaf00758208988a4c86e94f153253ac86aa53269e2f",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "down-only-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-down-only-group8-quality-v1.json",
+      "family_mask": 8,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "down"
+      ],
+      "group_size": 8,
+      "module_count": 28,
+      "quantized_parameter_count": 88080384,
+      "quantized_parameter_percent": 14.777350192413,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 44040192,
+        "scale_bytes": 22020096,
+        "retained_full_precision_parameter_count": 507969536,
+        "retained_full_precision_bytes": 1015939072,
+        "deployed_weight_bytes": 1081999360,
+        "whole_model_effective_bits_per_parameter": 14.522264980759,
+        "reduction_percent": 9.235843870258
+      },
+      "quality": {
+        "passed": true,
+        "nll_delta": 0.054939620725570126,
+        "perplexity_ratio": 1.0564768234456279,
+        "logit_rmse": 0.38961987926951913,
+        "logit_cosine_similarity": 0.993280813564271,
+        "top1_agreement": 0.8838709677419355
+      },
+      "report_id": "6c0303a2c9eae7560b9b2436cff8f2afb787ab9789e6662f230bbdf341073e9b",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "down-only-group16",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-down-only-group16-quality-v1.json",
+      "family_mask": 8,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "down"
+      ],
+      "group_size": 16,
+      "module_count": 28,
+      "quantized_parameter_count": 88080384,
+      "quantized_parameter_percent": 14.777350192413,
+      "quantized_subset_effective_bits_per_parameter": 5,
+      "estimated_storage": {
+        "packed_code_bytes": 44040192,
+        "scale_bytes": 11010048,
+        "retained_full_precision_parameter_count": 507969536,
+        "retained_full_precision_bytes": 1015939072,
+        "deployed_weight_bytes": 1070989312,
+        "whole_model_effective_bits_per_parameter": 14.374491478835,
+        "reduction_percent": 10.159428257284
+      },
+      "quality": {
+        "passed": true,
+        "nll_delta": 0.07645499321722182,
+        "perplexity_ratio": 1.0794536065098854,
+        "logit_rmse": 0.4497934048582624,
+        "logit_cosine_similarity": 0.9910323587388444,
+        "top1_agreement": 0.864516129032258
+      },
+      "report_id": "7ed43eb0fc4ac8a95a19c990ff1a54711afd5c9b6823687549673d5b3c89a9ac",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "down-only-group32",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-down-only-group32-quality-v1.json",
+      "family_mask": 8,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "down"
+      ],
+      "group_size": 32,
+      "module_count": 28,
+      "quantized_parameter_count": 88080384,
+      "quantized_parameter_percent": 14.777350192413,
+      "quantized_subset_effective_bits_per_parameter": 4.5,
+      "estimated_storage": {
+        "packed_code_bytes": 44040192,
+        "scale_bytes": 5505024,
+        "retained_full_precision_parameter_count": 507969536,
+        "retained_full_precision_bytes": 1015939072,
+        "deployed_weight_bytes": 1065484288,
+        "whole_model_effective_bits_per_parameter": 14.300604727872,
+        "reduction_percent": 10.621220450797
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.014612930051741913,
+        "perplexity_ratio": 1.0147202208882273,
+        "logit_rmse": 0.5136636581393179,
+        "logit_cosine_similarity": 0.9884125415759113,
+        "top1_agreement": 0.8838709677419355
+      },
+      "report_id": "b174e6a5214eacf3246559291d8c43b63221f2dd118b518554797aa9b54587e0",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "down-only-group64",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-down-only-group64-quality-v1.json",
+      "family_mask": 8,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "down"
+      ],
+      "group_size": 64,
+      "module_count": 28,
+      "quantized_parameter_count": 88080384,
+      "quantized_parameter_percent": 14.777350192413,
+      "quantized_subset_effective_bits_per_parameter": 4.25,
+      "estimated_storage": {
+        "packed_code_bytes": 44040192,
+        "scale_bytes": 2752512,
+        "retained_full_precision_parameter_count": 507969536,
+        "retained_full_precision_bytes": 1015939072,
+        "deployed_weight_bytes": 1062731776,
+        "whole_model_effective_bits_per_parameter": 14.263661352391,
+        "reduction_percent": 10.852116547554
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.03387648674749544,
+        "perplexity_ratio": 1.0344568297095897,
+        "logit_rmse": 0.6542750726225297,
+        "logit_cosine_similarity": 0.9817070726301007,
+        "top1_agreement": 0.8709677419354839
+      },
+      "report_id": "b9107b9ce3a542834cc7c555662a8728b6ef2021d942dbbf1fe8101f755e5b0e",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "down-only",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-down-only-quality-v1.json",
+      "family_mask": 8,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "down"
+      ],
+      "group_size": 128,
+      "module_count": 28,
+      "quantized_parameter_count": 88080384,
+      "quantized_parameter_percent": 14.777350192413,
+      "quantized_subset_effective_bits_per_parameter": 4.125,
+      "estimated_storage": {
+        "packed_code_bytes": 44040192,
+        "scale_bytes": 1376256,
+        "retained_full_precision_parameter_count": 507969536,
+        "retained_full_precision_bytes": 1015939072,
+        "deployed_weight_bytes": 1061355520,
+        "whole_model_effective_bits_per_parameter": 14.245189664651,
+        "reduction_percent": 10.967564595932
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": -0.020998930161999496,
+        "perplexity_ratio": 0.979220012175679,
+        "logit_rmse": 0.6802486425942238,
+        "logit_cosine_similarity": 0.9795945807557562,
+        "top1_agreement": 0.8774193548387097
+      },
+      "report_id": "5d60e243e91287bcce868406807573e5510d5388059ecd5b506f5f469ffa5a39",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "qkv-down-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-qkv-down-group8-quality-v1.json",
+      "family_mask": 9,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv",
+        "down"
+      ],
+      "group_size": 8,
+      "module_count": 112,
+      "quantized_parameter_count": 205520896,
+      "quantized_parameter_percent": 34.480483782298,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 102760448,
+        "scale_bytes": 51380224,
+        "retained_full_precision_parameter_count": 390529024,
+        "retained_full_precision_bytes": 781058048,
+        "deployed_weight_bytes": 935198720,
+        "whole_model_effective_bits_per_parameter": 12.55195162177,
+        "reduction_percent": 21.550302363936
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": -0.037610903093892034,
+        "perplexity_ratio": 0.9630876024030611,
+        "logit_rmse": 0.5928763061798853,
+        "logit_cosine_similarity": 0.9844784944813112,
+        "top1_agreement": 0.8774193548387097
+      },
+      "report_id": "8166f19cc50f807095b9f4be561dc274fb3d9ce51ecc012124f6fcebcb1f7191",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "output-projections-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-output-projections-group8-quality-v1.json",
+      "family_mask": 10,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "o_proj",
+        "down"
+      ],
+      "group_size": 8,
+      "module_count": 56,
+      "quantized_parameter_count": 146800640,
+      "quantized_parameter_percent": 24.628916987356,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 73400320,
+        "scale_bytes": 36700160,
+        "retained_full_precision_parameter_count": 449249280,
+        "retained_full_precision_bytes": 898498560,
+        "deployed_weight_bytes": 1008599040,
+        "whole_model_effective_bits_per_parameter": 13.537108301264,
+        "reduction_percent": 15.393073117097
+      },
+      "quality": {
+        "passed": true,
+        "nll_delta": 0.07280449405793199,
+        "perplexity_ratio": 1.0755202457599276,
+        "logit_rmse": 0.46378732209049456,
+        "logit_cosine_similarity": 0.9904772991518074,
+        "top1_agreement": 0.864516129032258
+      },
+      "report_id": "2b84db6decd1497517a47712faf20479cd05126e3888ac08116164420876c017",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "output-projections-group16",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-output-projections-group16-quality-v1.json",
+      "family_mask": 10,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "o_proj",
+        "down"
+      ],
+      "group_size": 16,
+      "module_count": 56,
+      "quantized_parameter_count": 146800640,
+      "quantized_parameter_percent": 24.628916987356,
+      "quantized_subset_effective_bits_per_parameter": 5,
+      "estimated_storage": {
+        "packed_code_bytes": 73400320,
+        "scale_bytes": 18350080,
+        "retained_full_precision_parameter_count": 449249280,
+        "retained_full_precision_bytes": 898498560,
+        "deployed_weight_bytes": 990248960,
+        "whole_model_effective_bits_per_parameter": 13.290819131391,
+        "reduction_percent": 16.932380428807
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.06733047731461062,
+        "perplexity_ratio": 1.069648914470875,
+        "logit_rmse": 0.5487430170853377,
+        "logit_cosine_similarity": 0.9866247750788726,
+        "top1_agreement": 0.8709677419354839
+      },
+      "report_id": "a88867b90196180bd81b65f1f5b1f357a931007bf34f4c37da1f29d2029ded6f",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "output-projections",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-output-projections-quality-v1.json",
+      "family_mask": 10,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "o_proj",
+        "down"
+      ],
+      "group_size": 128,
+      "module_count": 56,
+      "quantized_parameter_count": 146800640,
+      "quantized_parameter_percent": 24.628916987356,
+      "quantized_subset_effective_bits_per_parameter": 4.125,
+      "estimated_storage": {
+        "packed_code_bytes": 73400320,
+        "scale_bytes": 2293760,
+        "retained_full_precision_parameter_count": 449249280,
+        "retained_full_precision_bytes": 898498560,
+        "deployed_weight_bytes": 974192640,
+        "whole_model_effective_bits_per_parameter": 13.075316107752,
+        "reduction_percent": 18.279274326553
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": -0.024982132450226846,
+        "perplexity_ratio": 0.9753273385824146,
+        "logit_rmse": 0.765570093759132,
+        "logit_cosine_similarity": 0.9738584031987451,
+        "top1_agreement": 0.8516129032258064
+      },
+      "report_id": "f9af95bf04f02bc5ff2df52b26e6e5436d152931448266c35c3b11b1dca468b2",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "attention-down-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-attention-down-group8-quality-v1.json",
+      "family_mask": 11,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv",
+        "o_proj",
+        "down"
+      ],
+      "group_size": 8,
+      "module_count": 140,
+      "quantized_parameter_count": 264241152,
+      "quantized_parameter_percent": 44.33205057724,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 132120576,
+        "scale_bytes": 66060288,
+        "retained_full_precision_parameter_count": 331808768,
+        "retained_full_precision_bytes": 663617536,
+        "deployed_weight_bytes": 861798400,
+        "whole_model_effective_bits_per_parameter": 11.566794942276,
+        "reduction_percent": 27.707531610775
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": -0.03498610219647835,
+        "perplexity_ratio": 0.9656188361451743,
+        "logit_rmse": 0.6189717232297302,
+        "logit_cosine_similarity": 0.9829534649258316,
+        "top1_agreement": 0.8709677419354839
+      },
+      "report_id": "74ac4b062907f8be78ba9677d5809128bd2f0c9c2f3be91aad67136010ab65a0",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "mlp-only-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-mlp-only-group8-quality-v1.json",
+      "family_mask": 12,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "gate_up",
+        "down"
+      ],
+      "group_size": 8,
+      "module_count": 84,
+      "quantized_parameter_count": 264241152,
+      "quantized_parameter_percent": 44.33205057724,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 132120576,
+        "scale_bytes": 66060288,
+        "retained_full_precision_parameter_count": 331808768,
+        "retained_full_precision_bytes": 663617536,
+        "deployed_weight_bytes": 861798400,
+        "whole_model_effective_bits_per_parameter": 11.566794942276,
+        "reduction_percent": 27.707531610775
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.05119219749204573,
+        "perplexity_ratio": 1.052525166541699,
+        "logit_rmse": 0.5843699037724669,
+        "logit_cosine_similarity": 0.9848689017051839,
+        "top1_agreement": 0.8451612903225807
+      },
+      "report_id": "b3ed1282e2fb1783c34b409235bfe0f455c38f1011fdac1345c5c8f40838f849",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "mlp-only-group16",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-mlp-only-group16-quality-v1.json",
+      "family_mask": 12,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "gate_up",
+        "down"
+      ],
+      "group_size": 16,
+      "module_count": 84,
+      "quantized_parameter_count": 264241152,
+      "quantized_parameter_percent": 44.33205057724,
+      "quantized_subset_effective_bits_per_parameter": 5,
+      "estimated_storage": {
+        "packed_code_bytes": 132120576,
+        "scale_bytes": 33030144,
+        "retained_full_precision_parameter_count": 331808768,
+        "retained_full_precision_bytes": 663617536,
+        "deployed_weight_bytes": 828768256,
+        "whole_model_effective_bits_per_parameter": 11.123474436504,
+        "reduction_percent": 30.478284771853
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.04919758458291312,
+        "perplexity_ratio": 1.0504278785914727,
+        "logit_rmse": 0.65453292578089,
+        "logit_cosine_similarity": 0.9809309610797108,
+        "top1_agreement": 0.8193548387096774
+      },
+      "report_id": "6cb0675510bcace868eb08f9a51307485b556abf7bd87a5947290af69b85d58c",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "mlp-only",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-mlp-only-quality-v1.json",
+      "family_mask": 12,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "gate_up",
+        "down"
+      ],
+      "group_size": 128,
+      "module_count": 84,
+      "quantized_parameter_count": 264241152,
+      "quantized_parameter_percent": 44.33205057724,
+      "quantized_subset_effective_bits_per_parameter": 4.125,
+      "estimated_storage": {
+        "packed_code_bytes": 132120576,
+        "scale_bytes": 4128768,
+        "retained_full_precision_parameter_count": 331808768,
+        "retained_full_precision_bytes": 663617536,
+        "deployed_weight_bytes": 799866880,
+        "whole_model_effective_bits_per_parameter": 10.735568993953,
+        "reduction_percent": 32.902693787795
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.020113735814248024,
+        "perplexity_ratio": 1.020317380055689,
+        "logit_rmse": 1.0594312174958105,
+        "logit_cosine_similarity": 0.9495860087599569,
+        "top1_agreement": 0.7741935483870968
+      },
+      "report_id": "146b1321421008f2b7bf972a76e245e266290d90d4f1e4f55ce408b0ff1c830a",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "qkv-mlp-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-qkv-mlp-group8-quality-v1.json",
+      "family_mask": 13,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv",
+        "gate_up",
+        "down"
+      ],
+      "group_size": 8,
+      "module_count": 168,
+      "quantized_parameter_count": 381681664,
+      "quantized_parameter_percent": 64.035184167125,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 190840832,
+        "scale_bytes": 95420416,
+        "retained_full_precision_parameter_count": 214368256,
+        "retained_full_precision_bytes": 428736512,
+        "deployed_weight_bytes": 714997760,
+        "whole_model_effective_bits_per_parameter": 9.596481583288,
+        "reduction_percent": 40.021990104453
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": -0.03545672508978104,
+        "perplexity_ratio": 0.9651645007333889,
+        "logit_rmse": 0.7292690245172835,
+        "logit_cosine_similarity": 0.9764874572533727,
+        "top1_agreement": 0.8709677419354839
+      },
+      "report_id": "c79958a320a7cef847790379a804e699da96145ba1e0224512c9aa7f7ef926ca",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "o-mlp-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-o-mlp-group8-quality-v1.json",
+      "family_mask": 14,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "o_proj",
+        "gate_up",
+        "down"
+      ],
+      "group_size": 8,
+      "module_count": 112,
+      "quantized_parameter_count": 322961408,
+      "quantized_parameter_percent": 54.183617372183,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 161480704,
+        "scale_bytes": 80740352,
+        "retained_full_precision_parameter_count": 273088512,
+        "retained_full_precision_bytes": 546177024,
+        "deployed_weight_bytes": 788398080,
+        "whole_model_effective_bits_per_parameter": 10.581638262782,
+        "reduction_percent": 33.864760857614
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.07098470503284071,
+        "perplexity_ratio": 1.073564805604339,
+        "logit_rmse": 0.6280898823647783,
+        "logit_cosine_similarity": 0.9824381261029284,
+        "top1_agreement": 0.8516129032258064
+      },
+      "report_id": "c81704f0b1b0e20a795a82968db65342099321322daa213ac23610da14e15294",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "all-linear-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-group8-quality-v1.json",
+      "family_mask": 15,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv",
+        "o_proj",
+        "gate_up",
+        "down"
+      ],
+      "group_size": 8,
+      "module_count": 196,
+      "quantized_parameter_count": 440401920,
+      "quantized_parameter_percent": 73.886750962067,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 220200960,
+        "scale_bytes": 110100480,
+        "retained_full_precision_parameter_count": 155648000,
+        "retained_full_precision_bytes": 311296000,
+        "deployed_weight_bytes": 641597440,
+        "whole_model_effective_bits_per_parameter": 8.611324903793,
+        "reduction_percent": 46.179219351292
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": -0.03143950431577647,
+        "perplexity_ratio": 0.969049577997814,
+        "logit_rmse": 0.7507141268026472,
+        "logit_cosine_similarity": 0.9748989610294508,
+        "top1_agreement": 0.8903225806451613
+      },
+      "report_id": "71783b4714079762052726bdadb398b2a985d02951d769b0f5082299ad83bbde",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "all-linear-group16",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-group16-quality-v1.json",
+      "family_mask": 15,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv",
+        "o_proj",
+        "gate_up",
+        "down"
+      ],
+      "group_size": 16,
+      "module_count": 196,
+      "quantized_parameter_count": 440401920,
+      "quantized_parameter_percent": 73.886750962067,
+      "quantized_subset_effective_bits_per_parameter": 5,
+      "estimated_storage": {
+        "packed_code_bytes": 220200960,
+        "scale_bytes": 55050240,
+        "retained_full_precision_parameter_count": 155648000,
+        "retained_full_precision_bytes": 311296000,
+        "deployed_weight_bytes": 586547200,
+        "whole_model_effective_bits_per_parameter": 7.872457394173,
+        "reduction_percent": 50.797141286421
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.0069693842241838055,
+        "perplexity_ratio": 1.006993726900712,
+        "logit_rmse": 0.8841497339909915,
+        "logit_cosine_similarity": 0.9649116520101617,
+        "top1_agreement": 0.8193548387096774
+      },
+      "report_id": "0d8008855cd8ecd4bece5f208385f8b8dafdd2c0939c49c3ffa82caa8bd1cd2e",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "all-linear-group32",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-group32-quality-v1.json",
+      "family_mask": 15,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv",
+        "o_proj",
+        "gate_up",
+        "down"
+      ],
+      "group_size": 32,
+      "module_count": 196,
+      "quantized_parameter_count": 440401920,
+      "quantized_parameter_percent": 73.886750962067,
+      "quantized_subset_effective_bits_per_parameter": 4.5,
+      "estimated_storage": {
+        "packed_code_bytes": 220200960,
+        "scale_bytes": 27525120,
+        "retained_full_precision_parameter_count": 155648000,
+        "retained_full_precision_bytes": 311296000,
+        "deployed_weight_bytes": 559022080,
+        "whole_model_effective_bits_per_parameter": 7.503023639362,
+        "reduction_percent": 53.106102253986
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.04152834799981875,
+        "perplexity_ratio": 1.042402711464511,
+        "logit_rmse": 0.9891489345513275,
+        "logit_cosine_similarity": 0.9560979374988359,
+        "top1_agreement": 0.8
+      },
+      "report_id": "d620ba678671d1c5510ee718463e402aed083b1ba3b2e79533dda4989d96e4e8",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "all-linear-group64",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-group64-quality-v1.json",
+      "family_mask": 15,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv",
+        "o_proj",
+        "gate_up",
+        "down"
+      ],
+      "group_size": 64,
+      "module_count": 196,
+      "quantized_parameter_count": 440401920,
+      "quantized_parameter_percent": 73.886750962067,
+      "quantized_subset_effective_bits_per_parameter": 4.25,
+      "estimated_storage": {
+        "packed_code_bytes": 220200960,
+        "scale_bytes": 13762560,
+        "retained_full_precision_parameter_count": 155648000,
+        "retained_full_precision_bytes": 311296000,
+        "deployed_weight_bytes": 545259520,
+        "whole_model_effective_bits_per_parameter": 7.318306761957,
+        "reduction_percent": 54.260582737768
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.13291259888679718,
+        "perplexity_ratio": 1.1421501687721551,
+        "logit_rmse": 1.1674655295618073,
+        "logit_cosine_similarity": 0.9380837314943191,
+        "top1_agreement": 0.7290322580645161
+      },
+      "report_id": "abefa3067ecb0ea3760d4dc8059af0e5148dc08680d5cbd79a47019ec6cee4ad",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "all-linear-group128",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-quality-v1.json",
+      "family_mask": 15,
+      "layer_scope": "all_layers",
+      "quantized_families": [
+        "qkv",
+        "o_proj",
+        "gate_up",
+        "down"
+      ],
+      "group_size": 128,
+      "module_count": 196,
+      "quantized_parameter_count": 440401920,
+      "quantized_parameter_percent": 73.886750962067,
+      "quantized_subset_effective_bits_per_parameter": 4.125,
+      "estimated_storage": {
+        "packed_code_bytes": 220200960,
+        "scale_bytes": 6881280,
+        "retained_full_precision_parameter_count": 155648000,
+        "retained_full_precision_bytes": 311296000,
+        "deployed_weight_bytes": 538378240,
+        "whole_model_effective_bits_per_parameter": 7.225948323255,
+        "reduction_percent": 54.837822979659
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.20879045917141825,
+        "perplexity_ratio": 1.232186778038894,
+        "logit_rmse": 1.2727578871735912,
+        "logit_cosine_similarity": 0.9258855704155327,
+        "top1_agreement": 0.7419354838709677
+      },
+      "report_id": "fbd5c9d8a688b7581da3d1ab1e239ad488b5deda25e7abf7d905b21aa11638fd",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "even-layers-group8",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-even-layers-group8-quality-v1.json",
+      "family_mask": 15,
+      "layer_scope": "even_numbered_layers",
+      "quantized_families": [
+        "qkv",
+        "o_proj",
+        "gate_up",
+        "down"
+      ],
+      "group_size": 8,
+      "module_count": 98,
+      "quantized_parameter_count": 220200960,
+      "quantized_parameter_percent": 36.943375481034,
+      "quantized_subset_effective_bits_per_parameter": 6,
+      "estimated_storage": {
+        "packed_code_bytes": 110100480,
+        "scale_bytes": 55050240,
+        "retained_full_precision_parameter_count": 375848960,
+        "retained_full_precision_bytes": 751697920,
+        "deployed_weight_bytes": 916848640,
+        "whole_model_effective_bits_per_parameter": 12.305662451897,
+        "reduction_percent": 23.089609675646
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.009698609382875478,
+        "perplexity_ratio": 1.0097457933109875,
+        "logit_rmse": 0.5950823145139386,
+        "logit_cosine_similarity": 0.9843568890853007,
+        "top1_agreement": 0.8838709677419355
+      },
+      "report_id": "c08bfa6f790a742948fc489ce83bcfc52f1840f068f36a82bdc8bb67c751f8c4",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "even-layers-group16",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-even-layers-group16-quality-v1.json",
+      "family_mask": 15,
+      "layer_scope": "even_numbered_layers",
+      "quantized_families": [
+        "qkv",
+        "o_proj",
+        "gate_up",
+        "down"
+      ],
+      "group_size": 16,
+      "module_count": 98,
+      "quantized_parameter_count": 220200960,
+      "quantized_parameter_percent": 36.943375481034,
+      "quantized_subset_effective_bits_per_parameter": 5,
+      "estimated_storage": {
+        "packed_code_bytes": 110100480,
+        "scale_bytes": 27525120,
+        "retained_full_precision_parameter_count": 375848960,
+        "retained_full_precision_bytes": 751697920,
+        "deployed_weight_bytes": 889323520,
+        "whole_model_effective_bits_per_parameter": 11.936228697086,
+        "reduction_percent": 25.398570643211
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.022435126766081392,
+        "perplexity_ratio": 1.0226886868899774,
+        "logit_rmse": 0.7109762433590263,
+        "logit_cosine_similarity": 0.9782684977701402,
+        "top1_agreement": 0.8516129032258064
+      },
+      "report_id": "4542073d9d92b24c87ed4bd31cfc3d1fe5e1113d0e6f1299d3048de43d0e409f",
+      "runtime_storage_compressed": false
+    },
+    {
+      "variant": "even-layers",
+      "source_artifact": "artifacts/qwen3-0.6b/int4-even-layers-quality-v1.json",
+      "family_mask": 15,
+      "layer_scope": "even_numbered_layers",
+      "quantized_families": [
+        "qkv",
+        "o_proj",
+        "gate_up",
+        "down"
+      ],
+      "group_size": 128,
+      "module_count": 98,
+      "quantized_parameter_count": 220200960,
+      "quantized_parameter_percent": 36.943375481034,
+      "quantized_subset_effective_bits_per_parameter": 4.125,
+      "estimated_storage": {
+        "packed_code_bytes": 110100480,
+        "scale_bytes": 3440640,
+        "retained_full_precision_parameter_count": 375848960,
+        "retained_full_precision_bytes": 751697920,
+        "deployed_weight_bytes": 865239040,
+        "whole_model_effective_bits_per_parameter": 11.612974161627,
+        "reduction_percent": 27.41891148983
+      },
+      "quality": {
+        "passed": false,
+        "nll_delta": 0.18876217257591987,
+        "perplexity_ratio": 1.2077536813768173,
+        "logit_rmse": 0.9338807600917568,
+        "logit_cosine_similarity": 0.9609611862041954,
+        "top1_agreement": 0.8
+      },
+      "report_id": "d3a6cfc5c5f2ec0e7db45c4f3293ee2917f305ff1faea3a867a9a7b48b0a99fe",
+      "runtime_storage_compressed": false
+    }
+  ],
+  "conclusion": "No all-linear group size passed every numerical gate. The group-8 four-family search found seven passing selective masks; the best was o_proj plus gate/up, estimating 898,498,560 deployed weight bytes, 12.059 whole-model bits per parameter, and a 24.629% reduction from the unique BF16 logical baseline. That selected mask subsequently passed the same five gates against a BF16 baseline over 4,096 contiguous held-out WikiText-2 targets. This strengthens the teacher-forced model-specific selectivity evidence, but runtime weights remained uncompressed and packed-kernel correctness, throughput, latency, energy, task success, serving cost, and dollars per token remain unmeasured."
+}

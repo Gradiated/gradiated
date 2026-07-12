@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "provenance": {
+    "producer": {
+      "name": "foundry-core-test-fixture",
+      "version": "1"
+    },
+    "model": {
+      "model_id": "zai-org/GLM-5.2",
+      "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9"
+    },
+    "phase": {
+      "phase": "decode",
+      "batch_size": 2,
+      "context_tokens": 8192,
+      "candidate_tokens": 4,
+      "committed_tokens": 3
+    }
+  },
+  "actions": [
+    {
+      "id": "decode_batch",
+      "dependencies": [],
+      "evidence": {
+        "kind": "workload_trace",
+        "source_artifact_id": "synthetic:agentic-decode-v1"
+      },
+      "work": {
+        "type": "scheduler",
+        "details": {
+          "decision": "batch_formation",
+          "requests": 2,
+          "tokens": 2
+        }
+      }
+    },
+    {
+      "id": "mla_weights_read",
+      "dependencies": ["decode_batch"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "memory",
+        "details": {
+          "source": "hbm",
+          "destination": "on_chip",
+          "payload": "weights",
+          "bytes": 24576
+        }
+      }
+    },
+    {
+      "id": "mla_kv_read",
+      "dependencies": ["decode_batch"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "memory",
+        "details": {
+          "source": "hbm",
+          "destination": "on_chip",
+          "payload": "kv",
+          "bytes": 8192
+        }
+      }
+    },
+    {
+      "id": "mla_decode",
+      "dependencies": ["mla_weights_read", "mla_kv_read"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "compute",
+        "details": {
+          "class": "matrix_multiply",
+          "label": "mla_decode_projection_and_attention",
+          "flops": 50331648,
+          "non_flop_operations": 0
+        }
+      }
+    },
+    {
+      "id": "dsa_index_read",
+      "dependencies": ["decode_batch"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "memory",
+        "details": {
+          "source": "hbm",
+          "destination": "on_chip",
+          "payload": "indices",
+          "bytes": 1048576
+        }
+      }
+    },
+    {
+      "id": "dsa_index_scan",
+      "dependencies": ["dsa_index_read"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "compute",
+        "details": {
+          "class": "attention_score",
+          "label": "dsa_lightning_index_scan",
+          "flops": 33554432,
+          "non_flop_operations": 0
+        }
+      }
+    },
+    {
+      "id": "dsa_topk",
+      "dependencies": ["dsa_index_scan"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "compute",
+        "details": {
+          "class": "top_k",
+          "label": "dsa_top_2048_selection",
+          "flops": 0,
+          "non_flop_operations": 8192
+        }
+      }
+    },
+    {
+      "id": "indexshare_store",
+      "dependencies": ["dsa_topk"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "cache",
+        "details": {
+          "operation": "store",
+          "tier": "on_chip",
+          "key_space": "dsa_indices",
+          "bytes": 16384,
+          "hit": null
+        }
+      }
+    },
+    {
+      "id": "expert_route",
+      "dependencies": ["mla_decode", "indexshare_store"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "scheduler",
+        "details": {
+          "decision": "expert_routing",
+          "requests": 2,
+          "tokens": 2
+        }
+      }
+    },
+    {
+      "id": "expert_weights_read",
+      "dependencies": ["expert_route"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "memory",
+        "details": {
+          "source": "hbm",
+          "destination": "on_chip",
+          "payload": "weights",
+          "bytes": 4194304
+        }
+      }
+    },
+    {
+      "id": "moe_dispatch",
+      "dependencies": ["expert_route"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "network",
+        "details": {
+          "pattern": {
+            "type": "collective",
+            "collective": "all_to_all",
+            "participants": 8
+          },
+          "source": "expert_parallel_group",
+          "destination": "expert_parallel_group",
+          "aggregate_bytes": 24576,
+          "messages": 56
+        }
+      }
+    },
+    {
+      "id": "expert_ready",
+      "dependencies": ["expert_weights_read", "moe_dispatch"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "synchronization",
+        "details": {
+          "kind": "barrier",
+          "participants": 8
+        }
+      }
+    },
+    {
+      "id": "moe_experts",
+      "dependencies": ["expert_ready"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "compute",
+        "details": {
+          "class": "matrix_multiply",
+          "label": "top8_routed_expert_mlp",
+          "flops": 100663296,
+          "non_flop_operations": 0
+        }
+      }
+    },
+    {
+      "id": "mtp_draft_schedule",
+      "dependencies": ["moe_experts"],
+      "evidence": {
+        "kind": "workload_trace",
+        "source_artifact_id": "synthetic:agentic-decode-v1"
+      },
+      "work": {
+        "type": "scheduler",
+        "details": {
+          "decision": "mtp_draft",
+          "requests": 2,
+          "tokens": 4
+        }
+      }
+    },
+    {
+      "id": "mtp_draft",
+      "dependencies": ["mtp_draft_schedule"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "compute",
+        "details": {
+          "class": "matrix_multiply",
+          "label": "shared_parameter_mtp_draft",
+          "flops": 12582912,
+          "non_flop_operations": 0
+        }
+      }
+    },
+    {
+      "id": "mtp_indexshare_lookup",
+      "dependencies": ["indexshare_store", "mtp_draft_schedule"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "cache",
+        "details": {
+          "operation": "lookup",
+          "tier": "on_chip",
+          "key_space": "dsa_indices",
+          "bytes": 16384,
+          "hit": true
+        }
+      }
+    },
+    {
+      "id": "mtp_verify_ready",
+      "dependencies": ["mtp_draft", "mtp_indexshare_lookup"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "synchronization",
+        "details": {
+          "kind": "barrier",
+          "participants": 2
+        }
+      }
+    },
+    {
+      "id": "mtp_verify",
+      "dependencies": ["mtp_verify_ready"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "compute",
+        "details": {
+          "class": "matrix_multiply",
+          "label": "mtp_verify_candidates",
+          "flops": 25165824,
+          "non_flop_operations": 0
+        }
+      }
+    },
+    {
+      "id": "token_commit",
+      "dependencies": ["mtp_verify"],
+      "evidence": {
+        "kind": "workload_trace",
+        "source_artifact_id": "synthetic:agentic-decode-v1"
+      },
+      "work": {
+        "type": "scheduler",
+        "details": {
+          "decision": "token_commit",
+          "requests": 2,
+          "tokens": 3
+        }
+      }
+    }
+  ]
+}

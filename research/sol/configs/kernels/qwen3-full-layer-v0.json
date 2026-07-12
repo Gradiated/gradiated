@@ -1,0 +1,7 @@
+{
+  "backend": "rust",
+  "attention": "paged",
+  "fusion": "full_layer",
+  "tile_rows": 128,
+  "tile_columns": 128
+}

@@ -1,0 +1,12 @@
+{
+  "name": "qwen3-8b-kv8",
+  "changes": [
+    {
+      "change": "kv_precision",
+      "precision": "fp8"
+    }
+  ],
+  "quality": {
+    "evidence": "unvalidated"
+  }
+}

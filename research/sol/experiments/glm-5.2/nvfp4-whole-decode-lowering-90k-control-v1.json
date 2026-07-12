@@ -1,0 +1,1606 @@
+{
+  "schema_version": 1,
+  "content_id": "f40f41c1d67b909783c40073f475f08906e77ccb05673f2beb630a496b0c7cd3",
+  "result": {
+    "lowering_id": "glm-5.2-nvidia-nvfp4-whole-decode-lowering-90k-control-v1",
+    "model_id": "nvidia/GLM-5.2-NVFP4",
+    "model_revision": "aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa",
+    "checkpoint": {
+      "variant_id": "glm-5.2-nvidia-nvfp4-expert-selective",
+      "checkpoint": {
+        "model_id": "nvidia/GLM-5.2-NVFP4",
+        "checkpoint_revision": "aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa",
+        "payload_bytes": 464794806272,
+        "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+      },
+      "routed_expert_storage": {
+        "kind": "opaque_aggregate_bounds",
+        "bytes": {
+          "lower": 362387865600,
+          "upper": 464794806272
+        },
+        "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json",
+        "lower_bound_basis": "four packed payload bits per BF16-reference logical routed-expert parameter, excluding scales and metadata",
+        "upper_bound_basis": "the routed-expert tensors cannot exceed the exact full checkpoint tensor payload; the expert-selective release layout remains intentionally opaque"
+      }
+    },
+    "active_parameters": {
+      "released_active_parameter_count": {
+        "kind": "approximate",
+        "parameters": 40000000000
+      },
+      "exact_whole_model_active_parameter_count": null,
+      "exact_active_routed_expert_parameter_count_per_candidate_token": 22649241600,
+      "exact_active_shared_and_dense_ffn_parameter_count_per_candidate_token": 3510632448,
+      "exact_active_ffn_parameter_count_per_candidate_token": 26159874048
+    },
+    "route": {
+      "total_dispatches": 9600,
+      "unique_routed_expert_instances": {
+        "lower": 600,
+        "upper": 9600
+      },
+      "remote_dispatches": {
+        "lower": 5192,
+        "upper": 5193
+      },
+      "endpoint_payload_bytes": {
+        "lower": 127598592,
+        "upper": 127623168
+      },
+      "endpoint_message_count": {
+        "lower": 65,
+        "upper": 66
+      },
+      "network_hop_payload_bytes": {
+        "lower": 127598592,
+        "upper": 127623168
+      },
+      "network_hop_message_count": {
+        "lower": 65,
+        "upper": 66
+      },
+      "participants": 8,
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "experiments/glm-5.2/moe-route-skew-v1.json#a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2/synthetic-source-affine-hotset/modeled-fully-connected-8x/traffic-aware-primary-plus-1024-replicas"
+      },
+      "basis": "The pinned synthetic route result is scaled from 39,321,600 dispatches to this step's 9,600 dispatches with floor/ceiling integer bounds. Unique expert residency remains a 600-to-9,600 assumption; no production route histogram is implied. Context length does not scale this candidate-token route work unit.",
+      "route_report_selection": {
+        "report_content_id": "a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2",
+        "scenario_id": "synthetic-source-affine-hotset",
+        "topology_id": "modeled-fully-connected-8x",
+        "strategy_id": "traffic-aware-primary-plus-1024-replicas"
+      }
+    },
+    "weights": {
+      "checkpoint_payload_bytes": 464794806272,
+      "routed_expert_resident_byte_bounds": {
+        "lower": 362387865600,
+        "upper": 464794806272
+      },
+      "average_routed_expert_storage_byte_bounds": {
+        "lower": 18874368,
+        "upper": 24208063
+      },
+      "non_routed_resident_byte_bounds": {
+        "lower": 0,
+        "upper": 102406940672
+      },
+      "routed_expert_hbm_read_bytes": {
+        "lower": 0,
+        "upper": 464794806272
+      },
+      "shared_and_dense_ffn_hbm_read_bytes": {
+        "lower": 0,
+        "upper": 102406940672
+      },
+      "total_ffn_hbm_read_bytes": {
+        "lower": 0,
+        "upper": 464794806272
+      }
+    },
+    "compute": {
+      "exact_routed_expert_flops_per_candidate_token": 45298483200,
+      "exact_shared_and_dense_ffn_flops_per_candidate_token": 7021264896,
+      "exact_ffn_flops_per_candidate_token": 52319748096,
+      "exact_routed_expert_flops": 724775731200,
+      "exact_shared_and_dense_ffn_flops": 112340238336,
+      "exact_ffn_flops": 837115969536,
+      "attention_flops": {
+        "lower": 0,
+        "upper": 5493164062500
+      },
+      "dsa_indexer_flops": {
+        "lower": 0,
+        "upper": 274658203125
+      },
+      "other_non_ffn_flops": {
+        "lower": 0,
+        "upper": 500000000000
+      },
+      "mtp_flops": {
+        "lower": 0,
+        "upper": 1000000000000
+      },
+      "total_flops": {
+        "lower": 837115969536,
+        "upper": 8104938235161
+      },
+      "non_flop_operations": {
+        "lower": 0,
+        "upper": 65480957032
+      }
+    },
+    "semantic_kv_resident_bytes": 64696320000,
+    "lower_bound_ledger_content_id": "386fbfcf01076a825c60386be1d9ab771e93b042b661702511f867b776041efa",
+    "upper_bound_ledger_content_id": "60ac51b8128ece729c73230420bab9245b3c5f2231d0a39b69e240ee5fb7d905",
+    "lower_bound_ledger": {
+      "schema_version": 1,
+      "provenance": {
+        "producer": {
+          "name": "foundry-glm-decode-lowerer",
+          "version": "1-lower-bound"
+        },
+        "model": {
+          "model_id": "nvidia/GLM-5.2-NVFP4",
+          "model_revision": "aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa"
+        },
+        "phase": {
+          "phase": "decode",
+          "batch_size": 8,
+          "context_tokens": 720000,
+          "candidate_tokens": 16,
+          "committed_tokens": 12
+        }
+      },
+      "actions": [
+        {
+          "id": "decode_batch",
+          "dependencies": [],
+          "evidence": {
+            "kind": "workload_trace",
+            "source_artifact_id": "synthetic:agentic-batch8-context90000-candidate16-committed12-control-v1"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "batch_formation",
+              "requests": 8,
+              "tokens": 16
+            }
+          }
+        },
+        {
+          "id": "semantic_kv_read",
+          "dependencies": [
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-agentic-cache-state-90k-control-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "kv",
+              "bytes": 2944401408
+            }
+          }
+        },
+        {
+          "id": "decode_activation_read",
+          "dependencies": [
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "activations",
+              "bytes": 393216
+            }
+          }
+        },
+        {
+          "id": "dsa_index_lookup",
+          "dependencies": [
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-agentic-cache-state-90k-control-v1"
+          },
+          "work": {
+            "type": "cache",
+            "details": {
+              "operation": "lookup",
+              "tier": "on_chip",
+              "key_space": "dsa_indices",
+              "bytes": 9830400,
+              "hit": true
+            }
+          }
+        },
+        {
+          "id": "expert_route",
+          "dependencies": [
+            "dsa_index_lookup",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "experiments/glm-5.2/moe-route-skew-v1.json#a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2/synthetic-source-affine-hotset/modeled-fully-connected-8x/traffic-aware-primary-plus-1024-replicas"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "expert_routing",
+              "requests": 8,
+              "tokens": 16
+            }
+          }
+        },
+        {
+          "id": "moe_dispatch",
+          "dependencies": [
+            "expert_route"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "experiments/glm-5.2/moe-route-skew-v1.json#a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2/synthetic-source-affine-hotset/modeled-fully-connected-8x/traffic-aware-primary-plus-1024-replicas"
+          },
+          "work": {
+            "type": "network",
+            "details": {
+              "pattern": {
+                "type": "collective",
+                "collective": "all_to_all",
+                "participants": 8
+              },
+              "source": "expert_parallel_group",
+              "destination": "expert_parallel_group",
+              "aggregate_bytes": 127598592,
+              "messages": 65
+            }
+          }
+        },
+        {
+          "id": "expert_ready",
+          "dependencies": [
+            "moe_dispatch",
+            "expert_route"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "experiments/glm-5.2/moe-route-skew-v1.json#a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2/synthetic-source-affine-hotset/modeled-fully-connected-8x/traffic-aware-primary-plus-1024-replicas"
+          },
+          "work": {
+            "type": "synchronization",
+            "details": {
+              "kind": "barrier",
+              "participants": 8
+            }
+          }
+        },
+        {
+          "id": "routed_expert_ffn",
+          "dependencies": [
+            "expert_ready"
+          ],
+          "evidence": {
+            "kind": "derived_fact",
+            "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "matrix_multiply",
+              "label": "exact_glm_active_routed_expert_ffn",
+              "flops": 724775731200,
+              "non_flop_operations": 0
+            }
+          }
+        },
+        {
+          "id": "shared_dense_ffn",
+          "dependencies": [
+            "expert_ready"
+          ],
+          "evidence": {
+            "kind": "derived_fact",
+            "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "matrix_multiply",
+              "label": "exact_glm_active_shared_and_dense_ffn",
+              "flops": 112340238336,
+              "non_flop_operations": 0
+            }
+          }
+        },
+        {
+          "id": "ffn_complete",
+          "dependencies": [
+            "routed_expert_ffn",
+            "shared_dense_ffn"
+          ],
+          "evidence": {
+            "kind": "derived_fact",
+            "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+          },
+          "work": {
+            "type": "synchronization",
+            "details": {
+              "kind": "event",
+              "participants": 2
+            }
+          }
+        },
+        {
+          "id": "semantic_kv_store",
+          "dependencies": [
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-agentic-cache-state-90k-control-v1"
+          },
+          "work": {
+            "type": "cache",
+            "details": {
+              "operation": "store",
+              "tier": "on_chip",
+              "key_space": "kv",
+              "bytes": 1078272,
+              "hit": null
+            }
+          }
+        },
+        {
+          "id": "mtp_draft_schedule",
+          "dependencies": [
+            "ffn_complete",
+            "semantic_kv_store"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "mtp_draft",
+              "requests": 8,
+              "tokens": 8
+            }
+          }
+        },
+        {
+          "id": "mtp_verify_schedule",
+          "dependencies": [
+            "mtp_draft_schedule"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "mtp_verify",
+              "requests": 8,
+              "tokens": 16
+            }
+          }
+        },
+        {
+          "id": "mtp_verify_ready",
+          "dependencies": [
+            "mtp_verify_schedule"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "synchronization",
+            "details": {
+              "kind": "barrier",
+              "participants": 8
+            }
+          }
+        },
+        {
+          "id": "token_commit",
+          "dependencies": [
+            "mtp_verify_ready",
+            "semantic_kv_store"
+          ],
+          "evidence": {
+            "kind": "workload_trace",
+            "source_artifact_id": "synthetic:agentic-batch8-context90000-candidate16-committed12-control-v1"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "token_commit",
+              "requests": 8,
+              "tokens": 12
+            }
+          }
+        }
+      ]
+    },
+    "upper_bound_ledger": {
+      "schema_version": 1,
+      "provenance": {
+        "producer": {
+          "name": "foundry-glm-decode-lowerer",
+          "version": "1-upper-bound"
+        },
+        "model": {
+          "model_id": "nvidia/GLM-5.2-NVFP4",
+          "model_revision": "aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa"
+        },
+        "phase": {
+          "phase": "decode",
+          "batch_size": 8,
+          "context_tokens": 720000,
+          "candidate_tokens": 16,
+          "committed_tokens": 12
+        }
+      },
+      "actions": [
+        {
+          "id": "decode_batch",
+          "dependencies": [],
+          "evidence": {
+            "kind": "workload_trace",
+            "source_artifact_id": "synthetic:agentic-batch8-context90000-candidate16-committed12-control-v1"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "batch_formation",
+              "requests": 8,
+              "tokens": 16
+            }
+          }
+        },
+        {
+          "id": "attention_weights_read",
+          "dependencies": [
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "weights",
+              "bytes": 102406940672
+            }
+          }
+        },
+        {
+          "id": "semantic_kv_read",
+          "dependencies": [
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-agentic-cache-state-90k-control-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "kv",
+              "bytes": 129392640000
+            }
+          }
+        },
+        {
+          "id": "decode_activation_read",
+          "dependencies": [
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "activations",
+              "bytes": 1000000000
+            }
+          }
+        },
+        {
+          "id": "attention_compute",
+          "dependencies": [
+            "attention_weights_read",
+            "semantic_kv_read",
+            "decode_activation_read",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "attention_score",
+              "label": "bounded_glm_mla_attention_and_projection",
+              "flops": 5493164062500,
+              "non_flop_operations": 54931640625
+            }
+          }
+        },
+        {
+          "id": "dsa_indexer_weights_read",
+          "dependencies": [
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "weights",
+              "bytes": 102406940672
+            }
+          }
+        },
+        {
+          "id": "dsa_indexer_compute",
+          "dependencies": [
+            "dsa_indexer_weights_read",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "matrix_multiply",
+              "label": "bounded_glm_dsa_indexer",
+              "flops": 274658203125,
+              "non_flop_operations": 0
+            }
+          }
+        },
+        {
+          "id": "dsa_topk",
+          "dependencies": [
+            "dsa_indexer_compute",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "top_k",
+              "label": "bounded_glm_dsa_topk_selection",
+              "flops": 0,
+              "non_flop_operations": 549316407
+            }
+          }
+        },
+        {
+          "id": "other_non_ffn_weights_read",
+          "dependencies": [
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "weights",
+              "bytes": 102406940672
+            }
+          }
+        },
+        {
+          "id": "other_non_ffn_compute",
+          "dependencies": [
+            "other_non_ffn_weights_read",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "elementwise",
+              "label": "bounded_glm_other_non_ffn_decode_work",
+              "flops": 500000000000,
+              "non_flop_operations": 10000000000
+            }
+          }
+        },
+        {
+          "id": "dsa_index_lookup",
+          "dependencies": [
+            "dsa_topk",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-agentic-cache-state-90k-control-v1"
+          },
+          "work": {
+            "type": "cache",
+            "details": {
+              "operation": "lookup",
+              "tier": "on_chip",
+              "key_space": "dsa_indices",
+              "bytes": 9830400,
+              "hit": true
+            }
+          }
+        },
+        {
+          "id": "dsa_index_store",
+          "dependencies": [
+            "dsa_topk",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-agentic-cache-state-90k-control-v1"
+          },
+          "work": {
+            "type": "cache",
+            "details": {
+              "operation": "store",
+              "tier": "on_chip",
+              "key_space": "dsa_indices",
+              "bytes": 9830400,
+              "hit": null
+            }
+          }
+        },
+        {
+          "id": "expert_route",
+          "dependencies": [
+            "attention_compute",
+            "dsa_index_lookup",
+            "dsa_index_store",
+            "dsa_topk",
+            "other_non_ffn_compute",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "experiments/glm-5.2/moe-route-skew-v1.json#a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2/synthetic-source-affine-hotset/modeled-fully-connected-8x/traffic-aware-primary-plus-1024-replicas"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "expert_routing",
+              "requests": 8,
+              "tokens": 16
+            }
+          }
+        },
+        {
+          "id": "opaque_ffn_weights_read",
+          "dependencies": [
+            "expert_route"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "experiments/glm-5.2/moe-route-skew-v1.json#a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2/synthetic-source-affine-hotset/modeled-fully-connected-8x/traffic-aware-primary-plus-1024-replicas+modeled-assumption:glm-5.2-nvfp4-agentic-cache-state-90k-control-v1+huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "weights",
+              "bytes": 464794806272
+            }
+          }
+        },
+        {
+          "id": "moe_dispatch",
+          "dependencies": [
+            "expert_route"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "experiments/glm-5.2/moe-route-skew-v1.json#a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2/synthetic-source-affine-hotset/modeled-fully-connected-8x/traffic-aware-primary-plus-1024-replicas"
+          },
+          "work": {
+            "type": "network",
+            "details": {
+              "pattern": {
+                "type": "collective",
+                "collective": "all_to_all",
+                "participants": 8
+              },
+              "source": "expert_parallel_group",
+              "destination": "expert_parallel_group",
+              "aggregate_bytes": 127623168,
+              "messages": 66
+            }
+          }
+        },
+        {
+          "id": "expert_ready",
+          "dependencies": [
+            "opaque_ffn_weights_read",
+            "moe_dispatch",
+            "expert_route"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "experiments/glm-5.2/moe-route-skew-v1.json#a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2/synthetic-source-affine-hotset/modeled-fully-connected-8x/traffic-aware-primary-plus-1024-replicas"
+          },
+          "work": {
+            "type": "synchronization",
+            "details": {
+              "kind": "barrier",
+              "participants": 8
+            }
+          }
+        },
+        {
+          "id": "routed_expert_ffn",
+          "dependencies": [
+            "expert_ready"
+          ],
+          "evidence": {
+            "kind": "derived_fact",
+            "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "matrix_multiply",
+              "label": "exact_glm_active_routed_expert_ffn",
+              "flops": 724775731200,
+              "non_flop_operations": 0
+            }
+          }
+        },
+        {
+          "id": "shared_dense_ffn",
+          "dependencies": [
+            "expert_ready"
+          ],
+          "evidence": {
+            "kind": "derived_fact",
+            "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "matrix_multiply",
+              "label": "exact_glm_active_shared_and_dense_ffn",
+              "flops": 112340238336,
+              "non_flop_operations": 0
+            }
+          }
+        },
+        {
+          "id": "ffn_complete",
+          "dependencies": [
+            "routed_expert_ffn",
+            "shared_dense_ffn"
+          ],
+          "evidence": {
+            "kind": "derived_fact",
+            "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+          },
+          "work": {
+            "type": "synchronization",
+            "details": {
+              "kind": "event",
+              "participants": 2
+            }
+          }
+        },
+        {
+          "id": "semantic_kv_store",
+          "dependencies": [
+            "attention_compute",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-agentic-cache-state-90k-control-v1"
+          },
+          "work": {
+            "type": "cache",
+            "details": {
+              "operation": "store",
+              "tier": "on_chip",
+              "key_space": "kv",
+              "bytes": 1437696,
+              "hit": null
+            }
+          }
+        },
+        {
+          "id": "mtp_draft_schedule",
+          "dependencies": [
+            "ffn_complete",
+            "semantic_kv_store"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "mtp_draft",
+              "requests": 8,
+              "tokens": 8
+            }
+          }
+        },
+        {
+          "id": "mtp_state_read",
+          "dependencies": [
+            "mtp_draft_schedule"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "mtp_state",
+              "bytes": 98304
+            }
+          }
+        },
+        {
+          "id": "mtp_draft_compute",
+          "dependencies": [
+            "mtp_state_read",
+            "mtp_draft_schedule"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "matrix_multiply",
+              "label": "bounded_glm_shared_parameter_mtp_draft",
+              "flops": 500000000000,
+              "non_flop_operations": 0
+            }
+          }
+        },
+        {
+          "id": "mtp_state_write",
+          "dependencies": [
+            "mtp_draft_compute",
+            "mtp_draft_schedule"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "on_chip",
+              "destination": "hbm",
+              "payload": "mtp_state",
+              "bytes": 98304
+            }
+          }
+        },
+        {
+          "id": "mtp_verify_schedule",
+          "dependencies": [
+            "mtp_draft_compute",
+            "mtp_state_write",
+            "mtp_draft_schedule"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "mtp_verify",
+              "requests": 8,
+              "tokens": 16
+            }
+          }
+        },
+        {
+          "id": "mtp_verify_compute",
+          "dependencies": [
+            "mtp_verify_schedule"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "matrix_multiply",
+              "label": "bounded_glm_mtp_verification",
+              "flops": 500000000000,
+              "non_flop_operations": 0
+            }
+          }
+        },
+        {
+          "id": "mtp_verify_ready",
+          "dependencies": [
+            "mtp_verify_compute",
+            "mtp_verify_schedule"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "synchronization",
+            "details": {
+              "kind": "barrier",
+              "participants": 8
+            }
+          }
+        },
+        {
+          "id": "token_commit",
+          "dependencies": [
+            "mtp_verify_ready",
+            "semantic_kv_store"
+          ],
+          "evidence": {
+            "kind": "workload_trace",
+            "source_artifact_id": "synthetic:agentic-batch8-context90000-candidate16-committed12-control-v1"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "token_commit",
+              "requests": 8,
+              "tokens": 12
+            }
+          }
+        }
+      ]
+    },
+    "hardware_study_bound": "upper",
+    "hardware_study_ledger": {
+      "schema_version": 1,
+      "provenance": {
+        "producer": {
+          "name": "foundry-glm-decode-lowerer",
+          "version": "1-upper-bound"
+        },
+        "model": {
+          "model_id": "nvidia/GLM-5.2-NVFP4",
+          "model_revision": "aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa"
+        },
+        "phase": {
+          "phase": "decode",
+          "batch_size": 8,
+          "context_tokens": 720000,
+          "candidate_tokens": 16,
+          "committed_tokens": 12
+        }
+      },
+      "actions": [
+        {
+          "id": "decode_batch",
+          "dependencies": [],
+          "evidence": {
+            "kind": "workload_trace",
+            "source_artifact_id": "synthetic:agentic-batch8-context90000-candidate16-committed12-control-v1"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "batch_formation",
+              "requests": 8,
+              "tokens": 16
+            }
+          }
+        },
+        {
+          "id": "attention_weights_read",
+          "dependencies": [
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "weights",
+              "bytes": 102406940672
+            }
+          }
+        },
+        {
+          "id": "semantic_kv_read",
+          "dependencies": [
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-agentic-cache-state-90k-control-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "kv",
+              "bytes": 129392640000
+            }
+          }
+        },
+        {
+          "id": "decode_activation_read",
+          "dependencies": [
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "activations",
+              "bytes": 1000000000
+            }
+          }
+        },
+        {
+          "id": "attention_compute",
+          "dependencies": [
+            "attention_weights_read",
+            "semantic_kv_read",
+            "decode_activation_read",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "attention_score",
+              "label": "bounded_glm_mla_attention_and_projection",
+              "flops": 5493164062500,
+              "non_flop_operations": 54931640625
+            }
+          }
+        },
+        {
+          "id": "dsa_indexer_weights_read",
+          "dependencies": [
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "weights",
+              "bytes": 102406940672
+            }
+          }
+        },
+        {
+          "id": "dsa_indexer_compute",
+          "dependencies": [
+            "dsa_indexer_weights_read",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "matrix_multiply",
+              "label": "bounded_glm_dsa_indexer",
+              "flops": 274658203125,
+              "non_flop_operations": 0
+            }
+          }
+        },
+        {
+          "id": "dsa_topk",
+          "dependencies": [
+            "dsa_indexer_compute",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "top_k",
+              "label": "bounded_glm_dsa_topk_selection",
+              "flops": 0,
+              "non_flop_operations": 549316407
+            }
+          }
+        },
+        {
+          "id": "other_non_ffn_weights_read",
+          "dependencies": [
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "weights",
+              "bytes": 102406940672
+            }
+          }
+        },
+        {
+          "id": "other_non_ffn_compute",
+          "dependencies": [
+            "other_non_ffn_weights_read",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-whole-decode-attention-dsa-90k-control-v1"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "elementwise",
+              "label": "bounded_glm_other_non_ffn_decode_work",
+              "flops": 500000000000,
+              "non_flop_operations": 10000000000
+            }
+          }
+        },
+        {
+          "id": "dsa_index_lookup",
+          "dependencies": [
+            "dsa_topk",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-agentic-cache-state-90k-control-v1"
+          },
+          "work": {
+            "type": "cache",
+            "details": {
+              "operation": "lookup",
+              "tier": "on_chip",
+              "key_space": "dsa_indices",
+              "bytes": 9830400,
+              "hit": true
+            }
+          }
+        },
+        {
+          "id": "dsa_index_store",
+          "dependencies": [
+            "dsa_topk",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-agentic-cache-state-90k-control-v1"
+          },
+          "work": {
+            "type": "cache",
+            "details": {
+              "operation": "store",
+              "tier": "on_chip",
+              "key_space": "dsa_indices",
+              "bytes": 9830400,
+              "hit": null
+            }
+          }
+        },
+        {
+          "id": "expert_route",
+          "dependencies": [
+            "attention_compute",
+            "dsa_index_lookup",
+            "dsa_index_store",
+            "dsa_topk",
+            "other_non_ffn_compute",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "experiments/glm-5.2/moe-route-skew-v1.json#a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2/synthetic-source-affine-hotset/modeled-fully-connected-8x/traffic-aware-primary-plus-1024-replicas"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "expert_routing",
+              "requests": 8,
+              "tokens": 16
+            }
+          }
+        },
+        {
+          "id": "opaque_ffn_weights_read",
+          "dependencies": [
+            "expert_route"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "experiments/glm-5.2/moe-route-skew-v1.json#a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2/synthetic-source-affine-hotset/modeled-fully-connected-8x/traffic-aware-primary-plus-1024-replicas+modeled-assumption:glm-5.2-nvfp4-agentic-cache-state-90k-control-v1+huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "weights",
+              "bytes": 464794806272
+            }
+          }
+        },
+        {
+          "id": "moe_dispatch",
+          "dependencies": [
+            "expert_route"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "experiments/glm-5.2/moe-route-skew-v1.json#a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2/synthetic-source-affine-hotset/modeled-fully-connected-8x/traffic-aware-primary-plus-1024-replicas"
+          },
+          "work": {
+            "type": "network",
+            "details": {
+              "pattern": {
+                "type": "collective",
+                "collective": "all_to_all",
+                "participants": 8
+              },
+              "source": "expert_parallel_group",
+              "destination": "expert_parallel_group",
+              "aggregate_bytes": 127623168,
+              "messages": 66
+            }
+          }
+        },
+        {
+          "id": "expert_ready",
+          "dependencies": [
+            "opaque_ffn_weights_read",
+            "moe_dispatch",
+            "expert_route"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "experiments/glm-5.2/moe-route-skew-v1.json#a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2/synthetic-source-affine-hotset/modeled-fully-connected-8x/traffic-aware-primary-plus-1024-replicas"
+          },
+          "work": {
+            "type": "synchronization",
+            "details": {
+              "kind": "barrier",
+              "participants": 8
+            }
+          }
+        },
+        {
+          "id": "routed_expert_ffn",
+          "dependencies": [
+            "expert_ready"
+          ],
+          "evidence": {
+            "kind": "derived_fact",
+            "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "matrix_multiply",
+              "label": "exact_glm_active_routed_expert_ffn",
+              "flops": 724775731200,
+              "non_flop_operations": 0
+            }
+          }
+        },
+        {
+          "id": "shared_dense_ffn",
+          "dependencies": [
+            "expert_ready"
+          ],
+          "evidence": {
+            "kind": "derived_fact",
+            "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "matrix_multiply",
+              "label": "exact_glm_active_shared_and_dense_ffn",
+              "flops": 112340238336,
+              "non_flop_operations": 0
+            }
+          }
+        },
+        {
+          "id": "ffn_complete",
+          "dependencies": [
+            "routed_expert_ffn",
+            "shared_dense_ffn"
+          ],
+          "evidence": {
+            "kind": "derived_fact",
+            "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+          },
+          "work": {
+            "type": "synchronization",
+            "details": {
+              "kind": "event",
+              "participants": 2
+            }
+          }
+        },
+        {
+          "id": "semantic_kv_store",
+          "dependencies": [
+            "attention_compute",
+            "decode_batch"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-nvfp4-agentic-cache-state-90k-control-v1"
+          },
+          "work": {
+            "type": "cache",
+            "details": {
+              "operation": "store",
+              "tier": "on_chip",
+              "key_space": "kv",
+              "bytes": 1437696,
+              "hit": null
+            }
+          }
+        },
+        {
+          "id": "mtp_draft_schedule",
+          "dependencies": [
+            "ffn_complete",
+            "semantic_kv_store"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "mtp_draft",
+              "requests": 8,
+              "tokens": 8
+            }
+          }
+        },
+        {
+          "id": "mtp_state_read",
+          "dependencies": [
+            "mtp_draft_schedule"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "hbm",
+              "destination": "on_chip",
+              "payload": "mtp_state",
+              "bytes": 98304
+            }
+          }
+        },
+        {
+          "id": "mtp_draft_compute",
+          "dependencies": [
+            "mtp_state_read",
+            "mtp_draft_schedule"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "matrix_multiply",
+              "label": "bounded_glm_shared_parameter_mtp_draft",
+              "flops": 500000000000,
+              "non_flop_operations": 0
+            }
+          }
+        },
+        {
+          "id": "mtp_state_write",
+          "dependencies": [
+            "mtp_draft_compute",
+            "mtp_draft_schedule"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "memory",
+            "details": {
+              "source": "on_chip",
+              "destination": "hbm",
+              "payload": "mtp_state",
+              "bytes": 98304
+            }
+          }
+        },
+        {
+          "id": "mtp_verify_schedule",
+          "dependencies": [
+            "mtp_draft_compute",
+            "mtp_state_write",
+            "mtp_draft_schedule"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "mtp_verify",
+              "requests": 8,
+              "tokens": 16
+            }
+          }
+        },
+        {
+          "id": "mtp_verify_compute",
+          "dependencies": [
+            "mtp_verify_schedule"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "compute",
+            "details": {
+              "class": "matrix_multiply",
+              "label": "bounded_glm_mtp_verification",
+              "flops": 500000000000,
+              "non_flop_operations": 0
+            }
+          }
+        },
+        {
+          "id": "mtp_verify_ready",
+          "dependencies": [
+            "mtp_verify_compute",
+            "mtp_verify_schedule"
+          ],
+          "evidence": {
+            "kind": "assumption",
+            "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+          },
+          "work": {
+            "type": "synchronization",
+            "details": {
+              "kind": "barrier",
+              "participants": 8
+            }
+          }
+        },
+        {
+          "id": "token_commit",
+          "dependencies": [
+            "mtp_verify_ready",
+            "semantic_kv_store"
+          ],
+          "evidence": {
+            "kind": "workload_trace",
+            "source_artifact_id": "synthetic:agentic-batch8-context90000-candidate16-committed12-control-v1"
+          },
+          "work": {
+            "type": "scheduler",
+            "details": {
+              "decision": "token_commit",
+              "requests": 8,
+              "tokens": 12
+            }
+          }
+        }
+      ]
+    },
+    "completeness": {
+      "work_bounds_collapsed": false,
+      "all_actions_calibrated": false,
+      "complete_hardware_timing_claim_permitted": false,
+      "cost_per_token_claim_permitted": false,
+      "checkpoint_quality_claim_permitted": false,
+      "blockers": [
+        "non_collapsed_work_bounds",
+        "opaque_checkpoint_layout",
+        "approximate_whole_model_active_parameters",
+        "missing_action_calibration",
+        "ledger_contains_assumptions"
+      ]
+    }
+  }
+}

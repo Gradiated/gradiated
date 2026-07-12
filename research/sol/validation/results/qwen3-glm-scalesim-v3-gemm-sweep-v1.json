@@ -1,0 +1,1951 @@
+{
+  "adapter_identity": {
+    "driver_sha256": "a2e967dcd381dbda21695d6f9f40476dddf3071a89fe7fad7c54427c9e2142d7",
+    "name": "inference-foundry/scalesim-v3-adapter",
+    "normalizer_sha256": "cbfa2d83be8e9e793acf81d2b0ed4a1367198948a2e5a76a199379eae9688d6a",
+    "runner_sha256": "e02121c7d00acacf331b91c84867d01b488ad7e6a815af8c20990ecb5c9f46ec",
+    "version": "1"
+  },
+  "cases": [
+    {
+      "architecture": {
+        "array_height": 16,
+        "array_width": 16,
+        "dataflow": "ws",
+        "filter_sram_kb": 64,
+        "id": "ws-16x16-sram64kb",
+        "ifmap_sram_kb": 64,
+        "interface_bandwidth": "CALC",
+        "ofmap_sram_kb": 64,
+        "role": "base_array_dataflow_sweep"
+      },
+      "case_id": "qwen3-0.6b-o-proj-bf16-b1/ws-16x16-sram64kb",
+      "logical_accounting": {
+        "flops": 4194304,
+        "input_bytes": 4096,
+        "input_elements": 2048,
+        "multiply_accumulates": 2097152,
+        "output_bytes": 2048,
+        "output_elements": 1024,
+        "total_tensor_bytes": 4200448,
+        "weight_bytes": 4194304,
+        "weight_elements": 2097152
+      },
+      "native_result": {
+        "access_semantics": "native_scale_sim_element_access_counts_not_foundry_logical_bytes",
+        "access_windows": {
+          "dram_filter": {
+            "start_cycle": -3275.0,
+            "stop_cycle": 384797.0
+          },
+          "dram_ifmap": {
+            "start_cycle": -262.0,
+            "stop_cycle": -1.0
+          },
+          "dram_ofmap": {
+            "start_cycle": 96287.0,
+            "stop_cycle": 387071.0
+          },
+          "sram_filter": {
+            "start_cycle": 1.0,
+            "stop_cycle": 384993.0
+          },
+          "sram_ifmap": {
+            "start_cycle": 17.0,
+            "stop_cycle": 385009.0
+          },
+          "sram_ofmap": {
+            "start_cycle": 31.0,
+            "stop_cycle": 385023.0
+          }
+        },
+        "bandwidth": {
+          "average_filter_dram_words_per_cycle": 5.404014193205917,
+          "average_filter_sram_words_per_cycle": 5.4468226573477425,
+          "average_ifmap_dram_words_per_cycle": 7.816793893129771,
+          "average_ifmap_sram_words_per_cycle": 0.3404264160842339,
+          "average_ofmap_dram_words_per_cycle": 0.4508038585209003,
+          "average_ofmap_sram_words_per_cycle": 0.3404264160842339
+        },
+        "compute_utilization_percent": 1.6129032258064515,
+        "dram_accesses": {
+          "filter_reads": 2097152,
+          "ifmap_reads": 2048,
+          "ofmap_writes": 131087
+        },
+        "mapping_efficiency_percent": 100.0,
+        "overall_utilization_percent": 2.127665100526462,
+        "sram_accesses": {
+          "filter_reads": 2097152,
+          "ifmap_reads": 131072,
+          "ofmap_writes": 131072
+        },
+        "stall_cycles": 0,
+        "total_cycles": 385023,
+        "total_cycles_including_prefetch": 390346
+      },
+      "raw_artifacts": [
+        {
+          "bytes": 747,
+          "path": "input/config.cfg",
+          "sha256": "2aedf1ea2403a69ae0eefa6f0b13fe1d9088b96d17f34feb89998d5f843b5c6f"
+        },
+        {
+          "bytes": 654,
+          "path": "input/layout.csv",
+          "sha256": "4cbf39e3d95fa0de3eb84995eb28c0169f0c76e3de1435bc93446c4fb0b3a755"
+        },
+        {
+          "bytes": 63,
+          "path": "input/topology.csv",
+          "sha256": "9be4bca556920c7ba4efa76ff52d834b6fa234daf5f1b72cab6a85eaee981686"
+        },
+        {
+          "bytes": 246,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__ws-16x16-sram64kb/BANDWIDTH_REPORT.csv",
+          "sha256": "65fd345e3b9f0319d4a650dc2fe8bb295ae5f0747aeb3c396520c62f36a6e737"
+        },
+        {
+          "bytes": 190,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__ws-16x16-sram64kb/COMPUTE_REPORT.csv",
+          "sha256": "7c7e0d82a1071251da968160f3d53b7eae00b77db069bbfe3cd0ad28b144cada"
+        },
+        {
+          "bytes": 557,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__ws-16x16-sram64kb/DETAILED_ACCESS_REPORT.csv",
+          "sha256": "a0f23394ef141e8e1e00001d29cd6d2c1dc8cc616af2e766c5ecfecd0f3a3647"
+        },
+        {
+          "bytes": 375,
+          "path": "process.json",
+          "sha256": "ee45208c3be462030810bb5fd653e00c426cb59a2333549b862b493138b3d10c"
+        },
+        {
+          "bytes": 0,
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 0,
+          "path": "stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "workload": {
+        "dimensions": {
+          "batch": 1,
+          "k": 2048,
+          "m": 1,
+          "n": 1024
+        },
+        "id": "qwen3-0.6b-o-proj-bf16-b1",
+        "model_id": "Qwen/Qwen3-0.6B",
+        "operator": "decoder.layer0.self_attn.o_proj",
+        "semantic_limit": "SCALE-Sim models dense element movement and systolic-array scheduling; it does not execute BF16 arithmetic or Qwen model code.",
+        "source_contract": {
+          "basis": "The checked Foundry KernelProblem and Timeloop export pin B=1, M=1, N=1024, K=2048 and exact BF16 logical operand accounting.",
+          "content_id": "f88f03ed0d8ae74a571d4dd21126663d3557b55263eaf87f40b50f9fe385f8bd",
+          "kind": "timeloop_problem_export",
+          "path": "../../experiments/qwen3-0.6b/timeloop-o-proj-bf16-decode-b1-v1.json",
+          "sha256": "9e3f458939012cbd88772988be4be853bbd2140a564cbca24e467bead9de3375"
+        },
+        "tensor_types": {
+          "accumulator": "fp32",
+          "input": "bf16",
+          "output": "bf16",
+          "weight": "bf16"
+        }
+      }
+    },
+    {
+      "architecture": {
+        "array_height": 32,
+        "array_width": 32,
+        "dataflow": "ws",
+        "filter_sram_kb": 64,
+        "id": "ws-32x32-sram64kb",
+        "ifmap_sram_kb": 64,
+        "interface_bandwidth": "CALC",
+        "ofmap_sram_kb": 64,
+        "role": "base_array_dataflow_sweep"
+      },
+      "case_id": "qwen3-0.6b-o-proj-bf16-b1/ws-32x32-sram64kb",
+      "logical_accounting": {
+        "flops": 4194304,
+        "input_bytes": 4096,
+        "input_elements": 2048,
+        "multiply_accumulates": 2097152,
+        "output_bytes": 2048,
+        "output_elements": 1024,
+        "total_tensor_bytes": 4200448,
+        "weight_bytes": 4194304,
+        "weight_elements": 2097152
+      },
+      "native_result": {
+        "access_semantics": "native_scale_sim_element_access_counts_not_foundry_logical_bytes",
+        "access_windows": {
+          "dram_filter": {
+            "start_cycle": -3275.0,
+            "stop_cycle": 194398.0
+          },
+          "dram_ifmap": {
+            "start_cycle": -262.0,
+            "stop_cycle": -1.0
+          },
+          "dram_ofmap": {
+            "start_cycle": 97343.0,
+            "stop_cycle": 195583.0
+          },
+          "sram_filter": {
+            "start_cycle": 1.0,
+            "stop_cycle": 194497.0
+          },
+          "sram_ifmap": {
+            "start_cycle": 33.0,
+            "stop_cycle": 194529.0
+          },
+          "sram_ofmap": {
+            "start_cycle": 63.0,
+            "stop_cycle": 194559.0
+          }
+        },
+        "bandwidth": {
+          "average_filter_dram_words_per_cycle": 10.609144348776269,
+          "average_filter_sram_words_per_cycle": 10.779002770367857,
+          "average_ifmap_dram_words_per_cycle": 7.816793893129771,
+          "average_ifmap_sram_words_per_cycle": 0.3368438365739955,
+          "average_ofmap_dram_words_per_cycle": 0.6674097372787329,
+          "average_ofmap_sram_words_per_cycle": 0.3368438365739955
+        },
+        "compute_utilization_percent": 0.7936507936507936,
+        "dram_accesses": {
+          "filter_reads": 2097152,
+          "ifmap_reads": 2048,
+          "ofmap_writes": 65567
+        },
+        "mapping_efficiency_percent": 100.0,
+        "overall_utilization_percent": 1.0526369892937362,
+        "sram_accesses": {
+          "filter_reads": 2097152,
+          "ifmap_reads": 65536,
+          "ofmap_writes": 65536
+        },
+        "stall_cycles": 0,
+        "total_cycles": 194559,
+        "total_cycles_including_prefetch": 198858
+      },
+      "raw_artifacts": [
+        {
+          "bytes": 747,
+          "path": "input/config.cfg",
+          "sha256": "793187ddf269d82384f642bcedfebb6082fa89d381c0480865f77ede2992b30f"
+        },
+        {
+          "bytes": 654,
+          "path": "input/layout.csv",
+          "sha256": "4cbf39e3d95fa0de3eb84995eb28c0169f0c76e3de1435bc93446c4fb0b3a755"
+        },
+        {
+          "bytes": 63,
+          "path": "input/topology.csv",
+          "sha256": "9be4bca556920c7ba4efa76ff52d834b6fa234daf5f1b72cab6a85eaee981686"
+        },
+        {
+          "bytes": 247,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__ws-32x32-sram64kb/BANDWIDTH_REPORT.csv",
+          "sha256": "443b732273be7c705a3d452d2258ab09768ecc1a5ad1033fa9864a752fce94ee"
+        },
+        {
+          "bytes": 191,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__ws-32x32-sram64kb/COMPUTE_REPORT.csv",
+          "sha256": "0da7dcf25bb7fce43b902f39055ccdff2bcc103f8f8f528fdf4de91e9ced80fe"
+        },
+        {
+          "bytes": 554,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__ws-32x32-sram64kb/DETAILED_ACCESS_REPORT.csv",
+          "sha256": "bc396f2fb595da2cdb37efd3ff1eee597369d6f903e3adccba90551bc3efaddd"
+        },
+        {
+          "bytes": 375,
+          "path": "process.json",
+          "sha256": "ee45208c3be462030810bb5fd653e00c426cb59a2333549b862b493138b3d10c"
+        },
+        {
+          "bytes": 0,
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 0,
+          "path": "stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "workload": {
+        "dimensions": {
+          "batch": 1,
+          "k": 2048,
+          "m": 1,
+          "n": 1024
+        },
+        "id": "qwen3-0.6b-o-proj-bf16-b1",
+        "model_id": "Qwen/Qwen3-0.6B",
+        "operator": "decoder.layer0.self_attn.o_proj",
+        "semantic_limit": "SCALE-Sim models dense element movement and systolic-array scheduling; it does not execute BF16 arithmetic or Qwen model code.",
+        "source_contract": {
+          "basis": "The checked Foundry KernelProblem and Timeloop export pin B=1, M=1, N=1024, K=2048 and exact BF16 logical operand accounting.",
+          "content_id": "f88f03ed0d8ae74a571d4dd21126663d3557b55263eaf87f40b50f9fe385f8bd",
+          "kind": "timeloop_problem_export",
+          "path": "../../experiments/qwen3-0.6b/timeloop-o-proj-bf16-decode-b1-v1.json",
+          "sha256": "9e3f458939012cbd88772988be4be853bbd2140a564cbca24e467bead9de3375"
+        },
+        "tensor_types": {
+          "accumulator": "fp32",
+          "input": "bf16",
+          "output": "bf16",
+          "weight": "bf16"
+        }
+      }
+    },
+    {
+      "architecture": {
+        "array_height": 64,
+        "array_width": 64,
+        "dataflow": "ws",
+        "filter_sram_kb": 64,
+        "id": "ws-64x64-sram64kb",
+        "ifmap_sram_kb": 64,
+        "interface_bandwidth": "CALC",
+        "ofmap_sram_kb": 64,
+        "role": "base_array_dataflow_sweep"
+      },
+      "case_id": "qwen3-0.6b-o-proj-bf16-b1/ws-64x64-sram64kb",
+      "logical_accounting": {
+        "flops": 4194304,
+        "input_bytes": 4096,
+        "input_elements": 2048,
+        "multiply_accumulates": 2097152,
+        "output_bytes": 2048,
+        "output_elements": 1024,
+        "total_tensor_bytes": 4200448,
+        "weight_bytes": 4194304,
+        "weight_elements": 2097152
+      },
+      "native_result": {
+        "access_semantics": "native_scale_sim_element_access_counts_not_foundry_logical_bytes",
+        "access_windows": {
+          "dram_filter": {
+            "start_cycle": -3275.0,
+            "stop_cycle": 97647.0
+          },
+          "dram_ifmap": {
+            "start_cycle": -262.0,
+            "stop_cycle": -1.0
+          },
+          "dram_ofmap": {
+            "start_cycle": 97791.0,
+            "stop_cycle": 98302.0
+          },
+          "sram_filter": {
+            "start_cycle": 1.0,
+            "stop_cycle": 97665.0
+          },
+          "sram_ifmap": {
+            "start_cycle": 65.0,
+            "stop_cycle": 97729.0
+          },
+          "sram_ofmap": {
+            "start_cycle": 127.0,
+            "stop_cycle": 97791.0
+          }
+        },
+        "bandwidth": {
+          "average_filter_dram_words_per_cycle": 20.779723155276795,
+          "average_filter_sram_words_per_cycle": 21.445245472487244,
+          "average_ifmap_dram_words_per_cycle": 7.816793893129771,
+          "average_ifmap_sram_words_per_cycle": 0.3350819605076132,
+          "average_ofmap_dram_words_per_cycle": 64.0,
+          "average_ofmap_sram_words_per_cycle": 0.3350819605076132
+        },
+        "compute_utilization_percent": 0.39370078740157477,
+        "dram_accesses": {
+          "filter_reads": 2097152,
+          "ifmap_reads": 2048,
+          "ofmap_writes": 32768
+        },
+        "mapping_efficiency_percent": 100.0,
+        "overall_utilization_percent": 0.5235655632931456,
+        "sram_accesses": {
+          "filter_reads": 2097152,
+          "ifmap_reads": 32768,
+          "ofmap_writes": 32768
+        },
+        "stall_cycles": 0,
+        "total_cycles": 97791,
+        "total_cycles_including_prefetch": 101577
+      },
+      "raw_artifacts": [
+        {
+          "bytes": 747,
+          "path": "input/config.cfg",
+          "sha256": "b073968b16e7d0104edbb4e05a805ee08c626f86d421ae14799e023be9b61bb3"
+        },
+        {
+          "bytes": 654,
+          "path": "input/layout.csv",
+          "sha256": "4cbf39e3d95fa0de3eb84995eb28c0169f0c76e3de1435bc93446c4fb0b3a755"
+        },
+        {
+          "bytes": 63,
+          "path": "input/topology.csv",
+          "sha256": "9be4bca556920c7ba4efa76ff52d834b6fa234daf5f1b72cab6a85eaee981686"
+        },
+        {
+          "bytes": 233,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__ws-64x64-sram64kb/BANDWIDTH_REPORT.csv",
+          "sha256": "53b1206b5e53a60a806bd6e3dcf274c58099dcd1ac709e566e8c3f109ff1eafe"
+        },
+        {
+          "bytes": 191,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__ws-64x64-sram64kb/COMPUTE_REPORT.csv",
+          "sha256": "ed0c470a9b2175dfc629cb8cf6e6f6e2486f16c1b5cf93235e1be5bc17153184"
+        },
+        {
+          "bytes": 550,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__ws-64x64-sram64kb/DETAILED_ACCESS_REPORT.csv",
+          "sha256": "ff0f822dc69c09cc29a362afa48891e08537ebf59e85dc34f7ec28868f2e7411"
+        },
+        {
+          "bytes": 375,
+          "path": "process.json",
+          "sha256": "ee45208c3be462030810bb5fd653e00c426cb59a2333549b862b493138b3d10c"
+        },
+        {
+          "bytes": 0,
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 0,
+          "path": "stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "workload": {
+        "dimensions": {
+          "batch": 1,
+          "k": 2048,
+          "m": 1,
+          "n": 1024
+        },
+        "id": "qwen3-0.6b-o-proj-bf16-b1",
+        "model_id": "Qwen/Qwen3-0.6B",
+        "operator": "decoder.layer0.self_attn.o_proj",
+        "semantic_limit": "SCALE-Sim models dense element movement and systolic-array scheduling; it does not execute BF16 arithmetic or Qwen model code.",
+        "source_contract": {
+          "basis": "The checked Foundry KernelProblem and Timeloop export pin B=1, M=1, N=1024, K=2048 and exact BF16 logical operand accounting.",
+          "content_id": "f88f03ed0d8ae74a571d4dd21126663d3557b55263eaf87f40b50f9fe385f8bd",
+          "kind": "timeloop_problem_export",
+          "path": "../../experiments/qwen3-0.6b/timeloop-o-proj-bf16-decode-b1-v1.json",
+          "sha256": "9e3f458939012cbd88772988be4be853bbd2140a564cbca24e467bead9de3375"
+        },
+        "tensor_types": {
+          "accumulator": "fp32",
+          "input": "bf16",
+          "output": "bf16",
+          "weight": "bf16"
+        }
+      }
+    },
+    {
+      "architecture": {
+        "array_height": 32,
+        "array_width": 32,
+        "dataflow": "is",
+        "filter_sram_kb": 64,
+        "id": "is-32x32-sram64kb",
+        "ifmap_sram_kb": 64,
+        "interface_bandwidth": "CALC",
+        "ofmap_sram_kb": 64,
+        "role": "base_array_dataflow_sweep"
+      },
+      "case_id": "qwen3-0.6b-o-proj-bf16-b1/is-32x32-sram64kb",
+      "logical_accounting": {
+        "flops": 4194304,
+        "input_bytes": 4096,
+        "input_elements": 2048,
+        "multiply_accumulates": 2097152,
+        "output_bytes": 2048,
+        "output_elements": 1024,
+        "total_tensor_bytes": 4200448,
+        "weight_bytes": 4194304,
+        "weight_elements": 2097152
+      },
+      "native_result": {
+        "access_semantics": "native_scale_sim_element_access_counts_not_foundry_logical_bytes",
+        "access_windows": {
+          "dram_filter": {
+            "start_cycle": -3243.0,
+            "stop_cycle": 71470.0
+          },
+          "dram_ifmap": {
+            "start_cycle": -262.0,
+            "stop_cycle": -1.0
+          },
+          "dram_ofmap": {
+            "start_cycle": 35839.0,
+            "stop_cycle": 72575.0
+          },
+          "sram_filter": {
+            "start_cycle": 33.0,
+            "stop_cycle": 71521.0
+          },
+          "sram_ifmap": {
+            "start_cycle": 1.0,
+            "stop_cycle": 70466.0
+          },
+          "sram_ofmap": {
+            "start_cycle": 63.0,
+            "stop_cycle": 71520.0
+          }
+        },
+        "bandwidth": {
+          "average_filter_dram_words_per_cycle": 28.069063361618973,
+          "average_filter_sram_words_per_cycle": 29.30989084708809,
+          "average_ifmap_dram_words_per_cycle": 7.816793893129771,
+          "average_ifmap_sram_words_per_cycle": 0.028622940280359464,
+          "average_ofmap_dram_words_per_cycle": 1.7847674007131775,
+          "average_ofmap_sram_words_per_cycle": 0.9159340889715029
+        },
+        "compute_utilization_percent": 2.78503046127067,
+        "dram_accesses": {
+          "filter_reads": 2097152,
+          "ifmap_reads": 2048,
+          "ofmap_writes": 65567
+        },
+        "mapping_efficiency_percent": 3.125,
+        "overall_utilization_percent": 2.8622940280359463,
+        "sram_accesses": {
+          "filter_reads": 2097152,
+          "ifmap_reads": 2048,
+          "ofmap_writes": 65536
+        },
+        "stall_cycles": 0,
+        "total_cycles": 71551,
+        "total_cycles_including_prefetch": 75818
+      },
+      "raw_artifacts": [
+        {
+          "bytes": 747,
+          "path": "input/config.cfg",
+          "sha256": "9dbe41123aa8b531408e0dcc2f566bf92060011bab78d4e1b1dea6df8e89903f"
+        },
+        {
+          "bytes": 654,
+          "path": "input/layout.csv",
+          "sha256": "4cbf39e3d95fa0de3eb84995eb28c0169f0c76e3de1435bc93446c4fb0b3a755"
+        },
+        {
+          "bytes": 63,
+          "path": "input/topology.csv",
+          "sha256": "9be4bca556920c7ba4efa76ff52d834b6fa234daf5f1b72cab6a85eaee981686"
+        },
+        {
+          "bytes": 248,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__is-32x32-sram64kb/BANDWIDTH_REPORT.csv",
+          "sha256": "efa297993fbfb03d4fa22c347f1202e3cca84c9598086e08e3e2f19cf003804f"
+        },
+        {
+          "bytes": 187,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__is-32x32-sram64kb/COMPUTE_REPORT.csv",
+          "sha256": "49f6789f386d9d8436d6bf0ec4c9e60f28083a77086f03168dcbd8cfc2c7dd74"
+        },
+        {
+          "bytes": 548,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__is-32x32-sram64kb/DETAILED_ACCESS_REPORT.csv",
+          "sha256": "0c5976098fd997645199b1feee362ad1fc67e47291a4ec815622e1ba5c3bcc6f"
+        },
+        {
+          "bytes": 375,
+          "path": "process.json",
+          "sha256": "ee45208c3be462030810bb5fd653e00c426cb59a2333549b862b493138b3d10c"
+        },
+        {
+          "bytes": 0,
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 0,
+          "path": "stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "workload": {
+        "dimensions": {
+          "batch": 1,
+          "k": 2048,
+          "m": 1,
+          "n": 1024
+        },
+        "id": "qwen3-0.6b-o-proj-bf16-b1",
+        "model_id": "Qwen/Qwen3-0.6B",
+        "operator": "decoder.layer0.self_attn.o_proj",
+        "semantic_limit": "SCALE-Sim models dense element movement and systolic-array scheduling; it does not execute BF16 arithmetic or Qwen model code.",
+        "source_contract": {
+          "basis": "The checked Foundry KernelProblem and Timeloop export pin B=1, M=1, N=1024, K=2048 and exact BF16 logical operand accounting.",
+          "content_id": "f88f03ed0d8ae74a571d4dd21126663d3557b55263eaf87f40b50f9fe385f8bd",
+          "kind": "timeloop_problem_export",
+          "path": "../../experiments/qwen3-0.6b/timeloop-o-proj-bf16-decode-b1-v1.json",
+          "sha256": "9e3f458939012cbd88772988be4be853bbd2140a564cbca24e467bead9de3375"
+        },
+        "tensor_types": {
+          "accumulator": "fp32",
+          "input": "bf16",
+          "output": "bf16",
+          "weight": "bf16"
+        }
+      }
+    },
+    {
+      "architecture": {
+        "array_height": 32,
+        "array_width": 32,
+        "dataflow": "os",
+        "filter_sram_kb": 64,
+        "id": "os-32x32-sram64kb",
+        "ifmap_sram_kb": 64,
+        "interface_bandwidth": "CALC",
+        "ofmap_sram_kb": 64,
+        "role": "base_array_dataflow_sweep"
+      },
+      "case_id": "qwen3-0.6b-o-proj-bf16-b1/os-32x32-sram64kb",
+      "logical_accounting": {
+        "flops": 4194304,
+        "input_bytes": 4096,
+        "input_elements": 2048,
+        "multiply_accumulates": 2097152,
+        "output_bytes": 2048,
+        "output_elements": 1024,
+        "total_tensor_bytes": 4200448,
+        "weight_bytes": 4194304,
+        "weight_elements": 2097152
+      },
+      "native_result": {
+        "access_semantics": "native_scale_sim_element_access_counts_not_foundry_logical_bytes",
+        "access_windows": {
+          "dram_filter": {
+            "start_cycle": -3275.0,
+            "stop_cycle": 67438.0
+          },
+          "dram_ifmap": {
+            "start_cycle": -262.0,
+            "stop_cycle": -1.0
+          },
+          "dram_ofmap": {
+            "start_cycle": 67519.0,
+            "stop_cycle": 67550.0
+          },
+          "sram_filter": {
+            "start_cycle": 1.0,
+            "stop_cycle": 67489.0
+          },
+          "sram_ifmap": {
+            "start_cycle": 1.0,
+            "stop_cycle": 67458.0
+          },
+          "sram_ofmap": {
+            "start_cycle": 2078.0,
+            "stop_cycle": 67519.0
+          }
+        },
+        "bandwidth": {
+          "average_filter_dram_words_per_cycle": 29.65681477500919,
+          "average_filter_sram_words_per_cycle": 31.06017565426028,
+          "average_ifmap_dram_words_per_cycle": 7.816793893129771,
+          "average_ifmap_sram_words_per_cycle": 0.9706304891956338,
+          "average_ofmap_dram_words_per_cycle": 32.0,
+          "average_ofmap_sram_words_per_cycle": 0.045498304181045335
+        },
+        "compute_utilization_percent": 3.033175355450237,
+        "dram_accesses": {
+          "filter_reads": 2097152,
+          "ifmap_reads": 2048,
+          "ofmap_writes": 1024
+        },
+        "mapping_efficiency_percent": 3.125,
+        "overall_utilization_percent": 3.033220278736356,
+        "sram_accesses": {
+          "filter_reads": 2097152,
+          "ifmap_reads": 65536,
+          "ofmap_writes": 3072
+        },
+        "stall_cycles": 0,
+        "total_cycles": 67519,
+        "total_cycles_including_prefetch": 70825
+      },
+      "raw_artifacts": [
+        {
+          "bytes": 747,
+          "path": "input/config.cfg",
+          "sha256": "9907b0050d09846f633826bd72dcc06826c86dd0673b967b8e63ea5b110372d9"
+        },
+        {
+          "bytes": 654,
+          "path": "input/layout.csv",
+          "sha256": "4cbf39e3d95fa0de3eb84995eb28c0169f0c76e3de1435bc93446c4fb0b3a755"
+        },
+        {
+          "bytes": 63,
+          "path": "input/topology.csv",
+          "sha256": "9be4bca556920c7ba4efa76ff52d834b6fa234daf5f1b72cab6a85eaee981686"
+        },
+        {
+          "bytes": 233,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__os-32x32-sram64kb/BANDWIDTH_REPORT.csv",
+          "sha256": "776f1a92ac712b3912cd8e1708154ce5c562af58a385cc8ecc181b0a2681286a"
+        },
+        {
+          "bytes": 187,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__os-32x32-sram64kb/COMPUTE_REPORT.csv",
+          "sha256": "5f7b957ecb633a07cd42fb0cf17523daae49dd343173329a1ee090433b6b2f02"
+        },
+        {
+          "bytes": 548,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__os-32x32-sram64kb/DETAILED_ACCESS_REPORT.csv",
+          "sha256": "ab93c5d1cec28dfe5c847f908cf4333fd98848680868e7a7dd7f78756e0bf6ac"
+        },
+        {
+          "bytes": 375,
+          "path": "process.json",
+          "sha256": "ee45208c3be462030810bb5fd653e00c426cb59a2333549b862b493138b3d10c"
+        },
+        {
+          "bytes": 0,
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 0,
+          "path": "stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "workload": {
+        "dimensions": {
+          "batch": 1,
+          "k": 2048,
+          "m": 1,
+          "n": 1024
+        },
+        "id": "qwen3-0.6b-o-proj-bf16-b1",
+        "model_id": "Qwen/Qwen3-0.6B",
+        "operator": "decoder.layer0.self_attn.o_proj",
+        "semantic_limit": "SCALE-Sim models dense element movement and systolic-array scheduling; it does not execute BF16 arithmetic or Qwen model code.",
+        "source_contract": {
+          "basis": "The checked Foundry KernelProblem and Timeloop export pin B=1, M=1, N=1024, K=2048 and exact BF16 logical operand accounting.",
+          "content_id": "f88f03ed0d8ae74a571d4dd21126663d3557b55263eaf87f40b50f9fe385f8bd",
+          "kind": "timeloop_problem_export",
+          "path": "../../experiments/qwen3-0.6b/timeloop-o-proj-bf16-decode-b1-v1.json",
+          "sha256": "9e3f458939012cbd88772988be4be853bbd2140a564cbca24e467bead9de3375"
+        },
+        "tensor_types": {
+          "accumulator": "fp32",
+          "input": "bf16",
+          "output": "bf16",
+          "weight": "bf16"
+        }
+      }
+    },
+    {
+      "architecture": {
+        "array_height": 32,
+        "array_width": 32,
+        "dataflow": "ws",
+        "filter_sram_kb": 4096,
+        "id": "ws-32x32-sram4096kb",
+        "ifmap_sram_kb": 4096,
+        "interface_bandwidth": "CALC",
+        "ofmap_sram_kb": 4096,
+        "role": "sram_control"
+      },
+      "case_id": "qwen3-0.6b-o-proj-bf16-b1/ws-32x32-sram4096kb",
+      "logical_accounting": {
+        "flops": 4194304,
+        "input_bytes": 4096,
+        "input_elements": 2048,
+        "multiply_accumulates": 2097152,
+        "output_bytes": 2048,
+        "output_elements": 1024,
+        "total_tensor_bytes": 4200448,
+        "weight_bytes": 4194304,
+        "weight_elements": 2097152
+      },
+      "native_result": {
+        "access_semantics": "native_scale_sim_element_access_counts_not_foundry_logical_bytes",
+        "access_windows": {
+          "dram_filter": {
+            "start_cycle": -209715.0,
+            "stop_cycle": 194497.0
+          },
+          "dram_ifmap": {
+            "start_cycle": -4195.0,
+            "stop_cycle": -1.0
+          },
+          "dram_ofmap": {
+            "start_cycle": 194559.0,
+            "stop_cycle": 196606.0
+          },
+          "sram_filter": {
+            "start_cycle": 1.0,
+            "stop_cycle": 194497.0
+          },
+          "sram_ifmap": {
+            "start_cycle": 33.0,
+            "stop_cycle": 194529.0
+          },
+          "sram_ofmap": {
+            "start_cycle": 63.0,
+            "stop_cycle": 194559.0
+          }
+        },
+        "bandwidth": {
+          "average_filter_dram_words_per_cycle": 5.188234915749865,
+          "average_filter_sram_words_per_cycle": 10.779002770367857,
+          "average_ifmap_dram_words_per_cycle": 0.48820023837902266,
+          "average_ifmap_sram_words_per_cycle": 0.3368438365739955,
+          "average_ofmap_dram_words_per_cycle": 32.0,
+          "average_ofmap_sram_words_per_cycle": 0.3368438365739955
+        },
+        "compute_utilization_percent": 0.7936507936507936,
+        "dram_accesses": {
+          "filter_reads": 2097152,
+          "ifmap_reads": 2048,
+          "ofmap_writes": 65536
+        },
+        "mapping_efficiency_percent": 100.0,
+        "overall_utilization_percent": 1.0526369892937362,
+        "sram_accesses": {
+          "filter_reads": 2097152,
+          "ifmap_reads": 65536,
+          "ofmap_writes": 65536
+        },
+        "stall_cycles": 0,
+        "total_cycles": 194559,
+        "total_cycles_including_prefetch": 406321
+      },
+      "raw_artifacts": [
+        {
+          "bytes": 755,
+          "path": "input/config.cfg",
+          "sha256": "4e4f063ca03f8d7b569f7680c92754c66dadc7e8c9f94b2ccc0c9af7ecb98359"
+        },
+        {
+          "bytes": 654,
+          "path": "input/layout.csv",
+          "sha256": "4cbf39e3d95fa0de3eb84995eb28c0169f0c76e3de1435bc93446c4fb0b3a755"
+        },
+        {
+          "bytes": 63,
+          "path": "input/topology.csv",
+          "sha256": "9be4bca556920c7ba4efa76ff52d834b6fa234daf5f1b72cab6a85eaee981686"
+        },
+        {
+          "bytes": 234,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__ws-32x32-sram4096kb/BANDWIDTH_REPORT.csv",
+          "sha256": "d103befa0af803c6b843c2769c14b842b589357642dc2c2859ea0a40279db061"
+        },
+        {
+          "bytes": 191,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__ws-32x32-sram4096kb/COMPUTE_REPORT.csv",
+          "sha256": "6161e4380b31d6d6bc6056c4afb9bbdc4f01a0b0751d1928a277160c1958ee6b"
+        },
+        {
+          "bytes": 558,
+          "path": "output/qwen3-0.6b-o-proj-bf16-b1__ws-32x32-sram4096kb/DETAILED_ACCESS_REPORT.csv",
+          "sha256": "b16bd16a787eca63746995c9fb38d12113c18e679e945758b4ea070fd1baa7b0"
+        },
+        {
+          "bytes": 375,
+          "path": "process.json",
+          "sha256": "ee45208c3be462030810bb5fd653e00c426cb59a2333549b862b493138b3d10c"
+        },
+        {
+          "bytes": 0,
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 0,
+          "path": "stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "workload": {
+        "dimensions": {
+          "batch": 1,
+          "k": 2048,
+          "m": 1,
+          "n": 1024
+        },
+        "id": "qwen3-0.6b-o-proj-bf16-b1",
+        "model_id": "Qwen/Qwen3-0.6B",
+        "operator": "decoder.layer0.self_attn.o_proj",
+        "semantic_limit": "SCALE-Sim models dense element movement and systolic-array scheduling; it does not execute BF16 arithmetic or Qwen model code.",
+        "source_contract": {
+          "basis": "The checked Foundry KernelProblem and Timeloop export pin B=1, M=1, N=1024, K=2048 and exact BF16 logical operand accounting.",
+          "content_id": "f88f03ed0d8ae74a571d4dd21126663d3557b55263eaf87f40b50f9fe385f8bd",
+          "kind": "timeloop_problem_export",
+          "path": "../../experiments/qwen3-0.6b/timeloop-o-proj-bf16-decode-b1-v1.json",
+          "sha256": "9e3f458939012cbd88772988be4be853bbd2140a564cbca24e467bead9de3375"
+        },
+        "tensor_types": {
+          "accumulator": "fp32",
+          "input": "bf16",
+          "output": "bf16",
+          "weight": "bf16"
+        }
+      }
+    },
+    {
+      "architecture": {
+        "array_height": 16,
+        "array_width": 16,
+        "dataflow": "ws",
+        "filter_sram_kb": 64,
+        "id": "ws-16x16-sram64kb",
+        "ifmap_sram_kb": 64,
+        "interface_bandwidth": "CALC",
+        "ofmap_sram_kb": 64,
+        "role": "base_array_dataflow_sweep"
+      },
+      "case_id": "glm-5.2-routed-expert-gate-bf16-reference-b1/ws-16x16-sram64kb",
+      "logical_accounting": {
+        "flops": 25165824,
+        "input_bytes": 12288,
+        "input_elements": 6144,
+        "multiply_accumulates": 12582912,
+        "output_bytes": 4096,
+        "output_elements": 2048,
+        "total_tensor_bytes": 25182208,
+        "weight_bytes": 25165824,
+        "weight_elements": 12582912
+      },
+      "native_result": {
+        "access_semantics": "native_scale_sim_element_access_counts_not_foundry_logical_bytes",
+        "access_windows": {
+          "dram_filter": {
+            "start_cycle": -3275.0,
+            "stop_cycle": 2308844.0
+          },
+          "dram_ifmap": {
+            "start_cycle": -655.0,
+            "stop_cycle": -1.0
+          },
+          "dram_ofmap": {
+            "start_cycle": 96287.0,
+            "stop_cycle": 2312191.0
+          },
+          "sram_filter": {
+            "start_cycle": 1.0,
+            "stop_cycle": 2310113.0
+          },
+          "sram_ifmap": {
+            "start_cycle": 17.0,
+            "stop_cycle": 2310129.0
+          },
+          "sram_ofmap": {
+            "start_cycle": 31.0,
+            "stop_cycle": 2310143.0
+          }
+        },
+        "bandwidth": {
+          "average_filter_dram_words_per_cycle": 5.442153521443523,
+          "average_filter_sram_words_per_cycle": 5.446810868418102,
+          "average_ifmap_dram_words_per_cycle": 9.380152671755726,
+          "average_ifmap_sram_words_per_cycle": 0.3404256792761314,
+          "average_ofmap_dram_words_per_cycle": 0.3549100706032073,
+          "average_ofmap_sram_words_per_cycle": 0.3404256792761314
+        },
+        "compute_utilization_percent": 1.6129032258064515,
+        "dram_accesses": {
+          "filter_reads": 12582912,
+          "ifmap_reads": 6144,
+          "ofmap_writes": 786447
+        },
+        "mapping_efficiency_percent": 100.0,
+        "overall_utilization_percent": 2.1276604954758214,
+        "sram_accesses": {
+          "filter_reads": 12582912,
+          "ifmap_reads": 786432,
+          "ofmap_writes": 786432
+        },
+        "stall_cycles": 0,
+        "total_cycles": 2310143,
+        "total_cycles_including_prefetch": 2315466
+      },
+      "raw_artifacts": [
+        {
+          "bytes": 766,
+          "path": "input/config.cfg",
+          "sha256": "327027f7581ca7ce8f6a046d5f62b394110f9f9cc5529c63dd3be3bcbf5e12dc"
+        },
+        {
+          "bytes": 673,
+          "path": "input/layout.csv",
+          "sha256": "15099b7bf91733d96bcb3aaa5e14d61eefc569769c68138a647d7366ad4feff8"
+        },
+        {
+          "bytes": 82,
+          "path": "input/topology.csv",
+          "sha256": "86c6422f8873a307ad669f6c75cab3ff9e45261d126a6a1ffc279fb08e4daded"
+        },
+        {
+          "bytes": 245,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__ws-16x16-sram64kb/BANDWIDTH_REPORT.csv",
+          "sha256": "d5a1e888531adc42af4b035d2f2b6739240bf520d604dd4ed54df6abb4edb600"
+        },
+        {
+          "bytes": 193,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__ws-16x16-sram64kb/COMPUTE_REPORT.csv",
+          "sha256": "48074ee840f84f65c16d7a374dce5b52b81a2532ee6782a352be133672ebba3a"
+        },
+        {
+          "bytes": 564,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__ws-16x16-sram64kb/DETAILED_ACCESS_REPORT.csv",
+          "sha256": "904d8f2f797719875bd81f6b9907e8f697cc21bb5a4a9b8a2a60b0f2964b83df"
+        },
+        {
+          "bytes": 375,
+          "path": "process.json",
+          "sha256": "ee45208c3be462030810bb5fd653e00c426cb59a2333549b862b493138b3d10c"
+        },
+        {
+          "bytes": 0,
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 0,
+          "path": "stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "workload": {
+        "dimensions": {
+          "batch": 1,
+          "k": 6144,
+          "m": 1,
+          "n": 2048
+        },
+        "id": "glm-5.2-routed-expert-gate-bf16-reference-b1",
+        "model_id": "zai-org/GLM-5.2",
+        "operator": "moe.routed_expert.gate_projection",
+        "semantic_limit": "This is one architectural BF16 routed-expert projection, not the opaque NVIDIA NVFP4 checkpoint, three-matrix expert execution, routing, batching, or whole-model decode.",
+        "source_contract": {
+          "basis": "The checked GLM lowerer contract pins hidden_size=6144, expert_intermediate_size=2048, routed-expert BF16 weights, and BF16 network activations. This case covers one logical gate projection for one dispatched token.",
+          "kind": "glm_routed_expert_gate_bf16_reference",
+          "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+          "path": "../glm-5.2-whole-decode-lowering-v1.json",
+          "sha256": "4e4f3c3afdb1cf0334abaa19d5304f285faacde30fe40698df54d74d6d412a4e"
+        },
+        "tensor_types": {
+          "accumulator": "fp32",
+          "input": "bf16",
+          "output": "bf16",
+          "weight": "bf16"
+        }
+      }
+    },
+    {
+      "architecture": {
+        "array_height": 32,
+        "array_width": 32,
+        "dataflow": "ws",
+        "filter_sram_kb": 64,
+        "id": "ws-32x32-sram64kb",
+        "ifmap_sram_kb": 64,
+        "interface_bandwidth": "CALC",
+        "ofmap_sram_kb": 64,
+        "role": "base_array_dataflow_sweep"
+      },
+      "case_id": "glm-5.2-routed-expert-gate-bf16-reference-b1/ws-32x32-sram64kb",
+      "logical_accounting": {
+        "flops": 25165824,
+        "input_bytes": 12288,
+        "input_elements": 6144,
+        "multiply_accumulates": 12582912,
+        "output_bytes": 4096,
+        "output_elements": 2048,
+        "total_tensor_bytes": 25182208,
+        "weight_bytes": 25165824,
+        "weight_elements": 12582912
+      },
+      "native_result": {
+        "access_semantics": "native_scale_sim_element_access_counts_not_foundry_logical_bytes",
+        "access_windows": {
+          "dram_filter": {
+            "start_cycle": -3275.0,
+            "stop_cycle": 1166703.0
+          },
+          "dram_ifmap": {
+            "start_cycle": -655.0,
+            "stop_cycle": -1.0
+          },
+          "dram_ofmap": {
+            "start_cycle": 97343.0,
+            "stop_cycle": 1168383.0
+          },
+          "sram_filter": {
+            "start_cycle": 1.0,
+            "stop_cycle": 1167297.0
+          },
+          "sram_ifmap": {
+            "start_cycle": 33.0,
+            "stop_cycle": 1167329.0
+          },
+          "sram_ofmap": {
+            "start_cycle": 63.0,
+            "stop_cycle": 1167359.0
+          }
+        },
+        "bandwidth": {
+          "average_filter_dram_words_per_cycle": 10.75481867623265,
+          "average_filter_sram_words_per_cycle": 10.778956602039305,
+          "average_ifmap_dram_words_per_cycle": 9.380152671755726,
+          "average_ifmap_sram_words_per_cycle": 0.33684239381372827,
+          "average_ofmap_dram_words_per_cycle": 0.36716334855528404,
+          "average_ofmap_sram_words_per_cycle": 0.33684239381372827
+        },
+        "compute_utilization_percent": 0.7936507936507936,
+        "dram_accesses": {
+          "filter_reads": 12582912,
+          "ifmap_reads": 6144,
+          "ofmap_writes": 393247
+        },
+        "mapping_efficiency_percent": 100.0,
+        "overall_utilization_percent": 1.0526324806679008,
+        "sram_accesses": {
+          "filter_reads": 12582912,
+          "ifmap_reads": 393216,
+          "ofmap_writes": 393216
+        },
+        "stall_cycles": 0,
+        "total_cycles": 1167359,
+        "total_cycles_including_prefetch": 1171658
+      },
+      "raw_artifacts": [
+        {
+          "bytes": 766,
+          "path": "input/config.cfg",
+          "sha256": "a383fc1d215020ef09b834df897b7c2cb0dd03ce67074eea45cabd547280e119"
+        },
+        {
+          "bytes": 673,
+          "path": "input/layout.csv",
+          "sha256": "15099b7bf91733d96bcb3aaa5e14d61eefc569769c68138a647d7366ad4feff8"
+        },
+        {
+          "bytes": 82,
+          "path": "input/topology.csv",
+          "sha256": "86c6422f8873a307ad669f6c75cab3ff9e45261d126a6a1ffc279fb08e4daded"
+        },
+        {
+          "bytes": 249,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__ws-32x32-sram64kb/BANDWIDTH_REPORT.csv",
+          "sha256": "db2fe982ec4b2d0785e40c6df4cbcc06b85a954e570138435319d28ccb370229"
+        },
+        {
+          "bytes": 193,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__ws-32x32-sram64kb/COMPUTE_REPORT.csv",
+          "sha256": "f600ac2c78b048c0c410c172161da885faa8b2051130987ff623e1bf99ca16a7"
+        },
+        {
+          "bytes": 564,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__ws-32x32-sram64kb/DETAILED_ACCESS_REPORT.csv",
+          "sha256": "28365b9c682081b0e3035a4ad76e015d977423a9448a6ca6e3f94fd3c6d8b508"
+        },
+        {
+          "bytes": 375,
+          "path": "process.json",
+          "sha256": "ee45208c3be462030810bb5fd653e00c426cb59a2333549b862b493138b3d10c"
+        },
+        {
+          "bytes": 0,
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 0,
+          "path": "stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "workload": {
+        "dimensions": {
+          "batch": 1,
+          "k": 6144,
+          "m": 1,
+          "n": 2048
+        },
+        "id": "glm-5.2-routed-expert-gate-bf16-reference-b1",
+        "model_id": "zai-org/GLM-5.2",
+        "operator": "moe.routed_expert.gate_projection",
+        "semantic_limit": "This is one architectural BF16 routed-expert projection, not the opaque NVIDIA NVFP4 checkpoint, three-matrix expert execution, routing, batching, or whole-model decode.",
+        "source_contract": {
+          "basis": "The checked GLM lowerer contract pins hidden_size=6144, expert_intermediate_size=2048, routed-expert BF16 weights, and BF16 network activations. This case covers one logical gate projection for one dispatched token.",
+          "kind": "glm_routed_expert_gate_bf16_reference",
+          "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+          "path": "../glm-5.2-whole-decode-lowering-v1.json",
+          "sha256": "4e4f3c3afdb1cf0334abaa19d5304f285faacde30fe40698df54d74d6d412a4e"
+        },
+        "tensor_types": {
+          "accumulator": "fp32",
+          "input": "bf16",
+          "output": "bf16",
+          "weight": "bf16"
+        }
+      }
+    },
+    {
+      "architecture": {
+        "array_height": 64,
+        "array_width": 64,
+        "dataflow": "ws",
+        "filter_sram_kb": 64,
+        "id": "ws-64x64-sram64kb",
+        "ifmap_sram_kb": 64,
+        "interface_bandwidth": "CALC",
+        "ofmap_sram_kb": 64,
+        "role": "base_array_dataflow_sweep"
+      },
+      "case_id": "glm-5.2-routed-expert-gate-bf16-reference-b1/ws-64x64-sram64kb",
+      "logical_accounting": {
+        "flops": 25165824,
+        "input_bytes": 12288,
+        "input_elements": 6144,
+        "multiply_accumulates": 12582912,
+        "output_bytes": 4096,
+        "output_elements": 2048,
+        "total_tensor_bytes": 25182208,
+        "weight_bytes": 25165824,
+        "weight_elements": 12582912
+      },
+      "native_result": {
+        "access_semantics": "native_scale_sim_element_access_counts_not_foundry_logical_bytes",
+        "access_windows": {
+          "dram_filter": {
+            "start_cycle": -3275.0,
+            "stop_cycle": 586390.0
+          },
+          "dram_ifmap": {
+            "start_cycle": -655.0,
+            "stop_cycle": -1.0
+          },
+          "dram_ofmap": {
+            "start_cycle": 97919.0,
+            "stop_cycle": 587263.0
+          },
+          "sram_filter": {
+            "start_cycle": 1.0,
+            "stop_cycle": 586625.0
+          },
+          "sram_ifmap": {
+            "start_cycle": 65.0,
+            "stop_cycle": 586689.0
+          },
+          "sram_ofmap": {
+            "start_cycle": 127.0,
+            "stop_cycle": 586751.0
+          }
+        },
+        "bandwidth": {
+          "average_filter_dram_words_per_cycle": 21.339049563651287,
+          "average_filter_sram_words_per_cycle": 21.44506272677848,
+          "average_ifmap_dram_words_per_cycle": 9.380152671755726,
+          "average_ifmap_sram_words_per_cycle": 0.33507910510591377,
+          "average_ofmap_dram_words_per_cycle": 0.40190663029151213,
+          "average_ofmap_sram_words_per_cycle": 0.33507910510591377
+        },
+        "compute_utilization_percent": 0.39370078740157477,
+        "dram_accesses": {
+          "filter_reads": 12582912,
+          "ifmap_reads": 6144,
+          "ofmap_writes": 196671
+        },
+        "mapping_efficiency_percent": 100.0,
+        "overall_utilization_percent": 0.5235611017279902,
+        "sram_accesses": {
+          "filter_reads": 12582912,
+          "ifmap_reads": 196608,
+          "ofmap_writes": 196608
+        },
+        "stall_cycles": 0,
+        "total_cycles": 586751,
+        "total_cycles_including_prefetch": 590538
+      },
+      "raw_artifacts": [
+        {
+          "bytes": 766,
+          "path": "input/config.cfg",
+          "sha256": "ac4d7e6b46dff641c5a881b91f43bd86f96f2430d2ae7e3d5e62622bece1eea8"
+        },
+        {
+          "bytes": 673,
+          "path": "input/layout.csv",
+          "sha256": "15099b7bf91733d96bcb3aaa5e14d61eefc569769c68138a647d7366ad4feff8"
+        },
+        {
+          "bytes": 82,
+          "path": "input/topology.csv",
+          "sha256": "86c6422f8873a307ad669f6c75cab3ff9e45261d126a6a1ffc279fb08e4daded"
+        },
+        {
+          "bytes": 249,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__ws-64x64-sram64kb/BANDWIDTH_REPORT.csv",
+          "sha256": "36215e2f6b2d0d4922b559c24ed8b81d5a16629fab5598787f01b3d0141d8431"
+        },
+        {
+          "bytes": 192,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__ws-64x64-sram64kb/COMPUTE_REPORT.csv",
+          "sha256": "2da6df3c1194657f5b86f1b7330d1daea1df9bcba5a2be79e93452c3fff685de"
+        },
+        {
+          "bytes": 560,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__ws-64x64-sram64kb/DETAILED_ACCESS_REPORT.csv",
+          "sha256": "d7ff2afc96f147617756096886a6b20a35a872bdaeaf1fcbd05eca4fde510638"
+        },
+        {
+          "bytes": 375,
+          "path": "process.json",
+          "sha256": "ee45208c3be462030810bb5fd653e00c426cb59a2333549b862b493138b3d10c"
+        },
+        {
+          "bytes": 0,
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 0,
+          "path": "stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "workload": {
+        "dimensions": {
+          "batch": 1,
+          "k": 6144,
+          "m": 1,
+          "n": 2048
+        },
+        "id": "glm-5.2-routed-expert-gate-bf16-reference-b1",
+        "model_id": "zai-org/GLM-5.2",
+        "operator": "moe.routed_expert.gate_projection",
+        "semantic_limit": "This is one architectural BF16 routed-expert projection, not the opaque NVIDIA NVFP4 checkpoint, three-matrix expert execution, routing, batching, or whole-model decode.",
+        "source_contract": {
+          "basis": "The checked GLM lowerer contract pins hidden_size=6144, expert_intermediate_size=2048, routed-expert BF16 weights, and BF16 network activations. This case covers one logical gate projection for one dispatched token.",
+          "kind": "glm_routed_expert_gate_bf16_reference",
+          "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+          "path": "../glm-5.2-whole-decode-lowering-v1.json",
+          "sha256": "4e4f3c3afdb1cf0334abaa19d5304f285faacde30fe40698df54d74d6d412a4e"
+        },
+        "tensor_types": {
+          "accumulator": "fp32",
+          "input": "bf16",
+          "output": "bf16",
+          "weight": "bf16"
+        }
+      }
+    },
+    {
+      "architecture": {
+        "array_height": 32,
+        "array_width": 32,
+        "dataflow": "is",
+        "filter_sram_kb": 64,
+        "id": "is-32x32-sram64kb",
+        "ifmap_sram_kb": 64,
+        "interface_bandwidth": "CALC",
+        "ofmap_sram_kb": 64,
+        "role": "base_array_dataflow_sweep"
+      },
+      "case_id": "glm-5.2-routed-expert-gate-bf16-reference-b1/is-32x32-sram64kb",
+      "logical_accounting": {
+        "flops": 25165824,
+        "input_bytes": 12288,
+        "input_elements": 6144,
+        "multiply_accumulates": 12582912,
+        "output_bytes": 4096,
+        "output_elements": 2048,
+        "total_tensor_bytes": 25182208,
+        "weight_bytes": 25165824,
+        "weight_elements": 12582912
+      },
+      "native_result": {
+        "access_semantics": "native_scale_sim_element_access_counts_not_foundry_logical_bytes",
+        "access_windows": {
+          "dram_filter": {
+            "start_cycle": -3243.0,
+            "stop_cycle": 411002.0
+          },
+          "dram_ifmap": {
+            "start_cycle": -655.0,
+            "stop_cycle": -1.0
+          },
+          "dram_ofmap": {
+            "start_cycle": 34335.0,
+            "stop_cycle": 412287.0
+          },
+          "sram_filter": {
+            "start_cycle": 33.0,
+            "stop_cycle": 411233.0
+          },
+          "sram_ifmap": {
+            "start_cycle": 1.0,
+            "stop_cycle": 409154.0
+          },
+          "sram_ofmap": {
+            "start_cycle": 63.0,
+            "stop_cycle": 411232.0
+          }
+        },
+        "bandwidth": {
+          "average_filter_dram_words_per_cycle": 30.37545806115207,
+          "average_filter_sram_words_per_cycle": 30.595779343145384,
+          "average_ifmap_dram_words_per_cycle": 9.380152671755726,
+          "average_ifmap_sram_words_per_cycle": 0.014939345382395207,
+          "average_ofmap_dram_words_per_cycle": 1.0404653488661288,
+          "average_ofmap_sram_words_per_cycle": 0.9561181044732933
+        },
+        "compute_utilization_percent": 2.9452369995398064,
+        "dram_accesses": {
+          "filter_reads": 12582912,
+          "ifmap_reads": 6144,
+          "ofmap_writes": 393247
+        },
+        "mapping_efficiency_percent": 3.125,
+        "overall_utilization_percent": 2.987869076479041,
+        "sram_accesses": {
+          "filter_reads": 12582912,
+          "ifmap_reads": 6144,
+          "ofmap_writes": 393216
+        },
+        "stall_cycles": 0,
+        "total_cycles": 411263,
+        "total_cycles_including_prefetch": 415530
+      },
+      "raw_artifacts": [
+        {
+          "bytes": 766,
+          "path": "input/config.cfg",
+          "sha256": "aea7d5238965e5e0b9a9d80d5817d29848af83fcffff3647177f419a7100d0ee"
+        },
+        {
+          "bytes": 673,
+          "path": "input/layout.csv",
+          "sha256": "15099b7bf91733d96bcb3aaa5e14d61eefc569769c68138a647d7366ad4feff8"
+        },
+        {
+          "bytes": 82,
+          "path": "input/topology.csv",
+          "sha256": "86c6422f8873a307ad669f6c75cab3ff9e45261d126a6a1ffc279fb08e4daded"
+        },
+        {
+          "bytes": 248,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__is-32x32-sram64kb/BANDWIDTH_REPORT.csv",
+          "sha256": "1144135ac73bf46fbbbde7cf8e5ffecad7cdba3981be44f7e8e2d8df8ae4f107"
+        },
+        {
+          "bytes": 190,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__is-32x32-sram64kb/COMPUTE_REPORT.csv",
+          "sha256": "9e1033762cee6518a139abd5138f254d4e42672a9f8277dd2dce6adc2bc4d6a1"
+        },
+        {
+          "bytes": 557,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__is-32x32-sram64kb/DETAILED_ACCESS_REPORT.csv",
+          "sha256": "d8dec86433051663546d60c607d0d5b5e4c1185070a045fd5a0b10c439c4870f"
+        },
+        {
+          "bytes": 375,
+          "path": "process.json",
+          "sha256": "ee45208c3be462030810bb5fd653e00c426cb59a2333549b862b493138b3d10c"
+        },
+        {
+          "bytes": 0,
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 0,
+          "path": "stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "workload": {
+        "dimensions": {
+          "batch": 1,
+          "k": 6144,
+          "m": 1,
+          "n": 2048
+        },
+        "id": "glm-5.2-routed-expert-gate-bf16-reference-b1",
+        "model_id": "zai-org/GLM-5.2",
+        "operator": "moe.routed_expert.gate_projection",
+        "semantic_limit": "This is one architectural BF16 routed-expert projection, not the opaque NVIDIA NVFP4 checkpoint, three-matrix expert execution, routing, batching, or whole-model decode.",
+        "source_contract": {
+          "basis": "The checked GLM lowerer contract pins hidden_size=6144, expert_intermediate_size=2048, routed-expert BF16 weights, and BF16 network activations. This case covers one logical gate projection for one dispatched token.",
+          "kind": "glm_routed_expert_gate_bf16_reference",
+          "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+          "path": "../glm-5.2-whole-decode-lowering-v1.json",
+          "sha256": "4e4f3c3afdb1cf0334abaa19d5304f285faacde30fe40698df54d74d6d412a4e"
+        },
+        "tensor_types": {
+          "accumulator": "fp32",
+          "input": "bf16",
+          "output": "bf16",
+          "weight": "bf16"
+        }
+      }
+    },
+    {
+      "architecture": {
+        "array_height": 32,
+        "array_width": 32,
+        "dataflow": "os",
+        "filter_sram_kb": 64,
+        "id": "os-32x32-sram64kb",
+        "ifmap_sram_kb": 64,
+        "interface_bandwidth": "CALC",
+        "ofmap_sram_kb": 64,
+        "role": "base_array_dataflow_sweep"
+      },
+      "case_id": "glm-5.2-routed-expert-gate-bf16-reference-b1/os-32x32-sram64kb",
+      "logical_accounting": {
+        "flops": 25165824,
+        "input_bytes": 12288,
+        "input_elements": 6144,
+        "multiply_accumulates": 12582912,
+        "output_bytes": 4096,
+        "output_elements": 2048,
+        "total_tensor_bytes": 25182208,
+        "weight_bytes": 25165824,
+        "weight_elements": 12582912
+      },
+      "native_result": {
+        "access_semantics": "native_scale_sim_element_access_counts_not_foundry_logical_bytes",
+        "access_windows": {
+          "dram_filter": {
+            "start_cycle": -3275.0,
+            "stop_cycle": 396922.0
+          },
+          "dram_ifmap": {
+            "start_cycle": -655.0,
+            "stop_cycle": -1.0
+          },
+          "dram_ofmap": {
+            "start_cycle": 397183.0,
+            "stop_cycle": 397246.0
+          },
+          "sram_filter": {
+            "start_cycle": 1.0,
+            "stop_cycle": 397153.0
+          },
+          "sram_ifmap": {
+            "start_cycle": 1.0,
+            "stop_cycle": 397122.0
+          },
+          "sram_ofmap": {
+            "start_cycle": 6174.0,
+            "stop_cycle": 397183.0
+          }
+        },
+        "bandwidth": {
+          "average_filter_dram_words_per_cycle": 31.441716350406548,
+          "average_filter_sram_words_per_cycle": 31.680389140522127,
+          "average_ifmap_dram_words_per_cycle": 9.380152671755726,
+          "average_ifmap_sram_words_per_cycle": 0.9900121606413165,
+          "average_ofmap_dram_words_per_cycle": 32.0,
+          "average_ofmap_sram_words_per_cycle": 0.01546894001002057
+        },
+        "compute_utilization_percent": 3.0937802126973897,
+        "dram_accesses": {
+          "filter_reads": 12582912,
+          "ifmap_reads": 6144,
+          "ofmap_writes": 2048
+        },
+        "mapping_efficiency_percent": 3.125,
+        "overall_utilization_percent": 3.093788002004114,
+        "sram_accesses": {
+          "filter_reads": 12582912,
+          "ifmap_reads": 393216,
+          "ofmap_writes": 6144
+        },
+        "stall_cycles": 0,
+        "total_cycles": 397183,
+        "total_cycles_including_prefetch": 400521
+      },
+      "raw_artifacts": [
+        {
+          "bytes": 766,
+          "path": "input/config.cfg",
+          "sha256": "8ea0f8585849e44435f364db32ffa8e22cebda75c896730f15987aacdbacdbde"
+        },
+        {
+          "bytes": 673,
+          "path": "input/layout.csv",
+          "sha256": "15099b7bf91733d96bcb3aaa5e14d61eefc569769c68138a647d7366ad4feff8"
+        },
+        {
+          "bytes": 82,
+          "path": "input/topology.csv",
+          "sha256": "86c6422f8873a307ad669f6c75cab3ff9e45261d126a6a1ffc279fb08e4daded"
+        },
+        {
+          "bytes": 234,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__os-32x32-sram64kb/BANDWIDTH_REPORT.csv",
+          "sha256": "1ae4b597cea6a930413887627c59ab9a906b430162afa026eaf3653f30812df4"
+        },
+        {
+          "bytes": 190,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__os-32x32-sram64kb/COMPUTE_REPORT.csv",
+          "sha256": "27093bf8b0104c7932c7fe3fcc88dad2a1e9a00e2989144a7faeea04969d9c50"
+        },
+        {
+          "bytes": 557,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__os-32x32-sram64kb/DETAILED_ACCESS_REPORT.csv",
+          "sha256": "00da4af617025fe56e07377b2af03ad8c2700aa846c667dee4dcff80ab7ba392"
+        },
+        {
+          "bytes": 375,
+          "path": "process.json",
+          "sha256": "ee45208c3be462030810bb5fd653e00c426cb59a2333549b862b493138b3d10c"
+        },
+        {
+          "bytes": 0,
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 0,
+          "path": "stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "workload": {
+        "dimensions": {
+          "batch": 1,
+          "k": 6144,
+          "m": 1,
+          "n": 2048
+        },
+        "id": "glm-5.2-routed-expert-gate-bf16-reference-b1",
+        "model_id": "zai-org/GLM-5.2",
+        "operator": "moe.routed_expert.gate_projection",
+        "semantic_limit": "This is one architectural BF16 routed-expert projection, not the opaque NVIDIA NVFP4 checkpoint, three-matrix expert execution, routing, batching, or whole-model decode.",
+        "source_contract": {
+          "basis": "The checked GLM lowerer contract pins hidden_size=6144, expert_intermediate_size=2048, routed-expert BF16 weights, and BF16 network activations. This case covers one logical gate projection for one dispatched token.",
+          "kind": "glm_routed_expert_gate_bf16_reference",
+          "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+          "path": "../glm-5.2-whole-decode-lowering-v1.json",
+          "sha256": "4e4f3c3afdb1cf0334abaa19d5304f285faacde30fe40698df54d74d6d412a4e"
+        },
+        "tensor_types": {
+          "accumulator": "fp32",
+          "input": "bf16",
+          "output": "bf16",
+          "weight": "bf16"
+        }
+      }
+    },
+    {
+      "architecture": {
+        "array_height": 32,
+        "array_width": 32,
+        "dataflow": "ws",
+        "filter_sram_kb": 4096,
+        "id": "ws-32x32-sram4096kb",
+        "ifmap_sram_kb": 4096,
+        "interface_bandwidth": "CALC",
+        "ofmap_sram_kb": 4096,
+        "role": "sram_control"
+      },
+      "case_id": "glm-5.2-routed-expert-gate-bf16-reference-b1/ws-32x32-sram4096kb",
+      "logical_accounting": {
+        "flops": 25165824,
+        "input_bytes": 12288,
+        "input_elements": 6144,
+        "multiply_accumulates": 12582912,
+        "output_bytes": 4096,
+        "output_elements": 2048,
+        "total_tensor_bytes": 25182208,
+        "weight_bytes": 25165824,
+        "weight_elements": 12582912
+      },
+      "native_result": {
+        "access_semantics": "native_scale_sim_element_access_counts_not_foundry_logical_bytes",
+        "access_windows": {
+          "dram_filter": {
+            "start_cycle": -209715.0,
+            "stop_cycle": 1167297.0
+          },
+          "dram_ifmap": {
+            "start_cycle": -4195.0,
+            "stop_cycle": -1.0
+          },
+          "dram_ofmap": {
+            "start_cycle": 1167359.0,
+            "stop_cycle": 1179646.0
+          },
+          "sram_filter": {
+            "start_cycle": 1.0,
+            "stop_cycle": 1167297.0
+          },
+          "sram_ifmap": {
+            "start_cycle": 33.0,
+            "stop_cycle": 1167329.0
+          },
+          "sram_ofmap": {
+            "start_cycle": 63.0,
+            "stop_cycle": 1167359.0
+          }
+        },
+        "bandwidth": {
+          "average_filter_dram_words_per_cycle": 9.137830942772508,
+          "average_filter_sram_words_per_cycle": 10.778956602039305,
+          "average_ifmap_dram_words_per_cycle": 1.464600715137068,
+          "average_ifmap_sram_words_per_cycle": 0.33684239381372827,
+          "average_ofmap_dram_words_per_cycle": 32.0,
+          "average_ofmap_sram_words_per_cycle": 0.33684239381372827
+        },
+        "compute_utilization_percent": 0.7936507936507936,
+        "dram_accesses": {
+          "filter_reads": 12582912,
+          "ifmap_reads": 6144,
+          "ofmap_writes": 393216
+        },
+        "mapping_efficiency_percent": 100.0,
+        "overall_utilization_percent": 1.0526324806679008,
+        "sram_accesses": {
+          "filter_reads": 12582912,
+          "ifmap_reads": 393216,
+          "ofmap_writes": 393216
+        },
+        "stall_cycles": 0,
+        "total_cycles": 1167359,
+        "total_cycles_including_prefetch": 1389361
+      },
+      "raw_artifacts": [
+        {
+          "bytes": 774,
+          "path": "input/config.cfg",
+          "sha256": "7269127c92d2a219e3f311e5d25f3e9d750ae67385c3192c6b6bae57c7cf5cf6"
+        },
+        {
+          "bytes": 673,
+          "path": "input/layout.csv",
+          "sha256": "15099b7bf91733d96bcb3aaa5e14d61eefc569769c68138a647d7366ad4feff8"
+        },
+        {
+          "bytes": 82,
+          "path": "input/topology.csv",
+          "sha256": "86c6422f8873a307ad669f6c75cab3ff9e45261d126a6a1ffc279fb08e4daded"
+        },
+        {
+          "bytes": 234,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__ws-32x32-sram4096kb/BANDWIDTH_REPORT.csv",
+          "sha256": "7d54371749abb24c4d289f1f37d9e9d96b140f9c5cfeb0987bdc209fcd06a7ea"
+        },
+        {
+          "bytes": 193,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__ws-32x32-sram4096kb/COMPUTE_REPORT.csv",
+          "sha256": "7538f54c1e889fb6282d00c85803537a3a069e7a109312c947860ee8d541de13"
+        },
+        {
+          "bytes": 569,
+          "path": "output/glm-5.2-routed-expert-gate-bf16-reference-b1__ws-32x32-sram4096kb/DETAILED_ACCESS_REPORT.csv",
+          "sha256": "704ccd59170933b6898abbd226fdbf265281037ebca2c2d6f76504c50dd0ef9b"
+        },
+        {
+          "bytes": 375,
+          "path": "process.json",
+          "sha256": "ee45208c3be462030810bb5fd653e00c426cb59a2333549b862b493138b3d10c"
+        },
+        {
+          "bytes": 0,
+          "path": "stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "bytes": 0,
+          "path": "stdout.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "workload": {
+        "dimensions": {
+          "batch": 1,
+          "k": 6144,
+          "m": 1,
+          "n": 2048
+        },
+        "id": "glm-5.2-routed-expert-gate-bf16-reference-b1",
+        "model_id": "zai-org/GLM-5.2",
+        "operator": "moe.routed_expert.gate_projection",
+        "semantic_limit": "This is one architectural BF16 routed-expert projection, not the opaque NVIDIA NVFP4 checkpoint, three-matrix expert execution, routing, batching, or whole-model decode.",
+        "source_contract": {
+          "basis": "The checked GLM lowerer contract pins hidden_size=6144, expert_intermediate_size=2048, routed-expert BF16 weights, and BF16 network activations. This case covers one logical gate projection for one dispatched token.",
+          "kind": "glm_routed_expert_gate_bf16_reference",
+          "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+          "path": "../glm-5.2-whole-decode-lowering-v1.json",
+          "sha256": "4e4f3c3afdb1cf0334abaa19d5304f285faacde30fe40698df54d74d6d412a4e"
+        },
+        "tensor_types": {
+          "accumulator": "fp32",
+          "input": "bf16",
+          "output": "bf16",
+          "weight": "bf16"
+        }
+      }
+    }
+  ],
+  "claims": {
+    "area_claim_permitted": false,
+    "bf16_arithmetic_claim_permitted": false,
+    "blockers": [
+      "scale_sim_dense_elements_do_not_encode_bf16_arithmetic",
+      "calc_bandwidth_mode_is_not_a_calibrated_memory_system",
+      "cycles_have_no_bound_clock_frequency_or_gpu_runtime_calibration",
+      "single_gemms_do_not_model_serving_or_whole_model_execution",
+      "energy_area_and_cost_backends_are_not_executed"
+    ],
+    "cost_claim_permitted": false,
+    "energy_claim_permitted": false,
+    "exact_topology_claim_permitted": true,
+    "glm_nvfp4_execution_claim_permitted": false,
+    "gpu_latency_claim_permitted": false,
+    "gpu_performance_claim_permitted": false,
+    "model_specific_hardware_advantage_claim_permitted": false,
+    "native_access_count_claim_permitted": true,
+    "native_cycle_count_claim_permitted": true,
+    "native_simulator_execution_claim_permitted": true,
+    "native_utilization_claim_permitted": true,
+    "provider_comparison_claim_permitted": false,
+    "same_oracle_cycle_ratio_claim_permitted": true,
+    "sram_capacity_benefit_claim_permitted": false,
+    "wall_clock_latency_claim_permitted": false,
+    "whole_model_claim_permitted": false
+  },
+  "content_identity_sha256": "ab42fa90e0c0233f900269ade11597528362e3e2609c0424fc8e3f5944231a0f",
+  "current_main_probe": {
+    "basis": "The current main revision was inspected, while the immutable v3.0.0 release tag is executed for the primary reproducible result. The release tag's setup.py still declares package version 2.0.2; that upstream metadata is preserved rather than relabeled.",
+    "commit_time": "2025-12-17T22:09:58+05:30",
+    "license": "MIT",
+    "license_sha256": "fe3db3ba0fad0a4e33850aa144c40c88498d3c7943a463254e7c572b665f666a",
+    "revision": "9f98c4371055a54c75209c2e02b640b897550532",
+    "scale_config_sha256": "631a1995b27a9f318b7eabf30fc7e7400fbd474ead03bd6ff7de2562346b8291",
+    "setup_sha256": "9108c922dbbf8ab02b7e712c518814a3ee5790ba5fac8a6ac883b36af6087810",
+    "simulator_sha256": "88d92232657463be4b9d8c30bd0aa85ec53ef003675a65aaf3472f75ad97018f",
+    "use_for_primary_result": false,
+    "version": "3.0.0"
+  },
+  "environment": {
+    "platform": "macOS-15.6.1-arm64-arm-64bit",
+    "python": "3.12.12"
+  },
+  "request_id": "qwen3-glm-bf16-gemm-sweep-v1",
+  "same_oracle_cycle_frontier": [
+    {
+      "cycle_ratio_to_minimum": {
+        "is-32x32-sram64kb": 1.0374736905181001,
+        "os-32x32-sram64kb": 1.0,
+        "ws-16x16-sram64kb": 5.781135071569281,
+        "ws-32x32-sram4096kb": 3.4688842782276086,
+        "ws-32x32-sram64kb": 2.925334751486189,
+        "ws-64x64-sram64kb": 1.4744245620079846
+      },
+      "minimum_architecture_ids": [
+        "os-32x32-sram64kb"
+      ],
+      "minimum_total_cycles_including_prefetch": 400521,
+      "workload_id": "glm-5.2-routed-expert-gate-bf16-reference-b1"
+    },
+    {
+      "cycle_ratio_to_minimum": {
+        "is-32x32-sram64kb": 1.070497705612425,
+        "os-32x32-sram64kb": 1.0,
+        "ws-16x16-sram64kb": 5.511415460642429,
+        "ws-32x32-sram4096kb": 5.736971408400988,
+        "ws-32x32-sram64kb": 2.8077373808683372,
+        "ws-64x64-sram64kb": 1.4341969643487469
+      },
+      "minimum_architecture_ids": [
+        "os-32x32-sram64kb"
+      ],
+      "minimum_total_cycles_including_prefetch": 70825,
+      "workload_id": "qwen3-0.6b-o-proj-bf16-b1"
+    }
+  ],
+  "schema_version": "inference-foundry.scalesim-v3-smoke-report.v1",
+  "source_identity": {
+    "probe_sha256": "1979e322998b07a9797a5ad0f8c1a8f7e218e556540ae5ea129d5c23f371e682",
+    "request_sha256": "0bac392c2fee154293368455b82cca1079b713a7ac43cff25a955d127eec58dd"
+  },
+  "status": "native_sweep_succeeded",
+  "sweep": {
+    "architecture_count": 6,
+    "case_count": 12,
+    "workload_count": 2
+  },
+  "sweep_analysis": {
+    "base_architecture_rank_identical_across_workloads": true,
+    "base_architecture_rankings": {
+      "glm-5.2-routed-expert-gate-bf16-reference-b1": [
+        "os-32x32-sram64kb",
+        "is-32x32-sram64kb",
+        "ws-64x64-sram64kb",
+        "ws-32x32-sram64kb",
+        "ws-16x16-sram64kb"
+      ],
+      "qwen3-0.6b-o-proj-bf16-b1": [
+        "os-32x32-sram64kb",
+        "is-32x32-sram64kb",
+        "ws-64x64-sram64kb",
+        "ws-32x32-sram64kb",
+        "ws-16x16-sram64kb"
+      ]
+    },
+    "interpretation_scope": "same_pinned_scale_sim_oracle_only",
+    "larger_sram_reduced_native_dram_filter_reads_observed": false,
+    "larger_sram_reduced_total_cycles_observed": false,
+    "model_specific_best_base_architecture_observed": false,
+    "sram_controls": [
+      {
+        "baseline_architecture_id": "ws-32x32-sram64kb",
+        "control_architecture_id": "ws-32x32-sram4096kb",
+        "dram_filter_reads_ratio": 1.0,
+        "total_cycles_including_prefetch_ratio": 1.185807633285481,
+        "total_cycles_ratio": 1.0,
+        "workload_id": "glm-5.2-routed-expert-gate-bf16-reference-b1"
+      },
+      {
+        "baseline_architecture_id": "ws-32x32-sram64kb",
+        "control_architecture_id": "ws-32x32-sram4096kb",
+        "dram_filter_reads_ratio": 1.0,
+        "total_cycles_including_prefetch_ratio": 2.043272083597341,
+        "total_cycles_ratio": 1.0,
+        "workload_id": "qwen3-0.6b-o-proj-bf16-b1"
+      }
+    ]
+  },
+  "tool_identity": {
+    "executed_source_sha256": "deca8f4ad4ba005a1a34a2a480cd98948ce2785eb4c618e96636a11c93a29903",
+    "license": "MIT",
+    "license_sha256": "fe3db3ba0fad0a4e33850aa144c40c88498d3c7943a463254e7c572b665f666a",
+    "name": "SCALE-Sim",
+    "release_tag": "v3.0.0",
+    "release_version": "3.0.0",
+    "repository": "https://github.com/scalesim-project/SCALE-Sim",
+    "revision": "7fd972e7c650e81c77294c9433143a282235c5e7",
+    "version": "2.0.2"
+  }
+}

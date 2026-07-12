@@ -1,0 +1,26 @@
+{
+  "schema_version": 2,
+  "trace_id": "qwen3-0.6b-vllm-cpu-burst-8x128x32-v1",
+  "provenance": {
+    "provenance": "synthetic",
+    "generator_id": "vllm-random-seed-0-fixed-128x32",
+    "seed": 0
+  },
+  "timestamp_basis": "relative_microseconds",
+  "identity": {
+    "model_id": "qwen3-0.6b-local",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "tokenizer_id": "/Users/js/dev/inference-foundry/models/Qwen3-0.6B",
+    "tokenizer_revision": "c1899de289a04d12100db370d81485cdf75e47ca"
+  },
+  "requests": [
+    {"request_id": 1, "class": "tool", "arrival_timestamp_microseconds": 0, "input_tokens": 128, "output_tokens": 32, "prefix_reused_tokens": 0},
+    {"request_id": 2, "class": "coding", "arrival_timestamp_microseconds": 0, "input_tokens": 128, "output_tokens": 32, "prefix_reused_tokens": 0},
+    {"request_id": 3, "class": "long_agent", "arrival_timestamp_microseconds": 0, "input_tokens": 128, "output_tokens": 32, "prefix_reused_tokens": 0},
+    {"request_id": 4, "class": "tool", "arrival_timestamp_microseconds": 0, "input_tokens": 128, "output_tokens": 32, "prefix_reused_tokens": 0},
+    {"request_id": 5, "class": "coding", "arrival_timestamp_microseconds": 0, "input_tokens": 128, "output_tokens": 32, "prefix_reused_tokens": 0},
+    {"request_id": 6, "class": "long_agent", "arrival_timestamp_microseconds": 0, "input_tokens": 128, "output_tokens": 32, "prefix_reused_tokens": 0},
+    {"request_id": 7, "class": "tool", "arrival_timestamp_microseconds": 0, "input_tokens": 128, "output_tokens": 32, "prefix_reused_tokens": 0},
+    {"request_id": 8, "class": "coding", "arrival_timestamp_microseconds": 0, "input_tokens": 128, "output_tokens": 32, "prefix_reused_tokens": 0}
+  ]
+}

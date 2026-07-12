@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "study_id": "glm-5.2-parallel-mapping-90k-control-v1",
+  "sources": {
+    "storage_report_content_id": "3216cdd0e8c0988ccc7c779f9df9c7d0b8099f11375e7bdb441ab7463d9bc174",
+    "route_report_content_id": "a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2",
+    "dsa_report_content_id": "ed372a7fbf9c0bc338ab66b107b7f188edae3fc63bc8bb68943b79082eeb8fe0",
+    "lowering_report_content_id": "f40f41c1d67b909783c40073f475f08906e77ccb05673f2beb630a496b0c7cd3",
+    "lower_action_ledger_content_id": "386fbfcf01076a825c60386be1d9ab771e93b042b661702511f867b776041efa"
+  },
+  "mechanism_evidence": [
+    {
+      "kind": "published_mechanism",
+      "source_artifact_id": "https://fireworks.ai/blog/glm-5p2-fast",
+      "basis": "Mechanism evidence only: independent expert and attention parallelism, topology-local expert groups, and data-parallel attention that keeps each request's compressed MLA cache local. The vendor reports approximately 90K average public prompt length, but no vendor timing, aggregate throughput, or cost number is imported."
+    },
+    {
+      "kind": "analytical_bound",
+      "source_artifact_id": "experiments/glm-5.2/parallel-mapping-control-v1.json#205c1c7157d104179e066ecfde311107ca7f160f941a8a97e7058e8e1fd80729",
+      "basis": "Pinned 16,384-token comparison control. The 90,000-token residency context is exactly 90,000/16,384 = 5.4931640625 times that context. Decode network work remains batch 8 and 16 aggregate candidate tokens per integer lowerer repetition; the mapping executes exactly two repetitions. Residency concurrency is a separate dimension and does not scale active decode batch."
+    }
+  ],
+  "variant_id": "glm-5.2-nvidia-nvfp4-expert-selective",
+  "device_profile_id": "fireworks-b200-180gb-16x",
+  "semantic_cache": {
+    "format_id": "modeled-fp8-semantic-mla",
+    "bytes_per_token": 44928,
+    "evidence": {
+      "kind": "published_specification",
+      "source_artifact_id": "https://recipes.vllm.ai/zai-org/GLM-5.2#fp8-kv-cache",
+      "basis": "78 layers times 576 semantic-plus-rotary values times one byte gives 44,928 bytes per token. One exact 90,000-token context occupies 4,043,520,000 semantic bytes versus 736,100,352 at 16,384 tokens, an increase of 3,307,419,648 bytes. Scale storage, alignment, block metadata, and indexer cache are excluded from this partial semantic payload and bounded separately where the storage artifact permits."
+    }
+  },
+  "topology": {
+    "topology_id": "modeled-two-domain-b200-16x",
+    "device_count": 16,
+    "domains": [
+      {
+        "domain_id": "domain-0",
+        "ordered_device_ids": [0, 1, 2, 3, 4, 5, 6, 7]
+      },
+      {
+        "domain_id": "domain-1",
+        "ordered_device_ids": [8, 9, 10, 11, 12, 13, 14, 15]
+      }
+    ],
+    "evidence": {
+      "kind": "modeled_assumption",
+      "source_artifact_id": "modeled-assumption:two-physical-8-device-domains-on-16-b200-v1",
+      "basis": "Device IDs and domain membership are a mechanism fixture. Link bandwidth, latency, switching, and physical B200 fabric realization are not asserted."
+    }
+  },
+  "network_workload": {
+    "integer_repetitions": 2,
+    "attention_collectives_per_layer": 1,
+    "moe_collectives_per_layer": 1
+  },
+  "residency_sweep": {
+    "context_tokens_per_request": 90000,
+    "concurrency_points": [1, 5, 6, 7, 8, 9, 14, 15, 16, 27, 28, 32],
+    "crossover_min_concurrency": 1,
+    "crossover_max_concurrency": 32
+  },
+  "plans": [
+    {
+      "plan_id": "coupled-tp16",
+      "attention_parallelism": "tensor_parallel",
+      "attention_groups": [
+        {
+          "group_id": "attention-tp16",
+          "ordered_device_ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+        }
+      ],
+      "expert_parallelism": "tensor_parallel",
+      "expert_groups": [
+        {
+          "group_id": "expert-tp16",
+          "ordered_device_ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+        }
+      ],
+      "semantic_cache_placement": "attention_group_local",
+      "non_routed_weight_mapping": "attention_groups_exact",
+      "expert_network_model": "tensor_parallel_collective"
+    },
+    {
+      "plan_id": "decoupled-dp-attention-ep8",
+      "attention_parallelism": "data_parallel_local",
+      "attention_groups": [
+        { "group_id": "attention-dp-0", "ordered_device_ids": [0] },
+        { "group_id": "attention-dp-1", "ordered_device_ids": [1] },
+        { "group_id": "attention-dp-2", "ordered_device_ids": [2] },
+        { "group_id": "attention-dp-3", "ordered_device_ids": [3] },
+        { "group_id": "attention-dp-4", "ordered_device_ids": [4] },
+        { "group_id": "attention-dp-5", "ordered_device_ids": [5] },
+        { "group_id": "attention-dp-6", "ordered_device_ids": [6] },
+        { "group_id": "attention-dp-7", "ordered_device_ids": [7] },
+        { "group_id": "attention-dp-8", "ordered_device_ids": [8] },
+        { "group_id": "attention-dp-9", "ordered_device_ids": [9] },
+        { "group_id": "attention-dp-10", "ordered_device_ids": [10] },
+        { "group_id": "attention-dp-11", "ordered_device_ids": [11] },
+        { "group_id": "attention-dp-12", "ordered_device_ids": [12] },
+        { "group_id": "attention-dp-13", "ordered_device_ids": [13] },
+        { "group_id": "attention-dp-14", "ordered_device_ids": [14] },
+        { "group_id": "attention-dp-15", "ordered_device_ids": [15] }
+      ],
+      "expert_parallelism": "expert_parallel",
+      "expert_groups": [
+        { "group_id": "expert-ep8-domain-0", "ordered_device_ids": [0, 1, 2, 3, 4, 5, 6, 7] },
+        { "group_id": "expert-ep8-domain-1", "ordered_device_ids": [8, 9, 10, 11, 12, 13, 14, 15] }
+      ],
+      "semantic_cache_placement": "attention_group_local",
+      "non_routed_weight_mapping": "opaque_global_shard_to_attention_replication",
+      "expert_network_model": "pinned_lowerer_route"
+    }
+  ],
+  "partial_comparison": {
+    "baseline_plan_id": "coupled-tp16",
+    "candidate_plan_id": "decoupled-dp-attention-ep8"
+  }
+}

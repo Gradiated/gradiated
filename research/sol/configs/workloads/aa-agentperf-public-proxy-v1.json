@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "proxy_id": "aa-agentperf-public-geometry-synthetic-proxy-v1",
+  "seed": 20260712,
+  "identity": {
+    "model_id": "synthetic/model-under-test",
+    "model_revision": "synthetic-public-agentic-proxy-v1",
+    "tokenizer_id": "synthetic/tokenizer-under-test",
+    "tokenizer_revision": "synthetic-public-agentic-proxy-v1"
+  },
+  "public_basis": {
+    "source_label": "AA-AgentPerf public workload geometry",
+    "minimum_input_tokens": 5000,
+    "maximum_input_tokens": 131000,
+    "approximate_mean_input_tokens": 27000,
+    "median_tool_delay_milliseconds": 1000,
+    "dynamic_prefixes": true,
+    "concurrent_sessions": true,
+    "private_test_set_used": false
+  },
+  "synthetic_design": {
+    "session_count": 8,
+    "turns_per_session": 8,
+    "session_start_stagger_milliseconds": 125,
+    "tool_delay_milliseconds_by_turn": [500, 750, 1000, 1000, 1250, 1500, 2000],
+    "prefix_reuse_basis_points_by_turn": [0, 4500, 6500, 8000, 5500, 8500, 7000, 9000],
+    "class_by_turn": [
+      "tool",
+      "coding",
+      "tool",
+      "coding",
+      "long_agent",
+      "tool",
+      "coding",
+      "long_agent"
+    ],
+    "input_length_histogram": [
+      { "input_tokens": 5000, "count": 8 },
+      { "input_tokens": 10000, "count": 8 },
+      { "input_tokens": 16000, "count": 8 },
+      { "input_tokens": 22000, "count": 8 },
+      { "input_tokens": 27000, "count": 8 },
+      { "input_tokens": 32000, "count": 8 },
+      { "input_tokens": 45000, "count": 7 },
+      { "input_tokens": 48250, "count": 8 },
+      { "input_tokens": 131000, "count": 1 }
+    ],
+    "output_tokens_by_class": [
+      { "class": "tool", "output_tokens": 32 },
+      { "class": "coding", "output_tokens": 256 },
+      { "class": "long_agent", "output_tokens": 512 }
+    ]
+  },
+  "slo_tiers": [
+    {
+      "tier_id": "interactive_tool",
+      "class": "tool",
+      "percentile": 95.0,
+      "maximum_ttft_milliseconds": 1000.0,
+      "minimum_output_tokens_per_second": 40.0
+    },
+    {
+      "tier_id": "interactive_generation",
+      "class": "coding",
+      "percentile": 95.0,
+      "maximum_ttft_milliseconds": 3000.0,
+      "minimum_output_tokens_per_second": 25.0
+    },
+    {
+      "tier_id": "long_context",
+      "class": "long_agent",
+      "percentile": 95.0,
+      "maximum_ttft_milliseconds": 10000.0,
+      "minimum_output_tokens_per_second": 15.0
+    }
+  ],
+  "claim_gates": {
+    "aa_agentperf_score_claim_permitted": false,
+    "measured_performance_claim_permitted": false,
+    "nvidia_performance_claim_permitted": false,
+    "provider_performance_claim_permitted": false,
+    "cost_claim_permitted": false
+  }
+}

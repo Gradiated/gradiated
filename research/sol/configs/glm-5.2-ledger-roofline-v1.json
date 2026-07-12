@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "study_id": "glm-5.2-decode-ledger-hardware-roofline-v1",
+  "baseline_hardware_id": "h200-like-modeled",
+  "hardware": [
+    {
+      "hardware_id": "h200-like-modeled",
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "modeled-h200-like-ledger-timing-v1"
+      },
+      "compute_engines": [
+        {
+          "class": "matrix_multiply",
+          "flops_per_second": 1000000000000000.0,
+          "non_flop_operations_per_second": 1000000000000.0,
+          "fixed_latency_seconds": 0.000004,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-h200-like-matrix-engine-v1"
+          }
+        },
+        {
+          "class": "attention_score",
+          "flops_per_second": 500000000000000.0,
+          "non_flop_operations_per_second": 500000000000.0,
+          "fixed_latency_seconds": 0.000004,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-h200-like-attention-engine-v1"
+          }
+        },
+        {
+          "class": "top_k",
+          "flops_per_second": 100000000000000.0,
+          "non_flop_operations_per_second": 5000000000.0,
+          "fixed_latency_seconds": 0.000005,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-h200-like-topk-engine-v1"
+          }
+        },
+        {
+          "class": "elementwise",
+          "flops_per_second": 100000000000000.0,
+          "non_flop_operations_per_second": 500000000000.0,
+          "fixed_latency_seconds": 0.000004,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-h200-like-elementwise-engine-v1"
+          }
+        }
+      ],
+      "memory_paths": [
+        {
+          "source": "hbm",
+          "destination": "on_chip",
+          "bandwidth_bytes_per_second": 3350000000000.0,
+          "fixed_latency_seconds": 0.000001,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-h200-like-hbm-path-v1"
+          }
+        },
+        {
+          "source": "on_chip",
+          "destination": "hbm",
+          "bandwidth_bytes_per_second": 3350000000000.0,
+          "fixed_latency_seconds": 0.000001,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-h200-like-hbm-store-path-v1"
+          }
+        }
+      ],
+      "cache_tiers": [
+        {
+          "tier": "on_chip",
+          "key_space": null,
+          "bandwidth_bytes_per_second": 50000000000000.0,
+          "fixed_latency_seconds": 0.0000002,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-h200-like-onchip-cache-v1"
+          }
+        }
+      ],
+      "network": {
+        "aggregate_bandwidth_bytes_per_second": 450000000000.0,
+        "fixed_latency_seconds": 0.000001,
+        "latency_seconds_per_message": 0.0000003,
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-h200-like-collective-v1"
+        }
+      },
+      "synchronization": {
+        "fixed_latency_seconds": 0.0000005,
+        "latency_seconds_per_participant": 0.00000005,
+        "supported_kinds": [
+          "barrier",
+          "event"
+        ],
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-h200-like-synchronization-v1"
+        }
+      },
+      "scheduler": {
+        "fixed_latency_seconds": 0.000001,
+        "latency_seconds_per_request": 0.0000001,
+        "latency_seconds_per_token": 0.00000001,
+        "supported_decisions": [
+          "batch_formation",
+          "expert_routing",
+          "mtp_draft",
+          "mtp_verify",
+          "token_commit"
+        ],
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-h200-like-scheduler-v1"
+        }
+      }
+    },
+    {
+      "hardware_id": "glm-dsa-moe-custom-upper-bound",
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "modeled-glm-specific-custom-hardware-upper-bound-v1"
+      },
+      "compute_engines": [
+        {
+          "class": "matrix_multiply",
+          "flops_per_second": 2000000000000000.0,
+          "non_flop_operations_per_second": 2000000000000.0,
+          "fixed_latency_seconds": 0.000001,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-custom-expert-matrix-engine-v1"
+          }
+        },
+        {
+          "class": "attention_score",
+          "flops_per_second": 2000000000000000.0,
+          "non_flop_operations_per_second": 2000000000000.0,
+          "fixed_latency_seconds": 0.0000008,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-custom-dsa-attention-engine-v1"
+          }
+        },
+        {
+          "class": "top_k",
+          "flops_per_second": 500000000000000.0,
+          "non_flop_operations_per_second": 500000000000.0,
+          "fixed_latency_seconds": 0.0000005,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-custom-indexer-topk-engine-v1"
+          }
+        },
+        {
+          "class": "elementwise",
+          "flops_per_second": 500000000000000.0,
+          "non_flop_operations_per_second": 2000000000000.0,
+          "fixed_latency_seconds": 0.0000005,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-custom-elementwise-engine-v1"
+          }
+        }
+      ],
+      "memory_paths": [
+        {
+          "source": "hbm",
+          "destination": "on_chip",
+          "bandwidth_bytes_per_second": 12000000000000.0,
+          "fixed_latency_seconds": 0.0000002,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-custom-hbm-path-v1"
+          }
+        },
+        {
+          "source": "on_chip",
+          "destination": "hbm",
+          "bandwidth_bytes_per_second": 12000000000000.0,
+          "fixed_latency_seconds": 0.0000002,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-custom-hbm-store-path-v1"
+          }
+        }
+      ],
+      "cache_tiers": [
+        {
+          "tier": "on_chip",
+          "key_space": null,
+          "bandwidth_bytes_per_second": 150000000000000.0,
+          "fixed_latency_seconds": 0.00000005,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-custom-indexshare-cache-v1"
+          }
+        }
+      ],
+      "network": {
+        "aggregate_bandwidth_bytes_per_second": 1600000000000.0,
+        "fixed_latency_seconds": 0.0000002,
+        "latency_seconds_per_message": 0.00000005,
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-custom-expert-fabric-v1"
+        }
+      },
+      "synchronization": {
+        "fixed_latency_seconds": 0.0000001,
+        "latency_seconds_per_participant": 0.00000001,
+        "supported_kinds": [
+          "barrier",
+          "event"
+        ],
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-custom-synchronization-v1"
+        }
+      },
+      "scheduler": {
+        "fixed_latency_seconds": 0.0000002,
+        "latency_seconds_per_request": 0.00000002,
+        "latency_seconds_per_token": 0.000000002,
+        "supported_decisions": [
+          "batch_formation",
+          "expert_routing",
+          "mtp_draft",
+          "mtp_verify",
+          "token_commit"
+        ],
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-custom-control-plane-v1"
+        }
+      }
+    }
+  ]
+}

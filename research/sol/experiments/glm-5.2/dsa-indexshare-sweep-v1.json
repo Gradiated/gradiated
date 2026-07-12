@@ -1,0 +1,540 @@
+{
+  "schema_version": 1,
+  "content_id": "ed372a7fbf9c0bc338ab66b107b7f188edae3fc63bc8bb68943b79082eeb8fe0",
+  "result": {
+    "study_id": "glm-5.2-indexshare-dsa-context-hardware-envelope-v1",
+    "model_id": "zai-org/GLM-5.2",
+    "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+    "batch_size": 1,
+    "layer_count": 78,
+    "full_indexer_layer_count": 21,
+    "shared_index_layer_count": 57,
+    "selected_token_count": 2048,
+    "selected_index_bytes": 4,
+    "full_indexer_layer_ids": [
+      0,
+      1,
+      2,
+      6,
+      10,
+      14,
+      18,
+      22,
+      26,
+      30,
+      34,
+      38,
+      42,
+      46,
+      50,
+      54,
+      58,
+      62,
+      66,
+      70,
+      74
+    ],
+    "index_key_cache_storage": {
+      "value_storage_bits_per_element": 16,
+      "metadata_bytes_per_token": 0,
+      "basis": "Explicit semantic BF16 index-key scenario with zero metadata bytes per token. This is a modeled storage scenario, not a provider runtime baseline.",
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "modeled-glm-5.2-bf16-index-key-cache-v1"
+      }
+    },
+    "work_basis": "Decode-step analytical operation and byte counts. Index projection uses two FLOPs per released indexer parameter; scan uses one multiply-add per query-head key element; top-k counts scored candidates. Attention uses absorbed MLA core arithmetic over semantic latent and rotary state; common per-step query and output absorption transforms are excluded. Main-cache traffic uses compressed semantic MLA state. Index-key traffic uses the independent typed storage scenario including per-token metadata. The HBM IndexShare handoff counts 21 top-k writes plus 78 attention reads for the supplied layer pattern; the zero-HBM-handoff upper bound removes only this HBM traffic and does not model SRAM movement. Allocator, scale metadata outside the typed index-key scenario, paging metadata, transaction amplification, distributed mapping, overlap, and utilization are excluded. Every-layer indexing is a same-geometry analytical counterfactual, not a GLM-5.1 deployment measurement.",
+    "points": [
+      {
+        "context_tokens_per_request": 1024,
+        "selected_tokens_per_request": 1024,
+        "decode_query_tokens": 1,
+        "semantic_cache_bytes_per_layer_token": 1152,
+        "index_key_bytes_per_full_indexer_token": 256,
+        "indexshare": {
+          "full_indexer_layers": 21,
+          "shared_index_layers": 57,
+          "indexer_projection_flops": 393619968,
+          "index_score_scan_flops": 176160768,
+          "index_key_scan_bytes": 5505024,
+          "indexer_weight_bytes_per_step": 393619968,
+          "score_candidates": 21504
+        },
+        "same_geometry_every_layer_indexing_counterfactual": {
+          "full_indexer_layers": 78,
+          "shared_index_layers": 0,
+          "indexer_projection_flops": 1462017024,
+          "index_score_scan_flops": 654311424,
+          "index_key_scan_bytes": 20447232,
+          "indexer_weight_bytes_per_step": 1462017024,
+          "score_candidates": 79872
+        },
+        "sparse_attention_flops": 11123294208,
+        "sparse_cache_read_bytes": 92012544,
+        "dense_attention_flops": 11123294208,
+        "dense_cache_read_bytes": 92012544,
+        "hbm_index_topk_write_bytes": 86016,
+        "hbm_index_attention_read_bytes": 319488,
+        "hbm_index_handoff_bytes": 405504,
+        "zero_hbm_handoff_upper_bound_hbm_bytes": 0,
+        "indexshare_scan_reduction_fraction": 0.7307692307692307,
+        "sparse_cache_read_reduction_fraction": 0.0,
+        "hardware": [
+          {
+            "profile_id": "h200-sxm-component-roofline",
+            "evidence": {
+              "kind": "modeled_assumption",
+              "source_artifact_id": "validation/results/custom-hardware-feasibility-2026-07-12.json#commodity_baselines/nvidia_h200_sxm+modeled-topk"
+            },
+            "modeled_serial_component_dense_attention_seconds": 0.00001916928,
+            "modeled_serial_component_indexshare_hbm_handoff_seconds": 0.00010283487999999999,
+            "modeled_serial_component_indexshare_zero_hbm_handoff_upper_bound_seconds": 0.00010275039999999999,
+            "modeled_serial_component_same_geometry_every_layer_indexing_seconds": 0.00032961344,
+            "component_time_ratio_dense_attention_over_indexshare_hbm_handoff": 0.1864083470511173,
+            "component_time_ratio_same_geometry_every_layer_indexing_over_indexshare_hbm_handoff": 3.205268873751786,
+            "component_time_ratio_indexshare_hbm_handoff_over_zero_hbm_handoff_upper_bound": 1.0008221865802955,
+            "indexshare_components": {
+              "modeled_serial_component_projection_roofline_seconds": 0.00008200416,
+              "modeled_serial_component_scan_roofline_seconds": 1.14688e-6,
+              "modeled_serial_component_topk_seconds": 4.3008e-7,
+              "modeled_serial_component_sparse_attention_roofline_seconds": 0.00001916928,
+              "modeled_serial_component_hbm_handoff_seconds": 8.448e-8
+            }
+          },
+          {
+            "profile_id": "custom-dsa-component-upper-bound",
+            "evidence": {
+              "kind": "modeled_assumption",
+              "source_artifact_id": "configs/glm-5.2-ledger-roofline-v1.json#glm-dsa-moe-custom-upper-bound"
+            },
+            "modeled_serial_component_dense_attention_seconds": 7.667712e-6,
+            "modeled_serial_component_indexshare_hbm_handoff_seconds": 0.000041004928,
+            "modeled_serial_component_indexshare_zero_hbm_handoff_upper_bound_seconds": 0.000040971136,
+            "modeled_serial_component_same_geometry_every_layer_indexing_seconds": 0.000131366144,
+            "component_time_ratio_dense_attention_over_indexshare_hbm_handoff": 0.18699488998005315,
+            "component_time_ratio_same_geometry_every_layer_indexing_over_indexshare_hbm_handoff": 3.203667227509825,
+            "component_time_ratio_indexshare_hbm_handoff_over_zero_hbm_handoff_upper_bound": 1.0008247757640891,
+            "indexshare_components": {
+              "modeled_serial_component_projection_roofline_seconds": 0.000032801664,
+              "modeled_serial_component_scan_roofline_seconds": 4.58752e-7,
+              "modeled_serial_component_topk_seconds": 4.3008e-8,
+              "modeled_serial_component_sparse_attention_roofline_seconds": 7.667712e-6,
+              "modeled_serial_component_hbm_handoff_seconds": 3.3792e-8
+            }
+          }
+        ]
+      },
+      {
+        "context_tokens_per_request": 2048,
+        "selected_tokens_per_request": 2048,
+        "decode_query_tokens": 1,
+        "semantic_cache_bytes_per_layer_token": 1152,
+        "index_key_bytes_per_full_indexer_token": 256,
+        "indexshare": {
+          "full_indexer_layers": 21,
+          "shared_index_layers": 57,
+          "indexer_projection_flops": 393619968,
+          "index_score_scan_flops": 352321536,
+          "index_key_scan_bytes": 11010048,
+          "indexer_weight_bytes_per_step": 393619968,
+          "score_candidates": 43008
+        },
+        "same_geometry_every_layer_indexing_counterfactual": {
+          "full_indexer_layers": 78,
+          "shared_index_layers": 0,
+          "indexer_projection_flops": 1462017024,
+          "index_score_scan_flops": 1308622848,
+          "index_key_scan_bytes": 40894464,
+          "indexer_weight_bytes_per_step": 1462017024,
+          "score_candidates": 159744
+        },
+        "sparse_attention_flops": 22246588416,
+        "sparse_cache_read_bytes": 184025088,
+        "dense_attention_flops": 22246588416,
+        "dense_cache_read_bytes": 184025088,
+        "hbm_index_topk_write_bytes": 172032,
+        "hbm_index_attention_read_bytes": 638976,
+        "hbm_index_handoff_bytes": 811008,
+        "zero_hbm_handoff_upper_bound_hbm_bytes": 0,
+        "indexshare_scan_reduction_fraction": 0.7307692307692307,
+        "sparse_cache_read_reduction_fraction": 0.0,
+        "hardware": [
+          {
+            "profile_id": "h200-sxm-component-roofline",
+            "evidence": {
+              "kind": "modeled_assumption",
+              "source_artifact_id": "validation/results/custom-hardware-feasibility-2026-07-12.json#commodity_baselines/nvidia_h200_sxm+modeled-topk"
+            },
+            "modeled_serial_component_dense_attention_seconds": 0.00003833856,
+            "modeled_serial_component_indexshare_hbm_handoff_seconds": 0.0001236656,
+            "modeled_serial_component_indexshare_zero_hbm_handoff_upper_bound_seconds": 0.00012349664,
+            "modeled_serial_component_same_geometry_every_layer_indexing_seconds": 0.00035464,
+            "component_time_ratio_dense_attention_over_indexshare_hbm_handoff": 0.3100179839826112,
+            "component_time_ratio_same_geometry_every_layer_indexing_over_indexshare_hbm_handoff": 2.8677336300474825,
+            "component_time_ratio_indexshare_hbm_handoff_over_zero_hbm_handoff_upper_bound": 1.0013681343881098,
+            "indexshare_components": {
+              "modeled_serial_component_projection_roofline_seconds": 0.00008200416,
+              "modeled_serial_component_scan_roofline_seconds": 2.29376e-6,
+              "modeled_serial_component_topk_seconds": 8.6016e-7,
+              "modeled_serial_component_sparse_attention_roofline_seconds": 0.00003833856,
+              "modeled_serial_component_hbm_handoff_seconds": 1.6896e-7
+            }
+          },
+          {
+            "profile_id": "custom-dsa-component-upper-bound",
+            "evidence": {
+              "kind": "modeled_assumption",
+              "source_artifact_id": "configs/glm-5.2-ledger-roofline-v1.json#glm-dsa-moe-custom-upper-bound"
+            },
+            "modeled_serial_component_dense_attention_seconds": 0.000015335424,
+            "modeled_serial_component_indexshare_hbm_handoff_seconds": 0.000049208192000000006,
+            "modeled_serial_component_indexshare_zero_hbm_handoff_upper_bound_seconds": 0.000049140608000000004,
+            "modeled_serial_component_same_geometry_every_layer_indexing_seconds": 0.000140897536,
+            "component_time_ratio_dense_attention_over_indexshare_hbm_handoff": 0.3116437198099048,
+            "component_time_ratio_same_geometry_every_layer_indexing_over_indexshare_hbm_handoff": 2.8632943067690837,
+            "component_time_ratio_indexshare_hbm_handoff_over_zero_hbm_handoff_upper_bound": 1.0013753187587748,
+            "indexshare_components": {
+              "modeled_serial_component_projection_roofline_seconds": 0.000032801664,
+              "modeled_serial_component_scan_roofline_seconds": 9.17504e-7,
+              "modeled_serial_component_topk_seconds": 8.6016e-8,
+              "modeled_serial_component_sparse_attention_roofline_seconds": 0.000015335424,
+              "modeled_serial_component_hbm_handoff_seconds": 6.7584e-8
+            }
+          }
+        ]
+      },
+      {
+        "context_tokens_per_request": 8192,
+        "selected_tokens_per_request": 2048,
+        "decode_query_tokens": 1,
+        "semantic_cache_bytes_per_layer_token": 1152,
+        "index_key_bytes_per_full_indexer_token": 256,
+        "indexshare": {
+          "full_indexer_layers": 21,
+          "shared_index_layers": 57,
+          "indexer_projection_flops": 393619968,
+          "index_score_scan_flops": 1409286144,
+          "index_key_scan_bytes": 44040192,
+          "indexer_weight_bytes_per_step": 393619968,
+          "score_candidates": 172032
+        },
+        "same_geometry_every_layer_indexing_counterfactual": {
+          "full_indexer_layers": 78,
+          "shared_index_layers": 0,
+          "indexer_projection_flops": 1462017024,
+          "index_score_scan_flops": 5234491392,
+          "index_key_scan_bytes": 163577856,
+          "indexer_weight_bytes_per_step": 1462017024,
+          "score_candidates": 638976
+        },
+        "sparse_attention_flops": 22246588416,
+        "sparse_cache_read_bytes": 184025088,
+        "dense_attention_flops": 88986353664,
+        "dense_cache_read_bytes": 736100352,
+        "hbm_index_topk_write_bytes": 172032,
+        "hbm_index_attention_read_bytes": 638976,
+        "hbm_index_handoff_bytes": 811008,
+        "zero_hbm_handoff_upper_bound_hbm_bytes": 0,
+        "indexshare_scan_reduction_fraction": 0.7307692307692307,
+        "sparse_cache_read_reduction_fraction": 0.75,
+        "hardware": [
+          {
+            "profile_id": "h200-sxm-component-roofline",
+            "evidence": {
+              "kind": "modeled_assumption",
+              "source_artifact_id": "validation/results/custom-hardware-feasibility-2026-07-12.json#commodity_baselines/nvidia_h200_sxm+modeled-topk"
+            },
+            "modeled_serial_component_dense_attention_seconds": 0.00015335424,
+            "modeled_serial_component_indexshare_hbm_handoff_seconds": 0.00013312736,
+            "modeled_serial_component_indexshare_zero_hbm_handoff_upper_bound_seconds": 0.0001329584,
+            "modeled_serial_component_same_geometry_every_layer_indexing_seconds": 0.00038978368,
+            "component_time_ratio_dense_attention_over_indexshare_hbm_handoff": 1.1519363112135628,
+            "component_time_ratio_same_geometry_every_layer_indexing_over_indexshare_hbm_handoff": 2.927900620879134,
+            "component_time_ratio_indexshare_hbm_handoff_over_zero_hbm_handoff_upper_bound": 1.0012707734148425,
+            "indexshare_components": {
+              "modeled_serial_component_projection_roofline_seconds": 0.00008200416,
+              "modeled_serial_component_scan_roofline_seconds": 9.17504e-6,
+              "modeled_serial_component_topk_seconds": 3.44064e-6,
+              "modeled_serial_component_sparse_attention_roofline_seconds": 0.00003833856,
+              "modeled_serial_component_hbm_handoff_seconds": 1.6896e-7
+            }
+          },
+          {
+            "profile_id": "custom-dsa-component-upper-bound",
+            "evidence": {
+              "kind": "modeled_assumption",
+              "source_artifact_id": "configs/glm-5.2-ledger-roofline-v1.json#glm-dsa-moe-custom-upper-bound"
+            },
+            "modeled_serial_component_dense_attention_seconds": 0.000061341696,
+            "modeled_serial_component_indexshare_hbm_handoff_seconds": 0.000052218752000000004,
+            "modeled_serial_component_indexshare_zero_hbm_handoff_upper_bound_seconds": 0.000052151168,
+            "modeled_serial_component_same_geometry_every_layer_indexing_seconds": 0.00015207961600000004,
+            "component_time_ratio_dense_attention_over_indexshare_hbm_handoff": 1.1747062817587062,
+            "component_time_ratio_same_geometry_every_layer_indexing_over_indexshare_hbm_handoff": 2.912356388754753,
+            "component_time_ratio_indexshare_hbm_handoff_over_zero_hbm_handoff_upper_bound": 1.001295924954164,
+            "indexshare_components": {
+              "modeled_serial_component_projection_roofline_seconds": 0.000032801664,
+              "modeled_serial_component_scan_roofline_seconds": 3.670016e-6,
+              "modeled_serial_component_topk_seconds": 3.44064e-7,
+              "modeled_serial_component_sparse_attention_roofline_seconds": 0.000015335424,
+              "modeled_serial_component_hbm_handoff_seconds": 6.7584e-8
+            }
+          }
+        ]
+      },
+      {
+        "context_tokens_per_request": 32768,
+        "selected_tokens_per_request": 2048,
+        "decode_query_tokens": 1,
+        "semantic_cache_bytes_per_layer_token": 1152,
+        "index_key_bytes_per_full_indexer_token": 256,
+        "indexshare": {
+          "full_indexer_layers": 21,
+          "shared_index_layers": 57,
+          "indexer_projection_flops": 393619968,
+          "index_score_scan_flops": 5637144576,
+          "index_key_scan_bytes": 176160768,
+          "indexer_weight_bytes_per_step": 393619968,
+          "score_candidates": 688128
+        },
+        "same_geometry_every_layer_indexing_counterfactual": {
+          "full_indexer_layers": 78,
+          "shared_index_layers": 0,
+          "indexer_projection_flops": 1462017024,
+          "index_score_scan_flops": 20937965568,
+          "index_key_scan_bytes": 654311424,
+          "indexer_weight_bytes_per_step": 1462017024,
+          "score_candidates": 2555904
+        },
+        "sparse_attention_flops": 22246588416,
+        "sparse_cache_read_bytes": 184025088,
+        "dense_attention_flops": 355945414656,
+        "dense_cache_read_bytes": 2944401408,
+        "hbm_index_topk_write_bytes": 172032,
+        "hbm_index_attention_read_bytes": 638976,
+        "hbm_index_handoff_bytes": 811008,
+        "zero_hbm_handoff_upper_bound_hbm_bytes": 0,
+        "indexshare_scan_reduction_fraction": 0.7307692307692307,
+        "sparse_cache_read_reduction_fraction": 0.9375,
+        "hardware": [
+          {
+            "profile_id": "h200-sxm-component-roofline",
+            "evidence": {
+              "kind": "modeled_assumption",
+              "source_artifact_id": "validation/results/custom-hardware-feasibility-2026-07-12.json#commodity_baselines/nvidia_h200_sxm+modeled-topk"
+            },
+            "modeled_serial_component_dense_attention_seconds": 0.00061341696,
+            "modeled_serial_component_indexshare_hbm_handoff_seconds": 0.00017097439999999998,
+            "modeled_serial_component_indexshare_zero_hbm_handoff_upper_bound_seconds": 0.00017080543999999998,
+            "modeled_serial_component_same_geometry_every_layer_indexing_seconds": 0.0005303583999999999,
+            "component_time_ratio_dense_attention_over_indexshare_hbm_handoff": 3.5877708007748534,
+            "component_time_ratio_same_geometry_every_layer_indexing_over_indexshare_hbm_handoff": 3.1019755004257945,
+            "component_time_ratio_indexshare_hbm_handoff_over_zero_hbm_handoff_upper_bound": 1.0009891956602788,
+            "indexshare_components": {
+              "modeled_serial_component_projection_roofline_seconds": 0.00008200416,
+              "modeled_serial_component_scan_roofline_seconds": 0.00003670016,
+              "modeled_serial_component_topk_seconds": 0.00001376256,
+              "modeled_serial_component_sparse_attention_roofline_seconds": 0.00003833856,
+              "modeled_serial_component_hbm_handoff_seconds": 1.6896e-7
+            }
+          },
+          {
+            "profile_id": "custom-dsa-component-upper-bound",
+            "evidence": {
+              "kind": "modeled_assumption",
+              "source_artifact_id": "configs/glm-5.2-ledger-roofline-v1.json#glm-dsa-moe-custom-upper-bound"
+            },
+            "modeled_serial_component_dense_attention_seconds": 0.000245366784,
+            "modeled_serial_component_indexshare_hbm_handoff_seconds": 0.000064260992,
+            "modeled_serial_component_indexshare_zero_hbm_handoff_upper_bound_seconds": 0.00006419340800000001,
+            "modeled_serial_component_same_geometry_every_layer_indexing_seconds": 0.00019680793600000002,
+            "component_time_ratio_dense_attention_over_indexshare_hbm_handoff": 3.8182850336328453,
+            "component_time_ratio_same_geometry_every_layer_indexing_over_indexshare_hbm_handoff": 3.0626345761982634,
+            "component_time_ratio_indexshare_hbm_handoff_over_zero_hbm_handoff_upper_bound": 1.0010528183828469,
+            "indexshare_components": {
+              "modeled_serial_component_projection_roofline_seconds": 0.000032801664,
+              "modeled_serial_component_scan_roofline_seconds": 0.000014680064,
+              "modeled_serial_component_topk_seconds": 1.376256e-6,
+              "modeled_serial_component_sparse_attention_roofline_seconds": 0.000015335424,
+              "modeled_serial_component_hbm_handoff_seconds": 6.7584e-8
+            }
+          }
+        ]
+      },
+      {
+        "context_tokens_per_request": 131072,
+        "selected_tokens_per_request": 2048,
+        "decode_query_tokens": 1,
+        "semantic_cache_bytes_per_layer_token": 1152,
+        "index_key_bytes_per_full_indexer_token": 256,
+        "indexshare": {
+          "full_indexer_layers": 21,
+          "shared_index_layers": 57,
+          "indexer_projection_flops": 393619968,
+          "index_score_scan_flops": 22548578304,
+          "index_key_scan_bytes": 704643072,
+          "indexer_weight_bytes_per_step": 393619968,
+          "score_candidates": 2752512
+        },
+        "same_geometry_every_layer_indexing_counterfactual": {
+          "full_indexer_layers": 78,
+          "shared_index_layers": 0,
+          "indexer_projection_flops": 1462017024,
+          "index_score_scan_flops": 83751862272,
+          "index_key_scan_bytes": 2617245696,
+          "indexer_weight_bytes_per_step": 1462017024,
+          "score_candidates": 10223616
+        },
+        "sparse_attention_flops": 22246588416,
+        "sparse_cache_read_bytes": 184025088,
+        "dense_attention_flops": 1423781658624,
+        "dense_cache_read_bytes": 11777605632,
+        "hbm_index_topk_write_bytes": 172032,
+        "hbm_index_attention_read_bytes": 638976,
+        "hbm_index_handoff_bytes": 811008,
+        "zero_hbm_handoff_upper_bound_hbm_bytes": 0,
+        "indexshare_scan_reduction_fraction": 0.7307692307692307,
+        "sparse_cache_read_reduction_fraction": 0.984375,
+        "hardware": [
+          {
+            "profile_id": "h200-sxm-component-roofline",
+            "evidence": {
+              "kind": "modeled_assumption",
+              "source_artifact_id": "validation/results/custom-hardware-feasibility-2026-07-12.json#commodity_baselines/nvidia_h200_sxm+modeled-topk"
+            },
+            "modeled_serial_component_dense_attention_seconds": 0.00245366784,
+            "modeled_serial_component_indexshare_hbm_handoff_seconds": 0.00032236256,
+            "modeled_serial_component_indexshare_zero_hbm_handoff_upper_bound_seconds": 0.0003221936,
+            "modeled_serial_component_same_geometry_every_layer_indexing_seconds": 0.00109265728,
+            "component_time_ratio_dense_attention_over_indexshare_hbm_handoff": 7.61151617607206,
+            "component_time_ratio_same_geometry_every_layer_indexing_over_indexshare_hbm_handoff": 3.3895291066059285,
+            "component_time_ratio_indexshare_hbm_handoff_over_zero_hbm_handoff_upper_bound": 1.0005244052023379,
+            "indexshare_components": {
+              "modeled_serial_component_projection_roofline_seconds": 0.00008200416,
+              "modeled_serial_component_scan_roofline_seconds": 0.00014680064,
+              "modeled_serial_component_topk_seconds": 0.00005505024,
+              "modeled_serial_component_sparse_attention_roofline_seconds": 0.00003833856,
+              "modeled_serial_component_hbm_handoff_seconds": 1.6896e-7
+            }
+          },
+          {
+            "profile_id": "custom-dsa-component-upper-bound",
+            "evidence": {
+              "kind": "modeled_assumption",
+              "source_artifact_id": "configs/glm-5.2-ledger-roofline-v1.json#glm-dsa-moe-custom-upper-bound"
+            },
+            "modeled_serial_component_dense_attention_seconds": 0.000981467136,
+            "modeled_serial_component_indexshare_hbm_handoff_seconds": 0.000112429952,
+            "modeled_serial_component_indexshare_zero_hbm_handoff_upper_bound_seconds": 0.000112362368,
+            "modeled_serial_component_same_geometry_every_layer_indexing_seconds": 0.000375721216,
+            "component_time_ratio_dense_attention_over_indexshare_hbm_handoff": 8.729587788136742,
+            "component_time_ratio_same_geometry_every_layer_indexing_over_indexshare_hbm_handoff": 3.3418249257991324,
+            "component_time_ratio_indexshare_hbm_handoff_over_zero_hbm_handoff_upper_bound": 1.0006014825177054,
+            "indexshare_components": {
+              "modeled_serial_component_projection_roofline_seconds": 0.000032801664,
+              "modeled_serial_component_scan_roofline_seconds": 0.000058720256,
+              "modeled_serial_component_topk_seconds": 5.505024e-6,
+              "modeled_serial_component_sparse_attention_roofline_seconds": 0.000015335424,
+              "modeled_serial_component_hbm_handoff_seconds": 6.7584e-8
+            }
+          }
+        ]
+      },
+      {
+        "context_tokens_per_request": 1048576,
+        "selected_tokens_per_request": 2048,
+        "decode_query_tokens": 1,
+        "semantic_cache_bytes_per_layer_token": 1152,
+        "index_key_bytes_per_full_indexer_token": 256,
+        "indexshare": {
+          "full_indexer_layers": 21,
+          "shared_index_layers": 57,
+          "indexer_projection_flops": 393619968,
+          "index_score_scan_flops": 180388626432,
+          "index_key_scan_bytes": 5637144576,
+          "indexer_weight_bytes_per_step": 393619968,
+          "score_candidates": 22020096
+        },
+        "same_geometry_every_layer_indexing_counterfactual": {
+          "full_indexer_layers": 78,
+          "shared_index_layers": 0,
+          "indexer_projection_flops": 1462017024,
+          "index_score_scan_flops": 670014898176,
+          "index_key_scan_bytes": 20937965568,
+          "indexer_weight_bytes_per_step": 1462017024,
+          "score_candidates": 81788928
+        },
+        "sparse_attention_flops": 22246588416,
+        "sparse_cache_read_bytes": 184025088,
+        "dense_attention_flops": 11390253268992,
+        "dense_cache_read_bytes": 94220845056,
+        "hbm_index_topk_write_bytes": 172032,
+        "hbm_index_attention_read_bytes": 638976,
+        "hbm_index_handoff_bytes": 811008,
+        "zero_hbm_handoff_upper_bound_hbm_bytes": 0,
+        "indexshare_scan_reduction_fraction": 0.7307692307692307,
+        "sparse_cache_read_reduction_fraction": 0.998046875,
+        "hardware": [
+          {
+            "profile_id": "h200-sxm-component-roofline",
+            "evidence": {
+              "kind": "modeled_assumption",
+              "source_artifact_id": "validation/results/custom-hardware-feasibility-2026-07-12.json#commodity_baselines/nvidia_h200_sxm+modeled-topk"
+            },
+            "modeled_serial_component_dense_attention_seconds": 0.01962934272,
+            "modeled_serial_component_indexshare_hbm_handoff_seconds": 0.00173531872,
+            "modeled_serial_component_indexshare_zero_hbm_handoff_upper_bound_seconds": 0.00173514976,
+            "modeled_serial_component_same_geometry_every_layer_indexing_seconds": 0.00634078016,
+            "component_time_ratio_dense_attention_over_indexshare_hbm_handoff": 11.311664245747318,
+            "component_time_ratio_same_geometry_every_layer_indexing_over_indexshare_hbm_handoff": 3.653957101321422,
+            "component_time_ratio_indexshare_hbm_handoff_over_zero_hbm_handoff_upper_bound": 1.0000973748801947,
+            "indexshare_components": {
+              "modeled_serial_component_projection_roofline_seconds": 0.00008200416,
+              "modeled_serial_component_scan_roofline_seconds": 0.00117440512,
+              "modeled_serial_component_topk_seconds": 0.00044040192,
+              "modeled_serial_component_sparse_attention_roofline_seconds": 0.00003833856,
+              "modeled_serial_component_hbm_handoff_seconds": 1.6896e-7
+            }
+          },
+          {
+            "profile_id": "custom-dsa-component-upper-bound",
+            "evidence": {
+              "kind": "modeled_assumption",
+              "source_artifact_id": "configs/glm-5.2-ledger-roofline-v1.json#glm-dsa-moe-custom-upper-bound"
+            },
+            "modeled_serial_component_dense_attention_seconds": 0.007851737088,
+            "modeled_serial_component_indexshare_hbm_handoff_seconds": 0.000562006912,
+            "modeled_serial_component_indexshare_zero_hbm_handoff_upper_bound_seconds": 0.000561939328,
+            "modeled_serial_component_same_geometry_every_layer_indexing_seconds": 0.002045578496,
+            "component_time_ratio_dense_attention_over_indexshare_hbm_handoff": 13.970890607124776,
+            "component_time_ratio_same_geometry_every_layer_indexing_over_indexshare_hbm_handoff": 3.6397746225583782,
+            "component_time_ratio_indexshare_hbm_handoff_over_zero_hbm_handoff_upper_bound": 1.0001202692116968,
+            "indexshare_components": {
+              "modeled_serial_component_projection_roofline_seconds": 0.000032801664,
+              "modeled_serial_component_scan_roofline_seconds": 0.000469762048,
+              "modeled_serial_component_topk_seconds": 0.000044040192,
+              "modeled_serial_component_sparse_attention_roofline_seconds": 0.000015335424,
+              "modeled_serial_component_hbm_handoff_seconds": 6.7584e-8
+            }
+          }
+        ]
+      }
+    ],
+    "claims": {
+      "end_to_end_latency_claim_permitted": false,
+      "cost_per_token_claim_permitted": false,
+      "quality_claim_permitted": false,
+      "blockers": [
+        "projection_and_topk_work_are_analytical_proxies",
+        "irregular_gather_efficiency_not_calibrated",
+        "hardware_timing_not_measured",
+        "peak_serial_roofline_and_utilization_not_calibrated",
+        "residency_and_distributed_mapping_not_modeled",
+        "sram_capacity_bandwidth_and_latency_not_modeled",
+        "remaining_model_work_not_modeled",
+        "serving_and_contention_not_modeled",
+        "quality_contract_not_provided"
+      ]
+    }
+  }
+}

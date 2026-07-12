@@ -1,0 +1,12 @@
+{
+  "name": "qwen3-8b-kv4-heads",
+  "changes": [
+    {
+      "change": "kv_head_count",
+      "heads": 4
+    }
+  ],
+  "quality": {
+    "evidence": "unvalidated"
+  }
+}

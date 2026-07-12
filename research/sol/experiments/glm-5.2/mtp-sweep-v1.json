@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "content_id": "38e8f17675bdbb271990915018be375da926952b34e69ab61b6a5dccef84a49e",
+  "result": {
+    "study_id": "glm-5.2-recursive-mtp-acceptance-work-envelope-v1",
+    "model_id": "zai-org/GLM-5.2",
+    "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+    "mtp_layer_count": 1,
+    "mtp_shared_parameters": true,
+    "mtp_shares_dsa_indices": true,
+    "work": {
+      "baseline_target_work_units_per_token": 1.0,
+      "draft_work_units_per_proposed_token": 0.22,
+      "verification_fixed_work_units_per_round": 0.78,
+      "verification_incremental_work_units_per_proposed_token": 0.07,
+      "scheduler_work_units_per_round": 0.03,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "docs/GLM_CO_DESIGN.md#e5-mtp-acceptance-and-verification-sweep"
+      },
+      "basis": "Illustrative normalized target-decode work units chosen to expose MTP break-even thresholds. These values are not measured GLM-5.2 kernel, hardware, latency, energy, or cost evidence."
+    },
+    "scenarios": [
+      {
+        "scenario_id": "low-decaying-acceptance",
+        "conditional_acceptance_probabilities": [
+          0.35,
+          0.3,
+          0.25,
+          0.2
+        ],
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "glm-5.2-mtp-synthetic-acceptance-envelope-v1"
+        },
+        "basis": "Synthetic downside acceptance path for identifying depths that regress; not sampled from GLM-5.2 outputs.",
+        "depths": [
+          {
+            "proposal_depth": 1,
+            "expected_accepted_draft_tokens": 0.35,
+            "expected_committed_tokens_per_round": 1.35,
+            "expected_rejected_draft_tokens": 0.65,
+            "draft_work_units": 0.22,
+            "verification_work_units": 0.8500000000000001,
+            "scheduler_work_units": 0.03,
+            "total_work_units": 1.1,
+            "work_units_per_committed_token": 0.8148148148148149,
+            "target_equivalent_work_per_committed_token": 0.8148148148148149,
+            "ideal_throughput_speedup": 1.227272727272727,
+            "ideal_work_reduction_fraction": 0.18518518518518512,
+            "synchronization_round_reduction_fraction": 0.2592592592592593,
+            "homogeneous_acceptance_break_even_probability": 0.09999999999999998,
+            "beats_baseline": true
+          },
+          {
+            "proposal_depth": 2,
+            "expected_accepted_draft_tokens": 0.45499999999999996,
+            "expected_committed_tokens_per_round": 1.455,
+            "expected_rejected_draft_tokens": 1.545,
+            "draft_work_units": 0.44,
+            "verification_work_units": 0.92,
+            "scheduler_work_units": 0.03,
+            "total_work_units": 1.3900000000000001,
+            "work_units_per_committed_token": 0.9553264604810997,
+            "target_equivalent_work_per_committed_token": 0.9553264604810997,
+            "ideal_throughput_speedup": 1.0467625899280575,
+            "ideal_work_reduction_fraction": 0.044673539518900296,
+            "synchronization_round_reduction_fraction": 0.3127147766323024,
+            "homogeneous_acceptance_break_even_probability": 0.29999999999999993,
+            "beats_baseline": true
+          },
+          {
+            "proposal_depth": 3,
+            "expected_accepted_draft_tokens": 0.48124999999999996,
+            "expected_committed_tokens_per_round": 1.48125,
+            "expected_rejected_draft_tokens": 2.51875,
+            "draft_work_units": 0.66,
+            "verification_work_units": 0.99,
+            "scheduler_work_units": 0.03,
+            "total_work_units": 1.68,
+            "work_units_per_committed_token": 1.1341772151898735,
+            "target_equivalent_work_per_committed_token": 1.1341772151898735,
+            "ideal_throughput_speedup": 0.8816964285714285,
+            "ideal_work_reduction_fraction": -0.13417721518987347,
+            "synchronization_round_reduction_fraction": 0.3248945147679325,
+            "homogeneous_acceptance_break_even_probability": 0.42399957106840025,
+            "beats_baseline": false
+          },
+          {
+            "proposal_depth": 4,
+            "expected_accepted_draft_tokens": 0.48649999999999993,
+            "expected_committed_tokens_per_round": 1.4865,
+            "expected_rejected_draft_tokens": 3.5135,
+            "draft_work_units": 0.88,
+            "verification_work_units": 1.06,
+            "scheduler_work_units": 0.03,
+            "total_work_units": 1.97,
+            "work_units_per_committed_token": 1.3252606794483688,
+            "target_equivalent_work_per_committed_token": 1.3252606794483688,
+            "ideal_throughput_speedup": 0.7545685279187816,
+            "ideal_work_reduction_fraction": -0.3252606794483688,
+            "synchronization_round_reduction_fraction": 0.32727884291960974,
+            "homogeneous_acceptance_break_even_probability": 0.5098789908402777,
+            "beats_baseline": false
+          }
+        ],
+        "best_proposal_depth": 1,
+        "best_ideal_throughput_speedup": 1.227272727272727
+      },
+      {
+        "scenario_id": "medium-decaying-acceptance",
+        "conditional_acceptance_probabilities": [
+          0.65,
+          0.6,
+          0.55,
+          0.5
+        ],
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "glm-5.2-mtp-synthetic-acceptance-envelope-v1"
+        },
+        "basis": "Synthetic middle acceptance path for experiment planning; not sampled from GLM-5.2 outputs.",
+        "depths": [
+          {
+            "proposal_depth": 1,
+            "expected_accepted_draft_tokens": 0.65,
+            "expected_committed_tokens_per_round": 1.65,
+            "expected_rejected_draft_tokens": 0.35,
+            "draft_work_units": 0.22,
+            "verification_work_units": 0.8500000000000001,
+            "scheduler_work_units": 0.03,
+            "total_work_units": 1.1,
+            "work_units_per_committed_token": 0.6666666666666667,
+            "target_equivalent_work_per_committed_token": 0.6666666666666667,
+            "ideal_throughput_speedup": 1.4999999999999998,
+            "ideal_work_reduction_fraction": 0.33333333333333326,
+            "synchronization_round_reduction_fraction": 0.3939393939393939,
+            "homogeneous_acceptance_break_even_probability": 0.09999999999999998,
+            "beats_baseline": true
+          },
+          {
+            "proposal_depth": 2,
+            "expected_accepted_draft_tokens": 1.04,
+            "expected_committed_tokens_per_round": 2.04,
+            "expected_rejected_draft_tokens": 0.96,
+            "draft_work_units": 0.44,
+            "verification_work_units": 0.92,
+            "scheduler_work_units": 0.03,
+            "total_work_units": 1.3900000000000001,
+            "work_units_per_committed_token": 0.6813725490196079,
+            "target_equivalent_work_per_committed_token": 0.6813725490196079,
+            "ideal_throughput_speedup": 1.4676258992805755,
+            "ideal_work_reduction_fraction": 0.31862745098039214,
+            "synchronization_round_reduction_fraction": 0.5098039215686274,
+            "homogeneous_acceptance_break_even_probability": 0.29999999999999993,
+            "beats_baseline": true
+          },
+          {
+            "proposal_depth": 3,
+            "expected_accepted_draft_tokens": 1.2545000000000002,
+            "expected_committed_tokens_per_round": 2.2545,
+            "expected_rejected_draft_tokens": 1.7454999999999998,
+            "draft_work_units": 0.66,
+            "verification_work_units": 0.99,
+            "scheduler_work_units": 0.03,
+            "total_work_units": 1.68,
+            "work_units_per_committed_token": 0.7451763140385894,
+            "target_equivalent_work_per_committed_token": 0.7451763140385894,
+            "ideal_throughput_speedup": 1.341964285714286,
+            "ideal_work_reduction_fraction": 0.2548236859614106,
+            "synchronization_round_reduction_fraction": 0.5564426702151253,
+            "homogeneous_acceptance_break_even_probability": 0.42399957106840025,
+            "beats_baseline": true
+          },
+          {
+            "proposal_depth": 4,
+            "expected_accepted_draft_tokens": 1.3617500000000002,
+            "expected_committed_tokens_per_round": 2.3617500000000002,
+            "expected_rejected_draft_tokens": 2.6382499999999998,
+            "draft_work_units": 0.88,
+            "verification_work_units": 1.06,
+            "scheduler_work_units": 0.03,
+            "total_work_units": 1.97,
+            "work_units_per_committed_token": 0.8341272361596272,
+            "target_equivalent_work_per_committed_token": 0.8341272361596272,
+            "ideal_throughput_speedup": 1.1988578680203048,
+            "ideal_work_reduction_fraction": 0.16587276384037275,
+            "synchronization_round_reduction_fraction": 0.5765851593098339,
+            "homogeneous_acceptance_break_even_probability": 0.5098789908402777,
+            "beats_baseline": true
+          }
+        ],
+        "best_proposal_depth": 1,
+        "best_ideal_throughput_speedup": 1.4999999999999998
+      },
+      {
+        "scenario_id": "high-decaying-acceptance",
+        "conditional_acceptance_probabilities": [
+          0.85,
+          0.8,
+          0.75,
+          0.7
+        ],
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "glm-5.2-mtp-synthetic-acceptance-envelope-v1"
+        },
+        "basis": "Synthetic upside acceptance path for bounding useful recursive depth; not sampled from GLM-5.2 outputs.",
+        "depths": [
+          {
+            "proposal_depth": 1,
+            "expected_accepted_draft_tokens": 0.85,
+            "expected_committed_tokens_per_round": 1.85,
+            "expected_rejected_draft_tokens": 0.15000000000000002,
+            "draft_work_units": 0.22,
+            "verification_work_units": 0.8500000000000001,
+            "scheduler_work_units": 0.03,
+            "total_work_units": 1.1,
+            "work_units_per_committed_token": 0.5945945945945946,
+            "target_equivalent_work_per_committed_token": 0.5945945945945946,
+            "ideal_throughput_speedup": 1.6818181818181817,
+            "ideal_work_reduction_fraction": 0.4054054054054054,
+            "synchronization_round_reduction_fraction": 0.45945945945945954,
+            "homogeneous_acceptance_break_even_probability": 0.09999999999999998,
+            "beats_baseline": true
+          },
+          {
+            "proposal_depth": 2,
+            "expected_accepted_draft_tokens": 1.53,
+            "expected_committed_tokens_per_round": 2.5300000000000002,
+            "expected_rejected_draft_tokens": 0.47,
+            "draft_work_units": 0.44,
+            "verification_work_units": 0.92,
+            "scheduler_work_units": 0.03,
+            "total_work_units": 1.3900000000000001,
+            "work_units_per_committed_token": 0.549407114624506,
+            "target_equivalent_work_per_committed_token": 0.549407114624506,
+            "ideal_throughput_speedup": 1.8201438848920861,
+            "ideal_work_reduction_fraction": 0.450592885375494,
+            "synchronization_round_reduction_fraction": 0.6047430830039526,
+            "homogeneous_acceptance_break_even_probability": 0.29999999999999993,
+            "beats_baseline": true
+          },
+          {
+            "proposal_depth": 3,
+            "expected_accepted_draft_tokens": 2.04,
+            "expected_committed_tokens_per_round": 3.04,
+            "expected_rejected_draft_tokens": 0.96,
+            "draft_work_units": 0.66,
+            "verification_work_units": 0.99,
+            "scheduler_work_units": 0.03,
+            "total_work_units": 1.68,
+            "work_units_per_committed_token": 0.5526315789473684,
+            "target_equivalent_work_per_committed_token": 0.5526315789473684,
+            "ideal_throughput_speedup": 1.8095238095238098,
+            "ideal_work_reduction_fraction": 0.44736842105263164,
+            "synchronization_round_reduction_fraction": 0.6710526315789473,
+            "homogeneous_acceptance_break_even_probability": 0.42399957106840025,
+            "beats_baseline": true
+          },
+          {
+            "proposal_depth": 4,
+            "expected_accepted_draft_tokens": 2.3970000000000002,
+            "expected_committed_tokens_per_round": 3.3970000000000002,
+            "expected_rejected_draft_tokens": 1.6029999999999998,
+            "draft_work_units": 0.88,
+            "verification_work_units": 1.06,
+            "scheduler_work_units": 0.03,
+            "total_work_units": 1.97,
+            "work_units_per_committed_token": 0.5799234618781277,
+            "target_equivalent_work_per_committed_token": 0.5799234618781277,
+            "ideal_throughput_speedup": 1.7243654822335026,
+            "ideal_work_reduction_fraction": 0.4200765381218723,
+            "synchronization_round_reduction_fraction": 0.7056226081836915,
+            "homogeneous_acceptance_break_even_probability": 0.5098789908402777,
+            "beats_baseline": true
+          }
+        ],
+        "best_proposal_depth": 2,
+        "best_ideal_throughput_speedup": 1.8201438848920861
+      }
+    ],
+    "claims": {
+      "end_to_end_latency_claim_permitted": false,
+      "cost_per_token_claim_permitted": false,
+      "quality_claim_permitted": false,
+      "blockers": [
+        "acceptance_is_not_measured_exact_checkpoint",
+        "work_is_not_measured_hardware",
+        "end_to_end_serving_not_measured",
+        "quality_contract_not_provided"
+      ]
+    }
+  }
+}

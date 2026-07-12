@@ -1,0 +1,11 @@
+{
+  "axis": "kernel",
+  "name": "full-layer fusion hypothesis",
+  "model_specific_reason": "Qwen3-8B repeats the same dense attention and gated-MLP layer geometry 36 times, creating a stable target for model-specific fusion and tile selection.",
+  "mechanism": "The analytical kernel model reduces intermediate HBM materialization and launches while retaining padding costs for the declared tile; no Rust-versus-CUDA language speedup is assumed.",
+  "confidence": 0.15,
+  "evidence_artifacts": [
+    "configs/kernels/qwen3-full-layer-v0.json",
+    "crates/foundry-core/src/stack.rs"
+  ]
+}

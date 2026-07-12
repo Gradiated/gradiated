@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "screen_id": "glm-5.2-bf16-h200-lower-work-optimistic-business-screen-v1",
+  "storage_report_content_id": "3216cdd0e8c0988ccc7c779f9df9c7d0b8099f11375e7bdb441ab7463d9bc174",
+  "roofline_report_content_id": "a143eade5e99a685e6fd311f233dbc567dacca6abf0affe8102af931f40a59df",
+  "variant_id": "glm-5.2-bf16",
+  "storage_hardware_id": "fireworks-h200-141gb-20x",
+  "roofline_hardware_id": "h200-published-peak-component",
+  "timing_scope": {
+    "kind": "per_rank",
+    "rank_count": 20
+  },
+  "break_even_hurdle_scope": "required_peak_throughput_already_load_adjusted",
+  "billable_tokens_per_committed_output_token": 15.471910112359549,
+  "useful_load_factor": 0.65,
+  "availability_factor": 0.98,
+  "input_prefill_work_included_in_roofline": false,
+  "mapping_source_artifact_id": "optimistic-screen:lower-work-free-input-linear-20-rank-scaling-v1"
+}

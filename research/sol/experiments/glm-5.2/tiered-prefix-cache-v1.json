@@ -1,0 +1,471 @@
+{
+  "schema_version": 1,
+  "content_id": "703fb359ead5576585db3e27104f339aac15142cc54dd74a4f33dd0cc77ddde2",
+  "result": {
+    "study_id": "glm-5.2-tiered-prefix-cache-synthetic-agent-trace-v1",
+    "model_id": "zai-org/GLM-5.2",
+    "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+    "footprint": {
+      "mla_bytes_per_token": 89856,
+      "indexer_bytes_per_token": 8192,
+      "extra_bytes_per_token": 0,
+      "evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "configs/glm-5.2-storage-envelope-v1.json#residency"
+      }
+    },
+    "total_bytes_per_token": 98048,
+    "trace_evidence": {
+      "kind": "synthetic_trace",
+      "source_artifact_id": "glm-5.2-synthetic-agent-prefix-trace-v1"
+    },
+    "scenarios": [
+      {
+        "scenario_id": "hbm-only-4gb",
+        "policy": "exclusive_lru_promote_on_hit",
+        "totals": {
+          "requests": 15,
+          "hit_requests": 2,
+          "miss_requests": 13,
+          "hot_tier_hit_requests": 2,
+          "lower_tier_hit_requests": 0,
+          "accessed_tokens": 258048,
+          "hit_tokens": 8192,
+          "miss_recompute_tokens": 249856,
+          "promotion_bytes": 0,
+          "demotion_bytes": 0,
+          "link_transfer_bytes": 0,
+          "modeled_transfer_time_microseconds": 0.0,
+          "dropped_entries": 12
+        },
+        "tiers": [
+          {
+            "tier_id": "hbm",
+            "capacity_bytes": 4000000000,
+            "final_used_bytes": 803209216,
+            "peak_used_bytes": 3614441472,
+            "hits": 2,
+            "insertions": 13,
+            "evictions": 12,
+            "dropped_evictions": 12
+          }
+        ],
+        "links": [],
+        "accesses": [
+          {
+            "request_id": 1,
+            "prefix_key": "agent-system-v1",
+            "prefix_tokens": 4096,
+            "entry_bytes": 401604608,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 4096,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 2,
+            "prefix_key": "repository-a-v1",
+            "prefix_tokens": 32768,
+            "entry_bytes": 3212836864,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 32768,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 3,
+            "prefix_key": "agent-system-v1",
+            "prefix_tokens": 4096,
+            "entry_bytes": 401604608,
+            "hit_tier": "hbm",
+            "promoted_to_tier": null,
+            "recompute_tokens": 0,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 4,
+            "prefix_key": "tool-schema-v1",
+            "prefix_tokens": 8192,
+            "entry_bytes": 803209216,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 8192,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 5,
+            "prefix_key": "repository-a-v1",
+            "prefix_tokens": 32768,
+            "entry_bytes": 3212836864,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 32768,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 6,
+            "prefix_key": "agent-system-v1",
+            "prefix_tokens": 4096,
+            "entry_bytes": 401604608,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 4096,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 7,
+            "prefix_key": "repository-b-v1",
+            "prefix_tokens": 32768,
+            "entry_bytes": 3212836864,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 32768,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 8,
+            "prefix_key": "tool-schema-v1",
+            "prefix_tokens": 8192,
+            "entry_bytes": 803209216,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 8192,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 9,
+            "prefix_key": "repository-a-v1",
+            "prefix_tokens": 32768,
+            "entry_bytes": 3212836864,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 32768,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 10,
+            "prefix_key": "conversation-a-v1",
+            "prefix_tokens": 16384,
+            "entry_bytes": 1606418432,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 16384,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 11,
+            "prefix_key": "agent-system-v1",
+            "prefix_tokens": 4096,
+            "entry_bytes": 401604608,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 4096,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 12,
+            "prefix_key": "repository-b-v1",
+            "prefix_tokens": 32768,
+            "entry_bytes": 3212836864,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 32768,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 13,
+            "prefix_key": "agent-system-v1",
+            "prefix_tokens": 4096,
+            "entry_bytes": 401604608,
+            "hit_tier": "hbm",
+            "promoted_to_tier": null,
+            "recompute_tokens": 0,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 14,
+            "prefix_key": "repository-a-v1",
+            "prefix_tokens": 32768,
+            "entry_bytes": 3212836864,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 32768,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 15,
+            "prefix_key": "tool-schema-v1",
+            "prefix_tokens": 8192,
+            "entry_bytes": 803209216,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 8192,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          }
+        ]
+      },
+      {
+        "scenario_id": "hbm4gb-host8gb-nvme32gb",
+        "policy": "exclusive_lru_promote_on_hit",
+        "totals": {
+          "requests": 15,
+          "hit_requests": 10,
+          "miss_requests": 5,
+          "hot_tier_hit_requests": 2,
+          "lower_tier_hit_requests": 8,
+          "accessed_tokens": 258048,
+          "hit_tokens": 163840,
+          "miss_recompute_tokens": 94208,
+          "promotion_bytes": 15260975104,
+          "demotion_bytes": 25301090304,
+          "link_transfer_bytes": 40562065408,
+          "modeled_transfer_time_microseconds": 1261613.2232294525,
+          "dropped_entries": 0
+        },
+        "tiers": [
+          {
+            "tier_id": "hbm",
+            "capacity_bytes": 4000000000,
+            "final_used_bytes": 803209216,
+            "peak_used_bytes": 3614441472,
+            "hits": 2,
+            "insertions": 13,
+            "evictions": 12,
+            "dropped_evictions": 0
+          },
+          {
+            "tier_id": "host_dram",
+            "capacity_bytes": 8000000000,
+            "final_used_bytes": 6827278336,
+            "peak_used_bytes": 7630487552,
+            "hits": 8,
+            "insertions": 12,
+            "evictions": 1,
+            "dropped_evictions": 0
+          },
+          {
+            "tier_id": "nvme",
+            "capacity_bytes": 32000000000,
+            "final_used_bytes": 1606418432,
+            "peak_used_bytes": 1606418432,
+            "hits": 0,
+            "insertions": 1,
+            "evictions": 0,
+            "dropped_evictions": 0
+          }
+        ],
+        "links": [
+          {
+            "upper_tier_id": "hbm",
+            "lower_tier_id": "host_dram",
+            "promotion_bytes": 15260975104,
+            "demotion_bytes": 23694671872,
+            "total_bytes": 38955646976,
+            "modeled_transfer_time_microseconds": 985739.7257361194
+          },
+          {
+            "upper_tier_id": "host_dram",
+            "lower_tier_id": "nvme",
+            "promotion_bytes": 0,
+            "demotion_bytes": 1606418432,
+            "total_bytes": 1606418432,
+            "modeled_transfer_time_microseconds": 275873.4974933333
+          }
+        ],
+        "accesses": [
+          {
+            "request_id": 1,
+            "prefix_key": "agent-system-v1",
+            "prefix_tokens": 4096,
+            "entry_bytes": 401604608,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 4096,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 2,
+            "prefix_key": "repository-a-v1",
+            "prefix_tokens": 32768,
+            "entry_bytes": 3212836864,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 32768,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 3,
+            "prefix_key": "agent-system-v1",
+            "prefix_tokens": 4096,
+            "entry_bytes": 401604608,
+            "hit_tier": "hbm",
+            "promoted_to_tier": null,
+            "recompute_tokens": 0,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 4,
+            "prefix_key": "tool-schema-v1",
+            "prefix_tokens": 8192,
+            "entry_bytes": 803209216,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 8192,
+            "link_transfer_bytes": 3212836864,
+            "modeled_transfer_time_microseconds": 81290.9773802985
+          },
+          {
+            "request_id": 5,
+            "prefix_key": "repository-a-v1",
+            "prefix_tokens": 32768,
+            "entry_bytes": 3212836864,
+            "hit_tier": "host_dram",
+            "promoted_to_tier": "hbm",
+            "recompute_tokens": 0,
+            "link_transfer_bytes": 4417650688,
+            "modeled_transfer_time_microseconds": 111792.96889791044
+          },
+          {
+            "request_id": 6,
+            "prefix_key": "agent-system-v1",
+            "prefix_tokens": 4096,
+            "entry_bytes": 401604608,
+            "hit_tier": "host_dram",
+            "promoted_to_tier": "hbm",
+            "recompute_tokens": 0,
+            "link_transfer_bytes": 401604608,
+            "modeled_transfer_time_microseconds": 10170.997172537313
+          },
+          {
+            "request_id": 7,
+            "prefix_key": "repository-b-v1",
+            "prefix_tokens": 32768,
+            "entry_bytes": 3212836864,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 32768,
+            "link_transfer_bytes": 3212836864,
+            "modeled_transfer_time_microseconds": 81290.9773802985
+          },
+          {
+            "request_id": 8,
+            "prefix_key": "tool-schema-v1",
+            "prefix_tokens": 8192,
+            "entry_bytes": 803209216,
+            "hit_tier": "host_dram",
+            "promoted_to_tier": "hbm",
+            "recompute_tokens": 0,
+            "link_transfer_bytes": 4417650688,
+            "modeled_transfer_time_microseconds": 111792.96889791044
+          },
+          {
+            "request_id": 9,
+            "prefix_key": "repository-a-v1",
+            "prefix_tokens": 32768,
+            "entry_bytes": 3212836864,
+            "hit_tier": "host_dram",
+            "promoted_to_tier": "hbm",
+            "recompute_tokens": 0,
+            "link_transfer_bytes": 4016046080,
+            "modeled_transfer_time_microseconds": 101621.97172537312
+          },
+          {
+            "request_id": 10,
+            "prefix_key": "conversation-a-v1",
+            "prefix_tokens": 16384,
+            "entry_bytes": 1606418432,
+            "hit_tier": null,
+            "promoted_to_tier": null,
+            "recompute_tokens": 16384,
+            "link_transfer_bytes": 3212836864,
+            "modeled_transfer_time_microseconds": 81290.9773802985
+          },
+          {
+            "request_id": 11,
+            "prefix_key": "agent-system-v1",
+            "prefix_tokens": 4096,
+            "entry_bytes": 401604608,
+            "hit_tier": "host_dram",
+            "promoted_to_tier": "hbm",
+            "recompute_tokens": 0,
+            "link_transfer_bytes": 401604608,
+            "modeled_transfer_time_microseconds": 10170.997172537313
+          },
+          {
+            "request_id": 12,
+            "prefix_key": "repository-b-v1",
+            "prefix_tokens": 32768,
+            "entry_bytes": 3212836864,
+            "hit_tier": "host_dram",
+            "promoted_to_tier": "hbm",
+            "recompute_tokens": 0,
+            "link_transfer_bytes": 4819255296,
+            "modeled_transfer_time_microseconds": 121941.96607044776
+          },
+          {
+            "request_id": 13,
+            "prefix_key": "agent-system-v1",
+            "prefix_tokens": 4096,
+            "entry_bytes": 401604608,
+            "hit_tier": "hbm",
+            "promoted_to_tier": null,
+            "recompute_tokens": 0,
+            "link_transfer_bytes": 0,
+            "modeled_transfer_time_microseconds": 0.0
+          },
+          {
+            "request_id": 14,
+            "prefix_key": "repository-a-v1",
+            "prefix_tokens": 32768,
+            "entry_bytes": 3212836864,
+            "hit_tier": "host_dram",
+            "promoted_to_tier": "hbm",
+            "recompute_tokens": 0,
+            "link_transfer_bytes": 6425673728,
+            "modeled_transfer_time_microseconds": 162581.954760597
+          },
+          {
+            "request_id": 15,
+            "prefix_key": "tool-schema-v1",
+            "prefix_tokens": 8192,
+            "entry_bytes": 803209216,
+            "hit_tier": "host_dram",
+            "promoted_to_tier": "hbm",
+            "recompute_tokens": 0,
+            "link_transfer_bytes": 6024069120,
+            "modeled_transfer_time_microseconds": 387666.46639124374
+          }
+        ]
+      }
+    ],
+    "claims": {
+      "end_to_end_latency_claim_permitted": false,
+      "cost_per_token_claim_permitted": false,
+      "blockers": [
+        "trace_is_not_measured",
+        "tier_and_link_timing_is_not_measured",
+        "recompute_work_is_not_calibrated",
+        "concurrent_contention_is_not_modeled",
+        "serving_integration_is_not_measured"
+      ]
+    }
+  }
+}

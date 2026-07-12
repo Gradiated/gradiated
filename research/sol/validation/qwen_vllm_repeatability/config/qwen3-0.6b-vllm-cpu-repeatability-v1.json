@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "campaign_id": "qwen3-0.6b-vllm-cpu-repeatability-v1",
+  "durable_report_path": "/Users/js/dev/inference-foundry/validation/results/qwen3-0.6b-vllm-cpu-repeatability-v1.json",
+  "source_command_root": "/Users/js/dev/inference-foundry/artifacts/qwen3-0.6b/vllm-repeatability-v1",
+  "archive_root": "/Users/js/dev/inference-foundry/artifacts/qwen3-0.6b/vllm-repeatability-v1-final",
+  "prior_evidence_roots": [
+    "/Users/js/dev/inference-foundry/artifacts/qwen3-0.6b/vllm-repeatability-v1"
+  ],
+  "schedule_seed": 20260712,
+  "concurrency_levels": [1, 2, 4, 8],
+  "repeat_pairs": 5,
+  "workload": {
+    "dataset_seed": 0,
+    "num_prompts": 8,
+    "input_tokens": 128,
+    "output_tokens": 32,
+    "request_rate": "inf",
+    "ignore_eos": true,
+    "prompt_content_id": "f9f9109790c7994e73bd0d469d142d4ad71ffdb9db93bf42f507f25903ab6e17"
+  },
+  "engine": {
+    "python": "/Users/js/dev/vllm-study/.venv/bin/python",
+    "checkout": "/Users/js/dev/vllm-study",
+    "expected_revision": "bec0a4ede621bc9f1ec7be39b79ed2e286da4ca1",
+    "expected_version": "0.1.dev1+gbec0a4ede.d20260711",
+    "expected_tracked_diff_sha256": "8a6e55e6e7a1ee4a5d5d36d7cde25740b811c9a9a51bc315c27d4cd31a797d37",
+    "expected_installed_binary_sha256": "4e6929e8fd3c47a35864a589738e56deb7a476f9b9d18b314395d0df264a2492",
+    "model_path": "/Users/js/dev/inference-foundry/models/Qwen3-0.6B",
+    "served_model_name": "qwen3-0.6b-local",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "checkpoint_sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
+    "tokenizer_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "host": "127.0.0.1",
+    "port": 18731,
+    "environment": {
+      "HF_HUB_OFFLINE": "1",
+      "NO_PROXY": "127.0.0.1,localhost",
+      "OMP_DYNAMIC": "FALSE",
+      "OMP_NUM_THREADS": "10",
+      "PYTHONHASHSEED": "0",
+      "PYTHONUNBUFFERED": "1",
+      "TOKENIZERS_PARALLELISM": "false",
+      "TRANSFORMERS_OFFLINE": "1",
+      "VECLIB_MAXIMUM_THREADS": "10",
+      "VLLM_CPU_KVCACHE_SPACE": "4",
+      "VLLM_CPU_OMP_THREADS_BIND": "0-9",
+      "VLLM_TARGET_DEVICE": "cpu"
+    },
+    "server_arguments": [
+      "--dtype",
+      "bfloat16"
+    ]
+  },
+  "isolation": {
+    "cooldown_seconds": 15,
+    "startup_timeout_seconds": 300,
+    "quiet_process_cpu_percent": 20.0,
+    "minimum_available_memory_bytes": 12000000000,
+    "require_ac_power": true,
+    "require_no_thermal_warning": true,
+    "retry_wait_seconds": 15,
+    "maximum_isolation_retries_per_pair": 40,
+    "quiet_consecutive_samples": 3,
+    "quiet_sample_interval_seconds": 5,
+    "preflight_wait_timeout_seconds": 1800
+  },
+  "acceptance": {
+    "minimum_repeats_per_cell": 5,
+    "maximum_coefficient_of_variation": 0.1,
+    "maximum_relative_ci_half_width": 0.15,
+    "primary_metrics": [
+      "output_throughput",
+      "p95_ttft_ms",
+      "p95_tpot_ms"
+    ]
+  },
+  "runtime_estimate": {
+    "prior_duration_seconds_by_concurrency": {
+      "1": 15.623134416062385,
+      "2": 15.687259666970931,
+      "4": 10.279673082986847,
+      "8": 7.8500594169599935
+    },
+    "startup_seconds": 19.804304041084833,
+    "per_pair_overhead_seconds": 2.0,
+    "per_run_client_setup_seconds": 3.325063375,
+    "measurement_provenance": {
+      "startup_probe": "/Users/js/dev/inference-foundry/artifacts/qwen3-0.6b/vllm-repeatability-v1/startup-probe.json",
+      "startup_probe_clean": true,
+      "client_setup_captured_at": "2026-07-12T07:17:54+0200",
+      "client_setup_clean": true
+    }
+  },
+  "claim_gates": {
+    "provider_comparison": false,
+    "gpu_performance": false,
+    "simulator_calibration": false,
+    "cost_per_token": false
+  }
+}

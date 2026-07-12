@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "content_id": "07017590792feee5b1376711e0c716fdaed2af67b9b288f908cd35f918e820c4",
+  "result": {
+    "screen_id": "glm-5.2-bf16-h200-lower-work-optimistic-business-screen-v1",
+    "storage_report_content_id": "3216cdd0e8c0988ccc7c779f9df9c7d0b8099f11375e7bdb441ab7463d9bc174",
+    "roofline_report_content_id": "a143eade5e99a685e6fd311f233dbc567dacca6abf0affe8102af931f40a59df",
+    "variant_id": "glm-5.2-bf16",
+    "storage_hardware_id": "fireworks-h200-141gb-20x",
+    "roofline_hardware_id": "h200-published-peak-component",
+    "deployment_device_count": 20,
+    "timing_scope": {
+      "kind": "per_rank",
+      "rank_count": 20
+    },
+    "break_even_hurdle_scope": "required_peak_throughput_already_load_adjusted",
+    "billable_tokens_per_committed_output_token": 15.471910112359549,
+    "useful_load_factor": 0.65,
+    "availability_factor": 0.98,
+    "input_prefill_work_included_in_roofline": false,
+    "mapping_source_artifact_id": "optimistic-screen:lower-work-free-input-linear-20-rank-scaling-v1",
+    "capacity_status": "feasible",
+    "roofline_optimistic_committed_output_tokens_per_second": 1177.9572119475847,
+    "optimistic_peak_billable_tokens_per_second_upper_bound": 364504.96198917396,
+    "optimistic_effective_billable_tokens_per_second_upper_bound": 232189.6607871038,
+    "optimistic_billable_tokens_per_second_compared_to_hurdle": 364504.96198917396,
+    "required_billable_tokens_per_second_for_deployment": 337338.20973715704,
+    "optimistic_headroom_ratio": 1.0805326863896751,
+    "optimistic_hurdle_cleared": true,
+    "candidate_rejected": false,
+    "rejection_reasons": [],
+    "claims": {
+      "business_viability_claim_permitted": false,
+      "end_to_end_cost_claim_permitted": false,
+      "provider_comparison_claim_permitted": false,
+      "blockers": [
+        "optimistic_rejection_bound_only",
+        "end_to_end_cost_model_is_absent",
+        "input_prefill_work_treated_as_free",
+        "per_rank_linear_scaling_assumption",
+        "ledger_contains_modeled_work",
+        "hardware_timing_is_modeled_or_uncalibrated",
+        "storage_envelope_contains_modeled_inputs",
+        "shared_resource_contention_is_not_modeled",
+        "serving_and_queueing_are_not_modeled"
+      ],
+      "source_roofline_blockers": [
+        "ledger_contains_assumptions",
+        "hardware_timing_is_not_calibrated",
+        "shared_resource_contention_is_not_modeled",
+        "serving_and_queueing_are_not_modeled"
+      ]
+    }
+  }
+}

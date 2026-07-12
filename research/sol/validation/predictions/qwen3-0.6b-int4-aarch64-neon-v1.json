@@ -1,0 +1,95 @@
+{
+  "schema_version": "inference-foundry.locked-kernel-prediction.v1",
+  "content_id": "beedae5f05e4d89a816ad508172b6a07b338855e6c0b68cc06ba16762cc39f72",
+  "study_id": "qwen3-0.6b-int4-o-gate-up-aarch64-neon-v1",
+  "predictive_scope": {
+    "model_id": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "workload_id": "qwen3-0.6b-layer0-o-gate-up-packed-matvec",
+    "workload_revision": "8c9f38791aea1e54178371a6aa41c0da5dda4c39b2640c778bbb044bfbd4165d",
+    "context_regime": "decode-batch1-three-layer0-tensors",
+    "hardware_id": "Apple M4 Pro",
+    "hardware_revision": "Mac16,7-Apple-M4-Pro-14c-48GB",
+    "software_id": "foundry-qwen-int4-aarch64-neon",
+    "software_revision": "qwen-int4-aarch64-neon-v1",
+    "intervention_id": "aarch64-neon-group8-packed-matvec",
+    "intervention_revision": "v1",
+    "metric_id": "summed_three_tensor_median_seconds",
+    "metric_unit": "seconds",
+    "higher_is_better": false
+  },
+  "prediction": {
+    "baseline_seconds": 0.005299750000000001,
+    "candidate_seconds": 0.003028428571428572,
+    "scalar_packed_over_neon_speed_ratio": 1.75,
+    "candidate_time_reduction_fraction": 0.42857142857142855,
+    "direction": "neon_faster",
+    "maximum_relative_effect_size_error_for_predictive_gate": 0.15
+  },
+  "prediction_method": {
+    "method": "prior scalar baseline plus static operation-count hypothesis",
+    "rationale": "The exact prior scalar packed path supplies the aggregate baseline. The candidate estimate assumes that eight-lane NEON multiply/reduction and one scale multiply per group reduce the packed decode arithmetic enough to produce a 1.75x aggregate speedup. No candidate timing was observed before this prediction was locked.",
+    "known_limitations": [
+      "The estimate has no calibrated instruction-throughput or cache model.",
+      "The NEON path still performs scalar nibble decode into a temporary eight-element stack array.",
+      "The prior baseline and the holdout run may experience different uncontrolled host load.",
+      "The prediction concerns a local scalar control, not BF16 BLAS, vLLM, serving, energy, or cost."
+    ]
+  },
+  "calibration_evidence": {
+    "case_id": "qwen3-0.6b-int4-packed-kernel-smoke-v1",
+    "path": "experiments/qwen3-0.6b/int4-packed-kernel-smoke-v1.json",
+    "file_sha256": "861943394f1a308fe1b6e3c8e868fd41c2a8b6a180da103af066a24b1365c2fa",
+    "content_id": "06c3789ef245d9275f0adf76b592ed6c2f812864bd95dcf80f5b669fe21d723c",
+    "baseline_json_path": "result.aggregate.summed_packed_median_seconds",
+    "baseline_seconds": 0.005299750000000001
+  },
+  "locked_inputs": {
+    "config": {
+      "path": "configs/qwen3-0.6b-int4-aarch64-neon-v1.json",
+      "file_sha256": "83700f1a2b3ead18d8aa1f4616c8386a59f750296a38b93cdccf38e9ccc8f372",
+      "blake3": "8c9f38791aea1e54178371a6aa41c0da5dda4c39b2640c778bbb044bfbd4165d"
+    },
+    "core_source": {
+      "path": "crates/foundry-core/src/qwen_int4_kernel.rs",
+      "file_sha256": "7fcc6b023f4b2ea901183d16e730a33006621a77addf27d9ca0167cf87113853",
+      "blake3": "a7ecfb1311b12694ae737f193e1b6d57226e0ed98de6bacca7d280052cee5bbf"
+    },
+    "core_tests": {
+      "path": "crates/foundry-core/tests/qwen_int4_kernel.rs",
+      "file_sha256": "ace148b3c0868eafba0e494ece0e89955db518abb419d86987706cad07e083ec"
+    },
+    "cli_source": {
+      "path": "crates/foundry-cli/src/main.rs",
+      "file_sha256": "38864c61c4726b0db0819649a58cd1be86ca7ff3988ffefc095e280868abd77b"
+    },
+    "base_request": {
+      "path": "configs/qwen3-0.6b-int4-packed-kernel-smoke-v1.json",
+      "file_sha256": "2f0ed670dfd02bc3c3b5c99bfc2882e17ec4219b5d0147522f05f6f1e52ff2a2",
+      "blake3": "b103d7a7f5b92223bf316f0e8424f37334cb89e2f14f8215d2223079f458a222"
+    }
+  },
+  "prelock_observation_audit": {
+    "candidate_timing_output_observed": false,
+    "candidate_result_file_created": false,
+    "interrupted_release_process_produced_output": false,
+    "prediction_commit_id_embedded": false,
+    "prediction_commit_id_location": "downstream predictive-pair protocol to avoid a content-identity cycle"
+  },
+  "claim_permissions": {
+    "prediction_registered": true,
+    "prediction_accurate": false,
+    "kernel_speedup_measured": false,
+    "predictive_validity": false,
+    "quality_equivalence": false,
+    "serving": false,
+    "energy": false,
+    "cost_per_token": false,
+    "provider_superiority": false,
+    "production": false
+  },
+  "content_identity": {
+    "algorithm": "sha256",
+    "canonicalization": "UTF-8 JSON with sorted keys and compact separators, excluding content_id"
+  }
+}

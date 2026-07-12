@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "qwen3-0.6b-vllm-cpu-c4-warm-v1",
+  "ordered_request_ids": [1, 2, 3, 4, 5, 6, 7, 8],
+  "workload_contract": {
+    "schema_version": 2,
+    "contract_id": "qwen3-0.6b-agentic-class-slo-v1",
+    "identity": {"model_id": "qwen3-0.6b-local", "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca", "tokenizer_id": "/Users/js/dev/inference-foundry/models/Qwen3-0.6B", "tokenizer_revision": "c1899de289a04d12100db370d81485cdf75e47ca"},
+    "class_objectives": [
+      {"class": "tool", "ttft": {"percentile": 95.0, "maximum_milliseconds": 2000.0}, "tpot": {"percentile": 95.0, "maximum_milliseconds": 50.0}},
+      {"class": "coding", "ttft": {"percentile": 95.0, "maximum_milliseconds": 5000.0}, "tpot": {"percentile": 95.0, "maximum_milliseconds": 50.0}},
+      {"class": "long_agent", "ttft": {"percentile": 95.0, "maximum_milliseconds": 10000.0}, "tpot": {"percentile": 95.0, "maximum_milliseconds": 70.0}}
+    ]
+  },
+  "model": {"model_id": "qwen3-0.6b-local", "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca", "checkpoint_id": "Qwen/Qwen3-0.6B:model.safetensors", "checkpoint_revision": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b", "tokenizer_id": "/Users/js/dev/inference-foundry/models/Qwen3-0.6B", "tokenizer_revision": "c1899de289a04d12100db370d81485cdf75e47ca"},
+  "provenance": {
+    "evidence_kind": "measured_hardware",
+    "run_id": "vllm-cpu-c4-20260712-020349",
+    "source_artifact_id": "3af5ee8da345338b93137d9601b20957729368ac0f8eb9200634a9bc85ead950",
+    "engine": {"name": "vllm", "version": "0.1.dev1+gbec0a4ede.d20260711", "build_id": "bec0a4ede621bc9f1ec7be39b79ed2e286da4ca1"},
+    "hardware": {"device_model": "Apple M4 Pro 14-core CPU, 48 GB unified memory", "device_count": 1, "topology": "single_host_cpu", "interconnect": "on_package_unified_memory", "device_set_hash": "5cd8bf44015fe1d407eba23bfe790c8ef6ddd44ffb2cbf140ff94b5b82f946c7"},
+    "measurement_tool": "foundry-vllm-adapter-v1",
+    "software_revision": "c5660102b3a379b844fd5db86957d812e8face45ec6a3026b011052d2466ba2f",
+    "captured_at_unix_milliseconds": 1783814629995
+  }
+}

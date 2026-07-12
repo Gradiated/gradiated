@@ -1,0 +1,16 @@
+{
+  "name": "h100-sxm-4x-public-rental",
+  "physical_device_count": 4,
+  "tensor_parallelism": 4,
+  "pipeline_parallelism": 1,
+  "scale_up_bandwidth_bytes_per_second": 3600000000000.0,
+  "scale_up_latency_nanoseconds": 1000.0,
+  "scale_up_energy_picojoules_per_byte": 2.0,
+  "accelerator_group_hourly_cost_usd": 28.0,
+  "host_hourly_cost_usd": 0.5,
+  "cost_basis": "four times the checked-in $7/H100-hour public rental baseline; link latency and energy are explicit analytical assumptions",
+  "evidence_artifacts": [
+    "configs/SOURCES.md#nvidia-h100-sxm",
+    "configs/SOURCES.md#fireworks-h100-price"
+  ]
+}

@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "study_id": "glm-5.2-tiered-prefix-cache-synthetic-agent-trace-v1",
+  "model_id": "zai-org/GLM-5.2",
+  "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+  "footprint": {
+    "mla_bytes_per_token": 89856,
+    "indexer_bytes_per_token": 8192,
+    "extra_bytes_per_token": 0,
+    "evidence": {
+      "kind": "modeled_assumption",
+      "source_artifact_id": "configs/glm-5.2-storage-envelope-v1.json#residency"
+    }
+  },
+  "trace_evidence": {
+    "kind": "synthetic_trace",
+    "source_artifact_id": "glm-5.2-synthetic-agent-prefix-trace-v1"
+  },
+  "accesses": [
+    {
+      "request_id": 1,
+      "arrival_timestamp_microseconds": 0,
+      "prefix_key": "agent-system-v1",
+      "prefix_tokens": 4096
+    },
+    {
+      "request_id": 2,
+      "arrival_timestamp_microseconds": 1000000,
+      "prefix_key": "repository-a-v1",
+      "prefix_tokens": 32768
+    },
+    {
+      "request_id": 3,
+      "arrival_timestamp_microseconds": 2000000,
+      "prefix_key": "agent-system-v1",
+      "prefix_tokens": 4096
+    },
+    {
+      "request_id": 4,
+      "arrival_timestamp_microseconds": 3000000,
+      "prefix_key": "tool-schema-v1",
+      "prefix_tokens": 8192
+    },
+    {
+      "request_id": 5,
+      "arrival_timestamp_microseconds": 4000000,
+      "prefix_key": "repository-a-v1",
+      "prefix_tokens": 32768
+    },
+    {
+      "request_id": 6,
+      "arrival_timestamp_microseconds": 5000000,
+      "prefix_key": "agent-system-v1",
+      "prefix_tokens": 4096
+    },
+    {
+      "request_id": 7,
+      "arrival_timestamp_microseconds": 6000000,
+      "prefix_key": "repository-b-v1",
+      "prefix_tokens": 32768
+    },
+    {
+      "request_id": 8,
+      "arrival_timestamp_microseconds": 7000000,
+      "prefix_key": "tool-schema-v1",
+      "prefix_tokens": 8192
+    },
+    {
+      "request_id": 9,
+      "arrival_timestamp_microseconds": 8000000,
+      "prefix_key": "repository-a-v1",
+      "prefix_tokens": 32768
+    },
+    {
+      "request_id": 10,
+      "arrival_timestamp_microseconds": 9000000,
+      "prefix_key": "conversation-a-v1",
+      "prefix_tokens": 16384
+    },
+    {
+      "request_id": 11,
+      "arrival_timestamp_microseconds": 10000000,
+      "prefix_key": "agent-system-v1",
+      "prefix_tokens": 4096
+    },
+    {
+      "request_id": 12,
+      "arrival_timestamp_microseconds": 11000000,
+      "prefix_key": "repository-b-v1",
+      "prefix_tokens": 32768
+    },
+    {
+      "request_id": 13,
+      "arrival_timestamp_microseconds": 12000000,
+      "prefix_key": "agent-system-v1",
+      "prefix_tokens": 4096
+    },
+    {
+      "request_id": 14,
+      "arrival_timestamp_microseconds": 13000000,
+      "prefix_key": "repository-a-v1",
+      "prefix_tokens": 32768
+    },
+    {
+      "request_id": 15,
+      "arrival_timestamp_microseconds": 14000000,
+      "prefix_key": "tool-schema-v1",
+      "prefix_tokens": 8192
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "hbm-only-4gb",
+      "policy": "exclusive_lru_promote_on_hit",
+      "tiers": [
+        {
+          "tier_id": "hbm",
+          "capacity_bytes": 4000000000,
+          "read_bandwidth_bytes_per_second": 3350000000000,
+          "write_bandwidth_bytes_per_second": 3350000000000,
+          "fixed_access_latency_microseconds": 1.0,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-h200-like-hbm-cache-slice-v1"
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "scenario_id": "hbm4gb-host8gb-nvme32gb",
+      "policy": "exclusive_lru_promote_on_hit",
+      "tiers": [
+        {
+          "tier_id": "hbm",
+          "capacity_bytes": 4000000000,
+          "read_bandwidth_bytes_per_second": 3350000000000,
+          "write_bandwidth_bytes_per_second": 3350000000000,
+          "fixed_access_latency_microseconds": 1.0,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-h200-like-hbm-cache-slice-v1"
+          }
+        },
+        {
+          "tier_id": "host_dram",
+          "capacity_bytes": 8000000000,
+          "read_bandwidth_bytes_per_second": 200000000000,
+          "write_bandwidth_bytes_per_second": 200000000000,
+          "fixed_access_latency_microseconds": 5.0,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-host-dram-tier-v1"
+          }
+        },
+        {
+          "tier_id": "nvme",
+          "capacity_bytes": 32000000000,
+          "read_bandwidth_bytes_per_second": 12000000000,
+          "write_bandwidth_bytes_per_second": 12000000000,
+          "fixed_access_latency_microseconds": 50.0,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-nvme-tier-v1"
+          }
+        }
+      ],
+      "links": [
+        {
+          "upper_tier_id": "hbm",
+          "lower_tier_id": "host_dram",
+          "bandwidth_bytes_per_second": 50000000000,
+          "fixed_latency_microseconds": 5.0,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-hbm-host-link-v1"
+          }
+        },
+        {
+          "upper_tier_id": "host_dram",
+          "lower_tier_id": "nvme",
+          "bandwidth_bytes_per_second": 12000000000,
+          "fixed_latency_microseconds": 50.0,
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-host-nvme-link-v1"
+          }
+        }
+      ]
+    }
+  ]
+}

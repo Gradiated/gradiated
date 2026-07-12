@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "content_id": "93cd84ad8247059841409d57f2a38af8ab898e0d2ed55641b1ed3a061ade62a6",
+  "result": {
+    "benchmark_id": "qwen3-0.6b-vllm-cpu-c8-warm-v1",
+    "workload_contract_id": "qwen3-0.6b-agentic-class-slo-v1",
+    "trace_id": "qwen3-0.6b-vllm-cpu-burst-8x128x32-v1",
+    "trace_content_id": "119830fbb79803ec4d730914f9683c8f155f3912aeccf6328824d6631427a40c",
+    "model": {
+      "model_id": "qwen3-0.6b-local",
+      "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+      "checkpoint_id": "Qwen/Qwen3-0.6B:model.safetensors",
+      "checkpoint_revision": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
+      "tokenizer_id": "/Users/js/dev/inference-foundry/models/Qwen3-0.6B",
+      "tokenizer_revision": "c1899de289a04d12100db370d81485cdf75e47ca"
+    },
+    "evidence_kind": "measured_hardware",
+    "run_id": "vllm-cpu-c8-rep2-20260712-020417",
+    "source_artifact_id": "f0311f057a11610816332d72c79079e816086413887dd02c1314001a336a108d",
+    "engine": {
+      "name": "vllm",
+      "version": "0.1.dev1+gbec0a4ede.d20260711",
+      "build_id": "bec0a4ede621bc9f1ec7be39b79ed2e286da4ca1"
+    },
+    "hardware": {
+      "device_model": "Apple M4 Pro 14-core CPU, 48 GB unified memory",
+      "device_count": 1,
+      "topology": "single_host_cpu",
+      "interconnect": "on_package_unified_memory",
+      "device_set_hash": "5cd8bf44015fe1d407eba23bfe790c8ef6ddd44ffb2cbf140ff94b5b82f946c7"
+    },
+    "measurement_tool": "foundry-vllm-adapter-v1",
+    "software_revision": "c5660102b3a379b844fd5db86957d812e8face45ec6a3026b011052d2466ba2f",
+    "captured_at_unix_milliseconds": 1783814657000,
+    "by_class": [
+      {
+        "class": "tool",
+        "objective": {
+          "class": "tool",
+          "ttft": {
+            "percentile": 95.0,
+            "maximum_milliseconds": 2000.0
+          },
+          "tpot": {
+            "percentile": 95.0,
+            "maximum_milliseconds": 50.0
+          }
+        },
+        "request_count": 3,
+        "successful_requests": 3,
+        "failed_requests": 0,
+        "measured_ttft_milliseconds": 4864.906,
+        "measured_tpot_milliseconds": 96.30503225806451,
+        "ttft_slo_met_requests": 0,
+        "tpot_slo_met_requests": 0,
+        "slo_met_requests": 0,
+        "ttft_compliant_fraction": 0.0,
+        "tpot_compliant_fraction": 0.0,
+        "ttft_objective_met": false,
+        "tpot_objective_met": false,
+        "goodput_requests_per_second": 0.0,
+        "goodput_output_tokens_per_second": 0.0
+      },
+      {
+        "class": "coding",
+        "objective": {
+          "class": "coding",
+          "ttft": {
+            "percentile": 95.0,
+            "maximum_milliseconds": 5000.0
+          },
+          "tpot": {
+            "percentile": 95.0,
+            "maximum_milliseconds": 50.0
+          }
+        },
+        "request_count": 3,
+        "successful_requests": 3,
+        "failed_requests": 0,
+        "measured_ttft_milliseconds": 4864.991,
+        "measured_tpot_milliseconds": 232.4817741935484,
+        "ttft_slo_met_requests": 3,
+        "tpot_slo_met_requests": 0,
+        "slo_met_requests": 0,
+        "ttft_compliant_fraction": 1.0,
+        "tpot_compliant_fraction": 0.0,
+        "ttft_objective_met": true,
+        "tpot_objective_met": false,
+        "goodput_requests_per_second": 0.0,
+        "goodput_output_tokens_per_second": 0.0
+      },
+      {
+        "class": "long_agent",
+        "objective": {
+          "class": "long_agent",
+          "ttft": {
+            "percentile": 95.0,
+            "maximum_milliseconds": 10000.0
+          },
+          "tpot": {
+            "percentile": 95.0,
+            "maximum_milliseconds": 70.0
+          }
+        },
+        "request_count": 2,
+        "successful_requests": 2,
+        "failed_requests": 0,
+        "measured_ttft_milliseconds": 4864.964,
+        "measured_tpot_milliseconds": 96.2883870967742,
+        "ttft_slo_met_requests": 2,
+        "tpot_slo_met_requests": 0,
+        "slo_met_requests": 0,
+        "ttft_compliant_fraction": 1.0,
+        "tpot_compliant_fraction": 0.0,
+        "ttft_objective_met": true,
+        "tpot_objective_met": false,
+        "goodput_requests_per_second": 0.0,
+        "goodput_output_tokens_per_second": 0.0
+      }
+    ],
+    "aggregate": {
+      "request_count": 8,
+      "successful_requests": 8,
+      "failed_requests": 0,
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "prefix_reused_tokens": 0,
+      "duration_seconds": 7.849906,
+      "throughput_requests_per_second": 1.0191204837357288,
+      "successful_requests_per_second": 1.0191204837357288,
+      "p95_ttft_milliseconds": 4864.991,
+      "p95_tpot_milliseconds": 232.4817741935484,
+      "slo_met_requests": 0,
+      "goodput_requests_per_second": 0.0,
+      "goodput_output_tokens_per_second": 0.0,
+      "class_objective_count": 3,
+      "class_objectives_met": 0,
+      "all_class_objectives_met": false
+    },
+    "requests": [
+      {
+        "request_id": 1,
+        "class": "tool",
+        "success": true,
+        "input_tokens": 128,
+        "output_tokens": 32,
+        "prefix_reused_tokens": 0,
+        "queue_milliseconds": 0.0,
+        "ttft_milliseconds": 4864.906,
+        "tpot_milliseconds": 96.2882258064516,
+        "ttft_objective_met": false,
+        "tpot_objective_met": false
+      },
+      {
+        "request_id": 2,
+        "class": "coding",
+        "success": true,
+        "input_tokens": 128,
+        "output_tokens": 32,
+        "prefix_reused_tokens": 0,
+        "queue_milliseconds": 0.061,
+        "ttft_milliseconds": 554.268,
+        "tpot_milliseconds": 232.4817741935484,
+        "ttft_objective_met": true,
+        "tpot_objective_met": false
+      },
+      {
+        "request_id": 3,
+        "class": "long_agent",
+        "success": true,
+        "input_tokens": 128,
+        "output_tokens": 32,
+        "prefix_reused_tokens": 0,
+        "queue_milliseconds": 0.2,
+        "ttft_milliseconds": 4864.964,
+        "tpot_milliseconds": 96.28764516129031,
+        "ttft_objective_met": true,
+        "tpot_objective_met": false
+      },
+      {
+        "request_id": 4,
+        "class": "tool",
+        "success": true,
+        "input_tokens": 128,
+        "output_tokens": 32,
+        "prefix_reused_tokens": 0,
+        "queue_milliseconds": 0.348,
+        "ttft_milliseconds": 4864.134,
+        "tpot_milliseconds": 96.30503225806451,
+        "ttft_objective_met": false,
+        "tpot_objective_met": false
+      },
+      {
+        "request_id": 5,
+        "class": "coding",
+        "success": true,
+        "input_tokens": 128,
+        "output_tokens": 32,
+        "prefix_reused_tokens": 0,
+        "queue_milliseconds": 0.385,
+        "ttft_milliseconds": 4864.726,
+        "tpot_milliseconds": 96.29241935483871,
+        "ttft_objective_met": true,
+        "tpot_objective_met": false
+      },
+      {
+        "request_id": 6,
+        "class": "long_agent",
+        "success": true,
+        "input_tokens": 128,
+        "output_tokens": 32,
+        "prefix_reused_tokens": 0,
+        "queue_milliseconds": 0.408,
+        "ttft_milliseconds": 4864.923,
+        "tpot_milliseconds": 96.2883870967742,
+        "ttft_objective_met": true,
+        "tpot_objective_met": false
+      },
+      {
+        "request_id": 7,
+        "class": "tool",
+        "success": true,
+        "input_tokens": 128,
+        "output_tokens": 32,
+        "prefix_reused_tokens": 0,
+        "queue_milliseconds": 0.544,
+        "ttft_milliseconds": 4864.815,
+        "tpot_milliseconds": 96.29045161290323,
+        "ttft_objective_met": false,
+        "tpot_objective_met": false
+      },
+      {
+        "request_id": 8,
+        "class": "coding",
+        "success": true,
+        "input_tokens": 128,
+        "output_tokens": 32,
+        "prefix_reused_tokens": 0,
+        "queue_milliseconds": 0.681,
+        "ttft_milliseconds": 4864.991,
+        "tpot_milliseconds": 96.28758064516128,
+        "ttft_objective_met": true,
+        "tpot_objective_met": false
+      }
+    ]
+  }
+}

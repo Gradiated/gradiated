@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "provenance": {
+    "producer": {
+      "name": "foundry-core-chakra-fixture",
+      "version": "1"
+    },
+    "model": {
+      "model_id": "zai-org/GLM-5.2",
+      "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9"
+    },
+    "phase": {
+      "phase": "decode",
+      "batch_size": 2,
+      "context_tokens": 8192,
+      "candidate_tokens": 4,
+      "committed_tokens": 3
+    }
+  },
+  "actions": [
+    {
+      "id": "dsa_index_scan",
+      "dependencies": [],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "compute",
+        "details": {
+          "class": "attention_score",
+          "label": "dsa_lightning_index_scan",
+          "flops": 33554432,
+          "non_flop_operations": 0
+        }
+      }
+    },
+    {
+      "id": "dsa_topk",
+      "dependencies": ["dsa_index_scan"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "compute",
+        "details": {
+          "class": "top_k",
+          "label": "dsa_top_2048_selection",
+          "flops": 0,
+          "non_flop_operations": 8192
+        }
+      }
+    },
+    {
+      "id": "moe_dispatch",
+      "dependencies": ["dsa_topk"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "network",
+        "details": {
+          "pattern": {
+            "type": "collective",
+            "collective": "all_to_all",
+            "participants": 8
+          },
+          "source": "expert_parallel_group",
+          "destination": "expert_parallel_group",
+          "aggregate_bytes": 24576,
+          "messages": 56
+        }
+      }
+    },
+    {
+      "id": "moe_experts",
+      "dependencies": ["moe_dispatch"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "compute",
+        "details": {
+          "class": "matrix_multiply",
+          "label": "top8_routed_expert_mlp",
+          "flops": 100663296,
+          "non_flop_operations": 0
+        }
+      }
+    },
+    {
+      "id": "mtp_draft",
+      "dependencies": ["moe_experts"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "compute",
+        "details": {
+          "class": "matrix_multiply",
+          "label": "shared_parameter_mtp_draft",
+          "flops": 12582912,
+          "non_flop_operations": 0
+        }
+      }
+    },
+    {
+      "id": "mtp_verify",
+      "dependencies": ["mtp_draft"],
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "fixture:glm-5.2-decode-slice-v1"
+      },
+      "work": {
+        "type": "compute",
+        "details": {
+          "class": "matrix_multiply",
+          "label": "mtp_verify_candidates",
+          "flops": 25165824,
+          "non_flop_operations": 0
+        }
+      }
+    }
+  ]
+}

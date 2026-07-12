@@ -1,0 +1,505 @@
+{
+  "schema_version": 1,
+  "content_id": "5494727ab064f8c189f89e88794bbd7c9234baf23ab657c11bae62eaa6f35d40",
+  "result": {
+    "study_id": "qwen3-0.6b-int4-o-gate-up-aarch64-neon-v1",
+    "base_request_path": "configs/qwen3-0.6b-int4-packed-kernel-smoke-v1.json",
+    "base_request_blake3": "b103d7a7f5b92223bf316f0e8424f37334cb89e2f14f8215d2223079f458a222",
+    "base_study_id": "qwen3-0.6b-int4-o-gate-up-packed-kernel-smoke-v1",
+    "checkpoint": {
+      "model_id": "Qwen/Qwen3-0.6B",
+      "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+      "path": "models/Qwen3-0.6B/model.safetensors",
+      "expected_file_bytes": 1503300328,
+      "expected_sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b"
+    },
+    "quality_evidence": {
+      "path": "validation/results/qwen3-0.6b-int4-o-gate-up-wikitext2-sequential4096-bf16-v1.json",
+      "expected_sha256": "810201f17e88b4a1be625627ca98b7ffd42ee9e15ab2dbe42f4d6aa32cfe4a05",
+      "candidate": "o_proj plus gate_proj plus up_proj symmetric signed group-8 INT4",
+      "scope": "Teacher-forced BF16 QDQ quality proxy only; the run did not use persisted BF16 scales or packed codes."
+    },
+    "tensor_source_pins": [
+      {
+        "name": "model.layers.0.self_attn.o_proj.weight",
+        "expected_source_bytes_blake3": "88c9cc589476128bec96ece9d825422cbad162a70c16625119b2e132be518e1a"
+      },
+      {
+        "name": "model.layers.0.mlp.gate_proj.weight",
+        "expected_source_bytes_blake3": "8e9fffe22ba26c6f63da2e9c984ecd6f269a64034a04719340ec9d055c13fd0e"
+      },
+      {
+        "name": "model.layers.0.mlp.up_proj.weight",
+        "expected_source_bytes_blake3": "bcb34ecc8344764a96f5b21fafbcfd06166708de42dc91e409b957953037b595"
+      }
+    ],
+    "host": {
+      "hostname": "Joshuas-MacBook-Pro.local",
+      "operating_system": "Darwin 24.6.0 Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041",
+      "architecture": "aarch64",
+      "cpu_model": "Apple M4 Pro",
+      "available_parallelism": 14,
+      "benchmark_thread_count": 1,
+      "rust_profile": "release"
+    },
+    "compiler": {
+      "rustc_verbose": "rustc 1.90.0 (1159e78c4 2025-09-14)\nbinary: rustc\ncommit-hash: 1159e78c4747b02ef996e55082b704c09b970588\ncommit-date: 2025-09-14\nhost: aarch64-apple-darwin\nrelease: 1.90.0\nLLVM version: 20.1.8",
+      "target_architecture": "aarch64",
+      "target_operating_system": "macos",
+      "release_profile": true,
+      "explicit_simd_intrinsics_used": true,
+      "auto_vectorization_inspected": false
+    },
+    "benchmark": {
+      "required_target_architecture": "aarch64",
+      "required_target_feature": "neon",
+      "require_release_build": true,
+      "thread_count": 1,
+      "warmup_iterations": 5,
+      "measured_iterations": 31,
+      "preallocated_output_buffers": true,
+      "alternate_forward_reverse_order": true
+    },
+    "correctness": {
+      "maximum_output_absolute_error": 0.001,
+      "maximum_output_rmse": 0.0001
+    },
+    "predictive_scope": {
+      "model_id": "Qwen/Qwen3-0.6B",
+      "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+      "workload_id": "qwen3-0.6b-layer0-o-gate-up-packed-matvec",
+      "workload_revision": "8c9f38791aea1e54178371a6aa41c0da5dda4c39b2640c778bbb044bfbd4165d",
+      "context_regime": "decode-batch1-three-layer0-tensors",
+      "hardware_id": "Apple M4 Pro",
+      "hardware_revision": "Mac16,7-Apple-M4-Pro-14c-48GB",
+      "software_id": "foundry-qwen-int4-aarch64-neon",
+      "software_revision": "qwen-int4-aarch64-neon-v1",
+      "intervention_id": "aarch64-neon-group8-packed-matvec",
+      "intervention_revision": "v1",
+      "metric_id": "summed_three_tensor_median_seconds",
+      "metric_unit": "seconds",
+      "higher_is_better": false
+    },
+    "source_verification": {
+      "base_request_blake3_verified": true,
+      "checkpoint_sha256_pin_matches_base_request": true,
+      "quality_evidence_sha256_pin_matches_base_request": true,
+      "tensor_source_pins_match_base_request": true,
+      "checkpoint_file_size_verified": true,
+      "measured_tensor_blake3_pins_verified": true,
+      "checkpoint_declared_sha256_recomputed": false,
+      "quality_evidence_declared_sha256_recomputed": false
+    },
+    "implementation_boundary": "All three paths consume the same precomputed f32 input. NEON and scalar packed paths consume the identical signed group-8 INT4 code and BF16-scale matrix; the scalar f32 control consumes an independently materialized QDQ matrix with the same represented values. Quantization, packing, QDQ materialization, input generation, allocation, and checksum work are outside the timed region. Each timed call writes a distinct preallocated f32 output buffer. Forward NEON→scalar-packed→f32-QDQ and reverse f32-QDQ→scalar-packed→NEON orders alternate by sample.",
+    "measurements": [
+      {
+        "family": "attention_output",
+        "tensor_name": "model.layers.0.self_attn.o_proj.weight",
+        "source_dtype": "BF16",
+        "rows": 1024,
+        "columns": 2048,
+        "parameter_count": 2097152,
+        "source_bytes_blake3": "88c9cc589476128bec96ece9d825422cbad162a70c16625119b2e132be518e1a",
+        "input_checksum_blake3": "007a892b65c9730999897f37e87949d62147172e188b7e604b7c9a20cc2b0d03",
+        "packed_checksum_blake3": "c478e30a89a9fe24db33bfddd4a6f8823cdf6c6183dbcc350a5a3a6aa3d1dd83",
+        "source_load_seconds": 0.0061675,
+        "pack_seconds": 0.005043083,
+        "storage": {
+          "source_bfloat16_bytes": 4194304,
+          "packed_code_bytes": 1048576,
+          "group_scale_bytes": 524288,
+          "total_packed_bytes": 1572864,
+          "scale_overhead_fraction_of_codes": 0.5,
+          "scale_fraction_of_packed_storage": 0.3333333333333333,
+          "packed_fraction_of_source_bfloat16": 0.375,
+          "logical_packed_weight_bytes_read_per_output": 1536,
+          "logical_f32_qdq_weight_bytes_read_per_output": 8192,
+          "logical_input_bytes_if_read_once_per_matvec": 8192,
+          "logical_output_write_bytes_per_matvec": 4096
+        },
+        "dequantized_weight_correctness": {
+          "packed_checksum_blake3": "16a9f2da130677b4143cc0ebbb66e88e6f090b96094a35998b996f73a77ce5fa",
+          "floating_qdq_checksum_blake3": "16a9f2da130677b4143cc0ebbb66e88e6f090b96094a35998b996f73a77ce5fa",
+          "maximum_absolute_error": 0.0,
+          "rmse": 0.0,
+          "checksum_match": true,
+          "passed": true
+        },
+        "work": {
+          "output_elements": 1024,
+          "multiply_accumulate_terms_each": 2097152,
+          "nominal_arithmetic_operations_each": 4194304,
+          "identical_input_for_all_paths": true,
+          "identical_packed_matrix_for_neon_and_scalar": true,
+          "independently_materialized_f32_qdq_reference": true,
+          "exact_term_count_equal": true,
+          "accumulation_order_equal": false,
+          "scope": "Each path produces the same row count and evaluates one weight-input term per matrix element. The NEON path horizontally reduces eight products before adding a scaled group sum, while both scalar paths accumulate terms in column order; exact term counts match but floating-point accumulation order does not."
+        },
+        "memory": {
+          "source_bfloat16_weight_resident_bytes": 4194304,
+          "packed_code_resident_bytes": 1048576,
+          "packed_scale_resident_bytes": 524288,
+          "packed_weight_resident_bytes": 1572864,
+          "floating_qdq_weight_resident_bytes": 8388608,
+          "input_resident_bytes": 8192,
+          "output_buffer_bytes_each": 4096,
+          "preallocated_output_buffer_count": 3,
+          "timed_region_allocation_bytes": 0,
+          "neon_minimum_logical_bytes_per_call": 1585152,
+          "scalar_packed_minimum_logical_bytes_per_call": 1585152,
+          "floating_qdq_minimum_logical_bytes_per_call": 8400896,
+          "scope": "Resident bytes exclude allocator metadata. Minimum logical bytes count one resident weight representation, one input vector, and one output write per call; they are operand-accounting bounds rather than measured cache, DRAM, or temporary-stack traffic."
+        },
+        "neon_vs_scalar_packed_correctness": {
+          "candidate_output_checksum_blake3": "394a5846e19b4b5d18f33c0ad1225a8d0346821c06c4e041ffe5beccb29319e8",
+          "reference_output_checksum_blake3": "34d9ffd6d9a7c7ebb4084ee223483737d05eff7d87352c24beac307a66c07ef9",
+          "maximum_absolute_error": 5.245208740234375e-6,
+          "rmse": 5.510905302455656e-7,
+          "maximum_absolute_error_threshold": 0.001,
+          "rmse_threshold": 0.0001,
+          "passed": true
+        },
+        "neon_vs_floating_qdq_correctness": {
+          "candidate_output_checksum_blake3": "394a5846e19b4b5d18f33c0ad1225a8d0346821c06c4e041ffe5beccb29319e8",
+          "reference_output_checksum_blake3": "34d9ffd6d9a7c7ebb4084ee223483737d05eff7d87352c24beac307a66c07ef9",
+          "maximum_absolute_error": 5.245208740234375e-6,
+          "rmse": 5.510905302455656e-7,
+          "maximum_absolute_error_threshold": 0.001,
+          "rmse_threshold": 0.0001,
+          "passed": true
+        },
+        "alternating_order": {
+          "forward_order": [
+            "aarch64_neon",
+            "scalar_packed",
+            "floating_qdq_scalar_reference"
+          ],
+          "reverse_order": [
+            "floating_qdq_scalar_reference",
+            "scalar_packed",
+            "aarch64_neon"
+          ],
+          "forward_warmup_count": 3,
+          "reverse_warmup_count": 2,
+          "forward_measured_count": 16,
+          "reverse_measured_count": 15
+        },
+        "aarch64_neon": {
+          "iterations": 31,
+          "minimum_seconds": 0.000248708,
+          "median_seconds": 0.000261208,
+          "logical_bytes_per_call": 1585152,
+          "best_logical_effective_bandwidth_gbps": 6.373546488251283,
+          "median_logical_effective_bandwidth_gbps": 6.0685430767817214
+        },
+        "scalar_packed": {
+          "iterations": 31,
+          "minimum_seconds": 0.001203417,
+          "median_seconds": 0.00123125,
+          "logical_bytes_per_call": 1585152,
+          "best_logical_effective_bandwidth_gbps": 1.3172092466701069,
+          "median_logical_effective_bandwidth_gbps": 1.2874330964467007
+        },
+        "floating_qdq_scalar_reference": {
+          "iterations": 31,
+          "minimum_seconds": 0.000931416,
+          "median_seconds": 0.000941459,
+          "logical_bytes_per_call": 8400896,
+          "best_logical_effective_bandwidth_gbps": 9.01948860659469,
+          "median_logical_effective_bandwidth_gbps": 8.923273344882784
+        },
+        "scalar_packed_over_neon_speed_ratio": 4.713676457076352,
+        "floating_qdq_over_neon_speed_ratio": 3.6042502526721996,
+        "neon_faster_than_scalar_packed": true,
+        "neon_faster_than_floating_qdq": true,
+        "boundary": "Release-profile, one-thread local AArch64 timing of one exact intrinsic path, the existing scalar packed path, and an independently materialized scalar f32-QDQ path. All outputs are preallocated and order alternates; no tuned library, serving runtime, GPU, energy, or cost baseline is present."
+      },
+      {
+        "family": "mlp_gate",
+        "tensor_name": "model.layers.0.mlp.gate_proj.weight",
+        "source_dtype": "BF16",
+        "rows": 3072,
+        "columns": 1024,
+        "parameter_count": 3145728,
+        "source_bytes_blake3": "8e9fffe22ba26c6f63da2e9c984ecd6f269a64034a04719340ec9d055c13fd0e",
+        "input_checksum_blake3": "ee31fb34925f50f52230ded48064bfe431b601ae7d2b44a04408f1cc11a12d4a",
+        "packed_checksum_blake3": "971892e72979dd8c52040554484c24fd422f1ec24c4b25edaff282b3a03e59d5",
+        "source_load_seconds": 0.003962417,
+        "pack_seconds": 0.003619542,
+        "storage": {
+          "source_bfloat16_bytes": 6291456,
+          "packed_code_bytes": 1572864,
+          "group_scale_bytes": 786432,
+          "total_packed_bytes": 2359296,
+          "scale_overhead_fraction_of_codes": 0.5,
+          "scale_fraction_of_packed_storage": 0.3333333333333333,
+          "packed_fraction_of_source_bfloat16": 0.375,
+          "logical_packed_weight_bytes_read_per_output": 768,
+          "logical_f32_qdq_weight_bytes_read_per_output": 4096,
+          "logical_input_bytes_if_read_once_per_matvec": 4096,
+          "logical_output_write_bytes_per_matvec": 12288
+        },
+        "dequantized_weight_correctness": {
+          "packed_checksum_blake3": "a5b63d3c365b8692c5e3d638744c199b36673300481f0f0abcfc63287d6d2118",
+          "floating_qdq_checksum_blake3": "a5b63d3c365b8692c5e3d638744c199b36673300481f0f0abcfc63287d6d2118",
+          "maximum_absolute_error": 0.0,
+          "rmse": 0.0,
+          "checksum_match": true,
+          "passed": true
+        },
+        "work": {
+          "output_elements": 3072,
+          "multiply_accumulate_terms_each": 3145728,
+          "nominal_arithmetic_operations_each": 6291456,
+          "identical_input_for_all_paths": true,
+          "identical_packed_matrix_for_neon_and_scalar": true,
+          "independently_materialized_f32_qdq_reference": true,
+          "exact_term_count_equal": true,
+          "accumulation_order_equal": false,
+          "scope": "Each path produces the same row count and evaluates one weight-input term per matrix element. The NEON path horizontally reduces eight products before adding a scaled group sum, while both scalar paths accumulate terms in column order; exact term counts match but floating-point accumulation order does not."
+        },
+        "memory": {
+          "source_bfloat16_weight_resident_bytes": 6291456,
+          "packed_code_resident_bytes": 1572864,
+          "packed_scale_resident_bytes": 786432,
+          "packed_weight_resident_bytes": 2359296,
+          "floating_qdq_weight_resident_bytes": 12582912,
+          "input_resident_bytes": 4096,
+          "output_buffer_bytes_each": 12288,
+          "preallocated_output_buffer_count": 3,
+          "timed_region_allocation_bytes": 0,
+          "neon_minimum_logical_bytes_per_call": 2375680,
+          "scalar_packed_minimum_logical_bytes_per_call": 2375680,
+          "floating_qdq_minimum_logical_bytes_per_call": 12599296,
+          "scope": "Resident bytes exclude allocator metadata. Minimum logical bytes count one resident weight representation, one input vector, and one output write per call; they are operand-accounting bounds rather than measured cache, DRAM, or temporary-stack traffic."
+        },
+        "neon_vs_scalar_packed_correctness": {
+          "candidate_output_checksum_blake3": "9f74c05b1a0aa7f6aca6b26cff7812fa4a0fd80f5fa8514f5ea46de2c454d0e2",
+          "reference_output_checksum_blake3": "cf979595c3fc5dfc6fe2296e9fdbc63cceaf40a353e3b9058b2f4282a9b2c9e5",
+          "maximum_absolute_error": 4.291534423828125e-6,
+          "rmse": 4.107378892652301e-7,
+          "maximum_absolute_error_threshold": 0.001,
+          "rmse_threshold": 0.0001,
+          "passed": true
+        },
+        "neon_vs_floating_qdq_correctness": {
+          "candidate_output_checksum_blake3": "9f74c05b1a0aa7f6aca6b26cff7812fa4a0fd80f5fa8514f5ea46de2c454d0e2",
+          "reference_output_checksum_blake3": "cf979595c3fc5dfc6fe2296e9fdbc63cceaf40a353e3b9058b2f4282a9b2c9e5",
+          "maximum_absolute_error": 4.291534423828125e-6,
+          "rmse": 4.107378892652301e-7,
+          "maximum_absolute_error_threshold": 0.001,
+          "rmse_threshold": 0.0001,
+          "passed": true
+        },
+        "alternating_order": {
+          "forward_order": [
+            "aarch64_neon",
+            "scalar_packed",
+            "floating_qdq_scalar_reference"
+          ],
+          "reverse_order": [
+            "floating_qdq_scalar_reference",
+            "scalar_packed",
+            "aarch64_neon"
+          ],
+          "forward_warmup_count": 3,
+          "reverse_warmup_count": 2,
+          "forward_measured_count": 16,
+          "reverse_measured_count": 15
+        },
+        "aarch64_neon": {
+          "iterations": 31,
+          "minimum_seconds": 0.000367042,
+          "median_seconds": 0.000399792,
+          "logical_bytes_per_call": 2375680,
+          "best_logical_effective_bandwidth_gbps": 6.472501784536919,
+          "median_logical_effective_bandwidth_gbps": 5.942289990795214
+        },
+        "scalar_packed": {
+          "iterations": 31,
+          "minimum_seconds": 0.001741083,
+          "median_seconds": 0.00176325,
+          "logical_bytes_per_call": 2375680,
+          "best_logical_effective_bandwidth_gbps": 1.3644840596341472,
+          "median_logical_effective_bandwidth_gbps": 1.3473302140932937
+        },
+        "floating_qdq_scalar_reference": {
+          "iterations": 31,
+          "minimum_seconds": 0.001270208,
+          "median_seconds": 0.00127825,
+          "logical_bytes_per_call": 12599296,
+          "best_logical_effective_bandwidth_gbps": 9.919080969416033,
+          "median_logical_effective_bandwidth_gbps": 9.856675924115
+        },
+        "scalar_packed_over_neon_speed_ratio": 4.41041841757714,
+        "floating_qdq_over_neon_speed_ratio": 3.1972875895465647,
+        "neon_faster_than_scalar_packed": true,
+        "neon_faster_than_floating_qdq": true,
+        "boundary": "Release-profile, one-thread local AArch64 timing of one exact intrinsic path, the existing scalar packed path, and an independently materialized scalar f32-QDQ path. All outputs are preallocated and order alternates; no tuned library, serving runtime, GPU, energy, or cost baseline is present."
+      },
+      {
+        "family": "mlp_up",
+        "tensor_name": "model.layers.0.mlp.up_proj.weight",
+        "source_dtype": "BF16",
+        "rows": 3072,
+        "columns": 1024,
+        "parameter_count": 3145728,
+        "source_bytes_blake3": "bcb34ecc8344764a96f5b21fafbcfd06166708de42dc91e409b957953037b595",
+        "input_checksum_blake3": "35863ec06d8fee658d721c3ef61abda6e007329b4be011f76cb3504213a17a9b",
+        "packed_checksum_blake3": "f645c72d8ace3238b9479177e27a88eded731d27a42a817602c2635601d3862c",
+        "source_load_seconds": 0.003654542,
+        "pack_seconds": 0.003691667,
+        "storage": {
+          "source_bfloat16_bytes": 6291456,
+          "packed_code_bytes": 1572864,
+          "group_scale_bytes": 786432,
+          "total_packed_bytes": 2359296,
+          "scale_overhead_fraction_of_codes": 0.5,
+          "scale_fraction_of_packed_storage": 0.3333333333333333,
+          "packed_fraction_of_source_bfloat16": 0.375,
+          "logical_packed_weight_bytes_read_per_output": 768,
+          "logical_f32_qdq_weight_bytes_read_per_output": 4096,
+          "logical_input_bytes_if_read_once_per_matvec": 4096,
+          "logical_output_write_bytes_per_matvec": 12288
+        },
+        "dequantized_weight_correctness": {
+          "packed_checksum_blake3": "ecf4af7869b4599c0fecb5c3d3642b75cdd8a83b490e5594436599d37cfcf1a2",
+          "floating_qdq_checksum_blake3": "ecf4af7869b4599c0fecb5c3d3642b75cdd8a83b490e5594436599d37cfcf1a2",
+          "maximum_absolute_error": 0.0,
+          "rmse": 0.0,
+          "checksum_match": true,
+          "passed": true
+        },
+        "work": {
+          "output_elements": 3072,
+          "multiply_accumulate_terms_each": 3145728,
+          "nominal_arithmetic_operations_each": 6291456,
+          "identical_input_for_all_paths": true,
+          "identical_packed_matrix_for_neon_and_scalar": true,
+          "independently_materialized_f32_qdq_reference": true,
+          "exact_term_count_equal": true,
+          "accumulation_order_equal": false,
+          "scope": "Each path produces the same row count and evaluates one weight-input term per matrix element. The NEON path horizontally reduces eight products before adding a scaled group sum, while both scalar paths accumulate terms in column order; exact term counts match but floating-point accumulation order does not."
+        },
+        "memory": {
+          "source_bfloat16_weight_resident_bytes": 6291456,
+          "packed_code_resident_bytes": 1572864,
+          "packed_scale_resident_bytes": 786432,
+          "packed_weight_resident_bytes": 2359296,
+          "floating_qdq_weight_resident_bytes": 12582912,
+          "input_resident_bytes": 4096,
+          "output_buffer_bytes_each": 12288,
+          "preallocated_output_buffer_count": 3,
+          "timed_region_allocation_bytes": 0,
+          "neon_minimum_logical_bytes_per_call": 2375680,
+          "scalar_packed_minimum_logical_bytes_per_call": 2375680,
+          "floating_qdq_minimum_logical_bytes_per_call": 12599296,
+          "scope": "Resident bytes exclude allocator metadata. Minimum logical bytes count one resident weight representation, one input vector, and one output write per call; they are operand-accounting bounds rather than measured cache, DRAM, or temporary-stack traffic."
+        },
+        "neon_vs_scalar_packed_correctness": {
+          "candidate_output_checksum_blake3": "99d51b3061fec53e369ad555e6dfa58548a7623bdc066a7d5af6ff5418a0fc2e",
+          "reference_output_checksum_blake3": "92b21493daf848ab6f35fabcaacab29b1b5fb98aa391c12b23b470f786ecebca",
+          "maximum_absolute_error": 2.5033950805664062e-6,
+          "rmse": 2.915387582161607e-7,
+          "maximum_absolute_error_threshold": 0.001,
+          "rmse_threshold": 0.0001,
+          "passed": true
+        },
+        "neon_vs_floating_qdq_correctness": {
+          "candidate_output_checksum_blake3": "99d51b3061fec53e369ad555e6dfa58548a7623bdc066a7d5af6ff5418a0fc2e",
+          "reference_output_checksum_blake3": "92b21493daf848ab6f35fabcaacab29b1b5fb98aa391c12b23b470f786ecebca",
+          "maximum_absolute_error": 2.5033950805664062e-6,
+          "rmse": 2.915387582161607e-7,
+          "maximum_absolute_error_threshold": 0.001,
+          "rmse_threshold": 0.0001,
+          "passed": true
+        },
+        "alternating_order": {
+          "forward_order": [
+            "aarch64_neon",
+            "scalar_packed",
+            "floating_qdq_scalar_reference"
+          ],
+          "reverse_order": [
+            "floating_qdq_scalar_reference",
+            "scalar_packed",
+            "aarch64_neon"
+          ],
+          "forward_warmup_count": 3,
+          "reverse_warmup_count": 2,
+          "forward_measured_count": 16,
+          "reverse_measured_count": 15
+        },
+        "aarch64_neon": {
+          "iterations": 31,
+          "minimum_seconds": 0.000366417,
+          "median_seconds": 0.000402583,
+          "logical_bytes_per_call": 2375680,
+          "best_logical_effective_bandwidth_gbps": 6.483541975399612,
+          "median_logical_effective_bandwidth_gbps": 5.901093687512886
+        },
+        "scalar_packed": {
+          "iterations": 31,
+          "minimum_seconds": 0.001740167,
+          "median_seconds": 0.001746166,
+          "logical_bytes_per_call": 2375680,
+          "best_logical_effective_bandwidth_gbps": 1.3652023052959859,
+          "median_logical_effective_bandwidth_gbps": 1.360512116259279
+        },
+        "floating_qdq_scalar_reference": {
+          "iterations": 31,
+          "minimum_seconds": 0.00126725,
+          "median_seconds": 0.001273417,
+          "logical_bytes_per_call": 12599296,
+          "best_logical_effective_bandwidth_gbps": 9.942233971197476,
+          "median_logical_effective_bandwidth_gbps": 9.894084969809576
+        },
+        "scalar_packed_over_neon_speed_ratio": 4.337406199466942,
+        "floating_qdq_over_neon_speed_ratio": 3.163116674077147,
+        "neon_faster_than_scalar_packed": true,
+        "neon_faster_than_floating_qdq": true,
+        "boundary": "Release-profile, one-thread local AArch64 timing of one exact intrinsic path, the existing scalar packed path, and an independently materialized scalar f32-QDQ path. All outputs are preallocated and order alternates; no tuned library, serving runtime, GPU, energy, or cost baseline is present."
+      }
+    ],
+    "aggregate": {
+      "tensor_count": 3,
+      "parameter_count": 8388608,
+      "summed_neon_median_seconds": 0.0010635829999999999,
+      "summed_scalar_packed_median_seconds": 0.004740665999999999,
+      "summed_floating_qdq_median_seconds": 0.003493126,
+      "scalar_packed_over_neon_speed_ratio": 4.457260035182961,
+      "floating_qdq_over_neon_speed_ratio": 3.2843003319910156,
+      "neon_faster_than_scalar_packed": true,
+      "neon_faster_than_floating_qdq": true,
+      "all_work_counts_equal": true,
+      "all_correctness_checks_passed": true,
+      "all_timed_regions_allocation_free": true
+    },
+    "claims": {
+      "local_aarch64_neon_intrinsic_correctness_permitted": true,
+      "local_aarch64_neon_timing_observation_permitted": true,
+      "local_scalar_packed_comparison_permitted": true,
+      "local_f32_qdq_scalar_comparison_permitted": true,
+      "tuned_kernel_claim_permitted": false,
+      "blas_or_vllm_comparison_permitted": false,
+      "gpu_claim_permitted": false,
+      "quality_equivalence_claim_permitted": false,
+      "serving_claim_permitted": false,
+      "energy_claim_permitted": false,
+      "cost_per_token_claim_permitted": false,
+      "provider_claim_permitted": false,
+      "production_claim_permitted": false
+    },
+    "limitations": [
+      "The NEON path is an exact local intrinsic implementation, not a tuned kernel: it decodes each group through a temporary stack array and has no multi-row tiling, prefetch, cache blocking, fusion, or threading.",
+      "The f32 QDQ control is a one-thread scalar Rust matvec over independently materialized weights, not BF16 BLAS, Accelerate, llama.cpp, vLLM, SGLang, a GPU kernel, or a provider baseline.",
+      "The immutable 1e-3 maximum-error and 1e-4 RMSE gates permit only f32 accumulation-order differences and are checked before timing; failure aborts the report.",
+      "Logical byte counts describe resident operands and one minimum stream per call. They are not hardware-counter cache, DRAM, or energy measurements.",
+      "Timing consists of 31 alternating-order release-build samples on one local AArch64 thread under uncontrolled host load; it is not a confidence interval or production benchmark.",
+      "Only the three exact layer-zero tensors from the prior selective-INT4 study are measured. Full-model quality, retained BF16 paths, fusion, scheduling, serving, and cost are excluded.",
+      "The prior quality artifact used a different runtime representation. Binding its hash records provenance but does not transfer quality approval to this packed intrinsic path.",
+      "The declared checkpoint and quality-evidence SHA-256 pins are cross-checked against the byte-pinned base request but are not recomputed in this runner. File size and each measured tensor BLAKE3 are verified."
+    ]
+  }
+}

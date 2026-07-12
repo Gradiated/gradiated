@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "content_id": "f88f03ed0d8ae74a571d4dd21126663d3557b55263eaf87f40b50f9fe385f8bd",
+  "exporter_id": "foundry-core/timeloop-problem-export",
+  "exporter_version": "1",
+  "timeloop_problem_schema_version": "0.4",
+  "timeloop_problem_schema_url": "https://timeloop.csail.mit.edu/v4/input-formats/problem",
+  "source_problem": {
+    "operation": "gemm",
+    "m": 1,
+    "n": 1024,
+    "k": 2048,
+    "batch": 1,
+    "sequence_length": 1,
+    "heads": 16,
+    "input_type": "bf16",
+    "weight_type": "bf16",
+    "output_type": "bf16",
+    "accumulator_type": "fp32",
+    "layout": "row_major"
+  },
+  "problem_dimensions": {
+    "batch": 1,
+    "m": 1,
+    "n": 1024,
+    "k": 2048
+  },
+  "tensor_types": {
+    "input": "bf16",
+    "weight": "bf16",
+    "output": "bf16",
+    "accumulator": "fp32"
+  },
+  "accounting": {
+    "multiply_accumulates": 2097152,
+    "flops": 4194304,
+    "input_elements": 2048,
+    "weight_elements": 2097152,
+    "output_elements": 1024,
+    "input_bytes": 4096,
+    "weight_bytes": 4194304,
+    "output_bytes": 2048
+  },
+  "problem_yaml": "problem:\n  version: 0.4\n  shape:\n    name: FoundryGemmBMNK\n    dimensions: [B, M, N, K]\n    data_spaces:\n      - name: Inputs\n        projection:\n          - [[B]]\n          - [[M]]\n          - [[K]]\n      - name: Weights\n        projection:\n          - [[N]]\n          - [[K]]\n      - name: Outputs\n        projection:\n          - [[B]]\n          - [[M]]\n          - [[N]]\n        read_write: true\n  instance:\n    B: 1\n    M: 1\n    N: 1024\n    K: 2048\n",
+  "backend_parse_verified": false,
+  "claims": {
+    "problem_contract_permitted": true,
+    "backend_parse_verified": false,
+    "mapping_claim_permitted": false,
+    "cycle_claim_permitted": false,
+    "utilization_claim_permitted": false,
+    "energy_claim_permitted": false,
+    "area_claim_permitted": false,
+    "cost_claim_permitted": false,
+    "blockers": [
+      "timeloop_backend_not_invoked",
+      "architecture_mapping_and_mapper_inputs_missing",
+      "tensor_bit_widths_are_manifest_metadata_not_bound_to_architecture",
+      "backend_output_normalization_and_calibration_missing"
+    ]
+  }
+}

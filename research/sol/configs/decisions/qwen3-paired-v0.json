@@ -1,0 +1,12 @@
+{
+  "axis": "interaction",
+  "name": "joint model-kernel-hardware co-design",
+  "model_specific_reason": "The combined Qwen3-8B variant changes weights, KV precision, KV geometry, feed-forward width, kernel fusion, and the resulting memory/compute/interconnect balance together.",
+  "mechanism": "Every model change is followed by hardware re-sizing, mapping, SLO capacity planning, and TCO allocation; this captures discontinuous changes such as dropping devices or replicas that isolated tensor savings miss.",
+  "confidence": 0.1,
+  "evidence_artifacts": [
+    "configs/variants/qwen3-8b-paired-v0.json",
+    "configs/kernels/qwen3-full-layer-v0.json",
+    "configs/hardware-sizing-agentic-v0.json"
+  ]
+}

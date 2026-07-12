@@ -1,0 +1,11 @@
+{
+  "axis": "model",
+  "name": "FP8 KV cache",
+  "model_specific_reason": "Qwen3-8B has eight KV heads across 36 layers and the canonical agent workload spends most decode steps at long context, making KV reads a first-order bandwidth term.",
+  "mechanism": "FP8 halves KV capacity, read traffic, and write traffic relative to FP16, then the hardware group is re-sized around the lower capacity and bandwidth envelope.",
+  "confidence": 0.25,
+  "evidence_artifacts": [
+    "configs/variants/qwen3-8b-kv8.json",
+    "configs/hardware-sizing-agentic-v0.json"
+  ]
+}

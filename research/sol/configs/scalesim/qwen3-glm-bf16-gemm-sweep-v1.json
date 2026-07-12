@@ -1,0 +1,155 @@
+{
+  "schema_version": "inference-foundry.scalesim-v3-smoke-request.v1",
+  "request_id": "qwen3-glm-bf16-gemm-sweep-v1",
+  "tool": {
+    "name": "SCALE-Sim",
+    "version": "2.0.2",
+    "release_version": "3.0.0",
+    "repository": "https://github.com/scalesim-project/SCALE-Sim",
+    "revision": "7fd972e7c650e81c77294c9433143a282235c5e7",
+    "release_tag": "v3.0.0",
+    "license": "MIT",
+    "license_sha256": "fe3db3ba0fad0a4e33850aa144c40c88498d3c7943a463254e7c572b665f666a"
+  },
+  "current_main_probe": {
+    "revision": "9f98c4371055a54c75209c2e02b640b897550532",
+    "commit_time": "2025-12-17T22:09:58+05:30",
+    "version": "3.0.0",
+    "setup_sha256": "9108c922dbbf8ab02b7e712c518814a3ee5790ba5fac8a6ac883b36af6087810",
+    "simulator_sha256": "88d92232657463be4b9d8c30bd0aa85ec53ef003675a65aaf3472f75ad97018f",
+    "scale_config_sha256": "631a1995b27a9f318b7eabf30fc7e7400fbd474ead03bd6ff7de2562346b8291",
+    "license": "MIT",
+    "license_sha256": "fe3db3ba0fad0a4e33850aa144c40c88498d3c7943a463254e7c572b665f666a",
+    "use_for_primary_result": false,
+    "basis": "The current main revision was inspected, while the immutable v3.0.0 release tag is executed for the primary reproducible result. The release tag's setup.py still declares package version 2.0.2; that upstream metadata is preserved rather than relabeled."
+  },
+  "official_interface": {
+    "repository_readme": "https://github.com/scalesim-project/SCALE-Sim",
+    "input_mode": "gemm_mnk",
+    "native_reports": [
+      "COMPUTE_REPORT.csv",
+      "BANDWIDTH_REPORT.csv",
+      "DETAILED_ACCESS_REPORT.csv"
+    ]
+  },
+  "workloads": [
+    {
+      "id": "qwen3-0.6b-o-proj-bf16-b1",
+      "model_id": "Qwen/Qwen3-0.6B",
+      "operator": "decoder.layer0.self_attn.o_proj",
+      "dimensions": {
+        "batch": 1,
+        "m": 1,
+        "n": 1024,
+        "k": 2048
+      },
+      "tensor_types": {
+        "input": "bf16",
+        "weight": "bf16",
+        "output": "bf16",
+        "accumulator": "fp32"
+      },
+      "source_contract": {
+        "kind": "timeloop_problem_export",
+        "path": "../../experiments/qwen3-0.6b/timeloop-o-proj-bf16-decode-b1-v1.json",
+        "sha256": "9e3f458939012cbd88772988be4be853bbd2140a564cbca24e467bead9de3375",
+        "content_id": "f88f03ed0d8ae74a571d4dd21126663d3557b55263eaf87f40b50f9fe385f8bd",
+        "basis": "The checked Foundry KernelProblem and Timeloop export pin B=1, M=1, N=1024, K=2048 and exact BF16 logical operand accounting."
+      },
+      "semantic_limit": "SCALE-Sim models dense element movement and systolic-array scheduling; it does not execute BF16 arithmetic or Qwen model code."
+    },
+    {
+      "id": "glm-5.2-routed-expert-gate-bf16-reference-b1",
+      "model_id": "zai-org/GLM-5.2",
+      "operator": "moe.routed_expert.gate_projection",
+      "dimensions": {
+        "batch": 1,
+        "m": 1,
+        "n": 2048,
+        "k": 6144
+      },
+      "tensor_types": {
+        "input": "bf16",
+        "weight": "bf16",
+        "output": "bf16",
+        "accumulator": "fp32"
+      },
+      "source_contract": {
+        "kind": "glm_routed_expert_gate_bf16_reference",
+        "path": "../glm-5.2-whole-decode-lowering-v1.json",
+        "sha256": "4e4f3c3afdb1cf0334abaa19d5304f285faacde30fe40698df54d74d6d412a4e",
+        "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+        "basis": "The checked GLM lowerer contract pins hidden_size=6144, expert_intermediate_size=2048, routed-expert BF16 weights, and BF16 network activations. This case covers one logical gate projection for one dispatched token."
+      },
+      "semantic_limit": "This is one architectural BF16 routed-expert projection, not the opaque NVIDIA NVFP4 checkpoint, three-matrix expert execution, routing, batching, or whole-model decode."
+    }
+  ],
+  "architectures": [
+    {
+      "id": "ws-16x16-sram64kb",
+      "array_height": 16,
+      "array_width": 16,
+      "ifmap_sram_kb": 64,
+      "filter_sram_kb": 64,
+      "ofmap_sram_kb": 64,
+      "dataflow": "ws",
+      "interface_bandwidth": "CALC",
+      "role": "base_array_dataflow_sweep"
+    },
+    {
+      "id": "ws-32x32-sram64kb",
+      "array_height": 32,
+      "array_width": 32,
+      "ifmap_sram_kb": 64,
+      "filter_sram_kb": 64,
+      "ofmap_sram_kb": 64,
+      "dataflow": "ws",
+      "interface_bandwidth": "CALC",
+      "role": "base_array_dataflow_sweep"
+    },
+    {
+      "id": "ws-64x64-sram64kb",
+      "array_height": 64,
+      "array_width": 64,
+      "ifmap_sram_kb": 64,
+      "filter_sram_kb": 64,
+      "ofmap_sram_kb": 64,
+      "dataflow": "ws",
+      "interface_bandwidth": "CALC",
+      "role": "base_array_dataflow_sweep"
+    },
+    {
+      "id": "is-32x32-sram64kb",
+      "array_height": 32,
+      "array_width": 32,
+      "ifmap_sram_kb": 64,
+      "filter_sram_kb": 64,
+      "ofmap_sram_kb": 64,
+      "dataflow": "is",
+      "interface_bandwidth": "CALC",
+      "role": "base_array_dataflow_sweep"
+    },
+    {
+      "id": "os-32x32-sram64kb",
+      "array_height": 32,
+      "array_width": 32,
+      "ifmap_sram_kb": 64,
+      "filter_sram_kb": 64,
+      "ofmap_sram_kb": 64,
+      "dataflow": "os",
+      "interface_bandwidth": "CALC",
+      "role": "base_array_dataflow_sweep"
+    },
+    {
+      "id": "ws-32x32-sram4096kb",
+      "array_height": 32,
+      "array_width": 32,
+      "ifmap_sram_kb": 4096,
+      "filter_sram_kb": 4096,
+      "ofmap_sram_kb": 4096,
+      "dataflow": "ws",
+      "interface_bandwidth": "CALC",
+      "role": "sram_control"
+    }
+  ]
+}

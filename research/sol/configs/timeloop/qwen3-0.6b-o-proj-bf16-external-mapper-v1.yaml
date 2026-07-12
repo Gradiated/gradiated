@@ -1,0 +1,10 @@
+mapper:
+  version: 0.4
+  optimization_metrics: [delay]
+  live_status: false
+  num_threads: 1
+  timeout: 100
+  victory_condition: 1
+  search_size: 1
+  algorithm: random_pruned
+  diagnostics: true

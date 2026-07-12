@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Live findings and evidence status for Inference Foundry">
+  <title>Inference Foundry · Live Findings</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --panel-soft: #111720;
+      --line: #30363d;
+      --line-soft: #21262d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --blue: #58a6ff;
+      --blue-soft: rgba(56, 139, 253, .14);
+      --green: #3fb950;
+      --green-soft: rgba(46, 160, 67, .14);
+      --amber: #d29922;
+      --amber-soft: rgba(187, 128, 9, .16);
+      --red: #f85149;
+      --red-soft: rgba(248, 81, 73, .13);
+      --radius: 12px;
+      --shadow: 0 18px 50px rgba(0, 0, 0, .22);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(circle at 15% -20%, rgba(56, 139, 253, .12), transparent 31rem),
+        radial-gradient(circle at 90% 6%, rgba(46, 160, 67, .07), transparent 27rem),
+        var(--bg);
+      color: var(--text);
+      font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    a { color: var(--blue); }
+    button, textarea, input { font: inherit; }
+    button, a.button { -webkit-tap-highlight-color: transparent; }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 64px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 34px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      flex: 0 0 auto;
+      border: 1px solid #2f81f7;
+      border-radius: 11px;
+      background: linear-gradient(145deg, rgba(56, 139, 253, .2), rgba(46, 160, 67, .08));
+      color: #cae8ff;
+      font-size: 18px;
+      font-weight: 750;
+      box-shadow: inset 0 0 18px rgba(56, 139, 253, .08);
+    }
+
+    .brand strong { display: block; font-size: 15px; letter-spacing: .01em; }
+    .brand span { display: block; color: var(--muted); font-size: 12px; }
+
+    .live-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 32px;
+      padding: 5px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(22, 27, 34, .8);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .live-state::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      content: "";
+    }
+
+    .live-state.active { color: #aff5b4; border-color: rgba(46, 160, 67, .45); }
+    .live-state.active::before { background: var(--green); box-shadow: 0 0 0 4px rgba(46, 160, 67, .12); }
+    .live-state.stale { color: #e3b341; border-color: rgba(187, 128, 9, .45); }
+    .live-state.stale::before { background: var(--amber); }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(280px, .8fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .hero-copy, .decision-card, .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(22, 27, 34, .96), rgba(17, 23, 32, .96));
+      box-shadow: var(--shadow);
+    }
+
+    .hero-copy { padding: clamp(22px, 4vw, 42px); }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 720px;
+      margin: 0;
+      font-size: clamp(32px, 6vw, 62px);
+      line-height: .98;
+      letter-spacing: -.045em;
+    }
+
+    .lede {
+      max-width: 720px;
+      margin: 22px 0 0;
+      color: #b1bac4;
+      font-size: clamp(16px, 2vw, 19px);
+    }
+
+    .decision-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 24px;
+      border-color: rgba(187, 128, 9, .5);
+      background: linear-gradient(155deg, var(--amber-soft), rgba(22, 27, 34, .95) 58%);
+    }
+
+    .decision-card h2 { margin: 13px 0 8px; font-size: 22px; }
+    .decision-card p { margin: 0; color: #c4cbd3; }
+
+    .badge {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      padding: 4px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(13, 17, 23, .65);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .badge.warning { color: #e3b341; border-color: rgba(187, 128, 9, .48); background: var(--amber-soft); }
+    .badge.danger { color: #ff938a; border-color: rgba(248, 81, 73, .45); background: var(--red-soft); }
+    .badge.good { color: #aff5b4; border-color: rgba(46, 160, 67, .45); background: var(--green-soft); }
+    .badge.info { color: #cae8ff; border-color: rgba(56, 139, 253, .45); background: var(--blue-soft); }
+
+    .meta-line { margin-top: 20px; color: var(--muted); font-size: 12px; }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0 34px;
+    }
+
+    .metric {
+      min-height: 144px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(22, 27, 34, .82);
+    }
+
+    .metric-label { min-height: 42px; color: var(--muted); font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .055em; }
+    .metric-value { margin: 8px 0 3px; color: #f0f6fc; font-size: clamp(25px, 3vw, 34px); font-weight: 750; letter-spacing: -.035em; }
+    .metric-detail { color: #9da7b1; font-size: 12px; }
+    .metric-evidence { margin-top: 12px; color: var(--amber); font-size: 11px; }
+
+    .section { margin-top: 38px; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin: 0 2px 14px; }
+    .section-head h2 { margin: 0; font-size: 20px; letter-spacing: -.018em; }
+    .section-head p { max-width: 650px; margin: 0; color: var(--muted); font-size: 13px; text-align: right; }
+
+    .panel { padding: 20px; box-shadow: none; }
+    .panel h3 { margin: 0 0 6px; font-size: 16px; }
+    .panel > p { margin: 0; color: var(--muted); }
+
+    .two-col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+
+    .cost-row { display: grid; grid-template-columns: minmax(135px, .85fr) minmax(160px, 1.4fr) auto; align-items: center; gap: 12px; margin-top: 15px; }
+    .cost-name { color: #c7d0d9; font-size: 13px; }
+    .track { height: 9px; overflow: hidden; border: 1px solid var(--line-soft); border-radius: 999px; background: #0d1117; }
+    .fill { height: 100%; width: 0; border-radius: inherit; background: var(--blue); transition: width .5s ease; }
+    .fill.baseline { background: #6e7681; }
+    .fill.h100 { background: var(--amber); }
+    .cost-number { color: #d8dee4; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
+
+    .hardware-flow { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; margin-top: 14px; }
+    .hardware-node { min-height: 145px; padding: 17px; border: 1px solid var(--line); border-radius: 10px; background: #0d1117; }
+    .hardware-node.candidate { border-color: rgba(46, 160, 67, .45); background: var(--green-soft); }
+    .hardware-node strong { display: block; margin-bottom: 8px; }
+    .hardware-node span { display: block; color: var(--muted); font-size: 13px; }
+    .arrow { color: var(--blue); font-size: 25px; }
+    .note { margin-top: 14px; padding: 12px 14px; border-left: 3px solid var(--amber); background: var(--amber-soft); color: #d4c49d; font-size: 13px; }
+
+    .evidence-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .evidence-card { padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: #0d1117; }
+    .evidence-top { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+    .evidence-card h3 { margin: 1px 0 0; font-size: 14px; }
+    .evidence-card p { margin: 11px 0 0; color: var(--muted); font-size: 13px; }
+
+    .table-wrap { margin-top: 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+    table { width: 100%; min-width: 790px; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line-soft); text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: var(--muted); background: #0d1117; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr.best { background: rgba(56, 139, 253, .06); }
+    .fail { color: #ff938a; font-weight: 700; }
+
+    .blocker-list, .progress-list, .chat-list { display: grid; gap: 10px; margin-top: 14px; }
+    .blocker, .progress-item, .chat-message { padding: 14px; border: 1px solid var(--line); border-radius: 9px; background: #0d1117; }
+    .blocker { border-left: 3px solid var(--red); }
+    .blocker strong, .progress-item strong { display: block; font-size: 13px; }
+    .blocker span, .progress-item span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .progress-item { display: grid; grid-template-columns: 92px 1fr; gap: 12px; }
+    .progress-date { color: var(--blue); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+    .codex-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .75fr); gap: 14px; }
+    label { display: block; margin: 15px 0 7px; color: #c7d0d9; font-size: 13px; font-weight: 650; }
+    textarea { width: 100%; min-height: 118px; resize: vertical; padding: 12px; border: 1px solid var(--line); border-radius: 9px; outline: none; background: #0d1117; color: var(--text); }
+    input[type="password"] { width: 100%; min-height: 42px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 9px; outline: none; background: #0d1117; color: var(--text); }
+    textarea:focus, input[type="password"]:focus { border-color: #2f81f7; box-shadow: 0 0 0 3px rgba(56, 139, 253, .13); }
+    .prompt-fields { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(190px, .75fr); gap: 12px; align-items: end; }
+    .token-help { margin: 7px 0 0; color: var(--muted); font-size: 11px; }
+
+    .form-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 9px; }
+    .button, button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 8px 14px;
+      border: 1px solid #2ea043;
+      border-radius: 8px;
+      background: #238636;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 650;
+      text-decoration: none;
+    }
+
+    button:hover, .button:hover { background: #2ea043; }
+    button:disabled { cursor: wait; opacity: .65; }
+    .button.secondary { border-color: var(--line); background: #21262d; color: var(--text); }
+    .button.secondary:hover { background: #30363d; }
+    .form-status { color: var(--muted); font-size: 12px; }
+    .availability { margin-top: 14px; padding: 11px 12px; border: 1px solid rgba(187, 128, 9, .35); border-radius: 8px; background: var(--amber-soft); color: #d6c69f; font-size: 12px; }
+
+    .state-summary { margin-top: 14px; white-space: pre-wrap; overflow-wrap: anywhere; color: #c7d0d9; font-size: 13px; }
+    .state-meta { margin-top: 7px; color: var(--muted); font-size: 11px; }
+    .chat-message { border-left: 3px solid #2f81f7; }
+    .chat-message.user { border-left-color: var(--amber); }
+    .chat-meta { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+    .chat-text { margin-top: 6px; white-space: pre-wrap; overflow-wrap: anywhere; color: #d7dee5; font-size: 12px; }
+
+    .document-links { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
+    details.document { margin-top: 12px; border: 1px solid var(--line); border-radius: 9px; background: #0d1117; }
+    details.document summary { padding: 12px 14px; cursor: pointer; color: #c7d0d9; font-weight: 650; }
+    .trusted-document { max-height: 680px; overflow: auto; padding: 4px 18px 20px; border-top: 1px solid var(--line); color: #c7d0d9; }
+    .trusted-document table { min-width: 620px; }
+    .trusted-document pre { overflow-x: auto; padding: 12px; border-radius: 8px; background: #010409; }
+    .trusted-document code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .document-loading { color: var(--muted); font-size: 12px; }
+
+    footer { margin-top: 42px; padding-top: 20px; border-top: 1px solid var(--line-soft); color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 900px) {
+      .hero, .codex-grid { grid-template-columns: 1fr; }
+      .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 680px) {
+      .shell { width: min(100% - 22px, 1180px); padding-top: 14px; }
+      .topbar { margin-bottom: 20px; }
+      .brand span { display: none; }
+      .hero-copy, .decision-card, .panel { padding: 16px; }
+      .two-col, .evidence-grid { grid-template-columns: 1fr; }
+      .section-head { display: block; }
+      .section-head p { margin-top: 5px; text-align: left; }
+      .cost-row { grid-template-columns: 1fr auto; }
+      .track { grid-column: 1 / -1; grid-row: 2; }
+      .hardware-flow { grid-template-columns: 1fr; }
+      .arrow { transform: rotate(90deg); text-align: center; }
+      .progress-item { grid-template-columns: 1fr; gap: 5px; }
+      .prompt-fields { grid-template-columns: 1fr; }
+      .form-row { align-items: flex-start; flex-direction: column; }
+      button { width: 100%; }
+    }
+
+    @media (max-width: 450px) {
+      .metric-grid { grid-template-columns: 1fr; }
+      .metric { min-height: 0; }
+      .metric-label { min-height: 0; }
+      .live-state { max-width: 148px; overflow: hidden; text-overflow: ellipsis; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .fill { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">IF</div>
+        <div><strong>Inference Foundry</strong><span>Model-specific inference co-design</span></div>
+      </div>
+      <div id="bridge-state" class="live-state stale" role="status" aria-live="polite">Connecting to Codex</div>
+    </header>
+
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Live findings · evidence before narrative</p>
+        <h1 id="page-title">Can vertical co-design materially lower inference cost?</h1>
+        <p id="claim-summary" class="lede">Loading the current evidence boundary…</p>
+      </div>
+      <aside class="decision-card">
+        <div>
+          <span id="claim-badge" class="badge warning">Analytical screening</span>
+          <h2>No production claim yet</h2>
+          <p>Promising economics are still gated by model quality, calibrated performance, hardware validation, and a measured provider-grade baseline.</p>
+        </div>
+        <div id="study-meta" class="meta-line">Loading study contract…</div>
+      </aside>
+    </section>
+
+    <section id="metrics" class="metric-grid" aria-label="Headline metrics"></section>
+
+    <section class="section" aria-labelledby="economics-title">
+      <div class="section-head">
+        <h2 id="economics-title">Projected economics</h2>
+        <p>Separate input and output economics, with like-for-like custom sizing and an explicitly assumed H100 sensitivity.</p>
+      </div>
+      <div class="two-col">
+        <article class="panel">
+          <h3>Input cost per million tokens</h3>
+          <p>Lower is better. All values below are analytical.</p>
+          <div id="input-costs"></div>
+        </article>
+        <article class="panel">
+          <h3>Output cost per million tokens</h3>
+          <p>Output cost is the fragile part of the current thesis.</p>
+          <div id="output-costs"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="hardware-title">
+      <div class="section-head">
+        <h2 id="hardware-title">What co-design changed</h2>
+        <p>The selected points are feasible inside the analytical search envelope; that is not evidence of manufacturability.</p>
+      </div>
+      <article class="panel">
+        <div id="hardware-flow" class="hardware-flow"></div>
+        <div id="hardware-note" class="note"></div>
+      </article>
+    </section>
+
+    <section class="section" aria-labelledby="evidence-title">
+      <div class="section-head">
+        <h2 id="evidence-title">Evidence boundary</h2>
+        <p>Measured, simulated, assumed, and untested results stay visibly separate.</p>
+      </div>
+      <div id="evidence-grid" class="evidence-grid"></div>
+    </section>
+
+    <section class="section" aria-labelledby="checks-title">
+      <div class="section-head">
+        <h2 id="checks-title">Reality checks</h2>
+        <p>SLO feasibility is simulated; volume sensitivity shows where the economic thesis breaks.</p>
+      </div>
+      <div class="two-col">
+        <article class="panel">
+          <div class="evidence-top"><h3>Serving contract</h3><span class="badge warning">Simulated</span></div>
+          <div id="slo-check" class="state-summary"></div>
+        </article>
+        <article class="panel">
+          <div class="evidence-top"><h3>Output-cost sensitivity</h3><span class="badge danger">Not robust</span></div>
+          <div id="sensitivity-check" class="state-summary"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="int4-title">
+      <div class="section-head">
+        <h2 id="int4-title">Measured INT4 sweep</h2>
+        <p>Qwen3-0.6B numerical QDQ only. This does not measure a packed kernel, memory, latency, energy, cost, or Qwen3-8B task quality.</p>
+      </div>
+      <article class="panel">
+        <div class="evidence-top">
+          <div>
+            <h3 id="int4-scope">Loading measured sweep…</h3>
+            <p id="int4-detail"></p>
+          </div>
+          <span class="badge danger">Measured · failed</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Group</th><th>Effective bits</th><th>NLL Δ</th><th>PPL ratio</th><th>Logit RMSE</th><th>Cosine</th><th>Top-1</th><th>Gate</th>
+              </tr>
+            </thead>
+            <tbody id="int4-body"></tbody>
+          </table>
+        </div>
+        <div id="int4-conclusion" class="note"></div>
+      </article>
+    </section>
+
+    <section class="section" aria-labelledby="blockers-title">
+      <div class="section-head">
+        <h2 id="blockers-title">What blocks a company-level claim</h2>
+        <p>The dashboard stays red until the evidence, not the story, changes.</p>
+      </div>
+      <div class="two-col">
+        <article class="panel"><h3>Open blockers</h3><div id="blockers" class="blocker-list"></div></article>
+        <article class="panel"><h3>Recent progress</h3><div id="recent-progress" class="progress-list"></div></article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="codex-title">
+      <div class="section-head">
+        <h2 id="codex-title">Codex work session</h2>
+        <p>Live state refreshes automatically from the local bridge.</p>
+      </div>
+      <div class="codex-grid">
+        <article class="panel">
+          <h3>Send a prompt to Codex</h3>
+          <p>Use this for course corrections, questions, or the next experiment.</p>
+          <form id="prompt-form">
+            <div class="prompt-fields">
+              <div>
+                <label for="prompt-text">Prompt</label>
+                <textarea id="prompt-text" maxlength="20000" placeholder="Ask about a result, request an experiment, or change priorities…" required></textarea>
+              </div>
+              <div>
+                <label for="prompt-token">Codex access code</label>
+                <input id="prompt-token" type="password" autocomplete="off" spellcheck="false" placeholder="Required to send">
+                <p class="token-help">Stored only in this browser's localStorage and sent only as the prompt-auth header.</p>
+              </div>
+            </div>
+            <div class="form-row">
+              <span id="prompt-status" class="form-status" role="status" aria-live="polite">Cmd/Ctrl + Enter to send</span>
+              <button id="prompt-submit" type="submit">Send prompt</button>
+            </div>
+          </form>
+          <div id="availability-note" class="availability">The prompt inbox is polled only while Codex has an active work session. Sending a prompt does not start or wake a Codex session.</div>
+        </article>
+        <article class="panel">
+          <div class="evidence-top">
+            <h3>Live state</h3>
+            <span id="session-badge" class="badge">Unknown</span>
+          </div>
+          <div id="state-summary" class="state-summary">Waiting for the first bridge response…</div>
+          <div id="state-meta" class="state-meta"></div>
+          <div id="live-progress" class="progress-list"></div>
+          <div id="chat" class="chat-list" aria-live="polite"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="documents-title">
+      <div class="section-head">
+        <h2 id="documents-title">Full evidence</h2>
+        <p>Trusted checked-in Markdown is rendered by the bridge and embedded below.</p>
+      </div>
+      <article class="panel">
+        <div id="document-links" class="document-links"></div>
+        <details class="document">
+          <summary>Embed full Qwen3-8B experiment dossier</summary>
+          <div id="report-content" class="trusted-document"><p class="document-loading">Loading from /codex/report…</p></div>
+        </details>
+        <details class="document">
+          <summary>Embed validation methodology and INT4 results</summary>
+          <div id="validation-content" class="trusted-document"><p class="document-loading">Loading from /codex/validation…</p></div>
+        </details>
+      </article>
+    </section>
+
+    <footer>
+      Static findings refresh from the checked-in dashboard status. Codex state is live only when the bridge and an active Codex work session are available.
+    </footer>
+  </main>
+
+  <script>
+    const byId = (id) => document.getElementById(id);
+    const make = (tag, className, text) => {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = String(text);
+      return node;
+    };
+
+    let dashboardState;
+    let codexTimer;
+    const promptTokenStorageKey = "inference-foundry.codex-prompt-token";
+
+    const money = (value) => `$${Number(value).toFixed(6)}`;
+    const fixed = (value, digits) => Number(value).toFixed(digits);
+    const percent = (value, digits = 1) => `${(Number(value) * 100).toFixed(digits)}%`;
+
+    async function loadJsonWithFallback(paths) {
+      let lastError;
+      for (const path of paths) {
+        try {
+          const response = await fetch(path, { cache: "no-store" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return await response.json();
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      throw lastError || new Error("No status route available");
+    }
+
+    function renderMetrics(items) {
+      const root = byId("metrics");
+      root.replaceChildren();
+      for (const item of items) {
+        const card = make("article", "metric");
+        card.append(
+          make("div", "metric-label", item.label),
+          make("div", "metric-value", item.value),
+          make("div", "metric-detail", item.detail),
+          make("div", "metric-evidence", item.evidence)
+        );
+        root.append(card);
+      }
+    }
+
+    function appendCostRow(root, label, value, maximum, className) {
+      const row = make("div", "cost-row");
+      const track = make("div", "track");
+      const fill = make("div", `fill ${className || ""}`.trim());
+      fill.style.width = `${Math.max(2, Math.min(100, Number(value) / maximum * 100))}%`;
+      track.append(fill);
+      row.append(make("div", "cost-name", label), track, make("div", "cost-number", money(value)));
+      root.append(row);
+    }
+
+    function renderCosts(costs) {
+      const input = byId("input-costs");
+      const output = byId("output-costs");
+      input.replaceChildren();
+      output.replaceChildren();
+      const rows = [
+        [costs.candidate.label, costs.candidate, ""],
+        [costs.baseline.label, costs.baseline, "baseline"],
+        [costs.owned_h100_sensitivity.label, costs.owned_h100_sensitivity, "h100"]
+      ];
+      const maxInput = Math.max(...rows.map(([, value]) => value.input_usd_per_million));
+      const maxOutput = Math.max(...rows.map(([, value]) => value.output_usd_per_million));
+      for (const [label, value, className] of rows) {
+        appendCostRow(input, label, value.input_usd_per_million, maxInput, className);
+        appendCostRow(output, label, value.output_usd_per_million, maxOutput, className);
+      }
+    }
+
+    function hardwareNode(title, data, candidate) {
+      const node = make("div", `hardware-node${candidate ? " candidate" : ""}`);
+      node.append(
+        make("strong", "", title),
+        make("span", "", `${data.devices_per_replica} devices × ${data.replicas} replica${data.replicas === 1 ? "" : "s"}`),
+        make("span", "", `${data.arrays_per_device} tensor array${data.arrays_per_device === 1 ? "" : "s"} / device`),
+        make("span", "", `${data.hbm_gb_per_replica} GB HBM / replica`),
+        make("span", "", `${Number(data.design_target_output_tokens_per_second).toLocaleString()} output-token/s design target`)
+      );
+      return node;
+    }
+
+    function renderHardware(hardware) {
+      const root = byId("hardware-flow");
+      root.replaceChildren(
+        hardwareNode("Unchanged-model reference", hardware.baseline, false),
+        make("div", "arrow", "→"),
+        hardwareNode("Paired candidate", hardware.candidate, true)
+      );
+      byId("hardware-note").textContent = hardware.rejected_baseline_trial;
+    }
+
+    function badgeTone(tone) {
+      if (tone === "danger") return "danger";
+      if (tone === "warning") return "warning";
+      if (tone === "good") return "good";
+      if (tone === "info") return "info";
+      return "";
+    }
+
+    function renderEvidence(items) {
+      const root = byId("evidence-grid");
+      root.replaceChildren();
+      for (const item of items) {
+        const card = make("article", "evidence-card");
+        const top = make("div", "evidence-top");
+        top.append(make("h3", "", item.label), make("span", `badge ${badgeTone(item.tone)}`.trim(), item.kind));
+        card.append(top, make("p", "", item.detail));
+        root.append(card);
+      }
+    }
+
+    function renderReality(slo, sensitivity) {
+      byId("slo-check").textContent = `${slo.requests_met}/${slo.requests_total} requests and ${slo.class_objectives_met}/${slo.class_objectives_total} class objectives pass. Candidate p95 TTFT is ${fixed(slo.p95_ttft_milliseconds, 2)} ms; p95 TPOT is ${fixed(slo.p95_tpot_milliseconds, 2)} ms.`;
+      const worstMultiple = 1 - Number(sensitivity.worst_output_advantage_fraction);
+      byId("sensitivity-check").textContent = `${sensitivity.output_scenarios_below_owned_h100}/${sensitivity.scenario_count} output-cost scenarios beat the assumed owned-H100 baseline. At 1,000 amortization units, 0 scenarios win; the worst case costs ${fixed(worstMultiple, 3)}× the baseline.`;
+    }
+
+    function renderInt4(sweep) {
+      byId("int4-scope").textContent = `${sweep.model} · ${sweep.device} · ${sweep.target_tokens} target tokens`;
+      byId("int4-detail").textContent = `${sweep.mechanism}. Hand-authored calibration corpus; not a standard benchmark.`;
+      const body = byId("int4-body");
+      body.replaceChildren();
+      for (const row of sweep.rows) {
+        const tr = make("tr", row.group_size === 8 ? "best" : "");
+        const cells = [
+          row.group_size,
+          fixed(row.effective_bits, 3),
+          `${row.nll_delta >= 0 ? "+" : ""}${fixed(row.nll_delta, 4)}`,
+          fixed(row.perplexity_ratio, 4),
+          fixed(row.logit_rmse, 4),
+          fixed(row.logit_cosine, 4),
+          percent(row.top1_agreement),
+          row.passed ? "Pass" : "Fail"
+        ];
+        cells.forEach((value, index) => tr.append(make("td", index === cells.length - 1 && !row.passed ? "fail" : "", value)));
+        body.append(tr);
+      }
+      byId("int4-conclusion").textContent = sweep.conclusion;
+    }
+
+    function renderBlockers(items) {
+      const root = byId("blockers");
+      root.replaceChildren();
+      for (const item of items) {
+        const node = make("div", "blocker");
+        node.append(make("strong", "", item.title), make("span", "", item.detail));
+        root.append(node);
+      }
+    }
+
+    function renderProgress(root, items) {
+      root.replaceChildren();
+      for (const item of items) {
+        const node = make("div", "progress-item");
+        const body = make("div");
+        body.append(make("strong", "", item.title || item.kind || "Update"), make("span", "", item.detail || item.text || item.content || ""));
+        node.append(make("div", "progress-date", item.date || item.ts || item.updated || ""), body);
+        root.append(node);
+      }
+    }
+
+    function renderDocuments(documents) {
+      const root = byId("document-links");
+      root.replaceChildren();
+      for (const document of documents) {
+        const link = make("a", "button secondary", document.label);
+        link.href = document.route;
+        link.target = "_blank";
+        link.rel = "noreferrer";
+        root.append(link);
+      }
+    }
+
+    function renderDashboard(data) {
+      dashboardState = data;
+      byId("claim-summary").textContent = data.claim_status.summary;
+      byId("claim-badge").textContent = data.claim_status.label;
+      byId("study-meta").textContent = `${data.study.model} · ${data.study.workload} · ${data.study.requests} requests · ${data.updated}`;
+      byId("availability-note").textContent = data.codex.availability_note;
+      renderMetrics(data.headline_metrics);
+      renderCosts(data.cost_comparison);
+      renderHardware(data.hardware);
+      renderEvidence(data.evidence);
+      renderReality(data.simulated_slo, data.sensitivity);
+      renderInt4(data.int4_sweep);
+      renderBlockers(data.blockers);
+      renderProgress(byId("recent-progress"), data.recent_progress);
+      renderDocuments(data.documents);
+    }
+
+    function stateText(state) {
+      const base = typeof state.status_text === "string" ? state.status_text
+        : typeof state.summary === "string" ? state.summary
+        : typeof state.status === "string" ? state.status
+        : state.status && typeof state.status.text === "string" ? state.status.text
+        : typeof state.current_task === "string" ? state.current_task
+        : "Bridge connected. No work-session summary was provided.";
+      const chatSummary = state.chat_summary || {};
+      const inboxCount = chatSummary.inbox_count ?? state.inbox_count ?? state.inbox?.count;
+      const outboxCount = chatSummary.outbox_count ?? state.outbox_count ?? state.outbox?.count;
+      if (inboxCount === undefined && outboxCount === undefined) return base;
+      return `${base}\nPrompt inbox: ${inboxCount ?? 0} queued · Codex outbox: ${outboxCount ?? 0}. Prompt and reply text are not exposed by this endpoint.`;
+    }
+
+    function activeValue(state) {
+      for (const key of ["session_active", "active", "codex_active", "work_session_active"]) {
+        if (typeof state[key] === "boolean") return state[key];
+      }
+      return null;
+    }
+
+    function stateMessages(state) {
+      if (Array.isArray(state.chat)) return state.chat;
+      if (Array.isArray(state.messages)) return state.messages;
+      if (Array.isArray(state.conversation)) return state.conversation;
+      return [];
+    }
+
+    function stateUpdates(state) {
+      if (Array.isArray(state.recent_progress)) return state.recent_progress;
+      if (Array.isArray(state.lablog)) return state.lablog;
+      if (Array.isArray(state.events)) return state.events;
+      return [];
+    }
+
+    function renderMessages(messages) {
+      const root = byId("chat");
+      root.replaceChildren();
+      for (const message of messages.slice(0, 20)) {
+        const role = String(message.who || message.role || message.kind || "update");
+        const text = message.text ?? message.content ?? message.prompt ?? "";
+        const node = make("article", `chat-message${/user|me|prompt/i.test(role) ? " user" : ""}`);
+        node.append(
+          make("div", "chat-meta", `${message.ts || message.date || ""}${message.ts || message.date ? " · " : ""}${role}`),
+          make("div", "chat-text", typeof text === "string" ? text : JSON.stringify(text))
+        );
+        root.append(node);
+      }
+    }
+
+    function renderCodexState(state) {
+      const active = activeValue(state);
+      const bridge = byId("bridge-state");
+      const badge = byId("session-badge");
+      bridge.className = `live-state${active === true ? " active" : ""}`;
+      bridge.textContent = active === true ? "Codex session active" : active === false ? "Codex session inactive" : "Bridge connected";
+      badge.className = `badge${active === true ? " good" : active === false ? " warning" : ""}`;
+      badge.textContent = active === true ? "Active" : active === false ? "Inactive" : "Connected";
+      byId("state-summary").textContent = stateText(state);
+      const updated = state.updated || state.ts || state.last_updated || new Date().toLocaleTimeString();
+      const chatSummary = state.chat_summary || {};
+      const inboxUpdated = chatSummary.inbox_updated || chatSummary.inbox_last_ts || chatSummary.last_inbox_at;
+      const outboxUpdated = chatSummary.outbox_updated || chatSummary.outbox_last_ts || chatSummary.last_outbox_at;
+      const queueTimes = [inboxUpdated ? `inbox ${inboxUpdated}` : "", outboxUpdated ? `outbox ${outboxUpdated}` : ""].filter(Boolean).join(" · ");
+      byId("state-meta").textContent = `Last bridge response: ${updated}${queueTimes ? ` · ${queueTimes}` : ""}`;
+      const updates = stateUpdates(state);
+      renderProgress(byId("live-progress"), updates.slice(0, 8));
+      renderMessages(stateMessages(state));
+    }
+
+    async function refreshCodexState() {
+      const route = dashboardState?.codex?.state_route || "/api/codex-state";
+      try {
+        const response = await fetch(route, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        renderCodexState(await response.json());
+      } catch (error) {
+        const bridge = byId("bridge-state");
+        bridge.className = "live-state stale";
+        bridge.textContent = "Bridge reconnecting";
+        byId("session-badge").className = "badge warning";
+        byId("session-badge").textContent = "Unavailable";
+        byId("state-summary").textContent = "Live Codex state is unavailable. The checked-in findings above remain readable.";
+        byId("state-meta").textContent = String(error.message || error);
+      }
+    }
+
+    async function sendPrompt(event) {
+      event.preventDefault();
+      const field = byId("prompt-text");
+      const submit = byId("prompt-submit");
+      const status = byId("prompt-status");
+      const text = field.value.trim();
+      const token = byId("prompt-token").value;
+      if (!text) return;
+      if (!token) {
+        status.textContent = "Enter the Codex access code before sending.";
+        byId("prompt-token").focus();
+        return;
+      }
+      submit.disabled = true;
+      status.textContent = "Sending…";
+      try {
+        const route = dashboardState?.codex?.prompt_route || "/codex/prompt";
+        const response = await fetch(route, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Codex-Prompt-Token": token
+          },
+          body: JSON.stringify({ text })
+        });
+        let result = {};
+        try { result = await response.json(); } catch (_) { result = {}; }
+        if (response.status === 401) throw new Error("ACCESS_CODE_REJECTED");
+        if (!response.ok) throw new Error(result.err || result.error || `HTTP ${response.status}`);
+        field.value = "";
+        status.textContent = "Prompt queued for the active-work-session inbox.";
+        window.setTimeout(refreshCodexState, 350);
+      } catch (error) {
+        status.textContent = error.message === "ACCESS_CODE_REJECTED"
+          ? "Access code rejected (401). Check the Codex access code; the prompt was not queued."
+          : `Prompt was not queued: ${String(error.message || error)}`;
+      } finally {
+        submit.disabled = false;
+      }
+    }
+
+    async function loadTrustedDocument(route, containerId) {
+      const container = byId(containerId);
+      try {
+        const response = await fetch(route, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        container.innerHTML = await response.text();
+      } catch (error) {
+        container.replaceChildren(make("p", "document-loading", `Document unavailable: ${String(error.message || error)}`));
+      }
+    }
+
+    async function initialize() {
+      try {
+        byId("prompt-token").value = window.localStorage.getItem(promptTokenStorageKey) || "";
+      } catch (_) {
+        byId("prompt-status").textContent = "Browser storage is unavailable; the access code will last only for this page.";
+      }
+      try {
+        const data = await loadJsonWithFallback(["./status.json", "/codex/status.json", "/dashboard/status.json"]);
+        renderDashboard(data);
+      } catch (error) {
+        byId("claim-summary").textContent = `Dashboard status could not be loaded: ${String(error.message || error)}`;
+      }
+      await refreshCodexState();
+      const interval = dashboardState?.codex?.poll_interval_milliseconds || 6000;
+      window.clearInterval(codexTimer);
+      codexTimer = window.setInterval(refreshCodexState, interval);
+      loadTrustedDocument("/codex/report", "report-content");
+      loadTrustedDocument("/codex/validation", "validation-content");
+    }
+
+    byId("prompt-form").addEventListener("submit", sendPrompt);
+    byId("prompt-token").addEventListener("input", (event) => {
+      try {
+        if (event.target.value) window.localStorage.setItem(promptTokenStorageKey, event.target.value);
+        else window.localStorage.removeItem(promptTokenStorageKey);
+      } catch (_) {
+        byId("prompt-status").textContent = "Browser storage is unavailable; the access code was not persisted.";
+      }
+    });
+    byId("prompt-text").addEventListener("keydown", (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+        event.preventDefault();
+        byId("prompt-form").requestSubmit();
+      }
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) refreshCodexState();
+    });
+    initialize();
+  </script>
+</body>
+</html>

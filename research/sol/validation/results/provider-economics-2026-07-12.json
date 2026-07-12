@@ -1,0 +1,360 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-07-12",
+  "currency": "USD",
+  "price_unit": "per_million_tokens",
+  "sources": [
+    {
+      "id": "fireworks_serverless_pricing",
+      "url": "https://docs.fireworks.ai/serverless/pricing",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "fireworks_pricing",
+      "url": "https://fireworks.ai/pricing",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "fireworks_inference",
+      "url": "https://fireworks.ai/inference",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "fireworks_serverless_overview",
+      "url": "https://docs.fireworks.ai/serverless/overview",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "fireworks_model_overview",
+      "url": "https://docs.fireworks.ai/models/overview",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "fireworks_glm_5_2",
+      "url": "https://fireworks.ai/models/fireworks/glm-5p2",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "fireworks_qwen3_8b",
+      "url": "https://fireworks.ai/models/fireworks/qwen3-8b",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "baseten_pricing",
+      "url": "https://www.baseten.co/pricing/",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "baseten_model_apis",
+      "url": "https://www.baseten.co/products/model-apis/",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "baseten_cache_pricing",
+      "url": "https://www.baseten.co/resources/changelog/cache-token-pricing-for-model-apis/",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "baseten_autoscaling",
+      "url": "https://docs.baseten.co/deployment/autoscaling/overview",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "baseten_cold_starts",
+      "url": "https://docs.baseten.co/deployment/autoscaling/cold-starts",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "baseten_deployment_concepts",
+      "url": "https://docs.baseten.co/deployment/concepts",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "baseten_environments",
+      "url": "https://docs.baseten.co/deployment/environments",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "zai_glm_5_2",
+      "url": "https://z.ai/blog/glm-5.2",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "zai_pricing",
+      "url": "https://docs.z.ai/guides/overview/pricing",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "zai_glm_5_2_fp8",
+      "url": "https://huggingface.co/zai-org/GLM-5.2-FP8/tree/ba978f7d347eaf65d22f1a86833408afdb953541",
+      "revision": "ba978f7d347eaf65d22f1a86833408afdb953541",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "nvidia_glm_5_2_nvfp4",
+      "url": "https://huggingface.co/nvidia/GLM-5.2-NVFP4/tree/aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa",
+      "revision": "aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa",
+      "repository_storage_bytes": 464865454030,
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "nvidia_h200",
+      "url": "https://www.nvidia.com/en-us/data-center/h200/",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "nvidia_h100",
+      "url": "https://www.nvidia.com/en-in/data-center/h100/",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "eia_electricity",
+      "url": "https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=table_5_03",
+      "accessed_at": "2026-07-12"
+    }
+  ],
+  "public_model_api_prices": [
+    {
+      "provider": "Fireworks",
+      "model": "GLM 5.2",
+      "serving_path": "standard",
+      "input": 1.4,
+      "cached_input": 0.14,
+      "output": 4.4,
+      "source_id": "fireworks_serverless_pricing"
+    },
+    {
+      "provider": "Fireworks",
+      "model": "GLM 5.2",
+      "serving_path": "priority",
+      "input": 1.75,
+      "cached_input": 0.18,
+      "output": 5.5,
+      "source_id": "fireworks_serverless_pricing"
+    },
+    {
+      "provider": "Fireworks",
+      "model": "GLM 5.2 Fast",
+      "serving_path": "fast",
+      "input": 2.1,
+      "cached_input": 0.21,
+      "output": 6.6,
+      "source_id": "fireworks_serverless_pricing"
+    },
+    {
+      "provider": "Baseten",
+      "model": "GLM 5.2",
+      "serving_path": "model_api",
+      "input": 1.4,
+      "cached_input": 0.26,
+      "output": 4.4,
+      "source_id": "baseten_pricing"
+    },
+    {
+      "provider": "Z.AI",
+      "model": "GLM 5.2",
+      "serving_path": "pay_as_you_go_api",
+      "input": 1.4,
+      "cached_input": 0.26,
+      "cached_input_storage": "limited_time_free",
+      "output": 4.4,
+      "source_id": "zai_pricing"
+    }
+  ],
+  "public_dedicated_prices": [
+    {
+      "provider": "Fireworks",
+      "accelerator": "H100 80 GB",
+      "billing_granularity": "gpu_second",
+      "usd_per_hour": 7.0,
+      "source_id": "fireworks_pricing"
+    },
+    {
+      "provider": "Fireworks",
+      "accelerator": "H200 141 GB",
+      "billing_granularity": "gpu_second",
+      "usd_per_hour": 7.0,
+      "source_id": "fireworks_pricing"
+    },
+    {
+      "provider": "Fireworks",
+      "accelerator": "B200 180 GB",
+      "billing_granularity": "gpu_second",
+      "usd_per_hour": 10.0,
+      "source_id": "fireworks_pricing"
+    },
+    {
+      "provider": "Fireworks",
+      "accelerator": "B300 288 GB",
+      "billing_granularity": "gpu_second",
+      "usd_per_hour": 12.0,
+      "source_id": "fireworks_pricing"
+    },
+    {
+      "provider": "Baseten",
+      "accelerator": "L4 24 GB",
+      "billing_granularity": "minute",
+      "usd_per_minute": 0.01414,
+      "derived_usd_per_hour": 0.8484,
+      "source_id": "baseten_pricing"
+    },
+    {
+      "provider": "Baseten",
+      "accelerator": "A100 80 GB",
+      "billing_granularity": "minute",
+      "usd_per_minute": 0.06667,
+      "derived_usd_per_hour": 4.0002,
+      "source_id": "baseten_pricing"
+    },
+    {
+      "provider": "Baseten",
+      "accelerator": "H100 MIG 40 GB",
+      "billing_granularity": "minute",
+      "usd_per_minute": 0.0625,
+      "derived_usd_per_hour": 3.75,
+      "source_id": "baseten_pricing"
+    },
+    {
+      "provider": "Baseten",
+      "accelerator": "H100 80 GB",
+      "billing_granularity": "minute",
+      "usd_per_minute": 0.10833,
+      "derived_usd_per_hour": 6.4998,
+      "source_id": "baseten_pricing"
+    },
+    {
+      "provider": "Baseten",
+      "accelerator": "B200 180 GB",
+      "billing_granularity": "minute",
+      "usd_per_minute": 0.16633,
+      "derived_usd_per_hour": 9.9798,
+      "source_id": "baseten_pricing"
+    }
+  ],
+  "canonical_agentic_mix": {
+    "evidence_kind": "modeled_assumption",
+    "source": "configs/qwen3-8b-agentic-h100.json",
+    "average_input_tokens_per_request": 16486.4,
+    "average_cached_input_tokens_per_request": 14385.152,
+    "average_uncached_input_tokens_per_request": 2101.248,
+    "average_output_tokens_per_request": 1139.2,
+    "average_total_tokens_per_request": 17625.6,
+    "input_to_output_ratio": 14.471910112359554,
+    "input_cache_hit_ratio": 0.8725465838509318
+  },
+  "derived_public_cost_for_canonical_mix": {
+    "evidence_kind": "derived_from_public_price_and_modeled_mix",
+    "fireworks_standard_usd_per_request": 0.00996814848,
+    "fireworks_standard_usd_per_million_total_tokens": 0.5655494553376905,
+    "baseten_model_api_usd_per_request": 0.01169436672,
+    "baseten_model_api_usd_per_million_total_tokens": 0.6634875816993463,
+    "fireworks_no_cache_usd_per_million_total_tokens": 1.593899782135076
+  },
+  "break_even_case": {
+    "evidence_kind": "modeled_assumption",
+    "benchmark": "Fireworks GLM 5.2 standard",
+    "list_price_discount": 0.2,
+    "target_gross_margin": 0.6,
+    "useful_load_factor": 0.65,
+    "availability": 0.98,
+    "maximum_cogs_per_million_uncached_input_tokens": 0.448,
+    "maximum_cogs_per_million_cached_input_tokens": 0.0448,
+    "maximum_cogs_per_million_output_tokens": 1.408,
+    "maximum_cogs_per_million_total_tokens_at_canonical_mix": 0.18097582570806098,
+    "required_billable_tokens_per_second_per_usd_of_hourly_system_cost": 2409.5586409796933,
+    "required_uncached_input_tokens_per_second_per_usd_of_hourly_system_cost": 973.3746978644939,
+    "required_cached_input_tokens_per_second_per_usd_of_hourly_system_cost": 9733.746978644938,
+    "required_output_tokens_per_second_per_usd_of_hourly_system_cost": 309.71013113870254,
+    "reference_topologies": [
+      {
+        "name": "eight_fireworks_h200",
+        "hourly_system_cost_usd": 56.0,
+        "required_billable_tokens_per_second": 134935.28389486283
+      },
+      {
+        "name": "eight_fireworks_b200",
+        "hourly_system_cost_usd": 80.0,
+        "required_billable_tokens_per_second": 192764.69127837545
+      },
+      {
+        "name": "eight_baseten_b200",
+        "hourly_system_cost_usd": 79.8384,
+        "required_billable_tokens_per_second": 192375.30660199316
+      }
+    ],
+    "eight_h200_load_and_availability_sensitivity": [
+      {
+        "useful_load_factor": 0.4,
+        "availability": 0.95,
+        "required_billable_tokens_per_second": 226194.14695007267
+      },
+      {
+        "useful_load_factor": 0.5,
+        "availability": 0.98,
+        "required_billable_tokens_per_second": 175415.86906332168
+      },
+      {
+        "useful_load_factor": 0.65,
+        "availability": 0.98,
+        "required_billable_tokens_per_second": 134935.28389486283
+      },
+      {
+        "useful_load_factor": 0.8,
+        "availability": 0.995,
+        "required_billable_tokens_per_second": 107982.1304535523
+      }
+    ]
+  },
+  "custom_lane_scenario": {
+    "evidence_kind": "modeled_assumption",
+    "installed_capex_usd_per_accelerator_lane": 60000.0,
+    "economic_life_years": 3,
+    "annual_cost_of_capital": 0.1,
+    "capital_recovery_factor": 0.4021148036253773,
+    "annualized_capex_usd_per_hour": 2.754210983735461,
+    "spare_and_failure_reserve_fraction_of_capex": 0.1,
+    "spare_and_failure_reserve_usd_per_hour": 0.2754210983735461,
+    "average_it_power_kw": 0.6,
+    "pue": 1.2,
+    "electricity_usd_per_kwh": 0.12,
+    "power_usd_per_hour": 0.0864,
+    "facility_and_colocation_usd_per_hour": 0.2,
+    "network_fabric_and_transit_usd_per_hour": 0.15,
+    "operations_and_support_usd_per_hour": 0.15,
+    "fully_loaded_usd_per_hour_before_nre": 3.616032082109007,
+    "eight_lane_usd_per_hour_before_nre": 28.928256656872055,
+    "sixteen_lane_usd_per_hour_before_nre": 57.85651331374411,
+    "eight_lane_required_billable_tokens_per_second": 69704.33079604439,
+    "sixteen_lane_required_billable_tokens_per_second": 139408.66159208879
+  },
+  "nre_amortization_case": {
+    "evidence_kind": "modeled_assumption",
+    "maximum_total_cogs_per_million_tokens": 0.18097582570806098,
+    "infrastructure_cogs_per_million_tokens": 0.1,
+    "remaining_nre_budget_per_million_tokens": 0.08097582570806097,
+    "economic_life_years": 3,
+    "scenarios": [
+      {
+        "nre_usd": 25000000.0,
+        "required_lifetime_tokens": 308734116403228.0,
+        "required_average_tokens_per_second": 3263298.2031459073,
+        "required_average_requests_per_second": 185.14536827942922,
+        "annual_revenue_usd_at_discounted_price": 46561176.36693566
+      },
+      {
+        "nre_usd": 100000000.0,
+        "required_lifetime_tokens": 1234936465612912.0,
+        "required_average_tokens_per_second": 13053192.812583629,
+        "required_average_requests_per_second": 740.5814731177169,
+        "annual_revenue_usd_at_discounted_price": 186244705.46774265
+      },
+      {
+        "nre_usd": 300000000.0,
+        "required_lifetime_tokens": 3704809396838736.0,
+        "required_average_tokens_per_second": 39159578.43775089,
+        "required_average_requests_per_second": 2221.744419353151,
+        "annual_revenue_usd_at_discounted_price": 558734116.4032279
+      }
+    ]
+  }
+}

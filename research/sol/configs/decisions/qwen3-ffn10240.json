@@ -1,0 +1,11 @@
+{
+  "axis": "model",
+  "name": "10,240-wide feed-forward block",
+  "model_specific_reason": "The Qwen3-8B feed-forward matrices are a large part of dense parameter traffic, so their width can change both array utilization and weight bandwidth.",
+  "mechanism": "Reducing the intermediate width from 12,288 to 10,240 removes dense parameters and arithmetic, with hardware arrays and fleet capacity re-selected afterward.",
+  "confidence": 0.1,
+  "evidence_artifacts": [
+    "configs/variants/qwen3-8b-ffn10240.json",
+    "configs/hardware-sizing-agentic-v0.json"
+  ]
+}

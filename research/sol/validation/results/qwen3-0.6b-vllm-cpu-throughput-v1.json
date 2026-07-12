@@ -1,0 +1,77 @@
+{
+  "schema_version": "inference-foundry.measured-throughput-summary.v1",
+  "status": "measured_hardware",
+  "scope": {
+    "supported_claim": "Offline vLLM CPU throughput for one fixed Qwen3-0.6B batch geometry on an Apple M4 Pro.",
+    "unsupported_claims": [
+      "request-level TTFT or TPOT",
+      "online serving tails or SLO compliance",
+      "Qwen3-8B performance",
+      "H100 or custom-hardware performance",
+      "provider cost or price advantage"
+    ]
+  },
+  "model": {
+    "id": "Qwen/Qwen3-0.6B",
+    "upstream_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "weight_file_bytes": 1503300328,
+    "weight_sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
+    "dtype": "bfloat16",
+    "max_model_length": 512
+  },
+  "software": {
+    "engine": "vLLM",
+    "version": "0.1.dev1+gbec0a4ede.d20260711",
+    "revision": "bec0a4ede621bc9f1ec7be39b79ed2e286da4ca1",
+    "torch": "2.11.0",
+    "transformers": "5.13.0",
+    "backend": "vllm-cpu-v1"
+  },
+  "hardware": {
+    "system": "MacBook Pro Mac16,7",
+    "chip": "Apple M4 Pro",
+    "cpu_cores": 14,
+    "memory_gib": 48,
+    "kv_cache_gib": 1
+  },
+  "workload": {
+    "dataset": "vllm-random",
+    "seed": 0,
+    "requests": 8,
+    "input_tokens_per_request": 128,
+    "output_tokens_per_request": 32,
+    "total_input_tokens": 1024,
+    "total_output_tokens": 256,
+    "offline_batch": true,
+    "prefix_cache_hit_ratio": 0.0
+  },
+  "measurement": {
+    "elapsed_seconds": 20.771399667020887,
+    "requests_per_second": 0.3851449651080442,
+    "input_tokens_per_second": 49.298555533829656,
+    "output_tokens_per_second": 12.324638883457414,
+    "total_tokens_per_second": 61.62319441728707,
+    "raw_artifact": "artifacts/qwen3-0.6b/vllm-cpu-throughput-8x128x32.json",
+    "raw_artifact_sha256": "23311fbfde330a47519ef2539d21addb59dd519b67450231f5d9d2379976d195"
+  },
+  "command": [
+    "vllm",
+    "bench",
+    "throughput",
+    "--backend",
+    "vllm",
+    "--dataset-name",
+    "random",
+    "--num-prompts",
+    "8",
+    "--random-input-len",
+    "128",
+    "--random-output-len",
+    "32",
+    "--dtype",
+    "bfloat16",
+    "--max-model-len",
+    "512"
+  ],
+  "conclusion": "The local vLLM CPU path can load and execute the exact Qwen3-0.6B checkpoint and emit reproducible aggregate throughput. This run does not satisfy the request-level serving benchmark contract and cannot calibrate the Qwen3-8B H100 or custom-silicon simulation."
+}

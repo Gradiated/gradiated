@@ -1,0 +1,186 @@
+{
+  "claims": {
+    "blockers": [
+      "held_out_target_count_is_512",
+      "teacher_forced_proxy_only",
+      "alias_kernel_not_implemented",
+      "cache_traffic_share_unmeasured",
+      "serving_and_cost_unmeasured"
+    ],
+    "business_viability_claim_permitted": false,
+    "quality_proxy_frontier_claim_permitted": true,
+    "runtime_cost_reduction_claim_permitted": false
+  },
+  "content_identity_sha256": "49c67c0ea89d5a820c06333d83f253f59f7ae64a3c7ad829ca0762608c531d59",
+  "frontier": [
+    {
+      "kv_cache_reduction_percent": 0.44642857142857145,
+      "logit_cosine_similarity": 0.99866442023364,
+      "logit_rmse": 0.1718698879024231,
+      "nll_delta": 0.012741826474666595,
+      "perplexity_ratio": 1.012823349428097,
+      "quality_gate_passed": true,
+      "source_content_id": "4f40a240dfcc956173aada26623bcd037f76242aab451aa66e2a24f1549802c6",
+      "source_path": "artifacts/qwen3-0.6b/kv-head-pair-mean-layer1-wikitext2-test-v1.json",
+      "source_sha256": "c6f9f816f49bfaf9e6639b6fabf8955c2e9f16da293bd9afebab8067e268ca3f",
+      "top1_agreement": 0.931640625,
+      "transformed_layer_count": 1,
+      "transformed_pair_count": 1,
+      "weight_storage_reduction_percent": 0.0439802089059923
+    },
+    {
+      "kv_cache_reduction_percent": 0.8928571428571429,
+      "logit_cosine_similarity": 0.9973525150949671,
+      "logit_rmse": 0.24363462609039238,
+      "nll_delta": 0.005619008094072342,
+      "perplexity_ratio": 1.005634824330029,
+      "quality_gate_passed": true,
+      "source_content_id": "b10eb9f29b73701fa38583dcf8a535382b0e519e21a5f56922701ca90489a37e",
+      "source_path": "artifacts/qwen3-0.6b/kv-head-pair-mean-layer2-wikitext2-test-v1.json",
+      "source_sha256": "cdc798348fdb2692f7293ddcd7969e4bcb51dafef4bd1893b8dfa075df2889c0",
+      "top1_agreement": 0.91796875,
+      "transformed_layer_count": 2,
+      "transformed_pair_count": 2,
+      "weight_storage_reduction_percent": 0.0879604178119846
+    },
+    {
+      "kv_cache_reduction_percent": 1.7857142857142858,
+      "logit_cosine_similarity": 0.9918142581197109,
+      "logit_rmse": 0.423709354970526,
+      "nll_delta": 0.018939677625894547,
+      "perplexity_ratio": 1.0191201710149749,
+      "quality_gate_passed": true,
+      "source_content_id": "273ea41558d780556df8a79421242c29fa0e6c42ef465ecb471f2886d7f34c48",
+      "source_path": "artifacts/qwen3-0.6b/kv-head-pair-mean-layer4-wikitext2-test-v1.json",
+      "source_sha256": "56562bf03ca7060bd0bb188d7cfdc0c32defcca813dc4b0e2b979a90b7841c8c",
+      "top1_agreement": 0.8984375,
+      "transformed_layer_count": 4,
+      "transformed_pair_count": 4,
+      "weight_storage_reduction_percent": 0.1759208356239692
+    },
+    {
+      "kv_cache_reduction_percent": 2.232142857142857,
+      "logit_cosine_similarity": 0.9765966679066737,
+      "logit_rmse": 0.714257252875972,
+      "nll_delta": 0.09701753780245781,
+      "perplexity_ratio": 1.1018796980000325,
+      "quality_gate_passed": false,
+      "source_content_id": "cce34df2e4cdb3cb4a304a2b7b4a559a64ee4f4efe8d8286ba69a937fc7e432e",
+      "source_path": "artifacts/qwen3-0.6b/kv-head-pair-mean-layer5-wikitext2-test-v1.json",
+      "source_sha256": "29f1371c21672f55bdb810d671937104dea74d7899a8c47031266700a41df846",
+      "top1_agreement": 0.80859375,
+      "transformed_layer_count": 5,
+      "transformed_pair_count": 5,
+      "weight_storage_reduction_percent": 0.2199010445299615
+    },
+    {
+      "kv_cache_reduction_percent": 2.6785714285714284,
+      "logit_cosine_similarity": 0.9752205814151024,
+      "logit_rmse": 0.7339051596739012,
+      "nll_delta": 0.10558241978287697,
+      "perplexity_ratio": 1.111357698608436,
+      "quality_gate_passed": false,
+      "source_content_id": "c2b02c50a7e00a41ac79f4ba1e276450aecd2109e43272d134f9d6d1371f0d17",
+      "source_path": "artifacts/qwen3-0.6b/kv-head-pair-mean-layer6-wikitext2-test-v1.json",
+      "source_sha256": "2effd4370e1e898a8a1be251e432859dbfd1213b33e89dd0d61a9036ac519f36",
+      "top1_agreement": 0.80859375,
+      "transformed_layer_count": 6,
+      "transformed_pair_count": 6,
+      "weight_storage_reduction_percent": 0.2638812534359538
+    },
+    {
+      "kv_cache_reduction_percent": 3.125,
+      "logit_cosine_similarity": 0.9737920060435794,
+      "logit_rmse": 0.7545982538620679,
+      "nll_delta": 0.12473897263407707,
+      "perplexity_ratio": 1.132852708911261,
+      "quality_gate_passed": false,
+      "source_content_id": "b246ccb6040a135ede85aced9cee6abd67c195dd4c7a27c5bda00907386f3a49",
+      "source_path": "artifacts/qwen3-0.6b/kv-head-pair-mean-layer7-wikitext2-test-v1.json",
+      "source_sha256": "b502ca53add1ef73c80a72d2223f1d5b62f6821877314c158d37aa97a7d3a782",
+      "top1_agreement": 0.806640625,
+      "transformed_layer_count": 7,
+      "transformed_pair_count": 7,
+      "weight_storage_reduction_percent": 0.3078614623419461
+    },
+    {
+      "kv_cache_reduction_percent": 6.25,
+      "logit_cosine_similarity": 0.8684203280662542,
+      "logit_rmse": 1.6463856316207393,
+      "nll_delta": 0.658780250698328,
+      "perplexity_ratio": 1.9324338114990116,
+      "quality_gate_passed": false,
+      "source_content_id": "435222846e86bc692fbf403239b19567adb231f06b54efae1988fc3fa529c0a9",
+      "source_path": "artifacts/qwen3-0.6b/kv-head-pair-mean-layer14-wikitext2-test-v1.json",
+      "source_sha256": "792881c3a9951adf0a81384bde694488a0f06c265d7b7cc756a2a33aaf96e8f7",
+      "top1_agreement": 0.625,
+      "transformed_layer_count": 14,
+      "transformed_pair_count": 14,
+      "weight_storage_reduction_percent": 0.6157229246838922
+    },
+    {
+      "kv_cache_reduction_percent": 12.5,
+      "logit_cosine_similarity": 0.7556524929335985,
+      "logit_rmse": 2.178183962536208,
+      "nll_delta": 1.117560151964426,
+      "perplexity_ratio": 3.057385539692875,
+      "quality_gate_passed": false,
+      "source_content_id": "6b4904a42bb7e33d67d0aac0a9224f472a78391e493f8b60f499a4fe4b012cd3",
+      "source_path": "artifacts/qwen3-0.6b/kv-head-pair-mean-layer28-pair1-wikitext2-test-v1.json",
+      "source_sha256": "dd46048077e083db393c1e7367543ae56fe5e33ec2d619848f67f0c841e4ff59",
+      "top1_agreement": 0.501953125,
+      "transformed_layer_count": 28,
+      "transformed_pair_count": 28,
+      "weight_storage_reduction_percent": 1.2314458493677845
+    },
+    {
+      "kv_cache_reduction_percent": 50.0,
+      "logit_cosine_similarity": 0.3528169080122935,
+      "logit_rmse": 4.582098142609707,
+      "nll_delta": 8.14767674729228,
+      "perplexity_ratio": 3455.342100253292,
+      "quality_gate_passed": false,
+      "source_content_id": "a264069ac08fad3fc76e421ab08bf22ef0486eb4256bf4d4d491cedd1ef898d4",
+      "source_path": "artifacts/qwen3-0.6b/kv-head-pair-mean-wikitext2-test-v1.json",
+      "source_sha256": "9d676dfebc8195186201702646b88ea54f4e9207a44f175a752a7f82a9051489",
+      "top1_agreement": 0.0078125,
+      "transformed_layer_count": 28,
+      "transformed_pair_count": 112,
+      "weight_storage_reduction_percent": 4.925783397471138
+    }
+  ],
+  "identity": {
+    "corpus_sha256": "bad296b44904bebae31ba4ace054aba59ac2885299a8b66db776afbcf004ba8e",
+    "model_weight_files": [
+      {
+        "bytes": 1503300328,
+        "name": "model.safetensors",
+        "sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b"
+      }
+    ],
+    "target_tokens": 512,
+    "transform_scheme": "minimum_joint_kv_weight_distance_pair_mean"
+  },
+  "schema_version": "inference-foundry.kv-dedup-quality-frontier.v1",
+  "scope": {
+    "supported_claim": "A deterministic 512-target teacher-forced quality frontier for one-shot, tensor-selected Qwen3-0.6B KV-head pair averaging.",
+    "unsupported_claims": [
+      "task accuracy or end-to-end agent success",
+      "quality after uptraining or architecture-aware pretraining",
+      "runtime KV-cache, checkpoint, latency, energy, or cost reduction",
+      "custom attention alias-kernel correctness or speed",
+      "transfer to GLM-5.2 or another model"
+    ]
+  },
+  "summary": {
+    "candidate_count": 9,
+    "first_failing_cache_reduction_percent": 2.232142857142857,
+    "first_failing_source_content_id": "cce34df2e4cdb3cb4a304a2b7b4a559a64ee4f4efe8d8286ba69a937fc7e432e",
+    "ideal_cache_only_decode_speedup_upper_bound": 1.0181818181818183,
+    "maximum_passing_cache_reduction_percent": 1.7857142857142858,
+    "maximum_passing_source_content_id": "273ea41558d780556df8a79421242c29fa0e6c42ef465ecb471f2886d7f34c48",
+    "maximum_passing_weight_storage_reduction_percent": 0.1759208356239692,
+    "passing_candidate_count": 3,
+    "speedup_bound_assumption": "All decode time is proportional to KV-cache bytes and the custom alias kernel has zero overhead."
+  }
+}

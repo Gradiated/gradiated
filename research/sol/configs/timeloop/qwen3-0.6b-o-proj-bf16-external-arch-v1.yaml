@@ -1,0 +1,83 @@
+architecture:
+  version: 0.4
+  nodes:
+    - !Container
+      name: system
+    - !Component
+      name: DRAM
+      class: DRAM
+      attributes:
+        type: '"LPDDR4"'
+        width: 64
+        datawidth: 16
+    - !Container
+      name: simple_output_stationary
+      attributes:
+        technology: '"45nm"'
+    - !Component
+      name: shared_glb
+      class: smartbuffer_SRAM
+      attributes:
+        depth: 16384
+        width: 64
+        n_banks: 32
+        datawidth: 16
+        read_bandwidth: 16
+        write_bandwidth: 16
+    - !Container
+      name: PE
+      spatial:
+        meshX: 16
+        meshY: 16
+    - !Component
+      name: pe_spad
+      class: smartbuffer_SRAM
+      attributes:
+        depth: 192
+        width: 16
+        datawidth: 16
+      constraints:
+        dataspace:
+          bypass: [Inputs, Weights]
+          keep: [Outputs]
+    - !Parallel
+      nodes:
+        - !Component
+          name: weight_reg
+          class: storage
+          subclass: aladdin_register
+          attributes:
+            depth: 1
+            width: 16
+            datawidth: 16
+          constraints:
+            dataspace:
+              keep: [Weights]
+        - !Component
+          name: input_activation_reg
+          class: storage
+          subclass: aladdin_register
+          attributes:
+            depth: 1
+            width: 16
+            datawidth: 16
+          constraints:
+            dataspace:
+              keep: [Inputs]
+        - !Component
+          name: output_activation_reg
+          class: storage
+          subclass: aladdin_register
+          attributes:
+            depth: 1
+            width: 16
+            datawidth: 16
+          constraints:
+            dataspace:
+              keep: [Outputs]
+    - !Component
+      name: mac
+      class: intmac
+      attributes:
+        multiplier_width: 16
+        adder_width: 32

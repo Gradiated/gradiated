@@ -1,0 +1,1482 @@
+{
+  "schema_version": "inference-foundry.competitive-simulation-landscape.v1",
+  "as_of_date": "2026-07-12",
+  "scope": {
+    "question": "Is a model-specific, hardware-through-serving co-design simulator and autoresearch loop a defensible business wedge for lower input- and output-token inference cost?",
+    "supported_claim": "Primary-source snapshot of publicly documented competitive capabilities, validation methods, and proposed falsification gates as of the stated date.",
+    "unsupported_claims": [
+      "exhaustive market coverage",
+      "competitor performance reproduced by Inference Foundry",
+      "provider-grade cost or reliability",
+      "measured input- or output-token cost advantage",
+      "5x or 10x end-to-end performance",
+      "commercial moat",
+      "custom silicon readiness or tapeout economics"
+    ]
+  },
+  "evidence_policy": {
+    "primary_sources_only": true,
+    "vendor_statement_treatment": "A vendor page or blog establishes that the vendor publicly makes the statement, not that the claimed performance is independently true.",
+    "paper_result_treatment": "A primary paper establishes an author-reported method and result until an independent implementation reproduces it.",
+    "public_repository_treatment": "An inspectable repository establishes public artifact availability and documented scope, not accuracy on our models or workloads.",
+    "absence_treatment": "A capability not demonstrated in the reviewed public sources is not treated as proof that a competitor lacks it internally.",
+    "analysis_inference_treatment": "Competitive implications, commoditization labels, the surviving wedge and decision thresholds are analyst inferences or proposed tests, not direct source claims.",
+    "independently_reproduced_fact_count": 0,
+    "market_snapshot_not_exhaustive": true
+  },
+  "sources": [
+    {
+      "source_id": "nvidia_dynosim_docs",
+      "title": "DynoSim",
+      "publisher": "NVIDIA Dynamo Documentation",
+      "url": "https://docs.nvidia.com/dynamo/latest/user-guides/dynosim/",
+      "source_kind": "official_documentation",
+      "primary_source": true,
+      "claimant_relation": "same_organization_documentation",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "dynamo_repository_head": "0ee5aa6f9a156609863eef62f5decb241f64287c"
+      }
+    },
+    {
+      "source_id": "nvidia_dynosim_blog",
+      "title": "DynoSim: Simulating the Pareto Frontier",
+      "publisher": "NVIDIA Technical Blog",
+      "url": "https://developer.nvidia.com/blog/dynosim-simulating-the-pareto-frontier/",
+      "source_kind": "vendor_technical_blog",
+      "primary_source": true,
+      "claimant_relation": "same_organization_vendor",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "published_date": "2026-05-29"
+      }
+    },
+    {
+      "source_id": "nvidia_aiconfigurator_paper",
+      "title": "AIConfigurator: Lightning-Fast Configuration Optimization for Multi-Framework LLM Serving",
+      "publisher": "AIConfigurator authors",
+      "url": "https://arxiv.org/abs/2601.06288",
+      "source_kind": "primary_paper",
+      "primary_source": true,
+      "claimant_relation": "project_authors",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "arxiv_id": "2601.06288",
+        "initial_submission_date": "2026-01-09"
+      }
+    },
+    {
+      "source_id": "nvidia_model_codesign_blog",
+      "title": "AI Model Co-Design: Hardware-Friendly LLM Design",
+      "publisher": "NVIDIA Technical Blog",
+      "url": "https://developer.nvidia.com/blog/ai-model-co-design-hardware-friendly-llm-design/",
+      "source_kind": "vendor_technical_blog",
+      "primary_source": true,
+      "claimant_relation": "same_organization_vendor",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "published_date": "2026-07-10"
+      }
+    },
+    {
+      "source_id": "nvidia_latentmoe_project",
+      "title": "Think Smart About Sparse Compute: LatentMoE for Higher Accuracy per FLOP and per Parameter",
+      "publisher": "NVIDIA Nemotron Research",
+      "url": "https://research.nvidia.com/labs/nemotron/LatentMoE/",
+      "source_kind": "vendor_technical_blog",
+      "primary_source": true,
+      "claimant_relation": "same_organization_research_team",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "snapshot_date": "2026-07-12"
+      }
+    },
+    {
+      "source_id": "fireworks_fireoptimizer_blog",
+      "title": "FireOptimizer: Customizing latency and quality for your production inference workload",
+      "publisher": "Fireworks AI",
+      "url": "https://fireworks.ai/blog/fireoptimizer",
+      "source_kind": "vendor_technical_blog",
+      "primary_source": true,
+      "claimant_relation": "same_organization_vendor",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "published_date": "2024-08-30"
+      }
+    },
+    {
+      "source_id": "fireworks_3d_fireoptimizer_blog",
+      "title": "3D FireOptimizer: Automating the Multi-Dimensional Tradeoffs in LLM Serving",
+      "publisher": "Fireworks AI",
+      "url": "https://fireworks.ai/blog/3d-fireoptimizer",
+      "source_kind": "vendor_technical_blog",
+      "primary_source": true,
+      "claimant_relation": "same_organization_vendor",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "published_date": "2025-06-14"
+      }
+    },
+    {
+      "source_id": "etched_home_2026_07_12",
+      "title": "Frontier inference clusters",
+      "publisher": "Etched",
+      "url": "https://www.etched.com/",
+      "source_kind": "vendor_product_page",
+      "primary_source": true,
+      "claimant_relation": "same_organization_vendor",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "snapshot_date": "2026-07-12"
+      }
+    },
+    {
+      "source_id": "furiosa_sdk_2026_3",
+      "title": "Furiosa SDK 2026.3: A new kernel framework, and the models it unlocks",
+      "publisher": "FuriosaAI",
+      "url": "https://furiosa.ai/blog/furiosa-sdk-2026-3-a-new-kernel-framework-and-the-models-it-unlocks",
+      "source_kind": "vendor_technical_blog",
+      "primary_source": true,
+      "claimant_relation": "same_organization_vendor",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "published_date": "2026-06-30",
+        "sdk_version": "2026.3"
+      }
+    },
+    {
+      "source_id": "furiosa_sdk_2026_2",
+      "title": "Furiosa SDK 2026.2: Boosting RNGD throughput and accelerating deployments",
+      "publisher": "FuriosaAI",
+      "url": "https://furiosa.ai/blog/furiosa-sdk-2026-2",
+      "source_kind": "vendor_technical_blog",
+      "primary_source": true,
+      "claimant_relation": "same_organization_vendor",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "published_date": "2026-04-30",
+        "sdk_version": "2026.2"
+      }
+    },
+    {
+      "source_id": "furiosa_rngd_product",
+      "title": "Furiosa RNGD",
+      "publisher": "FuriosaAI",
+      "url": "https://furiosa.ai/rngd",
+      "source_kind": "vendor_product_page",
+      "primary_source": true,
+      "claimant_relation": "same_organization_vendor",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "snapshot_date": "2026-07-12"
+      }
+    },
+    {
+      "source_id": "astra_sim_repository",
+      "title": "ASTRA-sim distributed AI system simulator",
+      "publisher": "ASTRA-sim maintainers",
+      "url": "https://github.com/astra-sim/astra-sim",
+      "source_kind": "official_repository",
+      "primary_source": true,
+      "claimant_relation": "project_maintainers",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "head_commit": "518bd513ae110428cd62eb60efc0f3993fd53c70"
+      }
+    },
+    {
+      "source_id": "astra_sim_3_paper",
+      "title": "ASTRA-sim 3.0: Next-Level Distributed Machine Learning Simulations via High-Fidelity GPU and Infrastructure Modeling",
+      "publisher": "ASTRA-sim 3.0 authors",
+      "url": "https://arxiv.org/abs/2606.10440",
+      "source_kind": "primary_paper",
+      "primary_source": true,
+      "claimant_relation": "project_authors",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "arxiv_id": "2606.10440",
+        "initial_submission_date": "2026-06-09"
+      }
+    },
+    {
+      "source_id": "timeloop_accelergy_v4_overview",
+      "title": "Timeloop+Accelergy v4 Overview",
+      "publisher": "Timeloop/Accelergy",
+      "url": "https://timeloop.csail.mit.edu/v4",
+      "source_kind": "official_documentation",
+      "primary_source": true,
+      "claimant_relation": "project_documentation",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "major_version": "4",
+        "timeloop_head_commit": "5c943637fac4296c8a5f639f87858c6a0b594b41",
+        "accelergy_head_commit": "6911d15686ee7efdceba7d95605102df4472ae3a"
+      }
+    },
+    {
+      "source_id": "timeloop_accelergy_v4_outputs",
+      "title": "Timeloop+Accelergy v4 Output Formats",
+      "publisher": "Timeloop/Accelergy",
+      "url": "https://timeloop.csail.mit.edu/v4/output-formats",
+      "source_kind": "official_documentation",
+      "primary_source": true,
+      "claimant_relation": "project_documentation",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "major_version": "4"
+      }
+    },
+    {
+      "source_id": "llmservingsim_repository",
+      "title": "LLMServingSim 2.0",
+      "publisher": "LLMServingSim maintainers",
+      "url": "https://github.com/casys-kaist/LLMServingSim",
+      "source_kind": "official_repository",
+      "primary_source": true,
+      "claimant_relation": "project_maintainers",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "head_commit": "f6848b8a0077daa05a79fe657d03be9d141893b6",
+        "latest_release_observed": "v1.1.0"
+      }
+    },
+    {
+      "source_id": "llmservingsim_2_paper",
+      "title": "LLMServingSim 2.0: A Unified Simulator for Heterogeneous and Disaggregated LLM Serving Infrastructure",
+      "publisher": "LLMServingSim 2.0 authors",
+      "url": "https://arxiv.org/abs/2602.23036",
+      "source_kind": "primary_paper",
+      "primary_source": true,
+      "claimant_relation": "project_authors",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "arxiv_id": "2602.23036",
+        "initial_submission_date": "2026-02-26"
+      }
+    },
+    {
+      "source_id": "mlperf_inference_docs",
+      "title": "MLPerf Inference Benchmark Suite",
+      "publisher": "MLCommons",
+      "url": "https://docs.mlcommons.org/inference/index_gh/",
+      "source_kind": "benchmark_methodology",
+      "primary_source": true,
+      "claimant_relation": "benchmark_operator",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "current_round_observed": "v6.0",
+        "inference_repository_head": "2a3cb460f5edb9e3b173739c2937f081b4c861e9"
+      }
+    },
+    {
+      "source_id": "mlperf_inference_submission_guide",
+      "title": "MLPerf Inference Submission Guide",
+      "publisher": "MLCommons",
+      "url": "https://docs.mlcommons.org/inference/submission/",
+      "source_kind": "benchmark_methodology",
+      "primary_source": true,
+      "claimant_relation": "benchmark_operator",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "snapshot_date": "2026-07-12"
+      }
+    },
+    {
+      "source_id": "aa_agentperf_methodology",
+      "title": "AA-AgentPerf Methodology",
+      "publisher": "Artificial Analysis",
+      "url": "https://artificialanalysis.ai/methodology/agentperf",
+      "source_kind": "benchmark_methodology",
+      "primary_source": true,
+      "claimant_relation": "benchmark_operator",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "snapshot_date": "2026-07-12"
+      }
+    },
+    {
+      "source_id": "indexcache_paper",
+      "title": "IndexCache: Accelerating Sparse Attention via Cross-Layer Index Reuse",
+      "publisher": "IndexCache authors",
+      "url": "https://arxiv.org/abs/2603.12201",
+      "source_kind": "primary_paper",
+      "primary_source": true,
+      "claimant_relation": "project_authors",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "arxiv_id": "2603.12201",
+        "initial_submission_date": "2026-03-12"
+      }
+    },
+    {
+      "source_id": "tisa_openreview",
+      "title": "TISA: Exploiting Temporal Locality to Accelerate Indexing Sparse Attention",
+      "publisher": "TISA authors",
+      "url": "https://openreview.net/forum?id=6kOo3YtMdu",
+      "source_kind": "primary_paper",
+      "primary_source": true,
+      "claimant_relation": "project_authors",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "openreview_forum_id": "6kOo3YtMdu",
+        "submission_date": "2026-05-26",
+        "last_modified_date": "2026-06-16"
+      }
+    },
+    {
+      "source_id": "hisa_paper",
+      "title": "HISA: Efficient Hierarchical Indexing for Fine-Grained Sparse Attention",
+      "publisher": "HISA authors",
+      "url": "https://arxiv.org/abs/2603.28458",
+      "source_kind": "primary_paper",
+      "primary_source": true,
+      "claimant_relation": "project_authors",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "arxiv_id": "2603.28458",
+        "initial_submission_date": "2026-03-30"
+      }
+    },
+    {
+      "source_id": "misa_paper",
+      "title": "MISA: Mixture of Indexer Sparse Attention for Long-Context LLM Inference",
+      "publisher": "MISA authors",
+      "url": "https://arxiv.org/abs/2605.07363",
+      "source_kind": "primary_paper",
+      "primary_source": true,
+      "claimant_relation": "project_authors",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "arxiv_id": "2605.07363",
+        "initial_submission_date": "2026-05-08"
+      }
+    },
+    {
+      "source_id": "unique_paper",
+      "title": "UNIQUE: Universal Top-k Sparse Attention for Training-free Inference and Sparsity-aware Training",
+      "publisher": "UNIQUE authors",
+      "url": "https://arxiv.org/abs/2605.27740",
+      "source_kind": "primary_paper",
+      "primary_source": true,
+      "claimant_relation": "project_authors",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "arxiv_id": "2605.27740",
+        "initial_submission_date": "2026-05-26"
+      }
+    },
+    {
+      "source_id": "spin_paper",
+      "title": "Unifying Sparse Attention with Hierarchical Memory for Scalable Long-Context LLM Serving",
+      "publisher": "SPIN authors",
+      "url": "https://arxiv.org/abs/2604.26837",
+      "source_kind": "primary_paper",
+      "primary_source": true,
+      "claimant_relation": "project_authors",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "arxiv_id": "2604.26837",
+        "initial_submission_date": "2026-04-29"
+      }
+    },
+    {
+      "source_id": "intra_openreview",
+      "title": "INTRA: Interleaved Non-contiguous Token Sparse Attention",
+      "publisher": "INTRA authors",
+      "url": "https://openreview.net/forum?id=hqqhBFhR8k",
+      "source_kind": "primary_paper",
+      "primary_source": true,
+      "claimant_relation": "project_authors",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "openreview_forum_id": "hqqhBFhR8k",
+        "submission_date": "2025-09-19",
+        "last_modified_date": "2026-02-11"
+      }
+    },
+    {
+      "source_id": "salca_paper",
+      "title": "Salca: A Sparsity-Aware Hardware Accelerator for Efficient Long-Context Attention Decoding",
+      "publisher": "Salca authors",
+      "url": "https://arxiv.org/abs/2604.24820",
+      "source_kind": "primary_paper",
+      "primary_source": true,
+      "claimant_relation": "project_authors",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "arxiv_id": "2604.24820",
+        "initial_submission_date": "2026-04-27"
+      }
+    },
+    {
+      "source_id": "nosa_paper",
+      "title": "NOSA: Native and Offloadable Sparse Attention",
+      "publisher": "NOSA authors",
+      "url": "https://arxiv.org/abs/2510.13602",
+      "source_kind": "primary_paper",
+      "primary_source": true,
+      "claimant_relation": "project_authors",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "arxiv_id": "2510.13602",
+        "initial_submission_date": "2025-10-15"
+      }
+    },
+    {
+      "source_id": "nosa_1b_checkpoint",
+      "title": "OpenBMB NOSA-1B checkpoint",
+      "publisher": "OpenBMB",
+      "url": "https://huggingface.co/openbmb/NOSA-1B/tree/7bdc33fbc1bc80b76b29689ba35ff6a7991b7dee",
+      "source_kind": "official_repository",
+      "primary_source": true,
+      "claimant_relation": "project_authors",
+      "accessed_on": "2026-07-12",
+      "version_pin": {
+        "revision": "7bdc33fbc1bc80b76b29689ba35ff6a7991b7dee",
+        "weight_sha256": "831236605310bdfded1fc5959dfecd033b48a0aa3ebdd2aa28f19d0ecf5ce4aa",
+        "repository_bytes": 3245641146
+      }
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "nvidia_dynosim_aiconfigurator",
+      "name": "NVIDIA DynoSim plus AIConfigurator",
+      "entry_kind": "commercial_software",
+      "covered_layers": [
+        "workload",
+        "serving_scheduler",
+        "routing",
+        "kv_cache",
+        "fleet_planner",
+        "parallelism",
+        "network_topology",
+        "accelerator_microarchitecture"
+      ],
+      "source_ids": [
+        "nvidia_dynosim_docs",
+        "nvidia_dynosim_blog",
+        "nvidia_aiconfigurator_paper"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "dynosim_composed_serving_des",
+          "statement": "NVIDIA documents a workload-driven discrete-event twin of Dynamo that composes engine scheduling, Router, Planner, KV-cache behavior, traces, and AIC-backed pass timing, and directs users to validate shortlisted configurations on real GPUs.",
+          "evidence_class": "official_documented_capability",
+          "source_ids": [
+            "nvidia_dynosim_docs"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "public_artifact_inspected_not_benchmarked"
+        },
+        {
+          "claim_id": "dynosim_rust_speed_vendor_report",
+          "statement": "NVIDIA reports that its Rust offline replay simulated a 23,608-request, 60.1-minute Mooncake trace in 2.41 seconds on an Apple M4, approximately 1,500x faster than real time.",
+          "evidence_class": "vendor_assertion",
+          "source_ids": [
+            "nvidia_dynosim_blog"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        },
+        {
+          "claim_id": "aiconfigurator_search_author_report",
+          "statement": "The AIConfigurator authors report primitive-decomposed, calibrated multi-framework performance modeling, searches averaging under 30 seconds, and selected configurations improving dense-model performance by up to 40% and MoE performance by up to 50% on their evaluated workloads.",
+          "evidence_class": "author_reported_result",
+          "source_ids": [
+            "nvidia_aiconfigurator_paper"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Full-stack serving DES, calibrated pass timing, Pareto sweeps, and a Rust implementation are already a public incumbent capability and cannot be the wedge by themselves.",
+      "public_evidence_limit": "The reviewed sources focus on deployment choices for supported model/backend/GPU tuples and explicitly retain real-hardware validation; they do not independently prove arbitrary model-architecture or custom-silicon predictions."
+    },
+    {
+      "entry_id": "nvidia_model_hardware_codesign",
+      "name": "NVIDIA hardware-friendly model co-design",
+      "entry_kind": "commercial_software",
+      "covered_layers": [
+        "model_architecture",
+        "kernel",
+        "compiler",
+        "parallelism",
+        "memory_hierarchy",
+        "network_topology",
+        "quality_validation"
+      ],
+      "source_ids": [
+        "nvidia_model_codesign_blog",
+        "nvidia_latentmoe_project"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "nvidia_hardware_friendly_design_rules",
+          "statement": "NVIDIA publicly recommends dimensions aligned to at least 128 and preferably 256 or 512, fewer larger operations where quality permits, low-precision-friendly layers, repeatable pipeline-balanced layer patterns, wide expert parallelism, and decoupled attention and FFN parallelism.",
+          "evidence_class": "vendor_assertion",
+          "source_ids": [
+            "nvidia_model_codesign_blog"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        },
+        {
+          "claim_id": "latentmoe_codesign_vendor_report",
+          "statement": "NVIDIA describes LatentMoE as a hardware-software co-design that contracts routed experts into a latent space to reduce expert-weight traffic and all-to-all payload while reinvesting savings in expert capacity.",
+          "evidence_class": "vendor_assertion",
+          "source_ids": [
+            "nvidia_latentmoe_project"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Hardware-aware model geometry, precision, sparsity, and parallelism co-design are publicly articulated and used in released model families; model modification alone is not an empty competitive category.",
+      "public_evidence_limit": "The sources provide vendor design guidance and vendor-reported model results, not an independently reproduced autonomous search loop or proof that the rules generalize to GLM architectures."
+    },
+    {
+      "entry_id": "fireworks_fireoptimizer_3d",
+      "name": "Fireworks FireOptimizer and 3D FireOptimizer",
+      "entry_kind": "commercial_software",
+      "covered_layers": [
+        "workload",
+        "model_architecture",
+        "quality_validation",
+        "parallelism",
+        "kv_cache",
+        "serving_scheduler",
+        "accelerator_microarchitecture",
+        "cost_accounting"
+      ],
+      "source_ids": [
+        "fireworks_fireoptimizer_blog",
+        "fireworks_3d_fireoptimizer_blog"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "fireoptimizer_cross_stack_adaptation",
+          "statement": "Fireworks says FireOptimizer adapts hardware mapping, model quantization or tuning, caching and request handling, and specialized speculative models to workload data and latency, quality, and cost goals.",
+          "evidence_class": "vendor_assertion",
+          "source_ids": [
+            "fireworks_fireoptimizer_blog"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        },
+        {
+          "claim_id": "fireoptimizer_three_x_vendor_report",
+          "statement": "Fireworks reports adaptive speculative execution delivering up to 3x latency improvement and gives one vendor case with a 76% draft hit rate and 2x speed increase versus no speculation.",
+          "evidence_class": "vendor_assertion",
+          "source_ids": [
+            "fireworks_fireoptimizer_blog"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        },
+        {
+          "claim_id": "three_d_optimizer_search_space",
+          "statement": "Fireworks says 3D FireOptimizer searches a space exceeding 100,000 combinations across model architecture, quantization, speculation, hardware, parallelism, and disaggregation, using production profiles and heuristics to find workload- and SLA-specific Pareto configurations.",
+          "evidence_class": "vendor_assertion",
+          "source_ids": [
+            "fireworks_3d_fireoptimizer_blog"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Workload-specific search across hardware, model, speculation, quantization, and serving is commercially occupied and directly overlaps an ordinary full-stack optimization service.",
+      "public_evidence_limit": "The case studies and speedups are vendor reports without raw configurations, independent reruns, or a public general simulator contract."
+    },
+    {
+      "entry_id": "etched_vertical_inference_clusters",
+      "name": "Etched frontier inference clusters",
+      "entry_kind": "vertically_integrated_hardware_vendor",
+      "covered_layers": [
+        "model_architecture",
+        "compiler",
+        "kernel",
+        "accelerator_microarchitecture",
+        "memory_hierarchy",
+        "network_topology",
+        "physical_design",
+        "manufacturing",
+        "power_energy"
+      ],
+      "source_ids": [
+        "etched_home_2026_07_12"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "etched_vertical_scope",
+          "statement": "Etched says it co-designs chips, packages, racks, software, manufacturing methods, cooling, power delivery, interconnects, tiling, and scheduling for frontier-model inference.",
+          "evidence_class": "vendor_assertion",
+          "source_ids": [
+            "etched_home_2026_07_12"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        },
+        {
+          "claim_id": "etched_current_hardware_status",
+          "statement": "Etched states that A0 silicon returned from TSMC N4P, a first rack-scale product is under customer validation, and racks have been tested in representative data centers.",
+          "evidence_class": "vendor_assertion",
+          "source_ids": [
+            "etched_home_2026_07_12"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        },
+        {
+          "claim_id": "etched_internal_simulator",
+          "statement": "Etched says it has run terabytes of production traffic patterns through an internal simulator while co-designing its rack-scale product.",
+          "evidence_class": "vendor_assertion",
+          "source_ids": [
+            "etched_home_2026_07_12"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Chip-to-rack-to-software verticality and simulator-guided custom hardware are already competitively occupied, even if Etched does not expose its internal simulator as a public product in the reviewed page.",
+      "public_evidence_limit": "LVI, cluster-scale memory, performance, demand, shipment, and production statements are vendor claims; no public independent benchmark or simulator input/output contract is provided on the reviewed page."
+    },
+    {
+      "entry_id": "furiosa_rngd_model_compiler",
+      "name": "Furiosa RNGD accelerator and per-model compiler stack",
+      "entry_kind": "custom_accelerator_vendor",
+      "covered_layers": [
+        "model_architecture",
+        "kernel",
+        "compiler",
+        "accelerator_microarchitecture",
+        "memory_hierarchy",
+        "kv_cache",
+        "serving_scheduler",
+        "power_energy"
+      ],
+      "source_ids": [
+        "furiosa_sdk_2026_3",
+        "furiosa_sdk_2026_2",
+        "furiosa_rngd_product"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "furiosa_model_enablement_stack",
+          "statement": "Furiosa documents a model-enablement path in which TCL kernels compile to executable binaries, SDK 2026.3 ships per-model FXB bundles, and the stack targets its RNGD Tensor Contraction Processor accelerator.",
+          "evidence_class": "vendor_assertion",
+          "source_ids": [
+            "furiosa_sdk_2026_3",
+            "furiosa_rngd_product"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        },
+        {
+          "claim_id": "furiosa_per_model_presets",
+          "statement": "Furiosa says ArtifactBuilder applies expert-tuned per-model prefill and decode bucket presets during compilation to automate model-specific performance tuning.",
+          "evidence_class": "vendor_assertion",
+          "source_ids": [
+            "furiosa_sdk_2026_2"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        },
+        {
+          "claim_id": "furiosa_seventy_four_point_nine_percent_report",
+          "statement": "Furiosa reports a 74.9% average throughput improvement for Qwen3 and EXAONE 4.0 families in SDK 2026.2 versus its previous SDK, combining compiler changes and hybrid KV-cache management.",
+          "evidence_class": "vendor_assertion",
+          "source_ids": [
+            "furiosa_sdk_2026_2"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Per-model compiler artifacts, kernel enablement, model presets, a custom accelerator, and an integrated serving stack are already a shipping competitive pattern; per-model specialization alone is not a wedge.",
+      "public_evidence_limit": "Performance deltas, production status, and hardware efficiency remain vendor-reported, and the reviewed sources do not expose an independently executable full hardware simulator."
+    },
+    {
+      "entry_id": "astra_sim",
+      "name": "ASTRA-sim",
+      "entry_kind": "open_simulator",
+      "covered_layers": [
+        "workload",
+        "parallelism",
+        "network_topology",
+        "accelerator_microarchitecture",
+        "memory_hierarchy"
+      ],
+      "source_ids": [
+        "astra_sim_repository",
+        "astra_sim_3_paper"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "astra_sim_public_stack_model",
+          "statement": "The public ASTRA-sim repository documents a distributed-AI simulator spanning workload scheduling, collective algorithms, and compute, memory, and network hardware with plug-in APIs and Chakra traces.",
+          "evidence_class": "public_artifact_observation",
+          "source_ids": [
+            "astra_sim_repository"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "public_artifact_inspected_not_benchmarked"
+        },
+        {
+          "claim_id": "astra_sim_three_author_report",
+          "statement": "The ASTRA-sim 3.0 authors report cache-line-granularity load/store simulation, a detailed GPU execution model, and InfraGraph for higher-fidelity infrastructure representation.",
+          "evidence_class": "author_reported_result",
+          "source_ids": [
+            "astra_sim_3_paper"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Distributed compute, memory, topology, and collective simulation are open building blocks rather than a proprietary wedge.",
+      "public_evidence_limit": "The repository landing page still labels the current project ASTRA-sim 2.0 while the newer 3.0 paper describes additions; neither source establishes accuracy for our inference models without calibration and execution."
+    },
+    {
+      "entry_id": "timeloop_accelergy",
+      "name": "Timeloop and Accelergy",
+      "entry_kind": "open_simulator",
+      "covered_layers": [
+        "kernel",
+        "accelerator_microarchitecture",
+        "memory_hierarchy",
+        "power_energy"
+      ],
+      "source_ids": [
+        "timeloop_accelergy_v4_overview",
+        "timeloop_accelergy_v4_outputs"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "timeloop_mapping_model",
+          "statement": "Timeloop v4 publicly documents analytical tensor-algebra architecture modeling and mapper search over dataflows and mappings for parameterized compute and memory hierarchies.",
+          "evidence_class": "official_documented_capability",
+          "source_ids": [
+            "timeloop_accelergy_v4_overview"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "public_artifact_inspected_not_benchmarked"
+        },
+        {
+          "claim_id": "accelergy_outputs",
+          "statement": "The v4 output contract documents mappings, cycles, throughput, access counts, energy and area statistics, plus Accelergy energy and area reference tables.",
+          "evidence_class": "official_documented_capability",
+          "source_ids": [
+            "timeloop_accelergy_v4_outputs"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "public_artifact_inspected_not_benchmarked"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Tensor mapping, memory-traffic, cycle, energy, and area exploration are open infrastructure; differentiation must come from validated model and serving integration, not recreating a mapper contract.",
+      "public_evidence_limit": "Analytical outputs depend on architecture, mapping, technology and plug-in assumptions and require validation against silicon or lower-level tools before supporting cost claims."
+    },
+    {
+      "entry_id": "llmservingsim_2",
+      "name": "LLMServingSim 2.0",
+      "entry_kind": "open_simulator",
+      "covered_layers": [
+        "workload",
+        "serving_scheduler",
+        "kv_cache",
+        "parallelism",
+        "network_topology",
+        "memory_hierarchy",
+        "accelerator_microarchitecture",
+        "power_energy"
+      ],
+      "source_ids": [
+        "llmservingsim_repository",
+        "llmservingsim_2_paper"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "llmservingsim_public_scope",
+          "statement": "The public project documents a vLLM-like continuous-batching frontend, ASTRA-sim network backend, layerwise hardware profiles, heterogeneous accelerators, disaggregated CPU/CXL/PIM memory, MoE routing, and TP, PP, EP and DP multi-instance simulation.",
+          "evidence_class": "public_artifact_observation",
+          "source_ids": [
+            "llmservingsim_repository"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "public_artifact_inspected_not_benchmarked"
+        },
+        {
+          "claim_id": "llmservingsim_accuracy_author_report",
+          "statement": "The authors report average 0.97% error against real deployments for selected performance, memory, and power metrics and simulation times around 10 minutes for complex configurations.",
+          "evidence_class": "author_reported_result",
+          "source_ids": [
+            "llmservingsim_2_paper"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Heterogeneous and disaggregated LLM serving co-simulation is an open research baseline that substantially overlaps the proposed simulation environment.",
+      "public_evidence_limit": "The accuracy and runtime numbers are author-reported and profile-dependent; this landscape did not execute the project or validate arbitrary model architecture mutations."
+    },
+    {
+      "entry_id": "mlperf_inference",
+      "name": "MLPerf Inference",
+      "entry_kind": "validation_benchmark",
+      "covered_layers": [
+        "workload",
+        "quality_validation",
+        "serving_scheduler",
+        "power_energy"
+      ],
+      "source_ids": [
+        "mlperf_inference_docs",
+        "mlperf_inference_submission_guide"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "mlperf_loadgen_validation_contract",
+          "statement": "MLCommons documents architecture-neutral inference scenarios, LoadGen query scheduling and latency collection, accuracy validation, power submissions, closed and open divisions, availability categories, and submission checking.",
+          "evidence_class": "benchmark_operator_methodology",
+          "source_ids": [
+            "mlperf_inference_docs",
+            "mlperf_inference_submission_guide"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "methodology_target_only"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "A credible hardware or provider claim should adopt MLPerf-style frozen accuracy, load generation, system disclosure, power measurement, and result checking even when the exact research model is not an MLPerf closed-division model.",
+      "public_evidence_limit": "Inference Foundry has not completed or submitted an MLPerf result, and an internal benchmark using similar controls is not an MLPerf result."
+    },
+    {
+      "entry_id": "aa_agentperf",
+      "name": "AA-AgentPerf",
+      "entry_kind": "validation_benchmark",
+      "covered_layers": [
+        "workload",
+        "quality_validation",
+        "serving_scheduler",
+        "kv_cache",
+        "power_energy"
+      ],
+      "source_ids": [
+        "aa_agentperf_methodology"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "agentperf_agentic_methodology",
+          "statement": "Artificial Analysis documents sustained concurrent agents replaying real multi-turn coding trajectories with tool calls, approximately 5K to 131K input lengths, model-specific TTFT and output-speed SLO tiers, measured accelerator power, and maximum-agent and output-throughput results normalized per accelerator, system and MW.",
+          "evidence_class": "benchmark_operator_methodology",
+          "source_ids": [
+            "aa_agentperf_methodology"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "methodology_target_only"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "The intended agent-heavy pricing workload now has a concrete external validation target; uniform synthetic token traces are insufficient for business promotion.",
+      "public_evidence_limit": "Inference Foundry has not run AA-AgentPerf, Artificial Analysis controls the current dataset and publication process, and methodology adoption alone does not create an official result."
+    },
+    {
+      "entry_id": "indexcache_cross_layer_dsa",
+      "name": "IndexCache cross-layer DSA index reuse",
+      "entry_kind": "research_mechanism",
+      "covered_layers": [
+        "model_architecture",
+        "kernel",
+        "memory_hierarchy",
+        "quality_validation"
+      ],
+      "source_ids": [
+        "indexcache_paper"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "indexcache_public_result",
+          "statement": "The authors report that reusing DSA top-k selections across layers removes up to 75% of indexer computation, reaches up to 1.82x prefill and 1.48x decode speedup on a 30B DSA model, and has preliminary production-scale GLM-5 evidence.",
+          "evidence_class": "author_reported_result",
+          "source_ids": [
+            "indexcache_paper"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Cross-layer DSA sharing is published research and is already trained into GLM-5.2 as IndexShare, so it is a baseline mechanism rather than a new model-specific wedge.",
+      "public_evidence_limit": "The reported speedups are author measurements on disclosed study settings, not a local GLM-5.2 reproduction or delivered cost result."
+    },
+    {
+      "entry_id": "tisa_temporal_dsa",
+      "name": "TISA temporal DSA score reuse",
+      "entry_kind": "research_mechanism",
+      "covered_layers": [
+        "model_architecture",
+        "kernel",
+        "memory_hierarchy",
+        "quality_validation"
+      ],
+      "source_ids": [
+        "tisa_openreview"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "tisa_public_result",
+          "statement": "The authors report round-robin refresh of cached DSA scores with K in 2, 4 and 8, competitive LongBench and retrieval results on DeepSeek-V3.2 and GLM-5, and 3.8x to 7.3x indexer-kernel speedup on H20.",
+          "evidence_class": "author_reported_result",
+          "source_ids": [
+            "tisa_openreview"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Temporal score reuse is already a published GLM-adjacent mechanism and can compose with IndexShare, so an equivalent cache alone would not be novel.",
+      "public_evidence_limit": "The reviewed submission is author-reported, uses GLM-5 rather than GLM-5.2, and does not establish agent-task quality or end-to-end cost."
+    },
+    {
+      "entry_id": "hisa_hierarchical_dsa",
+      "name": "HISA hierarchical DSA indexing",
+      "entry_kind": "research_mechanism",
+      "covered_layers": [
+        "model_architecture",
+        "kernel",
+        "memory_hierarchy",
+        "quality_validation"
+      ],
+      "source_ids": [
+        "hisa_paper"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "hisa_public_result",
+          "statement": "The authors report a training-free two-stage DSA indexer that prunes blocks before token refinement, exceeds 99% mean selected-set IoU, and reaches 2x kernel speedup at 32K and 4x at 128K on their DeepSeek-V3.2 study.",
+          "evidence_class": "author_reported_result",
+          "source_ids": [
+            "hisa_paper"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Hierarchical index pruning is already an explicit DSA optimization baseline that a GLM-specific search must compare against.",
+      "public_evidence_limit": "The result is not a GLM-5.2 measurement, was not run locally, and reports kernel and benchmark outcomes rather than provider economics."
+    },
+    {
+      "entry_id": "misa_indexer_head_routing",
+      "name": "MISA routed indexer heads",
+      "entry_kind": "research_mechanism",
+      "covered_layers": [
+        "model_architecture",
+        "kernel",
+        "routing",
+        "memory_hierarchy",
+        "quality_validation"
+      ],
+      "source_ids": [
+        "misa_paper"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "misa_public_result",
+          "statement": "The authors report query-dependent routing across DSA indexer heads, LongBench parity on DeepSeek-V3.2 and GLM-5 with fewer active heads, and about 3.82x indexer-kernel speedup on one H200.",
+          "evidence_class": "author_reported_result",
+          "source_ids": [
+            "misa_paper"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Reducing indexer-head work through learned or training-free routing is an occupied GLM-adjacent model-and-kernel lever.",
+      "public_evidence_limit": "The result is author-reported on GLM-5 rather than GLM-5.2 and does not measure the target agent workload, full serving stack, or cost."
+    },
+    {
+      "entry_id": "unique_page_sparse_attention",
+      "name": "UNIQUE page-granular sparse attention",
+      "entry_kind": "research_mechanism",
+      "covered_layers": [
+        "model_architecture",
+        "kernel",
+        "kv_cache",
+        "memory_hierarchy",
+        "quality_validation"
+      ],
+      "source_ids": [
+        "unique_paper"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "unique_public_result",
+          "statement": "The authors report page-granular top-k selection using per-page key statistics, training-free and sparsity-aware training paths, up to 11.4x attention-kernel speedup, and at least 5.3x end-to-end decode speedup on their evaluated models.",
+          "evidence_class": "author_reported_result",
+          "source_ids": [
+            "unique_paper"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Page-aware token selection already exists as a research direction, so a co-trained page-clustered GLM indexer must beat this class rather than claim page locality as new.",
+      "public_evidence_limit": "The reviewed result is not on GLM-5.2 or DSA, was not reproduced locally, and does not establish equivalent agent quality or cost."
+    },
+    {
+      "entry_id": "spin_sparse_hierarchical_kv",
+      "name": "SPIN sparse-attention hierarchical KV serving",
+      "entry_kind": "research_mechanism",
+      "covered_layers": [
+        "kernel",
+        "kv_cache",
+        "memory_hierarchy",
+        "serving_scheduler",
+        "quality_validation"
+      ],
+      "source_ids": [
+        "spin_paper"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "spin_public_result",
+          "statement": "The authors report a vLLM-based page abstraction, sparse-attention-aware hierarchical KV placement, locality-aware HBM budgeting and metadata, with 1.66x to 5.66x throughput and up to 58% lower TPOT over evaluated sparse baselines.",
+          "evidence_class": "author_reported_result",
+          "source_ids": [
+            "spin_paper"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Sparse attention plus tiered memory and page-aware serving is an active systems category, not an empty GLM-specific opportunity.",
+      "public_evidence_limit": "The study is not a local GLM-5.2 reproduction and its author-reported relative results do not yield target-provider dollars per token."
+    },
+    {
+      "entry_id": "intra_token_sparse_gather",
+      "name": "INTRA non-contiguous token sparse-attention kernel",
+      "entry_kind": "research_mechanism",
+      "covered_layers": [
+        "kernel",
+        "memory_hierarchy",
+        "quality_validation"
+      ],
+      "source_ids": [
+        "intra_openreview"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "intra_public_result",
+          "statement": "The authors report a token-granular sparse-attention data-movement design that loads non-contiguous global-memory tokens into contiguous shared memory and accelerates evaluated attention workloads by more than 3.3x.",
+          "evidence_class": "author_reported_result",
+          "source_ids": [
+            "intra_openreview"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Irregular sparse gather and coalesced staging are already explicit kernel research, so a GLM gather engine needs measured residual advantage over optimized token-granular kernels.",
+      "public_evidence_limit": "The result is not a GLM DSA study, was not reproduced locally, and does not validate a custom DRAM or accelerator design."
+    },
+    {
+      "entry_id": "salca_sparse_attention_accelerator",
+      "name": "Salca sparse-attention accelerator co-design",
+      "entry_kind": "research_mechanism",
+      "covered_layers": [
+        "model_architecture",
+        "kernel",
+        "accelerator_microarchitecture",
+        "memory_hierarchy",
+        "power_energy",
+        "quality_validation"
+      ],
+      "source_ids": [
+        "salca_paper"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "salca_public_result",
+          "statement": "The authors report a dual-compression sparse-attention method, approximate top-k, analytical hardware search and a pipelined accelerator with 3.82x speedup and 74.19x energy efficiency over A100 in their study.",
+          "evidence_class": "author_reported_result",
+          "source_ids": [
+            "salca_paper"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Sparse-attention ASIC co-design is already a published accelerator category, so custom DSA hardware must be compared against specialized prior art as well as GPUs.",
+      "public_evidence_limit": "The paper result is author-reported, not a fabricated-and-measured GLM-5.2 system, and does not establish manufacturing feasibility or delivered cost."
+    },
+    {
+      "entry_id": "nosa_locality_trained_offload",
+      "name": "NOSA locality-trained sparse KV offload",
+      "entry_kind": "research_mechanism",
+      "covered_layers": [
+        "model_architecture",
+        "kernel",
+        "kv_cache",
+        "memory_hierarchy",
+        "quality_validation"
+      ],
+      "source_ids": [
+        "nosa_paper",
+        "nosa_1b_checkpoint"
+      ],
+      "public_claims": [
+        {
+          "claim_id": "nosa_public_result",
+          "statement": "The authors report a trainable locality constraint for sparse token selection, a paired CPU-GPU offload system, near-lossless quality in their study, and up to 2.3x decode-throughput improvement over the InfLLM-V2 sparse baseline.",
+          "evidence_class": "author_reported_result",
+          "source_ids": [
+            "nosa_paper"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "not_run_locally"
+        },
+        {
+          "claim_id": "nosa_small_proxy_checkpoint",
+          "statement": "OpenBMB publishes an Apache-2.0 NOSA-1B checkpoint with a 28-layer, hidden-size-2048, two-KV-head architecture and custom CUDA sparse-attention code, providing a closer small-model co-design proxy than the current dense Qwen fixture.",
+          "evidence_class": "public_artifact_observation",
+          "source_ids": [
+            "nosa_1b_checkpoint"
+          ],
+          "independently_reproduced": false,
+          "reproduction_status": "public_artifact_inspected_not_benchmarked"
+        }
+      ],
+      "independently_reproduced_facts": [],
+      "competitive_implication": "Explicitly training the model for memory locality and tiered KV movement is already a released 1B-scale research pattern. It validates the direction as worth testing but removes it as a generic novelty claim.",
+      "public_evidence_limit": "The checkpoint's sparse path requires CUDA, its monolithic PyTorch weights were not executed locally, and neither its quality nor performance result transfers to GLM-5.2 without a frozen cross-scale experiment."
+    }
+  ],
+  "commoditized_layers": [
+    {
+      "layer_id": "serving_discrete_event_simulation",
+      "status": "commercially_occupied",
+      "evidence_entry_ids": [
+        "nvidia_dynosim_aiconfigurator",
+        "llmservingsim_2"
+      ],
+      "business_implication": "A fast serving twin with scheduler, KV, routing, disaggregation and traces is necessary infrastructure, not a sufficient company moat."
+    },
+    {
+      "layer_id": "configuration_pareto_search",
+      "status": "commercially_occupied",
+      "evidence_entry_ids": [
+        "nvidia_dynosim_aiconfigurator",
+        "fireworks_fireoptimizer_3d"
+      ],
+      "business_implication": "Sweeping topology, parallelism, hardware, serving and SLA knobs is already sold or documented by incumbents."
+    },
+    {
+      "layer_id": "rust_as_simulation_differentiator",
+      "status": "publicly_documented_design_space",
+      "evidence_entry_ids": [
+        "nvidia_dynosim_aiconfigurator"
+      ],
+      "business_implication": "Rust can improve iteration speed and correctness but is an implementation choice already used by DynoSim, not market differentiation."
+    },
+    {
+      "layer_id": "workload_specific_serving_adaptation",
+      "status": "commercially_occupied",
+      "evidence_entry_ids": [
+        "fireworks_fireoptimizer_3d"
+      ],
+      "business_implication": "Tuning speculation, quantization, caching, hardware and serving to workload distributions overlaps FireOptimizer and should not be the positioning."
+    },
+    {
+      "layer_id": "hardware_aware_model_design_rules",
+      "status": "publicly_documented_design_space",
+      "evidence_entry_ids": [
+        "nvidia_model_hardware_codesign"
+      ],
+      "business_implication": "Dimension alignment, wider operations, low precision, LatentMoE and parallel-friendly patterns are public design ideas; value must be in validated automated discovery beyond known rules."
+    },
+    {
+      "layer_id": "per_model_compilation_and_presets",
+      "status": "commercially_occupied",
+      "evidence_entry_ids": [
+        "furiosa_rngd_model_compiler"
+      ],
+      "business_implication": "Per-model executable bundles, kernels and compiler presets on custom silicon already exist as a vendor pattern."
+    },
+    {
+      "layer_id": "distributed_network_collective_simulation",
+      "status": "open_source_building_block",
+      "evidence_entry_ids": [
+        "astra_sim",
+        "llmservingsim_2"
+      ],
+      "business_implication": "Network topology and collective simulation should be integrated or reused, not treated as proprietary novelty."
+    },
+    {
+      "layer_id": "tensor_mapping_memory_energy_area_modeling",
+      "status": "open_source_building_block",
+      "evidence_entry_ids": [
+        "timeloop_accelergy"
+      ],
+      "business_implication": "Analytical mapping, cycles, memory traffic, energy and area tables are available building blocks whose assumptions still require silicon calibration."
+    },
+    {
+      "layer_id": "heterogeneous_disaggregated_llm_cosimulation",
+      "status": "open_source_building_block",
+      "evidence_entry_ids": [
+        "llmservingsim_2"
+      ],
+      "business_implication": "A unified heterogeneous-serving simulator is no longer an unoccupied research category."
+    },
+    {
+      "layer_id": "chip_rack_software_verticality",
+      "status": "competitively_occupied_not_commodity",
+      "evidence_entry_ids": [
+        "etched_vertical_inference_clusters",
+        "furiosa_rngd_model_compiler"
+      ],
+      "business_implication": "Vertical hardware is difficult and potentially valuable but cannot be claimed as unique; it must outperform active custom-accelerator vendors after full economics."
+    },
+    {
+      "layer_id": "standardized_system_validation",
+      "status": "open_source_building_block",
+      "evidence_entry_ids": [
+        "mlperf_inference",
+        "aa_agentperf"
+      ],
+      "business_implication": "Accuracy, SLO, agent concurrency, power and system disclosure have external benchmark patterns; private simulator scores are not enough."
+    },
+    {
+      "layer_id": "glm_dsa_index_and_memory_optimization",
+      "status": "competitively_occupied_not_commodity",
+      "evidence_entry_ids": [
+        "indexcache_cross_layer_dsa",
+        "tisa_temporal_dsa",
+        "hisa_hierarchical_dsa",
+        "misa_indexer_head_routing",
+        "unique_page_sparse_attention",
+        "spin_sparse_hierarchical_kv",
+        "intra_token_sparse_gather",
+        "salca_sparse_attention_accelerator",
+        "nosa_locality_trained_offload"
+      ],
+      "business_implication": "Cross-layer, temporal, hierarchical, head-routed and page-aware DSA reduction, locality-trained KV offload, irregular-gather kernels, sparse KV tiers and sparse-attention accelerators are active research categories. A defensible GLM result must show measured residual gain beyond these baselines rather than rediscover one mechanism."
+    }
+  ],
+  "surviving_wedge": {
+    "status": "hypothesis",
+    "hypothesis": "The remaining defensible wedge is a quality-aware, error-calibrated autoresearch loop that mutates model architecture and representation, lowers each candidate through executable kernel, compiler, network, hardware, serving and input/output-token economics models, and proves that predictions transfer across model scale before custom silicon is authorized.",
+    "why_it_survives_public_source_review": "The reviewed sources separately demonstrate strong serving twins, deployment search, hardware-aware model rules, per-model compilers, vertical accelerators, tensor and network simulators, validation benchmarks, and an active set of cross-layer, temporal, hierarchical, head-routed, page-aware and accelerator-specific sparse-attention mechanisms. They do not publicly establish one independently reproduced loop that closes model-quality deltas, system behavior, calibrated prediction uncertainty and customer-visible input/output-token economics across model mutations. This is a gap in reviewed evidence, not proof that competitors lack internal systems.",
+    "required_components": [
+      "frozen quality and task-success gates for every model mutation",
+      "typed model-to-kernel-to-network-to-hardware-to-serving lowering",
+      "multi-fidelity simulation with measured confidence intervals and explicit unsupported claims",
+      "commodity-silicon calibration and blinded holdout prediction",
+      "agent-trajectory input/output-token economics under SLO and utilization distributions",
+      "cross-scale transfer tests from small proxy models to a GLM-class architecture",
+      "custom-hardware authorization only after a robust residual gain remains beyond incumbent-grade software"
+    ],
+    "moat_claim_permitted": false,
+    "falsifier_gate_ids": [
+      "blind_sim_to_silicon_fidelity",
+      "joint_codesign_incremental_value",
+      "cross_scale_model_transfer",
+      "hardware_realization_economics",
+      "external_agentic_business_validation"
+    ]
+  },
+  "decision_gates": [
+    {
+      "gate_id": "blind_sim_to_silicon_fidelity",
+      "decision_scope": "Whether the simulator can rank and predict unseen commodity-hardware deployments rather than merely fit known measurements.",
+      "evidence_type": "pre_registered_proposal",
+      "measurements": [
+        "TTFT, TPOT, request throughput and output-token throughput",
+        "peak and steady-state accelerator memory",
+        "inter-device and inter-node transferred bytes",
+        "loaded accelerator power and energy per input and output token",
+        "predicted versus measured input- and output-token cost"
+      ],
+      "promotion_if_all": [
+        "Freeze unseen validation cells spanning at least one dense, one MoE and one hybrid or nonstandard-attention model on at least two commodity accelerator generations.",
+        "Achieve median absolute percentage error at most 10% and p90 at most 20% separately for TTFT, TPOT, throughput, peak memory and transferred bytes.",
+        "Achieve cost prediction error at most 15%, Spearman candidate-rank correlation at least 0.90 and top-three candidate recall at least 0.80.",
+        "Demonstrate at least 80% empirical coverage for every nominal 90% simulator prediction interval."
+      ],
+      "kill_if_any": [
+        "After two declared calibration rounds, any key performance metric retains median error above 20% on blinded cells.",
+        "Candidate-rank correlation remains below 0.70 or the simulator repeatedly promotes configurations that violate memory or SLO constraints.",
+        "Prediction intervals remain materially miscalibrated, making search rankings unauditable."
+      ],
+      "kill_action": "Stop predictive co-design claims and narrow the product to measurement orchestration or profiling until a new fidelity method passes a fresh blinded protocol.",
+      "current_status": "not_met",
+      "current_evidence_gap": "No blinded multi-model, multi-accelerator silicon calibration with cost, power and network observables has been completed."
+    },
+    {
+      "gate_id": "joint_codesign_incremental_value",
+      "decision_scope": "Whether joint model and vertical-stack search adds material value beyond incumbent-grade independent tuning of serving, quantization, speculation and hardware mapping.",
+      "evidence_type": "pre_registered_proposal",
+      "measurements": [
+        "quality- and SLO-controlled dollars per million input tokens",
+        "quality- and SLO-controlled dollars per million output tokens",
+        "input/output weighted cost for a frozen agent-trajectory mix",
+        "factorial ablation of model, kernel, serving and hardware levers"
+      ],
+      "promotion_if_all": [
+        "Compare against separately tuned vLLM, SGLang or TensorRT-LLM-class baselines with the same model, hardware budget, quality gates and agent SLOs.",
+        "On at least two model families, reduce measured output-token cost by at least 30% and input-token cost by at least 20%, with a paired 95% interval excluding zero regression.",
+        "Show through locked factorial ablation that cross-layer interactions contribute at least half of the gain rather than a single already-standard quantization, speculation or serving knob.",
+        "Retain the result after the baseline receives the same fixed search budget and current public optimization techniques."
+      ],
+      "kill_if_any": [
+        "Best joint candidates improve the frozen weighted cost by less than 15% on both model families after the declared search budget.",
+        "The advantage disappears when the baseline uses current incumbent-grade tuning or when quality and tail-latency gates are enforced.",
+        "A single commodity optimization explains at least 80% of the observed gain."
+      ],
+      "kill_action": "Reject vertical co-design as the moat and pivot to a narrower simulator, benchmarking or optimization-integration product.",
+      "current_status": "not_met",
+      "current_evidence_gap": "Current local mechanisms are conditional bounds or proxy-quality results and have not produced measured input/output-token cost against a fully tuned provider-grade baseline."
+    },
+    {
+      "gate_id": "cross_scale_model_transfer",
+      "decision_scope": "Whether hypotheses discovered cheaply on a small model transfer predictively to larger and GLM-class architectures without post-result reselection.",
+      "evidence_type": "pre_registered_proposal",
+      "measurements": [
+        "predicted and realized direction of performance change",
+        "predicted and realized quality delta",
+        "realized-to-predicted cost-gain ratio",
+        "required architecture-specific retuning effort"
+      ],
+      "promotion_if_all": [
+        "Lock at least three model or hardware changes using only the small-model environment before evaluating a larger model.",
+        "Across at least two scale jumps and one GLM-class or structurally comparable MoE model, predict the gain direction correctly for at least 80% of locked changes.",
+        "For passing changes, keep realized gain between 0.5x and 1.5x of the predicted gain while all frozen quality gates pass.",
+        "Demonstrate that transfer does not require changing the selection criterion after larger-model results are visible."
+      ],
+      "kill_if_any": [
+        "More than one third of locked hypotheses reverse direction at larger scale or fail quality gates.",
+        "Useful results require model-specific manual retuning extensive enough to eliminate the claimed autoresearch leverage.",
+        "The small-model simulator cannot represent the dominant larger-model communication, routing or memory bottleneck."
+      ],
+      "kill_action": "Stop treating the small model as a business-valid proxy and either fund a representative calibration platform or limit claims to the tested model class.",
+      "current_status": "not_met",
+      "current_evidence_gap": "No locked small-to-large transfer experiment or GLM-class measured execution has been completed."
+    },
+    {
+      "gate_id": "hardware_realization_economics",
+      "decision_scope": "Whether custom hardware adds a robust residual system and economic gain after the best model and software candidate on commodity accelerators.",
+      "evidence_type": "pre_registered_proposal",
+      "measurements": [
+        "post-place-and-route or equivalently grounded frequency, area and power",
+        "memory capacity, bandwidth, interconnect and package feasibility",
+        "FPGA, RTL or cycle-model system performance including compiler and serving overhead",
+        "NRE, yield, package, rack, power and utilization sensitivity",
+        "amortized input/output-token cost and payback volume"
+      ],
+      "promotion_if_all": [
+        "After commodity software and model optimization, retain at least a 2x simulated system opportunity attributable to hardware changes.",
+        "Validate at least a 1.5x end-to-end gain in an FPGA, RTL, emulation or independently calibrated cycle model that includes compiler, network, memory and serving overhead.",
+        "Close timing, area, power, capacity, interconnect, package and rack constraints with explicit uncertainty.",
+        "Show at least 30% amortized token-cost reduction across conservative utilization, energy-price, yield, volume and NRE sensitivity cases."
+      ],
+      "kill_if_any": [
+        "Grounded realization falls below 1.5x end-to-end or software improvements consume more than half of the supposed custom-hardware advantage.",
+        "The design fails timing, memory, package, power or network feasibility at the target model scale.",
+        "Token-cost advantage depends on a single optimistic utilization, yield, volume or power assumption."
+      ],
+      "kill_action": "Keep custom silicon and tapeout out of the company plan; continue only the software and model co-design path if its independent gate passes.",
+      "current_status": "not_met",
+      "current_evidence_gap": "No physical implementation, FPGA or RTL validation, foundry quote, package design, yield model or robust NRE amortization supports a tapeout."
+    },
+    {
+      "gate_id": "external_agentic_business_validation",
+      "decision_scope": "Whether measured gains survive standardized agentic workloads, external reruns and initial customer willingness to pay.",
+      "evidence_type": "pre_registered_proposal",
+      "measurements": [
+        "MLPerf-style frozen accuracy, load generation, system disclosure and loaded power",
+        "AA-AgentPerf-style concurrent agents, TTFT, output speed and output throughput",
+        "per-accelerator, per-system and per-MW results",
+        "customer-trace cost and SLO replay",
+        "paid design-partner conversion and forecast-error tolerance"
+      ],
+      "promotion_if_all": [
+        "Pass frozen model-quality and agent-task gates under MLPerf-style result checking and power measurement.",
+        "Pass at least two AA-AgentPerf-style SLO tiers on real multi-turn coding traces and disclose full system configuration.",
+        "Obtain one blinded third-party or customer rerun within 15% of predicted cost and performance.",
+        "Secure at least three trace-sharing design partners and two paid pilots where prediction accuracy or realized savings is the purchased outcome."
+      ],
+      "kill_if_any": [
+        "Gains disappear on multi-turn agent trajectories, long context, cache reuse or tail-latency constraints.",
+        "No external rerun lands within 25% of the simulator after two calibration cycles.",
+        "Fewer than two customers will pay for the validated outcome after a declared discovery period."
+      ],
+      "kill_action": "Do not position as a provider competitor; reconsider whether the durable product is a research tool, services engagement or no business.",
+      "current_status": "not_met",
+      "current_evidence_gap": "Neither MLPerf nor AA-AgentPerf has been run locally, no independent rerun exists, and no paid design-partner evidence is recorded."
+    }
+  ],
+  "validation_targets": [
+    {
+      "target_id": "mlperf_inference",
+      "source_ids": [
+        "mlperf_inference_docs",
+        "mlperf_inference_submission_guide"
+      ],
+      "required_measurements": [
+        "frozen accuracy or task-quality validation before performance",
+        "LoadGen-equivalent server, offline or interactive request scheduling and latency",
+        "full system and software configuration disclosure",
+        "loaded power where energy or cost is claimed",
+        "machine-checkable result completeness and consistency"
+      ],
+      "use_in_foundry": "Adopt the methodology controls for every commodity and custom-hardware comparison; do not call an internal analogous run an MLPerf result.",
+      "completed_locally": false
+    },
+    {
+      "target_id": "aa_agentperf",
+      "source_ids": [
+        "aa_agentperf_methodology"
+      ],
+      "required_measurements": [
+        "real multi-turn coding trajectories with reasoning and tool calls",
+        "approximately 5K to 131K input sequence coverage",
+        "sustained concurrent agents under model-specific TTFT and output-speed SLO tiers",
+        "system output tokens per second and maximum concurrent agents",
+        "normalization per accelerator, per system and per MW using measured loaded accelerator power"
+      ],
+      "use_in_foundry": "Use as the primary external shape for the assumed agent-heavy demand mix and as a kill test for uniform synthetic-trace optimizations.",
+      "completed_locally": false
+    }
+  ],
+  "claim_permissions": {
+    "commercial_moat": false,
+    "competitive_superiority": false,
+    "custom_silicon_tapeout": false,
+    "five_x_performance_gain": false,
+    "independent_competitor_reproduction": false,
+    "market_completeness": false,
+    "measured_cost_per_token": false,
+    "provider_competitiveness": false,
+    "ten_x_performance_gain": false
+  },
+  "conclusion": {
+    "current_decision": "Continue only as a falsification-led co-design evidence program; do not pitch a generic end-to-end simulator, Rust implementation, per-model compiler, workload optimizer or vertical hardware stack as the moat.",
+    "strongest_negative_evidence": "Every major layer of the original thesis is either commercially occupied, publicly documented or available as an open research building block; even GLM-adjacent DSA reduction, locality-trained sparse KV offload, sparse-memory serving, irregular-gather kernels and sparse-attention accelerator co-design are active research categories with released small-model artifacts.",
+    "strongest_remaining_opportunity": "An independently validated closed loop that discovers non-obvious model-plus-hardware changes beyond published sparse-attention baselines, predicts quality and economics with calibrated error, transfers across scale, and proves residual gain beyond incumbent-grade software.",
+    "business_claim_status": "unproven"
+  },
+  "content_identity_sha256": "bbffa8a7c236ab030f4f74a855fbd424f5e8362ca6f2b77fd90dafd503ab9464"
+}

@@ -1,0 +1,12 @@
+{
+  "name": "qwen3-8b-ffn10240",
+  "changes": [
+    {
+      "change": "intermediate_size",
+      "size": 10240
+    }
+  ],
+  "quality": {
+    "evidence": "unvalidated"
+  }
+}

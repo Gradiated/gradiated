@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "lowering_id": "glm-5.2-whole-decode-lowering-v1",
+  "model": {
+    "model_id": "zai-org/GLM-5.2",
+    "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+    "architecture": {
+      "hybrid_moe_mla_dsa": {
+        "schema_version": 1,
+        "active_parameter_count": {
+          "kind": "approximate",
+          "parameters": 40000000000
+        },
+        "checkpoint_fixed_storage_bytes": 38912,
+        "dense_layer_count": 3,
+        "moe_layer_count": 75,
+        "moe": {
+          "routed_expert_count": 256,
+          "routed_experts_per_token": 8,
+          "shared_expert_count": 1,
+          "expert_intermediate_size": 2048,
+          "routed_expert_weight_precision": "bf16"
+        },
+        "mla": {
+          "query_low_rank_dimension": 2048,
+          "semantic_kv_dimension": 512,
+          "query_key_nope_dimension": 192,
+          "rotary_kv_dimension": 64,
+          "value_dimension": 256,
+          "rope_theta": 8000000
+        },
+        "dsa_indexer": {
+          "query_head_count": 32,
+          "query_head_dimension": 128,
+          "key_head_count": 1,
+          "key_head_dimension": 128,
+          "selected_token_count": 2048,
+          "full_layer_count": 21,
+          "shared_layer_count": 57
+        },
+        "mtp": {
+          "layer_count": 1,
+          "shared_parameters": true,
+          "shares_dsa_indices": true
+        }
+      }
+    },
+    "parameter_count": 753329940480,
+    "layer_count": 78,
+    "hidden_size": 6144,
+    "intermediate_size": 12288,
+    "attention_head_count": 64,
+    "kv_head_count": 0,
+    "head_dimension": 256,
+    "vocabulary_size": 154880,
+    "max_sequence_length": 1048576,
+    "weight_precision": "bf16",
+    "quantized_weight_storage": null,
+    "kv_precision": "bf16"
+  },
+  "checkpoint": {
+    "variant_id": "glm-5.2-bf16-reference",
+    "checkpoint": {
+      "model_id": "zai-org/GLM-5.2",
+      "checkpoint_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+      "payload_bytes": 1506659919872,
+      "source_artifact_id": "huggingface:zai-org/GLM-5.2@b4734de4facf877f85769a911abafc5283eab3d9/model.safetensors.index.json"
+    },
+    "routed_expert_storage": {
+      "kind": "model_spec_exact",
+      "source_artifact_id": "huggingface:zai-org/GLM-5.2@b4734de4facf877f85769a911abafc5283eab3d9/config.json+model.safetensors.index.json"
+    }
+  },
+  "network_activation_precision": "bf16",
+  "workload": {
+    "batch_size": 8,
+    "context_tokens_per_request": 16384,
+    "candidate_tokens": 16,
+    "committed_tokens": 12,
+    "token_count_scope": "aggregate_across_batch",
+    "evidence_source_artifact_id": "synthetic:agentic-batch8-context16384-candidate16-committed12-v1"
+  },
+  "route": {
+    "kind": "pinned_route_report_selection",
+    "value": {
+      "report_content_id": "a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2",
+      "scenario_id": "synthetic-source-affine-hotset",
+      "topology_id": "modeled-fully-connected-8x",
+      "strategy_id": "traffic-aware-primary-plus-1024-replicas",
+      "sample_total_dispatches": 39321600,
+      "sample_remote_dispatches": 21267392,
+      "sample_endpoint_payload_bytes": 522667425792,
+      "sample_endpoint_message_count": 266752,
+      "sample_network_hop_payload_bytes": 522667425792,
+      "sample_network_hop_message_count": 266752,
+      "unique_routed_expert_instances": {
+        "lower": 600,
+        "upper": 9600
+      },
+      "participants": 8,
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "experiments/glm-5.2/moe-route-skew-v1.json#a4c04217d6f8d41755f2134d2f6f4f1fd675945b383807efda75656ee092a1f2/synthetic-source-affine-hotset/modeled-fully-connected-8x/traffic-aware-primary-plus-1024-replicas"
+      },
+      "basis": "The pinned synthetic route result is scaled from 39,321,600 dispatches to this step's 9,600 dispatches with floor/ceiling integer bounds. Unique expert residency remains a 600-to-9,600 assumption; no production route histogram is implied."
+    }
+  },
+  "attention_dsa": {
+    "attention_flops": {
+      "lower": 0,
+      "upper": 1000000000000
+    },
+    "attention_non_flop_operations": {
+      "lower": 0,
+      "upper": 10000000000
+    },
+    "attention_weight_bytes": {
+      "lower": 0,
+      "upper": 49693572608
+    },
+    "activation_bytes": {
+      "lower": 393216,
+      "upper": 1000000000
+    },
+    "dsa_indexer_flops": {
+      "lower": 0,
+      "upper": 50000000000
+    },
+    "dsa_indexer_weight_bytes": {
+      "lower": 0,
+      "upper": 393619968
+    },
+    "dsa_topk_non_flop_operations": {
+      "lower": 0,
+      "upper": 100000000
+    },
+    "other_non_ffn_flops": {
+      "lower": 0,
+      "upper": 500000000000
+    },
+    "other_non_ffn_non_flop_operations": {
+      "lower": 0,
+      "upper": 10000000000
+    },
+    "other_non_ffn_weight_bytes": {
+      "lower": 0,
+      "upper": 49693572608
+    },
+    "evidence": {
+      "kind": "assumption",
+      "source_artifact_id": "modeled-assumption:glm-5.2-whole-decode-attention-dsa-other-v1"
+    },
+    "basis": "Independent conservative component envelopes for MLA attention/projections, DSA indexing/top-k, norms, routing, embeddings, and output-head work. The exact 393,619,968-byte DSA indexer residency and 49,693,572,608-byte non-indexer non-FFN residency cap one logical weight pass, but the traffic envelopes permit rereads and are not claimed to be jointly tight."
+  },
+  "cache": {
+    "semantic_kv_read_bytes": {
+      "lower": 2944401408,
+      "upper": 23555211264
+    },
+    "semantic_kv_write_bytes": {
+      "lower": 1078272,
+      "upper": 1437696
+    },
+    "dsa_index_lookup_bytes": {
+      "lower": 9830400,
+      "upper": 9830400
+    },
+    "dsa_index_store_bytes": {
+      "lower": 0,
+      "upper": 9830400
+    },
+    "dsa_index_lookup_hit": true,
+    "weight_cache_policy": "unique_weights_loaded_once_per_decode_step",
+    "evidence": {
+      "kind": "assumption",
+      "source_artifact_id": "modeled-assumption:glm-5.2-agentic-cache-state-v1"
+    },
+    "basis": "Semantic KV reads span the released 2,048-token sparse selection through a full 16,384-token context for 16 aggregate candidates. KV writes span 12 committed through all 16 candidate tokens. Four-byte DSA selections cover 16 candidates across 75 MoE layers; stores may be elided on the assumed lookup hit. Weight reads assume unique expert instances are loaded once in this decode step."
+  },
+  "mtp": {
+    "kind": "enabled",
+    "value": {
+      "draft_tokens": 8,
+      "draft_flops": {
+        "lower": 0,
+        "upper": 500000000000
+      },
+      "verification_flops": {
+        "lower": 0,
+        "upper": 500000000000
+      },
+      "state_read_bytes": {
+        "lower": 0,
+        "upper": 98304
+      },
+      "state_write_bytes": {
+        "lower": 0,
+        "upper": 98304
+      },
+      "shares_dsa_indices": true,
+      "synchronization_participants": 8,
+      "evidence": {
+        "kind": "assumption",
+        "source_artifact_id": "modeled-assumption:glm-5.2-shared-parameter-mtp-v1"
+      },
+      "basis": "One released shared-parameter MTP layer with eight aggregate draft tokens. Draft/verification arithmetic and state traffic remain bounded assumptions; DSA-index sharing is pinned to the released model specification."
+    }
+  },
+  "hardware_study_bound": "upper"
+}

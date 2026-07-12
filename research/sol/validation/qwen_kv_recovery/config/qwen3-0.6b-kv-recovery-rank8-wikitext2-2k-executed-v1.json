@@ -1,0 +1,53 @@
+{
+  "schema_version": "inference-foundry.qwen-kv-recovery-run.v1",
+  "suite": "qwen3-0.6b-kv8-to-kv4-rank8-qo-recovery-wikitext2-v1",
+  "seed": 20260712,
+  "device": "cpu",
+  "dtype": "bfloat16",
+  "torch_threads": 4,
+  "maximum_rss_bytes": 19327352832,
+  "data": {
+    "dataset_id": "Salesforce/wikitext",
+    "dataset_config": "wikitext-2-raw-v1",
+    "dataset_revision": "b08601e04326c79dfdd32d625aee71d232d685c3",
+    "training_split": "train",
+    "training_dataset_fingerprint": "5d4fb603254a7a5b",
+    "heldout_split": "test",
+    "reserved_calibration_tokens": 4096,
+    "training_target_tokens": 8192,
+    "target_tokens_per_step": 128
+  },
+  "transform": {
+    "scheme": "minimum_joint_kv_weight_distance_pair_mean",
+    "original_kv_heads": 8,
+    "unique_kv_heads": 4
+  },
+  "adapter": {
+    "rank": 8,
+    "alpha": 8.0,
+    "targets": [
+      "q_proj",
+      "o_proj"
+    ]
+  },
+  "optimization": {
+    "optimizer": "AdamW",
+    "learning_rate": 0.00004,
+    "weight_decay": 0.05,
+    "teacher_kl_weight": 0.7,
+    "next_token_weight": 0.3,
+    "temperature": 2.0
+  },
+  "checkpoints_after_target_tokens": [
+    2048,
+    4096,
+    8192
+  ],
+  "non_inferiority": {
+    "maximum_nll_increase": 0.15,
+    "maximum_perplexity_ratio": 1.15,
+    "maximum_logit_rmse": 0.5,
+    "minimum_logit_cosine_similarity": 0.98,
+    "minimum_top1_agreement": 0.8
+  }
+}

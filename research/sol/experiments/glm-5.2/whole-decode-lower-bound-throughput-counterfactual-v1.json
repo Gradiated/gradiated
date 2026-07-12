@@ -1,0 +1,521 @@
+{
+  "schema_version": 1,
+  "content_id": "a143eade5e99a685e6fd311f233dbc567dacca6abf0affe8102af931f40a59df",
+  "result": {
+    "study_id": "glm-5.2-whole-decode-throughput-only-counterfactual-v1",
+    "ledger_content_id": "204bb65f22e421ab2e99d45948ac584af874ffc1f95441e8e6c5b0167a3522c7",
+    "baseline_hardware_id": "h200-published-peak-component",
+    "committed_tokens": 12,
+    "hardware": [
+      {
+        "hardware_id": "h200-published-peak-component",
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "validation/results/custom-hardware-feasibility-2026-07-12.json#commodity_baselines/nvidia_h200_sxm+common-control-counterfactual"
+        },
+        "action_timings": [
+          {
+            "action_id": "decode_batch",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 9.6e-7,
+            "modeled_duration_seconds": 1.96e-6,
+            "earliest_start_seconds": 0.0,
+            "earliest_finish_seconds": 1.96e-6
+          },
+          {
+            "action_id": "decode_activation_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 8.192e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 1.0819199999999999e-6,
+            "earliest_start_seconds": 1.96e-6,
+            "earliest_finish_seconds": 3.0419199999999998e-6
+          },
+          {
+            "action_id": "dsa_index_lookup",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 1.96608e-7,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 3.96608e-7,
+            "earliest_start_seconds": 1.96e-6,
+            "earliest_finish_seconds": 2.356608e-6
+          },
+          {
+            "action_id": "expert_route",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 9.6e-7,
+            "modeled_duration_seconds": 1.96e-6,
+            "earliest_start_seconds": 2.356608e-6,
+            "earliest_finish_seconds": 4.316608e-6
+          },
+          {
+            "action_id": "moe_dispatch",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.00014177621333333335,
+            "coordination_component_seconds": 0.0000195,
+            "modeled_duration_seconds": 0.00016227621333333336,
+            "earliest_start_seconds": 4.316608e-6,
+            "earliest_finish_seconds": 0.00016659282133333334
+          },
+          {
+            "action_id": "routed_expert_weights_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.009437184,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.009438183999999999,
+            "earliest_start_seconds": 4.316608e-6,
+            "earliest_finish_seconds": 0.009442500607999999
+          },
+          {
+            "action_id": "semantic_kv_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.00061341696,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.0006144169600000001,
+            "earliest_start_seconds": 1.96e-6,
+            "earliest_finish_seconds": 0.00061637696
+          },
+          {
+            "action_id": "semantic_kv_store",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 2.156544e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 2.2156544e-7,
+            "earliest_start_seconds": 1.96e-6,
+            "earliest_finish_seconds": 2.18156544e-6
+          },
+          {
+            "action_id": "shared_dense_ffn_weights_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.00146276352,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.00146376352,
+            "earliest_start_seconds": 4.316608e-6,
+            "earliest_finish_seconds": 0.001468080128
+          },
+          {
+            "action_id": "expert_ready",
+            "fixed_component_seconds": 5e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 4e-7,
+            "modeled_duration_seconds": 9e-7,
+            "earliest_start_seconds": 0.009442500607999999,
+            "earliest_finish_seconds": 0.009443400607999999
+          },
+          {
+            "action_id": "routed_expert_ffn",
+            "fixed_component_seconds": 4e-6,
+            "throughput_component_seconds": 0.0007324666308236483,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.0007364666308236483,
+            "earliest_start_seconds": 0.009443400607999999,
+            "earliest_finish_seconds": 0.010179867238823647
+          },
+          {
+            "action_id": "shared_dense_ffn",
+            "fixed_component_seconds": 4e-6,
+            "throughput_component_seconds": 0.0001135323277776655,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.0001175323277776655,
+            "earliest_start_seconds": 0.009443400607999999,
+            "earliest_finish_seconds": 0.009560932935777665
+          },
+          {
+            "action_id": "ffn_complete",
+            "fixed_component_seconds": 5e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 1e-7,
+            "modeled_duration_seconds": 6e-7,
+            "earliest_start_seconds": 0.010179867238823647,
+            "earliest_finish_seconds": 0.010180467238823647
+          },
+          {
+            "action_id": "mtp_draft_schedule",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 8.799999999999999e-7,
+            "modeled_duration_seconds": 1.8799999999999998e-6,
+            "earliest_start_seconds": 0.010180467238823647,
+            "earliest_finish_seconds": 0.010182347238823646
+          },
+          {
+            "action_id": "mtp_verify_schedule",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 9.6e-7,
+            "modeled_duration_seconds": 1.96e-6,
+            "earliest_start_seconds": 0.010182347238823646,
+            "earliest_finish_seconds": 0.010184307238823647
+          },
+          {
+            "action_id": "mtp_verify_ready",
+            "fixed_component_seconds": 5e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 4e-7,
+            "modeled_duration_seconds": 9e-7,
+            "earliest_start_seconds": 0.010184307238823647,
+            "earliest_finish_seconds": 0.010185207238823647
+          },
+          {
+            "action_id": "token_commit",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 9.2e-7,
+            "modeled_duration_seconds": 1.92e-6,
+            "earliest_start_seconds": 0.010185207238823647,
+            "earliest_finish_seconds": 0.010187127238823647
+          }
+        ],
+        "optimistic_critical_path_seconds": 0.010187127238823647,
+        "serial_action_seconds": 0.012546419745374647,
+        "optimistic_committed_tokens_per_second": 1177.9572119475847,
+        "relative_ideal_speedup_vs_baseline": 1.0
+      },
+      {
+        "hardware_id": "custom-original-throughput-component",
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "validation/results/custom-hardware-feasibility-2026-07-12.json#profile+common-control-counterfactual"
+        },
+        "action_timings": [
+          {
+            "action_id": "decode_batch",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 9.6e-7,
+            "modeled_duration_seconds": 1.96e-6,
+            "earliest_start_seconds": 0.0,
+            "earliest_finish_seconds": 1.96e-6
+          },
+          {
+            "action_id": "decode_activation_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 3.2768e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 1.032768e-6,
+            "earliest_start_seconds": 1.96e-6,
+            "earliest_finish_seconds": 2.992768e-6
+          },
+          {
+            "action_id": "dsa_index_lookup",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 1.96608e-7,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 3.96608e-7,
+            "earliest_start_seconds": 1.96e-6,
+            "earliest_finish_seconds": 2.356608e-6
+          },
+          {
+            "action_id": "expert_route",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 9.6e-7,
+            "modeled_duration_seconds": 1.96e-6,
+            "earliest_start_seconds": 2.356608e-6,
+            "earliest_finish_seconds": 4.316608e-6
+          },
+          {
+            "action_id": "moe_dispatch",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.00007974912,
+            "coordination_component_seconds": 0.0000195,
+            "modeled_duration_seconds": 0.00010024912,
+            "earliest_start_seconds": 4.316608e-6,
+            "earliest_finish_seconds": 0.000104565728
+          },
+          {
+            "action_id": "routed_expert_weights_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0037748736,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.0037758736,
+            "earliest_start_seconds": 4.316608e-6,
+            "earliest_finish_seconds": 0.003780190208
+          },
+          {
+            "action_id": "semantic_kv_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.000245366784,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.00024636678400000004,
+            "earliest_start_seconds": 1.96e-6,
+            "earliest_finish_seconds": 0.00024832678400000006
+          },
+          {
+            "action_id": "semantic_kv_store",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 2.156544e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 2.2156544e-7,
+            "earliest_start_seconds": 1.96e-6,
+            "earliest_finish_seconds": 2.18156544e-6
+          },
+          {
+            "action_id": "shared_dense_ffn_weights_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.000585105408,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.0005861054080000001,
+            "earliest_start_seconds": 4.316608e-6,
+            "earliest_finish_seconds": 0.0005904220160000001
+          },
+          {
+            "action_id": "expert_ready",
+            "fixed_component_seconds": 5e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 4e-7,
+            "modeled_duration_seconds": 9e-7,
+            "earliest_start_seconds": 0.003780190208,
+            "earliest_finish_seconds": 0.003781090208
+          },
+          {
+            "action_id": "routed_expert_ffn",
+            "fixed_component_seconds": 4e-6,
+            "throughput_component_seconds": 0.0003623878656,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.00036638786559999996,
+            "earliest_start_seconds": 0.003781090208,
+            "earliest_finish_seconds": 0.0041474780736
+          },
+          {
+            "action_id": "shared_dense_ffn",
+            "fixed_component_seconds": 4e-6,
+            "throughput_component_seconds": 0.000056170119168,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.000060170119168,
+            "earliest_start_seconds": 0.003781090208,
+            "earliest_finish_seconds": 0.003841260327168
+          },
+          {
+            "action_id": "ffn_complete",
+            "fixed_component_seconds": 5e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 1e-7,
+            "modeled_duration_seconds": 6e-7,
+            "earliest_start_seconds": 0.0041474780736,
+            "earliest_finish_seconds": 0.0041480780736
+          },
+          {
+            "action_id": "mtp_draft_schedule",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 8.799999999999999e-7,
+            "modeled_duration_seconds": 1.8799999999999998e-6,
+            "earliest_start_seconds": 0.0041480780736,
+            "earliest_finish_seconds": 0.0041499580736
+          },
+          {
+            "action_id": "mtp_verify_schedule",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 9.6e-7,
+            "modeled_duration_seconds": 1.96e-6,
+            "earliest_start_seconds": 0.0041499580736,
+            "earliest_finish_seconds": 0.0041519180735999995
+          },
+          {
+            "action_id": "mtp_verify_ready",
+            "fixed_component_seconds": 5e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 4e-7,
+            "modeled_duration_seconds": 9e-7,
+            "earliest_start_seconds": 0.0041519180735999995,
+            "earliest_finish_seconds": 0.004152818073599999
+          },
+          {
+            "action_id": "token_commit",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 9.2e-7,
+            "modeled_duration_seconds": 1.92e-6,
+            "earliest_start_seconds": 0.004152818073599999,
+            "earliest_finish_seconds": 0.004154738073599999
+          }
+        ],
+        "optimistic_critical_path_seconds": 0.004154738073599999,
+        "serial_action_seconds": 0.0051488838382079995,
+        "optimistic_committed_tokens_per_second": 2888.2687157224896,
+        "relative_ideal_speedup_vs_baseline": 2.451930075581564
+      },
+      {
+        "hardware_id": "rubin-preliminary-peak-component",
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "validation/results/custom-hardware-feasibility-2026-07-12.json#commodity_baselines/nvidia_rubin_gpu+common-control-counterfactual"
+        },
+        "action_timings": [
+          {
+            "action_id": "decode_batch",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 9.6e-7,
+            "modeled_duration_seconds": 1.96e-6,
+            "earliest_start_seconds": 0.0,
+            "earliest_finish_seconds": 1.96e-6
+          },
+          {
+            "action_id": "decode_activation_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 1.7873454545454546e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 1.0178734545454546e-6,
+            "earliest_start_seconds": 1.96e-6,
+            "earliest_finish_seconds": 2.9778734545454544e-6
+          },
+          {
+            "action_id": "dsa_index_lookup",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 1.96608e-7,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 3.96608e-7,
+            "earliest_start_seconds": 1.96e-6,
+            "earliest_finish_seconds": 2.356608e-6
+          },
+          {
+            "action_id": "expert_route",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 9.6e-7,
+            "modeled_duration_seconds": 1.96e-6,
+            "earliest_start_seconds": 2.356608e-6,
+            "earliest_finish_seconds": 4.316608e-6
+          },
+          {
+            "action_id": "moe_dispatch",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.000035444053333333336,
+            "coordination_component_seconds": 0.0000195,
+            "modeled_duration_seconds": 0.00005594405333333333,
+            "earliest_start_seconds": 4.316608e-6,
+            "earliest_finish_seconds": 0.000060260661333333334
+          },
+          {
+            "action_id": "routed_expert_weights_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0020590219636363637,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.002060021963636364,
+            "earliest_start_seconds": 4.316608e-6,
+            "earliest_finish_seconds": 0.002064338571636364
+          },
+          {
+            "action_id": "semantic_kv_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.00013383642763636363,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.00013483642763636362,
+            "earliest_start_seconds": 1.96e-6,
+            "earliest_finish_seconds": 0.0001367964276363636
+          },
+          {
+            "action_id": "semantic_kv_store",
+            "fixed_component_seconds": 2e-7,
+            "throughput_component_seconds": 2.156544e-8,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 2.2156544e-7,
+            "earliest_start_seconds": 1.96e-6,
+            "earliest_finish_seconds": 2.18156544e-6
+          },
+          {
+            "action_id": "shared_dense_ffn_weights_read",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0003191484043636364,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.0003201484043636364,
+            "earliest_start_seconds": 4.316608e-6,
+            "earliest_finish_seconds": 0.0003244650123636364
+          },
+          {
+            "action_id": "expert_ready",
+            "fixed_component_seconds": 5e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 4e-7,
+            "modeled_duration_seconds": 9e-7,
+            "earliest_start_seconds": 0.002064338571636364,
+            "earliest_finish_seconds": 0.0020652385716363637
+          },
+          {
+            "action_id": "routed_expert_ffn",
+            "fixed_component_seconds": 4e-6,
+            "throughput_component_seconds": 0.0001811939328,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.00018519393279999998,
+            "earliest_start_seconds": 0.0020652385716363637,
+            "earliest_finish_seconds": 0.002250432504436364
+          },
+          {
+            "action_id": "shared_dense_ffn",
+            "fixed_component_seconds": 4e-6,
+            "throughput_component_seconds": 0.000028085059584,
+            "coordination_component_seconds": 0.0,
+            "modeled_duration_seconds": 0.000032085059584,
+            "earliest_start_seconds": 0.0020652385716363637,
+            "earliest_finish_seconds": 0.0020973236312203636
+          },
+          {
+            "action_id": "ffn_complete",
+            "fixed_component_seconds": 5e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 1e-7,
+            "modeled_duration_seconds": 6e-7,
+            "earliest_start_seconds": 0.002250432504436364,
+            "earliest_finish_seconds": 0.002251032504436364
+          },
+          {
+            "action_id": "mtp_draft_schedule",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 8.799999999999999e-7,
+            "modeled_duration_seconds": 1.8799999999999998e-6,
+            "earliest_start_seconds": 0.002251032504436364,
+            "earliest_finish_seconds": 0.002252912504436364
+          },
+          {
+            "action_id": "mtp_verify_schedule",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 9.6e-7,
+            "modeled_duration_seconds": 1.96e-6,
+            "earliest_start_seconds": 0.002252912504436364,
+            "earliest_finish_seconds": 0.002254872504436364
+          },
+          {
+            "action_id": "mtp_verify_ready",
+            "fixed_component_seconds": 5e-7,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 4e-7,
+            "modeled_duration_seconds": 9e-7,
+            "earliest_start_seconds": 0.002254872504436364,
+            "earliest_finish_seconds": 0.002255772504436364
+          },
+          {
+            "action_id": "token_commit",
+            "fixed_component_seconds": 1e-6,
+            "throughput_component_seconds": 0.0,
+            "coordination_component_seconds": 9.2e-7,
+            "modeled_duration_seconds": 1.92e-6,
+            "earliest_start_seconds": 0.002255772504436364,
+            "earliest_finish_seconds": 0.0022576925044363637
+          }
+        ],
+        "optimistic_critical_path_seconds": 0.0022576925044363637,
+        "serial_action_seconds": 0.002801945888248242,
+        "optimistic_committed_tokens_per_second": 5315.1613766799555,
+        "relative_ideal_speedup_vs_baseline": 4.512185436593314
+      }
+    ],
+    "claims": {
+      "end_to_end_latency_claim_permitted": false,
+      "energy_claim_permitted": false,
+      "cost_per_token_claim_permitted": false,
+      "blockers": [
+        "ledger_contains_assumptions",
+        "hardware_timing_is_not_calibrated",
+        "shared_resource_contention_is_not_modeled",
+        "serving_and_queueing_are_not_modeled"
+      ]
+    }
+  }
+}

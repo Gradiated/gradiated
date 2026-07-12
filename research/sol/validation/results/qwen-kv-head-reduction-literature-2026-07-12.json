@@ -1,0 +1,259 @@
+{
+  "schema_version": "inference-foundry.source-dossier.v1",
+  "as_of": "2026-07-12",
+  "topic": "Recovery evidence for reducing Qwen3-0.6B from eight to four unique KV heads",
+  "bottom_line": {
+    "one_shot_head_averaging": {
+      "assessment": "expected_to_fail_a_strict_quality_gate",
+      "confidence": "high_for_the_strategy_class_low_for_exact_qwen_recovery",
+      "reason": "Mean pooling is the best simple checkpoint initializer in the original GQA study, but that recipe includes additional pre-training. A decoder-only LLaMA2 study measured catastrophic perplexity after mean-pool initialization, while activation-aware initialization plus LoRA recovered much of the loss. No primary source tests zero-shot Qwen3-0.6B GQA-8 to GQA-4 conversion."
+    },
+    "reported_recovery_budgets": [
+      {
+        "source_id": "gqa_2023",
+        "budget": "5% of original pre-training steps/compute",
+        "tokens": null,
+        "other": "About 600 TPUv3 chip-days at alpha=0.05 for T5 XXL",
+        "note": "The paper does not report an exact token count for this run."
+      },
+      {
+        "source_id": "effective_kv_compress_2024",
+        "budget": "23,000 FLANv2 samples for activation-aware initialization; 23,000 to 232,000 FLANv2 samples for one-epoch LoRA ablations",
+        "tokens": null,
+        "other": "The main LLaMA2 run used 232,000 samples, LoRA, and a constant 4e-5 learning rate",
+        "note": "Samples are not tokens and their sequence-length distribution is not reported, so a token budget cannot be reconstructed."
+      },
+      {
+        "source_id": "dha_2024",
+        "budget": "0.2B tokens for fusion, 1B tokens for the early comparison, and up to 50B tokens for continued pre-training",
+        "tokens": {
+          "fusion": 200000000,
+          "early_comparison": 1000000000,
+          "extended": 50000000000
+        },
+        "other": "The abstract reports 0.25% of original pre-training budget; the paper also labels 0.5B and 1B runs as about 0.01% and 0.05%",
+        "note": "The paper states LLaMA2 used 2T pre-training tokens, making 50B equal to 2.5%, not 0.25%, and 0.5B equal to 0.025%, not 0.01%. Treat its percentage labels as internally inconsistent and prefer the absolute token counts."
+      },
+      {
+        "source_id": "align_then_merge_2025",
+        "budget": "262,144 C4 calibration tokens plus 93M pruning-training tokens for LLaMA2-7B 32-to-16 KV-head conversion",
+        "tokens": {
+          "calibration": 262144,
+          "teacher_sft": 37200000,
+          "half_head_pruning_training": 93000000
+        },
+        "other": "Eight A100 GPUs were used for teacher SFT and pruning training",
+        "note": "This is exact token accounting for an MHA-to-GQA experiment, not Qwen GQA-to-GQA recovery."
+      }
+    ],
+    "qwen_scale_projection": {
+      "official_qwen3_family_pretraining_tokens": 36000000000000,
+      "five_percent_tokens": 1800000000000,
+      "classification": "arithmetic_projection_not_a_recommended_budget",
+      "note": "Applying the GQA paper's 5% fraction to the Qwen3 family's approximately 36T-token corpus gives 1.8T tokens. No source establishes that Qwen3-0.6B needs or would recover with this amount."
+    }
+  },
+  "qwen3_0_6b_geometry": {
+    "official": {
+      "layers": 28,
+      "query_heads": 16,
+      "kv_heads": 8,
+      "head_dim": 128,
+      "checkpoint_dtype": "bfloat16",
+      "official_context_length_tokens": 32768
+    },
+    "derived_for_eight_to_four_unique_kv_heads": {
+      "baseline_kv_bytes_per_token_bf16": 114688,
+      "candidate_kv_bytes_per_token_bf16": 57344,
+      "kv_capacity_and_traffic_reduction_percent": 50.0,
+      "kv_bytes_saved_per_32768_token_sequence": 1879048192,
+      "gib_saved_per_32768_token_sequence": 1.75,
+      "bytes_saved_for_64_sequences_at_32768_tokens": 120259084288,
+      "gib_saved_for_64_sequences_at_32768_tokens": 112.0,
+      "local_checkpoint_weight_bytes_baseline": 1192099840,
+      "local_checkpoint_weight_bytes_if_duplicate_kv_weights_are_physically_deduplicated": 1133379584,
+      "local_checkpoint_weight_reduction_percent": 4.925783397471138,
+      "derivation": "28 layers * 2 cache tensors * KV heads * 128 dimensions * 2 BF16 bytes"
+    }
+  },
+  "recommended_local_experiment": {
+    "name": "gradual_teacher_distilled_gqa8_to_gqa4_recovery_screen",
+    "purpose": "Test whether the exact full-model four-head structure is locally recoverable enough to justify a larger training run; do not claim final model quality or cost reduction.",
+    "why_this_experiment": "It combines the least expensive transferable findings: use activation behavior rather than weight distance for grouping, avoid an abrupt mean-pooling cliff with a gradual original-to-shared-head gate, and adapt a small tied parameter set against the original model's logits.",
+    "data": {
+      "calibration": "First 4,096 non-empty Qwen tokens from the cached WikiText-2 train split, deterministic sequential order",
+      "training": "Next 8,192 non-overlapping Qwen tokens from the cached WikiText-2 train split, sequence length 128, microbatch 1, 64 optimizer steps",
+      "first_holdout": "Existing 512-target-token WikiText-2 test fixture",
+      "confirmation_holdout": "Existing deterministic sequential 4,096-target-token WikiText-2 test fixture, run only after the first holdout passes",
+      "teacher": "Unmodified pinned Qwen3-0.6B checkpoint with teacher logits precomputed for the fixed training tokens"
+    },
+    "arms": [
+      {
+        "id": "hard_mean_control",
+        "description": "Current minimum joint K/V weight-distance pairing and hard pair mean across all 28 layers, with no adaptation."
+      },
+      {
+        "id": "activation_pairing_control",
+        "description": "Choose each layer's joint K/V perfect pairing by minimum calibration-set distance between post-QK-normalization, pre-RoPE activations; apply the same hard pair mean with no adaptation."
+      },
+      {
+        "id": "gradual_distilled_candidate",
+        "description": "Use the activation-aware pairs. Initialize four shared K and V projections per layer by pair means. During training blend each original branch and its shared branch with a scalar gate z, linearly anneal z from 1 to 0 over steps 1-48, and keep z=0 for steps 49-64. Remove original branches before evaluation."
+      }
+    ],
+    "trainable_parameters": {
+      "shared_kv_projections": "Four tied K heads and four tied V heads in every layer",
+      "lora": "Rank-8 LoRA on q_proj and o_proj only; merge adapters before evaluation",
+      "frozen": "Embedding, norms, MLP, language head, and every other base parameter",
+      "constraint": "No independently trainable duplicate K/V branch may remain after z reaches zero"
+    },
+    "optimization": {
+      "optimizer": "AdamW",
+      "learning_rate": 0.00004,
+      "weight_decay": 0.05,
+      "loss": "0.7 * teacher-logit KL at temperature 2 + 0.3 * next-token cross entropy",
+      "checkpoints_after_training_tokens": [2048, 4096, 8192],
+      "precision": "BF16 model weights with FP32 optimizer state",
+      "device": "local CPU"
+    },
+    "decision_rule": {
+      "positive_recoverability_signal": "Held-out NLL improves monotonically at 2K, 4K, and 8K tokens and the 8K candidate passes every existing 512-token quality gate; then require confirmation on the untouched 4,096-token fixture.",
+      "negative_result": "Reject this recovery path if NLL is non-monotonic after 4K tokens or the 8K candidate remains outside any existing gate by more than 2x its allowed regression.",
+      "claim_if_positive": "Small-budget recoverability signal only",
+      "claim_if_negative": "This exact gradual tied-head adaptation is not promising at the tested budget; it does not disprove recovery at the literature's much larger budgets."
+    },
+    "cpu_feasibility_notes": [
+      "The screen uses 8,192 training tokens rather than the literature's 23K variable-length samples, 93M tokens, 0.2B tokens, or 5% pre-training budget.",
+      "Teacher logits are precomputed and only the tied structural parameters plus small adapters receive gradients.",
+      "This is deliberately a trend and gate test; its budget is far too small to validate production recovery."
+    ]
+  },
+  "sources": [
+    {
+      "id": "gqa_2023",
+      "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+      "url": "https://aclanthology.org/2023.emnlp-main.298.pdf",
+      "evidence_kind": "peer_reviewed_primary_experiment",
+      "direct_claim_paraphrases": [
+        "Checkpoint conversion mean-pools K and V heads within each target group, and mean pooling performed better than selecting one head or random initialization.",
+        "The converted checkpoint is then trained for a fraction alpha of its original pre-training steps; the main alpha=0.05 run used 5% of original compute and about 600 TPUv3 chip-days.",
+        "GQA had reasonable performance immediately after conversion, whereas MQA required uptraining; both benefited at 5%, with diminishing returns at 10%.",
+        "Reducing H KV heads to one reduces KV-cache capacity and KV data loading by a factor of H."
+      ],
+      "scope_limits": [
+        "T5 encoder-decoder checkpoints, not a decoder-only Qwen model",
+        "MHA-to-GQA/MQA, not an already-GQA eight-to-four conversion",
+        "No QK normalization",
+        "The paper explicitly lists decoder-only evaluation as future work"
+      ]
+    },
+    {
+      "id": "effective_kv_compress_2024",
+      "title": "Effectively Compress KV Heads for LLM",
+      "url": "https://arxiv.org/html/2406.07056",
+      "evidence_kind": "primary_preprint_decoder_only_experiment",
+      "direct_claim_paraphrases": [
+        "On LLaMA2-7B compressed from 32 to 16 KV heads, mean-pool initialization collapsed to WikiText-2 perplexity 1079.43 and C4 perplexity 625.68; its reported fine-tuned perplexities remained the same.",
+        "Activation-SVD initialization for the same 50% head reduction started at perplexity 13.57/18.57 and reached 7.08/9.12 after LoRA, versus the uncompressed model's 5.47/6.98.",
+        "The activation-aware initializer used 23K FLANv2 samples; increasing initialization data to 232K did not help, while larger fine-tuning sets generally improved recovery.",
+        "With only 23K fine-tuning samples, the 50%-head candidate reached perplexity 7.29/9.41 and average commonsense QA 61.93 versus 62.50 for the uncompressed model.",
+        "At context length 2048 on one 80GB A100, measured decode throughput rose from 8.05 to 13.41 tokens/s for the 50%-head LLaMA2-7B candidate."
+      ],
+      "scope_limits": [
+        "ArXiv preprint rather than a reported peer-reviewed venue",
+        "LLaMA2 MHA-to-GQA, not Qwen GQA-to-GQA",
+        "FLANv2 counts are samples, not tokens",
+        "Its RoPE key-cache path cannot always be folded into standard GQA weights and can add prefill overhead",
+        "It does not test Qwen's QK normalization",
+        "Single-device token throughput is not serving cost or SLO evidence"
+      ]
+    },
+    {
+      "id": "dha_2024",
+      "title": "DHA: Learning Decoupled-Head Attention from Transformer Checkpoints via Adaptive Heads Fusion",
+      "url": "https://arxiv.org/html/2406.06567v2",
+      "evidence_kind": "accepted_primary_experiment_neurips_2024",
+      "direct_claim_paraphrases": [
+        "DHA replaces abrupt averaging with search, progressive linear head fusion, and continued pre-training.",
+        "The reported fusion phase used 0.2B tokens; early and extended continued-pretraining comparisons used 1B and up to 50B tokens.",
+        "The paper reports that 0.2B-token DHA matched the performance reached by GQA at 1B tokens in one comparison.",
+        "It proposes converting an existing GQA checkpoint by first losslessly replicating KV heads into MHA form or by grouping existing GQA KV heads before fusion.",
+        "It finds layer and K-versus-V redundancy varies, motivating non-uniform and separately allocated K/V head budgets."
+      ],
+      "scope_limits": [
+        "Experiments are on LLaMA2 and Sheared-LLaMA MHA checkpoints",
+        "GQA-to-DHA compatibility is proposed but not experimentally validated in the paper",
+        "Reported percentage budgets are internally inconsistent with its own absolute token counts",
+        "The architecture is not standard uniform GQA and needs a compatible runtime"
+      ]
+    },
+    {
+      "id": "align_then_merge_2025",
+      "title": "Align Attention Heads Before Merging Them: An Effective Way for Converting MHA to GQA",
+      "url": "https://aclanthology.org/2025.findings-emnlp.467.pdf",
+      "evidence_kind": "peer_reviewed_primary_experiment",
+      "direct_claim_paraphrases": [
+        "The method calibrates on 128 C4 sequences of 2048 tokens, aligns heads with output-preserving Procrustes transforms, then gradually transfers original heads into new shared heads with L0 masks and teacher-logit distillation.",
+        "Its LLaMA2-7B 32-to-16 conversion used 93M pruning-training tokens after a 37.2M-token teacher SFT run.",
+        "The pruning path initializes masks at the original heads and constrains them toward the shared heads instead of beginning from a fully collapsed hard merge.",
+        "The paper gives a RoPE-compatible constrained rotation for key/query heads."
+      ],
+      "scope_limits": [
+        "MHA-to-GQA on LLaMA2 and Sheared-LLaMA, not Qwen GQA-to-GQA",
+        "Eight A100 GPUs were used for training",
+        "No test of QK normalization",
+        "Task-supervised recovery may not preserve broad agent behavior"
+      ]
+    },
+    {
+      "id": "qwen3_official_blog",
+      "title": "Qwen3: Think Deeper, Act Faster",
+      "url": "https://qwenlm.github.io/blog/qwen3/",
+      "evidence_kind": "official_model_documentation",
+      "direct_claim_paraphrases": [
+        "Qwen3-0.6B has 28 layers, 16 query heads, 8 KV heads, and a 32K context length.",
+        "The Qwen3 family used approximately 36T pre-training tokens.",
+        "Qwen3's 30B-A3B and 235B-A22B MoE models were designed with four KV heads, showing that four-head family architectures are viable when trained that way."
+      ],
+      "scope_limits": [
+        "The 36T figure is family-level documentation, not an exact per-checkpoint training ledger",
+        "Four KV heads in separately trained MoE models do not show that the dense 0.6B checkpoint can be converted"
+      ]
+    },
+    {
+      "id": "qwen3_official_config",
+      "title": "Qwen3-0.6B pinned config.json",
+      "url": "https://huggingface.co/Qwen/Qwen3-0.6B/blob/c916fa4defd319b7d4e4da17604ca7338f4d99f5/config.json",
+      "evidence_kind": "official_pinned_checkpoint_configuration",
+      "direct_claim_paraphrases": [
+        "The pinned checkpoint declares 28 layers, 16 attention heads, 8 KV heads, head dimension 128, BF16 dtype, and cache use enabled."
+      ],
+      "scope_limits": [
+        "Configuration geometry alone provides no recovery, kernel, throughput, or cost evidence"
+      ]
+    }
+  ],
+  "material_gain_if_quality_and_runtime_are_validated": {
+    "defensible": [
+      "Exactly 50% less semantic BF16 KV storage per token for eight-to-four unique heads",
+      "Exactly 50% less semantic KV data to read in an attention implementation that loads only the four unique heads",
+      "Up to 2x KV-limited sequence capacity before allocator and workspace overhead",
+      "1.75 GiB saved per 32K sequence and 112 GiB saved at 64 simultaneous 32K sequences",
+      "About 4.93% lower checkpoint weight bytes if duplicate K/V projection storage is physically eliminated"
+    ],
+    "analog_only": "A decoder-only LLaMA2 experiment measured 1.67x decode throughput at 50% KV-head reduction and context 2048, but this is not transferable as a Qwen serving or cost claim.",
+    "cost_conclusion": "No defensible percent reduction in total dollars per token exists yet. The gain can approach a device-count or concurrency discontinuity only when KV capacity or KV bandwidth is the binding resource; it can be negligible when weights, compute, prefill, or serving overhead dominate."
+  },
+  "unsupported_claims": [
+    "One-shot pair averaging is always unrecoverable",
+    "Eight-to-four Qwen3-0.6B recovery will succeed with 8,192 local training tokens",
+    "Five percent of Qwen's documented 36T tokens is necessary or sufficient",
+    "Activation-SVD or Procrustes transformations remain output-preserving through Qwen3 QK normalization without a new derivation",
+    "A four-head architecture used by other Qwen3 family members proves this checkpoint can be converted",
+    "The custom alias attention kernel is correct, faster, or physically stores only unique heads",
+    "A 50% semantic KV reduction produces a 50% total inference-cost reduction",
+    "Teacher-forced WikiText quality predicts chat, reasoning, tool use, or end-to-end agent success",
+    "Results transfer to GLM-5.2",
+    "Any recovered model preserves safety or alignment behavior"
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "schema_version": 2,
+  "trace_id": "glm-5.2-synthetic-exact-decode-quantum-v1",
+  "provenance": {
+    "provenance": "synthetic",
+    "generator_id": "foundry-glm-exact-ledger-serving-v1",
+    "seed": 20260712
+  },
+  "timestamp_basis": "relative_microseconds",
+  "identity": {
+    "model_id": "zai-org/GLM-5.2",
+    "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+    "tokenizer_id": "zai-org/GLM-5.2",
+    "tokenizer_revision": "b4734de4facf877f85769a911abafc5283eab3d9"
+  },
+  "requests": [
+    {
+      "request_id": 1,
+      "class": "tool",
+      "arrival_timestamp_microseconds": 0,
+      "input_tokens": 16384,
+      "output_tokens": 2,
+      "prefix_reused_tokens": 16384
+    },
+    {
+      "request_id": 2,
+      "class": "coding",
+      "arrival_timestamp_microseconds": 1000,
+      "input_tokens": 16384,
+      "output_tokens": 2,
+      "prefix_reused_tokens": 16384
+    },
+    {
+      "request_id": 3,
+      "class": "long_agent",
+      "arrival_timestamp_microseconds": 2000,
+      "input_tokens": 16384,
+      "output_tokens": 2,
+      "prefix_reused_tokens": 16384
+    },
+    {
+      "request_id": 4,
+      "class": "tool",
+      "arrival_timestamp_microseconds": 3000,
+      "input_tokens": 16384,
+      "output_tokens": 2,
+      "prefix_reused_tokens": 16384
+    },
+    {
+      "request_id": 5,
+      "class": "coding",
+      "arrival_timestamp_microseconds": 4000,
+      "input_tokens": 16384,
+      "output_tokens": 1,
+      "prefix_reused_tokens": 16384
+    },
+    {
+      "request_id": 6,
+      "class": "long_agent",
+      "arrival_timestamp_microseconds": 5000,
+      "input_tokens": 16384,
+      "output_tokens": 1,
+      "prefix_reused_tokens": 16384
+    },
+    {
+      "request_id": 7,
+      "class": "tool",
+      "arrival_timestamp_microseconds": 6000,
+      "input_tokens": 16384,
+      "output_tokens": 1,
+      "prefix_reused_tokens": 16384
+    },
+    {
+      "request_id": 8,
+      "class": "coding",
+      "arrival_timestamp_microseconds": 7000,
+      "input_tokens": 16384,
+      "output_tokens": 1,
+      "prefix_reused_tokens": 16384
+    }
+  ]
+}

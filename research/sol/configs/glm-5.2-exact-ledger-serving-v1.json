@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "study_id": "glm-5.2-upper-work-exact-ledger-serving-v1",
+  "workload_contract": {
+    "path": "workloads/glm-5.2-exact-decode-slo-v1.json",
+    "artifact_id": "b2dfc4abf7d45321e4ba4fffa4b67bb27ccfea47c9c9beedce4c0954e373f2ca"
+  },
+  "trace": {
+    "path": "workloads/glm-5.2-exact-decode-trace-v1.json",
+    "artifact_id": "1f5bfdc95ab2f6a8416baa071a3a84344ba887a6e3ddfaa4b9625e67fee6e531"
+  },
+  "lowering_report": {
+    "path": "../experiments/glm-5.2/whole-decode-lowering-v1.json",
+    "artifact_id": "b4ea0d78050edf710dc46d1def38498f3005393e5237e60ee69084f77c4c766d"
+  },
+  "lowering_report_content_id": "ad1ed16e0100ac4a936fad83233b8b047ce6f1823328d6f15be01508b5a5d7dc",
+  "roofline_report": {
+    "path": "../experiments/glm-5.2/whole-decode-throughput-counterfactual-v1.json",
+    "artifact_id": "3d57d01a9e28982ddc5b89410131138f30aae40f0454de88ffb9725d8188dd74"
+  },
+  "roofline_report_content_id": "8a33f8417091fe6cdab9b6ccb1d0ddf4292e04b09c6ba4e675e0959f948b546f",
+  "ledger_content_id": "97e283935a0a9a183a2c2ecbadcac4709f0c8a91127d9f80a3e97e4b6ff8082a",
+  "hardware_ids": [
+    "h200-published-peak-component",
+    "custom-original-throughput-component",
+    "rubin-preliminary-peak-component"
+  ],
+  "slo_provenance": {
+    "evidence_kind": "synthetic_assumption",
+    "source_artifact_id": "modeled-assumption:glm-5.2-synthetic-agentic-slo-v1",
+    "basis": "Synthetic exerciser only: class shape and thresholds mirror the existing agentic SLO fixture. They are not measured GLM-5.2 production objectives and cannot promote performance, SLO, provider, or cost claims."
+  }
+}

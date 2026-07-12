@@ -1,0 +1,862 @@
+{
+  "schema_version": 1,
+  "content_id": "3216cdd0e8c0988ccc7c779f9df9c7d0b8099f11375e7bdb441ab7463d9bc174",
+  "result": {
+    "study_id": "glm-5.2-storage-envelope-v1",
+    "model_id": "zai-org/GLM-5.2",
+    "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+    "semantic_mla_cache_bytes_per_token": 89856,
+    "routed_expert_parameter_count": 724775731200,
+    "active_routed_expert_parameter_count_per_token": 22649241600,
+    "routed_expert_layer_instance_count": 19200,
+    "active_routed_expert_layer_instances_per_token": 600,
+    "residency_assumptions": {
+      "checkpoint_replication_factor": 1,
+      "concurrent_sequences": 64,
+      "reserved_tokens_per_sequence": 32768,
+      "cache_replication_factor": 1,
+      "extra_cache_bytes_per_token": {
+        "lower": 0,
+        "upper": 32768
+      },
+      "indexer_cache_bytes_per_token": {
+        "lower": 0,
+        "upper": 8192
+      },
+      "fixed_runtime_bytes": 16000000000,
+      "fragmentation_overhead_basis_points": 1500,
+      "source_artifact_id": "modeled-assumption:glm-agentic-residency-v1",
+      "basis": "64 concurrent 32K-token reservations; semantic MLA cache is exact, while engine-extra and DSA-indexer cache are explicit stress bounds; runtime and fragmentation are modeled assumptions"
+    },
+    "variants": [
+      {
+        "variant_id": "glm-5.2-bf16",
+        "checkpoint": {
+          "model_id": "zai-org/GLM-5.2",
+          "checkpoint_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+          "payload_bytes": 1506659919872,
+          "source_artifact_id": "huggingface:zai-org/GLM-5.2@b4734de4facf877f85769a911abafc5283eab3d9/model.safetensors.index.json"
+        },
+        "routed_experts": {
+          "resident_parameter_count": 724775731200,
+          "active_parameter_count_per_token": 22649241600,
+          "resident_storage_bytes": {
+            "lower": 1449551462400,
+            "upper": 1449551462400
+          },
+          "per_layer_expert_storage_bytes": {
+            "lower": 75497472,
+            "upper": 75497472
+          },
+          "active_storage_footprint_bytes_per_token": {
+            "lower": 45298483200,
+            "upper": 45298483200
+          },
+          "storage_evidence": {
+            "kind": "model_spec_exact",
+            "source_artifact_id": "huggingface:zai-org/GLM-5.2@b4734de4facf877f85769a911abafc5283eab3d9/config.json+model.safetensors.index.json"
+          }
+        },
+        "active_traffic": {
+          "routed_expert_weight_bytes_per_output_token": {
+            "lower": 0,
+            "upper": 1449551462400
+          },
+          "non_routed_weight_bytes_per_output_token": {
+            "lower": 0,
+            "upper": 57108457472
+          },
+          "indexer_bytes_per_output_token": {
+            "lower": 0,
+            "upper": 393619968
+          },
+          "total_bytes_per_output_token": {
+            "lower": 0,
+            "upper": 1507053539840
+          },
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-assumption:glm-bf16-single-pass-traffic-v1"
+          },
+          "basis": "single-output-token HBM traffic envelope from zero incremental reads under complete reuse through one full routed/non-routed/indexer storage pass; route distribution, cache reuse, batching, and rereads remain unmeasured"
+        },
+        "residency": {
+          "checkpoint_payload_bytes": 1506659919872,
+          "checkpoint_resident_bytes": 1506659919872,
+          "reserved_token_slots": 2097152,
+          "semantic_mla_cache_bytes": 188441690112,
+          "extra_cache_bytes": {
+            "lower": 0,
+            "upper": 68719476736
+          },
+          "indexer_cache_bytes": {
+            "lower": 0,
+            "upper": 17179869184
+          },
+          "fixed_runtime_bytes": 16000000000,
+          "unfragmented_resident_bytes": {
+            "lower": 1711101609984,
+            "upper": 1797000955904
+          },
+          "fragmentation_overhead_bytes": {
+            "lower": 256665241498,
+            "upper": 269550143386
+          },
+          "total_resident_bytes": {
+            "lower": 1967766851482,
+            "upper": 2066551099290
+          }
+        },
+        "hardware": [
+          {
+            "hardware_id": "fireworks-h100-80gb-32x",
+            "deployment_device_count": 32,
+            "usable_memory_bytes_per_device": 72000000000,
+            "minimum_devices_for_checkpoint_payload": 21,
+            "minimum_devices_for_total_residency": {
+              "lower": 28,
+              "upper": 29
+            },
+            "deployment_capacity_status": "feasible",
+            "minimum_hourly_cost_usd": {
+              "lower": 196.0,
+              "upper": 203.0
+            },
+            "deployment_hourly_cost_usd": 224.0,
+            "expert_placement": {
+              "minimum_devices_for_routed_expert_storage": {
+                "lower": 21,
+                "upper": 21
+              },
+              "uniform_layer_expert_slots_per_device": 953,
+              "minimum_devices_for_uniform_layer_experts": 21
+            },
+            "bandwidth": {
+              "effective_aggregate_bytes_per_second": 75040000000000,
+              "traffic_bytes_per_output_token": {
+                "lower": 0,
+                "upper": 1507053539840
+              },
+              "bandwidth_limited_output_tokens_per_second": {
+                "lower": 49.79252429742264,
+                "upper": null
+              },
+              "traffic_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "modeled-assumption:glm-bf16-single-pass-traffic-v1"
+              },
+              "bandwidth_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "nvidia_h100+modeled-assumption:70-percent-of-published-peak"
+              }
+            },
+            "claims": {
+              "end_to_end_latency_seconds_per_output_token": null,
+              "cost_per_million_output_tokens_usd": null,
+              "measured_output_tokens_per_second": null,
+              "source_artifact_id": null,
+              "blockers": [
+                "missing_measured_serving_evidence",
+                "route_traffic_is_not_measured",
+                "memory_bandwidth_is_not_measured"
+              ]
+            },
+            "break_even": {
+              "required_billable_tokens_per_second_for_deployment": 539741.1355794513,
+              "required_billable_tokens_per_second_at_minimum_residency": {
+                "lower": 472273.4936320199,
+                "upper": 489140.4041188777
+              },
+              "assumption": {
+                "required_billable_tokens_per_second_per_usd_of_hourly_system_cost": 2409.5586409796933,
+                "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case"
+              }
+            }
+          },
+          {
+            "hardware_id": "fireworks-h200-141gb-20x",
+            "deployment_device_count": 20,
+            "usable_memory_bytes_per_device": 129000000000,
+            "minimum_devices_for_checkpoint_payload": 12,
+            "minimum_devices_for_total_residency": {
+              "lower": 16,
+              "upper": 17
+            },
+            "deployment_capacity_status": "feasible",
+            "minimum_hourly_cost_usd": {
+              "lower": 112.0,
+              "upper": 119.0
+            },
+            "deployment_hourly_cost_usd": 140.0,
+            "expert_placement": {
+              "minimum_devices_for_routed_expert_storage": {
+                "lower": 12,
+                "upper": 12
+              },
+              "uniform_layer_expert_slots_per_device": 1708,
+              "minimum_devices_for_uniform_layer_experts": 12
+            },
+            "bandwidth": {
+              "effective_aggregate_bytes_per_second": 67200000000000,
+              "traffic_bytes_per_output_token": {
+                "lower": 0,
+                "upper": 1507053539840
+              },
+              "bandwidth_limited_output_tokens_per_second": {
+                "lower": 44.590320266348634,
+                "upper": null
+              },
+              "traffic_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "modeled-assumption:glm-bf16-single-pass-traffic-v1"
+              },
+              "bandwidth_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "nvidia_h200+modeled-assumption:70-percent-of-published-peak"
+              }
+            },
+            "claims": {
+              "end_to_end_latency_seconds_per_output_token": null,
+              "cost_per_million_output_tokens_usd": null,
+              "measured_output_tokens_per_second": null,
+              "source_artifact_id": null,
+              "blockers": [
+                "missing_measured_serving_evidence",
+                "route_traffic_is_not_measured",
+                "memory_bandwidth_is_not_measured"
+              ]
+            },
+            "break_even": {
+              "required_billable_tokens_per_second_for_deployment": 337338.20973715704,
+              "required_billable_tokens_per_second_at_minimum_residency": {
+                "lower": 269870.56778972567,
+                "upper": 286737.4782765835
+              },
+              "assumption": {
+                "required_billable_tokens_per_second_per_usd_of_hourly_system_cost": 2409.5586409796933,
+                "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case"
+              }
+            }
+          },
+          {
+            "hardware_id": "fireworks-b200-180gb-16x",
+            "deployment_device_count": 16,
+            "usable_memory_bytes_per_device": 164000000000,
+            "minimum_devices_for_checkpoint_payload": 10,
+            "minimum_devices_for_total_residency": {
+              "lower": 12,
+              "upper": 13
+            },
+            "deployment_capacity_status": "feasible",
+            "minimum_hourly_cost_usd": {
+              "lower": 120.0,
+              "upper": 130.0
+            },
+            "deployment_hourly_cost_usd": 160.0,
+            "expert_placement": {
+              "minimum_devices_for_routed_expert_storage": {
+                "lower": 9,
+                "upper": 9
+              },
+              "uniform_layer_expert_slots_per_device": 2172,
+              "minimum_devices_for_uniform_layer_experts": 9
+            },
+            "bandwidth": {
+              "effective_aggregate_bytes_per_second": 89600000000000,
+              "traffic_bytes_per_output_token": {
+                "lower": 0,
+                "upper": 1507053539840
+              },
+              "bandwidth_limited_output_tokens_per_second": {
+                "lower": 59.453760355131514,
+                "upper": null
+              },
+              "traffic_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "modeled-assumption:glm-bf16-single-pass-traffic-v1"
+              },
+              "bandwidth_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "modeled-assumption:b200-70-percent-of-8tbps-peak"
+              }
+            },
+            "claims": {
+              "end_to_end_latency_seconds_per_output_token": null,
+              "cost_per_million_output_tokens_usd": null,
+              "measured_output_tokens_per_second": null,
+              "source_artifact_id": null,
+              "blockers": [
+                "missing_measured_serving_evidence",
+                "route_traffic_is_not_measured",
+                "memory_bandwidth_is_not_measured"
+              ]
+            },
+            "break_even": {
+              "required_billable_tokens_per_second_for_deployment": 385529.3825567509,
+              "required_billable_tokens_per_second_at_minimum_residency": {
+                "lower": 289147.0369175632,
+                "upper": 313242.62332736014
+              },
+              "assumption": {
+                "required_billable_tokens_per_second_per_usd_of_hourly_system_cost": 2409.5586409796933,
+                "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "variant_id": "glm-5.2-native-fp8",
+        "checkpoint": {
+          "model_id": "zai-org/GLM-5.2-FP8",
+          "checkpoint_revision": "ba978f7d347eaf65d22f1a86833408afdb953541",
+          "payload_bytes": 755617140416,
+          "source_artifact_id": "huggingface:zai-org/GLM-5.2-FP8@ba978f7d347eaf65d22f1a86833408afdb953541/model.safetensors.index.json"
+        },
+        "routed_experts": {
+          "resident_parameter_count": 724775731200,
+          "active_parameter_count_per_token": 22649241600,
+          "resident_storage_bytes": {
+            "lower": 724775731200,
+            "upper": 755617140416
+          },
+          "per_layer_expert_storage_bytes": null,
+          "active_storage_footprint_bytes_per_token": null,
+          "storage_evidence": {
+            "kind": "opaque_aggregate_bounds",
+            "bytes": {
+              "lower": 724775731200,
+              "upper": 755617140416
+            },
+            "source_artifact_id": "huggingface:zai-org/GLM-5.2-FP8@ba978f7d347eaf65d22f1a86833408afdb953541/model.safetensors.index.json",
+            "lower_bound_basis": "one payload byte per BF16-reference logical routed-expert parameter, excluding scale and metadata storage",
+            "upper_bound_basis": "the routed-expert tensors cannot exceed the exact full checkpoint tensor payload; internal tensor allocation is intentionally opaque"
+          }
+        },
+        "active_traffic": {
+          "routed_expert_weight_bytes_per_output_token": {
+            "lower": 0,
+            "upper": 755617140416
+          },
+          "non_routed_weight_bytes_per_output_token": {
+            "lower": 0,
+            "upper": 30841409216
+          },
+          "indexer_bytes_per_output_token": {
+            "lower": 0,
+            "upper": 196809984
+          },
+          "total_bytes_per_output_token": {
+            "lower": 0,
+            "upper": 786655359616
+          },
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-assumption:glm-native-fp8-single-pass-traffic-v1"
+          },
+          "basis": "single-output-token HBM traffic stress envelope; exact payload is pinned, but route locality, per-tensor FP8 metadata, cache reuse, batching, and rereads remain unmeasured"
+        },
+        "residency": {
+          "checkpoint_payload_bytes": 755617140416,
+          "checkpoint_resident_bytes": 755617140416,
+          "reserved_token_slots": 2097152,
+          "semantic_mla_cache_bytes": 188441690112,
+          "extra_cache_bytes": {
+            "lower": 0,
+            "upper": 68719476736
+          },
+          "indexer_cache_bytes": {
+            "lower": 0,
+            "upper": 17179869184
+          },
+          "fixed_runtime_bytes": 16000000000,
+          "unfragmented_resident_bytes": {
+            "lower": 960058830528,
+            "upper": 1045958176448
+          },
+          "fragmentation_overhead_bytes": {
+            "lower": 144008824580,
+            "upper": 156893726468
+          },
+          "total_resident_bytes": {
+            "lower": 1104067655108,
+            "upper": 1202851902916
+          }
+        },
+        "hardware": [
+          {
+            "hardware_id": "fireworks-h100-80gb-32x",
+            "deployment_device_count": 32,
+            "usable_memory_bytes_per_device": 72000000000,
+            "minimum_devices_for_checkpoint_payload": 11,
+            "minimum_devices_for_total_residency": {
+              "lower": 16,
+              "upper": 17
+            },
+            "deployment_capacity_status": "feasible",
+            "minimum_hourly_cost_usd": {
+              "lower": 112.0,
+              "upper": 119.0
+            },
+            "deployment_hourly_cost_usd": 224.0,
+            "expert_placement": {
+              "minimum_devices_for_routed_expert_storage": {
+                "lower": 11,
+                "upper": 11
+              },
+              "uniform_layer_expert_slots_per_device": null,
+              "minimum_devices_for_uniform_layer_experts": null
+            },
+            "bandwidth": {
+              "effective_aggregate_bytes_per_second": 75040000000000,
+              "traffic_bytes_per_output_token": {
+                "lower": 0,
+                "upper": 786655359616
+              },
+              "bandwidth_limited_output_tokens_per_second": {
+                "lower": 95.39120160146143,
+                "upper": null
+              },
+              "traffic_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "modeled-assumption:glm-native-fp8-single-pass-traffic-v1"
+              },
+              "bandwidth_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "nvidia_h100+modeled-assumption:70-percent-of-published-peak"
+              }
+            },
+            "claims": {
+              "end_to_end_latency_seconds_per_output_token": null,
+              "cost_per_million_output_tokens_usd": null,
+              "measured_output_tokens_per_second": null,
+              "source_artifact_id": null,
+              "blockers": [
+                "missing_measured_serving_evidence",
+                "route_traffic_is_not_measured",
+                "memory_bandwidth_is_not_measured"
+              ]
+            },
+            "break_even": {
+              "required_billable_tokens_per_second_for_deployment": 539741.1355794513,
+              "required_billable_tokens_per_second_at_minimum_residency": {
+                "lower": 269870.56778972567,
+                "upper": 286737.4782765835
+              },
+              "assumption": {
+                "required_billable_tokens_per_second_per_usd_of_hourly_system_cost": 2409.5586409796933,
+                "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case"
+              }
+            }
+          },
+          {
+            "hardware_id": "fireworks-h200-141gb-20x",
+            "deployment_device_count": 20,
+            "usable_memory_bytes_per_device": 129000000000,
+            "minimum_devices_for_checkpoint_payload": 6,
+            "minimum_devices_for_total_residency": {
+              "lower": 9,
+              "upper": 10
+            },
+            "deployment_capacity_status": "feasible",
+            "minimum_hourly_cost_usd": {
+              "lower": 63.0,
+              "upper": 70.0
+            },
+            "deployment_hourly_cost_usd": 140.0,
+            "expert_placement": {
+              "minimum_devices_for_routed_expert_storage": {
+                "lower": 6,
+                "upper": 6
+              },
+              "uniform_layer_expert_slots_per_device": null,
+              "minimum_devices_for_uniform_layer_experts": null
+            },
+            "bandwidth": {
+              "effective_aggregate_bytes_per_second": 67200000000000,
+              "traffic_bytes_per_output_token": {
+                "lower": 0,
+                "upper": 786655359616
+              },
+              "bandwidth_limited_output_tokens_per_second": {
+                "lower": 85.42495665802517,
+                "upper": null
+              },
+              "traffic_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "modeled-assumption:glm-native-fp8-single-pass-traffic-v1"
+              },
+              "bandwidth_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "nvidia_h200+modeled-assumption:70-percent-of-published-peak"
+              }
+            },
+            "claims": {
+              "end_to_end_latency_seconds_per_output_token": null,
+              "cost_per_million_output_tokens_usd": null,
+              "measured_output_tokens_per_second": null,
+              "source_artifact_id": null,
+              "blockers": [
+                "missing_measured_serving_evidence",
+                "route_traffic_is_not_measured",
+                "memory_bandwidth_is_not_measured"
+              ]
+            },
+            "break_even": {
+              "required_billable_tokens_per_second_for_deployment": 337338.20973715704,
+              "required_billable_tokens_per_second_at_minimum_residency": {
+                "lower": 151802.19438172068,
+                "upper": 168669.10486857852
+              },
+              "assumption": {
+                "required_billable_tokens_per_second_per_usd_of_hourly_system_cost": 2409.5586409796933,
+                "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case"
+              }
+            }
+          },
+          {
+            "hardware_id": "fireworks-b200-180gb-16x",
+            "deployment_device_count": 16,
+            "usable_memory_bytes_per_device": 164000000000,
+            "minimum_devices_for_checkpoint_payload": 5,
+            "minimum_devices_for_total_residency": {
+              "lower": 7,
+              "upper": 8
+            },
+            "deployment_capacity_status": "feasible",
+            "minimum_hourly_cost_usd": {
+              "lower": 70.0,
+              "upper": 80.0
+            },
+            "deployment_hourly_cost_usd": 160.0,
+            "expert_placement": {
+              "minimum_devices_for_routed_expert_storage": {
+                "lower": 5,
+                "upper": 5
+              },
+              "uniform_layer_expert_slots_per_device": null,
+              "minimum_devices_for_uniform_layer_experts": null
+            },
+            "bandwidth": {
+              "effective_aggregate_bytes_per_second": 89600000000000,
+              "traffic_bytes_per_output_token": {
+                "lower": 0,
+                "upper": 786655359616
+              },
+              "bandwidth_limited_output_tokens_per_second": {
+                "lower": 113.89994221070022,
+                "upper": null
+              },
+              "traffic_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "modeled-assumption:glm-native-fp8-single-pass-traffic-v1"
+              },
+              "bandwidth_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "modeled-assumption:b200-70-percent-of-8tbps-peak"
+              }
+            },
+            "claims": {
+              "end_to_end_latency_seconds_per_output_token": null,
+              "cost_per_million_output_tokens_usd": null,
+              "measured_output_tokens_per_second": null,
+              "source_artifact_id": null,
+              "blockers": [
+                "missing_measured_serving_evidence",
+                "route_traffic_is_not_measured",
+                "memory_bandwidth_is_not_measured"
+              ]
+            },
+            "break_even": {
+              "required_billable_tokens_per_second_for_deployment": 385529.3825567509,
+              "required_billable_tokens_per_second_at_minimum_residency": {
+                "lower": 168669.10486857852,
+                "upper": 192764.69127837545
+              },
+              "assumption": {
+                "required_billable_tokens_per_second_per_usd_of_hourly_system_cost": 2409.5586409796933,
+                "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "variant_id": "glm-5.2-nvidia-nvfp4-expert-selective",
+        "checkpoint": {
+          "model_id": "nvidia/GLM-5.2-NVFP4",
+          "checkpoint_revision": "aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa",
+          "payload_bytes": 464794806272,
+          "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+        },
+        "routed_experts": {
+          "resident_parameter_count": 724775731200,
+          "active_parameter_count_per_token": 22649241600,
+          "resident_storage_bytes": {
+            "lower": 362387865600,
+            "upper": 464794806272
+          },
+          "per_layer_expert_storage_bytes": null,
+          "active_storage_footprint_bytes_per_token": null,
+          "storage_evidence": {
+            "kind": "opaque_aggregate_bounds",
+            "bytes": {
+              "lower": 362387865600,
+              "upper": 464794806272
+            },
+            "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json",
+            "lower_bound_basis": "four packed payload bits per BF16-reference logical routed-expert parameter, excluding scales and metadata",
+            "upper_bound_basis": "the routed-expert tensors cannot exceed the exact full checkpoint tensor payload; the expert-selective release layout remains intentionally opaque"
+          }
+        },
+        "active_traffic": {
+          "routed_expert_weight_bytes_per_output_token": {
+            "lower": 0,
+            "upper": 464794806272
+          },
+          "non_routed_weight_bytes_per_output_token": {
+            "lower": 0,
+            "upper": 102406940672
+          },
+          "indexer_bytes_per_output_token": {
+            "lower": 0,
+            "upper": 393619968
+          },
+          "total_bytes_per_output_token": {
+            "lower": 0,
+            "upper": 567595366912
+          },
+          "evidence": {
+            "kind": "modeled_assumption",
+            "source_artifact_id": "modeled-assumption:glm-nvfp4-single-pass-traffic-v1"
+          },
+          "basis": "single-output-token HBM traffic stress envelope; exact total payload is pinned, while the selective NVFP4 tensor layout, route locality, cache reuse, batching, and rereads remain unmeasured"
+        },
+        "residency": {
+          "checkpoint_payload_bytes": 464794806272,
+          "checkpoint_resident_bytes": 464794806272,
+          "reserved_token_slots": 2097152,
+          "semantic_mla_cache_bytes": 188441690112,
+          "extra_cache_bytes": {
+            "lower": 0,
+            "upper": 68719476736
+          },
+          "indexer_cache_bytes": {
+            "lower": 0,
+            "upper": 17179869184
+          },
+          "fixed_runtime_bytes": 16000000000,
+          "unfragmented_resident_bytes": {
+            "lower": 669236496384,
+            "upper": 755135842304
+          },
+          "fragmentation_overhead_bytes": {
+            "lower": 100385474458,
+            "upper": 113270376346
+          },
+          "total_resident_bytes": {
+            "lower": 769621970842,
+            "upper": 868406218650
+          }
+        },
+        "hardware": [
+          {
+            "hardware_id": "fireworks-h100-80gb-32x",
+            "deployment_device_count": 32,
+            "usable_memory_bytes_per_device": 72000000000,
+            "minimum_devices_for_checkpoint_payload": 7,
+            "minimum_devices_for_total_residency": {
+              "lower": 11,
+              "upper": 13
+            },
+            "deployment_capacity_status": "feasible",
+            "minimum_hourly_cost_usd": {
+              "lower": 77.0,
+              "upper": 91.0
+            },
+            "deployment_hourly_cost_usd": 224.0,
+            "expert_placement": {
+              "minimum_devices_for_routed_expert_storage": {
+                "lower": 6,
+                "upper": 7
+              },
+              "uniform_layer_expert_slots_per_device": null,
+              "minimum_devices_for_uniform_layer_experts": null
+            },
+            "bandwidth": {
+              "effective_aggregate_bytes_per_second": 75040000000000,
+              "traffic_bytes_per_output_token": {
+                "lower": 0,
+                "upper": 567595366912
+              },
+              "bandwidth_limited_output_tokens_per_second": {
+                "lower": 132.20685786822887,
+                "upper": null
+              },
+              "traffic_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "modeled-assumption:glm-nvfp4-single-pass-traffic-v1"
+              },
+              "bandwidth_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "nvidia_h100+modeled-assumption:70-percent-of-published-peak"
+              }
+            },
+            "claims": {
+              "end_to_end_latency_seconds_per_output_token": null,
+              "cost_per_million_output_tokens_usd": null,
+              "measured_output_tokens_per_second": null,
+              "source_artifact_id": null,
+              "blockers": [
+                "missing_measured_serving_evidence",
+                "route_traffic_is_not_measured",
+                "memory_bandwidth_is_not_measured"
+              ]
+            },
+            "break_even": {
+              "required_billable_tokens_per_second_for_deployment": 539741.1355794513,
+              "required_billable_tokens_per_second_at_minimum_residency": {
+                "lower": 185536.0153554364,
+                "upper": 219269.83632915208
+              },
+              "assumption": {
+                "required_billable_tokens_per_second_per_usd_of_hourly_system_cost": 2409.5586409796933,
+                "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case"
+              }
+            }
+          },
+          {
+            "hardware_id": "fireworks-h200-141gb-20x",
+            "deployment_device_count": 20,
+            "usable_memory_bytes_per_device": 129000000000,
+            "minimum_devices_for_checkpoint_payload": 4,
+            "minimum_devices_for_total_residency": {
+              "lower": 6,
+              "upper": 7
+            },
+            "deployment_capacity_status": "feasible",
+            "minimum_hourly_cost_usd": {
+              "lower": 42.0,
+              "upper": 49.0
+            },
+            "deployment_hourly_cost_usd": 140.0,
+            "expert_placement": {
+              "minimum_devices_for_routed_expert_storage": {
+                "lower": 3,
+                "upper": 4
+              },
+              "uniform_layer_expert_slots_per_device": null,
+              "minimum_devices_for_uniform_layer_experts": null
+            },
+            "bandwidth": {
+              "effective_aggregate_bytes_per_second": 67200000000000,
+              "traffic_bytes_per_output_token": {
+                "lower": 0,
+                "upper": 567595366912
+              },
+              "bandwidth_limited_output_tokens_per_second": {
+                "lower": 118.39420107602585,
+                "upper": null
+              },
+              "traffic_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "modeled-assumption:glm-nvfp4-single-pass-traffic-v1"
+              },
+              "bandwidth_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "nvidia_h200+modeled-assumption:70-percent-of-published-peak"
+              }
+            },
+            "claims": {
+              "end_to_end_latency_seconds_per_output_token": null,
+              "cost_per_million_output_tokens_usd": null,
+              "measured_output_tokens_per_second": null,
+              "source_artifact_id": null,
+              "blockers": [
+                "missing_measured_serving_evidence",
+                "route_traffic_is_not_measured",
+                "memory_bandwidth_is_not_measured"
+              ]
+            },
+            "break_even": {
+              "required_billable_tokens_per_second_for_deployment": 337338.20973715704,
+              "required_billable_tokens_per_second_at_minimum_residency": {
+                "lower": 101201.46292114712,
+                "upper": 118068.37340800498
+              },
+              "assumption": {
+                "required_billable_tokens_per_second_per_usd_of_hourly_system_cost": 2409.5586409796933,
+                "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case"
+              }
+            }
+          },
+          {
+            "hardware_id": "fireworks-b200-180gb-16x",
+            "deployment_device_count": 16,
+            "usable_memory_bytes_per_device": 164000000000,
+            "minimum_devices_for_checkpoint_payload": 3,
+            "minimum_devices_for_total_residency": {
+              "lower": 5,
+              "upper": 6
+            },
+            "deployment_capacity_status": "feasible",
+            "minimum_hourly_cost_usd": {
+              "lower": 50.0,
+              "upper": 60.0
+            },
+            "deployment_hourly_cost_usd": 160.0,
+            "expert_placement": {
+              "minimum_devices_for_routed_expert_storage": {
+                "lower": 3,
+                "upper": 3
+              },
+              "uniform_layer_expert_slots_per_device": null,
+              "minimum_devices_for_uniform_layer_experts": null
+            },
+            "bandwidth": {
+              "effective_aggregate_bytes_per_second": 89600000000000,
+              "traffic_bytes_per_output_token": {
+                "lower": 0,
+                "upper": 567595366912
+              },
+              "bandwidth_limited_output_tokens_per_second": {
+                "lower": 157.85893476803446,
+                "upper": null
+              },
+              "traffic_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "modeled-assumption:glm-nvfp4-single-pass-traffic-v1"
+              },
+              "bandwidth_evidence": {
+                "kind": "modeled_assumption",
+                "source_artifact_id": "modeled-assumption:b200-70-percent-of-8tbps-peak"
+              }
+            },
+            "claims": {
+              "end_to_end_latency_seconds_per_output_token": null,
+              "cost_per_million_output_tokens_usd": null,
+              "measured_output_tokens_per_second": null,
+              "source_artifact_id": null,
+              "blockers": [
+                "missing_measured_serving_evidence",
+                "route_traffic_is_not_measured",
+                "memory_bandwidth_is_not_measured"
+              ]
+            },
+            "break_even": {
+              "required_billable_tokens_per_second_for_deployment": 385529.3825567509,
+              "required_billable_tokens_per_second_at_minimum_residency": {
+                "lower": 120477.93204898467,
+                "upper": 144573.5184587816
+              },
+              "assumption": {
+                "required_billable_tokens_per_second_per_usd_of_hourly_system_cost": 2409.5586409796933,
+                "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

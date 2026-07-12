@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "study_id": "qwen3-8b-vertical-codesign-v0",
+  "as_of": "2026-07-11",
+  "artifact_identity": {
+    "baseline_spec_id": "ad455511c1586cb9b4809b41e825be51afe5d618bcdab99f11299723a37b7496",
+    "selected_baseline_spec_id": "a4d77fdf0a6bdef2befb2c920c4425fd887e2c783d9d47ceada91b9b6626bc17",
+    "selected_candidate_spec_id": "4115fa3ca56e3ac04b503459f8dd6d76d39df44bb1322c4d167d1ccbd631f073",
+    "owned_h100_spec_id": "8cd30f9b1198ac7807bd60b7c830947211f8ee57258309247bbf678ec4ec4633",
+    "public_h100_spec_id": "30fea3fc23073b1b4aa3e5523a6d994cbfb4da73deb1e99ea4550d327bbe8821"
+  },
+  "status": {
+    "evidence_level": "analytical_screening",
+    "production_claim_permitted": false,
+    "conclusion_permitted": false,
+    "quantized_weight_storage_accounting_complete": true,
+    "blockers": [
+      "quality_unmeasured",
+      "performance_fidelity_not_external",
+      "hardware_sizing_not_validated",
+      "provider_baseline_not_measured"
+    ]
+  },
+  "contract": {
+    "model_id": "Qwen/Qwen3-8B",
+    "model_revision": "b968826d9c46dd6066d109eabc6255188de91218",
+    "workload_seed": 20260711,
+    "request_count": 512,
+    "arrival_rate_per_second": 2.0,
+    "input_tokens": 8585216,
+    "output_tokens": 591872,
+    "slo_contract_id": "qwen3-agentic-class-slo-v2"
+  },
+  "same_methodology_comparison": {
+    "baseline": {
+      "name": "unchanged-model custom-sizing reference",
+      "input_usd_per_million_tokens": 0.010987474085048072,
+      "output_usd_per_million_tokens": 0.6228041920286397,
+      "workload_weighted_usd_per_million_tokens": 0.05053118352366799,
+      "logical_devices_per_replica": 7,
+      "replicas": 3,
+      "deployed_logical_devices": 21,
+      "selected_design_target_output_tokens_per_second": 5000.0,
+      "feasible": true,
+      "violations": [],
+      "rejected_hardware_trials": [
+        {
+          "design_target_output_tokens_per_second": 20000.0,
+          "physical_devices_provisioned": 16,
+          "minimum_required_device_count": 26,
+          "violations": [
+            "requires 26 devices with 16 allowed",
+            "requires 7 HBM stacks per device with 4 allowed"
+          ]
+        }
+      ]
+    },
+    "candidate": {
+      "name": "paired model, full-layer kernel, re-sized hardware",
+      "input_usd_per_million_tokens": 0.005670604463118069,
+      "output_usd_per_million_tokens": 0.428709361394776,
+      "workload_weighted_usd_per_million_tokens": 0.033012978731032046,
+      "minimum_input_price_at_50pct_margin": 0.011341208926236138,
+      "minimum_output_price_at_50pct_margin": 0.857418722789552,
+      "logical_devices_per_replica": 7,
+      "replicas": 1,
+      "deployed_logical_devices": 7,
+      "selected_design_target_output_tokens_per_second": 20000.0,
+      "hbm_capacity_bytes_per_replica": 672000000000,
+      "usable_hbm_bandwidth_bytes_per_second_per_replica": 17920000000000.0,
+      "weight_storage_bytes": 3683127624,
+      "quantized_weight_storage": {
+        "coverage_numerator": 1,
+        "coverage_denominator": 1,
+        "group_size": 128,
+        "code_bits": 4,
+        "scale_bits": 16,
+        "effective_bits_per_weight": 4.125,
+        "fixed_metadata_bytes": 0
+      },
+      "feasible": true,
+      "violations": []
+    },
+    "projected_reduction_fraction": {
+      "input": 0.48390281340142427,
+      "output": 0.3116466348783635,
+      "workload_weighted": 0.3466810704014225
+    }
+  },
+  "owned_h100_sensitivity": {
+    "baseline_name": "four-H100 owned-TCO sensitivity",
+    "physical_h100s": 8,
+    "assumed_four_h100_group_hour_usd": 10.0,
+    "input_usd_per_million_tokens": 0.09162802632339631,
+    "output_usd_per_million_tokens": 1.4068114440104544,
+    "owned_h100_cost_divided_by_candidate": {
+      "input": 16.158423130964284,
+      "output": 3.2815039061276656,
+      "workload_weighted": 5.344872615027737
+    },
+    "measured": false
+  },
+  "candidate_simulated_slo": {
+    "all_class_objectives_met": true,
+    "all_requests_met": true,
+    "aggregate_p95_ttft_milliseconds": 450.859,
+    "aggregate_p95_tpot_milliseconds": 6.689300439667806,
+    "by_class": [
+      {
+        "class": "tool",
+        "requests": 120,
+        "p95_ttft_milliseconds": 238.613,
+        "p95_tpot_milliseconds": 6.867482352941176
+      },
+      {
+        "class": "coding",
+        "requests": 236,
+        "p95_ttft_milliseconds": 412.85,
+        "p95_tpot_milliseconds": 6.696609970674487
+      },
+      {
+        "class": "long_agent",
+        "requests": 156,
+        "p95_ttft_milliseconds": 520.96,
+        "p95_tpot_milliseconds": 6.617788959452858
+      }
+    ],
+    "trace_id": "simulation-4115fa3ca56e3ac04b503459f8dd6d76d39df44bb1322c4d167d1ccbd631f073"
+  },
+  "candidate_simulation": {
+    "p95_ttft_milliseconds": 450.85927791623703,
+    "p95_tpot_milliseconds": 6.689300063179384,
+    "aggregate_output_goodput_tokens_per_second": 2188.996461771956,
+    "trace_energy_joules_per_replica": 263839.9759252025,
+    "duration_seconds": 270.385087566971
+  },
+  "exact_shapley_savings_fraction_of_baseline": {
+    "w4_weights": {
+      "input": 0.06507176481075536,
+      "output": -0.005320874571777282,
+      "workload_weighted": 0.008995978425255449
+    },
+    "fp8_kv": {
+      "input": 0.2369800294050366,
+      "output": 0.12423049633425128,
+      "workload_weighted": 0.14716213385513488
+    },
+    "four_kv_heads": {
+      "input": 0.2383874430817579,
+      "output": 0.12497202560117608,
+      "workload_weighted": 0.14803909445822913
+    },
+    "ffn_10240": {
+      "input": -0.013340946628098262,
+      "output": 0.03230161169121865,
+      "workload_weighted": 0.023018570117580683
+    },
+    "full_layer_fusion": {
+      "input": -0.04319547726802718,
+      "output": 0.035463375823494854,
+      "workload_weighted": 0.01946529354522243
+    }
+  },
+  "standalone_savings_fraction_of_baseline": {
+    "w4_weights": {
+      "input": -0.08335334268817716,
+      "output": 0.08975626243681671,
+      "workload_weighted": 0.05454825218618939
+    },
+    "fp8_kv": {
+      "input": 0.06956695761403467,
+      "output": 0.3312058928668687,
+      "workload_weighted": 0.2779922869107252
+    },
+    "four_kv_heads": {
+      "input": 0.07090147747704022,
+      "output": 0.33197680778337213,
+      "workload_weighted": 0.27887783098786606
+    },
+    "ffn_10240": {
+      "input": -0.20525931438590297,
+      "output": 0.18383712564690102,
+      "workload_weighted": 0.10470049172490697
+    },
+    "full_layer_fusion": {
+      "input": -0.1980433558815094,
+      "output": 0.12660159127877912,
+      "workload_weighted": 0.06057346638541626
+    }
+  },
+  "measured_int4_evidence": {
+    "status": "measured_failed",
+    "model_id": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "weight_sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
+    "target_tokens": 155,
+    "is_standard_benchmark": false,
+    "tested_group_sizes": [8, 16, 32, 64, 128],
+    "passing_group_sizes": [],
+    "group_128": {
+      "effective_bits_per_quantized_weight": 4.125,
+      "nll_delta": 0.20879045917141825,
+      "perplexity_ratio": 1.232186778038894,
+      "logit_rmse": 1.2727578871735912,
+      "logit_cosine_similarity": 0.9258855704155327,
+      "top1_agreement": 0.7419354838709677,
+      "passed": false
+    },
+    "w4_quality_validated": false,
+    "reason": "The measured naive-QDQ result is a failed small-corpus Qwen3-0.6B test, not rotation-assisted Qwen3-8B task-level evidence."
+  },
+  "sensitivity": {
+    "scenario_count": 243,
+    "input_usd_per_million_tokens": {
+      "lower": 0.004128691603962596,
+      "nominal": 0.005670604463118069,
+      "upper": 0.05334368163549136,
+      "scenarios_below_owned_h100": 243,
+      "worst_case_advantage_fraction": 0.4178235221697603
+    },
+    "output_usd_per_million_tokens": {
+      "lower": 0.30988943759245496,
+      "nominal": 0.428709361394776,
+      "upper": 4.102400363716465,
+      "scenarios_below_owned_h100": 162,
+      "worst_case_advantage_fraction": -1.9160982313461896
+    },
+    "output_scenarios_below_owned_h100_at_1000_units": 0
+  },
+  "artifacts": {
+    "baseline": "artifacts/qwen3-8b/factorial/baseline.json",
+    "candidate": "artifacts/qwen3-8b/factorial/full.json",
+    "owned_h100": "artifacts/qwen3-8b/h100-owned.json",
+    "public_h100": "artifacts/qwen3-8b/h100-public.json",
+    "attribution": "artifacts/qwen3-8b/full-stack-attribution.json",
+    "class_slo": "artifacts/qwen3-8b/class-slo.json",
+    "sensitivity": "artifacts/qwen3-8b/sensitivity.json",
+    "measured_int4_sweep": "validation/results/qwen3-0.6b-int4-sweep-v1.json"
+  }
+}

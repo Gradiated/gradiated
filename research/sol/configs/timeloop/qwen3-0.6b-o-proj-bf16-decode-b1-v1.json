@@ -1,0 +1,14 @@
+{
+  "operation": "gemm",
+  "m": 1,
+  "n": 1024,
+  "k": 2048,
+  "batch": 1,
+  "sequence_length": 1,
+  "heads": 16,
+  "input_type": "bf16",
+  "weight_type": "bf16",
+  "output_type": "bf16",
+  "accumulator_type": "fp32",
+  "layout": "row_major"
+}

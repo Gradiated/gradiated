@@ -1,0 +1,558 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-07-12",
+  "subject": {
+    "config": "configs/glm-5.2-ledger-roofline-v1.json",
+    "profile_id": "glm-dsa-moe-custom-upper-bound",
+    "fixture_result": "experiments/glm-5.2/decode-ledger-roofline-v1.json",
+    "fixture_relative_ideal_speedup": 5.3801812448925155,
+    "claim_status": "modeled_fixture_only_not_latency_energy_or_cost_evidence"
+  },
+  "evidence_labels": [
+    "shipped_fact",
+    "production_vendor_claim",
+    "announced_roadmap",
+    "derived_bound",
+    "foundry_assumption",
+    "unknown_requires_supplier_or_measurement"
+  ],
+  "profile": {
+    "matrix_pflops": 2.0,
+    "matrix_fixed_latency_microseconds": 1.0,
+    "attention_pflops": 2.0,
+    "attention_fixed_latency_microseconds": 0.8,
+    "topk_pflops": 0.5,
+    "topk_non_flop_operations_per_second": 500000000000.0,
+    "topk_fixed_latency_microseconds": 0.5,
+    "hbm_path_tb_per_second": 12.0,
+    "hbm_fixed_latency_microseconds": 0.2,
+    "on_chip_cache_tb_per_second": 150.0,
+    "on_chip_cache_fixed_latency_microseconds": 0.05,
+    "expert_fabric_tb_per_second": 1.6,
+    "expert_fabric_fixed_latency_microseconds": 0.2,
+    "expert_fabric_latency_microseconds_per_message": 0.05,
+    "barrier_fixed_latency_microseconds": 0.1,
+    "barrier_latency_microseconds_per_participant": 0.01,
+    "scheduler_fixed_latency_microseconds": 0.2,
+    "scheduler_latency_microseconds_per_request": 0.02,
+    "scheduler_latency_microseconds_per_token": 0.002,
+    "memory_capacity_bytes": null,
+    "power_watts": null,
+    "precision_contract": null,
+    "package_area": null,
+    "yield": null,
+    "nre_usd": null
+  },
+  "fixture_diagnostics": {
+    "ledger_flops": 222298112,
+    "critical_path_microseconds": {
+      "modeled_h200_like": 48.621869670527366,
+      "custom": 9.037217792000002,
+      "relative_ideal_speedup": 5.3801812448925155
+    },
+    "optimistic_committed_tokens_per_second": {
+      "modeled_h200_like": 61700.63019642538,
+      "custom": 331960.57338085666
+    },
+    "serial_microseconds": {
+      "modeled_h200_like": 57.1343415358408,
+      "custom": 11.064748842666668,
+      "speedup": 5.163636549573147
+    },
+    "custom_serial_component_microseconds": {
+      "fixed": 7.4,
+      "throughput": 0.5827488426666665,
+      "coordination": 3.082
+    },
+    "custom_serial_component_share_percent": {
+      "fixed": 66.87905984331911,
+      "throughput": 5.266715503017425,
+      "coordination": 27.854224653663444
+    },
+    "diagnostic_serial_speedup_if_only_throughput_uses_custom_totals": 1.0542801898038834,
+    "diagnostic_serial_speedup_if_only_fixed_and_coordination_use_custom_totals": 4.079176663630532,
+    "moe_dispatch": {
+      "aggregate_bytes": 24576,
+      "messages": 56,
+      "serialization_microseconds_at_profile_bandwidth": 0.01536,
+      "fixed_microseconds": 0.2,
+      "message_microseconds": 2.8,
+      "total_microseconds": 3.01536,
+      "serialization_share_percent": 0.5093919134033748,
+      "message_share_percent": 92.85790088082352
+    },
+    "interpretation": "The checked speedup is predominantly a fixed and coordination latency assumption on an incomplete mechanism fixture; raw throughput changes alone explain little of the serial diagnostic."
+  },
+  "commodity_baselines": [
+    {
+      "id": "nvidia_h200_sxm",
+      "evidence": "shipped_fact",
+      "memory_gb": 141,
+      "memory_tb_per_second": 4.8,
+      "nvlink_tb_per_second": 0.9,
+      "dense_bf16_pflops_derived_from_sparse_spec": 0.9895,
+      "maximum_power_kw": 0.7,
+      "source_ids": ["nvidia_h200"]
+    },
+    {
+      "id": "nvidia_b300_sxm",
+      "evidence": "shipped_fact",
+      "memory_gb": 288,
+      "memory_tb_per_second": 8.0,
+      "nvlink_tb_per_second": 1.8,
+      "gpu_power_kw": 1.4,
+      "eight_gpu_system_power_kw": 14.5,
+      "source_ids": ["nvidia_hgx", "nvidia_b300_guide", "nvidia_power_docs"]
+    },
+    {
+      "id": "amd_mi355x",
+      "evidence": "shipped_fact",
+      "memory_gb": 288,
+      "memory_tb_per_second": 8.0,
+      "dense_bf16_pflops": 2.5166,
+      "aggregate_scale_up_tb_per_second": 1.0752,
+      "board_power_kw": 1.4,
+      "source_ids": ["amd_mi355x", "amd_cdna4"]
+    },
+    {
+      "id": "nvidia_rubin_gpu",
+      "evidence": "production_vendor_claim_with_preliminary_specs",
+      "memory_gb": 288,
+      "memory_tb_per_second": 22.0,
+      "dense_bf16_pflops": 4.0,
+      "nvlink_tb_per_second": 3.6,
+      "power_kw": null,
+      "source_ids": ["nvidia_rubin", "nvidia_rubin_production"]
+    },
+    {
+      "id": "amd_mi450_series",
+      "evidence": "announced_roadmap_second_half_2026",
+      "memory_gb": 432,
+      "memory_tb_per_second": 19.6,
+      "scale_up_tb_per_second": null,
+      "power_kw": null,
+      "source_ids": ["amd_helios", "amd_helios_timing"]
+    }
+  ],
+  "derived_bounds": {
+    "hbm_stacks_required_for_12_tb_per_second": [
+      {
+        "memory": "hbm3e_1.2_tb_per_second_per_stack",
+        "stacks": 10,
+        "evidence": "derived_bound",
+        "source_ids": ["micron_hbm3e"]
+      },
+      {
+        "memory": "micron_hbm4_over_2.8_tb_per_second_per_stack",
+        "stacks": 5,
+        "capacity_gb_at_36_gb_per_stack": 180,
+        "evidence": "derived_bound",
+        "source_ids": ["micron_hbm4"]
+      },
+      {
+        "memory": "samsung_hbm4_up_to_3.3_tb_per_second_per_stack",
+        "stacks": 4,
+        "capacity_gb_at_36_gb_per_stack": 144,
+        "evidence": "derived_bound",
+        "source_ids": ["samsung_hbm4"]
+      },
+      {
+        "memory": "samsung_hbm4e_up_to_3.6_tb_per_second_per_stack",
+        "stacks": 4,
+        "capacity_gb_at_48_gb_per_stack": 192,
+        "evidence": "derived_bound_from_sample_spec",
+        "source_ids": ["samsung_hbm4e"]
+      }
+    ],
+    "glm_5_2_residency": [
+      {
+        "variant": "bf16",
+        "exact_checkpoint_bytes": 1506659919872,
+        "modeled_total_resident_bytes": [1967766851482, 2066551099290],
+        "devices_at_288_gb": [7, 8],
+        "devices_at_432_gb": [5, 5],
+        "devices_at_960_gb": [3, 3]
+      },
+      {
+        "variant": "native_fp8",
+        "exact_checkpoint_bytes": 755617140416,
+        "modeled_total_resident_bytes": [1104067655108, 1202851902916],
+        "devices_at_288_gb": [4, 5],
+        "devices_at_432_gb": [3, 3],
+        "devices_at_960_gb": [2, 2]
+      },
+      {
+        "variant": "expert_selective_nvfp4",
+        "exact_checkpoint_bytes": 464794806272,
+        "modeled_total_resident_bytes": [769621970842, 868406218650],
+        "devices_at_288_gb": [3, 4],
+        "devices_at_432_gb": [2, 3],
+        "devices_at_960_gb": [1, 1]
+      }
+    ],
+    "single_package_nvfp4_residency": {
+      "hbm4_36_gb_stacks_required": [22, 25],
+      "hbm4e_48_gb_stacks_required": [17, 19],
+      "tsmc_2027_announced_package_stack_capacity": 12,
+      "tsmc_2028_announced_package_stack_capacity": 20,
+      "source_ids": ["tsmc_2025_packaging", "tsmc_2026_packaging"],
+      "interpretation": "A single-package full-residency NVFP4 design is outside the 2027 package roadmap and only arithmetically fits the announced 2028 20-stack envelope with 48 GB stacks; power, area, yield, and usable-capacity margins remain unknown."
+    },
+    "on_chip_cache": {
+      "profile_tb_per_second": 150.0,
+      "bytes_per_cycle_at_2_ghz": 75000,
+      "equivalent_64_bit_banks_per_cycle_at_2_ghz": 9375,
+      "nvidia_groq3_lpx_derived_tb_per_second_per_lpu": 156.25,
+      "nvidia_groq3_lpx_derived_sram_gb_per_lpu": 0.5,
+      "source_ids": ["nvidia_groq3_lpx"],
+      "interpretation": "The bandwidth has a specialized-SRAM precedent, but only for heavily banked local storage; it says nothing about the capacity, wiring, or energy needed for GLM state."
+    },
+    "illustrative_io_power_sensitivity_not_measurement": {
+      "hbm_12_tb_per_second_watts": {
+        "at_2_pj_per_bit": 192,
+        "at_3_pj_per_bit": 288,
+        "at_5_pj_per_bit": 480
+      },
+      "sram_150_tb_per_second_watts": {
+        "at_0.1_pj_per_bit": 120,
+        "at_0.25_pj_per_bit": 300,
+        "at_0.5_pj_per_bit": 600
+      },
+      "warning": "Energy-per-bit values are explicit sensitivity assumptions; supplier or post-layout evidence is required."
+    }
+  },
+  "assessment": [
+    {
+      "assumption": "12 TB/s HBM path",
+      "classification": "plausible_single_2026_hbm4_package_or_multi_device_aggregate",
+      "business_implication": "At or below Rubin and MI450 headline bandwidth; not a hardware moat by itself.",
+      "blocking_evidence": "sustained workload bandwidth, capacity, controller area, stack count, and power"
+    },
+    {
+      "assumption": "1.6 TB/s expert fabric",
+      "classification": "plausible_nominal_scale_up_bandwidth",
+      "business_implication": "Below B300 NVLink and Rubin NVLink headline bandwidth, but useful all-to-all bandwidth and latency are unmeasured.",
+      "blocking_evidence": "per-rank topology, direction convention, collective efficiency, contention, and energy per bit"
+    },
+    {
+      "assumption": "2 PFLOP/s matrix and attention engines",
+      "classification": "plausible_peak_rate_precision_contract_missing",
+      "business_implication": "Within shipped MI355X dense BF16 and below Rubin preliminary dense BF16; differentiation must be utilization or lower precision with quality evidence.",
+      "blocking_evidence": "datatype, sparsity, accumulation, achieved utilization, model quality, area, and power"
+    },
+    {
+      "assumption": "150 TB/s on-chip cache",
+      "classification": "plausible_for_small_distributed_sram_working_set_not_validated_for_capacity",
+      "business_implication": "Comparable derived per-LPU bandwidth exists in an SRAM-centric product, but large DSA/KV state cannot be assumed local.",
+      "blocking_evidence": "hot-set bytes, bank count, ports, floorplan, wire energy, and sustained access pattern"
+    },
+    {
+      "assumption": "0.05 us per fabric message and 0.1-0.2 us synchronization/control fixed costs",
+      "classification": "high_risk_unsubstantiated",
+      "business_implication": "These assumptions dominate the fixture gain and are more aggressive than public software-launch measurements; UALink leaves implementation latency to vendors and uses a 1,000 ns link RTT only as an explanatory example.",
+      "blocking_evidence": "cycle-level RTL or silicon microbenchmarks including protocol, switching, queueing, and software"
+    },
+    {
+      "assumption": "full GLM-5.2 hardware target",
+      "classification": "incomplete_without_capacity_power_package_yield_and_cost",
+      "business_implication": "The current profile is a timing vector, not a buildable accelerator specification.",
+      "blocking_evidence": "capacity and placement plan, PPA, package BOM, yield model, landed system cost, and NRE quote"
+    }
+  ],
+  "underwriting_intervals": [
+    {
+      "id": "conservative_shipped_2026",
+      "evidence_mix": "shipped peaks plus foundry utilization assumptions",
+      "sustained_hbm_tb_per_second": [4.4, 5.6],
+      "useful_scale_up_tb_per_second": [0.48384, 1.17],
+      "compute_action_fixed_microseconds": [2.0, 5.0],
+      "fabric_message_microseconds": [0.25, 1.0],
+      "on_chip_cache_tb_per_second": [50.0, 100.0],
+      "accelerator_power_kw": [1.0, 1.4]
+    },
+    {
+      "id": "base_2026_2027",
+      "evidence_mix": "production and announced HBM4 accelerators plus foundry utilization assumptions",
+      "sustained_hbm_tb_per_second": [9.8, 15.4],
+      "useful_scale_up_tb_per_second": [0.9, 2.52],
+      "compute_action_fixed_microseconds": [0.8, 2.5],
+      "fabric_message_microseconds": [0.1, 0.5],
+      "on_chip_cache_tb_per_second": [100.0, 175.0],
+      "accelerator_power_kw": [1.2, 1.8]
+    },
+    {
+      "id": "aggressive_custom_2027_2028",
+      "evidence_mix": "sampled HBM4E, packaging roadmaps, and explicit foundry assumptions",
+      "sustained_hbm_tb_per_second": [15.84, 24.0],
+      "useful_scale_up_tb_per_second": [2.34, 3.06],
+      "compute_action_fixed_microseconds": [0.3, 1.0],
+      "fabric_message_microseconds": [0.05, 0.2],
+      "on_chip_cache_tb_per_second": [150.0, 250.0],
+      "accelerator_power_kw": [1.4, 2.5]
+    }
+  ],
+  "replacement_simulation_profiles": [
+    {
+      "id": "commodity_2026_nvfp4_four_rank",
+      "evidence": "shipped_component_envelope_with_foundry_latency_assumptions",
+      "deployment": {
+        "logical_accelerator_ranks": 4,
+        "memory_gb_per_rank": 288,
+        "raw_memory_gb": 1152,
+        "model_representation": "expert_selective_nvfp4",
+        "maximum_modeled_residency_gb": 868.40621865,
+        "raw_capacity_headroom_percent": 24.6175157421875
+      },
+      "per_rank_or_local_path": {
+        "matrix_pflops": 2.0,
+        "attention_pflops": 2.0,
+        "compute_fixed_microseconds": 2.5,
+        "topk_non_flop_operations_per_second": 100000000000.0,
+        "topk_fixed_microseconds": 2.0,
+        "sustained_hbm_tb_per_second": 5.0,
+        "hbm_fixed_microseconds": 1.0,
+        "on_chip_cache_tb_per_second": 75.0,
+        "on_chip_cache_fixed_microseconds": 0.2,
+        "useful_scale_up_tb_per_second": 0.75,
+        "fabric_fixed_microseconds": 0.75,
+        "fabric_message_microseconds": 0.5,
+        "barrier_fixed_microseconds": 0.5,
+        "barrier_microseconds_per_participant": 0.05,
+        "scheduler_fixed_microseconds": 0.75,
+        "scheduler_microseconds_per_request": 0.05,
+        "scheduler_microseconds_per_token": 0.01,
+        "power_kw": 1.4
+      },
+      "deployment_power_kw_excluding_hosts_and_switches": 5.6,
+      "status": "capacity-feasible with shipped 288 GB devices; timing vector must be replaced with measurements from one selected product"
+    },
+    {
+      "id": "hbm4_2026_2027_fp8_three_rank",
+      "evidence": "announced_432_gb_hbm4_device_envelope_with_foundry_latency_assumptions",
+      "deployment": {
+        "logical_accelerator_ranks": 3,
+        "memory_gb_per_rank": 432,
+        "raw_memory_gb": 1296,
+        "model_representation": "native_fp8",
+        "maximum_modeled_residency_gb": 1202.851902916,
+        "raw_capacity_headroom_percent": 7.187353170061725
+      },
+      "per_rank_or_local_path": {
+        "matrix_pflops": 2.0,
+        "attention_pflops": 2.0,
+        "compute_fixed_microseconds": 1.5,
+        "topk_non_flop_operations_per_second": 250000000000.0,
+        "topk_fixed_microseconds": 1.0,
+        "sustained_hbm_tb_per_second": 12.0,
+        "hbm_fixed_microseconds": 0.5,
+        "on_chip_cache_tb_per_second": 125.0,
+        "on_chip_cache_fixed_microseconds": 0.1,
+        "useful_scale_up_tb_per_second": 1.6,
+        "fabric_fixed_microseconds": 0.5,
+        "fabric_message_microseconds": 0.2,
+        "barrier_fixed_microseconds": 0.25,
+        "barrier_microseconds_per_participant": 0.025,
+        "scheduler_fixed_microseconds": 0.5,
+        "scheduler_microseconds_per_request": 0.05,
+        "scheduler_microseconds_per_token": 0.005,
+        "power_kw": 1.6
+      },
+      "deployment_power_kw_excluding_hosts_and_switches": 4.8,
+      "status": "capacity-feasible on arithmetic against an announced 432 GB class; not a shipped or measured system"
+    },
+    {
+      "id": "hbm4_2026_2027_bf16_five_rank",
+      "evidence": "announced_432_gb_hbm4_device_envelope_with_foundry_latency_assumptions",
+      "deployment": {
+        "logical_accelerator_ranks": 5,
+        "memory_gb_per_rank": 432,
+        "raw_memory_gb": 2160,
+        "model_representation": "bf16",
+        "maximum_modeled_residency_gb": 2066.55109929,
+        "raw_capacity_headroom_percent": 4.326337995833337
+      },
+      "per_rank_or_local_path": {
+        "matrix_pflops": 2.0,
+        "attention_pflops": 2.0,
+        "compute_fixed_microseconds": 1.5,
+        "topk_non_flop_operations_per_second": 250000000000.0,
+        "topk_fixed_microseconds": 1.0,
+        "sustained_hbm_tb_per_second": 12.0,
+        "hbm_fixed_microseconds": 0.5,
+        "on_chip_cache_tb_per_second": 125.0,
+        "on_chip_cache_fixed_microseconds": 0.1,
+        "useful_scale_up_tb_per_second": 1.6,
+        "fabric_fixed_microseconds": 0.5,
+        "fabric_message_microseconds": 0.2,
+        "barrier_fixed_microseconds": 0.25,
+        "barrier_microseconds_per_participant": 0.025,
+        "scheduler_fixed_microseconds": 0.5,
+        "scheduler_microseconds_per_request": 0.05,
+        "scheduler_microseconds_per_token": 0.005,
+        "power_kw": 1.6
+      },
+      "deployment_power_kw_excluding_hosts_and_switches": 8.0,
+      "status": "capacity-feasible on arithmetic with little raw margin against an announced 432 GB class; not a shipped or measured system"
+    },
+    {
+      "id": "custom_2028_nvfp4_twenty_stack_package",
+      "evidence": "announced_packaging_and_sampled_hbm4e_envelope_with_foundry_assumptions",
+      "deployment": {
+        "logical_accelerator_ranks": 1,
+        "logical_packages": 1,
+        "compute_chiplets": null,
+        "hbm4e_stacks": 20,
+        "memory_gb_per_stack": 48,
+        "raw_memory_gb": 960,
+        "model_representation": "expert_selective_nvfp4",
+        "maximum_modeled_residency_gb": 868.40621865,
+        "raw_capacity_headroom_percent": 9.541018890625
+      },
+      "per_rank_or_local_path": {
+        "matrix_pflops": 3.0,
+        "attention_pflops": 3.0,
+        "compute_fixed_microseconds": 0.7,
+        "topk_non_flop_operations_per_second": 500000000000.0,
+        "topk_fixed_microseconds": 0.4,
+        "sustained_hbm_tb_per_second": 18.0,
+        "hbm_fixed_microseconds": 0.3,
+        "on_chip_cache_tb_per_second": 175.0,
+        "on_chip_cache_fixed_microseconds": 0.08,
+        "useful_package_fabric_tb_per_second": 2.7,
+        "fabric_fixed_microseconds": 0.3,
+        "fabric_message_microseconds": 0.1,
+        "barrier_fixed_microseconds": 0.15,
+        "barrier_microseconds_per_participant": 0.015,
+        "scheduler_fixed_microseconds": 0.3,
+        "scheduler_microseconds_per_request": 0.03,
+        "scheduler_microseconds_per_token": 0.003,
+        "power_kw": 2.2
+      },
+      "status": "roadmap-arithmetic-only; requires a multi-chiplet package plan, supplier qualification, PPA, yield, thermals, usable-capacity margin, and cost evidence"
+    }
+  ],
+  "kill_criteria": [
+    "Kill a tapeout if a quality- and SLO-matched commodity implementation does not first deliver at least 1.5x lower measured cost per token on two models.",
+    "Kill the hardware thesis if the residual gain attributable to custom silicon is below 30 percent after commodity Rubin or MI450, persistent-kernel, and model-change baselines.",
+    "Kill the current profile if measured end-to-end expert dispatch cannot sustain 60 percent of its declared fabric bandwidth or its p99 coordination term exceeds the modeled value by 2x.",
+    "Kill a single-package plan if capacity needs more HBM stacks than a qualified package supports with supplier-backed usable capacity, power, thermal, and yield margins.",
+    "Kill the current package if landed accelerator power exceeds 1.5 kW without a funded liquid-cooling deployment path, or if the serving rack exceeds 150 kW without facility and utilization economics.",
+    "Kill the program if a foundry, HBM, packaging, and test quote plus risk-adjusted respin reserve cannot be repaid within three years by contracted token volume under incumbent price decline.",
+    "Kill any 5x claim until the full active GLM ledger, contention, queueing, quality, measured timing, energy, and fully loaded dollars are all present."
+  ],
+  "checks": {
+    "json_syntax": "pass",
+    "profile_values_match_config": "pass",
+    "fixture_values_match_checked_experiment": "pass",
+    "residency_values_match_storage_envelope": "pass",
+    "all_source_ids_resolve": "pass",
+    "replacement_capacity_arithmetic": "pass"
+  },
+  "sources": [
+    {
+      "id": "nvidia_h200",
+      "url": "https://www.nvidia.com/en-us/data-center/h200/",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "micron_hbm3e",
+      "url": "https://www.micron.com/products/memory/hbm/hbm3e",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "nvidia_hgx",
+      "url": "https://www.nvidia.com/en-us/data-center/hgx/",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "nvidia_b300_guide",
+      "url": "https://docs.nvidia.com/dgx/dgxb300-user-guide/introduction-to-dgxb300.html",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "nvidia_power_docs",
+      "url": "https://docs.nvidia.com/datacenter/dps/versions/latest/sdk/user/topology/index.html",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "amd_mi355x",
+      "url": "https://www.amd.com/en/products/accelerators/instinct/mi350/mi355x.html",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "amd_cdna4",
+      "url": "https://www.amd.com/content/dam/amd/en/documents/instinct-tech-docs/white-papers/amd-cdna-4-architecture-whitepaper.pdf",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "nvidia_rubin",
+      "url": "https://www.nvidia.com/en-us/data-center/vera-rubin-nvl72/",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "nvidia_rubin_production",
+      "url": "https://nvidianews.nvidia.com/news/vera-rubin-full-production-agentic-ai-factory",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "amd_helios",
+      "url": "https://www.amd.com/en/blogs/2025/amd-helios-ai-rack-built-on-metas-2025-ocp-design.html",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "amd_helios_timing",
+      "url": "https://www.amd.com/en/newsroom/press-releases/2026-5-20-amd-announces-more-than-10-billion-in-taiwan-ecos.html",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "samsung_hbm4",
+      "url": "https://news.samsung.com/global/samsung-ships-industry-first-commercial-hbm4-with-ultimate-performance-for-ai-computing",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "micron_hbm4",
+      "url": "https://www.micron.com/products/memory/hbm/hbm4",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "samsung_hbm4e",
+      "url": "https://semiconductor.samsung.com/news-events/news/samsung-electronics-begins-shipment-of-industry-first-hbm4e-samples/",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "sk_hynix_hbm4e",
+      "url": "https://news.skhynix.com/12-layer-hbm4e-sample/",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "tsmc_2025_packaging",
+      "url": "https://pr.tsmc.com/english/news/3228",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "tsmc_2026_packaging",
+      "url": "https://pr.tsmc.com/english/news/3302",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "ualink_specification",
+      "url": "https://ualinkconsortium.org/wp-content/uploads/2025/04/UALink200_Specification_v1.0_Evaluation_Copy.pdf",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "cuda_graph_launch",
+      "url": "https://developer.nvidia.com/blog/constant-time-launch-for-straight-line-cuda-graphs-and-other-performance-enhancements/",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "nvidia_groq3_lpx",
+      "url": "https://www.nvidia.com/en-us/data-center/vera-rubin-nvl72/",
+      "accessed_at": "2026-07-12"
+    },
+    {
+      "id": "nvidia_gb300_power",
+      "url": "https://docs.nvidia.com/enterprise-reference-architectures/nvl72-ai-factory/latest/components.html",
+      "accessed_at": "2026-07-12"
+    }
+  ]
+}

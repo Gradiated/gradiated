@@ -1,0 +1,11 @@
+{
+  "axis": "model",
+  "name": "four KV heads",
+  "model_specific_reason": "Qwen3-8B already uses grouped-query attention with eight KV heads; the experiment tests whether a more aggressive four-head geometry changes the optimal memory system.",
+  "mechanism": "Halving KV heads halves KV capacity and long-context bandwidth while slightly reducing projection parameters, at the cost of an unmeasured architecture-quality change.",
+  "confidence": 0.15,
+  "evidence_artifacts": [
+    "configs/variants/qwen3-8b-kv4-heads.json",
+    "configs/hardware-sizing-agentic-v0.json"
+  ]
+}

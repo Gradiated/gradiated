@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "study_id": "glm-5.2-storage-envelope-v1",
+  "model": {
+    "model_id": "zai-org/GLM-5.2",
+    "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+    "architecture": {
+      "hybrid_moe_mla_dsa": {
+        "schema_version": 1,
+        "active_parameter_count": {
+          "kind": "approximate",
+          "parameters": 40000000000
+        },
+        "checkpoint_fixed_storage_bytes": 38912,
+        "dense_layer_count": 3,
+        "moe_layer_count": 75,
+        "moe": {
+          "routed_expert_count": 256,
+          "routed_experts_per_token": 8,
+          "shared_expert_count": 1,
+          "expert_intermediate_size": 2048,
+          "routed_expert_weight_precision": "bf16"
+        },
+        "mla": {
+          "query_low_rank_dimension": 2048,
+          "semantic_kv_dimension": 512,
+          "query_key_nope_dimension": 192,
+          "rotary_kv_dimension": 64,
+          "value_dimension": 256,
+          "rope_theta": 8000000
+        },
+        "dsa_indexer": {
+          "query_head_count": 32,
+          "query_head_dimension": 128,
+          "key_head_count": 1,
+          "key_head_dimension": 128,
+          "selected_token_count": 2048,
+          "full_layer_count": 21,
+          "shared_layer_count": 57
+        },
+        "mtp": {
+          "layer_count": 1,
+          "shared_parameters": true,
+          "shares_dsa_indices": true
+        }
+      }
+    },
+    "parameter_count": 753329940480,
+    "layer_count": 78,
+    "hidden_size": 6144,
+    "intermediate_size": 12288,
+    "attention_head_count": 64,
+    "kv_head_count": 0,
+    "head_dimension": 256,
+    "vocabulary_size": 154880,
+    "max_sequence_length": 1048576,
+    "weight_precision": "bf16",
+    "quantized_weight_storage": null,
+    "kv_precision": "bf16"
+  },
+  "residency": {
+    "checkpoint_replication_factor": 1,
+    "concurrent_sequences": 64,
+    "reserved_tokens_per_sequence": 32768,
+    "cache_replication_factor": 1,
+    "extra_cache_bytes_per_token": {
+      "lower": 0,
+      "upper": 32768
+    },
+    "indexer_cache_bytes_per_token": {
+      "lower": 0,
+      "upper": 8192
+    },
+    "fixed_runtime_bytes": 16000000000,
+    "fragmentation_overhead_basis_points": 1500,
+    "source_artifact_id": "modeled-assumption:glm-agentic-residency-v1",
+    "basis": "64 concurrent 32K-token reservations; semantic MLA cache is exact, while engine-extra and DSA-indexer cache are explicit stress bounds; runtime and fragmentation are modeled assumptions"
+  },
+  "variants": [
+    {
+      "variant_id": "glm-5.2-bf16",
+      "checkpoint": {
+        "model_id": "zai-org/GLM-5.2",
+        "checkpoint_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+        "payload_bytes": 1506659919872,
+        "source_artifact_id": "huggingface:zai-org/GLM-5.2@b4734de4facf877f85769a911abafc5283eab3d9/model.safetensors.index.json"
+      },
+      "routed_expert_storage": {
+        "kind": "model_spec_exact",
+        "source_artifact_id": "huggingface:zai-org/GLM-5.2@b4734de4facf877f85769a911abafc5283eab3d9/config.json+model.safetensors.index.json"
+      },
+      "active_traffic": {
+        "routed_expert_weight_bytes_per_output_token": {
+          "lower": 0,
+          "upper": 1449551462400
+        },
+        "non_routed_weight_bytes_per_output_token": {
+          "lower": 0,
+          "upper": 57108457472
+        },
+        "indexer_bytes_per_output_token": {
+          "lower": 0,
+          "upper": 393619968
+        },
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-assumption:glm-bf16-single-pass-traffic-v1"
+        },
+        "basis": "single-output-token HBM traffic envelope from zero incremental reads under complete reuse through one full routed/non-routed/indexer storage pass; route distribution, cache reuse, batching, and rereads remain unmeasured"
+      }
+    },
+    {
+      "variant_id": "glm-5.2-native-fp8",
+      "checkpoint": {
+        "model_id": "zai-org/GLM-5.2-FP8",
+        "checkpoint_revision": "ba978f7d347eaf65d22f1a86833408afdb953541",
+        "payload_bytes": 755617140416,
+        "source_artifact_id": "huggingface:zai-org/GLM-5.2-FP8@ba978f7d347eaf65d22f1a86833408afdb953541/model.safetensors.index.json"
+      },
+      "routed_expert_storage": {
+        "kind": "opaque_aggregate_bounds",
+        "bytes": {
+          "lower": 724775731200,
+          "upper": 755617140416
+        },
+        "source_artifact_id": "huggingface:zai-org/GLM-5.2-FP8@ba978f7d347eaf65d22f1a86833408afdb953541/model.safetensors.index.json",
+        "lower_bound_basis": "one payload byte per BF16-reference logical routed-expert parameter, excluding scale and metadata storage",
+        "upper_bound_basis": "the routed-expert tensors cannot exceed the exact full checkpoint tensor payload; internal tensor allocation is intentionally opaque"
+      },
+      "active_traffic": {
+        "routed_expert_weight_bytes_per_output_token": {
+          "lower": 0,
+          "upper": 755617140416
+        },
+        "non_routed_weight_bytes_per_output_token": {
+          "lower": 0,
+          "upper": 30841409216
+        },
+        "indexer_bytes_per_output_token": {
+          "lower": 0,
+          "upper": 196809984
+        },
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-assumption:glm-native-fp8-single-pass-traffic-v1"
+        },
+        "basis": "single-output-token HBM traffic stress envelope; exact payload is pinned, but route locality, per-tensor FP8 metadata, cache reuse, batching, and rereads remain unmeasured"
+      }
+    },
+    {
+      "variant_id": "glm-5.2-nvidia-nvfp4-expert-selective",
+      "checkpoint": {
+        "model_id": "nvidia/GLM-5.2-NVFP4",
+        "checkpoint_revision": "aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa",
+        "payload_bytes": 464794806272,
+        "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+      },
+      "routed_expert_storage": {
+        "kind": "opaque_aggregate_bounds",
+        "bytes": {
+          "lower": 362387865600,
+          "upper": 464794806272
+        },
+        "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json",
+        "lower_bound_basis": "four packed payload bits per BF16-reference logical routed-expert parameter, excluding scales and metadata",
+        "upper_bound_basis": "the routed-expert tensors cannot exceed the exact full checkpoint tensor payload; the expert-selective release layout remains intentionally opaque"
+      },
+      "active_traffic": {
+        "routed_expert_weight_bytes_per_output_token": {
+          "lower": 0,
+          "upper": 464794806272
+        },
+        "non_routed_weight_bytes_per_output_token": {
+          "lower": 0,
+          "upper": 102406940672
+        },
+        "indexer_bytes_per_output_token": {
+          "lower": 0,
+          "upper": 393619968
+        },
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-assumption:glm-nvfp4-single-pass-traffic-v1"
+        },
+        "basis": "single-output-token HBM traffic stress envelope; exact total payload is pinned, while the selective NVFP4 tensor layout, route locality, cache reuse, batching, and rereads remain unmeasured"
+      }
+    }
+  ],
+  "hardware": [
+    {
+      "hardware_id": "fireworks-h100-80gb-32x",
+      "deployment_device_count": 32,
+      "device_memory_bytes": 80000000000,
+      "reserved_device_memory_bytes": 8000000000,
+      "memory_source_artifact_id": "validation/results/provider-economics-2026-07-12.json#sources[nvidia_h100]",
+      "bandwidth": {
+        "peak_bytes_per_second_per_device": 3350000000000,
+        "efficiency_basis_points": 7000,
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "nvidia_h100+modeled-assumption:70-percent-of-published-peak"
+        }
+      },
+      "cost": {
+        "usd_per_device_hour": 7.0,
+        "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#public_dedicated_prices[Fireworks/H100-80GB]"
+      }
+    },
+    {
+      "hardware_id": "fireworks-h200-141gb-20x",
+      "deployment_device_count": 20,
+      "device_memory_bytes": 141000000000,
+      "reserved_device_memory_bytes": 12000000000,
+      "memory_source_artifact_id": "validation/results/provider-economics-2026-07-12.json#sources[nvidia_h200]",
+      "bandwidth": {
+        "peak_bytes_per_second_per_device": 4800000000000,
+        "efficiency_basis_points": 7000,
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "nvidia_h200+modeled-assumption:70-percent-of-published-peak"
+        }
+      },
+      "cost": {
+        "usd_per_device_hour": 7.0,
+        "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#public_dedicated_prices[Fireworks/H200-141GB]"
+      }
+    },
+    {
+      "hardware_id": "fireworks-b200-180gb-16x",
+      "deployment_device_count": 16,
+      "device_memory_bytes": 180000000000,
+      "reserved_device_memory_bytes": 16000000000,
+      "memory_source_artifact_id": "modeled-assumption:b200-180gb-device-memory",
+      "bandwidth": {
+        "peak_bytes_per_second_per_device": 8000000000000,
+        "efficiency_basis_points": 7000,
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-assumption:b200-70-percent-of-8tbps-peak"
+        }
+      },
+      "cost": {
+        "usd_per_device_hour": 10.0,
+        "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#public_dedicated_prices[Fireworks/B200-180GB]"
+      }
+    }
+  ],
+  "break_even": {
+    "required_billable_tokens_per_second_per_usd_of_hourly_system_cost": 2409.5586409796933,
+    "source_artifact_id": "validation/results/provider-economics-2026-07-12.json#break_even_case"
+  },
+  "measured_serving_evidence": []
+}

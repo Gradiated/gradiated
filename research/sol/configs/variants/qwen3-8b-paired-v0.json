@@ -1,0 +1,40 @@
+{
+  "name": "qwen3-8b-paired-v0",
+  "changes": [
+    {
+      "change": "equivalent_rotation",
+      "family": "orthogonal_rotation_candidate"
+    },
+    {
+      "change": "weight_precision",
+      "precision": "int4",
+      "quantized_storage": {
+        "coverage": {
+          "kind": "fraction",
+          "numerator": 1,
+          "denominator": 1
+        },
+        "group_size": 128,
+        "code_bits": 4,
+        "scale_bits": 16,
+        "unquantized_bits": 16,
+        "fixed_metadata_bytes": 0
+      }
+    },
+    {
+      "change": "kv_precision",
+      "precision": "fp8"
+    },
+    {
+      "change": "kv_head_count",
+      "heads": 4
+    },
+    {
+      "change": "intermediate_size",
+      "size": 10240
+    }
+  ],
+  "quality": {
+    "evidence": "unvalidated"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "serving": {
+    "max_concurrent_requests": 32,
+    "reserved_sequence_tokens_per_request": 32768,
+    "decode_batch_size": 64,
+    "average_decode_context_tokens": 20000,
+    "target_output_tokens_per_second": 2500.0
+  },
+  "memory": {
+    "hbm_stack_capacity_bytes": 24000000000,
+    "hbm_stack_bandwidth_bytes_per_second": 800000000000.0,
+    "hbm_stack_power_watts": 20.0,
+    "hbm_stack_cost_usd": 300.0,
+    "hbm_stack_area_square_millimeters": 110.0,
+    "max_hbm_stacks_per_device": 4,
+    "bandwidth_efficiency": 0.8,
+    "runtime_fixed_bytes": 2000000000,
+    "runtime_headroom_fraction": 0.15,
+    "minimum_tile_tokens": 128,
+    "minimum_sram_bytes_per_array": 1048576,
+    "maximum_sram_bytes_per_device": 67108864,
+    "sram_bandwidth_bytes_per_second_per_array": 2000000000000.0,
+    "sram_energy_picojoules_per_byte": 0.5,
+    "sram_area_square_millimeters_per_megabyte": 0.4
+  },
+  "compute": {
+    "array_rows": 128,
+    "array_columns": 128,
+    "frequency_hz": 1500000000.0,
+    "operations_per_cycle_per_element": 2.0,
+    "compute_efficiency": 0.7,
+    "energy_picojoules_per_operation": 0.2,
+    "area_square_millimeters_per_array": 12.0,
+    "power_watts_per_array": 25.0,
+    "max_arrays_per_chiplet": 4
+  },
+  "physical": {
+    "max_devices": 16,
+    "max_chiplets_per_device": 4,
+    "maximum_die_area_square_millimeters": 600.0,
+    "fixed_die_area_square_millimeters": 60.0,
+    "maximum_device_tdp_watts": 450.0,
+    "base_device_power_watts": 50.0,
+    "cooling_headroom_fraction": 0.1,
+    "node_nanometers": 4.0,
+    "transistor_density_million_per_square_millimeter": 200.0,
+    "wafer_diameter_millimeters": 300.0,
+    "wafer_cost_usd": 20000.0,
+    "defect_density_per_square_centimeter": 0.1,
+    "yield_model": "Poisson",
+    "package_yield": 0.95,
+    "package_cost_usd_per_device": 500.0,
+    "package_area_square_millimeters_per_device": 1200.0,
+    "assembly_cost_usd_per_device": 100.0,
+    "test_cost_usd_per_device": 50.0,
+    "non_recurring_engineering_cost_usd": 300000000.0,
+    "amortization_units": 100000
+  },
+  "interconnect": {
+    "bandwidth_bytes_per_second_per_link": 200000000000.0,
+    "link_efficiency": 0.8,
+    "max_links_per_device": 8,
+    "latency_nanoseconds": 100.0,
+    "energy_picojoules_per_byte": 2.0,
+    "power_watts_per_link": 5.0
+  },
+  "cost": {
+    "active_lifetime_hours": 26280.0,
+    "target_utilization": 0.7,
+    "host_hourly_cost_usd": 0.25
+  }
+}

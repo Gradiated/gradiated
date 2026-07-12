@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "composition_id": "glm-5.2-current-cost-claim-composition-v1",
+  "scope": {
+    "model_id": "zai-org/GLM-5.2",
+    "model_revision": "ba978f7d347eaf65d22f1a86833408afdb953541",
+    "workload_id": "agentic-v1-90k",
+    "quality_contract_id": "glm-5.2-agent-quality-v1-unmeasured",
+    "slo_contract_id": "agentic-service-v1",
+    "baseline_stack_id": "incumbent-qualified-nvfp4-fp8kv-mapping-cache-pd-mtp-v1",
+    "candidate_stack_id": "foundry-joint-model-kernel-serving-hardware-v1"
+  },
+  "requested_intervention_ids": [
+    "public_nvfp4",
+    "fp8_semantic_kv",
+    "independent_attention_expert_mapping",
+    "tiered_agent_cache",
+    "prefill_decode_disaggregation",
+    "model_specific_hardware"
+  ],
+  "objective": "output_cost_per_million_tokens",
+  "evidence": [
+    {
+      "evidence_id": "qwen_selective_int4_weight_bound",
+      "source_artifact_id": "7aed32b64aefaf5f04afcf5cb73f7286e8acf85d71517c56a8f2dc981d40e97e",
+      "scope": {
+        "model_id": "Qwen/Qwen3-0.6B",
+        "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+        "workload_id": "wikitext2-sequential4096",
+        "quality_contract_id": "teacher-forced-proxy-v1",
+        "slo_contract_id": "none",
+        "baseline_stack_id": "bf16-transformers",
+        "candidate_stack_id": "selective-int4-float-scale-qdq"
+      },
+      "intervention_ids": [
+        "selective_int4"
+      ],
+      "metric": "weight_bytes",
+      "relative_effect": {
+        "lower": 0.24628916987355687,
+        "upper": 0.24628916987355687
+      },
+      "evidence_class": "analytical",
+      "claim_permitted": true
+    },
+    {
+      "evidence_id": "qwen_packed_int4_batch_latency",
+      "source_artifact_id": "9151f5d066bfc4fbff8e855cc9d312d44377e060ecef0b796fa30ffef56ec7ad",
+      "scope": {
+        "model_id": "Qwen/Qwen3-0.6B",
+        "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+        "workload_id": "three-layer0-tensor-batch-frontier-v1",
+        "quality_contract_id": "packed-bf16-scale-quality-unmeasured",
+        "slo_contract_id": "none",
+        "baseline_stack_id": "scalar-f32-qdq-matched-loop",
+        "candidate_stack_id": "scalar-packed-int4-bf16-scale-matched-loop"
+      },
+      "intervention_ids": [
+        "selective_int4"
+      ],
+      "metric": "latency",
+      "relative_effect": {
+        "lower": -0.06597667411799013,
+        "upper": -0.017296461672545282
+      },
+      "evidence_class": "measured_component",
+      "claim_permitted": true
+    },
+    {
+      "evidence_id": "qwen_full_kv_recovery_quality",
+      "source_artifact_id": "fe585d9bd1d73faa9b1599f678f68b8b9326e1980e656d733214c546e51b2731",
+      "scope": {
+        "model_id": "Qwen/Qwen3-0.6B",
+        "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+        "workload_id": "wikitext2-recovery-2k-v1",
+        "quality_contract_id": "teacher-forced-proxy-v1",
+        "slo_contract_id": "none",
+        "baseline_stack_id": "qwen3-0.6b-bf16",
+        "candidate_stack_id": "qwen3-0.6b-hard-8to4-kv-rank8-qo"
+      },
+      "intervention_ids": [
+        "kv_head_reduction"
+      ],
+      "metric": "quality",
+      "relative_effect": {
+        "lower": -1.0,
+        "upper": -1.0
+      },
+      "evidence_class": "measured_quality",
+      "claim_permitted": false
+    },
+    {
+      "evidence_id": "glm_independent_mapping_network_bytes",
+      "source_artifact_id": "205c1c7157d104179e066ecfde311107ca7f160f941a8a97e7058e8e1fd80729",
+      "scope": {
+        "model_id": "zai-org/GLM-5.2",
+        "model_revision": "ba978f7d347eaf65d22f1a86833408afdb953541",
+        "workload_id": "glm-5.2-exact-decode-b16-c16384-v1",
+        "quality_contract_id": "architecture-identity-only",
+        "slo_contract_id": "none",
+        "baseline_stack_id": "coupled-tp16",
+        "candidate_stack_id": "dp-attention-local-ep8"
+      },
+      "intervention_ids": [
+        "independent_attention_expert_mapping"
+      ],
+      "metric": "network_bytes",
+      "relative_effect": {
+        "lower": 0.858578431372549,
+        "upper": 0.8586056644880175
+      },
+      "evidence_class": "analytical",
+      "claim_permitted": true
+    },
+    {
+      "evidence_id": "glm_pd_synthetic_output_cost",
+      "source_artifact_id": "c83ec178319e944168b4192adab0f4e02dbb039d8e1d3685232d16925e504a20",
+      "scope": {
+        "model_id": "zai-org/GLM-5.2",
+        "model_revision": "ba978f7d347eaf65d22f1a86833408afdb953541",
+        "workload_id": "synthetic-long-input-pd-v1",
+        "quality_contract_id": "architecture-identity-only",
+        "slo_contract_id": "synthetic-class-objectives-failed",
+        "baseline_stack_id": "aggregate-eight-slot",
+        "candidate_stack_id": "pd-eight-slot"
+      },
+      "intervention_ids": [
+        "prefill_decode_disaggregation"
+      ],
+      "metric": "output_cost_per_million_tokens",
+      "relative_effect": {
+        "lower": -0.05178105154981768,
+        "upper": 0.3521953822971832
+      },
+      "evidence_class": "analytical",
+      "claim_permitted": false
+    },
+    {
+      "evidence_id": "glm_scalesim_same_oracle_cycles",
+      "source_artifact_id": "ab42fa90e0c0233f900269ade11597528362e3e2609c0424fc8e3f5944231a0f",
+      "scope": {
+        "model_id": "zai-org/GLM-5.2",
+        "model_revision": "ba978f7d347eaf65d22f1a86833408afdb953541",
+        "workload_id": "glm-5.2-routed-expert-gate-bf16-reference-b1",
+        "quality_contract_id": "architecture-identity-only",
+        "slo_contract_id": "none",
+        "baseline_stack_id": "scalesim-ws32-sram64kb",
+        "candidate_stack_id": "scalesim-os32-sram64kb"
+      },
+      "intervention_ids": [
+        "model_specific_hardware"
+      ],
+      "metric": "simulator_cycles",
+      "relative_effect": {
+        "lower": 0.6581587801218445,
+        "upper": 0.6581587801218445
+      },
+      "evidence_class": "external_simulator",
+      "claim_permitted": true
+    },
+    {
+      "evidence_id": "glm_current_economic_frontier",
+      "source_artifact_id": "fb0efb13d0e112dc8a1c025fbe3d6aff7aa8a410b79c6446f11e3bf173e6ba77",
+      "scope": {
+        "model_id": "zai-org/GLM-5.2",
+        "model_revision": "ba978f7d347eaf65d22f1a86833408afdb953541",
+        "workload_id": "agentic-v1-90k",
+        "quality_contract_id": "glm-5.2-agent-quality-v1-unmeasured",
+        "slo_contract_id": "agentic-service-v1",
+        "baseline_stack_id": "incumbent-qualified-nvfp4-fp8kv-mapping-cache-pd-mtp-v1",
+        "candidate_stack_id": "foundry-joint-model-kernel-serving-hardware-v1"
+      },
+      "intervention_ids": [
+        "public_nvfp4",
+        "fp8_semantic_kv",
+        "independent_attention_expert_mapping",
+        "tiered_agent_cache",
+        "prefill_decode_disaggregation",
+        "model_specific_hardware"
+      ],
+      "metric": "output_cost_per_million_tokens",
+      "relative_effect": {
+        "lower": -0.3817,
+        "upper": 0.0805326863896756
+      },
+      "evidence_class": "analytical",
+      "claim_permitted": false
+    }
+  ]
+}

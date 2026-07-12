@@ -1,0 +1,26 @@
+problem:
+  version: 0.4
+  shape:
+    name: FoundryGemmBMNK
+    dimensions: [B, M, N, K]
+    data_spaces:
+      - name: Inputs
+        projection:
+          - [[B]]
+          - [[M]]
+          - [[K]]
+      - name: Weights
+        projection:
+          - [[N]]
+          - [[K]]
+      - name: Outputs
+        projection:
+          - [[B]]
+          - [[M]]
+          - [[N]]
+        read_write: true
+  instance:
+    B: 1
+    M: 1
+    N: 1024
+    K: 2048

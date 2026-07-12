@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "study_id": "glm-5.2-parallel-mapping-context-frontier-v1",
+  "sources": {
+    "storage_report_content_id": "3216cdd0e8c0988ccc7c779f9df9c7d0b8099f11375e7bdb441ab7463d9bc174",
+    "controls": [
+      {
+        "context_tokens_per_request": 16384,
+        "mapping_report_content_id": "205c1c7157d104179e066ecfde311107ca7f160f941a8a97e7058e8e1fd80729",
+        "lowering_report_content_id": "de14e9be74e0f3a89baf3c09a94714d8a0aa72bde6221affe2235a5b74544845",
+        "lower_action_ledger_content_id": "685a946a02499d65dfaeb436a753fd4e917c85cc890f75f17e8833a8652076f6"
+      },
+      {
+        "context_tokens_per_request": 90000,
+        "mapping_report_content_id": "0f61e4f6ebec52b35fb5046ab1ba7bbb9506516dba23f94b694c65085bc0f48a",
+        "lowering_report_content_id": "f40f41c1d67b909783c40073f475f08906e77ccb05673f2beb630a496b0c7cd3",
+        "lower_action_ledger_content_id": "386fbfcf01076a825c60386be1d9ab771e93b042b661702511f867b776041efa"
+      }
+    ]
+  },
+  "variant_id": "glm-5.2-nvidia-nvfp4-expert-selective",
+  "device_profile_id": "fireworks-b200-180gb-16x",
+  "baseline_plan_id": "coupled-tp16",
+  "candidate_plan_id": "decoupled-dp-attention-ep8",
+  "context_points": [
+    16384,
+    32768,
+    65536,
+    90000,
+    131072,
+    262144,
+    524288,
+    1048576
+  ],
+  "concurrency_min": 1,
+  "concurrency_max": 96
+}

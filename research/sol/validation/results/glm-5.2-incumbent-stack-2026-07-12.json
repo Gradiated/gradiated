@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-07-12",
+  "model": "GLM-5.2",
+  "sources": [
+    {
+      "id": "baseten_glm_5_2_stack",
+      "url": "https://www.baseten.co/blog/how-we-built-the-worlds-fastest-api-for-glm-52/",
+      "accessed_at": "2026-07-12",
+      "evidence_kind": "vendor_report"
+    },
+    {
+      "id": "baseten_pricing",
+      "url": "https://www.baseten.co/pricing/",
+      "accessed_at": "2026-07-12",
+      "evidence_kind": "public_price"
+    },
+    {
+      "id": "nvidia_glm_5_2_nvfp4",
+      "url": "https://huggingface.co/nvidia/GLM-5.2-NVFP4",
+      "accessed_at": "2026-07-12",
+      "evidence_kind": "vendor_model_card"
+    },
+    {
+      "id": "zai_glm_5_2",
+      "url": "https://huggingface.co/zai-org/GLM-5.2",
+      "accessed_at": "2026-07-12",
+      "evidence_kind": "model_owner_release"
+    },
+    {
+      "id": "fireworks_glm_5_2_fast",
+      "url": "https://fireworks.ai/blog/glm-5p2-fast",
+      "accessed_at": "2026-07-12",
+      "evidence_kind": "vendor_report"
+    },
+    {
+      "id": "fireworks_fireoptimizer",
+      "url": "https://fireworks.ai/blog/fireoptimizer",
+      "accessed_at": "2026-07-12",
+      "evidence_kind": "vendor_report"
+    },
+    {
+      "id": "fireworks_inference",
+      "url": "https://fireworks.ai/inference",
+      "accessed_at": "2026-07-12",
+      "evidence_kind": "product_documentation"
+    }
+  ],
+  "baseten_public_stack": {
+    "reported_streaming_tokens_per_second_per_user_lower_bound": 280.0,
+    "measurement_attribution": "Artificial Analysis, as reported by Baseten on 2026-06-22",
+    "reported_time_to_first_token_milliseconds": 800.0,
+    "reported_time_to_first_answer_token_seconds": 7.9,
+    "reported_reasoning_time_before_first_answer_token_seconds": 7.1,
+    "reported_pd_disaggregation_throughput_multiplier": 2.0,
+    "reported_pd_multiplier_scope": "observed workload shapes; exact reproducible denominator is not published in the article",
+    "interventions": [
+      "custom runtime support for GLM-5.2 shared DSA",
+      "in-house NVFP4 quantization from native FP8 with agent-focused calibration",
+      "NVIDIA Blackwell NVFP4 execution",
+      "KV-aware routing with NVIDIA Dynamo",
+      "prefill-decode disaggregation with NIXL KV transfer",
+      "GLM-5.2 MTP speculative decoding",
+      "workload-specific parallelism and batching"
+    ],
+    "public_price_usd_per_million_tokens": {
+      "uncached_input": 1.4,
+      "cached_input": 0.26,
+      "output": 4.4
+    },
+    "unknowns": [
+      "aggregate output throughput",
+      "hardware topology and hourly cost",
+      "useful fleet utilization",
+      "failure and retry rate",
+      "gross margin",
+      "enterprise discounts",
+      "the exact workload behind the reported two-times disaggregation delta",
+      "independently reproducible BFCL runs for the in-house quantization"
+    ]
+  },
+  "fireworks_public_stack": {
+    "reported_peak_streaming_tokens_per_second_per_user": 446.0,
+    "measurement_attribution": "Artificial Analysis, as reported by Fireworks",
+    "reported_fast_over_standard_range": {
+      "lower": 2.0,
+      "upper": 3.0
+    },
+    "reported_same_workload_fast_over_standard": 2.0,
+    "reported_average_public_endpoint_prompt_tokens": 90000,
+    "glm_5_2_interventions": [
+      "independent MoE expert and sparse-MLA attention sharding",
+      "expert parallelism balanced against all-to-all traffic and narrow GEMMs",
+      "data-parallel attention to keep each request's compressed MLA KV local",
+      "quality-gated lower-precision serving",
+      "GLM-5.2-tuned speculative decoding",
+      "prefill-decode separation",
+      "multi-tier prefix cache with hot KV near GPUs and colder state in lower-cost tiers",
+      "workload-specific parallelism and dedicated-deployment tuning"
+    ],
+    "public_price_usd_per_million_tokens": {
+      "standard": {
+        "uncached_input": 1.4,
+        "cached_input": 0.14,
+        "output": 4.4
+      },
+      "fast": {
+        "uncached_input": 2.1,
+        "cached_input": 0.21,
+        "output": 6.6
+      }
+    },
+    "fireoptimizer_scope": [
+      "hardware choice and mapping",
+      "model quantization, tuning, and fine-tuning",
+      "request processing, caching, and prefill-versus-decode handling",
+      "adaptive speculative execution",
+      "automatic training and evaluation from representative workload data"
+    ],
+    "fireoptimizer_reported_examples": {
+      "same_eight_gpu_volume_vs_single_request_cost_ratio": 4.0,
+      "generic_speculator_hit_rate": 0.29,
+      "generic_speculator_latency_ratio_vs_no_speculation": 1.5,
+      "tuned_speculator_hit_rate": 0.76,
+      "tuned_speculator_speedup_vs_no_speculation": 2.0,
+      "maximum_reported_speedup_vs_generic_draft": 3.0
+    },
+    "unknowns": [
+      "aggregate output capacity",
+      "Fast and Standard hardware topology and hourly cost",
+      "useful fleet utilization",
+      "failure and retry rate",
+      "gross margin",
+      "reproducible raw Artificial Analysis result artifact",
+      "independently reproducible Standard-versus-Fast workload artifact"
+    ]
+  },
+  "nvidia_public_nvfp4": {
+    "release_date": "2026-06-25",
+    "tested_hardware": [
+      "NVIDIA B200",
+      "NVIDIA B300"
+    ],
+    "supported_runtime_engines": [
+      "SGLang",
+      "vLLM"
+    ],
+    "published_vllm_topology": {
+      "tensor_parallel_size": 8,
+      "expert_parallel": true,
+      "kv_cache_dtype": "fp8_e4m3"
+    },
+    "quantization_scope": "weights and activations of linear operators in routed MoE experts; shared expert excluded",
+    "quality_vs_fp8": [
+      {
+        "benchmark": "GPQA Diamond",
+        "fp8": 89.52,
+        "nvfp4": 89.39,
+        "delta": -0.13
+      },
+      {
+        "benchmark": "SciCode",
+        "fp8": 49.85,
+        "nvfp4": 49.04,
+        "delta": -0.81
+      },
+      {
+        "benchmark": "IFBench",
+        "fp8": 74.95,
+        "nvfp4": 75.81,
+        "delta": 0.86
+      },
+      {
+        "benchmark": "AA-LCR",
+        "fp8": 69.38,
+        "nvfp4": 70.13,
+        "delta": 0.75
+      },
+      {
+        "benchmark": "tau2-Bench Telecom",
+        "fp8": 97.9,
+        "nvfp4": 98.25,
+        "delta": 0.35
+      }
+    ],
+    "evidence_boundary": "vendor-reported benchmark evidence; not independently reproduced, not a serving-speed result, and not proof on the entrant's frozen customer workload"
+  },
+  "per_user_speed_is_not_capacity": {
+    "illustrative_eight_b200_public_hourly_cost_usd": 80.0,
+    "working_gate_required_billable_total_tokens_per_second": 192764.69127837548,
+    "synthetic_billable_tokens_per_committed_output_token": 15.47191011235955,
+    "required_output_token_equivalent_per_second_if_input_work_were_free": 12459.01054740408,
+    "reported_280_tps_user_equivalents": 44.49646624072886,
+    "boundary": "This is revenue-hurdle arithmetic, not a capacity estimate. Per-user streaming speed cannot be multiplied by users without the undisclosed concurrency-throughput curve, batching behavior, input work, cache hits, failures, and SLO tails."
+  },
+  "business_implications": {
+    "easy_thesis_status": "falsified_as_differentiation",
+    "easy_thesis": "a provider can win merely by replacing a generic serving abstraction with per-model kernels, scheduling, and automatic deployment tuning",
+    "reason": "Baseten publicly reports the same model, quantization, runtime, cache-routing, disaggregation, and speculation layers already combined in production; Fireworks publicly reports the same model-specific stack plus automatic hardware-model-software workload adaptation",
+    "surviving_wedge": "an automated co-design system that reaches quality-controlled model-architecture or hardware changes incumbents do not already deploy, or validates useful changes materially faster across models",
+    "minimum_incumbent_stack_to_model": [
+      "shared IndexShare DSA",
+      "public or equivalently qualified NVFP4",
+      "FP8 KV cache",
+      "KV-aware routing",
+      "prefill-decode disaggregation",
+      "NIXL-class KV transfer",
+      "MTP speculative decoding",
+      "workload-specific parallelism and batching"
+    ],
+    "comparison_policy": "No provider-advantage result may compare a candidate against BF16, a single generic parallelism map, an aggregated-only serving path, cache-unaware routing, or MTP-disabled execution when the incumbent exposes the stronger path.",
+    "open_falsification_test": "Show a quality- and SLO-controlled cost reduction beyond this incumbent stack on the same agent trace, including aggregate capacity, utilization, failures, and fully loaded cost."
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "schema_version": "inference-foundry.timeloop-external-smoke-request.v1",
+  "request_id": "qwen3-0.6b-o-proj-bf16-external-smoke-v1",
+  "problem_export_path": "experiments/qwen3-0.6b/timeloop-o-proj-bf16-decode-b1-v1.json",
+  "problem_yaml_path": "experiments/qwen3-0.6b/timeloop-o-proj-bf16-decode-b1-v1.yaml",
+  "architecture_path": "configs/timeloop/qwen3-0.6b-o-proj-bf16-external-arch-v1.yaml",
+  "mapper_path": "configs/timeloop/qwen3-0.6b-o-proj-bf16-external-mapper-v1.yaml",
+  "frontend": {
+    "name": "timeloopfe",
+    "version": "0.4",
+    "repository": "https://github.com/Accelergy-Project/timeloopfe",
+    "revision": "5603893c0ff75183b5ffd6839aba33774fc3b6fe"
+  },
+  "accelergy": {
+    "name": "accelergy",
+    "version": "0.4",
+    "repository": "https://github.com/Accelergy-Project/accelergy",
+    "revision": "6911d15686ee7efdceba7d95605102df4472ae3a"
+  },
+  "native_backend": {
+    "name": "timeloop-mapper",
+    "repository": "https://github.com/NVlabs/timeloop",
+    "requested_revision": "32370826fdf1aa3c8deb0c93e6b2a2fc7cf053aa",
+    "executable": "timeloop-mapper",
+    "timeout_seconds": 30
+  },
+  "official_example_source": {
+    "repository": "https://github.com/Accelergy-Project/timeloop-accelergy-exercises",
+    "revision": "2d5510807128e9bd5f1cad0705cdf2ec4612fd4e",
+    "architecture_path": "workspace/example_designs/example_designs/simple_output_stationary/arch.yaml",
+    "architecture_sha256": "d543740f7eda0ecd078aad79db00537103440003d4490d0fe65fe6fa84e381d0",
+    "mapper_path": "workspace/example_designs/example_designs/_include/mapper.yaml",
+    "mapper_sha256": "d5437d42ac7e47ddb63bcc66b0a3eb575a3e1a0be69240829f941de73e719765"
+  },
+  "architecture_adaptation": {
+    "description": "The official output-stationary hierarchy is retained while convolution-only dimension constraints are removed, tensor data widths are set to 16 bits, the accumulator width is set to 32 bits, and the bounded mapper optimizes delay.",
+    "semantic_limit": "The official intmac class does not establish BF16 arithmetic or energy semantics."
+  }
+}

@@ -1,0 +1,2240 @@
+{
+  "schema_version": "inference-foundry.model-stack-business-decision.v1",
+  "content_identity_sha256": "6801198aecdad0a46eb4b3b53502657cfc539fa563183e4b9c924f8d025a713e",
+  "generated_at": "2026-07-12T07:25:00+02:00",
+  "decision_mode": "fail_closed",
+  "scope": {
+    "objective": "Decide whether the checked evidence supports a model-specific, vertically co-designed inference business that materially lowers fully loaded dollars per input and output token relative to an incumbent-grade serving stack.",
+    "models": [
+      "Qwen/Qwen3-0.6B",
+      "zai-org/GLM-5.2"
+    ],
+    "business_metric": "quality- and SLO-matched fully loaded dollars per billable input and output token",
+    "material_improvement_rule": "At least 1.5x lower measured fully loaded cost per token on two models before custom-silicon underwriting.",
+    "target_improvement_range": {
+      "lower_multiplier": 5.0,
+      "upper_multiplier": 10.0
+    }
+  },
+  "evidence_policy": {
+    "classes": {
+      "measured": "Locally executed numerical evidence on pinned model and corpus bytes. It does not transfer to runtime, serving, another model, or dollars per token without a direct measurement.",
+      "analytical": "Deterministic arithmetic or a component bound over pinned inputs. It permits only the stated component claim, not end-to-end performance.",
+      "modeled_assumption": "A synthetic trace, service rate, topology, timing, cost, or sensitivity input. It is useful for falsification and sign analysis but is not measured evidence.",
+      "simulated": "Locally executed simulator or frontend evidence on pinned inputs. It permits only claims exposed by that simulator and is not hardware wall time, energy, area, serving, or cost evidence.",
+      "vendor_reported": "A public specification, list price, model card, or vendor performance report that has not been independently reproduced here.",
+      "inferred": "A decision or implication derived from other evidence classes. It is explicitly not a measurement."
+    },
+    "rules": [
+      "A runtime, serving, quality, or business claim is false unless the pinned source explicitly permits that claim.",
+      "Independent upper bounds from different models or scopes are not multiplied into a stack-level gain.",
+      "A public per-user streaming rate is never converted into aggregate capacity, utilization, COGS, gross margin, or fleet economics.",
+      "Provider public prices are price surfaces, not performance or cost baselines.",
+      "A modeled device-count boundary is not an executable deployment until format support, mapping, workspace, cache layout, serving, quality, and SLOs are validated.",
+      "Vendor-reported incumbent mechanisms define the minimum control stack even when their aggregate capacity and COGS remain unknown.",
+      "Native simulator operability and within-oracle sensitivity are not calibration, physical timing, or predictive validity.",
+      "A small proxy may reject a mechanism or promote a separate larger-model experiment; it never approves transfer to GLM.",
+      "A published or commercially occupied mechanism kills a generic novelty claim but does not prove that a narrower validated implementation cannot win."
+    ]
+  },
+  "sources": [
+    {
+      "source_id": "qwen_selective_int4_impact_bound",
+      "path": "validation/results/qwen3-0.6b-selective-int4-impact-bound-v1.json",
+      "file_sha256": "ac42b62f35f35202cb2f891919254e797323b4623c8567e7e03843a33f069248",
+      "internal_content_id": null,
+      "evidence_classes": [
+        "measured",
+        "analytical"
+      ]
+    },
+    {
+      "source_id": "qwen_selective_int4_4096_quality",
+      "path": "validation/results/qwen3-0.6b-int4-o-gate-up-wikitext2-sequential4096-bf16-v1.json",
+      "file_sha256": "810201f17e88b4a1be625627ca98b7ffd42ee9e15ab2dbe42f4d6aa32cfe4a05",
+      "internal_content_id": "7aed32b64aefaf5f04afcf5cb73f7286e8acf85d71517c56a8f2dc981d40e97e",
+      "internal_content_id_scope": "provenance.detailed_artifact.content_identity_sha256",
+      "evidence_classes": [
+        "measured",
+        "analytical"
+      ]
+    },
+    {
+      "source_id": "qwen_kv_head_dedup_frontier",
+      "path": "validation/results/qwen3-0.6b-kv-head-dedup-quality-frontier-v1.json",
+      "file_sha256": "a0c73592929b2e5454d286b74ce09e4729ecc46b78773d5728dce69afee57334",
+      "internal_content_id": "49c67c0ea89d5a820c06333d83f253f59f7ae64a3c7ad829ca0762608c531d59",
+      "evidence_classes": [
+        "measured",
+        "analytical"
+      ]
+    },
+    {
+      "source_id": "qwen_kv_head_dedup_layer4_4096_quality",
+      "path": "validation/results/qwen3-0.6b-kv-head-pair-mean-layer4-wikitext2-sequential4096-bf16-v1.json",
+      "file_sha256": "eb1fd42e452aadd5121bd13a5af7542b1baec594ba435ae9668c59eb6a8d3df5",
+      "internal_content_id": "ef72cb3fe4c5d4ff9fb5b638a0c15caf86b10d101969b408ec20274924ff0401",
+      "evidence_classes": [
+        "measured",
+        "analytical"
+      ]
+    },
+    {
+      "source_id": "glm_pd_serving_control",
+      "path": "experiments/glm-5.2/pd-serving-control-v1.json",
+      "file_sha256": "8f65d7c796fe4eadbeedfe10bd0ab9ed59516762ffacc11098cb99324a72b334",
+      "internal_content_id": "c83ec178319e944168b4192adab0f4e02dbb039d8e1d3685232d16925e504a20",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported"
+      ]
+    },
+    {
+      "source_id": "glm_parallel_mapping_control",
+      "path": "experiments/glm-5.2/parallel-mapping-control-v1.json",
+      "file_sha256": "efdab50dcefa2ed484b2a513ec8753ee7a7a2b477b01b3dde6f0363d75b523b9",
+      "internal_content_id": "205c1c7157d104179e066ecfde311107ca7f160f941a8a97e7058e8e1fd80729",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported"
+      ]
+    },
+    {
+      "source_id": "glm_nvfp4_whole_decode_lowering_90k_control",
+      "path": "experiments/glm-5.2/nvfp4-whole-decode-lowering-90k-control-v1.json",
+      "file_sha256": "910eca9d10ab0b61a2c396cdcf9480c9bd66d5775688764bcb9faca3dcf4e66f",
+      "internal_content_id": "f40f41c1d67b909783c40073f475f08906e77ccb05673f2beb630a496b0c7cd3",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported"
+      ]
+    },
+    {
+      "source_id": "glm_parallel_mapping_90k_control",
+      "path": "experiments/glm-5.2/parallel-mapping-90k-control-v1.json",
+      "file_sha256": "548bfe7501a8795aa2618a672ad32f89764b7dbcaa4c5c94442001e5d93d8711",
+      "internal_content_id": "0f61e4f6ebec52b35fb5046ab1ba7bbb9506516dba23f94b694c65085bc0f48a",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported"
+      ]
+    },
+    {
+      "source_id": "glm_nvfp4_blackwell_lower",
+      "path": "experiments/glm-5.2/nvfp4-blackwell-roofline-lower-v1.json",
+      "file_sha256": "6d2c983abb300bed2c53a995477f2ca66cfde0ff2d150e724568b4ac070b822f",
+      "internal_content_id": "df1218793c14fd749e208cd2005730f1a7aa27d108be75f6f0150b85d960960e",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported"
+      ]
+    },
+    {
+      "source_id": "glm_nvfp4_blackwell_upper",
+      "path": "experiments/glm-5.2/nvfp4-blackwell-roofline-upper-v1.json",
+      "file_sha256": "9d712c6d6c42f5781d4af0cfff11fa5b186b2b985054140d423ed980260a8849",
+      "internal_content_id": "8c245b30dbfc4a764ea4786f342c71f6cab11855422d6926bc45058171410d37",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported"
+      ]
+    },
+    {
+      "source_id": "glm_four_b200_residency_frontier",
+      "path": "experiments/glm-5.2/nvfp4-fp8-kv-four-b200-frontier-v1.json",
+      "file_sha256": "a86d2b04cf66adde2bb6dd057c7bb592589799ce393f21fa06fb51f44d1607f0",
+      "internal_content_id": "708257b73d32cb8228e7ebd467de5c2e606755f2aedb71a93570a9149c10a04a",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported"
+      ]
+    },
+    {
+      "source_id": "glm_economic_robustness_frontier",
+      "path": "experiments/glm-5.2/economic-robustness-frontier-v1.json",
+      "file_sha256": "880356569787f4d7f28095f0ca232ae7360f6fbbf44e4569f835b85178ed3664",
+      "internal_content_id": "fb0efb13d0e112dc8a1c025fbe3d6aff7aa8a410b79c6446f11e3bf173e6ba77",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported",
+        "inferred"
+      ]
+    },
+    {
+      "source_id": "custom_hardware_feasibility",
+      "path": "validation/results/custom-hardware-feasibility-2026-07-12.json",
+      "file_sha256": "d97338f2c6533e346d36f033ee95438e018e7a99b341bc108328c928f99d1e58",
+      "internal_content_id": null,
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported",
+        "inferred"
+      ]
+    },
+    {
+      "source_id": "glm_incumbent_stack_dossier",
+      "path": "validation/results/glm-5.2-incumbent-stack-2026-07-12.json",
+      "file_sha256": "2932b476960c7f0a3e3a008ba488f97cdd087b701f034e5276de07b56009a2b4",
+      "internal_content_id": null,
+      "evidence_classes": [
+        "vendor_reported",
+        "inferred"
+      ]
+    },
+    {
+      "source_id": "qwen_int4_bf16_scale_wikitext_512",
+      "path": "validation/results/qwen3-0.6b-int4-o-gate-up-bf16scale-wikitext2-test-v1.json",
+      "file_sha256": "357132aa87716441c20c5581db2227a45f97f787f13c13342de7c766cced9ebf",
+      "internal_content_id": "94b74bd8190d4f9f21e5ce46900d4ee32064f532b95ccc1521359bd234cd799c",
+      "internal_content_id_scope": "content_identity_sha256",
+      "evidence_classes": [
+        "measured",
+        "analytical"
+      ]
+    },
+    {
+      "source_id": "qwen_int4_bf16_scale_wikitext_4096",
+      "path": "validation/results/qwen3-0.6b-int4-o-gate-up-bf16scale-wikitext2-sequential4096-v1.json",
+      "file_sha256": "01c93879711b6b7329ac8d7b39c2fca7beee043521351ff3ad60204922022578",
+      "internal_content_id": "c97aa7940890f43c946eb8b4d4a7e0bece482626933799cc8932a0fa86492c12",
+      "internal_content_id_scope": "content_identity_sha256",
+      "evidence_classes": [
+        "measured",
+        "analytical"
+      ]
+    },
+    {
+      "source_id": "qwen_int4_bf16_scale_piqa_256",
+      "path": "validation/results/qwen3-0.6b-int4-o-gate-up-piqa256-bf16scale-v1.json",
+      "file_sha256": "5652b4d297c4ec72526c45e99592dc6fd62db10446622be9eb143d0217cfe441",
+      "internal_content_id": "165df94dfdb52f499513b89c38174b85681aa4b5390f65b8b76e2df3198fd619",
+      "internal_content_id_scope": "content_identity_sha256",
+      "evidence_classes": [
+        "measured",
+        "analytical"
+      ]
+    },
+    {
+      "source_id": "qwen_int4_packed_scalar_smoke",
+      "path": "experiments/qwen3-0.6b/int4-packed-kernel-smoke-v1.json",
+      "file_sha256": "861943394f1a308fe1b6e3c8e868fd41c2a8b6a180da103af066a24b1365c2fa",
+      "internal_content_id": "06c3789ef245d9275f0adf76b592ed6c2f812864bd95dcf80f5b669fe21d723c",
+      "internal_content_id_scope": "content_id",
+      "evidence_classes": [
+        "measured",
+        "analytical"
+      ]
+    },
+    {
+      "source_id": "qwen_int4_packed_batch_frontier",
+      "path": "experiments/qwen3-0.6b/int4-packed-batch-frontier-v1.json",
+      "file_sha256": "80a7e32737b88fb851142c6371b852fc4b042c24fc4852514133c8393879950d",
+      "internal_content_id": "9151f5d066bfc4fbff8e855cc9d312d44377e060ecef0b796fa30ffef56ec7ad",
+      "internal_content_id_scope": "content_id",
+      "evidence_classes": [
+        "measured",
+        "analytical"
+      ]
+    },
+    {
+      "source_id": "qwen_kv_head_recovery_2k",
+      "path": "validation/results/qwen3-0.6b-kv-head-recovery-2k-v1.json",
+      "file_sha256": "0bfa0a1a99472a2b56b7daf6565a89c5172388c5f5a849285d9c7e82d250777b",
+      "internal_content_id": "fe585d9bd1d73faa9b1599f678f68b8b9326e1980e656d733214c546e51b2731",
+      "internal_content_id_scope": "content_identity_sha256",
+      "evidence_classes": [
+        "measured"
+      ]
+    },
+    {
+      "source_id": "scalesim_qwen_glm_gemm_sweep",
+      "path": "validation/results/qwen3-glm-scalesim-v3-gemm-sweep-v1.json",
+      "file_sha256": "489592b48cf16403f2dcca95b869e245769972eb172d2423e47b5df27fbd4cf4",
+      "internal_content_id": "ab42fa90e0c0233f900269ade11597528362e3e2609c0424fc8e3f5944231a0f",
+      "internal_content_id_scope": "content_identity_sha256",
+      "evidence_classes": [
+        "simulated",
+        "analytical"
+      ]
+    },
+    {
+      "source_id": "timeloop_qwen_external_smoke",
+      "path": "experiments/qwen3-0.6b/timeloop-external-smoke-v1/report.json",
+      "file_sha256": "b2eb8bb20e7caff35840d90fcacbbdb58c3f1a526dbbef0002165190df6e488c",
+      "internal_content_id": "5dd5a235ef2229c39b7d8deee4efbaff01282673c80f9b0effcce404c8f1f874",
+      "internal_content_id_scope": "content_identity_sha256",
+      "evidence_classes": [
+        "simulated",
+        "analytical"
+      ]
+    },
+    {
+      "source_id": "glm_parallel_mapping_context_frontier",
+      "path": "experiments/glm-5.2/parallel-mapping-context-frontier-v1.json",
+      "file_sha256": "680ffeb3ff694c5fe134940b97d6e79e7cabdd8adf52d206e191e0db1ff2fdbf",
+      "internal_content_id": "727c79eb3ec827b12a45b9311d114cd7f33beb15fc72f1698940e975e774b09c",
+      "internal_content_id_scope": "content_id",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported"
+      ]
+    },
+    {
+      "source_id": "glm_current_cost_claim_composition",
+      "path": "experiments/glm-5.2/current-cost-claim-composition-v1.json",
+      "file_sha256": "41066a33113744a9bf887755a6a09656514a5e09d5ad2cc84fc110351c0d91f5",
+      "internal_content_id": "8dbc8cf34334a86c42c76259912f914490b5755166195a375893059459b0edf9",
+      "internal_content_id_scope": "content_id",
+      "evidence_classes": [
+        "analytical",
+        "inferred"
+      ]
+    },
+    {
+      "source_id": "qwen_vllm_cpu_repeatability_terminal",
+      "path": "validation/results/qwen3-0.6b-vllm-cpu-repeatability-v1.json",
+      "file_sha256": "4b84b13af21c140a9993de15d5966a74c6453a92989bfe8d8fc0ea0b633965ee",
+      "internal_content_id": "7b71feaf1820b3c97756ac6d09e56f775ab1e40ab4ae7f6f35dae2af8699989e",
+      "internal_content_id_scope": "content_id",
+      "evidence_classes": [
+        "measured"
+      ]
+    },
+    {
+      "source_id": "competitive_simulation_landscape",
+      "path": "validation/results/inference-codesign-competitive-simulation-landscape-2026-07-12.json",
+      "file_sha256": "b3314e342f440a4139957c19af0a60106b7754ad616a1760c5dd549edd0e7f1c",
+      "internal_content_id": "bbffa8a7c236ab030f4f74a855fbd424f5e8362ca6f2b77fd90dafd503ab9464",
+      "internal_content_id_scope": "content_identity_sha256",
+      "evidence_classes": [
+        "vendor_reported",
+        "inferred"
+      ]
+    },
+    {
+      "source_id": "glm_agentic_mapping_screen",
+      "path": "experiments/glm-5.2/agentic-mapping-screen-v1.json",
+      "file_sha256": "0e87a43ea19ca45b286b6bf8f0b588a3854c85ae3609cccc13517790f73906e8",
+      "internal_content_id": "f501dd1a2beba380f605c080ef0a6f405b506efb832c98374cfa043da092e5a5",
+      "internal_content_id_scope": "content_id",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "inferred"
+      ]
+    },
+    {
+      "source_id": "ramulator2_hbm3_synthetic_irregular",
+      "path": "validation/results/qwen3-glm-ramulator2-hbm3-synthetic-irregular-v1.json",
+      "file_sha256": "ad3aaa4cedfe487d5b1fd78ac53412190d6397f9289abe077e329ecb2c492aa9",
+      "internal_content_id": "8215dbe19f3480cd8c9c3040aad9f9186a4b9a1e84a52e637663e7abb6d72c0b",
+      "internal_content_id_scope": "content_identity_sha256",
+      "evidence_classes": [
+        "simulated",
+        "analytical",
+        "inferred"
+      ]
+    },
+    {
+      "source_id": "simulator_predictive_validity_gate",
+      "path": "validation/results/simulator-predictive-validity-gate-2026-07-12.json",
+      "file_sha256": "d35cee28674afb0c0d0d8d0b50ba6b1967b69d7ad98316a99af2fd944a9c1acc",
+      "internal_content_id": "83921cf8311aab4ecb4a3d180766d4b18610393a259476c663b3ae634bf63e42",
+      "internal_content_id_scope": "content_identity_sha256",
+      "evidence_classes": [
+        "analytical",
+        "inferred"
+      ]
+    },
+    {
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "path": "experiments/qwen3-0.6b/int4-aarch64-neon-v1.json",
+      "file_sha256": "2428ccbbf26adc3c993c4b0aa12491be2d10ae395e2473470fb67134d8686e62",
+      "internal_content_id": "5494727ab064f8c189f89e88794bbd7c9234baf23ab657c11bae62eaa6f35d40",
+      "internal_content_id_scope": "content_id",
+      "evidence_classes": [
+        "measured",
+        "analytical"
+      ]
+    },
+    {
+      "source_id": "small_model_proxy_selection_memo",
+      "path": "docs/SMALL_MODEL_PROXY_SELECTION.md",
+      "file_sha256": "27b68401ff5ae85db2775dd15882931ba569fcc2737dd3adeabdd296870a2643",
+      "internal_content_id": null,
+      "source_format": "markdown",
+      "evidence_classes": [
+        "vendor_reported",
+        "inferred"
+      ]
+    }
+  ],
+  "integrity_summary": {
+    "source_count": 31,
+    "file_sha256_bound_source_count": 31,
+    "internal_content_id_bound_source_count": 27,
+    "evidence_fact_check_count": 100,
+    "lever_decision_count": 20,
+    "arithmetic_check_count": 30,
+    "binding_rule": "Every source is bound to exact file bytes. Sources that expose a stable internal identity are also bound to that identity. Ledger validation fails closed on missing files, hash drift, content-ID drift, unknown lever references, or enabled business claims. Markdown decision sources are byte-bound and exact decision sentences are checked with explicit text_contains facts."
+  },
+  "evidence_fact_verification": [
+    {
+      "check_id": "qwen_int4_bf16_scale_512_quality_gate",
+      "source_id": "qwen_int4_bf16_scale_wikitext_512",
+      "source_scope": "quality_report.passed",
+      "expected": true
+    },
+    {
+      "check_id": "qwen_int4_bf16_scale_512_nll_delta",
+      "source_id": "qwen_int4_bf16_scale_wikitext_512",
+      "source_scope": "metrics.nll_delta",
+      "expected": 0.03160006180405617
+    },
+    {
+      "check_id": "qwen_int4_bf16_scale_4096_quality_gate",
+      "source_id": "qwen_int4_bf16_scale_wikitext_4096",
+      "source_scope": "quality_report.passed",
+      "expected": true
+    },
+    {
+      "check_id": "qwen_int4_bf16_scale_4096_nll_delta",
+      "source_id": "qwen_int4_bf16_scale_wikitext_4096",
+      "source_scope": "metrics.nll_delta",
+      "expected": 0.05935213342308998
+    },
+    {
+      "check_id": "qwen_int4_piqa_exact_selected_rows",
+      "source_id": "qwen_int4_bf16_scale_piqa_256",
+      "source_scope": "selection.measured_selected_rows_sha256",
+      "expected": "459ed1c48bf77ba46b40e21fe1e3153a7f93ac9619aada736e116683e7de678f"
+    },
+    {
+      "check_id": "qwen_int4_piqa_accuracy_delta",
+      "source_id": "qwen_int4_bf16_scale_piqa_256",
+      "source_scope": "metrics.accuracy_delta",
+      "expected": 0.00390625
+    },
+    {
+      "check_id": "qwen_int4_piqa_point_gate",
+      "source_id": "qwen_int4_bf16_scale_piqa_256",
+      "source_scope": "metrics.gate.passed",
+      "expected": true
+    },
+    {
+      "check_id": "qwen_int4_piqa_confirmatory_noninferiority",
+      "source_id": "qwen_int4_bf16_scale_piqa_256",
+      "source_scope": "metrics.uncertainty_interpretation.confirmatory_non_inferiority_established",
+      "expected": false
+    },
+    {
+      "check_id": "qwen_int4_packed_scalar_correctness",
+      "source_id": "qwen_int4_packed_scalar_smoke",
+      "source_scope": "result.aggregate.all_correctness_checks_passed",
+      "expected": true
+    },
+    {
+      "check_id": "qwen_int4_packed_scalar_time_ratio",
+      "source_id": "qwen_int4_packed_scalar_smoke",
+      "source_scope": "result.aggregate.raw_time_ratio_packed_over_reference",
+      "expected": 1.3678246149327555
+    },
+    {
+      "check_id": "qwen_int4_packed_batch_no_crossover",
+      "source_id": "qwen_int4_packed_batch_frontier",
+      "source_scope": "result.crossover.strict_no_crossover_in_sweep",
+      "expected": true
+    },
+    {
+      "check_id": "qwen_int4_packed_batch4_time_ratio",
+      "source_id": "qwen_int4_packed_batch_frontier",
+      "source_scope": "result.aggregate_points.1.raw_time_ratio_packed_over_reference",
+      "expected": 1.0172964616725453
+    },
+    {
+      "check_id": "qwen_kv_frontier_layer4_gate",
+      "source_id": "qwen_kv_head_dedup_frontier",
+      "source_scope": "frontier.2.quality_gate_passed",
+      "expected": true
+    },
+    {
+      "check_id": "qwen_kv_frontier_layer4_cache_reduction",
+      "source_id": "qwen_kv_head_dedup_frontier",
+      "source_scope": "frontier.2.kv_cache_reduction_percent",
+      "expected": 1.7857142857142858
+    },
+    {
+      "check_id": "qwen_kv_frontier_full_sharing_perplexity_ratio",
+      "source_id": "qwen_kv_head_dedup_frontier",
+      "source_scope": "frontier.8.perplexity_ratio",
+      "expected": 3455.342100253292
+    },
+    {
+      "check_id": "qwen_kv_recovery_nll_gap_fraction",
+      "source_id": "qwen_kv_head_recovery_2k",
+      "source_scope": "quality.change_from_zero_token_control.nll_gap_fraction_recovered",
+      "expected": 0.038024655983556546
+    },
+    {
+      "check_id": "qwen_kv_recovery_quality_gate",
+      "source_id": "qwen_kv_head_recovery_2k",
+      "source_scope": "quality.after_2048_training_targets.all_gates_passed",
+      "expected": false
+    },
+    {
+      "check_id": "scalesim_native_sweep_status",
+      "source_id": "scalesim_qwen_glm_gemm_sweep",
+      "source_scope": "status",
+      "expected": "native_sweep_succeeded"
+    },
+    {
+      "check_id": "scalesim_identical_base_rank",
+      "source_id": "scalesim_qwen_glm_gemm_sweep",
+      "source_scope": "sweep_analysis.base_architecture_rank_identical_across_workloads",
+      "expected": true
+    },
+    {
+      "check_id": "scalesim_model_specific_best_architecture",
+      "source_id": "scalesim_qwen_glm_gemm_sweep",
+      "source_scope": "sweep_analysis.model_specific_best_base_architecture_observed",
+      "expected": false
+    },
+    {
+      "check_id": "scalesim_qwen_minimum_inclusive_cycles",
+      "source_id": "scalesim_qwen_glm_gemm_sweep",
+      "source_scope": "same_oracle_cycle_frontier.1.minimum_total_cycles_including_prefetch",
+      "expected": 70825
+    },
+    {
+      "check_id": "timeloop_native_backend_status",
+      "source_id": "timeloop_qwen_external_smoke",
+      "source_scope": "status",
+      "expected": "native_backend_blocked"
+    },
+    {
+      "check_id": "timeloop_frontend_parse_claim",
+      "source_id": "timeloop_qwen_external_smoke",
+      "source_scope": "claims.frontend_parse_claim_permitted",
+      "expected": true
+    },
+    {
+      "check_id": "timeloop_native_mapping_claim",
+      "source_id": "timeloop_qwen_external_smoke",
+      "source_scope": "claims.native_mapping_claim_permitted",
+      "expected": false
+    },
+    {
+      "check_id": "glm_context_frontier_90k_strict_threshold",
+      "source_id": "glm_parallel_mapping_context_frontier",
+      "source_scope": "result.frontiers.3.partial_policy_regions.2.start_concurrency",
+      "expected": 9
+    },
+    {
+      "check_id": "glm_context_frontier_1m_strict_threshold",
+      "source_id": "glm_parallel_mapping_context_frontier",
+      "source_scope": "result.frontiers.7.partial_policy_regions.1.start_concurrency",
+      "expected": 2
+    },
+    {
+      "check_id": "glm_pd_cost_claim",
+      "source_id": "glm_pd_serving_control",
+      "source_scope": "result.claims.cost_per_token_claim_permitted",
+      "expected": false
+    },
+    {
+      "check_id": "glm_cost_composition_evidence_count",
+      "source_id": "glm_current_cost_claim_composition",
+      "source_scope": "evidence_count",
+      "expected": 7
+    },
+    {
+      "check_id": "glm_cost_composition_combined_claim",
+      "source_id": "glm_current_cost_claim_composition",
+      "source_scope": "combined_claim_permitted",
+      "expected": false
+    },
+    {
+      "check_id": "qwen_vllm_repeatability_terminal_status",
+      "source_id": "qwen_vllm_cpu_repeatability_terminal",
+      "source_scope": "terminal_status",
+      "expected": "host_contamination_blocked"
+    },
+    {
+      "check_id": "qwen_vllm_repeatability_campaign_accepted",
+      "source_id": "qwen_vllm_cpu_repeatability_terminal",
+      "source_scope": "campaign_accepted",
+      "expected": false
+    },
+    {
+      "check_id": "qwen_vllm_repeatability_new_runs",
+      "source_id": "qwen_vllm_cpu_repeatability_terminal",
+      "source_scope": "progress.new_measured_run_count",
+      "expected": 0
+    },
+    {
+      "check_id": "qwen_vllm_repeatability_prior_accepted_pairs",
+      "source_id": "qwen_vllm_cpu_repeatability_terminal",
+      "source_scope": "progress.accepted_pair_count",
+      "expected": 1
+    },
+    {
+      "check_id": "qwen_vllm_repeatability_expected_pairs",
+      "source_id": "qwen_vllm_cpu_repeatability_terminal",
+      "source_scope": "progress.expected_pair_count",
+      "expected": 20
+    },
+    {
+      "check_id": "competitive_primary_source_count",
+      "source_id": "competitive_simulation_landscape",
+      "check_kind": "json_length",
+      "source_scope": "sources",
+      "expected": 30
+    },
+    {
+      "check_id": "competitive_entry_count",
+      "source_id": "competitive_simulation_landscape",
+      "check_kind": "json_length",
+      "source_scope": "entries",
+      "expected": 19
+    },
+    {
+      "check_id": "competitive_gate_count",
+      "source_id": "competitive_simulation_landscape",
+      "check_kind": "json_length",
+      "source_scope": "decision_gates",
+      "expected": 5
+    },
+    {
+      "check_id": "competitive_first_glm_adjacent_entry",
+      "source_id": "competitive_simulation_landscape",
+      "source_scope": "entries.10.entry_id",
+      "expected": "indexcache_cross_layer_dsa"
+    },
+    {
+      "check_id": "competitive_nosa_entry",
+      "source_id": "competitive_simulation_landscape",
+      "source_scope": "entries.18.entry_id",
+      "expected": "nosa_locality_trained_offload"
+    },
+    {
+      "check_id": "competitive_moat_claim",
+      "source_id": "competitive_simulation_landscape",
+      "source_scope": "surviving_wedge.moat_claim_permitted",
+      "expected": false
+    },
+    {
+      "check_id": "competitive_business_claim_status",
+      "source_id": "competitive_simulation_landscape",
+      "source_scope": "conclusion.business_claim_status",
+      "expected": "unproven"
+    },
+    {
+      "check_id": "agentic_mapping_source_hashes_verified",
+      "source_id": "glm_agentic_mapping_screen",
+      "source_scope": "result.source_file_hashes_verified",
+      "expected": true
+    },
+    {
+      "check_id": "agentic_mapping_proxy_request_count",
+      "source_id": "glm_agentic_mapping_screen",
+      "source_scope": "result.proxy_request_count",
+      "expected": 64
+    },
+    {
+      "check_id": "agentic_mapping_exact_evaluation_count",
+      "source_id": "glm_agentic_mapping_screen",
+      "source_scope": "result.exact_context_evaluation_count",
+      "expected": 45
+    },
+    {
+      "check_id": "agentic_mapping_weighted_evaluation_count",
+      "source_id": "glm_agentic_mapping_screen",
+      "source_scope": "result.request_weighted_evaluation_count",
+      "expected": 320
+    },
+    {
+      "check_id": "agentic_mapping_token_only_retarget",
+      "source_id": "glm_agentic_mapping_screen",
+      "source_scope": "result.retargeting.token_count_retarget_only",
+      "expected": true
+    },
+    {
+      "check_id": "agentic_mapping_prompt_equivalence",
+      "source_id": "glm_agentic_mapping_screen",
+      "source_scope": "result.retargeting.prompt_or_tokenizer_equivalence_claimed",
+      "expected": false
+    },
+    {
+      "check_id": "agentic_mapping_c64_candidate_uncertain",
+      "source_id": "glm_agentic_mapping_screen",
+      "source_scope": "result.request_weighted.4.candidate_full_capacity.uncertain",
+      "expected": 64
+    },
+    {
+      "check_id": "agentic_mapping_deployment_claim",
+      "source_id": "glm_agentic_mapping_screen",
+      "source_scope": "result.claims.full_deployment_claim_permitted",
+      "expected": false
+    },
+    {
+      "check_id": "ramulator_native_status",
+      "source_id": "ramulator2_hbm3_synthetic_irregular",
+      "source_scope": "status",
+      "expected": "patched_native_sweep_succeeded"
+    },
+    {
+      "check_id": "ramulator_case_count",
+      "source_id": "ramulator2_hbm3_synthetic_irregular",
+      "check_kind": "json_length",
+      "source_scope": "cases",
+      "expected": 18
+    },
+    {
+      "check_id": "ramulator_build_status",
+      "source_id": "ramulator2_hbm3_synthetic_irregular",
+      "source_scope": "build.status",
+      "expected": "succeeded"
+    },
+    {
+      "check_id": "ramulator_within_geometry_only",
+      "source_id": "ramulator2_hbm3_synthetic_irregular",
+      "source_scope": "analysis.within_geometry_only",
+      "expected": true
+    },
+    {
+      "check_id": "ramulator_cross_geometry_comparison",
+      "source_id": "ramulator2_hbm3_synthetic_irregular",
+      "source_scope": "analysis.cross_geometry_comparison_permitted",
+      "expected": false
+    },
+    {
+      "check_id": "ramulator_32b_sort_ratio",
+      "source_id": "ramulator2_hbm3_synthetic_irregular",
+      "source_scope": "analysis.geometries.representative_hbm_transaction_32b.sorting_only_same_selected_set.controller_cycle_ratio",
+      "expected": 0.7225582708282926
+    },
+    {
+      "check_id": "ramulator_bf16_sort_ratio",
+      "source_id": "ramulator2_hbm3_synthetic_irregular",
+      "source_scope": "analysis.geometries.bf16_mla_record_1152b.sorting_only_same_selected_set.controller_cycle_ratio",
+      "expected": 1.5919401792612828
+    },
+    {
+      "check_id": "ramulator_32b_cluster64_ratio",
+      "source_id": "ramulator2_hbm3_synthetic_irregular",
+      "source_scope": "analysis.geometries.representative_hbm_transaction_32b.page_clustering_frontier.points.5.controller_cycle_ratio",
+      "expected": 0.4943140575852891
+    },
+    {
+      "check_id": "ramulator_bf16_cluster64_ratio",
+      "source_id": "ramulator2_hbm3_synthetic_irregular",
+      "source_scope": "analysis.geometries.bf16_mla_record_1152b.page_clustering_frontier.points.5.controller_cycle_ratio",
+      "expected": 1.0270877337345623
+    },
+    {
+      "check_id": "ramulator_calibration_claim",
+      "source_id": "ramulator2_hbm3_synthetic_irregular",
+      "source_scope": "claims.calibration",
+      "expected": false
+    },
+    {
+      "check_id": "ramulator_glm_performance_claim",
+      "source_id": "ramulator2_hbm3_synthetic_irregular",
+      "source_scope": "claims.glm_performance",
+      "expected": false
+    },
+    {
+      "check_id": "ramulator_cost_claim",
+      "source_id": "ramulator2_hbm3_synthetic_irregular",
+      "source_scope": "claims.cost_per_token",
+      "expected": false
+    },
+    {
+      "check_id": "ramulator_tapeout_claim",
+      "source_id": "ramulator2_hbm3_synthetic_irregular",
+      "source_scope": "claims.tapeout",
+      "expected": false
+    },
+    {
+      "check_id": "predictive_gate_inventory_count",
+      "source_id": "simulator_predictive_validity_gate",
+      "source_scope": "audit_inventory.artifact_count",
+      "expected": 61
+    },
+    {
+      "check_id": "predictive_gate_audit_count",
+      "source_id": "simulator_predictive_validity_gate",
+      "check_kind": "json_length",
+      "source_scope": "candidate_pair_audits",
+      "expected": 10
+    },
+    {
+      "check_id": "predictive_gate_status",
+      "source_id": "simulator_predictive_validity_gate",
+      "source_scope": "gate_result.status",
+      "expected": "NOT_MET"
+    },
+    {
+      "check_id": "predictive_gate_admitted_pairs",
+      "source_id": "simulator_predictive_validity_gate",
+      "source_scope": "gate_result.admitted_pair_count",
+      "expected": 1
+    },
+    {
+      "check_id": "predictive_gate_observed_effect_error",
+      "source_id": "simulator_predictive_validity_gate",
+      "source_scope": "gate_result.maximum_relative_effect_size_error",
+      "expected": 0.44746583093174686
+    },
+    {
+      "check_id": "predictive_gate_all_directions_correct",
+      "source_id": "simulator_predictive_validity_gate",
+      "source_scope": "gate_result.all_directions_correct",
+      "expected": true
+    },
+    {
+      "check_id": "predictive_gate_predicted_regression_count",
+      "source_id": "simulator_predictive_validity_gate",
+      "source_scope": "gate_result.predicted_regression_count",
+      "expected": 0
+    },
+    {
+      "check_id": "predictive_gate_pair_predicted_effect",
+      "source_id": "simulator_predictive_validity_gate",
+      "source_scope": "gate_result.pairs.0.predicted_benefit_effect",
+      "expected": 0.4285714285714285
+    },
+    {
+      "check_id": "predictive_gate_pair_measured_effect",
+      "source_id": "simulator_predictive_validity_gate",
+      "source_scope": "gate_result.pairs.0.measured_benefit_effect",
+      "expected": 0.7756469238710342
+    },
+    {
+      "check_id": "predictive_gate_required_interventions",
+      "source_id": "simulator_predictive_validity_gate",
+      "source_scope": "gate_spec.required_distinct_interventions",
+      "expected": 3
+    },
+    {
+      "check_id": "predictive_gate_required_context_regimes",
+      "source_id": "simulator_predictive_validity_gate",
+      "source_scope": "gate_spec.required_context_regimes",
+      "expected": 2
+    },
+    {
+      "check_id": "predictive_gate_max_effect_error",
+      "source_id": "simulator_predictive_validity_gate",
+      "source_scope": "gate_spec.maximum_relative_effect_size_error",
+      "expected": 0.15
+    },
+    {
+      "check_id": "predictive_gate_min_spearman",
+      "source_id": "simulator_predictive_validity_gate",
+      "source_scope": "gate_spec.minimum_spearman_rank_correlation",
+      "expected": 0.8
+    },
+    {
+      "check_id": "predictive_gate_cost_promotion",
+      "source_id": "simulator_predictive_validity_gate",
+      "source_scope": "gate_result.cost_promotion_permitted",
+      "expected": false
+    },
+    {
+      "check_id": "small_proxy_qwen_local",
+      "source_id": "small_model_proxy_selection_memo",
+      "check_kind": "text_contains",
+      "expected": "keep **Qwen3-0.6B** as the current local, quality-bearing proxy."
+    },
+    {
+      "check_id": "small_proxy_nosa_future",
+      "source_id": "small_model_proxy_selection_memo",
+      "check_kind": "text_contains",
+      "expected": "Make **NOSA-1B** the first future single-GPU proxy"
+    },
+    {
+      "check_id": "small_proxy_no_glm_transfer",
+      "source_id": "small_model_proxy_selection_memo",
+      "check_kind": "text_contains",
+      "expected": "No candidate can approve performance transfer to GLM-5.2."
+    },
+    {
+      "check_id": "neon_tensor_count",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.aggregate.tensor_count",
+      "expected": 3
+    },
+    {
+      "check_id": "neon_parameter_count",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.aggregate.parameter_count",
+      "expected": 8388608
+    },
+    {
+      "check_id": "neon_summed_median_seconds",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.aggregate.summed_neon_median_seconds",
+      "expected": 0.0010635829999999999
+    },
+    {
+      "check_id": "neon_scalar_packed_summed_median_seconds",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.aggregate.summed_scalar_packed_median_seconds",
+      "expected": 0.004740665999999999
+    },
+    {
+      "check_id": "neon_floating_qdq_summed_median_seconds",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.aggregate.summed_floating_qdq_median_seconds",
+      "expected": 0.003493126
+    },
+    {
+      "check_id": "neon_scalar_packed_speed_ratio",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.aggregate.scalar_packed_over_neon_speed_ratio",
+      "expected": 4.457260035182961
+    },
+    {
+      "check_id": "neon_floating_qdq_speed_ratio",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.aggregate.floating_qdq_over_neon_speed_ratio",
+      "expected": 3.2843003319910156
+    },
+    {
+      "check_id": "neon_faster_than_scalar_packed",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.aggregate.neon_faster_than_scalar_packed",
+      "expected": true
+    },
+    {
+      "check_id": "neon_faster_than_floating_qdq",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.aggregate.neon_faster_than_floating_qdq",
+      "expected": true
+    },
+    {
+      "check_id": "neon_all_work_counts_equal",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.aggregate.all_work_counts_equal",
+      "expected": true
+    },
+    {
+      "check_id": "neon_all_correctness_checks_passed",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.aggregate.all_correctness_checks_passed",
+      "expected": true
+    },
+    {
+      "check_id": "neon_all_timed_regions_allocation_free",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.aggregate.all_timed_regions_allocation_free",
+      "expected": true
+    },
+    {
+      "check_id": "neon_explicit_simd_intrinsics_used",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.compiler.explicit_simd_intrinsics_used",
+      "expected": true
+    },
+    {
+      "check_id": "neon_tuned_kernel_claim",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.claims.tuned_kernel_claim_permitted",
+      "expected": false
+    },
+    {
+      "check_id": "neon_blas_or_vllm_claim",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.claims.blas_or_vllm_comparison_permitted",
+      "expected": false
+    },
+    {
+      "check_id": "neon_quality_equivalence_claim",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.claims.quality_equivalence_claim_permitted",
+      "expected": false
+    },
+    {
+      "check_id": "neon_serving_claim",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.claims.serving_claim_permitted",
+      "expected": false
+    },
+    {
+      "check_id": "neon_energy_claim",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.claims.energy_claim_permitted",
+      "expected": false
+    },
+    {
+      "check_id": "neon_cost_per_token_claim",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.claims.cost_per_token_claim_permitted",
+      "expected": false
+    },
+    {
+      "check_id": "neon_provider_claim",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.claims.provider_claim_permitted",
+      "expected": false
+    },
+    {
+      "check_id": "neon_production_claim",
+      "source_id": "qwen_int4_aarch64_neon_holdout",
+      "source_scope": "result.claims.production_claim_permitted",
+      "expected": false
+    }
+  ],
+  "overall_decision": {
+    "business_thesis_status": "not_yet_supported",
+    "continue_building_falsification_and_measurement_stack": true,
+    "launch_provider_on_current_evidence": false,
+    "underwrite_custom_silicon_on_current_evidence": false,
+    "current_evidence_supports_any_measured_cost_per_token_reduction": false,
+    "current_evidence_supports_material_cost_per_token_reduction": false,
+    "current_evidence_supports_5x_cost_per_token_improvement": false,
+    "current_evidence_supports_10x_cost_per_token_improvement": false,
+    "current_evidence_supports_provider_superiority": false,
+    "current_evidence_supports_a_full_end_to_end_simulation_claim": false,
+    "measured_fully_loaded_cost_per_token_improvement_multiplier": null,
+    "reason": "The checked stack now includes exact packed-format quality proxies, a frozen PIQA subset, local scalar and batch kernel timings, a prospective AArch64 NEON holdout, a failed trained KV-recovery attempt, native SCALE-Sim cycles, a Timeloop frontend probe, GLM mapping and serving controls, a strict but host-blocked vLLM repeatability campaign, and an explicit composition gate. It still contains no quality- and SLO-controlled end-to-end runtime comparison and no measured fully loaded cost per token. The safe scalar packed Rust reference regresses, while the exact local NEON intrinsic is 4.457x faster than that scalar packed loop and 3.284x faster than the scalar f32-QDQ loop over three layer-zero tensors; neither control is tuned BLAS, vLLM, serving, energy, or cost. The 8-to-4 KV recovery recipe fails quality, the dense-array sweep exposes no model-specific winner, the Timeloop native backend is unavailable, the vLLM campaign produced zero new runs and only one prior accepted pair, and zero of seven current records is admissible for a joint GLM cost claim. The expanded public landscape rejects a generic simulator or obvious DSA idea as the moat; the agentic GLM mapping screen leaves every candidate full-capacity request uncertain; the drained Ramulator sweep kills geometry-insensitive locality claims; the artifact-bound predictive gate admits one prospective pair but misses effect magnitude by 44.747%, has no predicted regression, and remains NOT_MET; and Qwen plus future NOSA proxy work cannot transfer performance to GLM.",
+    "non_composition_reason": "Qwen quality, local CPU kernel timings, native simulator cycles, GLM topology arithmetic, GLM serving sensitivities, hardware rooflines, and economic screens use different models, scopes, controls, metrics, and evidence classes. The fail-closed composition artifact admits zero current records, so no marginal effects are multiplied. The predictive gate now admits one exact-scope local kernel pair, but its magnitude error fails the predeclared limit and it has no same-scope quality, SLO, serving, energy, or cost evidence. The new mapping, memory-oracle, competitive, predictive-gate, kernel, and proxy-selection records therefore do not compose into a cost claim.",
+    "strongest_measured_evidence": {
+      "finding": "The selective INT4 candidate with BF16-stored scales passes pinned 512- and 4,096-target teacher-forced Qwen3-0.6B gates and the predeclared point-estimate gate on an exact-source frozen PIQA256 subset; its paired-bootstrap interval still crosses the 2-point non-inferiority margin. Exact local scalar and matched-loop batch kernels decode the same packed representation correctly but are slower than their scalar f32-QDQ controls at every tested batch.",
+      "boundary": "The PIQA subset is not a full benchmark and does not establish confirmatory task non-inferiority. The kernel controls are local one-thread Rust loops, not tuned BF16 BLAS, vLLM, GPU, serving, energy, or cost controls.",
+      "evidence_class": "measured"
+    },
+    "latest_measured_kernel_evidence": {
+      "finding": "Across three exact Qwen3-0.6B layer-zero tensors totaling 8,388,608 parameters, the one-thread AArch64 NEON intrinsic path sums to 0.001063583 seconds, versus 0.004740666 seconds for the matched scalar packed loop and 0.003493126 seconds for the scalar f32-QDQ loop. This is a 4.457x and 3.284x local speed ratio respectively, with equal work counts, passing correctness gates, and allocation-free timed regions.",
+      "predictive_result": "The precommitted predicted benefit effect was 42.857% and the measured benefit effect was 77.565%. Direction was correct, but 44.747% relative effect-size error fails the 15% predictive-validity limit.",
+      "boundary": "This permits a local intrinsic implementation and timing claim only. The kernel is not tuned, neither control is BLAS or vLLM, and no full-model quality, serving, energy, cost, provider, production, or GLM-transfer claim is supported.",
+      "evidence_classes": [
+        "measured",
+        "analytical"
+      ]
+    },
+    "strongest_conditional_evidence": [
+      {
+        "rank": 1,
+        "finding": "The four-B200 lower residency endpoint misses aggregate modeled capacity by only 5,267,999,028 bytes and fits 60 sequences at 32,768 reserved tokens, creating a plausible device-count discontinuity to investigate.",
+        "why_conditional": "The upper endpoint misses by 104,052,246,836 bytes, and TP4 execution, NVFP4 kernels, real workspace, cache layout, serving, quality, and SLOs are unvalidated.",
+        "evidence_classes": [
+          "analytical",
+          "modeled_assumption"
+        ]
+      },
+      {
+        "rank": 2,
+        "finding": "Independent local attention plus EP8 reduces modeled network-hop payload by 85.858% to 85.861% and modeled cross-domain payload by 100% versus coupled TP16 on the pinned repeated decode work unit. Raising context from 16,384 to 90,000 tokens moves partial cluster-residency dominance from concurrency 43 to concurrency 8.",
+        "why_conditional": "The route histogram and topology are modeled, timing is uncalibrated, and the candidate full-residency upper bound remains uncertain because replicated common weights can exceed per-device capacity.",
+        "evidence_classes": [
+          "analytical",
+          "modeled_assumption"
+        ]
+      },
+      {
+        "rank": 3,
+        "finding": "Selective Qwen INT4 with BF16-stored scales preserves the declared 512- and 4,096-target numerical proxies and passes the frozen PIQA256 point gate while analytically reducing packed weight bytes by 24.629%.",
+        "why_conditional": "The PIQA bootstrap interval is inconclusive and the absolute zero-overhead bound is only 1.327x even if all time were weight reads. Historical scalar and identical-loop batch kernels are 1.017x to 1.368x slower than scalar f32-QDQ controls; the newer NEON intrinsic wins its local loops, but is not a tuned kernel or BLAS, vLLM, serving, energy, or cost control.",
+        "evidence_classes": [
+          "measured",
+          "analytical"
+        ]
+      },
+      {
+        "rank": 4,
+        "finding": "The patched native Ramulator2 oracle completes exact callback drain for 18 synthetic HBM3 cases. Within their separately scoped geometries, logical sorting is -27.744% in the representative 32-byte case and +59.194% in the synthetic 1,152-byte BF16 case; the source prohibits treating those ratios as an absolute cross-geometry performance comparison.",
+        "why_conditional": "The source build is compatibility-patched, traces are synthetic and not GLM-faithful, cross-geometry comparison is prohibited, and no physical calibration, GPU kernel, quality, serving, energy, or cost measurement exists.",
+        "evidence_classes": [
+          "simulated",
+          "analytical",
+          "inferred"
+        ]
+      }
+    ],
+    "current_evidence_supports_calibrated_simulation": false,
+    "current_evidence_supports_buildable_custom_hardware": false
+  },
+  "lever_decisions": [
+    {
+      "lever_id": "qwen_selective_int4_o_gate_up",
+      "model": "Qwen/Qwen3-0.6B",
+      "decision": "measure",
+      "role": "Quality-qualified compression hypothesis whose current safe scalar implementation is rejected as a performance lever, not a material-cost result.",
+      "source_ids": [
+        "qwen_selective_int4_impact_bound",
+        "qwen_int4_bf16_scale_wikitext_512",
+        "qwen_int4_bf16_scale_wikitext_4096",
+        "qwen_int4_bf16_scale_piqa_256",
+        "qwen_int4_packed_scalar_smoke",
+        "qwen_int4_packed_batch_frontier"
+      ],
+      "checked_facts": {
+        "teacher_forced_512_gate_passed": true,
+        "teacher_forced_512_nll_delta": 0.03160006180405617,
+        "teacher_forced_4096_gate_passed": true,
+        "target_tokens": 4096,
+        "nll_delta": 0.05935213342308998,
+        "perplexity_ratio": 1.0611488409315066,
+        "logit_rmse": 0.46077665885978747,
+        "logit_cosine_similarity": 0.989947955728275,
+        "top1_agreement": 0.862548828125,
+        "piqa_subset_examples": 256,
+        "piqa_is_full_standard_benchmark": false,
+        "piqa_exact_selected_rows_sha256": "459ed1c48bf77ba46b40e21fe1e3153a7f93ac9619aada736e116683e7de678f",
+        "piqa_baseline_accuracy": 0.6796875,
+        "piqa_candidate_accuracy": 0.68359375,
+        "piqa_accuracy_delta": 0.00390625,
+        "piqa_point_estimate_gate_passed": true,
+        "piqa_paired_bootstrap_95_percent_accuracy_delta": {
+          "lower": -0.0234375,
+          "upper": 0.03125
+        },
+        "piqa_confirmatory_noninferiority_established": false,
+        "estimated_packed_weight_byte_reduction_percent": 24.62891698735569,
+        "full_model_runtime_storage_compressed": false,
+        "absolute_zero_overhead_speedup_upper_bound": 1.3267687819110139,
+        "packed_scalar_all_correctness_checks_passed": true,
+        "packed_scalar_time_ratio_over_f32_qdq_control": 1.3678246149327555,
+        "matched_batch_time_ratio_over_f32_qdq_control": {
+          "batch_1": 1.0659766741179901,
+          "batch_4": 1.0172964616725453,
+          "batch_16": 1.0304572287647356,
+          "batch_64": 1.0204410906602348
+        },
+        "packed_win_observed_in_tested_batches": false,
+        "kernel_control_is_tuned_bf16_or_vllm": false
+      },
+      "evidence_classes": [
+        "measured",
+        "analytical"
+      ],
+      "pursue_condition": "A distinct architecture-tuned SIMD or accelerator kernel must beat a tuned same-hardware BF16 control while preserving the exact packed-format quality and task contracts.",
+      "kill_now": [
+        "Selective weight traffic alone as a 5x or 10x explanation.",
+        "The current safe scalar Rust packed kernel as a performance lever.",
+        "Any runtime or dollars-per-token claim based on the storage estimate or scalar timing alone."
+      ],
+      "next_falsification_test": "Implement an architecture-tuned packed kernel and benchmark it against tuned BF16 on the same hardware over prefill and decode sweeps, then materialize the full runtime representation and report achieved bandwidth, dequantization overhead, SLO tails, energy, and fully loaded cost.",
+      "claims": {
+        "teacher_forced_quality_proxy_pass_permitted": true,
+        "frozen_piqa_subset_point_gate_pass_permitted": true,
+        "confirmatory_task_quality_noninferiority_permitted": false,
+        "local_packed_correctness_permitted": true,
+        "local_scalar_timing_observation_permitted": true,
+        "packed_kernel_speedup_permitted": false,
+        "runtime_memory_reduction_permitted": false,
+        "task_quality_noninferiority_permitted": false,
+        "cost_per_token_reduction_permitted": false,
+        "transfer_to_glm_permitted": false
+      }
+    },
+    {
+      "lever_id": "qwen_one_shot_kv_head_pair_mean",
+      "model": "Qwen/Qwen3-0.6B",
+      "decision": "kill",
+      "role": "Kill the current one-shot, no-recovery formulation as a material cost lever; a separately trained architecture change remains a distinct hypothesis.",
+      "source_ids": [
+        "qwen_kv_head_dedup_frontier",
+        "qwen_kv_head_dedup_layer4_4096_quality"
+      ],
+      "checked_facts": {
+        "frontier_target_tokens": 512,
+        "maximum_passing_transformed_layers": 4,
+        "maximum_passing_cache_reduction_percent": 1.7857142857142858,
+        "first_failing_cache_reduction_percent": 2.232142857142857,
+        "ideal_cache_only_decode_speedup_upper_bound": 1.0181818181818183,
+        "layer4_4096_teacher_forced_gate_passed": true,
+        "layer4_4096_nll_delta": 0.0014089420437812805,
+        "layer4_4096_perplexity_ratio": 1.0014099350689396,
+        "layer4_4096_logit_rmse": 0.43881190997617764,
+        "layer4_4096_logit_cosine_similarity": 0.9909300517710955,
+        "layer4_4096_top1_agreement": 0.87646484375,
+        "runtime_kv_cache_deduplicated": false,
+        "runtime_weight_storage_deduplicated": false
+      },
+      "evidence_classes": [
+        "measured",
+        "analytical"
+      ],
+      "kill_now": [
+        "One-shot pair averaging without recovery as a material cache or cost reduction strategy.",
+        "A custom alias kernel before a larger quality-preserving cache reduction exists."
+      ],
+      "separate_reformulation_worth_testing": "Train or distill an architecture-native lower-KV-head model with activation-aware initialization, then require task and agent quality before implementing a cache alias kernel.",
+      "next_falsification_test": "Attempt a predeclared trained 8-to-4 KV-head conversion targeting 50% semantic KV reduction; stop if task quality cannot be recovered before kernel work.",
+      "claims": {
+        "teacher_forced_quality_frontier_permitted": true,
+        "runtime_cache_reduction_permitted": false,
+        "alias_kernel_performance_permitted": false,
+        "task_quality_noninferiority_permitted": false,
+        "cost_per_token_reduction_permitted": false,
+        "transfer_to_glm_permitted": false
+      }
+    },
+    {
+      "lever_id": "qwen_trained_full_kv_head_recovery_rank8_qo",
+      "model": "Qwen/Qwen3-0.6B",
+      "decision": "kill",
+      "role": "Reject this exact small-budget 8-to-4 KV recovery recipe before kernel work; broader architecture-native training hypotheses remain open.",
+      "source_ids": [
+        "qwen_kv_head_recovery_2k"
+      ],
+      "checked_facts": {
+        "semantic_unique_kv_heads_before": 8,
+        "semantic_unique_kv_heads_after": 4,
+        "shared_kv_weights_trainable": false,
+        "adapter_targets": [
+          "q_proj",
+          "o_proj"
+        ],
+        "adapter_rank": 8,
+        "trainable_parameter_count": 1376256,
+        "trainable_parameter_percent": 0.23036419482229048,
+        "training_target_tokens": 2048,
+        "nll_gap_fraction_recovered": 0.038024655983556546,
+        "post_training_nll_delta": 7.837864141911268,
+        "post_training_perplexity_ratio": 2534.7851067297934,
+        "post_training_logit_rmse": 4.415250806221513,
+        "post_training_logit_cosine_similarity": 0.3516097713355114,
+        "post_training_top1_agreement": 0.013671875,
+        "all_quality_gates_passed": false,
+        "every_gate_more_than_twice_outside_budget": true,
+        "full_8192_token_run_started": false,
+        "measured_peak_rss_bytes": 6262685696,
+        "measured_run_wall_seconds": 1276.338815624942
+      },
+      "evidence_classes": [
+        "measured"
+      ],
+      "scope_limit": "This result rejects minimum-weight-distance pair means with frozen shared K/V and rank-8 Q/O-only adapters at the declared data and budget. It does not reject trainable shared K/V, activation-aware initialization, gradual fusion, distillation, or literature-scale uptraining.",
+      "next_falsification_test": "Attempt activation-aware initialization with trainable shared K/V projections only if its predeclared local compute budget is justified by a larger initial quality signal; otherwise prioritize model architectures trained natively with fewer KV heads.",
+      "claims": {
+        "exact_recipe_quality_qualified": false,
+        "all_lower_kv_head_training_rejected": false,
+        "runtime_kv_reduction_measured": false,
+        "serving_performance_permitted": false,
+        "cost_per_token_reduction_permitted": false,
+        "transfer_to_glm_permitted": false
+      }
+    },
+    {
+      "lever_id": "qwen_vllm_cpu_repeatability_baseline",
+      "model": "Qwen/Qwen3-0.6B",
+      "decision": "measure",
+      "role": "The real-serving baseline remains unavailable: preserve the strict isolation contract and rerun on a controllable host before calibrating simulation or cost.",
+      "source_ids": [
+        "qwen_vllm_cpu_repeatability_terminal"
+      ],
+      "checked_facts": {
+        "terminal_status": "host_contamination_blocked",
+        "campaign_accepted": false,
+        "preflight_timeout_seconds": 1800,
+        "wait_sample_count": 355,
+        "blocking_process_cpu_threshold_percent": 20.0,
+        "new_measured_run_count": 0,
+        "prior_accepted_pair_count": 1,
+        "required_pair_count": 20,
+        "required_run_count": 40
+      },
+      "inference": "One prior accepted cold/warm pair and zero new runs cannot estimate dispersion, cold-versus-warm effects, concurrency scaling, or simulator error. The blocked gate is evidence that the local host was unsuitable for the frozen protocol, not evidence about vLLM performance.",
+      "unknowns": [
+        "repeatability dispersion",
+        "cold-versus-warm engine effect",
+        "concurrency scaling",
+        "simulator calibration error",
+        "provider-grade baseline cost"
+      ],
+      "evidence_classes": [
+        "measured",
+        "inferred"
+      ],
+      "next_falsification_test": "Run the unchanged 20-pair protocol on an isolated host where the predeclared CPU gate can clear; do not relax the gate or treat the single prior pair as a calibrated baseline.",
+      "claims": {
+        "host_contamination_observation_permitted": true,
+        "repeatability_estimate_permitted": false,
+        "simulator_calibration_permitted": false,
+        "provider_comparison_permitted": false,
+        "cost_per_token_reduction_permitted": false
+      }
+    },
+    {
+      "lever_id": "glm_prefill_decode_disaggregation",
+      "model": "zai-org/GLM-5.2",
+      "decision": "measure",
+      "role": "Required incumbent-parity mechanism whose economics are unresolved, not a differentiated moat.",
+      "source_ids": [
+        "glm_pd_serving_control"
+      ],
+      "checked_facts": {
+        "trace_request_count": 12,
+        "trace_input_tokens": 2031616,
+        "trace_output_tokens": 5024,
+        "fleet_device_slots": 8,
+        "neutral_aggregated_output_cost_usd_per_million": 450.2981165958953,
+        "neutral_best_pd_output_cost_usd_per_million": 473.61905564401985,
+        "neutral_best_pd_output_cost_change_percent": 5.1789999088655225,
+        "neutral_aggregated_slo_goodput_cost_usd_per_million": 2079.3177736928105,
+        "neutral_best_pd_slo_goodput_cost_usd_per_million": 2009.6808577327329,
+        "neutral_best_pd_slo_goodput_cost_reduction_percent": 3.349027110772229,
+        "specialization_upside_best_pd_output_cost_reduction_percent": 35.21789500303839,
+        "specialization_upside_injected_aggregate_rate_multiplier": 0.75,
+        "specialization_upside_injected_pd_rate_multiplier": 1.2,
+        "congested_full_transfer_best_pd_output_cost_change_percent": 1.068542523367344,
+        "all_case_class_objectives_met": false
+      },
+      "interpretation": "Neutral P/D worsens raw output-token cost and slightly improves the synthetic SLO-goodput cost only because request pass counts change; the declared class objectives still fail. Injected phase interference and specialization create a large upside, while a slower full-cache transfer reverses the raw cost sign. The result identifies measurements needed but validates no runtime or cost claim.",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported"
+      ],
+      "next_falsification_test": "Measure aggregated and P/D prefill and decode service matrices plus full and delta KV-transfer distributions on the same GLM hardware, then replay a pinned 90K-context agent trace with continuous batching, failures, and cache misses.",
+      "claims": {
+        "deterministic_synthetic_control_permitted": true,
+        "end_to_end_latency_permitted": false,
+        "slo_compliance_permitted": false,
+        "cost_per_token_reduction_permitted": false,
+        "provider_advantage_permitted": false
+      }
+    },
+    {
+      "lever_id": "glm_independent_attention_expert_parallel_mapping",
+      "model": "zai-org/GLM-5.2",
+      "decision": "pursue",
+      "role": "High-value implementation and calibration target, but already disclosed by an incumbent and therefore baseline parity rather than differentiation.",
+      "source_ids": [
+        "glm_parallel_mapping_control",
+        "glm_parallel_mapping_90k_control",
+        "glm_parallel_mapping_context_frontier"
+      ],
+      "checked_facts": {
+        "aggregate_batch_size": 16,
+        "context_tokens_per_request": 16384,
+        "aggregate_candidate_tokens": 32,
+        "coupled_tp16_network_hop_payload_bytes": 1804861440,
+        "decoupled_dp_attention_ep8_network_hop_payload_bytes": {
+          "lower": 255197184,
+          "upper": 255246336
+        },
+        "network_hop_payload_reduction_percent": {
+          "lower": 85.86056644880175,
+          "upper": 85.8578431372549
+        },
+        "coupled_tp16_cross_domain_payload_bytes": 225607680,
+        "decoupled_dp_attention_ep8_cross_domain_payload_bytes": 0,
+        "partial_cluster_residency_regions": [
+          {
+            "start_concurrency": 1,
+            "end_concurrency": 32,
+            "dominance": "coupled_tp16_lower"
+          },
+          {
+            "start_concurrency": 33,
+            "end_concurrency": 42,
+            "dominance": "bounds_overlap"
+          },
+          {
+            "start_concurrency": 43,
+            "end_concurrency": 96,
+            "dominance": "decoupled_lower"
+          }
+        ],
+        "full_residency_upper_bound_at_concurrency_16": {
+          "decoupled_bytes_on_max_device": 172629504794,
+          "usable_bytes_per_device": 164000000000,
+          "status": "uncertain"
+        },
+        "context_sensitivity_control": {
+          "fp8_semantic_kv_bytes_per_request_at_16384_tokens": 736100352,
+          "fp8_semantic_kv_bytes_per_request_at_90000_tokens": 4043520000,
+          "increase_bytes_per_request": 3307419648,
+          "partial_cluster_candidate_dominates_from_concurrency_at_16384_tokens": 43,
+          "partial_cluster_candidate_dominates_from_concurrency_at_90000_tokens": 8,
+          "partial_max_device_candidate_dominates_from_concurrency_at_16384_tokens": 43,
+          "partial_max_device_candidate_dominates_from_concurrency_at_90000_tokens": 9,
+          "full_capacity_status_at_90000_tokens": "uncertain"
+        },
+        "strict_decoupled_lower_threshold_by_context": [
+          {
+            "context_tokens": 16384,
+            "concurrency": 43
+          },
+          {
+            "context_tokens": 32768,
+            "concurrency": 22
+          },
+          {
+            "context_tokens": 65536,
+            "concurrency": 11
+          },
+          {
+            "context_tokens": 90000,
+            "concurrency": 9
+          },
+          {
+            "context_tokens": 131072,
+            "concurrency": 6
+          },
+          {
+            "context_tokens": 262144,
+            "concurrency": 4
+          },
+          {
+            "context_tokens": 524288,
+            "concurrency": 3
+          },
+          {
+            "context_tokens": 1048576,
+            "concurrency": 2
+          }
+        ]
+      },
+      "interpretation": "The byte and message accounting strongly favors decoupled mapping on the modeled route. The 90K control shows that model deployment context changes the residency crossover materially, but partial residency omits common-weight effects and the full upper endpoint remains uncertain. No timing or cost follows from byte dominance alone.",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported"
+      ],
+      "next_falsification_test": "Use an exact checkpoint expert layout and measured route histogram, then calibrate topology-local collective and all-to-all timing on a physical two-domain fleet and compare coupled, decoupled, and local-attention plus TP-expert controls at equal quality and SLO.",
+      "claims": {
+        "partial_residency_arithmetic_permitted": true,
+        "modeled_network_arithmetic_permitted": true,
+        "latency_improvement_permitted": false,
+        "throughput_improvement_permitted": false,
+        "cost_per_token_reduction_permitted": false,
+        "differentiated_moat_permitted": false
+      }
+    },
+    {
+      "lever_id": "glm_public_nvfp4_and_fp8_kv_baseline",
+      "model": "zai-org/GLM-5.2",
+      "decision": "pursue",
+      "role": "Mandatory commodity baseline, not proprietary differentiation.",
+      "checked_facts": {
+        "public_nvfp4_checkpoint_payload_bytes": 464794806272,
+        "public_fp8_semantic_kv_bytes_per_token": 44928,
+        "public_tested_hardware": [
+          "NVIDIA B200",
+          "NVIDIA B300"
+        ],
+        "public_runtime_engines": [
+          "SGLang",
+          "vLLM"
+        ],
+        "independently_reproduced_here": false
+      },
+      "evidence_class": "vendor_reported",
+      "next_falsification_test": "Reproduce the public NVFP4 plus FP8-KV path on the frozen quality suite and use it as the floor for every later kernel, mapping, serving, or hardware comparison.",
+      "claims": {
+        "incumbent_control_requirement_permitted": true,
+        "independent_quality_reproduction_permitted": false,
+        "independent_runtime_reproduction_permitted": false,
+        "cost_per_token_claim_permitted": false,
+        "moat_claim_permitted": false
+      }
+    },
+    {
+      "lever_id": "qwen_glm_dense_gemm_hardware_oracles",
+      "model": "Qwen/Qwen3-0.6B and zai-org/GLM-5.2",
+      "decision": "measure",
+      "role": "Use the external simulators as bounded contract and ranking oracles; the current dense-GEMM subset shows no model-specific architecture winner and supports no hardware or cost advantage.",
+      "source_ids": [
+        "scalesim_qwen_glm_gemm_sweep",
+        "timeloop_qwen_external_smoke"
+      ],
+      "checked_facts": {
+        "scalesim_native_sweep_succeeded": true,
+        "scalesim_native_case_count": 12,
+        "scalesim_workload_count": 2,
+        "scalesim_architecture_count": 6,
+        "qwen_o_proj_multiply_accumulates": 2097152,
+        "glm_expert_gate_multiply_accumulates": 12582912,
+        "qwen_minimum_same_oracle_cycles_including_prefetch": 70825,
+        "glm_minimum_same_oracle_cycles_including_prefetch": 400521,
+        "minimum_architecture_for_both_workloads": "os-32x32-sram64kb",
+        "base_architecture_rank_identical_across_workloads": true,
+        "qwen_ws32_cycle_ratio_to_minimum": 2.8077373808683372,
+        "glm_ws32_cycle_ratio_to_minimum": 2.925334751486189,
+        "larger_sram_reduced_native_dram_filter_reads_observed": false,
+        "larger_sram_reduced_total_cycles_observed": false,
+        "qwen_large_sram_inclusive_cycle_ratio": 2.043272083597341,
+        "glm_large_sram_inclusive_cycle_ratio": 1.185807633285481,
+        "model_specific_best_base_architecture_observed": false,
+        "timeloop_frontend_problem_parse_and_reconciliation_passed": true,
+        "timeloop_qwen_problem_multiply_accumulates": 2097152,
+        "timeloop_native_mapper_available": false,
+        "timeloop_native_exit_code_observed": 127,
+        "timeloop_native_cycles_energy_area_or_cost_produced": false
+      },
+      "inference": "The current dense-array search does not expose a Qwen-versus-GLM hardware wedge. The next model-specific hardware search should prioritize irregular top-k, gather, cache, fabric, and control behavior rather than treating a generic dense array as the differentiator.",
+      "unknowns": [
+        "BF16 or NVFP4 arithmetic timing on a calibrated implementation",
+        "whole-model and serving execution",
+        "wall-clock latency and throughput",
+        "energy, area, power, yield, and cost",
+        "whether irregular GLM mechanisms create a model-specific architecture ranking"
+      ],
+      "evidence_classes": [
+        "simulated",
+        "analytical",
+        "inferred"
+      ],
+      "next_falsification_test": "Add exact GLM top-k routing, expert gather, semantic KV movement, cache hierarchy, fabric, and control traces to a calibrated hardware oracle, then compare commodity and candidate profiles without converting simulator cycles to wall time or dollars until calibration exists.",
+      "claims": {
+        "native_scalesim_cycle_and_access_observations_permitted": true,
+        "timeloop_frontend_contract_permitted": true,
+        "timeloop_native_mapping_permitted": false,
+        "model_specific_hardware_advantage_permitted": false,
+        "whole_model_performance_permitted": false,
+        "energy_area_or_cost_permitted": false
+      }
+    },
+    {
+      "lever_id": "glm_joint_cost_claim_composition",
+      "model": "zai-org/GLM-5.2",
+      "decision": "kill",
+      "role": "Reject every current combined cost claim; retain the fail-closed composition gate as the admission contract for future evidence.",
+      "source_ids": [
+        "glm_current_cost_claim_composition",
+        "qwen_selective_int4_impact_bound",
+        "qwen_int4_packed_batch_frontier",
+        "qwen_kv_head_recovery_2k",
+        "glm_parallel_mapping_control",
+        "glm_pd_serving_control",
+        "scalesim_qwen_glm_gemm_sweep",
+        "glm_economic_robustness_frontier"
+      ],
+      "checked_facts": {
+        "requested_intervention_count": 6,
+        "evidence_record_count": 7,
+        "admissible_exact_joint_evidence_count": 0,
+        "combined_claim_permitted": false,
+        "relative_cost_effect": null,
+        "request_content_id": "923d5240a0392608b3a5d3dc2b1dc029f45b26f0ae80ac5a21e2708b4c27ebbd",
+        "composition_content_id": "8dbc8cf34334a86c42c76259912f914490b5755166195a375893059459b0edf9"
+      },
+      "inference": "The current evidence portfolio is useful for killing or prioritizing individual hypotheses, but it contains no same-model, same-workload, same-quality, same-SLO, same-baseline, same-candidate, same-intervention-set measured end-to-end cost record.",
+      "unknowns": [
+        "quality- and SLO-matched aggregate throughput",
+        "fully loaded input-token cost",
+        "fully loaded output-token cost",
+        "joint interaction effects among model, kernel, serving, and hardware changes"
+      ],
+      "evidence_classes": [
+        "analytical",
+        "inferred"
+      ],
+      "next_falsification_test": "Produce one exact-scope measured end-to-end control-versus-candidate record that independently passes quality and SLO contracts; admit only that record to a cost composition.",
+      "claims": {
+        "fail_closed_non_composition_permitted": true,
+        "marginal_effect_multiplication_permitted": false,
+        "measured_joint_cost_effect_permitted": false,
+        "five_x_or_ten_x_claim_permitted": false,
+        "provider_advantage_permitted": false
+      }
+    },
+    {
+      "lever_id": "glm_current_custom_hardware_roofline_rank",
+      "model": "zai-org/GLM-5.2",
+      "decision": "kill",
+      "role": "Kill the current hardware ranking and any speedup claim until opaque traffic and execution support are resolved.",
+      "checked_facts": {
+        "lower_endpoint": {
+          "b200_optimistic_tokens_per_second": 32344.12632390978,
+          "custom_optimistic_tokens_per_second": 25046.25241340679,
+          "custom_over_b200_ratio": 0.7743678763365399
+        },
+        "upper_endpoint": {
+          "b200_optimistic_tokens_per_second": 131.2087745768272,
+          "custom_optimistic_tokens_per_second": 176.0529892633718,
+          "custom_over_b200_ratio": 1.3417775589412795
+        },
+        "ranking_sign_flips_across_opaque_traffic_bounds": true,
+        "custom_selective_expert_nvfp4_native_support": false,
+        "custom_execution_blocker": "required_model_format_not_natively_supported"
+      },
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported"
+      ],
+      "kill_now": [
+        "The claim that the current custom profile beats B200 or B300.",
+        "Any latency, energy, or cost conclusion from either roofline endpoint."
+      ],
+      "next_falsification_test": "Close opaque attention, indexer, non-FFN, and routed-weight traffic with an executable selective-NVFP4 contract, then calibrate each action on commodity silicon before proposing custom totals.",
+      "claims": {
+        "component_sensitivity_permitted": true,
+        "hardware_ranking_permitted": false,
+        "end_to_end_latency_permitted": false,
+        "energy_advantage_permitted": false,
+        "cost_per_token_reduction_permitted": false
+      }
+    },
+    {
+      "lever_id": "glm_four_b200_residency_discontinuity",
+      "model": "zai-org/GLM-5.2",
+      "decision": "measure",
+      "role": "Highest-priority capacity-bound falsification because a small lower-bound gap could change device count, while the upper bound rejects the same conclusion.",
+      "checked_facts": {
+        "aggregate_target_capacity_bytes": 656000000000,
+        "lower_total_resident_bytes": 661267999028,
+        "lower_shortfall_bytes": 5267999028,
+        "upper_total_resident_bytes": 760052246836,
+        "upper_shortfall_bytes": 104052246836,
+        "bf16_to_fp8_total_resident_reduction_bytes": 108353971814,
+        "lower_maximum_32768_token_sequences": 60,
+        "lower_first_infeasible_32768_token_sequences": 61,
+        "upper_maximum_32768_token_sequences": 31,
+        "lower_maximum_fixed_runtime_bytes": 11419131280,
+        "executable_tp4_topology_validated": false
+      },
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported"
+      ],
+      "next_falsification_test": "Account exact scales, block metadata, fragmentation, indexer state, kernel workspace, non-routed placement, and TP4 or EP execution. Then test 60 and 61 sequence boundaries on four B200-class devices at equal quality and SLO.",
+      "claims": {
+        "aggregate_capacity_arithmetic_permitted": true,
+        "four_device_execution_permitted": false,
+        "model_format_kernel_support_permitted": false,
+        "serving_capacity_permitted": false,
+        "cost_per_token_reduction_permitted": false
+      }
+    },
+    {
+      "lever_id": "glm_current_economic_viability_screen",
+      "model": "zai-org/GLM-5.2",
+      "decision": "kill",
+      "role": "Kill the present business-pass interpretation; retain the frontier as a requirements generator.",
+      "checked_facts": {
+        "point_count": 4374,
+        "region_count": 54,
+        "below_required_margin_point_count": 3104,
+        "clears_required_margin_below_1_25_headroom_point_count": 354,
+        "clears_1_25_headroom_point_count": 916,
+        "robust_regions_across_full_sweep": 0,
+        "working_case": {
+          "benchmark": "Fireworks GLM-5.2 Standard public list price",
+          "customer_price_fraction": 0.8,
+          "required_gross_margin": 0.6,
+          "useful_load": 0.65,
+          "availability": 0.98,
+          "accelerator_usd_per_device_hour": 7.0,
+          "optimistic_peak_free_input_headroom": 1.0805326863896756,
+          "seventy_five_percent_peak_free_input_headroom": 0.8103995147922566,
+          "optimistic_peak_moderate_input_headroom": 0.8243787554406958,
+          "minimum_required_source_peak_fraction": 0.9254694583476646,
+          "maximum_accelerator_usd_per_device_hour": 7.563728804727728,
+          "maximum_average_work_units_per_billable_token": 0.06983835082692894
+        }
+      },
+      "interpretation": "The sole working-case pass is an 8.053% headroom result that assumes 100% of an optimistic BF16 source peak and free input work. A 7.453% peak loss, moderate input work, or the 75% peak case erases it. No configured region is robust, and the source omits the incumbent NVFP4, FP8-KV, routing, P/D, MTP, queueing, and quality stack.",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported",
+        "inferred"
+      ],
+      "next_falsification_test": "Replace the optimistic source peak with measured aggregate throughput, input work, quality, SLO, failures, utilization, and fully loaded cost from the same incumbent-grade control and candidate deployment.",
+      "claims": {
+        "configured_sensitivity_arithmetic_permitted": true,
+        "business_viability_permitted": false,
+        "provider_comparison_permitted": false,
+        "end_to_end_cost_per_token_permitted": false,
+        "gross_margin_permitted": false
+      }
+    },
+    {
+      "lever_id": "current_custom_silicon_program",
+      "model": "zai-org/GLM-5.2",
+      "decision": "kill",
+      "role": "No tapeout; continue software, model, mapping, and hardware simulation only.",
+      "checked_facts": {
+        "legacy_fixture_relative_ideal_speedup": 5.3801812448925155,
+        "diagnostic_speedup_if_only_throughput_uses_custom_totals": 1.0542801898038834,
+        "diagnostic_speedup_if_only_fixed_and_coordination_use_custom_totals": 4.079176663630532,
+        "custom_serial_fixed_component_share_percent": 66.87905984331911,
+        "custom_serial_coordination_component_share_percent": 27.854224653663444,
+        "profile_memory_capacity": null,
+        "profile_power_watts": null,
+        "profile_precision_contract": null,
+        "profile_package_area": null,
+        "profile_yield": null,
+        "profile_nre_usd": null
+      },
+      "interpretation": "The 5.380x fixture is dominated by unsubstantiated fixed and coordination assumptions. Throughput totals alone explain only 1.054x, and the profile is not a buildable accelerator specification.",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "vendor_reported",
+        "inferred"
+      ],
+      "restart_condition": "A quality- and SLO-matched commodity implementation first shows at least 1.5x lower measured cost per token on two models, with at least 30% residual gain attributable to custom silicon after current commodity and software baselines, plus supplier-backed PPA, package, yield, landed cost, NRE, and contracted-volume evidence.",
+      "claims": {
+        "fixture_component_diagnostic_permitted": true,
+        "buildable_accelerator_permitted": false,
+        "five_x_speedup_permitted": false,
+        "energy_advantage_permitted": false,
+        "cost_per_token_reduction_permitted": false,
+        "tapeout_go_permitted": false
+      }
+    },
+    {
+      "lever_id": "business_differentiation_after_incumbent_dossier",
+      "model": "GLM-5.2 and future model-specific targets",
+      "decision": "pursue",
+      "role": "Pursue only the surviving co-design and validation wedge; kill generic full-stack tuning as differentiation.",
+      "checked_facts": {
+        "baseten_vendor_reported_stack_includes": [
+          "shared DSA runtime",
+          "agent-calibrated NVFP4",
+          "Blackwell execution",
+          "KV-aware routing",
+          "prefill-decode disaggregation and KV transfer",
+          "MTP",
+          "workload-specific parallelism and batching"
+        ],
+        "fireworks_vendor_reported_stack_includes": [
+          "independent expert and attention sharding",
+          "data-parallel attention for local compressed MLA KV",
+          "quality-gated lower precision",
+          "model-tuned speculation",
+          "prefill-decode separation",
+          "multi-tier prefix cache",
+          "automatic hardware, model, and serving optimization"
+        ],
+        "baseten_reported_per_user_streaming_tps": 280.0,
+        "fireworks_reported_peak_per_user_streaming_tps": 446.0,
+        "per_user_rates_used_as_capacity_or_cogs": false,
+        "aggregate_incumbent_capacity_known": false,
+        "incumbent_cogs_known": false
+      },
+      "easy_thesis_decision": "kill",
+      "easy_thesis": "Replacing generic abstractions with per-model kernels, scheduling, caching, quantization, and automatic deployment tuning is by itself differentiated.",
+      "surviving_wedge": "Predictive, quality-controlled co-design that changes model architecture or hardware beyond the incumbent stack, or validates such changes materially faster across models.",
+      "evidence_classes": [
+        "vendor_reported",
+        "inferred"
+      ],
+      "next_falsification_test": "Beat the full incumbent mechanism floor on one frozen agent trace with measured aggregate capacity and fully loaded cost, then reproduce on a second model before treating the wedge as a business.",
+      "claims": {
+        "incumbent_mechanism_floor_permitted": true,
+        "incumbent_aggregate_capacity_permitted": false,
+        "incumbent_cogs_permitted": false,
+        "provider_advantage_permitted": false,
+        "differentiated_business_validated": false
+      }
+    },
+    {
+      "lever_id": "generic_simulator_and_obvious_dsa_moat",
+      "model": "cross-model business thesis",
+      "decision": "kill",
+      "role": "Reject a generic end-to-end simulator or obvious GLM DSA optimization as the moat; retain only the narrower hypothesis of independently validated non-obvious joint changes.",
+      "source_ids": [
+        "competitive_simulation_landscape"
+      ],
+      "checked_facts": {
+        "primary_source_count": 30,
+        "competitive_or_research_entry_count": 19,
+        "original_surface_count": 10,
+        "glm_adjacent_sparse_and_dsa_entry_count": 9,
+        "decision_gate_count": 5,
+        "all_decision_gates_not_met": true,
+        "surviving_wedge_status": "hypothesis",
+        "moat_claim_permitted": false,
+        "business_claim_status": "unproven"
+      },
+      "inference": "Serving twins, deployment search, model-hardware co-design, per-model compilers, vertical accelerators, open simulators, DSA reuse, sparse-memory serving, irregular gathers, accelerator co-design, and locality-trained offload are already occupied or published. Reimplementation breadth is not differentiated evidence.",
+      "kill_now": [
+        "Pitching a generic simulator, Rust rewrite, per-model compiler, serving optimizer, or vertical stack as the moat.",
+        "Pitching index reuse, temporal or hierarchical DSA, page-aware sparse attention, irregular gather, or locality-trained KV offload as an obvious unoccupied idea."
+      ],
+      "remaining_hypothesis": "A quality-aware loop that discovers a non-obvious model-plus-stack intervention, predicts its held-out effect, transfers it across scale, and retains residual measured economics beyond an incumbent-grade control.",
+      "evidence_classes": [
+        "vendor_reported",
+        "inferred"
+      ],
+      "claims": {
+        "generic_simulator_moat_permitted": false,
+        "obvious_dsa_moat_permitted": false,
+        "market_completeness_permitted": false,
+        "remaining_wedge_as_hypothesis_permitted": true,
+        "commercial_moat_permitted": false
+      }
+    },
+    {
+      "lever_id": "glm_agentic_mapping_deployment",
+      "model": "nvidia/GLM-5.2-NVFP4",
+      "decision": "measure",
+      "role": "Retain the exact capacity and partial-residency arithmetic as a prioritization screen; deployment remains uncertain for every candidate request at every tested concurrency.",
+      "source_ids": [
+        "glm_agentic_mapping_screen"
+      ],
+      "checked_facts": {
+        "proxy_request_count": 64,
+        "unique_context_count": 9,
+        "concurrency_point_count": 5,
+        "exact_context_evaluation_count": 45,
+        "request_weighted_evaluation_count": 320,
+        "token_count_retarget_only": true,
+        "prompt_or_tokenizer_equivalence_claimed": false,
+        "candidate_full_capacity_uncertain_request_count_by_concurrency": [
+          64,
+          64,
+          64,
+          64,
+          64
+        ],
+        "full_deployment_claim_permitted": false
+      },
+      "inference": "The screen makes the context and concurrency dependence concrete, but it retargets only token counts from a synthetic workload and leaves candidate full capacity uncertain for all 320 weighted evaluations. It does not establish a deployable plan, timing, quality, SLO, or cost.",
+      "evidence_classes": [
+        "analytical",
+        "modeled_assumption",
+        "inferred"
+      ],
+      "next_falsification_test": "Bind real GLM tokenizer traces, prefix reuse, arrivals, outputs, tool delays, exact checkpoint placement, workspace and cache fragmentation, then execute both mappings on the same target fleet.",
+      "claims": {
+        "exact_capacity_arithmetic_permitted": true,
+        "deployment_validated_permitted": false,
+        "latency_or_throughput_permitted": false,
+        "quality_or_slo_permitted": false,
+        "cost_per_token_reduction_permitted": false
+      }
+    },
+    {
+      "lever_id": "glm_synthetic_hbm3_locality_geometry",
+      "model": "synthetic GLM-adjacent sparse-memory traces",
+      "decision": "kill",
+      "role": "Kill any geometry-insensitive locality or logical-sorting claim; retain only geometry-specific page-aware hypotheses for calibrated testing.",
+      "source_ids": [
+        "ramulator2_hbm3_synthetic_irregular"
+      ],
+      "checked_facts": {
+        "native_status": "patched_native_sweep_succeeded",
+        "source_build_pristine": false,
+        "geometry_count": 2,
+        "pattern_count_per_geometry": 9,
+        "case_count": 18,
+        "complete_callback_drain": true,
+        "representative_32b_sort_cycle_ratio": 0.7225582708282926,
+        "synthetic_bf16_1152b_sort_cycle_ratio": 1.5919401792612828,
+        "representative_32b_cluster64_cycle_ratio": 0.4943140575852891,
+        "synthetic_bf16_1152b_cluster64_cycle_ratio": 1.0270877337345623,
+        "cross_geometry_comparison_permitted": false,
+        "calibration_claim": false,
+        "glm_performance_claim": false
+      },
+      "inference": "The representative 32-byte geometry separately reports sorting and clustering benefits while the synthetic 1,152-byte BF16 geometry reports sorting and cluster-64 regressions. Because the oracle permits only within-geometry comparison, no geometry-insensitive transfer claim is supportable; these observations validate only exact within-geometry sensitivity.",
+      "kill_now": [
+        "Assuming that locality benefit measured on one 32-byte request per token transfers to a 1,152-byte record.",
+        "Assuming logical token-position sorting is equivalent to sorting mapped HBM address vectors.",
+        "Converting native controller cycles into GLM latency, energy, serving, cost, or tapeout evidence."
+      ],
+      "next_falsification_test": "Generate measured or exact emitted traces from a real sparse kernel, calibrate the memory oracle against physical counters and latency, and evaluate page-aware index generation at equal selected tokens and model quality.",
+      "evidence_classes": [
+        "simulated",
+        "analytical",
+        "inferred"
+      ],
+      "claims": {
+        "patched_native_oracle_operability_permitted": true,
+        "within_geometry_sensitivity_permitted": true,
+        "geometry_insensitive_locality_benefit_permitted": false,
+        "cross_geometry_performance_comparison_permitted": false,
+        "calibrated_simulation_permitted": false,
+        "glm_performance_permitted": false,
+        "cost_or_tapeout_permitted": false
+      }
+    },
+    {
+      "lever_id": "simulator_predictive_validity",
+      "model": "cross-model simulator program",
+      "decision": "measure",
+      "role": "Keep the blinded predictive contract as Gate 2; current predictive validity is explicitly NOT_MET and promotes no cost claim.",
+      "source_ids": [
+        "simulator_predictive_validity_gate"
+      ],
+      "checked_facts": {
+        "status": "NOT_MET",
+        "workspace_artifact_count": 61,
+        "candidate_audit_family_count": 10,
+        "admitted_exact_scope_pair_count": 1,
+        "required_distinct_interventions": 3,
+        "required_context_regimes": 2,
+        "maximum_relative_effect_size_error": 0.15,
+        "maximum_observed_relative_effect_size_error": 0.44746583093174686,
+        "minimum_spearman_rank_correlation": 0.8,
+        "predicted_regression_required": true,
+        "predicted_regression_count": 0,
+        "predicted_benefit_effect": 0.4285714285714285,
+        "measured_benefit_effect": 0.7756469238710342,
+        "all_directions_correct": true,
+        "cost_promotion_permitted": false
+      },
+      "inference": "The first locked exact-scope prediction and later physical holdout is admissible and gets direction right, but predicts a 42.857% benefit versus the measured 77.565%, producing 44.747% relative effect-size error against a 15% limit. One intervention in one context, no predicted regression, no rank statistic, and no exact quality or SLO pair leave the gate underpowered and NOT_MET.",
+      "evidence_classes": [
+        "analytical",
+        "inferred"
+      ],
+      "next_falsification_test": "Precommit at least two additional exact-scope interventions spanning a second context regime and one predicted regression, then execute non-overlapping blinded hardware holdouts with exact quality and SLO bindings.",
+      "claims": {
+        "artifact_bound_gate_contract_permitted": true,
+        "simulator_predictive_validity_permitted": false,
+        "calibrated_simulation_permitted": false,
+        "cost_promotion_permitted": false,
+        "provider_or_tapeout_claim_permitted": false
+      }
+    },
+    {
+      "lever_id": "qwen_aarch64_neon_local_kernel_holdout",
+      "model": "Qwen/Qwen3-0.6B",
+      "decision": "pursue",
+      "role": "Pursue architecture-tuned local kernels because an exact intrinsic implementation produced a large measured matched-loop gain, while withholding predictive, tuned-kernel, serving, cost, provider, production, and GLM-transfer claims.",
+      "source_ids": [
+        "qwen_int4_aarch64_neon_holdout",
+        "simulator_predictive_validity_gate"
+      ],
+      "checked_facts": {
+        "tensor_count": 3,
+        "parameter_count": 8388608,
+        "summed_neon_median_seconds": 0.0010635829999999999,
+        "summed_scalar_packed_median_seconds": 0.004740665999999999,
+        "summed_floating_qdq_median_seconds": 0.003493126,
+        "scalar_packed_over_neon_speed_ratio": 4.457260035182961,
+        "floating_qdq_over_neon_speed_ratio": 3.2843003319910156,
+        "predicted_benefit_effect": 0.4285714285714285,
+        "measured_benefit_effect": 0.7756469238710342,
+        "relative_effect_size_error": 0.44746583093174686,
+        "direction_correct": true,
+        "all_work_counts_equal": true,
+        "all_correctness_checks_passed": true,
+        "all_timed_regions_allocation_free": true,
+        "explicit_simd_intrinsics_used": true
+      },
+      "inference": "Eliminating the scalar packed abstraction on this exact local path matters materially: NEON is 4.457x faster than the scalar packed loop and 3.284x faster than scalar f32-QDQ. The result supports continuing kernel specialization, but the predictive magnitude miss shows the simulator is not calibrated even for this scope, and the controls cannot support any end-to-end or economic claim.",
+      "evidence_classes": [
+        "measured",
+        "analytical"
+      ],
+      "next_falsification_test": "Implement a tiled and threaded AArch64 packed kernel, then compare it prospectively against Accelerate or another tuned same-hardware dense control inside a pinned full-model serving loop with exact task quality, SLO, energy, and cost accounting.",
+      "claims": {
+        "local_aarch64_neon_intrinsic_speedup_permitted": true,
+        "prospective_direction_match_permitted": true,
+        "predictive_magnitude_validation_permitted": false,
+        "tuned_kernel_claim_permitted": false,
+        "blas_or_vllm_comparison_permitted": false,
+        "quality_equivalence_claim_permitted": false,
+        "serving_claim_permitted": false,
+        "energy_claim_permitted": false,
+        "cost_per_token_reduction_permitted": false,
+        "provider_claim_permitted": false,
+        "production_claim_permitted": false,
+        "transfer_to_glm_permitted": false
+      }
+    },
+    {
+      "lever_id": "small_model_proxy_scope",
+      "model": "Qwen/Qwen3-0.6B, openbmb/NOSA-1B, and GLM-5.2",
+      "decision": "pursue",
+      "role": "Keep Qwen3-0.6B as the current local quality-bearing proxy and qualify NOSA-1B as the first future CUDA sparse-memory proxy; neither can approve GLM transfer.",
+      "source_ids": [
+        "small_model_proxy_selection_memo",
+        "competitive_simulation_landscape"
+      ],
+      "checked_facts": {
+        "current_local_proxy": "Qwen/Qwen3-0.6B",
+        "future_single_gpu_sparse_memory_proxy": "openbmb/NOSA-1B",
+        "nosa_revision": "7bdc33fbc1bc80b76b29689ba35ff6a7991b7dee",
+        "nosa_checkpoint_lfs_sha256": "831236605310bdfded1fc5959dfecd033b48a0aa3ebdd2aa28f19d0ecf5ce4aa",
+        "nosa_layer_count": 28,
+        "nosa_hidden_size": 2048,
+        "nosa_kv_head_count": 2,
+        "small_model_glm_transfer_permitted": false
+      },
+      "inference": "Qwen remains the executable local fixture for quality and plumbing. NOSA is more mechanism-aligned for a future single-GPU locality/offload experiment, but lacks the matched FullAttn control and does not represent GLM routed experts, MLA, DSA sharing, or MTP.",
+      "evidence_classes": [
+        "vendor_reported",
+        "inferred"
+      ],
+      "next_falsification_test": "On one suitable CUDA GPU, build the pinned NOSA stack, require deterministic sparse decode and measured host-device bytes, and compare against a matched 1B FullAttn control; use success only to promote a separate GLM experiment.",
+      "claims": {
+        "qwen_current_local_proxy_scope_permitted": true,
+        "nosa_future_cuda_proxy_scope_permitted": true,
+        "nosa_causal_cost_savings_permitted": false,
+        "small_model_to_glm_transfer_permitted": false,
+        "glm_cost_or_performance_claim_permitted": false
+      }
+    }
+  ],
+  "incumbent_control_floor": {
+    "required_features": [
+      "shared IndexShare DSA",
+      "public or equivalently qualified routed-expert NVFP4",
+      "FP8 KV cache",
+      "KV-aware routing",
+      "independent attention and expert parallelism",
+      "prefill-decode disaggregation",
+      "NIXL-class KV transfer",
+      "MTP speculative decoding",
+      "multi-tier reusable prefix state",
+      "workload-specific batching and mapping"
+    ],
+    "comparison_rejections": [
+      "Reject BF16-only as the provider-grade GLM baseline.",
+      "Reject aggregated-only serving as the provider-grade GLM baseline.",
+      "Reject cache-unaware, MTP-disabled, or single generic parallelism controls.",
+      "Reject public per-user TPS as aggregate throughput, concurrency, capacity, COGS, or gross margin."
+    ],
+    "evidence_class": "vendor_reported",
+    "aggregate_capacity_known": false,
+    "fully_loaded_cost_known": false
+  },
+  "next_decisive_falsification_test": {
+    "test_id": "same-fleet-incumbent-floor-vs-candidate-90k-agent-cost-ab-v1",
+    "priority": 1,
+    "question": "Does any model or stack co-design change beat an incumbent-grade GLM-5.2 control by at least 1.5x in measured fully loaded cost per billable token without degrading quality or SLOs?",
+    "control": "The complete incumbent mechanism floor in this artifact on a pinned commodity B200-class fleet.",
+    "candidate": "The same control plus exactly one predeclared model, kernel, mapping, serving, or hardware-simulation-derived change.",
+    "workload": "A frozen agent trace centered on approximately 90K prompt tokens, with declared cached and uncached input, output, arrival process, cache reuse, failures, retries, and billing semantics.",
+    "required_measurements": [
+      "aggregate input and output throughput",
+      "p50 and p95 TTFT and TPOT by class",
+      "task and end-to-end agent success",
+      "cache hit and transfer distributions",
+      "device, memory, fabric, and power utilization",
+      "failure, retry, and availability rates",
+      "fully loaded hourly cost and dollars per input and output token"
+    ],
+    "pass_rule": "At least 1.5x lower measured fully loaded cost per billable token at non-inferior task and agent quality, all declared SLOs, and the same availability target.",
+    "kill_rule": "Kill the tested lever if it misses the pass rule after its predeclared implementation and calibration budget; kill custom silicon unless the rule is met on two models and at least 30% residual measured benefit remains after the best commodity stack.",
+    "immediate_local_precursor": "Close exact TP4 checkpoint placement, scale and metadata bytes, kernel workspace, DSA state, and cache fragmentation to resolve the 5.268 GB versus 104.052 GB four-B200 uncertainty before any GPU test."
+  },
+  "claim_permissions": {
+    "measured_qwen_teacher_forced_int4_quality_proxy": true,
+    "measured_qwen_frozen_piqa_subset": true,
+    "measured_qwen_piqa_subset_point_gate_passed": true,
+    "confirmatory_qwen_piqa_noninferiority": false,
+    "measured_qwen_teacher_forced_kv_pair_quality_proxy": true,
+    "analytical_component_storage_and_network_bounds": true,
+    "measured_local_packed_int4_correctness_and_scalar_timing": true,
+    "measured_local_aarch64_neon_intrinsic_speedup": true,
+    "prospective_local_neon_direction_match": true,
+    "predictive_neon_magnitude_validated": false,
+    "measured_packed_int4_kernel_speedup": false,
+    "measured_repeatable_vllm_cpu_baseline": false,
+    "measured_trained_kv_recovery_recipe_quality_pass": false,
+    "measured_kv_alias_kernel_speedup": false,
+    "native_scalesim_cycle_and_access_observations": true,
+    "timeloop_frontend_problem_contract": true,
+    "timeloop_native_mapping_cycles_energy_or_area": false,
+    "combined_cross_scope_cost_claim": false,
+    "measured_glm_end_to_end_latency_or_throughput_improvement": false,
+    "measured_glm_slo_compliance": false,
+    "measured_energy_reduction": false,
+    "measured_fully_loaded_cost_per_token_reduction": false,
+    "material_cost_per_token_improvement": false,
+    "five_x_improvement": false,
+    "ten_x_improvement": false,
+    "provider_superiority": false,
+    "business_viability": false,
+    "custom_hardware_buildability": false,
+    "custom_hardware_advantage": false,
+    "custom_silicon_tapeout_go": false,
+    "task_or_agent_quality_noninferiority": false,
+    "transfer_from_qwen_to_glm": false,
+    "public_per_user_tps_as_capacity": false,
+    "public_per_user_tps_as_cogs": false,
+    "native_ramulator_synthetic_hbm3_sensitivity": true,
+    "glm_agentic_mapping_screen_arithmetic": true,
+    "predictive_validity_gate_contract": true,
+    "qwen_current_local_proxy_scope": true,
+    "nosa_future_single_gpu_proxy_scope": true,
+    "calibrated_simulation": false,
+    "generic_end_to_end_simulator_moat": false,
+    "obvious_glm_dsa_moat": false,
+    "glm_agentic_mapping_deployment_validated": false,
+    "geometry_insensitive_locality_benefit": false,
+    "simulator_predictive_validity": false,
+    "small_model_to_glm_transfer": false
+  },
+  "arithmetic_verification": {
+    "verified": true,
+    "checks": [
+      {
+        "check_id": "qwen_int4_weight_reduction",
+        "expression": "1 - 898498560 / 1192099840",
+        "result": 0.24628916987355687
+      },
+      {
+        "check_id": "qwen_int4_absolute_speedup_bound",
+        "expression": "1 / (1 - 0.24628916987355687)",
+        "result": 1.3267687819110139
+      },
+      {
+        "check_id": "qwen_kv_layer4_cache_only_speedup_bound",
+        "expression": "1 / (1 - 0.017857142857142858)",
+        "result": 1.0181818181818183
+      },
+      {
+        "check_id": "qwen_piqa_subset_accuracy_delta",
+        "expression": "175 / 256 - 174 / 256",
+        "result": 0.00390625
+      },
+      {
+        "check_id": "qwen_packed_scalar_time_regression",
+        "expression": "0.005299750000000001 / 0.003874583",
+        "result": 1.3678246149327555
+      },
+      {
+        "check_id": "qwen_packed_batch4_time_regression",
+        "expression": "0.009998541 / 0.009828542",
+        "result": 1.0172964616725453
+      },
+      {
+        "check_id": "qwen_kv_recovery_nll_gap_fraction",
+        "expression": "(8.14767674729228 - 7.837864141911268) / 8.14767674729228",
+        "result": 0.038024655983556546
+      },
+      {
+        "check_id": "scalesim_qwen_ws32_cycle_ratio",
+        "expression": "198858 / 70825",
+        "result": 2.8077373808683372
+      },
+      {
+        "check_id": "scalesim_glm_ws32_cycle_ratio",
+        "expression": "1171658 / 400521",
+        "result": 2.925334751486189
+      },
+      {
+        "check_id": "glm_mapping_network_reduction_lower",
+        "expression": "1 - 255197184 / 1804861440",
+        "result": 0.8586056644880175
+      },
+      {
+        "check_id": "glm_mapping_network_reduction_upper",
+        "expression": "1 - 255246336 / 1804861440",
+        "result": 0.8585784313725491
+      },
+      {
+        "check_id": "glm_fp8_kv_per_request_16k_to_90k_increase",
+        "expression": "44928 * (90000 - 16384)",
+        "result": 3307419648
+      },
+      {
+        "check_id": "glm_pd_neutral_raw_output_cost_change",
+        "expression": "473.61905564401985 / 450.2981165958953 - 1",
+        "result": 0.051789999088655225
+      },
+      {
+        "check_id": "glm_pd_specialization_assumption_raw_output_cost_reduction",
+        "expression": "1 - 395.04541799363056 / 609.8063933121019",
+        "result": 0.3521789500303839
+      },
+      {
+        "check_id": "glm_nvfp4_lower_custom_over_b200",
+        "expression": "25046.25241340679 / 32344.12632390978",
+        "result": 0.7743678763365399
+      },
+      {
+        "check_id": "glm_nvfp4_upper_custom_over_b200",
+        "expression": "176.0529892633718 / 131.2087745768272",
+        "result": 1.3417775589412795
+      },
+      {
+        "check_id": "glm_four_b200_lower_shortfall",
+        "expression": "661267999028 - 656000000000",
+        "result": 5267999028
+      },
+      {
+        "check_id": "glm_four_b200_upper_shortfall",
+        "expression": "760052246836 - 656000000000",
+        "result": 104052246836
+      },
+      {
+        "check_id": "glm_economic_working_peak_loss_budget",
+        "expression": "1 - 0.9254694583476646",
+        "result": 0.07453054165233541
+      },
+      {
+        "check_id": "competitive_glm_adjacent_entry_count",
+        "expression": "19 - 10",
+        "result": 9,
+        "meaning": "Nine reviewed entries extend beyond the original ten surfaces into GLM-adjacent DSA, sparse-memory, kernel, accelerator, and locality-trained model work."
+      },
+      {
+        "check_id": "agentic_mapping_exact_grid_count",
+        "expression": "9 * 5",
+        "result": 45,
+        "meaning": "Nine unique context lengths times five concurrency points."
+      },
+      {
+        "check_id": "agentic_mapping_request_weighted_count",
+        "expression": "64 * 5",
+        "result": 320,
+        "meaning": "Sixty-four synthetic requests evaluated at five concurrency points."
+      },
+      {
+        "check_id": "ramulator_geometry_case_count",
+        "expression": "2 * 9",
+        "result": 18,
+        "meaning": "Two request geometries times nine address-order or clustering patterns."
+      },
+      {
+        "check_id": "ramulator_32b_sort_cycle_change",
+        "expression": "0.7225582708282926 - 1",
+        "result": -0.2774417291717074,
+        "meaning": "Within the representative 32-byte geometry, logical address sorting reduces drained native controller cycles by 27.744%."
+      },
+      {
+        "check_id": "ramulator_bf16_sort_cycle_change",
+        "expression": "1.5919401792612828 - 1",
+        "result": 0.5919401792612828,
+        "meaning": "Within the synthetic 1,152-byte BF16 geometry, the same logical sorting intervention increases drained native controller cycles by 59.194%."
+      },
+      {
+        "check_id": "predictive_gate_inventory_family_sum",
+        "expression": "26 + 3 + 1 + 2 + 3 + 6 + 4 + 9 + 1 + 6",
+        "result": 61,
+        "meaning": "The ten audited families, including the admitted prospective NEON holdout family, exactly cover all 61 source artifacts in the predictive snapshot."
+      },
+      {
+        "check_id": "neon_measured_time_reduction",
+        "expression": "1 - 0.0010635829999999999 / 0.004740665999999999",
+        "result": 0.7756469238710342,
+        "meaning": "The summed local NEON median time is 77.565% below the summed scalar packed median time across the same three tensor loops."
+      },
+      {
+        "check_id": "neon_scalar_packed_over_neon_ratio",
+        "expression": "0.004740665999999999 / 0.0010635829999999999",
+        "result": 4.457260035182961,
+        "meaning": "The matched scalar packed loops take 4.457x the summed local NEON median time."
+      },
+      {
+        "check_id": "neon_floating_qdq_over_neon_ratio",
+        "expression": "0.003493126 / 0.0010635829999999999",
+        "result": 3.2843003319910156,
+        "meaning": "The scalar f32-QDQ loops take 3.284x the summed local NEON median time."
+      },
+      {
+        "check_id": "neon_prediction_relative_effect_error",
+        "expression": "(0.7756469238710342 - 0.4285714285714285) / 0.7756469238710342",
+        "result": 0.44746583093174686,
+        "meaning": "The precommitted predicted benefit undershoots the measured benefit by 44.747% of the measured effect, failing the 15% gate."
+      }
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "study_id": "qwen3-0.6b-int4-o-gate-up-aarch64-neon-v1",
+  "base_request_path": "configs/qwen3-0.6b-int4-packed-kernel-smoke-v1.json",
+  "expected_base_request_blake3": "b103d7a7f5b92223bf316f0e8424f37334cb89e2f14f8215d2223079f458a222",
+  "expected_checkpoint_sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
+  "expected_quality_evidence_sha256": "810201f17e88b4a1be625627ca98b7ffd42ee9e15ab2dbe42f4d6aa32cfe4a05",
+  "tensor_source_pins": [
+    {
+      "name": "model.layers.0.self_attn.o_proj.weight",
+      "expected_source_bytes_blake3": "88c9cc589476128bec96ece9d825422cbad162a70c16625119b2e132be518e1a"
+    },
+    {
+      "name": "model.layers.0.mlp.gate_proj.weight",
+      "expected_source_bytes_blake3": "8e9fffe22ba26c6f63da2e9c984ecd6f269a64034a04719340ec9d055c13fd0e"
+    },
+    {
+      "name": "model.layers.0.mlp.up_proj.weight",
+      "expected_source_bytes_blake3": "bcb34ecc8344764a96f5b21fafbcfd06166708de42dc91e409b957953037b595"
+    }
+  ],
+  "benchmark": {
+    "required_target_architecture": "aarch64",
+    "required_target_feature": "neon",
+    "require_release_build": true,
+    "thread_count": 1,
+    "warmup_iterations": 5,
+    "measured_iterations": 31,
+    "preallocated_output_buffers": true,
+    "alternate_forward_reverse_order": true
+  },
+  "correctness": {
+    "maximum_output_absolute_error": 0.001,
+    "maximum_output_rmse": 0.0001
+  }
+}

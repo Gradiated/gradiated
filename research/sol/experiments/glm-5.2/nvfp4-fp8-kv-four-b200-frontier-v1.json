@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "content_id": "708257b73d32cb8228e7ebd467de5c2e606755f2aedb71a93570a9149c10a04a",
+  "result": {
+    "study_id": "glm-5.2-nvfp4-fp8-kv-four-b200-frontier-v1",
+    "storage_report_content_id": "3216cdd0e8c0988ccc7c779f9df9c7d0b8099f11375e7bdb441ab7463d9bc174",
+    "model_id": "zai-org/GLM-5.2",
+    "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+    "variant_id": "glm-5.2-nvidia-nvfp4-expert-selective",
+    "checkpoint": {
+      "model_id": "nvidia/GLM-5.2-NVFP4",
+      "checkpoint_revision": "aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa",
+      "payload_bytes": 464794806272,
+      "source_artifact_id": "huggingface:nvidia/GLM-5.2-NVFP4@aec724e8c7b8ee9db3b48c01c320f63f9cdaf8aa/model.safetensors.index.json"
+    },
+    "residency_source_artifact_id": "modeled-assumption:glm-agentic-residency-v1",
+    "device_profile_id": "fireworks-b200-180gb-16x",
+    "usable_memory_bytes_per_device": 164000000000,
+    "target_device_count": 4,
+    "target_capacity_bytes": 656000000000,
+    "target": {
+      "topology_id": "four-b200-aggregate-capacity-only",
+      "device_capacity_evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "configs/glm-5.2-storage-envelope-v1.json#hardware[fireworks-b200-180gb-16x]"
+      },
+      "topology_evidence": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "modeled-assumption:four-b200-capacity-only-no-tp4-support"
+      },
+      "basis": "four devices contribute aggregate usable bytes only; no tensor-parallel, expert-parallel, kernel, allocation, or serving support is asserted"
+    },
+    "semantic_cache": {
+      "source_format_id": "bf16",
+      "override_format_id": "fp8",
+      "source_bytes_per_token": 89856,
+      "override_bytes_per_token": 44928,
+      "reduction_bytes_per_token": 44928,
+      "source_total_bytes": 188441690112,
+      "override_total_bytes": 94220845056,
+      "total_reduction_bytes": 94220845056,
+      "evidence": {
+        "kind": "published_specification",
+        "source_artifact_id": "https://recipes.vllm.ai/zai-org/GLM-5.2#fp8-kv-cache"
+      },
+      "basis": "78 layers times 576 semantic-plus-rotary values times one byte; excludes scales, alignment, block metadata, and indexer cache"
+    },
+    "frontiers": [
+      {
+        "cache_bound": "lower",
+        "extra_cache_bytes_per_token": 0,
+        "indexer_cache_bytes_per_token": 0,
+        "cache_bytes_per_reserved_token": 44928,
+        "source_unfragmented_resident_bytes": 669236496384,
+        "source_fragmentation_overhead_bytes": 100385474458,
+        "source_total_resident_bytes": 769621970842,
+        "override_unfragmented_resident_bytes": 575015651328,
+        "override_fragmentation_overhead_bytes": 86252347700,
+        "override_total_resident_bytes": 661267999028,
+        "source_to_override_total_resident_reduction_bytes": 108353971814,
+        "aggregate_capacity_feasible": false,
+        "capacity_headroom_bytes": 0,
+        "total_resident_reduction_required_bytes": 5267999028,
+        "maximum_unfragmented_resident_bytes": 570434782608,
+        "unfragmented_reduction_required_bytes": 4580868720,
+        "maximum_reserved_token_slots": 1995191,
+        "maximum_reserved_tokens_per_sequence": 31174,
+        "sequence_boundary": {
+          "reserved_tokens_per_sequence": 32768,
+          "maximum_feasible_sequences": 60,
+          "total_resident_bytes_at_maximum": 654495875789,
+          "first_infeasible_sequences": 61,
+          "total_resident_bytes_at_first_infeasible": 656188906599
+        },
+        "fragmentation_boundary": {
+          "maximum_feasible_basis_points": 1408,
+          "total_resident_bytes_at_maximum": 655977855035,
+          "first_infeasible_basis_points": 1409,
+          "total_resident_bytes_at_first_infeasible": 656035356601
+        },
+        "maximum_fixed_runtime_bytes": 11419131280,
+        "maximum_fixed_runtime_and_nonsemantic_cache_bytes": 11419131280,
+        "maximum_extra_cache_bytes_per_token": null,
+        "maximum_extra_cache_bytes_per_token_at_zero_fixed_runtime": 5445
+      },
+      {
+        "cache_bound": "upper",
+        "extra_cache_bytes_per_token": 32768,
+        "indexer_cache_bytes_per_token": 8192,
+        "cache_bytes_per_reserved_token": 85888,
+        "source_unfragmented_resident_bytes": 755135842304,
+        "source_fragmentation_overhead_bytes": 113270376346,
+        "source_total_resident_bytes": 868406218650,
+        "override_unfragmented_resident_bytes": 660914997248,
+        "override_fragmentation_overhead_bytes": 99137249588,
+        "override_total_resident_bytes": 760052246836,
+        "source_to_override_total_resident_reduction_bytes": 108353971814,
+        "aggregate_capacity_feasible": false,
+        "capacity_headroom_bytes": 0,
+        "total_resident_reduction_required_bytes": 104052246836,
+        "maximum_unfragmented_resident_bytes": 570434782608,
+        "unfragmented_reduction_required_bytes": 90480214640,
+        "maximum_reserved_token_slots": 1043684,
+        "maximum_reserved_tokens_per_sequence": 16307,
+        "sequence_boundary": {
+          "reserved_tokens_per_sequence": 32768,
+          "maximum_feasible_sequences": 31,
+          "total_resident_bytes_at_maximum": 653246602343,
+          "first_infeasible_sequences": 32,
+          "total_resident_bytes_at_first_infeasible": 656483137024
+        },
+        "fragmentation_boundary": {
+          "maximum_feasible_basis_points": null,
+          "total_resident_bytes_at_maximum": null,
+          "first_infeasible_basis_points": 0,
+          "total_resident_bytes_at_first_infeasible": 660914997248
+        },
+        "maximum_fixed_runtime_bytes": null,
+        "maximum_fixed_runtime_and_nonsemantic_cache_bytes": 11419131280,
+        "maximum_extra_cache_bytes_per_token": null,
+        "maximum_extra_cache_bytes_per_token_at_zero_fixed_runtime": null
+      }
+    ],
+    "claims": {
+      "aggregate_capacity_arithmetic_permitted": true,
+      "executable_topology_permitted": false,
+      "model_format_kernel_support_permitted": false,
+      "end_to_end_serving_permitted": false,
+      "cost_per_token_permitted": false,
+      "blockers": [
+        "aggregate_capacity_only",
+        "target_execution_topology_not_validated",
+        "model_format_kernel_support_not_validated",
+        "runtime_workspace_is_modeled",
+        "cache_layout_metadata_is_bounded"
+      ]
+    }
+  }
+}

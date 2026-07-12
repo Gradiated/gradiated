@@ -1,0 +1,1429 @@
+{
+  "schema_version": 1,
+  "content_id": "33fa1142172d5999b64ef7e7e73da49984c1f2f47bbcd2f8a9ad30615fb6b314",
+  "result": {
+    "proxy_id": "aa-agentperf-public-geometry-synthetic-proxy-v1",
+    "disclaimer": "Synthetic proxy based only on AA-AgentPerf's public workload geometry; it is not AA-AgentPerf's private test set and does not reproduce benchmark prompts, outputs, scoring, or measured results.",
+    "synthetic_assumption_notice": "Session count, turn mix, output lengths, prefix-reuse ratios, arrival stagger, delay distribution beyond its public median, and SLO tiers are synthetic controls rather than AA-AgentPerf specifications.",
+    "request_content_id": "fb005cf9e568558db99d7e214f9496584871d80c6754776071fe50832437759b",
+    "trace_content_id": "e6780efe7fe22c10110c26b61a1ad9e1fddd9c3fdacbdd2770218e28ee7d3b68",
+    "workload_contract_content_id": "5ab6c848fc7d92d59bc2dafe6d1914d79158d1ec463cded00757bda955c43981",
+    "public_basis": {
+      "source_label": "AA-AgentPerf public workload geometry",
+      "minimum_input_tokens": 5000,
+      "maximum_input_tokens": 131000,
+      "approximate_mean_input_tokens": 27000,
+      "median_tool_delay_milliseconds": 1000,
+      "dynamic_prefixes": true,
+      "concurrent_sessions": true,
+      "private_test_set_used": false
+    },
+    "synthetic_design": {
+      "session_count": 8,
+      "turns_per_session": 8,
+      "session_start_stagger_milliseconds": 125,
+      "tool_delay_milliseconds_by_turn": [
+        500,
+        750,
+        1000,
+        1000,
+        1250,
+        1500,
+        2000
+      ],
+      "prefix_reuse_basis_points_by_turn": [
+        0,
+        4500,
+        6500,
+        8000,
+        5500,
+        8500,
+        7000,
+        9000
+      ],
+      "class_by_turn": [
+        "tool",
+        "coding",
+        "tool",
+        "coding",
+        "long_agent",
+        "tool",
+        "coding",
+        "long_agent"
+      ],
+      "input_length_histogram": [
+        {
+          "input_tokens": 5000,
+          "count": 8
+        },
+        {
+          "input_tokens": 10000,
+          "count": 8
+        },
+        {
+          "input_tokens": 16000,
+          "count": 8
+        },
+        {
+          "input_tokens": 22000,
+          "count": 8
+        },
+        {
+          "input_tokens": 27000,
+          "count": 8
+        },
+        {
+          "input_tokens": 32000,
+          "count": 8
+        },
+        {
+          "input_tokens": 45000,
+          "count": 7
+        },
+        {
+          "input_tokens": 48250,
+          "count": 8
+        },
+        {
+          "input_tokens": 131000,
+          "count": 1
+        }
+      ],
+      "output_tokens_by_class": [
+        {
+          "class": "tool",
+          "output_tokens": 32
+        },
+        {
+          "class": "coding",
+          "output_tokens": 256
+        },
+        {
+          "class": "long_agent",
+          "output_tokens": 512
+        }
+      ]
+    },
+    "slo_tiers": [
+      {
+        "tier_id": "interactive_tool",
+        "class": "tool",
+        "percentile": 95.0,
+        "maximum_ttft_milliseconds": 1000.0,
+        "minimum_output_tokens_per_second": 40.0,
+        "maximum_tpot_milliseconds": 25.0
+      },
+      {
+        "tier_id": "interactive_generation",
+        "class": "coding",
+        "percentile": 95.0,
+        "maximum_ttft_milliseconds": 3000.0,
+        "minimum_output_tokens_per_second": 25.0,
+        "maximum_tpot_milliseconds": 40.0
+      },
+      {
+        "tier_id": "long_context",
+        "class": "long_agent",
+        "percentile": 95.0,
+        "maximum_ttft_milliseconds": 10000.0,
+        "minimum_output_tokens_per_second": 15.0,
+        "maximum_tpot_milliseconds": 66.66666666666667
+      }
+    ],
+    "workload_contract": {
+      "schema_version": 2,
+      "contract_id": "aa-agentperf-public-geometry-synthetic-proxy-v1-slo",
+      "identity": {
+        "model_id": "synthetic/model-under-test",
+        "model_revision": "synthetic-public-agentic-proxy-v1",
+        "tokenizer_id": "synthetic/tokenizer-under-test",
+        "tokenizer_revision": "synthetic-public-agentic-proxy-v1"
+      },
+      "class_objectives": [
+        {
+          "class": "tool",
+          "ttft": {
+            "percentile": 95.0,
+            "maximum_milliseconds": 1000.0
+          },
+          "tpot": {
+            "percentile": 95.0,
+            "maximum_milliseconds": 25.0
+          }
+        },
+        {
+          "class": "coding",
+          "ttft": {
+            "percentile": 95.0,
+            "maximum_milliseconds": 3000.0
+          },
+          "tpot": {
+            "percentile": 95.0,
+            "maximum_milliseconds": 40.0
+          }
+        },
+        {
+          "class": "long_agent",
+          "ttft": {
+            "percentile": 95.0,
+            "maximum_milliseconds": 10000.0
+          },
+          "tpot": {
+            "percentile": 95.0,
+            "maximum_milliseconds": 66.66666666666667
+          }
+        }
+      ]
+    },
+    "trace": {
+      "schema_version": 2,
+      "trace_id": "aa-agentperf-public-geometry-synthetic-proxy-v1-trace",
+      "provenance": {
+        "provenance": "synthetic",
+        "generator_id": "foundry-public-agentic-proxy-v1",
+        "seed": 20260712
+      },
+      "timestamp_basis": "relative_microseconds",
+      "identity": {
+        "model_id": "synthetic/model-under-test",
+        "model_revision": "synthetic-public-agentic-proxy-v1",
+        "tokenizer_id": "synthetic/tokenizer-under-test",
+        "tokenizer_revision": "synthetic-public-agentic-proxy-v1"
+      },
+      "requests": [
+        {
+          "request_id": 1,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 0,
+          "input_tokens": 48250,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 0
+        },
+        {
+          "request_id": 2,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 125000,
+          "input_tokens": 45000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 0
+        },
+        {
+          "request_id": 3,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 250000,
+          "input_tokens": 27000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 0
+        },
+        {
+          "request_id": 4,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 375000,
+          "input_tokens": 5000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 0
+        },
+        {
+          "request_id": 5,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 500000,
+          "input_tokens": 27000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 12150
+        },
+        {
+          "request_id": 6,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 500000,
+          "input_tokens": 5000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 0
+        },
+        {
+          "request_id": 7,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 625000,
+          "input_tokens": 22000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 9900
+        },
+        {
+          "request_id": 8,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 625000,
+          "input_tokens": 27000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 0
+        },
+        {
+          "request_id": 9,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 750000,
+          "input_tokens": 48250,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 21712
+        },
+        {
+          "request_id": 10,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 750000,
+          "input_tokens": 32000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 0
+        },
+        {
+          "request_id": 11,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 875000,
+          "input_tokens": 10000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 4500
+        },
+        {
+          "request_id": 12,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 875000,
+          "input_tokens": 10000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 0
+        },
+        {
+          "request_id": 13,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 1000000,
+          "input_tokens": 10000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 4500
+        },
+        {
+          "request_id": 14,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 1125000,
+          "input_tokens": 48250,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 21712
+        },
+        {
+          "request_id": 15,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 1250000,
+          "input_tokens": 27000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 17550
+        },
+        {
+          "request_id": 16,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 1250000,
+          "input_tokens": 45000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 20250
+        },
+        {
+          "request_id": 17,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 1375000,
+          "input_tokens": 10000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 6500
+        },
+        {
+          "request_id": 18,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 1375000,
+          "input_tokens": 5000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 2250
+        },
+        {
+          "request_id": 19,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 1500000,
+          "input_tokens": 32000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 20800
+        },
+        {
+          "request_id": 20,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 1625000,
+          "input_tokens": 22000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 14300
+        },
+        {
+          "request_id": 21,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 1750000,
+          "input_tokens": 5000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 3250
+        },
+        {
+          "request_id": 22,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 1875000,
+          "input_tokens": 45000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 29250
+        },
+        {
+          "request_id": 23,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 2000000,
+          "input_tokens": 5000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 3250
+        },
+        {
+          "request_id": 24,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 2125000,
+          "input_tokens": 32000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 20800
+        },
+        {
+          "request_id": 25,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 2250000,
+          "input_tokens": 48250,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 38600
+        },
+        {
+          "request_id": 26,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 2375000,
+          "input_tokens": 22000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 17600
+        },
+        {
+          "request_id": 27,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 2500000,
+          "input_tokens": 27000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 21600
+        },
+        {
+          "request_id": 28,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 2625000,
+          "input_tokens": 32000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 25600
+        },
+        {
+          "request_id": 29,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 2750000,
+          "input_tokens": 27000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 21600
+        },
+        {
+          "request_id": 30,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 2875000,
+          "input_tokens": 48250,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 38600
+        },
+        {
+          "request_id": 31,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 3000000,
+          "input_tokens": 45000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 36000
+        },
+        {
+          "request_id": 32,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 3125000,
+          "input_tokens": 22000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 17600
+        },
+        {
+          "request_id": 33,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 3250000,
+          "input_tokens": 22000,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 12100
+        },
+        {
+          "request_id": 34,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 3375000,
+          "input_tokens": 22000,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 12100
+        },
+        {
+          "request_id": 35,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 3500000,
+          "input_tokens": 45000,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 24750
+        },
+        {
+          "request_id": 36,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 3625000,
+          "input_tokens": 10000,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 5500
+        },
+        {
+          "request_id": 37,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 3750000,
+          "input_tokens": 32000,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 17600
+        },
+        {
+          "request_id": 38,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 3875000,
+          "input_tokens": 5000,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 2750
+        },
+        {
+          "request_id": 39,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 4000000,
+          "input_tokens": 5000,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 2750
+        },
+        {
+          "request_id": 40,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 4125000,
+          "input_tokens": 32000,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 17600
+        },
+        {
+          "request_id": 41,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 4500000,
+          "input_tokens": 32000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 27200
+        },
+        {
+          "request_id": 42,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 4625000,
+          "input_tokens": 16000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 13600
+        },
+        {
+          "request_id": 43,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 4750000,
+          "input_tokens": 45000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 38250
+        },
+        {
+          "request_id": 44,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 4875000,
+          "input_tokens": 16000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 13600
+        },
+        {
+          "request_id": 45,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 5000000,
+          "input_tokens": 48250,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 41012
+        },
+        {
+          "request_id": 46,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 5125000,
+          "input_tokens": 16000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 13600
+        },
+        {
+          "request_id": 47,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 5250000,
+          "input_tokens": 10000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 8500
+        },
+        {
+          "request_id": 48,
+          "class": "tool",
+          "arrival_timestamp_microseconds": 5375000,
+          "input_tokens": 22000,
+          "output_tokens": 32,
+          "prefix_reused_tokens": 18700
+        },
+        {
+          "request_id": 49,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 6000000,
+          "input_tokens": 10000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 7000
+        },
+        {
+          "request_id": 50,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 6125000,
+          "input_tokens": 16000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 11200
+        },
+        {
+          "request_id": 51,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 6250000,
+          "input_tokens": 22000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 15400
+        },
+        {
+          "request_id": 52,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 6375000,
+          "input_tokens": 16000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 11200
+        },
+        {
+          "request_id": 53,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 6500000,
+          "input_tokens": 27000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 18900
+        },
+        {
+          "request_id": 54,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 6625000,
+          "input_tokens": 27000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 18900
+        },
+        {
+          "request_id": 55,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 6750000,
+          "input_tokens": 45000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 31500
+        },
+        {
+          "request_id": 56,
+          "class": "coding",
+          "arrival_timestamp_microseconds": 6875000,
+          "input_tokens": 16000,
+          "output_tokens": 256,
+          "prefix_reused_tokens": 11200
+        },
+        {
+          "request_id": 57,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 8000000,
+          "input_tokens": 10000,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 9000
+        },
+        {
+          "request_id": 58,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 8125000,
+          "input_tokens": 16000,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 14400
+        },
+        {
+          "request_id": 59,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 8250000,
+          "input_tokens": 48250,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 43425
+        },
+        {
+          "request_id": 60,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 8375000,
+          "input_tokens": 32000,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 28800
+        },
+        {
+          "request_id": 61,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 8500000,
+          "input_tokens": 5000,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 4500
+        },
+        {
+          "request_id": 62,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 8625000,
+          "input_tokens": 131000,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 117900
+        },
+        {
+          "request_id": 63,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 8750000,
+          "input_tokens": 48250,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 43425
+        },
+        {
+          "request_id": 64,
+          "class": "long_agent",
+          "arrival_timestamp_microseconds": 8875000,
+          "input_tokens": 16000,
+          "output_tokens": 512,
+          "prefix_reused_tokens": 14400
+        }
+      ]
+    },
+    "sessions": [
+      {
+        "session_id": "session-00",
+        "start_timestamp_microseconds": 0,
+        "end_timestamp_microseconds": 8000000,
+        "turns": [
+          {
+            "request_id": 1,
+            "turn_index": 0,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 0,
+            "preceding_tool_delay_milliseconds": null,
+            "input_tokens": 48250,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 0
+          },
+          {
+            "request_id": 5,
+            "turn_index": 1,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 500000,
+            "preceding_tool_delay_milliseconds": 500,
+            "input_tokens": 27000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 12150
+          },
+          {
+            "request_id": 15,
+            "turn_index": 2,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 1250000,
+            "preceding_tool_delay_milliseconds": 750,
+            "input_tokens": 27000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 17550
+          },
+          {
+            "request_id": 25,
+            "turn_index": 3,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 2250000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 48250,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 38600
+          },
+          {
+            "request_id": 33,
+            "turn_index": 4,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 3250000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 22000,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 12100
+          },
+          {
+            "request_id": 41,
+            "turn_index": 5,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 4500000,
+            "preceding_tool_delay_milliseconds": 1250,
+            "input_tokens": 32000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 27200
+          },
+          {
+            "request_id": 49,
+            "turn_index": 6,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 6000000,
+            "preceding_tool_delay_milliseconds": 1500,
+            "input_tokens": 10000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 7000
+          },
+          {
+            "request_id": 57,
+            "turn_index": 7,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 8000000,
+            "preceding_tool_delay_milliseconds": 2000,
+            "input_tokens": 10000,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 9000
+          }
+        ]
+      },
+      {
+        "session_id": "session-01",
+        "start_timestamp_microseconds": 125000,
+        "end_timestamp_microseconds": 8125000,
+        "turns": [
+          {
+            "request_id": 2,
+            "turn_index": 0,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 125000,
+            "preceding_tool_delay_milliseconds": null,
+            "input_tokens": 45000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 0
+          },
+          {
+            "request_id": 7,
+            "turn_index": 1,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 625000,
+            "preceding_tool_delay_milliseconds": 500,
+            "input_tokens": 22000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 9900
+          },
+          {
+            "request_id": 17,
+            "turn_index": 2,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 1375000,
+            "preceding_tool_delay_milliseconds": 750,
+            "input_tokens": 10000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 6500
+          },
+          {
+            "request_id": 26,
+            "turn_index": 3,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 2375000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 22000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 17600
+          },
+          {
+            "request_id": 34,
+            "turn_index": 4,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 3375000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 22000,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 12100
+          },
+          {
+            "request_id": 42,
+            "turn_index": 5,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 4625000,
+            "preceding_tool_delay_milliseconds": 1250,
+            "input_tokens": 16000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 13600
+          },
+          {
+            "request_id": 50,
+            "turn_index": 6,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 6125000,
+            "preceding_tool_delay_milliseconds": 1500,
+            "input_tokens": 16000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 11200
+          },
+          {
+            "request_id": 58,
+            "turn_index": 7,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 8125000,
+            "preceding_tool_delay_milliseconds": 2000,
+            "input_tokens": 16000,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 14400
+          }
+        ]
+      },
+      {
+        "session_id": "session-02",
+        "start_timestamp_microseconds": 250000,
+        "end_timestamp_microseconds": 8250000,
+        "turns": [
+          {
+            "request_id": 3,
+            "turn_index": 0,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 250000,
+            "preceding_tool_delay_milliseconds": null,
+            "input_tokens": 27000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 0
+          },
+          {
+            "request_id": 9,
+            "turn_index": 1,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 750000,
+            "preceding_tool_delay_milliseconds": 500,
+            "input_tokens": 48250,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 21712
+          },
+          {
+            "request_id": 19,
+            "turn_index": 2,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 1500000,
+            "preceding_tool_delay_milliseconds": 750,
+            "input_tokens": 32000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 20800
+          },
+          {
+            "request_id": 27,
+            "turn_index": 3,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 2500000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 27000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 21600
+          },
+          {
+            "request_id": 35,
+            "turn_index": 4,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 3500000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 45000,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 24750
+          },
+          {
+            "request_id": 43,
+            "turn_index": 5,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 4750000,
+            "preceding_tool_delay_milliseconds": 1250,
+            "input_tokens": 45000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 38250
+          },
+          {
+            "request_id": 51,
+            "turn_index": 6,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 6250000,
+            "preceding_tool_delay_milliseconds": 1500,
+            "input_tokens": 22000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 15400
+          },
+          {
+            "request_id": 59,
+            "turn_index": 7,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 8250000,
+            "preceding_tool_delay_milliseconds": 2000,
+            "input_tokens": 48250,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 43425
+          }
+        ]
+      },
+      {
+        "session_id": "session-03",
+        "start_timestamp_microseconds": 375000,
+        "end_timestamp_microseconds": 8375000,
+        "turns": [
+          {
+            "request_id": 4,
+            "turn_index": 0,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 375000,
+            "preceding_tool_delay_milliseconds": null,
+            "input_tokens": 5000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 0
+          },
+          {
+            "request_id": 11,
+            "turn_index": 1,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 875000,
+            "preceding_tool_delay_milliseconds": 500,
+            "input_tokens": 10000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 4500
+          },
+          {
+            "request_id": 20,
+            "turn_index": 2,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 1625000,
+            "preceding_tool_delay_milliseconds": 750,
+            "input_tokens": 22000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 14300
+          },
+          {
+            "request_id": 28,
+            "turn_index": 3,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 2625000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 32000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 25600
+          },
+          {
+            "request_id": 36,
+            "turn_index": 4,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 3625000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 10000,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 5500
+          },
+          {
+            "request_id": 44,
+            "turn_index": 5,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 4875000,
+            "preceding_tool_delay_milliseconds": 1250,
+            "input_tokens": 16000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 13600
+          },
+          {
+            "request_id": 52,
+            "turn_index": 6,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 6375000,
+            "preceding_tool_delay_milliseconds": 1500,
+            "input_tokens": 16000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 11200
+          },
+          {
+            "request_id": 60,
+            "turn_index": 7,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 8375000,
+            "preceding_tool_delay_milliseconds": 2000,
+            "input_tokens": 32000,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 28800
+          }
+        ]
+      },
+      {
+        "session_id": "session-04",
+        "start_timestamp_microseconds": 500000,
+        "end_timestamp_microseconds": 8500000,
+        "turns": [
+          {
+            "request_id": 6,
+            "turn_index": 0,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 500000,
+            "preceding_tool_delay_milliseconds": null,
+            "input_tokens": 5000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 0
+          },
+          {
+            "request_id": 13,
+            "turn_index": 1,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 1000000,
+            "preceding_tool_delay_milliseconds": 500,
+            "input_tokens": 10000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 4500
+          },
+          {
+            "request_id": 21,
+            "turn_index": 2,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 1750000,
+            "preceding_tool_delay_milliseconds": 750,
+            "input_tokens": 5000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 3250
+          },
+          {
+            "request_id": 29,
+            "turn_index": 3,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 2750000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 27000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 21600
+          },
+          {
+            "request_id": 37,
+            "turn_index": 4,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 3750000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 32000,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 17600
+          },
+          {
+            "request_id": 45,
+            "turn_index": 5,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 5000000,
+            "preceding_tool_delay_milliseconds": 1250,
+            "input_tokens": 48250,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 41012
+          },
+          {
+            "request_id": 53,
+            "turn_index": 6,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 6500000,
+            "preceding_tool_delay_milliseconds": 1500,
+            "input_tokens": 27000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 18900
+          },
+          {
+            "request_id": 61,
+            "turn_index": 7,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 8500000,
+            "preceding_tool_delay_milliseconds": 2000,
+            "input_tokens": 5000,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 4500
+          }
+        ]
+      },
+      {
+        "session_id": "session-05",
+        "start_timestamp_microseconds": 625000,
+        "end_timestamp_microseconds": 8625000,
+        "turns": [
+          {
+            "request_id": 8,
+            "turn_index": 0,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 625000,
+            "preceding_tool_delay_milliseconds": null,
+            "input_tokens": 27000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 0
+          },
+          {
+            "request_id": 14,
+            "turn_index": 1,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 1125000,
+            "preceding_tool_delay_milliseconds": 500,
+            "input_tokens": 48250,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 21712
+          },
+          {
+            "request_id": 22,
+            "turn_index": 2,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 1875000,
+            "preceding_tool_delay_milliseconds": 750,
+            "input_tokens": 45000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 29250
+          },
+          {
+            "request_id": 30,
+            "turn_index": 3,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 2875000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 48250,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 38600
+          },
+          {
+            "request_id": 38,
+            "turn_index": 4,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 3875000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 5000,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 2750
+          },
+          {
+            "request_id": 46,
+            "turn_index": 5,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 5125000,
+            "preceding_tool_delay_milliseconds": 1250,
+            "input_tokens": 16000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 13600
+          },
+          {
+            "request_id": 54,
+            "turn_index": 6,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 6625000,
+            "preceding_tool_delay_milliseconds": 1500,
+            "input_tokens": 27000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 18900
+          },
+          {
+            "request_id": 62,
+            "turn_index": 7,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 8625000,
+            "preceding_tool_delay_milliseconds": 2000,
+            "input_tokens": 131000,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 117900
+          }
+        ]
+      },
+      {
+        "session_id": "session-06",
+        "start_timestamp_microseconds": 750000,
+        "end_timestamp_microseconds": 8750000,
+        "turns": [
+          {
+            "request_id": 10,
+            "turn_index": 0,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 750000,
+            "preceding_tool_delay_milliseconds": null,
+            "input_tokens": 32000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 0
+          },
+          {
+            "request_id": 16,
+            "turn_index": 1,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 1250000,
+            "preceding_tool_delay_milliseconds": 500,
+            "input_tokens": 45000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 20250
+          },
+          {
+            "request_id": 23,
+            "turn_index": 2,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 2000000,
+            "preceding_tool_delay_milliseconds": 750,
+            "input_tokens": 5000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 3250
+          },
+          {
+            "request_id": 31,
+            "turn_index": 3,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 3000000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 45000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 36000
+          },
+          {
+            "request_id": 39,
+            "turn_index": 4,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 4000000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 5000,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 2750
+          },
+          {
+            "request_id": 47,
+            "turn_index": 5,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 5250000,
+            "preceding_tool_delay_milliseconds": 1250,
+            "input_tokens": 10000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 8500
+          },
+          {
+            "request_id": 55,
+            "turn_index": 6,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 6750000,
+            "preceding_tool_delay_milliseconds": 1500,
+            "input_tokens": 45000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 31500
+          },
+          {
+            "request_id": 63,
+            "turn_index": 7,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 8750000,
+            "preceding_tool_delay_milliseconds": 2000,
+            "input_tokens": 48250,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 43425
+          }
+        ]
+      },
+      {
+        "session_id": "session-07",
+        "start_timestamp_microseconds": 875000,
+        "end_timestamp_microseconds": 8875000,
+        "turns": [
+          {
+            "request_id": 12,
+            "turn_index": 0,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 875000,
+            "preceding_tool_delay_milliseconds": null,
+            "input_tokens": 10000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 0
+          },
+          {
+            "request_id": 18,
+            "turn_index": 1,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 1375000,
+            "preceding_tool_delay_milliseconds": 500,
+            "input_tokens": 5000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 2250
+          },
+          {
+            "request_id": 24,
+            "turn_index": 2,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 2125000,
+            "preceding_tool_delay_milliseconds": 750,
+            "input_tokens": 32000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 20800
+          },
+          {
+            "request_id": 32,
+            "turn_index": 3,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 3125000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 22000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 17600
+          },
+          {
+            "request_id": 40,
+            "turn_index": 4,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 4125000,
+            "preceding_tool_delay_milliseconds": 1000,
+            "input_tokens": 32000,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 17600
+          },
+          {
+            "request_id": 48,
+            "turn_index": 5,
+            "class": "tool",
+            "arrival_timestamp_microseconds": 5375000,
+            "preceding_tool_delay_milliseconds": 1250,
+            "input_tokens": 22000,
+            "output_tokens": 32,
+            "prefix_reused_tokens": 18700
+          },
+          {
+            "request_id": 56,
+            "turn_index": 6,
+            "class": "coding",
+            "arrival_timestamp_microseconds": 6875000,
+            "preceding_tool_delay_milliseconds": 1500,
+            "input_tokens": 16000,
+            "output_tokens": 256,
+            "prefix_reused_tokens": 11200
+          },
+          {
+            "request_id": 64,
+            "turn_index": 7,
+            "class": "long_agent",
+            "arrival_timestamp_microseconds": 8875000,
+            "preceding_tool_delay_milliseconds": 2000,
+            "input_tokens": 16000,
+            "output_tokens": 512,
+            "prefix_reused_tokens": 14400
+          }
+        ]
+      }
+    ],
+    "summary": {
+      "session_count": 8,
+      "request_count": 64,
+      "minimum_input_tokens": 5000,
+      "maximum_input_tokens": 131000,
+      "mean_input_tokens": 27000.0,
+      "total_input_tokens": 1728000,
+      "total_output_tokens": 15104,
+      "tool_call_count": 56,
+      "median_tool_delay_milliseconds": 1000,
+      "peak_active_session_windows": 8,
+      "dynamic_prefix_session_count": 8,
+      "interleaved_session_switch_count": 63,
+      "trace_duration_milliseconds": 8875
+    },
+    "claim_gates": {
+      "aa_agentperf_score_claim_permitted": false,
+      "measured_performance_claim_permitted": false,
+      "nvidia_performance_claim_permitted": false,
+      "provider_performance_claim_permitted": false,
+      "cost_claim_permitted": false
+    }
+  }
+}

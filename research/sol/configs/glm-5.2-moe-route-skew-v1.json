@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "study_id": "glm-5.2-moe-route-skew-v1",
+  "model_id": "zai-org/GLM-5.2",
+  "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9",
+  "geometry": {
+    "moe_layer_count": 75,
+    "routed_expert_count": 256,
+    "top_k": 8
+  },
+  "traffic": {
+    "expert_storage_bytes": 75497472,
+    "activation_payload_bytes_per_dispatch": 12288,
+    "result_payload_bytes_per_dispatch": 12288,
+    "source_artifact_id": "huggingface:zai-org/GLM-5.2@b4734de4facf877f85769a911abafc5283eab3d9/config.json+model.safetensors.index.json",
+    "basis": "Each layer-local routed expert has 3x6144x2048 BF16 bytes; activation and result lower bounds each carry one 6144-element BF16 hidden state; protocol, alignment, routing metadata, and retransmission bytes are excluded"
+  },
+  "source_shard_mapping": "modulo_device_count",
+  "dispatch_policy": "local_replica_first_then_least_loaded_replica",
+  "scenarios": [
+    {
+      "scenario_id": "synthetic-uniform",
+      "route": {
+        "kind": "synthetic",
+        "value": {
+          "source_shard_count": 16,
+          "tokens_per_source_shard": 4096,
+          "distribution": {
+            "kind": "uniform"
+          }
+        }
+      },
+      "provenance": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "synthetic:glm-5.2-uniform-route-v1",
+        "model_id": "zai-org/GLM-5.2",
+        "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9"
+      }
+    },
+    {
+      "scenario_id": "synthetic-source-affine-hotset",
+      "route": {
+        "kind": "synthetic",
+        "value": {
+          "source_shard_count": 16,
+          "tokens_per_source_shard": 4096,
+          "distribution": {
+            "kind": "rotating_hotset",
+            "hot_expert_count": 32,
+            "hot_dispatch_share_basis_points": 8500,
+            "layer_rotation_stride": 17,
+            "source_rotation_stride": 16
+          }
+        }
+      },
+      "provenance": {
+        "kind": "modeled_assumption",
+        "source_artifact_id": "synthetic:glm-5.2-source-affine-hotset-v1",
+        "model_id": "zai-org/GLM-5.2",
+        "model_revision": "b4734de4facf877f85769a911abafc5283eab3d9"
+      }
+    }
+  ],
+  "topologies": [
+    {
+      "topology_id": "modeled-fully-connected-8x",
+      "device_count": 8,
+      "expert_memory_capacity_bytes_per_device": 210000000000,
+      "network": "fully_connected",
+      "routing": "shortest_hop_lowest_device_tie_break",
+      "link": {
+        "payload_bytes_per_second_per_direction": 450000000000,
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-assumption:8x-full-mesh-450gbps-directional-links"
+        }
+      }
+    },
+    {
+      "topology_id": "modeled-bidirectional-ring-8x",
+      "device_count": 8,
+      "expert_memory_capacity_bytes_per_device": 210000000000,
+      "network": "bidirectional_ring",
+      "routing": "shortest_hop_lowest_device_tie_break",
+      "link": {
+        "payload_bytes_per_second_per_direction": 450000000000,
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-assumption:8x-ring-450gbps-directional-links"
+        }
+      }
+    },
+    {
+      "topology_id": "modeled-bidirectional-ring-16x",
+      "device_count": 16,
+      "expert_memory_capacity_bytes_per_device": 105000000000,
+      "network": "bidirectional_ring",
+      "routing": "shortest_hop_lowest_device_tie_break",
+      "link": {
+        "payload_bytes_per_second_per_direction": 450000000000,
+        "evidence": {
+          "kind": "modeled_assumption",
+          "source_artifact_id": "modeled-assumption:16x-ring-450gbps-directional-links"
+        }
+      }
+    }
+  ],
+  "strategies": [
+    {
+      "strategy_id": "uniform-primary",
+      "policy": {
+        "kind": "uniform"
+      }
+    },
+    {
+      "strategy_id": "traffic-aware-primary",
+      "policy": {
+        "kind": "traffic_aware",
+        "additional_replica_budget": 0,
+        "maximum_replicas_per_expert": 1
+      }
+    },
+    {
+      "strategy_id": "traffic-aware-primary-plus-1024-replicas",
+      "policy": {
+        "kind": "traffic_aware",
+        "additional_replica_budget": 1024,
+        "maximum_replicas_per_expert": 2
+      }
+    }
+  ]
+}

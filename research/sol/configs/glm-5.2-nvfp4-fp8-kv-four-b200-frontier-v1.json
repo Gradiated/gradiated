@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "study_id": "glm-5.2-nvfp4-fp8-kv-four-b200-frontier-v1",
+  "storage_report_content_id": "3216cdd0e8c0988ccc7c779f9df9c7d0b8099f11375e7bdb441ab7463d9bc174",
+  "variant_id": "glm-5.2-nvidia-nvfp4-expert-selective",
+  "device_profile_id": "fireworks-b200-180gb-16x",
+  "target_device_count": 4,
+  "semantic_cache": {
+    "source_format_id": "bf16",
+    "override_format_id": "fp8",
+    "override_bytes_per_token": 44928,
+    "evidence": {
+      "kind": "published_specification",
+      "source_artifact_id": "https://recipes.vllm.ai/zai-org/GLM-5.2#fp8-kv-cache"
+    },
+    "basis": "78 layers times 576 semantic-plus-rotary values times one byte; excludes scales, alignment, block metadata, and indexer cache"
+  },
+  "target": {
+    "topology_id": "four-b200-aggregate-capacity-only",
+    "device_capacity_evidence": {
+      "kind": "modeled_assumption",
+      "source_artifact_id": "configs/glm-5.2-storage-envelope-v1.json#hardware[fireworks-b200-180gb-16x]"
+    },
+    "topology_evidence": {
+      "kind": "modeled_assumption",
+      "source_artifact_id": "modeled-assumption:four-b200-capacity-only-no-tp4-support"
+    },
+    "basis": "four devices contribute aggregate usable bytes only; no tensor-parallel, expert-parallel, kernel, allocation, or serving support is asserted"
+  }
+}

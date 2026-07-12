@@ -1,0 +1,995 @@
+{
+  "schema_version": 1,
+  "content_id": "9151f5d066bfc4fbff8e855cc9d312d44377e060ecef0b796fa30ffef56ec7ad",
+  "result": {
+    "study_id": "qwen3-0.6b-int4-o-gate-up-packed-batch-frontier-v1",
+    "base_request_path": "configs/qwen3-0.6b-int4-packed-kernel-smoke-v1.json",
+    "base_request_blake3": "b103d7a7f5b92223bf316f0e8424f37334cb89e2f14f8215d2223079f458a222",
+    "base_study_id": "qwen3-0.6b-int4-o-gate-up-packed-kernel-smoke-v1",
+    "checkpoint": {
+      "model_id": "Qwen/Qwen3-0.6B",
+      "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+      "path": "models/Qwen3-0.6B/model.safetensors",
+      "expected_file_bytes": 1503300328,
+      "expected_sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b"
+    },
+    "quality_evidence": {
+      "path": "validation/results/qwen3-0.6b-int4-o-gate-up-wikitext2-sequential4096-bf16-v1.json",
+      "expected_sha256": "810201f17e88b4a1be625627ca98b7ffd42ee9e15ab2dbe42f4d6aa32cfe4a05",
+      "candidate": "o_proj plus gate_proj plus up_proj symmetric signed group-8 INT4",
+      "scope": "Teacher-forced BF16 QDQ quality proxy only; the run did not use persisted BF16 scales or packed codes."
+    },
+    "host": {
+      "hostname": "Joshuas-MacBook-Pro.local",
+      "operating_system": "Darwin 24.6.0 Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041",
+      "architecture": "aarch64",
+      "cpu_model": "Apple M4 Pro",
+      "available_parallelism": 14,
+      "benchmark_thread_count": 1,
+      "rust_profile": "release"
+    },
+    "compiler": {
+      "rustc_verbose": "rustc 1.90.0 (1159e78c4 2025-09-14)\nbinary: rustc\ncommit-hash: 1159e78c4747b02ef996e55082b704c09b970588\ncommit-date: 2025-09-14\nhost: aarch64-apple-darwin\nrelease: 1.90.0\nLLVM version: 20.1.8",
+      "target_architecture": "aarch64",
+      "target_operating_system": "macos",
+      "release_profile": true,
+      "explicit_simd_intrinsics_used": false,
+      "auto_vectorization_inspected": false
+    },
+    "benchmark": {
+      "seed": 20260712,
+      "group_size": 8,
+      "scale_storage": "bfloat16",
+      "thread_count": 1,
+      "warmup_iterations": 5,
+      "measured_iterations": 15,
+      "require_release_build": true
+    },
+    "batch_sizes": [
+      1,
+      4,
+      16,
+      64
+    ],
+    "batch_tile_size": 64,
+    "implementation_boundary": "Both timed kernels consume prearranged feature-major activations X[K,B] and produce row-major outputs Y[M,B]. For each output row and batch tile they traverse columns in increasing order, then contiguous batch lanes. The packed path loads one BF16 scale and decodes each signed INT4 nibble pair once per tile before reusing both values across the tile. The floating control reads an independently materialized f32 QDQ weight once per tile and uses the identical lane loop. Input rearrangement, quantization, packing, allocation, BLAS, vLLM, explicit SIMD intrinsics, threading, and serving are outside the timed region.",
+    "source_verification": {
+      "checkpoint_file_size_verified": true,
+      "checkpoint_declared_sha256_recomputed": false,
+      "measured_tensor_blake3_pins_verified": true,
+      "quality_evidence_declared_sha256_recomputed": false
+    },
+    "measurements": [
+      {
+        "family": "attention_output",
+        "tensor_name": "model.layers.0.self_attn.o_proj.weight",
+        "rows": 1024,
+        "columns": 2048,
+        "parameter_count": 2097152,
+        "source_bytes_blake3": "88c9cc589476128bec96ece9d825422cbad162a70c16625119b2e132be518e1a",
+        "packed_checksum_blake3": "c478e30a89a9fe24db33bfddd4a6f8823cdf6c6183dbcc350a5a3a6aa3d1dd83",
+        "source_load_seconds": 0.001444458,
+        "pack_seconds": 0.002577334,
+        "storage": {
+          "source_bfloat16_bytes": 4194304,
+          "packed_code_bytes": 1048576,
+          "group_scale_bytes": 524288,
+          "total_packed_bytes": 1572864,
+          "scale_overhead_fraction_of_codes": 0.5,
+          "scale_fraction_of_packed_storage": 0.3333333333333333,
+          "packed_fraction_of_source_bfloat16": 0.375,
+          "logical_packed_weight_bytes_read_per_output": 1536,
+          "logical_f32_qdq_weight_bytes_read_per_output": 8192,
+          "logical_input_bytes_if_read_once_per_matvec": 8192,
+          "logical_output_write_bytes_per_matvec": 4096
+        },
+        "dequantized_weight_correctness": {
+          "packed_checksum_blake3": "16a9f2da130677b4143cc0ebbb66e88e6f090b96094a35998b996f73a77ce5fa",
+          "floating_qdq_checksum_blake3": "16a9f2da130677b4143cc0ebbb66e88e6f090b96094a35998b996f73a77ce5fa",
+          "maximum_absolute_error": 0.0,
+          "rmse": 0.0,
+          "checksum_match": true,
+          "passed": true
+        },
+        "points": [
+          {
+            "batch_size": 1,
+            "batch_tile_size": 64,
+            "input_layout": "feature_major_k_by_batch_contiguous_batch_lane",
+            "output_layout": "row_major_output_row_by_batch_contiguous_batch_lane",
+            "input_checksum_blake3": "8c4cb6aa579a11c3f784b27e6f162372515209de91a75fddcb7a92324d817b17",
+            "work": {
+              "output_elements": 1024,
+              "packed_multiply_accumulate_terms": 2097152,
+              "floating_reference_multiply_accumulate_terms": 2097152,
+              "nominal_arithmetic_operations_each": 4194304,
+              "exact_work_count_equal": true,
+              "accumulation_order_equal": true
+            },
+            "memory": {
+              "batch_tile_count": 1,
+              "source_bfloat16_weight_resident_bytes": 4194304,
+              "packed_code_resident_bytes": 1048576,
+              "packed_scale_resident_bytes": 524288,
+              "packed_weight_resident_bytes": 1572864,
+              "floating_qdq_weight_resident_bytes": 8388608,
+              "feature_major_input_resident_bytes": 8192,
+              "row_major_output_resident_bytes": 4096,
+              "packed_total_resident_bytes": 1585152,
+              "floating_reference_total_resident_bytes": 8400896,
+              "packed_logical_weight_stream_bytes_per_call": 1572864,
+              "floating_reference_logical_weight_stream_bytes_per_call": 8388608,
+              "logical_activation_operand_bytes_per_call": 8388608,
+              "logical_minimum_output_write_bytes_per_call": 4096,
+              "packed_minimum_logical_bytes_per_call": 9965568,
+              "floating_reference_minimum_logical_bytes_per_call": 16781312,
+              "scope": "Resident bytes count one weight representation, one feature-major input, and one row-major output. Minimum logical bytes count one weight stream per batch tile, every activation operand use, and one final output write; allocator metadata, cache-line amplification, cache hits/misses, prefetch, and intermediate accumulator traffic are excluded."
+            },
+            "correctness": {
+              "packed_checksum_blake3": "2d412fe5030ffa374539b028439999e7bfbe43f630f07bbf9a76265e69ef7870",
+              "floating_reference_checksum_blake3": "2d412fe5030ffa374539b028439999e7bfbe43f630f07bbf9a76265e69ef7870",
+              "maximum_absolute_error": 0.0,
+              "rmse": 0.0,
+              "checksum_match": true,
+              "passed": true
+            },
+            "packed_weight_stationary": {
+              "iterations": 15,
+              "minimum_seconds": 0.001360333,
+              "median_seconds": 0.00136575,
+              "logical_bytes_per_call": 9965568,
+              "best_logical_effective_bandwidth_gbps": 7.325829778443954,
+              "median_logical_effective_bandwidth_gbps": 7.296773201537617
+            },
+            "floating_qdq_weight_stationary_reference": {
+              "iterations": 15,
+              "minimum_seconds": 0.001275667,
+              "median_seconds": 0.001281792,
+              "logical_bytes_per_call": 16781312,
+              "best_logical_effective_bandwidth_gbps": 13.154931498580742,
+              "median_logical_effective_bandwidth_gbps": 13.092071100459359
+            },
+            "raw_speed_ratio_reference_over_packed": 0.9385260845689182,
+            "raw_time_ratio_packed_over_reference": 1.065500486818454,
+            "packed_faster": false
+          },
+          {
+            "batch_size": 4,
+            "batch_tile_size": 64,
+            "input_layout": "feature_major_k_by_batch_contiguous_batch_lane",
+            "output_layout": "row_major_output_row_by_batch_contiguous_batch_lane",
+            "input_checksum_blake3": "103a8d61b79b3a674ff8caa70bdbe664dcf23350c499be3a20fba69467a60c99",
+            "work": {
+              "output_elements": 4096,
+              "packed_multiply_accumulate_terms": 8388608,
+              "floating_reference_multiply_accumulate_terms": 8388608,
+              "nominal_arithmetic_operations_each": 16777216,
+              "exact_work_count_equal": true,
+              "accumulation_order_equal": true
+            },
+            "memory": {
+              "batch_tile_count": 1,
+              "source_bfloat16_weight_resident_bytes": 4194304,
+              "packed_code_resident_bytes": 1048576,
+              "packed_scale_resident_bytes": 524288,
+              "packed_weight_resident_bytes": 1572864,
+              "floating_qdq_weight_resident_bytes": 8388608,
+              "feature_major_input_resident_bytes": 32768,
+              "row_major_output_resident_bytes": 16384,
+              "packed_total_resident_bytes": 1622016,
+              "floating_reference_total_resident_bytes": 8437760,
+              "packed_logical_weight_stream_bytes_per_call": 1572864,
+              "floating_reference_logical_weight_stream_bytes_per_call": 8388608,
+              "logical_activation_operand_bytes_per_call": 33554432,
+              "logical_minimum_output_write_bytes_per_call": 16384,
+              "packed_minimum_logical_bytes_per_call": 35143680,
+              "floating_reference_minimum_logical_bytes_per_call": 41959424,
+              "scope": "Resident bytes count one weight representation, one feature-major input, and one row-major output. Minimum logical bytes count one weight stream per batch tile, every activation operand use, and one final output write; allocator metadata, cache-line amplification, cache hits/misses, prefetch, and intermediate accumulator traffic are excluded."
+            },
+            "correctness": {
+              "packed_checksum_blake3": "e13c00b25d47389d2a211349e4167139a2388acacb6904a749c91e8bf08635eb",
+              "floating_reference_checksum_blake3": "e13c00b25d47389d2a211349e4167139a2388acacb6904a749c91e8bf08635eb",
+              "maximum_absolute_error": 0.0,
+              "rmse": 0.0,
+              "checksum_match": true,
+              "passed": true
+            },
+            "packed_weight_stationary": {
+              "iterations": 15,
+              "minimum_seconds": 0.002469709,
+              "median_seconds": 0.002498333,
+              "logical_bytes_per_call": 35143680,
+              "best_logical_effective_bandwidth_gbps": 14.229887002881716,
+              "median_logical_effective_bandwidth_gbps": 14.066851776764747
+            },
+            "floating_qdq_weight_stationary_reference": {
+              "iterations": 15,
+              "minimum_seconds": 0.002434709,
+              "median_seconds": 0.002446167,
+              "logical_bytes_per_call": 41959424,
+              "best_logical_effective_bandwidth_gbps": 17.233855873535603,
+              "median_logical_effective_bandwidth_gbps": 17.15313140926192
+            },
+            "raw_speed_ratio_reference_over_packed": 0.979119677000624,
+            "raw_time_ratio_packed_over_reference": 1.0213256085949978,
+            "packed_faster": false
+          },
+          {
+            "batch_size": 16,
+            "batch_tile_size": 64,
+            "input_layout": "feature_major_k_by_batch_contiguous_batch_lane",
+            "output_layout": "row_major_output_row_by_batch_contiguous_batch_lane",
+            "input_checksum_blake3": "720d1259888518adcd18448574bbc013797c669c56b1ed275400b000192da1ae",
+            "work": {
+              "output_elements": 16384,
+              "packed_multiply_accumulate_terms": 33554432,
+              "floating_reference_multiply_accumulate_terms": 33554432,
+              "nominal_arithmetic_operations_each": 67108864,
+              "exact_work_count_equal": true,
+              "accumulation_order_equal": true
+            },
+            "memory": {
+              "batch_tile_count": 1,
+              "source_bfloat16_weight_resident_bytes": 4194304,
+              "packed_code_resident_bytes": 1048576,
+              "packed_scale_resident_bytes": 524288,
+              "packed_weight_resident_bytes": 1572864,
+              "floating_qdq_weight_resident_bytes": 8388608,
+              "feature_major_input_resident_bytes": 131072,
+              "row_major_output_resident_bytes": 65536,
+              "packed_total_resident_bytes": 1769472,
+              "floating_reference_total_resident_bytes": 8585216,
+              "packed_logical_weight_stream_bytes_per_call": 1572864,
+              "floating_reference_logical_weight_stream_bytes_per_call": 8388608,
+              "logical_activation_operand_bytes_per_call": 134217728,
+              "logical_minimum_output_write_bytes_per_call": 65536,
+              "packed_minimum_logical_bytes_per_call": 135856128,
+              "floating_reference_minimum_logical_bytes_per_call": 142671872,
+              "scope": "Resident bytes count one weight representation, one feature-major input, and one row-major output. Minimum logical bytes count one weight stream per batch tile, every activation operand use, and one final output write; allocator metadata, cache-line amplification, cache hits/misses, prefetch, and intermediate accumulator traffic are excluded."
+            },
+            "correctness": {
+              "packed_checksum_blake3": "d638fa877a97cf7c65bd9ae087cfc143851b559dc11f01b2977597846695e47d",
+              "floating_reference_checksum_blake3": "d638fa877a97cf7c65bd9ae087cfc143851b559dc11f01b2977597846695e47d",
+              "maximum_absolute_error": 0.0,
+              "rmse": 0.0,
+              "checksum_match": true,
+              "passed": true
+            },
+            "packed_weight_stationary": {
+              "iterations": 15,
+              "minimum_seconds": 0.006806791,
+              "median_seconds": 0.007041083,
+              "logical_bytes_per_call": 135856128,
+              "best_logical_effective_bandwidth_gbps": 19.958909859286113,
+              "median_logical_effective_bandwidth_gbps": 19.294777238103855
+            },
+            "floating_qdq_weight_stationary_reference": {
+              "iterations": 15,
+              "minimum_seconds": 0.006731958,
+              "median_seconds": 0.006850958,
+              "logical_bytes_per_call": 142671872,
+              "best_logical_effective_bandwidth_gbps": 21.19322075390251,
+              "median_logical_effective_bandwidth_gbps": 20.825098037383967
+            },
+            "raw_speed_ratio_reference_over_packed": 0.9729977618499881,
+            "raw_time_ratio_packed_over_reference": 1.027751593280823,
+            "packed_faster": false
+          },
+          {
+            "batch_size": 64,
+            "batch_tile_size": 64,
+            "input_layout": "feature_major_k_by_batch_contiguous_batch_lane",
+            "output_layout": "row_major_output_row_by_batch_contiguous_batch_lane",
+            "input_checksum_blake3": "cd7c443da427856846479a8fc5ef2aeba4a921546efe5121b5449cb1454f5612",
+            "work": {
+              "output_elements": 65536,
+              "packed_multiply_accumulate_terms": 134217728,
+              "floating_reference_multiply_accumulate_terms": 134217728,
+              "nominal_arithmetic_operations_each": 268435456,
+              "exact_work_count_equal": true,
+              "accumulation_order_equal": true
+            },
+            "memory": {
+              "batch_tile_count": 1,
+              "source_bfloat16_weight_resident_bytes": 4194304,
+              "packed_code_resident_bytes": 1048576,
+              "packed_scale_resident_bytes": 524288,
+              "packed_weight_resident_bytes": 1572864,
+              "floating_qdq_weight_resident_bytes": 8388608,
+              "feature_major_input_resident_bytes": 524288,
+              "row_major_output_resident_bytes": 262144,
+              "packed_total_resident_bytes": 2359296,
+              "floating_reference_total_resident_bytes": 9175040,
+              "packed_logical_weight_stream_bytes_per_call": 1572864,
+              "floating_reference_logical_weight_stream_bytes_per_call": 8388608,
+              "logical_activation_operand_bytes_per_call": 536870912,
+              "logical_minimum_output_write_bytes_per_call": 262144,
+              "packed_minimum_logical_bytes_per_call": 538705920,
+              "floating_reference_minimum_logical_bytes_per_call": 545521664,
+              "scope": "Resident bytes count one weight representation, one feature-major input, and one row-major output. Minimum logical bytes count one weight stream per batch tile, every activation operand use, and one final output write; allocator metadata, cache-line amplification, cache hits/misses, prefetch, and intermediate accumulator traffic are excluded."
+            },
+            "correctness": {
+              "packed_checksum_blake3": "db6dbec798058e40be0fd3328dd3c880533e28f44ea866bee80740cac23adf8d",
+              "floating_reference_checksum_blake3": "db6dbec798058e40be0fd3328dd3c880533e28f44ea866bee80740cac23adf8d",
+              "maximum_absolute_error": 0.0,
+              "rmse": 0.0,
+              "checksum_match": true,
+              "passed": true
+            },
+            "packed_weight_stationary": {
+              "iterations": 15,
+              "minimum_seconds": 0.009561542,
+              "median_seconds": 0.009768167,
+              "logical_bytes_per_call": 538705920,
+              "best_logical_effective_bandwidth_gbps": 56.34090400899772,
+              "median_logical_effective_bandwidth_gbps": 55.14913084512171
+            },
+            "floating_qdq_weight_stationary_reference": {
+              "iterations": 15,
+              "minimum_seconds": 0.00946825,
+              "median_seconds": 0.009556916,
+              "logical_bytes_per_call": 545521664,
+              "best_logical_effective_bandwidth_gbps": 57.61589142660999,
+              "median_logical_effective_bandwidth_gbps": 57.08134967389061
+            },
+            "raw_speed_ratio_reference_over_packed": 0.9783735269882262,
+            "raw_time_ratio_packed_over_reference": 1.0221045157245285,
+            "packed_faster": false
+          }
+        ]
+      },
+      {
+        "family": "mlp_gate",
+        "tensor_name": "model.layers.0.mlp.gate_proj.weight",
+        "rows": 3072,
+        "columns": 1024,
+        "parameter_count": 3145728,
+        "source_bytes_blake3": "8e9fffe22ba26c6f63da2e9c984ecd6f269a64034a04719340ec9d055c13fd0e",
+        "packed_checksum_blake3": "971892e72979dd8c52040554484c24fd422f1ec24c4b25edaff282b3a03e59d5",
+        "source_load_seconds": 0.002134625,
+        "pack_seconds": 0.003896083,
+        "storage": {
+          "source_bfloat16_bytes": 6291456,
+          "packed_code_bytes": 1572864,
+          "group_scale_bytes": 786432,
+          "total_packed_bytes": 2359296,
+          "scale_overhead_fraction_of_codes": 0.5,
+          "scale_fraction_of_packed_storage": 0.3333333333333333,
+          "packed_fraction_of_source_bfloat16": 0.375,
+          "logical_packed_weight_bytes_read_per_output": 768,
+          "logical_f32_qdq_weight_bytes_read_per_output": 4096,
+          "logical_input_bytes_if_read_once_per_matvec": 4096,
+          "logical_output_write_bytes_per_matvec": 12288
+        },
+        "dequantized_weight_correctness": {
+          "packed_checksum_blake3": "a5b63d3c365b8692c5e3d638744c199b36673300481f0f0abcfc63287d6d2118",
+          "floating_qdq_checksum_blake3": "a5b63d3c365b8692c5e3d638744c199b36673300481f0f0abcfc63287d6d2118",
+          "maximum_absolute_error": 0.0,
+          "rmse": 0.0,
+          "checksum_match": true,
+          "passed": true
+        },
+        "points": [
+          {
+            "batch_size": 1,
+            "batch_tile_size": 64,
+            "input_layout": "feature_major_k_by_batch_contiguous_batch_lane",
+            "output_layout": "row_major_output_row_by_batch_contiguous_batch_lane",
+            "input_checksum_blake3": "3e6be223e1a847b3c2597c173315105219dfe39806e8b1cf3c2561b74b061974",
+            "work": {
+              "output_elements": 3072,
+              "packed_multiply_accumulate_terms": 3145728,
+              "floating_reference_multiply_accumulate_terms": 3145728,
+              "nominal_arithmetic_operations_each": 6291456,
+              "exact_work_count_equal": true,
+              "accumulation_order_equal": true
+            },
+            "memory": {
+              "batch_tile_count": 1,
+              "source_bfloat16_weight_resident_bytes": 6291456,
+              "packed_code_resident_bytes": 1572864,
+              "packed_scale_resident_bytes": 786432,
+              "packed_weight_resident_bytes": 2359296,
+              "floating_qdq_weight_resident_bytes": 12582912,
+              "feature_major_input_resident_bytes": 4096,
+              "row_major_output_resident_bytes": 12288,
+              "packed_total_resident_bytes": 2375680,
+              "floating_reference_total_resident_bytes": 12599296,
+              "packed_logical_weight_stream_bytes_per_call": 2359296,
+              "floating_reference_logical_weight_stream_bytes_per_call": 12582912,
+              "logical_activation_operand_bytes_per_call": 12582912,
+              "logical_minimum_output_write_bytes_per_call": 12288,
+              "packed_minimum_logical_bytes_per_call": 14954496,
+              "floating_reference_minimum_logical_bytes_per_call": 25178112,
+              "scope": "Resident bytes count one weight representation, one feature-major input, and one row-major output. Minimum logical bytes count one weight stream per batch tile, every activation operand use, and one final output write; allocator metadata, cache-line amplification, cache hits/misses, prefetch, and intermediate accumulator traffic are excluded."
+            },
+            "correctness": {
+              "packed_checksum_blake3": "095408d52675ee20acb53763f35a4e388bbf725f9c6d6bbb554ae78b2a94e484",
+              "floating_reference_checksum_blake3": "095408d52675ee20acb53763f35a4e388bbf725f9c6d6bbb554ae78b2a94e484",
+              "maximum_absolute_error": 0.0,
+              "rmse": 0.0,
+              "checksum_match": true,
+              "passed": true
+            },
+            "packed_weight_stationary": {
+              "iterations": 15,
+              "minimum_seconds": 0.001996459,
+              "median_seconds": 0.002059125,
+              "logical_bytes_per_call": 14954496,
+              "best_logical_effective_bandwidth_gbps": 7.490509947862691,
+              "median_logical_effective_bandwidth_gbps": 7.262548898197049
+            },
+            "floating_qdq_weight_stationary_reference": {
+              "iterations": 15,
+              "minimum_seconds": 0.001859416,
+              "median_seconds": 0.001933875,
+              "logical_bytes_per_call": 25178112,
+              "best_logical_effective_bandwidth_gbps": 13.540870897098873,
+              "median_logical_effective_bandwidth_gbps": 13.019513670738801
+            },
+            "raw_speed_ratio_reference_over_packed": 0.9391731924968129,
+            "raw_time_ratio_packed_over_reference": 1.0647663370176461,
+            "packed_faster": false
+          },
+          {
+            "batch_size": 4,
+            "batch_tile_size": 64,
+            "input_layout": "feature_major_k_by_batch_contiguous_batch_lane",
+            "output_layout": "row_major_output_row_by_batch_contiguous_batch_lane",
+            "input_checksum_blake3": "05bf9dc8b68ae8725bb9446e2b6d324bc34affab426ebf823730a7daf1a01e28",
+            "work": {
+              "output_elements": 12288,
+              "packed_multiply_accumulate_terms": 12582912,
+              "floating_reference_multiply_accumulate_terms": 12582912,
+              "nominal_arithmetic_operations_each": 25165824,
+              "exact_work_count_equal": true,
+              "accumulation_order_equal": true
+            },
+            "memory": {
+              "batch_tile_count": 1,
+              "source_bfloat16_weight_resident_bytes": 6291456,
+              "packed_code_resident_bytes": 1572864,
+              "packed_scale_resident_bytes": 786432,
+              "packed_weight_resident_bytes": 2359296,
+              "floating_qdq_weight_resident_bytes": 12582912,
+              "feature_major_input_resident_bytes": 16384,
+              "row_major_output_resident_bytes": 49152,
+              "packed_total_resident_bytes": 2424832,
+              "floating_reference_total_resident_bytes": 12648448,
+              "packed_logical_weight_stream_bytes_per_call": 2359296,
+              "floating_reference_logical_weight_stream_bytes_per_call": 12582912,
+              "logical_activation_operand_bytes_per_call": 50331648,
+              "logical_minimum_output_write_bytes_per_call": 49152,
+              "packed_minimum_logical_bytes_per_call": 52740096,
+              "floating_reference_minimum_logical_bytes_per_call": 62963712,
+              "scope": "Resident bytes count one weight representation, one feature-major input, and one row-major output. Minimum logical bytes count one weight stream per batch tile, every activation operand use, and one final output write; allocator metadata, cache-line amplification, cache hits/misses, prefetch, and intermediate accumulator traffic are excluded."
+            },
+            "correctness": {
+              "packed_checksum_blake3": "1c547e11be3be78393749d75660f51d115b6169be25ea34baaabac11512b1799",
+              "floating_reference_checksum_blake3": "1c547e11be3be78393749d75660f51d115b6169be25ea34baaabac11512b1799",
+              "maximum_absolute_error": 0.0,
+              "rmse": 0.0,
+              "checksum_match": true,
+              "passed": true
+            },
+            "packed_weight_stationary": {
+              "iterations": 15,
+              "minimum_seconds": 0.003735292,
+              "median_seconds": 0.003746416,
+              "logical_bytes_per_call": 52740096,
+              "best_logical_effective_bandwidth_gbps": 14.119403784228918,
+              "median_logical_effective_bandwidth_gbps": 14.077479916805823
+            },
+            "floating_qdq_weight_stationary_reference": {
+              "iterations": 15,
+              "minimum_seconds": 0.003587208,
+              "median_seconds": 0.003682875,
+              "logical_bytes_per_call": 62963712,
+              "best_logical_effective_bandwidth_gbps": 17.55228913405635,
+              "median_logical_effective_bandwidth_gbps": 17.096347826086955
+            },
+            "raw_speed_ratio_reference_over_packed": 0.9830395236407276,
+            "raw_time_ratio_packed_over_reference": 1.0172530971048435,
+            "packed_faster": false
+          },
+          {
+            "batch_size": 16,
+            "batch_tile_size": 64,
+            "input_layout": "feature_major_k_by_batch_contiguous_batch_lane",
+            "output_layout": "row_major_output_row_by_batch_contiguous_batch_lane",
+            "input_checksum_blake3": "6de83a9a69034e725a5b132f61cc1884564cba937c317618d69904358bbf8ec5",
+            "work": {
+              "output_elements": 49152,
+              "packed_multiply_accumulate_terms": 50331648,
+              "floating_reference_multiply_accumulate_terms": 50331648,
+              "nominal_arithmetic_operations_each": 100663296,
+              "exact_work_count_equal": true,
+              "accumulation_order_equal": true
+            },
+            "memory": {
+              "batch_tile_count": 1,
+              "source_bfloat16_weight_resident_bytes": 6291456,
+              "packed_code_resident_bytes": 1572864,
+              "packed_scale_resident_bytes": 786432,
+              "packed_weight_resident_bytes": 2359296,
+              "floating_qdq_weight_resident_bytes": 12582912,
+              "feature_major_input_resident_bytes": 65536,
+              "row_major_output_resident_bytes": 196608,
+              "packed_total_resident_bytes": 2621440,
+              "floating_reference_total_resident_bytes": 12845056,
+              "packed_logical_weight_stream_bytes_per_call": 2359296,
+              "floating_reference_logical_weight_stream_bytes_per_call": 12582912,
+              "logical_activation_operand_bytes_per_call": 201326592,
+              "logical_minimum_output_write_bytes_per_call": 196608,
+              "packed_minimum_logical_bytes_per_call": 203882496,
+              "floating_reference_minimum_logical_bytes_per_call": 214106112,
+              "scope": "Resident bytes count one weight representation, one feature-major input, and one row-major output. Minimum logical bytes count one weight stream per batch tile, every activation operand use, and one final output write; allocator metadata, cache-line amplification, cache hits/misses, prefetch, and intermediate accumulator traffic are excluded."
+            },
+            "correctness": {
+              "packed_checksum_blake3": "069b67ad79401740df93159d0f4ba0ad4742ff8ecbe5641443b343bbb89bca2d",
+              "floating_reference_checksum_blake3": "069b67ad79401740df93159d0f4ba0ad4742ff8ecbe5641443b343bbb89bca2d",
+              "maximum_absolute_error": 0.0,
+              "rmse": 0.0,
+              "checksum_match": true,
+              "passed": true
+            },
+            "packed_weight_stationary": {
+              "iterations": 15,
+              "minimum_seconds": 0.009940167,
+              "median_seconds": 0.01039025,
+              "logical_bytes_per_call": 203882496,
+              "best_logical_effective_bandwidth_gbps": 20.510972904177567,
+              "median_logical_effective_bandwidth_gbps": 19.622482230937656
+            },
+            "floating_qdq_weight_stationary_reference": {
+              "iterations": 15,
+              "minimum_seconds": 0.009590167,
+              "median_seconds": 0.010035875,
+              "logical_bytes_per_call": 214106112,
+              "best_logical_effective_bandwidth_gbps": 22.32558744806008,
+              "median_logical_effective_bandwidth_gbps": 21.33407520520134
+            },
+            "raw_speed_ratio_reference_over_packed": 0.9658935059310411,
+            "raw_time_ratio_packed_over_reference": 1.035310822424552,
+            "packed_faster": false
+          },
+          {
+            "batch_size": 64,
+            "batch_tile_size": 64,
+            "input_layout": "feature_major_k_by_batch_contiguous_batch_lane",
+            "output_layout": "row_major_output_row_by_batch_contiguous_batch_lane",
+            "input_checksum_blake3": "31265c8ad34915352201a896dab0cf16a629ff867fa831ba4099fdb0593d9cec",
+            "work": {
+              "output_elements": 196608,
+              "packed_multiply_accumulate_terms": 201326592,
+              "floating_reference_multiply_accumulate_terms": 201326592,
+              "nominal_arithmetic_operations_each": 402653184,
+              "exact_work_count_equal": true,
+              "accumulation_order_equal": true
+            },
+            "memory": {
+              "batch_tile_count": 1,
+              "source_bfloat16_weight_resident_bytes": 6291456,
+              "packed_code_resident_bytes": 1572864,
+              "packed_scale_resident_bytes": 786432,
+              "packed_weight_resident_bytes": 2359296,
+              "floating_qdq_weight_resident_bytes": 12582912,
+              "feature_major_input_resident_bytes": 262144,
+              "row_major_output_resident_bytes": 786432,
+              "packed_total_resident_bytes": 3407872,
+              "floating_reference_total_resident_bytes": 13631488,
+              "packed_logical_weight_stream_bytes_per_call": 2359296,
+              "floating_reference_logical_weight_stream_bytes_per_call": 12582912,
+              "logical_activation_operand_bytes_per_call": 805306368,
+              "logical_minimum_output_write_bytes_per_call": 786432,
+              "packed_minimum_logical_bytes_per_call": 808452096,
+              "floating_reference_minimum_logical_bytes_per_call": 818675712,
+              "scope": "Resident bytes count one weight representation, one feature-major input, and one row-major output. Minimum logical bytes count one weight stream per batch tile, every activation operand use, and one final output write; allocator metadata, cache-line amplification, cache hits/misses, prefetch, and intermediate accumulator traffic are excluded."
+            },
+            "correctness": {
+              "packed_checksum_blake3": "8217d2056fc00ba833dc1f547186692f9bf7b785dead2ea092df4d9c8a48d195",
+              "floating_reference_checksum_blake3": "8217d2056fc00ba833dc1f547186692f9bf7b785dead2ea092df4d9c8a48d195",
+              "maximum_absolute_error": 0.0,
+              "rmse": 0.0,
+              "checksum_match": true,
+              "passed": true
+            },
+            "packed_weight_stationary": {
+              "iterations": 15,
+              "minimum_seconds": 0.014517042,
+              "median_seconds": 0.014768541,
+              "logical_bytes_per_call": 808452096,
+              "best_logical_effective_bandwidth_gbps": 55.689864092147694,
+              "median_logical_effective_bandwidth_gbps": 54.74150059914517
+            },
+            "floating_qdq_weight_stationary_reference": {
+              "iterations": 15,
+              "minimum_seconds": 0.014260584,
+              "median_seconds": 0.0144645,
+              "logical_bytes_per_call": 818675712,
+              "best_logical_effective_bandwidth_gbps": 57.408287907423706,
+              "median_logical_effective_bandwidth_gbps": 56.59896380794359
+            },
+            "raw_speed_ratio_reference_over_packed": 0.9794129291444564,
+            "raw_time_ratio_packed_over_reference": 1.0210198071139687,
+            "packed_faster": false
+          }
+        ]
+      },
+      {
+        "family": "mlp_up",
+        "tensor_name": "model.layers.0.mlp.up_proj.weight",
+        "rows": 3072,
+        "columns": 1024,
+        "parameter_count": 3145728,
+        "source_bytes_blake3": "bcb34ecc8344764a96f5b21fafbcfd06166708de42dc91e409b957953037b595",
+        "packed_checksum_blake3": "f645c72d8ace3238b9479177e27a88eded731d27a42a817602c2635601d3862c",
+        "source_load_seconds": 0.001660416,
+        "pack_seconds": 0.003949417,
+        "storage": {
+          "source_bfloat16_bytes": 6291456,
+          "packed_code_bytes": 1572864,
+          "group_scale_bytes": 786432,
+          "total_packed_bytes": 2359296,
+          "scale_overhead_fraction_of_codes": 0.5,
+          "scale_fraction_of_packed_storage": 0.3333333333333333,
+          "packed_fraction_of_source_bfloat16": 0.375,
+          "logical_packed_weight_bytes_read_per_output": 768,
+          "logical_f32_qdq_weight_bytes_read_per_output": 4096,
+          "logical_input_bytes_if_read_once_per_matvec": 4096,
+          "logical_output_write_bytes_per_matvec": 12288
+        },
+        "dequantized_weight_correctness": {
+          "packed_checksum_blake3": "ecf4af7869b4599c0fecb5c3d3642b75cdd8a83b490e5594436599d37cfcf1a2",
+          "floating_qdq_checksum_blake3": "ecf4af7869b4599c0fecb5c3d3642b75cdd8a83b490e5594436599d37cfcf1a2",
+          "maximum_absolute_error": 0.0,
+          "rmse": 0.0,
+          "checksum_match": true,
+          "passed": true
+        },
+        "points": [
+          {
+            "batch_size": 1,
+            "batch_tile_size": 64,
+            "input_layout": "feature_major_k_by_batch_contiguous_batch_lane",
+            "output_layout": "row_major_output_row_by_batch_contiguous_batch_lane",
+            "input_checksum_blake3": "87cb92a28982045a10640cb1ee459805ef41c93d211d05a3572331662b24ca1f",
+            "work": {
+              "output_elements": 3072,
+              "packed_multiply_accumulate_terms": 3145728,
+              "floating_reference_multiply_accumulate_terms": 3145728,
+              "nominal_arithmetic_operations_each": 6291456,
+              "exact_work_count_equal": true,
+              "accumulation_order_equal": true
+            },
+            "memory": {
+              "batch_tile_count": 1,
+              "source_bfloat16_weight_resident_bytes": 6291456,
+              "packed_code_resident_bytes": 1572864,
+              "packed_scale_resident_bytes": 786432,
+              "packed_weight_resident_bytes": 2359296,
+              "floating_qdq_weight_resident_bytes": 12582912,
+              "feature_major_input_resident_bytes": 4096,
+              "row_major_output_resident_bytes": 12288,
+              "packed_total_resident_bytes": 2375680,
+              "floating_reference_total_resident_bytes": 12599296,
+              "packed_logical_weight_stream_bytes_per_call": 2359296,
+              "floating_reference_logical_weight_stream_bytes_per_call": 12582912,
+              "logical_activation_operand_bytes_per_call": 12582912,
+              "logical_minimum_output_write_bytes_per_call": 12288,
+              "packed_minimum_logical_bytes_per_call": 14954496,
+              "floating_reference_minimum_logical_bytes_per_call": 25178112,
+              "scope": "Resident bytes count one weight representation, one feature-major input, and one row-major output. Minimum logical bytes count one weight stream per batch tile, every activation operand use, and one final output write; allocator metadata, cache-line amplification, cache hits/misses, prefetch, and intermediate accumulator traffic are excluded."
+            },
+            "correctness": {
+              "packed_checksum_blake3": "bbf3a692e29fd177819ea5813f7b50a090048f69d8eb679338477b2a36b9ba17",
+              "floating_reference_checksum_blake3": "bbf3a692e29fd177819ea5813f7b50a090048f69d8eb679338477b2a36b9ba17",
+              "maximum_absolute_error": 0.0,
+              "rmse": 0.0,
+              "checksum_match": true,
+              "passed": true
+            },
+            "packed_weight_stationary": {
+              "iterations": 15,
+              "minimum_seconds": 0.001932,
+              "median_seconds": 0.002059042,
+              "logical_bytes_per_call": 14954496,
+              "best_logical_effective_bandwidth_gbps": 7.740422360248448,
+              "median_logical_effective_bandwidth_gbps": 7.2628416516030265
+            },
+            "floating_qdq_weight_stationary_reference": {
+              "iterations": 15,
+              "minimum_seconds": 0.001747209,
+              "median_seconds": 0.001928833,
+              "logical_bytes_per_call": 25178112,
+              "best_logical_effective_bandwidth_gbps": 14.410475220766376,
+              "median_logical_effective_bandwidth_gbps": 13.053546885603886
+            },
+            "raw_speed_ratio_reference_over_packed": 0.9367623389906568,
+            "raw_time_ratio_packed_over_reference": 1.0675066218796547,
+            "packed_faster": false
+          },
+          {
+            "batch_size": 4,
+            "batch_tile_size": 64,
+            "input_layout": "feature_major_k_by_batch_contiguous_batch_lane",
+            "output_layout": "row_major_output_row_by_batch_contiguous_batch_lane",
+            "input_checksum_blake3": "2564aea911648ce010b9e52f2ae2bf8a44e2bc68a1edc2f9fc51d441d28c9283",
+            "work": {
+              "output_elements": 12288,
+              "packed_multiply_accumulate_terms": 12582912,
+              "floating_reference_multiply_accumulate_terms": 12582912,
+              "nominal_arithmetic_operations_each": 25165824,
+              "exact_work_count_equal": true,
+              "accumulation_order_equal": true
+            },
+            "memory": {
+              "batch_tile_count": 1,
+              "source_bfloat16_weight_resident_bytes": 6291456,
+              "packed_code_resident_bytes": 1572864,
+              "packed_scale_resident_bytes": 786432,
+              "packed_weight_resident_bytes": 2359296,
+              "floating_qdq_weight_resident_bytes": 12582912,
+              "feature_major_input_resident_bytes": 16384,
+              "row_major_output_resident_bytes": 49152,
+              "packed_total_resident_bytes": 2424832,
+              "floating_reference_total_resident_bytes": 12648448,
+              "packed_logical_weight_stream_bytes_per_call": 2359296,
+              "floating_reference_logical_weight_stream_bytes_per_call": 12582912,
+              "logical_activation_operand_bytes_per_call": 50331648,
+              "logical_minimum_output_write_bytes_per_call": 49152,
+              "packed_minimum_logical_bytes_per_call": 52740096,
+              "floating_reference_minimum_logical_bytes_per_call": 62963712,
+              "scope": "Resident bytes count one weight representation, one feature-major input, and one row-major output. Minimum logical bytes count one weight stream per batch tile, every activation operand use, and one final output write; allocator metadata, cache-line amplification, cache hits/misses, prefetch, and intermediate accumulator traffic are excluded."
+            },
+            "correctness": {
+              "packed_checksum_blake3": "84f3617e6344ca927c10062dd644b6d8b211db1b29fb27ebffc931c79ca7a17b",
+              "floating_reference_checksum_blake3": "84f3617e6344ca927c10062dd644b6d8b211db1b29fb27ebffc931c79ca7a17b",
+              "maximum_absolute_error": 0.0,
+              "rmse": 0.0,
+              "checksum_match": true,
+              "passed": true
+            },
+            "packed_weight_stationary": {
+              "iterations": 15,
+              "minimum_seconds": 0.003600417,
+              "median_seconds": 0.003753792,
+              "logical_bytes_per_call": 52740096,
+              "best_logical_effective_bandwidth_gbps": 14.648329901786378,
+              "median_logical_effective_bandwidth_gbps": 14.049818423610045
+            },
+            "floating_qdq_weight_stationary_reference": {
+              "iterations": 15,
+              "minimum_seconds": 0.003396542,
+              "median_seconds": 0.0036995,
+              "logical_bytes_per_call": 62963712,
+              "best_logical_effective_bandwidth_gbps": 18.537592645696712,
+              "median_logical_effective_bandwidth_gbps": 17.01951939451277
+            },
+            "raw_speed_ratio_reference_over_packed": 0.9855367585630743,
+            "raw_time_ratio_packed_over_reference": 1.0146754966887417,
+            "packed_faster": false
+          },
+          {
+            "batch_size": 16,
+            "batch_tile_size": 64,
+            "input_layout": "feature_major_k_by_batch_contiguous_batch_lane",
+            "output_layout": "row_major_output_row_by_batch_contiguous_batch_lane",
+            "input_checksum_blake3": "707b455560c33b3f08a03e09be47b2e4a5d09b54fb5c69862362d1fea9348a98",
+            "work": {
+              "output_elements": 49152,
+              "packed_multiply_accumulate_terms": 50331648,
+              "floating_reference_multiply_accumulate_terms": 50331648,
+              "nominal_arithmetic_operations_each": 100663296,
+              "exact_work_count_equal": true,
+              "accumulation_order_equal": true
+            },
+            "memory": {
+              "batch_tile_count": 1,
+              "source_bfloat16_weight_resident_bytes": 6291456,
+              "packed_code_resident_bytes": 1572864,
+              "packed_scale_resident_bytes": 786432,
+              "packed_weight_resident_bytes": 2359296,
+              "floating_qdq_weight_resident_bytes": 12582912,
+              "feature_major_input_resident_bytes": 65536,
+              "row_major_output_resident_bytes": 196608,
+              "packed_total_resident_bytes": 2621440,
+              "floating_reference_total_resident_bytes": 12845056,
+              "packed_logical_weight_stream_bytes_per_call": 2359296,
+              "floating_reference_logical_weight_stream_bytes_per_call": 12582912,
+              "logical_activation_operand_bytes_per_call": 201326592,
+              "logical_minimum_output_write_bytes_per_call": 196608,
+              "packed_minimum_logical_bytes_per_call": 203882496,
+              "floating_reference_minimum_logical_bytes_per_call": 214106112,
+              "scope": "Resident bytes count one weight representation, one feature-major input, and one row-major output. Minimum logical bytes count one weight stream per batch tile, every activation operand use, and one final output write; allocator metadata, cache-line amplification, cache hits/misses, prefetch, and intermediate accumulator traffic are excluded."
+            },
+            "correctness": {
+              "packed_checksum_blake3": "be466e5b87fa09e09c1cc4af3ecf91548ad657147c3377b9f6f579b882baed0a",
+              "floating_reference_checksum_blake3": "be466e5b87fa09e09c1cc4af3ecf91548ad657147c3377b9f6f579b882baed0a",
+              "maximum_absolute_error": 0.0,
+              "rmse": 0.0,
+              "checksum_match": true,
+              "passed": true
+            },
+            "packed_weight_stationary": {
+              "iterations": 15,
+              "minimum_seconds": 0.010096291,
+              "median_seconds": 0.010421625,
+              "logical_bytes_per_call": 203882496,
+              "best_logical_effective_bandwidth_gbps": 20.193801466300844,
+              "median_logical_effective_bandwidth_gbps": 19.563407434061386
+            },
+            "floating_qdq_weight_stationary_reference": {
+              "iterations": 15,
+              "minimum_seconds": 0.00992375,
+              "median_seconds": 0.010142875,
+              "logical_bytes_per_call": 214106112,
+              "best_logical_effective_bandwidth_gbps": 21.575121501448542,
+              "median_logical_effective_bandwidth_gbps": 21.109016132013853
+            },
+            "raw_speed_ratio_reference_over_packed": 0.9732527316997109,
+            "raw_time_ratio_packed_over_reference": 1.0274823459817852,
+            "packed_faster": false
+          },
+          {
+            "batch_size": 64,
+            "batch_tile_size": 64,
+            "input_layout": "feature_major_k_by_batch_contiguous_batch_lane",
+            "output_layout": "row_major_output_row_by_batch_contiguous_batch_lane",
+            "input_checksum_blake3": "d6a79e07c70131cf7b0daeefdcf4374f8098a901c3e40bae724a6b692984b418",
+            "work": {
+              "output_elements": 196608,
+              "packed_multiply_accumulate_terms": 201326592,
+              "floating_reference_multiply_accumulate_terms": 201326592,
+              "nominal_arithmetic_operations_each": 402653184,
+              "exact_work_count_equal": true,
+              "accumulation_order_equal": true
+            },
+            "memory": {
+              "batch_tile_count": 1,
+              "source_bfloat16_weight_resident_bytes": 6291456,
+              "packed_code_resident_bytes": 1572864,
+              "packed_scale_resident_bytes": 786432,
+              "packed_weight_resident_bytes": 2359296,
+              "floating_qdq_weight_resident_bytes": 12582912,
+              "feature_major_input_resident_bytes": 262144,
+              "row_major_output_resident_bytes": 786432,
+              "packed_total_resident_bytes": 3407872,
+              "floating_reference_total_resident_bytes": 13631488,
+              "packed_logical_weight_stream_bytes_per_call": 2359296,
+              "floating_reference_logical_weight_stream_bytes_per_call": 12582912,
+              "logical_activation_operand_bytes_per_call": 805306368,
+              "logical_minimum_output_write_bytes_per_call": 786432,
+              "packed_minimum_logical_bytes_per_call": 808452096,
+              "floating_reference_minimum_logical_bytes_per_call": 818675712,
+              "scope": "Resident bytes count one weight representation, one feature-major input, and one row-major output. Minimum logical bytes count one weight stream per batch tile, every activation operand use, and one final output write; allocator metadata, cache-line amplification, cache hits/misses, prefetch, and intermediate accumulator traffic are excluded."
+            },
+            "correctness": {
+              "packed_checksum_blake3": "1ea8ca2510f344ecb4cd83d50c8cd272123159c60e824c62397f103f7910af8c",
+              "floating_reference_checksum_blake3": "1ea8ca2510f344ecb4cd83d50c8cd272123159c60e824c62397f103f7910af8c",
+              "maximum_absolute_error": 0.0,
+              "rmse": 0.0,
+              "checksum_match": true,
+              "passed": true
+            },
+            "packed_weight_stationary": {
+              "iterations": 15,
+              "minimum_seconds": 0.014485708,
+              "median_seconds": 0.01476575,
+              "logical_bytes_per_call": 808452096,
+              "best_logical_effective_bandwidth_gbps": 55.810326702705865,
+              "median_logical_effective_bandwidth_gbps": 54.751847755786194
+            },
+            "floating_qdq_weight_stationary_reference": {
+              "iterations": 15,
+              "minimum_seconds": 0.014436792,
+              "median_seconds": 0.01449375,
+              "logical_bytes_per_call": 818675712,
+              "best_logical_effective_bandwidth_gbps": 56.707592102178936,
+              "median_logical_effective_bandwidth_gbps": 56.484740802069865
+            },
+            "raw_speed_ratio_reference_over_packed": 0.9815789919238779,
+            "raw_time_ratio_packed_over_reference": 1.018766709788702,
+            "packed_faster": false
+          }
+        ]
+      }
+    ],
+    "aggregate_points": [
+      {
+        "batch_size": 1,
+        "tensor_count": 3,
+        "multiply_accumulate_terms": 8388608,
+        "summed_packed_median_seconds": 0.005483917,
+        "summed_floating_reference_median_seconds": 0.0051445,
+        "raw_speed_ratio_reference_over_packed": 0.9381068313032455,
+        "raw_time_ratio_packed_over_reference": 1.0659766741179901,
+        "packed_faster": false,
+        "all_work_counts_equal": true,
+        "all_correctness_checks_passed": true
+      },
+      {
+        "batch_size": 4,
+        "tensor_count": 3,
+        "multiply_accumulate_terms": 33554432,
+        "summed_packed_median_seconds": 0.009998541,
+        "summed_floating_reference_median_seconds": 0.009828542,
+        "raw_speed_ratio_reference_over_packed": 0.9829976193526635,
+        "raw_time_ratio_packed_over_reference": 1.0172964616725453,
+        "packed_faster": false,
+        "all_work_counts_equal": true,
+        "all_correctness_checks_passed": true
+      },
+      {
+        "batch_size": 16,
+        "tensor_count": 3,
+        "multiply_accumulate_terms": 134217728,
+        "summed_packed_median_seconds": 0.027852958,
+        "summed_floating_reference_median_seconds": 0.027029708,
+        "raw_speed_ratio_reference_over_packed": 0.9704429956775147,
+        "raw_time_ratio_packed_over_reference": 1.0304572287647356,
+        "packed_faster": false,
+        "all_work_counts_equal": true,
+        "all_correctness_checks_passed": true
+      },
+      {
+        "batch_size": 64,
+        "tensor_count": 3,
+        "multiply_accumulate_terms": 536870912,
+        "summed_packed_median_seconds": 0.039302458,
+        "summed_floating_reference_median_seconds": 0.038515166,
+        "raw_speed_ratio_reference_over_packed": 0.9799683775503304,
+        "raw_time_ratio_packed_over_reference": 1.0204410906602348,
+        "packed_faster": false,
+        "all_work_counts_equal": true,
+        "all_correctness_checks_passed": true
+      }
+    ],
+    "batch_one_scalar_reconciliation": {
+      "scalar_smoke_report_path": "experiments/qwen3-0.6b/int4-packed-kernel-smoke-v1.json",
+      "scalar_smoke_report_blake3": "ca8c2f171c71757d76a2951b1527c8e7c5d58cd658bde75d49f4366c4601778f",
+      "scalar_smoke_report_content_id": "06c3789ef245d9275f0adf76b592ed6c2f812864bd95dcf80f5b669fe21d723c",
+      "scalar_reference_over_packed_speed_ratio": 0.7310878815038444,
+      "frontier_batch_one_reference_over_packed_speed_ratio": 0.9381068313032455,
+      "both_observe_packed_slower": true,
+      "direction_consistent": true,
+      "same_host_cpu": true,
+      "same_release_profile": true,
+      "boundary_difference": "The scalar smoke uses a specialized row-dot-product f32 control and a scalar packed group loop. The batch frontier uses the same generalized row→tile→group→nibble-pair→lane structure for packed and f32 controls, with B=1 represented as one lane. The timings are separate runs and their ratio magnitudes are not directly interchangeable.",
+      "conclusion": "The final matched B=1 frontier and the original scalar smoke agree in direction: packed decode is slower. The frontier narrows the loss because both sides share the generalized group/pair/tile control structure; this is not a compression win or a work-count mismatch."
+    },
+    "crossover": {
+      "observed_packed_win_batches": [],
+      "first_observed_packed_win_batch": null,
+      "strict_no_crossover_in_sweep": true,
+      "tested_batch_sizes": [
+        1,
+        4,
+        16,
+        64
+      ]
+    },
+    "claims": {
+      "local_batch_correctness_permitted": true,
+      "local_batch_timing_observation_permitted": true,
+      "tuned_kernel_claim_permitted": false,
+      "explicit_simd_claim_permitted": false,
+      "blas_or_vllm_comparison_permitted": false,
+      "gpu_claim_permitted": false,
+      "quality_equivalence_claim_permitted": false,
+      "serving_claim_permitted": false,
+      "energy_claim_permitted": false,
+      "cost_per_token_claim_permitted": false,
+      "production_claim_permitted": false
+    },
+    "limitations": [
+      "Feature-major activation arrangement is a kernel input contract and its creation cost is excluded from the timings.",
+      "The Rust compiler may transform ordinary loops, but generated assembly and hardware counters were not inspected; no SIMD or tuned-kernel claim is permitted.",
+      "The f32 QDQ reference is a matched one-thread Rust control, not a tuned BF16 BLAS, llama.cpp, vLLM, GPU, or provider baseline.",
+      "Logical byte counts are declared operand-accounting minima, not measured cache or DRAM transactions. Output accumulator traffic beyond one final write is excluded.",
+      "Timing is a release-build local host observation under uncontrolled load. Minimum and median samples are retained without a statistical confidence interval.",
+      "Only one exact layer-zero tensor from each quality-selected family is measured. Full-model fusion, retained BF16 tensors, scheduling, and serving are absent.",
+      "The packed BF16-scale representation differs from the prior BF16 QDQ quality experiment, so exact local kernel correctness does not transfer its quality verdict."
+    ]
+  }
+}

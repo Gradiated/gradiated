@@ -20,7 +20,7 @@ The guard above assumes secret-manager injection; it is not a command to paste a
 
 Fine-grained tokens cannot currently manage Projects owned by a personal account. Prefer an organization-owned Project if agents need to update the board with a fine-grained token. Otherwise use a separately scoped classic token only for Project operations, or treat the board as a human-managed view.
 
-When separate credentials are needed, keep the repository token in `GH_TOKEN` and the Project-only credential in `GH_PROJECT_TOKEN`. `tools/github/agent.py` automatically uses `GH_PROJECT_TOKEN` for Project commands while retaining `GH_TOKEN` for repository Issues and pull requests. This keeps the broader Project credential out of ordinary code operations.
+When separate credentials are needed, keep the repository token in `GH_TOKEN` and the Project-only credential in `GH_PROJECT_TOKEN`. `tools/github/agent.py` automatically uses `GH_PROJECT_TOKEN` for Project commands while retaining `GH_TOKEN` for repository Issues and the occasional explicitly requested pull request. This keeps the broader Project credential out of ordinary code operations.
 
 Create one private Project for the startup, normally named `Startup OS`. Personal-account Project creation currently requires a classic token with the `project` scope; fine-grained tokens cannot manage personal-account Projects. If the Project belongs to an organization, use the organization owner and grant the token organization Projects write access:
 
@@ -39,10 +39,10 @@ Keep the built-in `Status` field with these values: `Backlog`, `Ready`, `In Prog
 1. Create or find one issue for the work. Use the feature, bug, or research template.
 2. Set `Lane` and `Priority`, add the issue to `Startup OS`, and set `Status` to `Ready`.
 3. Assign the issue to the agent or human owner. An agent must claim an issue before changing code or starting spend-bearing research.
-4. Move to `In Progress`, add a branch or task packet link when needed, and work inside the declared scope.
-5. Open a PR linked to the issue. Put tests, evidence, risks, and rollback information in the PR body.
-6. Move the Project item to `Review`. A reviewer agent checks the diff and the issue contract.
-7. Merge or push the authorized change, then move the issue to `Done` only after CI and artifact handoff pass.
+4. Move to `In Progress`, link the task packet when one is needed, and work on `main` inside the declared scope.
+5. Run the acceptance checks and have a reviewer agent inspect the owned diff and issue contract when the risk warrants it.
+6. Commit only the owned files and push directly to `main`.
+7. Move the issue to `Done` only after the push, required CI, and artifact handoff pass.
 
 Use `Blocked` for missing access, failed quality gates, unavailable hardware, or a user decision. Record the exact blocker and the next unblock action in the issue.
 
@@ -60,13 +60,13 @@ python3 tools/github/agent.py project-items --project PROJECT_NUMBER --owner @me
 python3 tools/github/agent.py project-set-status --project PROJECT_NUMBER --owner @me \
   --issue ISSUE_NUMBER --status "Blocked"
 
-# Pull requests
-python3 tools/github/agent.py pr-create --title "..." --body-file tasks/pr-body.md --issue ISSUE_NUMBER
-gh pr checks --watch
-gh pr view --web
+# Publish the owned commit
+git status --short --branch
+git diff --check
+git push origin main
 ```
 
-Use `gh issue develop ISSUE_NUMBER --name agent/ISSUE_NUMBER-short-name` when a linked branch is useful. Do not check out or mutate another agent's branch.
+Do not create an agent branch or pull request unless the user explicitly asks for that workflow. When a PR is explicitly requested, use `gh issue develop ISSUE_NUMBER --name agent/ISSUE_NUMBER-short-name` and do not check out or mutate another agent's branch.
 
 ## Rules for autonomous agents
 
@@ -75,4 +75,7 @@ Use `gh issue develop ISSUE_NUMBER --name agent/ISSUE_NUMBER-short-name` when a 
 - Never put credentials, cookies, customer data, or private tokens in an issue, PR, Project field, or comment.
 - Put durable conclusions and evidence in the repository, then link the path from the issue.
 - Keep Project status synchronized after every meaningful state transition.
-- Use direct pushes to `main` only for owned changes when authorized; use PRs for substantial or reviewer-sensitive work.
+- Commit and push completed owned changes directly to `main`; this is the default publishing path and does not require a second user prompt.
+- Never stage unrelated worktree changes. If another agent owns overlapping paths, split or wait rather than publishing their work.
+- Use a branch or pull request only when the user explicitly requests it. Review-sensitive work can receive a local or agent review before the direct push.
+- Protected CI environments and human approvals remain mandatory for production applies, destructive infrastructure actions, purchases, and other externally consequential operations even though the repository commit lands directly on `main`.

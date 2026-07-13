@@ -38,4 +38,4 @@ Every change must have deterministic examples and property-based tests where inv
 - Keep architecture decisions, schemas, migrations, test fixtures, runbooks, and generated files in this directory; external tools are not the source of truth.
 - Prefer small domain packages with explicit dependency direction over framework-owned business logic.
 - A failed provider or missing optional secret is a test result, not permission to weaken billing or admission behavior.
-- Before handoff run `python3 tools/devex/check.py`, document narrow checks, update `HANDOFF.md`, and release the packet. Do not commit or push unless explicitly authorized.
+- Before handoff run `python3 tools/devex/check.py`, document narrow checks, update `HANDOFF.md`, and release the packet. Commit only owned paths and push completed work directly to `main`; create a branch or pull request only when the user explicitly asks for one.

@@ -53,4 +53,4 @@ GitHub workflow instructions and the CLI helper live in `docs/GITHUB_OPERATING_S
 
 Run `python3 tools/devex/check.py` first (`make devex-check` is an optional shorthand), then the narrowest relevant checks and workstream checks. GitHub Actions runs the same DevEx checks plus Rust formatting and tests for both workspaces after pushes. For Sol changes, the required Rust checks are documented in `research/sol/AGENTS.md`. For Fable changes, preserve the parity and calibration rules in `research/fable/CLAUDE.md`.
 
-Agents may commit and push changes they own directly to `main` when the user has authorized it. Never stage or publish unrelated worktree changes, and always summarize the exact paths included.
+Agents commit and push completed changes they own directly to `main` as the default handoff. Do not create a feature branch or pull request unless the user explicitly requests one. Never stage or publish unrelated worktree changes, and always summarize the exact paths included.

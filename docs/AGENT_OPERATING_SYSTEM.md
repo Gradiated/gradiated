@@ -21,7 +21,7 @@ Run `python3 tools/devex/context.py` before inspecting or changing a workstream.
 - Give each agent a narrow acceptance contract and a verification command.
 - Do not let two agents edit the same task packet, ledger, generated report, or lockfile concurrently.
 - Prefer separate per-run evidence files and append-only ledgers. One designated owner may consolidate them into a report after the runs finish.
-- Have a reviewer agent inspect the diff and evidence after implementation, before the owner pushes.
+- Have a reviewer agent inspect the diff and evidence after implementation when the risk warrants it, before the owner pushes directly to `main`.
 - Push only the owned files; the worktree may contain unrelated research in progress.
 
 ## Autonomous loop
@@ -34,7 +34,7 @@ Run `python3 tools/devex/context.py` before inspecting or changing a workstream.
 6. Run tests, smoke checks, or evidence validation.
 7. Update the task packet and durable docs.
 8. Ask for a human decision only for credentials, irreversible external actions, spending, legal/compliance claims, or a failed quality gate.
-9. Commit and push the owned change to `main` when authorized.
+9. Commit and push the owned change directly to `main`. Do not wait for a second authorization or open a pull request unless the user explicitly requested one.
 
 When blocked, keep the packet in `tasks/active/`, set the GitHub issue to `Blocked`, record the exact blocker and unblock condition, and leave any partial artifacts with a clear failure classification. Do not silently retry a blocked or falsifying experiment as a successful run.
 

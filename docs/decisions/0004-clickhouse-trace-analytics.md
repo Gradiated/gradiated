@@ -14,7 +14,7 @@ Keep the authority split:
 - PostgreSQL owns authorization, financial facts, trace registry/tombstones, retention/key state, recommendations/experiments, audit, and projection checkpoints.
 - Private KMS S3 owns compressed encrypted raw request/response/tool payloads.
 - ClickHouse stores only typed, allowlisted metadata, copied usage/latency/cost facts, derived workload/evaluation features, and aggregates. It stores no raw prompts, responses, tool arguments/results, files, credentials, arbitrary headers, or free-form tags.
-- Valkey remains the gateway's only internal dependency and transports financial events plus a separate bounded encrypted payload stream. ClickHouse is never on the serving path.
+- Valkey remains the gateway's only synchronous internal state/control dependency and transports financial events plus a separate bounded encrypted payload stream. ClickHouse is never on the serving path.
 
 Hono is the only customer query surface. It authorizes in PostgreSQL and issues typed, parameterized, organization/workspace/time-bounded ClickHouse queries; browsers receive no database credentials or SQL capability. Payload detail is separately authorized and streamed from S3 by trace-access.
 

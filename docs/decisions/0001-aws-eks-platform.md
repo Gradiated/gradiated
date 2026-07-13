@@ -9,9 +9,9 @@
 
 Host the seed product on account-isolated AWS environments. Run long-lived Rust gateway, Hono control API, workers, and platform controllers on private Amazon EKS. Serve the Vite application from private S3 through CloudFront. Use Aurora PostgreSQL Serverless v2 as the authoritative organization ledger/configuration database.
 
-The gateway's only internal dependency is a production Valkey tier. Start with node-based ElastiCache for Valkey 9 configured for synchronous durability, Multi-AZ, TLS, ACLs, and no eviction, but permit production only after scope-matched atomic command, failover, data-loss, memory-pressure, and latency tests pass. ElastiCache Serverless may be used for disposable environments; single-region MemoryDB is the fallback candidate if qualification fails.
+The gateway's only synchronous internal state/control dependency is a production Valkey tier; model APIs and the AWS inference edge are upstream serving dependencies. Start with node-based ElastiCache for Valkey 9 configured for synchronous durability, Multi-AZ, TLS, ACLs, and no eviction, but permit production only after scope-matched atomic command, failover, data-loss, memory-pressure, and latency tests pass. ElastiCache Serverless may be used for disposable environments; single-region MemoryDB is the fallback candidate if qualification fails.
 
-Define AWS resources with Terraform modules and Terragrunt implicit stacks. Store versioned/KMS state in S3 with Terraform native lock files. Argo CD pulls pinned Helm releases into EKS. KEDA scales pods and Karpenter provisions bounded node pools. GitHub Actions authenticates through OIDC and applies development automatically after merge checks; staging/production are protected promotions.
+Define AWS resources with Terraform modules and Terragrunt implicit stacks. Store versioned/KMS state in S3 with Terraform native lock files. Argo CD pulls pinned Helm releases into EKS. KEDA scales pods and Karpenter provisions bounded node pools. GitHub Actions authenticates through OIDC and applies development automatically after direct-to-main checks; staging/production are protected promotions.
 
 Locally, Docker Compose provides dependencies, mprocs/dekit runs source processes, and a Rust `grad` CLI exposes reproducible workflows.
 

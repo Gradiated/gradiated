@@ -135,7 +135,7 @@ The application shell has API status, docs and user menu. Organization/workspace
 - Usage: workload and trace timeline with provider/model or Grad release, payload according to data mode, units, cost, cache, latency, errors and evidence-backed Migration cards.
 - Billing: top up, low-credit warning, history and receipts.
 
-Settings contains organization/team/workspaces, monthly budget, Data mode (`Product Intelligence` default or `Private / No Retention`), retention/export/delete, model access, advanced limits and destructive actions. Provider names are explicit model identities in the direct lane, while provider endpoints/weights remain operator machinery.
+Settings contains organization/team/workspaces, monthly budget, Data mode (`Product Intelligence` default or `Private / No Retention`), retention/export/delete, model access, advanced limits and destructive actions. Model-provider names are explicit identities in the direct lane, while direct endpoint weights and Grad capacity-provider/cell placement remain operator machinery.
 
 Use optimistic UI only for reversible non-financial changes. Balance, top-up, key creation, and status use server-confirmed state. Accessibility, keyboard flow, narrow-screen behavior, loading/empty/error states, and destructive confirmation are part of acceptance.
 

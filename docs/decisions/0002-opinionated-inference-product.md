@@ -19,7 +19,7 @@ The seed console has five primary screens: Overview, API keys, Models, Usage, an
 
 OpenRouter's current public documentation describes a broad marketplace and programmable substrate: many protocols and modalities, provider/model routing variants, workspaces/budgets, BYOK, privacy/logging controls, plugins, hosted tools, agent SDKs, caching, observability exports, and provider onboarding. Breadth is useful, but presenting that machinery directly conflicts with the desired “Apple-like” experience: a fast, predictable path to reliable frontier and open-model inference and our differentiated supply.
 
-The existing architecture also requires prepaid organization credit, hard workspace/key limits, PostgreSQL financial authority, a Redis-only gateway dependency, fixed/reproducible charges, TS/Rust generated contracts, and property-based verification. Managed routing must preserve those invariants and cannot make cost or privacy depend on an opaque provider choice.
+The existing architecture also requires prepaid organization credit, hard workspace/key limits, PostgreSQL financial authority, Redis as the gateway's only synchronous internal state/control dependency, fixed/reproducible charges, TS/Rust generated contracts, and property-based verification. Managed routing must preserve those invariants and cannot make cost or privacy depend on an opaque model-provider choice.
 
 ## Alternatives considered
 
@@ -35,7 +35,7 @@ The existing architecture also requires prepaid organization credit, hard worksp
 - positive: the gateway still retains the hard engineering needed for production—capability filtering, health routing, retries, caching awareness, metering, billing, privacy and failure credits—without exposing it as setup.
 - negative: fewer models/modalities at launch; ModelOps qualification and route-release tooling become critical-path product infrastructure; we absorb provider buy-price variance and route-quality risk.
 - negative: customers needing arbitrary provider order, BYOK, deep guardrails, hosted plugins/tools, media generation, or regional guarantees wait for evidence-gated follow-ons.
-- migration or rollback: managed aliases are additive to concrete model IDs. A release rolls back by atomically repointing its head while in-flight requests retain their admitted release/price. The product strategy can broaden the advanced catalog or routes without changing organization billing or the gateway's Redis-only boundary.
+- migration or rollback: managed aliases are additive to concrete model IDs. A release rolls back by atomically repointing its head while in-flight requests retain their admitted release/price. The product strategy can broaden the advanced catalog or routes without changing organization billing or the gateway's Redis state/control boundary.
 
 ## Evidence
 

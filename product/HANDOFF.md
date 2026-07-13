@@ -8,9 +8,9 @@ The model surface has two lanes. Curated direct IDs (`openai/...`, `anthropic/..
 
 Product Intelligence retains bounded encrypted request/response/tool traces by default for history, workload analytics, replay and Grad migration recommendations. Private/No Retention is a workspace or stricter request mode. Retention is not training consent. Recommendations move through metadata opportunity, replay candidate, evaluator/shadow verified and live-canary ready; the customer explicitly starts experiments and performs the final model change.
 
-Owned Grad serving uses an AWS-hosted inference edge and disposable cells across curated external GPU providers. The gateway selects only signed exact-release cell targets from Redis; the edge/cell router handles transport, queueing and cache affinity, while an AWS fleet controller manages provider leases off the request path. Kubernetes is cell-local where a provider supports it, not one cluster stretched across providers. Every generative Grad release keeps active and prefix KV caching enabled, including Private/No Retention; salted cache state is ephemeral and never becomes a trace or durable data-store object.
+Owned Grad serving uses an AWS-hosted inference edge and disposable cells across curated external GPU capacity providers. The gateway selects only signed exact-release cell targets from Redis; the edge/cell router handles transport, queueing and cache affinity. PostgreSQL owns desired capacity, budgets and lease history. A Grad fleet API in AWS EKS projects that state into `CapacityPool`, `CapacityAllocation`, and `InferenceCell` resources; isolated controllers reconcile native APIs or managed-Kubernetes cells. Native allocations are not fake Nodes/Pods, and no cluster spans providers. The target projector—not a provider controller or cell—signs ready Redis targets. Every generative Grad release keeps active and prefix KV caching enabled, including Private/No Retention; salted cache state is ephemeral and never becomes a trace or durable data-store object.
 
-Creating an organization atomically creates a hidden Default workspace and owner memberships. PostgreSQL owns the ledger plus model/release, authorization, trace-registry/tombstone and workload/experiment control state. Private S3 stores encrypted trace payloads. ClickHouse Cloud stores only a content-free, replayable analytical projection used for trace lists/charts/workload/model/evaluation summaries. The gateway depends internally only on Redis for versioned policy/catalog/release/price, atomic reservations/limits and separate billing/trace streams. Workers project/reconcile money, drain encrypted traces, project analytics, enforce retention/delete and derive recommendations.
+Creating an organization atomically creates a hidden Default workspace and owner memberships. PostgreSQL owns the customer ledger, distribution-channel receivables, model/release, desired capacity/leases, authorization, trace-registry/tombstone and workload/experiment control state. Private S3 stores encrypted trace payloads. ClickHouse Cloud stores only a content-free, replayable analytical projection used for trace lists/charts/workload/model/evaluation summaries. The gateway's only synchronous internal state/control dependency is Redis for versioned policy/catalog/release/price, atomic reservations/limits and separate billing/trace streams; model APIs and the inference edge are upstream serving dependencies. Workers project/reconcile money, drain encrypted traces, project analytics, enforce retention/delete and derive recommendations.
 
 ## Non-negotiable behavior
 
@@ -28,6 +28,9 @@ Creating an organization atomically creates a hidden Default workspace and owner
 - No-retain payload never reaches Redis/S3; Product Intelligence ciphertext never falls back to plaintext. Trace load cannot starve billing events.
 - No-retain still uses tenant-isolated active/prefix KV cache. Cache loss affects latency only; cache cannot cross workspace/channel/release/retention-class or persist into traces/backups.
 - External GPU cells receive no customer API key, billing state, provider credential, trace key, or database access. Spot loss is assumed abrupt and cannot change the exact release/speed.
+- Use `model provider` for OpenAI/Anthropic/Google, `capacity provider` for GPU infrastructure, and `distribution channel` for OpenRouter/other gateways. Direct endpoints and Grad cells/targets are separate entities.
+- Fleet CRDs are rebuildable runtime actuation/status, not business authority. Argo owns schemas/controllers, fleet services own dynamic specs/status, and provider finalizers are backed by durable lease tags plus an independent orphan sweeper.
+- Distribution-channel admission uses a separate Redis `ChannelAccountProjection`, credentials, receivable exposure, price book, trace policy and cache scope. It can never debit organization credit.
 - ClickHouse never receives raw content and never becomes auth/ledger/retention truth. Hono scopes every analytical query; PostgreSQL tombstones/key revocation deny detail before S3/ClickHouse cleanup converges; ClickHouse outage can delay analytics only.
 - No recommendation/experiment state can automatically rewrite the customer's requested model.
 
@@ -40,7 +43,7 @@ Creating an organization atomically creates a hidden Default workspace and owner
 5. Implement Rust Redis admission/settlement scripts and state-machine tests before provider dispatch.
 6. Add Chat Completions, Anthropic Messages, stateless Responses and Embeddings with explicit capability conformance.
 7. Add curated OpenAI/Anthropic/Google identities/aliases and Grad effort/speed qualification/releases.
-8. Build the inference edge/cell contracts, pinned vLLM runtime with always-on salted prefix cache, one native provider adapter and one managed-Kubernetes cell; then qualify diversified spot capacity.
+8. Build the inference edge/two-AZ relay and cell contracts, fleet CRDs/fake controllers/Kind PBT, pinned vLLM runtime with always-on salted prefix cache, one native capacity-provider controller, then compare one managed-Kubernetes cell and qualify diversified spot capacity.
 9. Add encrypted Product Intelligence trace ingestion/S3 retention, content-free ClickHouse projection/query/delete/rebuild, Private/No Retention and workload/recommendation/experiment state machines.
 10. Complete provider-migration and Grad quickstarts, protected real-provider/owned CI and operations, then run measured OpenRouter provider conformance/soak/economics.
 
@@ -52,7 +55,7 @@ The AWS/EKS plan is specified under `../infra/`. Each environment has an isolate
 
 Terraform modules plus Terragrunt implicit stacks use versioned/KMS S3 state with native lock files. Argo CD pulls Helm desired state, KEDA scales pods, Karpenter supplies bounded nodes, and GitHub OIDC avoids static AWS credentials. Docker Compose and mprocs/dekit sit behind a Rust `grad` CLI so agents can run and verify the stack without owner-local execution. See `../infra/docs/DELIVERY_PLAN.md` and `../docs/decisions/0001-aws-eks-platform.md`.
 
-AWS GPUs are not normal serving capacity. The external fleet design, spot lifecycle, provider qualification, and selective Kubernetes model are in `docs/OWNED_INFERENCE_ARCHITECTURE.md`, `../infra/docs/MULTI_PROVIDER_GPU_FLEET.md`, and ADR-0005.
+AWS GPUs are not normal serving capacity. The external fleet design, spot lifecycle, provider qualification, and Kubernetes management abstraction are in `docs/OWNED_INFERENCE_ARCHITECTURE.md`, `docs/KUBERNETES_PROVIDER_ABSTRACTION_2026-07-13.md`, `../infra/docs/MULTI_PROVIDER_GPU_FLEET.md`, ADR-0005 and ADR-0006. The cross-product audit and remaining measured gates are in `docs/ARCHITECTURE_AUDIT_2026-07-13.md`.
 
 ## OpenRouter feature decision
 
@@ -98,6 +101,7 @@ Secrets belong in deployment/GitHub environments only. Provider smoke tests must
 - Opinionated product strategy issue: https://github.com/joshsny/gradiated/issues/3 is closed; completed packet: `tasks/done/2026-07-13-opinionated-openrouter-feature-strategy.md`.
 - Provider/Grad/trace/ClickHouse architecture: https://github.com/joshsny/gradiated/issues/4 is closed; completed packet: `tasks/done/2026-07-13-grad-effort-speed-provider-lanes.md`.
 - Multi-provider spot GPU architecture: https://github.com/joshsny/gradiated/issues/7; completed packet: `tasks/done/2026-07-13-multi-provider-spot-inference.md`.
+- Kubernetes provider abstraction and full architecture audit: https://github.com/joshsny/gradiated/issues/8; packet: `tasks/active/2026-07-13-kubernetes-provider-abstraction-audit.md` until verification, then `tasks/done/`.
 - No code has been implemented and no provider request has been made in this planning task.
 
 ## Resume
@@ -107,6 +111,8 @@ python3 tools/devex/context.py
 sed -n '1,260p' product/docs/DELIVERY_PLAN.md
 sed -n '1,340p' product/docs/OWNED_INFERENCE_ARCHITECTURE.md
 sed -n '1,340p' infra/docs/MULTI_PROVIDER_GPU_FLEET.md
+sed -n '1,420p' product/docs/KUBERNETES_PROVIDER_ABSTRACTION_2026-07-13.md
+sed -n '1,420p' product/docs/ARCHITECTURE_AUDIT_2026-07-13.md
 sed -n '1,180p' product/docs/MULTI_PROVIDER_GPU_EVIDENCE_2026-07-13.md
 sed -n '1,360p' product/docs/OPENROUTER_FEATURE_DECISIONS.md
 sed -n '1,420p' product/docs/MODEL_LANES_AND_MIGRATION.md

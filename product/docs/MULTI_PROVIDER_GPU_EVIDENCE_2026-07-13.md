@@ -1,5 +1,7 @@
 # Multi-provider GPU fleet evidence brief
 
+> Refinement: this brief established independent cells and rejected a global cluster. [ADR-0006](../../docs/decisions/0006-kubernetes-provider-abstraction.md) subsequently adopts Grad CRDs/controllers in the AWS management cluster as the common actuation/status interface. Native allocations still use their native APIs and do not become fake Nodes/Pods; the evidence conclusions below remain valid.
+
 - date: 2026-07-13
 - decision: how Grad should pool heterogeneous external GPU capacity for owned inference while AWS remains the control, data, gateway, and serving-edge home
 - issue: https://github.com/joshsny/gradiated/issues/7

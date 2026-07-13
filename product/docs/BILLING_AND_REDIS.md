@@ -31,7 +31,7 @@ low_balance_org_max_concurrency   default 1
 safety_reserve_microusd
 ```
 
-Each workspace projection contains status, curated provider/model and Grad effort/speed access, Product Intelligence or Private/No Retention data mode, retention policy, normal and low-credit concurrency caps, maximum request reserve/output, and zero or one budget for each `daily`, `weekly`, `monthly`, and `lifetime` interval. API keys can have more restrictive equivalents. Period state tracks both settled spend and active reserved spend.
+Each workspace projection contains status, curated model-provider/model and Grad effort/speed access, Product Intelligence or Private/No Retention data mode, retention policy, an opaque monotonic cache epoch, normal and low-credit concurrency caps, maximum request reserve/output, and zero or one budget for each `daily`, `weekly`, `monthly`, and `lifetime` interval. API keys can have more restrictive equivalents. Period state tracks both settled spend and active reserved spend. Organization/workspace deletion or a privacy-boundary change first closes new admission, then advances the cache epoch so no new request can address old ephemeral blocks.
 
 Low credit is calculated from organization projected spendable credit after the proposed reservation. It is not a stale flag. `risk_mode` is an explicit operator/risk override: restricted applies the low-credit organization cap regardless of balance; suspended admits nothing. Effective policy is the intersection/minimum of organization, workspace, and key constraints. Workspace/key budgets cap use of shared organization credit and do not allocate money.
 
@@ -65,7 +65,9 @@ require candidate_reserve <= effective_max_request_reserve
 reserve = candidate_reserve
 ```
 
-Every direct provider/model and Grad effort/speed release has an immutable published sell SKU. Provider/model buy-cost differences and failed-attempt costs are our margin risk, not a variable customer charge. A retry cannot change sell-price version or add failed upstream units to customer usage. Direct traffic retries only the exact provider/model/version; Grad traffic retries only owned targets for the exact effort/speed release. Speed never silently downgrades. Each release separately bounds attempt count and internal maximum buy exposure.
+Every direct model-provider/model and Grad effort/speed release has an immutable published sell SKU. The capability planner must prove the input bound: use the exact pinned tokenizer where available; otherwise use a tested conservative byte/item upper bound plus published image/audio/file units. Price the reserve as uncached input, because a cache hit cannot be guaranteed, and use the smaller valid request/model output cap. Grad settlement may apply the immutable cached-input SKU only from authoritative terminal runtime units. Cache counters or locality are not billing authority.
+
+Model-provider buy-cost differences and failed-attempt costs are our margin risk, not a variable customer charge. A retry cannot change sell-price version or add failed upstream units to customer usage. Direct traffic retries only the exact provider/model/version; Grad traffic retries only owned targets for the exact effort/speed release. Speed never silently downgrades. Each release separately bounds attempt count and internal maximum buy exposure.
 
 If the protocol lacks a safe output bound, impose a documented workspace/model default and validate it, or reject the request. Do not silently truncate input or output. Unknown price, stale route/price version, arithmetic overflow, or reserve above policy fails before provider dispatch. Tests must prove reserve is at least the sell charge for every valid response and bounded attempt sequence within declared limits.
 
@@ -118,7 +120,7 @@ The organization-local operation:
 7. appends `RequestSettled` with organization/workspace/key attribution to the same Redis Stream;
 8. returns final balance/status metadata.
 
-Cancellation, provider rejection, timeout, and partial response are settlement reasons, not excuses to delete a reservation. Evidence quality determines whether sell amount is measured, provider-reported, or conservative estimate. Settlement records whether protocol-usable output crossed the customer boundary; it does not issue a mutable in-place refund.
+Cancellation, model-provider/cell rejection, timeout, and partial response are settlement reasons, not excuses to delete a reservation. Evidence quality determines whether sell amount is measured, provider-reported, or conservative estimate. An exact-lane capacity rejection after reserve but before output releases unused reserve, decrements concurrency exactly once, and records zero sell usage plus any internal failed-attempt buy evidence. Protocol-usable partial output is charged at measured fixed-SKU units; after output the gateway never transparently replays. Settlement records whether usable output crossed the customer boundary; it does not issue a mutable in-place refund.
 
 ## Failed-request customer credit
 
@@ -131,6 +133,14 @@ Protocol validation, customer cancellation after usable output, moderation/refus
 Automated Product Intelligence profiling and offline replay on owned inference are product-development/marketing expense and never create a customer reservation or usage charge. They use a separate operator budget, capacity pool and event identity so they cannot be confused with customer traffic.
 
 Customer-approved live canaries are ordinary requests funded by the organization and require `x-grad-migration-experiment`. Before admission, deterministic bucketing chooses baseline or Grad, resolves its fixed price, and includes experiment ID/bucket in the atomic transition. The experiment has maximum request/micro-USD caps in addition to ordinary limits; actual selected route price is disclosed. Console state alone never enrolls traffic. Shadow experiments are unbilled because output is not delivered, but retain an operator cost budget and require approval. Duplicate events cannot charge or consume either budget twice.
+
+## Distribution-channel receivable admission
+
+OpenRouter and other downstream distribution channels are not customer organizations and never use organization credit. PostgreSQL owns each channel contract, credential references, immutable channel price book, approved Grad releases, credit/receivable ceiling, aging/risk state, concurrency/rate/capacity limits and reconciliation terms. Balanced `channel_receivable_transactions` record revenue, invoice, payment, credit and adjustment effects. A projector publishes a versioned `ChannelAccountProjection` to Redis.
+
+The gateway runs a separate atomic channel command that authenticates the channel credential, verifies model/release/price/policy versions, reserves receivable exposure and concurrency, deduplicates the downstream request ID, and appends a channel event before dispatch. Keys and commands use a channel hash tag and cannot address organization balance or workspace policy. Channel traffic has its own cache trust domain and defaults to content-free SLO/metering records rather than first-party Product Intelligence traces.
+
+Settlement releases the channel reserve, posts measured units/revenue once, decrements concurrency, and emits a `ChannelSettlementEvent`. A worker posts the receivable ledger and reconciles downstream request IDs, units, errors, credits and invoices/auto-top-ups. Exceeded exposure, overdue invoices, contract suspension or reconciliation drift closes new channel admission while existing requests can settle. Property tests interleave customer and channel traffic and prove neither domain can mutate the other's balances, credentials, limits, traces or cache scope.
 
 ## Stream consumption and PostgreSQL posting
 

@@ -129,7 +129,7 @@ A request cannot loosen a workspace's mode. Provider training/data use is a sepa
 
 ### Trace transport and storage
 
-The gateway keeps Redis as its only internal runtime dependency:
+The gateway keeps Redis as its only synchronous internal state/control dependency; model APIs and the inference edge are upstream serving dependencies:
 
 ```text
 request/response events

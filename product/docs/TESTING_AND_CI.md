@@ -37,9 +37,10 @@ The product owner will not run this repository locally. Therefore the acceptance
 | Model identity/routing | curated providers/models/aliases, Grad effort/speed releases, health, capability/data policy, prices, session/canary buckets and faults | bare alias resolves only when unique; direct pin never crosses provider/model/version; Grad never leaves owned inference or changes effort/speed; deterministic decision; fixed release price; no ineligible target. |
 | Route lifecycle | publish/canary/promote/halt/rollback/deprecate with stale/reordered projection commands | immutable release; deterministic rollout; stale head cannot win; in-flight request keeps admitted release/price; rollback restores a qualified head. |
 | Failed-request credit | pre-output/midstream/output-delivered failures, cancel, duplicate/reordered settle/correction, fraud eligibility | exactly one eligible reversal when no usable output; never double-credit; original usage remains immutable; provider buy evidence retained. |
+| Distribution channel | channel contract/credential/exposure, reserve/settle/invoice/payment/drift interleaved with organization traffic | channel and customer balances/keys/limits/traces/cache scopes never cross; one receivable effect; suspension closes new channel traffic while settlement continues. |
 | Effort/speed | arbitrary qualified cells, measured distributions, capacity/queue faults and release changes | unavailable cells absent; no silent lane downgrade; speed and declared effort monotonicity gates hold within configured statistical tolerance or release is rejected. |
 | Trace policy | Product Intelligence/no-retain/request tightening, credentials, oversized payloads, encryption/key rotation, stream lag, delete/export/redelivery | no-retain emits no trace payload; credentials never captured; ciphertext only after gateway; billing headroom preserved; one trace/object identity; retention/delete completes or closes capture. |
-| Owned inference fleet | releases/cell targets, capacity leases, provider observations, spot loss, edge/cell streams, cache namespaces and faults | exact release/speed preserved; no live broker dependency; leases converge/no orphan; pre-output retry only; no-retention still caches; no cache reuse crosses workspace/channel/release/retention class. |
+| Owned inference fleet | PostgreSQL intents/leases, fleet CR specs/status/finalizers, capacity-provider observations, cell/edge shards, signed targets, spot loss, cache namespaces and faults | one writer/authority per field; duplicate/reordered/restarted reconciliation converges; no leaked orphan or unqualified target; existing cells serve through PG/Kubernetes/provider outage; exact release/speed and cache isolation hold. |
 | Trace analytics | organization/workspace scopes, terminal usage versions, duplicate/reordered outbox delivery, retention/tombstones, restore, ClickHouse outage/backlog | one visible terminal fact; no content columns; result subset of authorized scope; expired/deleted content inaccessible during mutation lag; PostgreSQL reconciliation wins; projector failure never affects serving/billing/S3. |
 | Migration | workload grouping, evidence levels, replay/shadow/live-canary commands/headers, duplicate/reordered events, budgets and evaluator faults | no header means hard direct pin; invalid/mismatched header cannot enroll; source/candidate fixed; evidence cannot overstate; replay cannot charge; live canary is deterministic, disclosed and obeys experiment/billing caps; removing header preserves original traffic. |
 
@@ -67,6 +68,8 @@ Concurrency cases use explicit barriers/schedules rather than wall-clock sleeps:
 - no-retain policy change versus in-flight capture and key rotation;
 - no-retention trace suppression versus successful prefix-cache put/hit/evict, cache-salt rotation, workspace/channel/release namespace isolation, and cell teardown;
 - provider allocation observations, duplicate acquire/release, lease expiry, controller restart, spot notice/zero-notice loss, edge reconnect and failure before/after first output;
+- CR spec/status owner-epoch races, admission/RBAC negatives, finalizer failure/break-glass, management-cluster rebuild from PostgreSQL, provider-list orphan sweep, and two-AZ relay-shard loss;
+- distribution-channel reserve/settle/reconciliation versus concurrent organization top-up/reserve/trace/cache operations;
 - migration experiment cancel/stop versus concurrent canary admission;
 - direct-model alias activation/deprecation versus concurrent resolution.
 
@@ -103,7 +106,7 @@ Shard by stable property suite, not random test file distribution, so failures r
 
 ### Always-on fake-provider job
 
-On every `main` commit and external pull request, boot PostgreSQL, ClickHouse, Redis, S3-compatible storage, the Rust gateway/inference edge, and deterministic fake OpenAI/Anthropic/Google/owned/provider-cell upstreams. Run official `openai`, `@anthropic-ai/sdk`, and `@google/genai` clients with base URL pointed at the gateway. Cover:
+On every `main` commit and external pull request, boot PostgreSQL, ClickHouse, Redis, S3-compatible storage, the Rust gateway/inference edge, a Kind management cluster with fleet CRDs/controllers, and deterministic fake OpenAI/Anthropic/Google/owned/capacity-provider/cell upstreams. Run official `openai`, `@anthropic-ai/sdk`, and `@google/genai` clients with base URL pointed at the gateway. Cover:
 
 - model list where client supports it;
 - non-stream and stream Chat Completions;
@@ -116,6 +119,8 @@ On every `main` commit and external pull request, boot PostgreSQL, ClickHouse, R
 - Product Intelligence capture/decrypt fixture, ClickHouse fact/list/chart projection, credential/content-column exclusion, no-retain usage row with no object, deletion/tombstone convergence and trace/analytics backpressure that leaves billing correct;
 - workload recommendation evidence progression plus replay/shadow/live-canary stop with proof that no automatic model switch occurs;
 - 402, 429, key revocation, timeout, cancellation, malformed upstream, and duplicate settlement;
+- a distribution-channel credential/exposure/settlement fixture proving no organization-credit or first-party-trace mutation;
+- native and managed-Kubernetes fake allocations through CRD reconcile/ready/target/fence/finalizer/rebuild paths while an already-published request survives controller loss;
 - unsupported parameter/capability, context overflow, no eligible route, pinned-model outage and no-usable-output credit;
 - usage/ledger assertion after the worker posts events.
 

@@ -2,13 +2,13 @@
 
 This document freezes the product/runtime architecture for `grad/<effort>/<speed>`. AWS hosts the customer gateway, inference edge, control plane, financial/data services, ModelOps, and fleet control. Curated external GPU providers supply disposable execution capacity. AWS GPU instances are not normal serving capacity; an emergency or qualification deployment requires an explicit, margin-gated release like any other provider.
 
-The evidence and provider uncertainty are in [the dated GPU fleet brief](MULTI_PROVIDER_GPU_EVIDENCE_2026-07-13.md). Infrastructure realization is in [Multi-provider GPU fleet](../../infra/docs/MULTI_PROVIDER_GPU_FLEET.md), and the durable decision is [ADR-0005](../../docs/decisions/0005-multi-provider-spot-inference.md).
+The evidence and provider uncertainty are in [the dated GPU fleet brief](MULTI_PROVIDER_GPU_EVIDENCE_2026-07-13.md). Infrastructure realization is in [Multi-provider GPU fleet](../../infra/docs/MULTI_PROVIDER_GPU_FLEET.md). The serving decision is [ADR-0005](../../docs/decisions/0005-multi-provider-spot-inference.md); the common fleet actuation API is [ADR-0006](../../docs/decisions/0006-kubernetes-provider-abstraction.md) and [its implementation contract](KUBERNETES_PROVIDER_ABSTRACTION_2026-07-13.md).
 
 ## Product invariants
 
 1. A Grad request runs the exact immutable Grad release selected for its effort/speed cell. It never falls back to a direct provider, another model release, effort, speed, quantization, tokenizer, or runtime.
-2. The Rust gateway still has one internal state dependency: Redis/Valkey. The inference edge is the owned upstream serving endpoint, not a control-plane lookup.
-3. The gateway never discovers GPU pods, calls a provider API, reads PostgreSQL, or asks the fleet controller to schedule a live request.
+2. The Rust gateway still has one synchronous internal state/control dependency: Redis/Valkey. Curated model APIs and the inference edge are upstream serving endpoints after admission, not control-plane lookups.
+3. The gateway never discovers GPU pods, calls a capacity-provider API, reads PostgreSQL/Kubernetes, or asks the fleet operator to schedule a live request.
 4. Provider interruption may remove capacity or cache but cannot change model semantics, tenant boundaries, money authority, or trace policy.
 5. Every generative Grad release uses KV cache for active sequences and enables cross-request prefix reuse. Private/No Retention does **not** disable either cache.
 6. Cache material is confidential ephemeral serving state. It is isolated by opaque workspace/trust-domain salt, never enters Redis/PostgreSQL/S3/ClickHouse/backups/logs, and is never shared across workspaces or provider channels.
@@ -48,7 +48,7 @@ flowchart LR
 - **Public Rust gateway:** protocol compatibility, API-key auth, Redis admission/reservation, immutable route selection, commercial metering, public streaming response, and trace-policy enforcement.
 - **Inference edge:** a stateless, regional Rust serving proxy. It validates the signed release/cell target, applies the request deadline, chooses a live connection for the selected cell, forwards a canonical gRPC request, and relays usage/events. It supports direct mTLS endpoints and outbound cell tunnels behind one interface.
 - **ModelOps/release authority:** qualifies exact runtime/model/hardware/capability combinations, signs manifests, creates immutable releases, and publishes eligible target snapshots to Redis.
-- **Fleet controller/capacity broker:** reconciles desired warm capacity with provider reality, budgets, price, health, and interruption evidence. It is slow-path and PostgreSQL-backed.
+- **Fleet planner/broker and capacity-provider controllers:** project PostgreSQL-owned intent into Grad fleet CRDs in AWS EKS, reconcile desired warm capacity with provider reality, budgets, price, health, and interruption evidence, and persist observations back to durable lease history. They are slow-path and never request-serving dependencies.
 - **PostgreSQL, S3, Valkey, ClickHouse:** retain their existing authority boundaries. S3 additionally holds immutable signed model artifacts; it never holds live KV cache.
 
 ### External inference cell
@@ -120,13 +120,15 @@ Rules:
 - No provider-specific instance, bid, host, runtime flag, or Kubernetes object appears in this request contract.
 - Usage is cumulative/monotonic at terminal settlement. A runtime crash with uncertain usage is explicitly classified for conservative reconciliation; it is never fabricated as zero.
 
-Control-plane contracts are separate:
+Control-plane contracts are separate and generate/check the corresponding `fleet.grad.dev/v1alpha1` CRD domain fields:
 
 - `ReleaseManifest`: model/tokenizer/config/image digests, quantization, runtime and kernel versions, topology, capabilities, cache requirements, benchmark profile, and artifact signatures.
 - `CellTarget`: signed serving endpoint/epoch and hard eligibility.
 - `CapacityIntent`: desired release capacity by region/speed, warm floor, purchase classes, deadline, budget, and maximum effective cost.
 - `CapacityLease`: provider allocation identity, cell, release/topology, lifecycle state, acquired price, TTL, and idempotency key.
 - `CellHeartbeat`: current manifests, ready/draining replicas, queue/token capacity, cache pressure/hit metrics, notices, and sanitized health.
+
+PostgreSQL owns durable `CapacityIntent`/`CapacityLease` history. `CapacityPool`, `CapacityAllocation`, and `InferenceCell` CRs are rebuildable actuation/status projections with single writers. Provider controllers cannot sign a route; the target projector combines qualified release state, attestation and redundant edge connectivity before it publishes `CellTarget` to Redis.
 
 ## Always-on KV cache and no-retention semantics
 
@@ -150,7 +152,7 @@ Cache contract:
 - no raw prompts, responses, token arrays, cache keys, or tensors in telemetry;
 - GPU/RAM first; encrypted local NVMe spill is optional and release-qualified, with bounded service TTL, no snapshot, no backup, no object-store migration, and destruction on cell teardown;
 - cache metadata and tensors are not customer traces and are unavailable in the console/export API;
-- workspace trace deletion does not need to find cache blocks; TTL/eviction remains bounded and no durable copy exists;
+- trace deletion does not index or scan cache blocks; organization/workspace deletion or a privacy-boundary change rotates the cache epoch so old blocks become immediately unreachable, then bounded TTL/eviction removes them without a durable copy;
 - key/salt rotation intentionally creates misses and is the emergency cache-fence control;
 - cache loss never changes output correctness and never permits a release or speed downgrade;
 - timing-isolation, namespace, expiry, no-log, and teardown properties are mandatory release tests.
@@ -203,7 +205,7 @@ requested -> acquired -> bootstrapping -> attesting -> loading
 - Bootstrap accepts only a signed, short-lived manifest and obtains a short-lived cell certificate. Provider API credentials never leave AWS.
 - `ready` requires verified GPU/topology, artifact signatures/digests, runtime identity, cache enabled, synthetic generation, and registered serving connectivity.
 - Interruption/preemption notice immediately fences the allocation, removes it from new routing, drains active work until the provider deadline, and terminates. Absence of notice follows the same externally observable failure contract after heartbeat loss.
-- A provider API outage freezes acquisition/release retries under bounded backoff. Existing ready cells continue serving; budget/orphan alarms escalate independently.
+- A capacity-provider API outage freezes acquisition/release retries under bounded backoff. Existing ready cells continue serving; budget/orphan alarms escalate independently.
 - Warm capacity is reduced only after cooldown, active/cache pressure checks, concentration constraints, and minimum speed coverage remain satisfied.
 
 ## Failure and retry contract
@@ -211,7 +213,7 @@ requested -> acquired -> bootstrapping -> attesting -> loading
 | Failure | Serving behavior | Billing/cache behavior |
 | --- | --- | --- |
 | Fleet controller or PostgreSQL unavailable | existing published cells continue; no new scale/release | gateway admission and existing caches continue |
-| Provider lifecycle API unavailable | existing cells continue; acquisition/cleanup retries and orphan alarm | no request waits on provider API |
+| Capacity-provider lifecycle API unavailable | existing cells continue; acquisition/cleanup retries and orphan alarm | no request waits on lifecycle API |
 | Inference edge instance fails before output | gateway retries another edge/cell target for the exact release within deadline | same reservation/attempt lineage; no duplicate sell charge |
 | Cell/runtime fails before first output | one bounded retry to another qualified cell when deadline permits | failed attempt buy evidence retained; settle actual/zero sell usage per policy |
 | Cell/runtime fails after any output | no transparent replay; emit terminal `upstream_interrupted` with partial-usage evidence | settle once; apply existing no-usable-output credit rule only when eligible |
@@ -223,42 +225,44 @@ Retries never cross a direct-provider/Grad boundary, model release, effort, spee
 
 ## Security boundary
 
-- Provider credentials live only in AWS Secrets Manager and are available only to the matching fleet-adapter identity.
+- Capacity-provider credentials live only in AWS Secrets Manager and are available only to a separate matching controller service account/network/secret identity; the broker and target signer cannot read them.
 - Cell certificates are short-lived, provider/cell/release scoped, rotated, and revoked by target epoch. Edge-to-cell traffic is mTLS. Public endpoints allow only controlled AWS egress ranges where the provider supports firewalling.
-- `DIRECT_MTLS`, `MANAGED_LB`, and `OUTBOUND_RELAY` are supported ingress modes. Outbound relay workers initiate authenticated connections to the AWS edge; they do not expose a general shell or management port.
+- `DIRECT_MTLS`, `MANAGED_LB`, and `OUTBOUND_RELAY` are supported ingress modes. Outbound relay workers initiate authenticated connections to at least two edge shards in distinct AWS AZs; signed targets carry shard set and epoch. They do not expose a general shell or management port.
 - Signed runtime/model manifests and artifact digests are verified before execution. Model license/redistribution policy is part of release eligibility.
 - Runtime request logging, crash dumps, prompt metrics, core dumps, swap, and provider console logging are disabled. Content-free metrics use opaque IDs and bounded labels.
 - The provider can necessarily observe encrypted transport endpoints and plaintext in process/GPU memory while executing. No-retention cannot honestly promise otherwise; provider contractual/security qualification is required.
-- A compromised cell can affect its current requests and model availability, but cannot mint credit, read PostgreSQL/Redis/customer keys, decrypt S3 traces, call another provider adapter, or publish a route release.
+- A compromised cell can affect its current requests and model availability, but cannot mint credit, read PostgreSQL/Redis/customer keys, decrypt S3 traces, call a capacity-provider controller, or publish a route release.
 
 ## Observability and customer experience
 
 The gateway remains the customer trace boundary. The cell emits content-free operational metrics: release/cell/replica IDs, queue and active counts, token totals, cache hit/miss/eviction counts, TTFT/ITL, termination reason, GPU health/utilization, artifact/startup timing, and provider allocation cost. Organization/workspace identifiers are HMAC/pseudonymous and excluded from provider labels.
 
-The console shows requested Grad ID, actual immutable release, region/data mode, speed SLO outcome, usage/cost, and interruption status. It does not expose provider bidding or raw host selection by default. Provider placement may be available in enterprise audit/export only when disclosure is contractually required.
+The console shows requested Grad ID, actual immutable release, region/data mode, speed SLO outcome, usage/cost, and interruption status. It does not expose capacity-provider bidding or raw host selection by default. Placement may be available in enterprise audit/export only when disclosure is contractually required.
+
+Capacity-provider invoices and allocation lease intervals are durable PostgreSQL evidence. A content-free ClickHouse projection attributes GPU-seconds/token work, warm idle, failed starts, interruptions, storage and network cost to release/cell/request attempts for margin analysis. This allocation-cost attribution never changes fixed customer usage or price; unmatched invoice/resources freeze new acquisition and enter reconciliation.
 
 ## Property and end-to-end tests
 
-TypeScript `fast-check` model tests cover release publication, capacity-intent/lease reconciliation, provider-offer normalization, spend/concentration limits, orphan cleanup, rollout, and the rule that no broker state transition changes a live request's release.
+TypeScript `fast-check` model tests cover release publication, PostgreSQL intent/lease to CR projection, capacity-provider offer normalization, channel/customer accounting isolation, spend/concentration limits, finalizer plus orphan cleanup, rollout, and the rule that no broker state transition changes a live request's release.
 
 Rust `proptest`/state-machine tests cover:
 
 - gateway/edge/cell event ordering, deduplication, deadlines, cancel, and settlement outcome;
 - target selection and retries preserving exact release/effort/speed/data mode;
-- allocation lifecycle under duplicate/reordered API observations and controller restarts;
-- cache-scope derivation and no cross-workspace/channel/release/retention-class reuse;
+- allocation lifecycle under duplicate/reordered API/CR observations, owner-epoch races, leader/controller restarts, finalizer failure and management-cluster rebuild;
+- cache-scope derivation/epoch rotation and no cross-workspace/channel/release/retention-class reuse;
 - no-retention requests producing cache put/hit/evict behavior while producing no trace payload event;
-- preemption before/after first token, heartbeat loss, drain races, and stale target epochs;
+- preemption before/after first token, two-AZ relay-shard loss, heartbeat loss, drain races, self-asserted readiness rejection and stale target epochs;
 - integer cost/budget arithmetic, lease expiry, and no orphan surviving bounded reconciliation.
 
-Deterministic E2E boots an inference edge, fake provider adapters, fake cell agents, a real Redis, and tiny CPU/fake runtimes. It kills cells at every lifecycle/event boundary. GPU qualification runs under a preregistered provider budget with tiny prompts and records startup, cache hit, streaming, interruption, cleanup, and cost evidence. Protected CI never relies on spot availability for pass/fail; provider-capacity absence is a classified result, while protocol/security regressions fail.
+Deterministic E2E boots a Kind management cluster, Grad fleet CRDs/controllers, an inference edge, fake capacity-provider APIs, fake cell agents, a real Redis, and tiny CPU/fake runtimes. It kills controllers/cells at every lifecycle/event boundary and rebuilds CR state from PostgreSQL. GPU qualification runs under a preregistered provider budget with tiny prompts and records startup, cache hit, streaming, interruption, cleanup, and cost evidence. Protected CI never relies on spot availability for pass/fail; capacity absence is a classified result, while protocol/security regressions fail.
 
 ## Seed implementation sequence
 
 1. Freeze Protobuf messages, release manifest, target signature, cache scope, event/settlement, and fake provider/cell models.
 2. Build the Rust inference edge, local cell router/agent, fake runtime, and exhaustive failure/PBT harness without cloud capacity.
 3. Integrate a pinned vLLM single-node release with always-on salted prefix caching and exact manifest attestation.
-4. Implement one native container/VM provider adapter and prove acquire-to-cleanup under a hard spend cap.
+4. Implement one native container/VM `CapacityAllocation` controller and prove acquire-to-cleanup under a hard spend cap.
 5. Implement one managed-Kubernetes cell and prove the same contract without changing gateway/edge messages.
 6. Add diversified spot, drain, lease/orphan, cache-affinity, and cost controls; launch only qualified `flex`/`standard` cells.
 7. Add multi-node/runtime/topology candidates and `fast`/`turbo` only after measured latency, availability, interruption, and margin gates.

@@ -38,7 +38,7 @@ flowchart LR
   class Gateway,Redis,Edge,Owned hot;
 ```
 
-The red path is the serving hot path. Its only internal network dependency is Redis. The gateway does not call the API, worker, PostgreSQL, ClickHouse, Stripe, an external queue, or object storage. Provider calls are outbound inference dependencies, not control-plane dependencies.
+The red path is the serving hot path. Redis is the gateway's only synchronous internal **state/control dependency**. Curated model APIs and the AWS inference edge are upstream serving dependencies after admission. The gateway does not call the API, worker, PostgreSQL, ClickHouse, Stripe, an external queue, object storage, Kubernetes, or a capacity-provider lifecycle API.
 
 ## TypeScript control plane
 
@@ -93,11 +93,11 @@ Use a Cargo workspace with Tokio, Axum, Tower, Reqwest, tracing/OpenTelemetry, r
 - `gateway-protocol-google`: versioned GenerateContent schemas/streaming and official SDK fixtures;
 - `gateway-core`: canonical internal request, provider/model or Grad effort/speed identity, capability planning, route-release resolution, attempts, errors;
 - `gateway-admission`: Redis functions/scripts and typed state transitions;
-- `gateway-provider`: adapter trait and generic streaming transport;
+- `gateway-provider`: model-provider adapter trait and generic streaming transport;
 - `gateway-provider-{openai,anthropic,google,owned}` plus operator-only OpenRouter/generic adapters;
 - `inference-edge`: stable streaming target, signed cell-target validation, mTLS/direct/tunnel transport and event relay;
 - `inference-cell`: cell agent/router, exact-release runtime lifecycle, token queueing, cache affinity and drain;
-- `fleet-controller`: slow-path capacity leases, provider adapters, budgets, orphan cleanup and target publication inputs;
+- `fleet-controller`: slow-path PostgreSQL intent projection, Grad fleet CRDs/controllers, capacity-provider adapters, budgets, orphan cleanup and target publication inputs;
 - `gateway-trace`: data-mode enforcement, credential stripping, bounded trace serialization, public-key encryption and Redis trace events;
 - `gateway-contracts`: generated Prost messages;
 - `gateway-testkit`: fake upstreams, Redis harness, generated traces.
@@ -113,7 +113,7 @@ parse bounded headers/body
   -> resolve provider-qualified concrete model or Grad effort/speed release
   -> select eligible targets from the Redis route projection
   -> validate organization/workspace/key/model/config/price versions
-  -> estimate maximum fixed customer sell exposure for the bounded request
+  -> prove a conservative maximum fixed customer sell exposure for the bounded request
   -> atomic reserve + low-balance concurrency admission + XADD
   -> apply deterministic canary/session pin and choose a healthy same-lane target
   -> call exact curated provider/model or AWS inference edge for selected owned cell
@@ -129,10 +129,10 @@ Provider retry/fallback stays attached to the same organization-funded, workspac
 
 The customer model surface has explicit provider and first-party identities while endpoint machinery remains hidden:
 
-- `ProviderDefinition` is one curated direct provider namespace (`openai`, `anthropic`, `google`) with adapter/data-policy/lifecycle status. Adding it is an operator release, not customer configuration.
+- `ModelProviderDefinition` is one curated direct model-provider namespace (`openai`, `anthropic`, `google`) with adapter/data-policy/lifecycle status. Adding it is an operator release, not customer configuration.
 - `ModelDefinition` is a provider-qualified concrete model/version or owned concrete checkpoint with exact modalities, context/output limits, parameter support, lifecycle, alias set and public sell price.
 - `ModelProduct` is a canonical `grad/<effort>/<speed>` identity. Effort is `low|medium|high|max`; speed is `flex|standard|fast|turbo`; the active-cell set is catalog-driven.
-- `ProviderEndpoint` is an operator-owned endpoint for one exact provider/model or Grad release, with region, runtime/quantization, credentials reference, capacity, buy price, retention/training policy and measured health.
+- `DirectModelEndpoint` is an operator-owned endpoint for one exact model-provider/model with region, credential reference, capacity, buy price, retention/training policy and measured health. Grad serving endpoints are `InferenceCell` status projected into signed `CellTarget` records; the two concepts never share credentials or lifecycle ownership.
 - `QualificationEvidence` records scope-matched protocol, quality, tool, structured-output, modality, privacy, latency, throughput, and economics evidence. Evidence is never transferred to a different model, endpoint, region, runtime, or quantization without a new qualification.
 - `RouteRelease` is immutable. For direct models it permits only same-provider/same-version endpoints. For Grad it freezes effort/speed, owned checkpoint/runtime/hardware, capability/SLO/queue envelope, bounded attempts, fixed prices, rollout and rollback target.
 - `RouteCandidate` binds a release to a concrete model and endpoint class with its qualification IDs and constraints.
@@ -142,7 +142,7 @@ The control worker builds and publishes releases from PostgreSQL. The Rust gatew
 
 Owned inference is not a hidden preference inside direct-provider requests: customers reach it by selecting `grad/<effort>/<speed>` or an exposed Grad checkpoint. Each response and usage row identifies the requested canonical identity, actual provider/model or owned release, route release and data mode. This makes direct traffic a trustworthy migration baseline instead of secretly routing it to us.
 
-For Grad, a Redis route release contains signed cell targets rather than GPU pods. The gateway chooses an exact-release cell and calls a regional AWS inference edge. A cell-local router chooses a ready replica using queue deadline, token capacity and cache affinity. An AWS fleet controller acquires/releases external GPU capacity asynchronously through curated provider adapters and cannot participate in a live request. Managed Kubernetes, self-managed cell-local Kubernetes and provider-native container/VM allocations implement the same cell contract; no Kubernetes cluster spans providers. The complete design is [Owned Grad inference architecture](OWNED_INFERENCE_ARCHITECTURE.md).
+For Grad, a Redis route release contains signed cell targets rather than GPU pods. The gateway chooses an exact-release cell and calls a regional AWS inference edge. A cell-local router chooses a ready replica using queue deadline, token capacity and cache affinity. In the AWS management EKS cluster, Grad fleet CRDs/controllers project PostgreSQL capacity intent and reconcile external GPU capacity through curated capacity-provider adapters; they cannot participate in a live request. Managed Kubernetes, self-managed cell-local Kubernetes and provider-native container/VM allocations implement the same cell contract without pretending every allocation is a Kubernetes Node or spanning a cluster across providers. The complete designs are [Owned Grad inference architecture](OWNED_INFERENCE_ARCHITECTURE.md) and [Kubernetes provider abstraction](KUBERNETES_PROVIDER_ABSTRACTION_2026-07-13.md).
 
 Every generative Grad release enables active-sequence KV and cross-request prefix cache. The gateway supplies an opaque HMAC scope separated by workspace/channel, exact release, and retention class. Product Intelligence and Private/No Retention both cache but never share a namespace. Cache state remains in GPU/RAM or qualified encrypted ephemeral local storage and never enters Redis, PostgreSQL, S3, ClickHouse, trace payloads, backups or logs.
 
@@ -157,7 +157,7 @@ Every generative Grad release enables active-sequence KV and cross-request prefi
 
 ### Trace and migration architecture
 
-Product Intelligence is the default workspace data mode. The gateway strips credentials/non-allowlisted headers, bounds the record, encrypts it with a random symmetric data key, wraps that key to a rotating asymmetric public trace-ingest key from Redis, and asynchronously appends ciphertext to an organization-tagged trace stream after terminal response/settlement. This preserves Redis as its only internal dependency and keeps capture off customer latency. Failure records a safe capture status and alerts but does not fail or unbill completed inference.
+Product Intelligence is the default workspace data mode. The gateway strips credentials/non-allowlisted headers, bounds the record, encrypts it with a random symmetric data key, wraps that key to a rotating asymmetric public trace-ingest key from Redis, and asynchronously appends ciphertext to an organization-tagged trace stream after terminal response/settlement. This preserves Redis as its only synchronous internal state/control dependency and keeps capture off customer latency. Failure records a safe capture status and alerts but does not fail or unbill completed inference.
 
 The control worker drains ciphertext to a private S3 bucket and writes authorization, object reference, per-trace wrapped-key, retention and tombstone state to PostgreSQL. Separate KMS-backed trace/recommendation roles can decrypt; the gateway and ordinary API role cannot. A small internal trace-access service accepts a signed, single-object, workspace/action/expiry-bound grant minted only after control-plane authz/recent-auth checks. It rechecks tombstone/retention/key state, fetches and decrypts one trace, streams it without caching, and writes an audit event. It never lists a bucket or issues reusable object URLs. Key destruction, S3 lifecycle/version deletion and PostgreSQL tombstones enforce bounded retention.
 

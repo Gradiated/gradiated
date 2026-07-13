@@ -2,8 +2,9 @@
 
 There are two distinct integration directions. Keep them separate in code, credentials, economics, and metrics.
 
-- Curated direct-provider adapter: a customer explicitly requests a tested provider/model from our short registry; we buy that exact inference and preserve identity.
-- Downstream provider: OpenRouter or another gateway sends traffic to our owned/differentiated inference and pays us for capacity.
+- Curated model-provider adapter: a customer explicitly requests a tested model provider/model from our short registry; we buy that exact inference and preserve identity.
+- Distribution channel: OpenRouter or another gateway sends traffic to our owned/differentiated inference and pays us for capacity.
+- Capacity-provider adapter: an operator-only fleet reconciler acquires GPU infrastructure for Grad-owned inference; this is not a customer model-provider option.
 
 Both use the same Rust protocol, routing, metering, and serving core. An external-gateway listing must never bypass our request identity, provider-side limits, metering, or reconciliation.
 
@@ -49,7 +50,7 @@ Model IDs for paid smoke are environment-pinned because catalogs change. At each
 
 OpenRouter's current provider documentation asks prospective providers to apply and defines a model-list contract including ID/Hugging Face identity, name, input/output modalities, quantization, context/max-output length, pricing, supported parameters/features, lifecycle/readiness/free/discount flags, capacity and data-center metadata. It describes auto top-up or invoicing for commercial settlement and exposes measured uptime, time-to-first-token and throughput. After sufficient traffic, vendor-reported routing tiers are at least 95% uptime for normal routing, 80–94% as degraded, and below 80% as fallback-only; 429 capacity responses are tracked separately, while many auth/server/midstream failures count against uptime. It recommends early explicit 429s and stream keepalive comments. These requirements are time-sensitive and must be revalidated before onboarding: [OpenRouter provider integration](https://openrouter.ai/docs/guides/community/for-providers).
 
-Only owned or contractually differentiated inference is eligible for our OpenRouter provider catalog. Re-exporting OpenAI/Anthropic/OpenRouter supply creates no differentiation and risks circular economics. Provider-channel requests use dedicated credentials, limits, receivable/payout accounting, price books, and SLOs; they never reserve against a customer organization credit pool even though they share protocol, route, metering and inference code.
+Only owned or contractually differentiated inference is eligible for our OpenRouter provider catalog. Re-exporting OpenAI/Anthropic/OpenRouter supply creates no differentiation and risks circular economics. Distribution-channel requests use dedicated credentials, Redis `ChannelAccountProjection` admission, receivable/payout accounting, price books, capacity/concurrency limits, cache trust domains, and SLOs; they never reserve against a customer organization credit pool even though they share protocol, exact-release routing, metering and inference code. PostgreSQL is authoritative for channel contracts/receivables; reconciliation joins downstream request IDs to immutable Grad usage and closes new admission on exposure, aging, or drift.
 
 The OpenRouter provider catalog may expose selected Grad effort/speed products or concrete owned checkpoints only when their naming/capability contract fits OpenRouter's current model-list requirements. External marketplace traffic does not create first-party customer traces or migration recommendations; its data handling follows the downstream contract.
 

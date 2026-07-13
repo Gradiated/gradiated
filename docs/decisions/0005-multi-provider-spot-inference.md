@@ -9,7 +9,7 @@
 
 Host the public gateway, regional inference edge, fleet controller, ModelOps, authoritative data, and observability in AWS. Run normal owned Grad GPU execution in disposable cells across curated external GPU providers. AWS GPU capacity is not a default or fallback merely because the control plane is there; it must pass the same release economics gate.
 
-A cell is one provider/region/security/orchestration boundary. A slow-path AWS fleet controller acquires capacity through provider adapters and publishes qualified ready targets through the existing ModelOps/Redis route-release path. The gateway selects a signed cell target from Redis and calls the AWS inference edge. The edge forwards to a cell-local router or registered native allocation. No provider API, PostgreSQL query, Kubernetes discovery, or fleet scheduling occurs on the live gateway path.
+A cell is one capacity-provider/region/security/orchestration boundary. As refined by [ADR-0006](0006-kubernetes-provider-abstraction.md), slow-path Grad CRDs/controllers in AWS EKS project PostgreSQL capacity intent and acquire capacity through isolated provider-native reconcilers, then publish qualified ready targets through the ModelOps/Redis route-release path. The gateway selects a signed cell target from Redis and calls the AWS inference edge. The edge forwards to a cell-local router or registered native allocation. No capacity-provider API, PostgreSQL query, Kubernetes discovery, or fleet scheduling occurs on the live gateway/edge path.
 
 Use managed or cell-local Kubernetes where the provider offers a credible Kubernetes/VM substrate. Use native container/VM lifecycle APIs for marketplace providers. Do not create a stretched global Kubernetes cluster or require Cluster API/Karmada support from every provider.
 
@@ -23,21 +23,21 @@ Current primary docs show heterogeneous control surfaces: interruptible containe
 
 ## Alternatives considered
 
-1. **Chosen: AWS inference edge + external cells + provider adapters.** Keeps a stable serving contract, isolates provider failures, supports native/Kubernetes substrates, and leaves slow capacity control off the hot path.
+1. **Chosen: AWS inference edge + external cells + capacity-provider reconcilers.** Keeps a stable serving contract, isolates provider failures, supports native/Kubernetes substrates, and leaves slow capacity control off the hot path. ADR-0006 adds the management-cluster CRD actuation surface.
 2. **One stretched Kubernetes cluster.** Rejected because provider/WAN/node heterogeneity enlarges control and network blast radius, and several target suppliers expose containers/VMs rather than a supported node substrate.
 3. **Karmada as the seed fleet manager.** Deferred. It may distribute resources among mature Kubernetes cells later, but it adds a control plane and does not solve provider acquisition, spend, cache-aware live routing, or signed bootstrap.
 4. **Cluster API provider for every GPU supplier.** Rejected as seed scope. Existing providers may be reused, but building and operating missing CAPI providers delays revenue without replacing the product-specific fleet contract.
-5. **Direct provider API integration in the gateway.** Rejected because it leaks credentials/lifecycle into the request path, couples correctness to provider APIs, and makes multi-provider pooling a gateway rewrite.
+5. **Direct capacity-provider API integration in the gateway.** Rejected because it leaks credentials/lifecycle into the request path, couples correctness to provider APIs, and makes multi-provider pooling a gateway rewrite.
 6. **Disable KV/prefix cache for no-retention.** Rejected by product requirement and performance economics. Privacy is enforced through no durable traces, ephemeral storage, trust-domain salting, TTL/eviction, no logs/backups, and provider qualification.
 
 ## Consequences
 
 - positive: capacity and provider interruptions are isolated; Kubernetes is used selectively; gateway/public APIs remain simple; existing cells survive fleet-controller/PG outages; exact-release and cache affinity are explicit; spot cost is evaluated per successful token.
 - positive: no-retention customers keep normal generation and prefix-cache performance while durable payload capture remains suppressed.
-- negative: Grad must build an inference edge, cell agent/router, fleet controller, provider adapters, signed bootstrap, and cross-provider operations rather than rely on one cloud autoscaler.
+- negative: Grad must build an inference edge, cell agent/router, fleet operator, capacity-provider reconcilers, signed bootstrap, and cross-provider operations rather than rely on one cloud autoscaler.
 - negative: an extra AWS edge-to-cell hop and external network can affect TTFT/stream jitter; this must pass each speed gate.
 - negative: cache is lost on spot interruption, and post-output interruption cannot be transparently replayed.
-- migration: begin with fakes, one pinned vLLM single-node release, one native provider adapter, and one managed-Kubernetes provider. Publish `flex`/`standard` cells only after measured gates. Add provider breadth, multi-node topologies, `fast`, and `turbo` incrementally.
+- migration: begin with fakes/CRD PBT, one pinned vLLM single-node release, one native capacity-provider reconciler, and one managed-Kubernetes comparison. Publish `flex`/`standard` cells only after measured gates. Add provider breadth, multi-node topologies, `fast`, and `turbo` incrementally.
 - rollback: fence a provider/cell/target epoch in Redis, stop new acquisition, drain/terminate leases, and retain direct-provider gateway service. No customer model is silently moved elsewhere.
 
 ## Evidence

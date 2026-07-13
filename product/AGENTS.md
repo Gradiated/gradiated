@@ -8,7 +8,7 @@ This directory is the implementation contract for the revenue-first inference ga
 - Every organization has exactly one non-deletable seed Default workspace, hidden from setup until another workspace exists. Workspaces own inference keys, member access, model/privacy policy, optional advanced routes, budgets, concurrency, usage attribution, and observability settings.
 - API keys resolve one organization and one workspace. Organization, workspace, and key limits are checked together; workspace budgets never create an independent credit balance.
 - PostgreSQL is the durable financial source of truth. Credits are represented by an append-only, balanced ledger; corrections and refunds are compensating entries.
-- The Rust gateway has exactly one internal runtime dependency: Redis. It must never call PostgreSQL, the control API, or a second queue on the request path.
+- The Rust gateway has exactly one synchronous internal state/control dependency: Redis. Curated model APIs and the AWS inference edge are upstream serving dependencies; it must never call PostgreSQL, the control API, Kubernetes, a capacity-provider lifecycle API, or a second queue on the request path.
 - Redis admission is atomic. No upstream request starts unless authentication, status, reserve, concurrency increment, reservation lease, and billing-event append succeed together.
 - Money is integer micro-USD (`i64`/`bigint`) with checked arithmetic. Floating point is forbidden for prices, balances, reservations, and settlements.
 - Public inference wire compatibility is governed by OpenAPI/JSON Schema and conformance fixtures. Internal TypeScript/Rust messages are governed by Protobuf v3 and generated from `proto/`.
@@ -20,7 +20,8 @@ This directory is the implementation contract for the revenue-first inference ga
 - Capability, modality, tool, structured-output, reasoning, privacy, and context requirements are checked before provider spend. Unsupported behavior fails explicitly; no silent parameter drop, truncation, parser/plugin, response healing, or privacy downgrade.
 - Product Intelligence is the default; Private/No Retention and per-request tightening suppress payload persistence before Redis. Retention is not training consent.
 - Every generative Grad release uses active-sequence KV cache and cross-request prefix reuse, including Private/No Retention. Cache is salted by opaque workspace/channel/release/retention-class scope, remains ephemeral serving state, and never enters traces, Redis, PostgreSQL, S3, ClickHouse, backups, or logs.
-- AWS hosts the gateway, inference edge, fleet control, and authoritative data. Owned GPU execution runs in isolated external-provider cells; provider APIs and Kubernetes discovery never enter the gateway request path.
+- AWS hosts the gateway, inference edge, fleet control, and authoritative data. Owned GPU execution runs in isolated external-capacity-provider cells. Grad CRDs/controllers are rebuildable actuation/status projections of PostgreSQL intent/lease history; capacity-provider APIs and Kubernetes discovery never enter the gateway/edge request path.
+- Use `model provider`, `capacity provider`, and `distribution channel` explicitly. A direct model endpoint is not an inference cell or signed cell target.
 - Migration recommendations are evidence-level state machines. Replay/shadow/canary require defined authority and budgets, and no state transition automatically changes customer traffic.
 - Provider/model identity, effort/speed release, trace publishing/retention/delete, ClickHouse tenant projection/rebuild, canary/session/rollback, migration experiments, and failed-request credits require TS/Rust property coverage where each implementation participates.
 

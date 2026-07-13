@@ -22,7 +22,7 @@ Trace retention grants permission only for the customer's product features. It d
 
 Customers need exact direct provider access to migrate without a risky semantic cutover. That traffic is also the best workload-scoped baseline for recommending our inference. The differentiated product is not generic automatic provider routing; it is owned inference with understandable effort and speed controls plus evidence that a workload can move.
 
-The gateway must retain Redis as its only internal dependency, so trace capture cannot synchronously call S3/PostgreSQL/KMS. Billing events are correctness-critical while trace capture is valuable but shed-able. Trace ciphertext therefore uses a distinct Redis stream, separate quotas and workers; financial admission/settlement never depends on trace success.
+The gateway must retain Redis as its only synchronous internal state/control dependency, so trace capture cannot synchronously call S3/PostgreSQL/KMS. Billing events are correctness-critical while trace capture is valuable but shed-able. Trace ciphertext therefore uses a distinct Redis stream, separate quotas and workers; financial admission/settlement never depends on trace success.
 
 ## Alternatives considered
 

@@ -16,7 +16,7 @@ Seed endpoints:
 | `GET` | `/healthz` | Internal | Liveness only. |
 | `GET` | `/readyz` | Internal | Redis/script/config readiness; no provider call. |
 
-Authentication is `Authorization: Bearer <workspace-api-key>`. Anthropic clients may send their standard API-key header; normalize it only at the authentication edge. Reject query credentials. Accept optional `x-grad-provider` to disambiguate a bare direct alias, `x-grad-session-id` for stability, `x-grad-data-policy: no-retain` to tighten policy, and `x-grad-migration-experiment` to explicitly opt that request into a preconfigured live canary. Return request/canonical/actual model, provider, release, data-policy, experiment/bucket, trace ID when eligible, and price/usage metadata. Raw endpoint identity remains operator-only.
+Authentication is `Authorization: Bearer <workspace-api-key>`. Anthropic clients may send their standard API-key header; normalize it only at the authentication edge. Reject query credentials. Accept optional `x-grad-provider` to disambiguate a bare direct alias, `x-grad-session-id` for stability, `x-grad-data-policy: no-retain` to tighten policy, `x-grad-migration-experiment` to explicitly opt that request into a preconfigured live canary, and bounded `Idempotency-Key`/`x-grad-request-id` for admission/charge deduplication. Inference idempotency does not promise response-body replay: a duplicate active request returns the existing admission identity; a duplicate completed request returns a stable conflict/status reference unless that wire protocol later defines replay. Return request/canonical/actual model, model provider, release, data-policy, experiment/bucket, trace ID when eligible, and price/usage metadata. Raw endpoint/capacity-provider identity remains operator-only.
 
 OpenAPI/JSON Schema plus recorded conformance fixtures are authoritative for public JSON and streams. Provider-native skins remain separate protocol structs; do not force Google or Anthropic unions into OpenAI shapes. Implement an explicit support matrix per field/event. Preserve unknown response metadata only where safe; never silently accept a request feature that will be dropped.
 
@@ -27,7 +27,7 @@ Stable gateway errors have JSON fields `error.type`, `error.code`, `error.messag
 - `403 organization_suspended`, `organization_reconciling`, or `workspace_suspended`;
 - `503 admission_unavailable` when Redis cannot guarantee reservation.
 
-Protocol/capability errors are equally stable: `400 unsupported_parameter`, `unsupported_capability`, `invalid_tool_schema`, `context_too_large`, `incompatible_model`, `ambiguous_model`, or `provider_mismatch`; `404 model_not_found`/`provider_not_supported`/`grad_cell_not_available`; `429 route_capacity_exhausted`; `503 model_unavailable`, `route_unavailable`, or `upstream_midstream_error`. A request outside the selected model/release's tested capability/data-policy matrix fails before provider spend. The gateway does not silently remove fields, truncate content, invoke a parser/search plugin, repair output, cross a direct provider/model/version, or downgrade Grad effort/speed.
+Protocol/capability errors are equally stable: `400 unsupported_parameter`, `unsupported_capability`, `invalid_tool_schema`, `context_too_large`, `incompatible_model`, `ambiguous_model`, or `provider_mismatch`; `404 model_not_found`/`model_provider_not_supported` for absent catalog identity; `429 route_capacity_exhausted` when the exact eligible lane exists but temporary capacity is unavailable; `503 admission_unavailable`, `route_unavailable`, or `upstream_midstream_error` for serving/control infrastructure failure. A request outside the selected model/release's tested capability/data-policy matrix fails before provider spend. The gateway does not silently remove fields, truncate content, invoke a parser/search plugin, repair output, cross a direct provider/model/version, or downgrade Grad effort/speed.
 
 ### Public model semantics
 
@@ -100,18 +100,21 @@ All IDs are UUIDv7/ULID-style sortable opaque identifiers unless a library decis
 | `organizations` | customer/billing identity, slug, status, risk/billing mode, credit epoch/version, low-credit concurrency policy. |
 | `organization_memberships` | unique organization/user, org role/status; the last owner cannot be removed. |
 | `organization_invitations` | organization, email policy, org role, token digest, expiry, inviter; acceptance also creates Default-workspace access. |
-| `workspaces` | organization, name/slug, exactly-one Default flag, status, concurrency/output/reserve/privacy/model policy and config version. |
+| `workspaces` | organization, name/slug, exactly-one Default flag, status, concurrency/output/reserve/privacy/model policy, config version and monotonic opaque cache epoch rotated on deletion/privacy-boundary change. |
 | `workspace_memberships` | unique workspace/user, workspace role/status; user must also have active organization membership. |
 | `api_keys` | organization, workspace, optional creator/owner kind, public prefix, keyed digest, scopes, status, expiry, last-used; raw secret never stored. |
-| `provider_definitions` | curated namespace, adapter/profile version, lifecycle, training/retention policy and operator approval. |
+| `model_provider_definitions` | curated namespace, adapter/profile version, lifecycle, training/retention policy and operator approval. A compatibility view may preserve the old name during migration. |
 | `model_products` | Grad effort/speed identities, lifecycle, published envelope and active release. |
 | `model_definitions` | provider-qualified model/version or Grad checkpoint, owner/license, aliases, modalities, context/output limits, exact supported parameters, lifecycle and public metadata. |
 | `model_aliases` | unique alias, provider constraint, canonical model, activation/removal dates; ambiguous active bare aliases forbidden. |
-| `provider_endpoints` | exact provider/model or Grad release, encrypted secret reference, region/data policy, runtime/quantization, capacity, buy-price version and status. |
+| `direct_model_endpoints` | exact model provider/model, encrypted secret reference, region/data policy, capacity, buy-price version and status. Grad cells/targets have a separate fleet lifecycle. |
 | `qualification_evidence` | endpoint/model/scope, evidence kind, fixture/evaluation version, measured result, threshold, artifact reference, expiry. |
 | `route_releases` | immutable direct provider/model or Grad effort/speed identity, fixed sell prices, eligibility/SLO, attempt/session policy, release state and rollback target. |
 | `route_candidates` | release, concrete model, endpoint selector, priority/weight, capability/privacy/capacity constraints, required evidence. |
 | `route_rollouts` | release, deterministic bucket range, audience, start/halt state, SLO gates. |
+| `capacity_intents` / `capacity_leases` | durable desired pool generation, budget/owner epoch, external allocation identity/history, acquired cost, lifecycle and cleanup evidence; projected into rebuildable fleet CRDs. |
+| `distribution_channels` | downstream gateway contract, credentials reference, receivable/risk state, channel price book, model allowlist, concurrency/rate/capacity limits and reconciliation terms. |
+| `channel_receivable_transactions` | unique channel usage/revenue/credit/invoice/adjustment business entries; separate from customer organization credit. |
 | `trace_records` | organization/workspace/request, data mode, capture status, encrypted S3 reference, per-trace wrapped-key state, byte/content classes, retention deadline, deletion/export/ClickHouse projection state; no raw payload. |
 | `trace_access_grants` | one trace/workspace/user/action, nonce digest, issued/expiry/consumed state and audit request; short-lived, single-use, never a bearer URL to S3. |
 | `trace_analytics_outbox` | authoritative usage/trace version, content-free typed projection payload, ClickHouse batch/deduplication/checkpoint state and retry/dead-letter metadata; pruned only after durable projection. |
@@ -167,7 +170,7 @@ proto/
     capacity.proto
 ```
 
-Important messages include `ApiKeyProjection`, `OrganizationBillingProjection`, `WorkspacePolicyProjection`, `ProviderDefinition`, `ModelProduct`, `ModelDefinition`, `ModelAlias`, `GradEffort`, `GradSpeed`, `DataMode`, `CapabilityRequirement`, `ProviderEndpointProjection`, `QualificationReference`, `RouteRelease`, `RouteCandidate`, `RouteDecision`, `ReleaseManifest`, `CellTarget`, `GenerateRequest`, `GenerateEvent`, `CapacityIntent`, `CapacityLease`, `CellHeartbeat`, `TraceEnvelope`, `TraceCaptureEvent`, `WorkloadProfile`, `MigrationCandidate`, `MigrationExperiment`, `MigrationRecommendation`, `LimitWindow`, `PriceBook`, `Reservation`, `ReservationEvent`, `SettlementEvent`, `FailedRequestCreditEvent`, `ProjectionCommand`, and `ReconciliationCheckpoint`.
+Important messages include `ApiKeyProjection`, `OrganizationBillingProjection`, `WorkspacePolicyProjection`, `ChannelAccountProjection`, `ModelProviderDefinition`, `ModelProduct`, `ModelDefinition`, `ModelAlias`, `GradEffort`, `GradSpeed`, `DataMode`, `CapabilityRequirement`, `DirectModelEndpointProjection`, `QualificationReference`, `RouteRelease`, `RouteCandidate`, `RouteDecision`, `ReleaseManifest`, `CellTarget`, `GenerateRequest`, `GenerateEvent`, `CapacityIntent`, `CapacityLease`, `CapacityPoolSpec`, `CapacityAllocationSpec`, `CapacityAllocationStatus`, `InferenceCellStatus`, `CellHeartbeat`, `TraceEnvelope`, `TraceCaptureEvent`, `WorkloadProfile`, `MigrationCandidate`, `MigrationExperiment`, `MigrationRecommendation`, `LimitWindow`, `PriceBook`, `Reservation`, `ReservationEvent`, `SettlementEvent`, `ChannelSettlementEvent`, `FailedRequestCreditEvent`, `ProjectionCommand`, and `ReconciliationCheckpoint`.
 
 Rules:
 
@@ -178,6 +181,7 @@ Rules:
 - Events carry `event_id`, `organization_id`, `workspace_id`, `api_key_id`, `request_id`, `billing_epoch`, `sequence`, `schema_version`, `occurred_at`, and idempotency/business keys.
 - Protobuf payloads in Redis Streams are binary/base64 or a documented binary-safe field; stream envelope fields remain inspectable.
 - Gateway-to-inference messages carry exact release digest, deadlines, canonical input, capability/data mode, opaque billing principal and opaque cache scope. Provider allocation IDs, credentials, bids and Kubernetes objects are forbidden from that serving contract.
+- Shared fleet Protobuf is canonical for Grad domain fields. CRD JSON schemas/types are generated from or checked against that contract, and CI fails on stale Rust/TypeScript/CRD output. Kubernetes metadata/spec/status conventions remain CRD-specific rather than leaking into the serving protocol.
 - `GenerateEvent` sequence and cumulative usage are monotonic. A retry after output is forbidden; pre-output retries preserve exact release/effort/speed/data policy.
 
 Generation:

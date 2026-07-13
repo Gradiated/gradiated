@@ -35,7 +35,7 @@ AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/
 ### WP-00 — Monorepo, contracts, test substrate
 
 - Scope: `product/package.json`, pnpm workspace/config, Cargo workspace, `proto/**`, `schemas/**`, `packages/contracts/**`, `packages/testkit/**`, Rust testkit/contracts crates, product test/build scripts. Root Compose/mprocs, `grad`, Terraform, charts, and deployment workflows belong to infrastructure I-00/I-05/I-06/I-09.
-- Deliver: pinned toolchains; Vite/Hono/Rust shells; PostgreSQL/ClickHouse/Valkey/S3 test substrate; OpenAI/Anthropic/Google/owned fakes; Protobuf generation; public protocol fixtures; provider/model alias, Grad effort/speed, data mode, trace analytics/object and migration contracts; Vitest/fast-check/nextest/proptest; cross-language replay. Coordinate local containers/workflows with I-00/I-09.
+- Deliver: pinned toolchains; Vite/Hono/Rust shells; PostgreSQL/ClickHouse/Valkey/S3/Kind test substrate; OpenAI/Anthropic/Google/owned and capacity-provider fakes; Protobuf plus `fleet.grad.dev/v1alpha1` CRD generation/sync checks; public protocol fixtures; model-provider/alias, Grad effort/speed, data mode, trace analytics/object, channel receivable and migration contracts; Vitest/fast-check/nextest/proptest; cross-language/controller replay. Coordinate local containers/workflows with I-00/I-09.
 - Acceptance: all required commands in `TESTING_AND_CI.md` exist; generated drift is detected; a deliberately failing TS and Rust property is shown to shrink/replay in CI fixture tests; no paid secrets required.
 - Dependencies: none.
 - Blocks: all packages.
@@ -43,7 +43,7 @@ AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/
 ### WP-01 — PostgreSQL organization/workspace and ledger domain
 
 - Scope: `packages/db`, `packages/authz`, core part of `packages/billing`, migrations and domain/PBT tests.
-- Deliver: tenant/key/budget domain; curated provider/model/alias, Grad effort/speed, endpoint/qualification/release/rollout schema; data/retention policy; trace registry/wrapped-key/tombstone and analytics-outbox/checkpoint schema; workload/migration/experiment schema; immutable prices; top-up/payment/ledger/balance; usage/correction/outbox/audit repositories and role policy.
+- Deliver: tenant/key/budget domain; curated model-provider/model/alias, direct-endpoint and Grad effort/speed/qualification/release/rollout schema; capacity intent/lease history; distribution-channel contract/receivable accounting; data/retention policy; trace registry/wrapped-key/tombstone and analytics-outbox/checkpoint schema; workload/migration/experiment schema; immutable prices; top-up/payment/ledger/balance; usage/correction/outbox/audit repositories and role policy.
 - Acceptance: migration up/down policy; exactly one non-deletable Default workspace per organization; workspace membership/key organization consistency; constraints prevent imbalance/duplicate effect; fast-check covers ledger/authorization; no tenant query without organization and required workspace scope.
 - Dependencies: WP-00.
 
@@ -66,7 +66,7 @@ AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/
 
 - Scope: `gateway-admission`, generated contracts integration, Redis scripts/functions, gateway lifecycle hooks, Rust PBT.
 - Deliver: existing atomic admission plus canonical provider/model or Grad effort/speed/data-policy checks, fixed-release reserve, experiment cap for live canaries, and billing-stream priority over trace ingestion.
-- Acceptance: proptest-state-machine covers all billing commands/invariants; real Redis cross-workspace concurrency tests prove no shared-credit overspend and all nested caps; stream append and mutations are atomic; gateway process has no internal client dependency except Redis.
+- Acceptance: proptest-state-machine covers all customer and distribution-channel billing commands/invariants; real Redis cross-workspace concurrency tests prove no shared-credit overspend and all nested caps; stream append and mutations are atomic; gateway has no synchronous internal state/control client except Redis.
 - Dependencies: WP-00 contract/test substrate; policy contract from WP-01/WP-03.
 - Blocks: provider dispatch.
 
@@ -85,13 +85,13 @@ AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/
 - Dependencies: WP-04, WP-05.
 - Delegation: split 06A catalog/qualification/release control plane and 06B Rust route/adapters only after one interface owner freezes Protobuf, Redis projection and qualification manifest schemas.
 
-### WP-06C — Owned inference edge, cells, runtime and fleet controller
+### WP-06C — Owned inference edge, cells, runtime and Kubernetes fleet operator
 
 - Scope: `apps/fleet-controller`, `services/inference-edge`, `services/cell-agent`, owned runtime adapters, fleet/cell Protobuf, signed manifests/targets, fake provider/cell simulator and PBT. Provider account/network/Terraform/Helm and paid qualification are coordinated infrastructure work in `MULTI_PROVIDER_GPU_FLEET.md`.
-- Deliver: AWS inference edge; direct-mTLS/outbound-relay cell transports; exact-release cell router; vLLM first runtime; always-on workspace/channel/release/retention-class salted KV/prefix cache; capacity intents/leases; provider adapter interface; spot drain/orphan/cost controls; target publication inputs.
-- Acceptance: gateway/edge/cell golden contracts; fleet and event state-machine PBT; controller/PG/provider API can be unavailable while existing cells serve; no provider API/Kubernetes discovery on the gateway path; no-retention produces cache hits but no trace payload; cross-scope cache reuse is impossible; abrupt preemption before/after first token has the frozen retry/settlement outcome; one native and one managed-Kubernetes provider class pass bounded qualification before production.
+- Deliver: AWS inference edge with two-AZ relay shards; exact-release cell router; vLLM first runtime; always-on workspace/channel/release/retention-class salted KV/prefix cache; PostgreSQL capacity intents/leases; `CapacityPool`/`CapacityAllocation`/`InferenceCell` CRDs; isolated Rust `kube` capacity-provider controllers; finalizer/orphan/rebuild/cost controls; independently signed target publication.
+- Acceptance: gateway/edge/cell/fleet golden contracts; CRD schema/generated drift checks; fleet/event state-machine PBT and Kind RBAC/admission/leader/finalizer tests; PG/Kubernetes/provider API can be unavailable while existing cells serve; no lifecycle/discovery API on the gateway/edge path; no-retention produces cache hits but no trace payload and deletion rotates cache epoch; abrupt preemption before/after first token has the frozen retry/settlement outcome; one native capacity-provider class passes before first production Grad supply and one managed-Kubernetes class passes before it is enabled.
 - Dependencies: WP-00, WP-04, WP-05, and WP-06 release schema. Fake edge/cell/runtime work can proceed with WP-06 against frozen manifests.
-- Delegation: split 06C-1 contracts/simulator, 06C-2 Rust edge, 06C-3 cell router/runtime/cache, and 06C-4 fleet controller/provider adapters only after one owner freezes event, lease and target epochs.
+- Delegation: split 06C-1 contracts/CRDs/simulator, 06C-2 Rust edge/relay, 06C-3 cell router/runtime/cache, 06C-4 planner/broker/target projector, and one 06C-5 package per isolated capacity-provider controller only after one owner freezes event, lease, owner and target epochs.
 
 ### WP-07 — Trace intelligence, ClickHouse analytics and migration engine
 
@@ -117,7 +117,7 @@ AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/
 ### WP-09 — OpenRouter provider and gateway distribution
 
 - Scope: `services/gateway` provider-facing profile, integration configs/fixtures, `product/evidence/integrations/**`, decision brief.
-- Deliver: maintain the source-backed feature decision brief; isolated provider model-list profile for owned/differentiated supply; Chat Completions/tools matrix; 24-hour staging soak under an explicit budget; early-429/keepalive/midstream behavior; uptime/TTFT/throughput/tool-quality/economics/capacity/receivable reconciliation evidence; Cloudflare/LiteLLM/Portkey/Kong/Vercel-compatible customer configs.
+- Deliver: maintain the source-backed feature decision brief; isolated provider model-list profile for owned/differentiated supply; PostgreSQL distribution-channel contract/receivable ledger and Redis `ChannelAccountProjection` admission; Chat Completions/tools matrix; 24-hour staging soak under an explicit budget; early-429/keepalive/midstream behavior; uptime/TTFT/throughput/tool-quality/economics/capacity/receivable reconciliation evidence; Cloudflare/LiteLLM/Portkey/Kong/Vercel-compatible customer configs.
 - Acceptance: source-dated requirement matrix; provider channel cannot touch direct-customer credit or credentials; measured protocol/uptime/TTFT/throughput/reconciliation evidence; positive differentiated economics; go/no-go recommendation with uncertainty; no application, terms acceptance, credential submission or publish action without human approval.
 - Dependencies: WP-05 through WP-08; documentation/config exploration can begin earlier.
 

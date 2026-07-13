@@ -1,4 +1,4 @@
-.PHONY: doctor validate-skills devex-check context claim-status status browser-sync browser-install sol-check fable-check
+.PHONY: doctor validate-skills devex-check start context claim-status status browser-sync browser-install sol-check fable-check
 
 doctor:
 	python3 tools/devex/doctor.py
@@ -8,6 +8,9 @@ validate-skills:
 
 devex-check:
 	python3 tools/devex/check.py
+
+start:
+	python3 tools/devex/start.py
 
 context:
 	python3 tools/devex/context.py

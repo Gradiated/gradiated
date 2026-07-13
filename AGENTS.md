@@ -5,7 +5,7 @@ This repository is the complete project state for the research and product-build
 ## Start here
 
 1. Read this file.
-2. Run `python3 tools/devex/context.py` for the compact reset pack.
+2. Run `python3 tools/devex/start.py` for the context pack and standard DevEx checks.
 3. Read the nearest nested instructions before touching a workstream:
    - `research/sol/AGENTS.md` for Inference Foundry.
    - `research/fable/CLAUDE.md` and `research/fable/README.md` for Sartor/Fable.
@@ -18,6 +18,7 @@ This repository is the complete project state for the research and product-build
 - Use GitHub Issues for canonical cross-agent work tracking and GitHub Projects for the active execution view.
 - Use `tasks/` for detailed local execution packets when an issue needs a reproducible experiment contract or offline handoff; link the issue and do not maintain a second status system.
 - Use `docs/CONTEXT_INDEX.md` and `research/README.md` as the orientation map; update them when adding a workstream or changing the resume contract.
+- Use `docs/ARCHITECTURE.md` and `docs/decisions/` for cross-agent product architecture decisions; do not encode durable interfaces only in chat or issue comments.
 - Put browser automation code and dependency declarations in `tools/browser/`.
 - Put ephemeral browser profiles, caches, and run logs under `.agents/runtime/`; never commit them.
 - Put decision-relevant browser captures and research outputs in the relevant `research/<workstream>/docs/` or `research/<workstream>/evidence/` directory.

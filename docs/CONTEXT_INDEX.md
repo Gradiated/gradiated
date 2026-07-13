@@ -7,7 +7,7 @@ This is the shortest reliable reset path for a new agent. GitHub Issues and Proj
 From the repository root:
 
 ```sh
-python3 tools/devex/context.py
+python3 tools/devex/start.py
 git status --short --branch
 ```
 

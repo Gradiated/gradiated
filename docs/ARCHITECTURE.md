@@ -1,0 +1,31 @@
+# Product architecture contract
+
+This file is the durable entry point for product architecture. Product source lives under the product workstream directory (currently `product/` when present); this document records boundaries and points to the decisions that explain them.
+
+## Rules for coherent parallel work
+
+- Every product change starts from a GitHub Issue with an explicit user outcome and acceptance check.
+- One agent owns a directory or interface at a time. Split work by module or artifact before parallelizing.
+- Public interfaces, schemas, persistence formats, and cross-service contracts require a decision record in `docs/decisions/` before implementation or in the same commit.
+- Prefer a small number of stable interfaces over agent-specific wrappers or duplicated abstractions.
+- Keep product code, tests, fixtures, prompts, and operational runbooks in the repository. Keep only credentials and private runtime state outside it.
+- A change is not complete until its tests, migration/rollback path, limitations, and handoff are recorded.
+
+## Decision record process
+
+Use [`docs/decisions/TEMPLATE.md`](decisions/TEMPLATE.md) for decisions that affect architecture, data, APIs, model/provider boundaries, security, or operations. Record rejected alternatives and a reversal trigger; this prevents later agents from reopening settled questions without new evidence.
+
+Research results inform architecture only through a linked, scope-matched artifact. Label whether the evidence is measured, analytical, vendor-reported, derived, inferred, or synthetic.
+
+## Current architecture map
+
+Keep this map short and update it when a product boundary changes:
+
+| Area | Canonical location | Contract / owner |
+| --- | --- | --- |
+| Product source | `product/` | Product workstream issue and local instructions |
+| Shared agent procedures | `.agents/skills/` | Root `AGENTS.md` and skill contracts |
+| Research workstreams | `research/` | [`research/README.md`](../research/README.md) |
+| Execution packets | `tasks/` | GitHub Issue + packet lifecycle |
+| GitHub automation | `tools/github/` | [`docs/GITHUB_OPERATING_SYSTEM.md`](GITHUB_OPERATING_SYSTEM.md) |
+| Runtime/browser tooling | `tools/browser/` and `.agents/runtime/` | Browser safety contract |

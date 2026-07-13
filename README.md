@@ -5,8 +5,7 @@ This repository is the durable project state for a startup built with Codex agen
 ## Start here
 
 ```sh
-python3 tools/devex/context.py
-python3 tools/devex/check.py
+python3 tools/devex/start.py
 ```
 
 Read [`AGENTS.md`](AGENTS.md) and [`docs/CONTEXT_INDEX.md`](docs/CONTEXT_INDEX.md) before taking work. Claim one GitHub Issue, confirm its Project status and owner, reserve a narrow file/artifact scope, and leave a task packet or durable report another agent can resume.
@@ -14,6 +13,7 @@ Read [`AGENTS.md`](AGENTS.md) and [`docs/CONTEXT_INDEX.md`](docs/CONTEXT_INDEX.m
 ## Repository map
 
 - [`research/README.md`](research/README.md) — research workstream map and evidence conventions.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — product architecture boundaries and decision-record contract.
 - [`research/sol/`](research/sol/) — Inference Foundry; read its `AGENTS.md`, `README.md`, and current handoff.
 - [`research/fable/`](research/fable/) — Sartor/Fable; read its `CLAUDE.md`, `README.md`, and current report.
 - [`tasks/`](tasks/) — detailed execution packets in `inbox/`, `active/`, and `done/`.

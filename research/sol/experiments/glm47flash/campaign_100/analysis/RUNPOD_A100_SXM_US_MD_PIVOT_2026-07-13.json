@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "question": "Does the separately eligible Secure US-MD-1 A100-SXM scheduler pool allocate after the exact US-KS-2 request was rejected before pod creation?",
+  "decision": "Run one final A100-SXM placement request in US-MD-1 under a new preregistration, after adding sanitized provider HTTP-error evidence capture.",
+  "retrieved_at": "2026-07-13T13:25:59.310085Z",
+  "claim_scope": "Provider placement and, only if a pod is created, the unchanged frozen stock-control experiment.",
+  "claim_non_scope": "A stock label is not a capacity guarantee; changing datacenter does not permit pooling performance samples across different hosts or accelerators.",
+  "prior_result": {
+    "experiment_id": "phase-b-stock-a100-sxm-secure-v3",
+    "data_center_id": "US-KS-2",
+    "result": "HTTP 500 before pod creation",
+    "pod_id": null,
+    "cost_usd": 0.0,
+    "orchestration_result_sha256": "2c6f33adb957a8cd9ffbceaf5bffb946ef752cf3097796a7c2d87cd858dee861",
+    "provider_events_sha256": "dbcf5b4d981e610a058864fd41af593988525f4c14ab259414e9e91a2523fed8",
+    "limitation": "The driver retained status 500 but not the response body."
+  },
+  "direct_api_measurements": {
+    "exact_query_at": "2026-07-13T13:25:58.436907Z",
+    "exact_query_sha256": "19adb5db71eccbac9be4633a58baa354275d7f891e0bda4a621c4cc87cdbc051",
+    "gpu_type_id": "NVIDIA A100-SXM4-80GB",
+    "data_center_id": "US-MD-1",
+    "gpu_count": 1,
+    "secure_cloud": true,
+    "total_disk_gb": 140,
+    "support_public_ip": true,
+    "allowed_cuda_versions": [
+      "13.0"
+    ],
+    "stock_status": "Medium",
+    "uninterruptible_price_usd_per_hour": 1.49,
+    "inventory_at": "2026-07-13T13:25:59.310085Z",
+    "inventory_http_status": 200,
+    "pod_count": 0,
+    "active_pod_ids": []
+  },
+  "candidate_change": {
+    "from_data_center_id": "US-KS-2",
+    "to_data_center_id": "US-MD-1",
+    "from_exact_stock_status_after_failure": "Low",
+    "to_exact_stock_status": "Medium",
+    "unchanged": [
+      "RunPod Secure non-interruptible Pod product",
+      "NVIDIA A100-SXM4-80GB",
+      "CUDA 13 filter",
+      "40 GB container plus 100 GB volume",
+      "exact pinned SGLang image digest and source",
+      "model and checkpoint revision",
+      "native-BF16 representation",
+      "stock no-cache FCFS configuration",
+      "frozen workload, quality screen, SLO, telemetry, and artifact contract"
+    ],
+    "additional_evidence_control": "The driver now hashes every HTTP error body and stores only allowlisted provider error fields and headers."
+  },
+  "why_not_unchanged_retry": "US-MD-1 is a distinct provider datacenter and scheduler pool with a separately measured exact stock status. The experiment is explicitly the second and final placement for the A100-SXM hypothesis.",
+  "evidence_classification": {
+    "prior_request_result": "measured direct provider API",
+    "current_availability": "measured direct provider API; ephemeral",
+    "placement_probability": "hypothesis",
+    "model_performance": "unmeasured"
+  },
+  "competing_explanations": [
+    "US-KS-2 may have raced from available to unavailable between query and POST.",
+    "The prior 500 could be a backend validation or internal error because its response body was not retained.",
+    "US-MD-1 Medium stock can still reject at POST; the stock endpoint is advisory rather than transactional.",
+    "If a pod creates but startup fails, cold image or checkpoint transfer can dominate before any model/runtime conclusion."
+  ],
+  "falsification_rule": "Any pre-allocation rejection, price above $1.49/hour, startup miss, frozen correctness/quality/SLO failure, artifact failure, or teardown verification failure ends this two-placement A100-SXM hypothesis; do not repeat either data center unchanged.",
+  "source_table": [
+    {
+      "url": "https://docs.runpod.io/api-reference/pods/POST/pods",
+      "title": "Create a new Pod",
+      "revision_or_publication_date": null,
+      "retrieval_date": "2026-07-13",
+      "evidence_type": "official provider API documentation"
+    },
+    {
+      "url": "https://graphql-spec.runpod.io/",
+      "title": "RunPod GraphQL API specification",
+      "revision_or_publication_date": "1.1.0",
+      "retrieval_date": "2026-07-13",
+      "evidence_type": "official provider schema"
+    }
+  ],
+  "next_action": "Seal a new prospective prediction, bind the refreshed Gate A and a new watchdog, preflight, then submit exactly one US-MD-1 request."
+}

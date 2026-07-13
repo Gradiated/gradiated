@@ -256,3 +256,27 @@ The schema-valid Community L40S/CUDA-13 request returned HTTP 500 before pod cre
 This is explicit provider evidence of no available instance for the exact Community L40S/CUDA-13 combination. It is not an invalid-request, image-syntax, account-restriction, or runtime failure. No pod was created and phase spend remains $0.00.
 
 Secure L40S independently reports Low stock at $0.99/hour. One Secure L40S/CUDA-13 request is selected as a concrete cloud-pool change with a maximum watchdog cost of $0.66. Gzip transport timestamps are fixed to zero so the payload identity is deterministic. No further RunPod placement retry is authorized after it.
+
+## Campaign-100 RunPod placement pivot — resumed after explicit user authorization
+
+The earlier `STOP_OR_PIVOT` checkpoint remains historically valid: both A100 PCIe cloud-class requests were rejected before allocation, so no stock baseline existed at that boundary. The user subsequently authorized a new RunPod placement pivot and autonomous continuation. This opens a new prospective lineage; it does not relabel either prior rejection.
+
+Direct authenticated checks at 13:19 UTC found zero Pods, 22 settled billing rows totaling `$4.944724685296023`, no account templates, and no account capacity reservations. RunPod's exact Secure availability query for one A100 SXM, CUDA 13, public IP, and 140 GB total disk identified `US-KS-2` and `US-MD-1` at `Low` stock and `$1.49/hour`. `US-KS-2` was selected as the single exact placement; the other observation is not an automatic retry authorization.
+
+The selected experiment is `phase-b-stock-a100-sxm-secure-v3`. It changes the provider SKU and scheduler pool from A100 PCIe to A100 SXM while keeping the exact model revision, native-BF16 representation, SGLang image/source, stock configuration, workload, quality screen, SLO, and artifact contract fixed. The request is explicitly non-interruptible after allocation, but this is not a claim of initial reserved capacity or image pre-pull; RunPod exposes neither a public Pod machine/cache selector nor a self-service reservation API for this account.
+
+Before allocation, the driver gained fail-closed binding for CUDA, datacenter, public-IP, and non-interruptible controls, plus immediate teardown when the provider-returned hourly rate exceeds the preregistered ceiling. Campaign tests pass `70/70`; GLM experiment tests pass `21/21`. The allocation cap is `$2.255`, the absolute deadline is 14:50 UTC, and the frozen contract requires telemetry, TTFT, token-level ITL/TPOT, throughput, queueing, failures, quality evidence, verified artifact hashing, DELETE, and GET 404.
+
+The exact `US-KS-2` POST returned HTTP 500 in 1.459 seconds before a pod ID, machine, or hourly rate was assigned. Cost is therefore `$0`; deletion is not applicable because no resource existed. A direct post-request audit found zero Pods, the same 22 billing rows, and the same `$4.944724685296023` settled account total. The driver version retained the status but not the sanitized error body, so the classification is placement rejection rather than a more specific provider cause.
+
+An immediate exact-query recheck still labeled `US-KS-2` Low but now labeled the independently observed `US-MD-1` pool Medium at `$1.49/hour`. This demonstrates that the GraphQL stock label is not an allocation guarantee. Under the two-placement campaign rule, `US-KS-2` is exhausted; one new `US-MD-1` preregistration is admissible only after adding sanitized HTTP-error capture. It is a changed datacenter/scheduler pool, not an unchanged retry.
+
+The separately preregistered `US-MD-1` request also returned HTTP 500 before pod creation, in 1.419 seconds. The hardened driver hashed the 172-byte response as `887f9a284d2cff925262b0628b07915dabc7bcaf72a3847cbef13223dfab6a46` and retained only safe provider fields. The body reports an internal RunPod deployment-response parsing failure (`invalid character 'I' looking for beginning of value`), not model/runtime, quality, or SLO evidence. No pod existed, cost was `$0`, and teardown is not applicable.
+
+Final direct checks at 13:30 UTC found zero Pods and the unchanged 22 billing rows totaling `$4.944724685296023`. All four campaign Phase-B POSTs added `$0`; campaign-additional spend remains the conservative `$0.273464527` legacy L40S charge, leaving `$99.726535473` unspent.
+
+### Resumed campaign decision: STOP_OR_PIVOT
+
+Gate B remains empty. Both exact A100-SXM datacenter pools are exhausted; the account has no reservation, API-visible deploy queue, template, or cached-image host selector; and another cold H100 or best-effort A100 request would repeat an already measured provisioning failure mode. The campaign therefore stops without a throughput, quality, SLO-goodput, cost-per-token, tuned, AWQ, provider, memory-hierarchy, or hardware claim.
+
+The only admissible next experiment requires an external state change: a documented reservation or API-visible deployment queue on an 80 GB NVIDIA host with the exact image confirmed ready. Then run the same frozen stock harness once and, only after a pass, the matched tuned control on the same machine. The machine-readable resumed decision is `campaign_100/DECISION_RESUMED_2026-07-13.json`.

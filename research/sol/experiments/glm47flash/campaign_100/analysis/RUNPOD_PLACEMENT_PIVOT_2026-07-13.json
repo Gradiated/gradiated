@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "question": "What is the cheapest materially changed RunPod placement that can falsify the frozen native-BF16 stock-control hypothesis after both A100 PCIe cloud-class requests were rejected before allocation?",
+  "decision": "Use one Secure, non-interruptible NVIDIA A100-SXM4-80GB request constrained to the two data centers that the exact live CUDA-13, 140-GB-disk query currently reports as eligible.",
+  "claim_scope": "RunPod placement selection only; no model compatibility, performance, quality, SLO, or economic advantage is claimed.",
+  "claim_non_scope": "The availability signal is not a capacity reservation, and no public Pod API mechanism was found that guarantees a pre-pulled image or a specific tenant machine before allocation.",
+  "retrieved_at": "2026-07-13T13:15:12Z",
+  "user_authorization": {
+    "type": "explicit_resume_after_stop_or_pivot",
+    "instruction": "continue with this; test that on RunPod; use best judgement",
+    "effect": "opens a new placement-pivot lineage without rewriting the prior STOP_OR_PIVOT checkpoint"
+  },
+  "direct_api_measurements": {
+    "rest_inventory": {
+      "http_status": 200,
+      "pod_count": 0,
+      "active_pod_ids": []
+    },
+    "rest_billing": {
+      "http_status": 200,
+      "row_count": 22,
+      "provider_settled_total_usd": 4.944724685296023
+    },
+    "rest_templates": {
+      "http_status": 200,
+      "template_count": 0
+    },
+    "graphql_reservations": {
+      "http_status": 200,
+      "reservation_count": 0
+    },
+    "openapi": {
+      "url": "https://rest.runpod.io/v1/openapi.json",
+      "sha256": "1da83b045d6e4c9980d118a853dc16b788b8862280b3361b847f05ca2738cd84",
+      "pod_create_supports": [
+        "allowedCudaVersions",
+        "cloudType",
+        "dataCenterIds",
+        "dataCenterPriority",
+        "gpuTypeIds",
+        "gpuTypePriority",
+        "interruptible"
+      ]
+    },
+    "aggregate_secure_gpu_query": {
+      "gpu_type_id": "NVIDIA A100-SXM4-80GB",
+      "memory_gb": 80,
+      "stock_status": "Medium",
+      "uninterruptible_price_usd_per_hour": 1.49
+    },
+    "exact_constraint_query": {
+      "gpu_count": 1,
+      "secure_cloud": true,
+      "total_disk_gb": 140,
+      "support_public_ip": true,
+      "allowed_cuda_versions": [
+        "13.0"
+      ],
+      "eligible_data_centers": [
+        {
+          "id": "US-KS-2",
+          "stock_status": "Low",
+          "uninterruptible_price_usd_per_hour": 1.49
+        },
+        {
+          "id": "US-MD-1",
+          "stock_status": "Low",
+          "uninterruptible_price_usd_per_hour": 1.49
+        }
+      ],
+      "rejected_by_exact_query": [
+        "EUR-IS-1",
+        "US-MO-1"
+      ]
+    },
+    "runpodctl": {
+      "version": "2.6.1-32e9aec",
+      "command": "runpodctl datacenter list --output=json",
+      "observed_a100_sxm_low_stock_data_centers_before_exact_filter": [
+        "EUR-IS-1",
+        "US-KS-2",
+        "US-MD-1",
+        "US-MO-1"
+      ]
+    }
+  },
+  "evidence_classification": {
+    "account_inventory_billing_templates": "measured direct authenticated provider API",
+    "gpu_and_data_center_availability": "measured direct authenticated provider GraphQL/CLI API; ephemeral provider state",
+    "on_demand_semantics": "vendor documentation",
+    "no_public_reserved_capacity_or_prepull_selector": "negative documentation and API-schema finding",
+    "future_model_result": "hypothesis only"
+  },
+  "source_table": [
+    {
+      "url": "https://docs.runpod.io/api-reference/pods/POST/pods",
+      "title": "Create a new Pod",
+      "revision_or_publication_date": null,
+      "retrieval_date": "2026-07-13",
+      "evidence_type": "official vendor API documentation"
+    },
+    {
+      "url": "https://docs.runpod.io/sdks/graphql/manage-pods",
+      "title": "Manage Pods",
+      "revision_or_publication_date": null,
+      "retrieval_date": "2026-07-13",
+      "evidence_type": "official vendor GraphQL documentation"
+    },
+    {
+      "url": "https://docs.runpod.io/runpodctl/reference/runpodctl-datacenter",
+      "title": "runpodctl datacenter",
+      "revision_or_publication_date": null,
+      "retrieval_date": "2026-07-13",
+      "evidence_type": "official vendor CLI documentation"
+    },
+    {
+      "url": "https://github.com/runpod/runpodctl",
+      "title": "RunPod runpodctl",
+      "revision_or_publication_date": "32e9aec",
+      "retrieval_date": "2026-07-13",
+      "evidence_type": "official vendor source and release binary"
+    },
+    {
+      "url": "https://docs.runpod.io/serverless/endpoints/model-caching",
+      "title": "Cached models",
+      "revision_or_publication_date": null,
+      "retrieval_date": "2026-07-13",
+      "evidence_type": "official vendor documentation; serverless-only cache mechanism"
+    }
+  ],
+  "candidate_change": {
+    "from": {
+      "gpu_type_id": "NVIDIA A100 80GB PCIe",
+      "cloud_class": "SECURE",
+      "data_center_ids": "provider-selected across all",
+      "result": "HTTP 500 before pod creation"
+    },
+    "to": {
+      "gpu_type_id": "NVIDIA A100-SXM4-80GB",
+      "cloud_class": "SECURE",
+      "data_center_ids": [
+        "US-KS-2"
+      ],
+      "data_center_priority": "availability",
+      "allowed_cuda_versions": [
+        "13.0"
+      ],
+      "interruptible": false
+    },
+    "causal_change": "different 80 GB accelerator SKU plus exact live data-center and CUDA eligibility constraints; frozen model, image, harness, workload, quality policy, and SLO remain unchanged",
+    "unselected_positive_alternate": "US-MD-1 remains an availability observation, not an authorized automatic retry"
+  },
+  "competing_explanations_and_limitations": [
+    "Aggregate Medium stock can collapse to Low or None under exact disk, CUDA, public-IP, and data-center constraints.",
+    "A successful allocation would show placement feasibility, not that the image was already cached.",
+    "A startup miss can still be caused by image pull or model download rather than model/runtime incompatibility.",
+    "A100 SXM changes memory bandwidth relative to A100 PCIe, so a later serving comparison must identify exact hardware and cannot pool their performance samples."
+  ],
+  "falsification_rule": "If this exact request is rejected before allocation, reaches no artifact endpoint by the preregistered startup deadline, or fails the frozen compatibility/quality/SLO/artifact contract, classify the failure at its observed boundary and do not repeat the placement unchanged.",
+  "next_action": "Seal a prospective prediction and preregistration, run offline preflight, then submit exactly one request."
+}

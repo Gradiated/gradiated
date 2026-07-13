@@ -2,7 +2,7 @@
   "schema_version": 1,
   "gate": "A",
   "status": "passed",
-  "signed_off_at": "2026-07-13T12:59:00Z",
+  "signed_off_at": "2026-07-13T13:25:39Z",
   "signed_off_by": "codex_research_coordinator",
   "scope": "GLM-4.7-Flash campaign contracts, workload, quality, evidence validation, budget admission, watchdog, and Phase-B stock-control harness",
   "content_identities": {
@@ -15,9 +15,9 @@
     "quality_manifest_sha256": "c798564bee69f4f7459154f754403b17e5f28f9ebc48cce43707cea7b6af6575",
     "quality_bundle_sha256": "0a7ba38e9cd5b627381e59194f3ab5df8e402995b8e0424869ae34a97a077041",
     "phase_b_remote_harness_sha256": "9a87d9afd99a9b20d5edaf4b3499950e3aa201f98008344d198f6f8e2639a47a",
-    "phase_b_orchestrator_sha256": "6248e01d280485d1fa1cf10a97f9ff01f0011fac95446e9e7250535d8fd8bb29",
+    "phase_b_orchestrator_sha256": "e4709ab233e72fbb2b83b5232bbe6197c04039bcd9db54126f632d28b5f9c82d",
     "phase_b_artifact_builder_sha256": "2d6a50addd9dec39a88502c630193555376748051642481a524bb1d8a52fbcd1",
-    "phase_b_runpod_driver_sha256": "b738e92040f6cbeaac5bc87d2a47362f5ebad298ff56b64547c1de3ad93b41be",
+    "phase_b_runpod_driver_sha256": "51467b0febd5a9b2ddcf8971a15ee2f75c3f40886c46fca4a50f21472cf1ca7a",
     "phase_a_ranking_prediction_sha256": "7037228a0376db7c62800888d3252fd5117e5ac0906428cfd0998ccc86bf01cc",
     "phase_b_a100_prediction_sha256": "7525be7fd5e6bd388f9c0034b8931bcc0a33ac19aabf2546ee09ca8649660314",
     "plan_identity_migration_sha256": "2dfe5360e11d571d7a14bd6951b0e2decc4e5cfdd2663661c1016387b7deee08",
@@ -26,7 +26,7 @@
   "verification": {
     "campaign_tests": {
       "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s campaign_100/tests -v",
-      "tests_run": 68,
+      "tests_run": 71,
       "failures": 0,
       "errors": 0,
       "result": "pass"

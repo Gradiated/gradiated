@@ -44,6 +44,21 @@ def load_json(path):
     return json.loads(Path(path).read_text())
 
 
+def safe_provider_error_body(raw_body):
+    try:
+        decoded = json.loads(raw_body)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    if not isinstance(decoded, dict):
+        return None
+    allowed = {}
+    for key in ("error", "status", "message", "code", "requestId", "request_id"):
+        value = decoded.get(key)
+        if isinstance(value, (str, int, float, bool)) or value is None and key in decoded:
+            allowed[key] = value
+    return allowed or None
+
+
 def frozen_archive_b64(directory):
     directory = Path(directory)
     manifest = load_json(directory / "FROZEN_MANIFEST.json")
@@ -67,20 +82,21 @@ def frozen_archive_b64(directory):
 
 def build_request(preregistration, experiment_spec_sha256, deadline_epoch):
     remote_seconds = preregistration["timeouts"]["remote_command_seconds"]
+    provider_request = preregistration["provider_request"]
     script_b64 = base64.b64encode((HERE / "remote_baseline.sh").read_bytes()).decode()
     command = (
         'printf %s "$SCRIPT_B64" | base64 -d > /tmp/campaign-100-phase-b.sh; '
         "chmod 700 /tmp/campaign-100-phase-b.sh; "
         f"timeout --signal=TERM --kill-after=120 {remote_seconds} /tmp/campaign-100-phase-b.sh"
     )
-    return {
-        "name": preregistration["provider_request"]["name"],
+    request = {
+        "name": provider_request["name"],
         "imageName": IMAGE,
         "computeType": "GPU",
-        "gpuTypeIds": [preregistration["provider_request"].get("gpu_type_id", GPU_TYPE)],
+        "gpuTypeIds": [provider_request.get("gpu_type_id", GPU_TYPE)],
         "gpuTypePriority": "availability",
         "gpuCount": 1,
-        "cloudType": preregistration["provider_request"]["cloud_class"],
+        "cloudType": provider_request["cloud_class"],
         "containerDiskInGb": 40,
         "volumeInGb": 100,
         "volumeMountPath": "/workspace",
@@ -95,6 +111,17 @@ def build_request(preregistration, experiment_spec_sha256, deadline_epoch):
             "CAMPAIGN_DEADLINE_EPOCH": str(deadline_epoch),
         },
     }
+    optional_provider_fields = {
+        "allowed_cuda_versions": "allowedCudaVersions",
+        "data_center_ids": "dataCenterIds",
+        "data_center_priority": "dataCenterPriority",
+        "interruptible": "interruptible",
+        "support_public_ip": "supportPublicIp",
+    }
+    for source, destination in optional_provider_fields.items():
+        if source in provider_request:
+            request[destination] = provider_request[source]
+    return request
 
 
 class RunPodProvider:
@@ -133,6 +160,22 @@ class RunPodProvider:
                 body = response.read()
                 return response.status, json.loads(body) if body else None
         except urllib.error.HTTPError as error:
+            raw_body = error.read(64 * 1024)
+            safe_headers = {}
+            for name in ("content-type", "content-length", "date", "x-request-id", "request-id"):
+                value = error.headers.get(name) if error.headers is not None else None
+                if value is not None:
+                    safe_headers[name] = value
+            self._emit(
+                "provider_http_error",
+                method=method,
+                path=path,
+                http_status=error.code,
+                response_headers=safe_headers,
+                response_body_bytes=len(raw_body),
+                response_body_sha256=hashlib.sha256(raw_body).hexdigest(),
+                safe_response_body=safe_provider_error_body(raw_body),
+            )
             if path.startswith("/pods/") and error.code == 404:
                 if method == "GET":
                     raise ProviderNotFound(path) from None

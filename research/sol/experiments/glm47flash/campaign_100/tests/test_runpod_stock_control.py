@@ -3,13 +3,21 @@ import io
 import json
 import sys
 import tarfile
+import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "phase_b"))
-from runpod_stock_control import build_request, frozen_archive_b64  # noqa: E402
+from runpod_stock_control import (  # noqa: E402
+    RunPodError,
+    RunPodProvider,
+    build_request,
+    frozen_archive_b64,
+)
 
 
 class RunPodStockControlTests(unittest.TestCase):
@@ -58,6 +66,63 @@ class RunPodStockControlTests(unittest.TestCase):
         )
         self.assertEqual(request["gpuTypeIds"], ["NVIDIA A100 80GB PCIe"])
         self.assertEqual(request["cloudType"], "SECURE")
+
+    def test_changed_sxm_placement_binds_cuda_datacenters_and_ondemand_mode(self):
+        request = build_request(
+            {
+                "provider_request": {
+                    "name": "phase-b-stock-a100-sxm-secure-test",
+                    "gpu_type_id": "NVIDIA A100-SXM4-80GB",
+                    "cloud_class": "SECURE",
+                    "allowed_cuda_versions": ["13.0"],
+                    "data_center_ids": ["US-KS-2"],
+                    "data_center_priority": "availability",
+                    "interruptible": False,
+                    "support_public_ip": True,
+                },
+                "timeouts": {"remote_command_seconds": 5100},
+            },
+            "c" * 64,
+            1783952000,
+        )
+        self.assertEqual(request["gpuTypeIds"], ["NVIDIA A100-SXM4-80GB"])
+        self.assertEqual(request["cloudType"], "SECURE")
+        self.assertEqual(request["allowedCudaVersions"], ["13.0"])
+        self.assertEqual(request["dataCenterIds"], ["US-KS-2"])
+        self.assertEqual(request["dataCenterPriority"], "availability")
+        self.assertIs(request["interruptible"], False)
+        self.assertIs(request["supportPublicIp"], True)
+
+    def test_provider_http_error_event_is_allowlisted_and_credential_safe(self):
+        with tempfile.TemporaryDirectory() as directory:
+            event_log = Path(directory) / "provider-events.jsonl"
+            provider = RunPodProvider(
+                event_log=event_log,
+                deadline_epoch=1783952000,
+                startup_timeout_seconds=900,
+            )
+            error = urllib.error.HTTPError(
+                "https://rest.runpod.io/v1/pods",
+                500,
+                "server error",
+                {"content-type": "application/json", "x-request-id": "req-test"},
+                io.BytesIO(
+                    b'{"error":"create pod: no capacity","status":500,'
+                    b'"token":"must-not-be-retained"}'
+                ),
+            )
+            with patch("urllib.request.urlopen", side_effect=error), self.assertRaises(
+                RunPodError
+            ):
+                provider._api("/pods", "POST", {"name": "test"})
+            event = json.loads(event_log.read_text())
+            self.assertEqual(event["event"], "provider_http_error")
+            self.assertEqual(event["http_status"], 500)
+            self.assertEqual(event["safe_response_body"], {
+                "error": "create pod: no capacity",
+                "status": 500,
+            })
+            self.assertNotIn("must-not-be-retained", event_log.read_text())
 
 
 if __name__ == "__main__":

@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "experiment_id": "phase-b-stock-a100-sxm-secure-us-md-v4",
+  "preregistered_at": "2026-07-13T13:27:00Z",
+  "phase": "B",
+  "placement_attempt": 2,
+  "causal_hypothesis": "The changed Secure US-MD-1 A100-SXM 80 GB scheduler pool, currently Medium under the exact CUDA-13/public-IP/140-GB query, will allocate where Low-stock US-KS-2 rejected and will let the frozen native-BF16 stock control reach valid compatibility, quality, c1, and c8 service measurements.",
+  "falsification_value": "Any pre-allocation rejection or failure at the startup, compatibility, streaming observability, quality, SLO, artifact, or teardown boundary ends the two-placement A100-SXM hypothesis before tuned, c32, or AWQ spend.",
+  "stock_control": {
+    "model": "zai-org/GLM-4.7-Flash",
+    "model_revision": "75fce703a93da3705c4cf8d3caadbac1d1072c78",
+    "representation": "native_bf16",
+    "runtime": "SGLang",
+    "runtime_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "image": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+    "configuration": "stock_no_cache_fcfs",
+    "radix_cache": "disabled",
+    "schedule_policy": "fcfs",
+    "mtp": "disabled",
+    "context_length": 65536,
+    "max_running_requests": 32
+  },
+  "stock_control_change_from_attempt_1": {
+    "changed_variable": "data_center_id",
+    "from": "US-KS-2",
+    "to": "US-MD-1",
+    "from_exact_stock_status_after_failure": "Low",
+    "to_exact_stock_status": "Medium",
+    "additional_evidence_control": "sanitized allowlisted HTTP-error body and header capture",
+    "model_runtime_workload_quality_slo_changed": false
+  },
+  "workload_geometry": {
+    "workload_sha256": "c974f23e460a863be37b3cc04df80fc9aff977e239a5c49225cd8c85f1bb3d55",
+    "tokenizer_bindings_sha256": "c5258d650227ab3c474f25218263c5ac1898011f55aecef16def5fe10cf7fa64",
+    "sampling": "temperature_0_top_p_1_seed_470100",
+    "sequential_profiles": [
+      {
+        "profile_id": "development_smoke",
+        "warmup_requests": 2,
+        "measured_requests": 5,
+        "max_concurrency": 1
+      },
+      {
+        "profile_id": "fixed_8k_1k_c1",
+        "warmup_requests": 1,
+        "measured_requests": 4,
+        "max_concurrency": 1
+      },
+      {
+        "profile_id": "fixed_8k_1k_c8",
+        "warmup_requests": 4,
+        "measured_requests": 16,
+        "max_concurrency": 8
+      }
+    ],
+    "total_measured_requests_if_all_prior_gates_pass": 25,
+    "stop_on_first_profile_failure": true,
+    "headline_c32_executed": false,
+    "holdout_executed": false
+  },
+  "quality_gate": {
+    "quality_sha256": "0a7ba38e9cd5b627381e59194f3ab5df8e402995b8e0424869ae34a97a077041",
+    "split": "development",
+    "capture": "exact executable fixtures plus raw runtime input-token logprobs",
+    "comparison": "stock responses self-paired only to validate the BF16 control and scorer",
+    "requirements": [
+      "all category captures succeed",
+      "teacher-forced NLL is recomputed from raw runtime logprobs",
+      "deterministic serving fixtures are internally consistent",
+      "no malformed tool or code evidence",
+      "self-score passes the frozen policy"
+    ]
+  },
+  "service_level_objective": {
+    "max_p95_ttft_ms": 10000,
+    "max_p95_token_level_itl_ms": 100,
+    "min_request_success_fraction": 0.99,
+    "silent_truncation_allowed": false,
+    "token_level_itl_observability_required": true
+  },
+  "provider_request": {
+    "name": "glm47flash-c100-b-stock-a100-sxm-us-md-v4-20260713",
+    "provider": "RunPod",
+    "cloud_class": "SECURE",
+    "gpu_type_id": "NVIDIA A100-SXM4-80GB",
+    "gpu_count": 1,
+    "data_center_ids": [
+      "US-MD-1"
+    ],
+    "data_center_priority": "availability",
+    "allowed_cuda_versions": [
+      "13.0"
+    ],
+    "interruptible": false,
+    "support_public_ip": true,
+    "exact_query_stock_status": "Medium",
+    "exact_query_uninterruptible_usd_per_hour": 1.49,
+    "admission_hourly_price_ceiling_usd": 1.49,
+    "container_disk_gb": 40,
+    "volume_gb": 100,
+    "public_artifact_port": 8000,
+    "capacity_semantics": "non-interruptible after allocation; not an initial-capacity reservation",
+    "image_cache_semantics": "exact digest pinned; no provider pre-pull claim"
+  },
+  "spend_cap": {
+    "campaign_additional_spend_before_usd": 0.273464527,
+    "phase_cumulative_cap_usd": 20.0,
+    "campaign_cap_usd": 100.0,
+    "maximum_deadline_seconds": 5400,
+    "hourly_price_ceiling_usd": 1.49,
+    "exact_gpu_deadline_exposure_usd": 2.235,
+    "disk_and_rounding_reserve_usd": 0.02,
+    "recorded_maximum_allocation_cost_usd": 2.255,
+    "maximum_projected_campaign_additional_spend_usd": 2.528464527
+  },
+  "timeouts": {
+    "provider_startup_seconds": 900,
+    "model_download_seconds": 1200,
+    "server_health_seconds": 900,
+    "per_profile_runner_seconds": 1800,
+    "profiler_seconds": 600,
+    "remote_command_seconds": 5100,
+    "absolute_allocation_seconds": 5400,
+    "absolute_deadline_utc": "2026-07-13T14:56:00Z"
+  },
+  "telemetry": {
+    "gpu_sample_cadence_seconds": 1,
+    "gpu_fields": [
+      "utilization",
+      "memory_utilization",
+      "vram_used",
+      "vram_total",
+      "power_draw",
+      "power_limit",
+      "temperature",
+      "sm_clock",
+      "memory_clock"
+    ],
+    "dcgm_when_available": true,
+    "scheduler_metrics_cadence_seconds": 1,
+    "capture_queue_and_batch_metrics": true,
+    "capture_startup_and_cache_allocation": true,
+    "bounded_post_workload_profiler": "one 8192-input/128-output request",
+    "provider_state_and_billing": true
+  },
+  "artifact_contract": {
+    "remote_archive": "phase-b-control.tar.gz",
+    "remote_sha256_sidecar": true,
+    "retrieve_and_verify_before_delete": true,
+    "internal_manifest_required": true,
+    "typed_request_outcomes_required": true,
+    "raw_quality_and_logprob_evidence_required": true,
+    "gpu_and_scheduler_telemetry_required": true,
+    "profiler_trace_required": true,
+    "provider_billing_required": true,
+    "independent_watchdog_log_required": true,
+    "delete_http_status_required": 204,
+    "post_delete_get_status_required": 404,
+    "frozen_artifact_validator_required": true
+  },
+  "kill_conditions": [
+    "The exact provider request is rejected before pod creation.",
+    "Returned hourly price exceeds $1.49; delete immediately.",
+    "No public artifact endpoint exists within 900 seconds.",
+    "The pinned model/runtime fails import, download identity, load, health, or correctness.",
+    "Any profile emits an error, truncation, unobservable ITL, or SLO failure.",
+    "Development quality capture or self-score fails.",
+    "Artifact retrieval/hash, deadline, deletion, or GET 404 verification fails."
+  ],
+  "next_step_rules": {
+    "on_valid_stock_pass": "Analyze the profiler and preregister the cheapest supported tuned-incumbent A/B on the exact same pod hardware; c32 remains conditional.",
+    "on_any_failure": "End the two-placement A100-SXM hypothesis and issue a campaign decision; neither US-KS-2 nor US-MD-1 may be repeated unchanged.",
+    "on_quality_failure": "Do not promote serving or economic claims."
+  },
+  "gate_a_manifest_sha256": "c3cdcbba9c3c7780d440bad1f4ca45e97ae2711753c196dbd32864aaa202e571",
+  "campaign_baseline_sha256": "93434ba515f9695725924ed041719e1cfe8d8348fb52a5eddc3060bb4c87d878",
+  "inventory_snapshot_sha256": "39996beb6f92f87565b1fb36824eea98d29f84d2cdefc1756b20a800f778d264",
+  "watchdog_contract_sha256": "e0c9785dca5933f2bbf2b6c378ac365f32e658cc9717726f7174ba315d31b1d5",
+  "prospective_prediction_sha256": "ab3b0ece2167873193e2b0cad8986f1e9e24e5d4c3240f5f49a9f25534c16b94",
+  "placement_analysis_sha256": "2c6142ba53d69d0e505645b876547097500cb00f892f93bf7710bfa3cd7fa941",
+  "remote_harness_sha256": "9a87d9afd99a9b20d5edaf4b3499950e3aa201f98008344d198f6f8e2639a47a",
+  "runpod_driver_sha256": "51467b0febd5a9b2ddcf8971a15ee2f75c3f40886c46fca4a50f21472cf1ca7a",
+  "claim_boundary": "This can establish only the second/final placement and unchanged stock compatibility, service, quality-screen, telemetry, and GPU-only control. It cannot establish a tuned, AWQ, provider, reservation, cache, co-design, or hardware advantage."
+}

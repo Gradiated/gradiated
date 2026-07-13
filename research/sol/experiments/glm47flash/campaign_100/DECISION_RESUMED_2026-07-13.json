@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "decided_at": "2026-07-13T13:31:00Z",
+  "decision": "STOP_OR_PIVOT",
+  "interpretation_labels": [
+    "HARDWARE_HYPOTHESIS_ONLY",
+    "PROVIDER_PLACEMENT_BLOCKED"
+  ],
+  "decision_scope": "Close the user-authorized RunPod placement-pivot branch. The campaign still cannot test matched stock, tuned, representation, quality, or co-design economics because no resumed Phase-B request created a pod.",
+  "rubric_trigger": "Gate B has no valid stock SLO-goodput point after four campaign Phase-B requests across two A100 80 GB provider SKUs and distinct cloud/datacenter pools. The two-placement A100-SXM hypothesis is exhausted, and no documented API reservation or cached-image Pod selector is available.",
+  "measured_results": [
+    "Authenticated RunPod REST inventory, billing, templates, create, and prior delete-verification paths work with the account API key.",
+    "The refreshed campaign suite passes 71/71 tests and the GLM experiment suite passes 21/21 tests.",
+    "Before the resumed branch, both Community and Secure A100 PCIe requests returned HTTP 500 before pod creation and added $0.",
+    "The exact Secure US-KS-2 A100-SXM request returned HTTP 500 before pod creation in 1.459 seconds and added $0.",
+    "The separately preregistered Secure US-MD-1 A100-SXM request returned HTTP 500 before pod creation in 1.419 seconds and added $0.",
+    "The US-MD-1 provider response was safely captured and hashed. Its allowlisted body reported an internal deployment-response parsing failure: invalid character 'I' looking for beginning of value.",
+    "RunPod exact availability labeled US-KS-2 Low even immediately after its rejected POST and labeled US-MD-1 Medium before its rejected POST. The stock endpoint was therefore not transactional placement evidence.",
+    "No account templates or capacity reservations exist; the public Pod schema exposes no machine or cached-image host selector.",
+    "Final direct inventory contains zero pods. Billing remains 22 rows and $4.944724685296023 provider-settled account lifetime spend.",
+    "Campaign-additional spend remains $0.273464527, entirely the conservative charge for the earlier interrupted L40S allocation. All four Phase-B requests added $0.",
+    "No valid BF16 throughput, TTFT, token-level ITL/TPOT, SLO-goodput, provisional quality, GPU-dollar-per-token, tuned-stack, AWQ, intervention, or hardware comparison exists."
+  ],
+  "analytical_estimates": [
+    "The prospective A100-SXM c8 point estimate was 275 conservative output tokens/second with a 150 to 450 interval; it remains unscored because neither placement created a pod.",
+    "The US-MD-1 allocation probability was estimated at 0.75 from a Medium exact stock label; the observed rejection shows that estimate was not calibrated to RunPod's backend deployment failure mode.",
+    "Published provider prices remain commercial anchors only and cannot support a matched cost claim."
+  ],
+  "vendor_claims": [
+    "RunPod documents non-interruptible Pods as dedicated after allocation, but this is not an initial-capacity reservation.",
+    "RunPod documents sales-arranged reserved clusters and a console-only Deploy When Available queue; neither is an immediate public direct-API Pod placement mechanism for this campaign.",
+    "RunPod documents Serverless cached models, but that product changes the serving and billing control and is not the frozen Pod stock harness."
+  ],
+  "claims_not_supported": [
+    "No quality-preserving inference cost improvement.",
+    "No tuned-incumbent or model-specific serving gain.",
+    "No AWQ compatibility, quality, throughput, or economic gain.",
+    "No Fireworks, Baseten, Cloudflare, or other provider performance comparison.",
+    "No memory-hierarchy or hardware co-design benefit.",
+    "No PROMOTE case for a larger campaign."
+  ],
+  "why_not_continue_spending": [
+    "Both exact A100-SXM datacenter placements are exhausted and may not be repeated unchanged.",
+    "The provider's internal parsing error occurs before any model or telemetry boundary, so changing model/runtime code cannot fix it.",
+    "Historical H100 requests repeatedly missed cold image readiness; another best-effort cold H100 request would violate the campaign's low-information retry rule.",
+    "The account has no reservation, template, persistent model cache, or API-selectable pre-pulled host that would create the required causal placement change.",
+    "Phase C and later work remain gated on a valid stock and tuned baseline; spending on AWQ or kernels now would not permit the requested matched economics conclusion."
+  ],
+  "single_next_experiment_after_external_state_change": {
+    "experiment": "Run the existing frozen 25-request native-BF16 stock harness once after RunPod provides a documented reservation or API-visible deploy queue on an 80 GB NVIDIA host with the exact image confirmed ready; run the matched tuned control on that same allocated machine only if stock passes.",
+    "required_external_change": "A transactional capacity mechanism or provider-confirmed reserved/cache-ready placement must exist. A new aggregate Low/Medium stock label is insufficient.",
+    "information_value": "This would isolate model/runtime/SLO behavior from the pre-allocation provider failures that currently dominate the campaign.",
+    "not_authorized_or_admissible_now": [
+      "another best-effort A100 PCIe, A100 SXM, or cold H100 request",
+      "reverse-engineering private console endpoints",
+      "building a Serverless handler or gateway product",
+      "claiming economics from vendor prices"
+    ]
+  },
+  "budget": {
+    "authorized_campaign_cap_usd": 100.0,
+    "campaign_additional_spend_usd": 0.273464527,
+    "phase_b_new_allocation_spend_usd": 0.0,
+    "unspent_authorization_usd": 99.726535473,
+    "provider_settled_account_lifetime_spend_usd": 4.944724685296023,
+    "conservative_account_lifetime_spend_usd": 5.153606501907302
+  },
+  "evidence_identities": {
+    "plan_sha256": "1477bf9065eac07ab5ceb10b2ba85e8f4ac618713e6ed3166237e2ff0ade9e05",
+    "gate_a_manifest_sha256": "c3cdcbba9c3c7780d440bad1f4ca45e97ae2711753c196dbd32864aaa202e571",
+    "campaign_baseline_sha256": "93434ba515f9695725924ed041719e1cfe8d8348fb52a5eddc3060bb4c87d878",
+    "reconciliation_sha256": "a6ef7def4110f572bd6c9136ea9c6039cfe7169ed00459000f7e9aa983d1376f",
+    "initial_stop_or_pivot_sha256": "c44e5e7e5acc8ae600622965f34768ea1ee6b752f419c05fa1be283fbc7741fa",
+    "US-KS-2_preregistration_sha256": "8d42f9d861bdb29287be1a3dd0f6e79354dd0b7cb61c5fc0990e9ba6303abafb",
+    "US-KS-2_result_sha256": "2c6f33adb957a8cd9ffbceaf5bffb946ef752cf3097796a7c2d87cd858dee861",
+    "US-MD-1_preregistration_sha256": "aa03e68171b87c005fb1da1f5633608ddde2d1ea00da20d29988d72404c0259f",
+    "US-MD-1_result_sha256": "be3df9778172d727ba39be01642890715ad777f7749eae3057b2ffaed22d22ad",
+    "US-MD-1_provider_events_sha256": "54762d997fd4c671bc80cdeeab00782e295ff61cd2da583cef81f6b1ad7e3962",
+    "US-MD-1_response_body_sha256": "887f9a284d2cff925262b0628b07915dabc7bcaf72a3847cbef13223dfab6a46"
+  }
+}

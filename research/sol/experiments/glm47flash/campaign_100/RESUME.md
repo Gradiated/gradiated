@@ -1,24 +1,13 @@
-# Campaign terminal state
+# Campaign terminal state after resumed RunPod test
 
 Decision: `STOP_OR_PIVOT`.
 
-Gate A passed, but Gate B did not. The Community and changed Secure A100 80 GB
-PCIe requests both returned RunPod HTTP 500 before pod creation. Both cost $0,
-the final inventory is empty, and the two-placement limit is exhausted. Do not
-cycle through more best-effort A100 variants or return to the repeatedly failed
-H100 placements.
+The prior 13:00 decision was reopened by explicit user authorization for a materially changed RunPod placement. Two separately preregistered Secure A100-SXM requests then targeted exact CUDA-13/disk-positive `US-KS-2` and `US-MD-1` pools. Both returned HTTP 500 before pod creation and added `$0`. The second safe response identified an internal RunPod deployment-response parsing failure.
 
-Campaign-additional spend is $0.273464527, entirely from the earlier interrupted
-L40S allocation. The two Phase-B requests added $0, leaving $99.726535473
-unspent. Conservative account lifetime spend is $5.153606502. The final baseline
-SHA-256 is `93434ba515f9695725924ed041719e1cfe8d8348fb52a5eddc3060bb4c87d878`.
+Final direct inventory contains zero Pods. Provider billing remains 22 rows and `$4.944724685296023`. Campaign-additional spend remains `$0.273464527`, leaving `$99.726535473` unspent. Gate A is content-addressed and passes 71/71 campaign tests plus 21/21 GLM tests, but Gate B has no valid stock throughput/SLO point.
 
-No valid stock throughput/SLO result exists, so tuned, AWQ, paired quality,
-custom-intervention, holdout, specificity, provider, and hardware claims remain
-closed. The decision record is `DECISION_2026-07-13.json`.
+Do not create another best-effort RunPod Pod. `US-KS-2` and `US-MD-1` are exhausted, and historical cold H100 placement retries remain forbidden. The only named continuation requires an external state change: a documented capacity reservation or API-visible deploy queue on an 80 GB NVIDIA host with the exact image confirmed ready. Reuse the frozen stock harness and run a matched tuned control on the same machine only if stock passes.
 
-The only named continuation is a placement pivot under fresh authorization: run
-the same frozen 25-request stock BF16 harness once on a guaranteed or
-provider-reserved 80 GB NVIDIA placement with the exact image pre-pulled. Run a
-matched tuned control on that same machine only if stock passes. Do not build the
-gateway.
+Decision artifact: `DECISION_RESUMED_2026-07-13.json` (`456f73470caf30cc74512ceb400ba620bdfb79891fb90b4442391da0011bdf94`).
+
+No gateway product work is authorized.

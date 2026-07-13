@@ -116,6 +116,18 @@ class PhaseBOrchestrator:
             pod_id = created.get("id")
             if not pod_id:
                 raise ControlError("provider create response omitted pod id")
+            try:
+                returned_hourly_rate = Decimal(str(created.get("costPerHr")))
+                admitted_hourly_rate = Decimal(str(admission["hourly_price_usd"]))
+            except (InvalidOperation, KeyError, TypeError) as error:
+                raise ControlError("provider create response omitted a valid hourly rate") from error
+            if returned_hourly_rate <= 0:
+                raise ControlError("provider create response returned a non-positive hourly rate")
+            if returned_hourly_rate > admitted_hourly_rate:
+                raise ControlError(
+                    "provider hourly rate exceeds the preregistered admission ceiling: "
+                    f"{returned_hourly_rate} > {admitted_hourly_rate}"
+                )
             self.provider.inventory()
             watchdog = self.watchdog_factory(watchdog_contract)
             watchdog.start(pod_id)

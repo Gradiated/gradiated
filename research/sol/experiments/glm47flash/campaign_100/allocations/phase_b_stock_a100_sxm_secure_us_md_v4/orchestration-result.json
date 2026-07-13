@@ -1,0 +1,14 @@
+{
+  "started_at": "2026-07-13T13:29:39.515808Z",
+  "experiment_spec_sha256": "aa03e68171b87c005fb1da1f5633608ddde2d1ea00da20d29988d72404c0259f",
+  "error": "ControlError: Phase B orchestration failed: RunPod POST /pods failed with HTTP 500",
+  "finished_at": "2026-07-13T13:29:40.934701Z",
+  "allocation_seconds": 1.4188645600006566,
+  "pod_id": null,
+  "hourly_rate_usd": null,
+  "provider_created_at": null,
+  "last_state": null,
+  "harvest": null,
+  "delete": null,
+  "exit_code": 1
+}

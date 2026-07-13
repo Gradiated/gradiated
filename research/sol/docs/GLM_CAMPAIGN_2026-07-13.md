@@ -49,6 +49,18 @@ The changed A40/A6000 availability request was also rejected before pod creation
 The prior HTTP 500s were not evidence-backed capacity results because their bodies were lost. Both payloads pass the live REST schema, but current GPU metadata shows A40 is Secure-only while the second request specified Community; Community A6000 currently has no quoted availability. L40S is the only queried 48 GB Ada type with explicit current Community stock, at $0.79/hour. A single schema-valid L40S/CUDA-13 request is selected, with sanitized HTTP error capture and gzip-compressed startup inputs. Pinned WNA16 linear and MoE Marlin declare Ampere-or-newer capability 8.0, so Ada 8.9 is supported.
 
 The Community L40S request returned and preserved the explicit body `create pod: There are no instances currently available`; no pod was created and spend was $0. One final Secure L40S request is justified by its separately reported Low stock at $0.99/hour. No further RunPod placement retry is authorized.
+
+## Resumed RunPod placement pivot
+
+The 13:05 UTC `STOP_OR_PIVOT` decision remains a preserved checkpoint. The user subsequently authorized a materially changed RunPod placement and continued evidence collection.
+
+The resumed experiment is one Secure `NVIDIA A100-SXM4-80GB` request in exact CUDA-13/disk-positive `US-KS-2`. Direct provider measurements before preregistration found zero Pods, no templates or capacity reservations, exact `Low` stock, and `$1.49/hour`. The model/runtime/workload/quality/SLO remain frozen. Non-interruptible compute is not being described as initial reserved capacity, and no image pre-pull is claimed.
+
+That exact request returned HTTP 500 before pod creation, added `$0`, and left inventory and the 22-row billing ledger unchanged. The same exact availability endpoint still reported `US-KS-2` Low after the rejection, while `US-MD-1` reported Medium at `$1.49/hour`; stock metadata is therefore not a placement guarantee. One separately preregistered `US-MD-1` request remains admissible as the second and final changed data-center placement for this A100-SXM hypothesis.
+
+The separately preregistered `US-MD-1` request also returned HTTP 500 before allocation. Sanitized evidence identifies a RunPod internal deployment-response parsing failure, not a model/runtime result. No pod was created, no deletion was required, and the request added `$0`. Final inventory is empty and provider billing remains 22 rows at `$4.944724685296023`.
+
+The resumed decision is `STOP_OR_PIVOT`. Gate B still has no valid stock result, both A100-SXM placements are exhausted, and no account reservation, public API deploy queue, or cached-image Pod selector provides a higher-information placement change. Resume only after such an external capacity mechanism exists; do not run another best-effort cold H100/A100 request or claim economics from vendor prices.
 # Phase 3 GPU loader evidence
 
 Attempt 3 did not exercise the new `kv_b` patch: a slow Secure L40S host took 321.64 seconds for the first of four checkpoint shards, and the 480-second model-health loop ended load without a model exception. The 20.19 GB download itself took 300 seconds. Cost was $0.319079, cumulative phase spend $0.423387; artifact SHA-256 `a266d75e24973d933c9d59b0b7bf930f4a409928f47dd4acbe9fbc738bf3d944`; teardown was 204/404. The next smoke preserves the five-minute provider startup and 40-minute allocation caps while extending only model-load allowance to a measured 20 minutes.

@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "independent_process": true,
+  "absolute_deadline_utc": "2026-07-13T14:56:00Z",
+  "maximum_deadline_seconds": 5400,
+  "delete_on_deadline": true,
+  "delete_on_orchestrator_exit": true,
+  "delete_if_harvest_fails": true,
+  "verify_deleted_via_api": true,
+  "poll_interval_seconds": 10,
+  "watchdog_log_path": "allocations/phase_b_stock_a100_sxm_secure_us_md_v4/watchdog.jsonl"
+}

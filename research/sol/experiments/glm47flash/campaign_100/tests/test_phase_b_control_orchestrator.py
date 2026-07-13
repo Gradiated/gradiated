@@ -15,10 +15,11 @@ from orchestrator import ControlError, PhaseBOrchestrator, ProviderNotFound
 
 
 class FakeProvider:
-    def __init__(self, harvest_error=False):
+    def __init__(self, harvest_error=False, hourly_rate=2.99):
         self.calls = []
         self.pods = {}
         self.harvest_error = harvest_error
+        self.hourly_rate = hourly_rate
 
     def inventory(self):
         self.calls.append("inventory")
@@ -26,7 +27,11 @@ class FakeProvider:
 
     def create(self, request):
         self.calls.append("create")
-        self.pods["pod-1"] = {"id": "pod-1", "status": "RUNNING"}
+        self.pods["pod-1"] = {
+            "id": "pod-1",
+            "status": "RUNNING",
+            "costPerHr": self.hourly_rate,
+        }
         return dict(self.pods["pod-1"])
 
     def harvest(self, pod_id, destination):
@@ -160,6 +165,19 @@ class PhaseBOrchestratorTests(unittest.TestCase):
         self.assertIn("get", provider.calls)
         self.assertEqual(result["harvest_status"], "failed")
         self.assertEqual(result["teardown_verification"], "http_404")
+
+    def test_returned_hourly_rate_above_admission_is_deleted_before_harvest(self):
+        provider = FakeProvider(hourly_rate=3.00)
+        with patch.dict(os.environ, {"CAMPAIGN_100_COORDINATOR": "1"}), self.assertRaises(
+            ControlError
+        ):
+            self.build(provider).run(
+                {"name": "stock"}, self.admission, self.watchdog_contract, self.root / "out"
+            )
+        self.assertNotIn("harvest", provider.calls)
+        self.assertNotIn("watchdog_start", provider.calls)
+        self.assertIn("delete", provider.calls)
+        self.assertIn("get", provider.calls)
 
 
 if __name__ == "__main__":

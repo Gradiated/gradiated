@@ -13,7 +13,7 @@ The repository has an implementation-ready Kubernetes control abstraction for he
 - created: 2026-07-13T20:00:29+00:00
 - started: 2026-07-13T20:00:29+00:00
 - last updated: 2026-07-13T20:00:29+00:00
-- scope: product/docs, product/README.md, product/HANDOFF.md, product/AGENTS.md, infra/docs, infra/README.md, infra/AGENTS.md, docs/ARCHITECTURE.md, docs/decisions/0001-aws-eks-platform.md through docs/decisions/0006-kubernetes-provider-abstraction.md, tasks/active/2026-07-13-kubernetes-provider-abstraction-audit.md
+- scope: product/docs, product/README.md, product/HANDOFF.md, product/AGENTS.md, infra/docs, infra/README.md, infra/AGENTS.md, docs/ARCHITECTURE.md, docs/decisions/0001-aws-eks-platform.md through docs/decisions/0006-kubernetes-provider-abstraction.md, tasks/done/2026-07-13-kubernetes-provider-abstraction-audit.md
 - excluded paths: research/**, application/runtime code, credentials, provider/cloud mutations, paid capacity, unrelated worktree changes
 - dependencies: ADR-0001 through ADR-0005 and architecture commit `95b6592`
 
@@ -25,7 +25,7 @@ The repository has an implementation-ready Kubernetes control abstraction for he
 - SLO or budget: planning only, zero provider/cloud spend and zero external resource mutation; Kubernetes/fleet controllers remain off the request path and controller outage must not stop already-published serving cells.
 - timeout: one working session; stop source collection when primary evidence is sufficient to decide the abstraction and leave provider/runtime unknowns as qualification experiments.
 - artifact locations: `product/docs/KUBERNETES_PROVIDER_ABSTRACTION_2026-07-13.md`, `product/docs/ARCHITECTURE_AUDIT_2026-07-13.md`, `docs/decisions/0006-kubernetes-provider-abstraction.md`, updates in declared product/infra/docs scope, and this packet.
-- resume command: `git diff -- product infra/docs docs/ARCHITECTURE.md docs/decisions/0006-kubernetes-provider-abstraction.md tasks/active/2026-07-13-kubernetes-provider-abstraction-audit.md`
+- resume command: `git show fe345f3 -- product infra docs/ARCHITECTURE.md docs/decisions tasks/done/2026-07-13-kubernetes-provider-abstraction-audit.md`
 - rollback or cleanup: revert the scoped documentation commit; no external resources are created.
 
 ## Plan
@@ -36,9 +36,10 @@ The repository has an implementation-ready Kubernetes control abstraction for he
 
 ## Result
 
-- status: complete; pending direct-to-main publication and claim release
+- status: complete; architecture commit created and claim ready for release
 - verification: `python3 tools/devex/check.py`; `git diff --check` on all owned paths; custom local Markdown link resolution across 36 changed files; obsolete `only internal network dependency`/`ProviderEndpointProjection`/`provider_endpoints` invariant search; authority/CRD/channel/cache/relay terminology presence audit.
 - changed paths: ADR-0001 through ADR-0006 and root architecture map; product canonical architecture/API/billing/integration/testing/delivery/spec/handoff/README/instructions plus the dated Kubernetes decision and full audit; infrastructure cloud/Kubernetes/fleet/autoscaling/Terraform/CI/security/local/CLI/delivery/README/instructions. No runtime/application code.
 - limitations or blocked paths: no cloud/Kubernetes/provider/model/payment request or paid experiment was run; provider behavior, controller runtime/version, CRD scale/reconciliation, relay performance, Valkey durability, model economics, legal terms and numeric SLOs remain the explicit measured gates in the audit. User-owned `research/sol/**` and root research handoff changes were untouched.
-- commit: pending (will be recorded in the completed packet/handoff commit)
-- next action: commit only declared paths to `main`, record the commit, release this claim, push, and close GitHub issue #8.
+- commit: `fe345f3` (`docs: harden multi-provider fleet architecture`)
+- next action: release this claim, update the handoff to the completed packet, push both commits, and close GitHub issue #8.
+- released: 2026-07-13T20:21:35+00:00

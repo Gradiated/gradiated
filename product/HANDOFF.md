@@ -4,7 +4,9 @@
 
 Build the direct paid gateway first as a premium curated inference and migration product, while making owned serving independently OpenAI-compatible and eligible for external-gateway distribution. Customers may call Grad directly or put a workspace key behind their existing gateway; selected native listings use separate channel credentials/receivables. The control plane is Vite React plus Hono/tRPC Node; the data plane is Rust. An organization is the customer/billing boundary and workspaces isolate keys, data/model policy, limits, membership and usage.
 
-The model surface has two lanes. Curated direct IDs (`openai/...`, `anthropic/...`, `google/...`) preserve exact provider/model identity so an existing workload can often move by changing only base URL/key. First-party `grad/<effort>/<speed>` products run only on our inference; effort is `low|medium|high|max`, speed is `flex|standard|fast|turbo`, and the default is `grad/medium/standard`. There are no customer provider arrays or hidden moves from direct traffic to Grad.
+The model surface has two lanes. Curated direct IDs (`openai/...`, `anthropic/...`, `google/...`) preserve exact provider/model identity so an existing workload can often move by changing only base URL/key. First-party `grad/<effort>/<speed>` products run only on our inference; effort is `low|medium|high|max`, speed is `flex|standard|fast|turbo`, and the default is `grad/medium/standard`. Stable family heads such as `grad/glm-5.2/fast` stay inside a declared family compatibility envelope; `@release` pins are immutable. Preview `slow` may alias `flex` but is not another speed lane. There are no customer provider arrays or hidden moves from direct traffic to Grad.
+
+The research factory produces the custom architecture in the broad sense: weights/model code, custom operators, kernels/runtime, scheduler/cache, topology and hardware mapping are one signed content-addressed `ModelStackBundle`. Fable supplies hypotheses/functional-twin/model-surgery inputs; Sol supplies immutable experiment, controls, fidelity and claim-admission discipline. An independent qualification plane tests the exact bundle through model, runtime, protocol, measured system, distributed cell, security and soak gates. Production consumes that same digest through a human-approved `RouteRelease`; it does not recreate the architecture manually. Temporal orchestrates campaigns, Kueue/JobSet handles Kubernetes research execution, and native providers remain behind honest execution adapters. None is on the request path.
 
 Product Intelligence retains bounded encrypted request/response/tool traces by default for history, workload analytics, replay and Grad migration recommendations. Private/No Retention is a workspace or stricter request mode. Retention is not training consent. Recommendations move through metadata opportunity, replay candidate, evaluator/shadow verified and live-canary ready; the customer explicitly starts experiments and performs the final model change.
 
@@ -33,6 +35,8 @@ Creating an organization atomically creates a hidden Default workspace and owner
 - Distribution-channel admission uses a separate Redis `ChannelAccountProjection`, credentials, receivable exposure, price book, trace policy and cache scope. It can never debit organization credit.
 - ClickHouse never receives raw content and never becomes auth/ledger/retention truth. Hono scopes every analytical query; PostgreSQL tombstones/key revocation deny detail before S3/ClickHouse cleanup converges; ClickHouse outage can delay analytics only.
 - No recommendation/experiment state can automatically rewrite the customer's requested model.
+- Research agents cannot publish production targets, alter hidden evaluators, approve their own release or promote simulated/component-only evidence; production cells attest the exact qualified bundle digest.
+- Family heads cannot cross their compatibility envelope, managed effort/speed heads cannot leave their product envelope, immutable pins never move, and alias movement never changes an in-flight request.
 
 ## Implementation order
 
@@ -47,6 +51,7 @@ Creating an organization atomically creates a hidden Default workspace and owner
 9. Add encrypted Product Intelligence trace ingestion/S3 retention, content-free ClickHouse projection/query/delete/rebuild, Private/No Retention and workload/recommendation/experiment state machines.
 10. Complete provider-migration and Grad quickstarts, protected real-provider/owned CI and operations, then run measured OpenRouter provider conformance/soak/economics.
 11. Ship the shared open-distribution harness and P0 LiteLLM/Cloudflare/Portkey/Helicone/Vercel AI SDK recipes; pursue OpenRouter first and Hugging Face second as native listings after their channel gates pass.
+12. Build the research factory in RF-00 through RF-08: contracts, evidence authority, bundle supply chain, Temporal/execution adapters, Fable/Sol adapters, independent qualification, release registry/UI, then one no-public-alias dry-run vertical candidate.
 
 Detailed ownership and acceptance checks are in `docs/DELIVERY_PLAN.md`.
 
@@ -111,6 +116,7 @@ Secrets belong in deployment/GitHub environments only. Provider smoke tests must
 - Multi-provider spot GPU architecture: https://github.com/joshsny/gradiated/issues/7; completed packet: `tasks/done/2026-07-13-multi-provider-spot-inference.md`.
 - Kubernetes provider abstraction and full architecture audit: https://github.com/joshsny/gradiated/issues/8; architecture commit `fe345f3`; completed packet: `tasks/done/2026-07-13-kubernetes-provider-abstraction-audit.md`.
 - Open distribution integrations: https://github.com/joshsny/gradiated/issues/9; architecture commit `82bd779`; completed packet: `tasks/done/2026-07-13-open-distribution-integrations.md`.
+- Research factory and model lifecycle: https://github.com/joshsny/gradiated/issues/10; completed packet: `tasks/done/2026-07-13-model-research-production-platform.md`.
 - No code has been implemented and no provider request has been made in this planning task.
 
 ## Resume
@@ -119,6 +125,7 @@ Secrets belong in deployment/GitHub environments only. Provider smoke tests must
 python3 tools/devex/context.py
 sed -n '1,260p' product/docs/DELIVERY_PLAN.md
 sed -n '1,340p' product/docs/OWNED_INFERENCE_ARCHITECTURE.md
+sed -n '1,520p' product/docs/MODEL_RESEARCH_TO_PRODUCTION_2026-07-13.md
 sed -n '1,340p' infra/docs/MULTI_PROVIDER_GPU_FLEET.md
 sed -n '1,420p' product/docs/KUBERNETES_PROVIDER_ABSTRACTION_2026-07-13.md
 sed -n '1,420p' product/docs/ARCHITECTURE_AUDIT_2026-07-13.md

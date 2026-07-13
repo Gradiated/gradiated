@@ -161,7 +161,9 @@ Customer copy for Private/No Retention must say that request content is not writ
 
 ## Runtime and release model
 
-vLLM is the first implementation target because current releases expose automatic prefix caching, per-request cache salting, Kubernetes deployment, cache-aware routing, and single/multi-node execution. This is not a permanent runtime monopoly. `RuntimeAdapter` supports vLLM, SGLang, or a custom engine only through a qualified release:
+vLLM is the first baseline implementation target because current releases expose automatic prefix caching, per-request cache salting, Kubernetes deployment, cache-aware routing, and single/multi-node execution. It is a control and initial runtime, not a permanent architecture boundary. The research factory may produce a modified runtime, custom model architecture, generated kernels, compiler passes, scheduler, topology or complete custom engine. Those outputs enter serving only as one qualified `ModelStackBundle`; production never reconstructs them manually.
+
+`RuntimeAdapter` supports vLLM, SGLang, or a factory-produced engine only through that exact bundle:
 
 ```text
 prepare(manifest) -> artifact/topology validation
@@ -172,7 +174,9 @@ health() -> content-free load/cache/runtime metrics
 terminate() -> zeroize ephemeral state and exit
 ```
 
-Runtime image, model weights, tokenizer, chat template, reasoning parser, quantization, kernels, parallelism, speculative configuration, cache implementation, and topology are all release identity. Changing any of them creates a new candidate and qualification evidence; a rolling deployment cannot silently mutate an existing release.
+Runtime image, model weights/architecture, factory-produced code/operators, tokenizer, chat template, reasoning parser, quantization/calibration, kernels/dispatch, scheduler, parallelism, speculative configuration, cache implementation, topology, hardware/software envelope and protocol/data-policy behavior are all bundle identity. The manifest is canonicalized, content-addressed and signed; its S3/ECR references are immutable. Changing any field or referenced bytes creates a new candidate, bundle digest and qualification evidence. A rolling deployment cannot silently mutate an existing release.
+
+`RouteRelease` is the commercial/operational wrapper around a qualified bundle. It freezes public family or managed effort/speed identity, immutable release pin, capabilities, SLO, price, eligible placement envelope, rollout and rollback. Research, qualification, staging and production launch the same bundle digest. The cell's boot attestation includes that digest, runtime image and observed placement; the target projector refuses readiness on any mismatch. See [Model research factory to production](MODEL_RESEARCH_TO_PRODUCTION_2026-07-13.md).
 
 Start with single-node tensor parallel groups where possible. Multi-node Ray/multiprocessing, disaggregated prefill/decode, remote cache, speculative decoding, and LoRA multiplexing are separate measured candidates because they add correlated failure and state-transfer surfaces.
 
@@ -254,18 +258,20 @@ Rust `proptest`/state-machine tests cover:
 - no-retention requests producing cache put/hit/evict behavior while producing no trace payload event;
 - preemption before/after first token, two-AZ relay-shard loss, heartbeat loss, drain races, self-asserted readiness rejection and stale target epochs;
 - integer cost/budget arithmetic, lease expiry, and no orphan surviving bounded reconciliation.
+- manifest canonicalization/signature/object verification, research-allocation versus production-target separation, exact bundle launch, and alias movement never changing an admitted request.
 
 Deterministic E2E boots a Kind management cluster, Grad fleet CRDs/controllers, an inference edge, fake capacity-provider APIs, fake cell agents, a real Redis, and tiny CPU/fake runtimes. It kills controllers/cells at every lifecycle/event boundary and rebuilds CR state from PostgreSQL. GPU qualification runs under a preregistered provider budget with tiny prompts and records startup, cache hit, streaming, interruption, cleanup, and cost evidence. Protected CI never relies on spot availability for pass/fail; capacity absence is a classified result, while protocol/security regressions fail.
 
 ## Seed implementation sequence
 
-1. Freeze Protobuf messages, release manifest, target signature, cache scope, event/settlement, and fake provider/cell models.
+1. Freeze Protobuf messages, `ModelStackBundle` canonical manifest, release wrapper, target signature, cache scope, event/settlement, and fake provider/cell models.
 2. Build the Rust inference edge, local cell router/agent, fake runtime, and exhaustive failure/PBT harness without cloud capacity.
-3. Integrate a pinned vLLM single-node release with always-on salted prefix caching and exact manifest attestation.
+3. Integrate a pinned vLLM single-node baseline bundle with always-on salted prefix caching and exact bundle/runtime/placement attestation.
 4. Implement one native container/VM `CapacityAllocation` controller and prove acquire-to-cleanup under a hard spend cap.
 5. Implement one managed-Kubernetes cell and prove the same contract without changing gateway/edge messages.
 6. Add diversified spot, drain, lease/orphan, cache-affinity, and cost controls; launch only qualified `flex`/`standard` cells.
 7. Add multi-node/runtime/topology candidates and `fast`/`turbo` only after measured latency, availability, interruption, and margin gates.
 8. Qualify external-gateway provider traffic on the same inference edge with isolated channel/cache/billing principals.
+9. Connect the research factory only after its independent qualification pipeline can prove that one exact factory-produced bundle passes baseline parity, custom architecture/kernel/runtime tests, full-cell soak and dry-run release rollback.
 
 The revenue path remains simple: direct provider traffic works immediately through the gateway; Grad cells appear only when owned supply is actually ready and profitable. Multi-provider breadth is an internal reliability/margin mechanism, not customer configuration.

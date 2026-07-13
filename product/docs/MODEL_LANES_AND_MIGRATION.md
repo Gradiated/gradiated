@@ -57,6 +57,15 @@ grad/<effort>/<speed>
 
 Effort and speed are orthogonal. Effort controls the inference compute/quality budget. Speed controls the serving lane and capacity policy. The default is `grad/medium/standard`.
 
+Two advanced identities expose stability without making the default experience more complex:
+
+```text
+grad/<family>/<speed>
+grad/<family>/<speed>@<release>
+```
+
+For example, `grad/glm-5.2/fast` follows qualified complete-stack releases only within the declared GLM 5.2 family compatibility envelope, while `grad/glm-5.2/fast@r2026.07.13.3` is an immutable release pin. A family head never silently becomes another family. A managed effort/speed head may change families only through qualification against its published product envelope, canary and rollback, with the actual family/release disclosed.
+
 Compatibility aliases from the earlier design resolve as documented redirects during preview only:
 
 | Deprecated alias | Replacement |
@@ -66,6 +75,7 @@ Compatibility aliases from the earlier design resolve as documented redirects du
 | `grad/smart` | `grad/high/standard` |
 | `grad/code` | `grad/high/fast` initially; code capability is a release qualification, not a permanent separate product. |
 | `grad/open` | `grad/medium/standard`; every canonical Grad product is our inference, so `open` is redundant. |
+| `grad/<effort>/slow` | `grad/<effort>/flex`; preview compatibility only. `flex` describes queue tolerance and cost posture more accurately than a latency promise. |
 
 Aliases produce a deprecation header and console warning and are removed before general availability unless real preview customers require a longer window.
 
@@ -96,11 +106,15 @@ All 16 effort/speed combinations are valid product identities, but a combination
 ### First-party routing and release rules
 
 - Canonical `grad/*/*` traffic is served only by our owned inference fleet.
-- A release may move among our qualified replicas/configurations for that exact effort/speed product, preserving its capability and SLO envelope.
+- A request resolves to one immutable `RouteRelease` and `ModelStackBundle` before admission and cannot change because an alias moves while it is in flight.
+- A managed head may move among complete bundles qualified for that exact effort/speed product, preserving its capability, quality, data-policy, price-policy and SLO envelope.
+- A family head may move only inside its declared family compatibility envelope. An immutable `@release` pin never moves.
 - There is no hidden external frontier fallback. A customer who wants an external provider requests its namespaced model directly.
 - Releases remain immutable, fixed-price, canaried, session-sticky where useful, and rollbackable.
-- Actual release/runtime class is disclosed in authenticated usage metadata; internal host/topology and model weights remain protected.
-- Effort/speed may map to different owned model checkpoints over time only through a published release, compatibility evaluation, canary and rollback. Customers requiring exact checkpoint fidelity use a separately exposed Grad concrete checkpoint ID.
+- Actual family, release and bundle identity are disclosed in authenticated usage metadata; internal host/topology and protected model artifacts remain hidden.
+- Effort/speed may map to different owned families over time only through a published complete-stack release, compatibility evaluation, canary and rollback. Customers requiring reproducibility use the immutable public release pin.
+
+The research factory is allowed to change weights/model architecture, custom operators, kernels, runtime, scheduler/cache, topology and hardware mapping. Those changes are one content-addressed `ModelStackBundle`; the exact bundle is qualified and promoted rather than manually reproduced in serving. See [Model research factory to production](MODEL_RESEARCH_TO_PRODUCTION_2026-07-13.md).
 
 ## Data modes and trace retention
 
@@ -218,9 +232,11 @@ Before enabling a direct provider/model:
 
 Before enabling a Grad effort/speed cell:
 
+- the factory-produced complete stack is frozen as one signed `ModelStackBundle`; research, qualification and the cell launch the same digest;
+- model/custom-architecture, kernel/runtime, protocol/metering, measured single-node, distributed-cell, security/privacy and production-like soak gates pass against tuned stock and active-production controls;
 - the exact runtime/release must prove always-on salted prefix cache, no cross-workspace/channel/retention-class reuse, bounded eviction/teardown and no payload-bearing logs/backups;
 - the external-provider cell must pass the provider/region/topology/security/interruption/effective-successful-token-cost gates in [Owned Grad inference architecture](OWNED_INFERENCE_ARCHITECTURE.md);
-- owned runtime/checkpoint identity and evaluation scope are frozen in a RouteRelease;
+- bundle identity, evaluation scope and evidence expiry are bound into a RouteRelease;
 - capability, privacy, quality, TTFT, throughput, queue deadline, availability, capacity and margin gates pass for that cell;
 - speed monotonicity holds under representative load (`turbo` no slower than `fast`, and so on, within published statistical tolerance);
 - effort monotonicity is demonstrated on the declared evaluation scope or the release is not marketed as a higher effort;

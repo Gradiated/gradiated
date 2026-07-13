@@ -80,18 +80,26 @@ AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/
 ### WP-06 — Curated providers and Grad effort/speed releases
 
 - Scope: provider/model/alias and Grad product/release domain; Rust route planner; owned/OpenAI/Anthropic/Google adapters; operator-only OpenRouter/generic; qualification/pricing.
-- Deliver: curated direct registry and unique aliases; 4×4 Grad grammar with catalog-gated cells; same-provider and owned-only route boundaries; scoped qualification; immutable fixed-price releases; canary/session/rollback; health/capacity; capability/data-policy profiles; translation/stream/retry/usage/buy-cost exposure.
-- Acceptance: PBT proves alias uniqueness, direct identity, Grad owned/effort/speed fidelity, deterministic decisions, no speed downgrade, fixed price/rollback; adapter conformance; effort/speed monotonicity release gates; retries stay bounded.
+- Deliver: curated direct registry and unique aliases; 4×4 Grad grammar with catalog-gated cells; stable Grad family heads and immutable release pins; same-provider and owned-only route boundaries; scoped qualification; immutable fixed-price releases bound to exact bundle digests; canary/session/rollback; health/capacity; capability/data-policy profiles; translation/stream/retry/usage/buy-cost exposure.
+- Acceptance: PBT proves alias uniqueness, direct identity, Grad owned/effort/speed fidelity, family-envelope fidelity, immutable pins, deterministic decisions, no speed downgrade, in-flight bundle/price stability and fixed-price rollback; adapter conformance; effort/speed monotonicity release gates; retries stay bounded.
 - Dependencies: WP-04, WP-05.
 - Delegation: split 06A catalog/qualification/release control plane and 06B Rust route/adapters only after one interface owner freezes Protobuf, Redis projection and qualification manifest schemas.
 
 ### WP-06C — Owned inference edge, cells, runtime and Kubernetes fleet operator
 
 - Scope: `apps/fleet-controller`, `services/inference-edge`, `services/cell-agent`, owned runtime adapters, fleet/cell Protobuf, signed manifests/targets, fake provider/cell simulator and PBT. Provider account/network/Terraform/Helm and paid qualification are coordinated infrastructure work in `MULTI_PROVIDER_GPU_FLEET.md`.
-- Deliver: AWS inference edge with two-AZ relay shards; exact-release cell router; vLLM first runtime; always-on workspace/channel/release/retention-class salted KV/prefix cache; PostgreSQL capacity intents/leases; `CapacityPool`/`CapacityAllocation`/`InferenceCell` CRDs; isolated Rust `kube` capacity-provider controllers; finalizer/orphan/rebuild/cost controls; independently signed target publication.
+- Deliver: AWS inference edge with two-AZ relay shards; exact-release and exact-`ModelStackBundle` cell router/launcher; vLLM baseline runtime plus factory-produced runtime interface; always-on workspace/channel/release/retention-class salted KV/prefix cache; PostgreSQL capacity intents/leases; `CapacityPool`/`CapacityAllocation`/`InferenceCell` CRDs; isolated Rust `kube` capacity-provider controllers; finalizer/orphan/rebuild/cost controls; independently signed target publication.
 - Acceptance: gateway/edge/cell/fleet golden contracts; CRD schema/generated drift checks; fleet/event state-machine PBT and Kind RBAC/admission/leader/finalizer tests; PG/Kubernetes/provider API can be unavailable while existing cells serve; no lifecycle/discovery API on the gateway/edge path; no-retention produces cache hits but no trace payload and deletion rotates cache epoch; abrupt preemption before/after first token has the frozen retry/settlement outcome; one native capacity-provider class passes before first production Grad supply and one managed-Kubernetes class passes before it is enabled.
 - Dependencies: WP-00, WP-04, WP-05, and WP-06 release schema. Fake edge/cell/runtime work can proceed with WP-06 against frozen manifests.
 - Delegation: split 06C-1 contracts/CRDs/simulator, 06C-2 Rust edge/relay, 06C-3 cell router/runtime/cache, 06C-4 planner/broker/target projector, and one 06C-5 package per isolated capacity-provider controller only after one owner freezes event, lease, owner and target epochs.
+
+### RF-00 through RF-08 — Model research factory
+
+- Scope: continuous agent-operated iteration over model weights/architecture, custom operators, kernels/runtime, serving policy, topology and hardware mapping; exact bundle creation, independent qualification and production release handoff.
+- Deliver in order: RF-00 contracts/local substrate; RF-01 campaign/experiment/evidence authority; RF-02 S3 CAS + OCI/signing + bundle launcher; RF-03 Temporal/agent/execution adapters and Kueue/JobSet; RF-04 typed Fable/Sol adapters; RF-05 independent full-stack qualification; RF-06 family/managed/pin registry and release authority; RF-07 operator UI/analytics; RF-08 one bounded end-to-end dry-run candidate.
+- Acceptance: the factory outputs one signed content-addressed `ModelStackBundle`; the exact digest passes source/legal, model/custom-architecture, kernel/runtime, protocol/metering, measured single-node, distributed-cell, security/privacy and soak gates against scope-matched controls; candidate agents cannot see/modify hidden evaluators or publish production targets; a signed release proposal can be approved, canaried and rolled back without rebuilding or changing an in-flight request; RF-08 does not move a public alias.
+- Dependencies: RF-00 coordinates with WP-00. RF-02 and RF-05 freeze bundle/qualification contracts consumed by WP-06/06C. RF-03 reuses but does not share identities with fleet provider adapters. RF-06 extends WP-06 release/Redis projection. Research UI is operator-only and may proceed against fakes after RF-00.
+- Delegation: one agent per RF package after RF-00 schema freeze, with separate candidate/evaluator/release-authority owners. The complete package, state, API, test and command contracts are [Model research factory to production](MODEL_RESEARCH_TO_PRODUCTION_2026-07-13.md).
 
 ### WP-07 — Trace intelligence, ClickHouse analytics and migration engine
 
@@ -136,6 +144,11 @@ WP-00
  ├─> WP-02 ────────────────┼─> WP-07 ─> WP-07B ─> WP-08 ─> WP-10
  └─> WP-04 ─> WP-05 ─> WP-06 ─> WP-06C ┘                    │
                                       └────> WP-09 ──────────┘
+
+RF-00 ─┬─> RF-01 ───────────────┐
+       ├─> RF-02 ─> RF-05 ──────┼─> RF-06 ─> RF-07 ─> RF-08
+       └─> RF-03 ─> RF-04 ──────┘       │
+                WP-06C bundle launcher <─┘
 ```
 
 One integration owner approves changes to `proto/**`, public schemas, Redis key/script contracts, and ledger semantics. Other agents propose contract changes in their issue before generating code, preventing simultaneous incompatible edits.
@@ -152,6 +165,19 @@ Suggested first delegation wave after WP-00:
 - Agent H: OpenRouter native catalog/channel simulator/soak; no external application authority.
 - Agent I: Hugging Face provider helper/mapping fixtures; no external PR or live mapping authority.
 
+Research-factory delegation after RF-00:
+
+- Agent R1: RF-01 campaign/spec/evidence PostgreSQL domain and fast-check state models.
+- Agent R2: RF-02 canonical bundle/S3 CAS/OCI/signing plus TS/Rust golden vectors.
+- Agent R3: RF-03 Temporal workflows, isolated agent leases, fake/local execution and cleanup PBT.
+- Agent R4: RF-03 Kubernetes/native execution adapters after R3 freezes the adapter; no production target identity.
+- Agent R5: RF-04 Fable hypothesis and Sol evidence adapters, read-only against active research workstreams.
+- Agent R6: RF-05 visible model/kernel/runtime/protocol/system harnesses.
+- Agent R7: RF-05 separately owned hidden-evaluator and security policy; cannot edit candidates.
+- Agent R8: RF-06 registry/release/alias projection and rollback, coordinated with WP-06/06C.
+- Agent R9: RF-07 Vite/shadcn research console and ClickHouse derived metrics against typed fakes.
+- Integration owner: RF-08 exact-bundle vertical dry run and authority-separation audit.
+
 WP-03 starts once WP-01 ledger interfaces stabilize. WP-06 starts after protocol/admission interfaces compile. WP-06C starts with fakes after release/cell contracts freeze and coordinates its provider substrates with infrastructure F-00 through F-07. WP-07 starts only after data-mode/trace contracts and infrastructure ownership are frozen. The integration owner runs shared properties continuously.
 
 ## Implementation checkpoints
@@ -163,9 +189,10 @@ WP-03 starts once WP-01 ledger interfaces stabilize. WP-06 starts after protocol
 5. **Model-lane checkpoint:** curated direct identity and Grad effort/speed qualification/price/SLO/rollback satisfy PBT and measured gates.
 6. **Owned fleet checkpoint:** one native and one Kubernetes provider class satisfy exact-release edge/cell, always-on cache isolation, abrupt preemption, cleanup, concentration and successful-token margin gates.
 7. **Trace checkpoint:** Product Intelligence and no-retain, encryption, retention/delete, billing isolation and no-auto-switch recommendation state pass; no-retention cache remains enabled and ephemeral.
-8. **External checkpoint:** protected real-provider/owned smoke and failure drills pass inside cost limits.
-9. **Distribution checkpoint:** OpenRouter/other-gateway evidence supports go/no-go.
-10. **Revenue checkpoint:** direct workload retention, Grad migration and contribution margin decide next breadth.
+8. **Research-factory checkpoint:** one candidate moves from immutable ExperimentSpec through scope-matched evidence, exact signed bundle, independent full-cell qualification and dry-run release/rollback; no rebuild, hidden-eval leak, production target or public alias movement occurs.
+9. **External checkpoint:** protected real-provider/owned smoke and failure drills pass inside cost limits.
+10. **Distribution checkpoint:** OpenRouter/other-gateway evidence supports go/no-go.
+11. **Revenue checkpoint:** direct workload retention, Grad migration and contribution margin decide next breadth.
 
 ## Scope discipline
 

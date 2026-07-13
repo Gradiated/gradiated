@@ -43,6 +43,11 @@ The product owner will not run this repository locally. Therefore the acceptance
 | Owned inference fleet | PostgreSQL intents/leases, fleet CR specs/status/finalizers, capacity-provider observations, cell/edge shards, signed targets, spot loss, cache namespaces and faults | one writer/authority per field; duplicate/reordered/restarted reconciliation converges; no leaked orphan or unqualified target; existing cells serve through PG/Kubernetes/provider outage; exact release/speed and cache isolation hold. |
 | Trace analytics | organization/workspace scopes, terminal usage versions, duplicate/reordered outbox delivery, retention/tombstones, restore, ClickHouse outage/backlog | one visible terminal fact; no content columns; result subset of authorized scope; expired/deleted content inaccessible during mutation lag; PostgreSQL reconciliation wins; projector failure never affects serving/billing/S3. |
 | Migration | workload grouping, evidence levels, replay/shadow/live-canary commands/headers, duplicate/reordered events, budgets and evaluator faults | no header means hard direct pin; invalid/mismatched header cannot enroll; source/candidate fixed; evidence cannot overstate; replay cannot charge; live canary is deterministic, disclosed and obeys experiment/billing caps; removing header preserves original traffic. |
+| Research campaign | campaign/spec/budget/lease/timeout commands, agent crashes, stale epochs, provider failures and cleanup | approved scope cannot expand; spend/time/provider/data limits hold; one lease owner; stale writes fenced; every allocation terminates or has durable cleanup evidence; negative/invalid results persist. |
+| Evidence and lineage | arbitrary model/workload/hardware/software/intervention scopes, controls, fidelity labels, observations, claims and parent graphs | specs immutable after admission; sealed observations append-only; invalid environment is not model failure; claim scope cannot widen; incompatible claims do not compose; lineage is acyclic and content identity stable. |
+| ModelStackBundle | canonical manifests, object/image digests, custom architecture/kernel/runtime/topology matrices, signatures, missing/tampered/expired attestations | TS/Rust canonical bytes and digest agree; every reference is immutable/present; any changed byte changes identity; missing/invalid evidence fails closed; production launcher accepts only exact qualified digest. |
+| Bundle qualification | gate ordering, independent evaluator roles, hidden/visible policy versions, pass/fail/invalid/expiry/waiver and requalification | candidate writer cannot author gate result or approval; no later gate changes bundle; expired/invalid gate blocks release; non-waivable safety/identity/isolation/metering gates remain mandatory. |
+| Family/managed/pin aliases | family envelopes, effort/speed envelopes, release pins, concurrent head moves, canary/rollback/revocation | family never crosses compatibility boundary; managed alias satisfies declared product envelope; pin never moves; one atomic head generation; in-flight request retains admitted bundle/price; revoked pin cannot resolve elsewhere. |
 
 PBT complements examples: each bug found by a property receives a small example/regression fixture after shrinking. Do not encode exact framework implementation details as properties; test externally meaningful invariants.
 
@@ -72,6 +77,12 @@ Concurrency cases use explicit barriers/schedules rather than wall-clock sleeps:
 - distribution-channel reserve/settle/reconciliation versus concurrent organization top-up/reserve/trace/cache operations;
 - migration experiment cancel/stop versus concurrent canary admission;
 - direct-model alias activation/deprecation versus concurrent resolution.
+- research lease expiry/reassignment versus late observation upload and provider cleanup;
+- experiment sealing versus attempted spec/control/threshold mutation;
+- evidence expiry or invalidation versus bundle qualification and release approval;
+- bundle build/sign versus object tamper, missing attestation and concurrent garbage collection;
+- family/managed alias activation versus immutable-pin admission, canary halt and rollback;
+- research allocation registration attempts versus production cell target publication.
 
 ## Seeds, shrinking, and replay
 
@@ -101,6 +112,14 @@ Exact counts are tuned to CI duration using recorded timings, but start with:
 - release: main suite plus protocol conformance and real-provider smoke.
 
 Shard by stable property suite, not random test file distribution, so failures replay. A timeout is a failed/recorded result; the job never silently truncates a property and reports success.
+
+## Research-factory and bundle qualification jobs
+
+Pull requests run a deterministic tiny bundle through source validation, functional-twin/model parity, custom-kernel differential fixtures, bundle build/inspect/signature verification, fake cell launch, protocol/metering and dry-run release state machines. The fixture is small enough for CPU/Kind and proves orchestration and identity, not model quality.
+
+Main/nightly jobs add worker crash/replay, provider interruption, missing/tampered S3/ECR object, hidden-evaluator role negatives, distributed JobSet/collective fakes, security/privacy scans and a sustained fake-cell soak. Protected preregistered jobs run the exact candidate bundle on real GPUs only when a campaign supplies an approved spend cap, timeout, cleanup contract and scope-matched controls. Spot unavailability is a classified environment result; an incorrect result, leaked resource, identity mismatch or missing cleanup evidence fails.
+
+Promotion CI never treats simulation, a component benchmark or a GitHub checkmark alone as release authority. It emits signed gate attestations for one exact bundle. A separate release proposal must bind those attestations, price, aliases, rollout and rollback, and a release owner must approve it at seed. See [Model research factory to production](MODEL_RESEARCH_TO_PRODUCTION_2026-07-13.md).
 
 ## Official-client E2E
 
@@ -165,6 +184,8 @@ devex + formatting
   ├── Rust fmt/clippy/nextest/PBT
   ├── integration: PostgreSQL + Redis + fake providers
   ├── model/route qualification + release/canary/rollback
+  ├── research campaign/evidence/bundle identity state machines
+  ├── tiny bundle build/inspect/launch + qualification dry run
   ├── trace encryption/retention + migration state machines
   ├── ClickHouse projection/tenant-query/delete/restore properties
   ├── Vite build + Playwright
@@ -173,6 +194,7 @@ devex + formatting
 
 main/nightly/manual after required jobs
   ├── deep PBT/fault injection
+  ├── research orchestrator crash/replay + full-cell qualification harness
   ├── protected real-provider E2E
   └── protected hosted-router/post-listing smoke (when configured)
 ```
@@ -188,6 +210,8 @@ Pin action SHAs and tool versions. Use lockfiles and cached dependencies without
 | `pnpm contracts:check` | Buf format/lint/breaking/generate/drift and golden fixtures. |
 | `cargo nextest run --workspace` | Rust unit/integration tests. |
 | `cargo test -p gateway-pbt` | bounded proptest state machines. |
+| `grad research verify --fixture tiny` | deterministic campaign/spec/evidence/bundle/qualification dry run. |
+| `grad bundle inspect <ref>` | verify canonical digest, objects, signatures, attestations and placement manifest without launching. |
 | `pnpm test:conformance` | public JSON/SSE fixtures against Rust gateway. |
 | `pnpm test:routes` | cross-language provider/model identity, Grad effort/speed, qualification, route and rollout properties. |
 | `pnpm test:fleet` | edge/cell protocol, provider/lease simulator, spot lifecycle, cache isolation and exact-release fault properties. |

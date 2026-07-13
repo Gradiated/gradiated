@@ -34,6 +34,8 @@ Native listings ────channel credential─> the same Rust serving surface
 
 PostgreSQL is authoritative for organization credits, distribution-channel receivables, authorization, model qualification, route releases, desired capacity/lease history, trace registry/tombstones and workload/experiment control state. Encrypted raw traces live in private lifecycle-managed S3; ClickHouse Cloud is a replayable, content-free analytical projection for trace lists, charts and workload/model summaries. Every organization has a hidden Default workspace and may create more with separate keys, members, model/data policy, budgets and concurrency. Redis is the gateway's only synchronous internal state/control dependency; direct model APIs and the AWS inference edge are upstream serving dependencies. Direct requests stay on their exact curated model provider/model; Grad requests stay on the exact owned release in their effort/speed cell. Grad fleet CRDs/controllers in AWS EKS reconcile native or managed-Kubernetes capacity providers without fake Nodes or a global cluster. Product Intelligence retains bounded encrypted traces by default and suggests—but never performs—evidence-backed migrations to Grad. Private/No Retention is available per workspace/request and suppresses durable payload traces while retaining tenant-isolated ephemeral KV/prefix caching.
 
+The model research factory continuously explores the entire Grad stack: weights and factory-produced architecture, custom operators, kernels/runtime, serving/cache policy, parallelism/topology and hardware mapping. Its unit of promotion is one signed content-addressed `ModelStackBundle`, not a checkpoint. Fable supplies fast hypotheses and functional-twin/model-surgery tooling; Sol supplies fail-closed experiment/evidence discipline. Independent qualification runs the exact bundle through full-stack and production-like cell gates before a human-approved `RouteRelease` can move a stable family head such as `grad/glm-5.2/fast` or a managed head such as `grad/medium/standard`. Immutable `@release` pins remain reproducible; live requests never consult research systems.
+
 ## Planned repository layout
 
 ```text
@@ -47,6 +49,7 @@ product/
     recommendation-worker/ workload profiles, replay, migration experiments
     trace-access/        one-object audited decrypt/read service
     fleet-controller/    PostgreSQL intent, fleet CRDs, broker/target projection
+    research-worker/     Temporal campaigns, agent leases, execution and cleanup
   services/
     gateway/             Rust/Axum/Tower gateway and model-provider adapters
     inference-edge/      stable Rust streaming edge for owned Grad serving
@@ -58,6 +61,9 @@ product/
     contracts/           checked-in generated TypeScript Protobuf types
     db/                  PostgreSQL schema and migrations
     workloads/           trace metadata, profiles, recommendations, experiments
+    research-domain/     campaigns, specs, evidence, candidates and qualification
+    research-artifacts/  S3 CAS, canonical bundles, OCI and attestations
+    research-testkit/    factory state models, fakes, generators and replay
     testkit/             generators, models, fake providers, replay helpers
     ui/                  shadcn configuration and shared app components
   proto/                 canonical internal Protobuf schemas and Buf config
@@ -81,6 +87,7 @@ product/
 - [Open distribution targets, packages, and harnesses](docs/DISTRIBUTION_GATEWAY_INTEGRATIONS_2026-07-13.md)
 - [Model lanes, Grad effort/speed, traces, and migration](docs/MODEL_LANES_AND_MIGRATION.md)
 - [Owned Grad inference architecture](docs/OWNED_INFERENCE_ARCHITECTURE.md)
+- [Model research factory to production](docs/MODEL_RESEARCH_TO_PRODUCTION_2026-07-13.md)
 - [Multi-provider GPU fleet evidence](docs/MULTI_PROVIDER_GPU_EVIDENCE_2026-07-13.md)
 - [Kubernetes capacity-provider abstraction](docs/KUBERNETES_PROVIDER_ABSTRACTION_2026-07-13.md)
 - [Full architecture audit](docs/ARCHITECTURE_AUDIT_2026-07-13.md)
@@ -93,6 +100,7 @@ product/
 - [ClickHouse trace analytics ADR](../docs/decisions/0004-clickhouse-trace-analytics.md)
 - [Multi-provider inference ADR](../docs/decisions/0005-multi-provider-spot-inference.md)
 - [Kubernetes provider abstraction ADR](../docs/decisions/0006-kubernetes-provider-abstraction.md)
+- [Research-to-production model lifecycle ADR](../docs/decisions/0007-research-production-model-lifecycle.md)
 - [AWS infrastructure, Kubernetes, CI/CD, local stack, and `grad` plan](../infra/README.md)
 - [Current handoff](HANDOFF.md)
 

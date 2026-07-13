@@ -26,6 +26,10 @@ flowchart LR
   TraceProcessor --> Owned[Owned inference evaluation]
   ModelOps[Model qualification + route release jobs] --> PG
   ModelOps --> Providers
+  Research[Research factory + Temporal] --> PG
+  Research --> Artifacts[(S3 CAS + ECR bundles)]
+  Research --> ResearchCompute[Isolated research GPU allocations]
+  Artifacts --> ModelOps
 
   Clients[OpenAI / Anthropic SDKs] -->|workspace key| Gateway[Rust gateway]
   CustomerGateway[Customer gateway: LiteLLM / Cloudflare / Portkey / Helicone] -->|workspace key| Gateway
@@ -138,6 +142,8 @@ The customer model surface has explicit provider and first-party identities whil
 - `ModelProviderDefinition` is one curated direct model-provider namespace (`openai`, `anthropic`, `google`) with adapter/data-policy/lifecycle status. Adding it is an operator release, not customer configuration.
 - `ModelDefinition` is a provider-qualified concrete model/version or owned concrete checkpoint with exact modalities, context/output limits, parameter support, lifecycle, alias set and public sell price.
 - `ModelProduct` is a canonical `grad/<effort>/<speed>` identity. Effort is `low|medium|high|max`; speed is `flex|standard|fast|turbo`; the active-cell set is catalog-driven.
+- `ModelFamily` defines the compatibility envelope for `grad/<family>/<speed>` heads. A family head may adopt a newly qualified complete stack only inside that envelope.
+- `ModelAliasHead` atomically maps a managed or family identity to one immutable `RouteRelease`; `@release` identities bypass mutable heads and resolve the pinned release directly. Preview `slow` may warn-and-map to `flex` but is not a fifth speed.
 - `DirectModelEndpoint` is an operator-owned endpoint for one exact model-provider/model with region, credential reference, capacity, buy price, retention/training policy and measured health. Grad serving endpoints are `InferenceCell` status projected into signed `CellTarget` records; the two concepts never share credentials or lifecycle ownership.
 - `QualificationEvidence` records scope-matched protocol, quality, tool, structured-output, modality, privacy, latency, throughput, and economics evidence. Evidence is never transferred to a different model, endpoint, region, runtime, or quantization without a new qualification.
 - `RouteRelease` is immutable. For direct models it permits only same-provider/same-version endpoints. For Grad it freezes effort/speed, owned checkpoint/runtime/hardware, capability/SLO/queue envelope, bounded attempts, fixed prices, rollout and rollback target.
@@ -146,9 +152,17 @@ The customer model surface has explicit provider and first-party identities whil
 
 The control worker builds and publishes releases from PostgreSQL. The Rust gateway performs request-time filtering and selection locally from Redis plus bounded in-process endpoint-health/circuit-breaker state; it never calls the control plane. Bare aliases resolve only when unambiguous. A direct ID is a hard provider/model/version pin unless the request carries a valid customer-approved migration-experiment header bound to that exact source/workload; that distinct contract selects baseline or Grad deterministically before admission and discloses it. A Grad ID may switch only among owned candidates qualified for that effort/speed product.
 
-Owned inference is not a hidden preference inside direct-provider requests: customers reach it by selecting `grad/<effort>/<speed>` or an exposed Grad checkpoint. Each response and usage row identifies the requested canonical identity, actual provider/model or owned release, route release and data mode. This makes direct traffic a trustworthy migration baseline instead of secretly routing it to us.
+Owned inference is not a hidden preference inside direct-provider requests: customers reach it by selecting a managed `grad/<effort>/<speed>`, a stable `grad/<family>/<speed>`, or an immutable Grad `@release` pin. Each response and usage row identifies the requested canonical identity, actual provider/model or owned release, route release and data mode. This makes direct traffic a trustworthy migration baseline instead of secretly routing it to us.
 
 For Grad, a Redis route release contains signed cell targets rather than GPU pods. The gateway chooses an exact-release cell and calls a regional AWS inference edge. A cell-local router chooses a ready replica using queue deadline, token capacity and cache affinity. In the AWS management EKS cluster, Grad fleet CRDs/controllers project PostgreSQL capacity intent and reconcile external GPU capacity through curated capacity-provider adapters; they cannot participate in a live request. Managed Kubernetes, self-managed cell-local Kubernetes and provider-native container/VM allocations implement the same cell contract without pretending every allocation is a Kubernetes Node or spanning a cluster across providers. The complete designs are [Owned Grad inference architecture](OWNED_INFERENCE_ARCHITECTURE.md) and [Kubernetes provider abstraction](KUBERNETES_PROVIDER_ABSTRACTION_2026-07-13.md).
+
+### Research factory and exact bundle boundary
+
+The research factory iterates across weights/model architecture, tokenizer/templates, custom operators, kernels, runtime, scheduler/cache, parallelism/topology and hardware mapping. Its deployable output is one signed, content-addressed `ModelStackBundle`, not a checkpoint or a hand-maintained serving recipe. Large immutable objects live in S3 CAS; runtime images and the small OCI bundle index live in ECR. PostgreSQL owns campaigns, evidence, qualification, releases and alias heads. Temporal coordinates durable research workflows; Kueue/JobSet schedule only honest Kubernetes execution, while native GPU allocations use the existing provider-adapter lifecycle behind a separate research contract.
+
+Fable supplies hypotheses, functional-twin/model-surgery tooling and simulator priors. Sol supplies immutable experiment, controls, fidelity, scope and claim-admission discipline. Simulation or component evidence never authorizes production. An independent qualification plane tests the exact bundle through model, kernel/runtime, protocol, measured single-node, distributed-cell, security, soak and canary gates. Research allocations cannot publish production `CellTarget`s or possess production credentials.
+
+`RouteRelease` wraps a qualified bundle with the customer product contract: stable family or managed effort/speed identity, immutable pin, capability/SLO/price envelope, eligible placements, rollout and rollback. Cells attest the exact release and bundle digest before the target projector can publish them. A live request remains bound to the release resolved at admission even if an alias moves. The full design is [Model research factory to production](MODEL_RESEARCH_TO_PRODUCTION_2026-07-13.md) and [ADR-0007](../../docs/decisions/0007-research-production-model-lifecycle.md).
 
 Every generative Grad release enables active-sequence KV and cross-request prefix cache. The gateway supplies an opaque HMAC scope separated by workspace/channel, exact release, and retention class. Product Intelligence and Private/No Retention both cache but never share a namespace. Cache state remains in GPU/RAM or qualified encrypted ephemeral local storage and never enters Redis, PostgreSQL, S3, ClickHouse, trace payloads, backups or logs.
 

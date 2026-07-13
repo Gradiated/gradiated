@@ -60,17 +60,19 @@ Protocol/capability errors are equally stable: `400 unsupported_parameter`, `uns
 }
 ```
 
-Exact prices use integer/string unit fields in the documented schema; the example omits rates to avoid implying floating-point money. Direct entries use `kind: direct`, canonical IDs such as `openai/<id>`, an exact provider/model/version and any safe compatibility aliases. Grad checkpoint pins use `kind: grad_checkpoint`. Responses echo the canonical requested identity and expose actual provider/release in Grad headers and authenticated usage metadata. The standard response `model` field convention is frozen per protocol fixture before implementation.
+Exact prices use integer/string unit fields in the documented schema; the example omits rates to avoid implying floating-point money. Direct entries use `kind: direct`, canonical IDs such as `openai/<id>`, an exact provider/model/version and any safe compatibility aliases. Stable family heads such as `grad/glm-5.2/fast` use `kind: grad_family`; immutable pins such as `grad/glm-5.2/fast@r2026.07.13.3` use `kind: grad_release`. Every Grad entry discloses its current immutable route release and bundle identity in the namespaced object. Responses echo the canonical requested identity and expose actual family/release in Grad headers and authenticated usage metadata. The standard response `model` field convention is frozen per protocol fixture before implementation.
 
 `x-grad-session-id` is customer-chosen bounded opaque text, HMAC-normalized before indexing, and never a billing identity. Given the same active release, requirements and healthy candidates, it yields the same route decision. A route break returns a reason in usage metadata. Request-level no-retain may only make workspace data policy stricter; it cannot broaden access or retention.
 
 Model resolution is deterministic:
 
-1. Canonical `grad/<effort>/<speed>` resolves a qualified active Grad release; all targets are owned inference for that cell.
-2. Canonical `<provider>/<model>` resolves exactly that curated provider/model definition.
-3. A bare upstream model ID resolves only if the active alias registry has exactly one binding, or `x-grad-provider` names the matching curated provider.
-4. Deprecated preview aliases resolve to a documented Grad identity with warning headers until removal.
-5. No request body can supply endpoint URLs, provider arrays, weights or arbitrary credentials.
+1. Canonical `grad/<effort>/<speed>` resolves a qualified active managed-product release; all targets are owned inference for that cell.
+2. Canonical `grad/<family>/<speed>` resolves the active release within that family's declared compatibility envelope.
+3. A Grad identity with `@<release>` resolves exactly one immutable supported `RouteRelease`; it never follows an alias head.
+4. Canonical `<provider>/<model>` resolves exactly that curated provider/model definition.
+5. A bare upstream model ID resolves only if the active alias registry has exactly one binding, or `x-grad-provider` names the matching curated provider.
+6. During preview, `grad/<effort>/slow` may resolve to `grad/<effort>/flex` with warning headers; it is not a fifth speed class. Other deprecated preview aliases follow the same documented warning/removal contract.
+7. No request body can supply endpoint URLs, provider arrays, weights or arbitrary credentials.
 
 A valid `x-grad-migration-experiment` is the only exception to ordinary direct-pin routing. It identifies an active customer-approved experiment bound to the same organization/workspace/source model/workload, budget and expiry. The gateway deterministically selects baseline direct or candidate Grad before pricing/admission and discloses the choice. Missing/invalid/mismatched/expired headers fail or use the ordinary hard pin according to the published error contract; they never silently enroll traffic. Creating an experiment in the console does not affect requests without the header.
 
@@ -85,7 +87,7 @@ The Vite application calls tRPC routers under `/trpc`:
 - `apiKeys`: list, create, revoke, rotate;
 - `credits`: organization balance, top-up intent, history, receipt link, warning settings;
 - `usage`: ClickHouse-backed aggregate and paginated request facts behind typed filters; PostgreSQL remains financial authority;
-- `models`: Grad effort/speed matrix, curated direct-provider registry, aliases, lifecycle, capability/data-policy/price detail, and workspace access policy;
+- `models`: Grad managed effort/speed matrix, stable family heads, immutable release pins, curated direct-provider registry, aliases, lifecycle, capability/data-policy/price detail, and workspace access policy;
 - `workloads`: ClickHouse-backed profiles, traces, spend/latency/capability summaries and migration evidence;
 - `traceAccess`: single-trace view, bounded export and delete requests; each view/export requires workspace authorization and produces a short-lived signed internal grant plus audit event;
 - `migration`: candidates, recommendations, evaluator settings, replay/shadow/canary experiments, budgets, stop/cancel/promote actions;
@@ -114,8 +116,16 @@ All IDs are UUIDv7/ULID-style sortable opaque identifiers unless a library decis
 | `model_definitions` | provider-qualified model/version or Grad checkpoint, owner/license, aliases, modalities, context/output limits, exact supported parameters, lifecycle and public metadata. |
 | `model_aliases` | unique alias, provider constraint, canonical model, activation/removal dates; ambiguous active bare aliases forbidden. |
 | `direct_model_endpoints` | exact model provider/model, encrypted secret reference, region/data policy, capacity, buy-price version and status. Grad cells/targets have a separate fleet lifecycle. |
+| `research_campaigns` | immutable approved objective/search scope, model/workload/hardware targets, quality/SLO/economics policy, controls, budget, timeout, data/provider authority, stop rules and lifecycle. |
+| `experiment_specs` / `experiment_runs` | content-addressed preregistration and append-only executions with exact scope identities, predictions, fidelity, seeds, observations, environment validity, metering and cleanup evidence. |
+| `evidence_claims` | versioned claim, exact scope, evidence class, analysis/control artifacts, uncertainty, composition graph, admission decision, expiry and independent reviewer. |
+| `research_candidates` | lineage DAG node, parent bundles/candidates, coherent intervention set, implementation source and candidate lifecycle. |
+| `model_stack_bundles` | canonical manifest digest, immutable S3/ECR references, complete model/runtime/kernel/serving/topology/placement/protocol/security identity, signatures and support metadata. |
+| `bundle_qualifications` / `bundle_gate_results` | exact bundle, policy/evaluator/holdout versions, gate outcomes, measurements, signed attestations, limitations, expiry and invalidation reason. |
+| `release_proposals` / `release_approvals` | exact bundle/qualification, product aliases, price/SLO/capability/placement envelope, rollout/rollback, proposer and independent approval signatures. |
+| `model_alias_heads` | versioned family or managed-product alias generation, active/rollback release, effective time and audit event; immutable pins do not use a moving head. |
 | `qualification_evidence` | endpoint/model/scope, evidence kind, fixture/evaluation version, measured result, threshold, artifact reference, expiry. |
-| `route_releases` | immutable direct provider/model or Grad effort/speed identity, fixed sell prices, eligibility/SLO, attempt/session policy, release state and rollback target. |
+| `route_releases` | immutable direct provider/model or Grad managed/family/pinned identity, exact bundle digest, fixed sell prices, eligibility/SLO, attempt/session policy, release state and rollback target. |
 | `route_candidates` | release, concrete model, endpoint selector, priority/weight, capability/privacy/capacity constraints, required evidence. |
 | `route_rollouts` | release, deterministic bucket range, audience, start/halt state, SLO gates. |
 | `capacity_intents` / `capacity_leases` | durable desired pool generation, budget/owner epoch, external allocation identity/history, acquired cost, lifecycle and cleanup evidence; projected into rebuildable fleet CRDs. |
@@ -175,9 +185,19 @@ proto/
     releases.proto
     cells.proto
     capacity.proto
+  gradiated/research/v1/
+    campaigns.proto
+    experiments.proto
+    evidence.proto
+    candidates.proto
+    bundles.proto
+    qualification.proto
+    workflows.proto
 ```
 
-Important messages include `ApiKeyProjection`, `OrganizationBillingProjection`, `WorkspacePolicyProjection`, `ChannelAccountProjection`, `ModelProviderDefinition`, `ModelProduct`, `ModelDefinition`, `ModelAlias`, `GradEffort`, `GradSpeed`, `DataMode`, `CapabilityRequirement`, `DirectModelEndpointProjection`, `QualificationReference`, `RouteRelease`, `RouteCandidate`, `RouteDecision`, `ReleaseManifest`, `CellTarget`, `GenerateRequest`, `GenerateEvent`, `CapacityIntent`, `CapacityLease`, `CapacityPoolSpec`, `CapacityAllocationSpec`, `CapacityAllocationStatus`, `InferenceCellStatus`, `CellHeartbeat`, `TraceEnvelope`, `TraceCaptureEvent`, `WorkloadProfile`, `MigrationCandidate`, `MigrationExperiment`, `MigrationRecommendation`, `LimitWindow`, `PriceBook`, `Reservation`, `ReservationEvent`, `SettlementEvent`, `ChannelSettlementEvent`, `FailedRequestCreditEvent`, `ProjectionCommand`, and `ReconciliationCheckpoint`.
+Important messages include `ApiKeyProjection`, `OrganizationBillingProjection`, `WorkspacePolicyProjection`, `ChannelAccountProjection`, `ModelProviderDefinition`, `ModelProduct`, `ModelDefinition`, `ModelAlias`, `ModelFamily`, `ModelAliasHead`, `GradEffort`, `GradSpeed`, `DataMode`, `CapabilityRequirement`, `ResearchCampaign`, `ExperimentSpec`, `ExperimentRun`, `EvidenceClaim`, `ResearchCandidate`, `ModelStackBundleManifest`, `BundleQualification`, `BundleGateResult`, `ReleaseProposal`, `ReleaseApproval`, `DirectModelEndpointProjection`, `QualificationReference`, `RouteRelease`, `RouteCandidate`, `RouteDecision`, `ReleaseManifest`, `CellTarget`, `GenerateRequest`, `GenerateEvent`, `CapacityIntent`, `CapacityLease`, `CapacityPoolSpec`, `CapacityAllocationSpec`, `CapacityAllocationStatus`, `InferenceCellStatus`, `CellHeartbeat`, `TraceEnvelope`, `TraceCaptureEvent`, `WorkloadProfile`, `MigrationCandidate`, `MigrationExperiment`, `MigrationRecommendation`, `LimitWindow`, `PriceBook`, `Reservation`, `ReservationEvent`, `SettlementEvent`, `ChannelSettlementEvent`, `FailedRequestCreditEvent`, `ProjectionCommand`, and `ReconciliationCheckpoint`.
+
+`ModelStackBundleManifest` has generated TS/Rust types but its identity is the SHA-256 of RFC 8785-canonical JSON, not ordinary JSON bytes or an assumed cross-language Protobuf wire ordering. `RouteRelease`, `CellTarget` and internal `GenerateRequest` carry the exact bundle digest and alias generation. A cell cannot become ready when its attested runtime image, manifest, placement envelope or signatures differ from the release.
 
 Rules:
 

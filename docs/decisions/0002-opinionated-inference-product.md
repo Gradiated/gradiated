@@ -11,7 +11,7 @@ Build a curated inference product rather than an OpenRouter feature-for-feature 
 
 The default public catalog contains five managed products—`grad/auto`, `grad/fast`, `grad/smart`, `grad/code`, and `grad/open`—plus a small qualified set of concrete model IDs. A managed product resolves through an immutable, fixed-sell-price route release with explicit capability/privacy eligibility, deterministic canary assignment, session stickiness, bounded pre-output fallback, actual-model disclosure, and a rollback target. A concrete pin may retry the same model on another qualified endpoint but never changes model family.
 
-Owned inference is strategically preferred only when its exact model/endpoint/runtime scope passes the same capability, quality, privacy, region, SLO, capacity, and margin gates as external supply. OpenRouter is primarily a downstream distribution channel for owned/differentiated supply. OpenRouter-upstream access is operator-only fallback/benchmark supply, not the default breadth strategy.
+Owned inference is strategically preferred only when its exact model/endpoint/runtime scope passes the same capability, quality, privacy, region, SLO, capacity, and margin gates as external supply. Grad inference remains independently OpenAI-compatible and can sit behind customer-configured third-party gateways using the customer's workspace key. OpenRouter is the first native downstream distribution channel and Hugging Face is the second planned native channel for owned/differentiated supply; each uses separate channel credentials and receivable accounting. OpenRouter-upstream access is operator-only fallback/benchmark supply, not the default breadth strategy.
 
 The seed console has five primary screens: Overview, API keys, Models, Usage, and Billing. The Default workspace, providers, route weights, fallbacks, variants, and health machinery are hidden from first use. The seed inference API supports model listing, Chat Completions, Anthropic Messages, a stateless Responses subset, and Embeddings. Unsupported semantics fail explicitly.
 
@@ -33,6 +33,7 @@ The existing architecture also requires prepaid organization credit, hard worksp
 
 - positive: five-minute onboarding; small explainable surface; stable fixed prices; explicit behavioral/privacy guarantees; differentiated owned-inference path; auditable releases and rollbacks.
 - positive: the gateway still retains the hard engineering needed for production—capability filtering, health routing, retries, caching awareness, metering, billing, privacy and failure credits—without exposing it as setup.
+- positive: customers may call Grad directly or through their existing OpenAI-compatible gateway; native marketplace listings add reach without creating another inference runtime or forcing adoption of Grad's first-party gateway.
 - negative: fewer models/modalities at launch; ModelOps qualification and route-release tooling become critical-path product infrastructure; we absorb provider buy-price variance and route-quality risk.
 - negative: customers needing arbitrary provider order, BYOK, deep guardrails, hosted plugins/tools, media generation, or regional guarantees wait for evidence-gated follow-ons.
 - migration or rollback: managed aliases are additive to concrete model IDs. A release rolls back by atomically repointing its head while in-flight requests retain their admitted release/price. The product strategy can broaden the advanced catalog or routes without changing organization billing or the gateway's Redis state/control boundary.
@@ -44,6 +45,7 @@ The existing architecture also requires prepaid organization credit, hard worksp
 - [Architecture](../../product/docs/ARCHITECTURE.md): derived managed-route/control-data-plane architecture.
 - [Billing and Redis](../../product/docs/BILLING_AND_REDIS.md): derived fixed-price reservation and correction invariants.
 - [OpenRouter provider integration](https://openrouter.ai/docs/guides/community/for-providers): vendor-reported, time-sensitive downstream requirements.
+- [Open distribution and gateway integration plan](../../product/docs/DISTRIBUTION_GATEWAY_INTEGRATIONS_2026-07-13.md): source-backed target, principal, package and harness decision.
 
 No live provider request, authenticated OpenRouter UI inspection, or paid experiment informed this decision.
 

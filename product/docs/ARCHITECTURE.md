@@ -27,8 +27,9 @@ flowchart LR
   ModelOps[Model qualification + route release jobs] --> PG
   ModelOps --> Providers
 
-  Clients[OpenAI / Anthropic SDKs] --> Gateway[Rust gateway]
-  External[External gateways] --> Gateway
+  Clients[OpenAI / Anthropic SDKs] -->|workspace key| Gateway[Rust gateway]
+  CustomerGateway[Customer gateway: LiteLLM / Cloudflare / Portkey / Helicone] -->|workspace key| Gateway
+  NativeChannel[Native listing: OpenRouter / Hugging Face] -->|channel credential| Gateway
   Gateway --> Redis
   Gateway --> Providers[Curated direct providers]
   Gateway --> Edge[AWS inference edge]
@@ -39,6 +40,10 @@ flowchart LR
 ```
 
 The red path is the serving hot path. Redis is the gateway's only synchronous internal **state/control dependency**. Curated model APIs and the AWS inference edge are upstream serving dependencies after admission. The gateway does not call the API, worker, PostgreSQL, ClickHouse, Stripe, an external queue, object storage, Kubernetes, or a capacity-provider lifecycle API.
+
+Grad inference is independently OpenAI-compatible. Direct clients and customer-configured gateways authenticate with a workspace key and use organization prepaid accounting. Native listings authenticate with a dedicated distribution-channel credential and use a channel catalog, exposure limits and receivable settlement. Credential lookup selects the principal/profile before model or money resolution; no request header/body can cross those domains. Both profiles reuse the same public protocol, exact Grad release, inference edge/cells, metering and request identity. See [Open distribution and gateway integration plan](DISTRIBUTION_GATEWAY_INTEGRATIONS_2026-07-13.md).
+
+For OpenRouter specifically, OpenRouter validates/bills its end user's OpenRouter token and then calls this public gateway with a Grad-issued OpenRouter channel credential. Grad validates the channel—not the end user—and still performs channel exposure, model, capacity, rate and concurrency admission before forwarding an exact-release request through the private inference edge. Public/channel credentials are never valid at the inference edge or cell.
 
 ## TypeScript control plane
 
@@ -93,6 +98,7 @@ Use a Cargo workspace with Tokio, Axum, Tower, Reqwest, tracing/OpenTelemetry, r
 - `gateway-protocol-google`: versioned GenerateContent schemas/streaming and official SDK fixtures;
 - `gateway-core`: canonical internal request, provider/model or Grad effort/speed identity, capability planning, route-release resolution, attempts, errors;
 - `gateway-admission`: Redis functions/scripts and typed state transitions;
+- `gateway-distribution`: authenticated workspace/channel principal profiles, catalog projections and channel request/settlement correlation;
 - `gateway-provider`: model-provider adapter trait and generic streaming transport;
 - `gateway-provider-{openai,anthropic,google,owned}` plus operator-only OpenRouter/generic adapters;
 - `inference-edge`: stable streaming target, signed cell-target validation, mTLS/direct/tunnel transport and event relay;
@@ -108,13 +114,13 @@ Keep public protocol structs separate from internal Protobuf messages. Exact JSO
 
 ```text
 parse bounded headers/body
-  -> hash and resolve key to organization/workspace in Redis
+  -> hash and resolve key to workspace or native distribution principal in Redis
   -> derive capability/data-policy/native-tier requirements
   -> resolve provider-qualified concrete model or Grad effort/speed release
   -> select eligible targets from the Redis route projection
-  -> validate organization/workspace/key/model/config/price versions
-  -> prove a conservative maximum fixed customer sell exposure for the bounded request
-  -> atomic reserve + low-balance concurrency admission + XADD
+  -> validate principal/catalog/model/config/price versions
+  -> prove a conservative maximum fixed customer or channel sell exposure
+  -> atomic organization-credit or channel-exposure reserve + concurrency admission + XADD
   -> apply deterministic canary/session pin and choose a healthy same-lane target
   -> call exact curated provider/model or AWS inference edge for selected owned cell
   -> stream while collecting metered usage
@@ -123,7 +129,7 @@ parse bounded headers/body
   -> asynchronously append bounded encrypted trace event when Product Intelligence permits
 ```
 
-Provider retry/fallback stays attached to the same organization-funded, workspace-attributed reservation, route release, and customer price. A direct request may retry only the same concrete model/version within the named provider. A Grad request may retry only owned endpoints qualified for that exact effort/speed release; it never falls back to a frontier provider or slower lane. Failed-attempt buy cost is ours and is never added to customer sell usage. Only transient connection, capacity, rate-limit, or server failures before usable output are retryable. Context, capability, authentication, moderation/refusal, and customer-policy errors are returned rather than hidden. Cancellation settles known customer-billable usage and marks uncertainty explicitly. If no usable output was delivered, the worker posts exactly one eligible failed-request sell-credit correction.
+Provider retry/fallback stays attached to the same admitted financial principal, route release, and price book. A workspace request remains organization-funded/workspace-attributed; a native listing remains channel-funded/channel-attributed. A direct request may retry only the same concrete model/version within the named provider. A Grad request may retry only owned endpoints qualified for that exact effort/speed release; it never falls back to a frontier provider or slower lane. Failed-attempt buy cost is ours and is never added to sold usage. Only transient connection, capacity, rate-limit, or server failures before usable output are retryable. Context, capability, authentication, moderation/refusal, and principal-policy errors are returned rather than hidden. Cancellation settles known billable usage and marks uncertainty explicitly. If no usable output was delivered, the worker posts exactly one eligible sell-credit/receivable correction under that principal's contract.
 
 ### Model lanes and route-release domain
 

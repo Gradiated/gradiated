@@ -2,7 +2,7 @@
 
 ## Current decision
 
-Build the direct paid gateway first as a premium curated inference and migration product, while making owned serving eligible for external-gateway distribution. The control plane is Vite React plus Hono/tRPC Node; the data plane is Rust. An organization is the customer/billing boundary and workspaces isolate keys, data/model policy, limits, membership and usage.
+Build the direct paid gateway first as a premium curated inference and migration product, while making owned serving independently OpenAI-compatible and eligible for external-gateway distribution. Customers may call Grad directly or put a workspace key behind their existing gateway; selected native listings use separate channel credentials/receivables. The control plane is Vite React plus Hono/tRPC Node; the data plane is Rust. An organization is the customer/billing boundary and workspaces isolate keys, data/model policy, limits, membership and usage.
 
 The model surface has two lanes. Curated direct IDs (`openai/...`, `anthropic/...`, `google/...`) preserve exact provider/model identity so an existing workload can often move by changing only base URL/key. First-party `grad/<effort>/<speed>` products run only on our inference; effort is `low|medium|high|max`, speed is `flex|standard|fast|turbo`, and the default is `grad/medium/standard`. There are no customer provider arrays or hidden moves from direct traffic to Grad.
 
@@ -46,6 +46,7 @@ Creating an organization atomically creates a hidden Default workspace and owner
 8. Build the inference edge/two-AZ relay and cell contracts, fleet CRDs/fake controllers/Kind PBT, pinned vLLM runtime with always-on salted prefix cache, one native capacity-provider controller, then compare one managed-Kubernetes cell and qualify diversified spot capacity.
 9. Add encrypted Product Intelligence trace ingestion/S3 retention, content-free ClickHouse projection/query/delete/rebuild, Private/No Retention and workload/recommendation/experiment state machines.
 10. Complete provider-migration and Grad quickstarts, protected real-provider/owned CI and operations, then run measured OpenRouter provider conformance/soak/economics.
+11. Ship the shared open-distribution harness and P0 LiteLLM/Cloudflare/Portkey/Helicone/Vercel AI SDK recipes; pursue OpenRouter first and Hugging Face second as native listings after their channel gates pass.
 
 Detailed ownership and acceptance checks are in `docs/DELIVERY_PLAN.md`.
 
@@ -63,6 +64,12 @@ Current official public docs describe a much broader surface than routing alone:
 
 ADR-0003 and `docs/MODEL_LANES_AND_MIGRATION.md` supersede ADR-0002's five-product names and no-payload-retention boundary. ADR-0004 and `docs/CLICKHOUSE_TRACE_ANALYTICS_DECISION.md` define the ClickHouse/PostgreSQL/S3 split. The curated-not-marketplace, strict capability, fixed-price release, prepaid and downstream-distribution decisions remain.
 
+## Open distribution decision
+
+Grad inference is a first-class OpenAI-compatible endpoint, not a feature available only through Grad's own customer experience. Customer-configured gateways forward a workspace key and remain ordinary prepaid organization traffic. Native OpenRouter/Hugging Face listings authenticate as dedicated distribution principals with channel catalogs, exposure/receivable accounting and contract privacy; they cannot touch customer credit or first-party traces. One Rust serving path and owned inference fleet serve all three modes.
+
+P0 compatibility covers official OpenAI TypeScript/Python/Go clients, OpenAI's pinned `gpt-oss` tool/API-shape smoke, Vercel `@ai-sdk/openai-compatible`, a pinned LiteLLM proxy and reproducible Cloudflare/Portkey/Helicone recipes. OpenRouter SDKs are post-listing black-box test dependencies. The implementation-ready target/package/harness/CI plan is `docs/DISTRIBUTION_GATEWAY_INTEGRATIONS_2026-07-13.md`; WP-09 in `docs/DELIVERY_PLAN.md` owns delivery.
+
 ## Environment names planned
 
 ```text
@@ -77,6 +84,7 @@ ANTHROPIC_API_KEY
 ANTHROPIC_E2E_MODEL
 GOOGLE_API_KEY
 GOOGLE_E2E_MODEL
+GRAD_OPENAI_BASE_URL
 TRACE_BUCKET
 TRACE_KMS_KEY_ARN
 TRACE_RETENTION_DAYS
@@ -102,6 +110,7 @@ Secrets belong in deployment/GitHub environments only. Provider smoke tests must
 - Provider/Grad/trace/ClickHouse architecture: https://github.com/joshsny/gradiated/issues/4 is closed; completed packet: `tasks/done/2026-07-13-grad-effort-speed-provider-lanes.md`.
 - Multi-provider spot GPU architecture: https://github.com/joshsny/gradiated/issues/7; completed packet: `tasks/done/2026-07-13-multi-provider-spot-inference.md`.
 - Kubernetes provider abstraction and full architecture audit: https://github.com/joshsny/gradiated/issues/8; architecture commit `fe345f3`; completed packet: `tasks/done/2026-07-13-kubernetes-provider-abstraction-audit.md`.
+- Open distribution integrations: https://github.com/joshsny/gradiated/issues/9; active packet: `tasks/active/2026-07-13-open-distribution-integrations.md`.
 - No code has been implemented and no provider request has been made in this planning task.
 
 ## Resume
@@ -115,6 +124,7 @@ sed -n '1,420p' product/docs/KUBERNETES_PROVIDER_ABSTRACTION_2026-07-13.md
 sed -n '1,420p' product/docs/ARCHITECTURE_AUDIT_2026-07-13.md
 sed -n '1,180p' product/docs/MULTI_PROVIDER_GPU_EVIDENCE_2026-07-13.md
 sed -n '1,360p' product/docs/OPENROUTER_FEATURE_DECISIONS.md
+sed -n '1,420p' product/docs/DISTRIBUTION_GATEWAY_INTEGRATIONS_2026-07-13.md
 sed -n '1,420p' product/docs/MODEL_LANES_AND_MIGRATION.md
 sed -n '1,420p' product/docs/CLICKHOUSE_TRACE_ANALYTICS_DECISION.md
 sed -n '1,320p' infra/docs/DELIVERY_PLAN.md

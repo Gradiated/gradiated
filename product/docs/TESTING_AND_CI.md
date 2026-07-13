@@ -120,6 +120,8 @@ On every `main` commit and external pull request, boot PostgreSQL, ClickHouse, R
 - workload recommendation evidence progression plus replay/shadow/live-canary stop with proof that no automatic model switch occurs;
 - 402, 429, key revocation, timeout, cancellation, malformed upstream, and duplicate settlement;
 - a distribution-channel credential/exposure/settlement fixture proving no organization-credit or first-party-trace mutation;
+- direct OpenAI-compatible traffic and the same workspace key/request through pinned LiteLLM plus deterministic custom-gateway fakes, proving identical organization price/admission/trace semantics;
+- `/v1` path joining, slash-containing Grad model IDs, bearer/header allowlists, standard error preservation, SSE comments/events, cancellation and usage through a proxy;
 - native and managed-Kubernetes fake allocations through CRD reconcile/ready/target/fence/finalizer/rebuild paths while an already-published request survives controller loss;
 - unsupported parameter/capability, context overflow, no eligible route, pinned-model outage and no-usable-output credit;
 - usage/ledger assertion after the worker posts events.
@@ -140,6 +142,20 @@ On pushes to main, nightly schedule, and manual dispatch, use GitHub environment
 
 Real smoke proves current external compatibility but is not a replacement for deterministic fault coverage. Model aliases and API behavior can change, so the implementation owner verifies current official docs when pinning model IDs.
 
+## Distribution compatibility harness
+
+The full package, fixture and target plan is [Open distribution and gateway integration plan](DISTRIBUTION_GATEWAY_INTEGRATIONS_2026-07-13.md). The shared black-box corpus runs in five layers:
+
+1. official OpenAI TypeScript, Python and Go clients directly against Grad;
+2. OpenAI's pinned `gpt-oss` Chat/Responses tool/API-shape compatibility smoke;
+3. the same language-neutral cases through a pinned local LiteLLM proxy and deterministic gateway fakes;
+4. native-channel simulation using OpenRouter/Hugging Face catalog profiles, dedicated credentials and channel receivables;
+5. protected hosted/post-listing smoke and bounded release soaks.
+
+TypeScript uses Vitest, fast-check and Testcontainers; Python uses pytest, Hypothesis, httpx and respx; Rust uses reqwest, wiremock, proptest and proptest-state-machine. Framework packages (`ai`, `@ai-sdk/openai-compatible`, then selected LangChain/PydanticAI/LlamaIndex clients) are test/example dependencies, not production gateway dependencies. OpenRouter's TypeScript/Python/Go SDKs and `@openrouter/ai-sdk-provider` enter only after a native listing can be tested end to end.
+
+Every custom-gateway test proves that a forwarded workspace key remains organization prepaid traffic. Every native-channel test proves that a dedicated channel key uses channel exposure/receivables and cannot reserve organization credit, open a first-party trace or access tRPC. Cross-language properties vary model IDs, fields, tools, JSON schemas, Unicode/SSE splits, fault timing, cancellation, credential epochs and concurrent reserve/settle/reconcile order.
+
 ## GitHub Actions graph
 
 ```text
@@ -152,11 +168,13 @@ devex + formatting
   ├── trace encryption/retention + migration state machines
   ├── ClickHouse projection/tenant-query/delete/restore properties
   ├── Vite build + Playwright
-  └── fake official-client E2E
+  ├── fake official-client E2E
+  └── distribution contract + local router + channel simulator
 
 main/nightly/manual after required jobs
   ├── deep PBT/fault injection
-  └── protected real-provider E2E
+  ├── protected real-provider E2E
+  └── protected hosted-router/post-listing smoke (when configured)
 ```
 
 Pin action SHAs and tool versions. Use lockfiles and cached dependencies without caching generated test outcomes. Upload contract diffs, JUnit, coverage summaries, minimized traces, and sanitized service logs. Never upload `.env`, Redis dumps containing key projections, payment payloads, or request bodies.
@@ -176,6 +194,8 @@ Pin action SHAs and tool versions. Use lockfiles and cached dependencies without
 | `pnpm test:traces` | trace policy/encryption/retention, ClickHouse projection/tenant isolation and workload/migration state-machine properties. |
 | `pnpm test:e2e:fake` | official clients through gateway/fakes. |
 | `pnpm test:e2e:providers` | protected minimal paid smoke only. |
+| `pnpm test:distribution` | direct official-client, local-router, catalog and native-channel simulator suites. |
+| `pnpm test:distribution:hosted` | protected, budgeted hosted-router/post-listing smoke only. |
 | `pnpm verify` | all required non-paid pre-push/main checks. |
 
 Every task handoff records commands, CI run URL when available, seeds/artifacts for failures, and which paid tests were intentionally not invoked.

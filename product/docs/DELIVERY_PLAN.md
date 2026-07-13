@@ -114,11 +114,11 @@ AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/
 - Acceptance: drills for Redis/worker/provider/route/trace-object/KMS/retention failure; paid budget guard; identity/data-mode probes; no-retain eligibility; plaintext/credential leak scanner; missing secrets fail only protected context; no payload in ordinary logs/artifacts.
 - Dependencies: WP-06C, WP-07B.
 
-### WP-09 — OpenRouter provider and gateway distribution
+### WP-09 — Open distribution, router compatibility and native listings
 
-- Scope: `services/gateway` provider-facing profile, integration configs/fixtures, `product/evidence/integrations/**`, decision brief.
-- Deliver: maintain the source-backed feature decision brief; isolated provider model-list profile for owned/differentiated supply; PostgreSQL distribution-channel contract/receivable ledger and Redis `ChannelAccountProjection` admission; Chat Completions/tools matrix; 24-hour staging soak under an explicit budget; early-429/keepalive/midstream behavior; uptime/TTFT/throughput/tool-quality/economics/capacity/receivable reconciliation evidence; Cloudflare/LiteLLM/Portkey/Kong/Vercel-compatible customer configs.
-- Acceptance: source-dated requirement matrix; provider channel cannot touch direct-customer credit or credentials; measured protocol/uptime/TTFT/throughput/reconciliation evidence; positive differentiated economics; go/no-go recommendation with uncertainty; no application, terms acceptance, credential submission or publish action without human approval.
+- Scope: public OpenAI-compatible contract, `services/gateway` distribution profiles, `packages/distribution-testkit`, `tests/distribution/**`, integration configs/fixtures, `product/evidence/integrations/**`, decision brief.
+- Deliver: direct endpoint conformance with official OpenAI TypeScript/Python/Go clients and pinned OpenAI `gpt-oss` compatibility smoke; dedicated distribution principal/profile contracts; language-neutral JSON/SSE/error corpus; local LiteLLM/pass-through harness; customer configs for Cloudflare/LiteLLM/Portkey/Helicone/Vercel AI SDK and a validated-or-deferred Kong spike; isolated OpenRouter provider model-list profile and Hugging Face provider/mapping profile for owned/differentiated supply; PostgreSQL distribution-channel contract/receivable ledger and Redis `ChannelAccountProjection` admission; OpenRouter Chat/tools matrix; 24-hour staging soak under an explicit budget; early-429/keepalive/midstream behavior; uptime/TTFT/throughput/tool-quality/economics/capacity/receivable reconciliation evidence.
+- Acceptance: direct Grad inference remains usable without a native router listing; a customer-configured gateway using a workspace key posts exactly the same organization price/admission/trace semantics as direct traffic; native channel credentials cannot touch customer credit or first-party traces; generated catalog/feature fixtures pass; payout joins uniquely to usage; every published recipe passes its stream/tool/usage/error/privacy fixture. Partner applications, OSS PRs, terms acceptance and publishing remain human checkpoints. No OpenRouter application until the 24-hour soak meets our stricter target and realistic contribution margin is positive.
 - Dependencies: WP-05 through WP-08; documentation/config exploration can begin earlier.
 
 ### WP-10 — Seed launch and design partners
@@ -147,6 +147,10 @@ Suggested first delegation wave after WP-00:
 - Agent C: WP-04 Rust admission/Redis state machine.
 - Agent D: WP-05 public protocols/fake providers against fake admission.
 - Agent E: source-only portion of WP-09 integration requirement matrix.
+- Agent F: shared distribution fixtures and official OpenAI TypeScript/Python/Go harness after WP-00 schema freeze.
+- Agent G: P0 customer-gateway configs/tests, one target-owned directory per agent after shared harness freeze.
+- Agent H: OpenRouter native catalog/channel simulator/soak; no external application authority.
+- Agent I: Hugging Face provider helper/mapping fixtures; no external PR or live mapping authority.
 
 WP-03 starts once WP-01 ledger interfaces stabilize. WP-06 starts after protocol/admission interfaces compile. WP-06C starts with fakes after release/cell contracts freeze and coordinates its provider substrates with infrastructure F-00 through F-07. WP-07 starts only after data-mode/trace contracts and infrastructure ownership are frozen. The integration owner runs shared properties continuously.
 

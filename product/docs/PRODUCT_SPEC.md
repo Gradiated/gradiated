@@ -6,7 +6,7 @@ The seed is a premium, opinionated inference product—not a model marketplace. 
 
 The experience target is a successful production-shaped request within five minutes. An existing workload changes its base URL/key and can keep an unambiguous upstream model ID or use the canonical `provider/model` ID. A new workload starts with `grad/medium/standard`. Usage reads a content-free ClickHouse analytical projection, opens authorized encrypted payload detail from S3, groups Product Intelligence traces into workloads, and suggests evidence-backed Grad effort/speed candidates; the customer controls every replay, canary and final switch.
 
-The same serving endpoint can later be listed behind OpenRouter and other gateways, creating distribution without duplicating serving or metering. OpenRouter is a distribution partner and operator-only contingency—not the product template or a customer-selectable direct provider. The detailed model and migration contract is in [Model lanes and migration](MODEL_LANES_AND_MIGRATION.md); OpenRouter decisions remain in [OpenRouter feature decisions](OPENROUTER_FEATURE_DECISIONS.md).
+The same serving endpoint is also a first-class OpenAI-compatible provider endpoint. A customer may call it directly or put their workspace key behind LiteLLM, Cloudflare, Portkey, Helicone, Kong, Vercel AI SDK or another compatible gateway without changing Grad billing semantics. Selected Grad-owned releases can additionally be listed natively behind OpenRouter, Hugging Face and later approved marketplaces with separate channel credentials and receivable accounting. OpenRouter is a distribution partner and operator-only contingency—not the product template or a customer-selectable direct provider. The detailed model and migration contract is in [Model lanes and migration](MODEL_LANES_AND_MIGRATION.md); channel priorities and harnesses are in [Open distribution and gateway integration plan](DISTRIBUTION_GATEWAY_INTEGRATIONS_2026-07-13.md).
 
 The direct gateway is successful when teams activate quickly, retain paid usage, and produce positive contribution margin. The provider-distribution path is successful when externally sourced traffic is incremental, quality-competitive, and reconcilable to the same usage/ledger system.
 
@@ -82,6 +82,8 @@ Large-enterprise SSO, private networking, deeper hierarchy, and invoiced credit 
 
 - OpenAI, Anthropic and Google quickstarts; copyable environment and base-URL configuration.
 - No custom inference SDK at seed; use official clients and tested integration recipes.
+- P0 customer-gateway recipes for LiteLLM, Cloudflare, Portkey, Helicone and Vercel AI SDK; these use workspace keys and ordinary organization prepaid billing.
+- Native OpenRouter first and Hugging Face second only after dedicated channel auth/catalog/admission/receivable conformance and measured economics.
 - Deterministic fake providers for every `main` commit and external pull request.
 - Protected real-provider smoke tests using official clients and minimal token limits.
 - One-command deterministic tests plus replayable PBT for TypeScript and Rust.
@@ -89,6 +91,7 @@ Large-enterprise SSO, private networking, deeper hierarchy, and invoiced credit 
 ## Explicit non-goals for seed
 
 - Becoming a broad model marketplace before our differentiated supply is validated.
+- Requiring customers to adopt Grad's gateway as their only route to Grad inference.
 - Exposing provider ordering, arbitrary fallback arrays, model-suffix variants, plugin configuration or a routing DSL in the default product.
 - Hosting an agent runtime, MCP tool execution, shell/filesystem tools, prompt library or arbitrary system-prompt presets.
 - Silently dropping unsupported parameters, truncating context, healing outputs, bypassing moderation refusals or switching a pinned model family.

@@ -1,12 +1,19 @@
 # Gateway and provider integrations
 
-There are two distinct integration directions. Keep them separate in code, credentials, economics, and metrics.
+There are two distinct integration directions. Keep them separate in code, credentials, economics, and metrics. The complete target, package, harness and delivery decision is in [Open distribution and gateway integration plan](DISTRIBUTION_GATEWAY_INTEGRATIONS_2026-07-13.md).
 
 - Curated model-provider adapter: a customer explicitly requests a tested model provider/model from our short registry; we buy that exact inference and preserve identity.
 - Distribution channel: OpenRouter or another gateway sends traffic to our owned/differentiated inference and pays us for capacity.
 - Capacity-provider adapter: an operator-only fleet reconciler acquires GPU infrastructure for Grad-owned inference; this is not a customer model-provider option.
 
 Both use the same Rust protocol, routing, metering, and serving core. An external-gateway listing must never bypass our request identity, provider-side limits, metering, or reconciliation.
+
+There are two materially different ways traffic can arrive through another gateway:
+
+- **Customer-configured gateway:** the customer points LiteLLM, Cloudflare, Portkey, Helicone, Kong, or another compatible proxy at Grad using their workspace key. This is ordinary prepaid organization traffic and follows that workspace's model/data/trace/limit policy.
+- **Native distribution listing:** OpenRouter, Hugging Face, or another approved marketplace calls Grad with a dedicated channel credential. This uses channel exposure/receivable accounting and the channel privacy/catalog profile; it never mutates a customer organization credit pool or creates first-party Product Intelligence traces.
+
+Credential lookup selects the principal and profile. A caller cannot select channel billing, a customer organization, or a catalog view with headers or request-body fields.
 
 ## Upstream adapters
 
@@ -42,7 +49,9 @@ OpenRouter upstream does not appear in customer setup. If enabled by operators, 
 
 ## Official-client compatibility
 
-The conformance suite instantiates official OpenAI, Anthropic, and Google SDKs with base URL pointed to the Rust gateway. It covers canonical/bare model identity, native skins, Product Intelligence/no-retain behavior, fake providers on every `main` commit and external pull request, and real providers in protected CI as specified in [Testing and CI](TESTING_AND_CI.md).
+The Grad endpoint is independently usable as an OpenAI-compatible provider; third-party distribution is additive, not required. The conformance suite instantiates official OpenAI, Anthropic, and Google SDKs with base URL pointed to the Rust gateway. It covers canonical/bare model identity, native skins, Product Intelligence/no-retain behavior, fake providers on every `main` commit and external pull request, and real providers in protected CI as specified in [Testing and CI](TESTING_AND_CI.md).
+
+The OpenAI-compatible seed baseline is bearer authentication plus `GET /v1/models`, `POST /v1/chat/completions`, a qualified stateless `POST /v1/responses` subset, and qualified `POST /v1/embeddings`. Standard clients require only the base URL/key; Grad headers are optional. Public JSON/SSE compatibility is fixture-governed, including usage, tools, structured output, finish reasons, cancellation, UTF-8 chunking, early 429 and midstream errors. OpenAI's published `gpt-oss` compatibility test is pinned as an additional tool/API-shape smoke, not a claim of exhaustive OpenAI parity.
 
 Model IDs for paid smoke are environment-pinned because catalogs change. At each monthly review, verify from current official model/pricing documentation that the selected model supports the tested endpoint/streaming mode and remains the cheapest reasonable choice. The job's token and dollar preflight is the hard guardrail.
 
@@ -51,6 +60,8 @@ Model IDs for paid smoke are environment-pinned because catalogs change. At each
 OpenRouter's current provider documentation asks prospective providers to apply and defines a model-list contract including ID/Hugging Face identity, name, input/output modalities, quantization, context/max-output length, pricing, supported parameters/features, lifecycle/readiness/free/discount flags, capacity and data-center metadata. It describes auto top-up or invoicing for commercial settlement and exposes measured uptime, time-to-first-token and throughput. After sufficient traffic, vendor-reported routing tiers are at least 95% uptime for normal routing, 80–94% as degraded, and below 80% as fallback-only; 429 capacity responses are tracked separately, while many auth/server/midstream failures count against uptime. It recommends early explicit 429s and stream keepalive comments. These requirements are time-sensitive and must be revalidated before onboarding: [OpenRouter provider integration](https://openrouter.ai/docs/guides/community/for-providers).
 
 Only owned or contractually differentiated inference is eligible for our OpenRouter provider catalog. Re-exporting OpenAI/Anthropic/OpenRouter supply creates no differentiation and risks circular economics. Distribution-channel requests use dedicated credentials, Redis `ChannelAccountProjection` admission, receivable/payout accounting, price books, capacity/concurrency limits, cache trust domains, and SLOs; they never reserve against a customer organization credit pool even though they share protocol, exact-release routing, metering and inference code. PostgreSQL is authoritative for channel contracts/receivables; reconciliation joins downstream request IDs to immutable Grad usage and closes new admission on exposure, aging, or drift.
+
+OpenRouter calls the public Grad Rust gateway, not the inference edge or GPU cells. OpenRouter validates and bills its own end-user token; it presents a Grad-issued, rotatable OpenRouter channel credential to us. The Grad gateway validates that channel principal from Redis, performs provider-side exposure/model/capacity/rate/concurrency admission, routes the exact release through the private AWS inference edge, meters/streams the response, and emits the channel receivable event. No OpenRouter end-user token or channel secret reaches an inference cell, and the user need not have a Grad organization.
 
 The OpenRouter provider catalog may expose selected Grad effort/speed products or concrete owned checkpoints only when their naming/capability contract fits OpenRouter's current model-list requirements. External marketplace traffic does not create first-party customer traces or migration recommendations; its data handling follows the downstream contract.
 
@@ -84,7 +95,7 @@ Application submission, accepting terms, publishing a model, or sending credenti
 
 ## Other gateway distribution paths
 
-Prioritize configurable customer-side integrations before formal marketplace partnerships:
+Prioritize configurable customer-side integrations before formal marketplace partnerships. These recipes forward a customer workspace key and therefore stay on prepaid organization accounting:
 
 | Path | Seed integration | Evidence to produce | Priority |
 | --- | --- | --- | --- |
@@ -92,10 +103,15 @@ Prioritize configurable customer-side integrations before formal marketplace par
 | LiteLLM Proxy | Publish a tested custom/OpenAI-compatible model config. | Config fixture, stream/tool/usage behavior, error matrix. | High |
 | Portkey | Publish base-URL/custom-provider configuration. | Config fixture, virtual-key/header behavior, usage/error matrix. | Medium |
 | Kong AI Gateway | Validate an OpenAI-compatible route and plugin transformations. | Declarative config and protocol fixture results. | Medium |
-| Vercel AI SDK | Offer an OpenAI-compatible provider configuration for application clients. | Example package/test, not an assumed marketplace listing. | Medium |
+| Helicone | Publish `Helicone-Target-Url` configuration first; contribute a native OSS provider after demand. | Header/auth forwarding, unknown-domain limits, stream/tool/usage/error matrix; native registry tests. | High |
+| Vercel AI SDK | Offer `@ai-sdk/openai-compatible` configuration, then a thin `@grad/ai-sdk-provider`. | Example/package tests, not an assumed Vercel AI Gateway marketplace listing. | High |
 | Enterprise gateways | Generic base URL plus OpenAPI and capability profile. | Customer-specific conformance packet. | Demand-driven |
 
 Do not claim a formal provider program unless official documentation and a contact path confirm it. A working custom endpoint configuration is still valuable distribution and can be shipped without platform partnership.
+
+OpenRouter is the first native listing target. Hugging Face Inference Providers is the second: its current registration guide documents an OSS `huggingface.js` provider helper/registration, partner model mappings, staging/live state and automated endpoint/tool/structured-output validation. Vercel AI Gateway and cloud model marketplaces remain contact/evidence-gated because the reviewed public docs do not establish a self-service provider listing path.
+
+The shared harness uses official OpenAI TypeScript/Python/Go clients; `ai` plus `@ai-sdk/openai-compatible`; a pinned LiteLLM proxy; Vitest/fast-check/Testcontainers; pytest/Hypothesis/httpx/respx; and reqwest/wiremock/proptest in Rust. OpenRouter SDKs and `@openrouter/ai-sdk-provider` are post-listing black-box test dependencies, not production gateway dependencies. Package and harness ownership is frozen in the dated distribution plan.
 
 ## Integration test matrix
 
@@ -126,6 +142,11 @@ Fixtures are versioned with provider/document date. Live canaries are vendor-dep
 - [OpenRouter API reference](https://openrouter.ai/docs/api/reference/overview).
 - [OpenRouter complete documentation index](https://openrouter.ai/docs/llms.txt).
 - [OpenRouter provider integration](https://openrouter.ai/docs/guides/community/for-providers).
+- [Open distribution and gateway integration plan](DISTRIBUTION_GATEWAY_INTEGRATIONS_2026-07-13.md).
+- [OpenAI gpt-oss implementation verification](https://developers.openai.com/cookbook/articles/gpt-oss/verifying-implementations#quick-verification-of-tool-calling-and-api-shapes).
+- [Hugging Face provider registration](https://huggingface.co/docs/inference-providers/en/register-as-a-provider).
+- [Vercel AI SDK OpenAI-compatible providers](https://ai-sdk.dev/providers/openai-compatible-providers).
+- [Helicone provider integration](https://docs.helicone.ai/references/provider-integration).
 - [OpenAI official TypeScript SDK](https://github.com/openai/openai-node).
 - [Anthropic official TypeScript SDK](https://github.com/anthropics/anthropic-sdk-typescript).
 - [Google gateway/partner integration guidance](https://ai.google.dev/gemini-api/docs/partner-integration).

@@ -6,7 +6,7 @@ Seed endpoints:
 
 | Method | Path | Protocol authority | Notes |
 | --- | --- | --- | --- |
-| `GET` | `/v1/models` | OpenAI-shaped schema | Models allowed by the authenticated organization/workspace/key policy. |
+| `GET` | `/v1/models` | OpenAI-shaped schema | Models allowed by the authenticated workspace policy, or the approved catalog projection selected by a native-channel credential. |
 | `POST` | `/v1/chat/completions` | OpenAI Chat Completions | Stream and non-stream; unsupported fields fail explicitly. |
 | `POST` | `/v1/messages` | Anthropic Messages | Required Anthropic headers plus stream and non-stream. |
 | `POST` | `/v1/responses` | OpenAI Responses | Stateless supported subset; text/image/file input, tools, structured output, reasoning, stream and non-stream. No server-side conversation storage. |
@@ -17,6 +17,12 @@ Seed endpoints:
 | `GET` | `/readyz` | Internal | Redis/script/config readiness; no provider call. |
 
 Authentication is `Authorization: Bearer <workspace-api-key>`. Anthropic clients may send their standard API-key header; normalize it only at the authentication edge. Reject query credentials. Accept optional `x-grad-provider` to disambiguate a bare direct alias, `x-grad-session-id` for stability, `x-grad-data-policy: no-retain` to tighten policy, `x-grad-migration-experiment` to explicitly opt that request into a preconfigured live canary, and bounded `Idempotency-Key`/`x-grad-request-id` for admission/charge deduplication. Inference idempotency does not promise response-body replay: a duplicate active request returns the existing admission identity; a duplicate completed request returns a stable conflict/status reference unless that wire protocol later defines replay. Return request/canonical/actual model, model provider, release, data-policy, experiment/bucket, trace ID when eligible, and price/usage metadata. Raw endpoint/capacity-provider identity remains operator-only.
+
+The same paths accept dedicated native-distribution credentials. Credential lookup resolves exactly one principal before policy/model resolution: `WorkspacePrincipal` or `DistributionChannelPrincipal`. A workspace credential selects organization prepaid accounting and the workspace-filtered catalog. A channel credential selects a versioned distribution profile, channel catalog/price book, exposure/concurrency limits and receivable settlement. No header/body value can switch principal kind, organization, workspace, distribution channel, catalog profile or financial domain. Customer-configured gateways forward a workspace credential and remain workspace traffic.
+
+For a native OpenRouter request, OpenRouter validates its end user's OpenRouter token and account, then calls the same public Grad gateway with a Grad-issued OpenRouter channel credential. Grad validates that channel credential and admits against channel exposure/model/capacity/rate/concurrency state; it does not receive or validate the end-user token. The public gateway is the only allowed channel ingress. AWS inference-edge, cell and runtime endpoints are private and reject channel/customer keys; cells receive only the edge's short-lived signed service identity and exact-release request.
+
+The production OpenAI-compatible base URL is configured as `GRAD_OPENAI_BASE_URL` and includes `/v1`; DNS is frozen by deployment, not generated contracts. Baseline OpenAI compatibility requires only standard bearer auth and fields. Optional `x-grad-*` metadata must not be required by official OpenAI clients or customer gateways.
 
 OpenAPI/JSON Schema plus recorded conformance fixtures are authoritative for public JSON and streams. Provider-native skins remain separate protocol structs; do not force Google or Anthropic unions into OpenAI shapes. Implement an explicit support matrix per field/event. Preserve unknown response metadata only where safe; never silently accept a request feature that will be dropped.
 
@@ -114,6 +120,7 @@ All IDs are UUIDv7/ULID-style sortable opaque identifiers unless a library decis
 | `route_rollouts` | release, deterministic bucket range, audience, start/halt state, SLO gates. |
 | `capacity_intents` / `capacity_leases` | durable desired pool generation, budget/owner epoch, external allocation identity/history, acquired cost, lifecycle and cleanup evidence; projected into rebuildable fleet CRDs. |
 | `distribution_channels` | downstream gateway contract, credentials reference, receivable/risk state, channel price book, model allowlist, concurrency/rate/capacity limits and reconciliation terms. |
+| `distribution_profiles` | immutable protocol/catalog/privacy/price/limit profile version for one approved native channel; never selected by an untrusted request field. |
 | `channel_receivable_transactions` | unique channel usage/revenue/credit/invoice/adjustment business entries; separate from customer organization credit. |
 | `trace_records` | organization/workspace/request, data mode, capture status, encrypted S3 reference, per-trace wrapped-key state, byte/content classes, retention deadline, deletion/export/ClickHouse projection state; no raw payload. |
 | `trace_access_grants` | one trace/workspace/user/action, nonce digest, issued/expiry/consumed state and audit request; short-lived, single-use, never a bearer URL to S3. |

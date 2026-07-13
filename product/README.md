@@ -1,9 +1,10 @@
 # Inference gateway product
 
-This workstream specifies a revenue-first, curated inference product with two distribution paths sharing one serving system:
+This workstream specifies a revenue-first, curated inference product with three access modes sharing one serving system:
 
 1. customers send OpenAI-, Anthropic-, or Google-compatible traffic to our gateway and prepay an organization credit pool;
-2. external gateways such as OpenRouter list our models and send provider traffic to the same serving API.
+2. customers point an existing gateway such as LiteLLM, Cloudflare, Portkey or Helicone at the same OpenAI-compatible endpoint using their workspace key;
+3. external routers such as OpenRouter or Hugging Face natively list selected Grad inference and send traffic with a dedicated distribution-channel credential.
 
 The direct gateway is the seed product because it creates an immediate payment surface, customer relationship, trace/intelligence loop, and migration path. Customers can keep an explicitly curated direct provider/model (`openai/...`, `anthropic/...`, `google/...`) or select first-party owned inference as `grad/<effort>/<speed>`, with effort `low|medium|high|max` and speed `flex|standard|fast|turbo`. It is not a provider marketplace.
 
@@ -27,7 +28,8 @@ OpenAI/Anthropic/Google SDKs ──> Rust gateway ──> direct providers
 Hono reconciliation worker: Redis Streams ──> PostgreSQL ledger/outbox ──> Redis repair
 Trace analytics projector: PostgreSQL outbox ──> ClickHouse Cloud ──> Hono trace/workload UI
 Encrypted trace worker: Redis trace stream ──> private S3 payload ──> workload/recommendation processor
-External gateways ──provider protocol──> the same Rust serving surface
+Customer gateways ──workspace key──────> the same Rust serving surface
+Native listings ────channel credential─> the same Rust serving surface
 ```
 
 PostgreSQL is authoritative for organization credits, distribution-channel receivables, authorization, model qualification, route releases, desired capacity/lease history, trace registry/tombstones and workload/experiment control state. Encrypted raw traces live in private lifecycle-managed S3; ClickHouse Cloud is a replayable, content-free analytical projection for trace lists, charts and workload/model summaries. Every organization has a hidden Default workspace and may create more with separate keys, members, model/data policy, budgets and concurrency. Redis is the gateway's only synchronous internal state/control dependency; direct model APIs and the AWS inference edge are upstream serving dependencies. Direct requests stay on their exact curated model provider/model; Grad requests stay on the exact owned release in their effort/speed cell. Grad fleet CRDs/controllers in AWS EKS reconcile native or managed-Kubernetes capacity providers without fake Nodes or a global cluster. Product Intelligence retains bounded encrypted traces by default and suggests—but never performs—evidence-backed migrations to Grad. Private/No Retention is available per workspace/request and suppresses durable payload traces while retaining tenant-isolated ephemeral KV/prefix caching.
@@ -76,6 +78,7 @@ product/
 - [Testing and CI](docs/TESTING_AND_CI.md)
 - [Security and operations](docs/SECURITY_BILLING_OPERATIONS.md)
 - [Gateway and provider integrations](docs/INTEGRATIONS.md)
+- [Open distribution targets, packages, and harnesses](docs/DISTRIBUTION_GATEWAY_INTEGRATIONS_2026-07-13.md)
 - [Model lanes, Grad effort/speed, traces, and migration](docs/MODEL_LANES_AND_MIGRATION.md)
 - [Owned Grad inference architecture](docs/OWNED_INFERENCE_ARCHITECTURE.md)
 - [Multi-provider GPU fleet evidence](docs/MULTI_PROVIDER_GPU_EVIDENCE_2026-07-13.md)

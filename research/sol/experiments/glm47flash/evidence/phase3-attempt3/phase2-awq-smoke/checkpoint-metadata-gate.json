@@ -1,0 +1,43 @@
+{
+  "tensor_names": {
+    "q_shape": "model.layers.1.self_attn.q_a_proj.weight_shape",
+    "kv_shape": "model.layers.1.self_attn.kv_a_proj_with_mqa.weight_shape",
+    "q_packed": "model.layers.1.self_attn.q_a_proj.weight_packed",
+    "kv_packed": "model.layers.1.self_attn.kv_a_proj_with_mqa.weight_packed",
+    "q_scale": "model.layers.1.self_attn.q_a_proj.weight_scale",
+    "kv_scale": "model.layers.1.self_attn.kv_a_proj_with_mqa.weight_scale"
+  },
+  "q_weight_shape": [
+    768,
+    2048
+  ],
+  "kv_weight_shape": [
+    576,
+    2048
+  ],
+  "expected_fused_weight_shape": [
+    1344,
+    2048
+  ],
+  "packed_shapes": [
+    [
+      768,
+      256
+    ],
+    [
+      576,
+      256
+    ]
+  ],
+  "scale_shapes": [
+    [
+      768,
+      64
+    ],
+    [
+      576,
+      64
+    ]
+  ],
+  "zero_points_present": false
+}

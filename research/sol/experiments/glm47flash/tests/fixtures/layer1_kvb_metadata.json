@@ -1,0 +1,30 @@
+{
+  "checkpoint": "cyankiwi/GLM-4.7-Flash-AWQ-4bit",
+  "revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+  "index_sha256": "b9c53433e94f2fe7870cdbc3fcb6ed1431eb500c5242a039de93fef4bb988695",
+  "shard": "model-00001-of-00004.safetensors",
+  "shard_header_prefix_sha256": "c030a2ebc671199423ea5f0a5fd9f7e23b94feb0a287667450dcd62aaefec6f0",
+  "weight_shape_bytes_sha256": "fa8ed7720af084e2e130ede7723af31a0c70ddc54bdc4892040061445d586271",
+  "tensor": "model.layers.1.self_attn.kv_b_proj",
+  "weight_shape": {
+    "dtype": "I64",
+    "physical_shape": [2],
+    "values": [8960, 512]
+  },
+  "weight_packed": {
+    "dtype": "I32",
+    "shape": [8960, 64]
+  },
+  "weight_scale": {
+    "dtype": "BF16",
+    "shape": [8960, 16]
+  },
+  "quantization": {
+    "format": "pack-quantized",
+    "num_bits": 4,
+    "group_size": 32,
+    "strategy": "group",
+    "symmetric": true,
+    "actorder": null
+  }
+}

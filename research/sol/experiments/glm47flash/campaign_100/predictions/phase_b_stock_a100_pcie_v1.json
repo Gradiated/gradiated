@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "prediction_id": "phase-b-stock-a100-pcie-v1",
+  "sealed_at": "2026-07-13T12:42:00Z",
+  "evidence_cutoff": "2026-07-13T12:42:00Z",
+  "immutable_after_first_associated_gpu_measurement": true,
+  "associated_experiment": "phase-b-stock-a100-pcie-v1",
+  "plan_sha256": "1477bf9065eac07ab5ceb10b2ba85e8f4ac618713e6ed3166237e2ff0ade9e05",
+  "workload_sha256": "c974f23e460a863be37b3cc04df80fc9aff977e239a5c49225cd8c85f1bb3d55",
+  "quality_sha256": "0a7ba38e9cd5b627381e59194f3ab5df8e402995b8e0424869ae34a97a077041",
+  "candidate": {
+    "model": "zai-org/GLM-4.7-Flash",
+    "model_revision": "75fce703a93da3705c4cf8d3caadbac1d1072c78",
+    "representation": "native_bf16",
+    "runtime_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "gpu": "NVIDIA A100 80GB PCIe",
+    "cloud_class": "RunPod Community Cloud",
+    "configuration": "stock_no_cache_fcfs",
+    "mtp": "disabled"
+  },
+  "predictions": {
+    "compatibility_probability": 0.85,
+    "development_smoke_slo_pass_probability": 0.8,
+    "fixed_8k_1k_c1_slo_pass_probability": 0.75,
+    "fixed_8k_1k_c8_slo_pass_probability": 0.6,
+    "fixed_8k_1k_c8_conservative_output_tokens_per_second": {
+      "point": 250.0,
+      "low": 140.0,
+      "high": 400.0
+    },
+    "fixed_8k_1k_c8_p95_ttft_ms": {
+      "point": 4500.0,
+      "low": 1500.0,
+      "high": 12000.0
+    },
+    "fixed_8k_1k_c8_p95_token_level_itl_ms": {
+      "point": 35.0,
+      "low": 15.0,
+      "high": 90.0
+    },
+    "development_quality_self_score_pass_probability": 0.9
+  },
+  "mechanism": "The pinned runtime has already loaded the exact BF16 checkpoint on H100. A100 has sufficient VRAM and supported kernels, but lower memory bandwidth and a less controlled community host are expected to reduce throughput and increase queueing tails. The no-cache FCFS configuration is deliberately an attributable stock control, not the tuned incumbent.",
+  "falsifiers": [
+    "The exact pinned model and runtime do not reach a healthy server on A100 within the preregistered deadlines.",
+    "Any sequential smoke, c1, or c8 profile fails the frozen success, truncation, TTFT, or token-level ITL service gate.",
+    "The development quality capture or runtime-logprob self-score fails.",
+    "A valid c8 conservative output-throughput result lies outside 140 to 400 output tokens per second without an identified measured hardware or workload cause.",
+    "The retrieved artifact, telemetry, profiler, spend, or teardown evidence fails the frozen validator."
+  ],
+  "claim_boundary": "This prediction concerns only a valid native-BF16 stock control. It predicts neither a tuned-stack gain nor a model-specific co-design advantage."
+}

@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "decided_at": "2026-07-13T13:00:00Z",
+  "decision": "STOP_OR_PIVOT",
+  "interpretation_labels": [
+    "HARDWARE_HYPOTHESIS_ONLY"
+  ],
+  "decision_scope": "Stop the current RunPod pod-placement campaign before Phase B and pivot the placement strategy. This is not evidence that the co-design thesis is false; it is evidence that this campaign cannot validly test it on the admissible RunPod placements.",
+  "rubric_trigger": "A valid stock and tuned-incumbent baseline cannot be obtained under the admissible placement rules, so Gate B cannot pass and later representation, quality, intervention, holdout, and specificity phases may not start.",
+  "measured_results": [
+    "Direct authenticated RunPod inventory, billing, create, get, delete, and prior delete-verification paths are operational.",
+    "The campaign suite passes 68/68 tests and the GLM experiment suite passes 21/21 tests.",
+    "Historical H100 evidence proves the pinned CUDA-13 SGLang runtime loads native BF16 GLM-4.7-Flash and produces two identical deterministic greedy smoke completions.",
+    "No valid BF16 throughput, TTFT, token-level ITL, SLO-goodput, provisional quality, or GPU-dollar-per-token control exists.",
+    "The preregistered Community A100 80 GB PCIe request returned HTTP 500 before pod creation. Inventory remained empty and cost was $0.",
+    "The second and final changed Secure A100 80 GB PCIe request also returned HTTP 500 before pod creation. Inventory remained empty and cost was $0.",
+    "All 22 historical billing rows are settled at $4.944724685 provider-reported account lifetime spend. Conservative account lifetime spend remains $5.153606502 because the interrupted L40S allocation is retained at its larger local upper bound.",
+    "Campaign-additional spend remains $0.273464527; both Phase-B placement requests created no allocation and added $0.",
+    "The AWQ path has a source-supported, offline-tested fix for the measured dense-only KV-B post-load assumption, but that branch has not executed on GPU and cannot advance before Gate B."
+  ],
+  "analytical_estimates": [
+    "The prospective Secure A100 c8 stock prediction was 250 conservative output tokens/second with a 140 to 400 interval; it remains unscored because no pod was created.",
+    "RunPod's queried A100 prices and the Fireworks/Baseten accelerator rates are price anchors only; no matched workload, quality, or SLO result exists.",
+    "Cloudflare's public GLM-4.7-Flash token price is a commercial anchor only and cannot be compared to local GPU cost without matched responses and service evidence."
+  ],
+  "vendor_claims": [
+    "Cloudflare publishes GLM-4.7-Flash token pricing and a 131072-token context window.",
+    "Baseten publishes a GLM-4.7-Flash deployment template described as optimized for 2xH100, not a matched managed-API benchmark.",
+    "Fireworks and Baseten publish GLM 4.7 serverless prices, but those listings are not the GLM-4.7-Flash checkpoint measured here."
+  ],
+  "claims_not_supported": [
+    "No quality-preserving inference cost improvement.",
+    "No tuned-incumbent serving gain.",
+    "No AWQ compatibility, quality, throughput, or economic gain.",
+    "No model-specific kernel or scheduling gain.",
+    "No Fireworks, Baseten, or Cloudflare performance comparison.",
+    "No memory-hierarchy or hardware co-design benefit.",
+    "No PROMOTE case for a $1000 campaign."
+  ],
+  "why_not_continue_spending": [
+    "The two allowed A100 PCIe placements failed before allocation with two distinct cloud classes.",
+    "Historical H100 placements already exhibited repeated image-readiness failures and the plan forbids more unchanged cold H100 retries.",
+    "Phase C and the causally changed AWQ smoke are gated on a valid stock/tuned baseline.",
+    "Cycling through more GPU variants would violate the preregistered placement stop rule and convert provider-capacity noise into unbounded spend."
+  ],
+  "single_next_experiment_after_pivot": {
+    "experiment": "Run the existing 25-request stock BF16 harness once on a guaranteed 80 GB NVIDIA placement with the exact pinned image pre-pulled or provider-reserved, then run the matched supported tuned control on the same machine only if stock passes.",
+    "required_change": "Placement must be guaranteed or demonstrably cache-ready before billing; it may not be another best-effort RunPod request identical to the failed placements.",
+    "information_value": "This isolates model/runtime/SLO performance from the provider-capacity and image-readiness failure that prevented Gate B.",
+    "prerequisites": [
+      "fresh explicit authorization for the changed placement mechanism or provider",
+      "same frozen workload, quality, SLO, telemetry, and evidence contracts",
+      "new prospective prediction and spend admission",
+      "no gateway product work"
+    ]
+  },
+  "budget": {
+    "authorized_campaign_cap_usd": 100.0,
+    "campaign_additional_spend_usd": 0.273464527,
+    "phase_b_new_allocation_spend_usd": 0.0,
+    "unspent_authorization_usd": 99.726535473,
+    "conservative_account_lifetime_spend_usd": 5.153606501907302
+  },
+  "evidence_identities": {
+    "plan_sha256": "1477bf9065eac07ab5ceb10b2ba85e8f4ac618713e6ed3166237e2ff0ade9e05",
+    "gate_a_manifest_sha256": "a3f41e30d421dcd66822c42165b287b5804abcef199cc222c1e89a4bebd96d66",
+    "campaign_baseline_sha256": "93434ba515f9695725924ed041719e1cfe8d8348fb52a5eddc3060bb4c87d878",
+    "reconciliation_sha256": "a6ef7def4110f572bd6c9136ea9c6039cfe7169ed00459000f7e9aa983d1376f",
+    "community_request_result_sha256": "dba8487a676134e6fd4b529198b2c1ec115c09583b0c1f1a6d7d2d090257413e",
+    "secure_request_result_sha256": "ee3ab3f45de7c133ddcd1fe530b41559ad0240cb3db2f364ad211eab8decea07"
+  }
+}

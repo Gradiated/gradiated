@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "gate": "A",
+  "status": "passed",
+  "signed_off_at": "2026-07-13T12:59:00Z",
+  "signed_off_by": "codex_research_coordinator",
+  "scope": "GLM-4.7-Flash campaign contracts, workload, quality, evidence validation, budget admission, watchdog, and Phase-B stock-control harness",
+  "content_identities": {
+    "plan_sha256": "1477bf9065eac07ab5ceb10b2ba85e8f4ac618713e6ed3166237e2ff0ade9e05",
+    "campaign_baseline_sha256": "93434ba515f9695725924ed041719e1cfe8d8348fb52a5eddc3060bb4c87d878",
+    "contract_manifest_sha256": "188e6426061697cd092d6e36af57ef256fd050f32468a224829fd939545e631d",
+    "workload_manifest_sha256": "7ece5d9bc494dc8e37381d6b1e3a31afb5b47827f8d36b20170db296e1c67f72",
+    "workload_bundle_sha256": "c974f23e460a863be37b3cc04df80fc9aff977e239a5c49225cd8c85f1bb3d55",
+    "tokenizer_bindings_sha256": "c5258d650227ab3c474f25218263c5ac1898011f55aecef16def5fe10cf7fa64",
+    "quality_manifest_sha256": "c798564bee69f4f7459154f754403b17e5f28f9ebc48cce43707cea7b6af6575",
+    "quality_bundle_sha256": "0a7ba38e9cd5b627381e59194f3ab5df8e402995b8e0424869ae34a97a077041",
+    "phase_b_remote_harness_sha256": "9a87d9afd99a9b20d5edaf4b3499950e3aa201f98008344d198f6f8e2639a47a",
+    "phase_b_orchestrator_sha256": "6248e01d280485d1fa1cf10a97f9ff01f0011fac95446e9e7250535d8fd8bb29",
+    "phase_b_artifact_builder_sha256": "2d6a50addd9dec39a88502c630193555376748051642481a524bb1d8a52fbcd1",
+    "phase_b_runpod_driver_sha256": "b738e92040f6cbeaac5bc87d2a47362f5ebad298ff56b64547c1de3ad93b41be",
+    "phase_a_ranking_prediction_sha256": "7037228a0376db7c62800888d3252fd5117e5ac0906428cfd0998ccc86bf01cc",
+    "phase_b_a100_prediction_sha256": "7525be7fd5e6bd388f9c0034b8931bcc0a33ac19aabf2546ee09ca8649660314",
+    "plan_identity_migration_sha256": "2dfe5360e11d571d7a14bd6951b0e2decc4e5cfdd2663661c1016387b7deee08",
+    "spend_reconciliation_sha256": "a6ef7def4110f572bd6c9136ea9c6039cfe7169ed00459000f7e9aa983d1376f"
+  },
+  "verification": {
+    "campaign_tests": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s campaign_100/tests -v",
+      "tests_run": 68,
+      "failures": 0,
+      "errors": 0,
+      "result": "pass"
+    },
+    "experiment_tests": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m unittest discover -s tests -v",
+      "tests_run": 21,
+      "failures": 0,
+      "errors": 0,
+      "result": "pass"
+    },
+    "shell_syntax": {
+      "command": "bash -n campaign_100/phase_b/remote_baseline.sh",
+      "result": "pass"
+    },
+    "workload_validator": {
+      "reported_bundle_sha256": "c974f23e460a863be37b3cc04df80fc9aff977e239a5c49225cd8c85f1bb3d55",
+      "result": "pass"
+    },
+    "quality_validator": {
+      "reported_bundle_sha256": "0a7ba38e9cd5b627381e59194f3ab5df8e402995b8e0424869ae34a97a077041",
+      "result": "pass"
+    },
+    "broader_repository_validation_note": "The unrelated research/sol validation suite was also attempted. Ten pre-existing Qwen validation modules could not import because local torch is not installed; campaign and GLM experiment suites do not depend on those modules and passed in full."
+  },
+  "controls": {
+    "fail_closed_contract_validation": true,
+    "content_addressed_workload": true,
+    "content_addressed_quality_screen": true,
+    "typed_request_failures": true,
+    "token_observable_itl_required": true,
+    "independent_watchdog_required": true,
+    "harvest_before_delete_required": true,
+    "delete_204_and_get_404_required": true,
+    "zero_active_pods_required_before_create": true,
+    "prospective_prediction_required": true
+  },
+  "limitations": [
+    "The signed campaign baseline is conservative because one legacy allocation began after authorization but before baseline reconstruction; its full upper bound is charged to campaign-additional spend.",
+    "The Phase-A H100/AWQ ranking file retains its original pre-migration plan hash. The separately hashed migration record proves the plan change was path-only; the new A100 prediction binds the current plan directly.",
+    "Gate A authorizes measurement only. It does not establish compatibility, quality retention, serving performance, economic performance, or a co-design gain."
+  ]
+}

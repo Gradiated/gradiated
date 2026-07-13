@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-07-13T11:42:47Z",
+  "model": "zai-org/GLM-4.7-Flash",
+  "requested_revision": "75fce70",
+  "resolved_revision": "75fce703a93da3705c4cf8d3caadbac1d1072c78",
+  "tokenizer_implementation": {
+    "package": "@huggingface/transformers",
+    "version": "4.2.0"
+  },
+  "source_files": {
+    "tokenizer.json": {"bytes": 20217442, "sha256": "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d"},
+    "tokenizer_config.json": {"bytes": 7226, "sha256": "31a173e2797ddc8b72ac996803513e627fc28d7aad02cfcce321a431d865c86d"},
+    "chat_template.jinja": {"bytes": 3120, "sha256": "d63ad536c3c81880043e22ec7fd08db42b4d8fb7c89c7138bc562bfa25281375"}
+  },
+  "sampling": {"add_generation_prompt": true},
+  "bindings": [
+    {
+      "fixture_id": "development_append_1",
+      "raw_message_sha256": "9e19e2d9fb458d141066c86adc1761b1e95852e746b8e0a65c715fac0e6760b7",
+      "rendered_chat_sha256": "0c2534aad1ea391e6334af1b9df10e7785b4d8b5e89c24ed45cea65008289b72",
+      "token_ids_u32le_sha256": "3f48751c8e208f064fdaa3f0de33734c93b63cedecce2656dca5653b85ae06b7",
+      "input_tokens": 233,
+      "tool_schema_canonical_json_sha256": "238a4ba7f0a15ee691eeb251cd1db639e660fc3b075eb4c5d8fdeb097076c442",
+      "tool_schema_size_bytes": 151
+    },
+    {
+      "fixture_id": "development_prefix_1",
+      "raw_message_sha256": "6ca60e9a8082d2ec2ee07df631c66953e89458408ae171232f95911b4bc99688",
+      "requests": [
+        {"user": "Look up synthetic_alpha.", "rendered_chat_sha256": "0ed38d683daf5e95b0b68f8890a77e627c54f9fe6148505ac1b304befb756658", "token_ids_u32le_sha256": "23d37e005caacadc09d2011459faf75f805ed77d19552fdc4d5271d4a676a813", "input_tokens": 164},
+        {"user": "Look up synthetic_beta.", "rendered_chat_sha256": "f820f64110b55a831decfc741c7a84b79db6eb92cb0da17c204ad9399319134b", "token_ids_u32le_sha256": "f975165a68d20b647e2aa54ac76757f730a701df502d2b11c42e1e772a11e622", "input_tokens": 164},
+        {"user": "Look up synthetic_gamma.", "rendered_chat_sha256": "77c830cd0f2c34c3667b4c24524a3c1fde8bf274349ec11ddaf916306a8c0f16", "token_ids_u32le_sha256": "97c7ad3e606ec667d7a956a654b384a4c77f7b78eed4a5f11a4e8c72a47c3043", "input_tokens": 164}
+      ],
+      "exact_common_prefix_tokens": 160,
+      "exact_common_prefix_token_ids_u32le_sha256": "f3dc6ac4b4bf2c2740f0cb2a022a37431e4b5f57e64bc2413788db6f01a0762c"
+    },
+    {
+      "fixture_id": "holdout_append_2",
+      "raw_message_sha256": "ec5db2b90b747e2817ecd23596b8092cac61d46b483a8f37ce482d29c4c9e854",
+      "rendered_chat_sha256": "4255c2d377ad2868f9df86bb9b0a3f440d1c548254ffe5d6f935c8f006bba29a",
+      "token_ids_u32le_sha256": "03a4faefbaff9b7daf1bbcd5789c842dedff6710b1c13fbcb71a42de8f2ba49f",
+      "input_tokens": 236,
+      "tool_schema_canonical_json_sha256": "238a4ba7f0a15ee691eeb251cd1db639e660fc3b075eb4c5d8fdeb097076c442",
+      "tool_schema_size_bytes": 151
+    },
+    {
+      "fixture_id": "holdout_prefix_2",
+      "raw_message_sha256": "9b384fa740e2e464023c5c43b627b4a8c8db44556402f1ff1d3598e734ec4c4e",
+      "requests": [
+        {"user": "Look up synthetic_delta.", "rendered_chat_sha256": "362a63f58c97cbc892f36970ab8770cd5ad4b0a0e25092c474642f5554061af1", "token_ids_u32le_sha256": "eaa2d91e31c1d088ef93bbd5d91a6fd89a5d7111e269826bffd7aca820d052aa", "input_tokens": 164},
+        {"user": "Look up synthetic_epsilon.", "rendered_chat_sha256": "2336195597a052bbc3a7c605597551e020a38d75137621a62d0801da64f33218", "token_ids_u32le_sha256": "abbc43ec06dbd22664561e2ee19c310e897b246df55196414354117a5b12db7b", "input_tokens": 164},
+        {"user": "Look up synthetic_zeta.", "rendered_chat_sha256": "14cdfc8dee90285e837f35b434b15866449f3253e1b4c65af10c6fb7885790f6", "token_ids_u32le_sha256": "3336ce288194cd001ad5a21848930e1a4fec24dfdf798dffda6d47e418592604", "input_tokens": 165}
+      ],
+      "exact_common_prefix_tokens": 160,
+      "exact_common_prefix_token_ids_u32le_sha256": "2a1f565fd71430b8ea0c418b99a756759dce793f20cec50ed8797db4784514ea"
+    }
+  ],
+  "verification_contract": "The replay harness must retokenize with the three exact source-file hashes and reject any count or token-ID hash mismatch."
+}

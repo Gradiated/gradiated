@@ -1,0 +1,101 @@
+{
+  "timestamp": "2026-07-13T11:07:31Z",
+  "live_openapi": {
+    "url": "https://rest.runpod.io/v1/openapi.json",
+    "sha256": "1da83b045d6e4c9980d118a853dc16b788b8862280b3361b847f05ca2738cd84",
+    "bytes": 154584
+  },
+  "prior_payloads": [
+    {
+      "attempt": "phase2_attempt1_a6000_awq_loader_patch",
+      "payload_sha256": "d8200130783bb2d491d3ae76fb38cf31324c554323084505513590aac337675b",
+      "payload_bytes": 20202,
+      "gpu_type_ids": ["NVIDIA RTX A6000"],
+      "cloud_type": "COMMUNITY",
+      "allowed_cuda_versions": null,
+      "schema_errors": [],
+      "http_evidence": "status 500 only; response headers and body were not retained"
+    },
+    {
+      "attempt": "phase2_attempt2_ampere48_awq_loader_patch",
+      "payload_sha256": "813784af5a166d615f479fe05d046f5f2d2af94cad1fc9444fb2047561bc2b55",
+      "payload_bytes": 20219,
+      "gpu_type_ids": ["NVIDIA A40", "NVIDIA RTX A6000"],
+      "cloud_type": "COMMUNITY",
+      "allowed_cuda_versions": null,
+      "schema_errors": [],
+      "http_evidence": "status 500 only; response headers and body were not retained"
+    }
+  ],
+  "current_gpu_query": {
+    "api": "RunPod GraphQL gpuTypes/lowestPrice",
+    "source": "https://docs.runpod.io/sdks/graphql/manage-pods",
+    "results": [
+      {
+        "id": "NVIDIA A40",
+        "memory_gb": 48,
+        "secure_cloud": true,
+        "community_cloud": false,
+        "secure": {"stock_status": "Low", "price_per_hour": 0.44},
+        "community": {"stock_status": null, "price_per_hour": null}
+      },
+      {
+        "id": "NVIDIA RTX A6000",
+        "memory_gb": 48,
+        "secure_cloud": true,
+        "community_cloud": true,
+        "secure": {"stock_status": "Low", "price_per_hour": 0.49},
+        "community": {"stock_status": null, "price_per_hour": null}
+      },
+      {
+        "id": "NVIDIA L40S",
+        "memory_gb": 48,
+        "secure_cloud": true,
+        "community_cloud": true,
+        "secure": {"stock_status": "Low", "price_per_hour": 0.99},
+        "community": {"stock_status": "Low", "price_per_hour": 0.79}
+      },
+      {
+        "id": "NVIDIA L40",
+        "memory_gb": 48,
+        "secure_cloud": true,
+        "community_cloud": true,
+        "secure": {"stock_status": null, "price_per_hour": null},
+        "community": {"stock_status": null, "price_per_hour": null}
+      },
+      {
+        "id": "NVIDIA RTX 6000 Ada Generation",
+        "memory_gb": 48,
+        "secure_cloud": true,
+        "community_cloud": true,
+        "secure": {"stock_status": null, "price_per_hour": null},
+        "community": {"stock_status": null, "price_per_hour": null}
+      }
+    ]
+  },
+  "diagnosis": {
+    "multi_gpu_type_shape": "valid according to live OpenAPI",
+    "phase2_attempt1": "schema-valid; current Community A6000 query has no stock/price, but the lost historical body prevents retrospective capacity classification",
+    "phase2_attempt2": "schema-valid array but cross-field incompatible for A40 because A40 is Secure-only; A6000 currently has no Community stock/price; lost body prevents distinguishing backend validation from no eligible machine",
+    "image_digest_syntax": "schema accepts imageName as a string and the identical tag-plus-digest reached runtime in campaign attempt 7",
+    "cuda_filter": "neither failed payload set allowedCudaVersions",
+    "payload_size": "both failed requests were about 20 KB; no OpenAPI limit exists, so an undocumented backend limit remains possible"
+  },
+  "selected_payload": {
+    "gpu_type_ids": ["NVIDIA L40S"],
+    "cloud_type": "COMMUNITY",
+    "allowed_cuda_versions": ["13.0"],
+    "gpu_type_priority": "availability",
+    "payload_sha256": "fb9cd7d051b2291aadc71657fb10e6b5ac1016c83698a238dc3b0bee12c7c86f",
+    "payload_bytes": 9937,
+    "schema_errors": [],
+    "transport": "gzip-compressed harness and patcher",
+    "selection_reason": "only queried 48 GB Ada GPU with explicit current Community stock and price"
+  },
+  "runtime_compatibility": {
+    "l40s_compute_capability": "8.9",
+    "pinned_sglang_linear_wna16_minimum": "8.0",
+    "pinned_sglang_moe_wna16_minimum": "8.0",
+    "source_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6"
+  }
+}

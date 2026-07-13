@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-07-13T13:05:22Z",
+  "current_phase": "DECIDED",
+  "last_completed_gate": "A",
+  "decision": "STOP_OR_PIVOT",
+  "decision_artifact": "DECISION_2026-07-13.json",
+  "decision_sha256": "c44e5e7e5acc8ae600622965f34768ea1ee6b752f419c05fa1be283fbc7741fa",
+  "gate_a_manifest_sha256": "a3f41e30d421dcd66822c42165b287b5804abcef199cc222c1e89a4bebd96d66",
+  "campaign_start_lifetime_spend_usd": 4.880141974907302,
+  "provider_settled_lifetime_spend_usd": 4.944724685296024,
+  "conservative_lifetime_spend_usd": 5.153606501907302,
+  "campaign_additional_spend_usd": 0.273464527,
+  "campaign_cap_usd": 100.0,
+  "unspent_authorization_usd": 99.726535473,
+  "phase_b_new_allocation_spend_usd": 0.0,
+  "active_pod_inventory": [],
+  "active_hypothesis": null,
+  "decision_reason": "Both preregistered A100 PCIe cloud-class placements returned HTTP 500 before pod creation; the two-placement limit is exhausted and Gate B has no valid stock baseline.",
+  "next_action": "Do not create another best-effort RunPod pod. If newly authorized, pivot to one guaranteed or provider-reserved 80 GB NVIDIA placement with the pinned image pre-pulled and run the same frozen stock harness.",
+  "claims_permitted": false,
+  "runpod_creation_permitted": false,
+  "runpod_creation_blockers": [
+    "campaign decision is STOP_OR_PIVOT",
+    "Phase B has no valid stock SLO-goodput point",
+    "the two-placement limit for the A100 PCIe hypothesis is exhausted",
+    "historical unchanged H100 placement retries are forbidden"
+  ],
+  "plan_sha256": "1477bf9065eac07ab5ceb10b2ba85e8f4ac618713e6ed3166237e2ff0ade9e05",
+  "baseline_sha256": "93434ba515f9695725924ed041719e1cfe8d8348fb52a5eddc3060bb4c87d878",
+  "zero_active_pods_verified_at": "2026-07-13T13:05:22Z"
+}

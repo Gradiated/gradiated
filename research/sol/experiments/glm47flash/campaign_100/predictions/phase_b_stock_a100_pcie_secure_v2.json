@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "prediction_id": "phase-b-stock-a100-pcie-secure-v2",
+  "sealed_at": "2026-07-13T12:55:00Z",
+  "evidence_cutoff": "2026-07-13T12:55:00Z",
+  "immutable_after_first_associated_gpu_measurement": true,
+  "associated_experiment": "phase-b-stock-a100-pcie-secure-v2",
+  "new_evidence_since_v1": "The Community A100 PCIe request returned HTTP 500 before pod creation; cost was zero and inventory remained empty.",
+  "changed_causal_variable": "RunPod cloud class changes from COMMUNITY to SECURE; GPU type, image, model, runtime, workload, SLO, quality, and stock configuration are unchanged.",
+  "plan_sha256": "1477bf9065eac07ab5ceb10b2ba85e8f4ac618713e6ed3166237e2ff0ade9e05",
+  "workload_sha256": "c974f23e460a863be37b3cc04df80fc9aff977e239a5c49225cd8c85f1bb3d55",
+  "quality_sha256": "0a7ba38e9cd5b627381e59194f3ab5df8e402995b8e0424869ae34a97a077041",
+  "candidate": {
+    "model": "zai-org/GLM-4.7-Flash",
+    "model_revision": "75fce703a93da3705c4cf8d3caadbac1d1072c78",
+    "representation": "native_bf16",
+    "runtime_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "gpu": "NVIDIA A100 80GB PCIe",
+    "cloud_class": "RunPod Secure Cloud",
+    "configuration": "stock_no_cache_fcfs",
+    "mtp": "disabled"
+  },
+  "predictions": {
+    "pod_creation_probability": 0.7,
+    "compatibility_probability_conditional_on_creation": 0.85,
+    "development_smoke_slo_pass_probability_conditional_on_health": 0.8,
+    "fixed_8k_1k_c1_slo_pass_probability_conditional_on_health": 0.75,
+    "fixed_8k_1k_c8_slo_pass_probability_conditional_on_health": 0.6,
+    "fixed_8k_1k_c8_conservative_output_tokens_per_second": {
+      "point": 250.0,
+      "low": 140.0,
+      "high": 400.0
+    },
+    "development_quality_self_score_pass_probability_conditional_on_health": 0.9
+  },
+  "falsifiers": [
+    "Secure A100 PCIe also fails to create a pod, exhausting the two-placement limit for this hypothesis.",
+    "The exact pinned model/runtime fails health or any sequential profile fails the frozen SLO.",
+    "The quality capture/self-score, artifact hash, telemetry, billing, or teardown contract fails.",
+    "A valid c8 conservative output-throughput result lies outside 140 to 400 output tokens per second without an identified measured cause."
+  ],
+  "claim_boundary": "This remains a stock-control prediction. A Secure placement result cannot establish a tuning, representation, provider, model-specific, or hardware co-design advantage."
+}

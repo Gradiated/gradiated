@@ -1,0 +1,92 @@
+[
+  {
+    "path": "dcgm-unavailable.txt",
+    "bytes": 28,
+    "sha256": "acfb515b0636ce3e7de7bdc7b81d57a86348b99e60f994040536cec030728643"
+  },
+  {
+    "path": "http.stderr.log",
+    "bytes": 1917,
+    "sha256": "7b1b7c149bddfbd5c92ed2b07c4ba861ca6645a1137b55d6d2900135d5a1b8f5"
+  },
+  {
+    "path": "http.stdout.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "model-download.log",
+    "bytes": 660,
+    "sha256": "6c42c82d02adb6291975125d728f2ddf3a1521e6d3b5ca73104e0271e9ee4ef9"
+  },
+  {
+    "path": "model-hashes.sha256",
+    "bytes": 215,
+    "sha256": "152dab37e45d6e007b61d552d926b888f3b9d709441bbe09f36c60c0907eb9cf"
+  },
+  {
+    "path": "model-size.txt",
+    "bytes": 33,
+    "sha256": "68de28b0025feb234b73a7e719e8bed3d469318a651e82e36cf0a228664749e2"
+  },
+  {
+    "path": "native-import.json",
+    "bytes": 215,
+    "sha256": "eacc9bc8e28b5e50af2871744e991ede3cf60b9acbdd971c815273aa0fc9eafa"
+  },
+  {
+    "path": "nvidia-smi-q.txt",
+    "bytes": 10850,
+    "sha256": "3ef384e6f1675e83cc22e5661ef9c223610fc26b697fb576fda6e18dee2b38e7"
+  },
+  {
+    "path": "phases.jsonl",
+    "bytes": 845,
+    "sha256": "af02daf814d06c4af1824f7da6f48b8e8e2f9456214230ee07cc290c00c4794b"
+  },
+  {
+    "path": "pip-freeze.txt",
+    "bytes": 6695,
+    "sha256": "35434c996c6833edabffada096f23b63128006dc6f7dcd4a2a3ae22a6f8ffde2"
+  },
+  {
+    "path": "runtime-hotfix-cpu.json",
+    "bytes": 424,
+    "sha256": "e2387883cce605c21b9f10946a0bf37e42b62fa44a0b6e930e53198c9f6e4b2b"
+  },
+  {
+    "path": "runtime-hotfix.json",
+    "bytes": 402,
+    "sha256": "5fe97b804befee92060b515028830ed4a528ea6be84757d8e60a604b41de0f6e"
+  },
+  {
+    "path": "server-command.txt",
+    "bytes": 537,
+    "sha256": "80f63f3c98d8d15dffaf59608003eeea63c7d3d70eb29acc03afd0650be71854"
+  },
+  {
+    "path": "server.stderr.log",
+    "bytes": 21815,
+    "sha256": "099ebb906b8738fd4e945506e1692ad86db11c8bb28e1b6ae070caaabf05c5b4"
+  },
+  {
+    "path": "server.stdout.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "telemetry.csv",
+    "bytes": 33060,
+    "sha256": "d8ebd0e753f70c383c08e2b8767e299f77505ca5f6406724745eecb6eac70bb3"
+  },
+  {
+    "path": "telemetry.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "uname.txt",
+    "bytes": 132,
+    "sha256": "fc1ea0a7651038711fcb984896adc668f32b9e90abd5b067644a9b47bec7342e"
+  }
+]

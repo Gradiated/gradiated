@@ -1,0 +1,81 @@
+diff --git a/python/sglang/srt/models/glm4_moe_lite.py b/python/sglang/srt/models/glm4_moe_lite.py
+--- a/python/sglang/srt/models/glm4_moe_lite.py
++++ b/python/sglang/srt/models/glm4_moe_lite.py
+@@ -895,7 +895,9 @@ class Glm4MoeLiteModel(nn.Module):
+ 
+ class Glm4MoeLiteForCausalLM(nn.Module, DeepseekV2WeightLoaderMixin):
+     # for quark model load
+-    packed_modules_mapping = {}
++    packed_modules_mapping = {
++        "fused_qkv_a_proj_with_mqa": ["q_a_proj", "kv_a_proj_with_mqa"]
++    }
+ 
+     def __init__(
+         self,
+@@ -908,6 +910,8 @@ class Glm4MoeLiteForCausalLM(nn.Module, DeepseekV2WeightLoaderMixin):
+         self.config = config
+         self.tp_size = get_parallel().tp_size
+         self.quant_config = quant_config
++        if quant_config is not None:
++            quant_config.update_packed_modules_mapping(self.packed_modules_mapping)
+         self.pp_group = get_pp_group()
+         self.determine_num_fused_shared_experts("Glm4MoeLiteForCausalLM")
+         self.model = Glm4MoeLiteModel(
+@@ -1248,9 +1248,31 @@ class Glm4MoeLiteForCausalLM(nn.Module, SupportsPP):
+                         ):
+                             q_a_proj_weight = cached_a_proj[q_a_proj_name]
+                             kv_a_proj_weight = cached_a_proj[kv_a_proj_name]
+-                            fused_weight = torch.cat(
+-                                [q_a_proj_weight, kv_a_proj_weight], dim=0
+-                            )
++                            if name.endswith(".weight_shape"):
++                                if (
++                                    q_a_proj_weight.dim() != 1
++                                    or kv_a_proj_weight.dim() != 1
++                                    or q_a_proj_weight.numel() != 2
++                                    or kv_a_proj_weight.numel() != 2
++                                ):
++                                    raise ValueError(
++                                        "fused q_a/kv_a weight_shape must contain two integers"
++                                    )
++                                if not torch.equal(
++                                    q_a_proj_weight[1:], kv_a_proj_weight[1:]
++                                ):
++                                    raise ValueError(
++                                        "fused q_a/kv_a projections must have equal input features"
++                                    )
++                                fused_weight = torch.stack(
++                                    (
++                                        q_a_proj_weight[0] + kv_a_proj_weight[0],
++                                        q_a_proj_weight[1],
++                                    )
++                                )
++                            else:
++                                fused_weight = torch.cat(
++                                    [q_a_proj_weight, kv_a_proj_weight], dim=0
++                                )
+                             param_name = (
+                                 name.replace("q_a_proj", "fused_qkv_a_proj_with_mqa")
+                                 if "q_a_proj" in name
+diff --git a/python/sglang/srt/models/deepseek_v2.py b/python/sglang/srt/models/deepseek_v2.py
+--- a/python/sglang/srt/models/deepseek_v2.py
++++ b/python/sglang/srt/models/deepseek_v2.py
+@@ -1765,12 +1765,15 @@ class DeepseekV2AttentionMLA(nn.Module):
+         )
+ 
+         self.has_fused_proj = hasattr(self, "fused_qkv_a_proj_with_mqa")
+-        self.is_packed_weight = (
+-            self.has_fused_proj
+-            and hasattr(self.fused_qkv_a_proj_with_mqa.quant_method, "quant_config")
+-            and self.fused_qkv_a_proj_with_mqa.quant_method.quant_config.get_name()
+-            in {"awq", "awq_marlin", "moe_wna16"}
++        self.is_packed_weight = self.has_fused_proj and (
++            hasattr(self.fused_qkv_a_proj_with_mqa, "weight_packed")
++            or (
++                hasattr(self.fused_qkv_a_proj_with_mqa.quant_method, "quant_config")
++                and self.fused_qkv_a_proj_with_mqa.quant_method.quant_config.get_name()
++                in {"awq", "awq_marlin", "moe_wna16"}
++            )
+         )
+         self.use_min_latency_fused_a_gemm = (
+             self.has_fused_proj

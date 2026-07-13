@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "campaign-100://gpu-artifact/1.0.0",
+  "title": "Campaign 100 GPU artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "artifact_id", "experiment_spec_sha256", "workload_sha256",
+    "model", "runtime", "hardware", "allocation", "service_contract", "metrics",
+    "telemetry", "teardown", "validator"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "artifact_id": {"type": "string", "minLength": 1},
+    "experiment_spec_sha256": {"$ref": "#/$defs/sha256"},
+    "workload_sha256": {"$ref": "#/$defs/sha256"},
+    "model": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model_id", "checkpoint_revision", "tokenizer_revision", "representation"],
+      "properties": {
+        "model_id": {"type": "string", "minLength": 1},
+        "checkpoint_revision": {"type": "string", "minLength": 1},
+        "tokenizer_revision": {"type": "string", "minLength": 1},
+        "representation": {"type": "string", "minLength": 1}
+      }
+    },
+    "runtime": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "source_revision", "image_digest", "command_sha256"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "source_revision": {"type": "string", "minLength": 1},
+        "image_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "command_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "hardware": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provider", "cloud_class", "gpu_model", "gpu_count", "machine_id"],
+      "properties": {
+        "provider": {"type": "string", "minLength": 1},
+        "cloud_class": {"type": "string", "minLength": 1},
+        "gpu_model": {"type": "string", "minLength": 1},
+        "gpu_count": {"type": "integer", "minimum": 1},
+        "machine_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "allocation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provider_allocation_id", "started_at", "ended_at", "allocation_seconds", "hourly_price_usd", "provider_reported_cost_usd", "conservative_cost_usd"],
+      "properties": {
+        "provider_allocation_id": {"type": "string", "minLength": 1},
+        "started_at": {"$ref": "#/$defs/timestamp"},
+        "ended_at": {"$ref": "#/$defs/timestamp"},
+        "allocation_seconds": {"type": "number", "exclusiveMinimum": 0},
+        "hourly_price_usd": {"type": "number", "exclusiveMinimum": 0},
+        "provider_reported_cost_usd": {"type": "number", "minimum": 0},
+        "conservative_cost_usd": {"type": "number", "minimum": 0}
+      }
+    },
+    "service_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["max_p95_ttft_ms", "max_p95_itl_ms", "min_request_success_fraction", "silent_truncation_allowed"],
+      "properties": {
+        "max_p95_ttft_ms": {"const": 10000},
+        "max_p95_itl_ms": {"const": 100},
+        "min_request_success_fraction": {"const": 0.99},
+        "silent_truncation_allowed": {"const": false}
+      }
+    },
+    "metrics": {"$ref": "campaign-100://gpu-metrics/1.0.0"},
+    "telemetry": {"$ref": "campaign-100://gpu-telemetry/1.0.0"},
+    "teardown": {
+      "type": "object", "additionalProperties": false,
+      "required": ["delete_requested_at", "delete_http_status", "get_http_status", "verified_at", "verification", "watchdog_log_sha256"],
+      "properties": {
+        "delete_requested_at": {"$ref": "#/$defs/timestamp"},
+        "delete_http_status": {"const": 204},
+        "get_http_status": {"const": 404},
+        "verified_at": {"$ref": "#/$defs/timestamp"},
+        "verification": {"const": "not_found"},
+        "watchdog_log_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "validator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version", "result", "validated_at"],
+      "properties": {
+        "name": {"const": "campaign_100_validate_contracts"},
+        "version": {"const": "1.0.0"},
+        "result": {"const": "pass"},
+        "validated_at": {"$ref": "#/$defs/timestamp"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "timestamp": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"}
+  }
+}

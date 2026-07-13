@@ -1,0 +1,34 @@
+{
+  "attempt": "attempt15_a6000_awq_extended_hotfix",
+  "started_at": "2026-07-13T10:04:37.393405+00:00",
+  "image": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+  "model": "cyankiwi/GLM-4.7-Flash-AWQ-4bit",
+  "model_revision": "ab31d12",
+  "quantization": "compressed-tensors",
+  "shared_experts_fusion": false,
+  "runtime_hotfix": "three hasattr weight guards in MLA initialization",
+  "hardware_role": "A40-path capacity proxy; not an A40 measurement",
+  "prior_spend_usd": 3.57688446353128,
+  "cap_usd": 12.0,
+  "events": [
+    {
+      "at": "2026-07-13T10:04:39.497279+00:00",
+      "event": "pod_created"
+    }
+  ],
+  "pod_id": "fkdrzyut8s90s4",
+  "hourly_rate_usd": 0.33,
+  "terminal_status": "FAILED",
+  "artifact": {
+    "path": "/home/node/.openclaw/workspace/glm47flash/attempt15-awq-smoke.tar.gz",
+    "bytes": 16834,
+    "sha256": "f393831c2daa134becb013fe776499aab10bb82986acec9cebe9940bfe1555d8"
+  },
+  "finished_at": "2026-07-13T10:09:10.003887+00:00",
+  "allocation_seconds": 272.6104800210014,
+  "conservative_spend_usd": 0.024989294001925132,
+  "teardown": {
+    "delete_http_status": 204,
+    "verification": "http_404"
+  }
+}

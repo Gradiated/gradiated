@@ -1,0 +1,49 @@
+{
+  "openapi_url": "https://rest.runpod.io/v1/openapi.json",
+  "openapi_sha256": "1da83b045d6e4c9980d118a853dc16b788b8862280b3361b847f05ca2738cd84",
+  "payload_sha256": "ca26c13443109a9869f945a44cb9f4049d49819481ff624b0cd40bce171e473c",
+  "payload_bytes": 11139,
+  "schema_errors": [],
+  "payload": {
+    "name": "glm47flash-phase3-secure-l40s-kvb-load-smoke-20260713",
+    "imageName": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+    "computeType": "GPU",
+    "gpuTypeIds": [
+      "NVIDIA L40S"
+    ],
+    "gpuTypePriority": "availability",
+    "gpuCount": 1,
+    "cloudType": "SECURE",
+    "allowedCudaVersions": [
+      "13.0"
+    ],
+    "supportPublicIp": true,
+    "containerDiskInGb": 30,
+    "volumeInGb": 50,
+    "volumeMountPath": "/workspace",
+    "ports": [
+      "8000/tcp"
+    ],
+    "dockerEntrypoint": [
+      "/bin/bash",
+      "-lc"
+    ],
+    "dockerStartCmd": [
+      "export CAMPAIGN_DEADLINE_EPOCH=$(( $(date +%s)+2100 )); printf %s \"$SCRIPT_GZ_B64\" | base64 -d | gzip -d > /tmp/run.sh; chmod +x /tmp/run.sh; timeout --signal=TERM 2200 /tmp/run.sh"
+    ]
+  },
+  "env": {
+    "SCRIPT_GZ_B64": {
+      "encoded_bytes": 7508,
+      "transport_sha256": "c0c0c809f76a764760db04ed942477f4fbce85c080dba2b152420eaa09412209",
+      "source_bytes": 17672,
+      "source_sha256": "2baec41f496e5b15457432acad660d9279da492dbe8e5c9653100d9083eedbfc"
+    },
+    "PATCHER_GZ_B64": {
+      "encoded_bytes": 2900,
+      "transport_sha256": "8a834e34ff300f31154ef110aa3df457a7dbb42ff70e7f53136267b236c10928",
+      "source_bytes": 8950,
+      "source_sha256": "541834f89efe8dfb0e4f24db84ade858d4932eeed259ede3f1c203e4834a3b00"
+    }
+  }
+}

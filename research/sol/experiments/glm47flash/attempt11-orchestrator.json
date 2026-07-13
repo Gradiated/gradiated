@@ -1,0 +1,28 @@
+{
+  "attempt": "attempt11_a6000_awq_smoke_proxy",
+  "started_at": "2026-07-13T09:43:32.425808+00:00",
+  "image": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+  "model": "cyankiwi/GLM-4.7-Flash-AWQ-4bit",
+  "model_revision": "ab31d12",
+  "quantization": "compressed-tensors",
+  "shared_experts_fusion": false,
+  "hardware_role": "A40-path capacity proxy; not an A40 measurement",
+  "prior_spend_usd": 3.464440717511244,
+  "cap_usd": 12.0,
+  "events": [
+    {
+      "at": "2026-07-13T09:43:34.780468+00:00",
+      "event": "pod_created"
+    }
+  ],
+  "pod_id": "lhd1tiprmhq7cn",
+  "hourly_rate_usd": 0.49,
+  "error": "TimeoutError('five-minute startup deadline exceeded')",
+  "finished_at": "2026-07-13T09:48:38.594113+00:00",
+  "allocation_seconds": 306.16830065700196,
+  "conservative_spend_usd": 0.04167290758942526,
+  "teardown": {
+    "delete_http_status": 204,
+    "verification": "http_404"
+  }
+}

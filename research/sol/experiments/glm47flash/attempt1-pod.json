@@ -1,0 +1,13 @@
+{
+  "id": "t1g1agk4jzzqwk",
+  "name": "glm47flash-h100-attempt1-20260713",
+  "desiredStatus": "RUNNING",
+  "createdAt": "2026-07-13 06:36:51.402 +0000 UTC",
+  "lastStartedAt": "2026-07-13 06:36:51.397 +0000 UTC",
+  "costPerHr": 2.99,
+  "machineId": "cg2teurjgprr",
+  "imageName": "lmsysorg/sglang:v0.5.15-cu129@sha256:cf821c60ddc04db0e0c7f92b3612a344a08f78136968a40122eb5ba67bb69910",
+  "gpuCount": 1,
+  "publicIp": "",
+  "portMappings": null
+}

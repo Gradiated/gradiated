@@ -1,0 +1,38 @@
+{
+  "checkpoint": "cyankiwi/GLM-4.7-Flash-AWQ-4bit",
+  "revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+  "shard": "model-00001-of-00004.safetensors",
+  "q_a_proj.weight_shape": {
+    "dtype": "I64",
+    "storage_shape": [2],
+    "values": [768, 2048]
+  },
+  "kv_a_proj_with_mqa.weight_shape": {
+    "dtype": "I64",
+    "storage_shape": [2],
+    "values": [576, 2048]
+  },
+  "q_a_proj.weight_packed": {
+    "dtype": "I32",
+    "storage_shape": [768, 256]
+  },
+  "kv_a_proj_with_mqa.weight_packed": {
+    "dtype": "I32",
+    "storage_shape": [576, 256]
+  },
+  "q_a_proj.weight_scale": {
+    "dtype": "BF16",
+    "storage_shape": [768, 64]
+  },
+  "kv_a_proj_with_mqa.weight_scale": {
+    "dtype": "BF16",
+    "storage_shape": [576, 64]
+  },
+  "fused_target.weight_shape": [1344, 2048],
+  "quantization": {
+    "bits": 4,
+    "group_size": 32,
+    "symmetric": true,
+    "zero_point_tensors_present": false
+  }
+}

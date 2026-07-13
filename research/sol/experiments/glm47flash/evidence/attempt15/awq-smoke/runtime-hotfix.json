@@ -1,0 +1,7 @@
+{
+  "file": "/sgl-workspace/sglang/python/sglang/srt/models/deepseek_v2.py",
+  "purpose": "avoid dereferencing absent weight on compressed-tensors ReplicatedLinear before Hopper-only fused-path check",
+  "before_sha256": "c19120d6daa4e8003ffd0e17f593c9cacd9c30b6cea1f2cc6139ed910749ee31",
+  "after_sha256": "ae4b6087a07a832002c4681b22293dcb31cb2f17516561987dd3ea1a97e3022c",
+  "replacement_count": 1
+}

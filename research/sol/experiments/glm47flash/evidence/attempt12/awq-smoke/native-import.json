@@ -1,0 +1,8 @@
+{
+  "class": "Glm4MoeLiteForCausalLM",
+  "sha256": "2dc2c064b24be8c5633ef403f0447880e111c5a5c3ed4ef621e1aec52e2abe89",
+  "sglang": "0.5.15",
+  "torch": "2.11.0+cu130",
+  "cuda": "13.0",
+  "transformers": "5.12.1"
+}

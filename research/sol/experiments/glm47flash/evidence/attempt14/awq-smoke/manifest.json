@@ -1,0 +1,87 @@
+[
+  {
+    "path": "dcgm-unavailable.txt",
+    "bytes": 28,
+    "sha256": "acfb515b0636ce3e7de7bdc7b81d57a86348b99e60f994040536cec030728643"
+  },
+  {
+    "path": "http.stderr.log",
+    "bytes": 1988,
+    "sha256": "12e37a53c7c9b42cd906bb8dedf7fbf919b8700bc0e0bc5bb0ab36f4dd092cf4"
+  },
+  {
+    "path": "http.stdout.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "model-download.log",
+    "bytes": 588,
+    "sha256": "7f0b455d054a06b4ddfe6b669a1dd071c41c0369d741d50ce327e3955c0f7420"
+  },
+  {
+    "path": "model-hashes.sha256",
+    "bytes": 215,
+    "sha256": "152dab37e45d6e007b61d552d926b888f3b9d709441bbe09f36c60c0907eb9cf"
+  },
+  {
+    "path": "model-size.txt",
+    "bytes": 33,
+    "sha256": "fc0c4faf28726989076bc4a55e9a4ed8e7e5c13cf1cc212c30b28cb25d00aa57"
+  },
+  {
+    "path": "native-import.json",
+    "bytes": 215,
+    "sha256": "eacc9bc8e28b5e50af2871744e991ede3cf60b9acbdd971c815273aa0fc9eafa"
+  },
+  {
+    "path": "nvidia-smi-q.txt",
+    "bytes": 10850,
+    "sha256": "6c00e70f8355d239cebcad100ccd5d94b405dea8aad8e278ad273739b95a203e"
+  },
+  {
+    "path": "phases.jsonl",
+    "bytes": 845,
+    "sha256": "10b72d1436a68d008b72e962343c0e13c33cbe68b21e0face71fba547ad05610"
+  },
+  {
+    "path": "pip-freeze.txt",
+    "bytes": 6695,
+    "sha256": "35434c996c6833edabffada096f23b63128006dc6f7dcd4a2a3ae22a6f8ffde2"
+  },
+  {
+    "path": "runtime-hotfix.json",
+    "bytes": 402,
+    "sha256": "5fe97b804befee92060b515028830ed4a528ea6be84757d8e60a604b41de0f6e"
+  },
+  {
+    "path": "server-command.txt",
+    "bytes": 537,
+    "sha256": "80f63f3c98d8d15dffaf59608003eeea63c7d3d70eb29acc03afd0650be71854"
+  },
+  {
+    "path": "server.stderr.log",
+    "bytes": 18650,
+    "sha256": "0120645d90d4cbfa12b25f1f64abcc98762eaf583a3eedd2d2044e950f04dd76"
+  },
+  {
+    "path": "server.stdout.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "telemetry.csv",
+    "bytes": 32656,
+    "sha256": "10f59fb6406b4916cb4a8c2ac332f9d3c2a18e451491fad4c7c1dca31c239164"
+  },
+  {
+    "path": "telemetry.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "uname.txt",
+    "bytes": 132,
+    "sha256": "79433b15e2057a1fa30ef500a8184cbfe8b7788744841ac84a4f6ade5e931b81"
+  }
+]

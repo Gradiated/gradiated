@@ -1,0 +1,6 @@
+{"case_id":"dev_tool_01","output":"{\"arguments\":{\"path\":\"src/math.py\"},\"name\":\"read_file\"}"}
+{"case_id":"dev_code_01","output":"def clamp(value, low, high):\n    return max(low, min(high, value))\n"}
+{"case_id":"dev_retrieval_01","output":"amber-orbit-17"}
+{"case_id":"dev_continuation_01","output":"value, low, high"}
+{"case_id":"dev_loss_01","output":{"input_token_logprobs":[{"logprob":-1.5,"token_id":1},{"logprob":-1.5,"token_id":2},{"logprob":-1.5,"token_id":3}],"source":"runtime_teacher_forced_input_token_logprobs","token_sequence_sha256":"5f11d0678d082d90bd8909b90b571a6efbfa3e7d4128427dd466310559695c7f"}}
+{"case_id":"dev_serving_01","output":"{\"status\":\"ready\",\"truncated\":false}"}

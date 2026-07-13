@@ -1,0 +1,4 @@
+resolved_revision=ab31d120fbe79988fe2a0259993cf3c222aa8881
+Fetching 12 files:   0%|          | 0/12 [00:00<?, ?it/s]Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Fetching 12 files:   8%|▊         | 1/12 [00:00<00:06,  1.59it/s]Fetching 12 files:  50%|█████     | 6/12 [00:38<00:40,  6.73s/it]Fetching 12 files:  58%|█████▊    | 7/12 [00:42<00:30,  6.08s/it]Fetching 12 files: 100%|██████████| 12/12 [00:42<00:00,  3.50s/it]
+/workspace/model-awq

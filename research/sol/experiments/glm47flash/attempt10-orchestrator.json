@@ -1,0 +1,20 @@
+{
+  "attempt": "attempt10_a40_awq_smoke_community",
+  "started_at": "2026-07-13T09:42:32.785053+00:00",
+  "image": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+  "model": "cyankiwi/GLM-4.7-Flash-AWQ-4bit",
+  "model_revision": "ab31d12",
+  "quantization": "compressed-tensors",
+  "shared_experts_fusion": false,
+  "prior_spend_usd": 3.464440717511244,
+  "cap_usd": 12.0,
+  "events": [],
+  "error": "<HTTPError 500: 'Internal Server Error'>",
+  "finished_at": "2026-07-13T09:42:34.308629+00:00",
+  "allocation_seconds": 1.523569894998218,
+  "conservative_spend_usd": 0.0,
+  "teardown": {
+    "delete_http_status": null,
+    "verification": "not_created"
+  }
+}

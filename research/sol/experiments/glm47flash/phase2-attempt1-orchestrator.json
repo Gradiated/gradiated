@@ -1,0 +1,30 @@
+{
+  "attempt": "phase2_attempt1_a6000_awq_loader_patch",
+  "started_at": "2026-07-13T10:41:19.539476+00:00",
+  "phase_cap_usd": 4.0,
+  "phase_prior_spend_usd": 0.0,
+  "prior_campaign_spend_usd": 4.112385662812516,
+  "image": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+  "runtime_source_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+  "model": "cyankiwi/GLM-4.7-Flash-AWQ-4bit",
+  "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+  "intervention": "three-part fused MLA compressed-tensors loader patch",
+  "gpu_role": "cheap 48GB path",
+  "events": [
+    {
+      "at": "2026-07-13T10:41:21.111656+00:00",
+      "event": "attempt_failed",
+      "error": "<HTTPError 500: 'Internal Server Error'>"
+    }
+  ],
+  "pre_mutation_active_pods": [],
+  "error": "<HTTPError 500: 'Internal Server Error'>",
+  "finished_at": "2026-07-13T10:41:21.112882+00:00",
+  "allocation_seconds": 1.573402759997407,
+  "conservative_spend_usd": 0.0,
+  "phase_cumulative_spend_usd": 0.0,
+  "teardown": {
+    "delete_http_status": null,
+    "verification": "not_created"
+  }
+}

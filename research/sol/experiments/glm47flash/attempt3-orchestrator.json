@@ -1,0 +1,35 @@
+{
+  "attempt": "attempt3",
+  "pod_id": "opjyegxeh32tqu",
+  "pod_name": "glm47flash-h100-attempt3-20260713",
+  "gpu_type": "NVIDIA H100 80GB HBM3",
+  "image": "lmsysorg/sglang:v0.5.15-cu129",
+  "hourly_rate_usd": 2.99,
+  "started_at": "2026-07-13T06:56:55.866176+00:00",
+  "startup_deadline_seconds": 300,
+  "result_deadline_seconds": 3600,
+  "events": [
+    {
+      "at": "2026-07-13T06:56:58.667359+00:00",
+      "event": "pod_created"
+    },
+    {
+      "at": "2026-07-13T06:56:59.327706+00:00",
+      "event": "machine_assigned",
+      "machine_id": "ab7xbor2qb92"
+    },
+    {
+      "at": "2026-07-13T07:57:12.342858+00:00",
+      "event": "attempt_failed",
+      "error": "TimeoutError('Benchmark did not complete before the one-hour result deadline')"
+    }
+  ],
+  "error": "TimeoutError('Benchmark did not complete before the one-hour result deadline')",
+  "finished_at": "2026-07-13T07:57:13.617696+00:00",
+  "allocation_seconds": 3617.7514862619937,
+  "conservative_spend_usd": 3.0047435955342676,
+  "teardown": {
+    "delete_http_status": 404,
+    "verification": "http_404"
+  }
+}

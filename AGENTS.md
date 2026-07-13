@@ -40,6 +40,6 @@ This repository is the complete project state for the research and product-build
 
 ## Verification
 
-Run `python3 tools/devex/check.py` first (`make devex-check` is an optional shorthand), then the narrowest relevant checks and workstream checks. For Sol changes, the required Rust checks are documented in `research/sol/AGENTS.md`. For Fable changes, preserve the parity and calibration rules in `research/fable/CLAUDE.md`.
+Run `python3 tools/devex/check.py` first (`make devex-check` is an optional shorthand), then the narrowest relevant checks and workstream checks. GitHub Actions runs the same DevEx checks plus Rust formatting and tests for both workspaces after pushes. For Sol changes, the required Rust checks are documented in `research/sol/AGENTS.md`. For Fable changes, preserve the parity and calibration rules in `research/fable/CLAUDE.md`.
 
 Agents may commit and push changes they own directly to `main` when the user has authorized it. Never stage or publish unrelated worktree changes, and always summarize the exact paths included.

@@ -14,6 +14,7 @@ This repository is the complete project state for the research and product-build
 ## Repo-native state
 
 - Put reusable agent procedures in `.agents/skills/`.
+- Use `tasks/` for durable task packets, ownership, priorities, and handoffs.
 - Put browser automation code and dependency declarations in `tools/browser/`.
 - Put ephemeral browser profiles, caches, and run logs under `.agents/runtime/`; never commit them.
 - Put decision-relevant browser captures and research outputs in the relevant `research/<workstream>/docs/` or `research/<workstream>/evidence/` directory.
@@ -35,9 +36,10 @@ This repository is the complete project state for the research and product-build
 - `$evidence-research`: source-backed, falsifiable technical or market research.
 - `$browser-research`: reproducible research on JavaScript-heavy or interactive websites.
 - `$product-build`: repository-first product implementation, verification, and handoff.
+- `$experiment-run`: bounded, reproducible experiments with durable artifacts and cleanup.
 
 ## Verification
 
-Run the narrowest relevant checks, then the workstream checks. For Sol changes, the required Rust checks are documented in `research/sol/AGENTS.md`. For Fable changes, preserve the parity and calibration rules in `research/fable/CLAUDE.md`.
+Run `python3 tools/devex/check.py` first (`make devex-check` is an optional shorthand), then the narrowest relevant checks and workstream checks. For Sol changes, the required Rust checks are documented in `research/sol/AGENTS.md`. For Fable changes, preserve the parity and calibration rules in `research/fable/CLAUDE.md`.
 
 Agents may commit and push changes they own directly to `main` when the user has authorized it. Never stage or publish unrelated worktree changes, and always summarize the exact paths included.

@@ -116,6 +116,8 @@ All IDs are UUIDv7/ULID-style sortable opaque identifiers unless a library decis
 | `model_definitions` | provider-qualified model/version or Grad checkpoint, owner/license, aliases, modalities, context/output limits, exact supported parameters, lifecycle and public metadata. |
 | `model_aliases` | unique alias, provider constraint, canonical model, activation/removal dates; ambiguous active bare aliases forbidden. |
 | `direct_model_endpoints` | exact model provider/model, encrypted secret reference, region/data policy, capacity, buy-price version and status. Grad cells/targets have a separate fleet lifecycle. |
+| `model_programs` | durable per-model research objective, baseline/champion bundle, Pareto policy/frontier snapshot, open-question and negative-result summaries, cadence, global/campaign budget policy and lifecycle. |
+| `research_hypotheses` / `research_queue_entries` | falsifiable question, proposed intervention and scope, expected information/value, dependencies, priority class, resource estimate, status and immutable selected experiment spec. Queue ordering is advisory; admission remains budget/policy authoritative. |
 | `research_campaigns` | immutable approved objective/search scope, model/workload/hardware targets, quality/SLO/economics policy, controls, budget, timeout, data/provider authority, stop rules and lifecycle. |
 | `experiment_specs` / `experiment_runs` | content-addressed preregistration and append-only executions with exact scope identities, predictions, fidelity, seeds, observations, environment validity, metering and cleanup evidence. |
 | `evidence_claims` | versioned claim, exact scope, evidence class, analysis/control artifacts, uncertainty, composition graph, admission decision, expiry and independent reviewer. |
@@ -164,7 +166,7 @@ The initial content-free tables are `request_facts_v1`, `attempt_facts_v1`, `eva
 
 ## Protobuf contract system
 
-`product/proto/` is canonical for internal messages shared by TypeScript and Rust:
+`product/proto/` is canonical for internal messages shared by Python, TypeScript and Rust:
 
 ```text
 proto/
@@ -186,6 +188,7 @@ proto/
     cells.proto
     capacity.proto
   gradiated/research/v1/
+    programs.proto
     campaigns.proto
     experiments.proto
     evidence.proto
@@ -195,9 +198,11 @@ proto/
     workflows.proto
 ```
 
-Important messages include `ApiKeyProjection`, `OrganizationBillingProjection`, `WorkspacePolicyProjection`, `ChannelAccountProjection`, `ModelProviderDefinition`, `ModelProduct`, `ModelDefinition`, `ModelAlias`, `ModelFamily`, `ModelAliasHead`, `GradEffort`, `GradSpeed`, `DataMode`, `CapabilityRequirement`, `ResearchCampaign`, `ExperimentSpec`, `ExperimentRun`, `EvidenceClaim`, `ResearchCandidate`, `ModelStackBundleManifest`, `BundleQualification`, `BundleGateResult`, `ReleaseProposal`, `ReleaseApproval`, `DirectModelEndpointProjection`, `QualificationReference`, `RouteRelease`, `RouteCandidate`, `RouteDecision`, `ReleaseManifest`, `CellTarget`, `GenerateRequest`, `GenerateEvent`, `CapacityIntent`, `CapacityLease`, `CapacityPoolSpec`, `CapacityAllocationSpec`, `CapacityAllocationStatus`, `InferenceCellStatus`, `CellHeartbeat`, `TraceEnvelope`, `TraceCaptureEvent`, `WorkloadProfile`, `MigrationCandidate`, `MigrationExperiment`, `MigrationRecommendation`, `LimitWindow`, `PriceBook`, `Reservation`, `ReservationEvent`, `SettlementEvent`, `ChannelSettlementEvent`, `FailedRequestCreditEvent`, `ProjectionCommand`, and `ReconciliationCheckpoint`.
+Important messages include `ApiKeyProjection`, `OrganizationBillingProjection`, `WorkspacePolicyProjection`, `ChannelAccountProjection`, `ModelProviderDefinition`, `ModelProduct`, `ModelDefinition`, `ModelAlias`, `ModelFamily`, `ModelAliasHead`, `GradEffort`, `GradSpeed`, `DataMode`, `CapabilityRequirement`, `ModelProgram`, `ResearchHypothesis`, `ResearchQueueEntry`, `ResearchCampaign`, `ExperimentSpec`, `ExperimentRun`, `EvidenceClaim`, `ResearchCandidate`, `ModelArchitectureSpec`, `CheckpointManifest`, `OperatorManifest`, `RuntimeManifest`, `QualificationManifest`, `ModelStackBundleManifest`, `BundleQualification`, `BundleGateResult`, `ReleaseProposal`, `ReleaseApproval`, `DirectModelEndpointProjection`, `QualificationReference`, `RouteRelease`, `RouteCandidate`, `RouteDecision`, `ReleaseManifest`, `CellTarget`, `GenerateRequest`, `GenerateEvent`, `CapacityIntent`, `CapacityLease`, `CapacityPoolSpec`, `CapacityAllocationSpec`, `CapacityAllocationStatus`, `InferenceCellStatus`, `CellHeartbeat`, `TraceEnvelope`, `TraceCaptureEvent`, `WorkloadProfile`, `MigrationCandidate`, `MigrationExperiment`, `MigrationRecommendation`, `LimitWindow`, `PriceBook`, `Reservation`, `ReservationEvent`, `SettlementEvent`, `ChannelSettlementEvent`, `FailedRequestCreditEvent`, `ProjectionCommand`, and `ReconciliationCheckpoint`.
 
-`ModelStackBundleManifest` has generated TS/Rust types but its identity is the SHA-256 of RFC 8785-canonical JSON, not ordinary JSON bytes or an assumed cross-language Protobuf wire ordering. `RouteRelease`, `CellTarget` and internal `GenerateRequest` carry the exact bundle digest and alias generation. A cell cannot become ready when its attested runtime image, manifest, placement envelope or signatures differ from the release.
+Research Protobuf generates Python, TypeScript and Rust types. Canonical JSON schemas define the content-addressed architecture, checkpoint, operator, runtime and qualification manifests; Protobuf defines commands, events and private services. The Python research-control service is the sole normal writer for `model_programs`, hypotheses, campaign/evidence/candidate and qualification transitions. Hono receives authenticated operator intent and calls that service through its generated client. PostgreSQL roles reject direct BFF writes to those state machines.
+
+`ModelStackBundleManifest` has generated Python/TS/Rust types but its identity is the SHA-256 of RFC 8785-canonical JSON, not ordinary JSON bytes or an assumed cross-language Protobuf wire ordering. Its `RuntimeManifest` declares exactly one `python_plugin|native_library|rust_engine` launch mode and its pinned runtime/image/operator dependencies. `RouteRelease`, `CellTarget` and internal `GenerateRequest` carry the exact bundle digest and alias generation. A cell cannot become ready when its attested runtime image, manifest, placement envelope or signatures differ from the release.
 
 Rules:
 
@@ -213,7 +218,7 @@ Rules:
 
 Generation:
 
-- Buf formats, lints, resolves pinned plugins, and generates Protobuf-ES TypeScript into `packages/contracts/src/gen`.
+- Buf formats, lints, resolves pinned plugins, and generates Protobuf-ES TypeScript into `packages/contracts/src/gen` and Python messages/clients into `research/factory/src/grad_research/contracts/gen`.
 - Prost generates Rust into `services/gateway/crates/gateway-contracts/src/gen` from the same source; toolchain/plugin versions are pinned.
 - Generated directories are committed and never hand-edited.
 - `pnpm contracts:generate` runs all generation in a pinned container/toolchain.

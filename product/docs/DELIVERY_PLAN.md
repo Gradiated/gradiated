@@ -23,7 +23,7 @@ AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/
 - No secrets in repository/logs/artifacts. Customer payload traces exist only in the encrypted Product Intelligence data path with tested policy/retention/access/delete behavior.
 - Organization ID is explicit across every tenant/financial boundary; workspace/key IDs are explicit on inference, policy, limit, and usage paths.
 - Integer checked money and idempotency are enforced by schema plus tests.
-- Domain example tests and relevant TS/Rust property suites pass with replay artifacts.
+- Domain example tests and relevant Python/TS/Rust property suites pass with replay artifacts.
 - Public schema and internal Protobuf changes pass generation/drift/breaking/golden checks.
 - Direct IDs never cross provider/model/version; Grad IDs never leave owned inference or change effort/speed; unsupported capabilities/data policy never degrade silently.
 - Changed behavior is documented in source-of-truth docs/runbooks.
@@ -95,10 +95,10 @@ AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/
 
 ### RF-00 through RF-08 — Model research factory
 
-- Scope: continuous agent-operated iteration over model weights/architecture, custom operators, kernels/runtime, serving policy, topology and hardware mapping; exact bundle creation, independent qualification and production release handoff.
-- Deliver in order: RF-00 contracts/local substrate; RF-01 campaign/experiment/evidence authority; RF-02 S3 CAS + OCI/signing + bundle launcher; RF-03 Temporal/agent/execution adapters and Kueue/JobSet; RF-04 typed Fable/Sol adapters; RF-05 independent full-stack qualification; RF-06 family/managed/pin registry and release authority; RF-07 operator UI/analytics; RF-08 one bounded end-to-end dry-run candidate.
+- Scope: a Python-first, always-on per-model research lab spanning weights/architecture, operators, kernels/runtime, serving policy, topology and hardware mapping; exact bundle creation, independent qualification and production release handoff. Fable/Sol are evidence to mine, not dependencies to integrate.
+- Deliver in order: RF-00 generated Python/TS/Rust contracts, canonical manifests and local tiny-model substrate; RF-01 private Python research-control authority plus durable `ModelProgram`/hypothesis/evidence domains; RF-02 Python S3 CAS/OCI/signing and Rust bundle inspector/launcher/runtime supervisor; RF-03 Python Temporal workflows, continuous portfolio planner, agent leases, execution adapters, Kueue/JobSet and bounded cleanup; RF-04 PyTorch model/operator lab, spike extraction, Hypothesis testkit and Triton discovery; RF-05 graduated out-of-tree framework, native-library and Rust-engine runtime paths plus independent full-stack qualification; RF-06 family/managed/pin registry and release authority; RF-07 operator UI/program analytics; RF-08 one continuous model program producing a bounded end-to-end dry-run challenger.
 - Acceptance: the factory outputs one signed content-addressed `ModelStackBundle`; the exact digest passes source/legal, model/custom-architecture, kernel/runtime, protocol/metering, measured single-node, distributed-cell, security/privacy and soak gates against scope-matched controls; candidate agents cannot see/modify hidden evaluators or publish production targets; a signed release proposal can be approved, canaried and rolled back without rebuilding or changing an in-flight request; RF-08 does not move a public alias.
-- Dependencies: RF-00 coordinates with WP-00. RF-02 and RF-05 freeze bundle/qualification contracts consumed by WP-06/06C. RF-03 reuses but does not share identities with fleet provider adapters. RF-06 extends WP-06 release/Redis projection. Research UI is operator-only and may proceed against fakes after RF-00.
+- Dependencies: RF-00 coordinates with WP-00. RF-02 and RF-05 freeze bundle/qualification and Unix-domain serving contracts consumed by WP-06/06C. RF-03 reuses but does not share identities with fleet provider adapters. RF-06 extends WP-06 release/Redis projection. Research UI is operator-only and may proceed against generated-client fakes after RF-00.
 - Delegation: one agent per RF package after RF-00 schema freeze, with separate candidate/evaluator/release-authority owners. The complete package, state, API, test and command contracts are [Model research factory to production](MODEL_RESEARCH_TO_PRODUCTION_2026-07-13.md).
 
 ### WP-07 — Trace intelligence, ClickHouse analytics and migration engine
@@ -145,10 +145,12 @@ WP-00
  └─> WP-04 ─> WP-05 ─> WP-06 ─> WP-06C ┘                    │
                                       └────> WP-09 ──────────┘
 
-RF-00 ─┬─> RF-01 ───────────────┐
-       ├─> RF-02 ─> RF-05 ──────┼─> RF-06 ─> RF-07 ─> RF-08
-       └─> RF-03 ─> RF-04 ──────┘       │
-                WP-06C bundle launcher <─┘
+RF-00 ─┬─> RF-01 ────────────────> RF-07 ──────────────┐
+       ├─> RF-02 ──────────┐                            │
+       ├─> RF-03 ──────────┼────────────────────────────┼─> RF-08
+       └─> RF-04 ─> RF-05 ─┴─> RF-06 ──────────────────┘
+                     │            │
+                     └─> WP-06C bundle/runtime boundary
 ```
 
 One integration owner approves changes to `proto/**`, public schemas, Redis key/script contracts, and ledger semantics. Other agents propose contract changes in their issue before generating code, preventing simultaneous incompatible edits.
@@ -167,15 +169,15 @@ Suggested first delegation wave after WP-00:
 
 Research-factory delegation after RF-00:
 
-- Agent R1: RF-01 campaign/spec/evidence PostgreSQL domain and fast-check state models.
-- Agent R2: RF-02 canonical bundle/S3 CAS/OCI/signing plus TS/Rust golden vectors.
-- Agent R3: RF-03 Temporal workflows, isolated agent leases, fake/local execution and cleanup PBT.
+- Agent R1: RF-01 Python `ModelProgram`, hypothesis, campaign/spec/evidence domain, private API and Hypothesis state models.
+- Agent R2: RF-02 Python canonical bundle/S3 CAS/OCI/signing plus Rust inspector/launcher and Python/TS/Rust golden vectors.
+- Agent R3: RF-03 Python Temporal portfolio/planner workflows, isolated agent leases, fake/local execution and cleanup PBT.
 - Agent R4: RF-03 Kubernetes/native execution adapters after R3 freezes the adapter; no production target identity.
-- Agent R5: RF-04 Fable hypothesis and Sol evidence adapters, read-only against active research workstreams.
-- Agent R6: RF-05 visible model/kernel/runtime/protocol/system harnesses.
-- Agent R7: RF-05 separately owned hidden-evaluator and security policy; cannot edit candidates.
+- Agent R5: RF-04 PyTorch references, model surgery/training/quantization and provenance-preserving extraction of useful spike ideas.
+- Agent R6: RF-04/05 `torch.library`/Triton/native differential harnesses and framework-runtime packaging.
+- Agent R7: RF-05 separately owned hidden evaluator, qualification and security policy; cannot edit candidates.
 - Agent R8: RF-06 registry/release/alias projection and rollback, coordinated with WP-06/06C.
-- Agent R9: RF-07 Vite/shadcn research console and ClickHouse derived metrics against typed fakes.
+- Agent R9: RF-07 Vite/shadcn research console and ClickHouse derived metrics through the generated private-service client.
 - Integration owner: RF-08 exact-bundle vertical dry run and authority-separation audit.
 
 WP-03 starts once WP-01 ledger interfaces stabilize. WP-06 starts after protocol/admission interfaces compile. WP-06C starts with fakes after release/cell contracts freeze and coordinates its provider substrates with infrastructure F-00 through F-07. WP-07 starts only after data-mode/trace contracts and infrastructure ownership are frozen. The integration owner runs shared properties continuously.
@@ -189,7 +191,7 @@ WP-03 starts once WP-01 ledger interfaces stabilize. WP-06 starts after protocol
 5. **Model-lane checkpoint:** curated direct identity and Grad effort/speed qualification/price/SLO/rollback satisfy PBT and measured gates.
 6. **Owned fleet checkpoint:** one native and one Kubernetes provider class satisfy exact-release edge/cell, always-on cache isolation, abrupt preemption, cleanup, concentration and successful-token margin gates.
 7. **Trace checkpoint:** Product Intelligence and no-retain, encryption, retention/delete, billing isolation and no-auto-switch recommendation state pass; no-retention cache remains enabled and ephemeral.
-8. **Research-factory checkpoint:** one candidate moves from immutable ExperimentSpec through scope-matched evidence, exact signed bundle, independent full-cell qualification and dry-run release/rollback; no rebuild, hidden-eval leak, production target or public alias movement occurs.
+8. **Research-factory checkpoint:** one durable model program continuously ranks hypotheses, records a negative finding, develops a challenger, and moves it from immutable `ExperimentSpec` through scope-matched evidence, exact signed bundle, independent full-cell qualification and dry-run release/rollback; no unbounded GPU loop, rebuild, hidden-eval leak, production target or public alias movement occurs.
 9. **External checkpoint:** protected real-provider/owned smoke and failure drills pass inside cost limits.
 10. **Distribution checkpoint:** OpenRouter/other-gateway evidence supports go/no-go.
 11. **Revenue checkpoint:** direct workload retention, Grad migration and contribution margin decide next breadth.

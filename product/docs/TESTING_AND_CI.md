@@ -13,6 +13,14 @@ The product owner will not run this repository locally. Therefore the acceptance
 - Playwright for browser flows against built Vite assets, API, PostgreSQL, ClickHouse, Redis, S3 fixtures, and Stripe fixtures.
 - Testcontainers where process isolation is needed; CI service containers are acceptable when tests reset namespaces deterministically.
 
+### Python research lab
+
+- `pytest` for domain, workflow/activity, model/operator, artifact and runtime-adapter tests.
+- Hypothesis rule-based state machines for `ModelProgram`, experiment admission, budget/lease/cleanup, evidence composition and candidate lifecycle; every failure emits a replayable example/artifact.
+- `torch.library.opcheck`, FakeTensor/meta-kernel tests and `gradcheck` where differentiability applies before compiled or accelerated paths can graduate.
+- Differential tests compare eager PyTorch references with `torch.compile`, Triton, CUDA/C++ and packaged runtime outputs over generated shapes, dtypes, strides, devices and numerical tolerances.
+- Ruff, Pyright and pinned `uv` lock/sync checks are required; notebooks may explore but cannot be evidence or package authority.
+
 ### Rust
 
 - standard unit/doc tests plus `cargo nextest` for workspace execution.
@@ -32,7 +40,7 @@ The product owner will not run this repository locally. Therefore the acceptance
 | Payments | valid/invalid/reordered/duplicate Stripe event traces | redirects have no effect; exactly-once financial effect; impossible transitions quarantine. |
 | Admission | organization top-up, workspace/key limits, cross-workspace reserve, settle, cancel, renew, overage | invariants in `BILLING_AND_REDIS.md`; no unfunded dispatch; organization credit and nested caps. |
 | Streams/reconciliation | redelivery, consumer crash, sequence gap, lag, rebuild, epoch change | posting once; stale events fenced; equality or closed state; no blind refund. |
-| Contracts | generated valid/invalid Protobuf values, additive unknown fields | TS/Rust encode/decode agreement; deterministic generation; compatibility. |
+| Contracts | generated valid/invalid Protobuf values, canonical manifests, additive unknown fields | Python/TS/Rust encode/decode agreement; deterministic generation; compatibility. |
 | Protocols | valid support-subset JSON/SSE and malformed variants | lossless supported normalization; explicit unsupported rejection; terminal/event ordering. |
 | Model identity/routing | curated providers/models/aliases, Grad effort/speed releases, health, capability/data policy, prices, session/canary buckets and faults | bare alias resolves only when unique; direct pin never crosses provider/model/version; Grad never leaves owned inference or changes effort/speed; deterministic decision; fixed release price; no ineligible target. |
 | Route lifecycle | publish/canary/promote/halt/rollback/deprecate with stale/reordered projection commands | immutable release; deterministic rollout; stale head cannot win; in-flight request keeps admitted release/price; rollback restores a qualified head. |
@@ -43,9 +51,10 @@ The product owner will not run this repository locally. Therefore the acceptance
 | Owned inference fleet | PostgreSQL intents/leases, fleet CR specs/status/finalizers, capacity-provider observations, cell/edge shards, signed targets, spot loss, cache namespaces and faults | one writer/authority per field; duplicate/reordered/restarted reconciliation converges; no leaked orphan or unqualified target; existing cells serve through PG/Kubernetes/provider outage; exact release/speed and cache isolation hold. |
 | Trace analytics | organization/workspace scopes, terminal usage versions, duplicate/reordered outbox delivery, retention/tombstones, restore, ClickHouse outage/backlog | one visible terminal fact; no content columns; result subset of authorized scope; expired/deleted content inaccessible during mutation lag; PostgreSQL reconciliation wins; projector failure never affects serving/billing/S3. |
 | Migration | workload grouping, evidence levels, replay/shadow/live-canary commands/headers, duplicate/reordered events, budgets and evaluator faults | no header means hard direct pin; invalid/mismatched header cannot enroll; source/candidate fixed; evidence cannot overstate; replay cannot charge; live canary is deterministic, disclosed and obeys experiment/billing caps; removing header preserves original traffic. |
-| Research campaign | campaign/spec/budget/lease/timeout commands, agent crashes, stale epochs, provider failures and cleanup | approved scope cannot expand; spend/time/provider/data limits hold; one lease owner; stale writes fenced; every allocation terminates or has durable cleanup evidence; negative/invalid results persist. |
+| Research program | baseline/champion/frontier/question/queue transitions, scans, hypothesis ranking, campaign/spec/budget/lease/timeout commands, agent crashes, stale epochs, provider failures and cleanup | one durable program per model; queue churn cannot bypass admission; approved scope cannot expand; spend/time/provider/data limits hold; one lease owner; stale writes fenced; every allocation terminates or has durable cleanup evidence; negative/invalid results persist and influence ranking. |
+| Model/operator differential | generated PyTorch modules/operators, tensor shapes/dtypes/strides, compile modes, Triton/native variants and tolerances | eager reference is retained; schema/meta/alias rules pass `opcheck`; gradients pass where promised; accelerated output/error envelope matches the scoped oracle; unsupported inputs fail explicitly. |
 | Evidence and lineage | arbitrary model/workload/hardware/software/intervention scopes, controls, fidelity labels, observations, claims and parent graphs | specs immutable after admission; sealed observations append-only; invalid environment is not model failure; claim scope cannot widen; incompatible claims do not compose; lineage is acyclic and content identity stable. |
-| ModelStackBundle | canonical manifests, object/image digests, custom architecture/kernel/runtime/topology matrices, signatures, missing/tampered/expired attestations | TS/Rust canonical bytes and digest agree; every reference is immutable/present; any changed byte changes identity; missing/invalid evidence fails closed; production launcher accepts only exact qualified digest. |
+| ModelStackBundle | canonical manifests, object/image digests, custom architecture/kernel/runtime/topology matrices, signatures, missing/tampered/expired attestations | Python/TS/Rust canonical bytes and digest agree; every reference is immutable/present; any changed byte changes identity; missing/invalid evidence fails closed; production launcher accepts only exact qualified digest. |
 | Bundle qualification | gate ordering, independent evaluator roles, hidden/visible policy versions, pass/fail/invalid/expiry/waiver and requalification | candidate writer cannot author gate result or approval; no later gate changes bundle; expired/invalid gate blocks release; non-waivable safety/identity/isolation/metering gates remain mandatory. |
 | Family/managed/pin aliases | family envelopes, effort/speed envelopes, release pins, concurrent head moves, canary/rollback/revocation | family never crosses compatibility boundary; managed alias satisfies declared product envelope; pin never moves; one atomic head generation; in-flight request retains admitted bundle/price; revoked pin cannot resolve elsewhere. |
 
@@ -53,9 +62,9 @@ PBT complements examples: each bug found by a property receives a small example/
 
 ## Stateful model architecture
 
-Maintain a small pure reference model in `packages/testkit` and a parallel Rust model in `gateway-testkit`. Define a language-neutral `PropertyTrace` Protobuf containing initial organization credit/policy, workspaces/keys/limits, ordered commands, concurrency barriers, injected faults, expected coarse outcomes, seed, and shrink path.
+Maintain small pure reference models in `research/factory` for research state, `packages/testkit` for product state and `gateway-testkit` for serving state. Define a language-neutral `PropertyTrace` Protobuf containing initial state, ordered commands, concurrency barriers, injected faults, expected coarse outcomes, seed, and shrink path.
 
-Fast-check can generate and shrink a trace against TypeScript domain services. Rust can generate against Redis, and both can replay a stored trace. This does not require both test frameworks to share a PRNG; the minimized command trace is the portable artifact.
+Hypothesis, fast-check and proptest can each generate against their owned domain and all three can replay a stored trace. This does not require frameworks to share a PRNG; the minimized command trace or portable golden corpus is the cross-language artifact.
 
 Concurrency cases use explicit barriers/schedules rather than wall-clock sleeps:
 
@@ -96,6 +105,7 @@ Every property invocation reads optional `PBT_SEED` and `PBT_PATH`; otherwise CI
 
 ```sh
 PBT_SEED=123 PBT_PATH='2:1:0' pnpm test:pbt -- billing
+HYPOTHESIS_PROFILE=ci uv run --project research/factory pytest tests/domain/test_model_program.py
 cargo test -p gateway-pbt admission -- --nocapture proptest-seed=...
 pnpm test:pbt:replay artifacts/property-trace.pb
 ```
@@ -115,7 +125,7 @@ Shard by stable property suite, not random test file distribution, so failures r
 
 ## Research-factory and bundle qualification jobs
 
-Pull requests run a deterministic tiny bundle through source validation, functional-twin/model parity, custom-kernel differential fixtures, bundle build/inspect/signature verification, fake cell launch, protocol/metering and dry-run release state machines. The fixture is small enough for CPU/Kind and proves orchestration and identity, not model quality.
+Pull requests run a deterministic tiny PyTorch model through source validation, eager/compiled/operator parity, `opcheck`/FakeTensor/gradient checks, Triton-or-fake accelerator differential fixtures, bundle build/inspect/signature verification, every launch mode's fake cell, protocol/metering and dry-run release state machines. The fixture is small enough for CPU/Kind and proves orchestration and identity, not model quality.
 
 Main/nightly jobs add worker crash/replay, provider interruption, missing/tampered S3/ECR object, hidden-evaluator role negatives, distributed JobSet/collective fakes, security/privacy scans and a sustained fake-cell soak. Protected preregistered jobs run the exact candidate bundle on real GPUs only when a campaign supplies an approved spend cap, timeout, cleanup contract and scope-matched controls. Spot unavailability is a classified environment result; an incorrect result, leaked resource, identity mismatch or missing cleanup evidence fails.
 
@@ -180,6 +190,7 @@ Every custom-gateway test proves that a forwarded workspace key remains organiza
 ```text
 devex + formatting
   ├── contracts lint/breaking/generate/drift/golden
+  ├── Python research Ruff/Pyright/pytest/Hypothesis/operator checks
   ├── TypeScript typecheck/lint/unit/PBT
   ├── Rust fmt/clippy/nextest/PBT
   ├── integration: PostgreSQL + Redis + fake providers
@@ -208,6 +219,8 @@ Pin action SHAs and tool versions. Use lockfiles and cached dependencies without
 | `pnpm verify:ts` | format check, lint, typecheck, Vitest. |
 | `pnpm test:pbt` | bounded fast-check suites with replay output. |
 | `pnpm contracts:check` | Buf format/lint/breaking/generate/drift and golden fixtures. |
+| `uv run --project research/factory pytest` | Python research domain, workflow, artifact, model/operator and Hypothesis suites. |
+| `uv run --project research/factory ruff check . && uv run --project research/factory pyright` | Python formatting/lint/type boundary. |
 | `cargo nextest run --workspace` | Rust unit/integration tests. |
 | `cargo test -p gateway-pbt` | bounded proptest state machines. |
 | `grad research verify --fixture tiny` | deterministic campaign/spec/evidence/bundle/qualification dry run. |

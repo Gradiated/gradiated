@@ -12,6 +12,7 @@ flowchart LR
   TraceAccess --> Traces[(Private S3 trace objects)]
   TraceAccess --> PG
   API --> Stripe
+  API -->|private generated research API| Research
   Stripe -->|signed webhook| API
   API -->|transactional outbox| PG
   Worker[Control worker] --> PG
@@ -26,7 +27,7 @@ flowchart LR
   TraceProcessor --> Owned[Owned inference evaluation]
   ModelOps[Model qualification + route release jobs] --> PG
   ModelOps --> Providers
-  Research[Research factory + Temporal] --> PG
+  Research[Python research control + Temporal] --> PG
   Research --> Artifacts[(S3 CAS + ECR bundles)]
   Research --> ResearchCompute[Isolated research GPU allocations]
   Artifacts --> ModelOps
@@ -158,11 +159,17 @@ For Grad, a Redis route release contains signed cell targets rather than GPU pod
 
 ### Research factory and exact bundle boundary
 
-The research factory iterates across weights/model architecture, tokenizer/templates, custom operators, kernels, runtime, scheduler/cache, parallelism/topology and hardware mapping. Its deployable output is one signed, content-addressed `ModelStackBundle`, not a checkpoint or a hand-maintained serving recipe. Large immutable objects live in S3 CAS; runtime images and the small OCI bundle index live in ECR. PostgreSQL owns campaigns, evidence, qualification, releases and alias heads. Temporal coordinates durable research workflows; Kueue/JobSet schedule only honest Kubernetes execution, while native GPU allocations use the existing provider-adapter lifecycle behind a separate research contract.
+The research factory is an always-on Python inference laboratory. Each supported model has a durable `ModelProgram` containing its reproducible baseline, production champion, Pareto frontier, open questions, negative findings, campaigns and ranked experiment queue. Opportunity scanners, baseline keepers, portfolio planning and agent loops run continuously. Cheap static, simulation and CPU work may run continuously; GPU experiments require an immutable hypothesis, expected-information score, spend/time cap, stop rule and cleanup contract. The objective is validated stack improvement and learning per dollar, not experiment count or GPU utilization.
 
-Fable supplies hypotheses, functional-twin/model-surgery tooling and simulator priors. Sol supplies immutable experiment, controls, fidelity, scope and claim-admission discipline. Simulation or component evidence never authorizes production. An independent qualification plane tests the exact bundle through model, kernel/runtime, protocol, measured single-node, distributed-cell, security, soak and canary gates. Research allocations cannot publish production `CellTarget`s or possess production credentials.
+Python 3.12, PyTorch, Transformers, safetensors and Triton own model architecture, surgery, training/healing, quantization, evaluation and kernel discovery. A private Python research-control service and Python Temporal workers are the sole normal writers of campaign, evidence, candidate and qualification state. Hono/tRPC is the authenticated operator BFF through a generated Protobuf/gRPC client; it does not reproduce research state machines. Rust owns bundle inspection/materialization, cell/runtime supervision and serving. A runtime may graduate as an out-of-tree Python framework plugin, a native CUDA/C++ library or an owned Rust engine; measured value, not a language mandate, determines the boundary.
+
+The factory iterates across weights/model architecture, tokenizer/templates, custom operators, kernels, runtime, scheduler/cache, parallelism/topology and hardware mapping. Its deployable output is one signed, content-addressed `ModelStackBundle`, not a checkpoint or a hand-maintained serving recipe. Canonical JSON architecture/checkpoint/operator/runtime/qualification manifests and generated Protobuf services are the language-neutral handoff. Large immutable objects live in S3 CAS; runtime images and the small OCI bundle index live in ECR. PostgreSQL owns programs, campaigns, evidence, qualification, releases and alias heads. Temporal coordinates durable research workflows; Kueue/JobSet schedule only honest Kubernetes execution, while native GPU allocations use provider adapters behind a separate research contract.
+
+Fable and Sol are historical spike evidence, not runtime dependencies or interfaces to preserve. Useful algorithms, controls and regression cases are ported with provenance into factory-owned Python/Rust packages and revalidated. Simulation or component evidence never authorizes production. An independent qualification plane tests the exact bundle through model, operator/runtime, protocol, measured single-node, distributed-cell, security, soak and canary gates. Research allocations cannot publish production `CellTarget`s or possess production credentials.
 
 `RouteRelease` wraps a qualified bundle with the customer product contract: stable family or managed effort/speed identity, immutable pin, capability/SLO/price envelope, eligible placements, rollout and rollback. Cells attest the exact release and bundle digest before the target projector can publish them. A live request remains bound to the release resolved at admission even if an alias moves. The full design is [Model research factory to production](MODEL_RESEARCH_TO_PRODUCTION_2026-07-13.md) and [ADR-0007](../../docs/decisions/0007-research-production-model-lifecycle.md).
+
+For `python_plugin`, the Rust cell agent launches the pinned framework runtime and communicates over a cell-local Unix-domain socket using the internal serving Protobuf. `native_library` and `rust_engine` use the same external cell contract. This keeps the gateway/edge path stable while the factory can replace the model implementation, kernels or runtime inside an attested bundle.
 
 Every generative Grad release enables active-sequence KV and cross-request prefix cache. The gateway supplies an opaque HMAC scope separated by workspace/channel, exact release, and retention class. Product Intelligence and Private/No Retention both cache but never share a namespace. Cache state remains in GPU/RAM or qualified encrypted ephemeral local storage and never enters Redis, PostgreSQL, S3, ClickHouse, trace payloads, backups or logs.
 

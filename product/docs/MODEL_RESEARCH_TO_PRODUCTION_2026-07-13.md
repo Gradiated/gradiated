@@ -6,13 +6,35 @@ Grad's research factory produces a complete deployable **ModelStackBundle**, not
 
 The factory may continuously and autonomously propose, implement, run, reject, and qualify candidates inside explicit campaign budgets. Production release authority is separate. Initially, a human release owner must approve a signed release proposal before a public alias moves. Once approved, shadow/canary progression and rollback may be automatic within the release's frozen policy. Fully automatic public promotion requires a later decision backed by operational evidence.
 
-This design joins three systems without confusing their evidence:
+Fable and Sol were spikes, not permanent platform foundations. Their reports are evidence and design input; the factory does not import their crates, schemas, directory layouts, state machines, or campaign code. Useful ideas are selectively reimplemented behind the factory's stable contracts, and contradictory or unmaintained spike code may be archived without a compatibility burden.
 
-- Fable is the fast hypothesis and co-design surface: typed full-stack configurations, simulation, functional twins, model surgery, healing, and component parity tests.
-- Sol is the evidence-admission discipline: immutable experiment specifications, scope-matched controls, pre-registered predictions, fidelity labels, held-out measurements, and fail-closed claim composition.
+The durable design keeps three concerns separate:
+
+- the Python-first research lab generates hypotheses and changes models, checkpoints, training recipes, PyTorch graphs, Triton/CUDA kernels and runtime plugins quickly;
+- the evidence authority enforces immutable experiment specifications, scope-matched controls, pre-registered predictions, fidelity labels, held-out measurements and fail-closed claim composition, regardless of implementation language;
 - Product ModelOps turns an admitted full-stack candidate into an immutable route release, deploys it through production-like cells, and atomically moves or rolls back customer-visible aliases.
 
-Fable output is a prior or hypothesis until a Sol-style, scope-matched experiment measures it. A component win is not multiplied into a bundle claim. A bundle qualified on one model, workload, runtime, GPU, topology, or provider cannot donate that qualification to another scope.
+Spike output, simulation and component measurements remain priors until a factory-owned, scope-matched experiment measures the complete candidate. A component win is not multiplied into a bundle claim. A bundle qualified on one model, workload, runtime, GPU, topology or provider cannot donate that qualification to another scope.
+
+## Language and implementation boundary
+
+The factory is deliberately polyglot. Choose the language that minimizes uncertainty at each layer, then promote through explicit artifact contracts rather than rewriting everything into one language.
+
+| Layer | Default implementation | Boundary |
+| --- | --- | --- |
+| Model architecture, checkpoint surgery, training/healing, quantization and quality evaluation | Python 3.12+, PyTorch, Transformers/safetensors where applicable | Produces immutable checkpoint/config/package artifacts, reference outputs and evidence. |
+| Kernel discovery | PyTorch reference first, then Triton; CUDA/C++ only when Triton or compiler output fails a measured gate | Registers a stable operator schema plus fake/meta behavior, reference implementation, hardware matrix and golden vectors. |
+| Experiment SDK, campaign orchestration and GPU activities | Python, Pydantic, Temporal Python SDK, `uv` | Consumes generated Protobuf contracts; PostgreSQL remains domain authority. |
+| Research API | Internal Python service owning research mutations and Temporal client operations | Hono/tRPC is the authenticated BFF and generated Protobuf/gRPC client; it does not duplicate research state transitions. |
+| Product/customer control plane | TypeScript Hono/tRPC and Vite/shadcn | Owns product auth, UI composition and release-owner experience, not model execution. |
+| System simulator and serving experiments | Python by default; Rust executables where performance, determinism or existing useful code justifies them | Implement a language-neutral experiment-tool protocol and emit sealed observations. |
+| Bundle verification, materialization and cell lifecycle | Rust | Verifies signatures/digests, stages exact artifacts, launches the declared runtime mode and attests the cell. |
+| Gateway, inference edge and production transport | Rust | Never imports Python research packages or queries research services on the request path. |
+| Production model execution | Qualified per bundle: Python runtime plugin, native shared library, or Rust engine | Language is disclosed in runtime identity; every mode must meet the same protocol, security, metering, cache and SLO gates. |
+
+The production result is therefore not necessarily “Rust source.” It is a signed bundle that Rust can verify and launch. A seed bundle may contain a Python vLLM/SGLang runtime and Triton kernels behind a local Unix-domain-socket adapter. A later bundle may contain precompiled CUDA libraries or an in-process Rust engine. No rewrite is required merely for aesthetic consistency.
+
+Python notebooks are scratch surfaces only. A result becomes evidence only after it is represented by a pinned script or package, immutable `ExperimentSpec`, captured environment, content-addressed outputs and reproducible command.
 
 ## Product outcome
 
@@ -34,9 +56,9 @@ The family example above is illustrative. A family may be published only after l
 ```mermaid
 flowchart TB
   Signals[Source releases, research ideas, production telemetry] --> Campaign[Campaign and budget authority]
-  Campaign --> Temporal[Temporal research orchestrator]
-  Temporal --> Agents[Isolated research agents]
-  Temporal --> Exec[Research execution adapters]
+  Campaign --> Temporal[Python Temporal research orchestrator]
+  Temporal --> Agents[Isolated Python/Rust research agents]
+  Temporal --> Exec[Python research execution adapters]
   Exec --> K8s[Kubernetes Jobs / JobSets with Kueue]
   Exec --> Native[Native GPU provider leases]
   Agents --> Git[Git commits and immutable ExperimentSpecs]
@@ -68,15 +90,15 @@ The gateway's hot-path architecture does not change. Redis remains its only sync
 The AWS-hosted research control plane contains:
 
 - PostgreSQL domain state for campaigns, budgets, experiment specifications, evidence, candidates, qualifications, release proposals, approvals, and audit history;
-- Temporal for durable campaign/run orchestration, retries, timeouts, signals, human approval waits, and cleanup workflows;
+- a private Python research-control service and Temporal workers for durable campaign/run orchestration, retries, timeouts, signals, human approval waits and cleanup workflows;
 - an agent coordinator that grants short-lived, least-privilege work leases and prevents two agents from owning the same mutation scope;
 - an evaluation authority with separate code ownership and hidden-holdout access;
 - S3 buckets for immutable datasets, checkpoints, logs, evidence, and large content-addressed bundle objects;
 - ECR for runtime images and the small OCI artifact that indexes a bundle;
 - KMS-backed signing identities and Sigstore/cosign-compatible attestations;
-- a control API and Vite/shadcn research console integrated into the existing application, but protected by operator/research roles rather than customer workspace roles.
+- the Hono/tRPC control API and Vite/shadcn research console as an authenticated BFF over generated internal research APIs, protected by operator/research roles rather than customer workspace roles.
 
-PostgreSQL is domain authority. Temporal's event history makes workflows durable, but it does not decide whether evidence is valid or which release is active. S3 and ECR contain immutable bytes; they do not decide lifecycle state. ClickHouse is an analytical projection and is never promotion authority.
+PostgreSQL is domain authority. The Python research-control service is the only normal writer for campaign, experiment, evidence, candidate and qualification transitions; TypeScript never reimplements those rules. Temporal's event history makes workflows durable, but it does not decide whether evidence is valid or which release is active. S3 and ECR contain immutable bytes; they do not decide lifecycle state. ClickHouse is an analytical projection and is never promotion authority.
 
 ### Research execution plane
 
@@ -117,7 +139,7 @@ The bundle describes what can run. A release describes what Grad promises and se
 
 ### Canonical manifest
 
-Define `ModelStackBundleManifest` in Protobuf for TS/Rust APIs and emit a JSON representation canonicalized with RFC 8785 JSON Canonicalization Scheme before hashing. Do not hash ordinary JSON or rely on cross-language Protobuf serialization order. The identity is `sha256(canonical_manifest_bytes)`.
+Define `ModelStackBundleManifest` in Protobuf for Python/TS/Rust APIs and emit a JSON representation canonicalized with RFC 8785 JSON Canonicalization Scheme before hashing. Do not hash ordinary JSON or rely on cross-language Protobuf serialization order. The identity is `sha256(canonical_manifest_bytes)`.
 
 The manifest contains only immutable values or content-addressed references:
 
@@ -154,6 +176,35 @@ Every artifact carries:
 - cleanup status for any remote resources.
 
 Cosign/in-toto attestations bind build, test, and approval predicates to the bundle subject. Admission fails closed when any required attestation is absent, invalid, expired, signed by the wrong role, or names a different digest.
+
+## Reference-to-production graduation ladder
+
+Do not begin a model idea inside the production runtime. Each intervention starts with the simplest executable reference and moves down the stack only when the current layer is the measured constraint.
+
+| Stage | Required implementation and evidence | Exit rule |
+| --- | --- | --- |
+| R0 — reference | Eager PyTorch module/function, tiny deterministic fixtures, forward and where relevant backward behavior, checkpoint transformation and matched control. | Correctness/quality hypothesis survives cheap tests. |
+| R1 — compiled reference | `torch.compile`/export compatibility where useful, FakeTensor/meta behavior, dynamic-shape and graph-break report. | Compiler path is correct and either sufficient or exposes a measured operator bottleneck. |
+| R2 — kernel candidate | Triton implementation registered behind the same operator schema, or generated compiler kernel; PyTorch differential/property tests and representative GPU benchmark. | Kernel improves the target distribution without violating numerical/memory/compile/startup gates. |
+| R3 — framework runtime | Out-of-tree vLLM/SGLang model/plugin or equivalent Python runtime using the candidate checkpoint/operators; official protocol and full serving-loop benchmark. | Whole-system quality/goodput/SLO/cost beats the tuned framework control. |
+| R4 — native component | CUDA/C++ shared library or another native component only for a residual measured bottleneck; stable C/operator ABI and sanitizer/fault coverage. | Native component wins after build, portability, debugging and maintenance costs. |
+| R5 — owned engine integration | Rust scheduler/executor or in-process engine integration when removing Python/framework boundaries has measured whole-system value. | Exact bundle passes complete cell qualification and operational gates. |
+
+A candidate may ship at R3. R4 and R5 are optimizations, not moral victories. Conversely, a factory-produced architecture that genuinely requires a custom engine can proceed to R5, but must keep the R0 reference as the correctness oracle.
+
+### Language-neutral research/serving contracts
+
+The bridge between Python research and Rust production consists of five versioned contracts:
+
+1. `ModelArchitectureSpec`: family/source identity, layer graph and dimensions, attention/MoE semantics, tokenizer/template/parser behavior, supported transformations and compatibility version.
+2. `CheckpointManifest`: safetensors/object digests, tensor names/shapes/dtypes/layouts, source checkpoint, transformation recipe and model fingerprint.
+3. `OperatorManifest`: stable namespaced schema, mutation/aliasing contract, inputs/outputs, dtypes/shapes/strides, fake/meta implementation, training/autograd support, reference function, target-specific implementations, numerical tolerance and golden vectors.
+4. `RuntimeManifest`: runtime mode (`python_plugin|native_library|rust_engine`), immutable image/library/package digests, entrypoint/ABI, required operators, scheduler/cache/topology and hardware/software envelope.
+5. `QualificationManifest`: exact visible/hidden suite, controls, environment, results, uncertainty, limitations, evaluator identity and signatures.
+
+Use Protobuf for service/state messages and canonical JSON manifests for content identity. Checkpoints use safetensors or another explicitly qualified non-executable format. Python packages, Triton source/cache objects, native libraries and Rust binaries are immutable bundle references, not fields copied into PostgreSQL.
+
+For a Python runtime, the Rust cell agent launches the pinned runtime container/process and communicates over a local Unix-domain socket using the internal serving Protobuf. Customer credentials and billing state never enter that process. For native/Rust runtimes, the same cell-facing protocol and lifecycle apply. This keeps the gateway/edge/cell contract stable while research changes implementation language.
 
 ## Domain model and state machines
 
@@ -263,7 +314,7 @@ State transitions use optimistic versions and idempotency keys. Property tests g
 Campaigns may be proposed from:
 
 1. a new upstream model or checkpoint revision;
-2. a new architecture intervention from Fable/model surgery;
+2. a new architecture, checkpoint transformation, training or model-surgery intervention;
 3. a new kernel, compiler, runtime or driver;
 4. a new GPU/provider/topology or material price change;
 5. production quality, latency, error, margin or cache regression;
@@ -272,37 +323,99 @@ Campaigns may be proposed from:
 
 Production feedback is content-free by default. Product Intelligence traces may feed customer-specific replay/evaluation only under their retention contract. Retention is not permission to train a global model. Training, distillation, or cross-customer use requires a distinct explicit consent and dataset-governance contract. No-retain payloads never enter the factory, though their content-free SLO/error/cost facts may identify a system regression.
 
-## Fable and Sol interaction
+## Always-on inference research lab
 
-### Keep from Fable
+The factory is a continuously operating lab, not a release pipeline that sleeps between model launches. Each supported or prospective model family has a durable `ModelProgram` with a current measured baseline, production champion when one exists, Pareto frontier, open questions, negative-result memory, active campaigns and a bounded queue of next experiments. The lab continuously tries to improve quality-per-dollar, goodput, latency, memory, startup, reliability and portability across the entire stack.
 
-- the typed full-stack search space (`ModelSpec × HardwareSpec × KernelSpec × ServingSpec × WorkloadSpec × ParallelSpec × CostSpec`);
-- a functional twin for fast CPU/small-model correctness checks;
+### Research surface
+
+The program covers the work a strong inference researcher or systems team would perform, while retaining explicit owners and comparable controls:
+
+| Lane | Representative work |
+| --- | --- |
+| Model and data understanding | inspect architecture/checkpoint/tokenizer, reproduce upstream claims, characterize target workloads, build contamination-aware evals and identify quality or capability failures. |
+| Weights and architecture | model surgery, attention/MoE/layout changes, checkpoint conversion, healing/finetuning/distillation and compatibility-preserving architectural experiments. |
+| Compression | weight/activation/KV quantization, sparsity/pruning, calibration, memory-quality tradeoffs and mixed-precision policies. |
+| Operators and compiler | graph breaks, fusion, custom operator schemas, PyTorch compiler passes, Triton kernels, CUDA/C++ residual bottlenecks and compile-cache behavior. |
+| Runtime and serving | framework integration, batching/scheduling, prefill/decode split, speculative decoding, prefix/active KV policy, queueing, overload, cancellation and metering. |
+| Parallelism and hardware | tensor/expert/pipeline placement, collectives, topology, GPU/driver/provider portability, startup/artifact loading and spot recovery. |
+| Quality and reliability | task/capability/safety suites, numerical parity, long-context behavior, fault injection, soak, security/privacy and protocol conformance. |
+| Economics and product fit | goodput under SLO, full token cost, capacity availability, margin, speed-tier fit, workload migration value and maintenance risk. |
+
+Component specialists may work in parallel, but the challenger manager periodically assembles compatible interventions and measures their interaction as a complete stack. A local improvement is not assumed additive, and a component leaderboard never substitutes for the current tuned whole-system control.
+
+### Continuous services
+
+| Service | Responsibility |
+| --- | --- |
+| Opportunity scanner | Watches upstream checkpoints/code, papers, PyTorch/Triton/runtime/compiler changes, GPU/provider availability and content-free production regressions; emits sourced hypotheses, never claims. |
+| Baseline keeper | Reproduces and periodically refreshes tuned stock runtime and current-production controls on canonical workloads/hardware so challengers do not beat stale baselines. |
+| Portfolio manager | Allocates fixed daily/weekly compute budgets across model programs, exploration versus exploitation, fidelity levels and expected information gain; preserves capacity for replication and negative-result follow-up. |
+| Campaign planner | Converts a hypothesis into immutable staged ExperimentSpecs, controls, predictions, stop rules, budget and artifact contract. |
+| Agent pool | Runs specialized model, training, kernel, compiler, runtime, scheduler, topology, evaluator and systems agents in isolated worktrees/containers. |
+| Compute broker | Places CPU/simulator, single-GPU and distributed experiments across local/Kubernetes/native providers under lease, cost and cleanup constraints. |
+| Evidence graph | Stores sealed observations, scope, controls, claims, contradictions, replications and negative results; prevents repeated dead ends and unsafe claim composition. |
+| Challenger manager | Maintains component and complete-stack Pareto frontiers, requests combined-bundle measurements, expires stale evidence and proposes qualification only when the full candidate is ready. |
+
+These services are logical roles; several can begin in one Python worker process. Split them only for scale, security boundaries or independent evaluator ownership.
+
+### Per-model perpetual loop
+
+```text
+observe changes and production facts
+  -> generate/rank falsifiable hypotheses
+  -> reproduce current tuned baseline
+  -> run cheapest discriminating experiment
+  -> seal result and update evidence graph/simulator priors
+  -> kill, refine, replicate or increase fidelity
+  -> combine compatible winning components into a complete challenger
+  -> measure challenger against current champion on exact target scope
+  -> qualify/propose release or return findings to the queue
+```
+
+The queue should remain non-empty while a `ModelProgram` is funded, but “always on” does not mean continuously burning GPUs. Cheap static analysis, code generation, simulation, CPU/tiny-model tests and result synthesis run continuously. GPU experiments are admitted only when a preregistered test has sufficient expected information value, and expensive distributed/full-cell work requires evidence from cheaper stages.
+
+### Portfolio and stopping policy
+
+- Every model program has hard daily, weekly and campaign spend/time/provider limits plus a global emergency stop.
+- Reserve initial portfolio capacity for roughly three classes: exploitation of measured bottlenecks, exploration of uncertain high-upside ideas, and replication/baseline maintenance. Exact percentages are learned from throughput and value, not frozen in architecture.
+- Ranking uses expected information gain and a multi-objective Pareto model, never one synthetic “research score.”
+- Repeated null/negative results reduce a hypothesis family's prior and experiment priority; they do not disappear.
+- A local stop rule kills one lineage. A campaign closes when its terminal decision is supported, budget expires or its assumptions are invalidated.
+- A program enters maintenance mode when no admissible experiment has positive expected value; scanners and baseline refresh continue without GPU burn.
+- Agents cannot expand spend, training-data authority, hidden-eval access, provider scope or production authority to keep themselves busy.
+
+### Research cadence
+
+- continuous: source/telemetry scanning, static/model graph analysis, simulation, candidate code, tiny fixtures, result synthesis and queue ranking;
+- opportunistic: bounded single-GPU kernel/model/runtime trials when qualified spot/on-demand capacity meets the experiment deadline and price ceiling;
+- scheduled: baseline refresh, replication and candidate comparison on fixed hardware windows to control environmental drift;
+- release-driven: full bundle, distributed-cell, security, soak and canary qualification;
+- incident-driven: highest-priority reproduction and bounded root-cause campaigns without bypassing evidence or release authority.
+
+The factory is judged by validated improvement and learning rate per research dollar—not experiment count, GPU utilization or agent activity. Useful outputs include a promoted bundle, a rejected idea with strong evidence, a calibrated simulator, a narrowed uncertainty, a reusable test or an identified architecture limit.
+
+## Mining and retiring the spikes
+
+Fable and Sol have no compatibility promise. RF-00 inventories their artifacts and ports only ideas that pass a small extraction test: the idea has a clear owner, stable factory contract, deterministic tests, evidence of current value and lower maintenance cost than reimplementation. Everything else remains historical evidence or is archived after links/handoffs are preserved.
+
+Candidate ideas to reimplement—not import—include:
+
+- a typed full-stack search space (`Model × Hardware × Kernel × Serving × Workload × Parallelism × Cost`);
+- functional/reference twins and per-layer/engine parity tests;
 - model surgery plus healing/fine-tuning pipelines;
-- per-layer and engine parity tests;
-- simulator-guided ranking to spend scarce GPU budget on high-information candidates;
-- matched controls, including a tuned or fine-tuned unmodified model rather than only the raw baseline;
-- calibration loops that update simulator priors from measurements.
+- simulator-guided information-gain ordering for scarce GPU spend;
+- matched tuned/finetuned controls and calibration updates from real measurements;
+- immutable, content-derived experiment specifications and exact scope identities;
+- pre-registered predictions/stopping rules, environment validity, held-out evidence and fail-closed claim composition.
 
-### Do not promote from Fable alone
+Explicit non-transfers include:
 
-- simulated absolute economics or modeled speedups;
-- results transferred from Apple Silicon to data-center GPUs;
-- small-model quality transferred to a frontier model;
-- a component result multiplied with another unmeasured interaction;
-- a custom runtime result without stock-runtime and tuned-production controls;
-- a model surgery result without instruction, safety, long-context, tool and domain gates.
-
-### Apply Sol discipline
-
-- use immutable, content-derived ExperimentSpecs and exact scope identities;
-- pre-register predictions and stopping rules before expensive runs;
-- progress through cheap deterministic, emulated, small-scale, measured single-node and measured distributed fidelities;
-- compare against tuned stock and current-production controls on the same hardware/time window;
-- keep environment validity separate from candidate outcome;
-- admit claims only with scope-matched artifacts and confidence/uncertainty;
-- require held-out predictive validity before trusting simulator-guided production claims;
-- refuse to multiply marginal wins unless a measured combined bundle proves the interaction.
+- Fable's Rust workspace, Python scripts, configuration shape and numeric claims are not factory APIs or production evidence;
+- Sol's campaign files, Rust types, provider scripts and current validation state are not product control-plane implementations;
+- Apple-Silicon or small-model results do not qualify data-center/frontier scopes;
+- simulation or a component result does not qualify a complete stack;
+- no adapter is built merely to preserve a spike. Port a useful algorithm/test into the new SDK or leave it read-only.
 
 ## Qualification pipeline
 
@@ -454,6 +567,7 @@ Use Kueue/JobSet beneath Temporal for Kubernetes execution only. Kueue's workloa
 
 ```text
 gradiated/research/v1/
+  programs.proto
   campaigns.proto
   experiments.proto
   evidence.proto
@@ -468,27 +582,54 @@ gradiated/inference/v1/
   serving.proto         # exact release/bundle carried internally
 ```
 
-Public JSON remains fixture-governed and is not generated from internal Protobuf.
+Public JSON remains fixture-governed and is not generated from internal Protobuf. Generate Python (`betterproto`/official Protobuf or the selected pinned generator), TypeScript and Rust types from the same Buf module; generator choice is frozen by RF-00 golden tests.
 
-### TypeScript services/packages
+### Python research workstream
 
-- `apps/research-worker`: Temporal workers and activity dispatch, separate from financial/trace workers;
-- `packages/research-domain`: campaign/spec/evidence/candidate/qualification/release state machines;
-- `packages/research-db`: tenant/operator-scoped repositories and optimistic transitions;
-- `packages/research-artifacts`: S3 CAS, canonical manifest, ECR/OCI and signature clients;
-- `packages/research-evals`: evaluator registry, policy versions and result schemas, not candidate implementations;
-- `packages/research-provider`: typed execution adapter client and fake backend;
-- `packages/research-testkit`: generators, state-machine models, fake clock/provider/artifact/evaluator;
-- Hono/tRPC routers for campaigns, experiments, candidates, bundles, qualifications, releases and approvals;
-- Vite/shadcn operator screens: campaign queue, lineage/Pareto view, experiment evidence, bundle diff, gate matrix, release proposal and rollout.
+```text
+research/factory/
+  pyproject.toml                 # uv lock/workspace, Python toolchain
+  src/grad_research/
+    api/                         # private research-control service
+    workflows/                   # deterministic Temporal workflows
+    activities/                  # provider, artifact, build and evaluator effects
+    domain/                      # campaigns/specs/evidence/candidates/qualifications
+    models/                      # PyTorch reference architectures and adapters
+    interventions/               # surgery, pruning, quantization, distillation
+    training/                    # healing/finetuning recipes and data contracts
+    operators/                   # schemas, PyTorch refs, fake/meta and registrations
+    kernels/triton/              # first optimized kernel implementations
+    runtimes/                    # vLLM/SGLang/custom runtime adapters
+    simulators/                  # default Python simulation and external-tool adapters
+    evals/                       # visible suites; hidden evaluator is separately owned
+    artifacts/                   # CAS, canonical manifests, OCI/signature clients
+    providers/                   # research allocation adapters and fakes
+    agents/                      # role prompts/tools and lease-scoped runners
+    testkit/                     # Hypothesis strategies, fake clock/provider/evaluator
+  tests/
+  experiments/                  # reviewed reusable specs, never raw mutable run state
+```
+
+Use Python 3.12+, `uv`, Pydantic, Ruff, Pyright, pytest and Hypothesis. PyTorch, Transformers/datasets/accelerate and Triton are added only to the environment profiles that need them; CPU contract tests must not import a multi-gigabyte GPU environment unnecessarily. Lock separate base, CUDA-target and evaluator images by digest.
+
+`grad_research.api` is private and owns research-domain mutations. `grad_research.workflows` orchestrates the always-on portfolio and per-model loops. Temporal workflow code remains deterministic; network, database, provider, Git, artifact, agent and model execution occur in retryable idempotent activities. Model/kernels execute in separate job containers rather than inside long-lived Temporal worker processes.
+
+### TypeScript control-plane packages
+
+- generated research Protobuf client and actor-context signing;
+- thin Hono/tRPC BFF routers for campaigns, programs, experiments, candidates, bundles, qualifications, releases and approvals;
+- no duplicate campaign/evidence/qualification state machine or direct research-table mutation;
+- Vite/shadcn operator screens: model-program portfolio, queue/budget view, lineage/Pareto frontier, experiment evidence, bundle diff, gate matrix, release proposal and rollout.
 
 ### Rust crates
 
 - `research-contracts`: generated Protobuf and manifest validation;
 - `bundle-inspect`: offline digest/signature/SBOM/reference verifier;
 - `bundle-launcher`: only executable allowed to materialize and start a bundle in research/staging/production cells;
-- `qualification-runner`: protocol/runtime/system/fault harnesses with sealed outputs;
-- `kernel-testkit`: property/differential generators and tolerance policies;
+- `runtime-supervisor`: launch/health/drain/terminate adapter for Python-plugin, native-library and Rust-engine runtime modes over one cell contract;
+- `qualification-runner`: protocol/runtime/system/fault harnesses with sealed outputs; model-quality evaluation remains Python-owned;
+- `kernel-testkit`: native property/differential replay of Python-generated operator vectors and tolerance policies;
+- optional extracted simulator/engine crates only after the spike extraction test; no production dependency on Fable/Sol workspaces;
 - existing `inference-cell`: consume bundle launcher and attest exact digest;
 - existing `fleet-controller`: distinguish research allocations from production capacity and reject cross-registration;
 - `gateway-testkit`: exercise exact release/bundle pinning, alias movement and rollback.
@@ -513,7 +654,7 @@ Mutating commands require the appropriate role, explicit idempotency key, dry-ru
 
 ## Property-based and reproducibility testing
 
-TypeScript uses fast-check and Rust uses proptest. Stateful models cover:
+Python uses Hypothesis, TypeScript uses fast-check and Rust uses proptest. Stateful models cover:
 
 - campaign budget/lease/timeout/cleanup under duplicate, delayed and reordered events;
 - experiment immutability and observation sealing;
@@ -527,33 +668,35 @@ TypeScript uses fast-check and Rust uses proptest. Stateful models cover:
 - cache namespaces across principal, release and retention class;
 - provider interruption and orphan cleanup convergence.
 
-Cross-language golden vectors prove TS and Rust agree on IDs, canonical manifest bytes, enums, money, timestamps and state transition commands. CI emits failing seeds and minimized replay artifacts. Nightly and protected jobs increase case counts and run fault/Kind/real-GPU suites; pull-request checks remain cheap and deterministic.
+Model/operator properties additionally generate valid and invalid shapes, dtypes, layouts, masks, sequence lengths, expert maps, checkpoint transforms and numerical edge cases. PyTorch references are compared with compiled, Triton and native implementations; custom operators run `torch.library.opcheck`, FakeTensor/meta checks and `gradcheck` when training is supported. Kernel benchmarks cover a declared target distribution rather than one favorable shape.
+
+Cross-language golden vectors prove Python, TS and Rust agree on IDs, canonical manifest bytes, enums, timestamps, state commands and operator/runtime schemas. CI emits failing Hypothesis examples/seeds and minimized portable replay artifacts. Nightly and protected jobs increase case counts and run compile/kernel/fault/Kind/real-GPU suites; pull-request checks remain cheap and deterministic.
 
 ## Delivery sequence and delegation
 
 ### RF-00 — contracts and local substrate
 
-Freeze Protobuf, canonical manifest, domain states, fake artifact/provider/evaluator services, Temporal dev service, MinIO/S3-compatible local storage, local OCI registry, PBT replay, and `grad research` command skeleton. This must precede parallel agent implementation.
+Scaffold `research/factory` with `uv`, Python quality/test tools, generated Python/TS/Rust Protobuf, canonical model/checkpoint/operator/runtime/bundle manifests, domain states, fake artifact/provider/evaluator services, Temporal dev service, MinIO/S3-compatible local storage, local OCI registry, cross-language property replay and `grad research` command skeleton. This must precede parallel agent implementation.
 
 ### RF-01 — campaign, experiment and evidence authority
 
-Implement PostgreSQL schema, immutable specs, budgets, leases, observations, claims, scope composition, audit and tRPC views. Port Sol's discipline as policy and tests without coupling product code to a mutable research directory.
+Implement the private Python research-control service, PostgreSQL schema, `ModelProgram` portfolio/queue, immutable specs, budgets, leases, observations, claims, scope composition, audit and generated Hono BFF client. Research-domain mutations have one Python owner; Hono/tRPC never duplicates them.
 
 ### RF-02 — artifact and bundle supply chain
 
-Implement S3 CAS, canonical manifest, ECR/OCI publication, signatures/attestations, SBOM, bundle inspect/launcher and fake bundle fixtures. Prove one digest launches identically in local, research and staging harnesses.
+Implement Python S3 CAS/build clients, canonical model/checkpoint/operator/runtime/bundle manifests, ECR/OCI publication, signatures/attestations and SBOM plus Rust bundle inspect/launcher/runtime supervisor. Prove one digest and each runtime mode launches identically in local, research and staging harnesses.
 
 ### RF-03 — execution and agents
 
-Implement Temporal workflows, isolated-agent leases, local/Kubernetes/native adapters, Kueue/JobSet templates, quotas, metering, cancellation and cleanup. Begin with fake, local and one native provider; add managed Kubernetes only after lifecycle PBT passes.
+Implement Python Temporal always-on portfolio/per-model workflows, isolated-agent leases, local/Kubernetes/native activities, Kueue/JobSet templates, quotas, metering, cancellation and cleanup. Begin with fake/local execution and one native provider; add managed Kubernetes only after Hypothesis lifecycle tests pass.
 
-### RF-04 — Fable/Sol research adapters
+### RF-04 — model/operator/runtime lab and spike extraction
 
-Expose Fable stack configs, simulator scores, surgery/healing outputs and parity results as typed candidate inputs labeled synthetic/derived/measured. Expose Sol experiment/evidence artifacts through a stable adapter. Do not rewrite either active research workstream during product implementation.
+Build the PyTorch reference/intervention/training SDK, operator schemas, Triton kernel path, runtime adapters and experiment-tool protocol. Inventory Fable/Sol; port only useful algorithms/tests into factory-owned packages with new tests and provenance. Do not build compatibility adapters or make the factory depend on either spike.
 
 ### RF-05 — qualification harness
 
-Build independent evaluator ownership, visible/hidden suite registry, model/kernel/runtime/protocol/system/security/fault gates, stock and production controls, production-like cell qualification and signed gate attestations.
+Build independent evaluator ownership, visible/hidden suite registry, PyTorch/compiled/Triton/native differential gates, model/kernel/runtime/protocol/system/security/fault gates, tuned framework and production controls, production-like cell qualification and signed gate attestations.
 
 ### RF-06 — registry, aliases and release authority
 
@@ -561,13 +704,13 @@ Implement family/generic/pin identities, bundle qualification registry, release 
 
 ### RF-07 — operator experience and observability
 
-Build campaign/lineage/Pareto/gate/bundle-diff/release screens, content-free ClickHouse projections, alerts, runbooks, cost controls and evidence expiry/requalification jobs.
+Build model-program portfolio, experiment queue/budget, lineage/Pareto/gate/bundle-diff/release screens, content-free ClickHouse projections, alerts, runbooks, research-dollar/learning-rate metrics, cost controls and evidence expiry/requalification jobs.
 
 ### RF-08 — first vertical candidate
 
-Run one bounded end-to-end candidate through hypothesis, implementation, controls, bundle, single-node, full-cell, shadow and dry-run release proposal. Do not move a public alias in this work package. The exit artifact is evidence that the machinery is reproducible and that rollback can be rehearsed.
+Operate one model program continuously through at least one negative lineage and one surviving challenger, taking the challenger from PyTorch reference through the minimum justified runtime stage, controls, bundle, single-node, full-cell, shadow and dry-run release proposal. Do not move a public alias. The exit artifact proves the lab learns from results, keeps its queue/budgets bounded, reproduces exact artifacts and rehearses rollback.
 
-After RF-00, RF-01 and RF-02 can proceed in parallel. RF-03 starts against RF-00 fakes. RF-04 and evaluator authoring can proceed after evidence schemas freeze. RF-06 depends on RF-02 and RF-05. RF-07 consumes typed APIs and can begin with fakes. One integration owner continuously runs state-machine and cross-language properties.
+After RF-00, RF-01 and RF-02 can proceed in parallel. RF-03 starts against RF-00 fakes. RF-04 and evaluator authoring can proceed after model/operator/evidence schemas freeze. RF-06 depends on RF-02 and RF-05. RF-07 consumes typed APIs and can begin with fakes. One integration owner continuously runs Hypothesis/fast-check/proptest and cross-language replay.
 
 ## Architecture validations before implementation depth
 
@@ -575,7 +718,7 @@ The design is coherent, but these claims still require measured spikes before pr
 
 1. **Bundle materialization:** prove S3 CAS + OCI manifest can cold-load a representative large checkpoint within the intended cell startup budget on two capacity providers.
 2. **Exact runtime portability:** prove one bundle digest runs unchanged on at least one native provider and one Kubernetes-backed provider, or narrow its placement envelope honestly.
-3. **Temporal operations:** run worker crash/replay, long timer, cancellation and cleanup tests; confirm self-hosted operational burden is acceptable. If not, compare a PostgreSQL state-machine worker or managed Temporal without changing domain contracts.
+3. **Python Temporal operations:** run workflow determinism/versioning, worker crash/replay, long timer, cancellation, activity retry and cleanup tests; confirm self-hosted operational burden is acceptable. If not, compare a PostgreSQL state-machine worker or managed Temporal without changing domain contracts.
 4. **Custom architecture parity:** choose tolerances and trusted references for the first actual factory-produced architecture; generic thresholds are unsafe.
 5. **Hidden-eval governance:** select evaluator ownership, dataset licenses, contamination controls and access policy before autonomous search is allowed to optimize against it.
 6. **Release pin economics:** determine support/deprecation terms and warm-capacity cost for immutable public pins.
@@ -583,14 +726,21 @@ The design is coherent, but these claims still require measured spikes before pr
 8. **Canary statistics:** calibrate sample/duration thresholds from actual traffic and evaluator variance rather than treating rollout percentages as proof.
 9. **Provider qualification:** measure network, artifact load, interruption, driver and cost variance for each placement envelope.
 10. **Automation authority:** keep public alias approval human until false-positive/rollback history supports a separate automation decision.
+11. **Runtime-mode boundary:** compare Python-plugin over local UDS, native-library and Rust-engine modes for latency, cancellation, crash isolation, observability and payload-copy overhead; retain all modes unless evidence justifies removal.
+12. **Operator portability:** prove one nontrivial custom operator's reference/FakeTensor/schema/golden vectors replay across PyTorch, Triton and the Rust/native qualification harness on two GPU targets, or narrow its matrix.
+13. **Always-on portfolio value:** run a bounded shadow lab for one model program and measure accepted learning per dollar, duplicate/dead-end avoidance, queue latency and cleanup reliability before enabling unattended recurring GPU spend.
 
 These spikes refine thresholds and provider envelopes; they do not require changing the core separation between immutable bundle, evidence qualification, route release and mutable alias head.
 
 ## Evidence and primary references
 
-Evidence labels in this document are architectural inference unless stated otherwise. The Fable and Sol findings are repository-measured or repository-reported only within their recorded scopes; this document does not promote them to product claims.
+Evidence labels in this document are architectural inference unless stated otherwise. Fable/Sol findings are repository-measured or repository-reported only within their recorded scopes; this document neither promotes them to product claims nor adopts their implementations. Primary documentation was retrieved 2026-07-14; these are vendor/project-reported capabilities, not Grad measurements.
 
-- Temporal documents resilient workflows that reconstruct state from event history and keep side effects in activities: [Temporal Workflows](https://docs.temporal.io/workflows).
+- Temporal documents resilient workflows that reconstruct state from event history and keep side effects in activities: [Temporal Workflows](https://docs.temporal.io/workflows). Its Python SDK documents workflows, activities, workers, cancellation, timeouts and versioning: [Temporal Python SDK](https://docs.temporal.io/develop/python).
+- PyTorch documents Python/C++ custom operator registration, explicit mutation/aliasing contracts, FakeTensor/compiler integration, `opcheck` and `gradcheck`: [PyTorch custom operators](https://docs.pytorch.org/tutorials/advanced/custom_ops_landing_page.html) and [`torch.library`](https://docs.pytorch.org/docs/stable/library.html).
+- PyTorch's C++/CUDA extension API supports research kernels while warning that the C++ API has weaker stability than Python, supporting Python as the reference surface rather than the universal production ABI: [PyTorch C++ extensions](https://docs.pytorch.org/docs/stable/cpp_extension.html) and [PyTorch C++ API](https://docs.pytorch.org/cppdocs/).
+- Triton provides a Python DSL, differential validation and benchmarking patterns for custom GPU kernels: [Triton tutorials](https://triton-lang.org/main/getting-started/tutorials/index.html).
+- vLLM documents built-in and out-of-tree model registration, supporting a framework-plugin graduation stage before an owned-engine rewrite: [vLLM model registration](https://docs.vllm.ai/en/latest/contributing/model/registration/).
 - Kueue defines a workload as its unit of admission and supports multi-pod resource requests, priorities and arbitrary workload integrations: [Kueue Workload](https://kueue.sigs.k8s.io/docs/concepts/workload/).
 - JobSet defines coordinated groups of Kubernetes Jobs for distributed workloads: [JobSet concepts](https://jobset.sigs.k8s.io/docs/concepts/).
 - Argo Workflows supports S3-compatible artifact repositories; it remains an optional Kubernetes execution backend here: [Argo artifact repositories](https://argo-workflows.readthedocs.io/en/latest/configure-artifact-repository/).
@@ -601,6 +751,11 @@ Evidence labels in this document are architectural inference unless stated other
 ## Non-negotiable invariants
 
 - The factory's custom architecture is output inside the bundle; production never hand-recreates it.
+- Fable and Sol are spike evidence only; no factory or production component depends on their workspaces, schemas or lifecycle state.
+- Python is the reference/model-research surface, Rust is the verification/cell/serving substrate, and production runtime language is qualified per bundle rather than forced prematurely.
+- Every optimized operator/runtime retains a simple reference oracle and portable golden vectors.
+- Notebook-only results, mutable environments and unsealed interactive output are not evidence.
+- The always-on lab may keep planning and cheap work active, but no recurring GPU experiment runs without a bounded spec, expected information value, budget, timeout and cleanup lease.
 - A promoted byte, image, kernel, config or topology is content-addressed and named by the signed manifest.
 - The exact bundle tested in later qualification stages is the one launched in production.
 - Research agents cannot publish production targets, access production credentials, view hidden holdouts while mutating candidates, or approve their own release.

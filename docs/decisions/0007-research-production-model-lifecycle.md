@@ -2,6 +2,7 @@
 
 - Status: accepted
 - Date: 2026-07-13
+- Amended: 2026-07-14
 - Extends: ADR-0003, ADR-0005 and ADR-0006
 
 ## Decision
@@ -16,9 +17,15 @@ Use separate state machines and roles for:
 2. candidate assembly and bundle qualification;
 3. production release, rollout, alias movement and rollback.
 
-Fable is a hypothesis-generation, functional-twin, model-surgery and simulation input. Sol's immutable specification, controls, fidelity, predictive-validity and fail-closed claim-composition discipline governs evidence admission. Neither a simulation nor an isolated component win can authorize production.
+The factory is a deliberately polyglot, always-on inference laboratory. Python owns model research, PyTorch references, training, quantization, evaluation, Triton kernel exploration, campaign planning and Temporal workflows. TypeScript owns the operator UI and authenticated Hono/tRPC BFF. Rust owns bundle inspection/materialization, runtime supervision, cells, inference transport and the gateway. The research service is the sole normal writer of campaign, evidence, candidate and qualification state; the BFF calls its generated private API instead of duplicating research state machines.
+
+Each supported model has a durable `ModelProgram`: baseline, current champion, Pareto frontier, open questions, negative findings, active campaigns and a ranked experiment queue. Scanner, planner and agent loops run continuously, but recurring GPU work is admitted only through a bounded immutable experiment specification with hypothesis, expected information value, budget, timeout, stop rule and cleanup contract. Always-on means continuous attention and learning, not permanent GPU consumption.
+
+Fable and Sol are spike evidence, not implementation dependencies or compatibility targets. Useful algorithms, controls and tests are ported into factory-owned packages with provenance and fresh validation; abandoned shapes remain historical. Neither a simulation nor an isolated component win can authorize production.
 
 Temporal orchestrates durable cross-provider research campaigns. Kubernetes execution uses Kueue and JobSet where applicable; provider-native allocations remain honest external resources behind the research execution adapter. Research allocations and production cells have disjoint identities, credentials, registration paths and budgets.
+
+A candidate graduates through measured stages: eager PyTorch reference, compiled/reference validation, Triton kernel candidate, out-of-tree framework runtime, optional native CUDA/C++ component and, only when whole-system evidence warrants it, an owned Rust engine integration. A production bundle declares `python_plugin`, `native_library` or `rust_engine`; promotion does not require a Rust rewrite. Language-neutral Protobuf services plus canonical JSON `ModelArchitectureSpec`, `CheckpointManifest`, `OperatorManifest`, `RuntimeManifest` and `QualificationManifest` contracts connect research to Rust launch and serving.
 
 Public model identities have three layers:
 
@@ -45,15 +52,22 @@ An immutable complete bundle makes the experimental subject, qualified system an
 5. **Argo Workflows as the global orchestrator.** Deferred. It is useful for Kubernetes DAGs and S3 artifacts, but the campaign spans code agents, native provider leases, human waits and non-Kubernetes cleanup. It may be an execution adapter if measured researcher throughput justifies another control plane.
 6. **One Kubernetes cluster or fake Nodes across providers.** Rejected by ADR-0006 and remains rejected for research. Kueue governs only honest Kubernetes workloads.
 7. **Fully autonomous promotion at launch.** Rejected until measured false-positive, canary and rollback history supports that authority safely.
+8. **One language for research and production.** Rejected. All-Rust slows model and kernel exploration; all-Python weakens the long-lived serving boundary. The artifact and launcher contracts, not source-language uniformity, provide continuity.
+9. **Adapters preserving Fable/Sol shapes.** Rejected. Compatibility with exploratory spikes would freeze accidental interfaces and create two authorities.
+10. **Require every candidate to become native/Rust before production.** Rejected. A qualified framework plugin may be the best deployable result; native work is justified only by measured residual bottlenecks or operational value.
 
 ## Consequences
 
 - positive: exact parity from qualification to production and digest-level rollback/audit;
 - positive: research can change the entire vertical stack without exposing that complexity in the customer model surface;
 - positive: agent autonomy is bounded by campaign, evaluator and release authorities rather than ad hoc human supervision;
+- positive: every supported model receives persistent hypothesis generation, baseline maintenance and portfolio allocation without requiring a human to restart the loop;
+- positive: Python keeps the model ecosystem's fastest research path while Rust retains a stable, fail-closed production boundary;
 - positive: family, managed and pinned identities serve distinct compatibility needs;
 - negative: Grad must build bundle schemas, canonicalization, artifact GC, signatures, qualification and registry UI beyond a checkpoint registry;
 - negative: evaluator ownership, hidden datasets and full-cell qualification add cost and operational latency;
+- negative: Grad must operate a generated cross-language contract and support qualified Python, native-library and Rust runtime modes;
+- negative: an always-on portfolio manager requires explicit anti-churn, spend and experiment-value controls so activity does not become the objective;
 - negative: public pins require explicit support and capacity economics;
 - limit: evidence is valid only for its exact model/workload/hardware/software/intervention scope and expiry;
 - limit: production cells may run only bundles whose placement envelope and required attestations match the observed host;

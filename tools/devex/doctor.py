@@ -6,6 +6,7 @@ from __future__ import annotations
 import importlib.util
 import os
 import shutil
+import subprocess
 from pathlib import Path
 
 
@@ -21,6 +22,22 @@ def module_status(name: str) -> str:
     return "ok" if importlib.util.find_spec(name) else "missing"
 
 
+def browser_module_status(name: str) -> str:
+    current = module_status(name)
+    if current == "ok":
+        return current
+    if shutil.which("uv") is None:
+        return current
+    result = subprocess.run(
+        ["uv", "run", "--project", "tools/browser", "python", "-c", f"import {name}"],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return "ok (tools/browser)" if result.returncode == 0 else current
+
+
 def main() -> int:
     print(f"repo: {ROOT}")
     print(f"python: {os.sys.executable}")
@@ -29,7 +46,7 @@ def main() -> int:
         print(f"  {name:8} {command_status(name)}")
     print("\nPython modules:")
     for name in ("playwright", "browser_use", "pytest"):
-        print(f"  {name:16} {module_status(name)}")
+        print(f"  {name:16} {browser_module_status(name)}")
     print("\nRepo paths:")
     for relative in (
         "AGENTS.md",

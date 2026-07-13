@@ -2,21 +2,23 @@
 
 Use GitHub Issues as the canonical work objects and GitHub Projects as the shared execution view. Keep implementation, research evidence, prompts, tests, and generated artifacts in this repository.
 
-GitHub CLI supports creating issues, adding them to Projects, listing Project items, listing fields, and editing single-select field values. Project operations require the `project` authorization scope. The repo helper in `tools/github/agent.py` wraps those operations and resolves opaque Project IDs for agents.
+GitHub CLI supports creating issues, adding them to Projects, listing Project items, listing fields, and editing single-select field values. The repo helper in `tools/github/agent.py` wraps those operations and resolves opaque Project IDs for agents.
 
 ## Initial setup
 
-Install the official GitHub CLI for Debian using the [official instructions](https://github.com/cli/cli/blob/trunk/docs/install_linux.md), then authenticate once outside the repository:
+Install the official GitHub CLI for Debian using the [official instructions](https://github.com/cli/cli/blob/trunk/docs/install_linux.md), then authenticate outside the repository. For a fine-grained token, inject `GH_TOKEN` into the agent process from the external secret store; do not put it in the repository:
 
 ```sh
-gh auth login
-gh auth refresh -s project
+# GH_TOKEN is injected by the service/secret manager before this process starts.
+[ -n "${GH_TOKEN:-}" ] || { echo 'GH_TOKEN is not configured'; exit 1; }
 gh auth status
 python3 tools/github/agent.py auth-check
 python3 tools/github/agent.py bootstrap-labels
 ```
 
-The helper never prints token values. Keep `gh` credentials in its external credential store, not in the repository or task packets.
+The placeholder above represents secret-manager injection, not a command to paste a token into shell history. The helper never prints token values. Keep `GH_TOKEN` and any `gh` credentials in an external credential store, not in the repository or task packets. If the token is fine-grained, grant repository access only to this repository and use repository write permissions for Contents, Issues, and Pull requests; Actions and Workflows write are optional for CI operations.
+
+Fine-grained tokens cannot currently manage Projects owned by a personal account. Prefer an organization-owned Project if agents need to update the board with a fine-grained token. Otherwise use a separately scoped classic token only for Project operations, or treat the board as a human-managed view.
 
 Create one private Project for the startup, normally named `Startup OS`:
 

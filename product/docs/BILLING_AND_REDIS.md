@@ -1,0 +1,183 @@
+# Billing, Redis admission, and reconciliation
+
+This document is the implementation contract for money movement. Examples use integer micro-USD. No path may convert through floating point.
+
+## Financial model
+
+PostgreSQL contains a balanced, append-only ledger. An organization's posted credit is derived from entries, not trusted from a mutable cache. Recommended logical accounts are customer credit liability, Stripe clearing/cash, inference revenue, promotional credit expense, refunds/chargebacks, and provider-cost accrual. The exact accounting chart requires accountant review before production, but engineering invariants do not:
+
+- each transaction balances to zero in one currency;
+- each external/internal business event has one unique idempotency key;
+- entries never update/delete after posting;
+- reversals refer to and offset an original transaction;
+- the organization available balance equals posted credits minus posted sell charges and holds represented by the chosen projection checkpoint.
+
+Maintain a transactionally updated materialized organization balance row for efficient locking and projection, but verify it against ledger sums continuously. It is a derivative, not a separate authority. Workspaces and API keys have spend/budget windows but never independent funded balances in seed.
+
+## Organization billing and workspace limit policy
+
+The organization billing projection contains:
+
+```text
+billing_mode: prepaid | invoiced (later)
+status: active | reconciling | suspended | closed
+risk_mode: normal | restricted | suspended
+spendable_microusd
+billing_epoch
+projection_version
+normal_max_concurrency
+low_balance_threshold_microusd
+low_balance_org_max_concurrency   default 1
+safety_reserve_microusd
+```
+
+Each workspace projection contains status, model/provider allowlists, routes, normal and low-credit concurrency caps, maximum request reserve/output, and zero or one budget for each `daily`, `weekly`, `monthly`, and `lifetime` interval. API keys can have more restrictive equivalents. Period state tracks both settled spend and active reserved spend.
+
+Low credit is calculated from organization projected spendable credit after the proposed reservation. It is not a stale flag. `risk_mode` is an explicit operator/risk override: restricted applies the low-credit organization cap regardless of balance; suspended admits nothing. Effective policy is the intersection/minimum of organization, workspace, and key constraints. Workspace/key budgets cap use of shared organization credit and do not allocate money.
+
+## Top-up state machine
+
+States: `created -> checkout_pending -> paid -> credited`, with terminal/side paths `expired`, `failed`, `refunded`, and `charged_back`.
+
+1. Authorized organization owner/billing member creates a top-up with organization, allowed amount/currency, and idempotency key.
+2. API stores intent then creates a Stripe Checkout Session carrying only opaque IDs in metadata.
+3. Browser return displays `processing`; it never changes credit.
+4. Webhook handler verifies signature against raw body, inserts unique `payment_events`, locks the intent/payment object, and validates amount, currency, organization binding, and allowed transition.
+5. One PostgreSQL transaction posts balanced organization credit entries, advances intent, increments organization billing projection version, inserts audit and outbox records, and marks the event handled.
+6. Worker atomically applies versioned credit to Redis. Dashboard reads posted and projected status through API.
+7. Duplicate or reordered events return success after proving the existing effect. Conflicting duplicates quarantine the intent and alert.
+
+Refunds and chargebacks always append compensating organization transactions. Project the debit/restriction immediately; if it exceeds spendable credit, record explicit debt and set organization `risk_mode=suspended`, closing all workspaces.
+
+## Maximum-cost estimation
+
+Before admission, determine a conservative sell reserve:
+
+```text
+candidate_reserve = checked_add(
+  safety_reserve,
+  priced_known_input_units +
+  priced_declared_max_output_units +
+  priced_bounded_tool/cache/reasoning exposure +
+  bounded_fallback exposure
+)
+
+require candidate_reserve <= effective_max_request_reserve
+reserve = candidate_reserve
+```
+
+If the protocol lacks a safe output bound, impose a workspace/model default and inject/validate it, or reject the request. Unknown price, stale price version, arithmetic overflow, or reserve above policy fails before provider dispatch. Tests must prove reserve is at least the sell charge for every valid response within declared limits.
+
+## Atomic admission transition
+
+Implement as one versioned Redis Function/Lua script scoped to `{organization_id}`. Inputs include key digest, resolved organization/workspace/key IDs, model, config/price versions, request/reservation IDs, reserve, lease deadline, now/window IDs, and idempotency token.
+
+The operation:
+
+1. validates organization billing epoch/status/risk mode and projected key binding to the organization/workspace;
+2. validates workspace/key status, effective model/provider policy, immutable route/price version, and request reserve/output limits;
+3. returns the existing result for an identical idempotent reservation;
+4. requires organization `spendable >= reserve + safety_reserve`;
+5. computes `post_reserve_spendable`;
+6. requires every workspace/key interval to have `settled + active_reserved + reserve <= limit`; missing limits mean unlimited at that layer;
+7. chooses organization concurrency cap: zero if suspended/reconciling; low-credit cap if restricted or post-reserve is below threshold; normal cap otherwise;
+8. chooses workspace/key caps from effective normal/low-credit policy and requires organization, workspace, and key in-flight below every applicable cap;
+9. subtracts reserve from organization spendable; adds reserve to each applicable workspace/key window; increments all applicable in-flight counters; creates an active reservation/lease;
+10. appends a `ReservationCreated` event to the organization Redis Stream carrying workspace/key attribution;
+11. returns an opaque admission token with organization epoch and reservation ID.
+
+All mutations and `XADD` either succeed or do not happen. Expected outcomes are `admitted`, idempotent `already_admitted`, `insufficient_credits` (402), `low_balance_concurrency_limit` (429), policy/key errors, or `admission_unavailable` (503).
+
+This prevents bursts across several workspaces from spending the same last credits: every request for one organization serializes through the organization-local atomic transition. The low-credit organization cap defaults to one; workspace/key caps can only make it stricter.
+
+## Lease and streaming behavior
+
+Reservations have a finite lease renewed by a gateway heartbeat while an upstream request is active. A gateway crash does not immediately refund because the provider may still have incurred cost. An orphan sweeper waits a provider-specific grace period, inspects all durable evidence, and performs an idempotent conservative settlement or marks the organization `reconciling` for repair.
+
+For long streams:
+
+- renew lease before half its duration;
+- meter chunks locally where possible without logging payloads;
+- stop/finalize on client disconnect according to provider cancellation semantics;
+- never issue a second cost-bearing fallback after response bytes have been exposed;
+- if projected actual charge approaches reserve, atomically extend the reserve before further optional spend or cancel upstream.
+
+## Atomic settlement transition
+
+Inputs include admission token/epoch, reservation ID, final metered units, actual sell amount, provider cost evidence, terminal state, and event ID.
+
+The organization-local operation:
+
+1. fences stale epoch and validates reservation identity;
+2. returns prior result for a duplicate event/settlement;
+3. checked-compares actual sell amount with reserved amount;
+4. returns unused reserve to organization spendable and removes the same amount from active-reserved workspace/key windows, then adds actual sell amount to settled period spend; or atomically takes an overage from organization credit and every applicable limit if allowed;
+5. if an unavoidable overage cannot be funded, records negative debt metadata and restricts/suspends immediately;
+6. marks reservation settled, decrements organization/workspace/key in-flight exactly once, removes lease;
+7. appends `RequestSettled` with organization/workspace/key attribution to the same Redis Stream;
+8. returns final balance/status metadata.
+
+Cancellation, provider rejection, timeout, and partial response are settlement reasons, not excuses to delete a reservation. Evidence quality determines whether sell amount is measured, provider-reported, or conservative estimate.
+
+## Stream consumption and PostgreSQL posting
+
+The worker uses Redis Streams consumer groups. For each event:
+
+1. decode and validate Protobuf, epoch, monotonic sequence, and schema version;
+2. begin PostgreSQL transaction;
+3. insert unique organization event receipt; if already committed, acknowledge and stop;
+4. post usage charge and balanced ledger transaction for settlements, or persist reservation diagnostic/checkpoint for admission events;
+5. increment the organization reconciliation checkpoint, persist workspace/key usage windows, and insert any outbox/audit records;
+6. commit;
+7. acknowledge the stream entry.
+
+Pending entries are claimed after worker lease expiry. Poison events move to a retained dead-letter Redis Stream only after bounded attempts and immediately place the organization in `reconciling`; operators can inspect metadata and replay after repair. Retention must exceed maximum outage plus investigation window and is protected by memory/lag admission gates.
+
+## Reconciliation equations
+
+At a common organization checkpoint, compare:
+
+```text
+postgres_organization_posted_balance
+  = total_posted_credits - total_posted_sell_charges + posted_adjustments
+
+expected_redis_org_spendable
+  = postgres_organization_posted_balance
+    - active_redis_reservations
+    - settled_redis_events_not_yet_posted_to_postgres
+    + credits_committed_in_postgres_not_yet_projected
+```
+
+For every workspace/key period, separately prove `redis_settled + redis_active_reserved` equals the PostgreSQL posted usage plus the same fenced pending-event/active-reservation cut. The implementation may choose an equivalent algorithm, but all terms use one organization epoch/version so concurrent traffic is not mistaken for drift.
+
+Continuous reconciliation runs per event/batch; full organization plus nested workspace/key reconciliation runs at least hourly and after failover/deploy. A nonzero unexplained delta, event sequence gap, old pending entry, overage debt, or projection-version regression transitions the organization to `reconciling`. Small known in-flight lag can remain active only inside a documented amount/age envelope. Exceeding it suspends new cost-bearing admission across its workspaces.
+
+## Projection rebuild
+
+1. Set organization Redis status to `reconciling` in a new fenced epoch; all workspace admissions stop.
+2. Allow bounded active requests to settle or conservatively close them.
+3. Drain/post all usable stream events and record unresolved reservations.
+4. Recompute organization posted balance and versioned organization/workspace/key auth, policy, and period windows from PostgreSQL.
+5. Build replacement Redis keys under the new epoch, including explicit unresolved holds.
+6. Atomically swap/activate the projection and verify readback hashes.
+7. Run reconciliation. Reopen only on zero unexplained delta and complete event sequence.
+8. Audit operator, reason, old/new epoch, hashes, and result.
+
+## Required property invariants
+
+Generated command sequences include organization/default-workspace creation, additional workspaces/keys/limits, top-up, duplicate/reordered webhook, cross-workspace concurrent reserve, lease renewal, stream cancel, settle, duplicate settle, provider overage, refund, chargeback, worker redelivery, Redis failover checkpoint, and rebuild.
+
+For every sequence:
+
+- ledger entries balance and arithmetic never overflows;
+- one business event has at most one financial effect;
+- in-flight equals active reservations;
+- organization spendable plus active holds agrees with the fenced financial/event cut;
+- no request is dispatched without a reservation event;
+- organization low-credit and workspace/key concurrency never exceed selected caps;
+- workspace/key settled plus reserved spend never exceeds a configured hard period cap except the explicit unavoidable-overage path, which closes the organization;
+- status/epoch fencing prevents stale reopen or stale settlement mutation;
+- only explicit overage/chargeback paths can create debt, and they immediately restrict admission;
+- reconciliation either proves organization and nested window equality or leaves the organization closed.
+
+Both fast-check domain models and Rust Redis state-machine tests assert these invariants. Cross-language generated traces allow the same minimized failure sequence to be replayed in both implementations.

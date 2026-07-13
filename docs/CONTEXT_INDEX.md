@@ -60,3 +60,5 @@ Prefer one artifact per run and append-only ledgers. When a shared report must c
 ## Fast orientation by workstream
 
 See [`research/README.md`](../research/README.md) for the workstream map. The context helper accepts `--workstream sol` or `--workstream fable` to print only the relevant reset pack.
+
+For the inference-gateway product, read [`product/AGENTS.md`](../product/AGENTS.md), then [`product/HANDOFF.md`](../product/HANDOFF.md). The architecture and subagent work packages are indexed from [`product/README.md`](../product/README.md); the current OpenRouter feature spike is [`product/docs/OPENROUTER_SPIKE.md`](../product/docs/OPENROUTER_SPIKE.md).

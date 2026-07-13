@@ -1,0 +1,22 @@
+# External secrets and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.token
+
+# Repo-local generated environments and agent runtime state
+.venv/
+**/.venv/
+.agents/runtime/
+.agents/secrets/
+.cache/
+tools/browser/.browser-data/
+
+# Generated language caches
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+target/

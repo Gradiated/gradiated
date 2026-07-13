@@ -1,0 +1,4 @@
+interface:
+  display_name: "Browser Research"
+  short_description: "Research websites with reproducible evidence"
+  default_prompt: "Use $browser-research to inspect websites, capture reproducible evidence, and save the research output in the repository."

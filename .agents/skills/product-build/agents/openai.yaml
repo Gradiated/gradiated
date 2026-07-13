@@ -1,0 +1,4 @@
+interface:
+  display_name: "Product Build"
+  short_description: "Build, test, and document product changes"
+  default_prompt: "Use $product-build to take a product change from repository inspection through implementation, verification, and durable handoff."

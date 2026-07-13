@@ -110,7 +110,7 @@ Secrets belong in deployment/GitHub environments only. Provider smoke tests must
 - Provider/Grad/trace/ClickHouse architecture: https://github.com/joshsny/gradiated/issues/4 is closed; completed packet: `tasks/done/2026-07-13-grad-effort-speed-provider-lanes.md`.
 - Multi-provider spot GPU architecture: https://github.com/joshsny/gradiated/issues/7; completed packet: `tasks/done/2026-07-13-multi-provider-spot-inference.md`.
 - Kubernetes provider abstraction and full architecture audit: https://github.com/joshsny/gradiated/issues/8; architecture commit `fe345f3`; completed packet: `tasks/done/2026-07-13-kubernetes-provider-abstraction-audit.md`.
-- Open distribution integrations: https://github.com/joshsny/gradiated/issues/9; active packet: `tasks/active/2026-07-13-open-distribution-integrations.md`.
+- Open distribution integrations: https://github.com/joshsny/gradiated/issues/9; architecture commit `82bd779`; completed packet: `tasks/done/2026-07-13-open-distribution-integrations.md`.
 - No code has been implemented and no provider request has been made in this planning task.
 
 ## Resume

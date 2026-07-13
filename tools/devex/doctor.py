@@ -31,7 +31,24 @@ def main() -> int:
     for name in ("playwright", "browser_use", "pytest"):
         print(f"  {name:16} {module_status(name)}")
     print("\nRepo paths:")
-    for relative in ("AGENTS.md", ".agents/skills", "tasks", "Makefile", "tools/browser/pyproject.toml", "tools/github/agent.py", "research/sol", "research/fable"):
+    for relative in (
+        "AGENTS.md",
+        "README.md",
+        "docs/CONTEXT_INDEX.md",
+        "research/README.md",
+        ".agents/skills",
+        "tasks",
+        "tasks/inbox",
+        "tasks/active",
+        "tasks/done",
+        "Makefile",
+        "tools/devex/context.py",
+        "tools/devex/claim.py",
+        "tools/browser/pyproject.toml",
+        "tools/github/agent.py",
+        "research/sol",
+        "research/fable",
+    ):
         path = ROOT / relative
         print(f"  {relative:32} {'present' if path.exists() else 'missing'}")
     print("\nCredential variables present (values hidden):")

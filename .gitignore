@@ -12,6 +12,7 @@
 **/.venv/
 .agents/runtime/
 .agents/secrets/
+tasks/active/*.lock/
 .cache/
 tools/browser/.browser-data/
 

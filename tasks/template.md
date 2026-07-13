@@ -12,7 +12,9 @@
 - Codex thread:
 - created:
 - started:
+- last updated:
 - scope:
+- excluded paths:
 - dependencies:
 
 ## Contract
@@ -23,6 +25,8 @@
 - SLO or budget:
 - timeout:
 - artifact locations:
+- resume command:
+- rollback or cleanup:
 
 ## Plan
 
@@ -34,5 +38,7 @@
 
 - status: inbox | active | blocked | done
 - verification:
+- changed paths:
+- limitations or blocked paths:
 - commit:
 - next action:

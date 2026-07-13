@@ -10,11 +10,17 @@ This repository is intended to support a small startup run primarily by Codex ag
 
 Every task belongs to one lane, has one owner, and leaves a durable packet in `tasks/`.
 
+## Context reset
+
+Run `python3 tools/devex/context.py` before inspecting or changing a workstream. Read the root instructions, linked issue, nearest nested instructions, and the latest handoff/report in that order. A task is not resumable until its packet or report states the exact scope, changed paths, verification result, limitations, and next command.
+
 ## Parallel-agent rules
 
 - Split by directory or artifact, not by vague responsibility.
+- Treat the GitHub issue assignment as the ownership lock. If an issue is already assigned or its declared file scope overlaps another active packet, stop and split the work.
 - Give each agent a narrow acceptance contract and a verification command.
 - Do not let two agents edit the same task packet, ledger, generated report, or lockfile concurrently.
+- Prefer separate per-run evidence files and append-only ledgers. One designated owner may consolidate them into a report after the runs finish.
 - Have a reviewer agent inspect the diff and evidence after implementation, before the owner pushes.
 - Push only the owned files; the worktree may contain unrelated research in progress.
 
@@ -29,6 +35,8 @@ Every task belongs to one lane, has one owner, and leaves a durable packet in `t
 7. Update the task packet and durable docs.
 8. Ask for a human decision only for credentials, irreversible external actions, spending, legal/compliance claims, or a failed quality gate.
 9. Commit and push the owned change to `main` when authorized.
+
+When blocked, keep the packet in `tasks/active/`, set the GitHub issue to `Blocked`, record the exact blocker and unblock condition, and leave any partial artifacts with a clear failure classification. Do not silently retry a blocked or falsifying experiment as a successful run.
 
 ## Speed without drift
 

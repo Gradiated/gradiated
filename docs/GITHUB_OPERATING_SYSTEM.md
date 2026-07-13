@@ -20,6 +20,8 @@ The guard above assumes secret-manager injection; it is not a command to paste a
 
 Fine-grained tokens cannot currently manage Projects owned by a personal account. Prefer an organization-owned Project if agents need to update the board with a fine-grained token. Otherwise use a separately scoped classic token only for Project operations, or treat the board as a human-managed view.
 
+When separate credentials are needed, keep the repository token in `GH_TOKEN` and the Project-only credential in `GH_PROJECT_TOKEN`. `tools/github/agent.py` automatically uses `GH_PROJECT_TOKEN` for Project commands while retaining `GH_TOKEN` for repository Issues and pull requests. This keeps the broader Project credential out of ordinary code operations.
+
 Create one private Project for the startup, normally named `Startup OS`. Personal-account Project creation currently requires a classic token with the `project` scope; fine-grained tokens cannot manage personal-account Projects. If the Project belongs to an organization, use the organization owner and grant the token organization Projects write access:
 
 ```sh

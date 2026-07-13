@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -19,9 +20,9 @@ def require_gh() -> None:
         raise SystemExit(f"gh is required; install it from {INSTALL_URL}")
 
 
-def run(args: list[str], *, capture: bool = False) -> str:
+def run(args: list[str], *, capture: bool = False, env: dict[str, str] | None = None) -> str:
     require_gh()
-    result = subprocess.run(["gh", *args], text=True, capture_output=capture)
+    result = subprocess.run(["gh", *args], text=True, capture_output=capture, env=env)
     if result.returncode:
         if capture and result.stderr:
             print(result.stderr, file=sys.stderr, end="")
@@ -29,8 +30,8 @@ def run(args: list[str], *, capture: bool = False) -> str:
     return result.stdout if capture else ""
 
 
-def gh_json(args: list[str]) -> object:
-    output = run(args + ["--format", "json"], capture=True)
+def gh_json(args: list[str], *, env: dict[str, str] | None = None) -> object:
+    output = run(args + ["--format", "json"], capture=True, env=env)
     try:
         return json.loads(output)
     except json.JSONDecodeError as exc:
@@ -45,13 +46,31 @@ def repo_args(namespace: argparse.Namespace) -> list[str]:
     return ["--repo", namespace.repo] if namespace.repo else []
 
 
+def project_env() -> dict[str, str] | None:
+    """Use a separate personal-Project token when configured."""
+    token = os.environ.get("GH_PROJECT_TOKEN")
+    if not token:
+        return None
+    env = os.environ.copy()
+    env["GH_TOKEN"] = token
+    return env
+
+
+def project_run(args: list[str], *, capture: bool = False) -> str:
+    return run(args, capture=capture, env=project_env())
+
+
+def project_json(args: list[str]) -> object:
+    return gh_json(args, env=project_env())
+
+
 def project_fields(project: str, owner: str) -> list[dict[str, object]]:
-    payload = gh_json(["project", "field-list", project, "--owner", owner])
+    payload = project_json(["project", "field-list", project, "--owner", owner])
     return payload.get("fields", []) if isinstance(payload, dict) else []
 
 
 def project_items(project: str, owner: str, limit: int = 1000) -> list[dict[str, object]]:
-    payload = gh_json(["project", "item-list", project, "--owner", owner, "--limit", str(limit)])
+    payload = project_json(["project", "item-list", project, "--owner", owner, "--limit", str(limit)])
     return payload.get("items", []) if isinstance(payload, dict) else []
 
 
@@ -82,7 +101,7 @@ def set_status(project: str, owner: str, url: str, status: str) -> None:
     if not option:
         available = ", ".join(str(option.get("name")) for option in options)
         raise SystemExit(f"unknown status {status!r}; available: {available}")
-    run([
+    project_run([
         "project", "item-edit", "--id", str(item_id), "--project-id", project,
         "--field-id", str(status_field["id"]),
         "--single-select-option-id", str(option["id"]),
@@ -100,9 +119,12 @@ def issue_create(args: argparse.Namespace) -> None:
         command += ["--label", label]
     if args.assignee:
         command += ["--assignee", args.assignee]
+    url = run(command, capture=True).strip()
     if args.project:
-        command += ["--project", args.project]
-    print(run(command, capture=True), end="")
+        project_run(["project", "item-add", args.project, "--owner", args.owner, "--url", url, "--format", "json"])
+        if args.status:
+            set_status(args.project, args.owner, url, args.status)
+    print(url)
 
 
 def issue_start(args: argparse.Namespace) -> None:
@@ -110,7 +132,7 @@ def issue_start(args: argparse.Namespace) -> None:
     run(["issue", "edit", args.issue, "--add-assignee", "@me", *repo])
     url = issue_url(args.issue, repo)
     if args.project:
-        run(["project", "item-add", args.project, "--owner", args.owner, "--url", url, "--format", "json"])
+        project_run(["project", "item-add", args.project, "--owner", args.owner, "--url", url, "--format", "json"])
         if args.status:
             set_status(args.project, args.owner, url, args.status)
     print(url)
@@ -163,6 +185,8 @@ def parser() -> argparse.ArgumentParser:
     create.add_argument("--label", action="append", default=[])
     create.add_argument("--assignee")
     create.add_argument("--project")
+    create.add_argument("--owner", default="@me")
+    create.add_argument("--status", default="Ready")
     add_repo(create)
     create.set_defaults(func=issue_create)
 
@@ -185,17 +209,17 @@ def parser() -> argparse.ArgumentParser:
 
     projects = sub.add_parser("project-list")
     projects.add_argument("--owner", default="@me")
-    projects.set_defaults(func=lambda args: run(["project", "list", "--owner", args.owner]))
+    projects.set_defaults(func=lambda args: project_run(["project", "list", "--owner", args.owner]))
 
     items = sub.add_parser("project-items")
     items.add_argument("--project", required=True)
     items.add_argument("--owner", default="@me")
-    items.set_defaults(func=lambda args: run(["project", "item-list", args.project, "--owner", args.owner, "--limit", "1000"]))
+    items.set_defaults(func=lambda args: project_run(["project", "item-list", args.project, "--owner", args.owner, "--limit", "1000"]))
 
     fields = sub.add_parser("project-fields")
     fields.add_argument("--project", required=True)
     fields.add_argument("--owner", default="@me")
-    fields.set_defaults(func=lambda args: run(["project", "field-list", args.project, "--owner", args.owner]))
+    fields.set_defaults(func=lambda args: project_run(["project", "field-list", args.project, "--owner", args.owner]))
 
     status = sub.add_parser("project-set-status")
     status.add_argument("--project", required=True)

@@ -40,6 +40,6 @@ The repository instructs agents to publish completed owned work directly to `mai
 - verification: `python3 tools/devex/check.py` passed; `git diff --check` passed; local Markdown links valid across 22 scoped files.
 - changed paths: `AGENTS.md`, `docs/AGENT_OPERATING_SYSTEM.md`, `docs/GITHUB_OPERATING_SYSTEM.md`, `product/AGENTS.md`, `infra/docs/CI_CD_AND_RELEASES.md`, `infra/docs/KUBERNETES_AND_HELM.md`, `infra/docs/TERRAFORM_AND_ENVIRONMENTS.md`, and this packet.
 - limitations or blocked paths: GitHub check-rollup details for PR #5 were unavailable to the fine-grained token, but the PR was mergeable and merged successfully; no unrelated research path was staged or modified.
-- commit: pending direct-to-main commit; exact SHA will be recorded after commit.
-- next action: push the scoped commit to `main`, close issue #6, then continue the multi-provider inference architecture task.
+- commit: `c633cfa` (`Make direct-to-main the default workflow`); this handoff metadata is recorded in the immediately following direct-to-main commit.
+- next action: continue the multi-provider inference architecture task directly on `main`.
 - released: 2026-07-13T19:22:49+00:00

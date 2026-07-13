@@ -160,9 +160,14 @@ proto/
     traces.proto
     migration.proto
     pricing.proto
+  gradiated/inference/v1/
+    serving.proto
+    releases.proto
+    cells.proto
+    capacity.proto
 ```
 
-Important messages include `ApiKeyProjection`, `OrganizationBillingProjection`, `WorkspacePolicyProjection`, `ProviderDefinition`, `ModelProduct`, `ModelDefinition`, `ModelAlias`, `GradEffort`, `GradSpeed`, `DataMode`, `CapabilityRequirement`, `ProviderEndpointProjection`, `QualificationReference`, `RouteRelease`, `RouteCandidate`, `RouteDecision`, `TraceEnvelope`, `TraceCaptureEvent`, `WorkloadProfile`, `MigrationCandidate`, `MigrationExperiment`, `MigrationRecommendation`, `LimitWindow`, `PriceBook`, `Reservation`, `ReservationEvent`, `SettlementEvent`, `FailedRequestCreditEvent`, `ProjectionCommand`, and `ReconciliationCheckpoint`.
+Important messages include `ApiKeyProjection`, `OrganizationBillingProjection`, `WorkspacePolicyProjection`, `ProviderDefinition`, `ModelProduct`, `ModelDefinition`, `ModelAlias`, `GradEffort`, `GradSpeed`, `DataMode`, `CapabilityRequirement`, `ProviderEndpointProjection`, `QualificationReference`, `RouteRelease`, `RouteCandidate`, `RouteDecision`, `ReleaseManifest`, `CellTarget`, `GenerateRequest`, `GenerateEvent`, `CapacityIntent`, `CapacityLease`, `CellHeartbeat`, `TraceEnvelope`, `TraceCaptureEvent`, `WorkloadProfile`, `MigrationCandidate`, `MigrationExperiment`, `MigrationRecommendation`, `LimitWindow`, `PriceBook`, `Reservation`, `ReservationEvent`, `SettlementEvent`, `FailedRequestCreditEvent`, `ProjectionCommand`, and `ReconciliationCheckpoint`.
 
 Rules:
 
@@ -172,6 +177,8 @@ Rules:
 - Timestamps use `google.protobuf.Timestamp`; durations use `Duration`.
 - Events carry `event_id`, `organization_id`, `workspace_id`, `api_key_id`, `request_id`, `billing_epoch`, `sequence`, `schema_version`, `occurred_at`, and idempotency/business keys.
 - Protobuf payloads in Redis Streams are binary/base64 or a documented binary-safe field; stream envelope fields remain inspectable.
+- Gateway-to-inference messages carry exact release digest, deadlines, canonical input, capability/data mode, opaque billing principal and opaque cache scope. Provider allocation IDs, credentials, bids and Kubernetes objects are forbidden from that serving contract.
+- `GenerateEvent` sequence and cumulative usage are monotonic. A retry after output is forbidden; pre-output retries preserve exact release/effort/speed/data policy.
 
 Generation:
 
@@ -200,6 +207,7 @@ gw:{<organization_id>}:events                          Redis Stream
 gw:model-catalog:<version>                              binary immutable managed/concrete catalog
 gw:route-release:<release_id>                           binary immutable candidates/eligibility/attempt policy
 gw:route-head:<canonical_model_product>                 pointer to active stable/canary releases
+gw:cell-target-set:<route_release_id>                   signed bounded exact-release cell targets
 gw:key-index:<public_lookup_id>                         auth locator: organization/key IDs + digest version
 gw:{<organization_id>}:traces                           bounded encrypted trace Redis Stream
 gw:trace-ingest-key:<version>                           public encryption key + validity window
@@ -218,6 +226,7 @@ Global catalog/release keys are immutable or atomic pointers and are read before
 - `attempt_id`: one upstream attempt.
 - `route_release_id`: immutable direct-model or Grad effort/speed release admitted and priced for the request.
 - `route_decision_id`: deterministic selection result including capability filter, session/canary bucket, candidate and endpoint class.
+- `cell_target_id`: signed external inference cell/target epoch chosen for an owned attempt; never a billing or provider credential.
 - `reservation_id`: one organization-funded reservation attributed to one workspace/key, usually one request.
 - `event_id`: unique immutable event; redelivery has the same ID.
 - `usage_charge_id`: PostgreSQL posting identity derived from settlement event ID.

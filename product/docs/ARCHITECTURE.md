@@ -31,10 +31,11 @@ flowchart LR
   External[External gateways] --> Gateway
   Gateway --> Redis
   Gateway --> Providers[Curated direct providers]
-  Gateway --> Owned
+  Gateway --> Edge[AWS inference edge]
+  Edge --> Owned[External GPU inference cells]
 
   classDef hot fill:#fee2e2,stroke:#991b1b;
-  class Gateway,Redis hot;
+  class Gateway,Redis,Edge,Owned hot;
 ```
 
 The red path is the serving hot path. Its only internal network dependency is Redis. The gateway does not call the API, worker, PostgreSQL, ClickHouse, Stripe, an external queue, or object storage. Provider calls are outbound inference dependencies, not control-plane dependencies.
@@ -94,6 +95,9 @@ Use a Cargo workspace with Tokio, Axum, Tower, Reqwest, tracing/OpenTelemetry, r
 - `gateway-admission`: Redis functions/scripts and typed state transitions;
 - `gateway-provider`: adapter trait and generic streaming transport;
 - `gateway-provider-{openai,anthropic,google,owned}` plus operator-only OpenRouter/generic adapters;
+- `inference-edge`: stable streaming target, signed cell-target validation, mTLS/direct/tunnel transport and event relay;
+- `inference-cell`: cell agent/router, exact-release runtime lifecycle, token queueing, cache affinity and drain;
+- `fleet-controller`: slow-path capacity leases, provider adapters, budgets, orphan cleanup and target publication inputs;
 - `gateway-trace`: data-mode enforcement, credential stripping, bounded trace serialization, public-key encryption and Redis trace events;
 - `gateway-contracts`: generated Prost messages;
 - `gateway-testkit`: fake upstreams, Redis harness, generated traces.
@@ -112,7 +116,7 @@ parse bounded headers/body
   -> estimate maximum fixed customer sell exposure for the bounded request
   -> atomic reserve + low-balance concurrency admission + XADD
   -> apply deterministic canary/session pin and choose a healthy same-lane target
-  -> call exact curated provider/model or owned Grad inference
+  -> call exact curated provider/model or AWS inference edge for selected owned cell
   -> stream while collecting metered usage
   -> atomic settle/release + decrement in-flight + XADD
   -> finish response
@@ -138,6 +142,10 @@ The control worker builds and publishes releases from PostgreSQL. The Rust gatew
 
 Owned inference is not a hidden preference inside direct-provider requests: customers reach it by selecting `grad/<effort>/<speed>` or an exposed Grad checkpoint. Each response and usage row identifies the requested canonical identity, actual provider/model or owned release, route release and data mode. This makes direct traffic a trustworthy migration baseline instead of secretly routing it to us.
 
+For Grad, a Redis route release contains signed cell targets rather than GPU pods. The gateway chooses an exact-release cell and calls a regional AWS inference edge. A cell-local router chooses a ready replica using queue deadline, token capacity and cache affinity. An AWS fleet controller acquires/releases external GPU capacity asynchronously through curated provider adapters and cannot participate in a live request. Managed Kubernetes, self-managed cell-local Kubernetes and provider-native container/VM allocations implement the same cell contract; no Kubernetes cluster spans providers. The complete design is [Owned Grad inference architecture](OWNED_INFERENCE_ARCHITECTURE.md).
+
+Every generative Grad release enables active-sequence KV and cross-request prefix cache. The gateway supplies an opaque HMAC scope separated by workspace/channel, exact release, and retention class. Product Intelligence and Private/No Retention both cache but never share a namespace. Cache state remains in GPU/RAM or qualified encrypted ephemeral local storage and never enters Redis, PostgreSQL, S3, ClickHouse, trace payloads, backups or logs.
+
 ### Release and rollback flow
 
 1. ModelOps records source-dated endpoint metadata and runs deterministic conformance plus bounded quality/performance evaluations.
@@ -159,7 +167,7 @@ Hono authorizes organization/workspace scope in PostgreSQL and maps a closed fil
 
 The trace processor creates workspace-local profiles/candidates and runs unbilled offline replay. Recommendations advance through opportunity, replay candidate, evaluator/shadow verified, and live-canary ready. Shadow/live experiments require explicit budgets, buckets and stops. A live canary affects only requests carrying its explicit header; no control-plane job intercepts ordinary direct traffic or mutates the customer's model automatically.
 
-Private/No Retention is workspace policy or a stricter per-request override. It suppresses payload trace creation before Redis and requires an eligible endpoint data policy. Minimum financial/security metadata may still project to ClickHouse with `payload_state=no_retain`, so customers retain usage/cost/latency analytics without content history. Retention for product features is not permission to train global models; training requires separate consent and architecture.
+Private/No Retention is workspace policy or a stricter per-request override. It suppresses payload trace creation before Redis and requires an eligible endpoint data policy. It does not disable transient active/prefix KV cache; no-retention cache uses its own salted trust domain and bounded ephemeral lifecycle. Minimum financial/security metadata may still project to ClickHouse with `payload_state=no_retain`, so customers retain usage/cost/latency analytics without content history. Retention for product features is not permission to train global models; training requires separate consent and architecture.
 
 ### Redis access
 

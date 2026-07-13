@@ -41,7 +41,7 @@ OpenRouter upstream does not appear in customer setup. If enabled by operators, 
 
 ## Official-client compatibility
 
-The conformance suite instantiates official OpenAI, Anthropic, and Google SDKs with base URL pointed to the Rust gateway. It covers canonical/bare model identity, native skins, Product Intelligence/no-retain behavior, fake providers on every pull request, and real providers in protected CI as specified in [Testing and CI](TESTING_AND_CI.md).
+The conformance suite instantiates official OpenAI, Anthropic, and Google SDKs with base URL pointed to the Rust gateway. It covers canonical/bare model identity, native skins, Product Intelligence/no-retain behavior, fake providers on every `main` commit and external pull request, and real providers in protected CI as specified in [Testing and CI](TESTING_AND_CI.md).
 
 Model IDs for paid smoke are environment-pinned because catalogs change. At each monthly review, verify from current official model/pricing documentation that the selected model supports the tested endpoint/streaming mode and remains the cheapest reasonable choice. The job's token and dollar preflight is the hard guardrail.
 

@@ -19,6 +19,8 @@ This directory is the implementation contract for the revenue-first inference ga
 - The customer catalog has curated direct provider/model IDs and first-party `grad/<effort>/<speed>` IDs. Direct requests never cross provider/model/version. Grad requests never leave owned inference or change effort/speed.
 - Capability, modality, tool, structured-output, reasoning, privacy, and context requirements are checked before provider spend. Unsupported behavior fails explicitly; no silent parameter drop, truncation, parser/plugin, response healing, or privacy downgrade.
 - Product Intelligence is the default; Private/No Retention and per-request tightening suppress payload persistence before Redis. Retention is not training consent.
+- Every generative Grad release uses active-sequence KV cache and cross-request prefix reuse, including Private/No Retention. Cache is salted by opaque workspace/channel/release/retention-class scope, remains ephemeral serving state, and never enters traces, Redis, PostgreSQL, S3, ClickHouse, backups, or logs.
+- AWS hosts the gateway, inference edge, fleet control, and authoritative data. Owned GPU execution runs in isolated external-provider cells; provider APIs and Kubernetes discovery never enter the gateway request path.
 - Migration recommendations are evidence-level state machines. Replay/shadow/canary require defined authority and budgets, and no state transition automatically changes customer traffic.
 - Provider/model identity, effort/speed release, trace publishing/retention/delete, ClickHouse tenant projection/rebuild, canary/session/rollback, migration experiments, and failed-request credits require TS/Rust property coverage where each implementation participates.
 
@@ -29,7 +31,7 @@ Every change must have deterministic examples and property-based tests where inv
 - TypeScript: Vitest plus `fast-check`; use model-based commands for billing, authorization, and webhook state machines.
 - Rust: `cargo nextest`, `proptest`, and `proptest-state-machine`; use Redis Testcontainers for admission/settlement state machines.
 - Every PBT failure must print the seed and shrink path, upload a replay artifact in CI, and expose a one-command replay. Accepted failures become regression fixtures.
-- Pull requests run bounded deterministic PBT suites. Main/nightly runs deeper time-budgeted suites. Tests must be runnable by agents and CI; the product owner is not expected to run anything locally.
+- Agents run bounded deterministic PBT suites before direct pushes; main/nightly runs deeper time-budgeted suites. Explicitly requested or external pull requests run the bounded suite. Tests must be runnable by agents and CI; the product owner is not expected to run anything locally.
 - Official OpenAI, Anthropic, and Google client smoke tests run through the Rust gateway in protected CI jobs. Untrusted pull requests use deterministic fake providers and never receive provider secrets.
 
 ## Working rules

@@ -53,6 +53,8 @@ Retention for customer features does not authorize training or global model impr
 
 A workspace may choose Private/No Retention and a request may tighten Product Intelligence with `x-grad-data-policy: no-retain`. The gateway then suppresses payload trace creation before Redis/S3 and keeps only minimum billing/security/aggregate metadata. That content-free usage row may project to ClickHouse with `payload_state=no_retain`, preserving cost/latency/model analytics without a payload action. Route eligibility requires an endpoint qualified for the no-retention policy. Content-based history, replay and migration recommendations are unavailable; metadata-only opportunities are labeled low confidence. A request can never loosen workspace policy.
 
+No-retention is not a cache-disable mode. Generative Grad requests always use active and prefix KV cache in an opaque workspace/channel/release/retention-class namespace. Cache state is confidential, bounded, ephemeral, unavailable to product APIs, and excluded from traces, object storage, analytics, backups, logs and provider support bundles. Cells or cache tiers that cannot prove those controls are ineligible for no-retention traffic.
+
 Unknown provider data policy is ineligible in either mode. Prompt caching is eligible only when its semantics match the selected policy. Hosted tools/search/processors have separate policies and cannot inherit a false no-retention claim.
 
 ### Trace access and abuse prevention

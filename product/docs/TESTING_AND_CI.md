@@ -38,7 +38,8 @@ The product owner will not run this repository locally. Therefore the acceptance
 | Route lifecycle | publish/canary/promote/halt/rollback/deprecate with stale/reordered projection commands | immutable release; deterministic rollout; stale head cannot win; in-flight request keeps admitted release/price; rollback restores a qualified head. |
 | Failed-request credit | pre-output/midstream/output-delivered failures, cancel, duplicate/reordered settle/correction, fraud eligibility | exactly one eligible reversal when no usable output; never double-credit; original usage remains immutable; provider buy evidence retained. |
 | Effort/speed | arbitrary qualified cells, measured distributions, capacity/queue faults and release changes | unavailable cells absent; no silent lane downgrade; speed and declared effort monotonicity gates hold within configured statistical tolerance or release is rejected. |
-| Trace policy | Product Intelligence/no-retain/request tightening, credentials, oversized payloads, encryption/key rotation, stream lag, delete/export/redelivery | no-retain emits no payload; credentials never captured; ciphertext only after gateway; billing headroom preserved; one trace/object identity; retention/delete completes or closes capture. |
+| Trace policy | Product Intelligence/no-retain/request tightening, credentials, oversized payloads, encryption/key rotation, stream lag, delete/export/redelivery | no-retain emits no trace payload; credentials never captured; ciphertext only after gateway; billing headroom preserved; one trace/object identity; retention/delete completes or closes capture. |
+| Owned inference fleet | releases/cell targets, capacity leases, provider observations, spot loss, edge/cell streams, cache namespaces and faults | exact release/speed preserved; no live broker dependency; leases converge/no orphan; pre-output retry only; no-retention still caches; no cache reuse crosses workspace/channel/release/retention class. |
 | Trace analytics | organization/workspace scopes, terminal usage versions, duplicate/reordered outbox delivery, retention/tombstones, restore, ClickHouse outage/backlog | one visible terminal fact; no content columns; result subset of authorized scope; expired/deleted content inaccessible during mutation lag; PostgreSQL reconciliation wins; projector failure never affects serving/billing/S3. |
 | Migration | workload grouping, evidence levels, replay/shadow/live-canary commands/headers, duplicate/reordered events, budgets and evaluator faults | no header means hard direct pin; invalid/mismatched header cannot enroll; source/candidate fixed; evidence cannot overstate; replay cannot charge; live canary is deterministic, disclosed and obeys experiment/billing caps; removing header preserves original traffic. |
 
@@ -64,6 +65,8 @@ Concurrency cases use explicit barriers/schedules rather than wall-clock sleeps:
 - trace append/backpressure versus settlement and billing stream retention;
 - duplicate/reordered ClickHouse projection versus tombstone/retention and outbox checkpoint;
 - no-retain policy change versus in-flight capture and key rotation;
+- no-retention trace suppression versus successful prefix-cache put/hit/evict, cache-salt rotation, workspace/channel/release namespace isolation, and cell teardown;
+- provider allocation observations, duplicate acquire/release, lease expiry, controller restart, spot notice/zero-notice loss, edge reconnect and failure before/after first output;
 - migration experiment cancel/stop versus concurrent canary admission;
 - direct-model alias activation/deprecation versus concurrent resolution.
 
@@ -89,7 +92,7 @@ The scaffold work package must verify the exact proptest replay syntax supported
 
 Exact counts are tuned to CI duration using recorded timings, but start with:
 
-- pull request: deterministic unit/integration plus at least 1,000 simple cases per critical property and 100 state-machine traces, total PBT target under 8 minutes;
+- pre-push/external pull request: deterministic unit/integration plus at least 1,000 simple cases per critical property and 100 state-machine traces, total PBT target under 8 minutes;
 - main: 10,000 simple cases and 1,000 state-machine traces, target under 15 minutes;
 - nightly: time-budgeted deep run (at least 100,000 simple cases where throughput permits), fault injection, and cross-language replay corpus, target under 45 minutes;
 - release: main suite plus protocol conformance and real-provider smoke.
@@ -100,7 +103,7 @@ Shard by stable property suite, not random test file distribution, so failures r
 
 ### Always-on fake-provider job
 
-On every pull request, boot PostgreSQL, ClickHouse, Redis, S3-compatible storage, the Rust gateway, and deterministic fake OpenAI/Anthropic/Google/owned upstreams. Run official `openai`, `@anthropic-ai/sdk`, and `@google/genai` clients with base URL pointed at the gateway. Cover:
+On every `main` commit and external pull request, boot PostgreSQL, ClickHouse, Redis, S3-compatible storage, the Rust gateway/inference edge, and deterministic fake OpenAI/Anthropic/Google/owned/provider-cell upstreams. Run official `openai`, `@anthropic-ai/sdk`, and `@google/genai` clients with base URL pointed at the gateway. Cover:
 
 - model list where client supports it;
 - non-stream and stream Chat Completions;
@@ -164,9 +167,10 @@ Pin action SHAs and tool versions. Use lockfiles and cached dependencies without
 | `cargo test -p gateway-pbt` | bounded proptest state machines. |
 | `pnpm test:conformance` | public JSON/SSE fixtures against Rust gateway. |
 | `pnpm test:routes` | cross-language provider/model identity, Grad effort/speed, qualification, route and rollout properties. |
+| `pnpm test:fleet` | edge/cell protocol, provider/lease simulator, spot lifecycle, cache isolation and exact-release fault properties. |
 | `pnpm test:traces` | trace policy/encryption/retention, ClickHouse projection/tenant isolation and workload/migration state-machine properties. |
 | `pnpm test:e2e:fake` | official clients through gateway/fakes. |
 | `pnpm test:e2e:providers` | protected minimal paid smoke only. |
-| `pnpm verify` | all required non-paid pull-request checks. |
+| `pnpm verify` | all required non-paid pre-push/main checks. |
 
 Every task handoff records commands, CI run URL when available, seeds/artifacts for failures, and which paid tests were intentionally not invoked.

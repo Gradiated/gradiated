@@ -82,7 +82,7 @@ Large-enterprise SSO, private networking, deeper hierarchy, and invoiced credit 
 
 - OpenAI, Anthropic and Google quickstarts; copyable environment and base-URL configuration.
 - No custom inference SDK at seed; use official clients and tested integration recipes.
-- Deterministic fake providers for every pull request.
+- Deterministic fake providers for every `main` commit and external pull request.
 - Protected real-provider smoke tests using official clients and minimal token limits.
 - One-command deterministic tests plus replayable PBT for TypeScript and Rust.
 

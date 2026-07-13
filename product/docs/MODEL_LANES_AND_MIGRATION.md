@@ -122,6 +122,7 @@ A workspace can select Private/No Retention, and any request can tighten Product
 - the gateway records only the minimum billing, security and aggregate operational metadata;
 - no request/response/tool/file payload is written to the trace stream or object store;
 - route eligibility requires the selected direct provider or Grad deployment to meet the documented no-retention policy;
+- owned Grad execution still uses active-sequence and cross-request prefix KV cache. It is separated into an opaque no-retention workspace/channel/release namespace, kept only in ephemeral GPU/RAM or qualified encrypted local spill, and never copied to trace/object/analytics storage;
 - content-based workload analysis, replay and migration recommendations are unavailable; metadata-only cost/latency suggestions are clearly labeled low confidence.
 
 A request cannot loosen a workspace's mode. Provider training/data use is a separate eligibility dimension and remains disallowed unless a future customer explicitly chooses otherwise.
@@ -217,6 +218,8 @@ Before enabling a direct provider/model:
 
 Before enabling a Grad effort/speed cell:
 
+- the exact runtime/release must prove always-on salted prefix cache, no cross-workspace/channel/retention-class reuse, bounded eviction/teardown and no payload-bearing logs/backups;
+- the external-provider cell must pass the provider/region/topology/security/interruption/effective-successful-token-cost gates in [Owned Grad inference architecture](OWNED_INFERENCE_ARCHITECTURE.md);
 - owned runtime/checkpoint identity and evaluation scope are frozen in a RouteRelease;
 - capability, privacy, quality, TTFT, throughput, queue deadline, availability, capacity and margin gates pass for that cell;
 - speed monotonicity holds under representative load (`turbo` no slower than `fast`, and so on, within published statistical tolerance);

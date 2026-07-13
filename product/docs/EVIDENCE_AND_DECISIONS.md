@@ -25,6 +25,8 @@ Evidence labels follow the repository contract: vendor-reported, analytical, der
 | Product Intelligence retains encrypted bounded traces by default; Private/No Retention is an opt-in workspace/request mode. | Trace-derived history, analytics and migration recommendations are core product value; customers retain explicit control. | User decision plus derived security architecture. |
 | Trace retention does not authorize global model training; migration never auto-switches traffic. | Product features and training/traffic control are materially different permissions. | Analytical trust boundary. |
 | ClickHouse Cloud is the content-free trace analytics projection; PostgreSQL owns auth/control/money and S3 owns encrypted payloads. | Trace analytics needs high-cardinality interactive scans, while managed merge/backup deletion behavior makes ClickHouse unsuitable as the sole raw-content custodian. | Current ClickHouse vendor docs plus analytical architecture; see `CLICKHOUSE_TRACE_ANALYTICS_DECISION.md`. |
+| AWS inference edge plus isolated external-provider cells is the owned Grad fleet boundary. | Representative suppliers expose different container/VM/Kubernetes APIs; a cell/lease contract pools them without putting provider lifecycle or a global Kubernetes control plane on the request path. | Current vendor docs plus analytical architecture; see `MULTI_PROVIDER_GPU_EVIDENCE_2026-07-13.md`. |
+| Active and prefix KV cache remain enabled for no-retention Grad requests. | Cache is required for serving economics and can be isolated by opaque trust-domain salt while remaining ephemeral and absent from durable trace/data stores. | User requirement, current vLLM vendor docs, and derived security design. |
 
 ## Source-backed framework facts
 
@@ -52,6 +54,9 @@ Evidence labels follow the repository contract: vendor-reported, analytical, der
 8. Default Product Intelligence retention creates more customer value than trust/activation cost. Measure opt-out/deletion, trace-feature use, recommendation conversion and security/support incidents.
 9. Trace-derived replay/evaluation can identify safe Grad candidates. Measure false recommendations, evaluator disagreement, canary rollback and quality regressions; never infer equivalence from metadata alone.
 10. ClickHouse Cloud improves trace UX/cost over Aurora-only reads at seed volume. Measure realistic tenant-filtered query latency/concurrency, ingestion/rebuild/delete behavior and monthly Cloud/PrivateLink cost; use the Aurora read model temporarily if it fails the ADR-0004 falsification gate.
+11. A stable AWS inference edge and cell-local scheduler can preserve exact-release streaming SLOs across provider classes. Measure edge overhead, network jitter, startup, stream failure and pre/post-output retry semantics on one native and one Kubernetes provider class.
+12. Diversified external spot capacity lowers effective cost per successful token after warm idle, failed starts, interruptions, transfer and egress. Reject a provider/release when measured successful-token cost or concentration fails its margin/speed gate.
+13. Salted always-on prefix cache prevents cross-workspace/channel/release/retention-class reuse without destroying useful hit rate. Test timing isolation, hit/eviction, salt rotation, teardown, no-log/no-backup and abrupt preemption.
 
 ## Known uncertainties
 
@@ -66,6 +71,8 @@ Evidence labels follow the repository contract: vendor-reported, analytical, der
 - Thirty-day default raw retention, deletion SLO and exact legal notices require security/legal review before launch.
 - Recommendation quality and the fraction of direct workloads that can move to Grad are unknown.
 - ClickHouse Cloud sizing, Enterprise TDE/CMEK cost, PrivateLink price/region support, and deletion/backup legal interpretation are unmeasured; ADR-0004 requires a bounded spike and preserves an Aurora-only launch fallback.
+- External GPU provider capacity, interruption frequency, DPA/support access, network quality, startup distribution, host isolation, billing cleanup and successful-token economics are unmeasured; no provider is production-qualified by the architecture brief.
+- The AWS inference edge direct/tunnel transport, vLLM topology, cache hierarchy and managed-Kubernetes fixed cost require implementation spikes. Multi-node, disaggregated prefill and remote cache are not seed assumptions.
 
 ## Rejected alternatives
 
@@ -85,6 +92,9 @@ Evidence labels follow the repository contract: vendor-reported, analytical, der
 - Hidden owned-inference preference for a direct provider request: makes migration untrustworthy; Grad adoption must be explicit and evidence-backed.
 - No payload retention by default: rejected by product direction because workload intelligence is core; retained traces require explicit controls and no-retain escape hatch instead.
 - Raw payloads in ClickHouse or ClickHouse as authorization/ledger truth: rejected because content custody, immediate revocation, merge-based physical deletion and analytical mutation behavior require the PostgreSQL/S3 split.
+- One Kubernetes cluster stretched across GPU providers: rejected because provider/node/network control surfaces differ and a WAN control plane enlarges blast radius.
+- Karmada or a custom Cluster API provider as the universal seed fleet manager: deferred/rejected because neither replaces provider acquisition, spend, signed bootstrap, cache-aware request routing or interruption semantics.
+- Disabling KV/prefix cache for no-retention: rejected; no-retention suppresses durable trace payloads while transient salted serving cache remains mandatory.
 
 ## Evidence update protocol
 

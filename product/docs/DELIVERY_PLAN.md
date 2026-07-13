@@ -14,7 +14,7 @@ sign in -> create organization + Default workspace -> verified organization top-
 -> workload profile -> customer-controlled Grad migration
 ```
 
-Provider-distribution work reuses the serving path after this slice is reliable. Work packages below are designed for separate subagents with explicit path ownership. Each package gets a GitHub issue, active packet, dependency links, and CI acceptance evidence before merge.
+Provider-distribution work reuses the serving path after this slice is reliable. Work packages below are designed for separate subagents with explicit path ownership. Each package gets a GitHub issue, active packet, dependency links, and acceptance evidence before its owned commit is pushed directly to `main`.
 
 AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/DELIVERY_PLAN.md`](../../infra/docs/DELIVERY_PLAN.md). Product packages own application behavior, containers, contracts, and tests. Infrastructure packages own Terraform, managed services, Helm/GitOps, deployment workflows, capacity qualification, and cloud operations. Neither workstream duplicates those resources.
 
@@ -85,12 +85,20 @@ AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/
 - Dependencies: WP-04, WP-05.
 - Delegation: split 06A catalog/qualification/release control plane and 06B Rust route/adapters only after one interface owner freezes Protobuf, Redis projection and qualification manifest schemas.
 
+### WP-06C — Owned inference edge, cells, runtime and fleet controller
+
+- Scope: `apps/fleet-controller`, `services/inference-edge`, `services/cell-agent`, owned runtime adapters, fleet/cell Protobuf, signed manifests/targets, fake provider/cell simulator and PBT. Provider account/network/Terraform/Helm and paid qualification are coordinated infrastructure work in `MULTI_PROVIDER_GPU_FLEET.md`.
+- Deliver: AWS inference edge; direct-mTLS/outbound-relay cell transports; exact-release cell router; vLLM first runtime; always-on workspace/channel/release/retention-class salted KV/prefix cache; capacity intents/leases; provider adapter interface; spot drain/orphan/cost controls; target publication inputs.
+- Acceptance: gateway/edge/cell golden contracts; fleet and event state-machine PBT; controller/PG/provider API can be unavailable while existing cells serve; no provider API/Kubernetes discovery on the gateway path; no-retention produces cache hits but no trace payload; cross-scope cache reuse is impossible; abrupt preemption before/after first token has the frozen retry/settlement outcome; one native and one managed-Kubernetes provider class pass bounded qualification before production.
+- Dependencies: WP-00, WP-04, WP-05, and WP-06 release schema. Fake edge/cell/runtime work can proceed with WP-06 against frozen manifests.
+- Delegation: split 06C-1 contracts/simulator, 06C-2 Rust edge, 06C-3 cell router/runtime/cache, and 06C-4 fleet controller/provider adapters only after one owner freezes event, lease and target epochs.
+
 ### WP-07 — Trace intelligence, ClickHouse analytics and migration engine
 
 - Scope: `gateway-trace`, trace worker/processor/projector, ClickHouse schemas/query repository, private object contract, workload/recommendation/experiment domain and UI/API integration. ClickHouse Cloud/PrivateLink plus S3/KMS/Pod Identity/KEDA resources remain infrastructure-owned.
 - Deliver: Product Intelligence/no-retain enforcement; credential stripping; public-key trace encryption; bounded Redis stream; per-trace wrapped-key/S3 lifecycle/delete/export; PostgreSQL analytics outbox; idempotent batched ClickHouse request/attempt/evaluation facts and rollups; tenant/time-bounded Hono queries; workload grouping; opportunity/candidate/verified/ready evidence; unbilled replay; approved shadow/live-canary with budgets/stops; no-auto-switch state machine.
 - Acceptance: TS/Rust PBT proves no-retain/credential/ciphertext/retention invariants and no automatic migration; ClickHouse schema has no content; duplicate/reordered projection converges; arbitrary tenant queries return no cross-workspace row; tombstone/key destruction denies detail before asynchronous S3/ClickHouse cleanup; ClickHouse outage/backpressure leaves serving/billing/S3 correct; encrypted object roundtrip/delete; replay cannot debit customer; canary cannot exceed caps and stops without changing original traffic.
-- Dependencies: WP-00 through WP-06 interfaces. Coordinate ClickHouse/S3/KMS/projector autoscaling with infrastructure packages before production.
+- Dependencies: WP-00 through WP-06 interfaces; owned replay/canary additionally depends on WP-06C. Coordinate ClickHouse/S3/KMS/projector and external inference capacity with infrastructure packages before production.
 
 ### WP-07B — End-to-end vertical slice and console completion
 
@@ -104,7 +112,7 @@ AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/
 - Scope: application telemetry/freeze interfaces, product incident/financial runbooks, GitHub `provider-e2e` test behavior, secret/budget preflight. Terraform, Helm manifests, AWS observability, and deployment workflows belong to infrastructure I-05/I-06/I-08/I-10.
 - Deliver: managed Redis requirements; network/secret/data policies; private trace S3/KMS access/lifecycle; ClickHouse PrivateLink/encryption/RBAC/schema/backups and cost monitoring; billing-vs-trace capacity alerts; outbox/projection/rebuild/restore-with-tombstones/delete drills; financial/trace/recommendation/ModelOps dashboards; OpenAI/Anthropic/Google/owned smoke; sanitized artifacts.
 - Acceptance: drills for Redis/worker/provider/route/trace-object/KMS/retention failure; paid budget guard; identity/data-mode probes; no-retain eligibility; plaintext/credential leak scanner; missing secrets fail only protected context; no payload in ordinary logs/artifacts.
-- Dependencies: WP-06, WP-07B.
+- Dependencies: WP-06C, WP-07B.
 
 ### WP-09 — OpenRouter provider and gateway distribution
 
@@ -126,8 +134,8 @@ AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/
 WP-00
  ├─> WP-01 ──────> WP-03 ─┐
  ├─> WP-02 ────────────────┼─> WP-07 ─> WP-07B ─> WP-08 ─> WP-10
- └─> WP-04 ─> WP-05 ─> WP-06 ┘                              │
-                            └────────────────> WP-09 ─────────┘
+ └─> WP-04 ─> WP-05 ─> WP-06 ─> WP-06C ┘                    │
+                                      └────> WP-09 ──────────┘
 ```
 
 One integration owner approves changes to `proto/**`, public schemas, Redis key/script contracts, and ledger semantics. Other agents propose contract changes in their issue before generating code, preventing simultaneous incompatible edits.
@@ -140,7 +148,7 @@ Suggested first delegation wave after WP-00:
 - Agent D: WP-05 public protocols/fake providers against fake admission.
 - Agent E: source-only portion of WP-09 integration requirement matrix.
 
-WP-03 starts once WP-01 ledger interfaces stabilize. WP-06 starts after protocol/admission interfaces compile. WP-07 starts only after data-mode/trace contracts and infrastructure ownership are frozen. The integration owner runs shared properties continuously.
+WP-03 starts once WP-01 ledger interfaces stabilize. WP-06 starts after protocol/admission interfaces compile. WP-06C starts with fakes after release/cell contracts freeze and coordinates its provider substrates with infrastructure F-00 through F-07. WP-07 starts only after data-mode/trace contracts and infrastructure ownership are frozen. The integration owner runs shared properties continuously.
 
 ## Implementation checkpoints
 
@@ -149,13 +157,14 @@ WP-03 starts once WP-01 ledger interfaces stabilize. WP-06 starts after protocol
 3. **Vertical checkpoint:** fake official clients fund, call, settle, reconcile, and display usage.
 4. **Experience checkpoint:** existing model migrates with base URL/key where unambiguous; new workload reaches `grad/medium/standard`; both show exact identity/cost.
 5. **Model-lane checkpoint:** curated direct identity and Grad effort/speed qualification/price/SLO/rollback satisfy PBT and measured gates.
-6. **Trace checkpoint:** Product Intelligence and no-retain, encryption, retention/delete, billing isolation and no-auto-switch recommendation state pass.
-7. **External checkpoint:** protected real-provider/owned smoke and failure drills pass inside cost limits.
-8. **Distribution checkpoint:** OpenRouter/other-gateway evidence supports go/no-go.
-9. **Revenue checkpoint:** direct workload retention, Grad migration and contribution margin decide next breadth.
+6. **Owned fleet checkpoint:** one native and one Kubernetes provider class satisfy exact-release edge/cell, always-on cache isolation, abrupt preemption, cleanup, concentration and successful-token margin gates.
+7. **Trace checkpoint:** Product Intelligence and no-retain, encryption, retention/delete, billing isolation and no-auto-switch recommendation state pass; no-retention cache remains enabled and ephemeral.
+8. **External checkpoint:** protected real-provider/owned smoke and failure drills pass inside cost limits.
+9. **Distribution checkpoint:** OpenRouter/other-gateway evidence supports go/no-go.
+10. **Revenue checkpoint:** direct workload retention, Grad migration and contribution margin decide next breadth.
 
 ## Scope discipline
 
-No package may weaken fail-closed admission to unblock a demo. If a reserve/reconciliation/identity/data-policy guarantee cannot be proved, reject or close admission. Never cross a direct provider/model, leave a Grad effort/speed cell, persist no-retain payload, let trace load starve billing, overstate recommendation evidence, or auto-switch traffic. Record failures and continue with the next bounded branch.
+No package may weaken fail-closed admission to unblock a demo. If a reserve/reconciliation/identity/data-policy guarantee cannot be proved, reject or close admission. Never cross a direct provider/model, leave a Grad effort/speed cell, persist a no-retain trace payload, disable no-retention KV cache, reuse cache across trust domains, let trace load starve billing, overstate recommendation evidence, or auto-switch traffic. Record failures and continue with the next bounded experiment lineage.
 
 Infrastructure gates are equally binding: production does not use a Valkey tier that has not proved zero acknowledged reservation/event loss, CI does not receive static AWS keys, and autoscaling does not replace admission/backpressure. Product WP-00 and infrastructure I-00 establish the shared command/contract boundary before broad delegation.

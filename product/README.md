@@ -16,8 +16,9 @@ Vite React console ──tRPC──> Hono control API ──> PostgreSQL authori
        │                         │       └──> Stripe top-ups
        │                         └──> Redis projections
        │
-OpenAI/Anthropic/Google SDKs ──> Rust gateway ──> owned inference / direct providers
-                              │                         └──> OpenRouter upstream (operator-only)
+OpenAI/Anthropic/Google SDKs ──> Rust gateway ──> direct providers
+                              │       │                 └──> OpenRouter upstream (operator-only)
+                              │       └──> AWS inference edge ──> external GPU cells
                               │
                               └──> Redis only
                                    auth + config + balance reservations
@@ -29,7 +30,7 @@ Encrypted trace worker: Redis trace stream ──> private S3 payload ──> wo
 External gateways ──provider protocol──> the same Rust serving surface
 ```
 
-PostgreSQL is authoritative for organization credits, authorization, model qualification, route releases, trace registry/tombstones and workload/experiment control state. Encrypted raw traces live in private lifecycle-managed S3; ClickHouse Cloud is a replayable, content-free analytical projection for trace lists, charts and workload/model summaries. Every organization has a hidden Default workspace and may create more with separate keys, members, model/data policy, budgets and concurrency. Redis is the gateway's only internal dependency. Direct requests stay on their exact curated provider/model; Grad requests stay on owned inference in their effort/speed cell. Product Intelligence retains bounded encrypted traces by default and suggests—but never performs—evidence-backed migrations to Grad. Private/No Retention is available per workspace/request.
+PostgreSQL is authoritative for organization credits, authorization, model qualification, route releases, trace registry/tombstones and workload/experiment control state. Encrypted raw traces live in private lifecycle-managed S3; ClickHouse Cloud is a replayable, content-free analytical projection for trace lists, charts and workload/model summaries. Every organization has a hidden Default workspace and may create more with separate keys, members, model/data policy, budgets and concurrency. Redis is the gateway's only internal dependency. Direct requests stay on their exact curated provider/model; Grad requests stay on the exact owned release in their effort/speed cell. Product Intelligence retains bounded encrypted traces by default and suggests—but never performs—evidence-backed migrations to Grad. Private/No Retention is available per workspace/request and suppresses durable payload traces while retaining tenant-isolated ephemeral KV/prefix caching.
 
 ## Planned repository layout
 
@@ -43,8 +44,11 @@ product/
     trace-projector/     PostgreSQL outbox to ClickHouse analytical facts
     recommendation-worker/ workload profiles, replay, migration experiments
     trace-access/        one-object audited decrypt/read service
+    fleet-controller/    external GPU capacity leases/provider adapters
   services/
     gateway/             Rust/Axum/Tower gateway and provider adapters
+    inference-edge/      stable Rust streaming edge for owned Grad serving
+    cell-agent/          external-cell bootstrap, router, runtime lifecycle
   packages/
     authz/               workspace membership and role policy
     billing/             ledger, top-up, projection, reconciliation domains
@@ -72,6 +76,8 @@ product/
 - [Security and operations](docs/SECURITY_BILLING_OPERATIONS.md)
 - [Gateway and provider integrations](docs/INTEGRATIONS.md)
 - [Model lanes, Grad effort/speed, traces, and migration](docs/MODEL_LANES_AND_MIGRATION.md)
+- [Owned Grad inference architecture](docs/OWNED_INFERENCE_ARCHITECTURE.md)
+- [Multi-provider GPU fleet evidence](docs/MULTI_PROVIDER_GPU_EVIDENCE_2026-07-13.md)
 - [ClickHouse trace analytics decision and evidence](docs/CLICKHOUSE_TRACE_ANALYTICS_DECISION.md)
 - [OpenRouter complete feature inventory and decisions](docs/OPENROUTER_FEATURE_DECISIONS.md)
 - [OpenRouter product/architecture spike](docs/OPENROUTER_SPIKE.md)
@@ -79,6 +85,7 @@ product/
 - [Evidence and decisions](docs/EVIDENCE_AND_DECISIONS.md)
 - [Current model/data architecture decision](../docs/decisions/0003-provider-grad-effort-speed-and-traces.md)
 - [ClickHouse trace analytics ADR](../docs/decisions/0004-clickhouse-trace-analytics.md)
+- [Multi-provider inference ADR](../docs/decisions/0005-multi-provider-spot-inference.md)
 - [AWS infrastructure, Kubernetes, CI/CD, local stack, and `grad` plan](../infra/README.md)
 - [Current handoff](HANDOFF.md)
 

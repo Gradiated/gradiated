@@ -16,17 +16,17 @@ python3 tools/github/agent.py auth-check
 python3 tools/github/agent.py bootstrap-labels
 ```
 
-The placeholder above represents secret-manager injection, not a command to paste a token into shell history. The helper never prints token values. Keep `GH_TOKEN` and any `gh` credentials in an external credential store, not in the repository or task packets. If the token is fine-grained, grant repository access only to this repository and use repository write permissions for Contents, Issues, and Pull requests; Actions and Workflows write are optional for CI operations.
+The guard above assumes secret-manager injection; it is not a command to paste a token into shell history. The helper never prints token values. Keep `GH_TOKEN` and any `gh` credentials in an external credential store, not in the repository or task packets. If the token is fine-grained, grant repository access only to this repository and use repository write permissions for Contents, Issues, and Pull requests; Actions and Workflows write are optional for CI operations.
 
 Fine-grained tokens cannot currently manage Projects owned by a personal account. Prefer an organization-owned Project if agents need to update the board with a fine-grained token. Otherwise use a separately scoped classic token only for Project operations, or treat the board as a human-managed view.
 
-Create one private Project for the startup, normally named `Startup OS`:
+Create one private Project for the startup, normally named `Startup OS`. Personal-account Project creation currently requires a classic token with the `project` scope; fine-grained tokens cannot manage personal-account Projects. If the Project belongs to an organization, use the organization owner and grant the token organization Projects write access:
 
 ```sh
-gh project create --owner @me --title "Startup OS" --format json
-gh project field-create PROJECT_NUMBER --owner @me --name Lane \
+gh project create --owner ORG_NAME --title "Startup OS" --format json
+gh project field-create PROJECT_NUMBER --owner ORG_NAME --name Lane \
   --data-type SINGLE_SELECT --single-select-options Product,Research,Operations
-gh project field-create PROJECT_NUMBER --owner @me --name Priority \
+gh project field-create PROJECT_NUMBER --owner ORG_NAME --name Priority \
   --data-type SINGLE_SELECT --single-select-options P0,P1,P2,P3
 ```
 

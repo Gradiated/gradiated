@@ -6,6 +6,8 @@
 
 ## Owner and coordination
 
+- GitHub issue:
+- GitHub project:
 - owner:
 - Codex thread:
 - created:

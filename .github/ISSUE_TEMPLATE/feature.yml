@@ -1,0 +1,32 @@
+name: Product change
+description: Propose a product, platform, or developer-experience change.
+title: "[Product] "
+labels:
+  - "lane:product"
+body:
+  - type: markdown
+    attributes:
+      value: "Describe the user outcome, not only the implementation."
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: What should be true for the user or agent?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance checks
+      description: List observable checks, tests, or screenshots that prove completion.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and constraints
+  - type: textarea
+    id: references
+    attributes:
+      label: Repository references
+      description: Link files, prior issues, designs, or research artifacts.

@@ -14,12 +14,13 @@ This repository is the complete project state for the research and product-build
 ## Repo-native state
 
 - Put reusable agent procedures in `.agents/skills/`.
-- Use `tasks/` for durable task packets, ownership, priorities, and handoffs.
+- Use GitHub Issues for canonical cross-agent work tracking and GitHub Projects for the active execution view.
+- Use `tasks/` for detailed local execution packets when an issue needs a reproducible experiment contract or offline handoff; link the issue and do not maintain a second status system.
 - Put browser automation code and dependency declarations in `tools/browser/`.
 - Put ephemeral browser profiles, caches, and run logs under `.agents/runtime/`; never commit them.
 - Put decision-relevant browser captures and research outputs in the relevant `research/<workstream>/docs/` or `research/<workstream>/evidence/` directory.
 - Use `.env.example` for variable names and external secret storage for values.
-- Do not make Notion, Drive, Jira, Slack, or a remote app the source of truth.
+- Do not make Notion, Drive, Jira, or Slack a required source of truth. GitHub Issues/Projects own work state; the repository owns code, research, prompts, and artifacts.
 
 ## Agent operating contract
 
@@ -37,6 +38,8 @@ This repository is the complete project state for the research and product-build
 - `$browser-research`: reproducible research on JavaScript-heavy or interactive websites.
 - `$product-build`: repository-first product implementation, verification, and handoff.
 - `$experiment-run`: bounded, reproducible experiments with durable artifacts and cleanup.
+
+GitHub workflow instructions and the CLI helper live in `docs/GITHUB_OPERATING_SYSTEM.md` and `tools/github/agent.py`.
 
 ## Verification
 

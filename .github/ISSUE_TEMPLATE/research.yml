@@ -1,0 +1,36 @@
+name: Research
+description: Propose a falsifiable technical, market, or product research task.
+title: "[Research] "
+labels:
+  - "lane:research"
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Decision question
+    validations:
+      required: true
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Hypothesis and falsification rule
+    validations:
+      required: true
+  - type: textarea
+    id: contract
+    attributes:
+      label: Scope and experiment contract
+      description: Include model/data/workload/software/hardware identity, quality gate, SLO, budget, timeout, and teardown.
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Expected repository artifacts
+      description: Give exact paths for scripts, raw evidence, reports, and ledger updates.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Starting sources and prior art

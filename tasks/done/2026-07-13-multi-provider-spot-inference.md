@@ -40,6 +40,6 @@ The repository contains a source-backed, implementation-ready architecture for s
 - verification: current primary-source decision brief completed; `python3 tools/devex/check.py` passed; `git diff --check` passed; local Markdown links valid across 49 product/infra/architecture files; invariant searches found no direct gateway/provider-lifecycle dependency or cache-disable contradiction.
 - changed paths: new `product/docs/OWNED_INFERENCE_ARCHITECTURE.md`, `product/docs/MULTI_PROVIDER_GPU_EVIDENCE_2026-07-13.md`, `infra/docs/MULTI_PROVIDER_GPU_FLEET.md`, and `docs/decisions/0005-multi-provider-spot-inference.md`; adaptations across declared product/infra/root architecture and delivery/handoff documents; this packet.
 - limitations or blocked paths: no provider capacity, account, pricing, contract/DPA, network, edge latency, cache teardown, interruption frequency, or successful-token economics was measured; every provider/release remains qualification-gated. No application or infrastructure code exists yet.
-- commit: pending direct-to-main architecture commit; exact SHA will be recorded after commit.
+- commit: `95b6592` (`Design multi-provider spot inference fleet`); this handoff metadata is recorded in the immediately following direct-to-main commit.
 - next action: delegate product WP-00 plus fleet F-00 contracts/simulator and infrastructure I-00 foundations; run paid provider spikes only after provider/security/budget authority.
 - released: 2026-07-13T19:41:04+00:00

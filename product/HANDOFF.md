@@ -2,9 +2,13 @@
 
 ## Current decision
 
-Build the direct paid gateway first, while making the serving surface eligible for external-gateway provider onboarding. The control plane is a Vite React application plus a separate Hono/tRPC Node API. The data plane is Rust. An organization is the customer and billing boundary; its workspaces are isolated key, policy, limit, membership, and usage-attribution boundaries.
+Build the direct paid gateway first as a premium curated inference and migration product, while making owned serving eligible for external-gateway distribution. The control plane is Vite React plus Hono/tRPC Node; the data plane is Rust. An organization is the customer/billing boundary and workspaces isolate keys, data/model policy, limits, membership and usage.
 
-Creating an organization atomically creates a Default workspace and owner memberships. PostgreSQL owns the organization-level append-only credit ledger. The gateway depends internally only on Redis, which holds versioned organization/workspace/key/config projections, atomic reservations, nested limits, low-credit concurrency state, and Redis Streams billing events. A Node worker projects committed PostgreSQL changes to Redis, consumes gateway events into PostgreSQL idempotently, and continuously reconciles both views.
+The model surface has two lanes. Curated direct IDs (`openai/...`, `anthropic/...`, `google/...`) preserve exact provider/model identity so an existing workload can often move by changing only base URL/key. First-party `grad/<effort>/<speed>` products run only on our inference; effort is `low|medium|high|max`, speed is `flex|standard|fast|turbo`, and the default is `grad/medium/standard`. There are no customer provider arrays or hidden moves from direct traffic to Grad.
+
+Product Intelligence retains bounded encrypted request/response/tool traces by default for history, workload analytics, replay and Grad migration recommendations. Private/No Retention is a workspace or stricter request mode. Retention is not training consent. Recommendations move through metadata opportunity, replay candidate, evaluator/shadow verified and live-canary ready; the customer explicitly starts experiments and performs the final model change.
+
+Creating an organization atomically creates a hidden Default workspace and owner memberships. PostgreSQL owns the ledger plus model/release, authorization, trace-registry/tombstone and workload/experiment control state. Private S3 stores encrypted trace payloads. ClickHouse Cloud stores only a content-free, replayable analytical projection used for trace lists/charts/workload/model/evaluation summaries. The gateway depends internally only on Redis for versioned policy/catalog/release/price, atomic reservations/limits and separate billing/trace streams. Workers project/reconcile money, drain encrypted traces, project analytics, enforce retention/delete and derive recommendations.
 
 ## Non-negotiable behavior
 
@@ -14,8 +18,14 @@ Creating an organization atomically creates a Default workspace and owner member
 - Insufficient organization credit returns `402 insufficient_credits`. Low organization credit activates an organization-wide in-flight cap in addition to workspace/key caps; excess requests return `429 low_balance_concurrency_limit`.
 - Redis failure before admission is fail-closed. PostgreSQL is not queried by the gateway.
 - Settlement and stream consumption are idempotent. PostgreSQL ledger corrections are append-only.
-- Internal TS/Rust contracts are Protobuf-generated and checked for drift. External OpenAI/Anthropic JSON behavior is fixture-tested separately.
+- Internal TS/Rust contracts are Protobuf-generated and checked for drift. External OpenAI/Anthropic/Google JSON/stream behavior is fixture-tested separately.
 - Billing and authorization logic require PBT state machines in fast-check and proptest, with seeds/replay artifacts emitted by CI.
+- Direct requests never cross provider/model/version. Grad requests never leave owned inference or change effort/speed; capacity fails early instead of silently downgrading.
+- Unsupported capability/data-policy/context behavior fails before spend. Every provider model and Grad cell requires scope-matched qualification and immutable fixed-price release.
+- Eligible no-usable-output requests receive exactly one append-only customer sell credit; provider buy evidence remains intact.
+- No-retain payload never reaches Redis/S3; Product Intelligence ciphertext never falls back to plaintext. Trace load cannot starve billing events.
+- ClickHouse never receives raw content and never becomes auth/ledger/retention truth. Hono scopes every analytical query; PostgreSQL tombstones/key revocation deny detail before S3/ClickHouse cleanup converges; ClickHouse outage can delay analytics only.
+- No recommendation/experiment state can automatically rewrite the customer's requested model.
 
 ## Implementation order
 
@@ -24,21 +34,25 @@ Creating an organization atomically creates a Default workspace and owner member
 3. Implement Vite/shadcn UI, Hono/tRPC API, Better Auth sessions, and organization/workspace authorization.
 4. Implement Stripe top-ups, transactional outbox, Redis projector, stream consumer, and reconciliation.
 5. Implement Rust Redis admission/settlement scripts and state-machine tests before provider dispatch.
-6. Add OpenAI Chat Completions and Anthropic Messages ingress plus generic provider adapters and streaming conformance.
-7. Add official-client protected CI smoke tests and operational dashboards.
-8. Extend the completed documentation spike into measured OpenRouter/provider conformance, soak, economics, and then human-approved onboarding.
+6. Add Chat Completions, Anthropic Messages, stateless Responses and Embeddings with explicit capability conformance.
+7. Add curated OpenAI/Anthropic/Google identities/aliases and Grad effort/speed qualification/releases on owned inference.
+8. Add encrypted Product Intelligence trace ingestion/S3 retention, content-free ClickHouse projection/query/delete/rebuild, Private/No Retention and workload/recommendation/experiment state machines.
+9. Complete provider-migration and Grad quickstarts, five-screen workload UI, protected real-provider/owned CI and operations.
+10. Run measured OpenRouter provider conformance/soak/economics for selected Grad supply, then use a human-approved onboarding checkpoint.
 
 Detailed ownership and acceptance checks are in `docs/DELIVERY_PLAN.md`.
 
 ## Infrastructure decision
 
-The AWS/EKS plan is now specified under `../infra/`. Each environment has an isolated AWS account/VPC/private EKS cluster. The Vite console is served by S3/CloudFront; separate ALBs front the Hono API and Rust gateway. Aurora PostgreSQL Serverless v2 owns financial/configuration state. Production admission targets node-based ElastiCache Valkey 9 synchronous durability, but launch is blocked until exact command, failover, no-acknowledged-loss, memory-pressure, and latency qualification passes; serverless Valkey is limited to disposable environments until equivalent evidence exists.
+The AWS/EKS plan is specified under `../infra/`. Each environment has an isolated account/VPC/private EKS cluster. Vite is served by S3/CloudFront; separate ALBs front Hono and the gateway. Aurora owns financial/configuration/trace authority; a purpose-separated KMS S3 bucket owns encrypted trace payloads; ClickHouse Cloud is reached through PrivateLink for derived trace analytics; financial, trace, analytics-projector and recommendation workers have distinct identities. Production admission targets qualified node-based ElastiCache Valkey 9; billing-stream headroom is protected from the separate trace stream. Serverless Valkey remains limited to disposable environments until equivalent durability evidence exists.
 
 Terraform modules plus Terragrunt implicit stacks use versioned/KMS S3 state with native lock files. Argo CD pulls Helm desired state, KEDA scales pods, Karpenter supplies bounded nodes, and GitHub OIDC avoids static AWS credentials. Docker Compose and mprocs/dekit sit behind a Rust `grad` CLI so agents can run and verify the stack without owner-local execution. See `../infra/docs/DELIVERY_PLAN.md` and `../docs/decisions/0001-aws-eks-platform.md`.
 
-## OpenRouter spike result
+## OpenRouter feature decision
 
-Official public docs show one shared API surface with organization/account-level credits and billing, plus workspaces that independently scope API keys, members, routing, guardrails, BYOK, presets, observability, and interval budgets. The Default workspace contains the simple-path setup and organization members automatically receive access. Our design adopts that logical hierarchy but uses stricter atomic maximum-cost reservations so in-flight requests cannot overrun organization credit or workspace/key budgets. See `docs/OPENROUTER_SPIKE.md`.
+Current official public docs describe a much broader surface than routing alone: Chat/Messages/Responses/embeddings/media, provider and cross-model routing, Auto/Pareto/variant routers, workspaces/budgets/BYOK, privacy/logging/caching, plugins/hosted tools, agent SDKs, administration and provider onboarding. The repository now classifies that complete surface as keep, simplify, defer, reject, or operator-only. We retain protocol, reliability, billing and privacy fundamentals while removing marketplace and plugin/agent complexity from first use. See `docs/OPENROUTER_FEATURE_DECISIONS.md` and [ADR-0002](../docs/decisions/0002-opinionated-inference-product.md).
+
+ADR-0003 and `docs/MODEL_LANES_AND_MIGRATION.md` supersede ADR-0002's five-product names and no-payload-retention boundary. ADR-0004 and `docs/CLICKHOUSE_TRACE_ANALYTICS_DECISION.md` define the ClickHouse/PostgreSQL/S3 split. The curated-not-marketplace, strict capability, fixed-price release, prepaid and downstream-distribution decisions remain.
 
 ## Environment names planned
 
@@ -52,6 +66,18 @@ OPENAI_API_KEY
 OPENAI_E2E_MODEL
 ANTHROPIC_API_KEY
 ANTHROPIC_E2E_MODEL
+GOOGLE_API_KEY
+GOOGLE_E2E_MODEL
+TRACE_BUCKET
+TRACE_KMS_KEY_ARN
+TRACE_RETENTION_DAYS
+TRACE_ACCESS_SIGNING_PRIVATE_KEY
+TRACE_ACCESS_VERIFY_PUBLIC_KEY
+CLICKHOUSE_URL
+CLICKHOUSE_INSERT_USER
+CLICKHOUSE_INSERT_PASSWORD
+CLICKHOUSE_QUERY_USER
+CLICKHOUSE_QUERY_PASSWORD
 PBT_SEED
 ```
 
@@ -63,6 +89,8 @@ Secrets belong in deployment/GitHub environments only. Provider smoke tests must
 - Completed packet: `tasks/done/2026-07-13-gateway-architecture-revision.md`
 - GitHub issue #1 is closed. GitHub Project mutation was unavailable to the current fine-grained token; the local scope has been released.
 - Infrastructure plan issue: https://github.com/joshsny/gradiated/issues/2; completed packet: `tasks/done/2026-07-13-infrastructure-platform-plan.md`.
+- Opinionated product strategy issue: https://github.com/joshsny/gradiated/issues/3 is closed; completed packet: `tasks/done/2026-07-13-opinionated-openrouter-feature-strategy.md`.
+- Provider/Grad/trace/ClickHouse architecture: https://github.com/joshsny/gradiated/issues/4 is closed; completed packet: `tasks/done/2026-07-13-grad-effort-speed-provider-lanes.md`.
 - No code has been implemented and no provider request has been made in this planning task.
 
 ## Resume
@@ -70,6 +98,9 @@ Secrets belong in deployment/GitHub environments only. Provider smoke tests must
 ```sh
 python3 tools/devex/context.py
 sed -n '1,260p' product/docs/DELIVERY_PLAN.md
+sed -n '1,360p' product/docs/OPENROUTER_FEATURE_DECISIONS.md
+sed -n '1,420p' product/docs/MODEL_LANES_AND_MIGRATION.md
+sed -n '1,420p' product/docs/CLICKHOUSE_TRACE_ANALYTICS_DECISION.md
 sed -n '1,320p' infra/docs/DELIVERY_PLAN.md
 ```
 

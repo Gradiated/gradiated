@@ -7,23 +7,37 @@ flowchart LR
   Browser[Vite React console] -->|HTTPS /trpc| API[Hono control API]
   Browser -->|Stripe redirect| Stripe[Stripe Checkout]
   API --> PG[(PostgreSQL)]
+  API -->|typed tenant-scoped queries| CH[(ClickHouse Cloud analytics)]
+  API -->|short-lived scoped grant| TraceAccess[Trace access service]
+  TraceAccess --> Traces[(Private S3 trace objects)]
+  TraceAccess --> PG
   API --> Stripe
   Stripe -->|signed webhook| API
   API -->|transactional outbox| PG
   Worker[Control worker] --> PG
   Worker --> Redis[(Durable Redis: org credit + workspace policy)]
   Redis --> Worker
+  Worker --> Traces
+  Projector[Trace analytics projector] --> PG
+  Projector --> CH
+  TraceProcessor[Trace + recommendation processor] --> Traces
+  TraceProcessor --> CH
+  TraceProcessor --> PG
+  TraceProcessor --> Owned[Owned inference evaluation]
+  ModelOps[Model qualification + route release jobs] --> PG
+  ModelOps --> Providers
 
   Clients[OpenAI / Anthropic SDKs] --> Gateway[Rust gateway]
   External[External gateways] --> Gateway
   Gateway --> Redis
-  Gateway --> Providers[Owned and upstream inference]
+  Gateway --> Providers[Curated direct providers]
+  Gateway --> Owned
 
   classDef hot fill:#fee2e2,stroke:#991b1b;
   class Gateway,Redis hot;
 ```
 
-The red path is the serving hot path. Its only internal network dependency is Redis. The gateway does not call the API, worker, PostgreSQL, Stripe, an external queue, or object storage. Provider calls are outbound inference dependencies, not control-plane dependencies.
+The red path is the serving hot path. Its only internal network dependency is Redis. The gateway does not call the API, worker, PostgreSQL, ClickHouse, Stripe, an external queue, or object storage. Provider calls are outbound inference dependencies, not control-plane dependencies.
 
 ## TypeScript control plane
 
@@ -58,8 +72,11 @@ The Node worker owns asynchronous control-plane operations:
 - Redis organization credit and workspace/key policy projection;
 - Redis Stream usage consumption and PostgreSQL posting;
 - periodic ledger-to-Redis reconciliation and projection rebuild;
+- PostgreSQL usage/outbox to ClickHouse analytical projection with idempotent batching, lag checkpoints and rebuild;
 - top-up/refund/chargeback follow-up and receipts;
-- alerts, email, and retention jobs.
+- alerts, email, and retention jobs;
+- model-catalog ingestion, capability conformance, qualification evidence, immutable route-release publication, deterministic canary assignment, and automatic rollback signals;
+- encrypted trace-stream drain to S3, retention/delete/export, workload-profile derivation, recommendation jobs, and customer-approved migration experiment orchestration.
 
 Worker handlers are idempotent. A job/event is acknowledged only after its PostgreSQL transaction commits.
 
@@ -72,10 +89,12 @@ Use a Cargo workspace with Tokio, Axum, Tower, Reqwest, tracing/OpenTelemetry, r
 - `gateway-server`: listener, middleware, request lifecycle, shutdown;
 - `gateway-protocol-openai`: ingress/egress schemas and SSE;
 - `gateway-protocol-anthropic`: Messages schemas and event stream;
-- `gateway-core`: canonical internal request, routing, attempts, errors;
+- `gateway-protocol-google`: versioned GenerateContent schemas/streaming and official SDK fixtures;
+- `gateway-core`: canonical internal request, provider/model or Grad effort/speed identity, capability planning, route-release resolution, attempts, errors;
 - `gateway-admission`: Redis functions/scripts and typed state transitions;
 - `gateway-provider`: adapter trait and generic streaming transport;
-- `gateway-provider-{openai,anthropic,openrouter,owned}`;
+- `gateway-provider-{openai,anthropic,google,owned}` plus operator-only OpenRouter/generic adapters;
+- `gateway-trace`: data-mode enforcement, credential stripping, bounded trace serialization, public-key encryption and Redis trace events;
 - `gateway-contracts`: generated Prost messages;
 - `gateway-testkit`: fake upstreams, Redis harness, generated traces.
 
@@ -86,16 +105,61 @@ Keep public protocol structs separate from internal Protobuf messages. Exact JSO
 ```text
 parse bounded headers/body
   -> hash and resolve key to organization/workspace in Redis
-  -> validate organization/workspace/key/model/config versions
-  -> estimate maximum sell cost
+  -> derive capability/data-policy/native-tier requirements
+  -> resolve provider-qualified concrete model or Grad effort/speed release
+  -> select eligible targets from the Redis route projection
+  -> validate organization/workspace/key/model/config/price versions
+  -> estimate maximum fixed customer sell exposure for the bounded request
   -> atomic reserve + low-balance concurrency admission + XADD
-  -> select route and call provider
+  -> apply deterministic canary/session pin and choose a healthy same-lane target
+  -> call exact curated provider/model or owned Grad inference
   -> stream while collecting metered usage
   -> atomic settle/release + decrement in-flight + XADD
   -> finish response
+  -> asynchronously append bounded encrypted trace event when Product Intelligence permits
 ```
 
-Provider retry/fallback consumes the same organization-funded, workspace-attributed reservation. The reserve must cover the bounded attempt policy or be atomically increased before another cost-bearing attempt. Cancellation settles known usage and marks uncertainty explicitly; it never blindly refunds the full reserve.
+Provider retry/fallback stays attached to the same organization-funded, workspace-attributed reservation, route release, and customer price. A direct request may retry only the same concrete model/version within the named provider. A Grad request may retry only owned endpoints qualified for that exact effort/speed release; it never falls back to a frontier provider or slower lane. Failed-attempt buy cost is ours and is never added to customer sell usage. Only transient connection, capacity, rate-limit, or server failures before usable output are retryable. Context, capability, authentication, moderation/refusal, and customer-policy errors are returned rather than hidden. Cancellation settles known customer-billable usage and marks uncertainty explicitly. If no usable output was delivered, the worker posts exactly one eligible failed-request sell-credit correction.
+
+### Model lanes and route-release domain
+
+The customer model surface has explicit provider and first-party identities while endpoint machinery remains hidden:
+
+- `ProviderDefinition` is one curated direct provider namespace (`openai`, `anthropic`, `google`) with adapter/data-policy/lifecycle status. Adding it is an operator release, not customer configuration.
+- `ModelDefinition` is a provider-qualified concrete model/version or owned concrete checkpoint with exact modalities, context/output limits, parameter support, lifecycle, alias set and public sell price.
+- `ModelProduct` is a canonical `grad/<effort>/<speed>` identity. Effort is `low|medium|high|max`; speed is `flex|standard|fast|turbo`; the active-cell set is catalog-driven.
+- `ProviderEndpoint` is an operator-owned endpoint for one exact provider/model or Grad release, with region, runtime/quantization, credentials reference, capacity, buy price, retention/training policy and measured health.
+- `QualificationEvidence` records scope-matched protocol, quality, tool, structured-output, modality, privacy, latency, throughput, and economics evidence. Evidence is never transferred to a different model, endpoint, region, runtime, or quantization without a new qualification.
+- `RouteRelease` is immutable. For direct models it permits only same-provider/same-version endpoints. For Grad it freezes effort/speed, owned checkpoint/runtime/hardware, capability/SLO/queue envelope, bounded attempts, fixed prices, rollout and rollback target.
+- `RouteCandidate` binds a release to a concrete model and endpoint class with its qualification IDs and constraints.
+- `RouteRollout` defines deterministic organization/workspace/request buckets. Publishing or rolling back creates an audited control-plane event and a versioned Redis projection.
+
+The control worker builds and publishes releases from PostgreSQL. The Rust gateway performs request-time filtering and selection locally from Redis plus bounded in-process endpoint-health/circuit-breaker state; it never calls the control plane. Bare aliases resolve only when unambiguous. A direct ID is a hard provider/model/version pin unless the request carries a valid customer-approved migration-experiment header bound to that exact source/workload; that distinct contract selects baseline or Grad deterministically before admission and discloses it. A Grad ID may switch only among owned candidates qualified for that effort/speed product.
+
+Owned inference is not a hidden preference inside direct-provider requests: customers reach it by selecting `grad/<effort>/<speed>` or an exposed Grad checkpoint. Each response and usage row identifies the requested canonical identity, actual provider/model or owned release, route release and data mode. This makes direct traffic a trustworthy migration baseline instead of secretly routing it to us.
+
+### Release and rollback flow
+
+1. ModelOps records source-dated endpoint metadata and runs deterministic conformance plus bounded quality/performance evaluations.
+2. A release proposal freezes candidate evidence, customer price, attempt budget, compatibility matrix, and rollback target.
+3. Review publishes an immutable release to PostgreSQL/outbox; the worker projects it to Redis.
+4. The gateway assigns deterministic canary buckets and session pins. The same session remains on the same candidate while eligible and healthy.
+5. SLO, error, tool/schema, data-policy, margin, or failed-request-credit thresholds halt rollout or atomically point the canonical model head to the prior release.
+6. Existing request reservations settle against their admitted release and price version; rollback never changes an in-flight charge.
+
+### Trace and migration architecture
+
+Product Intelligence is the default workspace data mode. The gateway strips credentials/non-allowlisted headers, bounds the record, encrypts it with a random symmetric data key, wraps that key to a rotating asymmetric public trace-ingest key from Redis, and asynchronously appends ciphertext to an organization-tagged trace stream after terminal response/settlement. This preserves Redis as its only internal dependency and keeps capture off customer latency. Failure records a safe capture status and alerts but does not fail or unbill completed inference.
+
+The control worker drains ciphertext to a private S3 bucket and writes authorization, object reference, per-trace wrapped-key, retention and tombstone state to PostgreSQL. Separate KMS-backed trace/recommendation roles can decrypt; the gateway and ordinary API role cannot. A small internal trace-access service accepts a signed, single-object, workspace/action/expiry-bound grant minted only after control-plane authz/recent-auth checks. It rechecks tombstone/retention/key state, fetches and decrypts one trace, streams it without caching, and writes an audit event. It never lists a bucket or issues reusable object URLs. Key destruction, S3 lifecycle/version deletion and PostgreSQL tombstones enforce bounded retention.
+
+ClickHouse Cloud stores the replayable analytical projection used for trace lists, charts, model/workload summaries and evaluation facts. Its tables contain only allowlisted typed metadata, copied settled usage/cost, latency, derived features and aggregates—never raw customer payloads or arbitrary tags. The financial worker commits authoritative usage and an analytics outbox record in the same PostgreSQL transaction; a separately scalable projector performs acknowledged idempotent batches into ClickHouse. A ClickHouse outage therefore produces visible dashboard lag while serving, ledger posting and S3 payload persistence continue.
+
+Hono authorizes organization/workspace scope in PostgreSQL and maps a closed filter grammar to parameterized, time/row/byte-bounded ClickHouse queries. Browser code never sees ClickHouse credentials or SQL. Trace detail follows the separate PostgreSQL grant and S3 path. Delete first tombstones/revokes the per-trace key in PostgreSQL, then deletes every S3 version and the ClickHouse row; APIs hide tombstoned/expired rows while managed merge/backup cleanup converges. The complete store/schema/restore contract is [ClickHouse trace analytics decision](CLICKHOUSE_TRACE_ANALYTICS_DECISION.md).
+
+The trace processor creates workspace-local profiles/candidates and runs unbilled offline replay. Recommendations advance through opportunity, replay candidate, evaluator/shadow verified, and live-canary ready. Shadow/live experiments require explicit budgets, buckets and stops. A live canary affects only requests carrying its explicit header; no control-plane job intercepts ordinary direct traffic or mutates the customer's model automatically.
+
+Private/No Retention is workspace policy or a stricter per-request override. It suppresses payload trace creation before Redis and requires an eligible endpoint data policy. Minimum financial/security metadata may still project to ClickHouse with `payload_state=no_retain`, so customers retain usage/cost/latency analytics without content history. Retention for product features is not permission to train global models; training requires separate consent and architecture.
 
 ### Redis access
 
@@ -107,20 +171,31 @@ The gateway may keep a bounded in-process read cache for public model metadata a
 
 ### PostgreSQL
 
-Authoritative for users, sessions, organizations, organization memberships, workspaces, workspace memberships, invitations, API-key metadata, routing/model config, workspace/key budgets, immutable price books, organization top-up intents, payment events, organization ledger accounts/transactions/entries, usage charges, audits, and outbox records.
+Authoritative for users, sessions, organizations/memberships, workspaces/memberships, invitations, API-key metadata, provider/model/product definitions, alias bindings, endpoint/qualification evidence, route releases/rollouts, data/retention policy, trace registry/wrapped-key/tombstone state, workload profiles, migration candidates/recommendations/experiments, workspace model policy, budgets, immutable price books, top-ups/payments, ledger, usage/corrections, audits, analytical projection checkpoints, and outbox records. Raw trace payloads live encrypted in S3; high-volume trace analytics are a derived ClickHouse projection.
 
 Financial transactions use serializable or explicitly locked organization account rows, unique idempotency keys, balanced entries, and checked integer arithmetic. Workspace/key windows are spend caps and attribution, not funded wallets. No balance is derived from a mutable decimal cache alone.
+
+### ClickHouse Cloud
+
+Derived and rebuildable for request/attempt/evaluation facts plus bounded workspace/model rollups. It is optimized for user-facing time-series/filter/percentile queries and workload intelligence, but owns no authorization, money, retention policy or raw payload. Separate insert, read-only, schema and deletion identities follow least privilege. Every customer query is generated server-side with mandatory organization/workspace/time predicates; every row has a retention deadline and content-free schema.
+
+Projection disagreement is an incident and a rebuild input, never a reason to alter PostgreSQL financial facts. Managed TTL/lightweight deletion is asynchronous, so PostgreSQL tombstones and key revocation deny access immediately and restore procedures replay tombstones before enabling reads.
+
+### Private S3 traces
+
+Stores compressed ciphertext only, under an opaque object reference and purpose-separated KMS/key/access roles. PostgreSQL—not the object key or bucket prefix—decides which actor can request one payload. Per-trace wrapped-key destruction, all-version deletion and lifecycle deadlines implement cryptographic and storage cleanup. S3 is payload custody/replay input, not the interactive analytics index.
 
 ### Redis
 
 Redis is simultaneously:
 
-- versioned serving projection for organization/workspace/key/model/price policy;
+- versioned serving projection for organization/workspace/key policy plus model catalog, route releases, target eligibility, and prices;
 - atomic organization spendable balance, nested active reservations, budget windows, and concurrency state;
 - reservation lease index;
-- Redis Streams transport for reservation/settlement/diagnostic events.
+- Redis Streams transport for reservation/settlement/diagnostic events;
+- separate bounded encrypted trace-ingest streams; billing capacity and admission gates take precedence.
 
-Production Redis is not a disposable cache. Require replication across failure domains, AOF persistence (`appendfsync everysec` or stronger), backups, tested restore, memory headroom, `noeviction`, TLS, ACLs, and stream-lag alerts. The initial deployment uses one write region per workspace; global active-active money mutation is out of scope.
+Production Redis is not a disposable cache. Require replication across failure domains, AOF persistence (`appendfsync everysec` or stronger), backups, tested restore, memory headroom, `noeviction`, TLS, ACLs, and stream-lag alerts. The initial deployment uses one financial write region per organization; global active-active money mutation is out of scope.
 
 ## Top-up and projection flow
 
@@ -163,12 +238,15 @@ Seed production uses:
 
 - static/CDN Vite deployment;
 - independently autoscaled Node API and worker containers;
+- independently scalable trace-access/trace/recommendation workers and bounded ModelOps jobs;
 - independently autoscaled regional Rust gateway containers;
 - managed PostgreSQL with point-in-time recovery;
+- managed ClickHouse Cloud reached privately for replayable trace analytics;
 - managed Redis meeting persistence/no-eviction requirements;
 - managed secret storage, KMS, WAF/load balancer, and OpenTelemetry backend.
+- private versioned/lifecycle-managed S3 trace storage distinct from public Vite assets and Terraform state.
 
-Docker Compose and CI service containers run PostgreSQL, durable Redis configuration, Stripe webhook fixtures, and deterministic fake providers. Real provider credentials exist only in a protected GitHub environment.
+Docker Compose and CI service containers run PostgreSQL, ClickHouse, durable Redis configuration, Stripe webhook fixtures, and deterministic fake providers. Real provider and ClickHouse Cloud credentials exist only in protected environments.
 
 ## Failure policy
 
@@ -177,9 +255,20 @@ Docker Compose and CI service containers run PostgreSQL, durable Redis configura
 | Redis unavailable before admission | Return retryable 503; do not call a provider. |
 | Atomic script/function or stream append fails | Roll back/no-op atomically and do not dispatch. |
 | PostgreSQL/API unavailable | Existing projected organizations/workspaces continue through Redis; control-plane mutations/top-ups wait. |
+| ClickHouse unavailable | Serving, financial posting and S3 trace persistence continue; analytics projector retries and UI shows delayed data. |
+| ClickHouse row/tombstone disagreement | PostgreSQL authorization wins; hide/revoke immediately, enqueue deletion/rebuild and alert. Never restore payload access from ClickHouse. |
 | Worker unavailable | Redis continues bounded operation; stream lag alerts and eventually admission is restricted before retention/headroom risk. |
 | Provider fails before measurable usage | Settle/release according to adapter evidence; bounded fallback only within reserve. |
 | Provider fails after partial usage | Settle known or conservatively estimated charge and mark evidence quality. |
+| Unsupported capability/parameter | Return stable 400 before admission or dispatch; never silently drop or transform it. |
+| Pinned concrete model unavailable | Return retryable model-unavailable error; never switch model family. |
+| Managed release has no eligible target | Return route-unavailable with retry guidance and alert ModelOps; do not weaken privacy/capability policy. |
+| Direct provider/model unavailable | Return model-unavailable or same-provider capacity error; never cross provider/model/version. |
+| Grad speed lane unavailable | Return early typed 429/503; never serve a slower lane under the requested ID. |
+| Trace capture unavailable/backpressured | Complete inference/billing, mark capture skipped, protect billing-stream headroom, and alert; never persist plaintext fallback. |
+| Trace deletion/retention job behind | Stop new Product Intelligence capture for affected scope if the compliance deadline is at risk and page operators. |
+| Migration evaluator/canary fails | Halt experiment, retain evidence, preserve original requested model; never auto-switch. |
+| No usable output delivered | Settle provider evidence, then post exactly one eligible customer sell-credit correction under the anti-abuse policy. |
 | Actual cost exceeds reserve | Atomically debit remaining spendable credit; if insufficient, record debt and immediately restrict/freeze. |
 | Ledger/projection mismatch | Enter organization `reconciling`; stop new cost-bearing requests if tolerance or age is exceeded; repair from ledger. |
 | Redis failover loses acknowledged writes | Detect epoch/sequence gap, freeze affected organizations, replay streams/outbox, and reconcile before reopening. |

@@ -18,6 +18,13 @@ Evidence labels follow the repository contract: vendor-reported, analytical, der
 | Internal shared contracts use Protobuf/Buf; public inference uses OpenAPI/JSON fixtures. | Protobuf gives TS/Rust generation and compatibility checks, while public JSON/SSE presence/union semantics need exact wire fixtures. | Vendor-reported tooling plus analytical. |
 | PBT is mandatory in TS and Rust, with portable minimized traces. | Billing/admission are concurrent state machines; generated sequences and shrinking expose edge cases agents will miss with examples alone. | User requirement; vendor-reported framework capabilities; analytical test design. |
 | Real providers run only in protected CI; fake official-client tests run on every PR. | Verifies live compatibility without exposing secrets to untrusted code or making CI expensive/nondeterministic. | Analytical security/test decision. |
+| The product has curated direct provider/model and first-party Grad lanes, not a marketplace. | Exact OpenAI/Anthropic/Google identities make migration easy; `grad/<effort>/<speed>` makes differentiated owned inference explicit. | User decision plus analytical product design. |
+| Direct IDs never cross provider/model/version; Grad IDs never leave owned inference or change effort/speed. | Trustworthy migration requires the requested identity to mean what it says. | User strategy plus analytical reliability decision. |
+| Grad uses four effort × four speed identities with immutable fixed-price releases. | Separates inference compute/quality from serving latency/capacity while preserving auditable pricing/change control. | User decision plus derived architecture. |
+| OpenRouter upstream is operator-only; OpenRouter downstream lists only owned/differentiated supply. | Avoids rebuilding a broad marketplace, circular routing and undifferentiated resale while retaining distribution. | Current provider docs plus analytical commercial decision. |
+| Product Intelligence retains encrypted bounded traces by default; Private/No Retention is an opt-in workspace/request mode. | Trace-derived history, analytics and migration recommendations are core product value; customers retain explicit control. | User decision plus derived security architecture. |
+| Trace retention does not authorize global model training; migration never auto-switches traffic. | Product features and training/traffic control are materially different permissions. | Analytical trust boundary. |
+| ClickHouse Cloud is the content-free trace analytics projection; PostgreSQL owns auth/control/money and S3 owns encrypted payloads. | Trace analytics needs high-cardinality interactive scans, while managed merge/backup deletion behavior makes ClickHouse unsuitable as the sole raw-content custodian. | Current ClickHouse vendor docs plus analytical architecture; see `CLICKHOUSE_TRACE_ANALYTICS_DECISION.md`. |
 
 ## Source-backed framework facts
 
@@ -28,15 +35,23 @@ Evidence labels follow the repository contract: vendor-reported, analytical, der
 - fast-check supports command-based model testing, scheduled async execution, shrinking, and replay data: [fast-check model-based testing](https://fast-check.dev/docs/advanced/model-based-testing/). Vendor-reported.
 - proptest state-machine exposes reference/SUT transitions, invariants, shrinking, and timeouts: [proptest state machines](https://proptest-rs.github.io/proptest/proptest/state-machine.html). Vendor-reported.
 - OpenRouter currently publishes provider model metadata and routing-performance behavior: [provider integration](https://openrouter.ai/docs/guides/community/for-providers). Vendor-reported and time-sensitive.
+- OpenRouter's current documentation index spans protocols, modalities, routing variants, workspaces/budgets, privacy/logging, plugins/tools, SDKs and provider onboarding: [complete docs index](https://openrouter.ai/docs/llms.txt). Vendor-reported and time-sensitive; the grouped inventory is in `OPENROUTER_FEATURE_DECISIONS.md`.
 - OpenAI and Anthropic publish official TypeScript SDKs and changing model catalogs: [OpenAI SDK](https://github.com/openai/openai-node), [OpenAI models](https://developers.openai.com/api/docs/models/gpt), [Anthropic SDK](https://github.com/anthropics/anthropic-sdk-typescript), [Anthropic model choice](https://platform.claude.com/docs/en/about-claude/models/choosing-a-model). Vendor-reported and time-sensitive.
+- Google publishes partner/gateway guidance distinguishing native and OpenAI-compatible integration paths: [Gemini partner integration](https://ai.google.dev/gemini-api/docs/partner-integration). Vendor-reported and time-sensitive.
+- ClickHouse documents [PrivateLink connectivity](https://clickhouse.com/docs/cloud/security/connectivity/private-networking), [encryption/TDE/CMEK](https://clickhouse.com/docs/cloud/security/cmek), [merge-driven TTL](https://clickhouse.com/docs/guides/developer/ttl), [lightweight-delete physical-delay behavior](https://clickhouse.com/docs/sql-reference/statements/delete), and [Cloud backups](https://clickhouse.com/docs/cloud/manage/backups/overview). Vendor-reported and time-sensitive; the dated synthesis is `CLICKHOUSE_TRACE_ANALYTICS_DECISION.md`.
 
 ## Falsifiable architecture hypotheses
 
 1. A single durable Redis dependency can keep p95 gateway overhead below 25 ms while atomically reserving organization credit, nested workspace/key limits, leasing, and appending an event. Measure with real Redis and representative cross-workspace concurrency; do not infer from in-memory tests.
 2. `appendfsync everysec` plus replication and fencing gives an acceptable acknowledged-write loss envelope when coupled with reconciliation. Validate managed-service failover and restore; change persistence/architecture if loss exceeds risk tolerance.
 3. Conservative max-cost reservation can cover supported provider behavior without making small balances unusable. Measure reserve utilization and overage frequency per model/protocol.
-4. PostgreSQL plus Redis Streams is sufficient at seed volume. Track posting lag, stream memory, reconciliation time, and write load; introduce a separate durable bus/analytics store only outside the gateway path when thresholds are measured.
+4. PostgreSQL plus Redis Streams is sufficient for authoritative posting at seed volume, with ClickHouse outside the gateway path as a derived analytical projection. Track posting/projection lag, stream memory, reconciliation time, query load and Cloud cost; introduce a separate durable bus only when thresholds are measured.
 5. Protocol compatibility and owned-model economics are enough for external gateway distribution. Test against source-dated conformance and a bounded soak before application.
+6. Four effort and four speed labels are understandable and operationally monotonic. Measure selection/support, task quality by effort and TTFT/throughput/queue distributions by speed; hide cells that do not differentiate.
+7. Curated direct-provider traffic can retain positive margin and produce credible Grad migration candidates. Measure workload retention, support cost, recommendation precision and experiment conversion per provider/model.
+8. Default Product Intelligence retention creates more customer value than trust/activation cost. Measure opt-out/deletion, trace-feature use, recommendation conversion and security/support incidents.
+9. Trace-derived replay/evaluation can identify safe Grad candidates. Measure false recommendations, evaluator disagreement, canary rollback and quality regressions; never infer equivalence from metadata alone.
+10. ClickHouse Cloud improves trace UX/cost over Aurora-only reads at seed volume. Measure realistic tenant-filtered query latency/concurrency, ingestion/rebuild/delete behavior and monthly Cloud/PrivateLink cost; use the Aurora read model temporarily if it fails the ADR-0004 falsification gate.
 
 ## Known uncertainties
 
@@ -46,7 +61,11 @@ Evidence labels follow the repository contract: vendor-reported, analytical, der
 - Current cheapest real-smoke model IDs and SDK behavior will change; protected environment configuration must be reviewed monthly.
 - Provider-reported usage may arrive only at stream completion or be absent after failures; adapters need scope-matched conservative estimation evidence.
 - OpenRouter onboarding backlog, commercial terms, and acceptance are externally controlled.
-- A secondary analytics store may become necessary; no evidence yet justifies adding it to seed.
+- Public docs do not prove authenticated dashboard behavior or private provider terms; those require a human-owned onboarding checkpoint.
+- Grad effort/speed thresholds, speed monotonicity and representative quality workloads are unmeasured; no cell is launch-qualified yet.
+- Thirty-day default raw retention, deletion SLO and exact legal notices require security/legal review before launch.
+- Recommendation quality and the fraction of direct workloads that can move to Grad are unknown.
+- ClickHouse Cloud sizing, Enterprise TDE/CMEK cost, PrivateLink price/region support, and deletion/backup legal interpretation are unmeasured; ADR-0004 requires a bounded spike and preserves an Aurora-only launch fallback.
 
 ## Rejected alternatives
 
@@ -57,8 +76,15 @@ Evidence labels follow the repository contract: vendor-reported, analytical, der
 - Boolean-only low-credit flag: stale under concurrent spend; calculated post-reserve organization mode is safer.
 - Independently funded workspace wallets: create transfer/allocation complexity and stranded balances; hard workspace budgets against shared organization credit satisfy the current need.
 - Shared TypeScript-only schemas: does not provide idiomatic checked Rust generation or wire compatibility discipline.
-- Protobuf as the OpenAI/Anthropic public wire model: likely loses JSON field presence, unions, and streaming semantics.
+- Protobuf as the OpenAI/Anthropic/Google public wire model: likely loses JSON field presence, unions, and streaming semantics.
 - Examples-only billing tests: insufficient for duplicate, reorder, crash, race, and long command-sequence behavior.
+- An OpenRouter feature-for-feature clone: maximizes surface area before differentiated supply/revenue is proven and makes provider mechanics the customer problem.
+- OpenRouter as default upstream breadth: adds a marketplace hop and variable behavior without improving our owned inference differentiation.
+- Every provider/reseller and customer-configured provider weights/fallback arrays: increases support/identity risk and undermines a curated migration lane.
+- Silent parameter dropping, context transformation, response healing, or model-family fallback: apparent availability at the cost of correctness and auditability.
+- Hidden owned-inference preference for a direct provider request: makes migration untrustworthy; Grad adoption must be explicit and evidence-backed.
+- No payload retention by default: rejected by product direction because workload intelligence is core; retained traces require explicit controls and no-retain escape hatch instead.
+- Raw payloads in ClickHouse or ClickHouse as authorization/ledger truth: rejected because content custody, immediate revocation, merge-based physical deletion and analytical mutation behavior require the PostgreSQL/S3 split.
 
 ## Evidence update protocol
 

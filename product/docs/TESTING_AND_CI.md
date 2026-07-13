@@ -10,7 +10,7 @@ The product owner will not run this repository locally. Therefore the acceptance
 - `fast-check` for property and model-based state-machine tests.
 - Hono `app.request()` for transport tests without a listening socket.
 - Testing Library and MSW for components, hooks, and server-state failure modes.
-- Playwright for browser flows against built Vite assets, API, PostgreSQL, Redis, and Stripe fixtures.
+- Playwright for browser flows against built Vite assets, API, PostgreSQL, ClickHouse, Redis, S3 fixtures, and Stripe fixtures.
 - Testcontainers where process isolation is needed; CI service containers are acceptable when tests reset namespaces deterministically.
 
 ### Rust
@@ -34,7 +34,13 @@ The product owner will not run this repository locally. Therefore the acceptance
 | Streams/reconciliation | redelivery, consumer crash, sequence gap, lag, rebuild, epoch change | posting once; stale events fenced; equality or closed state; no blind refund. |
 | Contracts | generated valid/invalid Protobuf values, additive unknown fields | TS/Rust encode/decode agreement; deterministic generation; compatibility. |
 | Protocols | valid support-subset JSON/SSE and malformed variants | lossless supported normalization; explicit unsupported rejection; terminal/event ordering. |
-| Routing | target health/weights/capabilities and bounded failures | deterministic seed; policy respected; cost never exceeds admitted attempt exposure. |
+| Model identity/routing | curated providers/models/aliases, Grad effort/speed releases, health, capability/data policy, prices, session/canary buckets and faults | bare alias resolves only when unique; direct pin never crosses provider/model/version; Grad never leaves owned inference or changes effort/speed; deterministic decision; fixed release price; no ineligible target. |
+| Route lifecycle | publish/canary/promote/halt/rollback/deprecate with stale/reordered projection commands | immutable release; deterministic rollout; stale head cannot win; in-flight request keeps admitted release/price; rollback restores a qualified head. |
+| Failed-request credit | pre-output/midstream/output-delivered failures, cancel, duplicate/reordered settle/correction, fraud eligibility | exactly one eligible reversal when no usable output; never double-credit; original usage remains immutable; provider buy evidence retained. |
+| Effort/speed | arbitrary qualified cells, measured distributions, capacity/queue faults and release changes | unavailable cells absent; no silent lane downgrade; speed and declared effort monotonicity gates hold within configured statistical tolerance or release is rejected. |
+| Trace policy | Product Intelligence/no-retain/request tightening, credentials, oversized payloads, encryption/key rotation, stream lag, delete/export/redelivery | no-retain emits no payload; credentials never captured; ciphertext only after gateway; billing headroom preserved; one trace/object identity; retention/delete completes or closes capture. |
+| Trace analytics | organization/workspace scopes, terminal usage versions, duplicate/reordered outbox delivery, retention/tombstones, restore, ClickHouse outage/backlog | one visible terminal fact; no content columns; result subset of authorized scope; expired/deleted content inaccessible during mutation lag; PostgreSQL reconciliation wins; projector failure never affects serving/billing/S3. |
+| Migration | workload grouping, evidence levels, replay/shadow/live-canary commands/headers, duplicate/reordered events, budgets and evaluator faults | no header means hard direct pin; invalid/mismatched header cannot enroll; source/candidate fixed; evidence cannot overstate; replay cannot charge; live canary is deterministic, disclosed and obeys experiment/billing caps; removing header preserves original traffic. |
 
 PBT complements examples: each bug found by a property receives a small example/regression fixture after shrinking. Do not encode exact framework implementation details as properties; test externally meaningful invariants.
 
@@ -52,6 +58,14 @@ Concurrency cases use explicit barriers/schedules rather than wall-clock sleeps:
 - organization refund projection versus workspace admissions;
 - stale projection version versus newer top-up;
 - stream claim/redelivery versus first consumer commit.
+- route-head rollback versus request admission and settlement;
+- session-pinned candidate health change versus concurrent managed requests;
+- duplicate failed-request correction versus reconciliation.
+- trace append/backpressure versus settlement and billing stream retention;
+- duplicate/reordered ClickHouse projection versus tombstone/retention and outbox checkpoint;
+- no-retain policy change versus in-flight capture and key rotation;
+- migration experiment cancel/stop versus concurrent canary admission;
+- direct-model alias activation/deprecation versus concurrent resolution.
 
 ## Seeds, shrinking, and replay
 
@@ -86,23 +100,31 @@ Shard by stable property suite, not random test file distribution, so failures r
 
 ### Always-on fake-provider job
 
-On every pull request, boot Redis, Rust gateway, and deterministic fake OpenAI/Anthropic upstreams. Run official `openai` and `@anthropic-ai/sdk` TypeScript clients with base URL pointed at the gateway. Cover:
+On every pull request, boot PostgreSQL, ClickHouse, Redis, S3-compatible storage, the Rust gateway, and deterministic fake OpenAI/Anthropic/Google/owned upstreams. Run official `openai`, `@anthropic-ai/sdk`, and `@google/genai` clients with base URL pointed at the gateway. Cover:
 
 - model list where client supports it;
 - non-stream and stream Chat Completions;
 - non-stream and stream Anthropic Messages;
+- native Google GenerateContent and streaming through the pinned supported API-version skin;
+- stateless non-stream and stream Responses with text, image fixture, tools and structured output where the pinned SDK exposes them;
+- scalar and batched Embeddings;
+- canonical OpenAI/Anthropic/Google model fixtures, bare unique aliases, ambiguous alias rejection, same-provider retry and cross-provider fault rejection;
+- representative `grad/low/flex`, `grad/medium/standard`, `grad/high/fast`, and `grad/max/turbo` cells, actual release disclosure, speed-capacity rejection, session stickiness and rollback;
+- Product Intelligence capture/decrypt fixture, ClickHouse fact/list/chart projection, credential/content-column exclusion, no-retain usage row with no object, deletion/tombstone convergence and trace/analytics backpressure that leaves billing correct;
+- workload recommendation evidence progression plus replay/shadow/live-canary stop with proof that no automatic model switch occurs;
 - 402, 429, key revocation, timeout, cancellation, malformed upstream, and duplicate settlement;
+- unsupported parameter/capability, context overflow, no eligible route, pinned-model outage and no-usable-output credit;
 - usage/ledger assertion after the worker posts events.
 
 No provider secret is present, including on forked/untrusted pull requests.
 
 ### Protected real-provider job
 
-On pushes to main, nightly schedule, and manual dispatch, use GitHub environment `provider-e2e` with encrypted `OPENAI_API_KEY` and `ANTHROPIC_API_KEY`. The same official clients point to the Rust gateway, which routes to the real providers.
+On pushes to main, nightly schedule, and manual dispatch, use GitHub environment `provider-e2e` with encrypted OpenAI, Anthropic and Google keys. The same official clients point to the Rust gateway, which routes to real curated providers and the protected owned test deployment.
 
-- Models are controlled by reviewed environment variables `OPENAI_E2E_MODEL` and `ANTHROPIC_E2E_MODEL`; choose the provider's current cheapest capable model and pin it in environment configuration.
+- Models are controlled by reviewed `OPENAI_E2E_MODEL`, `ANTHROPIC_E2E_MODEL`, `GOOGLE_E2E_MODEL`, and owned release variables; choose current cheapest capable models and pin environment configuration.
 - Prompt requests an exact tiny response; output cap is 8 tokens or the smallest supported value.
-- Run one non-stream and one stream request per provider, concurrency one, at most one network retry, five-minute job timeout.
+- Run one tiny compatible request for each enabled curated direct provider and one owned Grad cell, plus minimal Responses/Embeddings probes where supported; concurrency one, at most one network retry, five-minute job timeout.
 - A preflight allowlist rejects expensive models or high token limits.
 - Budget target is below $0.05 per run, with a monthly GitHub/environment and provider-account cap.
 - Log request IDs, model, status, schema assertions, metered units, and response hash only—never body or credentials.
@@ -118,6 +140,9 @@ devex + formatting
   ├── TypeScript typecheck/lint/unit/PBT
   ├── Rust fmt/clippy/nextest/PBT
   ├── integration: PostgreSQL + Redis + fake providers
+  ├── model/route qualification + release/canary/rollback
+  ├── trace encryption/retention + migration state machines
+  ├── ClickHouse projection/tenant-query/delete/restore properties
   ├── Vite build + Playwright
   └── fake official-client E2E
 
@@ -138,6 +163,8 @@ Pin action SHAs and tool versions. Use lockfiles and cached dependencies without
 | `cargo nextest run --workspace` | Rust unit/integration tests. |
 | `cargo test -p gateway-pbt` | bounded proptest state machines. |
 | `pnpm test:conformance` | public JSON/SSE fixtures against Rust gateway. |
+| `pnpm test:routes` | cross-language provider/model identity, Grad effort/speed, qualification, route and rollout properties. |
+| `pnpm test:traces` | trace policy/encryption/retention, ClickHouse projection/tenant isolation and workload/migration state-machine properties. |
 | `pnpm test:e2e:fake` | official clients through gateway/fakes. |
 | `pnpm test:e2e:providers` | protected minimal paid smoke only. |
 | `pnpm verify` | all required non-paid pull-request checks. |

@@ -1,31 +1,35 @@
 # Inference gateway product
 
-This workstream specifies a revenue-first inference product with two distribution paths sharing one serving system:
+This workstream specifies a revenue-first, curated inference product with two distribution paths sharing one serving system:
 
-1. customers send OpenAI- or Anthropic-compatible traffic to our gateway and prepay an organization credit pool;
+1. customers send OpenAI-, Anthropic-, or Google-compatible traffic to our gateway and prepay an organization credit pool;
 2. external gateways such as OpenRouter list our models and send provider traffic to the same serving API.
 
-The direct gateway is the seed product because it creates an immediate payment surface, customer relationship, and observability loop. Provider integrations follow as distribution adapters, not as a separate product.
+The direct gateway is the seed product because it creates an immediate payment surface, customer relationship, trace/intelligence loop, and migration path. Customers can keep an explicitly curated direct provider/model (`openai/...`, `anthropic/...`, `google/...`) or select first-party owned inference as `grad/<effort>/<speed>`, with effort `low|medium|high|max` and speed `flex|standard|fast|turbo`. It is not a provider marketplace.
 
 ## System shape
 
 ```text
-Vite React console ──tRPC──> Hono control API ──> PostgreSQL ledger/config
+Vite React console ──tRPC──> Hono control API ──> PostgreSQL authority
+       │                         │       ├──> ClickHouse trace analytics
        │                         │       │
        │                         │       └──> Stripe top-ups
        │                         └──> Redis projections
        │
-OpenAI/Anthropic SDKs ──> Rust gateway ──> owned inference / OpenAI / Anthropic / OpenRouter
+OpenAI/Anthropic/Google SDKs ──> Rust gateway ──> owned inference / direct providers
+                              │                         └──> OpenRouter upstream (operator-only)
                               │
                               └──> Redis only
                                    auth + config + balance reservations
-                                   concurrency + Redis Streams usage events
+                                   route releases + concurrency + usage events
 
-Hono reconciliation worker: Redis Streams ──> PostgreSQL ledger ──> Redis repair
+Hono reconciliation worker: Redis Streams ──> PostgreSQL ledger/outbox ──> Redis repair
+Trace analytics projector: PostgreSQL outbox ──> ClickHouse Cloud ──> Hono trace/workload UI
+Encrypted trace worker: Redis trace stream ──> private S3 payload ──> workload/recommendation processor
 External gateways ──provider protocol──> the same Rust serving surface
 ```
 
-PostgreSQL is authoritative for organization credits. Every organization has a Default workspace and may create more workspaces with separate keys, members, model/routes, budgets, and concurrency limits. Redis is a durable, versioned projection and the gateway's only internal dependency. The gateway atomically reserves organization credit and nested workspace/key limits before dispatch, restricts organization concurrency near depletion, settles actual usage, and emits an idempotent event to a Redis Stream.
+PostgreSQL is authoritative for organization credits, authorization, model qualification, route releases, trace registry/tombstones and workload/experiment control state. Encrypted raw traces live in private lifecycle-managed S3; ClickHouse Cloud is a replayable, content-free analytical projection for trace lists, charts and workload/model summaries. Every organization has a hidden Default workspace and may create more with separate keys, members, model/data policy, budgets and concurrency. Redis is the gateway's only internal dependency. Direct requests stay on their exact curated provider/model; Grad requests stay on owned inference in their effort/speed cell. Product Intelligence retains bounded encrypted traces by default and suggests—but never performs—evidence-backed migrations to Grad. Private/No Retention is available per workspace/request.
 
 ## Planned repository layout
 
@@ -35,6 +39,10 @@ product/
     web/                 Vite, React, Tailwind, shadcn/ui
     control-api/         Hono on Node, Better Auth, tRPC, REST/OpenAPI
     control-worker/      Stripe, outbox, Redis projection, reconciliation
+    trace-worker/        encrypted trace drain, retention, deletion, export
+    trace-projector/     PostgreSQL outbox to ClickHouse analytical facts
+    recommendation-worker/ workload profiles, replay, migration experiments
+    trace-access/        one-object audited decrypt/read service
   services/
     gateway/             Rust/Axum/Tower gateway and provider adapters
   packages/
@@ -42,12 +50,13 @@ product/
     billing/             ledger, top-up, projection, reconciliation domains
     contracts/           checked-in generated TypeScript Protobuf types
     db/                  PostgreSQL schema and migrations
+    workloads/           trace metadata, profiles, recommendations, experiments
     testkit/             generators, models, fake providers, replay helpers
     ui/                  shadcn configuration and shared app components
   proto/                 canonical internal Protobuf schemas and Buf config
   schemas/               public OpenAPI/JSON Schema and wire fixtures
   tests/
-    client-e2e/           official OpenAI and Anthropic SDK tests
+    client-e2e/           official OpenAI, Anthropic, and Google SDK tests
     conformance/          protocol fixtures
     properties/           cross-language golden and model traces
   docs/                  product, architecture, operations, and work packets
@@ -62,9 +71,14 @@ product/
 - [Testing and CI](docs/TESTING_AND_CI.md)
 - [Security and operations](docs/SECURITY_BILLING_OPERATIONS.md)
 - [Gateway and provider integrations](docs/INTEGRATIONS.md)
+- [Model lanes, Grad effort/speed, traces, and migration](docs/MODEL_LANES_AND_MIGRATION.md)
+- [ClickHouse trace analytics decision and evidence](docs/CLICKHOUSE_TRACE_ANALYTICS_DECISION.md)
+- [OpenRouter complete feature inventory and decisions](docs/OPENROUTER_FEATURE_DECISIONS.md)
 - [OpenRouter product/architecture spike](docs/OPENROUTER_SPIKE.md)
 - [Delegation plan](docs/DELIVERY_PLAN.md)
 - [Evidence and decisions](docs/EVIDENCE_AND_DECISIONS.md)
+- [Current model/data architecture decision](../docs/decisions/0003-provider-grad-effort-speed-and-traces.md)
+- [ClickHouse trace analytics ADR](../docs/decisions/0004-clickhouse-trace-analytics.md)
 - [AWS infrastructure, Kubernetes, CI/CD, local stack, and `grad` plan](../infra/README.md)
 - [Current handoff](HANDOFF.md)
 

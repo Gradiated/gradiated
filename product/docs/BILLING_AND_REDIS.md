@@ -31,7 +31,7 @@ low_balance_org_max_concurrency   default 1
 safety_reserve_microusd
 ```
 
-Each workspace projection contains status, model/provider allowlists, routes, normal and low-credit concurrency caps, maximum request reserve/output, and zero or one budget for each `daily`, `weekly`, `monthly`, and `lifetime` interval. API keys can have more restrictive equivalents. Period state tracks both settled spend and active reserved spend.
+Each workspace projection contains status, curated provider/model and Grad effort/speed access, Product Intelligence or Private/No Retention data mode, retention policy, normal and low-credit concurrency caps, maximum request reserve/output, and zero or one budget for each `daily`, `weekly`, `monthly`, and `lifetime` interval. API keys can have more restrictive equivalents. Period state tracks both settled spend and active reserved spend.
 
 Low credit is calculated from organization projected spendable credit after the proposed reservation. It is not a stale flag. `risk_mode` is an explicit operator/risk override: restricted applies the low-credit organization cap regardless of balance; suspended admits nothing. Effective policy is the intersection/minimum of organization, workspace, and key constraints. Workspace/key budgets cap use of shared organization credit and do not allocate money.
 
@@ -58,24 +58,25 @@ candidate_reserve = checked_add(
   safety_reserve,
   priced_known_input_units +
   priced_declared_max_output_units +
-  priced_bounded_tool/cache/reasoning exposure +
-  bounded_fallback exposure
+  priced_bounded_tool/cache/reasoning exposure
 )
 
 require candidate_reserve <= effective_max_request_reserve
 reserve = candidate_reserve
 ```
 
-If the protocol lacks a safe output bound, impose a workspace/model default and inject/validate it, or reject the request. Unknown price, stale price version, arithmetic overflow, or reserve above policy fails before provider dispatch. Tests must prove reserve is at least the sell charge for every valid response within declared limits.
+Every direct provider/model and Grad effort/speed release has an immutable published sell SKU. Provider/model buy-cost differences and failed-attempt costs are our margin risk, not a variable customer charge. A retry cannot change sell-price version or add failed upstream units to customer usage. Direct traffic retries only the exact provider/model/version; Grad traffic retries only owned targets for the exact effort/speed release. Speed never silently downgrades. Each release separately bounds attempt count and internal maximum buy exposure.
+
+If the protocol lacks a safe output bound, impose a documented workspace/model default and validate it, or reject the request. Do not silently truncate input or output. Unknown price, stale route/price version, arithmetic overflow, or reserve above policy fails before provider dispatch. Tests must prove reserve is at least the sell charge for every valid response and bounded attempt sequence within declared limits.
 
 ## Atomic admission transition
 
-Implement as one versioned Redis Function/Lua script scoped to `{organization_id}`. Inputs include key digest, resolved organization/workspace/key IDs, model, config/price versions, request/reservation IDs, reserve, lease deadline, now/window IDs, and idempotency token.
+Implement as one versioned Redis Function/Lua script scoped to `{organization_id}`. Inputs include key digest, resolved organization/workspace/key IDs, canonical provider/model or Grad effort/speed, route release/decision, capability/data-policy/native-tier decision, config/price versions, request/reservation IDs, reserve, lease deadline, now/window IDs, and idempotency token.
 
 The operation:
 
 1. validates organization billing epoch/status/risk mode and projected key binding to the organization/workspace;
-2. validates workspace/key status, effective model/provider policy, immutable route/price version, and request reserve/output limits;
+2. validates workspace/key status, provider/model or Grad-product access, effective data policy, immutable catalog/route/price version, capability decision, and request reserve/output limits;
 3. returns the existing result for an identical idempotent reservation;
 4. requires organization `spendable >= reserve + safety_reserve`;
 5. computes `post_reserve_spendable`;
@@ -104,7 +105,7 @@ For long streams:
 
 ## Atomic settlement transition
 
-Inputs include admission token/epoch, reservation ID, final metered units, actual sell amount, provider cost evidence, terminal state, and event ID.
+Inputs include admission token/epoch, reservation ID, final metered units, actual sell amount, provider cost evidence, terminal state, `usable_output_delivered`, and event ID.
 
 The organization-local operation:
 
@@ -117,7 +118,19 @@ The organization-local operation:
 7. appends `RequestSettled` with organization/workspace/key attribution to the same Redis Stream;
 8. returns final balance/status metadata.
 
-Cancellation, provider rejection, timeout, and partial response are settlement reasons, not excuses to delete a reservation. Evidence quality determines whether sell amount is measured, provider-reported, or conservative estimate.
+Cancellation, provider rejection, timeout, and partial response are settlement reasons, not excuses to delete a reservation. Evidence quality determines whether sell amount is measured, provider-reported, or conservative estimate. Settlement records whether protocol-usable output crossed the customer boundary; it does not issue a mutable in-place refund.
+
+## Failed-request customer credit
+
+After PostgreSQL posts the original settlement, an idempotent policy evaluates whether no usable output was delivered and the terminal state is eligible. If so, the same worker transaction appends a `failed_request_credit` ledger transaction and `usage_correction` that reverses the customer sell amount exactly once. The provider buy-cost accrual remains unchanged. The business key is derived from the original usage charge, so redelivery, reconciliation, or repeated terminal signals cannot double-credit.
+
+Protocol validation, customer cancellation after usable output, moderation/refusal, deliberate disconnect abuse, and malformed requests are not automatically eligible. Uncertain midstream delivery is conservatively classified from the gateway's byte/event boundary and retained as a safe reason code. Reconciliation includes both original charges and posted corrections; it never rewrites the original event.
+
+## Migration experiment accounting
+
+Automated Product Intelligence profiling and offline replay on owned inference are product-development/marketing expense and never create a customer reservation or usage charge. They use a separate operator budget, capacity pool and event identity so they cannot be confused with customer traffic.
+
+Customer-approved live canaries are ordinary requests funded by the organization and require `x-grad-migration-experiment`. Before admission, deterministic bucketing chooses baseline or Grad, resolves its fixed price, and includes experiment ID/bucket in the atomic transition. The experiment has maximum request/micro-USD caps in addition to ordinary limits; actual selected route price is disclosed. Console state alone never enrolls traffic. Shadow experiments are unbilled because output is not delivered, but retain an operator cost budget and require approval. Duplicate events cannot charge or consume either budget twice.
 
 ## Stream consumption and PostgreSQL posting
 
@@ -139,7 +152,8 @@ At a common organization checkpoint, compare:
 
 ```text
 postgres_organization_posted_balance
-  = total_posted_credits - total_posted_sell_charges + posted_adjustments
+  = total_posted_credits - total_posted_sell_charges
+    + posted_failed_request_credits + other_posted_adjustments
 
 expected_redis_org_spendable
   = postgres_organization_posted_balance
@@ -165,12 +179,13 @@ Continuous reconciliation runs per event/batch; full organization plus nested wo
 
 ## Required property invariants
 
-Generated command sequences include organization/default-workspace creation, additional workspaces/keys/limits, top-up, duplicate/reordered webhook, cross-workspace concurrent reserve, lease renewal, stream cancel, settle, duplicate settle, provider overage, refund, chargeback, worker redelivery, Redis failover checkpoint, and rebuild.
+Generated command sequences include organization/default-workspace creation, additional workspaces/keys/limits, top-up, duplicate/reordered webhook, direct provider/model pins, Grad effort/speed release/canary/rollback, trace-mode tightening, migration replay/shadow/live-canary budget, cross-workspace concurrent reserve, lease renewal, stream cancel, settle, duplicate settle, usable/no-usable-output correction, provider overage, refund, chargeback, worker redelivery, Redis failover checkpoint, and rebuild.
 
 For every sequence:
 
 - ledger entries balance and arithmetic never overflows;
 - one business event has at most one financial effect;
+- each eligible no-usable-output charge has exactly one compensating sell credit and ineligible/delivered-output charges have none;
 - in-flight equals active reservations;
 - organization spendable plus active holds agrees with the fenced financial/event cut;
 - no request is dispatched without a reservation event;
@@ -179,5 +194,8 @@ For every sequence:
 - status/epoch fencing prevents stale reopen or stale settlement mutation;
 - only explicit overage/chargeback paths can create debt, and they immediately restrict admission;
 - reconciliation either proves organization and nested window equality or leaves the organization closed.
+- route rollback never reprices or invalidates an already admitted reservation.
+- direct traffic never settles under another provider/model/version and Grad traffic never settles under another effort/speed SKU;
+- internal replay/shadow traffic cannot debit organization credit, while live-canary traffic cannot exceed its experiment plus ordinary billing limits.
 
 Both fast-check domain models and Rust Redis state-machine tests assert these invariants. Cross-language generated traces allow the same minimized failure sequence to be replayed in both implementations.

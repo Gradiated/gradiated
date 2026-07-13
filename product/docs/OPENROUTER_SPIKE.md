@@ -1,5 +1,7 @@
 # OpenRouter product and architecture spike
 
+> Historical scope note (2026-07-13): this document remains the detailed organization/workspace/billing spike. Current product decisions are in [OpenRouter feature decisions](OPENROUTER_FEATURE_DECISIONS.md), [Model lanes and migration](MODEL_LANES_AND_MIGRATION.md), and [ADR-0003](../../docs/decisions/0003-provider-grad-effort-speed-and-traces.md): curated direct providers, first-party Grad effort/speed products, and OpenRouter primarily as downstream distribution.
+
 Date: 2026-07-13. Scope: official public documentation only; no account login, network benchmark, API key, or paid request. Evidence is vendor-reported unless marked as inference/recommendation.
 
 ## Executive answer
@@ -76,7 +78,7 @@ effective spend permission = all organization/workspace/key balance-window check
 effective privacy = most restrictive organization/workspace requirement
 ```
 
-Ship workspace model/provider allowlists, output/reserve/concurrency limits, and period budgets first. Defer content scanning and per-member inference guardrails until evidence supports their complexity. The policy contract should be extensible, not a wholesale clone.
+Ship workspace curated-provider/model allowlists, Grad effort/speed access, data mode, output/reserve/concurrency limits, and period budgets first. Defer content scanning and per-member inference guardrails until evidence supports their complexity. The policy contract should be extensible, not a wholesale clone.
 
 ## Routing and reusable configurations
 
@@ -112,9 +114,9 @@ Recommendation:
 | Workspace keys | Yes, including workspace-owned system keys. | Yes, service keys first. |
 | Workspace budgets | Daily/weekly/monthly/lifetime; may overrun in flight. | Yes, but reservations make them hard concurrent caps. |
 | Per-key spend limits | Yes. | Seed or immediate follow-on; schema/admission supports it from day one. |
-| Workspace model/provider policy | Yes via guardrails/routing. | Yes: allowlists, routes, fallback and max-output/reserve. |
+| Workspace model/provider policy | Yes via guardrails/routing. | Yes: curated direct-model and Grad-cell access, data mode, max-output/reserve; no customer provider arrays. |
 | Organization policy ceiling | Yes. | Yes: workspace/key can only restrict. |
-| Presets | Versioned model/provider/prompt/parameter configs. | Phase 2 after routes; no prompt persistence in seed. |
+| Presets | Versioned model/provider/prompt/parameter configs. | Defer arbitrary presets; Product Intelligence traces are retained under the current data policy, but prompt libraries are not a seed feature. |
 | BYOK | Per-workspace and filterable. | Phase 2. |
 | Customer observability integrations | Per workspace/shared. | Phase 2. |
 | Content guardrails/plugins/routers | Broad feature set. | Defer; not needed to validate paid inference. |
@@ -158,6 +160,6 @@ That lets one Redis operation reserve organization credit and all nested limits.
 
 ## Spike conclusion
 
-Adopt the OpenRouter-like organization/workspace split, but differentiate on financially strict admission, simple prepaid onboarding, and our inference supply—not feature breadth. The first UI should expose organization credits/billing and workspace keys/models/routes/limits. Presets, BYOK, external observability, content guardrails, and specialized routers are informed follow-ons after revenue validation.
+Adopt the OpenRouter-like organization/workspace split, but differentiate on financially strict admission, easy curated-provider migration, Grad effort/speed products, trace intelligence, and our inference supply—not feature breadth. The first UI exposes Overview, API keys, Models, Usage, and Billing; the Default workspace and advanced limits remain progressive settings. Presets, BYOK, external observability, content guardrails, and specialized routers are evidence-gated follow-ons.
 
 Confidence: high for documented feature hierarchy; medium for “one physical gateway” because public docs show one API base URL and workspace-key scoping but do not describe OpenRouter's internal deployment topology. We should copy the logical product model, not infer their infrastructure.

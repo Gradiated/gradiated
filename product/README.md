@@ -65,6 +65,7 @@ product/
 - [OpenRouter product/architecture spike](docs/OPENROUTER_SPIKE.md)
 - [Delegation plan](docs/DELIVERY_PLAN.md)
 - [Evidence and decisions](docs/EVIDENCE_AND_DECISIONS.md)
+- [AWS infrastructure, Kubernetes, CI/CD, local stack, and `grad` plan](../infra/README.md)
 - [Current handoff](HANDOFF.md)
 
 ## One-command agent verification
@@ -79,6 +80,8 @@ cargo test -p gateway-pbt
 pnpm contracts:check
 pnpm test:conformance
 pnpm test:e2e:fake
+grad infra check
+grad helm check
 ```
 
 Protected main/nightly workflows add `pnpm test:e2e:providers`. Failed properties upload seed, shrink path, generated command trace, and a copy-paste replay command.

@@ -62,3 +62,5 @@ Prefer one artifact per run and append-only ledgers. When a shared report must c
 See [`research/README.md`](../research/README.md) for the workstream map. The context helper accepts `--workstream sol` or `--workstream fable` to print only the relevant reset pack.
 
 For the inference-gateway product, read [`product/AGENTS.md`](../product/AGENTS.md), then [`product/HANDOFF.md`](../product/HANDOFF.md). The architecture and subagent work packages are indexed from [`product/README.md`](../product/README.md); the current OpenRouter feature spike is [`product/docs/OPENROUTER_SPIKE.md`](../product/docs/OPENROUTER_SPIKE.md).
+
+For its AWS platform, next read [`infra/AGENTS.md`](../infra/AGENTS.md), [`infra/README.md`](../infra/README.md), and [`infra/docs/DELIVERY_PLAN.md`](../infra/docs/DELIVERY_PLAN.md). The cross-workstream runtime decision is [`docs/decisions/0001-aws-eks-platform.md`](decisions/0001-aws-eks-platform.md). Infrastructure plans are implementation contracts, not evidence that cloud resources exist.

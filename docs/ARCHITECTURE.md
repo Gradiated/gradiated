@@ -24,8 +24,13 @@ Keep this map short and update it when a product boundary changes:
 | Area | Canonical location | Contract / owner |
 | --- | --- | --- |
 | Product source | `product/` | Product workstream issue and local instructions |
+| AWS infrastructure | `infra/` | [`infra/README.md`](../infra/README.md), [ADR-0001](decisions/0001-aws-eks-platform.md), and infrastructure issue/package |
 | Shared agent procedures | `.agents/skills/` | Root `AGENTS.md` and skill contracts |
 | Research workstreams | `research/` | [`research/README.md`](../research/README.md) |
 | Execution packets | `tasks/` | GitHub Issue + packet lifecycle |
 | GitHub automation | `tools/github/` | [`docs/GITHUB_OPERATING_SYSTEM.md`](GITHUB_OPERATING_SYSTEM.md) |
 | Runtime/browser tooling | `tools/browser/` and `.agents/runtime/` | Browser safety contract |
+
+## Current runtime boundary
+
+The Vite console is static S3/CloudFront. Hono control services, Rust gateway, workers, and platform controllers run on private EKS. Aurora PostgreSQL owns financial/configuration state; a qualification-gated durable Valkey tier is the gateway's only request-path dependency. Terraform/Terragrunt owns AWS and cluster bootstrap, while Argo CD/Helm owns Kubernetes desired state. The detailed decision and reversal triggers are in [ADR-0001](decisions/0001-aws-eks-platform.md).

@@ -13,6 +13,8 @@ sign in -> create organization + Default workspace -> verified organization top-
 
 Provider-distribution work reuses the serving path after this slice is reliable. Work packages below are designed for separate subagents with explicit path ownership. Each package gets a GitHub issue, active packet, dependency links, and CI acceptance evidence before merge.
 
+AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/DELIVERY_PLAN.md`](../../infra/docs/DELIVERY_PLAN.md). Product packages own application behavior, containers, contracts, and tests. Infrastructure packages own Terraform, managed services, Helm/GitOps, deployment workflows, capacity qualification, and cloud operations. Neither workstream duplicates those resources.
+
 ## Global definition of done
 
 - No secrets or customer payloads in repository, logs, snapshots, or artifacts.
@@ -28,8 +30,8 @@ Provider-distribution work reuses the serving path after this slice is reliable.
 
 ### WP-00 — Monorepo, contracts, test substrate
 
-- Scope: `product/package.json`, pnpm workspace/config, Cargo workspace, `proto/**`, `schemas/**`, `packages/contracts/**`, `packages/testkit/**`, Rust testkit/contracts crates, Docker/CI/tool scripts.
-- Deliver: pinned Node/pnpm/Rust/Buf toolchains; Vite/Hono/Rust shells; PostgreSQL/Redis/fake-provider containers; Protobuf-ES/Prost generation; public protocol schemas; Vitest/fast-check/nextest/proptest/Testcontainers; cross-language `PropertyTrace`; seed/replay wrapper; GitHub Actions graph.
+- Scope: `product/package.json`, pnpm workspace/config, Cargo workspace, `proto/**`, `schemas/**`, `packages/contracts/**`, `packages/testkit/**`, Rust testkit/contracts crates, product test/build scripts. Root Compose/mprocs, `grad`, Terraform, charts, and deployment workflows belong to infrastructure I-00/I-05/I-06/I-09.
+- Deliver: pinned Node/pnpm/Rust/Buf application toolchains; Vite/Hono/Rust shells; Testcontainers/fake-provider fixtures; Protobuf-ES/Prost generation; public protocol schemas; Vitest/fast-check/nextest/proptest; cross-language `PropertyTrace`; seed/replay interface. Coordinate executable local containers and workflow graph with I-00/I-09.
 - Acceptance: all required commands in `TESTING_AND_CI.md` exist; generated drift is detected; a deliberately failing TS and Rust property is shown to shrink/replay in CI fixture tests; no paid secrets required.
 - Dependencies: none.
 - Blocks: all packages.
@@ -87,7 +89,7 @@ Provider-distribution work reuses the serving path after this slice is reliable.
 
 ### WP-08 — Operations, security, and protected real-provider CI
 
-- Scope: deployment manifests, observability, runbooks, GitHub `provider-e2e` workflow, secret/budget preflight.
+- Scope: application telemetry/freeze interfaces, product incident/financial runbooks, GitHub `provider-e2e` test behavior, secret/budget preflight. Terraform, Helm manifests, AWS observability, and deployment workflows belong to infrastructure I-05/I-06/I-08/I-10.
 - Deliver: managed Redis requirements, network/secret policies, metrics/alerts, backups/restore drills, stream/reconciliation dashboards, OpenAI/Anthropic real smoke, sanitized artifacts.
 - Acceptance: fault drills for Redis/worker/provider; paid job budget guard; one stream/non-stream request per provider through gateway; missing secrets fail only the protected context; no body/token logs.
 - Dependencies: WP-06, WP-07.
@@ -140,3 +142,5 @@ WP-03 starts once WP-01 ledger interfaces stabilize. WP-06 starts after protocol
 ## Scope discipline
 
 No package may weaken fail-closed admission to unblock a demo. If a safe reserve cannot be computed, reject. If reconciliation cannot prove a balance, close the workspace. If an upstream feature cannot be translated, return an explicit unsupported error. Record failures and continue with the next bounded implementation branch.
+
+Infrastructure gates are equally binding: production does not use a Valkey tier that has not proved zero acknowledged reservation/event loss, CI does not receive static AWS keys, and autoscaling does not replace admission/backpressure. Product WP-00 and infrastructure I-00 establish the shared command/contract boundary before broad delegation.

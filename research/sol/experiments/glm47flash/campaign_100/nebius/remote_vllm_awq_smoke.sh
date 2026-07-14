@@ -10,6 +10,7 @@ VLLM_DTYPE="${VLLM_DTYPE:-bfloat16}"
 VLLM_MAX_NUM_BATCHED_TOKENS="${VLLM_MAX_NUM_BATCHED_TOKENS:-32768}"
 VLLM_DECODE_BLOCK_N="${VLLM_DECODE_BLOCK_N:-32}"
 VLLM_DECODE_NUM_STAGES="${VLLM_DECODE_NUM_STAGES:-2}"
+VLLM_NUM_KV_SPLITS="${VLLM_NUM_KV_SPLITS:-4}"
 SERVER=
 TELEMETRY=
 
@@ -66,21 +67,32 @@ print(json.dumps({"vllm": vllm.__version__, "torch": torch.__version__, "cuda": 
 PY
 phase allocation_bootstrap complete
 
-python3 /input/vllm_decode_kernel_patch.py --block-n "$VLLM_DECODE_BLOCK_N" --num-stages "$VLLM_DECODE_NUM_STAGES" --evidence "$OUT/vllm-decode-kernel-patch.json"
+python3 /input/vllm_decode_kernel_patch.py --block-n "$VLLM_DECODE_BLOCK_N" --num-stages "$VLLM_DECODE_NUM_STAGES" --num-kv-splits "$VLLM_NUM_KV_SPLITS" --evidence "$OUT/vllm-decode-kernel-patch.json"
 
 (
   while [ "$(date +%s)" -lt "$CAMPAIGN_DEADLINE_EPOCH" ]; do
-    nvidia-smi --query-gpu=timestamp,uuid,name,pstate,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.sm,clocks.current.memory --format=csv,noheader,nounits
+    TZ=UTC nvidia-smi --query-gpu=timestamp,uuid,name,pstate,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.sm,clocks.current.memory --format=csv,noheader,nounits
     sleep 1
   done
 ) > "$OUT/telemetry.csv" 2> "$OUT/telemetry.stderr.log" &
 TELEMETRY=$!
 
 phase model_identity begin
-(cd "$MODEL" && sha256sum -c "$MODEL_MANIFEST_PATH") > "$OUT/model-manifest-verification.log" 2>&1
+MARKER="$MODEL/.campaign-integrity-v1"
+MANIFEST_SHA="$(sha256sum "$MODEL_MANIFEST_PATH" | awk '{print $1}')"
+METADATA_SHA="$(find "$MODEL" -maxdepth 1 -type f ! -name '.campaign-integrity-v1' -printf '%f %s %T@\n' | sort | sha256sum | awk '{print $1}')"
+if [ -f "$MARKER" ] && grep -qx "manifest_sha256=$MANIFEST_SHA" "$MARKER" && grep -qx "metadata_sha256=$METADATA_SHA" "$MARKER"; then
+  printf 'reused content-addressed full-verification marker\n' > "$OUT/model-manifest-verification.log"
+  printf 'marker_reused=true\n' >> "$OUT/model-manifest-verification.log"
+else
+  (cd "$MODEL" && sha256sum -c "$MODEL_MANIFEST_PATH") > "$OUT/model-manifest-verification.log" 2>&1
+  printf 'manifest_sha256=%s\nmetadata_sha256=%s\n' "$MANIFEST_SHA" "$METADATA_SHA" > "$MARKER"
+  printf 'marker_reused=false\n' >> "$OUT/model-manifest-verification.log"
+fi
 test "$(find "$MODEL" -maxdepth 1 -name 'model-*-of-00004.safetensors' | wc -l)" -eq 4
 test "$(find "$MODEL" -maxdepth 1 -name 'model-*-of-00004.safetensors' -printf '%s\n' | awk '{s+=$1} END {printf "%.0f\n",s}')" = 20170199928
 cp "$MODEL/model-files.sha256" "$OUT/model-files.sha256"
+cp "$MARKER" "$OUT/model-integrity-marker.txt"
 du -sb "$MODEL" > "$OUT/model-size.txt"
 test "$(python3 "$QUALITY/validate_quality.py")" = 152548d51fba8e8ff5e8f1e665c5af166fb6d97cdf3010723042112855964668
 sha256sum "$TOKENIZER/tokenizer.json" "$TOKENIZER/tokenizer_config.json" "$TOKENIZER/chat_template.jinja" > "$OUT/tokenizer-hashes.sha256"
@@ -152,7 +164,7 @@ import os
 from pathlib import Path
 path = Path("/workspace/campaign-100-vllm-awq-batch/allocation-result.json")
 value = json.loads(path.read_text())
-value.update({"runtime": "vllm-0.15.0", "dtype": os.environ["VLLM_DTYPE"], "max_num_batched_tokens": int(os.environ["VLLM_MAX_NUM_BATCHED_TOKENS"]), "decode_grouped_block_n": int(os.environ["VLLM_DECODE_BLOCK_N"]), "decode_grouped_num_stages": int(os.environ["VLLM_DECODE_NUM_STAGES"]), "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "full_load_pass": True, "experiment_spec_sha256": os.environ["EXPERIMENT_SPEC_SHA256"]})
+value.update({"runtime": "vllm-0.15.0", "dtype": os.environ["VLLM_DTYPE"], "max_num_batched_tokens": int(os.environ["VLLM_MAX_NUM_BATCHED_TOKENS"]), "decode_grouped_block_n": int(os.environ["VLLM_DECODE_BLOCK_N"]), "decode_grouped_num_stages": int(os.environ["VLLM_DECODE_NUM_STAGES"]), "num_kv_splits": int(os.environ["VLLM_NUM_KV_SPLITS"]), "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "full_load_pass": True, "experiment_spec_sha256": os.environ["EXPERIMENT_SPEC_SHA256"]})
 path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 PY
 fi

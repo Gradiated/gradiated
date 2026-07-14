@@ -74,6 +74,13 @@ class NebiusVllmSmokeControlTests(unittest.TestCase):
         self.assertIn("cf4debbbbdf2245355177dd7be91c4ac75730a9207a10cd7dab6306a5c3bdec4", patcher)
         self.assertIn("function.count(old) != 1", patcher)
 
+    def test_retained_arm_can_change_only_non_batch_invariant_mla_splits(self):
+        joined = " ".join(build_container_command("f" * 64, 1783990000, num_kv_splits=8))
+        self.assertIn("VLLM_NUM_KV_SPLITS=8", joined)
+        patcher = (ROOT / "nebius" / "vllm_decode_kernel_patch.py").read_text()
+        self.assertIn("647a6d5f4c46f3057fdedce04cc2ee3b15ade713b1d7752df00e347efbd62ef6", patcher)
+        self.assertIn("expected exactly one non-batch-invariant KV split assignment", patcher)
+
     def test_remote_gate_requires_semantic_json_and_determinism(self):
         runner = (ROOT / "nebius" / "vllm_batched_runner.py").read_text()
         self.assertIn('{"alpha": 17, "beta": "smoke"}', runner)
@@ -94,11 +101,37 @@ class NebiusVllmSmokeControlTests(unittest.TestCase):
         self.assertIn('printf "%.0f\\n",s', script)
         self.assertIn('exit "$RUNNER_RC"', script)
 
+    def test_profiler_capture_is_true_fixed_geometry_batch_eight(self):
+        runner = (ROOT / "nebius" / "vllm_batched_runner.py").read_text()
+        self.assertIn('"fixed_8k_128_c8"', runner)
+        self.assertIn("threading.Barrier(concurrency)", runner)
+        self.assertIn("max_tokens=128", runner)
+        self.assertIn('row["input_tokens"] == 8192 and row["output_tokens"] == 128', runner)
+        self.assertIn("observer_only_after_fixed_slo", runner)
+        self.assertNotIn('quality.get("pass") and performance.get', runner)
+
+    def test_remote_reuses_content_addressed_checkpoint_verification_marker(self):
+        script = (ROOT / "nebius" / "remote_vllm_awq_smoke.sh").read_text()
+        self.assertIn(".campaign-integrity-v1", script)
+        self.assertIn("manifest_sha256=$MANIFEST_SHA", script)
+        self.assertIn("metadata_sha256=$METADATA_SHA", script)
+        self.assertIn("marker_reused=true", script)
+
+    def test_remote_telemetry_uses_utc_timestamps(self):
+        script = (ROOT / "nebius" / "remote_vllm_awq_smoke.sh").read_text()
+        self.assertIn("TZ=UTC nvidia-smi --query-gpu=timestamp", script)
+
     def test_infrastructure_failures_open_bounded_repair_window(self):
         source = (ROOT / "nebius" / "vllm_smoke_control.py").read_text()
         self.assertIn("time.time() + 600", source)
         self.assertIn("repair-decision.json", source)
         self.assertIn('decision.get("action") == "teardown"', source)
+
+    def test_primary_session_can_retain_verified_runtime_and_checkpoint(self):
+        source = (ROOT / "nebius" / "vllm_smoke_control.py").read_text()
+        self.assertIn("--keep-instance-after-result", source)
+        self.assertIn('"instance_retained_for_next_preregistered_experiment"', source)
+        self.assertIn("cleanup or retain_after_result", source)
 
     def test_recovery_failures_also_open_bounded_repair_window(self):
         source = (ROOT / "nebius" / "vllm_recover_existing.py").read_text()
@@ -106,6 +139,8 @@ class NebiusVllmSmokeControlTests(unittest.TestCase):
         self.assertIn("allocation_result is None", source)
         self.assertIn("--reuse-staged-runtime-and-checkpoint", source)
         self.assertIn("--keep-instance-after-result", source)
+        self.assertIn("--session-deadline-epoch", source)
+        self.assertIn("deadline = min", source)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,308 @@
+{
+  "decode": {
+    "kernel_count": 160911,
+    "kernel_duration_sum_ms": 2500.055860000028,
+    "kernel_families": [
+      {
+        "duration_ms": 1073.249838999971,
+        "family": "attention_mla",
+        "kernel_count": 11938,
+        "share_of_kernel_duration": 0.4292903435365476
+      },
+      {
+        "duration_ms": 732.6755219999902,
+        "family": "dense_gemm_gemv",
+        "kernel_count": 36068,
+        "share_of_kernel_duration": 0.29306366058556066
+      },
+      {
+        "duration_ms": 563.802175000068,
+        "family": "other",
+        "kernel_count": 76964,
+        "share_of_kernel_duration": 0.22551583107429513
+      },
+      {
+        "duration_ms": 79.42715299999968,
+        "family": "moe_routing_sort",
+        "kernel_count": 11684,
+        "share_of_kernel_duration": 0.03177015132773824
+      },
+      {
+        "duration_ms": 35.22234599999927,
+        "family": "copy_cast",
+        "kernel_count": 18415,
+        "share_of_kernel_duration": 0.014088623603793746
+      },
+      {
+        "duration_ms": 15.678825000000067,
+        "family": "norm_rope_activation",
+        "kernel_count": 5842,
+        "share_of_kernel_duration": 0.0062713898720646545
+      }
+    ],
+    "region_count": 5968,
+    "region_duration_max_ms": 32.392917000000004,
+    "region_duration_p50_ms": 0.063747,
+    "region_duration_p95_ms": 0.08825799999999999,
+    "region_duration_sum_ms": 3999.077285,
+    "status": "measured_summed_profiler_work_not_wall_time",
+    "top_exact_kernels": [
+      {
+        "duration_ms": 1063.2945150000007,
+        "name": "_fwd_grouped_kernel_stage1",
+        "share_of_kernel_duration": 0.42530830291127525
+      },
+      {
+        "duration_ms": 509.54360600000183,
+        "name": "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_128x2_tn_align8>(cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_128x2_tn_align8::Params)",
+        "share_of_kernel_duration": 0.2038128884048199
+      },
+      {
+        "duration_ms": 309.3577139999995,
+        "name": "void marlin_moe_wna16::Marlin<1125899906909960l, 1125899907892224l, 1125899906909960l, 1125899906909960l, 128, 1, 8, 4, true, 4, 2, false>(int4 const*, int4 const*, int4*, int4*, int4 const*, float const*, int4 const*, unsigned short const*, int4 const*, int const*, int const*, int const*, int const*, float const*, int, bool, int, int, int, int, int*, bool, bool, bool)",
+        "share_of_kernel_duration": 0.12374032074627163
+      },
+      {
+        "duration_ms": 125.74373900000063,
+        "name": "void marlin::Marlin<1125899906909960l, 1125899907892224l, 1125899906909960l, 1125899906909960l, 128, 1, 4, 8, true, 4, 2, false>(int4 const*, int4 const*, int4*, int4*, int4 const*, float const*, int4 const*, unsigned short const*, int4 const*, int const*, int, int, int, int, int, int*, bool, bool, bool, int)",
+        "share_of_kernel_duration": 0.05029637177786868
+      },
+      {
+        "duration_ms": 98.32537899999916,
+        "name": "void gemmSN_TN_kernel<float, 128, 16, 2, 4, 8, 9, false, cublasGemvTensorStridedBatched<float const>, cublasGemvTensorStridedBatched<float const>, cublasGemvTensorStridedBatched<float> >(cublasGemmSmallNParams<cublasGemvTensorStridedBatched<float const>, cublasGemvTensorStridedBatched<float const>, cublasGemvTensorStridedBatched<float>, float>)",
+        "share_of_kernel_duration": 0.03932927282672718
+      },
+      {
+        "duration_ms": 63.66461600000018,
+        "name": "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_64x1_nn_align8>(cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_64x1_nn_align8::Params)",
+        "share_of_kernel_duration": 0.025465277403841472
+      },
+      {
+        "duration_ms": 49.5028479999998,
+        "name": "void vllm::moe::moe_align_block_size_small_batch_expert_kernel<int, 256>(int const*, int*, int*, int*, int*, int, int, unsigned long, int, int, bool)",
+        "share_of_kernel_duration": 0.019800696773230996
+      },
+      {
+        "duration_ms": 49.00207099999892,
+        "name": "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_64x1_tn_align8>(cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_64x1_tn_align8::Params)",
+        "share_of_kernel_duration": 0.019600390448875158
+      },
+      {
+        "duration_ms": 42.17603800000002,
+        "name": "void marlin::Marlin<1125899906909960l, 1125899907892224l, 1125899906909960l, 1125899906909960l, 256, 1, 8, 8, true, 4, 2, false>(int4 const*, int4 const*, int4*, int4*, int4 const*, float const*, int4 const*, unsigned short const*, int4 const*, int const*, int, int, int, int, int, int*, bool, bool, bool, int)",
+        "share_of_kernel_duration": 0.016870038255865027
+      },
+      {
+        "duration_ms": 29.924304999999755,
+        "name": "void vllm::moe::grouped_topk_fused_kernel<float, float, int, (vllm::moe::ScoringFunc)1>(float*, float*, int*, float const*, long, long, long, long, long, bool, double)",
+        "share_of_kernel_duration": 0.011969454554507201
+      },
+      {
+        "duration_ms": 18.804498000000077,
+        "name": "triton_poi_fused_mul_silu_slice_0",
+        "share_of_kernel_duration": 0.007521631136673828
+      },
+      {
+        "duration_ms": 16.07523500000108,
+        "name": "void at::native::(anonymous namespace)::CatArrayBatchedCopy<at::native::(anonymous namespace)::OpaqueType<2u>, unsigned int, 3, 64, 64>(at::native::(anonymous namespace)::OpaqueType<2u>*, at::native::(anonymous namespace)::CatArrInputTensorMetadata<at::native::(anonymous namespace)::OpaqueType<2u>, unsigned int, 64, 64>, at::native::(anonymous namespace)::TensorSizeStride<unsigned int, 4u>, int, unsigned int)",
+        "share_of_kernel_duration": 0.006429950329190203
+      },
+      {
+        "duration_ms": 15.880269999999976,
+        "name": "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<c10::BFloat16, at::native::func_wrapper_t<c10::BFloat16, at::native::sum_functor<c10::BFloat16, float, c10::BFloat16>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, c10::BFloat16, 4, 4> >(at::native::ReduceOp<c10::BFloat16, at::native::func_wrapper_t<c10::BFloat16, at::native::sum_functor<c10::BFloat16, float, c10::BFloat16>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, c10::BFloat16, 4, 4>)",
+        "share_of_kernel_duration": 0.006351966071670013
+      },
+      {
+        "duration_ms": 15.678825000000067,
+        "name": "void vllm::act_and_mul_kernel<c10::BFloat16, &(c10::BFloat16 vllm::silu_kernel<c10::BFloat16>(c10::BFloat16 const&)), true>(c10::BFloat16*, c10::BFloat16 const*, int)",
+        "share_of_kernel_duration": 0.0062713898720646545
+      },
+      {
+        "duration_ms": 13.213630000000272,
+        "name": "triton_red_fused_3",
+        "share_of_kernel_duration": 0.005285333904499287
+      },
+      {
+        "duration_ms": 11.914310000000041,
+        "name": "triton_red_fused__to_copy_add_marlin_gemm_mean_mul_pow_rsqrt_1",
+        "share_of_kernel_duration": 0.0047656175170421615
+      },
+      {
+        "duration_ms": 11.588059000000197,
+        "name": "_fwd_kernel_stage2",
+        "share_of_kernel_duration": 0.0046351200328780115
+      },
+      {
+        "duration_ms": 11.557678999999686,
+        "name": "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul> >(int, at::native::FillFunctor<c10::BFloat16>, std::array<char*, 1ul>)",
+        "share_of_kernel_duration": 0.004622968304396028
+      },
+      {
+        "duration_ms": 9.9553239999998,
+        "name": "void vllm::concat_and_cache_mla_kernel<__nv_bfloat16, __nv_bfloat16, (vllm::Fp8KVCacheDataType)0>(__nv_bfloat16 const*, __nv_bfloat16 const*, __nv_bfloat16*, long const*, int, int, int, int, int, int, int, float const*)",
+        "share_of_kernel_duration": 0.003982040625284144
+      },
+      {
+        "duration_ms": 9.610633999999905,
+        "name": "triton_red_fused__to_copy_add_mean_moe_forward_shared_mul_pow_rsqrt_0",
+        "share_of_kernel_duration": 0.003844167705916698
+      }
+    ]
+  },
+  "evidence_label": "measured profiler trace",
+  "method": "Kernel events are assigned to GPU user-annotation regions when their midpoint falls inside the region. Durations are summed and therefore are component-time attribution, not an additive latency model when streams overlap.",
+  "prefill_or_mixed": {
+    "kernel_count": 9075,
+    "kernel_duration_sum_ms": 4713.233937000002,
+    "kernel_families": [
+      {
+        "duration_ms": 2238.0461100000025,
+        "family": "other",
+        "kernel_count": 7563,
+        "share_of_kernel_duration": 0.4748429931370075
+      },
+      {
+        "duration_ms": 1428.8359509999993,
+        "family": "attention_mla",
+        "kernel_count": 235,
+        "share_of_kernel_duration": 0.30315404881206914
+      },
+      {
+        "duration_ms": 481.837986,
+        "family": "dense_gemm_gemv",
+        "kernel_count": 476,
+        "share_of_kernel_duration": 0.10223086577932357
+      },
+      {
+        "duration_ms": 388.62235400000003,
+        "family": "copy_cast",
+        "kernel_count": 525,
+        "share_of_kernel_duration": 0.08245344050275599
+      },
+      {
+        "duration_ms": 164.20824099999996,
+        "family": "norm_rope_activation",
+        "kernel_count": 92,
+        "share_of_kernel_duration": 0.03483982403481533
+      },
+      {
+        "duration_ms": 11.683295000000001,
+        "family": "moe_routing_sort",
+        "kernel_count": 184,
+        "share_of_kernel_duration": 0.002478827734028513
+      }
+    ],
+    "region_count": 2,
+    "region_duration_max_ms": 3630.175889,
+    "region_duration_p50_ms": 1184.973581,
+    "region_duration_p95_ms": 1184.973581,
+    "region_duration_sum_ms": 4815.14947,
+    "status": "measured_summed_profiler_work_not_wall_time",
+    "top_exact_kernels": [
+      {
+        "duration_ms": 1402.418358,
+        "name": "void flash::flash_fwd_kernel<Flash_fwd_kernel_traits<256, 64, 64, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<256, 64, 64, 4, cutlass::bfloat16_t> >, false, true, false, false, false, true, false, false>(flash::Flash_fwd_params)",
+        "share_of_kernel_duration": 0.29754906646807494
+      },
+      {
+        "duration_ms": 1257.842329,
+        "name": "void marlin_moe_wna16::Marlin<1125899906909960l, 1125899907892224l, 1125899906909960l, 1125899906909960l, 256, 4, 16, 4, false, 4, 2, false>(int4 const*, int4 const*, int4*, int4*, int4 const*, float const*, int4 const*, unsigned short const*, int4 const*, int const*, int const*, int const*, int const*, float const*, int, bool, int, int, int, int, int*, bool, bool, bool)",
+        "share_of_kernel_duration": 0.26687458034400546
+      },
+      {
+        "duration_ms": 683.0094410000013,
+        "name": "void marlin::Marlin<1125899906909960l, 1125899907892224l, 1125899906909960l, 1125899906909960l, 256, 4, 16, 4, false, 4, 2, false>(int4 const*, int4 const*, int4*, int4*, int4 const*, float const*, int4 const*, unsigned short const*, int4 const*, int const*, int, int, int, int, int, int*, bool, bool, bool, int)",
+        "share_of_kernel_duration": 0.1449131212516772
+      },
+      {
+        "duration_ms": 232.905282,
+        "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32x3_tn_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32x3_tn_align8::Params)",
+        "share_of_kernel_duration": 0.049415175464056306
+      },
+      {
+        "duration_ms": 199.75447499999996,
+        "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})",
+        "share_of_kernel_duration": 0.042381616883448124
+      },
+      {
+        "duration_ms": 164.20824099999996,
+        "name": "void vllm::act_and_mul_kernel<c10::BFloat16, &(c10::BFloat16 vllm::silu_kernel<c10::BFloat16>(c10::BFloat16 const&)), true>(c10::BFloat16*, c10::BFloat16 const*, int)",
+        "share_of_kernel_duration": 0.03483982403481533
+      },
+      {
+        "duration_ms": 132.55512700000006,
+        "name": "void marlin::Marlin<1125899906909960l, 1125899907892224l, 1125899906909960l, 1125899906909960l, 128, 4, 4, 8, false, 4, 2, false>(int4 const*, int4 const*, int4*, int4*, int4 const*, float const*, int4 const*, unsigned short const*, int4 const*, int const*, int, int, int, int, int, int*, bool, bool, bool, int)",
+        "share_of_kernel_duration": 0.028124028803113495
+      },
+      {
+        "duration_ms": 100.88068999999999,
+        "name": "triton_red_fused__to_copy_add_marlin_gemm_mean_mul_pow_rsqrt_1",
+        "share_of_kernel_duration": 0.021403709501466223
+      },
+      {
+        "duration_ms": 91.969731,
+        "name": "triton_poi_fused_add_copy_index_select_mul_slice_split_stack_sub_unsqueeze_view_4",
+        "share_of_kernel_duration": 0.01951308427065668
+      },
+      {
+        "duration_ms": 89.12743,
+        "name": "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<c10::BFloat16, at::native::func_wrapper_t<c10::BFloat16, at::native::sum_functor<c10::BFloat16, float, c10::BFloat16>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, c10::BFloat16, 4, 4> >(at::native::ReduceOp<c10::BFloat16, at::native::func_wrapper_t<c10::BFloat16, at::native::sum_functor<c10::BFloat16, float, c10::BFloat16>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, c10::BFloat16, 4, 4>)",
+        "share_of_kernel_duration": 0.018910037394988734
+      },
+      {
+        "duration_ms": 86.70075599999997,
+        "name": "triton_red_fused__to_copy_add_mean_moe_forward_shared_mul_pow_rsqrt_0",
+        "share_of_kernel_duration": 0.018395173496350035
+      },
+      {
+        "duration_ms": 69.05452199999999,
+        "name": "ampere_bf16_s1688gemm_bf16_128x128_ldg8_f2f_stages_32x1_tn",
+        "share_of_kernel_duration": 0.014651197653888058
+      },
+      {
+        "duration_ms": 54.528379999999984,
+        "name": "ampere_sgemm_32x128_tn",
+        "share_of_kernel_duration": 0.011569207200164477
+      },
+      {
+        "duration_ms": 39.34535500000001,
+        "name": "triton_poi_fused_mul_silu_slice_0",
+        "share_of_kernel_duration": 0.008347846834236184
+      },
+      {
+        "duration_ms": 17.019569999999998,
+        "name": "triton_red_fused_3",
+        "share_of_kernel_duration": 0.0036110174516041623
+      },
+      {
+        "duration_ms": 14.769431999999998,
+        "name": "void vllm::concat_and_cache_mla_kernel<__nv_bfloat16, __nv_bfloat16, (vllm::Fp8KVCacheDataType)0>(__nv_bfloat16 const*, __nv_bfloat16 const*, __nv_bfloat16*, long const*, int, int, int, int, int, int, int, float const*)",
+        "share_of_kernel_duration": 0.0031336089397253257
+      },
+      {
+        "duration_ms": 13.799897,
+        "name": "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8::Params)",
+        "share_of_kernel_duration": 0.002927904106704219
+      },
+      {
+        "duration_ms": 11.648161,
+        "name": "_fwd_grouped_kernel_stage1",
+        "share_of_kernel_duration": 0.0024713734042690265
+      },
+      {
+        "duration_ms": 9.709331999999998,
+        "name": "void vllm::moe::count_and_sort_expert_tokens_kernel<int>(int const*, int*, int*, int*, unsigned long, int, int, int, bool)",
+        "share_of_kernel_duration": 0.0020600148708468393
+      },
+      {
+        "duration_ms": 7.598881999999998,
+        "name": "void vllm::moe::grouped_topk_fused_kernel<float, float, int, (vllm::moe::ScoringFunc)1>(float*, float*, int*, float const*, long, long, long, long, long, bool, double)",
+        "share_of_kernel_duration": 0.0016122437590773875
+      }
+    ]
+  },
+  "schema_version": 1,
+  "source_artifact": "nebius_l40s_vllm_awq_splits_ab_v24r2/vllm-awq-batch.tar.gz",
+  "source_artifact_sha256": "b89016cdb2fa90e935708e5b96faaf5bbb74b3643149d0e538ba5c1f5bdc9e79",
+  "trace_file": "1784035049456573912-rank-0.1784035303338618569.pt.trace.json.gz"
+}

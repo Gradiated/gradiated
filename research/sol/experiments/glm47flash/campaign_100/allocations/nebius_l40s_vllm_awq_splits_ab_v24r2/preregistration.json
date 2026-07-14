@@ -1,0 +1,23 @@
+{
+  "experiment_id": "nebius_l40s_vllm_awq_splits_ab_v24r2",
+  "preregistered_at_utc": "2026-07-14T13:14:00Z",
+  "parent_experiment_id": "nebius_l40s_vllm_awq_splits_ab_v24r1",
+  "session_spec_sha256": "0a8fc95434c7ac79cedd6ae4e55888a02ad36fe0c2ec70e725a95dc7ddb9550c",
+  "parent_artifact_sha256": "3228eb76867e017befea963ffbcc92548abffa8ee34831b3fcbb489d7c6bfc9f",
+  "observations": [
+    "The corrected stock arm passed semantic and fixed c1/c8 SLO at 364.105 c8 output tok/s.",
+    "The frozen exact quality screen failed only its long-context exact output because the response included the correct key with an extra record prefix; NLL remained non-regressed.",
+    "Quality failure suppressed the observer-only trace, so no true c8 grid evidence was captured.",
+    "Every retained arm rehashes unchanged 20.17 GB weights despite an already successful full verification."
+  ],
+  "causal_changes": [
+    "Admit diagnostic profiling after fixed-SLO and BF16-cost screens even when the carried-forward compact quality gate fails; record quality status and prohibit promotion.",
+    "After a full checkpoint verification, write a marker binding manifest SHA-256 and a filename/size/mtime metadata fingerprint; on later arms, reuse it only if both identities match."
+  ],
+  "arm": {"label": "A1_trace", "order": 1, "num_kv_splits": 4, "retain_after": true},
+  "quality_scope": "The frozen quality failure is not recalibrated. This amended sequence can measure only session-local output/NLL differences and component-to-serving performance transfer; it cannot support general or provider-matched quality-adjusted cost.",
+  "trace_gate": "Eight synchronized 8192/128 requests, exact geometry, nonempty trace, and postprocessed >=95% grouped-MLA launches with grid batch dimension eight.",
+  "source_hashes": {"runner": "607e7693acf0e93a1be3b43587bdc0c4d9ce3a10cdc1ea3e5c66d061f7040771", "remote": "d724473ba8b87c8f156c5aa251a5b44cc23a28a8c27ba52eed3b2d0ed12bcd41"},
+  "unchanged": "Model, checkpoint, authoritative tokenizer, runtime, hardware, BF16, 65536 token budget, four stock KV splits, workload, semantic gate, frozen quality scorer, SLO, telemetry, artifact, session cap, watchdog, and cleanup contract.",
+  "continuation_rule": "If stock fixed performance/SLO and true c8 trace pass, continue immediately to B1. The quality failure remains explicit and blocks a quality-adjusted promotion."
+}

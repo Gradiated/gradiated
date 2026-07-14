@@ -2,6 +2,14 @@
 
 This file is the durable reset point for the model-specific inference co-design research. It records what is measured, what is modeled, why Sol and Fable/Sartor reached different business conclusions, and what must happen next.
 
+## GLM-4.7-Flash update — 2026-07-14
+
+The Nebius campaign decision is `CONTINUE_NARROWLY`; the source-pinned eight-KV-split MLA lineage is `STOP`. An exact-shape L40S microbenchmark measured a 40.27% aggregate full grouped-attention reduction, but a retained same-session A/B/A/B/A server sequence measured only +1.0476% and +1.0447% drift-corrected c8 throughput effects against a 5% gate. Traces prove the candidate ran: summed c8 attention/MLA work fell 33.43% and all summed decode kernel work fell 14.09%, while vLLM decode annotation span changed +0.38%. The component win is therefore overlapped or off the current critical path; dense GEMM/GEMV is the largest residual measured family.
+
+All five final arms passed semantic, exact geometry, SLO, cache, paired diagnostic, artifact, and cleanup gates, but the absolute compact quality point screen remains failed and showed exact-output instability across identical stock arms. No general quality-adjusted, Fireworks/Baseten, settled-cost, or custom co-design advantage is admitted. Final session cleanup verified instance GET not-found and zero instances/disks. Conservative Nebius spend is `$17.656500383/$25`, leaving `$7.343499617`.
+
+Canonical decision: `experiments/glm47flash/campaign_100/DECISION_CONTINUE_NARROWLY_SPLIT8_STOP_2026-07-14.json`, SHA-256 `e51b5324a7c2c28dc66122f1f5776bb898fd0573106d51311da89edf3c031131`. Resume by calibrating a prospective expanded quality suite off GPU, then measuring a matched profiler-off/on phase trace with Nsight Systems, available standard DCGM fields, host/scheduler timing, attribution coverage, and explicit missing counters. Do not test another MLA split/tile variant on this workload without new critical-path evidence.
+
 ## Repository and history
 
 - Canonical path: `/Users/js/dev/gradiated/research/sol`

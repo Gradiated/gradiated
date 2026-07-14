@@ -1,0 +1,52 @@
+{
+  "admission_sha256": "c534074cd875b9b17b4f2b4afa809286f90d5c24644f80994917c8039e14a3db",
+  "capture_geometry_pass": true,
+  "claim_limit": "grid/resource validation only; summed kernel durations are diagnostic and are not phase-scoped wall-time or an Amdahl coefficient",
+  "grouped_mla": {
+    "c8_grid_fraction": 0.984375,
+    "c8_grid_kernel_count": 5922,
+    "c8_resource_signatures": [
+      [
+        202,
+        89088,
+        [
+          128,
+          1,
+          1
+        ]
+      ]
+    ],
+    "duration_sum_us_diagnostic_only": 699605.371,
+    "grid_counts": [
+      {
+        "count": 5922,
+        "grid": [
+          8,
+          2,
+          8
+        ]
+      },
+      {
+        "count": 47,
+        "grid": [
+          1,
+          2,
+          8
+        ]
+      },
+      {
+        "count": 47,
+        "grid": [
+          7,
+          2,
+          8
+        ]
+      }
+    ],
+    "kernel_count": 6016
+  },
+  "pass": true,
+  "schema_version": 1,
+  "trace_c8_grid_pass": true,
+  "trace_sha256": "83a51700743ad0ea82186473fa2653c011484b57c5b4884df14e8232c6c64ed1"
+}

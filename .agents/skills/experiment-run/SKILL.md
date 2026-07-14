@@ -11,12 +11,20 @@ Make experiments useful to the next agent, including when they fail.
 
 1. Create or claim a task packet before running work.
 2. State the causal hypothesis, stock control, exact inputs and revisions, workload geometry, quality gate, SLO, maximum spend, timeout, and artifact contract.
-3. Prefer an existing harness. Add a deterministic script or configuration when a command will be repeated.
-4. Run a smoke test before expensive allocation. Capture stdout, stderr, environment identity, command, seed, and timestamps without secrets.
-5. Enforce the timeout and final teardown contract. For costly accelerator setup, retain the allocation across preregistered arms and in-place repairs when the next useful test can start within ten minutes; delete and verify absence when the session ends.
-6. Validate correctness before performance, then validate performance before economics or product claims.
-7. Record measured, analytical, vendor-reported, derived, inferred, and synthetic results separately.
-8. Update the task packet, report, ledger, and next-action decision before committing.
+3. Build a typed observation-to-opportunity register before choosing an intervention. Record the evidence scope, phase, resource signature, uncertainty, competing explanations, modifiable fraction, upper bound, falsifier, next measurement, and expected information per dollar. Encourage intuition and first-principles leaps, but anchor them to observed data or an explicit unknown and choose a cheap discriminating measurement.
+4. Measure the baseline deeply enough to locate the critical path. Capture phase and concurrency, per-request distributions, queueing, batch composition, failures, CPU/GPU timelines, accelerator utilization, memory capacity and traffic, cache behavior, occupancy/resource limits, power, and network/collective behavior when relevant. Separate setup/load telemetry from steady state.
+5. Prefer an existing harness. Add a deterministic script or configuration when a command will be repeated.
+6. Use the cheapest fidelity that can falsify the mechanism: analytical bound, deterministic simulation, CPU/reference oracle, reduced model, exact-shape component harness, target-hardware microbenchmark, then matched serving holdout. A lower-fidelity pass promotes a measurement; it never approves transfer to a higher scope.
+7. Run a smoke test before expensive allocation. Capture stdout, stderr, environment identity, command, seed, and timestamps without secrets.
+8. Enforce the timeout and final teardown contract. For costly accelerator setup, retain the allocation across preregistered arms and in-place repairs when the next useful test can start within ten minutes; delete and verify absence when the session ends.
+9. Validate correctness before performance, then validate performance before economics or product claims. Alternate or randomize matched control/candidate repetitions and report uncertainty when the decision margin is not obviously larger than run variance.
+10. Record measured, analytical, vendor-reported, derived, inferred, and synthetic results separately. Score every prospective prediction after measurement and update the bottleneck model.
+11. Update the task packet, report, ledger, opportunity register, residual bottleneck, and next-action decision before committing.
+
+For model, kernel, serving, memory, network, or hardware search campaigns, read [measurement-driven-research-loop.md](references/measurement-driven-research-loop.md) before designing the search.
+Use `scripts/opportunity_register.py` to validate and rank reusable typed opportunity queues when the campaign has more than a few candidates.
+Use `scripts/summarize_nvidia_smi.py` to separate standard one-second accelerator telemetry by recorded experiment phases, report coverage/gaps, and integrate phase energy instead of reporting allocation-wide setup averages.
+Use `scripts/analyze_bracketed_ab.py` for deterministic A/B/A/.../B/A same-session effects and paired bootstrap intervals. Fewer than three independent candidate repetitions remain descriptive and the tool deliberately suppresses an interval.
 
 ## Retained accelerator sessions
 
@@ -27,7 +35,8 @@ Treat allocation, image/runtime setup, checkpoint transfer, model load, and scie
 - Verify large immutable resident inputs once per session, then write a content-addressed integrity marker that binds the manifest hash, file identities, and verification timestamp. Later arms may validate that marker and cheap file metadata instead of re-reading every byte; invalidate it after any write, remount, repair, or unexplained state change.
 - Reuse a live server for observer-only changes; reload the server for runtime flags; recreate the VM only for hardware, driver, image, or unsafe-state changes.
 - Inspect typed results for embedded harness errors. A result envelope is not a scientific result merely because it exists.
-- When a trace selects a custom kernel, reproduce its exact shapes in a correctness-checked standalone microbenchmark and reject hardware-illegal launch configurations before paying for another full model/server arm. Require a prospective component-to-end-to-end effect threshold before promotion.
+- Keep one provider-state coordinator. Parallelize read-only trace analysis, prior-art review, simulator construction, candidate generation, local tests, and result validation. Parallelize live experiments only across independent budgeted allocations whose controls, randomization, and cleanup ownership cannot interfere.
+- When a trace selects a custom kernel, reproduce its exact shapes in a correctness-checked standalone microbenchmark and reject hardware-illegal launch configurations before paying for another full model/server arm. Do not convert summed or overlapping kernel duration into end-to-end share. Require a scope-matched critical-path attribution or empirical end-to-end A/B before promotion.
 - After any error or completed arm, decide whether the next materially changed test can begin within ten minutes. Retain and start it when yes; teardown when no, or on a safety, spend, deadline, or completed-lineage stop.
 - Retrieve and hash every arm independently. Attribute total allocation exposure across the session and perform one final delete plus provider absence verification.
 

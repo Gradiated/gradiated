@@ -9,6 +9,8 @@ Before execution, record:
 - latency, throughput, availability, or SLO target
 - maximum spend, wall-clock timeout, and teardown action
 - exact command, seed, configuration, and output artifact paths
+- baseline measurement plan, critical-path attribution method, opportunity-register entry, competing explanations, and residual-bottleneck measurement
+- simulation/proxy fidelity, calibration evidence, transfer limits, and the next higher-fidelity gate
 
 On failure, preserve the failure log and classify it as invalid, blocked, or falsifying. Do not silently retry a failed placement as if it were an accepted sample. Do not promote a component or synthetic result into a full product claim without a scope-matched end-to-end control.
 
@@ -37,7 +39,7 @@ During the session:
 8. After every error or completed arm, immediately choose between another materially changed test and teardown. Keep the allocation when the next test can start within ten minutes. Teardown only when preparation exceeds ten minutes, the lineage is scientifically complete, state is unsafe, or a budget/deadline stop fires.
 9. Do not rerun an unchanged failed placement or arm.
 
-For trace-selected kernel work, first record the exact tensor shapes, dtypes, hardware limits, stock source hash, correctness oracle, and expected end-to-end contribution. Sweep launch/tile choices in a standalone microbenchmark when possible. A configuration that exceeds registers, shared memory, or another hardware limit is feasibility evidence; a faster component advances only when its prospective end-to-end effect clears the preregistered threshold.
+For trace-selected kernel work, first record the exact tensor shapes, dtypes, strides, length distribution, cache conditions, hardware limits, stock source hash, correctness oracle, and expected end-to-end contribution. Sweep launch/tile choices in a standalone microbenchmark when possible. A configuration that exceeds registers, shared memory, or another hardware limit is feasibility evidence. Summed kernel durations from overlapping or mixed-phase traces are diagnostic only; a faster component advances only after scope-matched critical-path attribution or empirical end-to-end A/B clears the preregistered threshold.
 
 For final teardown:
 

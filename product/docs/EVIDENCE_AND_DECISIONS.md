@@ -9,8 +9,8 @@ Evidence labels follow the repository contract: vendor-reported, analytical, der
 | Decision | Rationale | Evidence class |
 | --- | --- | --- |
 | Direct prepaid gateway is the seed; provider listings are distribution. | Direct traffic creates immediate revenue/customer feedback; one serving surface avoids duplicate metering and protocol work. | Analytical product decision. |
-| Vite React console plus separate Hono Node API and worker. | Clean static/app separation, Hono native Request/Response fits tRPC fetch adapter, and financial/webhook workers remain explicit. | Vendor-reported framework capability plus analytical design. |
-| tRPC only for first-party UI; REST/OpenAPI for webhooks/public management. | End-to-end TS ergonomics without making external customers depend on private router types. | Analytical. |
+| Vite React console plus separate Hono Node API and worker. | Clean static/app separation, Hono native Request/Response plus generated REST client, and financial/webhook workers remain explicit. | Vendor-reported framework capability plus analytical design. |
+| One Hono REST/Zod registry for UI and automation. | OpenAPI 3.1, generated client/docs and an allowlisted MCP adapter remove duplicate contracts while keeping domain logic out of transport generators. | User decision plus vendor-reported framework capability and analytical design. |
 | Product owns organization/workspace membership; auth library owns users/sessions. | Prevents competing tenant authorities and keeps role policy in domain/database tests. | Analytical. |
 | Organization is the customer/billing root; workspaces isolate keys, models, limits, and usage. | Matches the requested commercial hierarchy and OpenRouter's documented logical separation without creating funded sub-wallets. | User requirement plus vendor-reported reference plus analytical. |
 | Every organization receives a Default workspace. | Makes simple onboarding unchanged while allowing later isolation. | User requirement plus OpenRouter vendor-reported pattern. |
@@ -33,7 +33,7 @@ Evidence labels follow the repository contract: vendor-reported, analytical, der
 ## Source-backed framework facts
 
 - Hono documents runtime adapters and native web request/response behavior: [Hono getting started](https://hono.dev/docs/getting-started/basic). Vendor-reported.
-- tRPC's fetch adapter accepts native `Request` and returns native `Response`, fitting a Hono route: [tRPC fetch adapter](https://trpc.io/docs/server/adapters/fetch). Vendor-reported; exact glue must be integration-tested.
+- Hono's Zod OpenAPI integration validates routes and generates OpenAPI; Scalar renders the generated document: [Hono Zod OpenAPI](https://hono.dev/examples/zod-openapi), [Hono Scalar](https://hono.dev/examples/scalar). Vendor-reported; pinned compatibility is integration-tested.
 - shadcn/ui publishes a Vite setup: [shadcn Vite installation](https://ui.shadcn.com/docs/installation/vite). Vendor-reported.
 - Buf provides configured code generation; generation versions/configuration must be pinned: [Buf generate](https://buf.build/docs/reference/cli/buf/generate/). Vendor-reported.
 - fast-check supports command-based model testing, scheduled async execution, shrinking, and replay data: [fast-check model-based testing](https://fast-check.dev/docs/advanced/model-based-testing/). Vendor-reported.

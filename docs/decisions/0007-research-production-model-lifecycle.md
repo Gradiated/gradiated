@@ -17,7 +17,7 @@ Use separate state machines and roles for:
 2. candidate assembly and bundle qualification;
 3. production release, rollout, alias movement and rollback.
 
-The factory is a deliberately polyglot, always-on inference laboratory. Python owns model research, PyTorch references, training, quantization, evaluation, Triton kernel exploration, campaign planning and Temporal workflows. TypeScript owns the operator UI and authenticated Hono/tRPC BFF. Rust owns bundle inspection/materialization, runtime supervision, cells, inference transport and the gateway. The research service is the sole normal writer of campaign, evidence, candidate and qualification state; the BFF calls its generated private API instead of duplicating research state machines.
+The factory is a deliberately polyglot, always-on inference laboratory. Python owns model research, PyTorch references, training, quantization, evaluation, Triton kernel exploration, campaign planning and Temporal workflows. TypeScript owns the operator UI and authenticated Hono REST BFF. Rust owns bundle inspection/materialization, runtime supervision, cells, inference transport and the gateway. The research service is the sole normal writer of campaign, evidence, candidate and qualification state; the BFF calls its generated private API instead of duplicating research state machines.
 
 Each supported model has a durable `ModelProgram`: baseline, current champion, Pareto frontier, open questions, negative findings, active campaigns and a ranked experiment queue. Scanner, planner and agent loops run continuously, but recurring GPU work is admitted only through a bounded immutable experiment specification with hypothesis, expected information value, budget, timeout, stop rule and cleanup contract. Always-on means continuous attention and learning, not permanent GPU consumption.
 
@@ -25,7 +25,7 @@ Fable and Sol are spike evidence, not implementation dependencies or compatibili
 
 Temporal orchestrates durable cross-provider research campaigns. Kubernetes execution uses Kueue and JobSet where applicable; provider-native allocations remain honest external resources behind the research execution adapter. Research allocations and production cells have disjoint identities, credentials, registration paths and budgets.
 
-A candidate graduates through measured stages: eager PyTorch reference, compiled/reference validation, Triton kernel candidate, out-of-tree framework runtime, optional native CUDA/C++ component and, only when whole-system evidence warrants it, an owned Rust engine integration. A production bundle declares `python_plugin`, `native_library` or `rust_engine`; promotion does not require a Rust rewrite. Language-neutral Protobuf services plus canonical JSON `ModelArchitectureSpec`, `CheckpointManifest`, `OperatorManifest`, `RuntimeManifest` and `QualificationManifest` contracts connect research to Rust launch and serving.
+A candidate graduates through measured stages: eager PyTorch reference, compiled/reference validation, Triton kernel candidate, out-of-tree framework runtime, optional native CUDA/C++ component and, only when whole-system evidence warrants it, an owned Rust engine integration. Production always receives one signed OCI image behind the same local serving protocol; Python/native/Rust is an image implementation detail, not a product runtime-mode enum. Small compositional canonical JSON checkpoint/runtime/bundle/qualification manifests plus narrow language-neutral Protobuf services connect research to Rust launch and serving. The runtime manifest freezes the exact single- or multi-node topology required by ADR-0009.
 
 Public model identities have three layers:
 
@@ -66,7 +66,7 @@ An immutable complete bundle makes the experimental subject, qualified system an
 - positive: family, managed and pinned identities serve distinct compatibility needs;
 - negative: Grad must build bundle schemas, canonicalization, artifact GC, signatures, qualification and registry UI beyond a checkpoint registry;
 - negative: evaluator ownership, hidden datasets and full-cell qualification add cost and operational latency;
-- negative: Grad must operate a generated cross-language contract and support qualified Python, native-library and Rust runtime modes;
+- negative: Grad must operate generated cross-language serving contracts and qualify OCI runtimes implemented across Python/native/Rust ecosystems;
 - negative: an always-on portfolio manager requires explicit anti-churn, spend and experiment-value controls so activity does not become the objective;
 - negative: public pins require explicit support and capacity economics;
 - limit: evidence is valid only for its exact model/workload/hardware/software/intervention scope and expiry;

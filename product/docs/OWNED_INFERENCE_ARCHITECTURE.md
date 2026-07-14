@@ -273,7 +273,7 @@ Deterministic E2E boots a Kind management cluster, Grad fleet CRDs/controllers, 
 4. Implement one native container/VM `CapacityAllocation` controller and prove acquire-to-cleanup under a hard spend cap.
 5. Implement one managed-Kubernetes cell and prove the same contract without changing gateway/edge messages.
 6. Add diversified spot, drain, lease/orphan, cache-affinity, and cost controls; launch only qualified `flex`/`standard` cells.
-7. Add multi-node/runtime/topology candidates and `fast`/`turbo` only after measured latency, availability, interruption, and margin gates.
+7. Prove the first-class multi-node cell contract before public owned inference; add `fast`/`turbo` only after measured latency, availability, interruption and margin gates.
 8. Qualify external-gateway provider traffic on the same inference edge with isolated channel/cache/billing principals.
 9. Connect the research factory only after its independent qualification pipeline can prove that one exact factory-produced bundle passes baseline parity, custom architecture/kernel/runtime tests, full-cell soak and dry-run release rollback.
 

@@ -39,7 +39,7 @@ Current primary docs show heterogeneous control surfaces: interruptible containe
 - negative: Grad must build an inference edge, cell agent/router, fleet operator, capacity-provider reconcilers, signed bootstrap, and cross-provider operations rather than rely on one cloud autoscaler.
 - negative: an extra AWS edge-to-cell hop and external network can affect TTFT/stream jitter; this must pass each speed gate.
 - negative: cache is lost on spot interruption, and post-output interruption cannot be transparently replayed.
-- migration: begin with fakes/CRD PBT, one pinned vLLM single-node release, one native capacity-provider reconciler, and one managed-Kubernetes comparison. Publish `flex`/`standard` cells only after measured gates. Add provider breadth, multi-node topologies, `fast`, and `turbo` incrementally.
+- migration: begin with fake SQL/driver PBT, one pinned vLLM single-node release, the smallest qualified multi-node topology, one native capacity-provider reconciler, and one managed-Kubernetes comparison only if required. Publish owned cells only after exact topology gates. Add provider breadth, `fast`, and `turbo` incrementally. ADR-0009 supersedes the earlier multi-node deferral and the simplicity review supersedes fleet CRDs.
 - rollback: fence a provider/cell/target epoch in Redis, stop new acquisition, drain/terminate leases, and retain direct-provider gateway service. No customer model is silently moved elsewhere.
 
 ## Evidence

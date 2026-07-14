@@ -31,13 +31,14 @@ const client = new OpenAI({
   baseURL: process.env.GRAD_OPENAI_BASE_URL,
 });
 
-const result = await client.chat.completions.create({
+const result = await client.responses.create({
   model: "grad/medium/standard",
-  messages: [{ role: "user", content: "Hello" }],
+  input: "Hello",
+  store: false,
 });
 ```
 
-`GRAD_OPENAI_BASE_URL` includes `/v1`; its production hostname is a deployment/DNS decision and must not be hard-coded in generated clients or fixtures. Baseline use requires only the standard bearer credential and standard OpenAI request fields. `x-grad-*` headers are optional enhancements, never required for ordinary Chat Completions, Responses, Embeddings, models, streaming, tools or structured output.
+`GRAD_OPENAI_BASE_URL` includes `/v1`; its production hostname is a deployment/DNS decision and must not be hard-coded in generated clients or fixtures. Baseline use requires only the standard bearer credential and standard OpenAI Responses fields. `x-grad-*` headers are optional enhancements, never required for ordinary Responses, Models, Anthropic Messages, streaming, tools or structured output.
 
 We do not publish a required proprietary inference SDK at seed. We publish copyable configurations, an optional thin Vercel AI SDK provider package, OpenAPI/JSON Schema, and conformance results.
 
@@ -95,7 +96,7 @@ End user
 
 This is hop-by-hop authentication. OpenRouter owns validation and billing of the OpenRouter end user. Grad validates only the Grad-issued channel credential presented by OpenRouter; it does not receive, introspect or trust the end user's OpenRouter API key and does not require that user to have a Grad organization. Any forwarded end-user ID is optional, bounded, privacy-reviewed, non-authoritative abuse/correlation metadata—not an authentication or billing principal.
 
-The channel credential should be a rotatable scoped bearer secret unless the partner supports a stronger mutually agreed mechanism. Its digest/version/status and `DistributionChannelPrincipal` are projected from PostgreSQL into Redis. It authorizes only the agreed catalog and inference paths. It cannot call tRPC, list customer workspaces, spend organization credit, request arbitrary models, select an upstream URL or bypass gateway admission. If Redis cannot prove the credential and reserve channel exposure, the gateway fails closed before inference.
+The channel credential should be a rotatable scoped bearer secret unless the partner supports a stronger mutually agreed mechanism. Its digest/version/status and `DistributionChannelPrincipal` are projected from PostgreSQL into Redis. It authorizes only the agreed catalog and inference paths. It cannot call management REST/MCP, list customer workspaces, spend organization credit, request arbitrary models, select an upstream URL or bypass gateway admission. If Redis cannot prove the credential and reserve channel exposure, the gateway fails closed before inference.
 
 OpenRouter may already have checked its own balance, but Grad must still admit every request. Our admission protects unpaid/aged receivable exposure, contract/model allowlists, release readiness, regional capacity, RPM/TPM/concurrency, request bounds and abuse. These checks are not duplicated end-user billing; they are the provider-side safety boundary. Raw inference cells trust only the AWS inference edge's short-lived signed identity and exact release target, never a public or channel API key.
 
@@ -106,12 +107,12 @@ OpenRouter may already have checked its own balance, but Grad must still admit e
 | Method | Path | Distribution contract |
 | --- | --- | --- |
 | `GET` | `/v1/models` | OpenAI-compatible list for direct/customer-key policy. A channel credential receives its approved channel catalog projection. |
-| `POST` | `/v1/chat/completions` | Universal seed baseline: stream/non-stream, tools, structured output, usage and stable finish/error behavior. |
-| `POST` | `/v1/responses` | Stateless qualified subset. Advertise per model/profile only after client and router conformance. |
-| `POST` | `/v1/embeddings` | Qualified models only; not inferred from Chat support. |
+| `POST` | `/v1/responses` | Launch baseline: stateless stream/non-stream, function tools, structured output/reasoning where qualified, usage and stable native errors. |
+| `POST` | `/v1/messages` | Launch Anthropic Messages profile for direct customers and channels that accept it. |
+| `POST` | `/v1/chat/completions` | Deferred compatibility adapter required before a native channel such as OpenRouter whose provider contract still requires it. |
 | `GET` | `/healthz` | Liveness; not a substitute for channel model/readiness monitoring. |
 
-Anthropic Messages and Google native skins remain available to direct customers, but OpenAI Chat Completions is the common denominator for third-party distribution. A channel may gain another skin only after that channel documents and passes it.
+Responses and Anthropic Messages are the direct launch profiles. OpenAI Chat Completions is implemented later as a channel/customer-gateway compatibility adapter when a signed integration requires it; it does not block first-party launch. A channel receives only a profile it documents and passes.
 
 ### Compatibility rules
 
@@ -143,7 +144,7 @@ OpenAI publishes OpenAPI endpoint schemas for Chat Completions, Responses, Embed
 
 A customer using their own Grad key through a gateway does not become a channel receivable. Their gateway may independently retain payloads; our UI/docs disclose that the customer's selected gateway policy is outside Grad's no-retain guarantee. Native channels receive only contract-approved payload/metadata handling and are excluded from Product Intelligence by default.
 
-Credential lookup, never a spoofable header, selects the principal/profile. Channel credentials cannot access the first-party tRPC control plane, organization credits, traces or customer catalog. Workspace credentials cannot select a channel price book. Properties and integration tests prove those separations under credential rotation, replay and concurrent settlement.
+Credential lookup, never a spoofable header, selects the principal/profile. Channel credentials cannot access the first-party REST/MCP control plane, organization credits, traces or customer catalog. Workspace credentials cannot select a channel price book. Properties and integration tests prove those separations under credential rotation, replay and concurrent settlement.
 
 ## Catalog profiles
 
@@ -264,7 +265,7 @@ Configuration examples contain environment variable names only. Never commit cus
 ### Required invariant cases
 
 - A workspace key sent directly and through each custom gateway charges the same organization price book and nested limits exactly once.
-- A native channel key can never reserve customer credit, open a customer trace, inherit Product Intelligence or access tRPC.
+- A native channel key can never reserve customer credit, open a customer trace, inherit Product Intelligence or access management REST/MCP.
 - Router retries before first output cannot duplicate sold usage; retries after exposed output follow the frozen no-replay/settlement policy.
 - Cancellation propagates to the inference edge/cell and records partial billable usage consistently.
 - Headers containing credentials, router auth, cookies or trace payloads never enter fixtures/artifacts/logs.

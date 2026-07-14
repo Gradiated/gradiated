@@ -31,7 +31,7 @@ Each Rust adapter declares:
 - provider request ID, latency, error normalization, and cost evidence;
 - bounded customer sell exposure used by reservation calculation and a separate internal provider buy/attempt exposure used by route margin/risk gates.
 - exact concrete model/version, endpoint region/runtime/quantization, retention/training/ZDR policy, prompt-cache behavior, and qualification-evidence version;
-- Responses, embeddings, image/native-file input and reasoning support independently rather than inheriting them from Chat compatibility.
+- Responses, Anthropic Messages, later Chat/embeddings, image/native-file input and reasoning support independently rather than inheriting one protocol's compatibility.
 - canonical provider/model IDs, unique bare aliases, native service tiers, training/retention policy and whether Private/No Retention is eligible.
 
 Never declare a capability based only on a generic compatibility label. Add fixtures for each supported field and fail explicitly when translation would be lossy.
@@ -51,9 +51,9 @@ OpenRouter upstream does not appear in customer setup. If enabled by operators, 
 
 ## Official-client compatibility
 
-The Grad endpoint is independently usable as an OpenAI-compatible provider; third-party distribution is additive, not required. The conformance suite instantiates official OpenAI, Anthropic, and Google SDKs with base URL pointed to the Rust gateway. It covers canonical/bare model identity, native skins, Product Intelligence/no-retain behavior, fake providers on every `main` commit and external pull request, and real providers in protected CI as specified in [Testing and CI](TESTING_AND_CI.md).
+The Grad endpoint is independently usable through OpenAI Responses and Anthropic Messages; third-party distribution is additive, not required. The launch conformance suite instantiates official OpenAI and Anthropic SDKs with base URL pointed to the Rust gateway. Later protocol/provider SDKs are added only with their product slice. It covers canonical/bare model identity, native skins, Product Intelligence/no-retain behavior, fake providers on every `main` commit and external pull request, and real providers in protected CI as specified in [Testing and CI](TESTING_AND_CI.md).
 
-The OpenAI-compatible seed baseline is bearer authentication plus `GET /v1/models`, `POST /v1/chat/completions`, a qualified stateless `POST /v1/responses` subset, and qualified `POST /v1/embeddings`. Standard clients require only the base URL/key; Grad headers are optional. Public JSON/SSE compatibility is fixture-governed, including usage, tools, structured output, finish reasons, cancellation, UTF-8 chunking, early 429 and midstream errors. OpenAI's published `gpt-oss` compatibility test is pinned as an additional tool/API-shape smoke, not a claim of exhaustive OpenAI parity.
+The seed baseline is bearer authentication plus `GET /v1/models`, stateless `POST /v1/responses` and `POST /v1/messages`. Standard clients require only base URL/key plus Anthropic's version header where applicable; Grad headers are optional. Public JSON/SSE compatibility is fixture-governed, including usage, tools, structured output/reasoning where qualified, stop reasons, cancellation, UTF-8 chunking, early 429 and midstream errors. Chat Completions, Embeddings, Google and hosted/stateful provider products are deferred.
 
 Model IDs for paid smoke are environment-pinned because catalogs change. At each monthly review, verify from current official model/pricing documentation that the selected model supports the tested endpoint/streaming mode and remains the cheapest reasonable choice. The job's token and dollar preflight is the hard guardrail.
 
@@ -139,7 +139,8 @@ Fixtures are versioned with provider/document date. Live canaries are vendor-dep
 ## Evidence sources
 
 - [Hono supports native web Request/Response and runtime adapters](https://hono.dev/docs/getting-started/basic).
-- [tRPC fetch adapter consumes native Request and returns Response](https://trpc.io/docs/server/adapters/fetch).
+- [Hono Zod OpenAPI route validation and generation](https://hono.dev/examples/zod-openapi).
+- [Hono Scalar OpenAPI reference integration](https://hono.dev/examples/scalar).
 - [shadcn/ui Vite installation](https://ui.shadcn.com/docs/installation/vite).
 - [OpenRouter API reference](https://openrouter.ai/docs/api/reference/overview).
 - [OpenRouter complete documentation index](https://openrouter.ai/docs/llms.txt).

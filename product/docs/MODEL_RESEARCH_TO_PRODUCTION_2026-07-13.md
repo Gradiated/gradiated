@@ -25,8 +25,8 @@ The factory is deliberately polyglot. Choose the language that minimizes uncerta
 | Model architecture, checkpoint surgery, training/healing, quantization and quality evaluation | Python 3.12+, PyTorch, Transformers/safetensors where applicable | Produces immutable checkpoint/config/package artifacts, reference outputs and evidence. |
 | Kernel discovery | PyTorch reference first, then Triton; CUDA/C++ only when Triton or compiler output fails a measured gate | Registers a stable operator schema plus fake/meta behavior, reference implementation, hardware matrix and golden vectors. |
 | Experiment SDK, campaign orchestration and GPU activities | Python, Pydantic, Temporal Python SDK, `uv` | Consumes generated Protobuf contracts; PostgreSQL remains domain authority. |
-| Research API | Internal Python service owning research mutations and Temporal client operations | Hono/tRPC is the authenticated BFF and generated Protobuf/gRPC client; it does not duplicate research state transitions. |
-| Product/customer control plane | TypeScript Hono/tRPC and Vite/shadcn | Owns product auth, UI composition and release-owner experience, not model execution. |
+| Research API | Internal Python service owning research mutations and Temporal client operations | Hono REST is the authenticated BFF and generated Protobuf/gRPC client; it does not duplicate research state transitions. |
+| Product/customer control plane | TypeScript Hono REST/OpenAPI and Vite/shadcn | Owns product auth, UI composition and release-owner experience, not model execution. |
 | System simulator and serving experiments | Python by default; Rust executables where performance, determinism or existing useful code justifies them | Implement a language-neutral experiment-tool protocol and emit sealed observations. |
 | Bundle verification, materialization and cell lifecycle | Rust | Verifies signatures/digests, stages exact artifacts, launches the declared runtime mode and attests the cell. |
 | Gateway, inference edge and production transport | Rust | Never imports Python research packages or queries research services on the request path. |
@@ -96,7 +96,7 @@ The AWS-hosted research control plane contains:
 - S3 buckets for immutable datasets, checkpoints, logs, evidence, and large content-addressed bundle objects;
 - ECR for runtime images and the small OCI artifact that indexes a bundle;
 - KMS-backed signing identities and Sigstore/cosign-compatible attestations;
-- the Hono/tRPC control API and Vite/shadcn research console as an authenticated BFF over generated internal research APIs, protected by operator/research roles rather than customer workspace roles.
+- the Hono REST control API and Vite/shadcn research console as an authenticated BFF over generated internal research APIs, protected by operator/research roles rather than customer workspace roles.
 
 PostgreSQL is domain authority. The Python research-control service is the only normal writer for campaign, experiment, evidence, candidate and qualification transitions; TypeScript never reimplements those rules. Temporal's event history makes workflows durable, but it does not decide whether evidence is valid or which release is active. S3 and ECR contain immutable bytes; they do not decide lifecycle state. ClickHouse is an analytical projection and is never promotion authority.
 
@@ -617,7 +617,7 @@ Use Python 3.12+, `uv`, Pydantic, Ruff, Pyright, pytest and Hypothesis. PyTorch,
 ### TypeScript control-plane packages
 
 - generated research Protobuf client and actor-context signing;
-- thin Hono/tRPC BFF routers for campaigns, programs, experiments, candidates, bundles, qualifications, releases and approvals;
+- thin Hono REST BFF resources for campaigns, programs, experiments, candidates, bundles, qualifications, releases and approvals;
 - no duplicate campaign/evidence/qualification state machine or direct research-table mutation;
 - Vite/shadcn operator screens: model-program portfolio, queue/budget view, lineage/Pareto frontier, experiment evidence, bundle diff, gate matrix, release proposal and rollout.
 
@@ -680,7 +680,7 @@ Scaffold `research/factory` with `uv`, Python quality/test tools, generated Pyth
 
 ### RF-01 — campaign, experiment and evidence authority
 
-Implement the private Python research-control service, PostgreSQL schema, `ModelProgram` portfolio/queue, immutable specs, budgets, leases, observations, claims, scope composition, audit and generated Hono BFF client. Research-domain mutations have one Python owner; Hono/tRPC never duplicates them.
+Implement the private Python research-control service, PostgreSQL schema, `ModelProgram` portfolio/queue, immutable specs, budgets, leases, observations, claims, scope composition, audit and generated Hono BFF client. Research-domain mutations have one Python owner; Hono REST never duplicates them.
 
 ### RF-02 — artifact and bundle supply chain
 

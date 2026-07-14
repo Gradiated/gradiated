@@ -1,5 +1,7 @@
 # Evidence and decisions
 
+> Dated evidence ledger from the pre-simplification design. The [simplicity review](../../docs/SIMPLICITY_REVIEW.md) supersedes its accepted ClickHouse, fleet-CRD, target-publication and dependency decisions while preserving the cited evidence and uncertainty.
+
 Evidence labels follow the repository contract: vendor-reported, analytical, derived, inferred, synthetic, or measured. This planning artifact made no live provider request and spent $0.
 
 ## Accepted decisions

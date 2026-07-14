@@ -1,356 +1,199 @@
-# Control plane implementation blueprint
+# Simplified control-plane implementation blueprint
 
-## Scope and invariants
+## Boundary
 
-This document is the build contract for the customer/operator web application, Hono API, PostgreSQL domain, background workers, retained-data services and public release authority. It does not define public inference wire behavior, GPU execution or research candidate mutation.
+The Node control plane owns identity integration, organizations/workspaces, keys, prepaid credit, Stripe, catalog/releases, retained-trace metadata, PostgreSQL product analytics, recommendations, distribution accounts and operator commands. It never participates in live inference admission and never mutates research experiment state directly.
 
-Non-negotiable rules:
+The complete required field list is [the minimal persistent model](../../docs/SIMPLICITY_REVIEW.md#minimal-persistent-model). Adding a table or field requires a query/command, invariant and migration test in the same change.
 
-- Better Auth proves identity/session only; product tables own organizations, workspaces, roles and policy.
-- Every protected use case receives a server-derived `ActorContext`; IDs or roles from the browser never establish authority.
-- PostgreSQL mutations commit domain state, idempotency record, audit and outbox in one transaction.
-- Ledger entries are balanced integer micro-USD; no service mutates an old financial fact.
-- The control API never participates in inference admission and cannot make Redis a financial authority.
-- Research state is mutated only through the private Python research API. Node owns public product release approval/alias policy, not research evidence.
-- Raw trace payloads are never returned by ordinary database/analytics queries and never pass through ClickHouse.
+## Dependencies and source layout
 
-## Technology and package layout
-
-Use Node LTS, strict TypeScript, Hono, tRPC v11, Zod at transport/config boundaries, Drizzle over `node-postgres`, Better Auth, React/Vite, TanStack Router/Query, Tailwind and shadcn/ui. Pin exact versions in RF/WP-00 and do not use `drizzle-kit push` outside disposable local databases. Generated reviewed SQL migrations are canonical deployment artifacts.
+Use Node LTS, strict TypeScript, Hono, tRPC, Better Auth, Drizzle over `node-postgres`, Zod at untrusted boundaries, React/Vite, TanStack Router/Query, React Hook Form, Tailwind and shadcn/ui. Do not add a second ORM, a public REST surface without a consumer, ClickHouse or another product event bus.
 
 ```text
 product/
   apps/
-    web/src/
-      app/ routes/ features/ components/ lib/
-    control-api/src/
-      bootstrap/ middleware/ trpc/ rest/ auth/ health/
-    control-worker/src/roles/
-      financial.ts projection.ts modelops.ts scheduler.ts
-    intelligence-worker/src/roles/
-      trace.ts analytics.ts recommendation.ts retention.ts
-    trace-access/src/
+    web/src/{routes,features,components,lib}/
+    control/src/
+      roles/{api,financial,intelligence,trace-access}.ts
+      transport/{hono,trpc,stripe}.ts
   packages/
-    domain/src/
-      tenancy/ keys/ billing/ catalog/ releases/ traces/ workloads/ audit/
-    db/src/
-      schema/ repositories/ transactions/ migrations/ queries/
+    domain/src/{tenancy,keys,billing,catalog,traces,recommendations,distribution}/
+    db/src/{schema,repositories,migrations,queries}.ts
     authz/src/
     contracts/src/gen/
-    research-client/src/gen/
-    analytics/src/
     crypto/src/
-    jobs/src/
-    ui/src/
     testkit/src/
+    ui/src/
 ```
 
-Dependency direction is `transport/UI -> application use case -> domain -> repository/clock/ID/event interfaces`. Drizzle, Stripe, Redis, ClickHouse, S3/KMS and generated clients implement ports. Domain packages do not import Hono, React, Stripe SDK, Redis clients or Drizzle table objects.
+One image exposes four role commands. Deploy roles separately only for IAM, KMS decrypt, scaling or blast-radius reasons. Domain packages import no Hono, React, Drizzle, Stripe, Redis or AWS SDK object.
 
-## Shared application contracts
+Catalog persistence includes relational `workspace_models` allowlists. Do not put allowed model IDs, routes or observability options into a workspace JSON blob.
+
+## Common application contracts
 
 ```ts
-type ActorContext = {
-  actorUserId: UserId;
-  sessionId: SessionId;
+type Actor = {
+  userId: UserId;
   organizationId: OrganizationId;
-  organizationMembershipId: OrganizationMembershipId;
   workspaceId?: WorkspaceId;
-  workspaceMembershipId?: WorkspaceMembershipId;
   requestId: RequestId;
-  recentAuthAt?: Instant;
 };
 
 interface UnitOfWork {
-  transaction<T>(fn: (tx: TransactionContext) => Promise<T>): Promise<T>;
+  transaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
 }
 
-interface IdempotencyStore {
-  begin(scope: string, key: string, requestHash: Digest, tx: TransactionContext): Promise<BeginResult>;
-  complete(recordId: Id, responseRef: JsonValue, tx: TransactionContext): Promise<void>;
-}
-
-interface OutboxWriter {
-  append(event: DomainEvent, tx: TransactionContext): Promise<void>;
+interface Outbox {
+  append(type: string, schemaVersion: number, payload: JsonValue, tx: Tx): Promise<void>;
 }
 
 type AppError =
-  | { code: 'unauthenticated' | 'forbidden' | 'not_found'; safeMessage: string }
-  | { code: 'conflict' | 'invalid_state' | 'idempotency_conflict'; safeMessage: string }
+  | { code: 'unauthenticated' | 'forbidden' | 'not_found' | 'conflict'; message: string }
   | { code: 'validation_failed'; fields: FieldError[] }
   | { code: 'dependency_unavailable' | 'internal'; incidentId: string };
 ```
 
-Use nominal/branded IDs, `bigint` money at application boundaries, UTC instants and explicit page cursors. Never accept an unscoped repository method such as `getWorkspace(id)`; require organization and workspace scope in the method signature and SQL predicate.
+Repository methods always require the organization and, when applicable, workspace in their signature and SQL predicate. IDs, roles and organization/workspace selection come from the authenticated server context, never browser claims.
 
-## Tenancy, membership and key domain
+The outbox schema is exactly `id, type, schema_version, payload_json, occurred_at, available_at, published_at, attempts, last_error_code`. Domain payloads carry their own required IDs; there is no universal event principal, aggregate envelope or correlation hierarchy.
 
-### Core aggregates and services
+## Tenancy and authorization
 
 ```ts
-interface OrganizationService {
-  create(input: CreateOrganization, actor: SignedInActor): Promise<OrganizationCreated>;
-  rename(input: RenameOrganization, actor: ActorContext): Promise<Organization>;
-  requestClosure(input: RequestOrganizationClosure, actor: ActorContext): Promise<ClosureRequest>;
+interface TenancyService {
+  createOrganization(name: string, actor: SignedInActor): Promise<OrganizationCreated>;
+  createWorkspace(input: CreateWorkspace, actor: Actor): Promise<Workspace>;
+  updateWorkspace(input: UpdateWorkspace, actor: Actor): Promise<Workspace>;
+  inviteMember(input: InviteMember, actor: Actor): Promise<Invitation>;
+  acceptInvitation(token: string, actor: SignedInActor): Promise<void>;
 }
 
-interface WorkspaceService {
-  create(input: CreateWorkspace, actor: ActorContext): Promise<Workspace>;
-  updatePolicy(input: UpdateWorkspacePolicy, actor: ActorContext): Promise<WorkspacePolicyVersion>;
-  requestDelete(input: RequestWorkspaceDelete, actor: ActorContext): Promise<DeletionRequest>;
-}
-
-interface MembershipService {
-  invite(input: InviteMember, actor: ActorContext): Promise<Invitation>;
-  accept(input: AcceptInvitation, signedIn: SignedInActor): Promise<MembershipSet>;
-  changeRole(input: ChangeRole, actor: ActorContext): Promise<void>;
-  remove(input: RemoveMember, actor: ActorContext): Promise<void>;
-}
-
-interface ApiKeyService {
-  create(input: CreateApiKey, actor: ActorContext): Promise<{ key: ApiKeyView; secretOnce: string }>;
-  rotate(input: RotateApiKey, actor: ActorContext): Promise<{ key: ApiKeyView; secretOnce: string }>;
-  revoke(input: RevokeApiKey, actor: ActorContext): Promise<void>;
+interface KeyService {
+  create(input: CreateKey, actor: Actor): Promise<{ view: ApiKeyView; secretOnce: string }>;
+  revoke(id: ApiKeyId, actor: Actor): Promise<void>;
 }
 ```
 
-`OrganizationService.create` is one transaction: insert organization, owner membership, exactly one Default workspace, owner workspace membership, audit event and `OrganizationConfigChanged` outbox. A database constraint plus PBT prevents two Defaults.
+Organization creation is one transaction: organization, owner membership, one non-deletable Default workspace, owner workspace membership, audit and outbox. Better Auth's user ID is the product user ID; do not create another user table.
 
-API key raw format is `grad_<environment>_<public-prefix>_<secret>`. Store only public prefix, keyed digest with pepper version, last-four display, scopes, status and metadata. Creation/rotation returns raw bytes once after commit; logs, analytics, traces and idempotency response storage contain no secret. Rotation creates a new key and optionally schedules the old key's grace revocation; it never mutates secret material in place.
+Roles are intentionally small:
 
-### Authorization policy
+| Scope | Roles |
+| --- | --- |
+| organization | `owner`, `admin`, `billing`, `member` |
+| workspace | `admin`, `developer`, `viewer` |
+| internal | deployment identity or explicit operator allowlist; never a customer role |
 
-`AuthorizationService.authorize(actor, action, resource)` is the one role evaluator. Repositories still scope SQL as defense in depth.
+Organization owner/admin sees all workspaces; other members require a workspace row. Last owner removal is forbidden. Key secrets are returned once, stored only by keyed digest, and rotated by create-new/revoke-old—no grace-state machine.
 
-| Action | Organization role | Workspace role / condition |
-| --- | --- | --- |
-| billing/top-up/receipts | owner or billing | none |
-| organization member admin | owner/admin | none; last owner protected |
-| workspace policy/members/delete | owner/admin or assigned member | workspace admin |
-| key create/rotate/revoke | owner/admin or assigned member | admin/developer; viewer denied |
-| usage list/detail | active org membership | workspace viewer+ |
-| trace export/delete | owner/admin or assigned member | workspace admin and recent auth |
-| release/research operator | separate operator role | never inferred from customer role |
+## Billing and Stripe
 
-Invitation tokens are high entropy and stored by digest. Acceptance locks invitation and memberships, checks email policy/expiry/organization status and creates Default-workspace access in one transaction.
-
-## Billing and payment domain
-
-### Financial types and services
+Use a one-currency, fixed-chart, append-only double-entry ledger. Its structure is core financial authority, not optional analytics.
 
 ```ts
-type Money = { currency: 'USD'; micros: bigint };
-
-interface LedgerService {
-  post(command: LedgerCommand, tx: TransactionContext): Promise<LedgerTransactionId>;
-  balance(organizationId: OrganizationId, tx?: TransactionContext): Promise<Money>;
+interface Ledger {
+  post(command: BalancedTransaction, tx: Tx): Promise<LedgerTransactionId>;
+  balanceForUpdate(orgId: OrganizationId, tx: Tx): Promise<MoneyMicros>;
 }
 
-interface TopUpService {
-  createCheckout(input: CreateTopUp, actor: ActorContext, idempotencyKey: string): Promise<CheckoutRedirect>;
-  handleStripeWebhook(rawBody: Uint8Array, signature: string, receivedAt: Instant): Promise<WebhookResult>;
+interface TopUps {
+  createCheckout(amountMicros: bigint, actor: Actor, idempotencyKey: string): Promise<CheckoutUrl>;
+  handleWebhook(rawBody: Uint8Array, signature: string): Promise<void>;
 }
 
-interface UsagePoster {
-  post(event: SettlementEvent, streamIdentity: StreamIdentity): Promise<PostingResult>;
-  postFailedRequestCredit(event: FailedRequestCreditEvent): Promise<PostingResult>;
+interface UsageConsumer {
+  reservationCreated(event: ReservationCreated): Promise<void>;
+  usageSettled(event: UsageSettled): Promise<void>;
 }
 
-interface BillingReconciler {
-  reconcileOrganization(id: OrganizationId, reason: ReconcileReason): Promise<ReconcileReport>;
-  rebuildProjection(id: OrganizationId, operator: OperatorContext): Promise<ProjectionEpoch>;
+interface Reconciler {
+  compare(orgId: OrganizationId): Promise<ReconciliationReport>;
+  rebuildProjection(orgId: OrganizationId, actor: Operator): Promise<number>;
 }
 ```
-
-`createCheckout` validates an allowlisted amount/currency, writes `topup_intent(created)` and idempotency record, then creates the Stripe session with only internal top-up/organization references. If Stripe succeeds but the final local update fails, retry uses the same idempotency key and recovered Stripe object.
 
 Webhook transaction:
 
-1. verify signature over raw bytes before JSON parsing;
-2. insert unique `payment_event(provider_event_id)` or return duplicate result;
-3. lock the top-up intent and validate organization, amount, currency and provider object;
-4. transition the intent according to the explicit state machine;
-5. for a completed payment, post balanced cash/credit/clearing entries exactly once;
-6. append `OrganizationCreditChanged` and audit records;
-7. commit before returning 2xx.
+1. verify raw-body signature;
+2. insert unique Stripe event or return success for a duplicate;
+3. lock the top-up intent and validate organization/amount/object;
+4. transition `created -> completed|failed|expired`;
+5. post exactly one balanced processor-clearing/customer-credit transaction and update the locked balance projection for completion;
+6. append projection outbox and audit;
+7. commit before 2xx.
 
-Unsupported/conflicting events are retained as quarantined metadata and alert; they never improvise a ledger effect. Refunds and chargebacks use new compensating transactions. Automatic top-up is not implemented until a later package adds customer maximum, frequency, payment-method authority, velocity/fraud controls and its own PBT.
+Refunds, chargebacks and failed-request credits are new balanced transactions linked by source ID. They never modify old usage or top-up rows. `organization_balances` is a transactionally updated/rebuildable snapshot; ledger transactions/entries remain authority.
 
-### Financial worker roles
+The financial role consumes the Valkey billing stream with consumer-group claim/redelivery. It upserts the operational `usage_record`, posts one customer-credit/usage-revenue transaction at settlement, updates the balance projection and commits before acknowledging. Duplicate event IDs and business keys have no effect.
 
-- `financial-worker`: Redis billing stream -> immutable usage/ledger/outbox transaction; pending claim/redelivery; poison quarantine.
-- `projection-worker`: ordered PostgreSQL outbox -> versioned Redis config/credit/catalog keys; urgent key/suspension path uses the same ordering.
-- `scheduler`: continuous lag checks, hourly full reconciliation, retention and receipt jobs.
-- `modelops-worker`: model metadata ingestion, endpoint qualification expiry and public release projection; no ledger mutation.
-
-Every handler implements `JobHandler<T>.run(job, lease): Promise<JobOutcome>` and records `job_id`, idempotency key, attempt, lease owner/epoch, safe error class and next retry. Acknowledgement occurs only after the owned transaction commits.
-
-## Catalog and public release authority
+## Catalog and release authority
 
 ```ts
-interface CatalogService {
-  upsertProviderSnapshot(snapshot: SignedProviderSnapshot, operator: OperatorContext): Promise<CatalogVersion>;
-  qualifyEndpoint(command: QualifyEndpoint, operator: OperatorContext): Promise<QualificationEvidenceId>;
-}
-
-interface ReleaseAuthority {
-  propose(input: ReleaseProposalInput, operator: OperatorContext): Promise<ReleaseProposal>;
-  approve(id: ReleaseProposalId, releaseOwner: ReleaseOwnerContext): Promise<RouteRelease>;
-  startRollout(input: StartRollout, releaseOwner: ReleaseOwnerContext): Promise<RouteRollout>;
-  haltOrRollback(input: HaltOrRollback, actor: OperatorContext): Promise<AliasGeneration>;
+interface Catalog {
+  createDraft(input: DraftRelease, actor: Operator): Promise<ModelRelease>;
+  activate(digest: ReleaseDigest, qualificationId: QualificationId, actor: ReleaseOwner): Promise<void>;
+  updateAlias(input: AliasUpdate, actor: ReleaseOwner): Promise<ModelAlias>;
+  retire(digest: ReleaseDigest, actor: ReleaseOwner): Promise<void>;
 }
 ```
 
-Direct releases bind one model provider/model/version/price/capability/endpoint-evidence set. Grad releases consume a signed `QualifiedBundleRef` from Python research control and add family or managed product envelope, price, SLO, placements, rollout and rollback. Node cannot alter the bundle or qualification; Python cannot activate a public alias.
+`model_definitions` owns stable direct/owned catalog identity; `provider_endpoints` owns credential/region lifecycle; `model_releases` is the immutable capabilities/prices/retry unit; `release_endpoints` freezes direct endpoint membership; `capacity_targets` holds owned placement; and `model_aliases` supplies stable/canary pointers and generation. There are no separate model product, family, price book, generic route-candidate, rollout or release-manifest tables.
 
-Approval, release insertion, alias generation/outbox and audit commit atomically. Target publication is separate and requires cell attestation; an approved release with no eligible targets remains unavailable rather than resolving elsewhere.
+Direct qualification references one provider/model/endpoint scope. Owned activation requires a valid exact-bundle qualification report. Rollback updates the alias to a prior active digest; in-flight requests keep their admitted digest.
 
-## Trace, analytics and migration domain
+## Traces, usage analytics and recommendations
 
-### Encrypted trace envelope
+The gateway encrypts retained payloads and appends ciphertext to a separate Valkey stream. The intelligence role:
 
-Gateway output to the trace stream is `TraceCaptureEvent` with safe routing metadata plus:
+1. validates bounded envelope metadata;
+2. writes ciphertext to private S3;
+3. inserts/updates one `traces` row;
+4. acknowledges only after object and metadata are durable;
+5. deletes by destroying wrapped key and deleting the object, then setting `deleted_at`.
 
-```text
-envelope_version
-trace_id / request_id / organization_id / workspace_id
-retention_deadline / capture_class / plaintext_length
-ciphertext / nonce / authenticated_data_digest
-wrapped_data_key_for_ingest_key / ingest_key_version
-payload_schema_version / compression
-```
+Hono queries PostgreSQL `usage_records` and `traces` with mandatory organization/workspace/time bounds. Initial screens use indexes and closed query objects. No analytics repository abstraction or ClickHouse schema exists. Add a PostgreSQL rollup only with an `EXPLAIN ANALYZE` fixture proving a real query misses its SLO.
 
-Use a random data-encryption key per trace and an authenticated cipher selected by the crypto package. The gateway wraps that key to a rotating asymmetric ingest public key from Redis. The trace worker unwraps under a purpose-scoped private/KMS-backed role, rewraps/registers the key for trace access and writes ciphertext to S3. Cryptographic algorithm and envelope test vectors are frozen in the crypto package before implementation; no agent chooses one ad hoc inside the gateway.
+Trace detail uses a short-lived signed grant. The nonce is consumed once in Valkey; the `trace-access` role reloads PostgreSQL authorization/deletion state, reads exactly one S3 object, decrypts and streams `Cache-Control: no-store`. It cannot list the bucket or return presigned ciphertext.
 
-### Services
+Recommendations are one immutable summary tied to a source model and candidate release. Customer actions are `accept`, `dismiss`, or start an explicit evaluation. There is no automatic traffic rewrite and no separate workload-profile/migration-candidate/evidence-level state machine.
 
-```ts
-interface TraceRegistryService {
-  persistCapture(event: TraceCaptureEvent): Promise<TraceRecord>;
-  tombstone(input: DeleteTrace, actor: ActorContext): Promise<Tombstone>;
-  requestExport(input: ExportTraces, actor: ActorContext): Promise<ExportJob>;
-}
+## Research API boundary
 
-interface TraceGrantService {
-  issue(input: TraceAction, actor: ActorContext): Promise<SignedSingleUseGrant>;
-}
+Hono is an authenticated BFF for the private generated Python research API. Python remains the sole normal writer for program/hypothesis/campaign/experiment/evidence/bundle/qualification state. Hono may read approved research views and send bounded operator commands, but has no mutation repository for research tables. Temporal belongs behind the Python service and never becomes a Node dependency.
 
-interface AnalyticsRepository {
-  listRequests(scope: AuthorizedScope, query: TraceQuery): Promise<Page<RequestFact>>;
-  summarize(scope: AuthorizedScope, query: RollupQuery): Promise<UsageSummary>;
-}
+## tRPC and UI
 
-interface MigrationService {
-  createReplay(input: CreateReplay, actor: ActorContext): Promise<MigrationExperiment>;
-  createLiveCanary(input: CreateLiveCanary, actor: ActorContext): Promise<MigrationExperiment>;
-  stop(input: StopExperiment, actor: ActorContext): Promise<void>;
-}
-```
+Seed routers are:
 
-The ClickHouse and Aurora implementations consume the same closed query objects; neither accepts SQL from tRPC. Trace-access validates grant signature/audience/nonce/expiry, atomically consumes it, reloads trace scope and tombstone/key state, reads exactly one object, decrypts and streams with `Cache-Control: no-store`. It cannot list S3 or issue a presigned object URL.
+- `session`, `organizations`, `members`, `workspaces`, `workspaceMembers`;
+- `apiKeys`, `billing`, `usage`, `traces`;
+- `catalog` for customer reads and operator-only mutations;
+- `recommendations`, `distribution`, and an operator `research` BFF when their packages arrive.
 
-Recommendation states are `opportunity -> replay_candidate -> evaluator_verified -> live_canary_ready -> accepted|rejected|expired`. Only explicit customer commands create experiments. No worker can modify workspace requested-model policy from a recommendation.
+Routes are `/`, `/keys`, `/usage`, `/billing`, `/settings/organization`, and `/settings/workspaces/:id`. Product Intelligence detail lives under `/usage/:requestId`; do not build a second observability application. The Default workspace is implicit until another workspace exists. Client query keys begin with organization/workspace and switching clears scoped cache.
 
-## tRPC and REST surface
+## Migrations, configuration and failure behavior
 
-All list procedures use `{cursor, limit<=100, filters}` and return `{items,nextCursor}`. Mutations accept a bounded `clientMutationId`; financially or externally significant REST routes require `Idempotency-Key`.
+- Drizzle schema and reviewed SQL migrations are committed; never use schema push outside disposable tests.
+- Expansion precedes code use; destructive contraction waits one release and a backup/restore check.
+- Roles are `api`, `financial`, `intelligence`, `trace_access`, `research_command_writer`, and migration owner; grants reflect exact tables/actions.
+- API readiness requires PostgreSQL and required config. Worker readiness requires its owned dependency; liveness checks only process progress.
+- PostgreSQL failure blocks control mutations but not already projected serving. Valkey failure blocks projection/reconciliation and gateway admission. S3/KMS failure delays trace capture/detail but not settled inference.
 
-| Router | Queries | Mutations |
-| --- | --- | --- |
-| `session` | `current` | `switchOrganization`, `switchWorkspace` |
-| `organizations` | `list`, `get` | `create`, `rename`, `requestClosure` |
-| `organizationMembers` | `list`, `invitations` | `invite`, `accept`, `changeRole`, `remove` |
-| `workspaces` | `list`, `get`, `effectivePolicy` | `create`, `updatePolicy`, `requestDelete` |
-| `workspaceMembers` | `list` | `add`, `changeRole`, `remove` |
-| `apiKeys` | `list` | `create`, `rotate`, `revoke` |
-| `credits` | `balance`, `transactions`, `topUps` | `createCheckout`, `updateWarnings` |
-| `models` | `catalog`, `detail` | `updateWorkspaceAccess` |
-| `usage` | `requests`, `summary` | none |
-| `traceAccess` | none | `issueViewGrant`, `requestExport`, `deleteTrace` |
-| `workloads` | `list`, `detail` | `name`, `merge`, `split` only when supported by evidence |
-| `migration` | `candidates`, `experiments` | `createReplay`, `createCanary`, `stop`, `recordDecision` |
-| `research` | operator queries proxied to private API | operator commands proxied with signed actor context |
-| `audit` | `list` | none |
+## Verification and ordered packages
 
-REST endpoints are `/api/auth/*`, `/webhooks/stripe`, health/readiness and future versioned external management APIs. The Stripe route bypasses browser CSRF/session middleware but requires raw-body signature verification. Cookie-authenticated unsafe methods enforce strict origin/fetch metadata and, where required, an explicit anti-CSRF token.
+Use Vitest/fast-check/Testcontainers and Playwright. Required properties cover tenancy isolation, exactly one Default workspace, role commands, key lifecycle, Stripe event reorder/duplicates, ledger/balance equality, stream crash/redelivery, projection rebuild, trace retention/delete and no automatic recommendation switch.
 
-## UI implementation contract
+1. `CP-00`: schema, migrations, UoW/outbox/idempotency and testkit.
+2. `CP-01`: Better Auth, organizations/Default workspace/memberships and RBAC.
+3. `CP-02`: API keys and workspace policy/projection.
+4. `CP-03`: top-up, fixed-chart ledger/balance and Stripe state-machine PBT.
+5. `CP-04`: financial stream consumer and reconciliation.
+6. `CP-05`: immutable model releases/aliases/qualification activation.
+7. `CP-06`: Vite/shadcn keys/billing/usage UI.
+8. `CP-07`: encrypted trace persistence/detail/deletion and PostgreSQL analytics.
+9. `CP-08`: recommendations/evaluations, distribution and research API UI as later slices.
 
-Each route has a loader/query key, permission guard, skeleton, empty state, error state, optimistic-policy decision and accessibility test. Financial status and raw key display are never optimistic.
-
-```text
-/
-/keys
-/models
-/usage
-/usage/traces/:traceId
-/billing
-/settings/organization
-/settings/team
-/settings/workspaces/:workspaceId
-/settings/data
-/settings/limits
-/operator/research/*
-/operator/releases/*
-```
-
-The active organization/workspace lives in URL/session selection, not an unscoped global store. Query keys begin with organization/workspace. A switch cancels in-flight queries and clears workspace-scoped client cache. Sensitive detail uses the one-time grant flow and never stores plaintext in browser persistence.
-
-## Database and schema rules
-
-- Drizzle schema expresses columns/types/indexes; reviewed SQL migrations express constraints, triggers, RLS/roles where used and data backfills.
-- Migration names are ordered and immutable after main. CI creates an empty DB, migrates up, loads fixtures, upgrades from the previous release snapshot and verifies generated schema drift.
-- Use expand/migrate/contract. Application code tolerates old/new shape during rollout; destructive contract runs only after old code is gone.
-- Financial, outbox and idempotency unique constraints are correctness mechanisms, not best-effort indexes.
-- PostgreSQL roles are purpose-specific: API read/write, financial poster, projector, trace registry, analytics outbox, research service, migration owner and break-glass. The API role cannot post ledger entries directly except through owned stored/domain transaction code.
-
-## Event catalog
-
-All events carry `event_id`, `aggregate_type/id`, `aggregate_version`, `schema_version`, `occurred_at`, `idempotency/business_key`, `correlation_id`, `causation_id` and a typed `PrincipalRef`. Tenant events use workspace principal where applicable; channel/research events never invent tenant IDs.
-
-Seed events:
-
-- tenancy: `OrganizationCreated`, `MembershipChanged`, `WorkspacePolicyChanged`, `ApiKeyChanged`;
-- finance: `TopUpCredited`, `RefundPosted`, `ChargebackPosted`, `ReservationCreated`, `UsageSettled`, `FailedRequestCreditRequested`, `LedgerPostingCompleted`, `OrganizationStatusChanged`;
-- serving config: `CatalogVersionPublished`, `RouteReleaseApproved`, `AliasHeadChanged`, `CellTargetSetChanged`;
-- retained data: `TraceCaptured`, `TracePersisted`, `TraceCaptureSkipped`, `TraceTombstoned`, `TraceDeleted`, `AnalyticsFactReady`;
-- migration: `WorkloadProfileChanged`, `RecommendationChanged`, `MigrationExperimentChanged`;
-- operations: `ProjectionRebuildRequested/Completed`, `ReconciliationMismatch`, `OperatorActionRecorded`.
-
-Event payloads carry immutable facts/references, not current mutable object snapshots unless the projection contract explicitly requires one. Consumers ignore duplicate IDs and reject unsupported schema versions to a dead letter/closed state.
-
-## Configuration, readiness and shutdown
-
-Config is parsed once into a typed object; unknown production keys and missing required keys fail startup. Environment variables contain references/URLs and secret mounts, not policy that belongs in PostgreSQL.
-
-`/healthz` proves process/event loop only. `/readyz` proves required connection pools, schema compatibility and role-specific dependencies without mutating money. Workers stop leasing jobs, finish/abandon safely, commit/ack owned work, then close pools. API shutdown rejects new traffic, drains bounded requests and never reports a financial mutation successful before commit.
-
-## Verification and junior-agent packages
-
-Required test layers:
-
-- domain examples and fast-check state machines for tenancy, roles, ledger, webhooks, releases, trace/migration states;
-- repository tests against PostgreSQL for every uniqueness/scope/transaction invariant;
-- Hono `app.request()` tests for middleware, raw webhook, sessions, tRPC errors and idempotency;
-- MSW/Testing Library route tests plus Playwright activation/funding/key/usage/privacy flows;
-- worker redelivery/crash/lease/property tests with real PostgreSQL/Redis/S3/ClickHouse-compatible fixtures;
-- golden event and research-client compatibility tests.
-
-Implement in this order:
-
-1. `CP-00`: IDs/errors/clock/UoW/idempotency/outbox, Drizzle/pg and fixture DB.
-2. `CP-01`: Better Auth mount plus organization/default-workspace/membership/authz.
-3. `CP-02`: API key lifecycle and Redis projection commands.
-4. `CP-03`: ledger/top-up/webhook with model-based tests.
-5. `CP-04`: financial consumer/projector/reconciler and operator repair commands.
-6. `CP-05`: catalog/public release authority and generated research client.
-7. `CP-06`: trace registry/envelope worker/grant/access/delete.
-8. `CP-07`: analytics repository/projector and usage UI.
-9. `CP-08`: workload/recommendation/experiment state plus UI.
-10. `CP-09`: full Vite routes, Playwright and operations.
-
-Each package owns one directory set, adds migrations/events before consumers, and must run its narrow examples/PBT plus `pnpm verify:ts`. No package may add a browser-to-database path, a second tenancy authority or a direct Redis financial mutation from tRPC.
-
-## Source notes
-
-Current official documentation retrieved 2026-07-14 reports Hono's standard Request/Response handler and security middleware, Better Auth's Hono handler and Drizzle/PostgreSQL adapters, and Drizzle's node-postgres/transaction/migration support: [Hono](https://hono.dev/docs), [Hono CSRF](https://hono.dev/docs/middleware/builtin/csrf), [Better Auth installation](https://better-auth.com/docs/installation), [Drizzle PostgreSQL](https://orm.drizzle.team/docs/get-started-postgresql), [Drizzle transactions](https://orm.drizzle.team/docs/transactions), [Drizzle migrations](https://orm.drizzle.team/docs/migrations). These are vendor-reported capabilities; WP-00 pins versions and proves integration before they become repository facts.
+Every package must prove a concrete command/query uses each new field. Unused schema is a failing review, not future-proofing.

@@ -1,241 +1,108 @@
-# Distribution and gateway integration implementation blueprint
+# Simplified distribution implementation blueprint
 
-## Two integration modes
+## Two modes, one serving path
 
-Do not combine these modes in credentials, billing, traces, catalog or customer support:
+1. A customer-configured gateway or SDK sends a normal workspace key to Grad. Billing, traces and limits are identical to direct customer traffic.
+2. OpenRouter sends a dedicated channel credential for a natively listed owned release. Grad applies channel exposure/receivable accounting and does not need the downstream user's identity.
 
-1. **Customer-configured gateway:** a Grad customer configures LiteLLM, Cloudflare, Portkey, Helicone, Kong, Vercel AI SDK or another client/proxy with a workspace key and Grad base URL. This is ordinary organization-prepaid traffic.
-2. **Native distribution channel:** OpenRouter, Hugging Face or another approved marketplace lists selected Grad-owned releases and calls Grad with its own channel credential. This uses channel exposure/receivables and contract privacy. The downstream end user need not have a Grad account.
+OpenRouter is the only native channel implemented first. Hugging Face and others remain future decision records. LiteLLM/Cloudflare/Portkey/Helicone/Vercel integrations are configuration fixtures, not production dependencies.
 
-Both enter the same public Rust gateway and then the same exact-release owned inference path. Neither may call inference edge/cells directly.
+## Dependencies and source layout
 
-## Source/package layout
+Distribution reuses the gateway, control image, PostgreSQL, Valkey and black-box testkit. It adds no service, database, queue or universal principal/event abstraction.
 
 ```text
 product/
-  packages/
-    distribution-contracts/       # profiles/catalog/settlement schemas
-    distribution-testkit/          # language-neutral request/stream/error cases
-    integration-configs/
-      litellm/ cloudflare/ portkey/ helicone/ kong/ vercel-ai/
-    integration-docs/              # generated/tested customer snippets
-  tests/distribution/
-    official-openai/{ts,python,go}/
-    local-router/litellm/
-    channel-simulator/
-    hosted-smoke/
-  services/gateway/crates/gateway-distribution/
-  evidence/integrations/<target>/<date>/
+  packages/distribution-testkit/
+  tests/distribution/{cases,runners,fixtures}/
+  integrations/{litellm,cloudflare,portkey,helicone,vercel}/
+  evidence/distribution/openrouter/
 ```
 
-Production gateway dependencies remain Rust/HTTP/Protobuf/Redis. LiteLLM, framework SDKs and router packages are test/example dependencies only.
+Channel credential lookup returns `Principal::Channel { channel_id, credential_id }`; workspace lookup returns the workspace principal. A request body/header cannot change kind. Event payloads carry either workspace IDs or channel IDs, never a generic `PrincipalRef`.
 
-## Principal and event contracts
+## Minimal channel model
 
-```text
-PrincipalRef = oneof
-  WorkspacePrincipalRef(organization_id, workspace_id, api_key_id)
-  DistributionChannelPrincipalRef(channel_id, credential_id, profile_version)
-  ServicePrincipalRef(service, role)
-  ResearchPrincipalRef(program/campaign/run)
-```
+Use only `distribution_channels`, rebuildable `channel_balances`, `channel_credentials`, `channel_catalog`, the shared fixed-chart ledger, and—when the first contract requires it—`channel_statements`. Required fields are in [the minimal model](../../docs/SIMPLICITY_REVIEW.md#external-distribution).
 
-Credential lookup selects exactly one principal before parsing model policy or money. A header/body cannot convert workspace traffic to channel traffic, select an organization for a channel or borrow a channel catalog.
+Remove `distribution_profiles`, copied release capabilities, risk enums and separate receivable transaction classes. Channel status/exposure/data policy/catalog version are sufficient runtime policy; commercial terms remain in the signed contract and operator runbook.
 
-Channel PostgreSQL entities:
+Workspace and channel financial keys/account charts are disjoint, but both call the same parameterized reserve/settle state machine and balanced ledger implementation. Explicit account scope checks, organization/channel foreign keys and repositories prevent a channel effect from mutating organization credit.
 
-- `distribution_channels`: contract/status/risk/currency/settlement terms, legal/privacy owner;
-- `distribution_credentials`: prefix/keyed digest/status/rotation/last-used;
-- `distribution_profiles`: immutable protocol/catalog/data/price/limit version;
-- `channel_catalog_entries`: exact owned release and external model ID/metadata/effective time;
-- `channel_receivable_transactions`: immutable usage/credit/invoice/payment/adjustment business effects;
-- `channel_reconciliation_checkpoints`: downstream report/invoice period, usage set/digest, delta and status.
+## Customer gateway recipes
 
-Redis `ChannelAccountProjection` contains status/profile/catalog/price/exposure/in-flight/rate/concurrency/credential state under `gw-channel:{channel_id}`. Workspace keys/scripts cannot touch it.
+Each recipe contains only base URL, standard bearer workspace key, exact model ID, streaming-safe timeout and third-party logging/privacy instructions. It cannot require Grad-specific routing headers for basic use.
 
-Events are `ChannelReservationCreated`, `ChannelUsageSettled`, `ChannelCreditRequested`, `ChannelInvoiceIssued`, `ChannelPaymentApplied`, `ChannelAdjustmentPosted`, `ChannelStatusChanged` and `ChannelReconciliationMismatch`. They carry channel principal, never fake organization/workspace IDs.
+Pinned black-box cases prove:
 
-## Customer-configured gateway contract
+- path joining and slash-containing model IDs;
+- authentication forwarding/redaction;
+- models, stream/non-stream text, tools and structured output where claimed;
+- usage/finish/error/SSE/cancellation preservation;
+- 400/401/402/404/413/429/5xx and midstream behavior;
+- no-retention tightening and disclosed third-party logging;
+- direct-versus-proxy equality of principal, release, sell amount and trace mode.
 
-Every recipe configures:
+If a gateway cannot preserve a feature, mark it unsupported in that recipe. Do not change core wire behavior to accommodate it.
 
-- Grad base URL and standard bearer workspace key;
-- exact canonical model ID or documented unique bare alias;
-- no provider arrays or Grad-specific headers required for baseline use;
-- streaming and timeout values that do not buffer/corrupt SSE;
-- log/body capture disabled or explicitly disclosed in the third-party gateway;
-- optional Grad session/data-policy headers only when the proxy safely forwards them.
+## OpenRouter catalog
 
-The black-box assertion is simple: the same request directly and through the gateway resolves the same principal/model/release/price/data mode and posts one organization usage effect. Proxy retries must not create an extra financial effect; request IDs/idempotency fixtures prove behavior.
-
-### Recipe acceptance matrix
-
-Each checked-in target version runs:
-
-- authentication forwarding, key redaction and prohibited header injection;
-- base URL/path joining including `/v1` and slash-containing Grad model IDs;
-- model list where supported;
-- stream/non-stream text, tools and structured output;
-- usage/finish reason/error preservation, UTF-8/SSE comments and cancellation;
-- 400/401/402/404/413/429/5xx and midstream failure;
-- no-retain tightening and proof of third-party logging configuration;
-- direct-versus-proxy ledger, trace and actual-model equivalence.
-
-If a proxy cannot preserve a claimed feature, the recipe declares it unsupported; Grad does not alter core wire semantics to accommodate one low-value target.
-
-## Native channel catalog
-
-Use a separate operator/channel catalog endpoint rather than overloading customer `GET /v1/models` with incompatible marketplace fields:
+Expose a channel-authenticated catalog renderer at a stable integration URL. Its internal source is the approved `channel_catalog` joined to one active `model_release` and current coarse ready capacity.
 
 ```text
-GET /integrations/<channel>/v1/models
-Authorization: Bearer <channel-catalog-credential>
-ETag / If-None-Match
-
-ChannelModelCatalog
-  catalog_version, generated_at, expires_at
+ChannelCatalog
+  version, generated_at, expires_at
   models[]
     external_model_id
-    exact_route_release_id / bundle_digest
-    display/source/HuggingFace identity where applicable
-    modalities, context/output limits, quantization
-    supported parameters/features
-    fixed channel pricing strings/currency/unit
-    capacity, regions/data centers, lifecycle/deprecation/readiness
-    data policy and training/logging disclosure
+    release_digest
+    display/source identity
+    modalities, context/output limits, supported parameters
+    quantization where known
+    channel prices
+    coarse capacity/regions/readiness
+    data/logging/training disclosure
 ```
 
-The endpoint is generated from approved immutable channel catalog entries and release/capacity projections. It cannot list curated direct-provider resale or an unqualified/unpriced/expired Grad release. Channel-specific renderers convert one internal `ChannelCatalogEntry` to OpenRouter/Hugging Face schemas and have golden fixtures.
+Do not persist fields copied from the release. The renderer derives them. The channel catalog initially lists one differentiated Grad-owned release, never direct-provider resale or theoretical effort/speed combinations.
 
-The inference request still uses the normal public `/v1/chat/completions` (and any separately approved paths). The external model ID resolves only under the authenticated channel profile to one exact Grad release.
+## Admission and settlement
 
-## Native channel admission and serving
-
-```rust
-pub trait DistributionProfileResolver {
-    fn resolve(&self, principal: &ChannelPrincipal, requested_model: &RequestedModel)
-        -> Result<ChannelRequestProfile, DistributionError>;
-}
-
-pub trait ChannelExposureStore {
-    async fn reserve(&self, command: ChannelReserveCommand) -> Result<Reservation, AdmissionError>;
-    async fn settle(&self, command: ChannelSettleCommand) -> Result<SettlementReceipt, SettlementError>;
-}
-```
-
-Admission verifies credential/status/profile/catalog/release/price, maximum receivable exposure, aging/freeze policy, rate/concurrency/capacity and idempotency in one channel Redis operation. It does not require or debit a customer credit balance. Gateway routes only the exact owned release through inference edge/cell and emits channel settlement. External downstream request ID is bounded/hashed and stored as reconciliation correlation; it is not trusted as sole idempotency identity.
-
-Channel data handling is profile-owned. Seed native traffic does not create first-party Product Intelligence traces, workload profiles or migration recommendations. Minimum content-free usage/reliability facts are retained for settlement and operations. If a channel contract later permits payload retention, it requires a new explicit profile/ADR and isolated customer-facing disclosure—not reuse of workspace trace behavior.
-
-## Channel settlement and reconciliation
+Channel reserve verifies credential/status, catalog release, immutable channel price, exposure limit/outstanding amount, concurrency and idempotency in one Valkey script. It cannot access organization keys. It routes the exact owned release through inference router/cell and emits channel-shaped reservation/settlement events.
 
 ```ts
-interface ChannelSettlementService {
-  postUsage(event: ChannelSettlementEvent): Promise<ReceivableTransaction>;
-  ingestStatement(input: ChannelStatementRef, operator: OperatorContext): Promise<ReconciliationReport>;
-  issueInvoice(input: InvoicePeriod, billingActor: BillingActor): Promise<InvoiceRecord>;
-  applyPayment(input: ChannelPaymentEvidence, billingActor: BillingActor): Promise<void>;
-  adjust(input: ChannelAdjustment, billingActor: BillingActor): Promise<void>;
+interface ChannelBilling {
+  postUsage(event: ChannelUsageSettled): Promise<void>;
+  applyPayment(input: PaymentEvidence, actor: BillingOperator): Promise<void>;
+  applyAdjustment(input: Adjustment, actor: BillingOperator): Promise<void>;
+  reconcile(statement: ChannelStatementRef, actor: BillingOperator): Promise<ReconciliationReport>;
 }
 ```
 
-Usage posting is immutable/idempotent and carries our request/attempt/release/units/channel-price version plus downstream correlation. Statements/invoices are stored by content digest and reconciled line-by-line or aggregate-with-provable-membership according to the contract. Unexplained delta, overdue exposure, payment failure or profile mismatch closes new channel admission while existing settlements/reconciliation continue.
+Each effect posts an immutable balanced channel receivable/revenue/cash-or-adjustment transaction and updates the locked `channel_balances.outstanding_micros` projection. Statement digest/period uniquely identifies reconciliation. Unexplained delta, overdue exposure or policy mismatch suspends new channel admission while settlement continues.
 
-Channel revenue and customer prepaid ledger are separate account families. An operator report may combine company economics, but no database transaction transfers a channel receivable to organization credit unless an explicit unrelated customer payment business event exists.
+Seed native traffic creates no first-party Product Intelligence trace or recommendation. It retains only content-free usage/reliability needed for settlement and operations. A later payload-retention contract requires a new explicit decision.
 
-## OpenRouter profile
+## Onboarding gate
 
-Current official provider requirements are volatile and must be source-dated at onboarding. The implementation package currently needs:
+Before applying, record current official requirements, catalog/schema fixtures, privacy/terms/tax/payment owner, 24-hour staging soak, early 429/stream/tool behavior, uptime/TTFT/throughput and positive contribution margin. Human approval is required for terms, credentials and publication.
 
-- OpenAI-compatible Chat Completions streaming with terminal usage;
-- the separate OpenRouter model-list renderer with exact IDs, pricing strings, features, quantization, lifecycle/readiness, capacity and data-center metadata;
-- early explicit 429 under load, keepalive comments where safe and correct midstream terminal behavior;
-- synthetic uptime/TTFT/throughput/tool-call conformance without payload logging;
-- automatic payment/invoicing owner and reconciled request/usage evidence;
-- maintenance/readiness control that hides a model without changing its identity;
-- a 24-hour staging soak and contribution-margin model before application.
+OpenRouter validates/bills its own user token and calls Grad with Grad's channel credential. Grad validates the channel only. The public channel request still enters the Grad gateway for release/capacity/admission/usage; it never calls cells directly.
 
-OpenRouter validates/bills its user token. It sends Grad's channel credential to Grad. Grad validates only that channel and never receives or needs the user's OpenRouter account identity. Application submission, terms acceptance, secret exchange and model publication require founder/legal approval.
+## Shared harness
 
-The channel catalog may initially list one proprietary/differentiated Grad release. Do not list OpenAI/Anthropic/Google resale, an experimental research alias or all theoretical effort/speed combinations.
+One JSON case format contains case ID/version, endpoint/request fixture refs, principal kind, expected public events/errors, expected release/settlement/trace facts, injected fault schedule, timeout and redaction assertions.
 
-## Hugging Face and later channels
+Runners are official OpenAI TypeScript/Python/Go clients, Vercel AI SDK, pinned LiteLLM, a deterministic fault proxy, an OpenRouter channel simulator and post-acceptance hosted smoke. OpenRouter SDKs remain test dependencies only.
 
-Hugging Face is the second native target. Keep its model/provider mapping renderer and integration helper separate from OpenRouter. Shared code ends at internal catalog/principal/settlement and black-box request corpus. A marketplace-specific SDK, schema or commercial report never becomes core gateway authority.
+## Operations and ordered packages
 
-New native channels pass a target decision record:
+Metrics separate customer-recipe and native-channel traffic. Invariant counters for channel-to-organization mutation, channel-created first-party trace, direct-provider resale and cell-accepted channel credential must remain zero. Operator controls can suspend credential, model catalog entry or channel while settlement/reconciliation remain live.
 
-1. documented provider/onboarding path and contact;
-2. owned/differentiated supply accepted by the channel;
-3. protocol/catalog/privacy/settlement mapping without weakening core invariants;
-4. isolated credential/profile and positive expected contribution margin;
-5. bounded implementation/support cost and named legal/billing owner.
+1. `DI-00`: principal-kind credential lookup and channel SQL/Valkey state using shared admission core.
+2. `DI-01`: language-neutral cases and official direct-client runners.
+3. `DI-02`: LiteLLM/Vercel then Cloudflare/Portkey/Helicone recipes.
+4. `DI-03`: OpenRouter catalog renderer and channel simulator.
+5. `DI-04`: shared-ledger/channel-balance/statement reconciliation PBT.
+6. `DI-05`: 24-hour staging/economics/security packet and human onboarding gate.
 
-Otherwise ship a customer-configured endpoint recipe only.
-
-## Shared black-box harness
-
-Language-neutral case format:
-
-```text
-DistributionCase
-  case_id / schema_version
-  ingress endpoint and request fixture refs
-  principal kind/profile/catalog version
-  expected public event/error sequence
-  expected canonical model/release/data mode
-  expected reservation/settlement/trace facts
-  injected proxy/upstream fault schedule
-  timeout and secret/log redaction assertions
-```
-
-Runners:
-
-- official OpenAI TypeScript/Python/Go clients direct to Grad;
-- Vercel AI SDK OpenAI-compatible provider;
-- pinned LiteLLM proxy;
-- deterministic custom-gateway fault proxy for header/path/stream behavior;
-- native channel simulator with catalog credential and exposure ledger;
-- post-acceptance OpenRouter/Hugging Face SDK/hosted black-box smoke.
-
-Every failure artifact includes target/package version, case ID, safe request IDs, seed/shrink path, sanitized event transcript and replay command. Never upload body/credential/proxy dumps.
-
-## Integration lifecycle
-
-```text
-proposed -> source_verified -> local_conformance -> staging_soak
- -> approved -> published -> monitored -> deprecated -> removed
-                  \-> deferred/rejected
-```
-
-Each integration has an owner, pinned versions, evidence date, supported feature matrix, customer/privacy instructions, monitoring and removal test. A volatile vendor requirement older than the review interval blocks publication until revalidated. Removal of a recipe/channel never changes core customer keys or route releases.
-
-## Metrics and operations
-
-Separate by mode and target:
-
-- customer gateway: activation, request success, support cases, protocol differences and retained paid usage;
-- native channel: catalog fetch/version lag, auth/rate/exposure rejection, uptime/TTFT/throughput/tool success, capacity 429, usage/statement/invoice delta, payout aging, retries and contribution margin;
-- invariant counters: channel-to-organization balance mutation, first-party trace under channel principal, direct-provider resale listing and edge/cell credential acceptance must remain zero.
-
-Operator controls freeze credential, model entry, whole profile or new channel admission while allowing settlement/reconciliation. Secret rotation supports overlap by credential ID/expiry and projects urgently.
-
-## Verification and junior-agent packages
-
-Implement in order:
-
-1. `DI-00`: `PrincipalRef`, channel tables/events/Redis projection and simulator.
-2. `DI-01`: language-neutral black-box case schema plus direct OpenAI TS/Python/Go runners.
-3. `DI-02`: LiteLLM and deterministic fault-proxy harness.
-4. `DI-03`: Cloudflare/Portkey/Helicone/Vercel recipes, one target-owned package per agent.
-5. `DI-04`: channel admission/settlement/reconciliation PBT isolated from organization money.
-6. `DI-05`: channel catalog core plus OpenRouter renderer/credential/monitor fixtures.
-7. `DI-06`: OpenRouter 24-hour staging soak/economics/security packet; human application gate.
-8. `DI-07`: Hugging Face renderer/helper and staging validation.
-9. `DI-08`: hosted monitoring, deprecation/offboarding and support runbooks.
-
-Customer-configured recipes can ship before native channel work. Native distribution never blocks direct Grad availability or first revenue.
-
-## Current source notes
-
-OpenRouter's official provider documentation retrieved 2026-07-14 reports a model-list contract, automatic payment/invoicing, monitored uptime/performance and OpenAI-compatible streaming/usage requirements: [provider integration](https://openrouter.ai/docs/guides/community/for-providers). This is vendor-reported and must be revalidated before onboarding. The dated target/package source set remains in [Open distribution and gateway integration plan](DISTRIBUTION_GATEWAY_INTEGRATIONS_2026-07-13.md).
+No second native channel package starts until OpenRouter is live or rejected with a dated reason.

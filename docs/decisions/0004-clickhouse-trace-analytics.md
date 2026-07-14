@@ -1,11 +1,13 @@
 # ADR-0004: ClickHouse Cloud for trace analytics, not raw payload custody
 
-- status: accepted for planning
+- status: superseded for seed implementation by the 2026-07-14 simplicity review
 - date: 2026-07-13
 - owners: product and infrastructure
 - supersedes: ADR-0003 only where it implied PostgreSQL alone served trace analytics
 
 ## Decision
+
+> ClickHouse is not implemented at seed. PostgreSQL indexed usage/trace queries and measured rollups own the initial customer analytics path. This ADR remains the reintroduction evidence if a production-shaped benchmark meets the trigger in [the simplicity review](../SIMPLICITY_REVIEW.md).
 
 Use one environment-scoped ClickHouse Cloud service as the replayable analytical projection for customer trace lists, charts, workload/model summaries, evaluation evidence, and Product Intelligence features.
 

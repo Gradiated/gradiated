@@ -1,11 +1,13 @@
 # ADR-0001: AWS EKS platform and durable gateway data tier
 
-- status: accepted for implementation planning; production data tier remains qualification-gated
+- status: accepted in part; node provisioning and dependency details superseded by the 2026-07-14 simplicity review
 - GitHub issue: https://github.com/joshsny/gradiated/issues/2
 - owner: infrastructure workstream
 - date: 2026-07-13
 
 ## Decision
+
+> Current implementation keeps AWS/EKS, Aurora, qualified Valkey, Terraform/Terragrunt, Argo and KEDA. It prefers EKS Auto Mode with managed-node fallback and does not install self-managed Karpenter. See [the simplicity review](../SIMPLICITY_REVIEW.md) and [platform blueprint](../../infra/docs/PLATFORM_IMPLEMENTATION.md).
 
 Host the seed product on account-isolated AWS environments. Run long-lived Rust gateway, Hono control API, workers, and platform controllers on private Amazon EKS. Serve the Vite application from private S3 through CloudFront. Use Aurora PostgreSQL Serverless v2 as the authoritative organization ledger/configuration database.
 

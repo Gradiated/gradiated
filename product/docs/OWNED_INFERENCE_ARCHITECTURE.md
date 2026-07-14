@@ -1,5 +1,7 @@
 # Owned Grad inference architecture
 
+> Historical design note, superseded for implementation by [Owned inference implementation](OWNED_INFERENCE_IMPLEMENTATION.md) and the [simplicity review](../../docs/SIMPLICITY_REVIEW.md). In particular, do not implement its fleet CRDs, signed target projection, ClickHouse attribution or expanded gateway-to-cell fields.
+
 This document freezes the product/runtime architecture for `grad/<effort>/<speed>`. AWS hosts the customer gateway, inference edge, control plane, financial/data services, ModelOps, and fleet control. Curated external GPU providers supply disposable execution capacity. AWS GPU instances are not normal serving capacity; an emergency or qualification deployment requires an explicit, margin-gated release like any other provider.
 
 The evidence and provider uncertainty are in [the dated GPU fleet brief](MULTI_PROVIDER_GPU_EVIDENCE_2026-07-13.md). Infrastructure realization is in [Multi-provider GPU fleet](../../infra/docs/MULTI_PROVIDER_GPU_FLEET.md). The serving decision is [ADR-0005](../../docs/decisions/0005-multi-provider-spot-inference.md); the common fleet actuation API is [ADR-0006](../../docs/decisions/0006-kubernetes-provider-abstraction.md) and [its implementation contract](KUBERNETES_PROVIDER_ABSTRACTION_2026-07-13.md).

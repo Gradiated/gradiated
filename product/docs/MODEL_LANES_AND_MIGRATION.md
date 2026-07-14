@@ -1,5 +1,7 @@
 # Model lanes, Grad effort/speed products, and workload migration
 
+> The two-lane product decision remains current. Storage and serving details are superseded by [current architecture](ARCHITECTURE.md) and the [simplicity review](../../docs/SIMPLICITY_REVIEW.md): PostgreSQL serves seed analytics, recommendations are derived from primary usage/trace state, and owned traffic uses the private inference router without signed target projections.
+
 ## Product decision
 
 The gateway has two connected model lanes:

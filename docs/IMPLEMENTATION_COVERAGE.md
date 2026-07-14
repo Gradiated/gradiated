@@ -1,5 +1,7 @@
 # End-to-end implementation coverage and architecture audit
 
+> The 2026-07-14 [simplicity review](SIMPLICITY_REVIEW.md) is the current dependency and field authority. It preserves capability coverage while removing ClickHouse, fleet CRDs, self-managed Karpenter and duplicate/derived model and research projections. It retains the durable ledger, Temporal, Terragrunt, KEDA, Kueue/JobSet where needed and a small Kyverno policy set because they replace bespoke correctness or operations code.
+
 ## Audit contract
 
 This is the coverage ledger for the startup architecture. It answers a narrower question than the product specification: **could a junior implementation agent build each part without inventing a source of truth, protocol, failure behavior, security boundary, deployment shape, or acceptance test?**
@@ -38,7 +40,7 @@ The original plan had excellent invariant and system-boundary coverage, but only
 | Model catalog/releases | strong | partial | writer split among ModelOps, research and fleet; immutable projection contract |
 | Traces/analytics/migration | strong | partial | encryption envelope, process ownership, outbox schemas and API read paths |
 | Owned inference | strong | partial | edge/cell/runtime interfaces, process consolidation and exact readiness contract |
-| External GPU fleet | strong | partial | controller classes, CRD/SQL field ownership and reconciliation commands |
+| External GPU fleet | strong | partial | provider-driver classes and direct PostgreSQL allocation/cell reconciliation commands |
 | Research factory | strong after ADR-0007 | partial | concrete Python services/classes/workflows, artifacts and promotion API |
 | Customer gateway recipes | strong | partial | repository package layout, fixture contract and release ownership |
 | Native distribution channels | strong | partial | separate principal envelope, catalog endpoint, settlement lifecycle and onboarding gate |
@@ -68,20 +70,20 @@ The original plan had excellent invariant and system-boundary coverage, but only
 | Streaming/cancel/retry/usage | request attempt state in gateway; terminal event in Redis | Rust request coordinator | [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md) | Blueprint |
 | Failed-request credit | immutable usage plus compensating PostgreSQL entry | financial worker | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint |
 | Product Intelligence capture | gateway policy + encrypted envelope; S3 payload/PostgreSQL registry | Rust capture + trace worker | [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md), [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint |
-| Trace list/charts/detail/delete/export | ClickHouse derived facts; PostgreSQL auth/tombstone; S3 encrypted object | Hono, trace-access, trace worker | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint; ClickHouse/Aurora measured choice |
-| Workload profile/recommendation/experiment | PostgreSQL state; ClickHouse inputs; S3 detail by grant | intelligence worker + Hono | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint; recommendation-value gate |
+| Trace list/charts/detail/delete/export | PostgreSQL usage/trace metadata; S3 encrypted object | Hono + trace-access role | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint |
+| Workload summary/recommendation/evaluation | PostgreSQL usage/recommendation state; S3 detail by grant | control intelligence role + Hono | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint; recommendation-value gate |
 | Route release/alias/canary/rollback | PostgreSQL release authority; Redis projection | Node release authority + Rust gateway | [Owned inference](../product/docs/OWNED_INFERENCE_IMPLEMENTATION.md) | Blueprint |
-| Inference edge transport | signed cell target + in-memory connection registry | Rust inference edge | [Owned inference](../product/docs/OWNED_INFERENCE_IMPLEMENTATION.md) | Blueprint; direct/tunnel transport spike |
+| Inference router transport | mTLS exact-release cell attestation + ephemeral connection registry | Rust inference router | [Owned inference](../product/docs/OWNED_INFERENCE_IMPLEMENTATION.md) | Blueprint; direct/tunnel transport spike |
 | Cell lifecycle/runtime/cache | signed bundle and observed placement | Rust cell agent supervising runtime child | [Owned inference](../product/docs/OWNED_INFERENCE_IMPLEMENTATION.md) | Blueprint; runtime-mode/cache gates |
-| Capacity intent/provider allocation | PostgreSQL intent/lease; rebuildable CRDs | fleet planner + provider-scoped controllers | [Owned inference](../product/docs/OWNED_INFERENCE_IMPLEMENTATION.md) | Blueprint; provider-specific gates |
+| Capacity target/provider allocation | PostgreSQL target/allocation/cell state | fleet planner + provider-scoped drivers | [Owned inference](../product/docs/OWNED_INFERENCE_IMPLEMENTATION.md) | Blueprint; provider-specific gates |
 | Model program/hypothesis portfolio | PostgreSQL research domain | private Python research control | [Research factory](../product/docs/RESEARCH_FACTORY_IMPLEMENTATION.md) | Blueprint |
-| Experiment execution/evidence | immutable spec and sealed artifacts | Python Temporal workflows/activities | [Research factory](../product/docs/RESEARCH_FACTORY_IMPLEMENTATION.md) | Blueprint; Temporal ops gate |
+| Experiment execution/evidence | immutable experiment specifications/runs plus sealed evidence | Python API/workers, PostgreSQL domain state, Temporal execution | [Research factory](../product/docs/RESEARCH_FACTORY_IMPLEMENTATION.md) | Blueprint |
 | Bundle build/qualification | canonical JSON manifests/S3 CAS/ECR/signatures; PostgreSQL decisions | Python artifact/eval + Rust inspector/launcher | [Research factory](../product/docs/RESEARCH_FACTORY_IMPLEMENTATION.md) | Blueprint; portability/operator gates |
 | Promotion from research | signed proposal and independent approval | Python qualification -> Node release authority | [Research factory](../product/docs/RESEARCH_FACTORY_IMPLEMENTATION.md) | Blueprint; public promotion remains human |
 | Customer-configured gateways | workspace principal and ordinary prepaid path | recipes + shared black-box harness | [Distribution](../product/docs/DISTRIBUTION_IMPLEMENTATION.md) | Blueprint |
 | Native OpenRouter/Hugging Face traffic | channel principal, catalog, exposure and receivable ledger | Rust gateway + channel worker | [Distribution](../product/docs/DISTRIBUTION_IMPLEMENTATION.md) | Blueprint; external acceptance/legal gate |
 | Terraform/accounts/network/data | Terraform state per unit | platform modules/live units | [Platform](../infra/docs/PLATFORM_IMPLEMENTATION.md) | Blueprint; account/region approval gate |
-| EKS/Helm/GitOps/autoscaling | Argo static desired state; runtime controllers dynamic CRs | charts/gitops/KEDA/Karpenter | [Platform](../infra/docs/PLATFORM_IMPLEMENTATION.md) | Blueprint; measured scaling gate |
+| EKS/Helm/GitOps/autoscaling | Git/Argo static desired state; EKS Auto Mode or managed groups | charts/gitops/HPA | [Platform](../infra/docs/PLATFORM_IMPLEMENTATION.md) | Blueprint; Auto Mode measured gate |
 | Secrets/identity/supply chain | AWS IAM/Pod Identity/Secrets Manager; signed digests | Terraform/Helm/CI | [Platform](../infra/docs/PLATFORM_IMPLEMENTATION.md) | Blueprint |
 | Local development/agent UX | repository fixtures and `grad` CLI | Compose/mprocs/Kind | [Platform](../infra/docs/PLATFORM_IMPLEMENTATION.md) | Blueprint |
 | CI/CD/migrations/rollback | Git and immutable artifacts; protected deploy environments | GitHub Actions + Argo CD + migration jobs | [Platform](../infra/docs/PLATFORM_IMPLEMENTATION.md) | Blueprint |
@@ -92,15 +94,15 @@ The original plan had excellent invariant and system-boundary coverage, but only
 | Inconsistency found | Resolution frozen here |
 | --- | --- |
 | Internal Protobuf namespace appeared as both `grad/...` and `gradiated/...`. | Canonical package/root is `gradiated`; repository path is `product/proto/gradiated/...`. `grad` remains the product/CLI/model prefix only. |
-| Event rules required organization/workspace IDs even for native channels and global research. | Every event uses a `PrincipalRef` oneof: workspace, distribution channel, service/research, or none where explicitly allowed. Tenant events require organization/workspace; channel and research events cannot fake them. |
+| A universal event principal tried to cover tenant, channel and research events. | Remove `PrincipalRef`. Each small typed event carries only the IDs required by its domain; research uses PostgreSQL state rather than a general event bus. |
 | Full bundle manifests were described as both Protobuf and canonical JSON authority. | Canonical JSON Schema plus RFC 8785 bytes own content identity. Protobuf carries `ArtifactRef`, `BundleRef`, commands and events; it does not define a second independently evolving full manifest. |
-| The cell request carried an `opaque_billing_principal`, despite cells having no billing authority. | Replace it with an opaque `request_scope_id` used only for isolation/correlation. Reservation and sell/buy accounting never leave the gateway. |
+| The cell request carried an `opaque_billing_principal`, despite cells having no billing authority. | Remove it. `cache_scope` is the sole opaque isolation input; reservation and sell/buy accounting never leave the gateway. |
 | Research qualification and Node ModelOps both appeared to own qualification/release transitions. | Python research control owns experiments, evidence, candidates and bundle qualification. Node release authority owns public product envelopes, approval, alias/canary/rollback and Redis release projection. The handoff is a signed `QualifiedBundleRef`. |
-| Provider controllers, cells and ModelOps all appeared able to influence target publication. | Provider controller reports allocation; cell attests runtime; release authority supplies qualification; the target projector alone signs/publishes `CellTarget`. |
+| Provider drivers, cells and release authority all appeared able to publish routes. | Release authority publishes the owned release; drivers reconcile capacity; cells attest and connect; the inference router alone uses ephemeral authenticated live-cell health. There is no durable target publisher/document. |
 | Many logical workers looked like separate codebases/services. | Use a small number of images with role entrypoints. Scale/security can create separate Deployments without duplicating domain code. See process topology below. |
 | A 4×4 effort/speed grammar implied sixteen launch fleets. | The grammar remains stable, but catalog entries are sparse. Launch only measured products—initially `grad/medium/standard` and at most one measured adjacent speed—then add cells independently. |
-| Six AWS accounts looked mandatory before seed work could start. | Target remains six; minimum seed isolation is management, security/log, non-production and production. Staging has separate state/data/cluster from production even if it shares the non-production account. |
-| ClickHouse looked mandatory before the first request. | Preserve the typed analytics repository and content-free schema; launch may use the Aurora read model until ClickHouse passes cost, privacy, query and PrivateLink gates. |
+| Six AWS accounts looked mandatory before seed work could start. | Keep four: management, security/log, non-production and production. Split staging/shared-services only when isolation or qualification requires it. |
+| ClickHouse looked mandatory for product analytics. | Remove its adapter/projector/schema from seed. PostgreSQL indexed usage views and measured rollups are the product implementation; reconsider only after a failing benchmark. |
 | OpenAI, Anthropic, Google and all endpoint families appeared as one first implementation milestone. | Contract them all, but build vertically: OpenAI Models/Chat first; Responses/Embeddings next; Anthropic Messages; Google native last. No protocol is advertised until its fixture and live gate pass. |
 | `main` direct pushes seemed to imply automatic production deployment. | Direct push updates source and runs checks/dev plans. Staging/prod infrastructure apply and production release remain protected, reviewed external actions. |
 
@@ -110,19 +112,17 @@ Logical responsibilities do not automatically become independent microservices. 
 
 | Artifact/image | Role entrypoints / deployments |
 | --- | --- |
-| `control` Node image | `api`, `financial-worker`, `projection-worker`, `modelops-worker`; separate service accounts and KEDA policies where authority differs |
-| `intelligence` Node image | `trace-worker`, `analytics-projector`, `recommendation-worker`; trace decryption roles remain separate deployments |
-| `trace-access` minimal Node/Rust image | single-object grant validation/decrypt stream only |
+| `control` Node image | `api`, `financial`, `intelligence`, `trace-access`; separate deployments only where IAM/scaling differs |
 | `gateway` Rust image | public gateway |
-| `inference-edge` Rust image | private regional edge |
-| `fleet` Rust image | planner/projector plus one provider-controller deployment per provider credential |
+| `inference-router` Rust image | private regional cell connection/dispatch boundary |
+| `fleet` Rust image | SQL planner plus one provider-driver deployment per provider credential |
 | `cell-agent` Rust image | cell router, bundle launcher and runtime supervisor; model runtime is a child/container, not another public service |
-| `research` Python image | private API, Temporal workflow worker and activity worker entrypoints; evaluator uses a separately owned image |
+| `research` Python image | private API, Temporal workflow/activity and evaluator role entrypoints; evaluator retains separate credentials |
 | `web` static artifact | Vite assets in S3/CloudFront |
 
 This preserves IAM and scaling isolation while avoiding nine unrelated codebases. Split an image only after dependency weight, security review or measured scaling justifies it.
 
-Explicit seed exclusions remain: service mesh, Kafka, Argo Workflows, active/active money, customer BYOK, arbitrary provider routing, global customer-content training, remote/distributed KV cache, multi-node inference unless the first model requires it, LoRA multiplexing, automatic public model promotion and an always-running paid GPU research loop.
+Explicit seed exclusions remain: service mesh, Kafka, Argo Workflows, active/active money, customer BYOK, arbitrary provider routing, global customer-content training, remote/distributed KV cache, multi-node inference unless the first model requires it, LoRA multiplexing, automatic public model promotion and unbounded always-running paid GPUs. The research control loop remains always on but every compute activity is budgeted.
 
 ## Unresolved measured and human gates
 
@@ -132,7 +132,6 @@ These are not junior-engineer design gaps. Each has an owner, decision evidence 
 | --- | --- | --- | --- |
 | Primary region/customer residency | founder/platform; latency and legal requirements | selected region supports services/providers and target customers | keep modules parameterized; no production mutation |
 | Managed Valkey durability/latency | I-04 experiment | synchronous acknowledged reserve+event survives failover inside latency budget | qualify MemoryDB or close admission; never weaken reserve |
-| ClickHouse Cloud | I-04B | content-free privacy, PrivateLink, cost, query/delete/restore gates | Aurora typed read model |
 | First owned model and public SKUs | research/release owner | exact bundle quality/capability/cost and sparse effort/speed gates | sell curated direct providers only |
 | GPU providers/regions | fleet owner | security, availability, interruption and successful-token margin evidence | disable provider/cell; do not alter release |
 | OpenRouter/Hugging Face onboarding | founder/legal/distribution | terms, privacy, payout/tax, protocol, reliability and margin pass | customer-configured gateways/direct endpoint |

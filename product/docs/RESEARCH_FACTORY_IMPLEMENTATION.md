@@ -1,365 +1,160 @@
-# Always-on research factory implementation blueprint
+# Simplified always-on research factory blueprint
 
 ## Purpose and boundary
 
-The factory is a continuously operating inference laboratory, not a training pipeline or model registry wrapper. It performs the work of model, kernel, runtime, serving and systems researchers; learns from negative results; assembles complete challengers; independently qualifies exact bundles; and hands a signed qualified reference to public release authority.
+The factory continuously improves the complete inference stack for selected models: weights/architecture, operators/kernels, runtime, scheduler/cache, topology and hardware mapping. It preserves negative results, builds exact bundles and independently qualifies them. It never handles live customer admission or moves a public alias.
 
-Python owns model-facing research and research state transitions. Rust owns bundle verification/launch, production cell/runtime supervision and serving. TypeScript owns the operator UI/BFF. Fable and Sol are historical evidence only; no new package imports their workspaces or preserves their schemas.
+Python owns research state transitions, model-facing work and bundle construction. Temporal owns resumable workflow execution. Rust owns production cell/runtime supervision and serving. TypeScript is the authenticated operator BFF. Fable/Sol are evidence to port with provenance, not dependencies.
 
-The factory cannot:
+## Dependencies and processes
 
-- access customer no-retention payloads or treat trace retention as global training consent;
-- expand campaign budget/provider/data/hidden-eval authority;
-- mutate a sealed experiment or observation;
-- let a candidate-writing agent see hidden holdouts or approve its own result;
-- publish a `CellTarget`, move a public alias or deploy mutable/unqualified artifacts;
-- keep paid GPU work running merely to satisfy “always on.”
-
-## Python package and process layout
+Use Python 3.12, uv, PostgreSQL, Temporal, S3/ECR, PyTorch, Transformers/safetensors, Triton where justified, pytest/Hypothesis and curated compute adapters. Temporal removes the need to build a custom durable scheduler, timer, retry, cancellation and recovery engine. Its history is execution state, not scientific evidence or release authority.
 
 ```text
-research/factory/
-  pyproject.toml
-  uv.lock
-  src/grad_research/
-    api/                    # private gRPC/service handlers
-    domain/                 # programs, hypotheses, campaigns, evidence, candidates
-    repositories/           # PostgreSQL interfaces/implementations
-    workflows/              # deterministic Temporal workflows
-    activities/             # side effects and job submission
-    agents/                 # role-scoped tool runners and prompts
-    models/                 # PyTorch reference models/adapters
-    interventions/          # surgery, pruning, quantization, distillation
-    training/               # healing/fine-tuning/data recipes
-    operators/              # torch.library schemas/reference/meta/autograd
-    kernels/triton/         # optimized candidates
-    runtimes/               # vLLM/SGLang/custom packaging adapters
-    evals/                  # visible suites and evaluator protocol
-    artifacts/              # CAS, manifests, OCI/signing clients
-    providers/              # research allocation adapters
-    simulators/             # priors and experiment-tool clients
-    contracts/gen/          # generated Protobuf; never edited
-    testkit/                 # Hypothesis strategies/fakes/replay
-  tests/
-  experiments/              # reviewed reusable specs/templates only
+research/factory/src/grad_research/
+  api/                    private generated Protobuf service
+  domain/                 programs, hypotheses, campaigns, specs/runs, evidence, bundles
+  workflows/              deterministic Temporal workflows
+  activities/             DB, artifact, provider, Git, agent and evaluator operations
+  experiments/            baselines, interventions and evaluation
+  operators/              PyTorch oracle/differential/Triton/native candidates
+  artifacts/              S3 CAS, manifests, ECR image refs/signing
+  providers/              bounded research-compute adapters
+  qualification/          independent exact-bundle suite
+  agents/                 scoped work leases/tool policy
+  testkit/                Hypothesis models/fakes/Temporal replay
 ```
 
-One `research` image exposes entrypoints:
+One image exposes `api`, `workflow-worker`, `activity-worker`, and `evaluator` roles. Evaluator credentials/data remain separate even when the image is shared.
 
-- `research-api`: private generated API and sole normal research-domain writer;
-- `research-workflow-worker`: Temporal workflows only, with deterministic imports;
-- `research-activity-worker`: database/provider/artifact/Git/agent orchestration activities;
-- `research-gpu-runner`: short-lived image/profile for model/kernel jobs;
-- `research-evaluator`: separately built/owned image with hidden-suite authority.
+## Minimal scientific model
 
-Do not load PyTorch/CUDA/Triton into the lightweight API/workflow environment. Use separate locked CPU, CUDA-target, provider-bootstrap and evaluator environments/images.
+Required fields are in [the research model](../../docs/SIMPLICITY_REVIEW.md#research). Retained primary entities have different authority:
 
-## Domain model
+- `research_programs`: long-lived model/scope, baseline, champion and budget;
+- `research_hypotheses`: falsifiable scientific intent and intervention;
+- `research_campaigns`: real budget/deadline/scope authority envelope;
+- `experiment_specs`: immutable execution intent;
+- `experiment_runs`: one environment-bound observation and Temporal workflow ID;
+- `evidence_reports`: reviewed scope-bound synthesis, including negative results;
+- `bundles` and `bundle_qualifications`: deployable output and independent decision.
 
-### Model program
+Remove only derived/duplicative entities:
+
+| Removed concept | Derivation |
+| --- | --- |
+| queue entry | eligible hypotheses/specs ordered by priority and age |
+| stored expected-information score | recompute from current cost/evidence inputs |
+| persisted Pareto frontier | query sealed evidence reports/runs |
+| open-questions/negative-findings arrays | hypothesis/evidence status queries |
+| candidate aggregate | a built bundle is the deployable challenger |
+| relational workflow step/job rows | Temporal history/activity heartbeats own execution detail |
+| per-gate qualification rows | immutable qualification report artifact |
+
+This keeps scientific intent/evidence while deleting views and execution mirrors that can drift.
+
+## State and private API
+
+Program is `active|paused|stopped`. Hypothesis is `proposed|approved|rejected|exhausted`. Campaign is `draft|approved|running|stopped|completed`. Run is `queued|running|succeeded|falsified|failed|cancelled`. Bundle is `built|qualification_pending|qualified|rejected`.
+
+Do not add a state unless it changes an allowed command, resource action, evidence meaning or operator display.
+
+Private service package is `gradiated.research.v1`. Calls require mTLS/service identity and operator context from Hono. Commands are `create/update program`, `propose/approve hypothesis`, `create/approve/stop campaign`, `start/cancel experiment`, `record reviewed evidence`, `build bundle`, and `request qualification`.
+
+Each command opens one PostgreSQL transaction, locks/checks expected version, validates authority/state, writes domain state/audit/outbox and commits. Python is the sole normal writer. Hono has no research mutation repository. Temporal activities call the same application ports, not ad hoc SQL.
+
+## Temporal workflows
+
+```text
+PortfolioWorkflow(program)
+  -> BaselineRefreshWorkflow when stale
+  -> CampaignWorkflow for approved campaigns
+       -> ExperimentWorkflow per admitted immutable spec
+            validate -> cheap correctness/profile
+            -> acquire compute -> execute -> collect artifacts
+            -> release/cleanup -> seal run/evidence
+            -> optionally build bundle/request qualification
+```
+
+Workflow code uses deterministic time/random/versioning only. All network, database, provider, filesystem, Git, S3/ECR, model and agent actions are activities with small refs. Large outputs/logs go to S3.
+
+Activities are idempotent by domain ID, step and input digest. Provider acquisition records provider allocation identity before success. Cleanup runs in a non-cancellable bounded branch and by an independent sweeper. Uncertain cleanup freezes new acquisitions for that provider and is durable evidence; it is not silently converted to success.
+
+Temporal workflow ID/run ID is stored on `experiment_runs`. PostgreSQL stores domain milestones and artifact refs, not copied activity history. On disagreement, reconciliation can terminate workflow execution, but workflow history cannot approve evidence or alter release state.
+
+## Always-on portfolio loop
+
+Within fixed cheap/paid quotas:
+
+1. refresh reproducible baseline when source/software/hardware changes;
+2. scan profiles/regressions/prior evidence for opportunities;
+3. deduplicate hypotheses by scope/intervention digest;
+4. rank admissible work by expected information per bounded cost;
+5. admit only inside program/campaign/provider/global budgets;
+6. stop a lineage on falsification/stop rule and continue with the next admissible lineage;
+7. recompute frontier/open questions from primary evidence and propose bundle-worthy challengers.
+
+Paid GPU work always has immutable scope, budget, timeout, stop rule and cleanup contract. Expected-information score and queue order are derived and may change without mutating evidence.
+
+## Research SDK
+
+Start every intervention with an eager PyTorch oracle, tiny deterministic inputs and matched control.
 
 ```python
-@dataclass(frozen=True)
-class ModelProgram:
-    id: ModelProgramId
-    model_family: ModelFamilyRef
-    objective: ObjectiveEnvelope
-    baseline_bundle: BundleRef
-    champion_release: RouteReleaseRef | None
-    pareto_policy: ParetoPolicy
-    budget_policy: ProgramBudgetPolicy
-    cadence: ProgramCadence
-    lifecycle: Literal["active", "maintenance", "paused", "retired"]
-    version: int
-
-class ModelProgramService(Protocol):
-    async def create(self, command: CreateModelProgram, actor: ResearchActor) -> ModelProgram: ...
-    async def scan(self, command: RecordOpportunityScan, actor: ServiceActor) -> ScanResult: ...
-    async def rank_queue(self, program_id: ModelProgramId, reason: RankReason) -> QueueSnapshot: ...
-    async def set_baseline(self, command: SetBaseline, actor: ResearchActor) -> ModelProgram: ...
-    async def update_frontier(self, command: UpdateFrontier, actor: EvidenceActor) -> FrontierSnapshot: ...
-```
-
-The program stores refs/summaries, not mutable run logs. Its baseline is a current tuned control for the exact target scope, not merely an upstream default. Champion points to the active production release when one exists. Pareto dimensions include quality/capability, goodput/SLO, latency, memory/startup, successful-token cost, reliability, portability and maintenance risk.
-
-### Hypothesis and queue
-
-```python
-@dataclass(frozen=True)
-class ResearchHypothesis:
-    claim: str
-    falsifier: str
-    intervention_family: InterventionFamily
-    target_scope: ScopeIdentity
-    predicted_effects: tuple[Prediction, ...]
-    source_refs: tuple[SourceRef, ...]
-    prior: ProbabilityAssessment
-    expected_information: InformationValue
-    estimated_resources: ResourceEstimate
-
-@dataclass(frozen=True)
-class QueueEntry:
-    hypothesis_id: HypothesisId
-    class_: Literal["exploit", "explore", "replicate", "baseline"]
-    priority: Decimal
-    dependencies: tuple[EvidenceRef, ...]
-    next_fidelity: Fidelity
-    admitted_spec: ExperimentSpecRef | None
-```
-
-Queue ranking is advisory. Budget/data/provider/hidden-eval policy admission is authoritative. Duplicate detection uses normalized intervention/scope/source identities and evidence graph similarity; it never collapses two scopes merely because titles resemble each other.
-
-### Campaign, experiment and evidence
-
-```python
-class CampaignState(Enum):
-    DRAFT = "draft"
-    APPROVED = "approved"
-    ACTIVE = "active"
-    STOPPING = "stopping"
-    COMPLETE = "complete"
-    EXHAUSTED = "exhausted"
-    INVALIDATED = "invalidated"
-
-class RunState(Enum):
-    ADMITTED = "admitted"
-    LEASED = "leased"
-    PROVISIONING = "provisioning"
-    RUNNING = "running"
-    COLLECTING = "collecting"
-    SEALED = "sealed"
-    FAILED = "failed"
-    INVALID_ENVIRONMENT = "invalid_environment"
-    CANCELLED = "cancelled"
-```
-
-`ResearchCampaign` freezes objective, hypothesis space, target scopes, control requirements, metric/decision policy, total budget, timeout, allowed data/providers, stop/cleanup rules and owner. Approval creates the maximum authority envelope; children may narrow but never broaden it.
-
-`ExperimentSpec` is canonical JSON and content-addressed before admission. It includes hypothesis, exact model/checkpoint/workload/software/hardware/intervention/control identities, predictions, metrics/thresholds/statistical method, repetitions/seeds, fidelity, maximum spend/runtime, artifact contract and cleanup. The first observation permanently seals the spec.
-
-`ExperimentRun` is append-only observed execution. Environment validity is decided separately from model outcome. Failure to acquire capacity is not a negative model result. A sealed run names exact metering and cleanup evidence.
-
-`EvidenceClaim` states one conclusion, exact scope, evidence class, controls, uncertainty/limitations, observation refs, contradictions/replications, expiry and reviewer. Claim composition intersects scope; it cannot widen hardware, workload, model, software or intervention identity.
-
-### Candidate and qualification
-
-```text
-candidate: proposed -> implementing -> runnable -> measured -> rejected | bundle_ready
-bundle: assembling -> signed -> qualification_pending -> qualified | failed | expired
-qualification: planned -> running -> passed | failed | invalid -> expired/revoked
-```
-
-A `ResearchCandidate` is an immutable lineage node plus coherent intervention set; implementation commits/artifacts are refs. New bytes/config create a new candidate/bundle. `BundleQualification` belongs to the exact bundle digest and policy/evaluator/environment versions.
-
-## Private research API
-
-Service package is `gradiated.research.v1`. Calls require mTLS/service identity plus a signed `ResearchActorContext` issued by Hono for operator actions. Workflow/service identities use their own principal; research events never fake organization/workspace IDs.
-
-```text
-ModelPrograms
-  CreateModelProgram, GetModelProgram, ListModelPrograms
-  RecordOpportunity, RankExperimentQueue, SetProgramLifecycle
-
-Campaigns
-  DraftCampaign, ApproveCampaign, StartCampaign, StopCampaign, GetCampaign
-
-Experiments
-  AdmitExperimentSpec, LeaseRun, AppendRunObservation, SealRun, CancelRun
-
-Evidence
-  ProposeClaim, ReviewClaim, InvalidateClaim, GetEvidenceGraph
-
-Candidates
-  CreateCandidate, RecordImplementation, AssembleBundle, RejectCandidate
-
-Qualification
-  RequestQualification, RecordGateResult, FinalizeQualification
-  GetQualifiedBundleRef
-```
-
-Commands carry expected aggregate version and idempotency key. Responses include new version and event IDs. The API opens one PostgreSQL transaction per command, locks the aggregate or uses optimistic version compare, validates authority/state, writes state/append-only observation, audit and outbox, then commits. Temporal calls these APIs/ports; workflow history is not the domain source of truth.
-
-Hono/tRPC never accesses research tables directly. It maps product operator authorization to signed calls and returns generated views. Python does not own public alias/price/customer routes.
-
-## Always-on Temporal workflows
-
-### Workflow hierarchy
-
-```text
-ResearchPortfolioWorkflow
-  -> ModelProgramWorkflow(program_id) [long-lived, continue-as-new]
-       -> OpportunityScanWorkflow
-       -> BaselineRefreshWorkflow
-       -> CampaignWorkflow(campaign_id)
-            -> ExperimentRunWorkflow(run_id)
-       -> ChallengerAssemblyWorkflow
-       -> QualificationWorkflow(bundle_ref)
-```
-
-`ResearchPortfolioWorkflow` receives global budget/freeze signals and starts one child per funded program. `ModelProgramWorkflow` wakes on schedule/events, reads current queue through activities, starts only admitted work, records summaries and uses continue-as-new before history grows unbounded. Workflow IDs are stable; retrying start returns the same execution.
-
-Temporal workflow code uses deterministic time/random/version gates only. All network, database, filesystem, Git, agent, provider, S3/ECR and model operations are activities. Activity inputs/outputs are small refs; large logs/artifacts go to CAS.
-
-### Experiment workflow
-
-```text
-validate admitted immutable spec
- -> acquire research lease and budget hold
- -> quote/acquire compute allocation
- -> stage exact inputs/image
- -> run command with timeout/heartbeat/cancel
- -> collect content-addressed outputs/metering
- -> seal observation and environment validity
- -> release allocation and record cleanup evidence
- -> close budget hold
-```
-
-Cleanup runs in a non-cancellable bounded branch after allocation identity exists. If cleanup cannot be proven, the run remains `cleanup_uncertain`, the provider adapter may freeze new acquisition and an orphan sweep is scheduled. Workflow completion never turns missing cleanup into success.
-
-### Signals and controls
-
-- `pause/resume/stop_program` affects new work, not sealed evidence.
-- `freeze_global_spend` stops new paid activities and cancels/drains according to spec.
-- `approve_campaign` and `approve_release` are different authorities; release approval stays outside Temporal research.
-- `provider_unavailable` reranks admissible placements or classifies environment failure; it cannot expand provider/price policy.
-- Workflow/activity version changes use Temporal-compatible versioning and replay tests before deployment.
-
-## Agent execution contract
-
-Each agent role receives:
-
-```text
-AgentWorkLease
-  role, program/campaign/run/candidate IDs
-  base commit and clean worktree
-  writable path allowlist
-  readable evidence/holdout class
-  tool and network allowlist
-  CPU/GPU/spend/time/output limits
-  expected artifacts and verification command
-  lease owner epoch / expiry / cancellation
-```
-
-Agents operate through a small tool protocol:
-
-- `source.search/read/diff/apply/test` for scoped repository work;
-- `artifact.get/put` by digest;
-- `experiment.status/append_observation` for owned run only;
-- `compute.quote/run/cancel` inside admitted spec;
-- `evidence.query` filtered by role and hidden-data class.
-
-Candidate agents cannot call qualification result mutation or hidden dataset endpoints. Evaluators receive bundle refs, not candidate worktree credentials. Prompts and procedures are versioned repository artifacts referenced in the run; chat history is never sufficient provenance.
-
-## Model/operator/runtime research SDK
-
-### Reference first
-
-Every intervention starts with an eager PyTorch oracle, tiny deterministic fixtures and matched control. Compiled/Triton/native/Rust work begins only after the hypothesis survives cheaper correctness/quality tests and profiling identifies that layer as a constraint.
-
-```python
-class ModelIntervention(Protocol):
-    def applicability(self, model: ModelArchitectureSpec) -> Applicability: ...
-    def transform(self, checkpoint: CheckpointRef, config: FrozenConfig) -> TransformResult: ...
-    def verification_plan(self) -> VerificationPlan: ...
+class Intervention(Protocol):
+    def applicable(self, baseline: Baseline) -> Applicability: ...
+    def apply(self, baseline: Baseline, spec: FrozenSpec) -> InterventionOutput: ...
+    def checks(self, output: InterventionOutput) -> VerificationPlan: ...
 
 class OperatorCandidate(Protocol):
-    schema: OperatorSchema
     reference: Callable
-    fake_or_meta: Callable
-    implementations: Mapping[Target, ImplementationRef]
+    implementation: Callable
     tolerances: TolerancePolicy
+    supported_shapes: ShapePolicy
 ```
 
-Custom operators register an explicit namespaced schema, mutation/alias behavior, FakeTensor/meta implementation and autograd policy. Required tests include `torch.library.opcheck`, generated differential cases and `gradcheck` when gradients are promised. Benchmarks sample the declared shape/dtype/hardware distribution rather than one favorable case.
+Only profile-proven bottlenecks proceed to Triton/native/Rust work. Operators declare schema, mutation/alias behavior, FakeTensor/meta behavior and autograd promise. Use `torch.library.opcheck`, generated differential cases and `gradcheck` where gradients are promised. Benchmark the declared workload distribution, not one favorable shape.
 
-Runtime packaging adapters implement:
+Runtime packaging produces one OCI image implementing the local serving Protobuf. There is no `python_plugin|native_library|rust_engine` product enum: language is an image implementation detail behind one runtime protocol.
 
-```python
-class RuntimePackager(Protocol):
-    def supports(self, architecture: ModelArchitectureSpec) -> SupportReport: ...
-    def build(self, candidate: CandidateRef, target: RuntimeTarget) -> RuntimeArtifactSet: ...
-    def conformance_plan(self, artifacts: RuntimeArtifactSet) -> RuntimeConformancePlan: ...
-```
+## Artifacts and bundles
 
-Initial target is an out-of-tree framework plugin (`python_plugin`). `native_library` and `rust_engine` are justified by measured whole-system value, not required graduation stages.
+S3 CAS keys derive from digest; ECR stores runtime images by digest. Keep a small compositional schema set:
 
-## Artifact and bundle contracts
+- `ArtifactDescriptor`: digest, size, media type, role/object ref;
+- `CheckpointManifest`: source/revision, shard/tokenizer/config refs and transformation lineage;
+- `RuntimeManifest`: image digest, protocol/command, software/driver bounds and cache layout;
+- `BundleManifest`: checkpoint/runtime digests, additional artifacts, compatibility/capabilities and known limitations;
+- `QualificationReport`: policy, exact scope, gates/results/uncertainty and evaluator attestations.
 
-Canonical manifests are JSON Schema-governed and RFC 8785 canonicalized before SHA-256 identity:
+Do not create separate architecture/operator manifests when their content is already a referenced artifact or runtime field. Creation time, experiment/campaign IDs, prices, rollout and qualification are not bundle identity. Canonical RFC 8785 bytes determine manifest digests. Sign bundle and image provenance; component digests provide transitive integrity.
 
-- `ModelArchitectureSpec`
-- `CheckpointManifest`
-- `OperatorManifest`
-- `RuntimeManifest`
-- `QualificationManifest`
-- `ModelStackBundleManifest`
+The Rust cell independently verifies canonical bundle/runtime/image identity before launch.
 
-Protobuf transports `ArtifactRef`, `BundleRef`, commands/events and API messages. It does not duplicate full manifest authority. JSON schema, generated Python/TS/Rust readers and canonical golden bytes are drift-checked together.
+## Qualification and promotion
 
-CAS object key is derived from algorithm/digest, never mutable name:
+Evaluator policy/image/hidden datasets have separate repository/IAM ownership. Candidate agents cannot modify or inspect them beyond allowed aggregate feedback. Qualification tests the exact bundle through source/legal, model quality/correctness, operator/runtime, public protocol/metering, measured performance/economics, distributed-cell only when required, security/privacy, interruption and soak gates.
 
-```text
-s3://<artifact-bucket>/cas/sha256/<first-two>/<digest>
-```
-
-Artifact metadata includes size/media type, producer/source commit/workflow, input/command digests, evidence class, license/export/data policy, build environment, SBOM/signature where executable and retention. Model weights use safetensors or another explicitly qualified non-executable format. Runtime images live in ECR by digest. A small OCI artifact may index the canonical bundle and external S3 refs.
-
-Bundle builder refuses mutable tags, missing digests, unsupported executable formats, absent license/data metadata or claims not admitted for the exact scope. Rust `bundle-inspect` independently verifies canonical bytes, references, signatures, SBOM/attestations and placement/runtime mode before launch.
-
-## Independent qualification and promotion
-
-Evaluator policy/image/hidden datasets and thresholds have separate repository/IAM ownership. Candidate agents receive visible suites and may query bounded aggregate hidden results only according to contamination policy. Qualification executes the exact signed bundle through G0–G7 gates in the canonical lifecycle document.
-
-Successful finalization emits:
-
-```text
-QualifiedBundleRef
-  bundle_digest
-  qualification_id / policy_version / expiry
-  capability and quality envelope
-  runtime modes / placement envelope
-  known limitations
-  evaluator and attestation refs/signatures
-```
-
-Node `ReleaseAuthority` verifies this reference, selects a customer product/family envelope, price/SLO/support/rollout and independent release owner approval. It cannot override qualification. Any changed bundle bytes or expired/invalid qualification require a new reference. Public rollback moves an alias to a prior release; it does not ask research to rebuild.
+One immutable S3 qualification report records gate detail; PostgreSQL stores bundle, policy version, status, report key and expiry. Node release authority verifies it, chooses public model/alias/prices/SLO/canary and requires human approval. It cannot edit qualification; research cannot move an alias.
 
 ## Research compute and security
 
-Research allocations reuse provider lifecycle transports but have distinct resource kind, IAM, queues, budgets, networks and registration. They can never publish production readiness. Kubernetes jobs use Kueue/JobSet only where the provider exposes honest Kubernetes compute; native VM/container APIs stay native. Temporal is cross-provider workflow authority. Argo Workflows is not a seed dependency.
+Native provider work remains native. For honest Kubernetes execution, Kueue owns quota/admission and JobSet owns actual distributed/gang jobs; neither becomes research evidence or provider abstraction. Do not create Kubernetes Jobs for native VM/container providers merely for uniformity.
 
-Inputs are staged by digest with least-privilege short-lived credentials. Research containers have no production database, Redis route signer, customer API key or trace decryption by default. Customer-specific Product Intelligence evaluation uses a separate consent/scope/job role and never converts retained data into global training authority.
+Agents receive program/hypothesis/campaign/spec/run IDs, base commit, writable paths, readable evidence class, tool/network allowlist, CPU/GPU/spend/time/output limits, expected artifacts and verification command. Candidate agents cannot mutate qualification. Research roles have no production Valkey, customer keys, trace decrypt or release-alias rights. Customer-trace evaluation requires explicit workspace consent and separate scoped identity; retention is not global training consent.
 
-## Portfolio policy and observability
+## Verification and ordered packages
 
-Always-on scanners, static analysis, tiny CPU tests, code generation and synthesis may run continuously within cheap quotas. A paid experiment requires expected information value, immutable spec, program/campaign/global budget, timeout, stop and cleanup.
+Use pytest/Hypothesis domain models, Temporal replay/crash tests, fake S3/ECR/provider/evaluator services, tiny PyTorch/operator fixtures and cross-language manifest/serving goldens. Protected GPU runs require budget and cleanup packets.
 
-Metrics:
+1. `RF-00`: minimal schemas/domain/Hypothesis strategies and generated private API.
+2. `RF-01`: program/hypothesis/campaign/spec/run/evidence authority and API.
+3. `RF-02`: Temporal workflows/activities, idempotency, cancellation, replay and cleanup.
+4. `RF-03`: S3 CAS plus artifact/checkpoint/runtime/bundle manifests and Rust inspection.
+5. `RF-04`: PyTorch intervention/operator testkit and profile-gated Triton path.
+6. `RF-05`: OCI runtime packaging and cell-local conformance.
+7. `RF-06`: independent qualification report and Node release handoff.
+8. `RF-07`: operator program/evidence/bundle UI through generated client.
+9. `RF-08`: one continuous program producing a durable falsified result and one qualified dry-run challenger without moving a public alias.
 
-- queue age by class/fidelity, duplicate hypotheses avoided and baseline freshness;
-- admitted/completed/invalid/negative runs, cleanup reliability and provider availability;
-- spend/agent time/GPU time per program and accepted learning per dollar;
-- evidence expiry/contradiction/replication and challenger funnel;
-- quality/goodput/latency/memory/cost Pareto changes against current tuned baseline;
-- bundle build/qualification duration/failure reason and false-positive/rollback history.
-
-No metric rewards raw experiment count, GPU utilization or agent activity. High-cardinality run detail remains PostgreSQL/S3, not Prometheus labels.
-
-## Verification and junior-agent packages
-
-Use pytest/Hypothesis for domain/workflow/activity state models, Temporal replay tests, fake provider/CAS/evaluator services and tiny PyTorch/operator fixtures. Cross-language goldens exercise canonical JSON and Protobuf. Protected real-GPU runs require admitted specs and budget/cleanup evidence.
-
-Implement in order:
-
-1. `RF-00`: Python project/tooling, generated contracts, canonical schemas/readers/goldens and fakes.
-2. `RF-01`: program/hypothesis/queue/campaign/experiment/evidence PostgreSQL domain and private API.
-3. `RF-02`: CAS/manifests/signing plus Rust bundle inspector/launcher.
-4. `RF-03`: Temporal portfolio/program/campaign/run workflows with fake/local compute and cleanup PBT.
-5. `RF-04`: scoped agent runner/tool protocol and one provider research adapter.
-6. `RF-05`: PyTorch intervention/operator SDK and tiny model reference/compiled/Triton path.
-7. `RF-06`: framework runtime packaging and cell-local conformance.
-8. `RF-07`: independently owned qualification service/harness and signed reference.
-9. `RF-08`: Hono BFF/Vite operator program/evidence/bundle/qualification views.
-10. `RF-09`: one continuously operated model program with a durable negative result and one dry-run qualified challenger.
-
-RF-09 does not move a public alias. Production recurring GPU autonomy remains disabled until the bounded shadow-lab gate demonstrates learning value, cleanup reliability and budget control.
+Temporal, Kueue and JobSet remain because they replace difficult execution machinery. Derived frontier/queue/state mirrors and speculative runtime modes remain removed.

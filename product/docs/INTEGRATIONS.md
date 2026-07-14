@@ -1,5 +1,7 @@
 # Gateway and provider integrations
 
+> This retains dated vendor research and harness evidence. Implement the current boundaries in [Distribution implementation](DISTRIBUTION_IMPLEMENTATION.md) and [Gateway implementation](GATEWAY_IMPLEMENTATION.md): OpenRouter enters the public gateway with a channel credential, the private component is the inference router, channel effects use the shared fixed-chart ledger, and there is no signed target/price-book subsystem.
+
 There are two distinct integration directions. Keep them separate in code, credentials, economics, and metrics. The complete target, package, harness and delivery decision is in [Open distribution and gateway integration plan](DISTRIBUTION_GATEWAY_INTEGRATIONS_2026-07-13.md).
 
 - Curated model-provider adapter: a customer explicitly requests a tested model provider/model from our short registry; we buy that exact inference and preserve identity.

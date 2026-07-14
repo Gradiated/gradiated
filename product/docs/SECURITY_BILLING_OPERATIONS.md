@@ -1,5 +1,7 @@
 # Security and operations
 
+> Historical deep-dive, superseded where inconsistent by [API/data contracts](API_AND_DATA_CONTRACTS.md), [testing/CI](TESTING_AND_CI.md), [current architecture](ARCHITECTURE.md), and the [simplicity review](../../docs/SIMPLICITY_REVIEW.md). Do not implement ClickHouse projections, fleet CRDs or arbitrary billing periods from this note.
+
 Billing algorithms are specified in [Billing and Redis](BILLING_AND_REDIS.md); this document covers the surrounding security and operational controls.
 
 ## Security boundaries

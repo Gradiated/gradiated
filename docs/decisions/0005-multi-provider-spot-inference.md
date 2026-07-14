@@ -1,11 +1,13 @@
 # ADR-0005: Cell-based multi-provider GPU inference
 
-- status: accepted for implementation planning; every provider/release remains qualification-gated
+- status: accepted in part; serving and fleet actuation details superseded by the 2026-07-14 simplicity review
 - GitHub issue: https://github.com/joshsny/gradiated/issues/7
 - owner: product and infrastructure workstreams
 - date: 2026-07-13
 
 ## Decision
+
+> Current implementation retains isolated external cells, exact-release serving, spot assumptions and always-on isolated KV cache. It replaces the signed target/edge/CRD path with a private inference router using ephemeral authenticated cell connections and PostgreSQL-leased Rust provider drivers. See [the simplicity review](../SIMPLICITY_REVIEW.md).
 
 Host the public gateway, regional inference edge, fleet controller, ModelOps, authoritative data, and observability in AWS. Run normal owned Grad GPU execution in disposable cells across curated external GPU providers. AWS GPU capacity is not a default or fallback merely because the control plane is there; it must pass the same release economics gate.
 

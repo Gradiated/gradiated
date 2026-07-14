@@ -1,244 +1,193 @@
 # Testing and CI
 
-## Architecture and contract completeness
+## Objective
 
-CI treats architecture as an input contract, not prose that can silently drift. A documentation check validates relative links, canonical Protobuf package paths, generated-file drift and forbidden legacy terms. Any new deployable or cross-system event must update [`../../docs/IMPLEMENTATION_COVERAGE.md`](../../docs/IMPLEMENTATION_COVERAGE.md) with its authority, contract, failure/security behavior, tests and work package.
+Agents and CI—not the product owner—must be able to verify every change. Tests prioritize irreversible failures: wrong money, unauthorized access, silent protocol changes, retained data against policy, cross-release routing, leaked capacity and irreproducible research.
 
-The first end-to-end fixture is deliberately narrow: one organization, its Default workspace, one funded key, OpenAI Models/Chat, one curated direct model, and one `grad/medium/standard` fake release. Broader protocols, ClickHouse, native listings and real owned capacity cannot become required dependencies of this first revenue-path fixture.
+## Test stacks
 
-The product owner will not run this repository locally. Therefore the acceptance authority is automated CI plus durable artifacts, and every implementation packet must expose the same commands to coding agents in containers/devboxes.
+| Stack | Unit/example | Property/state model | Integration/E2E |
+| --- | --- | --- | --- |
+| TypeScript | Vitest | fast-check | Testcontainers, Playwright, MSW/fakes |
+| Rust | cargo nextest | proptest + proptest-state-machine | real Valkey/PostgreSQL, fake providers/cells |
+| Python | pytest | Hypothesis | Temporal test server, tiny model/runtime, fake compute |
+| contracts | Buf/schema/OpenAPI lint | generated value/event sequences | cross-language goldens/conformance |
+| infrastructure | Terraform/Helm/policy tests | lifecycle/fault models where useful | Kind and budgeted staging drills |
 
-## Test pyramid
+Every property failure prints the seed, minimal counterexample/shrink path and exact replay command. CI uploads a small sanitized replay artifact. Fixed failures become deterministic regression fixtures.
 
-### TypeScript
+## Test tiers
 
-- Vitest for domain/unit and Hono integration tests.
-- `fast-check` for property and model-based state-machine tests.
-- Hono `app.request()` for transport tests without a listening socket.
-- Testing Library and MSW for components, hooks, and server-state failure modes.
-- Playwright for browser flows against built Vite assets, API, PostgreSQL, ClickHouse, Redis, S3 fixtures, and Stripe fixtures.
-- Testcontainers where process isolation is needed; CI service containers are acceptable when tests reset namespaces deterministically.
+### PR/main bounded tier
 
-### Python research lab
+- formatting, lint, type/build and dependency/license/security checks;
+- unit tests and short deterministic PBT budgets;
+- generated-contract/schema/OpenAPI drift;
+- fake provider/Stripe/cell and real disposable PostgreSQL/Valkey integration;
+- public-protocol and gateway-to-cell goldens;
+- Vite accessibility/component smoke and fake-client E2E;
+- Terraform/Terragrunt/Helm/Kyverno/Kind checks for changed infrastructure.
 
-- `pytest` for domain, workflow/activity, model/operator, artifact and runtime-adapter tests.
-- Hypothesis rule-based state machines for `ModelProgram`, experiment admission, budget/lease/cleanup, evidence composition and candidate lifecycle; every failure emits a replayable example/artifact.
-- `torch.library.opcheck`, FakeTensor/meta-kernel tests and `gradcheck` where differentiability applies before compiled or accelerated paths can graduate.
-- Differential tests compare eager PyTorch references with `torch.compile`, Triton, CUDA/C++ and packaged runtime outputs over generated shapes, dtypes, strides, devices and numerical tolerances.
-- Ruff, Pyright and pinned `uv` lock/sync checks are required; notebooks may explore but cannot be evidence or package authority.
+### Main/nightly deep tier
 
-### Rust
+- longer PBT/model-state budgets with a seed matrix;
+- concurrency, cancellation, retry/reorder and failover fault injection;
+- Temporal replay/crash/cancellation tests;
+- trace retention/delete/export and PostgreSQL query/load fixtures;
+- fleet/provider-driver/cell lifecycle chaos;
+- load/leak/soak tests and dependency-update compatibility.
 
-- standard unit/doc tests plus `cargo nextest` for workspace execution.
-- `proptest` for parsers, arithmetic, protocol transformations, and generated inputs.
-- `proptest-state-machine` for Redis admission/settlement/reconciliation transitions.
-- Redis Testcontainers for real script/function behavior, concurrency, failover-compatible key slotting, and stream semantics.
-- Wiremock or a purpose-built Axum fake provider for timeouts, malformed SSE, disconnects, usage variants, and retries.
-- Criterion benchmarks for admission script load and parser/stream hot paths after correctness.
+### Protected paid tier
 
-## Property suites
+- cheapest qualifying OpenAI, Anthropic and Google requests through the public Rust gateway using official clients;
+- OpenRouter/channel smoke when credentials/contract exist;
+- bounded external GPU allocation/runtime/cache/stream/preemption/cleanup qualification;
+- staging Aurora/Valkey/EKS/Temporal recovery drills.
 
-| Suite | Generator/actions | Required properties |
-| --- | --- | --- |
-| Money | arbitrary valid prices, units, limits, extreme `i64`/`bigint` values | no float conversion; checked overflow; nonnegative reserve; reserve covers valid bounded charge. |
-| Ledger | top-ups, charges, refunds, promotions, chargebacks, duplicates | entries balance; idempotency; append-only corrections; derived balance matches model. |
-| Authorization | users, organizations, workspaces, both memberships, roles, invitations, keys | no cross-organization/workspace read/write; one Default workspace; membership implications; last organization owner retained; revoked key always fails. |
-| Payments | valid/invalid/reordered/duplicate Stripe event traces | redirects have no effect; exactly-once financial effect; impossible transitions quarantine. |
-| Admission | organization top-up, workspace/key limits, cross-workspace reserve, settle, cancel, renew, overage | invariants in `BILLING_AND_REDIS.md`; no unfunded dispatch; organization credit and nested caps. |
-| Streams/reconciliation | redelivery, consumer crash, sequence gap, lag, rebuild, epoch change | posting once; stale events fenced; equality or closed state; no blind refund. |
-| Contracts | generated valid/invalid Protobuf values, canonical manifests, additive unknown fields | Python/TS/Rust encode/decode agreement; deterministic generation; compatibility. |
-| Protocols | valid support-subset JSON/SSE and malformed variants | lossless supported normalization; explicit unsupported rejection; terminal/event ordering. |
-| Model identity/routing | curated providers/models/aliases, Grad effort/speed releases, health, capability/data policy, prices, session/canary buckets and faults | bare alias resolves only when unique; direct pin never crosses provider/model/version; Grad never leaves owned inference or changes effort/speed; deterministic decision; fixed release price; no ineligible target. |
-| Route lifecycle | publish/canary/promote/halt/rollback/deprecate with stale/reordered projection commands | immutable release; deterministic rollout; stale head cannot win; in-flight request keeps admitted release/price; rollback restores a qualified head. |
-| Failed-request credit | pre-output/midstream/output-delivered failures, cancel, duplicate/reordered settle/correction, fraud eligibility | exactly one eligible reversal when no usable output; never double-credit; original usage remains immutable; provider buy evidence retained. |
-| Distribution channel | channel contract/credential/exposure, reserve/settle/invoice/payment/drift interleaved with organization traffic | channel and customer balances/keys/limits/traces/cache scopes never cross; one receivable effect; suspension closes new channel traffic while settlement continues. |
-| Effort/speed | arbitrary qualified cells, measured distributions, capacity/queue faults and release changes | unavailable cells absent; no silent lane downgrade; speed and declared effort monotonicity gates hold within configured statistical tolerance or release is rejected. |
-| Trace policy | Product Intelligence/no-retain/request tightening, credentials, oversized payloads, encryption/key rotation, stream lag, delete/export/redelivery | no-retain emits no trace payload; credentials never captured; ciphertext only after gateway; billing headroom preserved; one trace/object identity; retention/delete completes or closes capture. |
-| Owned inference fleet | PostgreSQL intents/leases, fleet CR specs/status/finalizers, capacity-provider observations, cell/edge shards, signed targets, spot loss, cache namespaces and faults | one writer/authority per field; duplicate/reordered/restarted reconciliation converges; no leaked orphan or unqualified target; existing cells serve through PG/Kubernetes/provider outage; exact release/speed and cache isolation hold. |
-| Trace analytics | organization/workspace scopes, terminal usage versions, duplicate/reordered outbox delivery, retention/tombstones, restore, ClickHouse outage/backlog | one visible terminal fact; no content columns; result subset of authorized scope; expired/deleted content inaccessible during mutation lag; PostgreSQL reconciliation wins; projector failure never affects serving/billing/S3. |
-| Migration | workload grouping, evidence levels, replay/shadow/live-canary commands/headers, duplicate/reordered events, budgets and evaluator faults | no header means hard direct pin; invalid/mismatched header cannot enroll; source/candidate fixed; evidence cannot overstate; replay cannot charge; live canary is deterministic, disclosed and obeys experiment/billing caps; removing header preserves original traffic. |
-| Research program | baseline/champion/frontier/question/queue transitions, scans, hypothesis ranking, campaign/spec/budget/lease/timeout commands, agent crashes, stale epochs, provider failures and cleanup | one durable program per model; queue churn cannot bypass admission; approved scope cannot expand; spend/time/provider/data limits hold; one lease owner; stale writes fenced; every allocation terminates or has durable cleanup evidence; negative/invalid results persist and influence ranking. |
-| Model/operator differential | generated PyTorch modules/operators, tensor shapes/dtypes/strides, compile modes, Triton/native variants and tolerances | eager reference is retained; schema/meta/alias rules pass `opcheck`; gradients pass where promised; accelerated output/error envelope matches the scoped oracle; unsupported inputs fail explicitly. |
-| Evidence and lineage | arbitrary model/workload/hardware/software/intervention scopes, controls, fidelity labels, observations, claims and parent graphs | specs immutable after admission; sealed observations append-only; invalid environment is not model failure; claim scope cannot widen; incompatible claims do not compose; lineage is acyclic and content identity stable. |
-| ModelStackBundle | canonical manifests, object/image digests, custom architecture/kernel/runtime/topology matrices, signatures, missing/tampered/expired attestations | Python/TS/Rust canonical bytes and digest agree; every reference is immutable/present; any changed byte changes identity; missing/invalid evidence fails closed; production launcher accepts only exact qualified digest. |
-| Bundle qualification | gate ordering, independent evaluator roles, hidden/visible policy versions, pass/fail/invalid/expiry/waiver and requalification | candidate writer cannot author gate result or approval; no later gate changes bundle; expired/invalid gate blocks release; non-waivable safety/identity/isolation/metering gates remain mandatory. |
-| Family/managed/pin aliases | family envelopes, effort/speed envelopes, release pins, concurrent head moves, canary/rollback/revocation | family never crosses compatibility boundary; managed alias satisfies declared product envelope; pin never moves; one atomic head generation; in-flight request retains admitted bundle/price; revoked pin cannot resolve elsewhere. |
+Paid jobs have explicit secret presence, spend cap, timeout, concurrency cap, synthetic prompts, cleanup assertion and sanitized artifacts. Missing optional credentials skip with a classified result; they never weaken deterministic CI.
 
-PBT complements examples: each bug found by a property receives a small example/regression fixture after shrinking. Do not encode exact framework implementation details as properties; test externally meaningful invariants.
+## Core property suites
 
-## Stateful model architecture
+### Identity and tenancy
 
-Maintain small pure reference models in `research/factory` for research state, `packages/testkit` for product state and `gateway-testkit` for serving state. Define a language-neutral `PropertyTrace` Protobuf containing initial state, ordered commands, concurrency barriers, injected faults, expected coarse outcomes, seed, and shrink path.
+- signup yields one organization owner and exactly one Default workspace;
+- all workspace/member/key/trace queries remain within organization lineage;
+- invitation acceptance/retry/expiry cannot create duplicate membership;
+- revoked/expired keys and removed members cannot authorize;
+- role checks are monotonic and deny unknown actions.
 
-Hypothesis, fast-check and proptest can each generate against their owned domain and all three can replay a stored trace. This does not require frameworks to share a PRNG; the minimized command trace or portable golden corpus is the cross-language artifact.
+### Ledger and top-ups
 
-Concurrency cases use explicit barriers/schedules rather than wall-clock sleeps:
+- every ledger transaction balances to zero in USD;
+- business key/source identity is idempotent;
+- top-up credit follows one verified Stripe event regardless of duplicate/reordered delivery;
+- refunds/chargebacks/corrections preserve history and balance rebuild equality;
+- `organization_balances` equals fixed ledger account balance after arbitrary valid sequences;
+- workspace/key monthly limits constrain organization credit but never create a wallet.
 
-- N simultaneous reserves from several workspaces against one remaining organization balance;
-- settle versus duplicate settle;
-- lease sweeper versus heartbeat/settle;
-- organization refund projection versus workspace admissions;
-- stale projection version versus newer top-up;
-- stream claim/redelivery versus first consumer commit.
-- route-head rollback versus request admission and settlement;
-- session-pinned candidate health change versus concurrent managed requests;
-- duplicate failed-request correction versus reconciliation.
-- trace append/backpressure versus settlement and billing stream retention;
-- duplicate/reordered ClickHouse projection versus tombstone/retention and outbox checkpoint;
-- no-retain policy change versus in-flight capture and key rotation;
-- no-retention trace suppression versus successful prefix-cache put/hit/evict, cache-salt rotation, workspace/channel/release namespace isolation, and cell teardown;
-- provider allocation observations, duplicate acquire/release, lease expiry, controller restart, spot notice/zero-notice loss, edge reconnect and failure before/after first output;
-- CR spec/status owner-epoch races, admission/RBAC negatives, finalizer failure/break-glass, management-cluster rebuild from PostgreSQL, provider-list orphan sweep, and two-AZ relay-shard loss;
-- distribution-channel reserve/settle/reconciliation versus concurrent organization top-up/reserve/trace/cache operations;
-- migration experiment cancel/stop versus concurrent canary admission;
-- direct-model alias activation/deprecation versus concurrent resolution.
-- research lease expiry/reassignment versus late observation upload and provider cleanup;
-- experiment sealing versus attempted spec/control/threshold mutation;
-- evidence expiry or invalidation versus bundle qualification and release approval;
-- bundle build/sign versus object tamper, missing attestation and concurrent garbage collection;
-- family/managed alias activation versus immutable-pin admission, canary halt and rollback;
-- research allocation registration attempts versus production cell target publication.
+Use a reference in-memory fixed-chart model and generate commands such as create intent, receive event, reserve, settle, refund, chargeback, correct, retry and crash at transaction boundaries.
 
-## Seeds, shrinking, and replay
+### Valkey admission and billing
 
-Every property invocation reads optional `PBT_SEED` and `PBT_PATH`; otherwise CI derives a logged seed from run identity. On failure:
+- auth + reserve + concurrency acquisition is atomic;
+- rejected requests spend nothing and leak no slot;
+- accepted requests cannot exceed available credit plus explicitly bounded reservation exposure;
+- low balance applies the stricter concurrency cap atomically;
+- settle/refund is idempotent under duplicate/reordered terminal events;
+- timeout/cancel/provider failure follows frozen pre/post-output charge rules;
+- snapshot epoch rebuild never makes stale policy newer;
+- financial stream replay produces one PostgreSQL transaction.
 
-- print framework seed and shrink path;
-- serialize minimized `PropertyTrace` when applicable;
-- write JUnit/test output and relevant safe Redis/PostgreSQL state hashes;
-- upload artifacts for at least 30 days;
-- print exact commands such as:
+Run the same model against pure Rust state and a real Valkey script/function. Inject connection loss before/after acknowledgement to prove fail-closed uncertainty and reconciliation.
 
-```sh
-PBT_SEED=123 PBT_PATH='2:1:0' pnpm test:pbt -- billing
-HYPOTHESIS_PROFILE=ci uv run --project research/factory pytest tests/domain/test_model_program.py
-cargo test -p gateway-pbt admission -- --nocapture proptest-seed=...
-pnpm test:pbt:replay artifacts/property-trace.pb
-```
+### Protocol and provider adapters
 
-The scaffold work package must verify the exact proptest replay syntax supported by the pinned version and wrap it in `./tools/pbt/replay`, so later agents do not need to remember framework flags.
+- streaming and non-streaming canonical outputs agree;
+- chunk ordering/finish/usage/errors are valid under arbitrary provider chunk boundaries;
+- unsupported capabilities fail before provider spend;
+- direct model/provider identity never changes;
+- Grad alias resolves only to an active qualified immutable release;
+- cancellation/deadline/backpressure cannot double settle;
+- arbitrary headers/tool payloads do not leak to logs or traces outside allowlist.
 
-## Run depths
+Use official wire fixtures plus generated canonical requests. Each adapter declares capabilities and must pass a shared conformance suite; no adapter-specific exception silently weakens semantics.
 
-Exact counts are tuned to CI duration using recorded timings, but start with:
+### Traces and intelligence
 
-- pre-push/external pull request: deterministic unit/integration plus at least 1,000 simple cases per critical property and 100 state-machine traces, total PBT target under 8 minutes;
-- main: 10,000 simple cases and 1,000 state-machine traces, target under 15 minutes;
-- nightly: time-budgeted deep run (at least 100,000 simple cases where throughput permits), fault injection, and cross-language replay corpus, target under 45 minutes;
-- release: main suite plus protocol conformance and real-provider smoke.
+- no-retention produces usage metadata but no payload/trace-stream/S3 object;
+- retained content is encrypted before leaving gateway memory and credentials are stripped;
+- trace list/detail/export/delete is tenant/grant/retention constrained;
+- tombstone/key destruction denies detail before object cleanup converges;
+- trace-stream outage/backpressure cannot consume protected billing headroom;
+- PostgreSQL analytics equal authoritative sampled usage and remain bounded by tenant/time;
+- recommendation state cannot publish routing; replay is unbilled; canary cannot exceed authority/budget/stops.
 
-Shard by stable property suite, not random test file distribution, so failures replay. A timeout is a failed/recorded result; the job never silently truncates a property and reports success.
+There is no ClickHouse/projector test matrix. Add one only with the reintroduction ADR.
 
-## Research-factory and bundle qualification jobs
+### Catalog and releases
 
-Pull requests run a deterministic tiny PyTorch model through source validation, eager/compiled/operator parity, `opcheck`/FakeTensor/gradient checks, Triton-or-fake accelerator differential fixtures, bundle build/inspect/signature verification, every launch mode's fake cell, protocol/metering and dry-run release state machines. The fixture is small enough for CPU/Kind and proves orchestration and identity, not model quality.
+- release digest fixes capabilities, prices, direct endpoints/owned marker, retry count and artifact refs;
+- alias canary assignment is deterministic and reversible;
+- unpublished effort/speed combinations fail explicitly;
+- release endpoint must be qualified for exact release/capabilities;
+- rollback changes alias, never mutates a release;
+- settled usage retains the admitted release/price despite later catalog changes.
 
-Main/nightly jobs add worker crash/replay, provider interruption, missing/tampered S3/ECR object, hidden-evaluator role negatives, distributed JobSet/collective fakes, security/privacy scans and a sustained fake-cell soak. Protected preregistered jobs run the exact candidate bundle on real GPUs only when a campaign supplies an approved spend cap, timeout, cleanup contract and scope-matched controls. Spot unavailability is a classified environment result; an incorrect result, leaked resource, identity mismatch or missing cleanup evidence fails.
+### Owned inference and fleet
 
-Promotion CI never treats simulation, a component benchmark or a GitHub checkmark alone as release authority. It emits signed gate attestations for one exact bundle. A separate release proposal must bind those attestations, price, aliases, rollout and rollback, and a release owner must approve it at seed. See [Model research factory to production](MODEL_RESEARCH_TO_PRODUCTION_2026-07-13.md).
+- no ready/routable cell without short-lived allocation identity and exact-release signed attestation;
+- one-use bootstrap tokens cannot replay; certificate renewal requires current identity and active allocation;
+- router cannot dispatch across release digest or to draining/expired cells;
+- provider acquire/release is idempotent under timeout after side effect;
+- lease fencing prevents two reconcilers from creating untracked capacity;
+- cleanup is never `confirmed` without provider proof; uncertainty freezes acquisition;
+- provider/Kubernetes discovery is absent from request path;
+- interruption retries only before output and settles once;
+- KV cache key includes tenant/channel/release/retention-class and cache-layout epoch; no-retention still hits cache but persists no content.
 
-## Official-client E2E
+Test provider-independent state first, then fake native/managed-Kubernetes APIs. Kind tests only the latter; no fleet CRDs exist.
 
-### Always-on fake-provider job
+### Research factory
 
-On every `main` commit and external pull request, boot PostgreSQL, ClickHouse, Redis, S3-compatible storage, the Rust gateway/inference edge, a Kind management cluster with fleet CRDs/controllers, and deterministic fake OpenAI/Anthropic/Google/owned/capacity-provider/cell upstreams. Run official `openai`, `@anthropic-ai/sdk`, and `@google/genai` clients with base URL pointed at the gateway. Cover:
+- program/hypothesis/campaign/spec/run/evidence transitions respect authority/version/budget;
+- experiment specs are immutable once run; sealed evidence cannot change;
+- identical canonical manifests produce identical digests across Python/TS/Rust;
+- Temporal workflow replay is deterministic and activity side effects are idempotent;
+- cancellation/crash seals or classifies work and cleans resources within timeout;
+- negative results retain scope/provenance and are queryable;
+- tensor/operator transformations preserve declared shape/dtype/numerical/error properties;
+- qualification covers exact bundle/runtime/hardware and alone can make a release proposal eligible;
+- Temporal history, derived rankings or agent opinions cannot approve a release.
 
-- model list where client supports it;
-- non-stream and stream Chat Completions;
-- non-stream and stream Anthropic Messages;
-- native Google GenerateContent and streaming through the pinned supported API-version skin;
-- stateless non-stream and stream Responses with text, image fixture, tools and structured output where the pinned SDK exposes them;
-- scalar and batched Embeddings;
-- canonical OpenAI/Anthropic/Google model fixtures, bare unique aliases, ambiguous alias rejection, same-provider retry and cross-provider fault rejection;
-- representative `grad/low/flex`, `grad/medium/standard`, `grad/high/fast`, and `grad/max/turbo` cells, actual release disclosure, speed-capacity rejection, session stickiness and rollback;
-- Product Intelligence capture/decrypt fixture, ClickHouse fact/list/chart projection, credential/content-column exclusion, no-retain usage row with no object, deletion/tombstone convergence and trace/analytics backpressure that leaves billing correct;
-- workload recommendation evidence progression plus replay/shadow/live-canary stop with proof that no automatic model switch occurs;
-- 402, 429, key revocation, timeout, cancellation, malformed upstream, and duplicate settlement;
-- a distribution-channel credential/exposure/settlement fixture proving no organization-credit or first-party-trace mutation;
-- direct OpenAI-compatible traffic and the same workspace key/request through pinned LiteLLM plus deterministic custom-gateway fakes, proving identical organization price/admission/trace semantics;
-- `/v1` path joining, slash-containing Grad model IDs, bearer/header allowlists, standard error preservation, SSE comments/events, cancellation and usage through a proxy;
-- native and managed-Kubernetes fake allocations through CRD reconcile/ready/target/fence/finalizer/rebuild paths while an already-published request survives controller loss;
-- unsupported parameter/capability, context overflow, no eligible route, pinned-model outage and no-usable-output credit;
-- usage/ledger assertion after the worker posts events.
+Tiny deterministic models/fixtures run in ordinary CI. Real GPU tests are protected and scope results to exact hardware/runtime/intervention.
 
-No provider secret is present, including on forked/untrusted pull requests.
+## End-to-end scenarios
 
-### Protected real-provider job
+Fake CI must cover:
 
-On pushes to main, nightly schedule, and manual dispatch, use GitHub environment `provider-e2e` with encrypted OpenAI, Anthropic and Google keys. The same official clients point to the Rust gateway, which routes to real curated providers and the protected owned test deployment.
+1. signup -> Default workspace -> top-up webhook -> key -> funded direct request -> ledger/trace UI;
+2. low balance with concurrent requests -> bounded admissions -> exact refunds/settlement;
+3. no-retention request -> cache use -> no payload object -> usage visible;
+4. provider stream cancel/failure before and after output -> frozen retry/charge outcome;
+5. control/Aurora outage -> existing snapshot serving -> financial replay convergence;
+6. Grad alias -> exact cell -> preemption -> safe retry/failure -> one settlement;
+7. provider-driver timeout/orphan -> observation/sweeper -> no leaked untracked resource;
+8. research negative experiment -> sealed evidence -> no promotion;
+9. qualified challenger -> operator approval -> canary alias -> rollback;
+10. OpenRouter channel request -> isolated admission/cache/trace -> statement reconciliation.
 
-- Models are controlled by reviewed `OPENAI_E2E_MODEL`, `ANTHROPIC_E2E_MODEL`, `GOOGLE_E2E_MODEL`, and owned release variables; choose current cheapest capable models and pin environment configuration.
-- Prompt requests an exact tiny response; output cap is 8 tokens or the smallest supported value.
-- Run one tiny compatible request for each enabled curated direct provider and one owned Grad cell, plus minimal Responses/Embeddings probes where supported; concurrency one, at most one network retry, five-minute job timeout.
-- A preflight allowlist rejects expensive models or high token limits.
-- Budget target is below $0.05 per run, with a monthly GitHub/environment and provider-account cap.
-- Log request IDs, model, status, schema assertions, metered units, and response hash only—never body or credentials.
-- Missing protected secrets fail the protected job with a clear configuration error; they are not silently skipped.
-
-Real smoke proves current external compatibility but is not a replacement for deterministic fault coverage. Model aliases and API behavior can change, so the implementation owner verifies current official docs when pinning model IDs.
-
-## Distribution compatibility harness
-
-The full package, fixture and target plan is [Open distribution and gateway integration plan](DISTRIBUTION_GATEWAY_INTEGRATIONS_2026-07-13.md). The shared black-box corpus runs in five layers:
-
-1. official OpenAI TypeScript, Python and Go clients directly against Grad;
-2. OpenAI's pinned `gpt-oss` Chat/Responses tool/API-shape compatibility smoke;
-3. the same language-neutral cases through a pinned local LiteLLM proxy and deterministic gateway fakes;
-4. native-channel simulation using OpenRouter/Hugging Face catalog profiles, dedicated credentials and channel receivables;
-5. protected hosted/post-listing smoke and bounded release soaks.
-
-TypeScript uses Vitest, fast-check and Testcontainers; Python uses pytest, Hypothesis, httpx and respx; Rust uses reqwest, wiremock, proptest and proptest-state-machine. Framework packages (`ai`, `@ai-sdk/openai-compatible`, then selected LangChain/PydanticAI/LlamaIndex clients) are test/example dependencies, not production gateway dependencies. OpenRouter's TypeScript/Python/Go SDKs and `@openrouter/ai-sdk-provider` enter only after a native listing can be tested end to end.
-
-Every custom-gateway test proves that a forwarded workspace key remains organization prepaid traffic. Every native-channel test proves that a dedicated channel key uses channel exposure/receivables and cannot reserve organization credit, open a first-party trace or access tRPC. Cross-language properties vary model IDs, fields, tools, JSON schemas, Unicode/SSE splits, fault timing, cancellation, credential epochs and concurrent reserve/settle/reconcile order.
-
-## GitHub Actions graph
+## CI workflow
 
 ```text
-devex + formatting
-  ├── contracts lint/breaking/generate/drift/golden
-  ├── Python research Ruff/Pyright/pytest/Hypothesis/operator checks
-  ├── TypeScript typecheck/lint/unit/PBT
-  ├── Rust fmt/clippy/nextest/PBT
-  ├── integration: PostgreSQL + Redis + fake providers
-  ├── model/route qualification + release/canary/rollback
-  ├── research campaign/evidence/bundle identity state machines
-  ├── tiny bundle build/inspect/launch + qualification dry run
-  ├── trace encryption/retention + migration state machines
-  ├── ClickHouse projection/tenant-query/delete/restore properties
-  ├── Vite build + Playwright
-  ├── fake official-client E2E
-  └── distribution contract + local router + channel simulator
-
-main/nightly/manual after required jobs
-  ├── deep PBT/fault injection
-  ├── research orchestrator crash/replay + full-cell qualification harness
-  ├── protected real-provider E2E
-  └── protected hosted-router/post-listing smoke (when configured)
+checkout
+  -> devex/path/secret scan
+  -> parallel TS / Rust / Python / contracts / infra bounded jobs
+  -> fake E2E
+  -> build SBOM + sign immutable artifacts on main
+  -> update GitOps digest after qualification
+  -> optional protected provider/GPU/recovery jobs
 ```
 
-Pin action SHAs and tool versions. Use lockfiles and cached dependencies without caching generated test outcomes. Upload contract diffs, JUnit, coverage summaries, minimized traces, and sanitized service logs. Never upload `.env`, Redis dumps containing key projections, payment payloads, or request bodies.
+Main pushes are the normal workflow. Required checks run before deployment; failures stop promotion and create actionable artifacts. Real-provider keys are environment secrets unavailable to untrusted code. Prompts are synthetic and responses are not uploaded except minimal redacted conformance facts.
 
-## Required root scripts
+## Coverage discipline
 
-| Command | Contract |
-| --- | --- |
-| `pnpm verify:ts` | format check, lint, typecheck, Vitest. |
-| `pnpm test:pbt` | bounded fast-check suites with replay output. |
-| `pnpm contracts:check` | Buf format/lint/breaking/generate/drift and golden fixtures. |
-| `uv run --project research/factory pytest` | Python research domain, workflow, artifact, model/operator and Hypothesis suites. |
-| `uv run --project research/factory ruff check . && uv run --project research/factory pyright` | Python formatting/lint/type boundary. |
-| `cargo nextest run --workspace` | Rust unit/integration tests. |
-| `cargo test -p gateway-pbt` | bounded proptest state machines. |
-| `grad research verify --fixture tiny` | deterministic campaign/spec/evidence/bundle/qualification dry run. |
-| `grad bundle inspect <ref>` | verify canonical digest, objects, signatures, attestations and placement manifest without launching. |
-| `pnpm test:conformance` | public JSON/SSE fixtures against Rust gateway. |
-| `pnpm test:routes` | cross-language provider/model identity, Grad effort/speed, qualification, route and rollout properties. |
-| `pnpm test:fleet` | edge/cell protocol, provider/lease simulator, spot lifecycle, cache isolation and exact-release fault properties. |
-| `pnpm test:traces` | trace policy/encryption/retention, ClickHouse projection/tenant isolation and workload/migration state-machine properties. |
-| `pnpm test:e2e:fake` | official clients through gateway/fakes. |
-| `pnpm test:e2e:providers` | protected minimal paid smoke only. |
-| `pnpm test:distribution` | direct official-client, local-router, catalog and native-channel simulator suites. |
-| `pnpm test:distribution:hosted` | protected, budgeted hosted-router/post-listing smoke only. |
-| `pnpm verify` | all required non-paid pre-push/main checks. |
+Coverage percentage is not the gate. Each changed invariant/state transition requires an example and, where combinatorial, a property/model test. Mutants or fault injection should demonstrate that critical tests fail when balance checks, tenant predicates, release checks, retention gates, lease fencing or cleanup proof are removed.
 
-Every task handoff records commands, CI run URL when available, seeds/artifacts for failures, and which paid tests were intentionally not invoked.
+Flaky tests are product defects: quarantine only with issue, owner, diagnosis artifact and expiry. Timeouts are bounded; resource cleanup is asserted even on failure.
+
+## Agent commands
+
+```sh
+grad test unit
+grad test pbt --seed <seed>
+grad test e2e --profile fake
+pnpm verify:ts
+cargo nextest run --workspace
+uv run --project research/factory pytest
+pnpm contracts:check
+grad infra check
+grad helm check
+```
+
+Until commands are implemented, agents invoke and record the exact underlying tools. The owner is not expected to run anything locally.

@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "id": "glm47-observer-diagnostic-l40s-v8-result",
+  "run_id": "glm47-observer-diagnostic-l40s-v8",
+  "scout_id": "glm47-dense-resource-signature",
+  "control_id": "glm47-stock-observer-off",
+  "candidate_id": "glm47-stock-observer-on",
+  "changed_variable": "observer state and its harness/configuration identity only",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "prediction_sha256": "70bd80f5ba174e34bb8e666effaf71611dd319caac14c5c648d7a2a38f81779b",
+  "outcome_class": "operational_failure",
+  "failure_class": "operational_failure",
+  "fidelity": "matched_server",
+  "scope": {
+    "claim": "diagnostic localization only; no quality, economics, provider, or candidate-performance claim",
+    "hardware": "Nebius L40S 48GB; gpu-l40s-a; 1gpu-16vcpu-64gb",
+    "model": "GLM-4.7-Flash revision ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "workload": "A1 observer-off / B1 observer-on / A2 observer-off; 8 requests; c8; 8192 input + 32 output tokens"
+  },
+  "cost_usd": 0.127709276,
+  "artifact_refs": [
+    "6cecd25219b8a034f3a56572c3a11fbd98194479bd6637feec7b8d8d77fc92f1"
+  ],
+  "artifact_bundle_sha256": "6cecd25219b8a034f3a56572c3a11fbd98194479bd6637feec7b8d8d77fc92f1",
+  "telemetry_summary": {
+    "schema_version": 1,
+    "run_id": "glm47-observer-diagnostic-l40s-v8",
+    "failure_stage": "pretransfer_nsys_launch_capability_fixture_missing",
+    "captured_signals": [
+      "identity_and_environment",
+      "host_and_transfer_health",
+      "resource_and_cost_ledger"
+    ],
+    "missing_signals": [
+      "request_timeline",
+      "scheduler_timeline",
+      "accelerator_health",
+      "model_structure",
+      "quality_and_correctness",
+      "scheduler_iteration_trace",
+      "cpu_gpu_dependency_trace",
+      "kernel_resource_trace"
+    ]
+  },
+  "next_action": "Assign one parallel_offline implementation packet to add the exact version-pinned nsys launch help fixture to the transferred input manifest and a deterministic test proving remote /input presence. Preserve startup isolation, A1/B1/A2 geometry, the existing 2000-second/$0.55/$0.07 contract, telemetry, partial-evidence rules, and cleanup policy. Only after that cheap packet passes may a new immutable identity be prepared for a later fenced admission; do not update scientific beliefs from V8."
+}

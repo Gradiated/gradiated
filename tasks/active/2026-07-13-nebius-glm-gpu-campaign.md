@@ -6,6 +6,10 @@ Owner: primary research coordinator
 
 Status: complete — campaign decision `CONTINUE_NARROWLY`; split-8 lineage `STOP`
 
+## Budget authority amendment — 2026-07-14
+
+The user clarified that `$28.60` is the additional available balance, not the lifetime ceiling. The factory campaign `glm47-nebius-25` now has total authority `$48.034292`: `$18.884292` settled, `$0.55` reserved by the current V8 run, and `$28.60` available for new spend. This does not reopen stopped lineages or change the scientific scope. Historical decision artifacts retain their original `$25.00` basis.
+
 ## 2026-07-14 final retained split experiment and handoff
 
 The source-pinned eight-KV-split candidate reduced exact-shape grouped-attention component time by 40.27% and reduced summed c8 attention/MLA profiler work by 33.43%. It did not materially transfer to serving. A same-session A/B/A/B/A sequence measured drift-corrected c8 throughput effects of +1.0476% and +1.0447%, median +1.0461%, versus the preregistered 5% gate. All five final arms passed semantic, exact geometry, SLO, cache, paired diagnostic, and artifact gates. With two independent candidate repetitions the result is descriptive and intentionally has no bootstrap interval or significance claim.

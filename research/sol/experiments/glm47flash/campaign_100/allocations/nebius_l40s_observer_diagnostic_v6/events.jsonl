@@ -1,0 +1,12 @@
+{"disk_count": 0, "event": "stock_control", "instance_count": 0, "matching_labeled_resources": 0, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "timestamp": "2026-07-14T19:00:20.632824Z"}
+{"action": "register-allocation", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-14T19:01:00.360559Z"}
+{"event": "instance_created", "instance_id": "computeinstance-e00pm5w5dxr8jtt7t1", "timestamp": "2026-07-14T19:01:00.360690Z"}
+{"elapsed_seconds": 85.377, "event": "ssh_ready", "timestamp": "2026-07-14T19:01:45.178281Z"}
+{"before_model_transfer": true, "event": "nsys_preflight_passed", "timestamp": "2026-07-14T19:09:45.570993Z", "version": "2026.3.1.157"}
+{"event": "tiny_transfer_probe_passed", "sha256": "6967780b45a5e9e86c4e5ac54e2595fcf2add1a66cdd63cb8df63017fa8c8d11", "timestamp": "2026-07-14T19:09:50.344531Z"}
+{"elapsed_seconds": 356.302, "event": "verified_local_awq_transferred_once", "timestamp": "2026-07-14T19:15:46.646951Z"}
+{"error_type": "StockError", "event": "experiment_error", "message": "artifact retrieval failed: /workspace/public-observer/observer-diagnostic.tar.gz", "timestamp": "2026-07-14T19:20:23.664300Z"}
+{"event": "repair_window_skipped", "reason": "no_tested_action_within_ten_minutes", "timestamp": "2026-07-14T19:20:23.664408Z"}
+{"action": "request-cleanup", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-14T19:20:23.719835Z"}
+{"action": "mark-cleanup-verified", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-14T19:21:19.936479Z"}
+{"cleanup_pass": true, "event": "cleanup_verified", "final_disk_count": 0, "final_instance_count": 0, "instance_get_not_found": true, "timestamp": "2026-07-14T19:21:19.936813Z"}

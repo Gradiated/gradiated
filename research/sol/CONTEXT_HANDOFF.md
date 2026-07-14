@@ -21,7 +21,49 @@ The observer work did close the target-hardware capability path before the stop:
 - CUDA/NVTX/OSRT, node-level CUDA Graph, process-tree sampling/context switches, PyTorch CUDA, and SQLite export all passed on the target L40S after removing the runtime's CUDA-compat `ld.so` entries and running `ldconfig`. The retained V34 repair produced a 539,965-byte `.nsys-rep` and 2,015,232-byte SQLite export.
 - V35 was stopped during fresh-host bootstrap before checkpoint transfer. No model inference or observer bracket result exists.
 
-Do not reuse run `glm47-observer-diagnostic-l40s-v5`. When the user explicitly resumes, bump the controller, preregistration, and artifact contract to V36; recompute the harness-bound preflight references and paid-spec hash; run factory deep audit and fresh provider inventory; then admit the unchanged narrowed A1/B1/A2 observer contract. The source already contains the target-validated CUDA-compat cleanup, but its run constant still names V5 and must be bumped before a new admission. Keep the repaired ten-minute retention policy. The full evidence narrative and bundle hashes are in `experiments/glm47flash/REPORT.md`.
+Run V35 remains immutable and must never be reused. Its resume contract was fulfilled by the V36 cycle below with a new controller identity and freshly bound preflight/spec; any later retry must likewise use a new immutable identity. Keep the repaired ten-minute retention policy. The full evidence narrative and bundle hashes are in `experiments/glm47flash/REPORT.md`.
+
+### Observer V36 cycle — 2026-07-14
+
+V36 used new factory identity `glm47-observer-diagnostic-l40s-v6` and preserved the scientific observer contract. It passed the 35-reference deep audit, fresh zero-instance/zero-disk reconciliation, 196 local tests, target Nsight/CUDA preflight, and the verified one-time 20.17 GB transfer. The model endpoint then remained connection-refused for the bounded health window, before any request or scored observer arm. Treat this as operational failure only; the dense-versus-host bottleneck belief is unchanged.
+
+Cleanup and settlement passed at `$0.286961496`; factory bundle `6b69151c9f6ebf59e83a09995e963291106111cb9c802223a7b4667b625ff315` deep-verifies. The factory ledger is `$18.564850/$25` settled and `$6.435150` available, with zero reserved spend and no live Nebius resources. Before another paid run, add fail-closed partial remote packaging for server exit status and logs and audit the V36 launch/health path offline. Use a new immutable identity only after naming a materially changed operational variable; do not change the scientific observer geometry.
+
+### Observer V36 offline recovery cycle — 2026-07-14
+
+The bounded zero-cost audit falsified a readiness-window explanation. V36 emitted exactly 54 connection-refused health attempts and returned well before its 180-by-two-second readiness allowance; successful V24R2–V28R1 model loads took 108–112 seconds. Under the harness logic, the only pre-deadline exit path was loss of the tracked A1 server process. The server return code and per-arm stdout/stderr were not recovered, so the root cause remains operationally unclassified. The always-on observer patch—especially its NVTX wrapper during model initialization or CUDA graph capture—is the leading changed launch variable, but that is an inference, not a result. No dense-device or host/scheduler scientific belief changed.
+
+The remote harness now atomically refreshes a hashed partial archive before and during readiness. It retains server status/exit history, stdout/stderr, per-attempt health events, phases, partial metadata, and an internal content manifest. The controller prefers the verified complete archive, otherwise verifies the partial archive's outer hash and internal manifest, forces `FAIL`, and never scores it. Bash syntax, Python compilation, 19 focused tests, and all 200 campaign tests pass. Factory result `glm47-v36-launch-health-recovery-c1-result` cost `$0.00`; staging manifest SHA-256 is `392867bc666fdc12625b44a208d4356e288ebe04e1e7ff8094f618eea4ee68f0`.
+
+Next: validate the exact patch in the pinned derived image using compilation, imports, and a minimal NVTX invocation. If that passes, only a new immutable operational diagnostic that first proves unpatched stock startup before patched observer startup is admissible. Do not lengthen readiness, modify the science geometry, or spend on an opaque retry.
+
+### Observer patch exact-pin smoke — 2026-07-14
+
+The zero-cost GPU-free compatibility rung passed in a local runtime reconstructed from the exact V36 amd64 base digest and Transformers commit. The pristine scheduler and GPU-runner hashes matched `96f736...16a0` and `e8a73e...f9bb`; Torch `2.9.1+cu129`, vLLM `0.15.0`, and Transformers `5.3.0.dev0` matched V36. Stock imports passed, the exact `ecaa1de6...65c6b` patch applied, both patched modules compiled and imported in fresh processes, the synthetic scheduler event ID matched the runner NVTX label, and `torch.cuda.nvtx.range` entered/exited cleanly with no GPU present.
+
+The first attempt had an operational parser defect because vLLM informational stdout preceded the JSON record. A recorded parser-only amendment selected the final JSON object and reran the unchanged causal smoke; it did not update beliefs. Factory result `glm47-observer-patch-pinned-image-smoke-c1-result` cost `$0.00`; reconstructed image digest is `4672d4aa...f3f62c` and staging manifest is `1576d4f475b010074deacbdcbebed5d5f16f47858a672bb9b7add7aebde3dad2`.
+
+This falsifies source mismatch, syntax, import-time, correlation-identity, and basic host NVTX API explanations. It does not test the deleted V36 final image bytes, driver injection, model initialization, first GPU forward, or CUDA Graph capture. The next paid identity must therefore be an operational startup isolation on one retained L40S: verify/transfer once, prove unpatched stock health, stop it, apply the patch, then start the patched observer path with partial evidence enabled. Preserve the observer A1/B1/A2 science contract, readiness limit, budget, and cleanup deadline. Scientific bottleneck beliefs remain unchanged.
+
+### Observer V37 preparation cycle — 2026-07-14
+
+Immutable run `glm47-observer-diagnostic-l40s-v7` is prepared and factory-valid, but was deliberately not admitted or executed in this bounded cycle. The new excluded `STOCK_STARTUP` stage uses the exact A1 command, checkpoint, runtime, and 180-by-two-second readiness bound with zero requests. It must reach health, then pass a bounded 30-second TERM/KILL fallback and verified process absence before the observer patch can apply. A failure remains operational and is retained in the hashed partial archive; it cannot update scientific beliefs.
+
+The patched A1/B1/A2 geometry, `$0.55` cap, `$0.07` cleanup reserve, 1,760-second science/setup limit, and 2,000-second absolute deadline are unchanged. The candidate harness identity is `60453752...48ef9e`; factory validation content hash is `819ea18f...8534d`; the preparation verification artifact is `cdc53122...69f6a`; and the final 17-file plan manifest is `9550fbff...1508d`. DevEx, diff, shell syntax, Python compilation, and all 204 campaign tests passed. Fresh provider reconciliation measured zero instances and zero disks; no reservation or provider resource was created, so the ledger remains `$18.564850/$25` settled and `$6.435150` available.
+
+Next cycle only: resume with exact owner `supervisor-glm47`, run the deep audit and fresh zero-resource reconciliation, regenerate V37 with a fresh UTC deadline, then admit and immediately execute, clean up, settle, and interpret it. The V36 exit remains localized to target-GPU/final-image/model-initialization behavior, especially first forward or CUDA Graph capture; dense-device versus host/scheduler beliefs are unchanged.
+
+### Observer V37 execution cycle — 2026-07-14
+
+V37 executed under exact owner `supervisor-glm47` after a 52-reference deep audit and fresh zero-instance/zero-disk reconciliation. The target Nsight/CUDA preflight and tiny transfer probe passed, and the verified 20.17 GB checkpoint transferred once. The excluded unpatched `STOCK_STARTUP` reached health and stopped cleanly. The exact observer patch then applied, and patched A1 also reached health and completed. This falsifies the V36 startup failure at both unpatched stock startup and the patched A1 startup path.
+
+B1 did not start: Nsight Systems `2026.3.1.157` rejected `nsys launch --force-overwrite=true` as an unrecognised option. The failure is operational and occurred before B1 server startup. The verified partial archive omitted A1 request/workload/gate/scheduler files, so A1 is not admissible scientific evidence despite completing remotely; no scored bracket, observer comparison, quality result, or dense-device versus host/scheduler belief update exists.
+
+Cleanup verified direct not-found plus zero Nebius instances and disks. The `$0.319441958` session cost is settled; the factory ledger is `$18.884292/$25` settled, `$6.115708` available, and `$0` reserved. Partial archive SHA-256 is `50459d5f...008c`; the deep-verifiable operational-failure bundle is `89bcbafc...27ab`. The next cycle may repair only the operational launch boundary under a new immutable identity: remove the unsupported option and add an exact-version, pre-transfer `nsys launch --help` capability fixture/gate. Preserve the startup isolation, A1/B1/A2 science geometry, budget authority, deadline, partial-evidence contract, and cleanup policy.
+
+### Nebius budget authority amendment — 2026-07-14
+
+The user clarified that `$28.60` is the additional available Nebius balance, not the lifetime ceiling. The factory ledger now records total authority `$48.034292`, `$18.884292` settled, `$0.55` reserved by the active V8 run, and `$28.60` available for new admissions. This is an accounting amendment only; historical decision artifacts remain bound to their original `$25.00` authority, and the scientific contract is unchanged.
 
 ## Repository and history
 

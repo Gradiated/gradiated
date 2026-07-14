@@ -11,6 +11,17 @@ from helpers import HASH_A
 
 
 class LabDatabaseTests(unittest.TestCase):
+    def test_budget_authority_can_only_be_increased_explicitly(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = LabDatabase(Path(directory) / "lab.sqlite3")
+            lab.ensure_budget("campaign", authorized_usd=25.0, already_spent_usd=18.0)
+            lab.amend_budget("campaign", authorized_usd=28.60)
+            self.assertEqual(28.6, lab.snapshot()["budgets"][0]["authorized_usd"])
+            self.assertEqual(18.0, lab.snapshot()["budgets"][0]["settled_usd"])
+            with self.assertRaises(LabError):
+                lab.amend_budget("campaign", authorized_usd=28.0)
+            lab.close()
+
     def test_lease_budget_retention_adoption_and_cleanup_survive_restart(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "lab.sqlite3"
@@ -213,6 +224,16 @@ class LabDatabaseTests(unittest.TestCase):
                 )
             )
             self.assertEqual(1.0, lab.snapshot()["budgets"][0]["available_usd"])
+            lab.close()
+
+    def test_stopped_owner_can_relinquish_only_after_provider_state_is_clean(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = LabDatabase(Path(directory) / "lab.sqlite3")
+            lease = lab.acquire_coordinator("glm47", "stopped-owner", ttl_seconds=900, now=1000)
+            released = lab.relinquish_coordinator("glm47", "stopped-owner", now=1001)
+            self.assertTrue(released["released"])
+            reacquired = lab.acquire_coordinator("glm47", "new-owner", ttl_seconds=900, now=1002)
+            self.assertEqual(reacquired["epoch"], lease["epoch"] + 1)
             lab.close()
 
     def test_cleanup_sweep_fails_closed_until_both_provider_views_are_absent(self):

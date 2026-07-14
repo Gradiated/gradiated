@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 from datetime import datetime, timedelta, timezone
@@ -24,6 +25,10 @@ from grad_research.util import (
 )
 
 
+HERE = Path(__file__).resolve().parent
+NSYS_LAUNCH_FIXTURE = HERE / "fixtures" / "nsys-launch-help-2026.3.1.157.txt"
+
+
 COMBINED_HOURLY_RATE_USD = 0.8581222
 SCIENCE_AND_WATCHDOG_TIMEOUT_SECONDS = 2000
 CLEANUP_RESERVE_USD = 0.07
@@ -41,6 +46,19 @@ EXPECTED_GEOMETRY = {
     "temperature": 0,
     "ignore_eos": True,
     "prefix_cache": False,
+}
+EXPECTED_OPERATIONAL_STARTUP_ISOLATION = {
+    "stage_id": "STOCK_STARTUP",
+    "patch_state": "unpatched",
+    "server_configuration": "exact_same_command_checkpoint_and_runtime_as_A1",
+    "readiness_attempts": 180,
+    "readiness_interval_seconds": 2,
+    "requests": 0,
+    "excluded_from_measurement": True,
+    "success_gate": "healthy_then_stopped_and_process_absent_before_patch",
+    "term_timeout_seconds": 30,
+    "kill_fallback": True,
+    "failure_classification": "operational_only_no_scientific_update",
 }
 
 
@@ -84,6 +102,11 @@ def _validate_preregistration(preregistration: dict[str, Any], state: dict[str, 
     quality_gate = preregistration.get("quality_gate")
     if not isinstance(quality_gate, dict) or quality_gate.get("diagnostic_only") is not True:
         raise ValidationError("observer run must remain diagnostic_only")
+    if preregistration.get("operational_startup_isolation") != EXPECTED_OPERATIONAL_STARTUP_ISOLATION:
+        raise ValidationError(
+            "preregistration operational_startup_isolation must bind the exact excluded "
+            "unpatched startup, bounded stop, and process-absence gate"
+        )
     stock = preregistration.get("stock_control")
     if not isinstance(stock, dict) or str(stock.get("provider", "")).lower() != "nebius":
         raise ValidationError("observer stock control must use Nebius")
@@ -299,7 +322,20 @@ def prepare_observer_paid_run(
                 "run_id": run_id,
             },
             "inventory_reconcile": True,
+            "operational_startup_isolation": EXPECTED_OPERATIONAL_STARTUP_ISOLATION,
+            "nsys_launch_capability": {
+                "package_version": "2026.3.1.157",
+                "command": "nsys launch --help",
+                "before_model_transfer": True,
+                "fixture_sha256": hashlib.sha256(NSYS_LAUNCH_FIXTURE.read_bytes()).hexdigest(),
+                "required_flags": [
+                    "--session-new", "--trace", "--cuda-graph-trace", "--cuda-event-trace",
+                    "--sample", "--cpuctxsw", "--backtrace", "--output",
+                ],
+                "forbidden_flags": ["--force-overwrite"],
+            },
         },
+        "operational_startup_isolation": EXPECTED_OPERATIONAL_STARTUP_ISOLATION,
         "preflight": preflight,
         "telemetry_contract": telemetry,
         "artifact_contract": artifacts,

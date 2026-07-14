@@ -174,6 +174,43 @@ class LabDatabase:
                 (now + ttl_seconds, program_id),
             )
 
+    def relinquish_coordinator(self, program_id: str, owner: str, *, now: float) -> dict[str, Any]:
+        """End an explicitly stopped lease after proving provider state is clean."""
+        require_id("program_id", program_id)
+        require_id("owner", owner)
+        with self._transaction() as connection:
+            lease = connection.execute(
+                "SELECT * FROM coordinator_leases WHERE program_id = ?",
+                (program_id,),
+            ).fetchone()
+            if lease is None:
+                return {"program_id": program_id, "released": False, "reason": "lease_absent"}
+            if lease["owner"] != owner:
+                raise Fenced("only the current coordinator owner can relinquish its lease")
+            active_reservations = connection.execute(
+                "SELECT COUNT(*) AS count FROM reservations WHERE program_id = ? AND state = 'active'",
+                (program_id,),
+            ).fetchone()["count"]
+            unclean_allocations = connection.execute(
+                "SELECT COUNT(*) AS count FROM allocations WHERE program_id = ? AND state != 'cleaned'",
+                (program_id,),
+            ).fetchone()["count"]
+            if active_reservations or unclean_allocations:
+                raise LabError(
+                    "cannot relinquish a lease while active reservations or unclean allocations remain"
+                )
+            connection.execute(
+                "UPDATE coordinator_leases SET expires_at = ? WHERE program_id = ? AND owner = ? AND epoch = ?",
+                (now, program_id, owner, lease["epoch"]),
+            )
+            return {
+                "program_id": program_id,
+                "owner": owner,
+                "epoch": lease["epoch"],
+                "released": True,
+                "released_at": now,
+            }
+
     def ensure_budget(
         self,
         campaign_id: str,
@@ -198,6 +235,25 @@ class LabDatabase:
                 )
             elif authorized != row["authorized_micros"] or already_spent != row["settled_micros"]:
                 raise LabError("budget authority cannot change implicitly")
+
+    def amend_budget(self, campaign_id: str, *, authorized_usd: Any) -> None:
+        require_id("campaign_id", campaign_id)
+        authorized = usd_to_micros("authorized_usd", authorized_usd, positive=True)
+        with self._transaction() as connection:
+            row = connection.execute(
+                "SELECT authorized_micros FROM budgets WHERE campaign_id = ?",
+                (campaign_id,),
+            ).fetchone()
+            if row is None:
+                raise LabError("campaign budget does not exist")
+            if authorized < row["authorized_micros"]:
+                raise LabError("budget authority amendments cannot reduce the campaign ceiling")
+            if authorized == row["authorized_micros"]:
+                return
+            connection.execute(
+                "UPDATE budgets SET authorized_micros = ? WHERE campaign_id = ?",
+                (authorized, campaign_id),
+            )
 
     def release_expired_unused_reservation(
         self,

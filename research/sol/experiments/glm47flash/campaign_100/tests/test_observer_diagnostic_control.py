@@ -1,20 +1,29 @@
+import hashlib
+import json
+import shutil
 import subprocess
 import sys
+import tarfile
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
 NEBIUS = ROOT / "nebius"
 sys.path.insert(0, str(NEBIUS))
 
+import observer_diagnostic_control as observer_control  # noqa: E402
 from observer_diagnostic_control import (  # noqa: E402
     ABSOLUTE_TIMEOUT_SECONDS,
     CLEANUP_RESERVE_SECONDS,
     COMBINED_HOURLY_RATE_USD,
     FACTORY_CLEANUP_RESERVE_USD,
+    FACTORY_RUN_ID,
     MAX_COST_USD,
     NSYS_PACKAGE_VERSION,
+    OPERATIONAL_STARTUP_ISOLATION,
     build_container_command,
     build_factory_command,
     build_host_bootstrap,
@@ -58,6 +67,31 @@ class ObserverDiagnosticControlTests(unittest.TestCase):
         compat_cleanup = bootstrap.rindex("rm -f /etc/ld.so.conf.d/00-cuda-compat.conf")
         self.assertLess(compat_cleanup, bootstrap.index("nsys profile --force-overwrite=true"))
         self.assertIn("torch.cuda.CUDAGraph", bootstrap)
+
+    def test_v8_preflights_exact_nsys_launch_cli_and_omits_unsupported_option(self):
+        bootstrap = build_host_bootstrap()
+        self.assertIn("nsys launch --help", bootstrap)
+        self.assertIn("nsys-launch-help-2026.3.1.157.txt", bootstrap)
+        for flag in (
+            "session-new",
+            "trace",
+            "cuda-graph-trace",
+            "cuda-event-trace",
+            "sample",
+            "cpuctxsw",
+            "backtrace",
+            "output",
+        ):
+            self.assertIn(f'grep -F -- "--{flag}"', bootstrap)
+        self.assertLess(
+            bootstrap.index(f'grep -F "{NSYS_PACKAGE_VERSION}"'),
+            bootstrap.index("nsys launch --help"),
+        )
+
+        source = (NEBIUS / "remote_observer_diagnostic.sh").read_text()
+        launch = source[source.index("nsys launch ") : source.index("SERVER=$!", source.index("nsys launch "))]
+        self.assertIn('--session-new="$session"', launch)
+        self.assertNotIn("--force-overwrite", launch)
 
     def test_container_exposes_only_required_profiler_capabilities(self):
         command = build_container_command("a" * 64, 1_900_000_000, 1_899_999_760)
@@ -128,6 +162,56 @@ class ObserverDiagnosticControlTests(unittest.TestCase):
         self.assertIn("python3 /input/observer_workload.py", source)
         self.assertIn("python3 /input/vllm_observer_patch.py", source)
 
+    def test_v8_runs_excluded_unpatched_startup_probe_before_patch_and_scored_arms(self):
+        source = (NEBIUS / "remote_observer_diagnostic.sh").read_text()
+        self.assertEqual(FACTORY_RUN_ID, "glm47-observer-diagnostic-l40s-v8")
+        stock_probe_definition = source.index("run_stock_startup_probe()")
+        stock_probe = source.index("\nrun_stock_startup_probe\n", stock_probe_definition)
+        patch = source.index("phase observer_patch begin", stock_probe)
+        first_scored_arm = source.index("run_arm A1 off", patch)
+        self.assertLess(stock_probe, patch)
+        self.assertLess(patch, first_scored_arm)
+
+        probe = source[stock_probe_definition:stock_probe]
+        self.assertIn('CURRENT_ARM="STOCK_STARTUP"', probe)
+        self.assertIn('CURRENT_MODE="stock-unpatched"', probe)
+        self.assertIn('wait_healthy "$CURRENT_ARM"', probe)
+        self.assertIn("stop_server", probe)
+        self.assertIn('"excluded_from_measurement":true', probe)
+        self.assertIn('"scored_requests":0', probe)
+        self.assertNotIn("observer_workload.py", probe)
+        self.assertNotIn("run_warmup", probe)
+        self.assertNotIn("vllm_observer_patch.py", probe)
+
+    def test_stock_probe_uses_existing_readiness_limit_and_is_in_failure_archives(self):
+        source = (NEBIUS / "remote_observer_diagnostic.sh").read_text()
+        wait_healthy = source[source.index("wait_healthy()") : source.index("archive_arm()")]
+        self.assertIn("for attempt in $(seq 1 180)", wait_healthy)
+        self.assertIn("sleep 2", wait_healthy)
+        partial = source[source.index("refresh_partial_archive()") : source.index("stop_server()")]
+        self.assertIn("probe.json", partial)
+        self.assertIn("server-status.json", partial)
+        self.assertIn("server.stdout.log", partial)
+        self.assertIn("server.stderr.log", partial)
+        self.assertIn("health-attempts.jsonl", partial)
+        self.assertIn("nvidia-smi-loaded.txt", partial)
+
+    def test_stock_probe_stop_is_bounded_and_proves_absence_before_patch(self):
+        source = (NEBIUS / "remote_observer_diagnostic.sh").read_text()
+        stop = source[source.index("stop_server()") : source.index("package_session()")]
+        probe_start = source.index("run_stock_startup_probe()")
+        probe_call = source.index("\nrun_stock_startup_probe\n", probe_start)
+        probe = source[probe_start:probe_call]
+        self.assertIn("for _ in $(seq 1 30)", stop)
+        self.assertIn("pkill -KILL", stop)
+        self.assertIn("kill -KILL", stop)
+        self.assertIn("pgrep -f 'vllm serve /workspace/model-awq'", stop)
+        self.assertIn("stop_failed", stop)
+        self.assertIn("stopped_and_absent", stop)
+        self.assertLess(probe.index("wait_healthy"), probe.index("stop_server"))
+        self.assertEqual(OPERATIONAL_STARTUP_ISOLATION["term_timeout_seconds"], 30)
+        self.assertEqual(OPERATIONAL_STARTUP_ISOLATION["requests"], 0)
+
     def test_each_arm_excludes_exact_c8_8192_by_16_warmup_from_measurement(self):
         source = (NEBIUS / "remote_observer_diagnostic.sh").read_text()
         warmup = source.index('run_warmup "$arm"')
@@ -157,14 +241,109 @@ class ObserverDiagnosticControlTests(unittest.TestCase):
         self.assertIn("observer-diagnostic.tar.gz.sha256", source)
         self.assertIn("TZ=UTC nvidia-smi --query-gpu=timestamp", source)
 
+    def test_remote_keeps_atomic_hashed_partial_failure_evidence(self):
+        source = (NEBIUS / "remote_observer_diagnostic.sh").read_text()
+        self.assertIn("observer-diagnostic-partial.tar.gz.tmp", source)
+        self.assertIn("observer-diagnostic-partial.tar.gz.sha256.tmp", source)
+        self.assertIn('(root / "manifest.json")', source)
+        self.assertIn('server-status.json', source)
+        self.assertIn('server.stdout.log', source)
+        self.assertIn('server.stderr.log', source)
+        self.assertIn('health-attempts.jsonl', source)
+        self.assertIn('phases.jsonl', source)
+        self.assertLess(
+            source.index("refresh_partial_archive", source.index("finish()")),
+            source.index("package_session", source.index("finish()")),
+        )
+
+    def test_partial_failure_evidence_keeps_completed_arm_raw_scoring_files(self):
+        source = (NEBIUS / "remote_observer_diagnostic.sh").read_text()
+        partial = source[source.index("refresh_partial_archive()") : source.index("stop_server()")]
+        for name in (
+            "workload.json",
+            "workload.stdout.log",
+            "workload.stderr.log",
+            "gate.json",
+            "scheduler-events.jsonl",
+        ):
+            self.assertIn(name, partial)
+
+    def test_readiness_failure_is_recorded_before_returning(self):
+        source = (NEBIUS / "remote_observer_diagnostic.sh").read_text()
+        wait_healthy = source[source.index("wait_healthy()") : source.index("archive_arm()")]
+        self.assertIn('health-attempts.jsonl', wait_healthy)
+        self.assertIn('record_server_status "$arm" "$CURRENT_MODE" exited "$server_rc"', wait_healthy)
+        self.assertIn('record_server_status "$arm" "$CURRENT_MODE" readiness_failed null', wait_healthy)
+        self.assertGreaterEqual(wait_healthy.count("refresh_partial_archive"), 2)
+
+        run_arm = source[source.index("run_arm()") : source.index("# The exact same retained image")]
+        running = run_arm.index('record_server_status "$arm" "$mode" running null')
+        refresh = run_arm.index("refresh_partial_archive", running)
+        readiness = run_arm.index('wait_healthy "$arm"', refresh)
+        self.assertLess(running, refresh)
+        self.assertLess(refresh, readiness)
+
     def test_controller_orders_preflight_before_large_transfer_and_evidence_before_delete(self):
         source = (NEBIUS / "observer_diagnostic_control.py").read_text()
+        self.assertIn('"operational_startup_isolation": OPERATIONAL_STARTUP_ISOLATION', source)
         self.assertLess(source.index('"nsys_preflight_passed"'), source.index("transfer_local_model(ip, key, model_dir)"))
         self.assertLess(source.index("scp_from(ip, key, REMOTE_ARCHIVE"), source.index("delete_instance(instance_id)"))
         self.assertIn("start_new_session=True", source)
         self.assertIn("wait_absent(instance_id", source)
         self.assertIn("final_instance_count", source)
         self.assertIn("final_disk_count", source)
+
+    def test_controller_falls_back_to_verified_partial_artifact_without_scoring_it(self):
+        source = (NEBIUS / "observer_diagnostic_control.py").read_text()
+        self.assertIn("REMOTE_PARTIAL_ARCHIVE", source)
+        self.assertIn("observer-diagnostic-partial.tar.gz", source)
+        retrieve = source[source.index("def retrieve_observer_artifact") : source.index("def session_labels")]
+        self.assertLess(retrieve.index("REMOTE_ARCHIVE"), retrieve.index("REMOTE_PARTIAL_ARCHIVE"))
+        self.assertEqual(retrieve.count("verify_internal_manifest"), 2)
+        self.assertIn('return "partial"', retrieve)
+        self.assertIn('outcome = "FAIL"', source[source.index("artifact_kind =") :])
+        remote_segment = source[source.index("remote = None") : source.index("allocation_result = json.loads")]
+        self.assertLess(remote_segment.index("except Exception as error"), remote_segment.index("retrieve_observer_artifact"))
+
+    def test_partial_retrieval_verifies_outer_hash_and_internal_manifest(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bundle_root = root / "campaign-100-observer-partial"
+            bundle_root.mkdir()
+            payload = b'{"complete":false}\n'
+            (bundle_root / "partial-metadata.json").write_bytes(payload)
+            manifest = [{
+                "path": "partial-metadata.json",
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }]
+            (bundle_root / "manifest.json").write_text(json.dumps(manifest))
+            remote_archive = root / "remote-partial.tar.gz"
+            with tarfile.open(remote_archive, "w:gz") as bundle:
+                bundle.add(bundle_root, arcname=bundle_root.name)
+            remote_hash = hashlib.sha256(remote_archive.read_bytes()).hexdigest()
+
+            def fake_scp(_ip, _key, source, destination):
+                if source == observer_control.REMOTE_ARCHIVE:
+                    raise FileNotFoundError(source)
+                if source == observer_control.REMOTE_PARTIAL_ARCHIVE:
+                    shutil.copy2(remote_archive, destination)
+                    return
+                if source == observer_control.REMOTE_PARTIAL_SIDECAR:
+                    destination.write_text(remote_hash + "  observer-diagnostic-partial.tar.gz\n")
+                    return
+                raise AssertionError(source)
+
+            output = root / "output"
+            output.mkdir()
+            with mock.patch.object(observer_control, "scp_from", side_effect=fake_scp):
+                kind, archive, digest, count = observer_control.retrieve_observer_artifact(
+                    "192.0.2.1", Path("/unused/key"), output
+                )
+            self.assertEqual(kind, "partial")
+            self.assertEqual(archive.name, "observer-diagnostic-partial.tar.gz")
+            self.assertEqual(digest, remote_hash)
+            self.assertEqual(count, 1)
 
     def test_factory_lifecycle_commands_bind_exact_provider_resource(self):
         common = {
@@ -224,7 +403,7 @@ class ObserverDiagnosticControlTests(unittest.TestCase):
         labels = session_labels(
             program="glm-4.7-flash",
             campaign="glm47-nebius-25",
-            run_id="glm47-observer-diagnostic-l40s-v5",
+            run_id="glm47-observer-diagnostic-l40s-v8",
         )
         command = build_create_command(
             name="observer-v1",
@@ -237,7 +416,7 @@ class ObserverDiagnosticControlTests(unittest.TestCase):
         self.assertIn("--boot-disk-managed-disk-labels", joined)
         self.assertIn("glm-4.7-flash", joined)
         self.assertIn("glm47-nebius-25", joined)
-        self.assertIn("glm47-observer-diagnostic-l40s-v5", joined)
+        self.assertIn("glm47-observer-diagnostic-l40s-v8", joined)
 
     def test_provider_commands_are_not_executed_by_tests(self):
         # This suite only inspects pure builders and source. Provider lifecycle is

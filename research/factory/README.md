@@ -2,7 +2,7 @@
 
 This package is the small execution kernel for perpetual, telemetry-driven model research. The director is the Codex session you start under your Codex subscription; the harness does not call an OpenAI API and needs no API key. One active Codex session may coordinate each model. If it stops or its context is replaced, a fresh session reconstructs ownership, spend, evidence, and the next decision from durable state.
 
-The prototype deliberately contains no UI, service mesh, PostgreSQL, Temporal, Kubernetes scheduler, general graph ontology, intervention DSL, or learned optimizer. It standardizes only the boundaries where mistakes waste compute or corrupt scientific conclusions.
+The prototype deliberately contains no UI, service mesh, PostgreSQL, Temporal, Kubernetes scheduler, general graph ontology, intervention DSL, or learned optimizer. It standardizes only the boundaries where mistakes waste compute or corrupt scientific conclusions. `SUPERVISOR.md` describes the optional persistent scheduler that runs bounded Codex turns through the saved subscription login.
 
 ## Loop
 
@@ -17,7 +17,7 @@ baseline + observations
   -> residual bottleneck and next loop
 ```
 
-The four scientific records are a baseline, observations/scout cards, paid run specifications, and typed results. They are carried by one hash-chained event stream; `STATE.json` and the coordinator brief are generated views. Raw traces and outputs live in a content-addressed artifact store and are linked by manifest hash. See `OBSERVABILITY.md` for the collection and claim gates.
+The four scientific records are a baseline, observations/scout cards, paid run specifications, and typed results. They are carried by one hash-chained event stream; `STATE.json` and the coordinator brief are generated views. Raw traces and outputs live in a content-addressed artifact store and are linked by manifest hash. See `OBSERVABILITY.md` for collection and claim gates and `EFFICIENCY.md` for daily throughput measurement and model routing.
 
 ## Coordinator operation
 
@@ -32,10 +32,12 @@ PYTHONPATH=research/factory/src python3 -m grad_research resume \
 
 The operating loop is:
 
-1. Run `resume`; trust its event head and generated views rather than chat history.
+1. Run `resume`; trust its event head and generated views rather than chat history. The persistent supervisor then uses Sol/high for this decision turn and routes only `parallel_offline` packets to bounded Terra/Luna workers. If a paid run is admitted, the supervisor—not Codex—expands the configured `provider_launcher` template and owns the controller process, heartbeat, logs, and exit reconciliation.
 2. Resolve every P0 recovery action before new provider mutation. Run cheap trace analysis, source review, simulators, correctness oracles, and candidate preparation in parallel for selected scouts.
 3. Store each observation or offline result with `store-artifact`, then append its typed JSON with `record --kind observation`, `scouts`, or `result`. Run `select-cycle` after proposing a cycle's scout pool.
 4. Register each offline execution with `record --kind local_run`. Before paid compute, authorize the campaign budget once and use `admit-paid-run` on the exact spec. The durable admission event is the provider-creation intent; create at most one tagged resource with its idempotency key, then immediately call `register-allocation`.
+
+An explicit user-approved increase uses `amend-budget`; it can only raise an existing campaign ceiling and preserves settled and reserved amounts. Historical decision artifacts are not rewritten by a budget amendment.
 5. After each paid run, use `pack-run`; only then record the result using the returned manifest and telemetry summary. Request adapter-backed cleanup and settle from stored provider-metered cost evidence. Never infer cleanup from process exit.
 6. Run `resume` again. The residual bottleneck, failed mechanisms, instrumentation debt, and diverse next portfolio drive the next cycle.
 

@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "id": "glm47-observer-diagnostic-l40s-v6-result",
+  "run_id": "glm47-observer-diagnostic-l40s-v6",
+  "scout_id": "glm47-dense-resource-signature",
+  "control_id": "glm47-stock-observer-off",
+  "candidate_id": "glm47-stock-observer-on",
+  "changed_variable": "observer state and its harness/configuration identity only",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "prediction_sha256": "70bd80f5ba174e34bb8e666effaf71611dd319caac14c5c648d7a2a38f81779b",
+  "outcome_class": "operational_failure",
+  "failure_class": "operational_failure",
+  "fidelity": "matched_server",
+  "scope": {
+    "claim": "diagnostic localization only; no quality, economics, provider, or candidate-performance claim",
+    "hardware": "Nebius L40S 48GB; gpu-l40s-a; 1gpu-16vcpu-64gb",
+    "model": "GLM-4.7-Flash revision ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "workload": "A1 observer-off / B1 observer-on / A2 observer-off; 8 requests; c8; 8192 input + 32 output tokens"
+  },
+  "cost_usd": 0.286961496,
+  "artifact_refs": [
+    "6b69151c9f6ebf59e83a09995e963291106111cb9c802223a7b4667b625ff315"
+  ],
+  "artifact_bundle_sha256": "6b69151c9f6ebf59e83a09995e963291106111cb9c802223a7b4667b625ff315",
+  "telemetry_summary": {
+    "schema_version": 1,
+    "run_id": "glm47-observer-diagnostic-l40s-v6",
+    "failure_stage": "post_transfer_server_health_before_scored_arms",
+    "captured_signals": [
+      "identity_and_environment",
+      "host_and_transfer_health",
+      "resource_and_cost_ledger"
+    ],
+    "missing_signals": [
+      "request_timeline",
+      "scheduler_timeline",
+      "accelerator_health",
+      "model_structure",
+      "quality_and_correctness",
+      "scheduler_iteration_trace",
+      "cpu_gpu_dependency_trace",
+      "kernel_resource_trace"
+    ]
+  },
+  "next_action": "Before another paid run, add fail-closed partial remote packaging for server exit status and logs, then perform a bounded offline audit of the V6 launch/health path. Admit a new immutable identity only after that cheap falsifier names a materially changed operational variable; keep the scientific observer contract unchanged."
+}

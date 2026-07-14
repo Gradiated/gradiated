@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v8",
+  "failure_class": "operational_failure",
+  "stage": "pretransfer_nsys_launch_capability_fixture_missing",
+  "message": "The exact Nsight Systems 2026.3.1.157 launch help was captured on the target L40S, but the pre-transfer capability gate failed because /input/nsys-launch-help-2026.3.1.157.txt was absent from the transferred input bundle. No checkpoint bytes, inference request, scored arm, or scientific result occurred. Cleanup verified direct instance not-found and zero final instances and disks."
+}

@@ -66,16 +66,62 @@ NSYS_SIGNING_KEY_URL = (
 )
 FACTORY_PROGRAM = "glm-4.7-flash"
 FACTORY_CAMPAIGN = "glm47-nebius-25"
-FACTORY_RUN_ID = "glm47-observer-diagnostic-l40s-v5"
+FACTORY_RUN_ID = "glm47-observer-diagnostic-l40s-v8"
+NSYS_LAUNCH_FIXTURE = HERE / "fixtures" / "nsys-launch-help-2026.3.1.157.txt"
 FACTORY_SETUP_KEY = "l40s:vllm:glm47:observer"
 FALLBACK_MIN_SECONDS = 720
 FALLBACK_MIN_COST_USD = 0.08
 REMOTE_ARCHIVE = "/workspace/public-observer/observer-diagnostic.tar.gz"
 REMOTE_SIDECAR = REMOTE_ARCHIVE + ".sha256"
+REMOTE_PARTIAL_ARCHIVE = "/workspace/public-observer/observer-diagnostic-partial.tar.gz"
+REMOTE_PARTIAL_SIDECAR = REMOTE_PARTIAL_ARCHIVE + ".sha256"
+OPERATIONAL_STARTUP_ISOLATION = {
+    "stage_id": "STOCK_STARTUP",
+    "patch_state": "unpatched",
+    "server_configuration": "exact_same_command_checkpoint_and_runtime_as_A1",
+    "readiness_attempts": 180,
+    "readiness_interval_seconds": 2,
+    "requests": 0,
+    "excluded_from_measurement": True,
+    "success_gate": "healthy_then_stopped_and_process_absent_before_patch",
+    "term_timeout_seconds": 30,
+    "kill_fallback": True,
+    "failure_classification": "operational_only_no_scientific_update",
+}
 
 
 class ObserverDiagnosticError(RuntimeError):
     pass
+
+
+def retrieve_observer_artifact(
+    ip: str,
+    key: Path,
+    output_dir: Path,
+) -> tuple[str, Path, str, int]:
+    archive = output_dir / "observer-diagnostic.tar.gz"
+    sidecar = output_dir / "observer-diagnostic.remote.sha256"
+    try:
+        scp_from(ip, key, REMOTE_ARCHIVE, archive)
+        scp_from(ip, key, REMOTE_SIDECAR, sidecar)
+        artifact_hash = hashlib.sha256(archive.read_bytes()).hexdigest()
+        if artifact_hash != sidecar.read_text().split()[0]:
+            raise ObserverDiagnosticError("remote/local observer artifact hash mismatch")
+        manifest_files = verify_internal_manifest(archive)
+        return "complete", archive, artifact_hash, manifest_files
+    except Exception:
+        archive.unlink(missing_ok=True)
+        sidecar.unlink(missing_ok=True)
+
+    archive = output_dir / "observer-diagnostic-partial.tar.gz"
+    sidecar = output_dir / "observer-diagnostic-partial.remote.sha256"
+    scp_from(ip, key, REMOTE_PARTIAL_ARCHIVE, archive)
+    scp_from(ip, key, REMOTE_PARTIAL_SIDECAR, sidecar)
+    artifact_hash = hashlib.sha256(archive.read_bytes()).hexdigest()
+    if artifact_hash != sidecar.read_text().split()[0]:
+        raise ObserverDiagnosticError("remote/local partial observer artifact hash mismatch")
+    manifest_files = verify_internal_manifest(archive)
+    return "partial", archive, artifact_hash, manifest_files
 
 
 def session_labels(*, program: str, campaign: str, run_id: str) -> dict[str, str]:
@@ -247,6 +293,20 @@ nsys status -e | tee /tmp/nsys-status.txt
 grep -F "CPU Profiling Environment (process-tree): OK" /tmp/nsys-status.txt
 nsys profile --help > /tmp/nsys-profile-help.txt
 for flag in cuda-graph-trace sample cpuctxsw; do grep -F -- "--$flag" /tmp/nsys-profile-help.txt; done
+nsys launch --help | tee /tmp/nsys-launch-help-2026.3.1.157.txt
+diff -u /input/nsys-launch-help-2026.3.1.157.txt /tmp/nsys-launch-help-2026.3.1.157.txt
+grep -F -- "--session-new" /tmp/nsys-launch-help-2026.3.1.157.txt
+grep -F -- "--trace" /tmp/nsys-launch-help-2026.3.1.157.txt
+grep -F -- "--cuda-graph-trace" /tmp/nsys-launch-help-2026.3.1.157.txt
+grep -F -- "--cuda-event-trace" /tmp/nsys-launch-help-2026.3.1.157.txt
+grep -F -- "--sample" /tmp/nsys-launch-help-2026.3.1.157.txt
+grep -F -- "--cpuctxsw" /tmp/nsys-launch-help-2026.3.1.157.txt
+grep -F -- "--backtrace" /tmp/nsys-launch-help-2026.3.1.157.txt
+grep -F -- "--output" /tmp/nsys-launch-help-2026.3.1.157.txt
+if grep -F -- "--force-overwrite" /tmp/nsys-launch-help-2026.3.1.157.txt; then
+  echo "unsupported nsys launch flag is present" >&2
+  exit 1
+fi
 echo gpu_metrics_collector=unsupported_on_l40s
 cat > /tmp/nsys-probe.py <<"PY"
 import torch
@@ -357,6 +417,7 @@ def run(
         HERE / "vllm_observer_patch.py",
         HERE / "analyze_nsys_observer.py",
         HERE / "vllm_preflight.py",
+        NSYS_LAUNCH_FIXTURE,
         model_dir / "config.json",
         *(tokenizer_dir / item for item in ("tokenizer.json", "tokenizer_config.json", "chat_template.jinja")),
     ]
@@ -374,6 +435,7 @@ def run(
     instance_id = None
     allocation_result = None
     artifact_hash = None
+    artifact_kind = None
     manifest_files = 0
     outcome = "FAIL"
     absent = False
@@ -394,6 +456,7 @@ def run(
     contract = {
         "causal_hypothesis": "Pinned Nsight CUDA/NVTX/OSRT, node-level CUDA Graph, context-switch, and GPU metrics can expose the fixed decode critical path without changing throughput or median latency by more than 3% or tail latency by more than 5%.",
         "stock_control": "Patched vLLM observer hooks with Nsight collection off; A1 and A2 bracket B1 on the same retained L40S.",
+        "operational_startup_isolation": OPERATIONAL_STARTUP_ISOLATION,
         "candidate": "Nsight Systems 2026.3.1.157 CUDA/NVTX/OSRT, node-level CUDA Graph, and process-tree sampling; GPU Metrics explicitly unsupported on the L40S. Conditional B2 removes CPU sampling/context switching before A3 after an overhead breach.",
         "model": identities,
         "runtime": {"image": IMAGE, "derived_image": RUNTIME_IMAGE, "transformers_revision": TRANSFORMERS_REVISION},
@@ -471,7 +534,7 @@ def run(
 
         if run_ssh(ip, key, "mkdir -p /home/glmrunner/input/model-config-only", timeout=30).returncode:
             raise ObserverDiagnosticError("remote preflight input directory creation failed")
-        scp_to(ip, key, [HERE / "vllm_preflight.py"], "/home/glmrunner/input/")
+        scp_to(ip, key, [HERE / "vllm_preflight.py", NSYS_LAUNCH_FIXTURE], "/home/glmrunner/input/")
         scp_to(ip, key, [model_dir / "config.json"], "/home/glmrunner/input/model-config-only/")
         bootstrap_timeout = max(1, min(1200, int(deadline - time.time() - CLEANUP_RESERVE_SECONDS)))
         bootstrap = run_ssh(ip, key, "bash -s", timeout=bootstrap_timeout, input_text=build_host_bootstrap())
@@ -484,7 +547,7 @@ def run(
         with tempfile.TemporaryDirectory() as directory:
             staging = Path(directory)
             staged = []
-            for source in required[:4]:
+            for source in required[:5]:
                 target = staging / source.name
                 shutil.copy2(source, target)
                 staged.append(target)
@@ -501,26 +564,44 @@ def run(
         transfer_local_model(ip, key, model_dir)
         emit(events, "verified_local_awq_transferred_once", elapsed_seconds=round(time.time() - transfer_started, 3))
 
-        remote = run_ssh(
-            ip,
-            key,
-            build_container_command(spec_hash, int(deadline), int(science_deadline)),
-            timeout=max(1, int(deadline - time.time())),
+        remote = None
+        remote_error = None
+        try:
+            remote = run_ssh(
+                ip,
+                key,
+                build_container_command(spec_hash, int(deadline), int(science_deadline)),
+                timeout=max(1, int(deadline - time.time())),
+            )
+        except Exception as error:
+            remote_error = error
+        (output_dir / "remote.stdout.log").write_text(remote.stdout if remote else "")
+        (output_dir / "remote.stderr.log").write_text(
+            remote.stderr if remote else f"remote execution error: {type(remote_error).__name__}\n"
         )
-        (output_dir / "remote.stdout.log").write_text(remote.stdout)
-        (output_dir / "remote.stderr.log").write_text(remote.stderr)
 
-        archive = output_dir / "observer-diagnostic.tar.gz"
-        sidecar = output_dir / "observer-diagnostic.remote.sha256"
-        scp_from(ip, key, REMOTE_ARCHIVE, archive)
-        scp_from(ip, key, REMOTE_SIDECAR, sidecar)
-        artifact_hash = hashlib.sha256(archive.read_bytes()).hexdigest()
-        if artifact_hash != sidecar.read_text().split()[0]:
-            raise ObserverDiagnosticError("remote/local observer artifact hash mismatch")
-        manifest_files = verify_internal_manifest(archive)
+        artifact_kind, archive, artifact_hash, manifest_files = retrieve_observer_artifact(
+            ip, key, output_dir
+        )
+        if artifact_kind == "partial":
+            outcome = "FAIL"
+            emit(
+                events,
+                "partial_artifact_retrieved",
+                sha256=artifact_hash,
+                manifest_files=manifest_files,
+                outcome=outcome,
+            )
+            raise ObserverDiagnosticError(
+                "normal observer archive unavailable; verified partial artifact retained"
+            )
         allocation_result = json.loads(extract_member(archive, "/allocation-result.json"))
-        outcome = "PASS" if remote.returncode == 0 and allocation_result.get("bracket_complete") is True else "FAIL"
-        emit(events, "artifact_retrieved", sha256=artifact_hash, manifest_files=manifest_files, outcome=outcome)
+        outcome = "PASS" if remote is not None and remote.returncode == 0 and allocation_result.get("bracket_complete") is True else "FAIL"
+        emit(events, "artifact_retrieved", artifact_kind=artifact_kind, sha256=artifact_hash, manifest_files=manifest_files, outcome=outcome)
+        if remote_error is not None:
+            raise ObserverDiagnosticError(
+                "remote execution did not return cleanly; verified complete artifact retained"
+            )
     except Exception as error:
         emit(events, "experiment_error", error_type=type(error).__name__, message=str(error)[:500])
         if instance_id is not None and factory_registered and allocation_result is None:
@@ -593,6 +674,7 @@ def run(
             "cost_cap_usd": MAX_COST_USD,
             "cost_basis": "measured exposure at authenticated Nebius preemptible VM and disk rates; public IPv4/egress excluded; invoice pending",
             "artifact_sha256": artifact_hash,
+            "artifact_kind": artifact_kind,
             "manifest_file_count": manifest_files,
             "allocation_result": allocation_result,
             "final_instance_count": len(named_instances),

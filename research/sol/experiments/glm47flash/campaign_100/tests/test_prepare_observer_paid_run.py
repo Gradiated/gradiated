@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import tempfile
@@ -18,7 +19,10 @@ ROOT = Path(__file__).resolve().parents[1]
 NEBIUS = ROOT / "nebius"
 sys.path.insert(0, str(NEBIUS))
 
-from prepare_observer_paid_run import prepare_observer_paid_run  # noqa: E402
+from prepare_observer_paid_run import (  # noqa: E402
+    EXPECTED_OPERATIONAL_STARTUP_ISOLATION,
+    prepare_observer_paid_run,
+)
 
 
 HASHES = {name: f"{index:064x}" for index, name in enumerate(
@@ -37,7 +41,7 @@ HASHES = {name: f"{index:064x}" for index, name in enumerate(
     start=1,
 )}
 PROGRAM_ID = "glm-4.7-flash"
-RUN_ID = "glm47-observer-diagnostic-l40s-v1"
+RUN_ID = "glm47-observer-diagnostic-l40s-v8"
 SCOUT_ID = "glm47-dense-resource-signature"
 NOW = datetime(2026, 7, 14, 12, 0, tzinfo=timezone.utc)
 
@@ -96,6 +100,7 @@ def preregistration() -> dict:
             "prefix_cache": False,
         },
         "quality_gate": {"diagnostic_only": True},
+        "operational_startup_isolation": dict(EXPECTED_OPERATIONAL_STARTUP_ISOLATION),
         "claim_limit": "Diagnostic localization only.",
     }
 
@@ -234,6 +239,42 @@ class ObserverPaidRunPreparationTests(unittest.TestCase):
         self.assertEqual("2026-07-14T12:33:20Z", spec["watchdog"]["absolute_deadline_utc"])
         self.assertEqual("nebius", spec["provider_contract"]["provider"])
         self.assertEqual(RUN_ID, spec["provider_contract"]["idempotency_key"])
+        capability = spec["provider_contract"]["nsys_launch_capability"]
+        fixture = NEBIUS / "fixtures" / "nsys-launch-help-2026.3.1.157.txt"
+        self.assertEqual("2026.3.1.157", capability["package_version"])
+        self.assertEqual("nsys launch --help", capability["command"])
+        self.assertTrue(capability["before_model_transfer"])
+        self.assertEqual(
+            {
+                "--session-new",
+                "--trace",
+                "--cuda-graph-trace",
+                "--cuda-event-trace",
+                "--sample",
+                "--cpuctxsw",
+                "--backtrace",
+                "--output",
+            },
+            set(capability["required_flags"]),
+        )
+        self.assertEqual(["--force-overwrite"], capability["forbidden_flags"])
+        self.assertTrue(fixture.is_file())
+        self.assertEqual(
+            hashlib.sha256(fixture.read_bytes()).hexdigest(),
+            capability["fixture_sha256"],
+        )
+        self.assertEqual(
+            "A1 observer-off / B1 observer-on / A2 observer-off; 8 requests; c8; 8192 input + 32 output tokens",
+            spec["claim_scope"]["workload"],
+        )
+        self.assertEqual(
+            EXPECTED_OPERATIONAL_STARTUP_ISOLATION,
+            spec["operational_startup_isolation"],
+        )
+        self.assertEqual(
+            EXPECTED_OPERATIONAL_STARTUP_ISOLATION,
+            spec["provider_contract"]["operational_startup_isolation"],
+        )
         self.assertTrue(all(spec["cleanup"].values()))
         self.assertEqual(
             "typed_observation_same_evidence_bundle",
@@ -265,6 +306,14 @@ class ObserverPaidRunPreparationTests(unittest.TestCase):
         self.preregistration_path.write_text(json.dumps(value))
 
         with self.assertRaisesRegex(ValidationError, "workload_geometry"):
+            self._prepare()
+
+    def test_rejects_startup_isolation_drift_before_emitting_paid_spec(self):
+        value = preregistration()
+        value["operational_startup_isolation"]["requests"] = 1
+        self.preregistration_path.write_text(json.dumps(value))
+
+        with self.assertRaisesRegex(ValidationError, "operational_startup_isolation"):
             self._prepare()
 
 

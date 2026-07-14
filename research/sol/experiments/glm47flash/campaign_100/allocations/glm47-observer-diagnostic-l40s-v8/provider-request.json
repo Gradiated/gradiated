@@ -1,0 +1,85 @@
+{
+  "absolute_timeout_seconds": 2000,
+  "artifact_contract": "Per-arm content-addressed archives plus raw nsys-rep/SQLite, workload rows, server logs, metrics, scheduler events, phase telemetry, environment identities, session manifest, and outer archive sidecar; retrieve and verify before delete.",
+  "candidate": "Nsight Systems 2026.3.1.157 CUDA/NVTX/OSRT, node-level CUDA Graph, and process-tree sampling; GPU Metrics explicitly unsupported on the L40S. Conditional B2 removes CPU sampling/context switching before A3 after an overhead breach.",
+  "causal_hypothesis": "Pinned Nsight CUDA/NVTX/OSRT, node-level CUDA Graph, context-switch, and GPU metrics can expose the fixed decode critical path without changing throughput or median latency by more than 3% or tail latency by more than 5%.",
+  "cleanup_reserve_seconds": 240,
+  "derived_rate_exposure_cap_usd": 0.47673455555555555,
+  "derived_rate_plus_factory_cleanup_reserve_cap_usd": 0.5467345555555556,
+  "factory": {
+    "absolute_deadline_utc": "2026-07-14T21:47:33Z",
+    "allocation_id": "allocation:glm47-observer-diagnostic-l40s-v8",
+    "campaign": "glm47-nebius-25",
+    "owner": "supervisor-glm47",
+    "program": "glm-4.7-flash",
+    "reservation_id": "reservation:glm47-observer-diagnostic-l40s-v8",
+    "root": "/root/.local/share/gradiated/research-lab",
+    "run_id": "glm47-observer-diagnostic-l40s-v8",
+    "setup_key": "l40s:vllm:glm47:observer"
+  },
+  "factory_cleanup_reserve_usd": 0.07,
+  "hardware": {
+    "count": 1,
+    "platform": "gpu-l40s-a",
+    "preset": "1gpu-16vcpu-64gb",
+    "purchase_model": "preemptible_stop"
+  },
+  "max_total_cost_usd": 0.55,
+  "model": {
+    "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86",
+    "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "model_shard_count": 4,
+    "model_weight_bytes": 20170199928
+  },
+  "nsys_package_version": "2026.3.1.157",
+  "observer_overhead_gate": {
+    "median_e2e_abs_fraction": 0.03,
+    "p95_e2e_abs_fraction": 0.05,
+    "throughput_abs_fraction": 0.03
+  },
+  "operational_startup_isolation": {
+    "excluded_from_measurement": true,
+    "failure_classification": "operational_only_no_scientific_update",
+    "kill_fallback": true,
+    "patch_state": "unpatched",
+    "readiness_attempts": 180,
+    "readiness_interval_seconds": 2,
+    "requests": 0,
+    "server_configuration": "exact_same_command_checkpoint_and_runtime_as_A1",
+    "stage_id": "STOCK_STARTUP",
+    "success_gate": "healthy_then_stopped_and_process_absent_before_patch",
+    "term_timeout_seconds": 30
+  },
+  "quality_gate": "All requests must have exact 8192/32 geometry, finish_reason=length, and 32 correlated token timestamps.",
+  "rates_usd_per_hour": {
+    "compute": 0.8484,
+    "disk": 0.0097222,
+    "public_ipv4_and_egress": "excluded_unknown"
+  },
+  "runtime": {
+    "derived_image": "glm-vllm:0.15.0-transformers-1618d44",
+    "image": "vllm/vllm-openai:v0.15.0@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543",
+    "transformers_revision": "1618d44b9295361607ec74d7be860ba886aac039"
+  },
+  "slo": {
+    "all_request_tpot_ms_max": 100,
+    "all_request_ttft_ms_max": 10000
+  },
+  "stock_control": "Patched vLLM observer hooks with Nsight collection off; A1 and A2 bracket B1 on the same retained L40S.",
+  "telemetry": [
+    "request TTFT/TPOT/E2E/throughput/failures",
+    "vLLM metrics and scheduler batches",
+    "NVTX/CUDA/OSRT/context switches",
+    "CUDA Graph nodes",
+    "100 ms nvidia-smi GPU utilization/VRAM/power/clocks/temperature",
+    "explicit Nsight GPU Metrics unavailability"
+  ],
+  "workload": {
+    "concurrency": 8,
+    "output_tokens": 32,
+    "prefix_cache": false,
+    "prompt_tokens": 8192,
+    "requests_per_arm": 8,
+    "seed": 470147
+  }
+}

@@ -1,0 +1,12 @@
+NVIDIA Nsight Systems version 2026.3.1.157
+Usage: nsys launch [options] application [application options]
+
+Options:
+  --session-new=<name>       Create a new launch session.
+  --trace=<domains>          Select trace domains.
+  --cuda-graph-trace=<mode>  Trace CUDA Graph nodes.
+  --cuda-event-trace=<bool>  Enable CUDA event tracing.
+  --sample=<mode>            Select CPU sampling mode.
+  --cpuctxsw=<mode>          Select context-switch collection mode.
+  --backtrace=<mode>         Select backtrace mode.
+  --output=<path>             Set the report output path.

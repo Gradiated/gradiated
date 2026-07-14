@@ -75,6 +75,12 @@ def main() -> int:
     budget.add_argument("--authorized-usd", type=float, required=True)
     budget.add_argument("--already-spent-usd", type=float, default=0)
 
+    amend_budget = commands.add_parser("amend-budget", help="explicitly increase campaign spend authority")
+    amend_budget.add_argument("--root", type=Path, required=True)
+    amend_budget.add_argument("--lab", type=Path, help="defaults to ROOT/lab.sqlite3")
+    amend_budget.add_argument("--campaign", required=True)
+    amend_budget.add_argument("--authorized-usd", type=float, required=True)
+
     admit = commands.add_parser("admit-paid-run", help="fence, reserve, and durably admit an exact paid run")
     admit.add_argument("--root", type=Path, required=True)
     admit.add_argument("--program", required=True)
@@ -249,6 +255,13 @@ def main() -> int:
                 authorized_usd=args.authorized_usd,
                 already_spent_usd=args.already_spent_usd,
             )
+            _write(lab.snapshot())
+        finally:
+            lab.close()
+    elif args.command == "amend-budget":
+        lab = LabDatabase(_lab_path(args.root, args.lab))
+        try:
+            lab.amend_budget(args.campaign, authorized_usd=args.authorized_usd)
             _write(lab.snapshot())
         finally:
             lab.close()

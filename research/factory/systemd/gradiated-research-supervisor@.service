@@ -1,0 +1,19 @@
+[Unit]
+Description=Gradiated research supervisor (%i)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/workspace
+Environment=PYTHONPATH=/root/workspace/research/factory/src
+Environment=PATH=/root/.local/bin:/root/.codex/packages/standalone/current/bin:/root/.nebius/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+EnvironmentFile=-/root/.config/gradiated/research-supervisor/environment
+ExecStart=/usr/bin/python3 -m grad_research.supervisor --config /root/.config/gradiated/research-supervisor/%i.json
+Restart=on-failure
+RestartSec=15
+TimeoutStopSec=30
+KillMode=control-group
+
+[Install]
+WantedBy=default.target

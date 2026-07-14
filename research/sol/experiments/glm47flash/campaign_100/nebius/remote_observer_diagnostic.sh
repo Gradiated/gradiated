@@ -3,30 +3,128 @@ set -Eeuo pipefail
 
 OUT=/workspace/campaign-100-observer
 PUBLIC=/workspace/public-observer
+PARTIAL=/workspace/campaign-100-observer-partial
 MODEL=/workspace/model-awq
 TOKENIZER=/input/tokenizer
 SERVER=
 TELEMETRY=
 ACTIVE_SESSION=
 CURRENT_PHASE=bootstrap
+CURRENT_ARM=
+CURRENT_MODE=
 
-rm -rf "$OUT" "$PUBLIC"
+rm -rf "$OUT" "$PUBLIC" "$PARTIAL" "$PARTIAL.tmp"
 mkdir -p "$OUT" "$PUBLIC" "$OUT/arms" "$OUT/arm-artifacts"
 
 phase() {
   CURRENT_PHASE="$1"
   printf '{"timestamp":"%s","phase":"%s","state":"%s"}\n' \
     "$(date -u +%FT%TZ)" "$1" "$2" >> "$OUT/phases.jsonl"
+  refresh_partial_archive
+}
+
+record_server_status() {
+  local arm="$1"
+  local mode="$2"
+  local state="$3"
+  local exit_code="$4"
+  local arm_dir="$OUT/arms/$arm"
+  local pid="${SERVER:-null}"
+  local row
+  mkdir -p "$arm_dir"
+  row="$(printf '{"timestamp":"%s","arm":"%s","mode":"%s","phase":"%s","pid":%s,"state":"%s","exit_code":%s}' \
+    "$(date -u +%FT%TZ)" "$arm" "$mode" "$CURRENT_PHASE" "$pid" "$state" "$exit_code")"
+  printf '%s\n' "$row" >> "$arm_dir/server-status-events.jsonl"
+  printf '%s\n' "$row" > "$arm_dir/server-status.json.tmp"
+  mv "$arm_dir/server-status.json.tmp" "$arm_dir/server-status.json"
+}
+
+refresh_partial_archive() {
+  local staging="$PARTIAL.tmp"
+  local arm_dir
+  local name
+  rm -rf "$staging"
+  mkdir -p "$staging/arms"
+  for name in phases.jsonl allocation-result.json nvidia-smi-final.txt; do
+    [ ! -f "$OUT/$name" ] || cp "$OUT/$name" "$staging/$name"
+  done
+  for arm_dir in "$OUT"/arms/*; do
+    [ -d "$arm_dir" ] || continue
+    mkdir -p "$staging/arms/$(basename "$arm_dir")"
+    for name in probe.json server-command.txt server-status.json server-status-events.jsonl \
+      server.stdout.log server.stderr.log health-attempts.jsonl health-curl.stderr.log \
+      workload.json workload.stdout.log workload.stderr.log gate.json \
+      scheduler-events.jsonl request-events.jsonl request-event.jsonl \
+      metrics-before.txt metrics-after.txt nvidia-smi-loaded.txt telemetry.csv telemetry.stderr.log; do
+      [ ! -f "$arm_dir/$name" ] || cp "$arm_dir/$name" "$staging/arms/$(basename "$arm_dir")/$name"
+    done
+  done
+  printf '{"schema_version":1,"complete":false,"classification":"diagnostic_partial","timestamp":"%s","phase":"%s","arm":"%s","mode":"%s"}\n' \
+    "$(date -u +%FT%TZ)" "$CURRENT_PHASE" "$CURRENT_ARM" "$CURRENT_MODE" > "$staging/partial-metadata.json"
+  python3 - "$staging" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+rows = []
+for path in sorted(root.rglob("*")):
+    if not path.is_file() or path.name == "manifest.json":
+        continue
+    rows.append({
+        "path": str(path.relative_to(root)),
+        "bytes": path.stat().st_size,
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+    })
+(root / "manifest.json").write_text(json.dumps(rows, indent=2, sort_keys=True) + "\n")
+PY
+  rm -rf "$PARTIAL"
+  mv "$staging" "$PARTIAL"
+  tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner \
+    -C /workspace -czf "$PUBLIC/observer-diagnostic-partial.tar.gz.tmp" "$(basename "$PARTIAL")"
+  mv "$PUBLIC/observer-diagnostic-partial.tar.gz.tmp" "$PUBLIC/observer-diagnostic-partial.tar.gz"
+  sha256sum "$PUBLIC/observer-diagnostic-partial.tar.gz" \
+    > "$PUBLIC/observer-diagnostic-partial.tar.gz.sha256.tmp"
+  mv "$PUBLIC/observer-diagnostic-partial.tar.gz.sha256.tmp" \
+    "$PUBLIC/observer-diagnostic-partial.tar.gz.sha256"
 }
 
 stop_server() {
+  local server_rc
+  local terminated=0
   set +e
   if [ -n "$ACTIVE_SESSION" ]; then
     nsys shutdown --session="$ACTIVE_SESSION" --kill=sigterm >/dev/null 2>&1
   fi
   pkill -TERM -f 'vllm serve /workspace/model-awq' >/dev/null 2>&1
   [ -n "$SERVER" ] && kill -TERM "$SERVER" >/dev/null 2>&1
-  [ -n "$SERVER" ] && wait "$SERVER" >/dev/null 2>&1
+  if [ -n "$SERVER" ]; then
+    for _ in $(seq 1 30); do
+      if ! kill -0 "$SERVER" >/dev/null 2>&1 \
+        || [ "$(awk '{print $3}' "/proc/$SERVER/stat" 2>/dev/null)" = Z ]; then
+        terminated=1
+        break
+      fi
+      sleep 1
+    done
+    if [ "$terminated" -ne 1 ]; then
+      pkill -KILL -f 'vllm serve /workspace/model-awq' >/dev/null 2>&1
+      kill -KILL "$SERVER" >/dev/null 2>&1
+    fi
+    wait "$SERVER" >/dev/null 2>&1
+    server_rc=$?
+    if kill -0 "$SERVER" >/dev/null 2>&1 || pgrep -f 'vllm serve /workspace/model-awq' >/dev/null 2>&1; then
+      record_server_status "$CURRENT_ARM" "$CURRENT_MODE" stop_failed "$server_rc"
+      refresh_partial_archive
+      SERVER=
+      ACTIVE_SESSION=
+      set -e
+      return 1
+    fi
+    record_server_status "$CURRENT_ARM" "$CURRENT_MODE" stopped_and_absent "$server_rc"
+    refresh_partial_archive
+  fi
   SERVER=
   ACTIVE_SESSION=
   set -e
@@ -77,6 +175,7 @@ Path("/workspace/campaign-100-observer/allocation-result.json").write_text(json.
 }, indent=2, sort_keys=True) + "\n")
 PY
   fi
+  refresh_partial_archive
   package_session
   exit "$rc"
 }
@@ -139,6 +238,104 @@ cp "$MARKER" "$OUT/model-integrity-marker.txt"
 sha256sum "$TOKENIZER/tokenizer.json" "$TOKENIZER/tokenizer_config.json" "$TOKENIZER/chat_template.jinja" > "$OUT/tokenizer-files.sha256"
 phase retained_checkpoint_identity complete
 
+CMD=(
+  vllm serve "$MODEL"
+  --tokenizer "$TOKENIZER"
+  --served-model-name glm-4.7-flash-awq
+  --host 127.0.0.1
+  --port 30000
+  --max-model-len 32768
+  --max-num-seqs 8
+  --max-num-batched-tokens 65536
+  --gpu-memory-utilization 0.90
+  --no-enable-prefix-caching
+  --quantization compressed-tensors
+  --dtype bfloat16
+  --generation-config vllm
+  --seed 1234
+)
+
+wait_healthy() {
+  local arm="$1"
+  local arm_dir="$OUT/arms/$arm"
+  local healthy=0
+  local attempt
+  local curl_rc
+  local http_status
+  local server_rc
+  for attempt in $(seq 1 180); do
+    if ! kill -0 "$SERVER" 2>/dev/null; then
+      printf '{"timestamp":"%s","arm":"%s","attempt":%s,"process_alive":false,"curl_return_code":null,"http_status":null}\n' \
+        "$(date -u +%FT%TZ)" "$arm" "$attempt" >> "$arm_dir/health-attempts.jsonl"
+      set +e
+      wait "$SERVER"
+      server_rc=$?
+      set -e
+      record_server_status "$arm" "$CURRENT_MODE" exited "$server_rc"
+      refresh_partial_archive
+      SERVER=
+      return 1
+    fi
+    set +e
+    http_status="$(curl -fsS -o /dev/null -w '%{http_code}' \
+      http://127.0.0.1:30000/health 2>> "$arm_dir/health-curl.stderr.log")"
+    curl_rc=$?
+    set -e
+    printf '{"timestamp":"%s","arm":"%s","attempt":%s,"process_alive":true,"curl_return_code":%s,"http_status":"%s"}\n' \
+      "$(date -u +%FT%TZ)" "$arm" "$attempt" "$curl_rc" "$http_status" >> "$arm_dir/health-attempts.jsonl"
+    if [ "$curl_rc" -eq 0 ]; then
+      healthy=1
+      break
+    fi
+    if [ $((attempt % 15)) -eq 0 ]; then
+      refresh_partial_archive
+    fi
+    if [ "$(date +%s)" -ge "$SCIENCE_DEADLINE_EPOCH" ]; then
+      break
+    fi
+    sleep 2
+  done
+  if [ "$healthy" -ne 1 ]; then
+    record_server_status "$arm" "$CURRENT_MODE" readiness_failed null
+    refresh_partial_archive
+    echo "$arm server readiness failed" >&2
+    return 1
+  fi
+  record_server_status "$arm" "$CURRENT_MODE" healthy null
+  refresh_partial_archive
+}
+
+run_stock_startup_probe() {
+  local arm_dir="$OUT/arms/STOCK_STARTUP"
+  mkdir -p "$arm_dir"
+  CURRENT_ARM="STOCK_STARTUP"
+  CURRENT_MODE="stock-unpatched"
+  phase stock_startup_probe begin
+  if [ "$(date +%s)" -ge "$SCIENCE_DEADLINE_EPOCH" ]; then
+    echo "science deadline reached before stock startup probe" >&2
+    return 71
+  fi
+  printf '%q ' "${CMD[@]}" > "$arm_dir/server-command.txt"
+  printf '\nmode=stock-unpatched\nscored_requests=0\n' >> "$arm_dir/server-command.txt"
+  printf '{"schema_version":1,"excluded_from_measurement":true,"scored_requests":0,"purpose":"unpatched_startup_to_health","readiness_pass":null}\n' \
+    > "$arm_dir/probe.json"
+  unset GRAD_RESEARCH_SCHEDULER_EVENTS GRAD_RESEARCH_ARM_ID
+  "${CMD[@]}" > "$arm_dir/server.stdout.log" 2> "$arm_dir/server.stderr.log" &
+  SERVER=$!
+  record_server_status "$CURRENT_ARM" "$CURRENT_MODE" running null
+  refresh_partial_archive
+  wait_healthy "$CURRENT_ARM"
+  nvidia-smi -q > "$arm_dir/nvidia-smi-loaded.txt" 2>&1
+  printf '{"schema_version":1,"excluded_from_measurement":true,"scored_requests":0,"purpose":"unpatched_startup_to_health","readiness_pass":true}\n' \
+    > "$arm_dir/probe.json.tmp"
+  mv "$arm_dir/probe.json.tmp" "$arm_dir/probe.json"
+  refresh_partial_archive
+  stop_server
+  phase stock_startup_probe complete
+}
+
+run_stock_startup_probe
+
 phase observer_patch begin
 SCHEDULER_PATH="$(python3 - <<'PY'
 import inspect
@@ -181,46 +378,6 @@ Path("/workspace/campaign-100-observer/prompt-identity.json").write_text(json.du
 }, indent=2, sort_keys=True) + "\n")
 PY
 phase prompt_geometry complete
-
-CMD=(
-  vllm serve "$MODEL"
-  --tokenizer "$TOKENIZER"
-  --served-model-name glm-4.7-flash-awq
-  --host 127.0.0.1
-  --port 30000
-  --max-model-len 32768
-  --max-num-seqs 8
-  --max-num-batched-tokens 65536
-  --gpu-memory-utilization 0.90
-  --no-enable-prefix-caching
-  --quantization compressed-tensors
-  --dtype bfloat16
-  --generation-config vllm
-  --seed 1234
-)
-
-wait_healthy() {
-  local arm="$1"
-  local healthy=0
-  for _ in $(seq 1 180); do
-    if ! kill -0 "$SERVER" 2>/dev/null; then
-      wait "$SERVER"
-      return $?
-    fi
-    if curl -fsS http://127.0.0.1:30000/health >/dev/null; then
-      healthy=1
-      break
-    fi
-    if [ "$(date +%s)" -ge "$SCIENCE_DEADLINE_EPOCH" ]; then
-      break
-    fi
-    sleep 2
-  done
-  if [ "$healthy" -ne 1 ]; then
-    echo "$arm server readiness failed" >&2
-    return 1
-  fi
-}
 
 archive_arm() {
   local arm="$1"
@@ -314,6 +471,8 @@ run_arm() {
   local arm_dir="$OUT/arms/$arm"
   local session="observer${arm}"
   mkdir -p "$arm_dir"
+  CURRENT_ARM="$arm"
+  CURRENT_MODE="$mode"
   phase "$arm" begin
   if [ "$(date +%s)" -ge "$SCIENCE_DEADLINE_EPOCH" ]; then
     echo "science deadline reached before $arm" >&2
@@ -325,7 +484,7 @@ run_arm() {
   export GRAD_RESEARCH_ARM_ID="$arm"
   if [[ "$mode" = nsys-* ]]; then
     ACTIVE_SESSION="$session"
-    nsys launch --session-new="$session" --force-overwrite=true \
+    nsys launch --session-new="$session" \
       --trace=cuda,nvtx,osrt --cuda-graph-trace=node --cuda-event-trace=true \
       --sample="$sample_mode" --cpuctxsw="$context_switch_mode" --backtrace=none \
       --output="$arm_dir/trace" "${CMD[@]}" \
@@ -335,6 +494,8 @@ run_arm() {
     "${CMD[@]}" > "$arm_dir/server.stdout.log" 2> "$arm_dir/server.stderr.log" &
     SERVER=$!
   fi
+  record_server_status "$arm" "$mode" running null
+  refresh_partial_archive
   wait_healthy "$arm"
   nvidia-smi -q > "$arm_dir/nvidia-smi-loaded.txt" 2>&1
   run_warmup "$arm"

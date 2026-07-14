@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "glm47-observer-v8-operational-repair-c1-result",
+  "run_id": "glm47-observer-v8-operational-repair-c1",
+  "scout_id": "glm47-dense-resource-signature",
+  "control_id": "v37-unsupported-nsys-launch-option",
+  "candidate_id": "v8-exact-nsys-launch-capability-gate",
+  "changed_variable": "Remove only the unsupported --force-overwrite=true argument from nsys launch, add an exact Nsight Systems 2026.3.1.157 nsys launch --help fixture and pre-transfer capability gate, retain completed-arm raw files in partial evidence, and bind the repair to immutable V8 identities.",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "prediction_sha256": "62ee00568e67f7497c2e455a7eecade097183a0b39e78170d4b9fd261c5007af",
+  "outcome_class": "diagnostic_valid",
+  "fidelity": "reference",
+  "scope": {
+    "model": "GLM-4.7-Flash AWQ; no model execution in this worker packet",
+    "workload": "Offline validation of the unchanged excluded STOCK_STARTUP plus A1/B1/A2 8-request c8 8192-input/32-output diagnostic geometry",
+    "hardware": "Local CPU/reference validation only; no provider mutation",
+    "software": "Observer remote harness, controller, paid-run preparer, exact-version nsys launch help fixture, focused tests, and immutable preparation artifacts",
+    "claim_limit": "Operational admission-readiness only; no scientific bottleneck, performance, quality, SLO, cost, provider, or promotion claim"
+  },
+  "cost_usd": 0.0,
+  "artifact_refs": [
+    "89bcbafc38e8ae134bb4bf46cca8b76efbf75f5aba4eeae1fd2e5199d34827ab",
+    "9af5a9577d759e202a15460a1550dba28dc9186e1a51cc711d56e03ade311952",
+    "8a86e2cb4ba57432d812a4b7959ea849bdfd729b0253949e559b469ff2c55ccd",
+    "6f528d2616abc4963cd1b73b274dc9dcd7523c515074279a78639ff59697d5fb",
+    "a0d49fdd05e392c85eb9e6cbba2bbfaef823b298072ceb039e5baa09d85ff55a",
+    "ff15a149da37f87d649e2c956cac11dc2cc9affd2ddc5004f58a4a5190fe09fb",
+    "74363655a704ddd7164290bf08ef90bdf1b2c307136d2d66e0c3ba49a606f8e4",
+    "8b193fb43865701830494b810c860d5e7dd015c56a9caf8124666d38bd24d832",
+    "4d1f5ea6902add65a46476c69cd389005abe4505bcd6b47d7b37492e2a1c6e6a",
+    "15aed871777c73a60b9ae0468e8a6160f82326bdb451709a9c7064bea40e1190"
+  ],
+  "gates": {
+    "correctness": true,
+    "quality": true,
+    "slo": true
+  },
+  "diagnostic_summary": "The exact Nsight Systems 2026.3.1.157 launch-help fixture is checked before model transfer, the unsupported flag is absent only from nsys launch, completed-arm raw files are included in hashed partial evidence, immutable V8 input identities changed, and all 206 campaign tests plus factory validation at the fixture time passed. Revalidation at the actual current time correctly rejects the prepared paid spec because its fixed watchdog timestamp has expired; no paid run is admitted by this result.",
+  "residual_bottleneck": "The V37 nsys launch-boundary defect is falsified at offline reference scope, but the matched target-L40S observer bracket remains unexecuted. Dense-device versus host/scheduler critical-path attribution is still unresolved and no scientific belief changes.",
+  "next_action": "In the next bounded director cycle, resume as supervisor-glm47, reconcile provider state, regenerate the immutable V8 paid spec with a current absolute watchdog timestamp while preserving the existing 2000-second/$0.55/$0.07 contract and all science geometry, then make the fenced admission decision. Do not update scientific beliefs until a valid A1/B1/A2 result exists."
+}

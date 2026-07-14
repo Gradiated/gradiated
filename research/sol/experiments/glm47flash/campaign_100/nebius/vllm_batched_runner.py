@@ -10,6 +10,7 @@ import json
 import math
 import statistics
 import subprocess
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -331,8 +332,15 @@ def run_profile(prompt: str, concurrency: int, requests: int, output: Path, name
 
 
 def profile_if_admitted(output: Path, prompt: str, quality: dict, performance: dict) -> dict:
-    admitted = bool(quality.get("pass") and performance.get("beats_complete_bf16_h100_cost"))
-    result = {"admitted": admitted, "reason": "paired_quality_and_cheaper_than_complete_bf16_h100"}
+    admitted = bool(
+        performance.get("fixed_slo_pass") and performance.get("beats_complete_bf16_h100_cost")
+    )
+    result = {
+        "admitted": admitted,
+        "reason": "observer_only_after_fixed_slo_and_complete_bf16_h100_cost_screen",
+        "quality_pass": bool(quality.get("pass")),
+        "claim_limit": "diagnostic profiler admission is not a quality or performance promotion",
+    }
     if not admitted:
         (output / "profiler-admission.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
         return result
@@ -341,7 +349,31 @@ def profile_if_admitted(output: Path, prompt: str, quality: dict, performance: d
             request = urllib.request.Request(BASE_URL + endpoint, data=b"", method="POST")
             with urllib.request.urlopen(request, timeout=60) as response:
                 response.read()
-        result["request"] = stream_completion(prompt, timeout=300, max_tokens=128)
+        concurrency = 8
+        barrier = threading.Barrier(concurrency)
+
+        def profiled_request(index: int) -> dict:
+            barrier.wait(timeout=30)
+            row = stream_completion(prompt, timeout=300, max_tokens=128)
+            row["request_index"] = index
+            return row
+
+        profiled_started = time.monotonic()
+        rows = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
+            futures = [pool.submit(profiled_request, index) for index in range(concurrency)]
+            for future in concurrent.futures.as_completed(futures):
+                rows.append(future.result())
+        result["profile_scope"] = "fixed_8k_128_c8"
+        result["concurrency"] = concurrency
+        result["requests"] = len(rows)
+        result["wall_seconds"] = time.monotonic() - profiled_started
+        result["rows"] = sorted(rows, key=lambda row: row["request_index"])
+        result["exact_geometry_pass"] = all(
+            row["input_tokens"] == 8192 and row["output_tokens"] == 128 for row in rows
+        )
+        if len(rows) != concurrency or not result["exact_geometry_pass"]:
+            raise BatchError("profiler batch did not preserve fixed 8K/128 c8 geometry")
         request = urllib.request.Request(BASE_URL + "/stop_profile", data=b"", method="POST")
         with urllib.request.urlopen(request, timeout=600) as response:
             response.read()

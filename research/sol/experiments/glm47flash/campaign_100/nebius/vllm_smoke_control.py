@@ -123,7 +123,7 @@ sudo dpkg-query -W -f='${{Package}}=${{Version}}\n' docker.io nvidia-container-t
 '''
 
 
-def build_container_command(spec_hash: str, deadline_epoch: int, dtype: str = "bfloat16", max_num_batched_tokens: int = 32768, decode_block_n: int = 32, decode_num_stages: int = 2) -> list[str]:
+def build_container_command(spec_hash: str, deadline_epoch: int, dtype: str = "bfloat16", max_num_batched_tokens: int = 32768, decode_block_n: int = 32, decode_num_stages: int = 2, num_kv_splits: int = 4) -> list[str]:
     return [
         "sudo", "docker", "run", "--rm", "--gpus", "all", "--ipc=host", "--shm-size=24g",
         "--cap-add", "SYS_NICE", "-v", "/home/glmrunner/input:/input:ro", "-v", "/workspace:/workspace",
@@ -133,13 +133,14 @@ def build_container_command(spec_hash: str, deadline_epoch: int, dtype: str = "b
         "-e", f"VLLM_MAX_NUM_BATCHED_TOKENS={max_num_batched_tokens}",
         "-e", f"VLLM_DECODE_BLOCK_N={decode_block_n}",
         "-e", f"VLLM_DECODE_NUM_STAGES={decode_num_stages}",
+        "-e", f"VLLM_NUM_KV_SPLITS={num_kv_splits}",
         "-e", "MODEL_MANIFEST_PATH=/workspace/model-awq/model-files.sha256",
         "--entrypoint", "bash", RUNTIME_IMAGE, "-lc",
         "rm -f /etc/ld.so.conf.d/00-cuda-compat.conf /etc/ld.so.conf.d/cuda-compat.conf; ldconfig; exec bash /input/remote_vllm_awq_smoke.sh",
     ]
 
 
-def run(output_dir: Path, name: str, key: Path, public_key: Path, model_dir: Path, tokenizer_dir: Path, spec_hash: str) -> int:
+def run(output_dir: Path, name: str, key: Path, public_key: Path, model_dir: Path, tokenizer_dir: Path, spec_hash: str, keep_instance_after_result: bool = False, num_kv_splits: int = 4) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     if (output_dir / "summary.json").exists():
         raise VllmSmokeError("completed output directory already exists")
@@ -162,6 +163,7 @@ def run(output_dir: Path, name: str, key: Path, public_key: Path, model_dir: Pat
     artifact_hash = None
     manifest_files = 0
     allocation_result = None
+    retain_after_result = False
     if list_items("instance"):
         raise VllmSmokeError("active instances exist")
     emit(events, "stock_control", instance_count=0, **identities)
@@ -228,7 +230,7 @@ def run(output_dir: Path, name: str, key: Path, public_key: Path, model_dir: Pat
         transfer_started = time.time()
         transfer_local_model(ip, key, model_dir)
         emit(events, "verified_local_awq_transferred", elapsed_seconds=round(time.time() - transfer_started, 3))
-        remote = run_ssh(ip, key, build_container_command(spec_hash, int(deadline)), timeout=max(60, int(deadline - time.time()) + 180))
+        remote = run_ssh(ip, key, build_container_command(spec_hash, int(deadline), max_num_batched_tokens=65536, num_kv_splits=num_kv_splits), timeout=max(60, int(deadline - time.time()) + 180))
         (output_dir / "remote.stdout.log").write_text(remote.stdout)
         (output_dir / "remote.stderr.log").write_text(remote.stderr)
         archive = output_dir / "vllm-awq-batch.tar.gz"
@@ -244,6 +246,7 @@ def run(output_dir: Path, name: str, key: Path, public_key: Path, model_dir: Pat
         emit(events, "artifact_retrieved", sha256=artifact_hash, manifest_files=manifest_files, outcome=outcome)
         if allocation_has_harness_error(allocation_result):
             raise VllmSmokeError("typed allocation result contains a harness error")
+        retain_after_result = keep_instance_after_result
     except Exception as error:
         emit(events, "experiment_error", error_type=type(error).__name__, message=str(error))
         if instance_id is not None and allocation_result is None:
@@ -253,13 +256,17 @@ def run(output_dir: Path, name: str, key: Path, public_key: Path, model_dir: Pat
             try: instance_id = find_named_instance(name)
             except Exception: instance_id = None
         delete_requested = time.time()
-        if instance_id:
+        if retain_after_result:
+            absent = False
+            emit(events, "instance_retained_for_next_preregistered_experiment", instance_id=instance_id)
+        elif instance_id:
             delete_instance(instance_id)
             absent = wait_absent(instance_id, time.time() + 240)
         else:
             absent = True
-        for disk in list_items("disk"):
-            if metadata_name(disk) == disk_name and metadata_id(disk): delete_disk(metadata_id(disk))
+        if not retain_after_result:
+            for disk in list_items("disk"):
+                if metadata_name(disk) == disk_name and metadata_id(disk): delete_disk(metadata_id(disk))
         final_instances = list_items("instance")
         final_disks = list_items("disk")
         cleanup = absent and not any(metadata_name(row) == name for row in final_instances) and not any(metadata_name(row) == disk_name for row in final_disks)
@@ -268,6 +275,7 @@ def run(output_dir: Path, name: str, key: Path, public_key: Path, model_dir: Pat
         disk_cost = elapsed / 3600 * DISK_HOURLY_RATE_USD
         (output_dir / "summary.json").write_text(json.dumps({
             "outcome": outcome, "cleanup_pass": cleanup, "instance_id": instance_id,
+            "retained_for_next_experiment": retain_after_result,
             "allocation_seconds": round(elapsed, 3), "compute_cost_usd_derived": round(compute_cost, 9),
             "disk_cost_usd_derived": round(disk_cost, 9), "cost_usd_derived": round(compute_cost + disk_cost, 9),
             "cost_basis": "measured exposure at authenticated Nebius preemptible VM and disk rates; public IPv4/egress excluded; invoice pending",
@@ -276,7 +284,7 @@ def run(output_dir: Path, name: str, key: Path, public_key: Path, model_dir: Pat
             "ended_at_utc": dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z"),
         }, indent=2, sort_keys=True) + "\n")
         emit(events, "cleanup_verified", cleanup_pass=cleanup, instance_get_not_found=absent)
-    return 0 if outcome == "PASS" and cleanup else 1
+    return 0 if outcome == "PASS" and (cleanup or retain_after_result) else 1
 
 
 def main() -> int:
@@ -288,8 +296,10 @@ def main() -> int:
     parser.add_argument("--local-model-dir", type=Path, required=True)
     parser.add_argument("--reference-tokenizer-dir", type=Path, required=True)
     parser.add_argument("--experiment-spec-sha256", required=True)
+    parser.add_argument("--keep-instance-after-result", action="store_true")
+    parser.add_argument("--num-kv-splits", type=int, choices=(4, 8, 16), default=4)
     args = parser.parse_args()
-    return run(args.output_dir, args.name, args.ssh_key, args.ssh_public_key, args.local_model_dir, args.reference_tokenizer_dir, args.experiment_spec_sha256)
+    return run(args.output_dir, args.name, args.ssh_key, args.ssh_public_key, args.local_model_dir, args.reference_tokenizer_dir, args.experiment_spec_sha256, args.keep_instance_after_result, args.num_kv_splits)
 
 
 if __name__ == "__main__":

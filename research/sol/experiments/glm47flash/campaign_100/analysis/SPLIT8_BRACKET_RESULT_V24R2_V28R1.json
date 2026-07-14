@@ -1,0 +1,57 @@
+{
+  "claim_limit": "descriptive bracketed same-session effect; fewer than three independent candidate repetitions do not support interval or significance language; validity still requires matched correctness, quality, SLO, workload, and allocation identity",
+  "identity": "nebius_l40s_vllm_awq_splits_ab_v24r2_v28r1",
+  "independent_candidate_repetitions": 2,
+  "paired_effect_mean": 0.010461442983353497,
+  "paired_effect_median": 0.010461442983353497,
+  "paired_percentile_bootstrap_95": null,
+  "pairs": [
+    {
+      "candidate_label": "B1_V25R1",
+      "candidate_value": 367.8291015798321,
+      "control_after_label": "A2_V26R1",
+      "control_before_label": "A1_V24R2",
+      "control_bracket_mean": 364.01579554634804,
+      "relative_effect": 0.010475660892024452
+    },
+    {
+      "candidate_label": "B2_V27R1",
+      "candidate_value": 364.0766845691678,
+      "control_after_label": "A3_V28R1",
+      "control_before_label": "A2_V26R1",
+      "control_bracket_mean": 360.31241962415083,
+      "relative_effect": 0.010447225074682542
+    }
+  ],
+  "precision_status": "descriptive_only_fewer_than_three_candidate_repetitions",
+  "resamples": 10000,
+  "schema_version": 1,
+  "seed": 14406435649878524875,
+  "sequence": [
+    {
+      "label": "A1_V24R2",
+      "role": "control",
+      "value": 364.8706352846219
+    },
+    {
+      "label": "B1_V25R1",
+      "role": "candidate",
+      "value": 367.8291015798321
+    },
+    {
+      "label": "A2_V26R1",
+      "role": "control",
+      "value": 363.1609558080741
+    },
+    {
+      "label": "B2_V27R1",
+      "role": "candidate",
+      "value": 364.0766845691678
+    },
+    {
+      "label": "A3_V28R1",
+      "role": "control",
+      "value": 357.46388344022756
+    }
+  ]
+}

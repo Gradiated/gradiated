@@ -4,7 +4,25 @@ Issue: [#11](https://github.com/joshsny/gradiated/issues/11)
 
 Owner: primary research coordinator
 
-Status: in progress
+Status: complete — campaign decision `CONTINUE_NARROWLY`; split-8 lineage `STOP`
+
+## 2026-07-14 final retained split experiment and handoff
+
+The source-pinned eight-KV-split candidate reduced exact-shape grouped-attention component time by 40.27% and reduced summed c8 attention/MLA profiler work by 33.43%. It did not materially transfer to serving. A same-session A/B/A/B/A sequence measured drift-corrected c8 throughput effects of +1.0476% and +1.0447%, median +1.0461%, versus the preregistered 5% gate. All five final arms passed semantic, exact geometry, SLO, cache, paired diagnostic, and artifact gates. With two independent candidate repetitions the result is descriptive and intentionally has no bootstrap interval or significance claim.
+
+The matched trace-delta tool measured summed decode kernel work down 14.09% while vLLM decode annotation span changed +0.38%. Dense GEMM/GEMV is the largest residual summed family. This stops the split-count lineage and falsifies the assumption that its large component win controls the current c8 path; it does not yet prove whether the residual is dense compute, memory, launch/dependency, or host scheduling.
+
+Cleanup passed: instance `computeinstance-e00ryn9r7gcjnecedr` returns not-found and fresh instance/disk inventories are zero. Full session exposure was 4,257.181 seconds and derived cost `$1.014772742`, bringing conservative Nebius spend to `$17.656500383/$25` and leaving `$7.343499617`. Decision artifact: `campaign_100/DECISION_CONTINUE_NARROWLY_SPLIT8_STOP_2026-07-14.json`, SHA-256 `e51b5324a7c2c28dc66122f1f5776bb898fd0573106d51311da89edf3c031131`.
+
+Resume contract: do not test another MLA split/tile variant on this fixed workload without new critical-path evidence. First calibrate a prospective expanded quality suite off GPU. Then preregister matched profiler-off/on vLLM phase capture using Nsight Systems, available standard DCGM utilization/memory-controller/power/energy fields, host and scheduler timing, coverage, and explicit unavailable counters. Use that resource signature to admit an exact-shape dense GEMM/GEMV or MoE falsifier. No gateway work and no provider/quality-adjusted cost claim is authorized by these results.
+
+## 2026-07-14 measurement-loop audit and V23
+
+The campaign through V22R1 is now audited in `campaign_100/analysis/RESEARCH_HARNESS_REVIEW_2026-07-14.md` with a machine-readable cross-stack opportunity register. The retained V19-V22 session is the preferred iteration pattern, but the decisive vLLM profiler artifact was one mixed prefill/decode c1 request. Its 37.38% summed grouped-MLA kernel-duration share is diagnostic only: overlapping CUDA work and graph replay make it invalid as a c8 end-to-end Amdahl coefficient.
+
+V23 (`664834a6...c46cc`) is preregistered as the cheapest falsifier before another checkpoint transfer. It runs 58 source-pinned grouped-MLA configurations across B1/B8 and sequence lengths 8,193 through 9,215 on one preemptible L40S, with FP32 correctness, legal-resource failures, component timing, GPU/VRAM/power telemetry, a `$0.569192` cap, artifact hashing, and verified teardown. A >=10% conservative component lead only admits a true fixed-8K/128 c8 trace; it does not admit an end-to-end or cost claim.
+
+The reusable `$experiment-run` skill and this workstream's `AGENTS.md` now require a measurement-driven opportunity queue, broad observability, an increasingly faithful simulation/proxy ladder, residual-bottleneck measurement, prediction scoring, and one provider-state coordinator with parallel offline analysis. A reusable opportunity-ranking tool is included under `.agents/skills/experiment-run/scripts/`.
 
 Budget update: the user explicitly authorized up to `$25` total Nebius spend on 2026-07-13. This provider-specific cap includes placement controls and inference allocations. Continue to gate spend, update the report after every allocation, and prefer same-host matched comparisons.
 

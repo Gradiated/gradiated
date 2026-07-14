@@ -1,0 +1,100 @@
+{
+  "phases": {
+    "bootstrap": {
+      "end": "2026-07-14T12:30:24+00:00",
+      "metrics": {
+        "gpu_util_pct": null,
+        "memory_clock_mhz": null,
+        "memory_total_mib": null,
+        "memory_used_mib": null,
+        "memory_util_pct": null,
+        "power_draw_w": null,
+        "power_limit_w": null,
+        "sm_clock_mhz": null,
+        "temperature_c": null
+      },
+      "sample_count": 0,
+      "start": "2026-07-14T12:30:19+00:00"
+    },
+    "exact_shape_sweep": {
+      "end": "2026-07-14T12:32:42+00:00",
+      "metrics": {
+        "gpu_util_pct": {
+          "max": 100.0,
+          "mean": 21.962962962962962,
+          "p50": 0.0,
+          "p95": 98.0
+        },
+        "memory_clock_mhz": {
+          "max": 9001.0,
+          "mean": 8809.977777777778,
+          "p50": 9001.0,
+          "p95": 9001.0
+        },
+        "memory_total_mib": {
+          "max": 46068.0,
+          "mean": 46068.0,
+          "p50": 46068.0,
+          "p95": 46068.0
+        },
+        "memory_used_mib": {
+          "max": 1131.0,
+          "mean": 698.4148148148148,
+          "p50": 697.0,
+          "p95": 1077.0
+        },
+        "memory_util_pct": {
+          "max": 10.0,
+          "mean": 0.5111111111111111,
+          "p50": 0.0,
+          "p95": 4.0
+        },
+        "power_draw_w": {
+          "max": 259.7,
+          "mean": 114.7837037037037,
+          "p50": 103.93,
+          "p95": 215.34
+        },
+        "power_limit_w": {
+          "max": 350.0,
+          "mean": 350.0,
+          "p50": 350.0,
+          "p95": 350.0
+        },
+        "sm_clock_mhz": {
+          "max": 2520.0,
+          "mean": 2468.3333333333335,
+          "p50": 2520.0,
+          "p95": 2520.0
+        },
+        "temperature_c": {
+          "max": 50.0,
+          "mean": 37.525925925925925,
+          "p50": 38.0,
+          "p95": 46.0
+        }
+      },
+      "sample_count": 135,
+      "start": "2026-07-14T12:30:24+00:00"
+    },
+    "teardown": {
+      "end": "2026-07-14T12:32:43+00:00",
+      "metrics": {
+        "gpu_util_pct": null,
+        "memory_clock_mhz": null,
+        "memory_total_mib": null,
+        "memory_used_mib": null,
+        "memory_util_pct": null,
+        "power_draw_w": null,
+        "power_limit_w": null,
+        "sm_clock_mhz": null,
+        "temperature_c": null
+      },
+      "sample_count": 0,
+      "start": "2026-07-14T12:32:43+00:00"
+    }
+  },
+  "sample_count": 136,
+  "schema_version": 1,
+  "telemetry_timestamp_offset_hours": 7.0
+}

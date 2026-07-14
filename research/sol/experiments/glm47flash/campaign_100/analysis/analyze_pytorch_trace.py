@@ -5,6 +5,7 @@ import gzip
 import json
 from collections import Counter
 from pathlib import Path
+from typing import Callable
 
 
 def kernel_family(name: str) -> str:
@@ -18,7 +19,7 @@ def kernel_family(name: str) -> str:
         for part in ("nvjet_", "fused_a_gemm", "cublas", "gemm", "dot_kernel", "reduce_1block")
     ):
         return "dense_gemm_gemv"
-    if any(part in lowered for part in ("flashattn", "flash::", "mla", "set_mla")):
+    if any(part in lowered for part in ("flashattn", "flash::", "mla", "set_mla", "fwd_grouped_kernel_stage")):
         return "attention_mla"
     if any(part in lowered for part in ("rmsnorm", "rope", "act_and_mul")):
         return "norm_rope_activation"
@@ -32,13 +33,14 @@ def percentile(values: list[float], fraction: float) -> float:
     return ordered[int(fraction * (len(ordered) - 1))]
 
 
-def region_summary(events: list[dict], prefix: str) -> dict:
+def region_summary(events: list[dict], selector: str | Callable[[str], bool]) -> dict:
+    matches = (lambda name: name.startswith(selector)) if isinstance(selector, str) else selector
     annotations = [
         event
         for event in events
         if event.get("cat") == "gpu_user_annotation"
         and event.get("ph") == "X"
-        and event.get("name", "").startswith(prefix)
+        and matches(event.get("name", ""))
     ]
     kernels = [event for event in events if event.get("cat") == "kernel" and event.get("ph") == "X"]
     selected = []
@@ -58,7 +60,16 @@ def region_summary(events: list[dict], prefix: str) -> dict:
 
     total_us = sum(family_duration_us.values())
     durations_ms = [annotation["dur"] / 1000 for annotation in annotations]
+    if not durations_ms:
+        return {
+            "status": "unavailable_no_matching_annotations",
+            "region_count": 0,
+            "kernel_count": 0,
+            "kernel_families": [],
+            "top_exact_kernels": [],
+        }
     return {
+        "status": "measured_summed_profiler_work_not_wall_time",
         "region_count": len(annotations),
         "region_duration_sum_ms": sum(durations_ms),
         "region_duration_p50_ms": percentile(durations_ms, 0.50),
@@ -86,6 +97,22 @@ def region_summary(events: list[dict], prefix: str) -> dict:
     }
 
 
+def classified_region_summary(events: list[dict]) -> dict:
+    """Support both SGLang step ranges and vLLM execution-context annotations."""
+    is_vllm_execute = lambda name: name.startswith("execute_context_")
+    is_vllm_decode = lambda name: name.startswith("execute_context_0(0)_generation_")
+    return {
+        "decode": region_summary(
+            events,
+            lambda name: name.startswith("step[DECODE") or is_vllm_decode(name),
+        ),
+        "prefill_or_mixed": region_summary(
+            events,
+            lambda name: name.startswith("step[EXTEND") or (is_vllm_execute(name) and not is_vllm_decode(name)),
+        ),
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("trace", type=Path)
@@ -97,6 +124,7 @@ def main() -> None:
     with gzip.open(args.trace, "rt") as trace_file:
         events = json.load(trace_file)["traceEvents"]
 
+    regions = classified_region_summary(events)
     output = {
         "schema_version": 1,
         "evidence_label": "measured profiler trace",
@@ -107,8 +135,7 @@ def main() -> None:
             "Kernel events are assigned to GPU user-annotation regions when their midpoint falls inside the region. "
             "Durations are summed and therefore are component-time attribution, not an additive latency model when streams overlap."
         ),
-        "decode": region_summary(events, "step[DECODE"),
-        "prefill": region_summary(events, "step[EXTEND"),
+        **regions,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(output, indent=2, sort_keys=True) + "\n")

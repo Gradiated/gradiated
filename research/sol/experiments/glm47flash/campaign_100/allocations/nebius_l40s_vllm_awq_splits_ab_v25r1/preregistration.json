@@ -1,0 +1,34 @@
+{
+  "session_amendment_id": "nebius_l40s_vllm_awq_splits_ab_v25r1_v28r1",
+  "preregistered_at_utc": "2026-07-14T13:25:05Z",
+  "parent_experiment_id": "nebius_l40s_vllm_awq_splits_ab_v24r2",
+  "parent_artifact_sha256": "b89016cdb2fa90e935708e5b96faaf5bbb74b3643149d0e538ba5c1f5bdc9e79",
+  "parent_trace_validation_sha256": "c7e6550b485a1de31ab8a8db6777995e54e2538f043e0d773c399685eeaa4fdd",
+  "original_session_spec_sha256": "0a8fc95434c7ac79cedd6ae4e55888a02ad36fe0c2ec70e725a95dc7ddb9550c",
+  "causal_hypothesis": "Changing only vLLM grouped-MLA non-batch-invariant KV splits from four to eight causes at least 5% higher exact fixed-workload c8 output throughput on the same retained L40S. The V23R1 40.27% aggregate component lead suggests the direction, while a null or negative end-to-end result falsifies transfer.",
+  "stock_control": "V24R2: source-pinned four splits, vLLM 0.15.0 plus Transformers 1618d44, public AWQ revision ab31d120, BF16 activations, 65536 batched-token budget, BLOCK_H=16, BLOCK_N=32, four warps, two stages, prefix cache disabled, same L40S.",
+  "observations": [
+    "V24R2 independently validated exact fixed_8k_128_c8 admission and 98.44% grouped-MLA stage-one launches with grid batch dimension eight.",
+    "V24R1 and V24R2 stock throughput were 364.105 and 364.871 output tok/s, respectively.",
+    "The frozen compact quality screen changed from 0.1667 to 0.3333 across identical stock arms; this instability blocks a quality-adjusted claim and must be reported per arm.",
+    "The content-addressed integrity marker can now replace repeated full checkpoint hashing while manifest and file metadata identities remain unchanged."
+  ],
+  "sequence_change": "The original three-pair promotion sequence is narrowed prospectively to A/B/A/B/A because the absolute quality gate already blocks business promotion and two bracketed pairs are sufficient to falsify a large claimed transfer while fitting the independent watchdog. No significance or promotion claim is permitted from two pairs.",
+  "arms": [
+    {"experiment_id": "nebius_l40s_vllm_awq_splits_ab_v25r1", "order": 2, "label": "B1", "num_kv_splits": 8, "retain_after": true},
+    {"experiment_id": "nebius_l40s_vllm_awq_splits_ab_v26r1", "order": 3, "label": "A2", "num_kv_splits": 4, "retain_after": true},
+    {"experiment_id": "nebius_l40s_vllm_awq_splits_ab_v27r1", "order": 4, "label": "B2", "num_kv_splits": 8, "retain_after": true},
+    {"experiment_id": "nebius_l40s_vllm_awq_splits_ab_v28r1", "order": 5, "label": "A3", "num_kv_splits": 4, "retain_after": false, "purpose": "final adjacent control and verified cleanup"}
+  ],
+  "workload_geometry": "Per arm: deterministic semantic JSON; frozen six-case paired diagnostic and teacher-forced NLL; one 8192/1024 warmup; four c1 and sixteen c8 exact 8192/1024 requests; eight barrier-synchronized c8 8192/128 observer requests; seed 1234.",
+  "quality_gate": "Do not recalibrate the frozen screen. Record exact response and score every arm. Reject candidate transfer for semantic failure, paired category/NLL regression versus that arm's control, or candidate-specific failure not present in adjacent stock. The known absolute point-screen failure and measured stock instability prohibit general quality and provider claims.",
+  "slo": "Every arm must complete 100% exact geometry with TTFT p95 <=10000 ms, TPOT p95 <=100 ms, zero prefix-cache query/hit delta, and no typed failures.",
+  "statistics_and_decision": "For each B arm, compare c8 throughput with the mean of its adjacent stock arms. Report both effects and their median. With only two independent candidate repetitions, do not report a bootstrap significance interval. STOP this split lineage if the median gain is below 5%, either B is nonpositive, or any semantic/relative-quality/SLO/resource gate fails. CONTINUE_NARROWLY only if both B effects are at least 5% and no gate regresses; a new quality-valid three-pair holdout would still be required before promotion.",
+  "budget": {"original_session_deadline_epoch": 1784037487, "remaining_sequence_cap_usd": 0.8, "campaign_cap_usd": 25.0, "settled_campaign_spend_before_session_usd": 16.641727641, "cost_accounting": "final original-session exposure supersedes all provisional arm estimates"},
+  "timeout": "Independent original watchdog at 2026-07-14T13:58:07Z is unchanged. Start the next arm immediately after a valid retained result; cleanup on terminal failure or final A3.",
+  "telemetry": ["request TTFT/TPOT/E2E/queue/failures and raw rows", "throughput and cache counters", "true-c8 trace grids/resources", "UTC one-second GPU/memory/power/temperature/clocks", "model/load and phase timestamps", "source/patch hashes", "allocation exposure and cost"],
+  "observer_change": "The only harness change after V24R2 is TZ=UTC on nvidia-smi sampling. It changes timestamp representation, not inference execution or the primary throughput estimator.",
+  "artifact_contract": "Retrieve, remote/local hash, and internally validate a distinct archive before the next arm overwrites remote output. Preserve patch evidence, exact rows, quality outputs, profiler admission/trace, telemetry, phases, commands, logs, and manifest. After A3 or terminal stop, delete the instance and disk, verify instance GET not-found, and verify fresh zero inventories.",
+  "source_hashes": {"runner": "607e7693acf0e93a1be3b43587bdc0c4d9ce3a10cdc1ea3e5c66d061f7040771", "remote": "cd1c14f3cd6e5ff82d816c023d94b931bba95f896bcd7801ffc128fd335b80df", "patcher": "cb8afadd61eec4dca5eb57f0ae7763193a5f115d0b0dfed9e83ba371728ef305", "retained_coordinator": "614a760515a7114d4135af814847bca0a2ca7a2dce9adfbd33aacc9032911fec", "trace_validator": "4ac330b48f8373bc572b14da430c27fe0deb1b32737dceebfb588b659c1d7de4"},
+  "claim_limit": "Same-session diagnostic component-to-serving transfer only. No general quality, provider-matched, settled cost, or model-specific business advantage claim."
+}

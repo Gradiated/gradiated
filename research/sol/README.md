@@ -26,6 +26,7 @@ The expanded 30-source competitive review finds active work on cross-layer, temp
 
 - [Current Qwen3-8B study and decision gates](experiments/qwen3-8b/README.md)
 - [Inference co-design learning library](learning/README.md)
+- [Per-model research operating system](docs/MODEL_RESEARCH_OPERATING_SYSTEM.md)
 - [Measured small-model validation](validation/README.md)
 - [Small-model proxy selection](docs/SMALL_MODEL_PROXY_SELECTION.md)
 - [Wake-up decision brief](docs/WAKEUP_BRIEF_2026-07-12.md)

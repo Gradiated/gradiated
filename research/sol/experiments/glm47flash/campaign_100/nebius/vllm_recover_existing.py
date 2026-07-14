@@ -24,11 +24,19 @@ from vllm_smoke_control import (
 
 def run(args: argparse.Namespace) -> int:
     out = args.output_dir
+    out.mkdir(parents=True, exist_ok=True)
     events = out / "events.jsonl"
     identities = validate_local_model(args.local_model_dir)
+    if not events.exists():
+        emit(
+            events,
+            "retained_arm_control",
+            instance_id=args.instance_id,
+            parent_experiment_id=args.parent_experiment_id,
+        )
     first = json.loads(events.read_text().splitlines()[0])
     started = dt.datetime.fromisoformat(first["timestamp"].replace("Z", "+00:00")).timestamp()
-    deadline = started + 4500
+    deadline = min(started + 4500, float(args.session_deadline_epoch))
     disk_name = args.name + "-boot"
     artifact_hash = None
     manifest_files = 0
@@ -83,7 +91,7 @@ def run(args: argparse.Namespace) -> int:
         else:
             emit(events, "repair_01_reused_verified_runtime_and_checkpoint")
 
-        remote = run_ssh(ip, args.ssh_key, build_container_command(args.repair_spec_sha256, int(deadline), dtype=args.dtype, max_num_batched_tokens=args.max_num_batched_tokens, decode_block_n=args.decode_block_n, decode_num_stages=args.decode_num_stages), timeout=max(60, int(deadline - time.time()) + 180))
+        remote = run_ssh(ip, args.ssh_key, build_container_command(args.repair_spec_sha256, int(deadline), dtype=args.dtype, max_num_batched_tokens=args.max_num_batched_tokens, decode_block_n=args.decode_block_n, decode_num_stages=args.decode_num_stages, num_kv_splits=args.num_kv_splits), timeout=max(60, int(deadline - time.time()) + 180))
         (out / "repair-01-remote.stdout.log").write_text(remote.stdout)
         (out / "repair-01-remote.stderr.log").write_text(remote.stderr)
         archive = out / "vllm-awq-batch.tar.gz"
@@ -142,6 +150,8 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--name", required=True)
     parser.add_argument("--instance-id", required=True)
+    parser.add_argument("--parent-experiment-id", required=True)
+    parser.add_argument("--session-deadline-epoch", type=float, required=True)
     parser.add_argument("--ssh-key", type=Path, required=True)
     parser.add_argument("--local-model-dir", type=Path, required=True)
     parser.add_argument("--reference-tokenizer-dir", type=Path, required=True)
@@ -152,6 +162,7 @@ def main() -> int:
     parser.add_argument("--max-num-batched-tokens", type=int, default=32768)
     parser.add_argument("--decode-block-n", type=int, choices=(32, 64), default=32)
     parser.add_argument("--decode-num-stages", type=int, choices=(1, 2), default=2)
+    parser.add_argument("--num-kv-splits", type=int, choices=(4, 8, 16), default=4)
     return run(parser.parse_args())
 
 

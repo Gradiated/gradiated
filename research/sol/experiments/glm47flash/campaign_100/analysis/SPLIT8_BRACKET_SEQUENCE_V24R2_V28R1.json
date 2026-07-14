@@ -1,0 +1,11 @@
+{
+  "sequence": [
+    {"label": "A1_V24R2", "role": "control", "value": 364.8706352846219},
+    {"label": "B1_V25R1", "role": "candidate", "value": 367.8291015798321},
+    {"label": "A2_V26R1", "role": "control", "value": 363.1609558080741},
+    {"label": "B2_V27R1", "role": "candidate", "value": 364.0766845691678},
+    {"label": "A3_V28R1", "role": "control", "value": 357.46388344022756}
+  ],
+  "metric": "exact_fixed_8192_input_1024_output_c8_output_tokens_per_second_conservative",
+  "scope": "same retained Nebius L40S, public AWQ revision ab31d120, vLLM 0.15.0, BF16, 65536 batched-token budget"
+}

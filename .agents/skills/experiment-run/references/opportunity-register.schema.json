@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/experiment-run/opportunity-register.schema.json",
+  "title": "Compact measurement-driven opportunity register",
+  "type": "object",
+  "required": ["schema_version", "opportunities"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "opportunities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "anyOf": [
+          {"required": ["id", "observation", "evidence_scope", "competing_explanations", "mechanism", "falsifier", "next_measurement", "cost_usd", "decision_impact", "uncertainty", "discrimination_power", "readiness", "transfer_penalty"]},
+          {"required": ["id", "observation", "bottleneck_interpretation", "candidate", "falsifier", "next_measurement", "information_value", "ranking_inputs"]}
+        ],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "observation": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "object", "required": ["summary", "evidence_scope"]}]},
+          "evidence_scope": {"type": "string", "minLength": 1},
+          "competing_explanations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "mechanism": {"type": "string", "minLength": 1},
+          "falsifier": {"type": "string", "minLength": 1},
+          "next_measurement": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "object", "required": ["experiment"]}]},
+          "cost_usd": {"type": "number", "minimum": 0},
+          "decision_impact": {"type": "number", "minimum": 0, "maximum": 1},
+          "uncertainty": {"oneOf": [{"type": "number", "minimum": 0, "maximum": 1}, {"type": "object"}]},
+          "discrimination_power": {"type": "number", "minimum": 0, "maximum": 1},
+          "readiness": {"type": "number", "minimum": 0, "maximum": 1},
+          "transfer_penalty": {"type": "number", "minimum": 0, "maximum": 1},
+          "intuition": {"type": "string"},
+          "measurements": {"type": "object"},
+          "promotion_rule": {"type": "string"},
+          "kill_rule": {"type": "string"},
+          "residual_bottleneck_rule": {"type": "string"},
+          "bottleneck_interpretation": {"type": "object", "required": ["competing_explanations"]},
+          "candidate": {"type": "object", "required": ["intervention"]},
+          "information_value": {"type": "object", "required": ["estimated_cost_usd"]},
+          "ranking_inputs": {
+            "type": "object",
+            "required": ["decision_impact", "uncertainty", "discrimination_power", "readiness", "transfer_penalty"],
+            "properties": {
+              "decision_impact": {"type": "number", "minimum": 0, "maximum": 1},
+              "uncertainty": {"type": "number", "minimum": 0, "maximum": 1},
+              "discrimination_power": {"type": "number", "minimum": 0, "maximum": 1},
+              "readiness": {"type": "number", "minimum": 0, "maximum": 1},
+              "transfer_penalty": {"type": "number", "minimum": 0, "maximum": 1}
+            }
+          }
+        }
+      }
+    }
+  }
+}

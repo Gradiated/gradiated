@@ -6,7 +6,7 @@
 
 ## Decision
 
-> Do not implement the management fleet CRDs below. PostgreSQL owns capacity sources/targets/allocations/cells and curated Rust drivers reconcile provider APIs directly. Kubernetes remains valid inside a provider cell and for research jobs, but is not the universal fleet API. See [the simplicity review](../SIMPLICITY_REVIEW.md) and [current fleet blueprint](../../infra/docs/MULTI_PROVIDER_GPU_FLEET.md).
+> Do not implement the management fleet CRDs below. PostgreSQL owns capacity sources/targets/allocations/allocation-members/cells and curated Rust drivers reconcile provider APIs directly. Kubernetes remains valid inside a provider cell and for research jobs, but is not the universal fleet API. Cells may be one or many nodes behind one router contract. See [the simplicity review](../SIMPLICITY_REVIEW.md), [current fleet blueprint](../../infra/docs/MULTI_PROVIDER_GPU_FLEET.md) and [multi-node contract](../../product/docs/MULTI_NODE_INFERENCE.md).
 
 Use the AWS management EKS cluster as the common **declarative fleet actuation surface** for external GPU capacity. Grad-owned CRDs in `fleet.grad.dev/v1alpha1` represent aggregate desired pools, provider allocations, and serving cells. Rust controllers built with a pinned `kube` controller runtime reconcile those resources through curated capacity-provider adapters.
 

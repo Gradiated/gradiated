@@ -15,6 +15,8 @@ Grad should feel like the curated, reliable inference option: one key, a small u
 
 Signup creates an organization, owner membership and Default workspace atomically. Billing/top-ups/credit live only at organization level. Workspaces isolate API keys, members, data policy, allowed models, monthly limit and concurrency. Workspace keys cannot spend beyond organization credit or their workspace/key limits.
 
+Organization deletion is self-service for owners with recent reauthentication and explicit confirmation. It immediately stops new spend, then drains usage, refunds refundable unused credit, destroys trace keys/objects, revokes access and pseudonymizes legally required financial evidence. A fixed seven-day cancellation window is shown in the UI; deletion status is visible without support intervention.
+
 Seed roles are `owner`, `admin`, `member`, `billing` at organization level and `admin`, `developer`, `viewer` at workspace level. Add finer grants only with a customer workflow that cannot be expressed by these roles.
 
 ## Onboarding journey
@@ -46,12 +48,14 @@ The stable alias resolves to immutable qualified releases. Start with `grad/medi
 Public surface:
 
 - `GET /v1/models`;
-- OpenAI-compatible generation endpoints required by the published catalog;
+- OpenAI Responses Create and Anthropic Messages from launch;
 - streaming and non-streaming;
 - explicit request IDs, rate/admission headers and normalized errors;
 - idempotency only on management/payment operations where meaningful.
 
 Compatibility means requests work through official clients and common gateway provider integrations. Unsupported model features return clear errors before spend. Grad does not silently switch a direct model/provider, change effort/speed, truncate to fit, drop parameters or retain content against policy.
+
+The management surface is a documented Hono REST API under `/api/v1`, not tRPC. Described Zod schemas generate OpenAPI 3.1, interactive Scalar docs, agent-readable Markdown, the Vite TypeScript client and an allowlisted OAuth MCP server. Every public field and operation must include an agent-usable description. Destructive/sensitive operations such as organization deletion, checkout, key-secret creation and trace plaintext are not MCP tools at launch.
 
 ## Billing and limits
 
@@ -68,7 +72,7 @@ No subscriptions, postpaid credit, coupons, multiple currencies, arbitrary daily
 
 ## Console
 
-Use Vite, React, TanStack Router/Query, tRPC, Tailwind and shadcn/ui. Primary pages:
+Use Vite, React, TanStack Router/Query, the generated REST client, Tailwind and shadcn/ui. Primary pages:
 
 - Home/quickstart: balance, first-request snippet and recent failures.
 - Models: curated direct/Grad cards with capabilities and price.
@@ -77,6 +81,7 @@ Use Vite, React, TanStack Router/Query, tRPC, Tailwind and shadcn/ui. Primary pa
 - Billing: balance, top-up, ledger transactions and usage export.
 - Recommendations: evidence and explicit replay/canary actions, never automatic switching.
 - Research/operator pages: internal program/run/evidence/bundle/qualification/release views.
+- Organization deletion: owner-only danger zone with reauthentication, balance/refund impact, cancellation deadline and deletion progress.
 
 Use progressive disclosure: most users see base URL, key, model, balance and results. Advanced release/channel/fleet/research data is role-gated.
 
@@ -96,6 +101,7 @@ Deletion revokes access and destroys key material first, then removes objects. E
 - Never double charge duplicate/reordered attempts/events.
 - Existing serving continues from versioned Valkey snapshots during control-plane outage.
 - Provider/cell health removes unhealthy endpoints without changing the requested product.
+- Multi-node cells are one exact-release routing unit; loss of any required rank fences the cell and follows the same pre/post-output settlement rules.
 - Customer-visible errors identify authentication, credit, limit, capability, provider and internal failure classes consistently.
 
 Initial SLOs are hypotheses to validate: multi-AZ gateway, p95 admission overhead, stream first-token overhead, billing posting lag, trace availability and supportable error rate. The delivery gate records measured values before promises are published.

@@ -107,14 +107,14 @@ Only `Gateway -> Redis -> selected upstream` is on the customer inference path. 
 | Deployable | Language | Responsibility | May synchronously call |
 | --- | --- | --- | --- |
 | Web assets | TypeScript/React | customer/operator presentation | Hono only |
-| Control API | Node/Hono/tRPC | sessions, RBAC, product commands/queries, Stripe endpoint, research BFF | PostgreSQL, Stripe, analytics read repo, private research API, trace-access grant endpoint |
+| Control API | Node/Hono REST/OpenAPI | sessions, RBAC, product commands/queries, Stripe endpoint, generated docs/client/MCP adapter and research BFF | PostgreSQL, Stripe, analytics read repo, private research API, trace-access grant endpoint |
 | Control workers | Node | ledger posting, outbox, Redis projection/reconciliation, model catalog and public release authority | PostgreSQL, Redis, Stripe/provider metadata |
 | Intelligence workers | Node | trace persistence/retention and workload/recommendation jobs | purpose-scoped PostgreSQL, Redis, S3/KMS, owned evaluation |
 | Trace access | minimal service | one-grant/one-object checked decrypt stream | PostgreSQL, S3/KMS |
 | Public gateway | Rust | public protocols, auth, admission, route, upstream stream, metering, trace encryption | Redis and selected model provider/inference router only |
 | Inference router | Rust | select authenticated exact-release cell connection and relay stream | cells and compact Valkey catalog only |
 | Fleet deployments | Rust | desired capacity and provider allocation/reconciliation | PostgreSQL and one provider API per driver role |
-| Cell agent | Rust | bundle materialization, local queue/cache routing and runtime supervision | inference router, artifact endpoints, local runtime |
+| Cell agent | Rust | one/multi-node bundle materialization, local queue/cache routing and runtime supervision | inference router, artifact endpoints, local runtime/members |
 | Research roles | Python | programs, Temporal workflows/activities, experiments, bundles and qualification | PostgreSQL, Temporal, S3/ECR, research compute/provider APIs |
 | Evaluator | Python/Rust harnesses | independently owned visible/hidden qualification | exact bundle/cell and sealed evidence API |
 
@@ -196,9 +196,9 @@ Research agents cannot see hidden holdouts while writing candidates, publish tar
 
 1. **Contracts/tooling:** monorepo, generated contracts, PostgreSQL/Redis fakes, `grad`, CI/PBT replay.
 2. **Money vertical:** auth, organization/default workspace, key, Stripe top-up, ledger, Redis projection/reserve/settle/reconcile.
-3. **First paid inference:** OpenAI-shaped Models/Chat through fake then one curated real provider; Overview/Keys/Billing/Usage minimum UI.
-4. **Gateway completeness:** Responses/Embeddings, Anthropic Messages, Google skin, strict capability matrix and customer gateway harnesses.
-5. **Owned vertical:** exact bundle, inference router, one native external cell/provider, `grad/medium/standard`, cache and preemption tests.
+3. **First paid inference:** OpenAI Responses and Anthropic Messages through fakes then curated real providers; Overview/Keys/Billing/Usage minimum UI.
+4. **Management/agent surface:** described Hono REST, OpenAPI/Scalar/generated client and allowlisted OAuth MCP; self-service organization deletion.
+5. **Owned vertical:** exact bundle/topology, inference router, one native external provider, single- and multi-node cell qualification, `grad/medium/standard`, cache and preemption tests.
 6. **Intelligence:** encrypted traces, analytics read model, workloads and customer-controlled replay/recommendations.
 7. **Research factory:** one always-on model program producing a negative result and qualified challenger without public alias movement.
 8. **Distribution:** customer gateway recipes first; native OpenRouter/Hugging Face only after soak, economics, terms and settlement gates.

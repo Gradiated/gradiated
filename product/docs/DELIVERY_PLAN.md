@@ -4,16 +4,16 @@ Packages are ordered to earn revenue before owned inference breadth. Each packag
 
 ## WP-00 — Repository, contracts and `grad`
 
-- Create pnpm/Rust/Python workspaces, Vite/Hono skeleton, Rust gateway workspace, research package and transparent Rust CLI.
-- Add Buf/Prost generation for hot cross-language contracts, OpenAPI/JSON goldens, artifact schemas and generated-drift CI.
+- Create pnpm/Rust/Python workspaces, Vite/Hono REST skeleton, Rust gateway workspace, research package and transparent Rust CLI.
+- Add the described-Zod route registry, OpenAPI 3.1/TypeScript-client/agent-doc generation, MCP allowlist generator, Buf/Prost hot contracts, artifact schemas and generated-drift CI.
 - Add Vitest/fast-check, nextest/proptest, pytest/Hypothesis, Testcontainers/fakes and replay artifacts.
 - Acceptance: `grad start`, bounded verify and fake E2E run unattended in CI; generated diff is empty.
 
 ## WP-01 — Organization, workspace and identity
 
-- Better Auth identity/session/recovery; organization/default-workspace creation; org/workspace membership; invitations; role checks; audit.
+- Better Auth identity/session/recovery/OAuth; organization/default-workspace creation; org/workspace membership; invitations; role checks; audit; self-service organization deletion workflow.
 - Vite/shadcn shell with organization/workspace URL state and accessibility baseline.
-- Acceptance: transaction/PBT proves exactly one Default workspace, no cross-tenant membership/key access and retry-safe signup/invite acceptance.
+- Acceptance: transaction/PBT proves exactly one Default workspace, no cross-tenant membership/key access, retry-safe signup/invite acceptance and deletion request/cancel/drain/refund/purge under crashes.
 
 ## WP-02 — Ledger, top-ups and limits
 
@@ -28,12 +28,13 @@ Packages are ordered to earn revenue before owned inference breadth. Each packag
 
 ## WP-04 — First paid direct-model slice
 
-- OpenAI-compatible public gateway, one provider/model adapter, streaming, canonical errors/usage, usage posting and quickstart.
-- Acceptance: official client + fake/real cheapest model tests cover funded success, insufficient balance, cancel, timeout, provider errors and exact settlement; no silent parameter or model change.
+- OpenAI Responses Create, Anthropic Messages and Models surfaces, OpenAI/Anthropic direct adapters, streaming, canonical errors/usage, usage posting and quickstarts.
+- Acceptance: official OpenAI and Anthropic clients plus fake/real cheapest-model tests cover funded success, tool cycles, structured output where qualified, insufficient balance, cancel, timeout, provider errors and exact settlement; unsupported fields spend nothing and no parameter/model changes silently.
 
-## WP-05 — Curated protocols/providers
+## WP-05 — Curated providers and gateway recipes
 
-- Add providers only from demand: OpenAI, Anthropic, Google candidates; `/v1/models`; capability checks; provider endpoint health and explicit eligible failover.
+- Add providers only from demand: Google and additional OpenAI/Anthropic models are candidates; capability checks, provider endpoint health and explicit eligible failover.
+- Defer Chat Completions, Embeddings, Google GenerateContent and hosted-product APIs until demonstrated demand.
 - Publish generic integration recipes for OpenAI SDK, LiteLLM, Cloudflare AI Gateway, Portkey and Helicone based on current documented interfaces.
 - Acceptance: protocol conformance/golden/PBT and official clients; adapter cannot accept a capability it cannot preserve.
 
@@ -45,13 +46,14 @@ Packages are ordered to earn revenue before owned inference breadth. Each packag
 
 ## WP-07 — Owned inference substrate
 
-- Inference router, cell-agent/runtime local protocol, signed bundle/runtime verification, exact-release health, tenant-salted always-on KV cache, SQL capacity sources/targets/allocations/cells, one-use bootstrap/CSR certificate enrollment and fake provider/cell/CA.
-- Acceptance: serving/fleet state-machine PBT, cache isolation, exact-release routing, bootstrap replay denial, certificate rotation/expiry, pre/post-output interruption behavior, lease fencing, uncertain cleanup freeze and zero provider lifecycle/CA issuance calls in serving path.
+- Inference router, cell-agent/runtime local protocol, signed bundle/runtime/topology verification, exact-release health, tenant-salted always-on KV cache, SQL capacity sources/targets/allocations/members/cells, coordinator/worker one-use joins, CSR certificate enrollment and fake provider/cell/CA.
+- Support one- and multi-node cells behind the same gateway/router contract. Multi-node loss fences the whole cell; no elastic repair or cross-provider topology.
+- Acceptance: serving/fleet state-machine PBT, two-node CPU harness, cache isolation, exact-release/topology routing, bootstrap/join replay denial, certificate rotation/expiry, partial acquire/member loss, pre/post-output interruption, lease fencing, uncertain cleanup freeze and zero provider lifecycle/CA issuance calls in serving path.
 
 ## WP-08 — First external GPU provider
 
 - One native Rust provider driver with tag/idempotency/observe/drain/release/list-owned; paid bounded qualification on one hardware/runtime class.
-- Acceptance: fake conformance plus real startup/stream/cache/preemption/cleanup evidence and zero orphans.
+- Acceptance: fake conformance plus real single-node and smallest meaningful two-node startup/collective/stream/cache/member-loss/preemption/cleanup evidence and zero orphans.
 
 ## RF-00 — Research foundations
 
@@ -75,8 +77,8 @@ Packages are ordered to earn revenue before owned inference breadth. Each packag
 
 ## RF-04 — Runtime and qualification
 
-- Language-neutral signed OCI/local protocol; cell-agent supervisor; quality, protocol, hardware, cache, load, failure, security, cost and cleanup qualification.
-- Acceptance: candidate is production-ineligible until independent qualification digest covers exact bundle/runtime/hardware classes.
+- Language-neutral signed OCI/local protocol and exact topology; cell-agent supervisor; quality, protocol, hardware/fabric, cache, load, member/failure, security, cost and cleanup qualification.
+- Acceptance: candidate is production-ineligible until independent qualification digest covers exact bundle/runtime/single-or-multi-node topology and hardware/fabric classes.
 
 ## RF-05 — Continuous factory and promotion
 
@@ -102,6 +104,7 @@ Packages are ordered to earn revenue before owned inference breadth. Each packag
 
 - Load/fault/security/DR tests, dashboards/runbooks/support flows, margin/cost evidence, accessibility/quickstart polish, production migrations and rollback.
 - Acceptance: ledger/Valkey/tenant/release invariants, multi-AZ serving, Aurora/Valkey restore/failover, trace delete, provider cleanup, protected official-client CI and five-minute onboarding pass.
+- Public owned-inference launch additionally requires one qualified single-node and one qualified multi-node topology through the same cell contract.
 
 ## Dependency graph
 

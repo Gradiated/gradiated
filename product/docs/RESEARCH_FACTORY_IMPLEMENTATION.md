@@ -123,7 +123,7 @@ S3 CAS keys derive from digest; ECR stores runtime images by digest. Keep a smal
 
 - `ArtifactDescriptor`: digest, size, media type, role/object ref;
 - `CheckpointManifest`: source/revision, shard/tokenizer/config refs and transformation lineage;
-- `RuntimeManifest`: image digest, protocol/command, software/driver bounds and cache layout;
+- `RuntimeManifest`: image digest, protocol/command, software/driver bounds, cache layout and required one-or-many-node topology/parallelism/fabric;
 - `BundleManifest`: checkpoint/runtime digests, additional artifacts, compatibility/capabilities and known limitations;
 - `QualificationReport`: policy, exact scope, gates/results/uncertainty and evaluator attestations.
 
@@ -133,7 +133,7 @@ The Rust cell independently verifies canonical bundle/runtime/image identity bef
 
 ## Qualification and promotion
 
-Evaluator policy/image/hidden datasets have separate repository/IAM ownership. Candidate agents cannot modify or inspect them beyond allowed aggregate feedback. Qualification tests the exact bundle through source/legal, model quality/correctness, operator/runtime, public protocol/metering, measured performance/economics, distributed-cell only when required, security/privacy, interruption and soak gates.
+Evaluator policy/image/hidden datasets have separate repository/IAM ownership. Candidate agents cannot modify or inspect them beyond allowed aggregate feedback. Qualification tests the exact bundle through source/legal, model quality/correctness, operator/runtime, public protocol/metering, measured performance/economics, its exact single- or multi-node cell topology, security/privacy, member/interruption failure and soak gates. Evidence never transfers across node count, fabric, accelerator, parallelism or runtime changes.
 
 One immutable S3 qualification report records gate detail; PostgreSQL stores bundle, policy version, status, report key and expiry. Node release authority verifies it, chooses public model/alias/prices/SLO/canary and requires human approval. It cannot edit qualification; research cannot move an alias.
 
@@ -152,7 +152,7 @@ Use pytest/Hypothesis domain models, Temporal replay/crash tests, fake S3/ECR/pr
 3. `RF-02`: Temporal workflows/activities, idempotency, cancellation, replay and cleanup.
 4. `RF-03`: S3 CAS plus artifact/checkpoint/runtime/bundle manifests and Rust inspection.
 5. `RF-04`: PyTorch intervention/operator testkit and profile-gated Triton path.
-6. `RF-05`: OCI runtime packaging and cell-local conformance.
+6. `RF-05`: OCI runtime/topology packaging and one/two-node cell-local conformance.
 7. `RF-06`: independent qualification report and Node release handoff.
 8. `RF-07`: operator program/evidence/bundle UI through generated client.
 9. `RF-08`: one continuous program producing a durable falsified result and one qualified dry-run challenger without moving a public alias.

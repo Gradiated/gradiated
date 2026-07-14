@@ -11,13 +11,13 @@ Direct model IDs preserve exact provider/model identity. Owned products use spar
 ## Reduced system
 
 ```text
-Vite/shadcn -> Hono/tRPC control roles -> PostgreSQL
+Vite/shadcn -> Hono REST/OpenAPI roles -> PostgreSQL
                            |              authoritative business, fleet,
                            +-> Stripe     research and seed analytics state
                            +-> S3         encrypted traces/artifacts
                            +-> Valkey projections
 
-OpenAI-compatible clients -> Rust gateway -> curated direct provider
+Responses/Messages clients -> Rust gateway -> curated direct provider
                                   |  |
                                   |  +-> Valkey reserve/settle only
                                   +-> inference router -> external GPU cell
@@ -35,14 +35,15 @@ The seed has PostgreSQL, Valkey and S3/ECR as internal durable services, with Te
 product/
   apps/
     web/                  Vite/React/Tailwind/shadcn
-    control/              Hono/tRPC and api/financial/intelligence/trace-access roles
+    control/              Hono REST/OpenAPI and api/financial/intelligence/trace-access/MCP roles
   services/
     gateway/              public Rust serving/admission/provider modules
     inference-router/     private external-cell connection/dispatch
     fleet/                SQL planner and curated provider drivers
-    cell-agent/           bundle/runtime/cache/local scheduler
+    cell-agent/           one/multi-node bundle/runtime/cache/local scheduler
   packages/
-    domain/ db/ authz/ contracts/ crypto/ testkit/ ui/
+    api-contracts/ control-client/ domain/ db/ authz/ contracts/ crypto/ testkit/ ui/
+  openapi/                generated control OpenAPI 3.1 artifact
   proto/                  only cross-language hot serving/Redis contracts
   schemas/                public protocol and bundle JSON schemas
   tests/                  conformance, PBT and official-client E2E
@@ -59,8 +60,8 @@ research/factory/         Python API/workflow/activity/evaluator, PyTorch/Triton
 4. [Product architecture](docs/ARCHITECTURE.md)
 5. [API/data contracts](docs/API_AND_DATA_CONTRACTS.md)
 6. [Control plane](docs/CONTROL_PLANE_IMPLEMENTATION.md)
-7. [Gateway](docs/GATEWAY_IMPLEMENTATION.md)
-8. [Owned inference](docs/OWNED_INFERENCE_IMPLEMENTATION.md)
+7. [REST/OpenAPI/MCP](docs/REST_OPENAPI_MCP_IMPLEMENTATION.md), [organization deletion](docs/ORGANIZATION_DELETION.md) and [public protocols](docs/PUBLIC_INFERENCE_PROTOCOLS.md)
+8. [Gateway](docs/GATEWAY_IMPLEMENTATION.md), [owned inference](docs/OWNED_INFERENCE_IMPLEMENTATION.md) and [multi-node inference](docs/MULTI_NODE_INFERENCE.md)
 9. [Research factory](docs/RESEARCH_FACTORY_IMPLEMENTATION.md)
 10. [Distribution](docs/DISTRIBUTION_IMPLEMENTATION.md)
 11. [Delivery plan](docs/DELIVERY_PLAN.md)

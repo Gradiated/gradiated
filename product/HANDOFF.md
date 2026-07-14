@@ -2,11 +2,13 @@
 
 ## Current design
 
-Grad starts as a prepaid OpenAI-compatible gateway with organizations, a Default workspace, workspace keys/limits and one curated direct model. Billing is organization-level through an immutable fixed-chart double-entry ledger. The Rust gateway depends synchronously only on Valkey for versioned snapshots, atomic reservations/concurrency and bounded streams; PostgreSQL is durable authority and Stripe webhooks are top-up authority.
+Grad starts as a prepaid gateway with OpenAI Responses and Anthropic Messages, organizations, a Default workspace, workspace keys/limits and curated direct models. Billing is organization-level through an immutable fixed-chart double-entry ledger. The Rust gateway depends synchronously only on Valkey for versioned snapshots, atomic reservations/concurrency and bounded streams; PostgreSQL is durable authority and Stripe webhooks are top-up authority.
+
+The control plane is Hono REST, not tRPC. Described Zod v4 contracts generate OpenAPI 3.1, Scalar/agent docs, the Vite client and an allowlisted OAuth MCP adapter. Organization deletion is self-service, immediately suspends admission and uses a durable refund/purge workflow.
 
 Product Intelligence retains encrypted traces by default in S3 with PostgreSQL metadata/analytics. No-retention is an explicit tighter mode and still uses ephemeral tenant-salted KV cache. ClickHouse is absent until a measured PostgreSQL benchmark fails.
 
-Owned Grad inference uses immutable `grad/<effort>/<speed>` aliases, signed bundles/runtime images, a private inference router and isolated external GPU cells. PostgreSQL owns allocation leases; Rust provider drivers reconcile native or managed-Kubernetes providers directly. There are no fleet CRDs.
+Owned Grad inference uses immutable `grad/<effort>/<speed>` aliases, signed bundles/runtime/topology images, a private inference router and isolated external GPU cells. A cell may contain one or many nodes but is always one routing/failure/cache unit. PostgreSQL owns allocation/member leases; Rust provider drivers reconcile native or managed-Kubernetes providers directly. There are no fleet CRDs.
 
 The research factory is Python/PyTorch/Triton with a private API and Temporal workflows/activities. PostgreSQL/S3 own programs, hypotheses, experiments, evidence and artifacts; Temporal owns execution history only. Independent qualification precedes Node-controlled release publication.
 
@@ -36,11 +38,11 @@ OpenRouter and later routers call the same public Grad gateway with isolated cha
 1. [Simplicity review](../docs/SIMPLICITY_REVIEW.md)
 2. [Product architecture](docs/ARCHITECTURE.md)
 3. [API/data contracts](docs/API_AND_DATA_CONTRACTS.md)
-4. [Control](docs/CONTROL_PLANE_IMPLEMENTATION.md), [gateway](docs/GATEWAY_IMPLEMENTATION.md), [owned inference](docs/OWNED_INFERENCE_IMPLEMENTATION.md), [research](docs/RESEARCH_FACTORY_IMPLEMENTATION.md), [distribution](docs/DISTRIBUTION_IMPLEMENTATION.md)
+4. [Control](docs/CONTROL_PLANE_IMPLEMENTATION.md), [REST/OpenAPI/MCP](docs/REST_OPENAPI_MCP_IMPLEMENTATION.md), [organization deletion](docs/ORGANIZATION_DELETION.md), [gateway protocols](docs/PUBLIC_INFERENCE_PROTOCOLS.md), [owned inference](docs/OWNED_INFERENCE_IMPLEMENTATION.md), [multi-node](docs/MULTI_NODE_INFERENCE.md), [research](docs/RESEARCH_FACTORY_IMPLEMENTATION.md), [distribution](docs/DISTRIBUTION_IMPLEMENTATION.md)
 5. [Delivery packages](docs/DELIVERY_PLAN.md) and [testing](docs/TESTING_AND_CI.md)
 6. Infrastructure [platform blueprint](../infra/docs/PLATFORM_IMPLEMENTATION.md)
 
-First milestone is WP-00–04: a funded request through one direct model with exact ledger reconciliation and official-client CI. Do not make owned inference, a router listing or research automation block that milestone.
+First milestone is WP-00–04: funded Responses and Messages requests through curated direct models with exact ledger reconciliation and official-client CI. Do not make owned inference, a router listing or research automation block that revenue milestone. Multi-node is nevertheless required before public owned Grad inference.
 
 ## Required verification
 

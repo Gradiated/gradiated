@@ -8,16 +8,20 @@ The complete required field list is [the minimal persistent model](../../docs/SI
 
 ## Dependencies and source layout
 
-Use Node LTS, strict TypeScript, Hono, tRPC, Better Auth, Drizzle over `node-postgres`, Zod at untrusted boundaries, React/Vite, TanStack Router/Query, React Hook Form, Tailwind and shadcn/ui. Do not add a second ORM, a public REST surface without a consumer, ClickHouse or another product event bus.
+Use Node LTS, strict TypeScript, Hono, `@hono/zod-openapi`, Zod v4, Better Auth, Drizzle over `node-postgres`, React/Vite, TanStack Router/Query, React Hook Form, Tailwind and shadcn/ui. Generate OpenAPI 3.1, the TypeScript client and the allowlisted MCP manifest from one route/schema registry. Do not add tRPC, a second ORM/validator, ClickHouse or another product event bus.
 
 ```text
 product/
   apps/
     web/src/{routes,features,components,lib}/
     control/src/
-      roles/{api,financial,intelligence,trace-access}.ts
-      transport/{hono,trpc,stripe}.ts
+      roles/{api,financial,intelligence,trace-access,mcp}.ts
+      http/{routes,route-manifest,errors,idempotency,pagination}.ts
+      transport/{hono,stripe}.ts
+      mcp/{generator,server,rest-client}.ts
   packages/
+    api-contracts/src/
+    control-client/src/{generated,client}.ts
     domain/src/{tenancy,keys,billing,catalog,traces,recommendations,distribution}/
     db/src/{schema,repositories,migrations,queries}.ts
     authz/src/
@@ -64,6 +68,8 @@ The outbox schema is exactly `id, type, schema_version, payload_json, occurred_a
 ```ts
 interface TenancyService {
   createOrganization(name: string, actor: SignedInActor): Promise<OrganizationCreated>;
+  requestOrganizationDeletion(input: DeleteOrganization, actor: RecentOwnerActor): Promise<DeletionView>;
+  cancelOrganizationDeletion(id: OrganizationId, actor: RecentOwnerActor): Promise<void>;
   createWorkspace(input: CreateWorkspace, actor: Actor): Promise<Workspace>;
   updateWorkspace(input: UpdateWorkspace, actor: Actor): Promise<Workspace>;
   inviteMember(input: InviteMember, actor: Actor): Promise<Invitation>;
@@ -77,6 +83,8 @@ interface KeyService {
 ```
 
 Organization creation is one transaction: organization, owner membership, one non-deletable Default workspace, owner workspace membership, audit and outbox. Better Auth's user ID is the product user ID; do not create another user table.
+
+Organization deletion is self-service and immediately suspends new admission. A durable Node worker drains reservations, reconciles/refunds unused credit, cryptographically deletes traces and redacts product identity while retaining pseudonymous statutory financial evidence. It does not use Temporal. The API/state/worker contract and PBT are [specified separately](ORGANIZATION_DELETION.md).
 
 Roles are intentionally small:
 
@@ -163,14 +171,11 @@ Recommendations are one immutable summary tied to a source model and candidate r
 
 Hono is an authenticated BFF for the private generated Python research API. Python remains the sole normal writer for program/hypothesis/campaign/experiment/evidence/bundle/qualification state. Hono may read approved research views and send bounded operator commands, but has no mutation repository for research tables. Temporal belongs behind the Python service and never becomes a Node dependency.
 
-## tRPC and UI
+## REST, generated clients, MCP and UI
 
-Seed routers are:
+Seed resources are session, organizations/deletion, members/invitations, workspaces/workspace members, API keys, billing, models, usage/traces and later recommendations/evaluations. Each route declares method/path, stable operation ID, auth, idempotency, described Zod request/responses/errors and explicit MCP exposure. CI fails generated OpenAPI if any operation or field lacks a description.
 
-- `session`, `organizations`, `members`, `workspaces`, `workspaceMembers`;
-- `apiKeys`, `billing`, `usage`, `traces`;
-- `catalog` for customer reads and operator-only mutations;
-- `recommendations`, `distribution`, and an operator `research` BFF when their packages arrive.
+The Vite app uses only the `openapi-typescript`/`openapi-fetch` generated client. Human docs use Scalar; `/api/llms.txt` is generated from the same artifact. The stateless Streamable HTTP MCP role forwards OAuth-authenticated calls through the REST API and has no repositories/domain imports. One-time secrets, trace plaintext, checkout, organization deletion and operator/destructive actions are not MCP tools at launch. See [the complete implementation blueprint](REST_OPENAPI_MCP_IMPLEMENTATION.md).
 
 Routes are `/`, `/keys`, `/usage`, `/billing`, `/settings/organization`, and `/settings/workspaces/:id`. Product Intelligence detail lives under `/usage/:requestId`; do not build a second observability application. The Default workspace is implicit until another workspace exists. Client query keys begin with organization/workspace and switching clears scoped cache.
 
@@ -186,13 +191,13 @@ Routes are `/`, `/keys`, `/usage`, `/billing`, `/settings/organization`, and `/s
 
 Use Vitest/fast-check/Testcontainers and Playwright. Required properties cover tenancy isolation, exactly one Default workspace, role commands, key lifecycle, Stripe event reorder/duplicates, ledger/balance equality, stream crash/redelivery, projection rebuild, trace retention/delete and no automatic recommendation switch.
 
-1. `CP-00`: schema, migrations, UoW/outbox/idempotency and testkit.
-2. `CP-01`: Better Auth, organizations/Default workspace/memberships and RBAC.
+1. `CP-00`: schema, migrations, UoW/outbox/idempotency, REST route manifest/problem details and testkit.
+2. `CP-01`: Better Auth, organizations/Default workspace/memberships, self-service deletion and RBAC.
 3. `CP-02`: API keys and workspace policy/projection.
 4. `CP-03`: top-up, fixed-chart ledger/balance and Stripe state-machine PBT.
 5. `CP-04`: financial stream consumer and reconciliation.
 6. `CP-05`: immutable model releases/aliases/qualification activation.
-7. `CP-06`: Vite/shadcn keys/billing/usage UI.
+7. `CP-06`: generated OpenAPI/client/docs, Vite/shadcn keys/billing/usage UI and allowlisted MCP role.
 8. `CP-07`: encrypted trace persistence/detail/deletion and PostgreSQL analytics.
 9. `CP-08`: recommendations/evaluations, distribution and research API UI as later slices.
 

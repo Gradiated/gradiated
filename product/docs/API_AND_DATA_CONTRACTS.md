@@ -9,7 +9,7 @@
 | prepaid credit and settled usage | PostgreSQL double-entry ledger/balance/usage records | Valkey hot balance/reservations/billing stream |
 | model catalog/releases/aliases | PostgreSQL immutable releases | Valkey alias/release snapshots |
 | retained trace authorization/metadata | PostgreSQL | encrypted S3 object; Valkey trace stream/grant nonce |
-| capacity targets/allocations/cells | PostgreSQL | ephemeral authenticated in-memory router registry |
+| capacity targets/allocations/members/cells | PostgreSQL | ephemeral authenticated in-memory router registry |
 | research experiments/jobs/bundles/qualification | PostgreSQL | S3 CAS/reports and ECR images |
 | research workflow execution/timers/retries | Temporal | PostgreSQL domain IDs and S3 artifact refs |
 | customer usage/workload analytics | PostgreSQL indexed queries/rollups | none at seed |
@@ -20,25 +20,25 @@ ClickHouse, fleet CRDs and Kubernetes etcd are not application authorities or se
 
 ### Customer control API
 
-The Vite application uses Hono/tRPC. tRPC routers are `session`, `organizations`, `members`, `workspaces`, `workspaceMembers`, `apiKeys`, `billing`, `usage`, `traces`, and later `recommendations`, `distribution`, `researchCommands`.
+The Vite application, CLI and automation use the versioned Hono REST API under `/api/v1`. Described Zod v4 request/response schemas generate the OpenAPI 3.1 artifact, Scalar reference, typed TypeScript client and an explicitly allowlisted MCP adapter. There is no tRPC surface or second MCP business implementation. The complete route, description, error, generation and authorization contract is [REST, OpenAPI and MCP](REST_OPENAPI_MCP_IMPLEMENTATION.md).
 
-Every protected call receives organization/workspace context from the authenticated server session. Browser IDs select a resource but never establish authority. Unsafe cookie-authenticated calls enforce Origin/Fetch Metadata and CSRF policy. Stripe webhook is raw-body signed REST. Do not publish a management REST API until an external consumer exists.
+Every protected call receives organization/workspace context from the authenticated session or short-lived OAuth token. URL/body IDs select a resource but never establish authority. Unsafe cookie-authenticated calls enforce Origin/Fetch Metadata and CSRF policy. Stripe webhook remains raw-body signed REST. Every externally visible schema property, operation and error must be described and example-checked in generated OpenAPI.
 
 ### Public inference API
 
-Wire authority is versioned JSON/OpenAPI plus golden fixtures. Build OpenAI Models/Chat first, then Responses/Embeddings, Anthropic Messages and only then Google GenerateContent. Unsupported fields/capabilities fail before admission; internal Protobuf never defines public JSON behavior.
+Wire authority is versioned JSON/OpenAPI plus golden fixtures. Launch `GET /v1/models`, OpenAI Responses Create and Anthropic Messages, streaming and non-streaming. Chat Completions, Embeddings, Google GenerateContent and other hosted-product surfaces are deferred. Unsupported fields/capabilities fail before admission; internal Protobuf never defines public JSON behavior. The exact stateless Responses and Messages profiles are [specified here](PUBLIC_INFERENCE_PROTOCOLS.md).
 
 ### Native channel API
 
-OpenRouter uses the normal public inference path with a channel credential plus a channel-authenticated catalog renderer. Channel credentials never work at inference router/cells or tRPC.
+OpenRouter uses the normal public inference path with a channel credential plus a channel-authenticated catalog renderer. Channel credentials never work at inference router/cells or the management REST/MCP surface.
 
 ## Minimal PostgreSQL schema
 
 The exhaustive required-field and removal rationale is [the simplicity review](../../docs/SIMPLICITY_REVIEW.md#minimal-persistent-model). Canonical seed tables are:
 
 ```text
-Better Auth user/session/recovery tables
-organizations, organization_members, invitations
+Better Auth user/session/recovery/OAuth-provider tables
+organizations, organization_members, invitations, organization_deletions
 workspaces, workspace_members, workspace_models, api_keys
 organization_balances, channel_balances, ledger_accounts, ledger_transactions, ledger_entries
 topup_intents, payment_events, usage_records
@@ -47,7 +47,7 @@ model_aliases, qualification_runs
 traces, recommendations, evaluations
 distribution_channels, channel_credentials, channel_catalog
 channel_statements                         # only with first native contract
-capacity_sources, capacity_targets, allocations, cells
+capacity_sources, capacity_targets, allocations, allocation_members, cells
 research_programs, research_hypotheses, research_campaigns
 experiment_specs, experiment_runs, evidence_reports
 bundles, bundle_qualifications
@@ -59,6 +59,7 @@ Rules:
 - USD integer micro-units only at seed; JavaScript uses `bigint`, Rust/Python checked integer types.
 - Tables use explicit foreign keys and unique business/idempotency keys. Tenant indexes start organization/workspace.
 - Exactly one Default workspace per organization; key organization must match workspace; workspace membership requires organization membership.
+- Organization deletion is a self-service, idempotent workflow that suspends admission immediately, reconciles/refunds money, destroys payload keys and preserves only pseudonymized legally required financial evidence.
 - No free-form metadata column without an implemented bounded consumer. Validated JSON is used only for release capabilities, bounded usage-attempt summaries, evaluation authority/stops/results, bounded research scopes/specifications and immutable provider statements.
 - Mutable operational rows are allowed for usage/job/allocation status; money/evidence artifacts remain append-only or content-addressed.
 - Every new field must name its writer, reader, retention, migration default and property/example test.
@@ -167,7 +168,7 @@ S3 object refs are content-addressed. Runtime image is an ECR digest and impleme
 
 Gateway envelope contains trace/request/tenant IDs, capture policy/version, ciphertext, wrapped data key, nonce/algorithm/key ID, bounded safe metadata and created/expiry. The trace worker stores ciphertext in S3 and metadata/key state in PostgreSQL. No plaintext enters Valkey, PostgreSQL, logs or analytics.
 
-No-retention emits no payload but usage remains. Trace detail authorization checks PostgreSQL membership/deletion, issues a short-lived signed single-object grant and consumes its nonce once in Valkey. Deletion destroys the wrapped key and object; usage facts remain unless separate account deletion policy requires removal.
+No-retention emits no payload but usage remains. Trace detail authorization checks PostgreSQL membership/deletion, issues a short-lived signed single-object grant and consumes its nonce once in Valkey. Deletion destroys the wrapped key and object; usage facts remain unless the [organization-deletion policy](ORGANIZATION_DELETION.md) removes or pseudonymizes them. Organization deletion also rotates cache scope so old ephemeral KV state is unreachable before TTL/drain cleanup.
 
 ## PostgreSQL analytics contract
 
@@ -185,6 +186,6 @@ Seed queries read `usage_records` and `traces`. If measured volume requires it, 
 
 ## Verification
 
-Properties cover tenant foreign keys, Default workspace uniqueness, balanced transactions/credit projection/reconciliation equality, event idempotency/reorder, snapshot epoch rebuild, alias canary determinism, trace encryption/delete, Temporal replay/domain reconciliation, allocation leases, canonical manifest digests and cross-language serving events.
+Properties cover tenant foreign keys, Default workspace uniqueness, self-service organization deletion/refund/purge, balanced transactions/credit projection/reconciliation equality, event idempotency/reorder, snapshot epoch rebuild, REST/OpenAPI/MCP generation and authorization, both launch inference protocols, alias canary determinism, trace encryption/delete, Temporal replay/domain reconciliation, single/multi-node allocation leases/member cleanup, canonical manifest digests and cross-language serving events.
 
 The schema is complete when every persisted field has a writer, reader and test—not when it models every future possibility.

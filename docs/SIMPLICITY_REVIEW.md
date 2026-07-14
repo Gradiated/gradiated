@@ -59,7 +59,8 @@ ClickHouse is not an “optional path” implemented behind an interface at seed
 | Dependency | Decision | Boundary |
 | --- | --- | --- |
 | Vite + React + TypeScript | Keep | User-requested static console. |
-| Hono + tRPC | Keep | User-requested first-party API/BFF. Public management REST is added only when an external consumer exists. |
+| Hono REST + `@hono/zod-openapi` | Keep | One described Zod route registry serves the Vite app and generates OpenAPI 3.1, clients, docs and a security-allowlisted MCP adapter. tRPC is removed. |
+| Scalar + OpenAPI TypeScript + MCP SDK | Keep narrowly | Build-time/docs/client adapters over the REST artifact; none owns business logic or durable state. |
 | TanStack Query/Router | Keep | Server cache and URL-scoped organization/workspace state. |
 | Tailwind + shadcn/ui | Keep | User-requested single UI system. |
 | React Hook Form | Keep | It removes repetitive form state/error plumbing; use it only for forms and share Zod transport schemas. |
@@ -167,7 +168,7 @@ Remove `reservation_id`, `route_release_id`, separate manifest digest, public mo
 
 ### Artifact and runtime contract
 
-Use a small compositional schema set: generic `ArtifactDescriptor`, `CheckpointManifest`, `RuntimeManifest`, `BundleManifest`, and immutable `QualificationReport`. Checkpoint/runtime detail can evolve and be reused without bloating every bundle. The bundle contains:
+Use a small compositional schema set: generic `ArtifactDescriptor`, `CheckpointManifest`, `RuntimeManifest`, `BundleManifest`, and immutable `QualificationReport`. Checkpoint/runtime detail can evolve and be reused without bloating every bundle. `RuntimeManifest` contains the exact one-or-many-node topology, parallelism, collective/fabric, command, software bounds and cache layout. The bundle contains:
 
 ```text
 schema_version
@@ -193,8 +194,9 @@ Fields below are the seed schema contract. `id` is a stable opaque identifier; a
 
 | Model | Required fields | Removed/deferred |
 | --- | --- | --- |
-| Better Auth user/session tables | library-required identity/session/recovery fields | duplicate product `users` table |
-| `organizations` | `id`, `name`, `status`, `stripe_customer_id?`, `created_at` | global policy blob, risk enum, closure workflow fields until closure exists |
+| Better Auth user/session/OAuth-provider tables | library-required identity/session/recovery/OAuth client-consent-token fields | duplicate product `users` or custom OAuth token tables |
+| `organizations` | `id`, `name`, `status`, `stripe_customer_id?`, `created_at` | global policy blob, risk enum and duplicated deletion-phase fields |
+| `organization_deletions` | `id`, `organization_id`, `requested_by`, `status`, `requested_at`, `execute_after`, `completed_at?`, `cancelled_at?`, `last_error_code?` | generic workflow engine/step/event rows; one idempotent workflow row is required for refund/purge recovery |
 | `organization_members` | `organization_id`, `user_id`, `role`, `status`, `created_at` | surrogate membership ID, per-action grants |
 | `invitations` | `id`, `organization_id`, `email`, `role`, `token_digest`, `expires_at`, `accepted_at?`, `created_by`, `created_at` | invitation state enum derivable from dates |
 | `workspaces` | `id`, `organization_id`, `name`, `status`, `is_default`, `data_mode`, `retention_days`, `monthly_limit_micros?`, `concurrency_limit`, `policy_version`, `created_at` | independent wallet, daily/weekly/lifetime budget records, route builder, observability settings blob |
@@ -260,6 +262,7 @@ Workspace and channel accounting remain separate keys/account charts and foreign
 | `capacity_sources` | `id`, `provider`, `driver`, `region`, `config_ref`, `status`, `hourly_budget_micros`, `created_at` | Kubernetes pool CR, provider capability duplication and dynamic plugin discovery |
 | `capacity_targets` | `release_digest`, `region`, `capacity_class`, `minimum_cells`, `maximum_cells`, `budget_micros_hour`, `updated_at` | generated intent generations and separate ownership epochs |
 | `allocations` | `id`, `source_id`, `provider_allocation_id?`, `release_digest`, `desired_state`, `observed_state`, `lease_epoch`, `lease_owner?`, `lease_expires_at?`, `bootstrap_token_digest?`, `bootstrap_expires_at?`, `quoted_micros_hour?`, `created_at`, `last_error_code?`, `cleanup_state` | CRD spec/status mirror, bid/history/event tables until required by provider contract |
+| `allocation_members` | `allocation_id`, `ordinal`, `role`, `provider_resource_id?`, `observed_state`, `bootstrap_token_digest?`, `bootstrap_expires_at?`, `joined_at?`, `last_observed_at?`, `cleanup_state` | pod/IP/rank metrics and generic topology tables; member rows are required to acquire and prove cleanup of multi-node resources |
 | `cells` | `id`, `allocation_id`, `release_digest`, `region`, `status`, `capacity_class`, `attestation_digest`, `identity_serial`, `identity_expires_at`, `last_observed_at`, `drain_at?` | ephemeral connection ID, signed target document, pod/instance topology and per-request state |
 
 The router uses an ephemeral in-memory registry built from authenticated cell connections/heartbeats. PostgreSQL retains lifecycle observations but is not consulted per request. A cell generates its private key and exchanges a one-use allocation-bound token/CSR at the enrollment role for a short-lived AWS Private CA certificate; rotation uses the current identity plus active allocation. mTLS allocation identity and exact bundle/release attestation are the trust boundary. Valkey cell projections, per-target signatures and a dedicated route-signing service are removed. Signed bundles and exact release digests remain mandatory.
@@ -290,7 +293,8 @@ Hypothesis is durable scientific intent, campaign is a real budget/authority env
 
 ## Simplified state machines
 
-- Organization/workspace/key: `active -> suspended -> closed`; seed UI implements active/suspended and revocation, while closure is an operator runbook until legal deletion requirements are fixed.
+- Organization: `active -> deletion_pending -> deleted`, with cancellation restoring `active` before irreversible purge; suspension remains an operator policy state. Workspace/key retain their small active/suspended/revoked states.
+- Organization deletion: `pending -> running -> completed | blocked`, with `pending -> cancelled`; blocked retries after the financial/external condition is repaired.
 - Top-up: `created -> completed | failed | expired`; refunds/chargebacks append entries and do not reopen the intent.
 - Usage: `reserved -> settled | abandoned`; a correction is an immutable balanced ledger transaction.
 - Model release: `draft -> active -> retired`; aliases hold stable/canary pointers. Rollback is a pointer change.
@@ -306,23 +310,25 @@ Do not add a state unless it changes an allowed command, customer display, billi
 Simplification does not remove the product's differentiators or safety:
 
 - organization billing with multiple workspaces, memberships, keys, limits and a Default workspace;
+- owner self-service organization deletion with admission suspension, unused-credit refund, cryptographic payload deletion and pseudonymous financial retention;
 - verified prepaid top-ups, fail-closed atomic admission, low-balance concurrency and reconciliation;
-- OpenAI-compatible direct onboarding, exact provider/model identity and strict capabilities;
+- OpenAI Responses and Anthropic Messages direct onboarding, exact provider/model identity and strict capabilities;
 - first-party `grad/<effort>/<speed>` aliases, immutable releases and owned external-GPU serving;
 - default encrypted Product Intelligence plus opt-in no-retention and always-on isolated KV cache;
 - customer-visible traces, usage, workload summaries and explicit recommendations;
 - direct use, customer-configured gateways and native OpenRouter distribution;
 - always-on bounded research, exact bundle reproducibility, independent qualification and human public promotion;
+- single- and multi-node external GPU cells behind one exact-release serving contract;
 - property-based/state-machine tests and protected real-provider/client checks.
 
 ## Implementation order after subtraction
 
 1. One repository/toolchain, PostgreSQL, Valkey, S3 fake, shared contracts and PBT replay.
-2. Better Auth, organization/Default workspace/key, Stripe top-up, fixed-chart double-entry ledger and Redis projection.
-3. Rust OpenAI Models/Chat gateway through one curated direct provider with reserve/settle/reconcile and PostgreSQL usage UI.
+2. Better Auth, described Hono REST/OpenAPI client/docs, organization/Default workspace/key/self-service deletion, Stripe top-up, fixed-chart double-entry ledger and Redis projection.
+3. Rust Models/Responses/Messages gateway through curated direct providers with reserve/settle/reconcile and PostgreSQL usage UI.
 4. Trace encryption/S3/detail and PostgreSQL usage/workload views; no ClickHouse/projector.
-5. Remaining public protocols and customer-gateway recipes only when demanded.
-6. One bundle/runtime, inference router, one capacity-source driver and one `grad/medium/standard` alias; no CRDs.
+5. Generated allowlisted MCP role plus customer-gateway recipes; other inference protocols only when demanded.
+6. One bundle/runtime, inference router, one capacity-source driver, single/multi-node cell qualification and one `grad/medium/standard` alias; no CRDs.
 7. Python research API + Temporal workflow/activity workers and one continuous research program; Kueue/JobSet only for matching Kubernetes jobs.
 8. One native OpenRouter channel using the shared admission/entry core.
 9. Terragrunt/Terraform, EKS Auto Mode, Argo, KEDA and policy-controller production qualification, recovery and measured autoscaling.

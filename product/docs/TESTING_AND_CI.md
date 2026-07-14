@@ -11,7 +11,7 @@ Agents and CI—not the product owner—must be able to verify every change. Tes
 | TypeScript | Vitest | fast-check | Testcontainers, Playwright, MSW/fakes |
 | Rust | cargo nextest | proptest + proptest-state-machine | real Valkey/PostgreSQL, fake providers/cells |
 | Python | pytest | Hypothesis | Temporal test server, tiny model/runtime, fake compute |
-| contracts | Buf/schema/OpenAPI lint | generated value/event sequences | cross-language goldens/conformance |
+| contracts | Buf/schema/OpenAPI lint + description gate | generated value/event/REST sequences | cross-language goldens, generated client and MCP conformance |
 | infrastructure | Terraform/Helm/policy tests | lifecycle/fault models where useful | Kind and budgeted staging drills |
 
 Every property failure prints the seed, minimal counterexample/shrink path and exact replay command. CI uploads a small sanitized replay artifact. Fixed failures become deterministic regression fixtures.
@@ -55,6 +55,16 @@ Paid jobs have explicit secret presence, spend cap, timeout, concurrency cap, sy
 - invitation acceptance/retry/expiry cannot create duplicate membership;
 - revoked/expired keys and removed members cannot authorize;
 - role checks are monotonic and deny unknown actions.
+- self-service organization deletion suspends admission immediately, cannot duplicate refunds/purge, cannot resurrect revoked keys and leaves only allowed pseudonymous financial evidence.
+
+### REST, OpenAPI and MCP
+
+- every route has stable operation ID, auth/idempotency classification, success/errors and descriptions for every exposed field;
+- generated OpenAPI, TypeScript client, Scalar/agent docs and MCP manifest come from the same route registry and have no drift;
+- mutation retries under the same idempotency key return one result; conflicting inputs fail;
+- browser cookies require CSRF/origin checks while OAuth bearer calls preserve actor/organization scope;
+- MCP can invoke only explicitly exposed operations through REST middleware; destructive/sensitive routes remain unreachable;
+- MCP annotations match route metadata but server authorization remains decisive.
 
 ### Ledger and top-ups
 
@@ -82,6 +92,7 @@ Run the same model against pure Rust state and a real Valkey script/function. In
 
 ### Protocol and provider adapters
 
+- OpenAI Responses Create and Anthropic Messages official-client profiles pass streaming/non-streaming, tools, structured output/reasoning where qualified, usage and native errors;
 - streaming and non-streaming canonical outputs agree;
 - chunk ordering/finish/usage/errors are valid under arbitrary provider chunk boundaries;
 - unsupported capabilities fail before provider spend;
@@ -89,6 +100,7 @@ Run the same model against pure Rust state and a real Valkey script/function. In
 - Grad alias resolves only to an active qualified immutable release;
 - cancellation/deadline/backpressure cannot double settle;
 - arbitrary headers/tool payloads do not leak to logs or traces outside allowlist.
+- Responses `store: true`/stateful fields and unsupported Anthropic beta/hosted-tool fields reject before reserve at launch.
 
 Use official wire fixtures plus generated canonical requests. Each adapter declares capabilities and must pass a shared conformance suite; no adapter-specific exception silently weakens semantics.
 
@@ -124,6 +136,9 @@ There is no ClickHouse/projector test matrix. Add one only with the reintroducti
 - provider/Kubernetes discovery is absent from request path;
 - interruption retries only before output and settles once;
 - KV cache key includes tenant/channel/release/retention-class and cache-layout epoch; no-retention still hits cache but persists no content.
+- a multi-node cell is never ready until every unique rank joins and exact topology/fabric/collective checks pass;
+- partial acquire, duplicate rank, member loss and uncertain per-member cleanup fence the whole cell and cannot leak a provider resource;
+- gateway/router behavior is identical for one- and multi-node cells and never exposes ranks/provider members.
 
 Test provider-independent state first, then fake native/managed-Kubernetes APIs. Kind tests only the latter; no fleet CRDs exist.
 
@@ -155,6 +170,8 @@ Fake CI must cover:
 8. research negative experiment -> sealed evidence -> no promotion;
 9. qualified challenger -> operator approval -> canary alias -> rollback;
 10. OpenRouter channel request -> isolated admission/cache/trace -> statement reconciliation.
+11. owner requests organization deletion -> admission closes -> usage drains -> balance refunds -> traces cryptographically delete -> access cannot return.
+12. exact multi-node Grad release -> all-rank readiness -> worker loss -> cell fence/pre-output retry or post-output failure -> one settlement -> zero-orphan cleanup.
 
 ## CI workflow
 

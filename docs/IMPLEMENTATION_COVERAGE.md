@@ -56,13 +56,15 @@ The original plan had excellent invariant and system-boundary coverage, but only
 | Capability | Authority / source of truth | Implementing boundary | Detailed contract | Status |
 | --- | --- | --- | --- | --- |
 | Sign-in/session/recovery | Better Auth tables for identity/session; product user row for status/profile | Hono auth mount + Vite routes | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint |
+| REST/OpenAPI/generated client/MCP | described Zod route registry and committed OpenAPI 3.1 | Hono API, generated client/docs and OAuth MCP REST adapter | [REST/OpenAPI/MCP](../product/docs/REST_OPENAPI_MCP_IMPLEMENTATION.md) | Blueprint |
 | Organization/default workspace/memberships | PostgreSQL product domain | TS domain services/repositories | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint |
+| Self-service organization deletion | PostgreSQL deletion workflow + ledger; S3/KMS payload custody | Hono owner API + financial/intelligence workers | [Organization deletion](../product/docs/ORGANIZATION_DELETION.md) | Blueprint; legal retention policy gate |
 | Workspace policy/budgets | PostgreSQL; versioned Redis projection for serving | TS policy service + projector | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint |
 | API-key lifecycle | PostgreSQL keyed digest; Redis lookup projection | TS key service + Rust auth resolver | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md), [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md) | Blueprint |
 | Top-up/refund/chargeback | PostgreSQL balanced ledger and Stripe event record | Hono webhook + financial worker | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint; fraud/tax human gate |
 | Admission/reservation/settlement | Redis atomic projection and event stream; PostgreSQL eventual ledger authority | Rust gateway + Node financial worker | [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md), [API/data](../product/docs/API_AND_DATA_CONTRACTS.md) | Blueprint; managed-Valkey measured gate |
 | Reconciliation/projection rebuild | PostgreSQL ledger/config plus fenced Redis epoch | financial worker/operator command | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md), [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md) | Blueprint |
-| Public OpenAI/Anthropic/Google wire | versioned public schemas and conformance fixtures | Rust protocol crates | [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md) | Blueprint; per-provider conformance gate |
+| Public Responses/Messages wire | versioned public schemas and conformance fixtures | Rust protocol modules | [Protocol contract](../product/docs/PUBLIC_INFERENCE_PROTOCOLS.md), [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md) | Blueprint; per-provider conformance gate |
 | Principal authentication | credential lookup selects workspace or channel principal | Rust gateway admission | [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md) | Blueprint |
 | Catalog/capability/model resolution | PostgreSQL model/release authority; Redis immutable projection | Node ModelOps + Rust resolver | [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md) | Blueprint |
 | Direct provider dispatch | exact provider/model endpoint qualification | Rust provider adapter | [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md) | Blueprint; model/date-specific live gate |
@@ -76,6 +78,7 @@ The original plan had excellent invariant and system-boundary coverage, but only
 | Inference router transport | mTLS exact-release cell attestation + ephemeral connection registry | Rust inference router | [Owned inference](../product/docs/OWNED_INFERENCE_IMPLEMENTATION.md) | Blueprint; direct/tunnel transport spike |
 | Cell lifecycle/runtime/cache | signed bundle and observed placement | Rust cell agent supervising runtime child | [Owned inference](../product/docs/OWNED_INFERENCE_IMPLEMENTATION.md) | Blueprint; runtime-mode/cache gates |
 | Capacity target/provider allocation | PostgreSQL target/allocation/cell state | fleet planner + provider-scoped drivers | [Owned inference](../product/docs/OWNED_INFERENCE_IMPLEMENTATION.md) | Blueprint; provider-specific gates |
+| Multi-node topology/members | signed runtime topology plus PostgreSQL allocation members | provider driver + coordinator/worker cell agent | [Multi-node inference](../product/docs/MULTI_NODE_INFERENCE.md) | Blueprint; exact two-node GPU measured gate |
 | Model program/hypothesis portfolio | PostgreSQL research domain | private Python research control | [Research factory](../product/docs/RESEARCH_FACTORY_IMPLEMENTATION.md) | Blueprint |
 | Experiment execution/evidence | immutable experiment specifications/runs plus sealed evidence | Python API/workers, PostgreSQL domain state, Temporal execution | [Research factory](../product/docs/RESEARCH_FACTORY_IMPLEMENTATION.md) | Blueprint |
 | Bundle build/qualification | canonical JSON manifests/S3 CAS/ECR/signatures; PostgreSQL decisions | Python artifact/eval + Rust inspector/launcher | [Research factory](../product/docs/RESEARCH_FACTORY_IMPLEMENTATION.md) | Blueprint; portability/operator gates |
@@ -103,7 +106,10 @@ The original plan had excellent invariant and system-boundary coverage, but only
 | A 4×4 effort/speed grammar implied sixteen launch fleets. | The grammar remains stable, but catalog entries are sparse. Launch only measured products—initially `grad/medium/standard` and at most one measured adjacent speed—then add cells independently. |
 | Six AWS accounts looked mandatory before seed work could start. | Keep four: management, security/log, non-production and production. Split staging/shared-services only when isolation or qualification requires it. |
 | ClickHouse looked mandatory for product analytics. | Remove its adapter/projector/schema from seed. PostgreSQL indexed usage views and measured rollups are the product implementation; reconsider only after a failing benchmark. |
-| OpenAI, Anthropic, Google and all endpoint families appeared as one first implementation milestone. | Contract them all, but build vertically: OpenAI Models/Chat first; Responses/Embeddings next; Anthropic Messages; Google native last. No protocol is advertised until its fixture and live gate pass. |
+| OpenAI, Anthropic, Google and all endpoint families appeared as one first implementation milestone. | Launch only Models, OpenAI Responses Create and Anthropic Messages. Chat, Embeddings, Google and hosted/stateful product APIs are deferred until demand and no protocol is advertised until its fixture/live gate passes. |
+| tRPC was first-party-only while agents/external automation needed a structured API. | Remove tRPC. One Hono REST/Zod registry generates OpenAPI 3.1, the Vite client, Scalar/agent docs and an explicitly allowlisted MCP adapter. |
+| Organization closure was operator-only despite a customer expectation of self-service deletion. | Add one durable deletion row/workflow: suspend immediately, drain/reconcile/refund, cryptographically purge and retain only pseudonymous statutory financial evidence. |
+| Multi-node was deferred even though frontier/open-weight releases may not fit one node. | Make one- and multi-node cells first-class before public owned inference. Preserve one cell/gateway contract and qualify exact topologies; do not force small releases onto multiple nodes. |
 | `main` direct pushes seemed to imply automatic production deployment. | Direct push updates source and runs checks/dev plans. Staging/prod infrastructure apply and production release remain protected, reviewed external actions. |
 
 ## Seed process topology and simplifications
@@ -112,17 +118,17 @@ Logical responsibilities do not automatically become independent microservices. 
 
 | Artifact/image | Role entrypoints / deployments |
 | --- | --- |
-| `control` Node image | `api`, `financial`, `intelligence`, `trace-access`; separate deployments only where IAM/scaling differs |
+| `control` Node image | `api`, `financial`, `intelligence`, `trace-access`, `mcp`; separate deployments only where IAM/scaling differs |
 | `gateway` Rust image | public gateway |
 | `inference-router` Rust image | private regional cell connection/dispatch boundary |
 | `fleet` Rust image | SQL planner plus one provider-driver deployment per provider credential |
-| `cell-agent` Rust image | cell router, bundle launcher and runtime supervisor; model runtime is a child/container, not another public service |
+| `cell-agent` Rust image | one/multi-node coordinator, cell router, bundle launcher and runtime supervisor; model runtime/workers are children/containers, not public services |
 | `research` Python image | private API, Temporal workflow/activity and evaluator role entrypoints; evaluator retains separate credentials |
 | `web` static artifact | Vite assets in S3/CloudFront |
 
 This preserves IAM and scaling isolation while avoiding nine unrelated codebases. Split an image only after dependency weight, security review or measured scaling justifies it.
 
-Explicit seed exclusions remain: service mesh, Kafka, Argo Workflows, active/active money, customer BYOK, arbitrary provider routing, global customer-content training, remote/distributed KV cache, multi-node inference unless the first model requires it, LoRA multiplexing, automatic public model promotion and unbounded always-running paid GPUs. The research control loop remains always on but every compute activity is budgeted.
+Explicit seed exclusions remain: service mesh, Kafka, Argo Workflows, active/active money, customer BYOK, arbitrary provider routing, global customer-content training, remote/cross-cell durable KV cache, elastic multi-node rank repair, LoRA multiplexing, automatic public model promotion and unbounded always-running paid GPUs. The research control loop remains always on but every compute activity is budgeted.
 
 ## Unresolved measured and human gates
 

@@ -28,6 +28,7 @@ enum Principal {
 
 struct CanonicalRequest {
     request_id: Id,
+    protocol: PublicProtocol,
     requested_model: String,
     input: CanonicalInput,
     max_output_tokens: u32,
@@ -135,12 +136,9 @@ For owned traffic the gateway calls the private inference router for the admitte
 
 ## Public protocols
 
-Build and advertise in this order:
+Launch `GET /v1/models`, OpenAI `POST /v1/responses` and Anthropic `POST /v1/messages`, streaming and non-streaming. The Responses profile is stateless (`store` omitted/false only); Anthropic Messages is naturally stateless. Both support bounded text, function tools/tool results, structured output/reasoning where qualified, protocol-native events, usage and errors. Chat Completions, Embeddings, Google GenerateContent and other hosted-product surfaces are deferred.
 
-1. OpenAI `GET /v1/models` and Chat Completions, streaming and non-streaming;
-2. Responses and Embeddings;
-3. Anthropic Messages;
-4. Google GenerateContent only with demonstrated demand.
+The protocol contract, accepted/deferred capabilities, module layout and official-client tests are [defined here](PUBLIC_INFERENCE_PROTOCOLS.md). The canonical input is a tagged ordered content-item union; it is not a lossy flattened chat message.
 
 Public JSON/SSE remains protocol-specific and fixture-governed. The canonical request is not a claim of lossless translation. Unsupported fields/capabilities fail before reserve/upstream spend; no silent dropping, truncation or response healing.
 
@@ -165,10 +163,10 @@ Use unit fixtures, real Valkey Testcontainers, proptest state machines, fake pro
 1. `GW-00`: one crate layout, contracts, errors, fakes and PBT replay.
 2. `GW-01`: credential/release snapshots and workspace/channel isolation.
 3. `GW-02`: reserve/settle/lease Lua plus state-machine PBT.
-4. `GW-03`: OpenAI Models/Chat protocol and coordinator against fake provider.
+4. `GW-03`: OpenAI Models/Responses protocol and coordinator against fake provider.
 5. `GW-04`: one curated direct-provider adapter and protected client smoke.
 6. `GW-05`: trace encryption/no-retention and S3-drain fixture.
 7. `GW-06`: owned inference-router adapter/cell selection.
-8. `GW-07+`: later protocols only in the stated order.
+8. `GW-07`: Anthropic Messages protocol and direct adapter conformance; later protocols require demand.
 
-The first paid acceptance is one funded workspace key making streamed/non-streamed Chat through one exact provider, producing one usage record and one credit effect under duplicate, cancellation and provider-fault schedules.
+The first paid acceptance is one funded workspace key making streamed/non-streamed Responses and Messages requests through exact providers, producing one usage record and one credit effect under duplicate, cancellation and provider-fault schedules.

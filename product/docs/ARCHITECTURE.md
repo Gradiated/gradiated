@@ -6,7 +6,7 @@ Grad is a revenue-first inference provider and gateway:
 
 1. An organization prepays credit and gets a Default workspace.
 2. A workspace creates API keys, limits and data policy.
-3. OpenAI-compatible clients call curated direct models or `grad/<effort>/<speed>` aliases.
+3. OpenAI Responses and Anthropic Messages clients call curated direct models or `grad/<effort>/<speed>` aliases.
 4. Direct requests preserve the selected provider/model; Grad aliases route only to qualified owned releases.
 5. Encrypted traces are retained by default for analytics/recommendations; no-retention is opt-in and still uses ephemeral tenant-salted KV cache.
 6. Selected owned releases are also distributed through OpenRouter and later curated routers, using isolated channel credentials through the same public gateway.
@@ -19,6 +19,7 @@ The first paid slice is one direct model through the Grad gateway. Owned inferen
 | --- | --- | --- |
 | identity/session | Better Auth tables in PostgreSQL | browser session cookie |
 | org/workspace/key policy | PostgreSQL | versioned Valkey snapshot |
+| organization deletion | PostgreSQL deletion workflow + ledger | financial/intelligence workers and cryptographic purge |
 | credit/top-ups/usage | PostgreSQL double-entry ledger | balance snapshot + Valkey reservation state |
 | model/release/alias | PostgreSQL | signed/versioned Valkey catalog |
 | traces/retention/grants | PostgreSQL metadata + encrypted S3 payload | indexed PostgreSQL queries |
@@ -34,7 +35,7 @@ Valkey contains only rebuildable hot policy/catalog/balance projections, active 
 web: static Vite/React/shadcn artifact
 
 control Node image:
-  api | financial | intelligence | trace-access roles
+  api | financial | intelligence | trace-access | mcp roles
 
 Rust images:
   gateway | inference-router | fleet | cell-agent
@@ -98,7 +99,7 @@ The grammar may support more effort/speed values than the published catalog. An 
 
 ## Protocols
 
-The public gateway implements OpenAI-compatible `/v1/models`, chat/completions where required, responses and embeddings only when a listed model supports them. Anthropic-native compatibility is added only for proven customer demand; the first-party surface remains OpenAI-compatible.
+The public gateway launches `/v1/models`, OpenAI Responses Create and Anthropic Messages, streaming and non-streaming. The Responses profile is stateless and rejects hosted/stateful OpenAI surfaces; Messages supports the documented bounded text/tool/thinking profile. Chat Completions, Embeddings, Google and other hosted products are deferred until demand. See [the exact launch profile](PUBLIC_INFERENCE_PROTOCOLS.md).
 
 Provider adapters normalize a closed canonical request/stream/usage/error model. Unsupported fields fail explicitly. No silent parameter dropping, prompt rewriting, response healing or privacy downgrade. Official OpenAI/Anthropic/Google clients exercise the public endpoint; gateway integrations use published base-URL/API-key recipes.
 
@@ -116,7 +117,7 @@ Recommendations are evidence, never autonomous routing. A recommendation progres
 
 The gateway forwards an admitted immutable release to the private inference router. The router chooses a healthy exact-release cell from authenticated live state; it never queries provider lifecycle APIs. External cells can be native VMs, managed Kubernetes or managed endpoints but expose one cell-agent/runtime protocol.
 
-PostgreSQL capacity sources/targets/allocations/cells are durable state. Rust provider drivers reconcile leases idempotently and use ownership tags; an independent sweeper detects orphans. Every cell verifies signed bundle/runtime digests, reports exact-release attestation, maintains tenant/channel/release/retention-class salted KV cache and returns authoritative usage.
+PostgreSQL capacity sources/targets/allocations/allocation-members/cells are durable state. Rust provider drivers reconcile complete one- or multi-node topology leases idempotently and use ownership tags; an independent sweeper detects every member/orphan. Every cell verifies signed bundle/runtime/topology digests, reports exact-release attestation, maintains tenant/channel/release/retention-class salted KV cache and returns authoritative usage. Ranks and provider members never cross the router/gateway contract. See [multi-node inference](MULTI_NODE_INFERENCE.md).
 
 Spot interruption permits retry only before output and within deadline/budget. After output, fail consistently and settle once. Unknown cleanup freezes new acquisition for that provider source.
 

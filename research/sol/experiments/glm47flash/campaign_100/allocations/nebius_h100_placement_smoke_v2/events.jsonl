@@ -1,0 +1,6 @@
+{"disk_count":0,"event":"stock_control","instance_count":0,"timestamp":"2026-07-13T22:05:29.519105Z"}
+{"event":"instance_created","instance_id":"computeinstance-e00pk5eggwsyganevx","timestamp":"2026-07-13T22:06:08.820002Z"}
+{"elapsed_seconds":40.192,"event":"public_ip_ready","timestamp":"2026-07-13T22:06:08.997554Z"}
+{"elapsed_seconds":87.155,"event":"ssh_ready","timestamp":"2026-07-13T22:06:55.960527Z"}
+{"event":"evidence_hashed","gate_pass":true,"sha256":"9365bf33d5b1143b5493c446c1edd68e735a95db1f56859079358f0482be3ffb","timestamp":"2026-07-13T22:06:57.558424Z"}
+{"cleanup_pass":true,"event":"cleanup_verified","instance_get_not_found":true,"timestamp":"2026-07-13T22:07:46.047699Z"}

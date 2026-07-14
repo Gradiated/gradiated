@@ -1,16 +1,9 @@
+import argparse
 import copy
 import hashlib
+import json
 from decimal import Decimal
 from pathlib import Path
-
-
-try:
-    from validate_contracts import calculate_economics
-except ImportError:
-    import sys
-
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "specs"))
-    from validate_contracts import calculate_economics
 
 
 class ArtifactBuildError(ValueError):
@@ -43,6 +36,27 @@ def _require_exact_fields(value, fields, name):
         raise ArtifactBuildError(f"{name} is missing: {', '.join(sorted(missing))}")
     if unknown:
         raise ArtifactBuildError(f"{name} has unknown fields: {', '.join(sorted(unknown))}")
+
+
+def write_internal_manifest(bundle_root, output_path):
+    bundle_root = Path(bundle_root).resolve()
+    output_path = Path(output_path).resolve()
+    if output_path != bundle_root and bundle_root not in output_path.parents:
+        raise ArtifactBuildError("internal manifest output escapes the bundle")
+    rows = []
+    for path in sorted(bundle_root.rglob("*")):
+        if path.is_file() and path.resolve() != output_path:
+            payload = path.read_bytes()
+            rows.append(
+                {
+                    "path": path.relative_to(bundle_root).as_posix(),
+                    "bytes": len(payload),
+                    "sha256": hashlib.sha256(payload).hexdigest(),
+                }
+            )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(rows, indent=2) + "\n")
+    return rows
 
 
 def _safe_raw_file(bundle_root, relative_name):
@@ -122,6 +136,14 @@ def build_artifact(
     input_token_weight,
     non_gpu_sensitivity_fraction,
 ):
+    try:
+        from validate_contracts import calculate_economics
+    except ImportError:
+        import sys
+
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "specs"))
+        from validate_contracts import calculate_economics
+
     bundle_root = Path(bundle_root)
     _require_exact_fields(identity, IDENTITY_FIELDS, "identity")
     allocation_copy = copy.deepcopy(allocation)
@@ -182,3 +204,19 @@ def build_artifact(
         non_gpu_sensitivity_fraction,
     )
     return artifact, economics
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    manifest = subparsers.add_parser("manifest")
+    manifest.add_argument("--bundle-root", required=True, type=Path)
+    manifest.add_argument("--output", required=True, type=Path)
+    arguments = parser.parse_args()
+    if arguments.command == "manifest":
+        write_internal_manifest(arguments.bundle_root, arguments.output)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

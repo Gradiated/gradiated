@@ -1,0 +1,10 @@
+{
+  "driver_version": "580.159.04",
+  "gpu_count": 1,
+  "memory_mib": 81559,
+  "memory_used_mib": 0.0,
+  "mig_mode": "Disabled",
+  "name": "NVIDIA H100 80GB HBM3",
+  "power_draw_w": 69.23,
+  "utilization_gpu_percent": 0.0
+}

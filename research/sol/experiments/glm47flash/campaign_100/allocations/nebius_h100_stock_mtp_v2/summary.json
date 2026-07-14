@@ -1,0 +1,23 @@
+{
+  "allocation_seconds": 902.414,
+  "arms": [
+    {
+      "allocation_result": null,
+      "artifact_ok": false,
+      "artifact_sha256": null,
+      "configuration": "stock_no_cache_fcfs",
+      "elapsed_seconds": 499.589,
+      "manifest_file_count": 0,
+      "pass": false,
+      "remote_exit_code": 1
+    }
+  ],
+  "cleanup_pass": true,
+  "cost_basis": "measured elapsed exposure at vendor list rate; provider invoice pending",
+  "cost_usd_derived": 0.739477971,
+  "ended_at_utc": "2026-07-13T22:50:03.154331Z",
+  "final_disk_count": 0,
+  "final_instance_count": 0,
+  "instance_id": "computeinstance-e00a3k96fsr68j7vrw",
+  "outcome": "FAIL"
+}

@@ -1,0 +1,14 @@
+{
+  "started_at": "2026-07-13T14:14:50.099535Z",
+  "experiment_spec_sha256": "2835d43674d14561b7756c5d3cd3096b08442b2c209c352b7d6064293ee2165c",
+  "error": "ControlError: Phase B orchestration failed: RunPod GraphQL create failed with HTTP 500",
+  "finished_at": "2026-07-13T14:14:51.177667Z",
+  "allocation_seconds": 1.0781094970006961,
+  "pod_id": null,
+  "hourly_rate_usd": null,
+  "provider_created_at": null,
+  "last_state": null,
+  "harvest": null,
+  "delete": null,
+  "exit_code": 1
+}

@@ -10,11 +10,26 @@ CAMPAIGN = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(CAMPAIGN / "phase_b"))
 sys.path.insert(0, str(CAMPAIGN / "specs"))
 
-from artifact_builder import build_artifact
+from artifact_builder import build_artifact, write_internal_manifest
 from validate_contracts import validate_gpu_artifact
 
 
 class ArtifactBuilderTests(unittest.TestCase):
+    def test_writes_content_addressed_internal_manifest_without_self_reference(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "evidence.txt").write_bytes(b"evidence\n")
+            output = root / "manifest.json"
+
+            rows = write_internal_manifest(root, output)
+
+            self.assertEqual(rows, [{
+                "path": "evidence.txt",
+                "bytes": 9,
+                "sha256": hashlib.sha256(b"evidence\n").hexdigest(),
+            }])
+            self.assertEqual(json.loads(output.read_text()), rows)
+
     def test_builds_valid_conservative_artifact_and_economics(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

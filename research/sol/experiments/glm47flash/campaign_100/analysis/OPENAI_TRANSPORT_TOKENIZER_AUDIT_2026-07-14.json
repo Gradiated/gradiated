@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "classification": {
+    "exact_container_reproduction": "measured_offline",
+    "server_prompt_accounting": "measured_gpu_v5",
+    "unmeasured_holdout_server_prompt_accounting": "inferred_from_measured_one_token_offset"
+  },
+  "runtime": {
+    "container": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+    "runtime_source_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "transformers": "5.12.1",
+    "model_revision": "75fce703a93da3705c4cf8d3caadbac1d1072c78",
+    "tokenizer_source_hashes_match": true
+  },
+  "method": "Instantiate SGLang ChatCompletionRequest, model_dump messages/tools, apply the pinned serving_chat normalization and string-content conversion, render the exact Jinja template, and encode without added special tokens inside the pinned serving image on the local CPU host.",
+  "development_append": {
+    "exact_rendered_input_tokens": 253,
+    "exact_rendered_chat_sha256": "deaa8cd196893e93ab98853041385817f724c68c43e8e75f7a7d1e9fcf347421",
+    "exact_token_ids_u32le_sha256": "28e96d458bbf683a346a208cc40e8cae93536b8ec3b86b8ee7da55fc21c4619f",
+    "transport_tool_schema_bytes": 220,
+    "transport_tool_schema_sha256": "add77b41f331b7265f79f7b7a03806fb5f30ed3eda8e240244e141674fa2e1ff",
+    "v5_scheduler_reported_input_tokens": 252,
+    "v5_scheduler_output_tokens": 69,
+    "accounting_offset_tokens": -1
+  },
+  "development_prefix": {
+    "exact_rendered_input_tokens": [184, 184, 184],
+    "expected_server_reported_input_tokens": [183, 183, 183],
+    "exact_common_prefix_tokens": 180,
+    "exact_common_prefix_token_ids_u32le_sha256": "5c8be4ad1ffc29636f7b609579a66c96d5b5889463c71d4f86c37ca8f31d5081"
+  },
+  "runner_correction": {
+    "usage_only_events": "accept choice-free events only when typed usage telemetry is present",
+    "token_timing": "advance TTFT/ITL from cumulative completion_tokens regardless of text, reasoning, or tool-call delta semantics",
+    "observability_gate": "reject any cumulative-token decrease or increase larger than one",
+    "failure_persistence": "write typed warmup outcomes before evaluating the warmup gate"
+  },
+  "result": "offline_preflight_pass",
+  "next_admissible_experiment": "nebius_h100_stock_mtp_v6"
+}

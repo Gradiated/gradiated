@@ -1,0 +1,93 @@
+{
+  "experiment_id": "nebius_h100_http_diagnostic_mtp_v11",
+  "issue": "https://github.com/joshsny/gradiated/issues/11",
+  "causal_hypotheses": {
+    "delivery": "Disabling Hugging Face Xet avoids v10's anonymous CAS 401 and retrieves the exact public model revision through standard HTTP within 1200 seconds.",
+    "mtp": "On the same H100 and matched 32K stack, official GLM MTP/EAGLE improves fixed-8K/1K c8 output throughput by at least 5% without fixed SLO or paired-output regression."
+  },
+  "changed_from_v10": {
+    "model_delivery": "HF_HUB_DISABLE_XET=1",
+    "unchanged_scientific_contract": "hardware, model/revision, image/runtime, stock and MTP flags, 32K server, fixed workload, reasoning-off paired quality, seeds, SLOs, diagnostic gates, timeouts, and cleanup",
+    "classification": "changed artifact-delivery path; not an unchanged placement or Xet retry"
+  },
+  "stock_control": {
+    "configuration": "stock_no_cache_fcfs",
+    "context_length": 32768,
+    "chunked_prefill_size": 8192,
+    "max_running_requests": 32,
+    "schedule_policy": "fcfs",
+    "radix_cache": false,
+    "quality_policy": "chat_template_kwargs.enable_thinking=false",
+    "absolute_quality_expected": "unchanged frozen failure is recorded and carried forward"
+  },
+  "candidate": {
+    "configuration": "mtp_eagle_3_1_4",
+    "only_server_change": ["EAGLE", "same model as draft", "3 speculative steps", "top-k 1", "4 draft tokens"]
+  },
+  "workload_geometry": {
+    "fixed_8k_1k_c1": "4 requests at concurrency 1, exactly 8192 input and 1024 output tokens each",
+    "fixed_8k_1k_c8": "16 requests at concurrency 8, exactly 8192 input and 1024 output tokens each",
+    "quality": "unchanged complete 32K reasoning-off development capture/self-score per arm",
+    "agent_tool_call_itl": "excluded and unclaimable"
+  },
+  "quality_gate": {
+    "absolute": "not recalibrated; cannot support a quality-adjusted claim",
+    "paired_text": "exact normalized identity",
+    "paired_non_regression": "overall >= -0.02 and every category >= -0.05, including teacher-forced loss",
+    "claim_limit": "diagnostic mechanism evidence only"
+  },
+  "service_contract": {
+    "request_success_fraction_min": 0.99,
+    "p95_ttft_ms_max": 10000,
+    "p95_inter_token_latency_ms_max": 100,
+    "silent_truncation_allowed": false
+  },
+  "predictions": {
+    "standard_http_download": "passes within 1200 seconds",
+    "stock_c8_output_tokens_per_second": "280 to 330",
+    "mtp_load": "may fail if the runtime duplicates full weights; that falsifies one-H100 deployability of this configuration",
+    "mtp_speedup": ">=5% required; even a pass remains insufficient to close the roughly 3.1x historical analytical cost gap"
+  },
+  "falsification_rules": {
+    "delivery": "a standard-HTTP download failure kills this delivery retry lineage",
+    "mtp": "falsified if candidate cannot load, fixed sequence fails, c8 gain is <5%, paired text differs, or paired non-regression fails",
+    "business": "no promotion without absolute quality and matched provider evidence",
+    "repeat": "do not repeat any identical download or MTP failure"
+  },
+  "hardware": {
+    "provider": "Nebius",
+    "gpu": "1x NVIDIA H100 SXM 80GB",
+    "platform": "gpu-h100-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "boot_disk_gib": 250,
+    "purchase_model": "regular_on_demand",
+    "image_family": "ubuntu24.04-cuda13.0"
+  },
+  "identities": {
+    "container": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+    "harness_sha256": "3f1a0cf9fc67e307ade52ed5b3d3a09d6c53120237ec84974b3837e876221d75",
+    "orchestrator_sha256": "8aa4c4e6745bdc3c740a51645c82766d42d1a304a1f78ae487dfbc4f70aeb9b4",
+    "model_revision": "75fce703a93da3705c4cf8d3caadbac1d1072c78",
+    "runtime_source_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "workload_sha256": "f47c7af5e53483524010d06a93313b29f1a10c08f7df4bf18638349b4767193a",
+    "quality_sha256": "152548d51fba8e8ff5e8f1e665c5af166fb6d97cdf3010723042112855964668",
+    "tokenizer_bindings_sha256": "ccbe405b3abcef13f95dc7882f3ab21f8fa3443a97a340f9e8c4070682ecb14c"
+  },
+  "budget": {
+    "hourly_compute_rate_usd_vendor_list": 2.95,
+    "absolute_allocation_seconds": 9000,
+    "compute_cap_usd": 7.375,
+    "absolute_all_in_cap_usd": 8.5,
+    "nebius_campaign_cap_usd": 25.0,
+    "nebius_conservative_spend_before_usd": 8.144631285,
+    "nebius_remaining_before_usd": 16.855368715
+  },
+  "timeouts_seconds": {"absolute_allocation": 9000, "container_bootstrap": 1800, "model_download": 1200, "server_startup_per_arm": 900, "workload_profile_each": 1800},
+  "telemetry": ["GPU utilization", "VRAM", "power", "temperature", "clocks", "TTFT", "token-level ITL/TPOT", "throughput", "queueing", "failures", "profiler", "startup/load", "allocation cost"],
+  "artifact_contract": {
+    "host": ["preregistration", "sanitized provider request", "events", "bootstrap logs", "summary"],
+    "per_arm": ["remote logs", "hash-matched archive", "internal manifest", "typed result", "profiles", "quality", "telemetry", "server logs", "profiler"],
+    "paired": ["exact identity", "paired quality", "paired non-regression", "performance gate"],
+    "cleanup": "retrieve and hash before delete; instance GET not-found and zero named instances/disks"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "classification": "measured_offline_runtime_compatibility",
+  "finding": "Python Transformers 5.12.1 returns a BatchEncoding from apply_chat_template in the pinned serving environment. After extracting input_ids, all four frozen JavaScript-derived bindings match exactly in token count and token-ID SHA-256.",
+  "fixtures": [
+    {"fixture_id": "development_append_1", "input_tokens": 233, "token_ids_match": true},
+    {"fixture_id": "development_prefix_1", "input_tokens": [164, 164, 164], "exact_common_prefix_tokens": 160, "token_ids_match": [true, true, true]},
+    {"fixture_id": "holdout_append_2", "input_tokens": 236, "token_ids_match": true},
+    {"fixture_id": "holdout_prefix_2", "input_tokens": [164, 164, 165], "exact_common_prefix_tokens": 160, "token_ids_match": [true, true, true]}
+  ],
+  "frozen_binding": {
+    "implementation": "@huggingface/transformers 4.2.0",
+    "sha256": "c5258d650227ab3c474f25218263c5ac1898011f55aecef16def5fe10cf7fa64"
+  },
+  "method": "Installed transformers==5.12.1 in an isolated non-GPU virtual environment; loaded the exact model revision and three source files; reconstructed the exact append/prefix messages and tool schemas; rendered with add_generation_prompt=true; extracted BatchEncoding.input_ids; compared counts, per-request u32le token hashes, and common-prefix identities against the frozen binding.",
+  "pinned_python_runtime": "transformers 5.12.1",
+  "source_files_match": true,
+  "temporary_generated_audit_sha256": "843a26aadad232ac53deb5d056d982d86b96d9fa7bdd92f660a3556b46afd080",
+  "root_cause": "remote_baseline.py treated BatchEncoding as a list; len(BatchEncoding) was 1, causing the append count check to fail before token hashing",
+  "selected_fix": "normalize apply_chat_template results by reading input_ids when the return value is mapping-like; do not change frozen tokenizer bindings"
+}

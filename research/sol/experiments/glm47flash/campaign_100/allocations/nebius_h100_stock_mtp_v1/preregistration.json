@@ -1,0 +1,91 @@
+{
+  "artifact_contract": {
+    "host": ["preregistration.json", "provider-request.json", "events.jsonl", "host-bootstrap.stdout.log", "summary.json"],
+    "per_arm": ["remote stdout/stderr", "remote artifact tar.gz", "remote SHA-256 sidecar", "verified internal manifest", "allocation-result.json inside archive"],
+    "paired": ["mtp-exact-identity.json", "paired-quality.json"],
+    "teardown": "instance GET not-found plus zero final experiment-named instance and managed-disk inventory"
+  },
+  "arms": [
+    {
+      "admission": "always after host/runtime gates",
+      "configuration": "stock_no_cache_fcfs",
+      "intervention": "none",
+      "runtime": "native BF16 SGLang, MTP off, radix cache disabled, FCFS"
+    },
+    {
+      "admission": "only if stock sequence, development quality self-score, artifact, and remaining-time gates pass",
+      "configuration": "mtp_eagle_3_1_4",
+      "intervention": "official model-specific GLM MTP/EAGLE only",
+      "runtime": "same native BF16 SGLang, radix cache disabled, FCFS; EAGLE 3 steps, top-k 1, 4 draft tokens"
+    }
+  ],
+  "budget": {
+    "absolute_all_in_cap_usd": 8.5,
+    "absolute_allocation_seconds": 9000,
+    "compute_cap_usd": 7.375,
+    "hourly_compute_rate_usd_vendor_list": 2.95,
+    "nebius_campaign_cap_usd": 25.0,
+    "nebius_conservative_spend_before_usd": 0.243921667
+  },
+  "causal_hypotheses": {
+    "mtp": "On the exact same host, adding only GLM's official MTP/EAGLE configuration improves frozen c8 SLO-goodput by at least 5% without any normalized deterministic output mismatch, paired quality regression, or SLO regression.",
+    "stock": "The exact GLM-4.7-Flash native-BF16 revision on the pinned stock SGLang container loads on one Nebius H100 and passes the sequential frozen development, 8K/1K c1, and 8K/1K c8 service gates."
+  },
+  "cleanup": {
+    "independent_watchdog": true,
+    "managed_disk_deleted_with_instance": true,
+    "retrieve_and_hash_before_delete": true,
+    "verify_instance_not_found": true,
+    "verify_named_disk_absent": true
+  },
+  "experiment_id": "nebius_h100_stock_mtp_v1",
+  "falsification_rules": {
+    "mtp": "Reject the MTP hypothesis if exact normalized deterministic identity fails, paired quality rejects or is provisional, any frozen profile fails, or c8 SLO-goodput improvement is below 5%.",
+    "stock": "Reject this stock configuration if exact model/runtime identity, load/health, typed workload, development quality capture, artifact, or any sequential SLO gate fails. A provider/bootstrap-only failure changes infrastructure lineage and does not falsify model serving."
+  },
+  "hardware": {
+    "boot_disk_gib": 250,
+    "gpu": "1x NVIDIA H100 SXM 80GB",
+    "image_family": "ubuntu24.04-cuda13.0",
+    "platform": "gpu-h100-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "purchase_model": "regular_on_demand"
+  },
+  "identities": {
+    "container": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+    "model": "zai-org/GLM-4.7-Flash",
+    "model_revision": "75fce703a93da3705c4cf8d3caadbac1d1072c78",
+    "quality_sha256": "0a7ba38e9cd5b627381e59194f3ab5df8e402995b8e0424869ae34a97a077041",
+    "runtime_source_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "tokenizer_bindings_sha256": "c5258d650227ab3c474f25218263c5ac1898011f55aecef16def5fe10cf7fa64",
+    "workload_sha256": "c974f23e460a863be37b3cc04df80fc9aff977e239a5c49225cd8c85f1bb3d55"
+  },
+  "issue": "https://github.com/joshsny/gradiated/issues/11",
+  "quality_gate": {
+    "development_pair_policy": "frozen campaign quality policy",
+    "mtp_deterministic_identity": "exact normalized output identity",
+    "mtp_paired_screen": "point pass and not provisional",
+    "stock": "valid capture plus self-score"
+  },
+  "service_contract": {
+    "p95_inter_token_latency_ms_max": 100,
+    "p95_ttft_ms_max": 10000,
+    "request_success_fraction_min": 0.99,
+    "silent_truncation_allowed": false
+  },
+  "stock_control": "Zero active Nebius instances before creation; same H100, VM, model files, pinned container, workload, quality suite, context, batching ceiling, FCFS policy, disabled radix cache, and seed across arms. Only official MTP flags change in arm B.",
+  "telemetry": ["one-second GPU utilization", "VRAM used/total", "power", "temperature", "clocks", "scheduler metrics and queueing", "startup/load timing", "TTFT", "token-level ITL/TPOT", "input/output throughput", "request failures and truncation", "profiler trace", "MTP-relevant runtime metrics where exposed", "allocation exposure and derived cost"],
+  "timeouts_seconds": {
+    "absolute_allocation": 9000,
+    "container_bootstrap": 1800,
+    "model_download": 1200,
+    "server_startup_per_arm": 900,
+    "workload_profile_each": 1800
+  },
+  "workload_geometry": {
+    "development_smoke": {"measured_requests": 5},
+    "fixed_8k_1k_c1": {"concurrency": 1, "measured_requests": 4},
+    "fixed_8k_1k_c8": {"concurrency": 8, "measured_requests": 16},
+    "headline_c32": "not admitted in this allocation; decide from c8 evidence"
+  }
+}

@@ -32,6 +32,11 @@ def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
 
 
+def openai_transport_tools(tools):
+    """Wrap tokenizer-native function schemas at the OpenAI HTTP boundary only."""
+    return [{"type": "function", "function": tool} for tool in tools]
+
+
 def tokenizer_binding(bundle, fixture_id, request_index=None):
     rows = {row["fixture_id"]: row for row in bundle["tokenizer_bindings"]["bindings"]}
     if fixture_id not in rows:
@@ -111,7 +116,8 @@ def validate_request(bundle, request):
     if not isinstance(request["scheduled_offset_ms"], int) or request["scheduled_offset_ms"] < 0:
         raise ReplayError("scheduled offset is invalid")
     binding = tokenizer_binding(bundle, request["fixture_id"], request.get("request_index"))
-    if request["expected_input_tokens"] != binding["input_tokens"]:
+    expected_server_input_tokens = binding.get("server_reported_input_tokens", binding["input_tokens"])
+    if request["expected_input_tokens"] != expected_server_input_tokens:
         raise ReplayError("request input count differs from frozen tokenizer binding")
     result = dict(request)
     expected_payload = materialize_fixture_payload(bundle, request["fixture_id"], request.get("request_index"))
@@ -122,6 +128,9 @@ def validate_request(bundle, request):
         if "prompt" in request or request.get("messages") != expected_payload["messages"] or request.get("tools") != expected_payload["tools"]:
             raise ReplayError("request content differs from the frozen fixture")
     result["api_kind"] = expected_payload["kind"]
+    result["length_finish_is_expected"] = fixture_by_id(
+        bundle, request["fixture_id"]
+    )["workload_class"] == "fixed_8k_1k"
     result["token_ids_u32le_sha256"] = binding.get("token_ids_u32le_sha256")
     result["model"] = bundle["tokenizer_bindings"]["model"]
     result["model_revision"] = bundle["tokenizer_bindings"]["resolved_revision"]
@@ -171,36 +180,53 @@ def measure_openai_stream(request, lines, monotonic_ns=time.monotonic_ns):
             raise ReplayError("stream event is not an object")
         if "error" in value:
             raise ReplayError(f"server returned a streaming error: {value['error']}")
+        usage = value.get("usage")
+        if isinstance(usage, dict) and {"prompt_tokens", "completion_tokens"} <= set(usage):
+            final_usage = usage
         choices = value.get("choices")
-        if not isinstance(choices, list) or len(choices) != 1 or not isinstance(choices[0], dict):
-            raise ReplayError("stream event must contain exactly one choice")
-        choice = choices[0]
-        delta = choice.get("delta", {})
-        if not isinstance(delta, dict):
-            raise ReplayError("stream choice delta is malformed")
-        content = choice.get("text") if isinstance(choice.get("text"), str) else delta.get("content")
-        if content:
-            if not isinstance(content, str):
-                raise ReplayError("stream content delta is not text")
-            completion_tokens = event_token_count(value)
-            if completion_tokens is None:
-                raise ReplayError("per-event completion token counts are required for observable ITL")
-            if completion_tokens != previous_completion_tokens + 1:
-                raise ReplayError("ITL is unobservable when a stream event does not advance exactly one token")
-            if first_token_ns is None:
-                first_token_ns = event_ns
-            elif previous_token_ns is not None:
-                itl_ms.append((event_ns - previous_token_ns) / 1_000_000)
-            previous_token_ns = event_ns
-            previous_completion_tokens = completion_tokens
-        current_finish = choice.get("finish_reason")
+        if not isinstance(choices, list):
+            raise ReplayError("stream event choices are malformed")
+        if not choices:
+            if not isinstance(usage, dict):
+                raise ReplayError("choice-free stream event is not usage telemetry")
+            choice = None
+            delta = {}
+        elif len(choices) == 1 and isinstance(choices[0], dict):
+            choice = choices[0]
+            delta = choice.get("delta", {})
+            if not isinstance(delta, dict):
+                raise ReplayError("stream choice delta is malformed")
+        else:
+            raise ReplayError("stream event must contain at most one typed choice")
+        token_bearing_delta = bool(
+            choice is not None
+            and (
+                choice.get("text")
+                or delta.get("content")
+                or delta.get("reasoning_content")
+                or delta.get("tool_calls")
+            )
+        )
+        completion_tokens = event_token_count(value)
+        if token_bearing_delta and completion_tokens is None:
+            raise ReplayError("per-event completion token counts are required for observable ITL")
+        if completion_tokens is not None:
+            if completion_tokens < previous_completion_tokens or completion_tokens > previous_completion_tokens + 1:
+                raise ReplayError("ITL is unobservable when cumulative completion tokens do not advance by zero or one")
+            if completion_tokens == previous_completion_tokens + 1:
+                # Time every generated token from authoritative cumulative usage,
+                # independent of whether its delta is text, reasoning, or a tool call.
+                if first_token_ns is None:
+                    first_token_ns = event_ns
+                elif previous_token_ns is not None:
+                    itl_ms.append((event_ns - previous_token_ns) / 1_000_000)
+                previous_token_ns = event_ns
+                previous_completion_tokens = completion_tokens
+        current_finish = choice.get("finish_reason") if choice is not None else None
         if current_finish is not None:
             if finish_reason is not None or current_finish not in {"stop", "length", "tool_calls"}:
                 raise ReplayError("stream finish reason is missing, duplicate, or unsupported")
             finish_reason = current_finish
-        usage = value.get("usage")
-        if isinstance(usage, dict) and {"prompt_tokens", "completion_tokens"} <= set(usage):
-            final_usage = usage
     if not done or finish_reason is None or first_token_ns is None or final_usage is None:
         raise ReplayError("stream is incomplete or lacks finish, token, or usage evidence")
     input_tokens = final_usage.get("prompt_tokens")
@@ -214,6 +240,11 @@ def measure_openai_stream(request, lines, monotonic_ns=time.monotonic_ns):
         raise ReplayError("final output token count differs from observed stream")
     if finish_reason == "stop" and output_tokens >= request["max_output_tokens"]:
         raise ReplayError("possible silent truncation: stop at the output-token cap")
+    if finish_reason == "length" and output_tokens != request["max_output_tokens"]:
+        raise ReplayError("length finish occurred before the declared output cap")
+    expected_length_finish = (
+        finish_reason == "length" and request["length_finish_is_expected"]
+    )
     return {
         "schema_version": 1,
         "request_id": request["request_id"],
@@ -225,7 +256,10 @@ def measure_openai_stream(request, lines, monotonic_ns=time.monotonic_ns):
             "end_to_end": (last_event_ns - start_ns) / 1_000_000,
         },
         "tokens": {"input": input_tokens, "output": output_tokens, "total": total_tokens},
-        "truncation": {"detected": finish_reason == "length", "finish_reason": finish_reason},
+        "truncation": {
+            "detected": finish_reason == "length" and not expected_length_finish,
+            "finish_reason": finish_reason,
+        },
         "stream_sha256": raw_digest.hexdigest(),
         "error": None,
     }
@@ -246,7 +280,7 @@ def stream_request(base_url, request, timeout_seconds, api_key):
         endpoint = "/v1/completions"
     else:
         payload["messages"] = request["messages"]
-        payload["tools"] = request["tools"]
+        payload["tools"] = openai_transport_tools(request["tools"])
         endpoint = "/v1/chat/completions"
     headers = {"Content-Type": "application/json"}
     if api_key:
@@ -262,7 +296,11 @@ def stream_request(base_url, request, timeout_seconds, api_key):
         try:
             with urllib.request.urlopen(http_request, timeout=timeout_seconds) as response:
                 yield from response
-        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError) as error:
+        except urllib.error.HTTPError as error:
+            detail = error.read(512).decode("utf-8", errors="replace").strip()
+            suffix = f": {detail}" if detail else ""
+            raise ReplayError(f"stream transport failed: HTTP {error.code}{suffix}") from error
+        except (urllib.error.URLError, TimeoutError) as error:
             raise ReplayError(f"stream transport failed: {type(error).__name__}") from error
 
     return lines()
@@ -391,6 +429,7 @@ def main():
         outcomes = []
         for repetition in range(profile["repetitions"]):
             warmup_outcomes = execute_requests(arguments.base_url, warmups, 1, timeout, api_key)
+            write_jsonl(arguments.output + ".warmup.jsonl", warmup_outcomes)
             if any(row["status"] != "success" or row["truncation"]["detected"] for row in warmup_outcomes):
                 raise ReplayError("warmup failed or truncated")
             reset_server_cache(arguments.base_url, timeout, api_key)

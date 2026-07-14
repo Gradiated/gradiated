@@ -1,0 +1,7 @@
+{"disk_count":0,"event":"stock_control","instance_count":0,"quality_sha256":"0a7ba38e9cd5b627381e59194f3ab5df8e402995b8e0424869ae34a97a077041","timestamp":"2026-07-13T22:57:08.781831Z","workload_sha256":"d43530741c526b316ed45c0e87ebdb2fefac790d20f559c3e596f7cd20ea293c"}
+{"event":"instance_created","instance_id":"computeinstance-e00mxycr06bs2knspp","timestamp":"2026-07-13T22:57:54.154288Z"}
+{"elapsed_seconds":83.506,"event":"ssh_ready","timestamp":"2026-07-13T22:58:31.858234Z"}
+{"elapsed_seconds":400.78,"event":"container_runtime_ready","timestamp":"2026-07-13T23:03:49.131960Z"}
+{"event":"frozen_inputs_transferred","timestamp":"2026-07-13T23:03:51.131446Z"}
+{"elapsed_seconds":501.244,"event":"stock_arm_complete","passed":false,"timestamp":"2026-07-13T23:12:12.375909Z"}
+{"cleanup_pass":true,"event":"cleanup_verified","instance_get_not_found":true,"timestamp":"2026-07-13T23:13:16.711791Z"}

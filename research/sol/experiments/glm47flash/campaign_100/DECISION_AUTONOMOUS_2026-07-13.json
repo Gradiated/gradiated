@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "decided_at": "2026-07-13T14:24:00Z",
+  "decision": "CONTINUE_NARROWLY",
+  "decision_scope": "End direct RunPod Pod-create experimentation for the current account state; continue only with managed exact-model provider controls or a transactional RunPod capacity/control-plane change.",
+  "measured_results": [
+    "Secure AP-IN-1 H100 SXM remained labeled High during the tests.",
+    "The full REST request returned the same internal deployment-response parsing error hash previously observed on A100.",
+    "The equivalent full GraphQL request returned HTTP 500 with a body hash matching Internal Server Error.",
+    "A minimal GraphQL H100 control using runpod/pytorch, documented storage, and no custom environment, command, or ports returned a typed GraphQL error before Pod creation.",
+    "All three autonomous continuation controls created zero Pods, added $0, and ended with zero active Pods.",
+    "The corrected campaign harness passes 89 tests and now has fail-closed output-cap, artifact, context, terminal-gate, GraphQL, price-ceiling, watchdog, and teardown behavior."
+  ],
+  "falsified_hypotheses": [
+    "RunPod is globally out of relevant GPU capacity.",
+    "Changing from Low/Medium A100 stock to High H100 stock is sufficient for placement.",
+    "Changing only from REST to GraphQL bypasses the create failure.",
+    "The pinned SGLang image, bootstrap environment, Docker command, ports, or unusual storage geometry is a necessary cause of the GraphQL failure."
+  ],
+  "claims_not_supported": [
+    "No quality-preserving inference cost improvement.",
+    "No stock or tuned GLM-4.7-Flash SLO-goodput point.",
+    "No Fireworks, Baseten, RunPod, or hardware performance comparison.",
+    "No representation, kernel, memory-hierarchy, serving, or hardware co-design advantage."
+  ],
+  "vendor_reported_next_controls": [
+    "Fireworks lists exact GLM-4.7-Flash as ready for on-demand deployment but not serverless.",
+    "Baseten lists an OpenAI-compatible GLM-4.7-Flash configuration on 2xH100.",
+    "RunPod Public Endpoints do not list GLM-4.7-Flash."
+  ],
+  "next_experiment": {
+    "priority": 1,
+    "experiment": "Run the frozen matched development and 8K/1K service workload against an exact-model Fireworks or Baseten deployment, capturing quality, TTFT, token-level TPOT/ITL where exposed, throughput, queueing, failures, and provider billing.",
+    "admission": "Requires a provider credential and deployable exact-model endpoint; neither credential is present. Do not substitute a different model or treat vendor pricing as measured cost.",
+    "fallback": "Resume the frozen native-BF16 stock harness only after RunPod reports a transactional control-plane fix, reservation, or API-visible deploy queue; do not issue another direct best-effort Pod create in the current state."
+  },
+  "budget": {
+    "authorized_campaign_cap_usd": 100.0,
+    "campaign_additional_spend_usd": 0.273464527,
+    "autonomous_continuation_allocation_spend_usd": 0.0,
+    "unspent_authorization_usd": 99.726535473
+  },
+  "active_pods": [],
+  "credential_presence": {
+    "RUNPOD_API_KEY": true,
+    "FIREWORKS_API_KEY": false,
+    "BASETEN_API_KEY": false
+  }
+}

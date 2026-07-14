@@ -1,0 +1,78 @@
+{
+  "allocation_seconds": 1125.828,
+  "arms": [
+    {
+      "allocation_result": {
+        "agent_tool_call_itl_claim_permitted": false,
+        "configuration": "stock_no_cache_fcfs",
+        "headline_c32_executed": false,
+        "next_action": "stop_or_correct_measured_failure",
+        "profiles": [
+          {
+            "conservative_runner_wall_seconds_including_warmup_and_cache_reset": 47.06871676445007,
+            "detected_truncations": 0,
+            "errors": 0,
+            "frozen_slo_pass": true,
+            "input_tokens": 32768,
+            "input_tokens_per_second_conservative": 696.1736425486943,
+            "output_tokens": 4096,
+            "output_tokens_per_second_conservative": 87.02170531858678,
+            "profile_id": "fixed_8k_1k_c1",
+            "requests": 4,
+            "success_fraction": 1.0,
+            "token_level_itl_ms": {
+              "p50": 7.731774,
+              "p95": 7.81731,
+              "p99": 8.117566
+            },
+            "ttft_ms": {
+              "p50": 179.235656,
+              "p95": 181.542794,
+              "p99": 181.542794
+            }
+          },
+          {
+            "conservative_runner_wall_seconds_including_warmup_and_cache_reset": 53.90275573730469,
+            "detected_truncations": 0,
+            "errors": 0,
+            "frozen_slo_pass": true,
+            "input_tokens": 131072,
+            "input_tokens_per_second_conservative": 2431.638201185482,
+            "output_tokens": 16384,
+            "output_tokens_per_second_conservative": 303.95477514818526,
+            "profile_id": "fixed_8k_1k_c8",
+            "requests": 16,
+            "success_fraction": 1.0,
+            "token_level_itl_ms": {
+              "p50": 9.173983,
+              "p95": 9.457681,
+              "p99": 9.8384
+            },
+            "ttft_ms": {
+              "p50": 733.240694,
+              "p95": 1319.250082,
+              "p99": 1319.250082
+            }
+          }
+        ],
+        "quality_pass": false,
+        "sequence_pass": true
+      },
+      "artifact_ok": true,
+      "artifact_sha256": "ad5b0d8abd57d8796cd37c643c8f1613c12b29762ace22aaf1469539ab3d0bb4",
+      "configuration": "stock_no_cache_fcfs",
+      "elapsed_seconds": 729.362,
+      "manifest_file_count": 46,
+      "pass": false,
+      "remote_exit_code": 1
+    }
+  ],
+  "cleanup_pass": true,
+  "cost_basis": "measured elapsed exposure at vendor list rate; provider invoice pending",
+  "cost_usd_derived": 0.922553439,
+  "ended_at_utc": "2026-07-14T01:34:13.523569Z",
+  "final_disk_count": 0,
+  "final_instance_count": 0,
+  "instance_id": "computeinstance-e00bhvf5wwyvz55k8w",
+  "outcome": "FAIL"
+}

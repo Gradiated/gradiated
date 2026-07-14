@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "experiment_id": "phase-b-h100-graphql-standard-image-placement-v7",
+  "preregistered_at": "2026-07-13T14:20:00Z",
+  "phase": "B-provider-control",
+  "causal_hypothesis": "The prior GraphQL HTTP 500 is caused by the pinned SGLang image or large bootstrap payload rather than inability of RunPod's shared deployment backend to create any advertised AP-IN-1 H100 Pod.",
+  "stock_control": {
+    "provider": "RunPod",
+    "api_surface": "graphql_podFindAndDeployOnDemand",
+    "cloud_class": "SECURE",
+    "gpu_type_id": "NVIDIA H100 80GB HBM3",
+    "gpu_count": 1,
+    "data_center_ids": ["AP-IN-1"],
+    "allowed_cuda_versions": ["13.0"],
+    "interruptible": false,
+    "observed_stock_status": "High"
+  },
+  "candidate_change": {
+    "from": "pinned SGLang digest plus bootstrap environment, command, and artifact port",
+    "to": "standard runpod/pytorch image with 20 GB container disk, 20 GB volume, and no custom env, command, or ports",
+    "hardware_datacenter_cloud_cuda_create_api_changed": false
+  },
+  "provider_request": {
+    "cloud_class": "SECURE",
+    "gpu_type_id": "NVIDIA H100 80GB HBM3",
+    "gpu_count": 1,
+    "data_center_ids": ["AP-IN-1"],
+    "allowed_cuda_versions": ["13.0"],
+    "interruptible": false,
+    "admission_hourly_price_ceiling_usd": 2.99
+  },
+  "workload_geometry": {
+    "type": "placement_only_control",
+    "requests": 1,
+    "model_downloads": 0,
+    "inference_requests": 0,
+    "post_create_action": "one allowlisted REST state read followed immediately by deletion"
+  },
+  "quality_gate": {
+    "type": "provider_control_correctness",
+    "requirements": ["GraphQL response contains pod id and positive hourly price", "REST state read succeeds", "DELETE returns 204", "subsequent REST GET returns 404"]
+  },
+  "service_level_objective": {
+    "create_response_seconds": 60,
+    "delete_to_verified_404_seconds": 120,
+    "maximum_total_allocation_seconds": 300
+  },
+  "spend_cap": {
+    "hourly_price_ceiling_usd": 2.99,
+    "maximum_gpu_exposure_usd": 0.249166667,
+    "disk_and_rounding_reserve_usd": 0.010833333,
+    "recorded_maximum_allocation_cost_usd": 0.26,
+    "campaign_additional_spend_before_usd": 0.273464527,
+    "campaign_cap_usd": 100.0
+  },
+  "timeouts": {
+    "provider_request_seconds": 60,
+    "absolute_allocation_seconds": 300,
+    "absolute_deadline_utc": "2026-07-13T14:30:00Z"
+  },
+  "telemetry": {
+    "provider_create_response": true,
+    "provider_state_after_create": true,
+    "gpu_runtime_metrics": "not_expected_because_immediate_placement-only_teardown",
+    "missing_runtime_metrics_interpretation": "not an inference or utilization result"
+  },
+  "artifact_contract": {
+    "result": "placement-control-result.json",
+    "provider_events": "provider-events.jsonl",
+    "watchdog_log": "watchdog.jsonl",
+    "hash_all_artifacts_before_reporting": true,
+    "errors": "type_and_sha256_only",
+    "delete_http_status_required": 204,
+    "post_delete_get_status_required": 404
+  },
+  "placement_control_watchdog": {
+    "independent_process": true,
+    "maximum_deadline_seconds": 300,
+    "watchdog_log_path": "allocations/phase_b_h100_graphql_standard_image_placement_v7/watchdog.jsonl",
+    "watchdog_cancel_path": "allocations/phase_b_h100_graphql_standard_image_placement_v7/watchdog.jsonl.cancel",
+    "start_immediately_after_pod_id": true,
+    "cancel_only_after_verified_404": true
+  },
+  "kill_conditions": ["hourly price exceeds $2.99", "create exceeds 60 seconds", "any Pod ID triggers unconditional deletion", "absolute deadline is reached"],
+  "next_step_rules": {
+    "on_control_pass": "Decompose the pinned image and bootstrap payload with the cheapest single-variable GraphQL follow-up.",
+    "on_control_preallocation_failure": "Classify the direct Pod create backend as unavailable for this account/placement and pivot to a different in-scope provider or managed API evidence path.",
+    "on_cleanup_failure": "Continue deletion attempts and do not run another allocation until 404 is verified."
+  },
+  "placement_control_script_sha256": "426ddfd03104b158755045730ed2864f50fbc3a8cf0ba19a9218bd66001c6e14",
+  "claim_boundary": "This control can establish only whether minimal H100 Pod placement works. It provides no model, quality, latency, throughput, utilization, power, or cost-per-token evidence."
+}

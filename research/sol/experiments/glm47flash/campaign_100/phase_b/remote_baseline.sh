@@ -1,23 +1,33 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-OUT=/workspace/campaign-100-phase-b
-PUBLIC=/workspace/public
-MODEL=/workspace/model-bf16
-WORKLOAD=/workspace/frozen-workloads
-QUALITY=/workspace/frozen-quality
+OUT="${OUT:-/workspace/campaign-100-phase-b}"
+PUBLIC="${PUBLIC:-/workspace/public}"
+MODEL="${MODEL:-/workspace/model-bf16}"
+WORKLOAD="${WORKLOAD:-/workspace/frozen-workloads}"
+QUALITY="${QUALITY:-/workspace/frozen-quality}"
+CONFIGURATION="${CONFIGURATION:-stock_no_cache_fcfs}"
+SERVER_EXTRA_ARGS_B64="${SERVER_EXTRA_ARGS_B64:-}"
+export CONFIGURATION SERVER_EXTRA_ARGS_B64
+export OUT PUBLIC MODEL WORKLOAD QUALITY
+export HF_HUB_DISABLE_XET=1
 STARTUP_TIMEOUT_SECONDS=900
 PROFILE_TIMEOUT_SECONDS=600
 TELEMETRY_CADENCE_SECONDS=1
 MODEL_REVISION=75fce703a93da3705c4cf8d3caadbac1d1072c78
 SOURCE_REVISION=f63458b5beaceabbd9d749b9fc956370e1b649e6
 IMAGE_DIGEST=sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af
-WORKLOAD_SHA256=c974f23e460a863be37b3cc04df80fc9aff977e239a5c49225cd8c85f1bb3d55
-TOKENIZER_BINDINGS_SHA256=c5258d650227ab3c474f25218263c5ac1898011f55aecef16def5fe10cf7fa64
-QUALITY_SHA256=0a7ba38e9cd5b627381e59194f3ab5df8e402995b8e0424869ae34a97a077041
+WORKLOAD_SHA256=f47c7af5e53483524010d06a93313b29f1a10c08f7df4bf18638349b4767193a
+TOKENIZER_BINDINGS_SHA256=ccbe405b3abcef13f95dc7882f3ab21f8fa3443a97a340f9e8c4070682ecb14c
+QUALITY_SHA256=152548d51fba8e8ff5e8f1e665c5af166fb6d97cdf3010723042112855964668
 EXPERIMENT_SPEC_SHA256="${EXPERIMENT_SPEC_SHA256:?missing experiment specification identity}"
-WORKLOAD_ARCHIVE_B64="${WORKLOAD_ARCHIVE_B64:?missing frozen workload archive}"
-QUALITY_ARCHIVE_B64="${QUALITY_ARCHIVE_B64:?missing frozen quality archive}"
+WORKLOAD_ARCHIVE_B64="${WORKLOAD_ARCHIVE_B64:-}"
+QUALITY_ARCHIVE_B64="${QUALITY_ARCHIVE_B64:-}"
+ARTIFACT_BUILDER_B64="${ARTIFACT_BUILDER_B64:-}"
+WORKLOAD_ARCHIVE_PATH="${WORKLOAD_ARCHIVE_PATH:-}"
+QUALITY_ARCHIVE_PATH="${QUALITY_ARCHIVE_PATH:-}"
+ARTIFACT_BUILDER_PATH="${ARTIFACT_BUILDER_PATH:-}"
+SERVE_ARTIFACT="${SERVE_ARTIFACT:-1}"
 CAMPAIGN_DEADLINE_EPOCH="${CAMPAIGN_DEADLINE_EPOCH:?missing campaign deadline}"
 
 HTTP_PID=
@@ -47,20 +57,17 @@ stop_process() {
 }
 
 package_artifact() {
-  python3 - <<'PY'
-import hashlib
-import json
-from pathlib import Path
-
-root = Path("/workspace/campaign-100-phase-b")
-rows = []
-for path in sorted(root.rglob("*")):
-    if path.is_file() and path.name != "manifest.json":
-        payload = path.read_bytes()
-        rows.append({"path": path.relative_to(root).as_posix(), "bytes": len(payload), "sha256": hashlib.sha256(payload).hexdigest()})
-(root / "manifest.json").write_text(json.dumps(rows, indent=2) + "\n")
-PY
-  tar -C /workspace -czf "$PUBLIC/phase-b-control.tar.gz.tmp" campaign-100-phase-b
+  rm -f "$OUT/manifest.json"
+  if [ -n "$ARTIFACT_BUILDER_PATH" ]; then
+    cp "$ARTIFACT_BUILDER_PATH" /tmp/artifact_builder.py
+  else
+    test -n "$ARTIFACT_BUILDER_B64"
+    printf '%s' "$ARTIFACT_BUILDER_B64" | base64 -d > /tmp/artifact_builder.py
+  fi
+  cp /tmp/artifact_builder.py "$OUT/artifact-builder.py"
+  python3 /tmp/artifact_builder.py manifest --bundle-root "$OUT" --output "$OUT/manifest.json"
+  test -s "$OUT/manifest.json" || return 1
+  tar -C /workspace -czf "$PUBLIC/phase-b-control.tar.gz.tmp" "$(basename "$OUT")"
   mv "$PUBLIC/phase-b-control.tar.gz.tmp" "$PUBLIC/phase-b-control.tar.gz"
   sha256sum "$PUBLIC/phase-b-control.tar.gz" > "$PUBLIC/phase-b-control.tar.gz.sha256"
 }
@@ -75,27 +82,41 @@ finish() {
   stop_process "$TELEMETRY_PID"
   nvidia-smi -q > "$OUT/nvidia-smi-final.txt" 2>&1
   phase teardown complete
-  package_artifact
+  package_artifact || rc=1
   if [ "$rc" -eq 0 ]; then
     printf 'READY\n' > "$PUBLIC/STATUS"
   else
     printf 'FAILED\n' > "$PUBLIC/STATUS"
   fi
   printf '%s\n' "$rc" > "$PUBLIC/EXIT_CODE"
-  wait "$HTTP_PID"
+  if [ "$SERVE_ARTIFACT" -eq 1 ]; then
+    wait "$HTTP_PID"
+  fi
 }
 
 trap finish EXIT
 printf 'BOOTSTRAP\n' > "$PUBLIC/STATUS"
-python3 -m http.server 8000 --bind 0.0.0.0 --directory "$PUBLIC" > "$PUBLIC/http-server.stdout.log" 2> "$PUBLIC/http-server.stderr.log" &
-HTTP_PID=$!
+if [ "$SERVE_ARTIFACT" -eq 1 ]; then
+  python3 -m http.server 8000 --bind 0.0.0.0 --directory "$PUBLIC" > "$PUBLIC/http-server.stdout.log" 2> "$PUBLIC/http-server.stderr.log" &
+  HTTP_PID=$!
+fi
 
 phase bootstrap begin
-printf '%s' "$WORKLOAD_ARCHIVE_B64" | base64 -d > /tmp/frozen-workloads.tar.gz
+if [ -n "$WORKLOAD_ARCHIVE_PATH" ]; then
+  cp "$WORKLOAD_ARCHIVE_PATH" /tmp/frozen-workloads.tar.gz
+else
+  test -n "$WORKLOAD_ARCHIVE_B64"
+  printf '%s' "$WORKLOAD_ARCHIVE_B64" | base64 -d > /tmp/frozen-workloads.tar.gz
+fi
 tar -xzf /tmp/frozen-workloads.tar.gz -C "$WORKLOAD"
 test "$(python3 "$WORKLOAD/validate_bundle.py")" = "$WORKLOAD_SHA256"
 test "$(sha256sum "$WORKLOAD/TOKENIZER_BINDINGS.json" | awk '{print $1}')" = "$TOKENIZER_BINDINGS_SHA256"
-printf '%s' "$QUALITY_ARCHIVE_B64" | base64 -d > /tmp/frozen-quality.tar.gz
+if [ -n "$QUALITY_ARCHIVE_PATH" ]; then
+  cp "$QUALITY_ARCHIVE_PATH" /tmp/frozen-quality.tar.gz
+else
+  test -n "$QUALITY_ARCHIVE_B64"
+  printf '%s' "$QUALITY_ARCHIVE_B64" | base64 -d > /tmp/frozen-quality.tar.gz
+fi
 tar -xzf /tmp/frozen-quality.tar.gz -C "$QUALITY"
 test "$(python3 "$QUALITY/validate_quality.py")" = "$QUALITY_SHA256"
 python3 - <<'PY' > "$OUT/contract-identities.json"
@@ -104,16 +125,18 @@ import os
 
 print(json.dumps({
     "experiment_spec_sha256": os.environ["EXPERIMENT_SPEC_SHA256"],
-    "workload_sha256": "c974f23e460a863be37b3cc04df80fc9aff977e239a5c49225cd8c85f1bb3d55",
-    "tokenizer_bindings_sha256": "c5258d650227ab3c474f25218263c5ac1898011f55aecef16def5fe10cf7fa64",
-    "quality_sha256": "0a7ba38e9cd5b627381e59194f3ab5df8e402995b8e0424869ae34a97a077041",
+    "workload_sha256": "f47c7af5e53483524010d06a93313b29f1a10c08f7df4bf18638349b4767193a",
+    "tokenizer_bindings_sha256": "ccbe405b3abcef13f95dc7882f3ab21f8fa3443a97a340f9e8c4070682ecb14c",
+    "quality_sha256": "152548d51fba8e8ff5e8f1e665c5af166fb6d97cdf3010723042112855964668",
     "runtime_source_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
     "runtime_image_digest": "sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
     "model": "zai-org/GLM-4.7-Flash",
     "model_revision": "75fce703a93da3705c4cf8d3caadbac1d1072c78",
-    "configuration": "stock_no_cache_fcfs",
-    "mtp": "disabled",
-    "profile_sequence": ["development_smoke", "fixed_8k_1k_c1", "fixed_8k_1k_c8"],
+    "configuration": os.environ.get("CONFIGURATION", "stock_no_cache_fcfs"),
+    "mtp": "enabled" if os.environ.get("SERVER_EXTRA_ARGS_B64") else "disabled",
+    "profile_sequence": ["fixed_8k_1k_c1", "fixed_8k_1k_c8"],
+    "agent_tool_call_itl_claim": "not_permitted_tool_parser_buffers_tokens",
+    "semantic_quality_measurement": "separate_stock_chat_capture",
     "headline_c32_admissible": False,
     "service_contract": {"p95_ttft_ms": 10000, "p95_inter_token_ms": 100, "request_success_fraction": 0.99, "silent_truncation": False},
 }, indent=2))
@@ -158,7 +181,9 @@ PY
 phase native_import complete
 
 phase model_download begin
+if [ ! -s "$MODEL/config.json" ] || [ ! -s "$MODEL/model.safetensors.index.json" ]; then
 timeout --signal=TERM 1200 python3 - <<'PY' > "$OUT/model-download.log" 2>&1
+import os
 from huggingface_hub import HfApi, snapshot_download
 
 revision = "75fce703a93da3705c4cf8d3caadbac1d1072c78"
@@ -166,8 +191,11 @@ info = HfApi().model_info("zai-org/GLM-4.7-Flash", revision=revision)
 if info.sha != revision:
     raise SystemExit(f"revision mismatch: {info.sha}")
 print("resolved_revision=" + info.sha)
-print(snapshot_download("zai-org/GLM-4.7-Flash", revision=revision, local_dir="/workspace/model-bf16"))
+print(snapshot_download("zai-org/GLM-4.7-Flash", revision=revision, local_dir=os.environ["MODEL"]))
 PY
+else
+  printf 'reused exact model directory from prior same-host arm\n' > "$OUT/model-download.log"
+fi
 sha256sum "$MODEL/config.json" "$MODEL/model.safetensors.index.json" > "$OUT/model-hashes.sha256"
 grep -q '^dc9b97c7c9bed726a2e6939da4234d5c43abb3edec8812068c9a1af1dbc13acb ' "$OUT/model-hashes.sha256"
 grep -q '^91e6e95ca21700f50904a680c8c4212f5aa16dc7c10a013f01c906957c889791 ' "$OUT/model-hashes.sha256"
@@ -182,21 +210,28 @@ phase plan_materialization begin
 python3 - <<'PY'
 import hashlib
 import json
+import os
 import struct
 from pathlib import Path
 
 from transformers import AutoTokenizer
+from sglang.srt.entrypoints.openai.protocol import ChatCompletionRequest
+from sglang.srt.entrypoints.openai.serving_chat import (
+    normalize_assistant_tool_call_arguments,
+    normalize_tool_content,
+)
+from sglang.srt.parser.jinja_template_utils import process_content_for_template_format
 
-WORKLOAD = Path("/workspace/frozen-workloads")
-OUT = Path("/workspace/campaign-100-phase-b")
-BUNDLE_SHA = "c974f23e460a863be37b3cc04df80fc9aff977e239a5c49225cd8c85f1bb3d55"
+WORKLOAD = Path(os.environ["WORKLOAD"])
+OUT = Path(os.environ["OUT"])
+BUNDLE_SHA = "f47c7af5e53483524010d06a93313b29f1a10c08f7df4bf18638349b4767193a"
 READ_FILE_TOOL = {
     "name": "read_file",
     "description": "Read one UTF-8 file now",
     "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]},
 }
 
-tokenizer = AutoTokenizer.from_pretrained("/workspace/model-bf16")
+tokenizer = AutoTokenizer.from_pretrained(os.environ["MODEL"])
 records = {
     row["fixture_id"]: row
     for name in ("development.jsonl", "holdout.jsonl")
@@ -210,7 +245,31 @@ def token_hash(ids):
     return hashlib.sha256(b"".join(struct.pack("<I", value) for value in ids)).hexdigest()
 
 def rendered_ids(messages, tools=None):
-    return tokenizer.apply_chat_template(messages, tools=tools, tokenize=True, add_generation_prompt=True)
+    request = ChatCompletionRequest(
+        messages=messages,
+        tools=[{"type": "function", "function": tool} for tool in tools] if tools else None,
+        model="zai-org/GLM-4.7-Flash",
+        max_tokens=1,
+    )
+    normalized = [message.model_dump() for message in request.messages]
+    for message in normalized:
+        normalize_assistant_tool_call_arguments(message)
+    processed = []
+    for message in normalized:
+        if message.get("content") is None:
+            message["content"] = ""
+        row = process_content_for_template_format(message, "string", [], [], [], [])
+        row["content"] = normalize_tool_content(row["role"], row.get("content"))
+        processed.append(row)
+    transport_tools = [tool.model_dump() for tool in request.tools] if request.tools else None
+    rendered = tokenizer.apply_chat_template(
+        processed,
+        tools=transport_tools,
+        tokenize=False,
+        add_generation_prompt=True,
+        return_dict=False,
+    )
+    return tokenizer.encode(rendered, add_special_tokens=False)
 
 def fixed_prompt():
     atom = tokenizer.encode(" code", add_special_tokens=False)
@@ -233,7 +292,7 @@ def append_material():
     ids = rendered_ids(messages, [READ_FILE_TOOL])
     if len(ids) != binding["input_tokens"] or token_hash(ids) != binding["token_ids_u32le_sha256"]:
         raise SystemExit("append tokenizer binding mismatch")
-    return fixture, messages, [READ_FILE_TOOL], binding["input_tokens"]
+    return fixture, messages, [READ_FILE_TOOL], binding["server_reported_input_tokens"]
 
 def prefix_material(index):
     fixture = records["development_prefix_1"]
@@ -244,12 +303,10 @@ def prefix_material(index):
     ids = rendered_ids(messages, tools)
     if len(ids) != binding["input_tokens"] or token_hash(ids) != binding["token_ids_u32le_sha256"]:
         raise SystemExit(f"prefix tokenizer binding mismatch: {index}")
-    return fixture, messages, tools, binding["input_tokens"], index
+    return fixture, messages, tools, binding["server_reported_input_tokens"], index
 
 fixed_fixture = records["development_fixed_1"]
 fixed = (fixed_fixture, fixed_prompt(), None, 8192)
-append = append_material()
-prefixes = [prefix_material(index) for index in range(3)]
 
 def request(material, request_id, offset=0):
     fixture, content, tools, expected, *request_index = material
@@ -274,19 +331,16 @@ def repeat(material, count, prefix):
     return [request(material, f"{prefix}-{index:03d}") for index in range(count)]
 
 blueprints = {
-    "development_smoke": {
-        "warmup": [fixed, append],
-        "measured": [fixed, append, prefixes[0], prefixes[1], prefixes[2]],
-    },
     "fixed_8k_1k_c1": {"warmup": [fixed], "measured": [fixed] * 4},
     "fixed_8k_1k_c8": {"warmup": [fixed] * 4, "measured": [fixed] * 16},
 }
 identities = []
-for profile_id in ("development_smoke", "fixed_8k_1k_c1", "fixed_8k_1k_c8"):
+for profile_id in ("fixed_8k_1k_c1", "fixed_8k_1k_c8"):
     profile = profiles[profile_id]
     blueprint = blueprints[profile_id]
-    warmup = [request(material, f"stock-{profile_id}-warmup-{index:03d}") for index, material in enumerate(blueprint["warmup"])]
-    measured = [request(material, f"stock-{profile_id}-measured-{index:03d}") for index, material in enumerate(blueprint["measured"])]
+    configuration = __import__("os").environ.get("CONFIGURATION", "stock_no_cache_fcfs")
+    warmup = [request(material, f"{configuration}-{profile_id}-warmup-{index:03d}") for index, material in enumerate(blueprint["warmup"])]
+    measured = [request(material, f"{configuration}-{profile_id}-measured-{index:03d}") for index, material in enumerate(blueprint["measured"])]
     if len(warmup) != profile["warmup"]["request_count"] or len(measured) != profile["request_count"]:
         raise SystemExit(f"materialized request cardinality mismatch: {profile_id}")
     plan = {"schema_version": 1, "bundle_sha256": BUNDLE_SHA, "profile_id": profile_id, "cache_mode": profile["cache"]["prefix_cache"], "warmup_requests": warmup, "requests": measured}
@@ -305,13 +359,14 @@ start_scheduler_sampler() {
 import datetime
 import hashlib
 import json
+import os
 import urllib.request
 
 try:
     payload = urllib.request.urlopen("http://127.0.0.1:30000/metrics", timeout=5).read()
-    print(json.dumps({"timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(), "configuration": "stock_no_cache_fcfs", "metrics_sha256": hashlib.sha256(payload).hexdigest(), "metrics": payload.decode(errors="replace")}, separators=(",", ":")))
+    print(json.dumps({"timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(), "configuration": os.environ.get("CONFIGURATION", "stock_no_cache_fcfs"), "metrics_sha256": hashlib.sha256(payload).hexdigest(), "metrics": payload.decode(errors="replace")}, separators=(",", ":")))
 except Exception as error:
-    print(json.dumps({"timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(), "configuration": "stock_no_cache_fcfs", "error": repr(error)}, separators=(",", ":")))
+    print(json.dumps({"timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(), "configuration": os.environ.get("CONFIGURATION", "stock_no_cache_fcfs"), "error": repr(error)}, separators=(",", ":")))
 PY
       sleep 1
     done
@@ -320,6 +375,10 @@ PY
 }
 
 phase stock_server begin
+SERVER_EXTRA_ARGS=()
+if [ -n "$SERVER_EXTRA_ARGS_B64" ]; then
+  mapfile -t SERVER_EXTRA_ARGS < <(printf '%s' "$SERVER_EXTRA_ARGS_B64" | base64 -d)
+fi
 CMD=(
   python3 -m sglang.launch_server
   --model-path "$MODEL"
@@ -327,7 +386,7 @@ CMD=(
   --model-impl sglang
   --host 127.0.0.1
   --port 30000
-  --context-length 65536
+  --context-length 32768
   --max-running-requests 32
   --mem-fraction-static 0.90
   --chunked-prefill-size 8192
@@ -339,6 +398,7 @@ CMD=(
   --enable-metrics
   --enable-request-time-stats-logging
   --random-seed 1234
+  "${SERVER_EXTRA_ARGS[@]}"
 )
 printf '%q ' "${CMD[@]}" > "$OUT/stock-server-command.txt"
 printf '\n' >> "$OUT/stock-server-command.txt"
@@ -375,11 +435,12 @@ convert_profile() {
   python3 - "$profile" <<'PY'
 import json
 import math
+import os
 import sys
 from pathlib import Path
 
 profile = sys.argv[1]
-root = Path("/workspace/campaign-100-phase-b")
+root = Path(os.environ["OUT"])
 source = root / "profiles" / f"{profile}-runner-outcomes.jsonl"
 if not source.is_file():
     raise SystemExit(f"runner did not produce typed outcomes: {profile}")
@@ -404,7 +465,7 @@ for row in rows:
     compliant = eligible and ttft <= 10000 and request_itl <= 100
     tokens = row["tokens"]
     converted.append({
-        "request_id": f"stock_no_cache_fcfs:{profile}:{row['repetition']}:{row['request_id']}",
+        "request_id": f"{__import__('os').environ.get('CONFIGURATION', 'stock_no_cache_fcfs')}:{profile}:{row['repetition']}:{row['request_id']}",
         "completed": success,
         "slo_eligible": eligible,
         "slo_compliant": compliant,
@@ -429,13 +490,14 @@ summarize_profile() {
   python3 - "$profile" "$runner_started" "$runner_ended" <<'PY'
 import json
 import math
+import os
 import sys
 from pathlib import Path
 
 profile, started, ended = sys.argv[1], float(sys.argv[2]), float(sys.argv[3])
-root = Path("/workspace/campaign-100-phase-b")
+root = Path(os.environ["OUT"])
 rows = [json.loads(line) for line in (root / "profiles" / f"{profile}-runner-outcomes.jsonl").read_text().splitlines()]
-expected = {"development_smoke": 5, "fixed_8k_1k_c1": 4, "fixed_8k_1k_c8": 16}[profile]
+expected = {"fixed_8k_1k_c1": 4, "fixed_8k_1k_c8": 16}[profile]
 if len(rows) != expected:
     raise SystemExit(f"profile cardinality mismatch: {profile}")
 
@@ -474,7 +536,7 @@ PY
 
 SEQUENCE_PASS=1
 phase workload_sequence begin
-for profile in development_smoke fixed_8k_1k_c1 fixed_8k_1k_c8; do
+for profile in fixed_8k_1k_c1 fixed_8k_1k_c8; do
   phase "$profile" begin
   runner_started=$(date +%s.%N)
   set +e
@@ -492,6 +554,7 @@ for profile in development_smoke fixed_8k_1k_c1 fixed_8k_1k_c8; do
   profile_gate=$(summarize_profile "$profile" "$runner_started" "$runner_ended")
   python3 - "$profile" "$runner_rc" "$profile_gate" <<'PY' >> "$OUT/profile-gates.jsonl"
 import json
+import os
 import sys
 print(json.dumps({"profile_id": sys.argv[1], "runner_exit_code": int(sys.argv[2]), "slo_gate": sys.argv[3]}, separators=(",", ":")))
 PY
@@ -512,8 +575,9 @@ if [ "$SEQUENCE_PASS" -eq 1 ]; then
     --suite "$QUALITY" \
     --split development \
     --base-url http://127.0.0.1:30000 \
-    --responses "$OUT/quality-stock-responses.jsonl" \
-    --evidence "$OUT/quality-stock-evidence.json" \
+    --disable-thinking \
+    --responses "$OUT/quality-${CONFIGURATION}-responses.jsonl" \
+    --evidence "$OUT/quality-${CONFIGURATION}-evidence.json" \
     > "$OUT/quality-capture.stdout.log" \
     2> "$OUT/quality-capture.stderr.log"
   quality_capture_rc=$?
@@ -522,9 +586,9 @@ if [ "$SEQUENCE_PASS" -eq 1 ]; then
       --mode score \
       --suite "$QUALITY" \
       --split development \
-      --control-responses "$OUT/quality-stock-responses.jsonl" \
-      --candidate-responses "$OUT/quality-stock-responses.jsonl" \
-      --result-output "$OUT/quality-stock-self-score.json" \
+      --control-responses "$OUT/quality-${CONFIGURATION}-responses.jsonl" \
+      --candidate-responses "$OUT/quality-${CONFIGURATION}-responses.jsonl" \
+      --result-output "$OUT/quality-${CONFIGURATION}-self-score.json" \
       > "$OUT/quality-score.stdout.log" \
       2> "$OUT/quality-score.stderr.log"
     quality_score_rc=$?
@@ -544,7 +608,7 @@ PY
 fi
 
 phase profiler begin
-export SGLANG_TORCH_PROFILER_DIR="$OUT/profiler/stock_no_cache_fcfs"
+export SGLANG_TORCH_PROFILER_DIR="$OUT/profiler/$CONFIGURATION"
 mkdir -p "$SGLANG_TORCH_PROFILER_DIR"
 timeout --signal=TERM "$PROFILE_TIMEOUT_SECONDS" python3 -m sglang.benchmark.serving \
   --backend sglang \
@@ -577,24 +641,30 @@ SERVER_PID=
 
 python3 - "$SEQUENCE_PASS" "$QUALITY_PASS" <<'PY' > "$OUT/allocation-result.json"
 import json
+import os
 import sys
 from pathlib import Path
 
-root = Path("/workspace/campaign-100-phase-b")
+root = Path(os.environ["OUT"])
 summaries = []
-for profile in ("development_smoke", "fixed_8k_1k_c1", "fixed_8k_1k_c8"):
+for profile in ("fixed_8k_1k_c1", "fixed_8k_1k_c8"):
     path = root / "profiles" / f"{profile}-summary.json"
     if path.is_file():
         summaries.append(json.loads(path.read_text()))
 print(json.dumps({
-    "configuration": "stock_no_cache_fcfs",
+    "configuration": __import__("os").environ.get("CONFIGURATION", "stock_no_cache_fcfs"),
     "sequence_pass": sys.argv[1] == "1",
     "quality_pass": sys.argv[2] == "1",
     "headline_c32_executed": False,
     "profiles": summaries,
-    "next_action": "preregister_headline_or_tuned_followup" if sys.argv[1] == "1" and sys.argv[2] == "1" else "stop_or_correct_measured_failure",
+    "agent_tool_call_itl_claim_permitted": False,
+    "next_action": "evaluate_preregistered_mtp_on_fixed_slo_plus_separate_quality" if sys.argv[1] == "1" and sys.argv[2] == "1" else "stop_or_correct_measured_failure",
 }, indent=2))
 PY
 
 phase packaging begin
 phase packaging complete
+
+if [ "$SEQUENCE_PASS" -ne 1 ] || [ "$QUALITY_PASS" -ne 1 ]; then
+  exit 1
+fi

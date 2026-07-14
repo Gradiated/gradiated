@@ -1,0 +1,107 @@
+{
+  "artifact_contract": {
+    "host": ["preregistration.json", "provider-request.json", "events.jsonl", "host-bootstrap logs", "summary.json"],
+    "per_arm": ["remote logs", "hash-matched tar.gz and sidecar", "verified internal manifest", "typed allocation result", "fixed c1/c8 outcomes and summaries", "reasoning-off 32K semantic quality capture and score"],
+    "paired": ["mtp-exact-identity.json", "paired-quality.json", "mtp-performance.json"],
+    "teardown": "instance GET not-found and zero final experiment-named instance/disk inventory"
+  },
+  "arms": [
+    {
+      "admission": "always after local contract and host/runtime gates",
+      "configuration": "stock_no_cache_fcfs",
+      "change": "server context 32768 plus explicit enable_thinking=false quality policy; fixed 8K/1K performance geometry unchanged"
+    },
+    {
+      "admission": "only after stock fixed c1/c8 SLO, complete quality capture/self-score, typed artifact, and at least 1200 seconds remaining",
+      "configuration": "mtp_eagle_3_1_4",
+      "change": "official GLM MTP/EAGLE: 3 steps, top-k 1, 4 draft tokens"
+    }
+  ],
+  "budget": {
+    "absolute_all_in_cap_usd": 8.5,
+    "absolute_allocation_seconds": 9000,
+    "compute_cap_usd": 7.375,
+    "hourly_compute_rate_usd_vendor_list": 2.95,
+    "nebius_campaign_cap_usd": 25.0,
+    "nebius_conservative_spend_before_usd": 6.552516638,
+    "nebius_remaining_before_usd": 18.447483362
+  },
+  "causal_hypotheses": {
+    "quality_geometry": "Raising only server context from 16384 to 32768 admits the exact 32379-token frozen retrieval input plus its 256-token output budget, completes the reasoning-off quality screen, and does not materially regress fixed c8 throughput or SLO.",
+    "mtp": "Changing only to official GLM MTP/EAGLE improves matched fixed-8K/1K c8 SLO-goodput by at least 5% while both arms pass SLO, exact normalized reasoning-off quality identity, and paired quality gates."
+  },
+  "changed_from_v8": {
+    "server_context_length": "32768 instead of 16384",
+    "causal_basis": "exact-runtime audit measured 32379 input tokens; input plus frozen 256-token output budget is 32635",
+    "unchanged": "hardware, model, image, 8192-token chunked prefill, fixed workloads, reasoning-off quality request policy, quality output cap, seed, scheduler, cache policy, and conditional MTP gate",
+    "workload_identity": "f47c7af5e53483524010d06a93313b29f1a10c08f7df4bf18638349b4767193a",
+    "quality_identity": "152548d51fba8e8ff5e8f1e665c5af166fb6d97cdf3010723042112855964668"
+  },
+  "cleanup": {
+    "independent_watchdog": true,
+    "retrieve_and_hash_before_delete": true,
+    "verify_instance_not_found": true,
+    "verify_named_managed_disk_absent": true
+  },
+  "experiment_id": "nebius_h100_32k_quality_mtp_v9",
+  "falsification_rules": {
+    "quality_geometry": "Reject if the 32379-token request is rejected, truncated, incorrect, or incomplete; reject if any quality case or self-score fails.",
+    "fixed_performance": "Reject drift if c8 is outside the prospective 280-330 output tok/s band or either fixed SLO fails.",
+    "mtp": "Reject if c8 improvement is below 5%, either arm fails fixed SLO, exact normalized quality identity fails, paired quality fails, or artifact/cleanup fails.",
+    "economics": "Do not claim provider competitiveness without matched provider workload, quality, and service-level evidence."
+  },
+  "hardware": {
+    "boot_disk_gib": 250,
+    "gpu": "1x NVIDIA H100 SXM 80GB",
+    "image_family": "ubuntu24.04-cuda13.0",
+    "platform": "gpu-h100-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "purchase_model": "regular_on_demand"
+  },
+  "identities": {
+    "container": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+    "harness_sha256": "a717617f191fb9a4e70b9fb2ded8beccd60fac2305fa5b24e1117e86e120e99a",
+    "model_revision": "75fce703a93da3705c4cf8d3caadbac1d1072c78",
+    "orchestrator_sha256": "5d71deaefe4511ddc8ef7f9305c5bc1537beb1fb667605484d50599e14f8574b",
+    "quality_sha256": "152548d51fba8e8ff5e8f1e665c5af166fb6d97cdf3010723042112855964668",
+    "runtime_source_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "tokenizer_bindings_sha256": "ccbe405b3abcef13f95dc7882f3ab21f8fa3443a97a340f9e8c4070682ecb14c",
+    "workload_sha256": "f47c7af5e53483524010d06a93313b29f1a10c08f7df4bf18638349b4767193a"
+  },
+  "issue": "https://github.com/joshsny/gradiated/issues/11",
+  "predictions": {
+    "quality": "All five chat cases and the teacher-forced case complete; the development self-score passes.",
+    "long_context": "The retrieval request reaches inference with 32379 server input tokens and returns the bound key before 256 output tokens.",
+    "fixed_c8_output_tokens_per_second": "280 to 330; v8 point estimate 303.955",
+    "mtp": "Runtime acceptance and >=5% improvement remain uncertain and are the primary falsifiable intervention result.",
+    "business_threshold": "A 5% MTP pass alone cannot close the measured roughly 3.1x gap to the historical $0.88/M analytical anchor."
+  },
+  "quality_gate": {
+    "stock": "complete development capture at context 32768 with enable_thinking=false plus self-score",
+    "mtp_deterministic_identity": "exact normalized reasoning-off quality-output identity",
+    "mtp_pair": "point pass and not provisional"
+  },
+  "service_contract": {
+    "scope": "fixed_8k_1k only",
+    "p95_inter_token_latency_ms_max": 100,
+    "p95_ttft_ms_max": 10000,
+    "request_success_fraction_min": 0.99,
+    "silent_truncation_allowed": false
+  },
+  "stock_control": "Zero active instances; same H100 VM, model files, image, frozen fixed workload, quality suite/policy, context 32768, max-running 32, FCFS, disabled radix cache, and seed across arms. MTP flags are the only arm-B change.",
+  "telemetry": ["GPU utilization", "VRAM", "power", "temperature", "clocks", "fixed-workload TTFT", "fixed-workload token-level ITL/TPOT", "throughput", "queueing", "failures/truncation", "profiler", "startup/load", "allocation cost"],
+  "timeouts_seconds": {
+    "absolute_allocation": 9000,
+    "container_bootstrap": 1800,
+    "model_download": 1200,
+    "server_startup_per_arm": 900,
+    "workload_profile_each": 1800
+  },
+  "workload_geometry": {
+    "fixed_8k_1k_c1_requests": 4,
+    "fixed_8k_1k_c8_requests": 16,
+    "semantic_quality": "five development chat cases including exact 32379-token retrieval plus teacher-forced loss; thinking disabled; max output 256",
+    "agent_tool_call_itl": "excluded and unclaimable",
+    "headline_c32": "not admitted"
+  }
+}

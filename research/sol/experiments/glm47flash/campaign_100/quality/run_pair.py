@@ -21,10 +21,11 @@ def canonical(value):
 
 
 class QualityAPIClient:
-    def __init__(self, base_url, execution_contract, api_key=None):
+    def __init__(self, base_url, execution_contract, api_key=None, disable_thinking=False):
         self.base_url = base_url.rstrip("/")
         self.execution_contract = execution_contract
         self.api_key = api_key
+        self.disable_thinking = disable_thinking
 
     def post(self, endpoint, payload):
         headers = {"Content-Type": "application/json"}
@@ -60,6 +61,8 @@ class QualityAPIClient:
             "seed": 470200,
             "stream": False,
         }
+        if self.disable_thinking:
+            payload["chat_template_kwargs"] = {"enable_thinking": False}
         value, raw_sha256 = self.post(contract["chat_endpoint"], payload)
         choices = value.get("choices")
         if not isinstance(choices, list) or len(choices) != 1 or not isinstance(choices[0], dict):
@@ -209,6 +212,7 @@ def main():
     parser.add_argument("--candidate-responses")
     parser.add_argument("--result-output")
     parser.add_argument("--api-key-env", default="")
+    parser.add_argument("--disable-thinking", action="store_true")
     arguments = parser.parse_args()
     try:
         bundle = load_and_validate(arguments.suite)
@@ -220,7 +224,7 @@ def main():
             run_endpoint(
                 bundle,
                 arguments.split,
-                QualityAPIClient(arguments.base_url, contract, api_key),
+                QualityAPIClient(arguments.base_url, contract, api_key, arguments.disable_thinking),
                 Path(arguments.responses),
                 Path(arguments.evidence),
             )
@@ -245,14 +249,14 @@ def main():
             run_endpoint(
                 bundle,
                 arguments.split,
-                QualityAPIClient(arguments.control_url, contract, api_key),
+                QualityAPIClient(arguments.control_url, contract, api_key, arguments.disable_thinking),
                 control_responses,
                 output / "control_evidence.json",
             )
             run_endpoint(
                 bundle,
                 arguments.split,
-                QualityAPIClient(arguments.candidate_url, contract, api_key),
+                QualityAPIClient(arguments.candidate_url, contract, api_key, arguments.disable_thinking),
                 candidate_responses,
                 output / "candidate_evidence.json",
             )

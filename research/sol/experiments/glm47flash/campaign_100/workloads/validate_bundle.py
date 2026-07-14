@@ -122,8 +122,15 @@ def validate_tokenizer_bindings(bindings, records):
         raise BundleError("tokenizer revision binding drifted")
     if bindings.get("source_files") != expected_source_files:
         raise BundleError("tokenizer source file identity drifted")
-    if bindings.get("tokenizer_implementation") != {"package": "@huggingface/transformers", "version": "4.2.0"}:
+    if bindings.get("tokenizer_implementation") != {
+        "container": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+        "package": "transformers",
+        "runtime_source_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+        "version": "5.12.1",
+    }:
         raise BundleError("tokenizer implementation binding drifted")
+    if bindings.get("transport_adapter", {}).get("server_prompt_accounting_evidence") != "nebius_h100_stock_mtp_v5":
+        raise BundleError("tokenizer transport binding lacks measured server evidence")
     if bindings.get("sampling") != {"add_generation_prompt": True}:
         raise BundleError("tokenizer chat-template sampling binding drifted")
     content_records = {
@@ -143,6 +150,8 @@ def validate_tokenizer_bindings(bindings, records):
         if fixture["workload_class"] == "agent_append":
             if not isinstance(row.get("input_tokens"), int) or row["input_tokens"] <= 0:
                 raise BundleError("append tokenizer count is missing")
+            if row.get("server_reported_input_tokens") != row["input_tokens"] - 1:
+                raise BundleError("append server prompt-token accounting is invalid")
             token_hashes = [row.get("token_ids_u32le_sha256")]
         else:
             request_rows = row.get("requests")
@@ -153,6 +162,8 @@ def validate_tokenizer_bindings(bindings, records):
                 raise BundleError("prefix tokenizer request order drifted")
             if not isinstance(row.get("exact_common_prefix_tokens"), int) or row["exact_common_prefix_tokens"] <= 0:
                 raise BundleError("exact common prefix token count is missing")
+            if any(request.get("server_reported_input_tokens") != request.get("input_tokens", 0) - 1 for request in request_rows):
+                raise BundleError("prefix server prompt-token accounting is invalid")
             token_hashes = [request.get("token_ids_u32le_sha256") for request in request_rows]
         if any(not isinstance(value, str) or len(value) != 64 for value in token_hashes):
             raise BundleError("tokenizer token-id hash is missing")

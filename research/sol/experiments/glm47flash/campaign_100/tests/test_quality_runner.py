@@ -11,7 +11,7 @@ QUALITY = ROOT / "quality"
 sys.path.insert(0, str(QUALITY))
 
 from build_quality import build_quality
-from run_pair import RunnerError, run_endpoint
+from run_pair import QualityAPIClient, RunnerError, run_endpoint
 from score_pair import score_pair
 from validate_quality import load_and_validate
 
@@ -105,6 +105,24 @@ class QualityRunnerTest(unittest.TestCase):
                 self.path / "responses.jsonl",
                 self.path / "evidence.json",
             )
+
+    def test_disable_thinking_is_an_explicit_request_policy(self):
+        client = QualityAPIClient(
+            "http://127.0.0.1:30000",
+            self.bundle["policy"]["execution_contract"],
+            disable_thinking=True,
+        )
+        captured = {}
+
+        def fake_post(endpoint, payload):
+            captured.update(payload)
+            return {
+                "choices": [{"finish_reason": "stop", "message": {"content": "ok"}}]
+            }, "0" * 64
+
+        client.post = fake_post
+        client.chat({}, [{"role": "user", "content": "Say ok."}])
+        self.assertEqual(captured["chat_template_kwargs"], {"enable_thinking": False})
 
 
 if __name__ == "__main__":

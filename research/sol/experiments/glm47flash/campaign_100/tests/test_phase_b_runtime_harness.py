@@ -6,8 +6,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 HARNESS = ROOT / "phase_b" / "remote_baseline.sh"
-
-
 class PhaseBRuntimeHarnessTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -26,21 +24,27 @@ class PhaseBRuntimeHarnessTests(unittest.TestCase):
             "sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
             "zai-org/GLM-4.7-Flash",
             "75fce703a93da3705c4cf8d3caadbac1d1072c78",
-            "c974f23e460a863be37b3cc04df80fc9aff977e239a5c49225cd8c85f1bb3d55",
-            "c5258d650227ab3c474f25218263c5ac1898011f55aecef16def5fe10cf7fa64",
-            "0a7ba38e9cd5b627381e59194f3ab5df8e402995b8e0424869ae34a97a077041",
+            "f47c7af5e53483524010d06a93313b29f1a10c08f7df4bf18638349b4767193a",
+            "ccbe405b3abcef13f95dc7882f3ab21f8fa3443a97a340f9e8c4070682ecb14c",
+            "152548d51fba8e8ff5e8f1e665c5af166fb6d97cdf3010723042112855964668",
         }
         for identity in required:
             self.assertIn(identity, self.source)
         self.assertIn("EXPERIMENT_SPEC_SHA256", self.source)
         self.assertIn("WORKLOAD_ARCHIVE_B64", self.source)
         self.assertIn("QUALITY_ARCHIVE_B64", self.source)
+        self.assertIn("export HF_HUB_DISABLE_XET=1", self.source)
 
     def test_startup_allows_fifteen_minutes_and_fast_fails_server_exit(self):
         self.assertRegex(self.source, r"STARTUP_TIMEOUT_SECONDS=(?:\"?900\"?)")
         self.assertIn('kill -0 "$SERVER_PID"', self.source)
         self.assertIn('wait "$SERVER_PID"', self.source)
         self.assertIn("/health", self.source)
+
+    def test_stock_context_admits_the_exact_frozen_quality_geometry(self):
+        self.assertIn("--context-length 32768", self.source)
+        self.assertNotIn("--context-length 16384", self.source)
+        self.assertNotIn("--context-length 65536", self.source)
 
     def test_first_allocation_is_stock_only_and_attributable(self):
         self.assertIn("stock_no_cache_fcfs", self.source)
@@ -63,13 +67,15 @@ class PhaseBRuntimeHarnessTests(unittest.TestCase):
         self.assertNotIn("ignore_eos", self.source)
 
     def test_frozen_workloads_and_deterministic_sampling_are_replayed(self):
-        for profile in ("development_smoke", "fixed_8k_1k_c1", "fixed_8k_1k_c8"):
+        for profile in ("fixed_8k_1k_c1", "fixed_8k_1k_c8"):
             self.assertIn(profile, self.source)
         self.assertIn('python3 "$WORKLOAD/replay_api.py"', self.source)
         self.assertIn("--random-input-len 8192", self.source)
         self.assertIn("--random-output-len 128", self.source)
         self.assertIn("token_ids_u32le_sha256", self.source)
         self.assertIn("token_hash(ids)", self.source)
+        self.assertIn("ChatCompletionRequest", self.source)
+        self.assertIn('binding["server_reported_input_tokens"]', self.source)
         self.assertIn("materialized-plan-identities.json", self.source)
         for source_hash in (
             "19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d",
@@ -83,16 +89,21 @@ class PhaseBRuntimeHarnessTests(unittest.TestCase):
         self.assertIn('python3 "$QUALITY/run_pair.py"', self.source)
         self.assertIn("--mode capture", self.source)
         self.assertIn("--mode score", self.source)
+        self.assertIn("--disable-thinking", self.source)
+
+    def test_allocation_result_imports_its_environment_dependency(self):
+        self.assertRegex(self.source, r'import json\nimport os\nimport sys\nfrom pathlib import Path')
 
     def test_matrix_escalates_sequentially_and_excludes_headline_c32(self):
-        self.assertIn("for profile in development_smoke fixed_8k_1k_c1 fixed_8k_1k_c8; do", self.source)
+        self.assertIn("for profile in fixed_8k_1k_c1 fixed_8k_1k_c8; do", self.source)
         self.assertIn('if [ "$runner_rc" -ne 0 ] || [ "$profile_gate" != PASS ]', self.source)
         self.assertIn("break", self.source)
         self.assertIn('"headline_c32_executed": False', self.source)
-        self.assertNotIn("for profile in development_smoke fixed_8k_1k_c1 fixed_8k_1k_c8 fixed_8k_1k_c32", self.source)
+        self.assertNotIn("for profile in fixed_8k_1k_c1 fixed_8k_1k_c8 fixed_8k_1k_c32", self.source)
+        self.assertIn('"agent_tool_call_itl_claim_permitted": False', self.source)
 
     def test_materialized_plan_cardinality_is_bound_and_hashed(self):
-        self.assertIn('"development_smoke": 5', self.source)
+        self.assertNotIn('"development_smoke": 5', self.source)
         self.assertIn('"fixed_8k_1k_c1": 4', self.source)
         self.assertIn('"fixed_8k_1k_c8": 16', self.source)
         self.assertIn('"plan_sha256": hashlib.sha256(payload).hexdigest()', self.source)
@@ -123,6 +134,42 @@ class PhaseBRuntimeHarnessTests(unittest.TestCase):
         self.assertGreater(self.source.index("phase profiler begin"), self.source.index("phase workload_sequence complete"))
         self.assertIn("--random-output-len 128", self.source)
         self.assertIn("--num-prompts 1", self.source)
+
+    def test_packaging_invokes_the_pinned_artifact_builder_before_archive_creation(self):
+        self.assertIn("ARTIFACT_BUILDER_B64", self.source)
+        invocation = 'python3 /tmp/artifact_builder.py manifest --bundle-root "$OUT" --output "$OUT/manifest.json"'
+        self.assertIn(invocation, self.source)
+        self.assertLess(self.source.index(invocation), self.source.index('tar -C /workspace -czf'))
+
+    def test_ssh_transport_accepts_read_only_archive_paths_and_does_not_wait_on_http(self):
+        self.assertIn("WORKLOAD_ARCHIVE_PATH", self.source)
+        self.assertIn("QUALITY_ARCHIVE_PATH", self.source)
+        self.assertIn("ARTIFACT_BUILDER_PATH", self.source)
+        self.assertIn("SERVE_ARTIFACT", self.source)
+        self.assertIn('if [ "$SERVE_ARTIFACT" -eq 1 ]', self.source)
+        self.assertIn('cp "$WORKLOAD_ARCHIVE_PATH" /tmp/frozen-workloads.tar.gz', self.source)
+        self.assertIn('cp "$QUALITY_ARCHIVE_PATH" /tmp/frozen-quality.tar.gz', self.source)
+        self.assertIn('cp "$ARTIFACT_BUILDER_PATH" /tmp/artifact_builder.py', self.source)
+
+    def test_conditional_same_host_arm_is_parameterized_without_embedding_tuning(self):
+        self.assertIn('CONFIGURATION="${CONFIGURATION:-stock_no_cache_fcfs}"', self.source)
+        self.assertIn('SERVER_EXTRA_ARGS_B64="${SERVER_EXTRA_ARGS_B64:-}"', self.source)
+        self.assertIn('OUT="${OUT:-/workspace/campaign-100-phase-b}"', self.source)
+        self.assertIn('PUBLIC="${PUBLIC:-/workspace/public}"', self.source)
+        self.assertIn('mapfile -t SERVER_EXTRA_ARGS', self.source)
+        self.assertIn('"${SERVER_EXTRA_ARGS[@]}"', self.source)
+        self.assertNotIn("tuned_mtp_eagle", self.source)
+        self.assertEqual(self.source.count("/workspace/campaign-100-phase-b"), 1)
+        self.assertEqual(self.source.count("/workspace/model-bf16"), 1)
+        self.assertEqual(self.source.count("/workspace/frozen-workloads"), 1)
+        self.assertEqual(self.source.count("/workspace/frozen-quality"), 1)
+
+    def test_failed_sequence_or_quality_exits_nonzero_after_recording_for_trap_packaging(self):
+        terminal_gate = 'if [ "$SEQUENCE_PASS" -ne 1 ] || [ "$QUALITY_PASS" -ne 1 ]; then\n  exit 1\nfi'
+        self.assertIn(terminal_gate, self.source)
+        self.assertGreater(self.source.index(terminal_gate), self.source.index('> "$OUT/allocation-result.json"'))
+        self.assertIn("trap finish EXIT", self.source)
+        self.assertIn("package_artifact || rc=1", self.source)
 
     def test_profile_runner_is_bounded_and_preserves_typed_failures(self):
         self.assertIn('timeout --signal=TERM 1800 python3 "$WORKLOAD/replay_api.py"', self.source)

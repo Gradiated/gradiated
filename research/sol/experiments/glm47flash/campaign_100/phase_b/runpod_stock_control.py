@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import os
+import shlex
 import subprocess
 import sys
 import tarfile
@@ -21,6 +22,19 @@ EXPERIMENT = CAMPAIGN.parent
 IMAGE = "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af"
 GPU_TYPE = "NVIDIA A100 80GB PCIe"
 ACTIVE = {"RUNNING", "CREATED", "RESTARTING"}
+GRAPHQL_CREATE_SURFACE = "graphql_podFindAndDeployOnDemand"
+GRAPHQL_CREATE_MUTATION = """mutation DeployPod($input: PodFindAndDeployOnDemandInput) {
+  podFindAndDeployOnDemand(input: $input) {
+    id
+    costPerHr
+    createdAt
+    desiredStatus
+    imageName
+    machineId
+    gpuCount
+    ports
+  }
+}"""
 
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(CAMPAIGN / "specs"))
@@ -89,6 +103,49 @@ def build_request(preregistration, experiment_spec_sha256, deadline_epoch):
         "chmod 700 /tmp/campaign-100-phase-b.sh; "
         f"timeout --signal=TERM --kill-after=120 {remote_seconds} /tmp/campaign-100-phase-b.sh"
     )
+    environment = {
+        "SCRIPT_B64": script_b64,
+        "ARTIFACT_BUILDER_B64": base64.b64encode(
+            (HERE / "artifact_builder.py").read_bytes()
+        ).decode(),
+        "WORKLOAD_ARCHIVE_B64": frozen_archive_b64(CAMPAIGN / "workloads"),
+        "QUALITY_ARCHIVE_B64": frozen_archive_b64(CAMPAIGN / "quality"),
+        "EXPERIMENT_SPEC_SHA256": experiment_spec_sha256,
+        "CAMPAIGN_DEADLINE_EPOCH": str(deadline_epoch),
+    }
+    if provider_request.get("api_surface") == GRAPHQL_CREATE_SURFACE:
+        data_centers = provider_request.get("data_center_ids")
+        if not isinstance(data_centers, list) or len(data_centers) != 1:
+            raise RunPodError("GraphQL on-demand placement requires exactly one data center")
+        if provider_request.get("interruptible") is not False:
+            raise RunPodError("GraphQL on-demand placement requires interruptible=false")
+        graphql_input = {
+            "cloudType": provider_request["cloud_class"],
+            "computeType": "GPU",
+            "gpuCount": provider_request.get("gpu_count", 1),
+            "gpuTypeId": provider_request.get("gpu_type_id", GPU_TYPE),
+            "dataCenterId": data_centers[0],
+            "allowedCudaVersions": provider_request["allowed_cuda_versions"],
+            "containerDiskInGb": provider_request.get("container_disk_gb", 40),
+            "volumeInGb": provider_request.get("volume_gb", 100),
+            "volumeMountPath": "/workspace",
+            "imageName": IMAGE,
+            "name": provider_request["name"],
+            "ports": f"{provider_request.get('public_artifact_port', 8000)}/tcp",
+            "supportPublicIp": provider_request.get("support_public_ip", True),
+            "startJupyter": False,
+            "startSsh": False,
+            "dockerArgs": "/bin/bash -lc " + shlex.quote(command),
+            "env": [
+                {"key": key, "value": value}
+                for key, value in sorted(environment.items())
+            ],
+        }
+        return {
+            "api_surface": GRAPHQL_CREATE_SURFACE,
+            "query": GRAPHQL_CREATE_MUTATION,
+            "variables": {"input": graphql_input},
+        }
     request = {
         "name": provider_request["name"],
         "imageName": IMAGE,
@@ -103,13 +160,7 @@ def build_request(preregistration, experiment_spec_sha256, deadline_epoch):
         "ports": ["8000/tcp"],
         "dockerEntrypoint": ["/bin/bash", "-lc"],
         "dockerStartCmd": [command],
-        "env": {
-            "SCRIPT_B64": script_b64,
-            "WORKLOAD_ARCHIVE_B64": frozen_archive_b64(CAMPAIGN / "workloads"),
-            "QUALITY_ARCHIVE_B64": frozen_archive_b64(CAMPAIGN / "quality"),
-            "EXPERIMENT_SPEC_SHA256": experiment_spec_sha256,
-            "CAMPAIGN_DEADLINE_EPOCH": str(deadline_epoch),
-        },
+        "env": environment,
     }
     optional_provider_fields = {
         "allowed_cuda_versions": "allowedCudaVersions",
@@ -183,6 +234,72 @@ class RunPodProvider:
                     return 404, None
             raise RunPodError(f"RunPod {method} {path} failed with HTTP {error.code}") from None
 
+    def _graphql_create(self, request_payload, timeout=120):
+        payload = {
+            "query": request_payload["query"],
+            "variables": request_payload["variables"],
+        }
+        encoded = json.dumps(payload, separators=(",", ":")).encode()
+        request = urllib.request.Request(
+            "https://api.runpod.io/graphql",
+            data=encoded,
+            headers={
+                "Authorization": "Bearer " + os.environ["RUNPOD_API_KEY"],
+                "Content-Type": "application/json",
+                "User-Agent": "glm47flash-campaign-100/1.0",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                raw_body = response.read()
+                status = response.status
+        except urllib.error.HTTPError as error:
+            raw_body = error.read(64 * 1024)
+            self._emit(
+                "provider_graphql_http_error",
+                http_status=error.code,
+                response_body_bytes=len(raw_body),
+                response_body_sha256=hashlib.sha256(raw_body).hexdigest(),
+            )
+            raise RunPodError(
+                f"RunPod GraphQL create failed with HTTP {error.code}"
+            ) from None
+        try:
+            body = json.loads(raw_body)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            self._emit(
+                "provider_graphql_invalid_response",
+                http_status=status,
+                response_body_bytes=len(raw_body),
+                response_body_sha256=hashlib.sha256(raw_body).hexdigest(),
+            )
+            raise RunPodError("RunPod GraphQL create returned invalid JSON") from None
+        errors = body.get("errors") if isinstance(body, dict) else None
+        if errors:
+            self._emit(
+                "provider_graphql_errors",
+                http_status=status,
+                error_count=len(errors) if isinstance(errors, list) else 1,
+                response_body_bytes=len(raw_body),
+                response_body_sha256=hashlib.sha256(raw_body).hexdigest(),
+            )
+            raise RunPodError("RunPod GraphQL create returned errors")
+        row = (
+            body.get("data", {}).get("podFindAndDeployOnDemand")
+            if isinstance(body, dict) and isinstance(body.get("data"), dict)
+            else None
+        )
+        if not isinstance(row, dict) or not row.get("id"):
+            self._emit(
+                "provider_graphql_missing_pod",
+                http_status=status,
+                response_body_bytes=len(raw_body),
+                response_body_sha256=hashlib.sha256(raw_body).hexdigest(),
+            )
+            raise RunPodError("RunPod GraphQL create response omitted pod id")
+        return status, row
+
     def inventory(self):
         status, rows = self._api("/pods")
         active = [row.get("id") for row in rows if row.get("desiredStatus", row.get("status")) in ACTIVE]
@@ -191,7 +308,10 @@ class RunPodProvider:
 
     def create(self, request):
         self.created_monotonic = time.monotonic()
-        status, row = self._api("/pods", "POST", request, timeout=120)
+        if request.get("api_surface") == GRAPHQL_CREATE_SURFACE:
+            status, row = self._graphql_create(request, timeout=120)
+        else:
+            status, row = self._api("/pods", "POST", request, timeout=120)
         self.last_pod_id = row.get("id")
         self.created_at = row.get("createdAt") or utc_now()
         self.hourly_rate = float(row.get("costPerHr", 0))
@@ -367,6 +487,18 @@ def preflight(paths):
     return preregistration, admission, watchdog, request, decision, deadline
 
 
+def safe_request_summary(request):
+    if request.get("api_surface") != GRAPHQL_CREATE_SURFACE:
+        return {key: value for key, value in request.items() if key != "env"}
+    graphql_input = dict(request["variables"]["input"])
+    graphql_input["env"] = [row["key"] for row in graphql_input["env"]]
+    return {
+        "api_surface": request["api_surface"],
+        "query_sha256": hashlib.sha256(request["query"].encode()).hexdigest(),
+        "variables": {"input": graphql_input},
+    }
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--preregistration", required=True, type=Path)
@@ -380,7 +512,7 @@ def main():
     arguments = parser.parse_args()
     preregistration, admission, watchdog, request, decision, deadline = preflight(arguments)
     if arguments.preflight:
-        safe_request = {key: value for key, value in request.items() if key != "env"}
+        safe_request = safe_request_summary(request)
         print(json.dumps({"preflight": "pass", "budget": decision, "request": safe_request}, indent=2))
         return 0
     if os.environ.get("CAMPAIGN_100_COORDINATOR") != "1":

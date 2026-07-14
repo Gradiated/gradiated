@@ -1,0 +1,4 @@
+{"disk_count":0,"event":"stock_control","instance_count":0,"timestamp":"2026-07-13T21:58:29.005500Z"}
+{"event":"instance_created","instance_id":"computeinstance-e00c5byf609vnkn53c","timestamp":"2026-07-13T21:59:16.540154Z"}
+{"event":"observer_defect_detected","classification":"CIDR-suffixed public IPv4 was not normalized before parsing","provider_state":"RUNNING","timestamp":"2026-07-13T22:00:45Z"}
+{"cleanup_pass":true,"event":"cleanup_verified_out_of_band","final_disk_count":0,"final_instance_count":0,"instance_get_not_found":true,"timestamp":"2026-07-13T22:01:57.919596Z"}

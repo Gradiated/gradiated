@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "baseline_sha256": "93434ba515f9695725924ed041719e1cfe8d8348fb52a5eddc3060bb4c87d878",
+  "baseline_signed_off": true,
+  "reconciliation_status": "conservative",
+  "campaign_cap_usd": "100.00",
+  "campaign_additional_spend_usd": "0.273464527",
+  "phase": "B",
+  "phase_cumulative_cap_usd": "20.00",
+  "hourly_price_usd": "2.99",
+  "maximum_deadline_seconds": 5400,
+  "recorded_maximum_deadline_cost_usd": "4.505",
+  "active_campaign_pod_count": 0,
+  "inventory_snapshot_sha256": "e407a397118baea24c1f3c784e86c58f25f9a9d3075c079c633db1892ee7a9db",
+  "watchdog_contract_sha256": "dd50f3df85344c262fdc092685f16e05f348b11e8d8b49807a88a0510188f9fe"
+}

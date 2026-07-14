@@ -1,0 +1,5 @@
+# Real GPU campaign contract
+
+`contract.json` is the machine-readable admission record for a real GPU run. It must contain exact model/workload/SLO identity, measured-only result provenance, all five phase markers (`allocation`, `startup`, `warmup`, `benchmark`, `teardown`), explicit `missing_counters` for every phase, server health, complete teardown, benchmark result filename, hourly price, and workload identity. `telemetry.csv` must include a `phase` column and GPU utilization/power columns; `server.metrics.txt` must be a non-empty SGLang Prometheus scrape. `manifest.json` binds every artifact by SHA-256.
+
+Use `validate_campaign(directory_or_tar, ledger_json)` from `validation.real_gpu_campaign`. A report is valid only when all required evidence is present. Economic output is conservative allocation spend divided by measured input tokens, output tokens, and `output + input / 8` output-equivalent tokens. Hardware busy, whole-allocation, and commercial fleet utilization are separate fields; fleet utilization is never inferred from a single allocation.

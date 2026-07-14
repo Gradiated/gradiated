@@ -22,6 +22,7 @@ EVIDENCE_CLASSES = {
     "synthetic",
 }
 OUTCOME_CLASSES = {
+    "diagnostic_valid",
     "scientific_positive",
     "scientific_negative",
     "scientific_mixed",
@@ -33,6 +34,8 @@ SCIENTIFIC_OUTCOMES = {
     "scientific_negative",
     "scientific_mixed",
 }
+DIAGNOSTIC_OUTCOMES = {"diagnostic_valid"}
+SUCCESSFUL_OUTCOMES = SCIENTIFIC_OUTCOMES | DIAGNOSTIC_OUTCOMES
 FIDELITIES = {
     "bound",
     "analytical",
@@ -214,6 +217,18 @@ def validate_result(value: dict[str, Any]) -> dict[str, Any]:
             raise ValidationError("scientific_mixed requires at least one valid subclaim")
         require_number("result.observed_effect_fraction", value["observed_effect_fraction"])
         require_number("result.predicted_effect_fraction", value["predicted_effect_fraction"])
+        require_text("result.residual_bottleneck", value["residual_bottleneck"])
+    elif outcome in DIAGNOSTIC_OUTCOMES:
+        _required(
+            value,
+            {"gates", "diagnostic_summary", "residual_bottleneck"},
+            "diagnostic result",
+        )
+        gates = value["gates"]
+        _required(gates, {"correctness", "quality", "slo"}, "result.gates")
+        if any(gates[name] is not True for name in ("correctness", "quality", "slo")):
+            raise ValidationError("diagnostic_valid requires every preregistered gate")
+        require_text("result.diagnostic_summary", value["diagnostic_summary"])
         require_text("result.residual_bottleneck", value["residual_bottleneck"])
     else:
         require_text("result.failure_class", value.get("failure_class"))

@@ -10,7 +10,14 @@ from .context import build_coordinator_context
 from .events import EventStore
 from .labd import LabDatabase
 from .portfolio import select_portfolio, validate_scout
-from .records import SCIENTIFIC_OUTCOMES, validate_baseline, validate_observation, validate_result
+from .records import (
+    DIAGNOSTIC_OUTCOMES,
+    SCIENTIFIC_OUTCOMES,
+    SUCCESSFUL_OUTCOMES,
+    validate_baseline,
+    validate_observation,
+    validate_result,
+)
 from .run_specs import validate_local_run, validate_result_binding
 from .telemetry import validate_telemetry_summary
 from .util import ValidationError, content_hash
@@ -251,6 +258,12 @@ class ResearchDirector:
             "scoring_mode"
         ) == "diagnostic_only":
             raise ValidationError("diagnostic-only runs cannot update scientific mechanism beliefs")
+        if (
+            result["outcome_class"] in DIAGNOSTIC_OUTCOMES
+            and spec.get("execution_kind") != "local"
+            and spec.get("telemetry_contract", {}).get("scoring_mode") != "diagnostic_only"
+        ):
+            raise ValidationError("diagnostic_valid requires a diagnostic-only telemetry contract")
         if spec is not None:
             if spec.get("execution_kind") == "local":
                 self.store.append_once(
@@ -263,7 +276,7 @@ class ResearchDirector:
             if manifest_sha256 is None or manifest_sha256 not in result["artifact_refs"]:
                 raise ValidationError("an admitted run result must reference its artifact bundle")
             manifest = self.artifacts.verify_bundle(manifest_sha256, deep=True)
-            expected_kind = "run" if result["outcome_class"] in SCIENTIFIC_OUTCOMES else "run_failure"
+            expected_kind = "run" if result["outcome_class"] in SUCCESSFUL_OUTCOMES else "run_failure"
             if manifest.get("bundle_id") != result["run_id"] or manifest.get("kind") != expected_kind:
                 raise ValidationError("result artifact bundle belongs to another run")
             expected_contract_sha256 = content_hash(spec["telemetry_contract"])
@@ -273,14 +286,14 @@ class ResearchDirector:
 
             derived_evidence = (
                 validate_run_evidence(self.artifacts, manifest, spec)
-                if result["outcome_class"] in SCIENTIFIC_OUTCOMES
+                if result["outcome_class"] in SUCCESSFUL_OUTCOMES
                 else validate_failure_evidence(
                     self.artifacts, manifest, spec, failure_class=result["failure_class"]
                 )
             )
-            if result["outcome_class"] in SCIENTIFIC_OUTCOMES:
+            if result["outcome_class"] in SUCCESSFUL_OUTCOMES:
                 if abs(
-                    float(result["observed_effect_fraction"])
+                    float(result.get("observed_effect_fraction", derived_evidence["observed_effect_fraction"]))
                     - float(derived_evidence["observed_effect_fraction"])
                 ) > 1e-9:
                     raise ValidationError("result effect differs from raw measurement evidence")
@@ -289,7 +302,7 @@ class ResearchDirector:
             if abs(float(result["cost_usd"]) - float(derived_evidence["result_cost_usd"])) > 1e-9:
                 raise ValidationError("result cost differs from raw cost evidence")
             summary = result.get("telemetry_summary")
-            if result["outcome_class"] in SCIENTIFIC_OUTCOMES:
+            if result["outcome_class"] in SUCCESSFUL_OUTCOMES:
                 summary = validate_telemetry_summary(summary, spec["telemetry_contract"])
             summary_entries = [
                 entry for entry in manifest["entries"] if entry["role"] == "telemetry_summary"
@@ -297,22 +310,22 @@ class ResearchDirector:
             if len(summary_entries) != 1:
                 raise ValidationError("result artifact bundle must contain one telemetry summary")
             stored_summary = self.artifacts.load_json_reference(summary_entries[0]["sha256"])
-            if result["outcome_class"] in SCIENTIFIC_OUTCOMES:
+            if result["outcome_class"] in SUCCESSFUL_OUTCOMES:
                 stored_summary = validate_telemetry_summary(stored_summary, spec["telemetry_contract"])
             if stored_summary != summary:
                 raise ValidationError("result telemetry summary differs from its stored artifact")
-            if result["outcome_class"] in SCIENTIFIC_OUTCOMES:
+            if result["outcome_class"] in SUCCESSFUL_OUTCOMES:
                 if summary["missing_signals"]:
-                    raise ValidationError("a scientific result cannot omit planned telemetry")
+                    raise ValidationError("a successful result cannot omit planned telemetry")
                 if spec["telemetry_contract"]["critical_path_method"] != "not_applicable":
                     if summary["correlation_status"] != "pass":
-                        raise ValidationError("a scientific result requires correlated telemetry")
+                        raise ValidationError("a successful result requires correlated telemetry")
                     coverage = summary["attribution_coverage"]
                     if coverage == "not_applicable" or coverage < spec["telemetry_contract"]["critical_path_coverage_gate"]:
-                        raise ValidationError("a scientific result misses its critical-path attribution gate")
+                        raise ValidationError("a successful result misses its critical-path attribution gate")
                 if spec["telemetry_contract"]["observer_effect"]["required"]:
                     if summary["observer_effect"]["status"] != "pass":
-                        raise ValidationError("observer perturbation invalidates this scientific result")
+                        raise ValidationError("observer perturbation invalidates this successful result")
         self.store.append_once(
             "run_completed",
             result,

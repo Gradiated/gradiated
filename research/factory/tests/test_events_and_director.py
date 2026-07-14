@@ -181,6 +181,39 @@ class EventAndDirectorTests(unittest.TestCase):
             self.assertEqual("dense compute or host scheduling", state["residual_bottleneck"])
             self.assertAlmostEqual(-0.39, state["mechanism_beliefs"]["attention-1"]["latest_prediction_error_fraction"])
 
+    def test_local_diagnostic_updates_residual_without_updating_mechanism_beliefs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            director = ResearchDirector(directory, "glm47")
+            director.freeze_baseline(baseline())
+            observation_ref = director.artifacts.put_json({"observation": "quality screen may be unstable"})
+            director.record_observation(observation(1, "quality screen may be unstable", observation_ref))
+            director.propose_scouts(
+                [scout("attention-1", slot="bottleneck_adjacent", family="measurement", origin="adversarial")]
+            )
+            spec = register_local(director, "local-diagnostic", "attention-1")
+            evidence_ref = director.artifacts.put_json({"nominal_pair_failure_fraction": 0.25})
+            diagnostic = result(
+                "local-diagnostic",
+                "attention-1",
+                "harness_invalid",
+                artifact_ref=evidence_ref,
+                spec=spec,
+            )
+            diagnostic.update(
+                {
+                    "outcome_class": "diagnostic_valid",
+                    "gates": {"correctness": True, "quality": True, "slo": True},
+                    "diagnostic_summary": "one nominal pair failed the stability gate",
+                    "residual_bottleneck": "the compact quality screen remains unstable",
+                }
+            )
+            diagnostic.pop("failure_class")
+            director.complete_run(diagnostic)
+            state = director.state()
+            self.assertEqual(1, state["research_metrics"]["valid_diagnostic_outcomes"])
+            self.assertEqual({}, state["mechanism_beliefs"])
+            self.assertEqual(diagnostic["residual_bottleneck"], state["residual_bottleneck"])
+
     def test_baseline_refresh_is_explicit_and_reasoned(self):
         with tempfile.TemporaryDirectory() as directory:
             director = ResearchDirector(directory, "glm47")

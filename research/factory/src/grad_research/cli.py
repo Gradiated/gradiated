@@ -119,6 +119,21 @@ def main() -> int:
     cleanup.add_argument("--ttl-seconds", type=int, default=900)
     cleanup.add_argument("--now", help="RFC3339 timestamp; defaults to current UTC")
 
+    cleanup_verified = commands.add_parser(
+        "mark-cleanup-verified",
+        help="close a tracked allocation after the provider adapter proves two-view absence",
+    )
+    cleanup_verified.add_argument("--root", type=Path, required=True)
+    cleanup_verified.add_argument("--program", required=True)
+    cleanup_verified.add_argument("--owner", required=True)
+    cleanup_verified.add_argument("--lab", type=Path, help="defaults to ROOT/lab.sqlite3")
+    cleanup_verified.add_argument("--allocation-id", required=True)
+    cleanup_verified.add_argument("--verification-sha256", required=True)
+    cleanup_verified.add_argument("--get-absent", action="store_true")
+    cleanup_verified.add_argument("--inventory-absent", action="store_true")
+    cleanup_verified.add_argument("--ttl-seconds", type=int, default=900)
+    cleanup_verified.add_argument("--now", help="RFC3339 timestamp; defaults to current UTC")
+
     settle = commands.add_parser("settle-session", help="settle a cleaned reservation from stored cost evidence")
     settle.add_argument("--root", type=Path, required=True)
     settle.add_argument("--program", required=True)
@@ -294,6 +309,25 @@ def main() -> int:
                 lab.request_cleanup(
                     args.allocation_id, owner=args.owner, epoch=lease["epoch"], now=now.timestamp()
                 )
+            _write(lab.snapshot())
+        finally:
+            lab.close()
+    elif args.command == "mark-cleanup-verified":
+        now = _now(args.now)
+        lab = LabDatabase(_lab_path(args.root, args.lab))
+        try:
+            lease = lab.acquire_coordinator(
+                args.program, args.owner, ttl_seconds=args.ttl_seconds, now=now.timestamp()
+            )
+            lab.mark_cleanup_verified(
+                args.allocation_id,
+                owner=args.owner,
+                epoch=lease["epoch"],
+                now=now.timestamp(),
+                get_absent=args.get_absent,
+                inventory_absent=args.inventory_absent,
+                verification_sha256=args.verification_sha256,
+            )
             _write(lab.snapshot())
         finally:
             lab.close()

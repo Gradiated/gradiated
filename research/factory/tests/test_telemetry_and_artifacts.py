@@ -32,8 +32,14 @@ def write_run_files(
     run_directory = directory / "output"
     run_directory.mkdir()
     spec_path.write_text(json.dumps(spec, indent=2, sort_keys=True) + "\n")
+    diagnostic = spec["telemetry_contract"]["scoring_mode"] == "diagnostic_only"
     summary = build_complete_telemetry_summary(
-        spec["telemetry_contract"], attribution_coverage=claimed_attribution_coverage
+        spec["telemetry_contract"],
+        attribution_coverage=1.0 if diagnostic else claimed_attribution_coverage,
+        observer_status="pass" if diagnostic else "not_applicable",
+        throughput_change_fraction=0.01 if diagnostic else "not_applicable",
+        median_latency_change_fraction=0.01 if diagnostic else "not_applicable",
+        tail_latency_change_fraction=0.01 if diagnostic else "not_applicable",
     )
     candidate_identities = {**spec["identities"], **spec["candidate_identity_overrides"]}
     outputs = {
@@ -183,6 +189,41 @@ def write_run_files(
             },
         ],
     }
+    if diagnostic:
+        outputs["deep.jsonl"] = [
+            {
+                "signal": "scheduler_iteration_trace",
+                "run_id": spec["run_id"],
+                "iteration_id": "i1",
+                "phase": "decode",
+                "start_ns": 1,
+                "end_ns": 2,
+                "scheduled_tokens": 8,
+                "batch_composition": {"decode": 8},
+                "kv_state": {"tokens": 65536},
+            },
+            {
+                "signal": "cpu_gpu_dependency_trace",
+                "run_id": spec["run_id"],
+                "thread_id": "t1",
+                "stream_id": "s1",
+                "correlation_id": "c1",
+                "start_ns": 1,
+                "end_ns": 2,
+                "dependency": "launch",
+            },
+            {
+                "signal": "kernel_resource_trace",
+                "run_id": spec["run_id"],
+                "kernel": "dense",
+                "grid": [1, 1, 1],
+                "block": [32, 1, 1],
+                "registers": 32,
+                "shared_memory": 0,
+                "start_ns": 1,
+                "end_ns": 2,
+            },
+        ]
     for name, value in outputs.items():
         path = run_directory / name
         if isinstance(value, str):
@@ -194,7 +235,9 @@ def write_run_files(
     return spec_path, run_directory
 
 
-def prepare_paid_director(root: Path) -> tuple[ResearchDirector, LabDatabase, dict]:
+def prepare_paid_director(
+    root: Path, *, diagnostic: bool = False
+) -> tuple[ResearchDirector, LabDatabase, dict]:
     director = ResearchDirector(root / "lab", "glm47")
     director.freeze_baseline(
         {
@@ -251,6 +294,16 @@ def prepare_paid_director(root: Path) -> tuple[ResearchDirector, LabDatabase, di
     )
     director.select_portfolio(1)
     spec, now = paid_run_spec()
+    if diagnostic:
+        spec["arm_role"] = "diagnostic"
+        spec["telemetry_contract"] = build_telemetry_contract("diagnostic_only")
+        spec["artifact_contract"]["required"].append(
+            {
+                "role": "deep_trace",
+                "path": "deep.jsonl",
+                "media_type": "application/x-ndjson",
+            }
+        )
     for name, check in spec["preflight"].items():
         check["evidence_sha256"] = director.artifacts.put_json(
             {
@@ -330,6 +383,46 @@ class TelemetryContractTests(unittest.TestCase):
 
 
 class ArtifactBundleTests(unittest.TestCase):
+    def test_successful_diagnostic_closes_run_without_updating_mechanism_beliefs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            director, lab, spec = prepare_paid_director(root, diagnostic=True)
+            try:
+                spec_path, run_directory = write_run_files(root, spec)
+                bundle = package_run_directory(director.artifacts, spec, spec_path, run_directory)
+                result = {
+                    "schema_version": 1,
+                    "id": "diagnostic-result-run-1",
+                    "run_id": spec["run_id"],
+                    "scout_id": spec["scout_id"],
+                    "control_id": spec["control_id"],
+                    "candidate_id": spec["candidate_id"],
+                    "changed_variable": spec["changed_variable"],
+                    "baseline_sha256": spec["baseline_sha256"],
+                    "prediction_sha256": content_hash(spec["prediction"]),
+                    "outcome_class": "diagnostic_valid",
+                    "fidelity": spec["fidelity"],
+                    "scope": spec["claim_scope"],
+                    "cost_usd": 0.05,
+                    "artifact_refs": [bundle["manifest_sha256"]],
+                    "artifact_bundle_sha256": bundle["manifest_sha256"],
+                    "telemetry_summary": bundle["telemetry_summary"],
+                    "gates": {"correctness": True, "quality": True, "slo": True},
+                    "diagnostic_summary": "dense work is dependency critical in the bounded trace",
+                    "residual_bottleneck": "dense kernel resource limits remain unresolved",
+                    "next_action": "run an exact-shape resource-counter microbenchmark",
+                }
+                director.complete_run(result)
+                state = director.state()
+                self.assertEqual(1, state["outcome_counts"]["diagnostic_valid"])
+                self.assertEqual(1, state["research_metrics"]["valid_diagnostic_outcomes"])
+                self.assertEqual({}, state["mechanism_beliefs"])
+                self.assertEqual(result["residual_bottleneck"], state["residual_bottleneck"])
+                manifest = director.artifacts.verify_bundle(bundle["manifest_sha256"], deep=True)
+                self.assertEqual("run", manifest["kind"])
+            finally:
+                lab.close()
+
     def test_early_paid_failure_uses_compact_evidence_without_fake_measurements(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

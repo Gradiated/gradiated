@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .records import OUTCOME_CLASSES, SCIENTIFIC_OUTCOMES
+from .records import DIAGNOSTIC_OUTCOMES, OUTCOME_CLASSES, SCIENTIFIC_OUTCOMES
 
 
 def _initial_state(program_id: str) -> dict[str, Any]:
@@ -25,6 +25,7 @@ def _initial_state(program_id: str) -> dict[str, Any]:
         "next_action": None,
         "research_metrics": {
             "valid_scientific_outcomes": 0,
+            "valid_diagnostic_outcomes": 0,
             "harness_invalid_outcomes": 0,
             "operational_failures": 0,
             "prediction_errors_scored": 0,
@@ -174,6 +175,9 @@ def project_events(events: list[dict[str, Any]], program_id: str) -> dict[str, A
                 coverage = telemetry.get("attribution_coverage")
                 if isinstance(coverage, (int, float)) and coverage >= 0.95:
                     observability["scientific_attribution_gate_passes"] += 1
+            elif outcome in DIAGNOSTIC_OUTCOMES:
+                state["research_metrics"]["valid_diagnostic_outcomes"] += 1
+                state["residual_bottleneck"] = result["residual_bottleneck"]
             elif outcome == "harness_invalid":
                 state["research_metrics"]["harness_invalid_outcomes"] += 1
                 state["research_metrics"]["invalid_or_operational_cost_usd"] += cost

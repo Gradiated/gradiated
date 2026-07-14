@@ -1,0 +1,13 @@
+{"event": "stock_control", "instance_count": 0, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "timestamp": "2026-07-14T09:53:04.789196Z"}
+{"event": "instance_created", "instance_id": "computeinstance-e00z1sd0h8h3v2zchv", "timestamp": "2026-07-14T09:53:56.442869Z"}
+{"elapsed_seconds": 87.215, "event": "ssh_ready", "timestamp": "2026-07-14T09:54:31.784218Z"}
+{"event": "cuda_and_transformers_preflight_passed", "timestamp": "2026-07-14T10:01:18.888224Z", "transformers_revision": "1618d44b9295361607ec74d7be860ba886aac039"}
+{"event": "tiny_transfer_probe_passed", "sha256": "6967780b45a5e9e86c4e5ac54e2595fcf2add1a66cdd63cb8df63017fa8c8d11", "timestamp": "2026-07-14T10:01:26.625719Z"}
+{"elapsed_seconds": 455.986, "event": "verified_local_awq_transferred", "timestamp": "2026-07-14T10:09:02.612251Z"}
+{"error_type": "StockError", "event": "experiment_error", "message": "expected one artifact member ending in /allocation-result.json", "timestamp": "2026-07-14T10:10:58.699316Z"}
+{"event": "repair_window_open", "maximum_seconds": 600.0, "timestamp": "2026-07-14T10:10:58.699396Z"}
+{"event": "repair_01_begin", "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "repair_spec_sha256": "35aba78d8fc65c52c06bd313fe5c3d452844f62a4d5131c2c89f282ed2fb6530", "timestamp": "2026-07-14T10:14:59.590899Z"}
+{"event": "repair_01_inputs_staged", "timestamp": "2026-07-14T10:15:07.306590Z"}
+{"event": "repair_01_reused_verified_runtime_and_checkpoint", "timestamp": "2026-07-14T10:15:07.306755Z"}
+{"event": "repair_01_artifact_retrieved", "manifest_files": 24, "outcome": "SCIENTIFIC_FAIL", "sha256": "56fcf609d7213e3259748cf10b97dcaffd56305a7f3ec3c4b189b62ccf59f18c", "timestamp": "2026-07-14T10:18:52.610410Z"}
+{"cleanup_pass": true, "event": "cleanup_verified", "instance_get_not_found": true, "timestamp": "2026-07-14T10:19:47.024503Z"}

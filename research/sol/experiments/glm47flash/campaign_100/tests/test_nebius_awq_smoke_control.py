@@ -23,6 +23,10 @@ from awq_smoke_control import (  # noqa: E402
 
 
 class NebiusAwqSmokeControlTests(unittest.TestCase):
+    def test_remote_smoke_extends_scheduler_watchdog_beyond_cold_jit(self):
+        script = (ROOT / "nebius" / "remote_awq_smoke.sh").read_text()
+        self.assertIn("--watchdog-timeout 1800", script)
+
     def test_contract_is_bounded_and_pinned(self):
         self.assertEqual(MODEL_REVISION, "ab31d120fbe79988fe2a0259993cf3c222aa8881")
         self.assertEqual(MODEL_SHARD_COUNT, 4)

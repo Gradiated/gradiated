@@ -1,0 +1,61 @@
+import importlib.util
+import sys
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = ROOT / "nebius" / "vllm_batched_runner.py"
+spec = importlib.util.spec_from_file_location("vllm_batched_runner", SOURCE)
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+
+
+class VllmBatchedRunnerTests(unittest.TestCase):
+    def test_percentile_is_nearest_rank(self):
+        self.assertEqual(module.percentile([1, 2, 3, 4], 0.5), 2)
+        self.assertEqual(module.percentile([1, 2, 3, 4], 0.95), 4)
+
+    def test_fenced_json_is_accepted_for_semantic_smoke_only(self):
+        self.assertEqual(module.parse_json_content('```json\n{"alpha":17,"beta":"smoke"}\n```'), module.EXPECTED_JSON)
+
+    def test_metric_totals_accept_vllm_prefix_and_labels(self):
+        text = 'vllm:request_queue_time_seconds_sum{model_name="x"} 1.5\nvllm:request_queue_time_seconds_count{model_name="x"} 3\n'
+        result = module.metric_totals(text)
+        self.assertEqual(result["request_queue_time_seconds_sum"], 1.5)
+        self.assertEqual(result["request_queue_time_seconds_count"], 3)
+
+    def test_economic_thresholds_are_frozen(self):
+        self.assertAlmostEqual(module.L40S_HOURLY_USD, 0.8581222)
+        self.assertAlmostEqual(module.BF16_C8_TOK_S, 305.0449)
+
+    def test_quality_scorer_interface_and_source_match_frozen_contract(self):
+        source = SOURCE.read_text()
+        self.assertNotIn('"--suite"', source)
+        self.assertIn('"runtime_teacher_forced_input_token_logprobs"', source)
+
+    def test_vllm_completion_prompt_logprobs_are_read_from_choice(self):
+        response = {
+            "choices": [{
+                "prompt_token_ids": [10, 11, 12],
+                "prompt_logprobs": [None, {"11": {"logprob": -1.25}}, {"12": {"logprob": -2.5}}],
+            }]
+        }
+        result = module.extract_teacher_forced_logprobs(response, minimum_scored_tokens=2)
+        self.assertEqual(result, [{"logprob": -1.25, "token_id": 11}, {"logprob": -2.5, "token_id": 12}])
+
+    def test_quality_failure_does_not_suppress_fixed_performance(self):
+        source = SOURCE.read_text()
+        self.assertIn('"quality_error"', source)
+        self.assertIn("performance_batch(args.output, args.tokenizer)", source)
+
+    def test_prefix_cache_counters_are_part_of_slo_evidence(self):
+        text = "vllm:prefix_cache_queries_total 0\nvllm:prefix_cache_hits_total 0\n"
+        totals = module.metric_totals(text)
+        self.assertEqual(totals["prefix_cache_queries_total"], 0)
+        self.assertEqual(totals["prefix_cache_hits_total"], 0)
+
+
+if __name__ == "__main__":
+    unittest.main()

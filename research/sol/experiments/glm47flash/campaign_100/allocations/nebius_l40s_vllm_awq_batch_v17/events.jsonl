@@ -1,0 +1,8 @@
+{"event": "stock_control", "instance_count": 0, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "timestamp": "2026-07-14T09:31:48.413737Z"}
+{"event": "instance_created", "instance_id": "computeinstance-e00npp17ww7na4w841", "timestamp": "2026-07-14T09:32:33.951688Z"}
+{"elapsed_seconds": 90.111, "event": "ssh_ready", "timestamp": "2026-07-14T09:33:18.273255Z"}
+{"error_type": "VllmSmokeError", "event": "experiment_error", "message": "vLLM host bootstrap failed", "timestamp": "2026-07-14T09:39:55.462371Z"}
+{"event": "repair_window_open", "maximum_seconds": 600.0, "timestamp": "2026-07-14T09:39:55.462475Z"}
+{"event": "repair_01_begin", "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "repair_spec_sha256": "2b7ab41595bd44613ac302ffa206ff16b3948ead581c6811f9ce69ce012bcd19", "timestamp": "2026-07-14T09:43:28.520941Z"}
+{"event": "repair_01_error", "message": "repair-01 derived runtime preflight failed", "timestamp": "2026-07-14T09:43:55.309341Z", "type": "RuntimeError"}
+{"cleanup_pass": true, "event": "cleanup_verified", "instance_get_not_found": true, "timestamp": "2026-07-14T09:44:53.047669Z"}

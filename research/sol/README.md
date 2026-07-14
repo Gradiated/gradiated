@@ -25,6 +25,7 @@ The checked predictive-validity gate inventories 61 JSON artifacts across ten ca
 The expanded 30-source competitive review finds active work on cross-layer, temporal, hierarchical, routed, page-aware, offloaded, and accelerator-specific sparse attention. The proxy ladder therefore keeps Qwen3-0.6B for local work, selects NOSA-1B for a future single-CUDA-GPU offload experiment, and requires every surviving small-model mechanism to pass a fresh GLM-scale test.
 
 - [Current Qwen3-8B study and decision gates](experiments/qwen3-8b/README.md)
+- [Inference co-design learning library](learning/README.md)
 - [Measured small-model validation](validation/README.md)
 - [Small-model proxy selection](docs/SMALL_MODEL_PROXY_SELECTION.md)
 - [Wake-up decision brief](docs/WAKEUP_BRIEF_2026-07-12.md)

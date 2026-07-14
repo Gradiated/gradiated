@@ -1,0 +1,14 @@
+{
+  "experiment_id": "nebius_l40s_vllm_awq_batch_v18_repair_01",
+  "preregistered_at_utc": "2026-07-14T10:12:54Z",
+  "parent_spec_sha256": "0f86774b8d048a6c838624082ca0ded3016ecdfa7946817fa61fcaf16410f053",
+  "measured_failure": "All checkpoint file hashes and the four exact shard sizes passed, but awk printed the 20,170,199,928-byte sum in scientific notation and a string equality stopped the harness before model load.",
+  "causal_hypothesis": "Formatting the already-computed byte sum with awk printf %.0f will preserve exact integer text and pass the intended identity gate without changing checkpoint bytes or any scientific variable.",
+  "changed_variable": "remote_vllm_awq_smoke.sh uses awk END {printf \"%.0f\\n\",s} instead of END {print s} for the total shard-byte assertion.",
+  "unchanged_controls": "Same retained instance, derived image, verified checkpoint, tokenizer, quality suite, server command, semantic gate, paired quality gate, c1/c8 workloads, SLOs, economics, telemetry, timeout, and artifact contract as V18.",
+  "source_sha256": "0037dba05e5e6fe9cea011d1323d9ad43a0afc4113641dc881bfa553ca5822ad",
+  "tests": "134/134 pass before in-place rerun",
+  "budget": "No new allocation. Remain within V18's $1.10 cap and original absolute deadline.",
+  "failure_policy": "Keep the instance alive while this materially changed rerun starts immediately. A typed scientific result may tear down; another untyped failure opens a new ten-minute decision window.",
+  "artifact_contract": "Retrieve and hash the changed rerun archive before deleting the instance and disk; preserve the first failure archive separately."
+}

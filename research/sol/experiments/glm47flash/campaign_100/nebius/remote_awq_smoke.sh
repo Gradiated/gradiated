@@ -159,6 +159,7 @@ CMD=(
   --reasoning-parser glm45
   --enable-metrics
   --enable-request-time-stats-logging
+  --watchdog-timeout 1800
   --random-seed 1234
 )
 printf '%q ' "${CMD[@]}" > "$OUT/server-command.txt"

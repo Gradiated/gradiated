@@ -1,0 +1,59 @@
+{
+  "allocation_result": {
+    "batch_pass": false,
+    "claim_limit": "paired diagnostic against absolute-failing BF16 control; no provider-matched or quality-adjusted claim",
+    "error": {
+      "message": "vLLM prompt-logprob evidence is missing or misaligned",
+      "type": "BatchError"
+    },
+    "experiment_spec_sha256": "35aba78d8fc65c52c06bd313fe5c3d452844f62a4d5131c2c89f282ed2fb6530",
+    "full_load_pass": true,
+    "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "performance": null,
+    "profiler": null,
+    "quality": null,
+    "runtime": "vllm-0.15.0",
+    "schema_version": 1,
+    "semantic": {
+      "exact_normalized_identity": true,
+      "expected": {
+        "alpha": 17,
+        "beta": "smoke"
+      },
+      "pass": true,
+      "raw_response_sha256": [
+        "783017eb189951f1297939c1b5bb8bff8b1c6b6dd6d94218c7440d1be671df38",
+        "2f95bce3add41c45c90314b323d20d51a53141317dc87c3aac71547bd3e9d924"
+      ],
+      "semantic_json_pass": true,
+      "usage": [
+        {
+          "completion_tokens": 22,
+          "prompt_tokens": 24,
+          "prompt_tokens_details": null,
+          "total_tokens": 46
+        },
+        {
+          "completion_tokens": 22,
+          "prompt_tokens": 24,
+          "prompt_tokens_details": null,
+          "total_tokens": 46
+        }
+      ]
+    }
+  },
+  "allocation_seconds": 1547.821,
+  "artifact_sha256": "56fcf609d7213e3259748cf10b97dcaffd56305a7f3ec3c4b189b62ccf59f18c",
+  "cleanup_pass": true,
+  "compute_cost_usd_derived": 0.364769881,
+  "cost_usd_derived": 0.368949945,
+  "disk_cost_usd_derived": 0.004180063,
+  "ended_at_utc": "2026-07-14T10:19:47.024147Z",
+  "error": null,
+  "final_disk_count": 0,
+  "final_instance_count": 0,
+  "instance_id": "computeinstance-e00z1sd0h8h3v2zchv",
+  "manifest_file_count": 24,
+  "outcome": "SCIENTIFIC_FAIL",
+  "repair_spec_sha256": "35aba78d8fc65c52c06bd313fe5c3d452844f62a4d5131c2c89f282ed2fb6530"
+}

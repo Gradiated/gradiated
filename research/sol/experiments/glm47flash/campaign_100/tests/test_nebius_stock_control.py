@@ -59,6 +59,8 @@ class NebiusStockControlTests(unittest.TestCase):
         self.assertTrue(gate["pass"])
         self.assertFalse(gate["absolute_point_screen_pass"])
         result["category_regressions"]["coding"] = -0.06
+        self.assertTrue(paired_non_regression_gate(result)["pass"])
+        result["category_regressions"]["coding"] = 0.06
         self.assertFalse(paired_non_regression_gate(result)["pass"])
 
     def test_mtp_performance_gate_requires_five_percent_and_both_slos(self):

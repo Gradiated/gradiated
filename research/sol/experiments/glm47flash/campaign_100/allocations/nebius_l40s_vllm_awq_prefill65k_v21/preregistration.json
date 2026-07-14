@@ -1,0 +1,78 @@
+{
+  "experiment_id": "nebius_l40s_vllm_awq_prefill65k_v21",
+  "preregistered_at_utc": "2026-07-14T11:07:10Z",
+  "parent_control": "V19 retained L40S stock-vLLM AWQ BF16 arm",
+  "causal_hypothesis": "The 32,768-token scheduler budget forces eight simultaneous 8,192-token prefills into at least two token-budget waves. Raising only max_num_batched_tokens to 65,536 may reduce queueing and improve c8 SLO-goodput while preserving c1, quality, and semantics.",
+  "stock_control": {
+    "experiment_id": "nebius_l40s_vllm_awq_batch_v19",
+    "artifact_sha256": "fe546ceb4b506cf5dbebc4c0cb5741c4dd09352794fd93fb32cfe3d6d5202f8c",
+    "dtype": "bfloat16",
+    "max_num_batched_tokens": 32768,
+    "c1_output_tok_s": 59.181132110519876,
+    "c8_output_tok_s": 344.2111924423787,
+    "c8_ttft_p95_ms": 4904.00694899995,
+    "c8_tpot_p95_ms": 20.500027743890605,
+    "c8_queue_mean_seconds": 0.595402991750035,
+    "usd_per_million_output_tokens": 0.6925029836665776,
+    "paired_quality_pass": true
+  },
+  "candidate_change": "Return activation dtype to bfloat16 and set only vLLM --max-num-batched-tokens from 32768 to 65536. Checkpoint, runtime, all other server flags, and workloads remain fixed.",
+  "expected_direction": "At least 5% c8 throughput improvement is useful. C1 may not regress by more than 3%. Any semantic, paired-quality, exact-geometry, SLO, or memory failure rejects the candidate.",
+  "model": {
+    "id": "cyankiwi/GLM-4.7-Flash-AWQ-4bit",
+    "revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "weight_bytes": 20170199928,
+    "manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86"
+  },
+  "runtime": {
+    "vllm": "0.15.0",
+    "transformers_revision": "1618d44b9295361607ec74d7be860ba886aac039",
+    "quantization": "compressed-tensors",
+    "dtype": "bfloat16",
+    "max_model_len": 32768,
+    "max_num_seqs": 8,
+    "max_num_batched_tokens": 65536,
+    "prefix_caching": false,
+    "cuda_graphs": true
+  },
+  "workload": {
+    "semantic": "two exact temperature-zero alpha/beta JSON requests",
+    "quality_suite_sha256": "152548d51fba8e8ff5e8f1e665c5af166fb6d97cdf3010723042112855964668",
+    "paired_control": "V13 complete BF16 responses",
+    "c1": "4 requests, concurrency 1, exact 8192 input and 1024 output tokens",
+    "c8": "16 requests, concurrency 8, exact 8192 input and 1024 output tokens",
+    "seed": 470100
+  },
+  "quality_gate": {
+    "semantic_exact_and_deterministic": true,
+    "paired_overall_regression_max": 0.02,
+    "paired_category_regression_max": 0.05,
+    "teacher_forced_nll_max": 8.02778927385807,
+    "absolute_failure_carried_forward": true
+  },
+  "slo": {
+    "success_fraction_min": 1.0,
+    "exact_geometry_required": true,
+    "p95_ttft_ms_max": 10000,
+    "p95_tpot_ms_max": 100,
+    "prefix_cache_query_and_hit_delta": 0
+  },
+  "budget": {
+    "incremental_arm_cap_usd": 0.4,
+    "arm_timeout_seconds": 1200,
+    "session_cap_usd": 1.1,
+    "nebius_cap_usd": 25.0,
+    "provisional_spend_before_usd": 15.859130747,
+    "provisional_remaining_usd": 9.140869253
+  },
+  "telemetry": ["GPU utilization", "VRAM", "power", "TTFT", "TPOT", "throughput", "queueing", "failures", "allocation exposure"],
+  "artifact_contract": "Distinct V21 archive and internal manifest; model/runtime/server/scheduler identity; semantic, paired quality/NLL, c1/c8 rows, metrics, telemetry, conditional trace; retain only if another arm starts within ten minutes; final owner deletes instance/disk and verifies zero.",
+  "source_hashes": {
+    "orchestrator": "539282f558be68e0876bf49642f9864674e9ba191e753135f1aad8790da77109",
+    "runner": "be2878fb08bbc50d0ae00f5ae5bbf8aacec6889c1eeba6bebff2acf83c6e731b",
+    "remote": "287b5b51aeb7260b5c2bbb4855353a88b1ea578dc546c8c76f94589fb02b5e17",
+    "recovery": "619236e28cbeb505d5acddf0ea4d3a15c425feac60f649a0536a7f9c01543ab5"
+  },
+  "tests": "139/139 pass before arm",
+  "stop_rules": "OOM, semantic, quality, exact-geometry, or SLO failure rejects. Less than 5% c8 gain is neutral/reject. Any harness error opens a ten-minute in-place repair window; do not repeat unchanged."
+}

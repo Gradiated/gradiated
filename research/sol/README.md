@@ -2,6 +2,8 @@
 
 A Rust-first environment for model-specific inference co-design across model representation, kernels, serving, hardware, and economics.
 
+The shared autonomous coordinator, portfolio, telemetry, artifact, budget, and recovery contracts now live in [`../factory/`](../factory/). Sol remains the model-specific simulators, experiments, and evidence workstream; the factory is the common 24/7 research loop around it.
+
 The current local quality-bearing target is pinned Qwen3-0.6B; Qwen3-8B remains an analytical scale-up study, and GLM-5.2 is the model-specific target architecture. The optimization objective is the lowest sustainable input and output token price subject to fixed quality and latency constraints.
 
 This repository is independent of vLLM. vLLM, SGLang, TensorRT-LLM, kernel toolchains, and hardware simulators are benchmark targets or external backends.
@@ -27,6 +29,8 @@ The expanded 30-source competitive review finds active work on cross-layer, temp
 - [Current Qwen3-8B study and decision gates](experiments/qwen3-8b/README.md)
 - [Inference co-design learning library](learning/README.md)
 - [Per-model research operating system](docs/MODEL_RESEARCH_OPERATING_SYSTEM.md)
+- [Shared autonomous research factory](../factory/README.md)
+- [Research observability and artifact contract](../factory/OBSERVABILITY.md)
 - [Measured small-model validation](validation/README.md)
 - [Small-model proxy selection](docs/SMALL_MODEL_PROXY_SELECTION.md)
 - [Wake-up decision brief](docs/WAKEUP_BRIEF_2026-07-12.md)

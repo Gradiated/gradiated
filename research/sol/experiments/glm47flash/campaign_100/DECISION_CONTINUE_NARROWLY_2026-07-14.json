@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "decision": "CONTINUE_NARROWLY",
+  "decided_at_utc": "2026-07-14T11:41:18.703313Z",
+  "question": "Does model-specific vertical co-design across GLM architecture, representation, kernels, serving, memory hierarchy, and eventual hardware materially reduce quality- and SLO-adjusted inference dollars per token relative to tuned general stacks and providers?",
+  "scope": "GLM-4.7-Flash complete BF16 H100 control and public AWQ-4bit L40S candidate under the frozen campaign 8192-input/1024-output c1/c8 workload, compact diagnostic quality suite, fixed SLO, vLLM 0.15 stock/tuned controls, and two trace-guided runtime interventions.",
+  "result": {
+    "promote": false,
+    "continue_narrowly": true,
+    "stop_or_pivot": false,
+    "classification": "AWQ_REPRESENTATION_AND_CHEAPER_HARDWARE_SIGNAL_WITHOUT_CUSTOM_CODESIGN_OR_PROVIDER_MATCH",
+    "reason": "Public AWQ on L40S passes paired diagnostic quality and fixed SLOs and reaches a best measured 355.772 output tok/s at derived $0.670000/M output tokens, but both BF16 and AWQ fail the absolute compact quality gate. The provider comparison is unmatched. FP16 regresses, the trace-selected 64-token MLA tile is first infeasible and then regresses after a feasible one-stage repair, so no custom software/model co-design gain has been measured."
+  },
+  "measured_evidence": {
+    "complete_bf16_h100_v13": {
+      "c8_output_tok_s": 305.0449,
+      "derived_usd_per_million_output_tokens": 3.52799,
+      "fixed_slo_pass": true,
+      "absolute_compact_quality_pass": false
+    },
+    "awq_l40s_stock_v19": {
+      "c8_output_tok_s": 344.2111924423787,
+      "derived_usd_per_million_output_tokens": 0.6925029836665776,
+      "paired_quality_pass": true,
+      "absolute_compact_quality_pass": false,
+      "artifact_sha256": "fe546ceb4b506cf5dbebc4c0cb5741c4dd09352794fd93fb32cfe3d6d5202f8c"
+    },
+    "fp16_dtype_v20": {
+      "c8_output_tok_s": 334.40640562060054,
+      "delta_vs_v19_fraction": -0.0284848,
+      "hypothesis": "rejected"
+    },
+    "scheduler_65k_v21": {
+      "c8_output_tok_s": 355.7720285438214,
+      "delta_vs_v19_fraction": 0.03358648,
+      "derived_usd_per_million_output_tokens": 0.6700000524308151,
+      "preregistered_materiality_threshold_met": false,
+      "artifact_sha256": "001dd8a5eb6f8dc1ec10cd5f54cb57b406d20bd6f80b250ad8e78ef1643d8b30"
+    },
+    "mla_block64_v22": {
+      "result": "shared_memory_infeasible",
+      "required_shared_memory_bytes": 159744,
+      "l40s_limit_bytes": 101376,
+      "artifact_sha256": "576626d43673abadbaccfa07c3a6d213eead310a4c4a24feb3383cc8fc4e16d4"
+    },
+    "mla_block64_stage1_v22r1": {
+      "semantic_pass": true,
+      "paired_quality_pass": true,
+      "fixed_slo_pass": true,
+      "c1_output_tok_s": 58.68162659401998,
+      "c8_output_tok_s": 340.79147843962244,
+      "delta_vs_v21_fraction": -0.042107161,
+      "derived_usd_per_million_output_tokens": 0.6994519900238908,
+      "artifact_sha256": "e3a7eb4ff04257f90825f4551afa4d793c91f1b29221c7fec962a86d51514a12",
+      "trace_sha256": "4f3f636e6d64f06b5eff4054f4c9424021474d151f361cc274684161bb7c7d60",
+      "hypothesis": "rejected"
+    }
+  },
+  "derived_not_provider_matched": {
+    "best_campaign_cost_reduction_vs_complete_bf16_h100_fraction": 0.810090,
+    "interpretation": "Representation plus hardware/rate result on matched campaign geometry only; not a delivered provider, general quality, or custom co-design claim."
+  },
+  "missing_evidence": [
+    "absolute quality-passing BF16 and candidate control",
+    "matched Fireworks and Baseten workload, quality, availability, TTFT, TPOT, and price evidence",
+    "a custom component with a material reproducible improvement beyond public AWQ and hardware placement",
+    "fully loaded non-GPU serving costs",
+    "holdout replication for any future material candidate"
+  ],
+  "campaign_accounting": {
+    "nebius_authorized_usd": 25.0,
+    "conservative_spend_usd": 16.466387017,
+    "unspent_usd": 8.533612983,
+    "session_cost_usd_derived_conservative": 1.061006497,
+    "session_cleanup_pass": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "public_ipv4_and_egress_excluded": true,
+    "invoice_status": "pending"
+  },
+  "exact_next_experiment": {
+    "name": "standalone_exact_shape_glm_mla_decode_autotune",
+    "method": "Build a correctness-checked standalone microbenchmark from vLLM's pinned Triton grouped MLA decode kernel using GLM's exact 20-head, 512-rank latent, 256-value, long-context shapes. Sweep only hardware-legal BLOCK_H, BLOCK_N, num_warps, num_stages, and KV-split configurations on one L40S, with stock source as control. Promote only a >=10% kernel improvement that predicts >=5% end-to-end c8 and then survives one full-server holdout.",
+    "information_value": "Separates kernel parameter search from model load, quality, and serving setup; cheaply falsifies hardware legality and local kernel speed before another full allocation; directly targets the largest trace family.",
+    "kill_condition": "Stop the custom MLA lineage if no correctness-passing configuration improves the exact-shape kernel by at least 10%, or if the best legal configuration predicts less than 5% end-to-end gain."
+  },
+  "forbidden_claims": [
+    "measured Fireworks or Baseten advantage",
+    "general quality parity",
+    "custom co-design cost improvement",
+    "fully loaded delivered cost",
+    "hardware or tapeout case"
+  ]
+}

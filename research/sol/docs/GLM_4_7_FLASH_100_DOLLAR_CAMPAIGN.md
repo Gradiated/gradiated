@@ -58,7 +58,13 @@ The coordinator must audit current artifacts before acting. At plan creation, th
 - The first AWQ fused Q/KV-A metadata defect was reproduced offline and patched with deterministic tests.
 - A Secure L40S GPU run reached a later compressed-tensors dequantization boundary. The active pre-plan worker is investigating it. Do not overwrite or duplicate that work.
 
-2026-07-14 correction: the previously pinned native-BF16 Hugging Face revision `75fce703...` was an incomplete upstream upload with only 44 of 48 indexed shards. All intended-model performance, quality, and cost claims from that revision are withdrawn. The first complete commit is `33faccf4...` with 48 shards and 62,444,175,504 weight bytes; the coordinator verified every shard hash. Corrective H100 v13 loaded all 48 shards and passed the fixed SLO at 305.045 output tok/s at c8, only 0.30% above the malformed-revision run. It restored exact retrieval and continuation but still failed the prospective absolute quality screen (0.333 overall; teacher-forced NLL 7.646 versus 2.0 ceiling), so no quality-adjusted cost or competitiveness claim is permitted. The batch-one complete-model trace assigns 27.99% of decode kernel time to fused MoE experts, 24.26% to dense GEMM/GEMV, 17.97% to attention/MLA, and 14.61% to routing/sort. Full-VM-plus-disk arithmetic is a derived `$3.528/M` output tokens and requires about 4.01x throughput to reach the historical `$0.88/M` anchor. Reconstructed Nebius spend is `$13.768880805/$25`; the highest-information next experiment is the audited GLM-specific AWQ loader on a cheaper L40S, first behind a bounded smoke gate.
+2026-07-14 correction: the previously pinned native-BF16 Hugging Face revision `75fce703...` was an incomplete upstream upload with only 44 of 48 indexed shards. All intended-model performance, quality, and cost claims from that revision are withdrawn. The first complete commit is `33faccf4...` with 48 shards and 62,444,175,504 weight bytes; the coordinator verified every shard hash. Corrective H100 v13 loaded all 48 shards and passed the fixed SLO at 305.045 output tok/s at c8, only 0.30% above the malformed-revision run. It restored exact retrieval and continuation but still failed the prospective absolute quality screen (0.333 overall; teacher-forced NLL 7.646 versus 2.0 ceiling), so no quality-adjusted cost or competitiveness claim is permitted. The batch-one complete-model trace assigns 27.99% of decode kernel time to fused MoE experts, 24.26% to dense GEMM/GEMV, 17.97% to attention/MLA, and 14.61% to routing/sort. Full-VM-plus-disk arithmetic is a derived `$3.528/M` output tokens and requires about 4.01x throughput to reach the historical `$0.88/M` anchor.
+
+The first Nebius L40S AWQ smoke then provided measured model-specific loader evidence: all four exact checkpoint shards loaded in 18.25 seconds after the four-part GLM patch executed, using 17.36 GB model memory and leaving 26.50 GB free. Readiness did not complete because two cold `sm_89` Marlin JIT specializations exceeded SGLang's default 300-second scheduler watchdog; no deterministic output, performance, paired quality, or economic result is admitted. The allocation cost `$0.430964118`, cleaned up to zero resources, and leaves reconstructed spend at `$14.199844923/$25`. The changed follow-up extends only the watchdog beyond measured cold compilation before any benchmark is allowed.
+
+The changed v15 follow-up survived the cold JIT and reached health after 632 seconds, validating the watchdog diagnosis, but then falsified the semantic smoke. Two identical temperature-zero, seed-bound requests both returned 64 tokens of repetitive gibberish and produced different normalized messages. The exact custom SGLang loader plus public AWQ checkpoint is rejected for correct serving; no performance, paired quality, or cost comparison is admitted. V15 cost `$0.448674410`, cleaned up to zero resources, and leaves reconstructed spend at `$14.648519333/$25`. A materially different author-recommended stock vLLM control is the only useful next allocation: it distinguishes a faulty public checkpoint from faulty custom loader semantics. The AWQ tokenizer also embeds a 1,024-token truncation setting, so any future matched 8K test must serve with the authoritative complete-BF16 tokenizer.
+
+V16 tested that stock-vLLM control, but the vLLM 0.15.0 CUDA 13 image failed at Torch CUDA initialization against the Nebius host's driver 580.159.04/CUDA 12.9 interface (CUDA error 803), before checkpoint verification or load. The image's `nvidia-smi` probe itself passed, so this is a measured userspace runtime compatibility failure rather than L40S capacity or checkpoint evidence. The exact AWQ model had already transferred, but no semantic, quality, performance, or economic model result is admitted. The hash-matched allocation cost `$0.214643101`, cleanup returned to zero resources, and reconstructed Nebius spend is `$14.863162434/$25`. The changed follow-up enables the image's documented CUDA compatibility mode and probes Torch before model transfer; conditional experiments will then be batched behind the semantic gate on the same allocation to avoid repeated transfer/load overhead.
 - Historical pre-plan spend is not charged to this new $100 authorization, but must remain visible in the final lifetime ledger.
 - RunPod currently has no active campaign pod. Re-verify this before any mutation.
 
@@ -315,6 +321,68 @@ Tasks, in order:
 4. If at least $7 remains and primary gates pass, apply or analytically map the intervention to one smaller control model and perform the cheapest valid measurement needed to distinguish generic from GLM-specific behavior.
 
 The reserve may be used only to repair a final artifact defect or repeat the decisive result after a documented infrastructure failure.
+
++### Nebius L40S batched vLLM control v17 — CUDA fix passes; dependency validation rejects before transfer
+
+V17 validated the source-derived CUDA fix: deleting vLLM 0.15's two forward-compatibility linker entries and rerunning `ldconfig` made the exact image resolve the Nebius host driver library. Its first derived runtime used `--no-deps` and failed because the base `huggingface_hub` lacked an API required by the checkpoint-era Transformers source. The driver correctly retained the allocation and Repair 01 installed the full dependency closure on the same L40S.
+
+Repair 01 then failed a blanket `pip check`: vLLM 0.15 declares `transformers<5`, while the model author's documented combination requires that vLLM release plus Transformers main; the base image also contains an unrelated PyGObject/pycairo metadata defect. This is a validation error before model transfer, not model load, semantic, quality, throughput, SLO, or economic evidence. The recovery wrapper also deleted immediately instead of opening a second repair window, which is a recorded orchestration defect. Both driver paths now retain an untyped failure for up to ten minutes when a materially changed test can run in place.
+
+Local bootstrap evidence is hash-bound in the allocation directory. Exposure was 726.896 seconds and derived VM-plus-disk cost was `$0.173268141`. Cleanup passed with instance GET not-found and zero final instances/disks. Reconstructed Nebius spend is `$15.036430575/$25`, leaving `$9.963569425` before IPv4/egress and invoice reconciliation.
+
+V18 replaces package-metadata consistency with targeted runtime compatibility checks: exact Transformers version, GLM config registration, vLLM GLM loader import, vLLM import, driver-backed CUDA, and a real GPU tensor. If those pass, the checkpoint is transferred once and the retained server runs the preregistered semantic, paired-quality, c1/c8 fixed-SLO, economic, and conditional-trace sequence.
+
+
++### Nebius L40S stock-vLLM batched control v18 — semantic control passes; quality observer stops before performance
+
+V18 passed the targeted vLLM/Transformers/GLM/CUDA preflight, transferred the AWQ checkpoint once in 455.986 seconds, and matched all four shard hashes. Its first remote run exposed an awk scientific-notation error in the total-byte string check. The instance was retained and a preregistered exact-integer formatting repair reran from the cached image and already-transferred checkpoint four minutes later.
+
+The repaired run resolved `Glm4MoeLiteForCausalLM`, loaded all four shards in 10.84 seconds at 17.87 GiB model memory, and reached health. Two temperature-zero semantic requests both normalized to the requested `{"alpha":17,"beta":"smoke"}` with identical content, reasoning, and tool fields. This falsifies the checkpoint as a sufficient cause of V15's gibberish and strongly points to the custom SGLang AWQ path.
+
+The quality observer then read completion prompt-logprob fields from the wrong response level. vLLM 0.15 source places them on the first completion choice. No paired quality, fixed performance, SLO economics, or trace was admitted. A second policy defect caused immediate teardown because the driver treated a typed wrapper containing a harness error as a completed scientific result. The parser, stage isolation, and both driver error classifiers are corrected before V19.
+
+The 24-file artifact is hash-matched at `56fcf609...9f18c`. Allocation exposure was 1,547.821 seconds and derived cost was `$0.368949945`. Cleanup passed with zero final instances/disks. Reconstructed Nebius spend is `$15.405380520/$25`, leaving `$9.594619480`.
+
+
++
+
+### Nebius retained L40S AWQ arm v19 — paired quality and fixed SLO pass; $0.693/M derived
+
+V19 corrected the vLLM completion-choice prompt-logprob parser and retained the L40S after evidence retrieval. Its one-shot owner completed preflight and transferred the checkpoint in 436.101 seconds; a preregistered ownership handoff then ran the scientific arm from the resident image and checkpoint and deliberately kept the VM for the next arm.
+
+Stock vLLM again passed deterministic semantic JSON. The paired compact screen matches complete BF16 exactly at 0.333 overall with zero category regression. AWQ teacher-forced NLL is 7.6300 versus BF16 7.6455 and passes the prospective 8.0278 ceiling. Both representations still fail the absolute compact gate, so this is paired non-regression evidence only, not a general quality or provider-competitiveness claim.
+
+C1 completed 4/4 exact 8,192/1,024 requests at 59.181 output tok/s, TTFT p95 580.93 ms, TPOT p95 16.446 ms, and negligible mean queue time. C8 completed 16/16 at 344.211 output tok/s, TTFT p95 4,904.01 ms, TPOT p95 20.500 ms, and 595.4 ms mean server queue time. Both SLOs passed with prefix caching disabled and zero query/hit deltas.
+
+At the authenticated L40S VM-plus-disk rate, c8 analytically implies `$0.692503/M` output tokens. On the exact fixed geometry this is 80.4% below V13 complete BF16 H100's `$3.52799/M`, while throughput itself is 12.84% higher. This is a matched campaign representation/hardware result, not a matched Fireworks/Baseten result and not yet a custom co-design gain.
+
+The admitted 13.95 MB PyTorch trace is hash-bound at `b75a0445...434a`. Summed GPU event duration is led by `_fwd_grouped_kernel_stage1` at 36.53%, BF16 GEMV families at about 15%, flash prefill at 6.18%, Marlin MoE kernels at about 13.6%, and Marlin dense kernels at about 9.4%. Because the traced request includes 8K prefill plus 128 decode tokens, these shares are mixed-phase diagnostics rather than pure decode attribution.
+
+The 39-file artifact is internally validated and hash-matched at `fe546ceb...02f8c`. Across 411 arm samples, utilization averaged 34.96% and reached 100% at p95/max; VRAM averaged 25,502 MiB and peaked at 44,899 MiB; power averaged 128.86 W and peaked at 333.11 W. Exposure through artifact retrieval was 1,400.426 seconds for a provisional derived `$0.333815732`; final session cost remains open while the retained VM is running. The next immediate arm changes only activation dtype from BF16 to FP16, testing vLLM's measured pre-SM90 Marlin warning on the resident image/checkpoint.
+
+### Nebius retained L40S AWQ FP16 arm v20 — dtype hypothesis falsified
+
+V20 reused the V19 L40S, image, checkpoint, tokenizer, suite, and workload and changed only activation dtype to FP16. Semantic and paired-quality gates passed, but c1 fell 0.98% to 58.600 output tok/s and c8 fell 2.85% to 334.406 output tok/s. C8 still passed the fixed SLO at 5,026.29 ms TTFT p95 and 21.445 ms TPOT p95, but derived cost worsened from `$0.692503/M` to `$0.712807/M`. This rejects the preregistered dtype hypothesis; BF16 remains the control.
+
+The FP16 trace is hash-bound at `15939089...3fd8`, and the 39-file arm artifact at `4703691b...58f`. `_fwd_grouped_kernel_stage1` remained the largest named GPU event family at 25.49%; activation dtype did not remove the dominant grouped/launch path. Arm exposure was 503.150 seconds for derived `$0.119934495`; the allocation remains retained for V21, which returns to BF16 and changes only the scheduler token budget from 32,768 to 65,536.
+
+### Nebius retained L40S AWQ 65K scheduler arm v21 — small serving gain below promotion threshold
+
+V21 passed semantics, paired quality, exact geometry, both SLOs, and zero-cache checks. Raising only the scheduler token budget removed c8 mean queueing (595.4 ms to 0.013 ms), improved c8 throughput 3.36% to 355.772 output tok/s, and reduced derived cost to `$0.670000/M`. C1 was unchanged at 59.231 tok/s. Because the preregistered useful threshold was +5% c8, this is a small tuned-serving gain rather than a promoted material result.
+
+The 39-file artifact is hash-matched at `001dd8a5...d8b30`; trace hash is `faede248...bfa9`. Arm exposure was 627.722 seconds for derived `$0.149628439`. V22 keeps this tuned control and changes only the trace-selected Triton MLA grouped-decode tile from 32 to 64 tokens.
+
+### Nebius retained L40S MLA tile v22 — measured shared-memory infeasibility
+
+The source-pinned 64-token grouped MLA decode tile loaded the model but failed on its first affected decode invocation: Triton required 159,744 bytes of shared memory while L40S exposes 101,376 bytes. The hash-matched 22-file failure artifact is `576626d4...e16d4`. No semantic, quality, throughput, or economic result is admitted. V22R1 retains the larger tile and reduces pipeline stages from two to one, directly testing Triton's reported shared-memory remedy.
+
+### Nebius retained L40S MLA tile repair v22r1 — feasible but rejected
+
+Reducing pipeline stages to one made the 64-token tile hardware-feasible. Semantics, paired quality, exact c1/c8 geometry, both SLOs, and zero-cache checks passed. Performance did not: c1 fell 0.93% to 58.682 output tok/s and c8 fell 4.21% to 340.791, worsening derived cost from V21's `$0.670000/M` to `$0.699452/M`. The grouped decode kernel remained 25.72% of mixed profiler GPU duration. The model-specific tile lineage is rejected.
+
+The 40-file artifact is hash-matched at `e3a7eb4f...14a12`; trace hash is `4f3f636e...c7d60`. Final session cleanup passed with instance not-found and zero instances/disks. Conservative session cost is `$1.061006497`; total campaign spend is `$16.466387017/$25`, leaving `$8.533612983` before IPv4/egress and invoice reconciliation.
+
+Decision: `CONTINUE_NARROWLY` (`afc33c57...8cbe2`). AWQ plus L40S is an interesting matched-campaign representation/hardware signal, but absolute quality fails, provider comparison is unmatched, and no custom component beats tuned stock. The exact next experiment is an exact-shape standalone GLM MLA decode-kernel autotune with hardware legality and correctness gates before another full model/server run.
 
 ## 10. Decision rubric
 

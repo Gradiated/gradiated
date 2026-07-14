@@ -371,18 +371,18 @@ def fixed_sequence_pass(arm: dict[str, Any]) -> bool:
 
 
 def paired_non_regression_gate(result: dict[str, Any]) -> dict[str, Any]:
-    overall = float(result.get("overall_regression", float("-inf")))
+    overall = float(result.get("overall_regression", float("inf")))
     categories = result.get("category_regressions")
     category_pass = isinstance(categories, dict) and bool(categories) and all(
-        float(value) >= -0.05 for value in categories.values()
+        float(value) <= 0.05 for value in categories.values()
     )
     return {
         "overall_regression": overall,
-        "minimum_overall_regression": -0.02,
-        "minimum_category_regression": -0.05,
+        "maximum_overall_regression": 0.02,
+        "maximum_category_regression": 0.05,
         "category_pass": category_pass,
         "absolute_point_screen_pass": result.get("point_screen_pass") is True,
-        "pass": overall >= -0.02 and category_pass,
+        "pass": overall <= 0.02 and category_pass,
     }
 
 

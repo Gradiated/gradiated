@@ -1,0 +1,8 @@
+{"event":"retained_repair_handoff","instance_id":"computeinstance-e00wfcpr1va34g7tvd","parent_experiment_id":"nebius_l40s_vllm_awq_mla_block64_v22","parent_failure_artifact_sha256":"576626d43673abadbaccfa07c3a6d213eead310a4c4a24feb3383cc8fc4e16d4","timestamp":"2026-07-14T11:29:30Z"}
+{"event": "repair_01_begin", "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "repair_spec_sha256": "da0abf0fe827e842bd16d4ae1786a09b6323fb9df15360e0d2656b9eda8c8e81", "timestamp": "2026-07-14T11:31:31.901919Z"}
+{"event": "repair_01_inputs_staged", "timestamp": "2026-07-14T11:31:39.531152Z"}
+{"event": "repair_01_reused_verified_runtime_and_checkpoint", "timestamp": "2026-07-14T11:31:39.531261Z"}
+{"event": "repair_01_artifact_retrieved", "manifest_files": 40, "outcome": "PASS", "sha256": "e3a7eb4ff04257f90825f4551afa4d793c91f1b29221c7fec962a86d51514a12", "timestamp": "2026-07-14T11:38:56.027231Z"}
+{"event": "instance_retained_for_next_preregistered_experiment", "instance_id": "computeinstance-e00wfcpr1va34g7tvd", "timestamp": "2026-07-14T11:38:56.027339Z"}
+{"cleanup_pass": false, "event": "cleanup_verified", "instance_get_not_found": false, "timestamp": "2026-07-14T11:38:56.477662Z"}
+{"event":"session_cleanup_verified","instance_get_not_found":true,"final_instance_count":0,"final_disk_count":0,"cleanup_sha256":"cf11c388db54b5867117e7dda0033f534ced9db168f5f2a853ee07c9c01fb38a","timestamp":"2026-07-14T11:41:18.703313Z"}

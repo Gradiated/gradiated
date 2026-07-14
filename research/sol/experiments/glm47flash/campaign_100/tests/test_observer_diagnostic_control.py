@@ -54,6 +54,9 @@ class ObserverDiagnosticControlTests(unittest.TestCase):
         self.assertNotIn("--gpu-metrics-devices=all", bootstrap)
         self.assertNotIn("--gpu-metrics-frequency=", bootstrap)
         self.assertIn("gpu_metrics_collector=unsupported_on_l40s", bootstrap)
+        self.assertGreaterEqual(bootstrap.count("rm -f /etc/ld.so.conf.d/00-cuda-compat.conf"), 2)
+        compat_cleanup = bootstrap.rindex("rm -f /etc/ld.so.conf.d/00-cuda-compat.conf")
+        self.assertLess(compat_cleanup, bootstrap.index("nsys profile --force-overwrite=true"))
         self.assertIn("torch.cuda.CUDAGraph", bootstrap)
 
     def test_container_exposes_only_required_profiler_capabilities(self):
@@ -221,7 +224,7 @@ class ObserverDiagnosticControlTests(unittest.TestCase):
         labels = session_labels(
             program="glm-4.7-flash",
             campaign="glm47-nebius-25",
-            run_id="glm47-observer-diagnostic-l40s-v4",
+            run_id="glm47-observer-diagnostic-l40s-v5",
         )
         command = build_create_command(
             name="observer-v1",
@@ -234,7 +237,7 @@ class ObserverDiagnosticControlTests(unittest.TestCase):
         self.assertIn("--boot-disk-managed-disk-labels", joined)
         self.assertIn("glm-4.7-flash", joined)
         self.assertIn("glm47-nebius-25", joined)
-        self.assertIn("glm47-observer-diagnostic-l40s-v4", joined)
+        self.assertIn("glm47-observer-diagnostic-l40s-v5", joined)
 
     def test_provider_commands_are_not_executed_by_tests(self):
         # This suite only inspects pure builders and source. Provider lifecycle is

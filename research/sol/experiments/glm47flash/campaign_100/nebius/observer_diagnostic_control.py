@@ -66,7 +66,7 @@ NSYS_SIGNING_KEY_URL = (
 )
 FACTORY_PROGRAM = "glm-4.7-flash"
 FACTORY_CAMPAIGN = "glm47-nebius-25"
-FACTORY_RUN_ID = "glm47-observer-diagnostic-l40s-v4"
+FACTORY_RUN_ID = "glm47-observer-diagnostic-l40s-v5"
 FACTORY_SETUP_KEY = "l40s:vllm:glm47:observer"
 FALLBACK_MIN_SECONDS = 720
 FALLBACK_MIN_COST_USD = 0.08
@@ -237,8 +237,10 @@ RUN set -eux; \
 NSYS_DOCKERFILE
 sudo docker run --rm --gpus all --pid=host \
   --cap-add SYS_ADMIN --cap-add SYS_PTRACE --cap-add PERFMON --security-opt seccomp=unconfined \
-  --entrypoint bash {RUNTIME_IMAGE} -lc '
+--entrypoint bash {RUNTIME_IMAGE} -lc '
 set -Eeuo pipefail
+rm -f /etc/ld.so.conf.d/00-cuda-compat.conf /etc/ld.so.conf.d/cuda-compat.conf
+ldconfig
 nsys --version | tee /tmp/nsys-version.txt
 grep -F "{NSYS_PACKAGE_VERSION}" /tmp/nsys-version.txt
 nsys status -e | tee /tmp/nsys-status.txt

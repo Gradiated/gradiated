@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v4",
+  "currency": "USD",
+  "line_items": [
+    {
+      "name": "Nebius preemptible L40S VM",
+      "quantity": 0.19063403583215463,
+      "unit_rate_usd": 0.8484,
+      "cost_usd": 0.161733916
+    },
+    {
+      "name": "Nebius 100 GiB network SSD",
+      "quantity": 0.1906340128777437,
+      "unit_rate_usd": 0.0097222,
+      "cost_usd": 0.001853382
+    }
+  ],
+  "result_cost_usd": 0.163587298,
+  "basis": "Measured controller exposure at authenticated rates; public IPv4, egress, and provider invoice reconciliation excluded."
+}

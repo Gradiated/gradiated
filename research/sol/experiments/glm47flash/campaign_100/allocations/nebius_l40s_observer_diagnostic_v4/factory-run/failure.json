@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v4",
+  "failure_class": "preflight_failure",
+  "stage": "provider_preflight_before_model_transfer",
+  "message": "The narrowed Nsight trace created a report, but PyTorch CUDA initialization failed with driver/runtime error 803 because this probe invocation omitted the runtime's established CUDA-compat ldconfig cleanup. During the retained window, the exact cleanup made PyTorch CUDA pass and produced nonempty 539,965-byte Nsight and 2,015,232-byte SQLite artifacts before teardown."
+}

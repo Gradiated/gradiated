@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v5",
+  "failure_class": "user_requested_stop",
+  "stage": "provider_preflight_user_stop_before_model_transfer",
+  "message": "The user requested an immediate campaign stop while the fresh host was still running the pre-transfer bootstrap. The controller received SIGINT, executed its finally cleanup path, and verified direct not-found plus zero labeled instance and disk inventory. No checkpoint bytes, inference, or science result were produced."
+}

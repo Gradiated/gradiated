@@ -50,9 +50,9 @@ struct Dispatcher {
 }
 ```
 
-Cells establish outbound mTLS connections/tunnels to at least two router replicas when inbound provider networking is unavailable. Direct mTLS endpoints may use the same transport contract. Registration proves cell/allocation identity, release and topology digest, runtime/bundle attestation, region and capacity class. Only a multi-node cell's coordinator connects to routers; workers remain cell-local. Each router keeps connection/health state in memory; reconnect rebuilds it. The gateway never reads cell topology.
+Cells establish outbound long-lived mTLS HTTP/2 connections through the dedicated AWS cell-connect endpoint to at least two router replicas. Cells expose no inbound customer port. A later private/direct transport may use the same serving contract after provider-specific qualification. Registration proves cell/allocation identity, release and topology digest, runtime/bundle attestation, region and capacity class. Only a multi-node cell's coordinator connects to routers; workers remain cell-local. Each router keeps connection/health state in memory; reconnect rebuilds it. The gateway never reads cell topology.
 
-The provider driver stores a one-use, short-lived bootstrap-token digest on the allocation and sends the plaintext only through provider bootstrap. The cell generates its own private key and submits a CSR/token to the public narrow enrollment endpoint. The fleet enrollment role consumes the token transactionally, verifies active allocation/release, asks AWS Private CA for a short-lived certificate, and records serial/expiry. Rotation requires the existing mTLS identity and active allocation. Router trust bundles overlap during CA rotation; expired/drained identities cannot register. Provider drivers and routers never hold the CA key or issue certificates.
+The provider driver stores a one-use, short-lived bootstrap-token digest on the allocation and sends the plaintext only through provider bootstrap. The cell generates its own private key and submits a CSR/token to the public narrow enrollment endpoint. The fleet enrollment role consumes the token transactionally, verifies active allocation/release, asks AWS Private CA for a short-lived certificate, records serial/expiry and returns an allocation-tagged short-lived artifact credential restricted to the exact S3 object paths and runtime ECR repository. The cell verifies signed digests after download. Rotation requires the existing mTLS identity and active allocation. Router trust bundles overlap during CA rotation; expired/drained identities cannot register. Provider drivers and routers never hold the CA key or issue certificates.
 
 Selection filters exact release/region/readiness/deadline, then uses deterministic cache affinity among healthy cells. The router cannot substitute a release or acquire capacity. Existing connections continue serving while fleet/PostgreSQL are unavailable.
 
@@ -61,7 +61,8 @@ Selection filters exact release/region/readiness/deadline, then uses determinist
 Lifecycle:
 
 ```text
-bootstrap -> verify allocation token and bundle/image digest
+bootstrap -> verify allocation token -> receive bounded identity/artifact grants
+ -> fetch and verify bundle/image digest
  -> materialize artifacts -> launch OCI runtime child
  -> local conformance/readiness -> connect routers -> ready
  -> serving -> draining -> stopped

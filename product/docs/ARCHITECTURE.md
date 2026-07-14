@@ -84,7 +84,6 @@ Direct example:
 ```text
 openai/gpt-<curated-id>
 anthropic/claude-<curated-id>
-google/gemini-<curated-id>
 ```
 
 Owned examples begin sparsely:
@@ -92,7 +91,7 @@ Owned examples begin sparsely:
 ```text
 grad/medium/standard
 grad/low/fast
-grad/high/quality
+grad/high/turbo
 ```
 
 The grammar may support more effort/speed values than the published catalog. An unpublished combination returns an explicit model-not-found/capability response. Release promotion never mutates an existing digest; it publishes a new release and updates an alias after qualification.
@@ -101,7 +100,7 @@ The grammar may support more effort/speed values than the published catalog. An 
 
 The public gateway launches `/v1/models`, OpenAI Responses Create and Anthropic Messages, streaming and non-streaming. The Responses profile is stateless and rejects hosted/stateful OpenAI surfaces; Messages supports the documented bounded text/tool/thinking profile. Chat Completions, Embeddings, Google and other hosted products are deferred until demand. See [the exact launch profile](PUBLIC_INFERENCE_PROTOCOLS.md).
 
-Provider adapters normalize a closed canonical request/stream/usage/error model. Unsupported fields fail explicitly. No silent parameter dropping, prompt rewriting, response healing or privacy downgrade. Official OpenAI/Anthropic/Google clients exercise the public endpoint; gateway integrations use published base-URL/API-key recipes.
+Provider adapters normalize a closed canonical request/stream/usage/error model. Unsupported fields fail explicitly. No silent parameter dropping, prompt rewriting, response healing or privacy downgrade. Official OpenAI Responses and Anthropic Messages clients exercise the launch endpoint; a Google client/protocol suite is added only when that deferred surface is implemented and advertised. Gateway integrations use published base-URL/API-key recipes.
 
 Cross-language Protobuf is limited to gateway hot projection/events, gateway-to-cell serving and research API refs/commands. Public OpenAPI/JSON fixtures remain separate wire authorities. TypeScript-only domain/outbox types do not become universal Protobuf events.
 

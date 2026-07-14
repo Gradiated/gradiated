@@ -1,14 +1,14 @@
 # ClickHouse trace analytics decision
 
 - decision date: 2026-07-13
-- status: accepted for planning; implementation and cost/performance qualification remain open
+- status: historical and superseded for seed by the 2026-07-14 simplicity review; retain only as reintroduction evidence after the measured trigger
 - evidence class: current vendor-reported capabilities plus analytical architecture reasoning; nothing here is a measured Grad benchmark
 
 ## Question and decision
 
 Should customer traces live in ClickHouse Cloud so the console can provide fast search, timelines, cost/latency analytics, workload grouping, and Grad migration recommendations?
 
-**Decision:** use ClickHouse Cloud as the derived, customer-visible analytics projection, not as the only trace store and never as an authority for billing, authorization, retention, or raw payload custody.
+**Historical decision:** use ClickHouse Cloud as a derived analytics projection. **Current seed decision:** do not implement ClickHouse, its adapter, schema or projector. PostgreSQL indexed queries and measured rollups own seed analytics. Reconsider this document only after the trigger in [the simplicity review](../../docs/SIMPLICITY_REVIEW.md).
 
 The storage contract is deliberately split:
 

@@ -1,5 +1,7 @@
 # Full product and architecture audit
 
+> Historical audit. The current implementation authority is [the system manual](../../docs/SYSTEM_MANUAL.md), [implementation manual](../../docs/implementation/README.md) and [simplicity review](../../docs/SIMPLICITY_REVIEW.md). Do not implement the older fleet-CRD, ClickHouse or protocol breadth described here.
+
 Date: 2026-07-13
 
 Scope: seed product, gateway, billing, traces, owned inference, external capacity, distribution channels, AWS/Kubernetes, testing, delivery and operations

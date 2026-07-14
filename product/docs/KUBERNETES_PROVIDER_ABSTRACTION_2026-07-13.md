@@ -2,11 +2,13 @@
 
 Date: 2026-07-13
 
-Decision: accepted in [ADR-0006](../../docs/decisions/0006-kubernetes-provider-abstraction.md)
+Decision: historical; superseded for implementation by [the simplicity review](../../docs/SIMPLICITY_REVIEW.md), [current fleet blueprint](../../infra/docs/MULTI_PROVIDER_GPU_FLEET.md) and [multi-node contract](MULTI_NODE_INFERENCE.md)
 
 Scope: fleet actuation and observation; not request routing, financial authority, or a promise that every provider runs Kubernetes
 
 ## Answer
+
+> Do not implement the CRDs or signed Redis targets described below. PostgreSQL allocation/member/cell rows and direct Rust provider drivers are the current authority. This document is retained to explain the rejected Kubernetes-management abstraction.
 
 We should abstract every curated GPU provider through the **Kubernetes API**, but we should not abstract every provider as **Kubernetes compute**.
 

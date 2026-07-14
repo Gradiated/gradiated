@@ -34,7 +34,7 @@ Every change must have deterministic examples and property-based tests where inv
 - Rust: `cargo nextest`, `proptest`, and `proptest-state-machine`; use Redis Testcontainers for admission/settlement state machines.
 - Every PBT failure must print the seed and shrink path, upload a replay artifact in CI, and expose a one-command replay. Accepted failures become regression fixtures.
 - Agents run bounded deterministic PBT suites before direct pushes; main/nightly runs deeper time-budgeted suites. Explicitly requested or external pull requests run the bounded suite. Tests must be runnable by agents and CI; the product owner is not expected to run anything locally.
-- Official OpenAI, Anthropic, and Google client smoke tests run through the Rust gateway in protected CI jobs. Untrusted pull requests use deterministic fake providers and never receive provider secrets.
+- Official OpenAI Responses and Anthropic Messages client smoke tests run through the Rust gateway in protected CI jobs. A Google client/protocol test is added only when that deferred public surface is implemented and advertised. Untrusted pull requests use deterministic fake providers and never receive provider secrets.
 
 ## Working rules
 

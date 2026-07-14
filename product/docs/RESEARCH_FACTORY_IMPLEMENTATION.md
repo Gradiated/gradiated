@@ -14,15 +14,16 @@ Use Python 3.12, uv, PostgreSQL, Temporal, S3/ECR, PyTorch, Transformers/safeten
 research/factory/src/grad_research/
   api/                    private generated Protobuf service
   domain/                 programs, hypotheses, campaigns, specs/runs, evidence, bundles
+  application/            commands, queries, ports and authority checks
   workflows/              deterministic Temporal workflows
   activities/             DB, artifact, provider, Git, agent and evaluator operations
-  experiments/            baselines, interventions and evaluation
-  operators/              PyTorch oracle/differential/Triton/native candidates
-  artifacts/              S3 CAS, manifests, ECR image refs/signing
-  providers/              bounded research-compute adapters
-  qualification/          independent exact-bundle suite
-  agents/                 scoped work leases/tool policy
-  testkit/                Hypothesis models/fakes/Temporal replay
+  adapters/               PostgreSQL, S3/ECR, provider and compute adapters
+  harnesses/              baselines, interventions, PyTorch/operator/runtime evaluation
+  bundles/                S3 CAS, manifests, ECR image refs/signing
+  evidence/               scope-bound synthesis including negative results
+  qualification/          independent evaluator role and exact-bundle suite
+  portfolio/              bounded always-on ranking/admission loop
+  schemas/                generated immutable artifact/contract models
 ```
 
 One image exposes `api`, `workflow-worker`, `activity-worker`, and `evaluator` roles. Evaluator credentials/data remain separate even when the image is shared.
@@ -55,7 +56,7 @@ This keeps scientific intent/evidence while deleting views and execution mirrors
 
 ## State and private API
 
-Program is `active|paused|stopped`. Hypothesis is `proposed|approved|rejected|exhausted`. Campaign is `draft|approved|running|stopped|completed`. Run is `queued|running|succeeded|falsified|failed|cancelled`. Bundle is `built|qualification_pending|qualified|rejected`.
+Program is `active|paused|completed`. Hypothesis is `proposed|active|falsified|supported|retired`; activation is the approval transition. Campaign is `draft|active|paused|completed|cancelled`. Run is `queued|running|succeeded|falsified|failed|cancelled`. Evidence is `draft|reviewed|accepted|rejected`. A bundle has no lifecycle status: its digest/bytes are immutable, while `bundle_qualifications` is `pending|passed|failed` and release/alias state remains in the Node catalog authority.
 
 Do not add a state unless it changes an allowed command, resource action, evidence meaning or operator display.
 
@@ -143,18 +144,18 @@ Native provider work remains native. For honest Kubernetes execution, Kueue owns
 
 Agents receive program/hypothesis/campaign/spec/run IDs, base commit, writable paths, readable evidence class, tool/network allowlist, CPU/GPU/spend/time/output limits, expected artifacts and verification command. Candidate agents cannot mutate qualification. Research roles have no production Valkey, customer keys, trace decrypt or release-alias rights. Customer-trace evaluation requires explicit workspace consent and separate scoped identity; retention is not global training consent.
 
-## Verification and ordered packages
+## Verification and canonical work packages
 
 Use pytest/Hypothesis domain models, Temporal replay/crash tests, fake S3/ECR/provider/evaluator services, tiny PyTorch/operator fixtures and cross-language manifest/serving goldens. Protected GPU runs require budget and cleanup packets.
 
-1. `RF-00`: minimal schemas/domain/Hypothesis strategies and generated private API.
-2. `RF-01`: program/hypothesis/campaign/spec/run/evidence authority and API.
-3. `RF-02`: Temporal workflows/activities, idempotency, cancellation, replay and cleanup.
-4. `RF-03`: S3 CAS plus artifact/checkpoint/runtime/bundle manifests and Rust inspection.
-5. `RF-04`: PyTorch intervention/operator testkit and profile-gated Triton path.
-6. `RF-05`: OCI runtime/topology packaging and one/two-node cell-local conformance.
-7. `RF-06`: independent qualification report and Node release handoff.
-8. `RF-07`: operator program/evidence/bundle UI through generated client.
-9. `RF-08`: one continuous program producing a durable falsified result and one qualified dry-run challenger without moving a public alias.
+1. `RF-00`: research domain, schema/repository authority and Hypothesis models.
+2. `RF-01`: deterministic Temporal workflows/activities, cancellation, replay and cleanup.
+3. `RF-02`: intervention/operator/runtime harnesses and fidelity escalation.
+4. `RF-03`: S3 CAS, evidence synthesis and immutable bundle construction.
+5. `QUAL-00`: separately credentialed evaluator role, exact-scope report and known-bad controls.
+6. `RF-04`: bounded always-on portfolio loop and signed release proposal.
+7. `BUNDLE-00`, `RUNTIME-00/01`, `CELL-02` and `CP-04`: cross-language artifact verification, production runtime/topology qualification and human Node release handoff.
+
+These IDs and their writable roots come only from the [canonical work packages](../../docs/implementation/WORK_PACKAGES.md) and [path registry](../../docs/implementation/PATH_OWNERSHIP.md); no local RF-05+ delegation series exists.
 
 Temporal, Kueue and JobSet remain because they replace difficult execution machinery. Derived frontier/queue/state mirrors and speculative runtime modes remain removed.

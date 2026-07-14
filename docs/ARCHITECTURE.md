@@ -19,7 +19,7 @@ Research results inform architecture only through a linked, scope-matched artifa
 
 ## Founder and implementation entry points
 
-Read [the complete startup architecture](STARTUP_ARCHITECTURE.md) first, then [the simplicity review](SIMPLICITY_REVIEW.md) for the dependency budget and minimal persistent model. Use [the implementation coverage ledger](IMPLEMENTATION_COVERAGE.md) to verify capability ownership. These documents are the current architecture freeze; dated audits remain evidence of how the design evolved.
+Read [the canonical system manual](SYSTEM_MANUAL.md) first and use [the system diagrams](SYSTEM_DIAGRAMS.md) for topology and sequence views. Then read [the simplicity review](SIMPLICITY_REVIEW.md) for the dependency budget and minimal persistent model. Use [the implementation manual](implementation/README.md) and [coverage ledger](IMPLEMENTATION_COVERAGE.md) to delegate and verify capability ownership. These documents are the current architecture freeze; dated audits remain evidence of how the design evolved.
 
 ## Current architecture map
 
@@ -28,6 +28,9 @@ Keep this map short and update it when a product boundary changes:
 | Area | Canonical location | Contract / owner |
 | --- | --- | --- |
 | Product source | `product/` | Product workstream issue and local instructions |
+| Canonical system manual | `docs/SYSTEM_MANUAL.md` | Complete seed scope, planes, authorities, behavior, security, reliability and launch gates |
+| System views | `docs/SYSTEM_DIAGRAMS.md` | Mermaid context, sequence, state, deployment and dependency diagrams |
+| Parallel build contract | `docs/implementation/` | Document status, cross-service/data/package contracts, path-owned packets, verification and operations |
 | Startup-wide architecture | `docs/STARTUP_ARCHITECTURE.md` | Founder narrative, planes, journeys, authority map and seed sequence |
 | Completeness and contradictions | `docs/IMPLEMENTATION_COVERAGE.md` | Coverage matrix, simplifications, validation gates and blueprint map |
 | Complexity budget/minimal model | `docs/SIMPLICITY_REVIEW.md` | Dependency decisions, reduced contracts, required fields and reintroduction triggers |

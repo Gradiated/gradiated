@@ -1,211 +1,206 @@
-# Billing, Redis admission, and reconciliation
+# Billing, Valkey admission and reconciliation
 
-This document is the implementation contract for money movement. Examples use integer micro-USD. No path may convert through floating point.
+Status: current seed implementation contract
 
-## Financial model
+This document specifies money movement and hot-path admission. PostgreSQL is durable financial authority. Valkey is the gateway’s synchronous serving projection, reservation authority for in-flight requests and protected delivery path to PostgreSQL. Money is checked integer micro-USD; floating point is forbidden.
 
-PostgreSQL contains a balanced, append-only ledger. An organization's posted credit is derived from entries, not trusted from a mutable cache. Recommended logical accounts are customer credit liability, Stripe clearing/cash, inference revenue, promotional credit expense, refunds/chargebacks, and provider-cost accrual. The exact accounting chart requires accountant review before production, but engineering invariants do not:
+## 1. Financial model
 
-- each transaction balances to zero in one currency;
-- each external/internal business event has one unique idempotency key;
-- entries never update/delete after posting;
-- reversals refer to and offset an original transaction;
-- the organization available balance equals posted credits minus posted sell charges and holds represented by the chosen projection checkpoint.
+The organization is the customer and billing boundary. Workspaces and keys have attribution, optional monthly spend limits and concurrency limits, but never independent wallets. USD is the only seed currency.
 
-Maintain a transactionally updated materialized organization balance row for efficient locking and projection, but verify it against ledger sums continuously. It is a derivative, not a separate authority. Workspaces and API keys have spend/budget windows but never independent funded balances in seed.
+Top-up policy v1 accepts whole-USD amounts from $10 through $10,000 inclusive; the UI may offer presets but the server validates the range and currency. The single workspace/key spend window is the UTC calendar month identified as `YYYY-MM`; changing timezone or adding rolling/custom periods requires a new product contract, Valkey schema and reconciliation proof.
 
-## Organization billing and workspace limit policy
+The fixed chart contains the minimum platform, organization and channel accounts needed for:
 
-The organization billing projection contains:
+- processor cash/clearing;
+- customer prepaid-credit liability;
+- inference usage revenue;
+- refunds, chargebacks, promotional/failed-request credits and adjustments;
+- channel receivable/revenue/payment where a native distribution contract exists.
 
-```text
-billing_mode: prepaid | invoiced (later)
-status: active | reconciling | suspended | closed
-risk_mode: normal | restricted | suspended
-spendable_microusd
-billing_epoch
-projection_version
-normal_max_concurrency
-low_balance_threshold_microusd
-low_balance_org_max_concurrency   default 1
-safety_reserve_microusd
-```
+`ledger_transactions` and `ledger_entries` are immutable. Every transaction balances to zero in USD and has one unique business key/source identity. Refunds, chargebacks and corrections are compensating transactions; they never update prior entries or usage.
 
-Each workspace projection contains status, curated model-provider/model and Grad effort/speed access, Product Intelligence or Private/No Retention data mode, retention policy, an opaque monotonic cache epoch, normal and low-credit concurrency caps, maximum request reserve/output, and zero or one budget for each `daily`, `weekly`, `monthly`, and `lifetime` interval. API keys can have more restrictive equivalents. Period state tracks both settled spend and active reserved spend. Organization/workspace deletion or a privacy-boundary change first closes new admission, then advances the cache epoch so no new request can address old ephemeral blocks.
+`organization_balances` and `channel_balances` are transactionally updated, lockable and rebuildable projections. They are the only persisted ledger totals. The ledger remains authority.
 
-Low credit is calculated from organization projected spendable credit after the proposed reservation. It is not a stale flag. `risk_mode` is an explicit operator/risk override: restricted applies the low-credit organization cap regardless of balance; suspended admits nothing. Effective policy is the intersection/minimum of organization, workspace, and key constraints. Workspace/key budgets cap use of shared organization credit and do not allocate money.
-
-## Top-up state machine
-
-States: `created -> checkout_pending -> paid -> credited`, with terminal/side paths `expired`, `failed`, `refunded`, and `charged_back`.
-
-1. Authorized organization owner/billing member creates a top-up with organization, allowed amount/currency, and idempotency key.
-2. API stores intent then creates a Stripe Checkout Session carrying only opaque IDs in metadata.
-3. Browser return displays `processing`; it never changes credit.
-4. Webhook handler verifies signature against raw body, inserts unique `payment_events`, locks the intent/payment object, and validates amount, currency, organization binding, and allowed transition.
-5. One PostgreSQL transaction posts balanced organization credit entries, advances intent, increments organization billing projection version, inserts audit and outbox records, and marks the event handled.
-6. Worker atomically applies versioned credit to Redis. Dashboard reads posted and projected status through API.
-7. Duplicate or reordered events return success after proving the existing effect. Conflicting duplicates quarantine the intent and alert.
-
-Refunds and chargebacks always append compensating organization transactions. Project the debit/restriction immediately; if it exceeds spendable credit, record explicit debt and set organization `risk_mode=suspended`, closing all workspaces.
-
-## Maximum-cost estimation
-
-Before admission, determine a conservative sell reserve:
+## 2. Top-up state machine
 
 ```text
-candidate_reserve = checked_add(
-  safety_reserve,
-  priced_known_input_units +
-  priced_declared_max_output_units +
-  priced_bounded_tool/cache/reasoning exposure
-)
-
-require candidate_reserve <= effective_max_request_reserve
-reserve = candidate_reserve
+created -> completed | failed | expired
 ```
 
-Every direct model-provider/model and Grad effort/speed release has an immutable published sell SKU. The capability planner must prove the input bound: use the exact pinned tokenizer where available; otherwise use a tested conservative byte/item upper bound plus published image/audio/file units. Price the reserve as uncached input, because a cache hit cannot be guaranteed, and use the smaller valid request/model output cap. Grad settlement may apply the immutable cached-input SKU only from authoritative terminal runtime units. Cache counters or locality are not billing authority.
+Creating Checkout creates a `topup_intent`, not credit. The verified Stripe webhook transaction:
 
-Model-provider buy-cost differences and failed-attempt costs are our margin risk, not a variable customer charge. A retry cannot change sell-price version or add failed upstream units to customer usage. Direct traffic retries only the exact provider/model/version; Grad traffic retries only owned targets for the exact effort/speed release. Speed never silently downgrades. Each release separately bounds attempt count and internal maximum buy exposure.
+1. verifies the raw-body signature before parsing business fields;
+2. inserts the unique provider event or confirms the prior equal result;
+3. locks and validates the top-up intent, organization, USD amount and external object;
+4. performs the one allowed state transition;
+5. on completion, posts one balanced processor/customer-credit transaction and updates the locked balance projection;
+6. appends audit and account-projection outbox work;
+7. commits before returning 2xx.
 
-If the protocol lacks a safe output bound, impose a documented workspace/model default and validate it, or reject the request. Do not silently truncate input or output. Unknown price, stale route/price version, arithmetic overflow, or reserve above policy fails before provider dispatch. Tests must prove reserve is at least the sell charge for every valid response and bounded attempt sequence within declared limits.
+Same event/object with conflicting immutable input is an incident and never overwrites the first effect. Raw webhook bodies and secrets are not retained in application logs or ordinary fixtures.
 
-## Atomic admission transition
+## 3. Conservative maximum exposure
 
-Implement as one versioned Redis Function/Lua script scoped to `{organization_id}`. Inputs include key digest, resolved organization/workspace/key IDs, canonical provider/model or Grad effort/speed, route release/decision, capability/data-policy/native-tier decision, config/price versions, request/reservation IDs, reserve, lease deadline, now/window IDs, and idempotency token.
+Before reserve, the gateway computes the maximum customer sell amount for the admitted immutable release:
 
-The operation:
+```text
+max_sell = fixed_request_fee
+         + max_input_tokens * input_price_micros
+         + max_uncached_input_tokens * applicable_cache_delta
+         + max_output_tokens * output_price_micros
+```
 
-1. validates organization billing epoch/status/risk mode and projected key binding to the organization/workspace;
-2. validates workspace/key status, provider/model or Grad-product access, effective data policy, immutable catalog/route/price version, capability decision, and request reserve/output limits;
-3. returns the existing result for an identical idempotent reservation;
-4. requires organization `spendable >= reserve + safety_reserve`;
-5. computes `post_reserve_spendable`;
-6. requires every workspace/key interval to have `settled + active_reserved + reserve <= limit`; missing limits mean unlimited at that layer;
-7. chooses organization concurrency cap: zero if suspended/reconciling; low-credit cap if restricted or post-reserve is below threshold; normal cap otherwise;
-8. chooses workspace/key caps from effective normal/low-credit policy and requires organization, workspace, and key in-flight below every applicable cap;
-9. subtracts reserve from organization spendable; adds reserve to each applicable workspace/key window; increments all applicable in-flight counters; creates an active reservation/lease;
-10. appends a `ReservationCreated` event to the organization Redis Stream carrying workspace/key attribution;
-11. returns an opaque admission token with organization epoch and reservation ID.
+The exact formula is release- and protocol-versioned and uses checked arithmetic/rounding. Input token count comes from the qualified tokenizer or a conservative upper bound. Output count is the smaller of request, release and protocol limits. Unsupported/unbounded input fails before reserve.
 
-All mutations and `XADD` either succeed or do not happen. Expected outcomes are `admitted`, idempotent `already_admitted`, `insufficient_credits` (402), `low_balance_concurrency_limit` (429), policy/key errors, or `admission_unavailable` (503).
+The reserve must cover every allowed attempt under the release’s customer sell contract. Provider buy-risk is a separate company budget; it does not permit charging above the admitted sell maximum.
 
-This prevents bursts across several workspaces from spending the same last credits: every request for one organization serializes through the organization-local atomic transition. The low-credit organization cap defaults to one; workspace/key caps can only make it stricter.
+## 4. Organization Valkey keyspace
 
-## Lease and streaming behavior
+All organization-local mutable keys use one hash tag so the reserve/settle script is atomic:
 
-Reservations have a finite lease renewed by a gateway heartbeat while an upstream request is active. A gateway crash does not immediately refund because the provider may still have incurred cost. An orphan sweeper waits a provider-specific grace period, inspects all durable evidence, and performs an idempotent conservative settlement or marks the organization `reconciling` for repair.
+```text
+gw:{organization_id}:account
+gw:{organization_id}:workspace:<workspace_id>
+gw:{organization_id}:key:<key_id>
+gw:{organization_id}:reservation:<reservation_id>
+gw:{organization_id}:billing
+```
 
-For long streams:
+Global immutable catalog keys are versioned release/alias snapshots. Channel keys use a disjoint `gw-channel:{channel_id}:...` namespace and ACL; organization scripts cannot address them.
 
-- renew lease before half its duration;
-- meter chunks locally where possible without logging payloads;
-- stop/finalize on client disconnect according to provider cancellation semantics;
-- never issue a second cost-bearing fallback after response bytes have been exposed;
-- if projected actual charge approaches reserve, atomically extend the reserve before further optional spend or cancel upstream.
+The account snapshot contains status, available/held amounts and version/epoch. Workspace/key snapshots contain only active status, binding, one optional monthly spend limit, concurrency, data mode/model policy and version. Do not add daily/weekly/lifetime windows, independent workspace balance, adaptive risk state or arbitrary policy JSON.
 
-## Atomic settlement transition
+## 5. Atomic reserve
 
-Inputs include admission token/epoch, reservation ID, final metered units, actual sell amount, provider cost evidence, terminal state, `usable_output_delivered`, and event ID.
+Input:
 
-The organization-local operation:
+- internal request/reservation ID and immutable admission-input digest retained in reservation state for conflict detection;
+- credential candidate/binding;
+- organization/workspace/key or channel/credential IDs;
+- requested public model ID, immutable release digest, alias generation and expected price/policy versions;
+- conservative reserve micro-USD;
+- current monthly-window identity and bounded lease expiry.
 
-1. fences stale epoch and validates reservation identity;
-2. returns prior result for a duplicate event/settlement;
-3. checked-compares actual sell amount with reserved amount;
-4. returns unused reserve to organization spendable and removes the same amount from active-reserved workspace/key windows, then adds actual sell amount to settled period spend; or atomically takes an overage from organization credit and every applicable limit if allowed;
-5. if an unavoidable overage cannot be funded, records negative debt metadata and restricts/suspends immediately;
-6. marks reservation settled, decrements organization/workspace/key in-flight exactly once, removes lease;
-7. appends `RequestSettled` with organization/workspace/key attribution to the same Redis Stream;
-8. returns final balance/status metadata.
+One script/function:
 
-Cancellation, model-provider/cell rejection, timeout, and partial response are settlement reasons, not excuses to delete a reservation. Evidence quality determines whether sell amount is measured, provider-reported, or conservative estimate. An exact-lane capacity rejection after reserve but before output releases unused reserve, decrements concurrency exactly once, and records zero sell usage plus any internal failed-attempt buy evidence. Protocol-usable partial output is charged at measured fixed-SKU units; after output the gateway never transparently replays. Settlement records whether usable output crossed the customer boundary; it does not issue a mutable in-place refund.
+1. validates compatible epoch and monotonic projections;
+2. authenticates active unexpired credential binding;
+3. validates organization/channel, workspace and key status;
+4. validates model allowlist, data policy, release/price/capability decision and output/reserve bounds;
+5. returns the existing reservation for equal idempotent input and rejects conflicting input;
+6. requires sufficient organization available credit or channel exposure;
+7. requires optional workspace/key monthly settled plus active reserve plus new reserve within limit;
+8. applies organization/channel, workspace and key concurrency limits;
+9. when available-before-reserve is below the fixed deployment multiplier of this request’s hold, applies the fixed organization-wide low-balance cap, initially one;
+10. moves amount from available to held, increments counters and creates reservation/lease;
+11. appends the minimal `ReservationCreated` event in the same atomic transition;
+12. returns an opaque reservation token bound to epoch and identity.
 
-## Failed-request customer credit
+Expected outcomes are admitted/already-admitted, authentication/policy/model errors, insufficient credit, monthly/concurrency/low-balance limit, idempotency conflict or admission unavailable. No provider/router invocation occurs without an admitted token.
 
-After PostgreSQL posts the original settlement, an idempotent policy evaluates whether no usable output was delivered and the terminal state is eligible. If so, the same worker transaction appends a `failed_request_credit` ledger transaction and `usage_correction` that reverses the customer sell amount exactly once. The provider buy-cost accrual remains unchanged. The business key is derived from the original usage charge, so redelivery, reconciliation, or repeated terminal signals cannot double-credit.
+The low-balance multiplier/cap are deployment constants with property tests, not mutable organization/workspace fields.
 
-Protocol validation, customer cancellation after usable output, moderation/refusal, deliberate disconnect abuse, and malformed requests are not automatically eligible. Uncertain midstream delivery is conservatively classified from the gateway's byte/event boundary and retained as a safe reason code. Reconciliation includes both original charges and posted corrections; it never rewrites the original event.
+## 6. Lease and live request behavior
 
-## Migration experiment accounting
+A finite reservation lease is renewed while a cost-bearing request remains active. A gateway crash does not immediately release the hold because upstream spend may have occurred. The sweeper waits the bounded evidence/grace period and performs the same idempotent terminal transition or suspends the account for reconciliation.
 
-Automated Product Intelligence profiling and offline replay on owned inference are product-development/marketing expense and never create a customer reservation or usage charge. They use a separate operator budget, capacity pool and event identity so they cannot be confused with customer traffic.
+The gateway meters locally without logging payload. Client disconnect follows the exact provider cancellation behavior. After usable output, no transparent retry is allowed. Because initial reserve is conservative, the seed does not extend a reservation for optional additional spend; it stops before exceeding admitted bounds. An observed actual sell above reserve is an invariant incident.
 
-Customer-approved live canaries are ordinary requests funded by the organization and require `x-grad-migration-experiment`. Before admission, deterministic bucketing chooses baseline or Grad, resolves its fixed price, and includes experiment ID/bucket in the atomic transition. The experiment has maximum request/micro-USD caps in addition to ordinary limits; actual selected route price is disclosed. Console state alone never enrolls traffic. Shadow experiments are unbilled because output is not delivered, but retain an operator cost budget and require approval. Duplicate events cannot charge or consume either budget twice.
+## 7. Atomic settlement
 
-## Distribution-channel receivable admission
+Input:
 
-OpenRouter and other downstream distribution channels are not customer organizations and never use organization credit. PostgreSQL owns each channel contract, credential references, immutable channel price book, approved Grad releases, credit/receivable ceiling, aging/risk state, concurrency/rate/capacity limits and reconciliation terms. Balanced `channel_receivable_transactions` record revenue, invoice, payment, credit and adjustment effects. A projector publishes a versioned `ChannelAccountProjection` to Redis.
+- reservation token/epoch and request/reservation identity;
+- terminal state and event ID;
+- actual token usage and sell micro-USD;
+- bounded actual target/attempt/provider-cost evidence required for usage posting;
+- `usable_output_delivered` and cancellation owner.
 
-The gateway runs a separate atomic channel command that authenticates the channel credential, verifies model/release/price/policy versions, reserves receivable exposure and concurrency, deduplicates the downstream request ID, and appends a channel event before dispatch. Keys and commands use a channel hash tag and cannot address organization balance or workspace policy. Channel traffic has its own cache trust domain and defaults to content-free SLO/metering records rather than first-party Product Intelligence traces.
+One script/function:
 
-Settlement releases the channel reserve, posts measured units/revenue once, decrements concurrency, and emits a `ChannelSettlementEvent`. A worker posts the receivable ledger and reconciles downstream request IDs, units, errors, credits and invoices/auto-top-ups. Exceeded exposure, overdue invoices, contract suspension or reconciliation drift closes new channel admission while existing requests can settle. Property tests interleave customer and channel traffic and prove neither domain can mutate the other's balances, credentials, limits, traces or cache scope.
+1. validates epoch/token/reservation state;
+2. returns the prior result for an equal duplicate and rejects a conflict;
+3. checked-compares actual sell to reserve;
+4. if actual exceeds reserve, suspends account admission, retains reservation/evidence and returns an invariant error—never clamps or invents debt metadata;
+5. otherwise returns unused hold, records actual settled monthly spend and decrements concurrency once;
+6. marks reservation settled, removes lease and appends minimal `UsageSettled` atomically;
+7. returns final projected balance/status.
 
-## Stream consumption and PostgreSQL posting
+Timeout, cancellation, capacity rejection and partial output are terminal settlement reasons. A zero-sell request still emits a terminal usage event. Lease abandonment uses the same once-only terminal guard and is distinguishable from measured settlement.
 
-The worker uses Redis Streams consumer groups. For each event:
+## 8. Billing stream posting
 
-1. decode and validate Protobuf, epoch, monotonic sequence, and schema version;
+The financial worker uses consumer groups and at-least-once delivery:
+
+1. decode and validate schema/identity/version;
 2. begin PostgreSQL transaction;
-3. insert unique organization event receipt; if already committed, acknowledge and stop;
-4. post usage charge and balanced ledger transaction for settlements, or persist reservation diagnostic/checkpoint for admission events;
-5. increment the organization reconciliation checkpoint, persist workspace/key usage windows, and insert any outbox/audit records;
-6. commit;
-7. acknowledge the stream entry.
+3. insert unique event/business receipt or confirm prior equal effect;
+4. upsert the operational `usage_record` and, for settlement, post one balanced customer/channel revenue transaction and update the locked balance;
+5. append audit/outbox and commit;
+6. acknowledge only after commit;
+7. publish a newer account/policy projection where required.
 
-Pending entries are claimed after worker lease expiry. Poison events move to a retained dead-letter Redis Stream only after bounded attempts and immediately place the organization in `reconciling`; operators can inspect metadata and replay after repair. Retention must exceed maximum outage plus investigation window and is protected by memory/lag admission gates.
+Pending entries are reclaimed after worker lease expiry. A poison/conflicting event places only the affected account in reconciliation, preserves content-safe evidence and is never acknowledged merely to reduce lag. Billing stream capacity/headroom has priority over trace capture.
 
-## Reconciliation equations
+## 9. Failed-request credit
 
-At a common organization checkpoint, compare:
+The immutable usage record includes usable-output, terminal cause, cancellation owner and correction history. Policy may append an idempotent compensating sell credit for eligible failures. It never mutates original usage or erases provider buy cost.
+
+Malformed/policy/authentication requests, deliberate disconnect patterns and requests that delivered usable output are not automatically free. Abuse policy can suspend the organization for review but does not create mutable risk/balance buckets.
+
+## 10. Distribution-channel accounting
+
+A native channel is not a customer organization. It has separate channel credentials, approved catalog prices, exposure/outstanding projection and concurrency. The same balanced transaction implementation is parameterized by channel account scope, but keyspaces, account rows, scripts and foreign-key domains are disjoint.
+
+Reserve checks exposure rather than prepaid credit. Settlement posts channel revenue/receivable evidence once. `channel_statements` is implemented only when the first signed OpenRouter contract requires its period/reconciliation evidence; Grad does not build a configurable billing-period engine.
+
+Exceeded exposure, overdue/suspended contract or unexplained reconciliation drift closes new channel admission while existing requests can settle. Channel traffic defaults to content-free usage unless the signed channel policy explicitly defines a compatible trace contract.
+
+## 11. Reconciliation
+
+At a common checkpoint, compare:
 
 ```text
-postgres_organization_posted_balance
-  = total_posted_credits - total_posted_sell_charges
-    + posted_failed_request_credits + other_posted_adjustments
-
-expected_redis_org_spendable
-  = postgres_organization_posted_balance
-    - active_redis_reservations
-    - settled_redis_events_not_yet_posted_to_postgres
-    + credits_committed_in_postgres_not_yet_projected
+posted_balance = ledger reconstruction
+expected_valkey_available
+  = posted_balance
+    - active reservations
+    - settled events not yet posted
+    + committed credits not yet projected
 ```
 
-For every workspace/key period, separately prove `redis_settled + redis_active_reserved` equals the PostgreSQL posted usage plus the same fenced pending-event/active-reservation cut. The implementation may choose an equivalent algorithm, but all terms use one organization epoch/version so concurrent traffic is not mistaken for drift.
+For the one workspace/key monthly window, compare PostgreSQL posted usage with Valkey settled plus active reserve at the same epoch/checkpoint. For channels, compare ledger outstanding, active exposure and unposted settlements.
 
-Continuous reconciliation runs per event/batch; full organization plus nested workspace/key reconciliation runs at least hourly and after failover/deploy. A nonzero unexplained delta, event sequence gap, old pending entry, overage debt, or projection-version regression transitions the organization to `reconciling`. Small known in-flight lag can remain active only inside a documented amount/age envelope. Exceeding it suspends new cost-bearing admission across its workspaces.
+An unexplained delta suspends only the affected organization/channel, pages and blocks deletion/refund completion. Reconciliation never updates immutable ledger history.
 
-## Projection rebuild
+## 12. Fenced projection rebuild
 
-1. Set organization Redis status to `reconciling` in a new fenced epoch; all workspace admissions stop.
-2. Allow bounded active requests to settle or conservatively close them.
-3. Drain/post all usable stream events and record unresolved reservations.
-4. Recompute organization posted balance and versioned organization/workspace/key auth, policy, and period windows from PostgreSQL.
-5. Build replacement Redis keys under the new epoch, including explicit unresolved holds.
-6. Atomically swap/activate the projection and verify readback hashes.
-7. Run reconciliation. Reopen only on zero unexplained delta and complete event sequence.
-8. Audit operator, reason, old/new epoch, hashes, and result.
+1. Stop or fence new admission for the affected scope.
+2. Drain/claim durable billing events and record the cut.
+3. Build a new epoch from PostgreSQL account, policy, key, alias and release authority.
+4. Add conservative holds for reservations whose terminal effect is uncertain.
+5. compare ledger/balance, policy/catalog versions, event cut and holds;
+6. atomically switch the active epoch;
+7. retain old epoch until every reservation/stream/rollback window closes;
+8. reopen canary admission and observe reconciliation.
 
-## Required property invariants
+Never delete all Valkey keys and republish a clean balance that forgets in-flight liability.
 
-Generated command sequences include organization/default-workspace creation, additional workspaces/keys/limits, top-up, duplicate/reordered webhook, direct provider/model pins, Grad effort/speed release/canary/rollback, trace-mode tightening, migration replay/shadow/live-canary budget, cross-workspace concurrent reserve, lease renewal, stream cancel, settle, duplicate settle, usable/no-usable-output correction, provider overage, refund, chargeback, worker redelivery, Redis failover checkpoint, and rebuild.
+## 13. Required properties
 
-For every sequence:
+- every PostgreSQL transaction balances and business keys are idempotent;
+- balance projection always equals ledger reconstruction;
+- Checkout without verified webhook never adds credit;
+- no accepted reserves overspend organization credit/channel exposure or monthly limits;
+- concurrent workspaces cannot spend the same last credit;
+- low-balance cap is applied atomically and customer configuration cannot loosen it;
+- reserve atomically creates hold, counters, lease and event or does nothing;
+- each reservation reaches settled or abandoned once;
+- duplicate reserve/settle/webhook/stream delivery has one effect and conflicting duplicate fails closed;
+- actual-over-reserve suspends and preserves evidence;
+- consumer crash at every DB/ack boundary converges;
+- organization and channel commands cannot mutate each other’s keys/accounts;
+- rebuild never forgets uncertain active exposure.
 
-- ledger entries balance and arithmetic never overflows;
-- one business event has at most one financial effect;
-- each eligible no-usable-output charge has exactly one compensating sell credit and ineligible/delivered-output charges have none;
-- in-flight equals active reservations;
-- organization spendable plus active holds agrees with the fenced financial/event cut;
-- no request is dispatched without a reservation event;
-- organization low-credit and workspace/key concurrency never exceed selected caps;
-- workspace/key settled plus reserved spend never exceeds a configured hard period cap except the explicit unavoidable-overage path, which closes the organization;
-- status/epoch fencing prevents stale reopen or stale settlement mutation;
-- only explicit overage/chargeback paths can create debt, and they immediately restrict admission;
-- reconciliation either proves organization and nested window equality or leaves the organization closed.
-- route rollback never reprices or invalidates an already admitted reservation.
-- direct traffic never settles under another provider/model/version and Grad traffic never settles under another effort/speed SKU;
-- internal replay/shadow traffic cannot debit organization credit, while live-canary traffic cannot exceed its experiment plus ordinary billing limits.
-
-Both fast-check domain models and Rust Redis state-machine tests assert these invariants. Cross-language generated traces allow the same minimized failure sequence to be replayed in both implementations.
+Use fast-check for ledger/top-up/control models and proptest-state-machine against real Valkey for reserve/settle/lease behavior. Every failure emits a replay artifact.

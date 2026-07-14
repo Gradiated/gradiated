@@ -1,6 +1,6 @@
 # ADR-0003: Curated provider lane, Grad effort/speed products, and trace intelligence
 
-- status: accepted for planning; supersedes ADR-0002 model taxonomy and payload-retention boundary
+- status: accepted for the two model lanes and payload-retention boundary; ClickHouse and seed protocol/provider breadth are superseded by the 2026-07-14 simplicity review and ADR-0008
 - GitHub issue: https://github.com/joshsny/gradiated/issues/4
 - owner: product architecture
 - date: 2026-07-13
@@ -12,7 +12,7 @@ Expose two connected model lanes:
 1. A curated direct-provider registry with canonical `openai/<model>`, `anthropic/<model>`, and `google/<model>` identities. A bare upstream model ID is accepted only while it has one unambiguous active binding. Direct requests never cross provider/model/version.
 2. First-party `grad/<effort>/<speed>` products served only on owned inference. Effort is `low|medium|high|max`; speed is `flex|standard|fast|turbo`; the default is `grad/medium/standard`. Every enabled cell has an immutable fixed-price qualified RouteRelease and never silently leaves its effort/speed lane.
 
-Product Intelligence is the default workspace data mode. The gateway strips credentials, bounds and encrypts request/response/tool traces with a random data key, wraps that key to a rotating ingest public key, and emits ciphertext to a separate Redis stream. Workers store encrypted payloads in private lifecycle-managed S3 and authorization/key/retention metadata in PostgreSQL. ADR-0004 adds ClickHouse Cloud as a content-free replayable trace-analytics projection; it does not change raw payload custody or authority. Initial raw retention targets 30 days, configurable downward and subject to launch legal/security review. Private/No Retention can be selected at workspace level or as a stricter request header and suppresses payload capture before Redis.
+Product Intelligence is the default workspace data mode. The gateway strips credentials, bounds and encrypts request/response/tool traces with a random data key, wraps that key to a rotating ingest public key, and emits ciphertext to a separate Redis stream. Workers store encrypted payloads in private lifecycle-managed S3 and authorization/key/retention metadata in PostgreSQL. PostgreSQL indexed queries and measured rollups own seed analytics; the superseded ADR-0004 is reintroduction evidence only. Initial raw retention targets 30 days, configurable downward and subject to launch legal/security review. Private/No Retention can be selected at workspace level or as a stricter request header and suppresses payload capture before Redis.
 
 Trace processors group requests into workspace-local workloads and propose Grad migrations. Evidence progresses from metadata `opportunity`, to retained-trace replay `candidate`, to customer evaluator/shadow `verified`, to live-canary `ready`. Replays/shadows are not customer-billed; live canaries use ordinary prepaid admission plus an experiment cap. No system state automatically changes the customer's requested model.
 

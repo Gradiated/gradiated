@@ -41,7 +41,7 @@ Better Auth user/session/recovery/OAuth-provider tables
 organizations, organization_members, invitations, organization_deletions
 workspaces, workspace_members, workspace_models, api_keys
 organization_balances, channel_balances, ledger_accounts, ledger_transactions, ledger_entries
-topup_intents, payment_events, usage_records
+topup_intents, payment_events, usage_records, channel_usage_records
 provider_endpoints, model_definitions, model_releases, release_endpoints
 model_aliases, qualification_runs
 traces, recommendations, evaluations
@@ -78,7 +78,7 @@ customer_credit_liability balance
 
 Valkey reserves/holds synchronously; PostgreSQL receives reservation and settlement events asynchronously. Reconciliation compares PostgreSQL settled truth plus active reservation evidence with the projected epoch and fail-closes the organization before repair if equality cannot be proven.
 
-`usage_records` owns one request's operational identity, admitted release, bounded attempt summary, terminal usage and sell amount. Usage, corrections, refunds and chargebacks are immutable balanced transactions linked by source fields; there is no mutable charge/correction hierarchy.
+`usage_records` owns one organization request's operational identity, admitted release, bounded attempt summary, terminal usage and sell amount. `channel_usage_records` owns the corresponding channel/credential/release/external-model facts without nullable customer principal columns. Usage, corrections, refunds and chargebacks are immutable balanced transactions linked by source fields; there is no mutable charge/correction hierarchy.
 
 ## Cross-language contracts
 
@@ -130,16 +130,20 @@ There is no universal `PrincipalRef` or aggregate envelope.
 ReservationCreated
   event_id, request_id, reservation_id
   organization_id, workspace_id, api_key_id
-  release_digest, reserved_micros, expires_at
+  requested_model_id, release_digest
+  reserved_micros, started_at, expires_at
 
 UsageSettled
   event_id, request_id, reservation_id
   organization_id, workspace_id, api_key_id
-  release_digest, input/cached_input/output tokens
-  sell_micros, terminal_status
+  release_digest, actual_target
+  input/cached_input/output tokens
+  sell_micros, buy_micros?, attempts_json
+  terminal_status, usable_output_delivered, cancellation_owner?
+  completed_at
 ```
 
-Channel variants replace organization/workspace/key with channel/credential. Each payload contains only fields consumed by posting/reconciliation. Attempts remain a bounded JSON summary on `usage_records`; provider secrets/endpoints never enter billing events.
+Channel variants replace organization/workspace/key with channel/credential. Each payload contains only fields consumed by usage posting, failed-request credit policy and reconciliation. Attempts remain one bounded typed JSON summary on `usage_records`; provider secrets, raw provider bodies and customer payload never enter billing events.
 
 ## Gateway-to-cell contract
 

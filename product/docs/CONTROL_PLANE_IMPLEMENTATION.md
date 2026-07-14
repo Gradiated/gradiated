@@ -8,7 +8,7 @@ The complete required field list is [the minimal persistent model](../../docs/SI
 
 ## Dependencies and source layout
 
-Use Node LTS, strict TypeScript, Hono, `@hono/zod-openapi`, Zod v4, Better Auth, Drizzle over `node-postgres`, React/Vite, TanStack Router/Query, React Hook Form, Tailwind and shadcn/ui. Generate OpenAPI 3.1, the TypeScript client and the allowlisted MCP manifest from one route/schema registry. Do not add tRPC, a second ORM/validator, ClickHouse or another product event bus.
+Use Node LTS, strict TypeScript, Hono, `@hono/zod-openapi`, Zod v4, Better Auth, Drizzle over `node-postgres`, React/Vite, TanStack Router/Query, React Hook Form, Tailwind and shadcn/ui. Use one small mail port with an AWS SES adapter for bounded recovery/invitation templates; PostgreSQL tokens/invitations remain authority. Generate OpenAPI 3.1, the TypeScript client and the allowlisted MCP manifest from one route/schema registry. Do not add tRPC, a second ORM/validator, ClickHouse or another product event bus.
 
 ```text
 product/
@@ -53,6 +53,11 @@ interface Outbox {
   append(type: string, schemaVersion: number, payload: JsonValue, tx: Tx): Promise<void>;
 }
 
+interface Mailer {
+  sendRecovery(input: RecoveryMail): Promise<void>;
+  sendInvitation(input: InvitationMail): Promise<void>;
+}
+
 type AppError =
   | { code: 'unauthenticated' | 'forbidden' | 'not_found' | 'conflict'; message: string }
   | { code: 'validation_failed'; fields: FieldError[] }
@@ -82,7 +87,15 @@ interface KeyService {
 }
 ```
 
+Usage export is one authorization-checked, no-store CSV stream over a maximum 31-day range and documented row cap, ordered by `(started_at, id)`. It formula-escapes cells and contains only the caller-visible metadata projection. Do not add export jobs, export state or S3 export objects at seed.
+
 Organization creation is one transaction: organization, owner membership, one non-deletable Default workspace, owner workspace membership, audit and outbox. Better Auth's user ID is the product user ID; do not create another user table.
+
+Human authentication launches with Better Auth email/password, email verification and recovery through the one SES mail adapter. Social login is deferred. Better Auth's OAuth 2.1 provider capability is enabled for remote MCP authorization, not as a second product user authority.
+
+Deleting a non-Default workspace is terminal archival: revoke all workspace keys, publish suspended serving policy and retain workspace/usage/trace metadata under ordinary retention and financial rules. The Default workspace cannot be archived. Workspace archival is not organization deletion or an immediate payload-purge primitive.
+
+Recovery and invitation delivery use non-enumerating endpoints, bounded versioned templates and the SES adapter. Sending can be retried from the still-valid PostgreSQL token/invitation state; email delivery is never identity or invitation authority.
 
 Organization deletion is self-service and immediately suspends new admission. A durable Node worker drains reservations, reconciles/refunds unused credit, cryptographically deletes traces and redacts product identity while retaining pseudonymous statutory financial evidence. It does not use Temporal. The API/state/worker contract and PBT are [specified separately](ORGANIZATION_DELETION.md).
 

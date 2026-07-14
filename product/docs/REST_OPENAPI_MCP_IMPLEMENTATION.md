@@ -136,20 +136,20 @@ retry_after_seconds?                     # bounded transient failures only
 | --- | --- | --- |
 | session | current actor and organizations | read |
 | organizations | list/create/get/update; request/get/cancel deletion | read/create/update; deletion excluded |
-| organization members/invitations | list/invite/update/remove/accept | list/invite; destructive removal excluded initially |
-| workspaces | list/create/get/update/delete non-default | read/create/update |
+| organization members/invitations | list/invite/reissue/revoke/update/remove/accept | list/invite; revoke/removal excluded initially |
+| workspaces | list/create/get/update/archive non-Default | read/create/update |
 | workspace members | list/add/update/remove | read; writes added only after confirmation UX exists |
 | API keys | list/create/revoke | list only; one-time secrets are excluded |
 | billing | balance, top-up checkout, transactions | read only; checkout excluded |
 | models | list/get | read |
-| usage/traces | bounded list/aggregate/detail/delete | list/aggregate; payload detail and deletion excluded |
+| usage/traces | bounded list/aggregate, 31-day bounded streaming usage CSV, trace detail/delete | list/aggregate; CSV, payload detail and deletion excluded |
 | recommendations/evaluations | list/get/accept/dismiss/start bounded evaluation | read plus explicitly safe evaluation start later |
 
 Stripe webhooks, internal release/fleet commands, trace-decrypt grants and research mutations are documented in private specs and never emitted as customer MCP tools.
 
 ## Authentication and authorization
 
-The browser uses Better Auth session cookies. Remote MCP uses OAuth authorization-code + PKCE and short-lived bearer tokens backed by Better Auth's authorization tables. Every bearer token is user-bound and organization-scoped; selecting a workspace still requires current membership. Machine-to-machine management credentials are deferred until a real automation customer exists.
+The browser uses Better Auth email/password, verification/recovery and secure session cookies. Social login is deferred. Remote MCP uses OAuth authorization-code + PKCE and short-lived bearer tokens backed by Better Auth's authorization tables. Every bearer token is user-bound and organization-scoped; selecting a workspace still requires current membership. Machine-to-machine management credentials are deferred until a real automation customer exists.
 
 Authorization is executed in REST middleware/domain services on every request. The OpenAPI security declaration and MCP annotations are documentation hints, not enforcement. MCP cannot supply organization IDs to widen its grant.
 

@@ -1,5 +1,7 @@
 # Grad startup architecture
 
+> Founder-level overview. The build-grade authority is [the complete system manual](SYSTEM_MANUAL.md), [Mermaid diagrams](SYSTEM_DIAGRAMS.md), and [implementation packet set](implementation/README.md).
+
 ## Executive view
 
 Grad is a paid inference provider with one public API and two deliberately different model lanes:

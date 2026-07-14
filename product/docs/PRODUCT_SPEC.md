@@ -38,8 +38,8 @@ Keep a small set of high-demand, qualified providers and models. Seed providers 
 
 Owned Grad IDs express customer intent:
 
-- effort: `low`, `medium`, `high` (publish only validated values);
-- speed: `fast`, `standard`, `quality` (publish only validated values).
+- effort: `low`, `medium`, `high`, `max` (publish only validated values);
+- speed: `flex`, `standard`, `fast`, `turbo` (publish only validated values).
 
 The stable alias resolves to immutable qualified releases. Start with `grad/medium/standard`; do not publish a full matrix merely because the grammar permits it. Optional release pins are an advanced API feature after a real reproducibility customer asks for them.
 

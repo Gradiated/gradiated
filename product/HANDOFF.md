@@ -1,5 +1,13 @@
 # Product architecture handoff
 
+## 2026-07-14 architecture freeze
+
+The end-to-end plan has passed a coverage-first review and now has implementation blueprints detailed enough to delegate to junior coding agents. Start with the [founder/system architecture](../docs/STARTUP_ARCHITECTURE.md), then inspect the [coverage and contradiction ledger](../docs/IMPLEMENTATION_COVERAGE.md). Concrete interfaces, classes, state transitions, process roles, failure behavior, tests and ordered packages are defined in [control plane](docs/CONTROL_PLANE_IMPLEMENTATION.md), [gateway](docs/GATEWAY_IMPLEMENTATION.md), [owned inference](docs/OWNED_INFERENCE_IMPLEMENTATION.md), [research factory](docs/RESEARCH_FACTORY_IMPLEMENTATION.md), [distribution](docs/DISTRIBUTION_IMPLEMENTATION.md) and [platform](../infra/docs/PLATFORM_IMPLEMENTATION.md).
+
+The review simplified the seed to one narrow paid direct-model vertical before owned inference, ClickHouse, native listings or the research lab become launch dependencies. Worker deployments retain separate identities and scaling but share two seed images. Grad keeps the full effort/speed grammar while publishing a sparse catalog beginning with `grad/medium/standard`. Protobuf uses the canonical `gradiated` namespace and transports references/commands/events; content-addressed bundle manifests have one JSON Schema/RFC 8785 authority. Research signs a qualified-bundle reference, but Node release authority alone approves customer releases and the target projector alone signs routable cells.
+
+Remaining unknowns are intentionally explicit gates rather than implementation choices: Valkey durability/failover, primary AWS region, provider economics/conformance, GPU capacity-provider qualification, model quality/performance, and partner listing approval. Each has an experiment or human owner and a safe fallback in the coverage ledger.
+
 ## Current decision
 
 Build the direct paid gateway first as a premium curated inference and migration product, while making owned serving independently OpenAI-compatible and eligible for external-gateway distribution. Customers may call Grad directly or put a workspace key behind their existing gateway; selected native listings use separate channel credentials/receivables. The control plane is Vite React plus Hono/tRPC Node; the data plane is Rust. An organization is the customer/billing boundary and workspaces isolate keys, data/model policy, limits, membership and usage.

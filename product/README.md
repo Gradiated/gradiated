@@ -43,10 +43,8 @@ product/
   apps/
     web/                 Vite, React, Tailwind, shadcn/ui
     control-api/         Hono on Node, Better Auth, tRPC, REST/OpenAPI
-    control-worker/      Stripe, outbox, Redis projection, reconciliation
-    trace-worker/        encrypted trace drain, retention, deletion, export
-    trace-projector/     PostgreSQL outbox to ClickHouse analytical facts
-    recommendation-worker/ workload profiles, replay, migration experiments
+    control-worker/      role entrypoints for Stripe, outbox, projection and reconciliation
+    intelligence-worker/ role entrypoints for trace drain, analytics and recommendations
     trace-access/        one-object audited decrypt/read service
     fleet-controller/    PostgreSQL intent, fleet CRDs, broker/target projection
   services/
@@ -77,8 +75,15 @@ research/
 
 ## Documents
 
+- [Startup-wide architecture](../docs/STARTUP_ARCHITECTURE.md)
+- [Implementation coverage and simplification ledger](../docs/IMPLEMENTATION_COVERAGE.md)
 - [Product specification](docs/PRODUCT_SPEC.md)
 - [Architecture](docs/ARCHITECTURE.md)
+- [Control-plane implementation blueprint](docs/CONTROL_PLANE_IMPLEMENTATION.md)
+- [Gateway implementation blueprint](docs/GATEWAY_IMPLEMENTATION.md)
+- [Owned-inference implementation blueprint](docs/OWNED_INFERENCE_IMPLEMENTATION.md)
+- [Research-factory implementation blueprint](docs/RESEARCH_FACTORY_IMPLEMENTATION.md)
+- [Distribution implementation blueprint](docs/DISTRIBUTION_IMPLEMENTATION.md)
 - [API, data, and contract design](docs/API_AND_DATA_CONTRACTS.md)
 - [Billing, Redis admission, and reconciliation](docs/BILLING_AND_REDIS.md)
 - [Testing and CI](docs/TESTING_AND_CI.md)

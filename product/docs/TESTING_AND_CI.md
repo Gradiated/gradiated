@@ -1,5 +1,11 @@
 # Testing and CI
 
+## Architecture and contract completeness
+
+CI treats architecture as an input contract, not prose that can silently drift. A documentation check validates relative links, canonical Protobuf package paths, generated-file drift and forbidden legacy terms. Any new deployable or cross-system event must update [`../../docs/IMPLEMENTATION_COVERAGE.md`](../../docs/IMPLEMENTATION_COVERAGE.md) with its authority, contract, failure/security behavior, tests and work package.
+
+The first end-to-end fixture is deliberately narrow: one organization, its Default workspace, one funded key, OpenAI Models/Chat, one curated direct model, and one `grad/medium/standard` fake release. Broader protocols, ClickHouse, native listings and real owned capacity cannot become required dependencies of this first revenue-path fixture.
+
 The product owner will not run this repository locally. Therefore the acceptance authority is automated CI plus durable artifacts, and every implementation packet must expose the same commands to coding agents in containers/devboxes.
 
 ## Test pyramid

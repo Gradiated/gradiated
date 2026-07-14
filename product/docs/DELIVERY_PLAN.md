@@ -7,16 +7,16 @@ Ship one paid vertical path before breadth:
 ```text
 sign in -> create organization + Default workspace -> verified organization top-up
 -> create API key in implicit Default workspace -> Redis projection
--> existing direct provider/model or grad/medium/standard -> immutable route release
--> atomic reserve -> exact curated provider or owned Grad lane -> settle/credit
--> Redis Stream -> PostgreSQL ledger -> dashboard/reconciliation
--> settled usage -> ClickHouse trace analytics; encrypted payload -> S3 detail
--> workload profile -> customer-controlled Grad migration
+-> one curated direct provider/model -> immutable route release
+-> atomic reserve -> exact curated provider -> settle/credit
+-> Redis Stream -> PostgreSQL ledger -> minimum usage dashboard/reconciliation
 ```
 
-Provider-distribution work reuses the serving path after this slice is reliable. Work packages below are designed for separate subagents with explicit path ownership. Each package gets a GitHub issue, active packet, dependency links, and acceptance evidence before its owned commit is pushed directly to `main`.
+Owned `grad/medium/standard`, encrypted trace intelligence/ClickHouse, broader protocols and native distribution are subsequent vertical slices that reuse this paid path; they are not dependencies of the first dollar. Work packages below are designed for separate subagents with explicit path ownership. Each package gets a GitHub issue, active packet, dependency links, and acceptance evidence before its owned commit is pushed directly to `main`.
 
 AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/DELIVERY_PLAN.md`](../../infra/docs/DELIVERY_PLAN.md). Product packages own application behavior, containers, contracts, and tests. Infrastructure packages own Terraform, managed services, Helm/GitOps, deployment workflows, capacity qualification, and cloud operations. Neither workstream duplicates those resources.
+
+The concrete subpackage contracts are [control plane](CONTROL_PLANE_IMPLEMENTATION.md) (`CP-*`), [gateway](GATEWAY_IMPLEMENTATION.md) (`GW-*`), [owned inference](OWNED_INFERENCE_IMPLEMENTATION.md) (`OI-*`), [research factory](RESEARCH_FACTORY_IMPLEMENTATION.md) (`RF-*`) and [distribution](DISTRIBUTION_IMPLEMENTATION.md) (`DI-*`). A work-package owner must claim the corresponding subpackages and use their interfaces and acceptance fixtures; the `WP-*` grouping below remains the cross-team dependency order.
 
 ## Global definition of done
 
@@ -27,6 +27,7 @@ AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/
 - Public schema and internal Protobuf changes pass generation/drift/breaking/golden checks.
 - Direct IDs never cross provider/model/version; Grad IDs never leave owned inference or change effort/speed; unsupported capabilities/data policy never degrade silently.
 - Changed behavior is documented in source-of-truth docs/runbooks.
+- The capability remains `complete` in [`../../docs/IMPLEMENTATION_COVERAGE.md`](../../docs/IMPLEMENTATION_COVERAGE.md): authority, contracts, transactions/idempotency, deployment, failures, security, tests and ordered package are all named.
 - `python3 tools/devex/check.py` and the package's narrow CI checks pass.
 - Handoff names exact files, commands, CI run, evidence class, limitations, and next safe action.
 
@@ -73,14 +74,14 @@ AWS/Kubernetes implementation is a coordinated workstream in [`../../infra/docs/
 ### WP-05 — Rust protocols, capability planner, fake providers
 
 - Scope: gateway server/core, OpenAI/Anthropic/Google ingress crates, provider trait, fake providers, schemas/conformance fixtures.
-- Deliver: OpenAI Chat/Responses/Embeddings, Anthropic Messages and versioned Google GenerateContent/stream skins; canonical provider/model and Grad effort/speed parsing; unique bare aliases; provider/no-retain headers; trace hook; identity errors and upstream interface.
+- Deliver in stages: OpenAI Models plus Chat Completions first; then Responses and Embeddings; then Anthropic Messages; then Google GenerateContent only after the prior protocol stage is green. Each stage includes canonical provider/model and Grad effort/speed parsing, capability rejection, provider/no-retain headers, trace hooks, identity errors and upstream interfaces for its scope.
 - Acceptance: protocol parser/PBT and fixture matrix; official SDK fake E2E for all five endpoints; unsupported/lossy fields, hidden transforms and context overflow fail before dispatch; no dispatch hook executes without WP-04 admission token; malformed/midstream faults settle exactly once.
 - Dependencies: WP-00, WP-04 interfaces. Can develop handler parsing in parallel against a fake admission trait.
 
 ### WP-06 — Curated providers and Grad effort/speed releases
 
 - Scope: provider/model/alias and Grad product/release domain; Rust route planner; owned/OpenAI/Anthropic/Google adapters; operator-only OpenRouter/generic; qualification/pricing.
-- Deliver: curated direct registry and unique aliases; 4×4 Grad grammar with catalog-gated cells; stable Grad family heads and immutable release pins; same-provider and owned-only route boundaries; scoped qualification; immutable fixed-price releases bound to exact bundle digests; canary/session/rollback; health/capacity; capability/data-policy profiles; translation/stream/retry/usage/buy-cost exposure.
+- Deliver: curated direct registry and unique aliases; a parseable 4×4 Grad grammar backed by a sparse catalog that initially publishes only `grad/medium/standard` and, after measurement, at most one adjacent speed; stable Grad family heads and immutable release pins; same-provider and owned-only route boundaries; scoped qualification; immutable fixed-price releases bound to exact bundle digests; canary/session/rollback; health/capacity; capability/data-policy profiles; translation/stream/retry/usage/buy-cost exposure.
 - Acceptance: PBT proves alias uniqueness, direct identity, Grad owned/effort/speed fidelity, family-envelope fidelity, immutable pins, deterministic decisions, no speed downgrade, in-flight bundle/price stability and fixed-price rollback; adapter conformance; effort/speed monotonicity release gates; retries stay bounded.
 - Dependencies: WP-04, WP-05.
 - Delegation: split 06A catalog/qualification/release control plane and 06B Rust route/adapters only after one interface owner freezes Protobuf, Redis projection and qualification manifest schemas.

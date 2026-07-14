@@ -86,7 +86,7 @@ Large-enterprise SSO, private networking, deeper hierarchy, and invoiced credit 
 - Native OpenRouter first and Hugging Face second only after dedicated channel auth/catalog/admission/receivable conformance and measured economics.
 - Deterministic fake providers for every `main` commit and external pull request.
 - Protected real-provider smoke tests using official clients and minimal token limits.
-- One-command deterministic tests plus replayable PBT for TypeScript and Rust.
+- One-command deterministic tests plus replayable PBT for TypeScript, Rust and the Python research factory.
 
 ## Explicit non-goals for seed
 
@@ -116,7 +116,7 @@ Large-enterprise SSO, private networking, deeper hierarchy, and invoiced credit 
 | FR-05 | Reconciliation | Every settled gateway event is posted once to PostgreSQL; unexplained divergence transitions the organization to `reconciling` or `suspended`. |
 | FR-06 | Client compatibility | Official OpenAI, Anthropic and Google clients pass fake-provider conformance on every PR and minimal real smoke tests in protected CI. |
 | FR-07 | Streaming | Chunk order, terminal markers, cancellation, usage, errors, and timeouts match the selected ingress protocol. |
-| FR-08 | Contract safety | Protobuf generation is deterministic; lint, breaking-change, drift, and TS/Rust golden roundtrips pass. |
+| FR-08 | Contract safety | Protobuf generation is deterministic; lint, breaking-change, drift, and Python/TS/Rust golden roundtrips pass. Canonical artifact JSON Schema readers and RFC 8785 digest fixtures agree across all three languages. |
 | FR-09 | Testability | Stateful money/auth paths have model-based PBT, deterministic seed replay, shrinking, and CI artifacts. |
 | FR-10 | Operability | Operators can freeze an organization/workspace, revoke a key, replay/repair a billing event, rebuild a Redis projection, and audit each action. |
 | FR-11 | Model lanes | Canonical direct IDs hard-pin a curated provider/model; every `grad/<effort>/<speed>` identity resolves to an immutable owned-inference release with fixed prices, evidence and rollback. |

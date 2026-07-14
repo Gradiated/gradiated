@@ -1,5 +1,7 @@
 # Architecture
 
+This document fixes component boundaries and runtime behavior. For implementable module/class contracts use [control plane](CONTROL_PLANE_IMPLEMENTATION.md), [gateway](GATEWAY_IMPLEMENTATION.md), [owned inference](OWNED_INFERENCE_IMPLEMENTATION.md), [research factory](RESEARCH_FACTORY_IMPLEMENTATION.md) and [distribution](DISTRIBUTION_IMPLEMENTATION.md). [The coverage ledger](../../docs/IMPLEMENTATION_COVERAGE.md) records resolved contradictions and the few remaining measured or human gates.
+
 ## Component topology
 
 ```mermaid
@@ -77,7 +79,7 @@ Business logic lives in domain packages and accepts an explicit actor/organizati
 
 ### `apps/control-worker`
 
-The Node worker owns asynchronous control-plane operations:
+The Node worker source exposes role-specific entrypoints for asynchronous control-plane operations. Seed deployments reuse a control-worker image and an intelligence-worker image; each role still has a separate Kubernetes Deployment, identity, database role, scaling rule and failure budget:
 
 - PostgreSQL transactional-outbox publication;
 - Redis organization credit and workspace/key policy projection;

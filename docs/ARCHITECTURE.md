@@ -17,6 +17,10 @@ Use [`docs/decisions/TEMPLATE.md`](decisions/TEMPLATE.md) for decisions that aff
 
 Research results inform architecture only through a linked, scope-matched artifact. Label whether the evidence is measured, analytical, vendor-reported, derived, inferred, or synthetic.
 
+## Founder and implementation entry points
+
+Read [the complete startup architecture](STARTUP_ARCHITECTURE.md) first for the product, critical journeys, system topology and build order. Then use [the implementation coverage ledger](IMPLEMENTATION_COVERAGE.md) to verify that every capability has an authority, contract, deployment, failure behavior, security boundary, tests and ordered work package. Those documents are the current architecture freeze; dated audits remain evidence of how the design evolved.
+
 ## Current architecture map
 
 Keep this map short and update it when a product boundary changes:
@@ -24,6 +28,8 @@ Keep this map short and update it when a product boundary changes:
 | Area | Canonical location | Contract / owner |
 | --- | --- | --- |
 | Product source | `product/` | Product workstream issue and local instructions |
+| Startup-wide architecture | `docs/STARTUP_ARCHITECTURE.md` | Founder narrative, planes, journeys, authority map and seed sequence |
+| Completeness and contradictions | `docs/IMPLEMENTATION_COVERAGE.md` | Coverage matrix, simplifications, validation gates and blueprint map |
 | Inference product boundary | `product/docs/` | [ADR-0002](decisions/0002-opinionated-inference-product.md), [feature decisions](../product/docs/OPENROUTER_FEATURE_DECISIONS.md), and product delivery packages |
 | AWS infrastructure | `infra/` | [`infra/README.md`](../infra/README.md), [ADR-0001](decisions/0001-aws-eks-platform.md), and infrastructure issue/package |
 | Shared agent procedures | `.agents/skills/` | Root `AGENTS.md` and skill contracts |

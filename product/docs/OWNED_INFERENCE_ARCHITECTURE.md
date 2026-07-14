@@ -89,7 +89,7 @@ The router rejects before runtime spend when the exact release is unavailable or
 
 ## Gateway-to-inference Protobuf contract
 
-Canonical messages live under `product/proto/grad/inference/v1/` and generate Rust/TypeScript types plus golden fixtures. Public JSON is translated once at the gateway. The first contract includes:
+Canonical messages live under `product/proto/gradiated/inference/v1/` and generate Rust/TypeScript types plus golden fixtures. Public JSON is translated once at the gateway. The first contract includes:
 
 ```text
 GenerateRequest
@@ -99,7 +99,7 @@ GenerateRequest
   canonical_input (messages/content/tools/structured-output/sampling)
   capability_requirements, max_output_tokens
   absolute_deadline, queue_deadline
-  opaque_billing_principal, opaque_cache_scope, cache_affinity_key
+  request_scope_id, opaque_cache_scope, cache_affinity_key
   data_mode, trace_context, idempotency_token
 
 GenerateEvent (ordered sequence)
@@ -116,6 +116,7 @@ Rules:
 - `release_manifest_digest` is mandatory and checked by edge, cell router, and runtime sidecar before output.
 - The edge and cell emit monotonic event sequence numbers; the gateway deduplicates reconnect/replay within one attempt.
 - `absolute_deadline` only tightens downstream. A component cannot extend it.
+- `request_scope_id` is an opaque gateway-generated correlation and admission scope. Cells cannot infer, authorize or settle customer billing from it; all customer billing remains gateway-owned.
 - `opaque_cache_scope` and `cache_affinity_key` are HMAC-derived; external cells do not receive raw organization/workspace IDs.
 - No provider-specific instance, bid, host, runtime flag, or Kubernetes object appears in this request contract.
 - Usage is cumulative/monotonic at terminal settlement. A runtime crash with uncertain usage is explicitly classified for conservative reconciliation; it is never fabricated as zero.

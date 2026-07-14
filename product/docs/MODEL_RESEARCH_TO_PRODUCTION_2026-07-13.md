@@ -139,7 +139,7 @@ The bundle describes what can run. A release describes what Grad promises and se
 
 ### Canonical manifest
 
-Define `ModelStackBundleManifest` in Protobuf for Python/TS/Rust APIs and emit a JSON representation canonicalized with RFC 8785 JSON Canonicalization Scheme before hashing. Do not hash ordinary JSON or rely on cross-language Protobuf serialization order. The identity is `sha256(canonical_manifest_bytes)`.
+Define `ModelStackBundleManifest` once as versioned JSON Schema and generate validated Python/TypeScript/Rust readers. Serialize it with RFC 8785 JSON Canonicalization Scheme before hashing. Do not define a second authoritative Protobuf manifest, hash ordinary JSON or rely on cross-language Protobuf serialization order. Protobuf carries `ArtifactRef`, `BundleRef`, `QualifiedBundleRef`, workflow commands and events. The identity is `sha256(canonical_manifest_bytes)`.
 
 The manifest contains only immutable values or content-addressed references:
 

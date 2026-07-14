@@ -1,6 +1,8 @@
 import json
 import sys
+import time
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -13,6 +15,7 @@ from placement_control import (  # noqa: E402
     conservative_cost_usd,
     extract_instance_id,
     extract_public_ipv4,
+    watchdog,
     validate_gpu_csv,
 )
 
@@ -43,6 +46,47 @@ class NebiusPlacementControlTests(unittest.TestCase):
         )
         index = command.index("--boot-disk-managed-disk-size-gibibytes")
         self.assertEqual(command[index + 1], "250")
+
+    def test_create_command_binds_factory_labels_to_instance_and_disk(self):
+        labels = {
+            "program_id": "glm-4-7-flash",
+            "campaign_id": "glm47-nebius-25",
+            "run_id": "glm47-observer-diagnostic-l40s-v1",
+        }
+        command = build_create_command(
+            name="glm47-observer-diagnostic-l40s-v1",
+            disk_name="glm47-observer-diagnostic-l40s-v1-boot",
+            cloud_init="#cloud-config\nusers: []\n",
+            labels=labels,
+        )
+        encoded = "program_id=glm-4-7-flash,campaign_id=glm47-nebius-25,run_id=glm47-observer-diagnostic-l40s-v1"
+        self.assertEqual(encoded, command[command.index("--labels") + 1])
+        self.assertEqual(
+            encoded,
+            command[command.index("--boot-disk-managed-disk-labels") + 1],
+        )
+
+    def test_create_command_rejects_unsafe_factory_labels(self):
+        with self.assertRaisesRegex(ValueError, "label"):
+            build_create_command(
+                name="glm47-observer",
+                disk_name="glm47-observer-boot",
+                cloud_init="#cloud-config\nusers: []\n",
+                labels={"run_id": "contains,comma"},
+            )
+
+    @mock.patch("placement_control.delete_disk")
+    @mock.patch("placement_control.list_items")
+    @mock.patch("placement_control.delete_instance")
+    @mock.patch("placement_control.get_instance", return_value=None)
+    def test_watchdog_deletes_named_disk_when_instance_is_already_absent(
+        self, _get_instance, _delete_instance, list_items, delete_disk
+    ):
+        list_items.return_value = [
+            {"metadata": {"id": "disk-example", "name": "observer-boot"}}
+        ]
+        self.assertEqual(0, watchdog("instance-example", "observer-boot", time.time() + 60))
+        delete_disk.assert_called_once_with("disk-example")
 
     def test_instance_id_is_found_in_resource_or_operation_shape(self):
         for payload in (

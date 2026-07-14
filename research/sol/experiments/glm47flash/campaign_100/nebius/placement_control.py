@@ -9,6 +9,7 @@ import hashlib
 import ipaddress
 import json
 import os
+import re
 import subprocess
 import sys
 import tarfile
@@ -52,6 +53,7 @@ def build_create_command(
     platform: str = PLATFORM,
     preset: str = PRESET,
     preemptible: bool = False,
+    labels: dict[str, str] | None = None,
 ) -> list[str]:
     network = json.dumps(
         [{
@@ -83,6 +85,25 @@ def build_create_command(
         "--network-interfaces", network,
         "--cloud-init-user-data", cloud_init,
     ]
+    if labels:
+        label_pattern = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
+        if any(
+            not isinstance(key, str)
+            or not isinstance(value, str)
+            or not label_pattern.fullmatch(key)
+            or not label_pattern.fullmatch(value)
+            for key, value in labels.items()
+        ):
+            raise ValueError("provider labels contain an unsafe key or value")
+        encoded_labels = ",".join(f"{key}={value}" for key, value in labels.items())
+        command.extend(
+            [
+                "--labels",
+                encoded_labels,
+                "--boot-disk-managed-disk-labels",
+                encoded_labels,
+            ]
+        )
     if preemptible:
         command[command.index("--recovery-policy"):command.index("--recovery-policy")] = [
             "--preemptible-on-preemption", "stop"
@@ -279,12 +300,15 @@ def wait_ssh(ip: str, key_path: Path, deadline: float) -> None:
 
 
 def watchdog(instance_id: str, disk_name: str, deadline_epoch: float) -> int:
+    instance_present = True
     while time.time() < deadline_epoch:
         if get_instance(instance_id) is None:
-            return 0
+            instance_present = False
+            break
         time.sleep(10)
-    delete_instance(instance_id)
-    wait_absent(instance_id, time.time() + 180)
+    if instance_present:
+        delete_instance(instance_id)
+        wait_absent(instance_id, time.time() + 180)
     for disk in list_items("disk"):
         if metadata_name(disk) == disk_name and metadata_id(disk):
             delete_disk(metadata_id(disk))

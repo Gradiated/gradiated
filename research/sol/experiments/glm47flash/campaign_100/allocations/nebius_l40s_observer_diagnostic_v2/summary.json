@@ -1,0 +1,21 @@
+{
+  "allocation_result": null,
+  "allocation_seconds": 587.086,
+  "artifact_sha256": null,
+  "cleanup_pass": true,
+  "compute_cost_usd_derived": 0.138356582,
+  "cost_basis": "measured exposure at authenticated Nebius preemptible VM and disk rates; public IPv4/egress excluded; invoice pending",
+  "cost_cap_usd": 0.55,
+  "cost_usd_derived": 0.139942072,
+  "disk_cost_usd_derived": 0.001585491,
+  "ended_at_utc": "2026-07-14T17:49:31.130654Z",
+  "factory_cleanup_requested": true,
+  "factory_cleanup_verified": true,
+  "factory_registered": true,
+  "final_disk_count": 0,
+  "final_instance_count": 0,
+  "instance_get_not_found": true,
+  "instance_id": "computeinstance-e00s263f3x8jtcdv3z",
+  "manifest_file_count": 0,
+  "outcome": "FAIL"
+}

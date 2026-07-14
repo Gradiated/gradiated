@@ -1,6 +1,6 @@
 ---
 name: experiment-run
-description: Plan, execute, verify, and record bounded technical or product experiments with explicit hypotheses, budgets, timeouts, cleanup, and durable artifacts. Use when an agent needs to benchmark, run a model or browser experiment, compare alternatives, or gather evidence for a decision.
+description: Plan, execute, verify, measure the efficiency of, and record bounded technical or product experiments with explicit hypotheses, budgets, timeouts, cleanup, and durable artifacts. Use when an agent needs to benchmark, run a model or browser experiment, compare alternatives, gather evidence for a decision, or diagnose research throughput.
 ---
 
 # Experiment run
@@ -21,10 +21,34 @@ Make experiments useful to the next agent, including when they fail.
 10. Record measured, analytical, vendor-reported, derived, inferred, and synthetic results separately. Score every prospective prediction after measurement and update the bottleneck model.
 11. Update the task packet, report, ledger, opportunity register, residual bottleneck, and next-action decision before committing.
 
+## Throughput discipline
+
+Keep the user-selected coordinator model for campaign-level judgment. Use its expensive reasoning for hypothesis selection, causal interpretation, admission, stop/promotion decisions, and surprising failures. Route bounded mechanical work—log extraction, fixture generation, polling, packaging, deterministic tests, and routine code edits—to faster workers or lower reasoning effort when available.
+
+- Batch a mechanical phase into one script or tool call. If a sequence needs more than three similar shell calls or will recur, make it one bounded deterministic command with structured output.
+- Do not assign several high-reasoning agents overlapping reviews. Give workers disjoint outputs, use at most one high-reasoning skeptic for a decision, and continue non-overlapping work while they run.
+- Launch provider work as one bounded asynchronous experiment command. Do not spend model turns repeatedly polling when the wait mechanism can yield.
+- Validate images, dependency keys, capability-output parsers, harness patches, and exact fixtures before allocation. Emit phase timestamps for provision, SSH, image/bootstrap, checkpoint transfer, model load, warmup, scored arms, packaging, and cleanup.
+- Emit `useful_gpu_seconds` separately from provider-active seconds. Useful GPU time begins at model transfer or the first experiment-specific GPU operation, not VM creation.
+- Reuse a validated image and retained resident state. A paid allocation should not discover a dependency or parser incompatibility that a local fixture or image-build check could have rejected.
+
+Measure the last 24 hours before a daily campaign review:
+
+```bash
+python3 .agents/skills/experiment-run/scripts/research_efficiency.py \
+  --thread-id "$CODEX_RESEARCH_THREAD_ID" \
+  --campaign-dir "$CAMPAIGN_DIR" \
+  --hours 24 \
+  --output-dir "$RESEARCH_LAB_ROOT/efficiency"
+```
+
+Use `LATEST.json` for comparisons and `LATEST.md` for the operator summary. Optimize valid scientific outcomes per active coordinator hour and per dollar. Treat model/orchestration share, synchronous tool wait, provider setup, useful GPU share, invalid spend, and context compactions as diagnostic metrics—not goals that can justify weaker evidence.
+
 For model, kernel, serving, memory, network, or hardware search campaigns, read [measurement-driven-research-loop.md](references/measurement-driven-research-loop.md) before designing the search.
 Use `scripts/opportunity_register.py` to validate and rank reusable typed opportunity queues when the campaign has more than a few candidates.
 Use `scripts/summarize_nvidia_smi.py` to separate standard one-second accelerator telemetry by recorded experiment phases, report coverage/gaps, and integrate phase energy instead of reporting allocation-wide setup averages.
 Use `scripts/analyze_bracketed_ab.py` for deterministic A/B/A/.../B/A same-session effects and paired bootstrap intervals. Fewer than three independent candidate repetitions remain descriptive and the tool deliberately suppresses an interval.
+Use `scripts/research_efficiency.py` for daily Codex/provider throughput accounting. It reads event timing metadata, not reasoning text.
 
 ## Retained accelerator sessions
 

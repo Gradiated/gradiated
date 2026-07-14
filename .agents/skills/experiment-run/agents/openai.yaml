@@ -1,4 +1,4 @@
 interface:
   display_name: "Experiment Run"
-  short_description: "Run bounded, reproducible experiments"
-  default_prompt: "Use $experiment-run to plan, execute, verify, and record a bounded experiment with a durable repository artifact."
+  short_description: "Run and measure reproducible experiments"
+  default_prompt: "Use $experiment-run to plan, execute, measure, verify, and record a bounded experiment."

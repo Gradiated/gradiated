@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v2",
+  "failure_class": "preflight_failure",
+  "stage": "provider_preflight_before_model_transfer",
+  "message": "Nsight Systems 2026.3.1.157 installed and reported CPU Profiling Environment (process-tree): OK, but the preflight expected the obsolete text Sampling Environment: OK and stopped before checkpoint transfer or the remaining capability probe."
+}

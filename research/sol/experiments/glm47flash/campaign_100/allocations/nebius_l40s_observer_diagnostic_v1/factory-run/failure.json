@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v1",
+  "failure_class": "preflight_failure",
+  "stage": "provider_preflight_before_model_transfer",
+  "message": "The pinned NVIDIA devtools repository rejected the configured signing key (NO_PUBKEY F60F4B3D7FA2AF80), so the Nsight image build stopped before checkpoint transfer."
+}

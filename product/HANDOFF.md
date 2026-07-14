@@ -35,14 +35,14 @@ OpenRouter and later routers call the same public Grad gateway with isolated cha
 
 ## Read and build order
 
-1. [Simplicity review](../docs/SIMPLICITY_REVIEW.md)
-2. [Product architecture](docs/ARCHITECTURE.md)
-3. [API/data contracts](docs/API_AND_DATA_CONTRACTS.md)
-4. [Control](docs/CONTROL_PLANE_IMPLEMENTATION.md), [REST/OpenAPI/MCP](docs/REST_OPENAPI_MCP_IMPLEMENTATION.md), [organization deletion](docs/ORGANIZATION_DELETION.md), [gateway protocols](docs/PUBLIC_INFERENCE_PROTOCOLS.md), [owned inference](docs/OWNED_INFERENCE_IMPLEMENTATION.md), [multi-node](docs/MULTI_NODE_INFERENCE.md), [research](docs/RESEARCH_FACTORY_IMPLEMENTATION.md), [distribution](docs/DISTRIBUTION_IMPLEMENTATION.md)
-5. [Delivery packages](docs/DELIVERY_PLAN.md) and [testing](docs/TESTING_AND_CI.md)
+1. [Canonical system manual](../docs/SYSTEM_MANUAL.md), [diagrams](../docs/SYSTEM_DIAGRAMS.md) and [parallel implementation manual](../docs/implementation/README.md)
+2. [Contract catalog](../docs/implementation/CONTRACT_CATALOG.md), [physical data model](../docs/implementation/DATA_MODEL.md), [package boundaries](../docs/implementation/PACKAGE_BOUNDARIES.md), [work packages](../docs/implementation/WORK_PACKAGES.md), [verification](../docs/implementation/VERIFICATION_MATRIX.md) and [operations](../docs/implementation/OPERATIONS_MANUAL.md)
+3. [Simplicity review](../docs/SIMPLICITY_REVIEW.md)
+4. [Product architecture](docs/ARCHITECTURE.md) and [API/data contracts](docs/API_AND_DATA_CONTRACTS.md)
+5. [Control](docs/CONTROL_PLANE_IMPLEMENTATION.md), [REST/OpenAPI/MCP](docs/REST_OPENAPI_MCP_IMPLEMENTATION.md), [organization deletion](docs/ORGANIZATION_DELETION.md), [gateway protocols](docs/PUBLIC_INFERENCE_PROTOCOLS.md), [owned inference](docs/OWNED_INFERENCE_IMPLEMENTATION.md), [multi-node](docs/MULTI_NODE_INFERENCE.md), [research](docs/RESEARCH_FACTORY_IMPLEMENTATION.md), [distribution](docs/DISTRIBUTION_IMPLEMENTATION.md)
 6. Infrastructure [platform blueprint](../infra/docs/PLATFORM_IMPLEMENTATION.md)
 
-First milestone is WP-00–04: funded Responses and Messages requests through curated direct models with exact ledger reconciliation and official-client CI. Do not make owned inference, a router listing or research automation block that revenue milestone. Multi-node is nevertheless required before public owned Grad inference.
+The first revenue milestone is canonical waves W0–W4 through `INT-00`: funded Responses and Messages requests through curated direct models with exact ledger reconciliation and official-client CI. Do not make owned inference, a router listing or research automation block that revenue milestone. Multi-node is nevertheless required before public owned Grad inference.
 
 ## Required verification
 

@@ -23,7 +23,7 @@ Channel credential lookup returns `Principal::Channel { channel_id, credential_i
 
 ## Minimal channel model
 
-Use only `distribution_channels`, rebuildable `channel_balances`, `channel_credentials`, `channel_catalog`, the shared fixed-chart ledger, and—when the first contract requires it—`channel_statements`. Required fields are in [the minimal model](../../docs/SIMPLICITY_REVIEW.md#external-distribution).
+Use only `distribution_channels`, rebuildable `channel_balances`, `channel_credentials`, `channel_catalog`, immutable `channel_usage_records`, the shared fixed-chart ledger, and—when the first contract requires it—`channel_statements`. Required fields are in [the minimal model](../../docs/SIMPLICITY_REVIEW.md#external-distribution). A separate channel usage table avoids nullable generic principal columns in customer usage while preserving dispute/reconciliation evidence.
 
 Remove `distribution_profiles`, copied release capabilities, risk enums and separate receivable transaction classes. Channel status/exposure/data policy/catalog version are sufficient runtime policy; commercial terms remain in the signed contract and operator runbook.
 

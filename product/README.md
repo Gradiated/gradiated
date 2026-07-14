@@ -54,18 +54,17 @@ research/factory/         Python API/workflow/activity/evaluator, PyTorch/Triton
 
 ## Read order
 
-1. [Startup architecture](../docs/STARTUP_ARCHITECTURE.md)
-2. [Simplicity review, dependency budget and minimal model](../docs/SIMPLICITY_REVIEW.md)
-3. [Coverage ledger](../docs/IMPLEMENTATION_COVERAGE.md)
-4. [Product architecture](docs/ARCHITECTURE.md)
-5. [API/data contracts](docs/API_AND_DATA_CONTRACTS.md)
+1. [Canonical system manual](../docs/SYSTEM_MANUAL.md) and [Mermaid system views](../docs/SYSTEM_DIAGRAMS.md)
+2. [Cross-system contracts](../docs/implementation/CONTRACT_CATALOG.md), [physical data model](../docs/implementation/DATA_MODEL.md), [package boundaries](../docs/implementation/PACKAGE_BOUNDARIES.md), [work packages](../docs/implementation/WORK_PACKAGES.md), [verification](../docs/implementation/VERIFICATION_MATRIX.md) and [operations](../docs/implementation/OPERATIONS_MANUAL.md)
+3. [Simplicity review, dependency budget and minimal model](../docs/SIMPLICITY_REVIEW.md)
+4. [Coverage ledger](../docs/IMPLEMENTATION_COVERAGE.md)
+5. [Product architecture](docs/ARCHITECTURE.md) and [API/data contracts](docs/API_AND_DATA_CONTRACTS.md)
 6. [Control plane](docs/CONTROL_PLANE_IMPLEMENTATION.md)
 7. [REST/OpenAPI/MCP](docs/REST_OPENAPI_MCP_IMPLEMENTATION.md), [organization deletion](docs/ORGANIZATION_DELETION.md) and [public protocols](docs/PUBLIC_INFERENCE_PROTOCOLS.md)
 8. [Gateway](docs/GATEWAY_IMPLEMENTATION.md), [owned inference](docs/OWNED_INFERENCE_IMPLEMENTATION.md) and [multi-node inference](docs/MULTI_NODE_INFERENCE.md)
 9. [Research factory](docs/RESEARCH_FACTORY_IMPLEMENTATION.md)
 10. [Distribution](docs/DISTRIBUTION_IMPLEMENTATION.md)
-11. [Delivery plan](docs/DELIVERY_PLAN.md)
-12. [Testing/CI](docs/TESTING_AND_CI.md) and [handoff](HANDOFF.md)
+11. [Testing/CI](docs/TESTING_AND_CI.md), [delivery plan](docs/DELIVERY_PLAN.md) and [handoff](HANDOFF.md)
 
 Dated spikes/audits and ADRs remain evidence/history. Where they conflict with the current simplicity review or implementation blueprints, the current documents above win.
 

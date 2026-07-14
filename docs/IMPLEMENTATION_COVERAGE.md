@@ -2,6 +2,8 @@
 
 > The 2026-07-14 [simplicity review](SIMPLICITY_REVIEW.md) is the current dependency and field authority. It preserves capability coverage while removing ClickHouse, fleet CRDs, self-managed Karpenter and duplicate/derived model and research projections. It retains the durable ledger, Temporal, Terragrunt, KEDA, Kueue/JobSet where needed and a small Kyverno policy set because they replace bespoke correctness or operations code.
 
+> The deeper implementation handoff is now [the system manual](SYSTEM_MANUAL.md), [document status map](implementation/DOCUMENT_STATUS.md), [contract catalog](implementation/CONTRACT_CATALOG.md), [physical data model](implementation/DATA_MODEL.md), [package boundaries](implementation/PACKAGE_BOUNDARIES.md), [path registry](implementation/PATH_OWNERSHIP.md), [work package catalog](implementation/WORK_PACKAGES.md), [verification matrix](implementation/VERIFICATION_MATRIX.md), [operations manual](implementation/OPERATIONS_MANUAL.md), and [Mermaid system views](SYSTEM_DIAGRAMS.md). Together they assign every row below an interface owner, path-owned packet, failure behavior, test and launch gate.
+
 ## Audit contract
 
 This is the coverage ledger for the startup architecture. It answers a narrower question than the product specification: **could a junior implementation agent build each part without inventing a source of truth, protocol, failure behavior, security boundary, deployment shape, or acceptance test?**
@@ -49,13 +51,31 @@ The original plan had excellent invariant and system-boundary coverage, but only
 | Security/operations/DR | strong | partial | threat/control ownership, operator command catalog and launch evidence index |
 | Legal/commercial operations | partial | missing-partial | explicit human-owned terms, tax, privacy, subprocessors and provider-contract gates |
 
+## Coverage result after the implementation-depth pass
+
+The implementation-depth pass closes the coordination layer that remained after the architecture freeze:
+
+| Required implementation fact | Canonical source | Result |
+| --- | --- | --- |
+| complete product/system behavior and non-scope | [System manual](SYSTEM_MANUAL.md) | defined |
+| process, state, deployment and dependency views | [System diagrams](SYSTEM_DIAGRAMS.md) | defined in Mermaid |
+| public REST/inference, Protobuf, event, artifact and driver contracts | [Contract catalog](implementation/CONTRACT_CATALOG.md) | defined with ownership/versioning |
+| physical tables, constraints, indexes, migrations and database roles | [Physical data model](implementation/DATA_MODEL.md) | defined to migration level |
+| package graph, source layout, core classes/traits and forbidden dependencies | [Package boundaries](implementation/PACKAGE_BOUNDARIES.md) | defined for TS, Rust, Python and infrastructure |
+| disjoint implementation paths and dependency-safe parallelism | [Path ownership](implementation/PATH_OWNERSHIP.md), [work packages](implementation/WORK_PACKAGES.md) | 71 packets defined from foundation through launch |
+| PBT, E2E, load, security, recovery and staged launch evidence | [Verification matrix](implementation/VERIFICATION_MATRIX.md) | defined |
+| dashboards, incidents, repairs, rotation, restore and operational handoff | [Operations manual](implementation/OPERATIONS_MANUAL.md) | defined |
+| current versus historical source precedence | [System manual](SYSTEM_MANUAL.md#1-document-authority-and-reading-order) | defined; stale ClickHouse/CRD/protocol breadth marked historical |
+
+This is still a plan, not evidence that product code or infrastructure exists. A junior agent no longer owns an architectural choice merely because implementation has not started; it follows the named packet and opens a contract gap when an input is absent.
+
 ## Capability coverage matrix after this freeze
 
 `Blueprint` means the implementation contract is frozen in the linked detailed document. `Measured gate` means ordinary code can be built, but production enablement waits for the named evidence.
 
 | Capability | Authority / source of truth | Implementing boundary | Detailed contract | Status |
 | --- | --- | --- | --- | --- |
-| Sign-in/session/recovery | Better Auth tables for identity/session; product user row for status/profile | Hono auth mount + Vite routes | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint |
+| Sign-in/session/recovery | Better Auth tables for identity/session/recovery; no duplicate product user table | Hono auth mount + Vite routes | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint |
 | REST/OpenAPI/generated client/MCP | described Zod route registry and committed OpenAPI 3.1 | Hono API, generated client/docs and OAuth MCP REST adapter | [REST/OpenAPI/MCP](../product/docs/REST_OPENAPI_MCP_IMPLEMENTATION.md) | Blueprint |
 | Organization/default workspace/memberships | PostgreSQL product domain | TS domain services/repositories | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint |
 | Self-service organization deletion | PostgreSQL deletion workflow + ledger; S3/KMS payload custody | Hono owner API + financial/intelligence workers | [Organization deletion](../product/docs/ORGANIZATION_DELETION.md) | Blueprint; legal retention policy gate |
@@ -68,7 +88,7 @@ The original plan had excellent invariant and system-boundary coverage, but only
 | Principal authentication | credential lookup selects workspace or channel principal | Rust gateway admission | [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md) | Blueprint |
 | Catalog/capability/model resolution | PostgreSQL model/release authority; Redis immutable projection | Node ModelOps + Rust resolver | [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md) | Blueprint |
 | Direct provider dispatch | exact provider/model endpoint qualification | Rust provider adapter | [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md) | Blueprint; model/date-specific live gate |
-| Owned Grad dispatch | exact route release and signed cell targets | gateway -> edge -> cell | [Owned inference](../product/docs/OWNED_INFERENCE_IMPLEMENTATION.md) | Blueprint; latency/capacity gate |
+| Owned Grad dispatch | exact route release and authenticated in-memory ready-cell registry | gateway -> inference router -> cell | [Owned inference](../product/docs/OWNED_INFERENCE_IMPLEMENTATION.md) | Blueprint; latency/capacity gate |
 | Streaming/cancel/retry/usage | request attempt state in gateway; terminal event in Redis | Rust request coordinator | [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md) | Blueprint |
 | Failed-request credit | immutable usage plus compensating PostgreSQL entry | financial worker | [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint |
 | Product Intelligence capture | gateway policy + encrypted envelope; S3 payload/PostgreSQL registry | Rust capture + trace worker | [Gateway](../product/docs/GATEWAY_IMPLEMENTATION.md), [Control plane](../product/docs/CONTROL_PLANE_IMPLEMENTATION.md) | Blueprint |
@@ -84,7 +104,7 @@ The original plan had excellent invariant and system-boundary coverage, but only
 | Bundle build/qualification | canonical JSON manifests/S3 CAS/ECR/signatures; PostgreSQL decisions | Python artifact/eval + Rust inspector/launcher | [Research factory](../product/docs/RESEARCH_FACTORY_IMPLEMENTATION.md) | Blueprint; portability/operator gates |
 | Promotion from research | signed proposal and independent approval | Python qualification -> Node release authority | [Research factory](../product/docs/RESEARCH_FACTORY_IMPLEMENTATION.md) | Blueprint; public promotion remains human |
 | Customer-configured gateways | workspace principal and ordinary prepaid path | recipes + shared black-box harness | [Distribution](../product/docs/DISTRIBUTION_IMPLEMENTATION.md) | Blueprint |
-| Native OpenRouter/Hugging Face traffic | channel principal, catalog, exposure and receivable ledger | Rust gateway + channel worker | [Distribution](../product/docs/DISTRIBUTION_IMPLEMENTATION.md) | Blueprint; external acceptance/legal gate |
+| Native OpenRouter traffic | channel principal, catalog, exposure and receivable ledger | Rust gateway + channel worker | [Distribution](../product/docs/DISTRIBUTION_IMPLEMENTATION.md) | Blueprint; external acceptance/legal gate. Hugging Face remains a later decision record. |
 | Terraform/accounts/network/data | Terraform state per unit | platform modules/live units | [Platform](../infra/docs/PLATFORM_IMPLEMENTATION.md) | Blueprint; account/region approval gate |
 | EKS/Helm/GitOps/autoscaling | Git/Argo static desired state; EKS Auto Mode or managed groups | charts/gitops/HPA | [Platform](../infra/docs/PLATFORM_IMPLEMENTATION.md) | Blueprint; Auto Mode measured gate |
 | Secrets/identity/supply chain | AWS IAM/Pod Identity/Secrets Manager; signed digests | Terraform/Helm/CI | [Platform](../infra/docs/PLATFORM_IMPLEMENTATION.md) | Blueprint |
@@ -137,16 +157,16 @@ These are not junior-engineer design gaps. Each has an owner, decision evidence 
 | Gate | Owner/evidence | Pass condition | Fallback |
 | --- | --- | --- | --- |
 | Primary region/customer residency | founder/platform; latency and legal requirements | selected region supports services/providers and target customers | keep modules parameterized; no production mutation |
-| Managed Valkey durability/latency | I-04 experiment | synchronous acknowledged reserve+event survives failover inside latency budget | qualify MemoryDB or close admission; never weaken reserve |
+| Managed Valkey durability/latency | INFRA-02/LAUNCH-01 experiment | synchronous acknowledged reserve+event survives failover inside latency budget | qualify MemoryDB or close admission; never weaken reserve |
 | First owned model and public SKUs | research/release owner | exact bundle quality/capability/cost and sparse effort/speed gates | sell curated direct providers only |
 | GPU providers/regions | fleet owner | security, availability, interruption and successful-token margin evidence | disable provider/cell; do not alter release |
-| OpenRouter/Hugging Face onboarding | founder/legal/distribution | terms, privacy, payout/tax, protocol, reliability and margin pass | customer-configured gateways/direct endpoint |
+| OpenRouter onboarding | founder/legal/distribution | terms, privacy, payout/tax, protocol, reliability and margin pass | customer-configured gateways/direct endpoint |
 | Retention/terms/subprocessors/tax | founder with legal/accounting | reviewed customer terms, privacy disclosure, retention and payout/tax process | limited design partners; disable affected feature/channel |
 | Fully autonomous promotion | later ADR | measured false-positive, rollback and evaluator-governance history | human release approval |
 
 ## Source record
 
-Repository documents and ADR-0001 through ADR-0007 are the primary architecture inputs. External capabilities are revalidated at implementation time. Current source checks retrieved 2026-07-14 include:
+Repository documents and ADR-0001 through ADR-0009 are the primary architecture inputs. External capabilities are revalidated at implementation time. Current source checks retrieved 2026-07-14 include:
 
 - AWS documents Valkey 9 node-based durability with synchronous writes persisted to a Multi-AZ transactional log before acknowledgement, plus explicit unsupported configurations: [ElastiCache durability options](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/Durability.Options.html), [limitations](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/Durability.Limitations.html). Vendor-reported; the exact command/latency behavior remains a Grad measurement.
 - OpenRouter's provider contract currently requires a model-list feed, automatic payment/invoicing, OpenAI-compatible streaming/usage, capacity/reliability behavior and monitored performance: [provider integration](https://openrouter.ai/docs/guides/community/for-providers). Vendor-reported and volatile.
@@ -154,8 +174,9 @@ Repository documents and ADR-0001 through ADR-0007 are the primary architecture 
 
 ## How junior agents use this ledger
 
-1. Start from [Startup architecture](STARTUP_ARCHITECTURE.md).
-2. Select one work package from the product or infrastructure delivery plan.
-3. Read exactly one bounded-context implementation blueprint plus the canonical API/data contract.
-4. Claim the package paths; implement its first failing example/property; do not broaden an authority or dependency.
-5. If the blueprint lacks one of the eight completion fields in the audit contract, stop that package and open an architecture-gap issue rather than inventing policy.
+1. Start from [the system manual](SYSTEM_MANUAL.md) and the relevant [Mermaid view](SYSTEM_DIAGRAMS.md).
+2. Select one unblocked packet from [the work package catalog](implementation/WORK_PACKAGES.md).
+3. Read its cross-service inputs in [the contract catalog](implementation/CONTRACT_CATALOG.md) and exactly one bounded-context blueprint.
+4. Claim the packet paths; implement its first failing example/property; do not broaden an authority or dependency.
+5. Run the packet checks plus the matching [verification-matrix](implementation/VERIFICATION_MATRIX.md) scenarios and update its [operations](implementation/OPERATIONS_MANUAL.md) handoff.
+6. If any required input, failure behavior or acceptance field remains undefined, open an architecture-gap issue rather than inventing policy.

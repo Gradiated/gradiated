@@ -132,15 +132,19 @@ Each typed payload carries only its own IDs. Billing stream records are the sole
 ReservationCreated
   event_id, request_id, reservation_id
   organization_id, workspace_id, api_key_id
-  release_digest, reserved_micros, expires_at
+  requested_model_id, release_digest
+  reserved_micros, started_at, expires_at
 
 UsageSettled
   event_id, request_id, reservation_id
   organization_id, workspace_id, api_key_id
-  release_digest, usage, sell_micros, terminal_status
+  release_digest, actual_target, usage
+  sell_micros, buy_micros?, attempts_json
+  terminal_status, usable_output_delivered, cancellation_owner?
+  completed_at
 ```
 
-Channel events replace organization/workspace/key with `channel_id` and `credential_id`; they share the same Rust admission implementation but never the same balance key. Research uses PostgreSQL rows, not a general event bus.
+These are not generic observability fields: they are exactly the inputs needed to create the required `usage_records` row, apply failed-request credit policy and reconcile provider cost without another request-attempt table. `attempts_json` is bounded, typed at the producer and contains no provider endpoint secret or payload. Channel events replace organization/workspace/key with `channel_id` and `credential_id`; they share the same Rust admission implementation but never the same balance key. Research uses PostgreSQL rows, not a general event bus.
 
 ### Gateway-to-cell
 
@@ -198,11 +202,11 @@ Fields below are the seed schema contract. `id` is a stable opaque identifier; a
 | `organizations` | `id`, `name`, `status`, `stripe_customer_id?`, `created_at` | global policy blob, risk enum and duplicated deletion-phase fields |
 | `organization_deletions` | `id`, `organization_id`, `requested_by`, `status`, `requested_at`, `execute_after`, `completed_at?`, `cancelled_at?`, `last_error_code?` | generic workflow engine/step/event rows; one idempotent workflow row is required for refund/purge recovery |
 | `organization_members` | `organization_id`, `user_id`, `role`, `status`, `created_at` | surrogate membership ID, per-action grants |
-| `invitations` | `id`, `organization_id`, `email`, `role`, `token_digest`, `expires_at`, `accepted_at?`, `created_by`, `created_at` | invitation state enum derivable from dates |
-| `workspaces` | `id`, `organization_id`, `name`, `status`, `is_default`, `data_mode`, `retention_days`, `monthly_limit_micros?`, `concurrency_limit`, `policy_version`, `created_at` | independent wallet, daily/weekly/lifetime budget records, route builder, observability settings blob |
+| `invitations` | `id`, `organization_id`, `email`, `role`, `token_digest`, `expires_at`, `accepted_at?`, `revoked_at?`, `created_by`, `created_at` | invitation state enum derivable from dates; revocation is required token invalidation evidence |
+| `workspaces` | `id`, `organization_id`, `name`, `status` (`active|suspended|archived`), `is_default`, `data_mode`, `retention_days` (`7|30`, default `30`), `monthly_limit_micros?`, `concurrency_limit`, `policy_version`, `created_at` | independent wallet, daily/weekly/lifetime budget records, route builder, observability settings blob; archival is terminal and non-Default only |
 | `workspace_members` | `workspace_id`, `user_id`, `role`, `created_at` | surrogate ID and duplicate status; organization membership controls active state |
 | `workspace_models` | `workspace_id`, `model_id` | nullable model-ID arrays/policy JSON; absence of rows means the curated organization catalog |
-| `api_keys` | `id`, `organization_id`, `workspace_id`, `name`, `prefix`, `digest`, `pepper_version`, `status`, `monthly_limit_micros?`, `concurrency_limit?`, `expires_at?`, `created_by`, `created_at`, `last_used_at?` | scopes, metadata, last-four, in-place rotation/grace state; create new then revoke old |
+| `api_keys` | `id`, `organization_id`, `workspace_id`, `name`, `prefix`, `digest`, `pepper_version`, `status`, `monthly_limit_micros?`, `concurrency_limit?`, `expires_at?`, `created_by`, `created_at` | scopes, metadata, last-four, persisted last-use, in-place rotation/grace state; create new then revoke old and derive last use from usage |
 
 One monthly budget is enough initially. Add other windows only after a customer requirement; each extra window multiplies Redis and reconciliation state.
 
@@ -249,8 +253,9 @@ Usage lists, charts and workload groupings are PostgreSQL queries over `usage_re
 | --- | --- | --- |
 | `distribution_channels` | `id`, `name`, `status`, `data_policy`, `exposure_limit_micros`, `concurrency_limit`, `catalog_version`, `created_at`, `updated_at` | derived outstanding amount, risk/profile/legal-owner/settlement-policy blobs; contract terms live in the signed commercial document |
 | `channel_balances` | `channel_id`, `outstanding_micros`, `version`, `updated_at` | multiple exposure buckets; this is a rebuildable locked ledger projection like organization balance |
-| `channel_credentials` | `id`, `channel_id`, `prefix`, `digest`, `pepper_version`, `status`, `expires_at?`, `created_at`, `last_used_at?` | separate credential profile object |
+| `channel_credentials` | `id`, `channel_id`, `prefix`, `digest`, `pepper_version`, `status`, `expires_at?`, `created_at` | separate credential profile object and persisted last-use |
 | `channel_catalog` | `channel_id`, `external_model_id`, `release_digest`, `input_price_micros`, `output_price_micros`, `cache_price_micros?`, `status`, `updated_at` | generic price JSON and copied capabilities/regions/readiness already derived from release/cell state |
+| `channel_usage_records` | `id`, `request_id`, `channel_id`, `credential_id`, `release_digest`, `external_model_id`, reserve/sell/buy/token/attempt/timing facts | nullable organization/workspace/key identity, payload or customer trace linkage |
 | `channel_statements` | `id`, `channel_id`, `period_start`, `period_end`, `object_key`, `digest`, `status`, `delta_micros?`, `created_at` | implement only when the first native contract requires statement reconciliation |
 
 Workspace and channel accounting remain separate keys/account charts and foreign-key domains, but use the same balanced transaction implementation. Statement start/end are evidence supplied by the counterparty contract, not a configurable Grad billing-period engine. OpenRouter is the only native channel built first. Hugging Face and all others remain decision records, not code dependencies.
@@ -293,14 +298,14 @@ Hypothesis is durable scientific intent, campaign is a real budget/authority env
 
 ## Simplified state machines
 
-- Organization: `active -> deletion_pending -> deleted`, with cancellation restoring `active` before irreversible purge; suspension remains an operator policy state. Workspace/key retain their small active/suspended/revoked states.
+- Organization: `active -> deletion_pending -> deleted`, with cancellation restoring `active` before irreversible purge; suspension remains an operator policy state. Workspace is `active|suspended|archived` with terminal non-Default archival; key is `active|revoked` plus expiry by clock.
 - Organization deletion: `pending -> running -> completed | blocked`, with `pending -> cancelled`; blocked retries after the financial/external condition is repaired.
 - Top-up: `created -> completed | failed | expired`; refunds/chargebacks append entries and do not reopen the intent.
 - Usage: `reserved -> settled | abandoned`; a correction is an immutable balanced ledger transaction.
 - Model release: `draft -> active -> retired`; aliases hold stable/canary pointers. Rollback is a pointer change.
 - Allocation: `requested -> provisioning -> ready -> draining -> released | failed`; cleanup state is independently `pending|confirmed|uncertain`.
-- Research experiment: `draft -> queued -> running -> succeeded | falsified | failed | cancelled`; cleanup uncertainty blocks provider acquisition but is not another experiment status.
-- Bundle: `built -> qualification_pending -> qualified | rejected`; public activation belongs to `model_releases`.
+- Research experiment: `queued -> running -> succeeded | falsified | failed | cancelled`; immutable `experiment_specs` own pre-queue intent and cleanup uncertainty blocks provider acquisition without adding another run status.
+- Bundle bytes/digest have no mutable state. `bundle_qualifications` is `pending -> passed | failed`; public activation belongs to `model_releases`.
 - Recommendation: `pending -> accepted | dismissed | expired`; evaluations have `queued -> running -> completed | failed | cancelled`.
 
 Do not add a state unless it changes an allowed command, customer display, billing effect or required recovery action.

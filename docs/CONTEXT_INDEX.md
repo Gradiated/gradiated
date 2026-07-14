@@ -26,7 +26,7 @@ Then read, in order:
 1. [`AGENTS.md`](../AGENTS.md) — repository invariants and safety rules.
 2. The linked GitHub issue and its Project status — canonical scope, owner, and state.
 3. [`docs/AGENT_OPERATING_SYSTEM.md`](AGENT_OPERATING_SYSTEM.md) — concurrency and handoff rules.
-4. The nearest workstream instructions and start document from [`research/README.md`](../research/README.md).
+4. The nearest workstream instructions and start document from [`research/README.md`](../research/README.md). For continuous model research, read the shared [`research/factory/README.md`](../research/factory/README.md) and [`research/factory/OBSERVABILITY.md`](../research/factory/OBSERVABILITY.md) before the model-specific handoff.
 5. The task packet in `tasks/active/`, or the most recent handoff/report named by the context command.
 
 Do not infer current state from filenames, chat history, or an old report when a newer handoff, issue, or machine-readable status artifact exists.
@@ -40,6 +40,7 @@ Do not infer current state from filenames, chat history, or an old report when a
 | Product source | Product workstream directory | Code, tests, configuration, and implementation handoffs |
 | Research source material | `research/<workstream>/evidence/` | Raw captures, measurements, logs, hashes, and provenance |
 | Research synthesis | `research/<workstream>/docs/` | Reports, decision briefs, and uncertainty-labeled conclusions |
+| Per-model research state | Persistent research-factory root | Hash-chained events, generated state/context, and content-addressed run bundles; do not place a real campaign only under `.agents/runtime/` |
 | Current workstream state | Workstream `README`, `AGENTS.md`/`CLAUDE.md`, handoff, or report | The latest accepted facts, blockers, and next decisive actions |
 | Ephemeral runtime state | `.agents/runtime/` | Caches, browser profiles, temporary logs, and resumable process state; never commit |
 
@@ -61,6 +62,8 @@ Prefer one artifact per run and append-only ledgers. When a shared report must c
 
 See [`research/README.md`](../research/README.md) for the workstream map. The context helper accepts `--workstream sol` or `--workstream fable` to print only the relevant reset pack.
 
-For the complete startup, begin with [`docs/STARTUP_ARCHITECTURE.md`](STARTUP_ARCHITECTURE.md), [`docs/SIMPLICITY_REVIEW.md`](SIMPLICITY_REVIEW.md), and [`docs/IMPLEMENTATION_COVERAGE.md`](IMPLEMENTATION_COVERAGE.md). For the inference-gateway product, then read [`product/AGENTS.md`](../product/AGENTS.md) and [`product/HANDOFF.md`](../product/HANDOFF.md). The bounded-context implementation blueprints and subagent work packages are indexed from [`product/README.md`](../product/README.md); current cross-cutting additions are the [REST/OpenAPI/MCP](../product/docs/REST_OPENAPI_MCP_IMPLEMENTATION.md), [organization deletion](../product/docs/ORGANIZATION_DELETION.md), [launch protocols](../product/docs/PUBLIC_INFERENCE_PROTOCOLS.md), and [multi-node inference](../product/docs/MULTI_NODE_INFERENCE.md) contracts.
+For the complete startup, begin with [`docs/SYSTEM_MANUAL.md`](SYSTEM_MANUAL.md), [`docs/SYSTEM_DIAGRAMS.md`](SYSTEM_DIAGRAMS.md), and [`docs/implementation/README.md`](implementation/README.md). The [contract catalog](implementation/CONTRACT_CATALOG.md), [physical data model](implementation/DATA_MODEL.md), [package boundaries](implementation/PACKAGE_BOUNDARIES.md), [work packages](implementation/WORK_PACKAGES.md), [verification matrix](implementation/VERIFICATION_MATRIX.md), and [operations manual](implementation/OPERATIONS_MANUAL.md) are the implementation-agent handoff. Then use [`docs/SIMPLICITY_REVIEW.md`](SIMPLICITY_REVIEW.md) and [`docs/IMPLEMENTATION_COVERAGE.md`](IMPLEMENTATION_COVERAGE.md) for dependency/field and coverage audits.
+
+For the inference-gateway product, next read [`product/AGENTS.md`](../product/AGENTS.md) and [`product/HANDOFF.md`](../product/HANDOFF.md). The bounded-context blueprints are indexed from [`product/README.md`](../product/README.md); current cross-cutting contracts are [REST/OpenAPI/MCP](../product/docs/REST_OPENAPI_MCP_IMPLEMENTATION.md), [organization deletion](../product/docs/ORGANIZATION_DELETION.md), [launch protocols](../product/docs/PUBLIC_INFERENCE_PROTOCOLS.md), and [multi-node inference](../product/docs/MULTI_NODE_INFERENCE.md).
 
 For its AWS platform, next read [`infra/AGENTS.md`](../infra/AGENTS.md), [`infra/README.md`](../infra/README.md), [`infra/docs/PLATFORM_IMPLEMENTATION.md`](../infra/docs/PLATFORM_IMPLEMENTATION.md), and [`infra/docs/DELIVERY_PLAN.md`](../infra/docs/DELIVERY_PLAN.md). The cross-workstream runtime decision is [`docs/decisions/0001-aws-eks-platform.md`](decisions/0001-aws-eks-platform.md). Infrastructure plans are implementation contracts, not evidence that cloud resources exist.

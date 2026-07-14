@@ -1,11 +1,13 @@
 # ADR-0002: Opinionated managed inference product
 
-- status: partially superseded by ADR-0003 (model taxonomy and payload-retention boundary); curated-not-marketplace, strict capability, fixed-price release, prepaid and distribution decisions remain accepted
+- status: partially superseded by ADR-0003, ADR-0008 and the 2026-07-14 simplicity review; curated-not-marketplace, strict capability, fixed-price release, prepaid and distribution decisions remain accepted
 - GitHub issue: https://github.com/joshsny/gradiated/issues/3
 - owner: product architecture
 - date: 2026-07-13
 
 ## Decision
+
+> Current implementation uses concrete curated provider IDs plus qualified `grad/<effort>/<speed>` aliases. The seed protocol surface is Models, OpenAI Responses and Anthropic Messages only. The five named products, Chat Completions, Embeddings and Hugging Face native channel below are historical proposal detail, not seed scope. See [the system manual](../SYSTEM_MANUAL.md).
 
 Build a curated inference product rather than an OpenRouter feature-for-feature marketplace.
 

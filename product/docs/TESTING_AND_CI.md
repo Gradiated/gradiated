@@ -39,7 +39,7 @@ Every property failure prints the seed, minimal counterexample/shrink path and e
 
 ### Protected paid tier
 
-- cheapest qualifying OpenAI, Anthropic and Google requests through the public Rust gateway using official clients;
+- cheapest qualifying OpenAI Responses and Anthropic Messages requests through the public Rust gateway using official clients; Google is added only with its deferred public protocol;
 - OpenRouter/channel smoke when credentials/contract exist;
 - bounded external GPU allocation/runtime/cache/stream/preemption/cleanup qualification;
 - staging Aurora/Valkey/EKS/Temporal recovery drills.

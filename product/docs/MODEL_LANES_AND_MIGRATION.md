@@ -124,7 +124,7 @@ The research factory is allowed to change weights/model architecture, custom ope
 
 The default workspace mode retains bounded encrypted inference traces so we can provide request inspection, workload grouping, regressions, cost/latency analysis and Grad migration recommendations.
 
-- Initial raw trace-retention target is 30 days, configurable downward and subject to launch legal/security review.
+- Product Intelligence defaults visibly to 30 days and may be reduced to the single seed alternative of 7 days. No Retention is the separate zero-payload mode. Changing these choices requires legal/security review and a contract migration.
 - Metadata and derived workload/evaluation summaries may be retained longer under the published account retention schedule.
 - Traces may contain request messages, responses, tool schemas/calls/results and safe customer tags. Authorization headers, API/provider keys, transport cookies and unrelated headers are always excluded.
 - Files and payloads over the trace-size limit are omitted or represented by safe metadata; inference continues and capture status explains the omission.
@@ -156,23 +156,23 @@ request/response events
   -> PostgreSQL stores authorization, wrapped-key state, retention/tombstone and object reference
 
 terminal settlement
-  -> financial worker posts authoritative usage and an analytics outbox record in PostgreSQL
-  -> trace-analytics projector batches typed content-free facts into ClickHouse Cloud
-  -> Hono queries ClickHouse for trace lists/charts/workload analytics
+  -> financial worker posts authoritative usage in PostgreSQL
+  -> Hono runs closed organization/workspace/time-bounded indexed queries
+  -> measured PostgreSQL rollups are added only after a query-plan/SLO trigger
   -> trace detail is separately authorized in PostgreSQL and decrypted from S3
 ```
 
 The worker owns the KMS-backed private/decryption path; the gateway receives only an active trace-encryption public key through Redis projection. A separate trace-access service can decrypt one object only after receiving a signed, short-lived, single-use grant bound to user/workspace/trace/action and after rechecking retention/deletion/key state; every view/export is audited and never becomes a reusable S3 URL. Per-trace wrapped-key destruction provides immediate cryptographic revocation before object/version cleanup completes.
 
-ClickHouse Cloud is a replayable analytics projection, not raw trace custody. It stores only allowlisted typed dimensions, usage/latency/cost copies, derived workload/evaluation features and aggregates—never prompts, responses, tool arguments/results, files, credentials, arbitrary headers or free-form tags. PostgreSQL remains authorization, ledger, trace-registry, retention/delete and experiment authority; encrypted raw payloads remain in private S3. The browser never receives ClickHouse credentials or SQL capability. This split and its delete/restore gates are specified in [ClickHouse trace analytics decision](CLICKHOUSE_TRACE_ANALYTICS_DECISION.md) and [ADR-0004](../../docs/decisions/0004-clickhouse-trace-analytics.md).
+PostgreSQL is the seed trace/usage query authority and stores only metadata plus typed usage/latency/cost facts—never prompts, responses, tool arguments/results, files, credentials, arbitrary headers or free-form tags. Encrypted raw payloads remain in private S3. The browser receives neither database credentials nor SQL capability. ClickHouse has no seed adapter, schema, projector or infrastructure and may return only after the measured trigger in [the simplicity review](../../docs/SIMPLICITY_REVIEW.md).
 
-Payloads are never plaintext in PostgreSQL, ClickHouse, logs, metrics or CI artifacts. Trace capture is not part of financial admission: under backpressure or encryption/config failure, inference and billing continue, capture is marked `skipped_*`, and the system alerts. A ClickHouse outage delays analytics only; it cannot block inference, settlement, PostgreSQL posting or S3 persistence. Separate quotas/TTL/headroom/KEDA scaling prevent trace traffic from starving billing.
+Payloads are never plaintext in PostgreSQL, logs, metrics or CI artifacts. Trace capture is not part of financial admission: under backpressure or encryption/config failure, inference and billing continue, capture is marked `skipped_*`, and the system alerts. Separate quotas/TTL/headroom/KEDA scaling prevent trace traffic from starving billing.
 
 ## Workload intelligence and migration recommendations
 
 ### Workload model
 
-Customers may provide `x-grad-workload-id` and bounded request tags. The raw customer label/tag values remain in the encrypted payload object; ClickHouse receives only a generated internal workload UUID or workspace-scoped HMAC for explicitly indexed identifiers. Otherwise the processor derives a workspace-local workload fingerprint from protocol, model, capability use, normalized parameter shape, tool/schema hashes, input/output size bands and—only in Product Intelligence mode—content-derived features. Fingerprints are HMAC-scoped per workspace so they cannot become cross-customer tracking identifiers.
+Customers may provide `x-grad-workload-id` and bounded request tags. Raw customer label/tag values remain in the encrypted payload object; PostgreSQL receives only a generated internal workload UUID or workspace-scoped HMAC for explicitly indexed identifiers. Otherwise the processor derives a workspace-local workload fingerprint from protocol, model, capability use, normalized parameter shape, tool/schema hashes, input/output size bands and—only in Product Intelligence mode—content-derived features. Fingerprints are HMAC-scoped per workspace so they cannot become cross-customer tracking identifiers.
 
 Core records are:
 
@@ -207,8 +207,8 @@ The system never labels a generative migration “equivalent” from token/laten
 The five-screen shell remains, but Models and Usage become the bridge:
 
 - **Overview:** quickstart defaults to the inferred/brought-over provider model when onboarding an existing workload; a new workload defaults to `grad/medium/standard`.
-- **Models:** two tabs—“Grad” effort × speed selector first, “Direct providers” second. Provider models are grouped under only OpenAI, Anthropic and Google; there is no provider endpoint table.
-- **Usage:** Hono serves ClickHouse-backed workload groups, charts and individual trace facts with provider/model, capability, latency, cost and retention deadline. Opening payload detail follows the separate PostgreSQL authorization and S3 decrypt path. A Migration card appears only with sufficient evidence.
+- **Models:** two tabs—“Grad” effort × speed selector first, “Direct providers” second. Only implemented and qualified provider/protocol combinations are shown; Google remains hidden while its public protocol is deferred. Internal provider endpoints are never exposed as customer configuration.
+- **Usage:** Hono serves PostgreSQL-backed workload groups, charts and individual trace metadata with provider/model, capability, latency, cost and retention deadline. Opening payload detail follows the separate PostgreSQL authorization and S3 decrypt path. A Migration card appears only with sufficient evidence.
 - **Settings → Data:** Product Intelligence default, retention/delete/export controls, Private/No Retention, request-header example and provider-policy implications.
 - **Migration flow:** recommendation → evidence → configure evaluator/budget → replay/shadow → live canary → customer-approved switch.
 

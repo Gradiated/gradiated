@@ -1,0 +1,133 @@
+{
+  "experiment_id": "nebius_h100_complete_stock_v13",
+  "preregistered_at_utc": "2026-07-14T06:37:40Z",
+  "issue": "https://github.com/joshsny/gradiated/issues/11",
+  "decision": "Re-establish the stock control with the first immutable complete GLM-4.7-Flash checkpoint after correcting v12's remote-directory ownership defect.",
+  "causal_hypothesis": {
+    "primary": "With the transfer target created by sudo and owned by the SSH user, the already verified complete 48-shard checkpoint will reach the pinned runtime, materially improve the frozen absolute quality screen relative to the malformed 44-shard result, and retain the fixed 8K/1K H100 service SLO.",
+    "expected_direction": "The new transfer probe and stream pass; complete-checkpoint quality improves substantially; throughput remains in the same broad range because the configured architecture was already executed.",
+    "falsification_value": "A complete hash-verified checkpoint that cannot fit, fails the frozen quality screen, or misses the SLO rejects the corresponding one-H100 stock claim."
+  },
+  "changed_from_v12": {
+    "measured_v12_failure": "unprivileged SSH user could not create /workspace/model-bf16; remote tar exited before model bytes and local tar received SIGPIPE",
+    "candidate_change": "sudo removes the failed target and install creates it owned by glmrunner; a tiny stdin transfer with exact SHA-256 must pass before the 62GB stream",
+    "unchanged_scientific_contract": "hardware, complete checkpoint, runtime, workload, seeds, serving policy, quality gate, SLO, profiler, stock-only admission, and artifact/cleanup requirements",
+    "repeat_classification": "materially changed orchestration path; not an unchanged transfer retry"
+  },
+  "stock_control": {
+    "historical_negative_control": "v9 used incomplete revision 75fce703... and is invalid for intended-model quality and economics",
+    "configuration": "stock_no_cache_fcfs",
+    "context_length": 32768,
+    "chunked_prefill_size": 8192,
+    "max_running_requests": 32,
+    "schedule_policy": "fcfs",
+    "radix_cache": false,
+    "quality_policy": "chat_template_kwargs.enable_thinking=false",
+    "adaptive_candidate_arms": false
+  },
+  "model": {
+    "id": "zai-org/GLM-4.7-Flash",
+    "revision": "33faccf4c2ba82142214d0d4e16232a4e9ccfe10",
+    "source": "official Hugging Face repository",
+    "shard_count_required": 48,
+    "weight_bytes_required": 62444175504,
+    "local_manifest_sha256": "515b831798895e737cfee5943cb522db95cf71d48bb15dfb3f49a016cab9e101",
+    "local_checksum_list_sha256": "04cb9abcf890cde361d0eb6bf087d0aa8f61d7bdf86286934f466b92138a8904",
+    "delivery_gate": "tiny ownership/write/hash probe, then local tar over SSH, then all 48 SHA-256 values rechecked inside the container before load"
+  },
+  "workload_geometry": {
+    "fixed_8k_1k_c1": "4 measured requests at concurrency 1, exactly 8192 input and 1024 output tokens each, after one warmup",
+    "fixed_8k_1k_c8": "16 measured requests at concurrency 8, exactly 8192 input and 1024 output tokens each, after four warmups",
+    "quality": "unchanged complete 32K reasoning-off development capture and frozen self-score",
+    "profiler": "one 8192-input/128-output batch-one trace after the fixed sequence",
+    "agent_tool_call_itl": "excluded and unclaimable"
+  },
+  "quality_gate": {
+    "frozen": true,
+    "absolute": "all existing schema, formatting, task, and teacher-forced NLL thresholds pass; NLL ceiling remains 2.0",
+    "post_observation_recalibration": false,
+    "claim_limit": "failure permits diagnostic throughput only, never quality-adjusted cost"
+  },
+  "service_contract": {
+    "request_success_fraction_min": 0.99,
+    "p95_ttft_ms_max": 10000,
+    "p95_inter_token_latency_ms_max": 100,
+    "silent_truncation_allowed": false
+  },
+  "hardware": {
+    "provider": "Nebius",
+    "region": "eu-north1",
+    "gpu": "1x NVIDIA H100 SXM 80GB",
+    "platform": "gpu-h100-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "purchase_model": "regular_on_demand",
+    "boot_disk_gib": 250,
+    "image_family": "ubuntu24.04-cuda13.0"
+  },
+  "identities": {
+    "container": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+    "runtime_source_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "harness_sha256": "96a616c7a5cdefab8f5991c3a07d5c6d02755601a403736614955940f5b678a1",
+    "orchestrator_sha256": "20619de28122d243d22c6252845cda2aa4f254fd6066b5a8f1754f9e99cc524b",
+    "workload_sha256": "f47c7af5e53483524010d06a93313b29f1a10c08f7df4bf18638349b4767193a",
+    "quality_sha256": "152548d51fba8e8ff5e8f1e665c5af166fb6d97cdf3010723042112855964668",
+    "tokenizer_bindings_sha256": "ccbe405b3abcef13f95dc7882f3ab21f8fa3443a97a340f9e8c4070682ecb14c"
+  },
+  "predictions": {
+    "tiny_transfer_probe": "passes before the full stream",
+    "complete_checkpoint_load": "passes within 900 seconds",
+    "quality": "teacher-forced NLL falls materially below 7.7076; independent formatting defects may remain",
+    "fixed_c8_output_tokens_per_second": "260 to 330",
+    "business": "no cost win is predicted or claimable from this corrective control"
+  },
+  "budget": {
+    "h100_full_vm_hourly_rate_usd": 3.85,
+    "network_ssd_250gib_hourly_rate_usd": 0.0243055,
+    "absolute_allocation_seconds": 5400,
+    "compute_cap_usd": 5.775,
+    "compute_plus_disk_cap_usd": 5.81145825,
+    "absolute_all_in_cap_usd": 6.25,
+    "nebius_campaign_cap_usd": 25.0,
+    "reconstructed_spend_before_usd": 11.715626083,
+    "reconstructed_remaining_before_usd": 13.284373917,
+    "limitations": "public IPv4 and egress excluded; provider invoice pending"
+  },
+  "timeouts_seconds": {
+    "absolute_allocation": 5400,
+    "ssh_readiness": 600,
+    "container_bootstrap": 1800,
+    "tiny_transfer_probe": 30,
+    "verified_model_transfer": 1800,
+    "server_startup": 900,
+    "workload_profile_each": 1800
+  },
+  "telemetry": [
+    "GPU utilization",
+    "VRAM",
+    "power",
+    "temperature",
+    "clocks",
+    "TTFT",
+    "token-level ITL/TPOT",
+    "throughput",
+    "queueing",
+    "failures",
+    "profiler",
+    "startup/load",
+    "transfer time",
+    "allocation cost"
+  ],
+  "artifact_contract": {
+    "host": ["preregistration and SHA-256", "sanitized provider request", "events including transfer probe", "bootstrap and transfer timing", "summary and full-VM/disk cost"],
+    "remote": ["hash-matched archive", "internal manifest", "48-shard checksum verification", "typed result", "profiles", "quality", "telemetry", "server logs", "profiler"],
+    "cleanup": "retrieve and hash evidence before deletion; verify instance GET not-found and zero experiment-named instances/disks"
+  },
+  "falsification_rules": {
+    "delivery": "Any probe, count, byte, or checksum failure stops before inference and kills this transfer variant.",
+    "compatibility": "OOM or deterministic load failure falsifies one-H100 deployability at this geometry.",
+    "quality": "Failure of the unchanged screen rejects missing shards as a sufficient quality correction.",
+    "service": "Any fixed-profile SLO failure rejects the stock service point.",
+    "repeat": "Do not repeat an identical failure.",
+    "business": "No provider cost comparison without complete-checkpoint quality, workload, and matched SLO evidence."
+  }
+}

@@ -1,0 +1,318 @@
+{
+  "decode": {
+    "kernel_count": 210174,
+    "kernel_duration_sum_ms": 958.2234430000012,
+    "kernel_families": [
+      {
+        "duration_ms": 268.1977669999971,
+        "family": "moe_fused_expert",
+        "kernel_count": 11776,
+        "share_of_kernel_duration": 0.2798906340261566
+      },
+      {
+        "duration_ms": 232.43808000000803,
+        "family": "dense_gemm_gemv",
+        "kernel_count": 48384,
+        "share_of_kernel_duration": 0.24257189875494178
+      },
+      {
+        "duration_ms": 172.19894199999482,
+        "family": "attention_mla",
+        "kernel_count": 24064,
+        "share_of_kernel_duration": 0.17970645913324268
+      },
+      {
+        "duration_ms": 139.96661700000234,
+        "family": "moe_routing_sort",
+        "kernel_count": 35328,
+        "share_of_kernel_duration": 0.14606887153772355
+      },
+      {
+        "duration_ms": 67.28840699999695,
+        "family": "norm_rope_activation",
+        "kernel_count": 36224,
+        "share_of_kernel_duration": 0.07022204214638157
+      },
+      {
+        "duration_ms": 44.203014000002106,
+        "family": "copy_cast",
+        "kernel_count": 29825,
+        "share_of_kernel_duration": 0.04613017383671133
+      },
+      {
+        "duration_ms": 33.93061599999988,
+        "family": "other",
+        "kernel_count": 24573,
+        "share_of_kernel_duration": 0.03540992056484245
+      }
+    ],
+    "region_count": 128,
+    "region_duration_max_ms": 8.528102,
+    "region_duration_p50_ms": 7.8930929999999995,
+    "region_duration_p95_ms": 8.12567,
+    "region_duration_sum_ms": 1015.146826,
+    "top_exact_kernels": [
+      {
+        "duration_ms": 268.1977669999971,
+        "name": "fused_moe_kernel",
+        "share_of_kernel_duration": 0.2798906340261566
+      },
+      {
+        "duration_ms": 95.73466099999989,
+        "name": "void cutlass::device_kernel<flash::enable_sm90_or_later<flash::FlashAttnFwdSm90<flash::CollectiveMainloopFwdSm90<2, cute::tuple<cute::C<1>, cute::C<1>, cute::C<1> >, cute::tuple<cute::C<64>, cute::C<64>, cute::C<64> >, 512, cutlass::bfloat16_t, float, cutlass::arch::Sm90, false, false, false, true, true, false, true, false, false, false, true, true, false, cutlass::bfloat16_t, false, 1>, flash::CollectiveEpilogueFwd<cute::tuple<cute::C<64>, cute::C<512>, cute::C<64> >, cute::tuple<cute::C<1>, cute::C<1>, cute::C<1> >, cutlass::bfloat16_t, cutlass::arch::Sm90, 256, true, true, true, false>, flash::VarlenDynamicPersistentTileScheduler<64, 64, 256, 128, true, true, true, false, true, true> > > >(flash::enable_sm90_or_later<flash::FlashAttnFwdSm90<flash::CollectiveMainloopFwdSm90<2, cute::tuple<cute::C<1>, cute::C<1>, cute::C<1> >, cute::tuple<cute::C<64>, cute::C<64>, cute::C<64> >, 512, cutlass::bfloat16_t, float, cutlass::arch::Sm90, false, false, false, true, true, false, true, false, false, false, true, true, false, cutlass::bfloat16_t, false, 1>, flash::CollectiveEpilogueFwd<cute::tuple<cute::C<64>, cute::C<512>, cute::C<64> >, cute::tuple<cute::C<1>, cute::C<1>, cute::C<1> >, cutlass::bfloat16_t, cutlass::arch::Sm90, 256, true, true, true, false>, flash::VarlenDynamicPersistentTileScheduler<64, 64, 256, 128, true, true, true, false, true, true> > >::Params)",
+        "share_of_kernel_duration": 0.09990849388976988
+      },
+      {
+        "duration_ms": 79.55166200000195,
+        "name": "void at::native::sbtopk::gatherTopK<float, unsigned int, 1, false>(at::cuda::detail::TensorInfo<float const, unsigned int>, unsigned int, unsigned int, bool, unsigned int, unsigned int, at::cuda::detail::TensorInfo<float, unsigned int>, unsigned int, at::cuda::detail::TensorInfo<long, unsigned int>, unsigned int, float*)",
+        "share_of_kernel_duration": 0.08301994965907117
+      },
+      {
+        "duration_ms": 60.80863899999964,
+        "name": "nvjet_sm90_tst_64x8_64x16_4x1_v_bz_splitK_TNT",
+        "share_of_kernel_duration": 0.06345976968547154
+      },
+      {
+        "duration_ms": 55.505426999997795,
+        "name": "nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT",
+        "share_of_kernel_duration": 0.05792534862873076
+      },
+      {
+        "duration_ms": 50.4134050000002,
+        "name": "void cutlass::device_kernel<flash::FlashAttnFwdCombine<cute::tuple<cute::C<8>, cute::C<128> >, 7, 256, 1, false, true, cutlass::bfloat16_t, float, cutlass::arch::Sm90> >(flash::FlashAttnFwdCombine<cute::tuple<cute::C<8>, cute::C<128> >, 7, 256, 1, false, true, cutlass::bfloat16_t, float, cutlass::arch::Sm90>::Params)",
+        "share_of_kernel_duration": 0.052611325018480204
+      },
+      {
+        "duration_ms": 45.830162999995615,
+        "name": "void at::native::bitonicSortKVInPlace<-2, -1, 16, 16, float, long, at::native::GTOp<float, true>, unsigned int>(at::cuda::detail::TensorInfo<float, unsigned int>, unsigned int, unsigned int, unsigned int, at::cuda::detail::TensorInfo<long, unsigned int>, unsigned int, at::native::GTOp<float, true>)",
+        "share_of_kernel_duration": 0.047828263162202296
+      },
+      {
+        "duration_ms": 27.163408999999994,
+        "name": "nvjet_sm90_tst_256x8_64x6_2x1_v_bz_TNT",
+        "share_of_kernel_duration": 0.028347677359006087
+      },
+      {
+        "duration_ms": 25.581030999999733,
+        "name": "void (anonymous namespace)::fused_a_gemm_kernel<1, 1344, 2048, 16, 8, 256, 8>(__nv_bfloat16*, __nv_bfloat16 const*, __nv_bfloat16 const*, int)",
+        "share_of_kernel_duration": 0.026696310956357702
+      },
+      {
+        "duration_ms": 24.79191299999966,
+        "name": "kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnormFusedAddRMSNormKernel_object_at__tensorptrbf16gmemalign128o204820481_tensorptrbf16gmemalign128o204820481_tensorptrbf16gmemalign_0",
+        "share_of_kernel_duration": 0.025872789046343155
+      },
+      {
+        "duration_ms": 22.79117300000003,
+        "name": "nvjet_sm90_tst_128x8_64x12_4x1_v_bz_TNT",
+        "share_of_kernel_duration": 0.02378482092719996
+      },
+      {
+        "duration_ms": 19.194062999999755,
+        "name": "void flash::prepare_varlen_num_blocks_kernel<1, true>(int, int, int, int const*, int const*, int const*, int const*, int const*, int const*, int, int, int, int, int, cutlass::FastDivmod, cutlass::FastDivmod, int*, int*, int*, int*, int*, bool, bool, bool, int)",
+        "share_of_kernel_duration": 0.020030884383194673
+      },
+      {
+        "duration_ms": 15.230942000000015,
+        "name": "kernel_cutlass_kernel_flashinfernormkernelsrmsnormRMSNormKernel_object_at__tensorptrbf16gmemalign128o7687681_tensorptrbf16gmemalign16o7681_tensorptrbf16gmemalign128o7687681___True_4_768_0",
+        "share_of_kernel_duration": 0.01589497951784091
+      },
+      {
+        "duration_ms": 14.584791999999807,
+        "name": "void moe_align_block_size_kernel<int>(int const*, int*, int*, int*, int, int, unsigned long, int*, bool, int, int)",
+        "share_of_kernel_duration": 0.015220658716444894
+      },
+      {
+        "duration_ms": 14.34966800000034,
+        "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)",
+        "share_of_kernel_duration": 0.014975283797142835
+      },
+      {
+        "duration_ms": 13.69856600000008,
+        "name": "void dot_kernel<float, 128, 0, cublasDotParams<cublasGemvTensorStridedBatched<float const>, cublasGemvTensorStridedBatched<float> > >(cublasDotParams<cublasGemvTensorStridedBatched<float const>, cublasGemvTensorStridedBatched<float> >)",
+        "share_of_kernel_duration": 0.014295795098805636
+      },
+      {
+        "duration_ms": 12.281481999999816,
+        "name": "void at::native::(anonymous namespace)::distribution_elementwise_grid_stride_kernel<unsigned long, 2, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(curandStatePhilox4_32_10*)#1}, at::native::(anonymous namespace)::distribution_nullary_kernel<long, unsigned long, ulonglong2, at::CUDAGeneratorImpl*, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(curandStatePhilox4_32_10*)#1}, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(unsigned long)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(curandStatePhilox4_32_10*)#1} const&, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(unsigned long)#1})::{lambda(int, unsigned long)#1}>(long, at::PhiloxCudaState, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(curandStatePhilox4_32_10*)#1}, at::native::(anonymous namespace)::distribution_nullary_kernel<long, unsigned long, ulonglong2, at::CUDAGeneratorImpl*, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(curandStatePhilox4_32_10*)#1}, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(unsigned long)#1}>(at::TensorIteratorBase&, at::CUDAGeneratorImpl*, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(curandStatePhilox4_32_10*)#1} const&, at::native::templates::cuda::random_from_to_kernel<at::CUDAGeneratorImpl*>(at::TensorIteratorBase&, unsigned long, long, at::CUDAGeneratorImpl*)::{lambda()#1}::operator()() const::{lambda()#4}::operator()() const::{lambda(unsigned long)#1})::{lambda(int, unsigned long)#1})",
+        "share_of_kernel_duration": 0.012816929172124002
+      },
+      {
+        "duration_ms": 11.172801000000021,
+        "name": "void cublasLt::splitKreduce_kernel<32, 16, int, float, __nv_bfloat16, float, __nv_bfloat16, false, float, __nv_bfloat16, __nv_bfloat16, true, false, false, false>(cublasLt::cublasSplitKParams<float>, float const*, __nv_bfloat16 const*, float*, __nv_bfloat16*, float const*, float const*, __nv_bfloat16 const*, float const*, __nv_bfloat16*, void*, long, float*, int*, float*, float*, float const*, float const*, float const*, float const*, float const*)",
+        "share_of_kernel_duration": 0.011659911977336174
+      },
+      {
+        "duration_ms": 9.921574999999994,
+        "name": "void (anonymous namespace)::fused_rope_kernel<false, 64l, true, __nv_bfloat16, long, 8u>((anonymous namespace)::FusedRopeParams)",
+        "share_of_kernel_duration": 0.01035413511585312
+      },
+      {
+        "duration_ms": 9.391432000000417,
+        "name": "void reduce_1Block_kernel<float, 128, 7, cublasGemvTensorStridedBatched<float>, cublasGemvTensorStridedBatched<float const>, cublasGemvTensorStridedBatched<float> >(float const*, float, cublasGemvTensorStridedBatched<float>, int, float const*, float, cublasGemvTensorStridedBatched<float const>, cublasGemvTensorStridedBatched<float>, cublasPointerMode_t, cublasLtEpilogue_t, cublasGemvTensorStridedBatched<biasType<cublasGemvTensorStridedBatched<float>::value_type, float>::type const>)",
+        "share_of_kernel_duration": 0.009800878979330508
+      }
+    ]
+  },
+  "evidence_label": "measured profiler trace",
+  "method": "Kernel events are assigned to GPU user-annotation regions when their midpoint falls inside the region. Durations are summed and therefore are component-time attribution, not an additive latency model when streams overlap.",
+  "prefill": {
+    "kernel_count": 1598,
+    "kernel_duration_sum_ms": 172.062591,
+    "kernel_families": [
+      {
+        "duration_ms": 69.40678899999999,
+        "family": "moe_fused_expert",
+        "kernel_count": 92,
+        "share_of_kernel_duration": 0.40338105218931636
+      },
+      {
+        "duration_ms": 45.765167999999996,
+        "family": "attention_mla",
+        "kernel_count": 141,
+        "share_of_kernel_duration": 0.2659797677927563
+      },
+      {
+        "duration_ms": 28.361393000000007,
+        "family": "dense_gemm_gemv",
+        "kernel_count": 283,
+        "share_of_kernel_duration": 0.16483183727019438
+      },
+      {
+        "duration_ms": 11.160935000000004,
+        "family": "norm_rope_activation",
+        "kernel_count": 283,
+        "share_of_kernel_duration": 0.06486555232682742
+      },
+      {
+        "duration_ms": 8.069414999999994,
+        "family": "copy_cast",
+        "kernel_count": 283,
+        "share_of_kernel_duration": 0.04689813720171165
+      },
+      {
+        "duration_ms": 5.107231999999999,
+        "family": "moe_routing_sort",
+        "kernel_count": 276,
+        "share_of_kernel_duration": 0.029682407839598322
+      },
+      {
+        "duration_ms": 4.191658999999999,
+        "family": "other",
+        "kernel_count": 240,
+        "share_of_kernel_duration": 0.02436124537959561
+      }
+    ],
+    "region_count": 1,
+    "region_duration_max_ms": 176.766519,
+    "region_duration_p50_ms": 176.766519,
+    "region_duration_p95_ms": 176.766519,
+    "region_duration_sum_ms": 176.766519,
+    "top_exact_kernels": [
+      {
+        "duration_ms": 69.40678899999999,
+        "name": "fused_moe_kernel",
+        "share_of_kernel_duration": 0.40338105218931636
+      },
+      {
+        "duration_ms": 45.319829000000006,
+        "name": "void cutlass::device_kernel<flash::enable_sm90_or_later<flash::FlashAttnFwdSm90<flash::CollectiveMainloopFwdSm90<2, cute::tuple<cute::C<1>, cute::C<1>, cute::C<1> >, cute::tuple<cute::C<128>, cute::C<80>, cute::C<256> >, 256, cutlass::bfloat16_t, float, cutlass::arch::Sm90, true, false, false, true, false, false, false, false, true, true, false, false, false, cutlass::bfloat16_t, false, 1>, flash::CollectiveEpilogueFwd<cute::tuple<cute::C<128>, cute::C<256>, cute::C<80> >, cute::tuple<cute::C<1>, cute::C<1>, cute::C<1> >, cutlass::bfloat16_t, cutlass::arch::Sm90, 256, true, false, false, false>, flash::VarlenDynamicPersistentTileScheduler<128, 80, 256, 32, false, false, true, true, true, true> > > >(flash::enable_sm90_or_later<flash::FlashAttnFwdSm90<flash::CollectiveMainloopFwdSm90<2, cute::tuple<cute::C<1>, cute::C<1>, cute::C<1> >, cute::tuple<cute::C<128>, cute::C<80>, cute::C<256> >, 256, cutlass::bfloat16_t, float, cutlass::arch::Sm90, true, false, false, true, false, false, false, false, true, true, false, false, false, cutlass::bfloat16_t, false, 1>, flash::CollectiveEpilogueFwd<cute::tuple<cute::C<128>, cute::C<256>, cute::C<80> >, cute::tuple<cute::C<1>, cute::C<1>, cute::C<1> >, cutlass::bfloat16_t, cutlass::arch::Sm90, 256, true, false, false, false>, flash::VarlenDynamicPersistentTileScheduler<128, 80, 256, 32, false, false, true, true, true, true> > >::Params)",
+        "share_of_kernel_duration": 0.26339152942315047
+      },
+      {
+        "duration_ms": 16.584356,
+        "name": "nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT",
+        "share_of_kernel_duration": 0.09638559958683873
+      },
+      {
+        "duration_ms": 5.6939579999999985,
+        "name": "void (anonymous namespace)::act_and_mul_kernel<__nv_bfloat16, ((anonymous namespace)::ActivationKind)0, true, false>((anonymous namespace)::ActivationParams)",
+        "share_of_kernel_duration": 0.033092364626777004
+      },
+      {
+        "duration_ms": 5.131171999999998,
+        "name": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})",
+        "share_of_kernel_duration": 0.029821543254570648
+      },
+      {
+        "duration_ms": 4.725894000000001,
+        "name": "nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT",
+        "share_of_kernel_duration": 0.027466132949259155
+      },
+      {
+        "duration_ms": 3.958303,
+        "name": "kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnormFusedAddRMSNormKernel_object_at__tensorptrbf16gmemalign128o204820481_tensorptrbf16gmemalign128o204820481_tensorptrbf16gmemalign_0",
+        "share_of_kernel_duration": 0.02300501798209002
+      },
+      {
+        "duration_ms": 3.7845440000000004,
+        "name": "void at::native::sbtopk::gatherTopK<float, unsigned int, 2, false>(at::cuda::detail::TensorInfo<float const, unsigned int>, unsigned int, unsigned int, bool, unsigned int, unsigned int, at::cuda::detail::TensorInfo<float, unsigned int>, unsigned int, at::cuda::detail::TensorInfo<long, unsigned int>, unsigned int, float*)",
+        "share_of_kernel_duration": 0.021995158726861207
+      },
+      {
+        "duration_ms": 3.151171999999998,
+        "name": "void moe_sum_reduce_warp_per_token_vec_kernel<8>(c10::BFloat16 const*, c10::BFloat16*, long, long, long, long, long, long, float)",
+        "share_of_kernel_duration": 0.01831410291851294
+      },
+      {
+        "duration_ms": 2.93549,
+        "name": "nvjet_sm90_tst_168x128_64x5_1x2_h_bz_TNN",
+        "share_of_kernel_duration": 0.017060593955603054
+      },
+      {
+        "duration_ms": 2.8154610000000004,
+        "name": "sm80_xmma_gemm_f32f32_f32f32_f32_tn_n_tilesize128x64x8_stage3_warpsize2x2x1_ffma_aligna4_alignc4_execute_kernel__5x_cublas",
+        "share_of_kernel_duration": 0.01636300478585726
+      },
+      {
+        "duration_ms": 2.6159999999999997,
+        "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)",
+        "share_of_kernel_duration": 0.015203769656124728
+      },
+      {
+        "duration_ms": 0.875008,
+        "name": "nvjet_sm90_tst_192x192_64x4_1x1_h_bz_coopB_TNN",
+        "share_of_kernel_duration": 0.005085405229077366
+      },
+      {
+        "duration_ms": 0.857182,
+        "name": "void at::native::bitonicSortKVInPlace<2, -1, 16, 16, float, long, at::native::GTOp<float, true>, unsigned int>(at::cuda::detail::TensorInfo<float, unsigned int>, unsigned int, unsigned int, unsigned int, at::cuda::detail::TensorInfo<long, unsigned int>, unsigned int, at::native::GTOp<float, true>)",
+        "share_of_kernel_duration": 0.004981803395021525
+      },
+      {
+        "duration_ms": 0.8097299999999998,
+        "name": "void (anonymous namespace)::fused_rope_kernel<false, 64l, true, __nv_bfloat16, long, 8u>((anonymous namespace)::FusedRopeParams)",
+        "share_of_kernel_duration": 0.004706020031977781
+      },
+      {
+        "duration_ms": 0.691976,
+        "name": "void count_and_sort_expert_tokens_kernel<int>(int const*, int*, int*, unsigned long)",
+        "share_of_kernel_duration": 0.0040216527949413486
+      },
+      {
+        "duration_ms": 0.46550600000000003,
+        "name": "void moe_align_block_size_kernel<int>(int const*, int*, int*, int*, int, int, unsigned long, int*, bool, int, int)",
+        "share_of_kernel_duration": 0.002705445717715596
+      },
+      {
+        "duration_ms": 0.3447980000000001,
+        "name": "kernel_cutlass_kernel_flashinfernormkernelsrmsnormRMSNormKernel_object_at__tensorptrbf16gmemalign16o512i64div81_tensorptrbf16gmemalign16o5121_tensorptrbf16gmemalign16o512i64div81___True_4_0",
+        "share_of_kernel_duration": 0.002003910309591933
+      },
+      {
+        "duration_ms": 0.3344659999999999,
+        "name": "kernel_cutlass_kernel_flashinfernormkernelsrmsnormRMSNormKernel_object_at__tensorptrbf16gmemalign16o768i64div81_tensorptrbf16gmemalign16o7681_tensorptrbf16gmemalign16o768i64div81___True_4_0",
+        "share_of_kernel_duration": 0.0019438623936565032
+      },
+      {
+        "duration_ms": 0.27356699999999995,
+        "name": "void (anonymous namespace)::set_mla_kv_buffer_kernel<1024l, 128l, 8, true, long>((anonymous namespace)::SetMlaKVBufferParams)",
+        "share_of_kernel_duration": 0.0015899272375829792
+      }
+    ]
+  },
+  "schema_version": 1,
+  "source_artifact": "allocations/nebius_h100_complete_stock_v13/stock_no_cache_fcfs-artifact.tar.gz",
+  "source_artifact_sha256": "f4f6e198ed69cf3169d323ec903727d503c753efa32de6348cc9f7f77709b5ab",
+  "trace_file": "1784013056.7992625-TP-0.trace.json.gz"
+}

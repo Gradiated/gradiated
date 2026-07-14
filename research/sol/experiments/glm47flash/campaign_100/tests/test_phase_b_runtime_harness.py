@@ -23,7 +23,7 @@ class PhaseBRuntimeHarnessTests(unittest.TestCase):
             "f63458b5beaceabbd9d749b9fc956370e1b649e6",
             "sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
             "zai-org/GLM-4.7-Flash",
-            "75fce703a93da3705c4cf8d3caadbac1d1072c78",
+            "33faccf4c2ba82142214d0d4e16232a4e9ccfe10",
             "f47c7af5e53483524010d06a93313b29f1a10c08f7df4bf18638349b4767193a",
             "ccbe405b3abcef13f95dc7882f3ab21f8fa3443a97a340f9e8c4070682ecb14c",
             "152548d51fba8e8ff5e8f1e665c5af166fb6d97cdf3010723042112855964668",
@@ -34,6 +34,15 @@ class PhaseBRuntimeHarnessTests(unittest.TestCase):
         self.assertIn("WORKLOAD_ARCHIVE_B64", self.source)
         self.assertIn("QUALITY_ARCHIVE_B64", self.source)
         self.assertIn("export HF_HUB_DISABLE_XET=1", self.source)
+
+    def test_complete_checkpoint_is_required_before_load(self):
+        self.assertIn("EXPECTED_MODEL_SHARD_COUNT=48", self.source)
+        self.assertIn("EXPECTED_MODEL_WEIGHT_BYTES=62444175504", self.source)
+        self.assertIn('sha256sum -c "$MODEL_MANIFEST_PATH"', self.source)
+        self.assertIn('model-00015-of-00048.safetensors', self.source)
+        self.assertIn('model-00020-of-00048.safetensors', self.source)
+        self.assertIn('model-00027-of-00048.safetensors', self.source)
+        self.assertIn('model-00028-of-00048.safetensors', self.source)
 
     def test_startup_allows_fifteen_minutes_and_fast_fails_server_exit(self):
         self.assertRegex(self.source, r"STARTUP_TIMEOUT_SECONDS=(?:\"?900\"?)")

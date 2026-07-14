@@ -1,0 +1,82 @@
+{
+  "allocation_seconds": 1907.882,
+  "arms": [
+    {
+      "allocation_result": {
+        "agent_tool_call_itl_claim_permitted": false,
+        "configuration": "stock_no_cache_fcfs",
+        "headline_c32_executed": false,
+        "next_action": "stop_or_correct_measured_failure",
+        "profiles": [
+          {
+            "conservative_runner_wall_seconds_including_warmup_and_cache_reset": 47.01799273490906,
+            "detected_truncations": 0,
+            "errors": 0,
+            "frozen_slo_pass": true,
+            "input_tokens": 32768,
+            "input_tokens_per_second_conservative": 696.92468976182,
+            "output_tokens": 4096,
+            "output_tokens_per_second_conservative": 87.1155862202275,
+            "profile_id": "fixed_8k_1k_c1",
+            "requests": 4,
+            "success_fraction": 1.0,
+            "token_level_itl_ms": {
+              "p50": 7.690363,
+              "p95": 7.75995,
+              "p99": 8.088282
+            },
+            "ttft_ms": {
+              "p50": 183.979843,
+              "p95": 186.175956,
+              "p99": 186.175956
+            }
+          },
+          {
+            "conservative_runner_wall_seconds_including_warmup_and_cache_reset": 53.710121870040894,
+            "detected_truncations": 0,
+            "errors": 0,
+            "frozen_slo_pass": true,
+            "input_tokens": 131072,
+            "input_tokens_per_second_conservative": 2440.359385464567,
+            "output_tokens": 16384,
+            "output_tokens_per_second_conservative": 305.04492318307086,
+            "profile_id": "fixed_8k_1k_c8",
+            "requests": 16,
+            "success_fraction": 1.0,
+            "token_level_itl_ms": {
+              "p50": 9.11633,
+              "p95": 9.381818,
+              "p99": 9.69553
+            },
+            "ttft_ms": {
+              "p50": 750.235664,
+              "p95": 1358.106578,
+              "p99": 1358.106578
+            }
+          }
+        ],
+        "quality_pass": false,
+        "sequence_pass": true
+      },
+      "artifact_ok": true,
+      "artifact_sha256": "f4f6e198ed69cf3169d323ec903727d503c753efa32de6348cc9f7f77709b5ab",
+      "configuration": "stock_no_cache_fcfs",
+      "elapsed_seconds": 321.623,
+      "manifest_file_count": 53,
+      "pass": false,
+      "remote_exit_code": 1
+    }
+  ],
+  "cleanup_pass": true,
+  "compute_cost_usd_derived": 2.040373605,
+  "cost_basis": "measured elapsed exposure at authenticated Nebius calculator rates; public IPv4 and egress excluded; provider invoice pending",
+  "cost_usd_derived": 2.053254722,
+  "diagnostic_mtp_after_fixed_slo": false,
+  "disk_cost_usd_derived": 0.012881117,
+  "ended_at_utc": "2026-07-14T07:12:29.341599Z",
+  "final_disk_count": 0,
+  "final_instance_count": 0,
+  "instance_id": "computeinstance-e00p6g6wv2gqqa8wx3",
+  "outcome": "FAIL",
+  "stock_only": true
+}

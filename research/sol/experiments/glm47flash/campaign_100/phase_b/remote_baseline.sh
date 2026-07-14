@@ -14,7 +14,10 @@ export HF_HUB_DISABLE_XET=1
 STARTUP_TIMEOUT_SECONDS=900
 PROFILE_TIMEOUT_SECONDS=600
 TELEMETRY_CADENCE_SECONDS=1
-MODEL_REVISION=75fce703a93da3705c4cf8d3caadbac1d1072c78
+MODEL_REVISION="${MODEL_REVISION:-33faccf4c2ba82142214d0d4e16232a4e9ccfe10}"
+MODEL_MANIFEST_PATH="${MODEL_MANIFEST_PATH:-$MODEL/model-files.sha256}"
+EXPECTED_MODEL_SHARD_COUNT=48
+EXPECTED_MODEL_WEIGHT_BYTES=62444175504
 SOURCE_REVISION=f63458b5beaceabbd9d749b9fc956370e1b649e6
 IMAGE_DIGEST=sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af
 WORKLOAD_SHA256=f47c7af5e53483524010d06a93313b29f1a10c08f7df4bf18638349b4767193a
@@ -29,6 +32,7 @@ QUALITY_ARCHIVE_PATH="${QUALITY_ARCHIVE_PATH:-}"
 ARTIFACT_BUILDER_PATH="${ARTIFACT_BUILDER_PATH:-}"
 SERVE_ARTIFACT="${SERVE_ARTIFACT:-1}"
 CAMPAIGN_DEADLINE_EPOCH="${CAMPAIGN_DEADLINE_EPOCH:?missing campaign deadline}"
+export MODEL_REVISION MODEL_MANIFEST_PATH EXPECTED_MODEL_SHARD_COUNT EXPECTED_MODEL_WEIGHT_BYTES
 
 HTTP_PID=
 SERVER_PID=
@@ -131,7 +135,9 @@ print(json.dumps({
     "runtime_source_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
     "runtime_image_digest": "sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
     "model": "zai-org/GLM-4.7-Flash",
-    "model_revision": "75fce703a93da3705c4cf8d3caadbac1d1072c78",
+    "model_revision": os.environ["MODEL_REVISION"],
+    "model_shard_count": int(os.environ["EXPECTED_MODEL_SHARD_COUNT"]),
+    "model_weight_bytes": int(os.environ["EXPECTED_MODEL_WEIGHT_BYTES"]),
     "configuration": os.environ.get("CONFIGURATION", "stock_no_cache_fcfs"),
     "mtp": "enabled" if os.environ.get("SERVER_EXTRA_ARGS_B64") else "disabled",
     "profile_sequence": ["fixed_8k_1k_c1", "fixed_8k_1k_c8"],
@@ -186,7 +192,7 @@ timeout --signal=TERM 1200 python3 - <<'PY' > "$OUT/model-download.log" 2>&1
 import os
 from huggingface_hub import HfApi, snapshot_download
 
-revision = "75fce703a93da3705c4cf8d3caadbac1d1072c78"
+revision = os.environ["MODEL_REVISION"]
 info = HfApi().model_info("zai-org/GLM-4.7-Flash", revision=revision)
 if info.sha != revision:
     raise SystemExit(f"revision mismatch: {info.sha}")
@@ -196,6 +202,20 @@ PY
 else
   printf 'reused exact model directory from prior same-host arm\n' > "$OUT/model-download.log"
 fi
+test -s "$MODEL_MANIFEST_PATH"
+shard_count=$(find "$MODEL" -maxdepth 1 -type f -name 'model-*-of-00048.safetensors' | wc -l)
+weight_bytes=$(find "$MODEL" -maxdepth 1 -type f -name 'model-*-of-00048.safetensors' -printf '%s\n' | awk '{total += $1} END {print total + 0}')
+test "$shard_count" -eq "$EXPECTED_MODEL_SHARD_COUNT"
+test "$weight_bytes" -eq "$EXPECTED_MODEL_WEIGHT_BYTES"
+for required_shard in \
+  model-00015-of-00048.safetensors \
+  model-00020-of-00048.safetensors \
+  model-00027-of-00048.safetensors \
+  model-00028-of-00048.safetensors; do
+  test -s "$MODEL/$required_shard"
+done
+(cd "$MODEL" && sha256sum -c "$MODEL_MANIFEST_PATH") > "$OUT/model-manifest-verification.log"
+cp "$MODEL_MANIFEST_PATH" "$OUT/model-files.sha256"
 sha256sum "$MODEL/config.json" "$MODEL/model.safetensors.index.json" > "$OUT/model-hashes.sha256"
 grep -q '^dc9b97c7c9bed726a2e6939da4234d5c43abb3edec8812068c9a1af1dbc13acb ' "$OUT/model-hashes.sha256"
 grep -q '^91e6e95ca21700f50904a680c8c4212f5aa16dc7c10a013f01c906957c889791 ' "$OUT/model-hashes.sha256"

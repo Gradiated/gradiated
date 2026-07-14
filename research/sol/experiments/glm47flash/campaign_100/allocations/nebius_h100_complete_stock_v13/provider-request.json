@@ -1,0 +1,19 @@
+{
+  "absolute_timeout_seconds": 5400,
+  "boot_disk_gib": 250,
+  "container_image": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+  "diagnostic_mtp_after_fixed_slo": false,
+  "disk_hourly_rate_usd_vendor_calculator": 0.0243055,
+  "hourly_rate_usd_vendor_list": 3.85,
+  "image_family": "ubuntu24.04-cuda13.0",
+  "max_compute_cost_usd": 5.775,
+  "model_manifest_sha256": "515b831798895e737cfee5943cb522db95cf71d48bb15dfb3f49a016cab9e101",
+  "model_revision": "33faccf4c2ba82142214d0d4e16232a4e9ccfe10",
+  "model_shard_count": 48,
+  "model_weight_bytes": 62444175504,
+  "name": "glm47flash-complete-stock-v13",
+  "platform": "gpu-h100-sxm",
+  "preset": "1gpu-16vcpu-200gb",
+  "purchase_model": "regular_on_demand",
+  "stock_only": true
+}

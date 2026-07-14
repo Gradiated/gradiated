@@ -43,7 +43,16 @@ def conservative_cost_usd(seconds: float) -> float:
     return seconds / 3600 * HOURLY_RATE_USD
 
 
-def build_create_command(*, name: str, disk_name: str, cloud_init: str, disk_gib: int = 100) -> list[str]:
+def build_create_command(
+    *,
+    name: str,
+    disk_name: str,
+    cloud_init: str,
+    disk_gib: int = 100,
+    platform: str = PLATFORM,
+    preset: str = PRESET,
+    preemptible: bool = False,
+) -> list[str]:
     network = json.dumps(
         [{
             "name": "default-subnet",
@@ -53,7 +62,7 @@ def build_create_command(*, name: str, disk_name: str, cloud_init: str, disk_gib
         }],
         separators=(",", ":"),
     )
-    return [
+    command = [
         str(NEBIUS), "compute", "instance", "create",
         "--profile", PROFILE,
         "--format", "json",
@@ -62,8 +71,8 @@ def build_create_command(*, name: str, disk_name: str, cloud_init: str, disk_gib
         "--parent-id", PROJECT_ID,
         "--name", name,
         "--hostname", name,
-        "--resources-platform", PLATFORM,
-        "--resources-preset", PRESET,
+        "--resources-platform", platform,
+        "--resources-preset", preset,
         "--recovery-policy", "fail",
         "--reservation-policy-policy", "auto",
         "--boot-disk-attach-mode", "read_write",
@@ -74,6 +83,11 @@ def build_create_command(*, name: str, disk_name: str, cloud_init: str, disk_gib
         "--network-interfaces", network,
         "--cloud-init-user-data", cloud_init,
     ]
+    if preemptible:
+        command[command.index("--recovery-policy"):command.index("--recovery-policy")] = [
+            "--preemptible-on-preemption", "stop"
+        ]
+    return command
 
 
 def _walk(value: Any):

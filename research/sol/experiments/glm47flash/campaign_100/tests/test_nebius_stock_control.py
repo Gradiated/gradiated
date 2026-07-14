@@ -13,17 +13,36 @@ from stock_control import (  # noqa: E402
     ABSOLUTE_TIMEOUT_SECONDS,
     IMAGE,
     MAX_COMPUTE_COST_USD,
+    MODEL_REVISION,
     build_container_command,
     build_host_bootstrap,
+    build_model_transfer_command,
     fixed_sequence_pass,
     mtp_performance_gate,
     paired_non_regression_gate,
     validate_local_contracts,
     verify_internal_manifest,
 )
+from placement_control import build_create_command  # noqa: E402
 
 
 class NebiusStockControlTests(unittest.TestCase):
+    def test_create_command_supports_changed_l40s_preemptible_lineage(self):
+        command = build_create_command(
+            name="awq-v1",
+            disk_name="awq-v1-boot",
+            cloud_init="#cloud-config\n",
+            disk_gib=100,
+            platform="gpu-l40s-a",
+            preset="1gpu-16vcpu-64gb",
+            preemptible=True,
+        )
+        joined = " ".join(command)
+        self.assertIn("--resources-platform gpu-l40s-a", joined)
+        self.assertIn("--resources-preset 1gpu-16vcpu-64gb", joined)
+        self.assertIn("--preemptible-on-preemption stop", joined)
+        self.assertNotIn("preemptible-priority", joined)
+
     def test_diagnostic_admission_requires_artifact_and_fixed_sequence(self):
         arm = {"artifact_ok": True, "allocation_result": {"sequence_pass": True, "quality_pass": False}}
         self.assertTrue(fixed_sequence_pass(arm))
@@ -59,8 +78,9 @@ class NebiusStockControlTests(unittest.TestCase):
             IMAGE,
             "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
         )
-        self.assertEqual(ABSOLUTE_TIMEOUT_SECONDS, 9000)
-        self.assertAlmostEqual(MAX_COMPUTE_COST_USD, 7.375)
+        self.assertEqual(MODEL_REVISION, "33faccf4c2ba82142214d0d4e16232a4e9ccfe10")
+        self.assertEqual(ABSOLUTE_TIMEOUT_SECONDS, 5400)
+        self.assertAlmostEqual(MAX_COMPUTE_COST_USD, 5.775)
         self.assertLess(MAX_COMPUTE_COST_USD, 25)
 
     def test_bootstrap_configures_docker_gpu_runtime_and_records_versions(self):
@@ -83,8 +103,15 @@ class NebiusStockControlTests(unittest.TestCase):
         self.assertIn("WORKLOAD_ARCHIVE_PATH=/input/frozen-workloads.tar.gz", joined)
         self.assertIn("QUALITY_ARCHIVE_PATH=/input/frozen-quality.tar.gz", joined)
         self.assertIn("ARTIFACT_BUILDER_PATH=/input/artifact_builder.py", joined)
+        self.assertIn(f"MODEL_REVISION={MODEL_REVISION}", joined)
+        self.assertIn("MODEL_MANIFEST_PATH=/workspace/model-bf16/model-files.sha256", joined)
         self.assertIn(IMAGE, command)
         self.assertNotIn("RUNPOD_API_KEY", joined)
+
+    def test_model_transfer_changes_workspace_ownership_before_extract(self):
+        command = build_model_transfer_command()
+        self.assertIn("sudo install -d -o glmrunner -g glmrunner", command)
+        self.assertIn("tar -C /workspace/model-bf16 -xf -", command)
 
     def test_internal_manifest_verifier_accepts_exact_hashes_and_rejects_tamper(self):
         with tempfile.TemporaryDirectory() as directory:

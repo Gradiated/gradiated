@@ -28,7 +28,6 @@ sys.path.insert(0, str(PHASE_B))
 sys.path.insert(0, str(CAMPAIGN / "quality"))
 
 from placement_control import (  # noqa: E402
-    HOURLY_RATE_USD,
     SSH_USER,
     build_create_command,
     delete_disk,
@@ -51,7 +50,12 @@ from score_pair import score_pair  # noqa: E402
 
 
 IMAGE = "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af"
-ABSOLUTE_TIMEOUT_SECONDS = 9000
+MODEL_REVISION = "33faccf4c2ba82142214d0d4e16232a4e9ccfe10"
+MODEL_SHARD_COUNT = 48
+MODEL_WEIGHT_BYTES = 62_444_175_504
+HOURLY_RATE_USD = 3.85
+DISK_HOURLY_RATE_USD = 0.0243055
+ABSOLUTE_TIMEOUT_SECONDS = 5400
 MAX_COMPUTE_COST_USD = ABSOLUTE_TIMEOUT_SECONDS / 3600 * HOURLY_RATE_USD
 DISK_GIB = 250
 MTP_ARGS = [
@@ -135,6 +139,8 @@ def build_container_command(
         "-v", "/workspace:/workspace",
         "-e", f"EXPERIMENT_SPEC_SHA256={experiment_spec_sha256}",
         "-e", f"CAMPAIGN_DEADLINE_EPOCH={deadline_epoch}",
+        "-e", f"MODEL_REVISION={MODEL_REVISION}",
+        "-e", "MODEL_MANIFEST_PATH=/workspace/model-bf16/model-files.sha256",
         "-e", "WORKLOAD_ARCHIVE_PATH=/input/frozen-workloads.tar.gz",
         "-e", "QUALITY_ARCHIVE_PATH=/input/frozen-quality.tar.gz",
         "-e", "ARTIFACT_BUILDER_PATH=/input/artifact_builder.py",
@@ -212,6 +218,91 @@ def scp_from(ip: str, key: Path, source: str, destination: Path) -> None:
     result = subprocess.run(command, capture_output=True, text=True, timeout=300)
     if result.returncode:
         raise StockError(f"artifact retrieval failed: {source}")
+
+
+def validate_local_model(model_dir: Path) -> dict[str, Any]:
+    manifest_path = model_dir / "model-files-manifest.json"
+    checksum_path = model_dir / "model-files.sha256"
+    if not manifest_path.is_file() or not checksum_path.is_file():
+        raise StockError("local model lacks the verified manifest contract")
+    manifest = json.loads(manifest_path.read_text())
+    rows = manifest.get("files")
+    if manifest.get("revision") != MODEL_REVISION:
+        raise StockError("local model revision is not the first complete commit")
+    if manifest.get("shard_count") != MODEL_SHARD_COUNT or manifest.get("weight_bytes") != MODEL_WEIGHT_BYTES:
+        raise StockError("local model shard count or weight bytes are incomplete")
+    if not isinstance(rows, list) or len(rows) != MODEL_SHARD_COUNT:
+        raise StockError("local model manifest file list is invalid")
+    for row in rows:
+        path = model_dir / row["path"]
+        if not path.is_file() or path.stat().st_size != row["bytes"]:
+            raise StockError(f"local model file is missing or truncated: {row['path']}")
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(16 * 1024 * 1024), b""):
+                digest.update(chunk)
+        if digest.hexdigest() != row["sha256"]:
+            raise StockError(f"local model checksum mismatch: {row['path']}")
+    return {
+        "model_revision": MODEL_REVISION,
+        "model_shard_count": MODEL_SHARD_COUNT,
+        "model_weight_bytes": MODEL_WEIGHT_BYTES,
+        "model_manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+    }
+
+
+def build_model_transfer_command() -> str:
+    return (
+        "sudo rm -rf /workspace/model-bf16 && "
+        f"sudo install -d -o {SSH_USER} -g {SSH_USER} /workspace/model-bf16 && "
+        "tar -C /workspace/model-bf16 -xf -"
+    )
+
+
+def probe_model_transfer(ip: str, key: Path) -> str:
+    payload = "glm-complete-checkpoint-transfer-probe-v13\n"
+    expected = hashlib.sha256(payload.encode()).hexdigest()
+    command = (
+        f"sudo install -d -o {SSH_USER} -g {SSH_USER} /workspace/model-transfer-probe && "
+        "cat > /workspace/model-transfer-probe/payload && "
+        "sha256sum /workspace/model-transfer-probe/payload"
+    )
+    result = run_ssh(ip, key, command, timeout=30, input_text=payload)
+    if result.returncode or not result.stdout.startswith(expected):
+        raise StockError("tiny model transfer ownership probe failed")
+    return expected
+
+
+def transfer_local_model(ip: str, key: Path, model_dir: Path, *, timeout: int = 1800) -> None:
+    remote = build_model_transfer_command()
+    archive = subprocess.Popen(
+        ["tar", "-C", str(model_dir), "--exclude=.cache", "-cf", "-", "."],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if archive.stdout is None:
+        archive.kill()
+        raise StockError("local model archive stream did not open")
+    transport = subprocess.Popen(
+        [*ssh_base(ip, key), remote],
+        stdin=archive.stdout,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    archive.stdout.close()
+    try:
+        _, transport_stderr = transport.communicate(timeout=timeout)
+        archive_returncode = archive.wait(timeout=30)
+    except subprocess.TimeoutExpired:
+        transport.kill()
+        archive.kill()
+        transport.wait()
+        archive.wait()
+        raise StockError("local model transfer exceeded its timeout")
+    if transport.returncode or archive_returncode:
+        raise StockError(
+            f"local model transfer failed (tar={archive_returncode}, ssh={transport.returncode}, stderr_bytes={len(transport_stderr)})"
+        )
 
 
 def write_inputs(directory: Path) -> list[Path]:
@@ -340,12 +431,14 @@ def run_arm(
 
 def run(
     output_dir: Path, name: str, key: Path, public_key: Path, spec_hash: str,
-    *, diagnostic_mtp_after_fixed_slo: bool = False,
+    *, local_model_dir: Path, stock_only: bool = False,
+    diagnostic_mtp_after_fixed_slo: bool = False,
 ) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     if (output_dir / "summary.json").exists():
         raise StockError("output directory contains a completed run")
     contract_identities = validate_local_contracts()
+    model_identities = validate_local_model(local_model_dir)
     events = output_dir / "events.jsonl"
     started = time.time()
     deadline = started + ABSOLUTE_TIMEOUT_SECONDS
@@ -357,7 +450,10 @@ def run(
     initial_disks = list_items("disk")
     if initial_instances:
         raise StockError("stock control failed: active instances exist")
-    emit(events, "stock_control", instance_count=0, disk_count=len(initial_disks), **contract_identities)
+    emit(
+        events, "stock_control", instance_count=0, disk_count=len(initial_disks),
+        **contract_identities, **model_identities,
+    )
     (output_dir / "provider-request.json").write_text(json.dumps({
         "name": name,
         "platform": "gpu-h100-sxm",
@@ -367,9 +463,12 @@ def run(
         "boot_disk_gib": DISK_GIB,
         "container_image": IMAGE,
         "hourly_rate_usd_vendor_list": HOURLY_RATE_USD,
+        "disk_hourly_rate_usd_vendor_calculator": DISK_HOURLY_RATE_USD,
         "absolute_timeout_seconds": ABSOLUTE_TIMEOUT_SECONDS,
         "max_compute_cost_usd": MAX_COMPUTE_COST_USD,
         "diagnostic_mtp_after_fixed_slo": diagnostic_mtp_after_fixed_slo,
+        "stock_only": stock_only,
+        **model_identities,
     }, indent=2, sort_keys=True) + "\n")
     try:
         cloud_init = make_cloud_init(public_key.read_text())
@@ -411,6 +510,11 @@ def run(
                 raise StockError("remote input directory creation failed")
             scp_to(ip, key, inputs, "/home/glmrunner/input/")
         emit(events, "frozen_inputs_transferred")
+        transfer_probe_sha256 = probe_model_transfer(ip, key)
+        emit(events, "tiny_transfer_probe_passed", sha256=transfer_probe_sha256)
+        transfer_started = time.time()
+        transfer_local_model(ip, key, local_model_dir)
+        emit(events, "verified_local_model_transferred", elapsed_seconds=round(time.time() - transfer_started, 3))
 
         stock = run_arm(
             ip=ip, key=key, output_dir=output_dir, spec_hash=spec_hash,
@@ -419,8 +523,8 @@ def run(
         )
         arms.append(stock)
         emit(events, "stock_arm_complete", passed=stock["pass"], elapsed_seconds=stock["elapsed_seconds"])
-        mtp_admitted = stock["pass"] or (
-            diagnostic_mtp_after_fixed_slo and fixed_sequence_pass(stock)
+        mtp_admitted = not stock_only and (
+            stock["pass"] or (diagnostic_mtp_after_fixed_slo and fixed_sequence_pass(stock))
         )
         emit(events, "mtp_admission", admitted=mtp_admitted, diagnostic=diagnostic_mtp_after_fixed_slo)
         if mtp_admitted and time.time() < deadline - 1200:
@@ -491,14 +595,19 @@ def run(
             metadata_name(row) == disk_name for row in final_disks
         )
         elapsed = max(0.0, delete_requested - started)
+        compute_cost = elapsed / 3600 * HOURLY_RATE_USD
+        disk_cost = elapsed / 3600 * DISK_HOURLY_RATE_USD
         summary = {
             "outcome": outcome,
             "cleanup_pass": cleanup,
             "instance_id": instance_id,
             "allocation_seconds": round(elapsed, 3),
-            "cost_usd_derived": round(elapsed / 3600 * HOURLY_RATE_USD, 9),
-            "cost_basis": "measured elapsed exposure at vendor list rate; provider invoice pending",
+            "compute_cost_usd_derived": round(compute_cost, 9),
+            "disk_cost_usd_derived": round(disk_cost, 9),
+            "cost_usd_derived": round(compute_cost + disk_cost, 9),
+            "cost_basis": "measured elapsed exposure at authenticated Nebius calculator rates; public IPv4 and egress excluded; provider invoice pending",
             "diagnostic_mtp_after_fixed_slo": diagnostic_mtp_after_fixed_slo,
+            "stock_only": stock_only,
             "arms": arms,
             "final_instance_count": len(final_instances),
             "final_disk_count": len(final_disks),
@@ -506,7 +615,7 @@ def run(
         }
         (output_dir / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
         emit(events, "cleanup_verified", cleanup_pass=cleanup, instance_get_not_found=absent)
-    return 0 if cleanup and outcome in {"PASS", "DIAGNOSTIC_PASS"} else 1
+    return 0 if cleanup and outcome in {"PASS", "DIAGNOSTIC_PASS", "STOCK_ONLY_PASS"} else 1
 
 
 def main() -> int:
@@ -515,12 +624,16 @@ def main() -> int:
     parser.add_argument("--name", required=True)
     parser.add_argument("--ssh-key", type=Path, required=True)
     parser.add_argument("--ssh-public-key", type=Path, required=True)
+    parser.add_argument("--local-model-dir", type=Path, required=True)
     parser.add_argument("--experiment-spec-sha256", required=True)
+    parser.add_argument("--stock-only", action="store_true")
     parser.add_argument("--diagnostic-mtp-after-fixed-slo", action="store_true")
     args = parser.parse_args()
     return run(
         args.output_dir, args.name, args.ssh_key, args.ssh_public_key,
         args.experiment_spec_sha256,
+        local_model_dir=args.local_model_dir,
+        stock_only=args.stock_only,
         diagnostic_mtp_after_fixed_slo=args.diagnostic_mtp_after_fixed_slo,
     )
 

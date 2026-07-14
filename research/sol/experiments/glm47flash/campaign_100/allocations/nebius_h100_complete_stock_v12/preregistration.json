@@ -1,0 +1,154 @@
+{
+  "experiment_id": "nebius_h100_complete_stock_v12",
+  "preregistered_at_utc": "2026-07-14T06:24:02Z",
+  "issue": "https://github.com/joshsny/gradiated/issues/11",
+  "decision": "Re-establish the stock control with the first immutable complete GLM-4.7-Flash checkpoint before testing any optimization.",
+  "causal_hypothesis": {
+    "primary": "Adding the four weight shards absent from the previously pinned upstream commit is sufficient to produce a valid complete-checkpoint stock run, materially improve the frozen absolute quality screen, and retain the fixed 8K/1K service SLO on one H100.",
+    "expected_direction": "Quality improves substantially from the malformed 44-shard result; throughput remains in the same broad range because the runtime already instantiated and executed all configured layers.",
+    "falsification_value": "A complete, hash-verified checkpoint that still fails the frozen quality screen or cannot fit the same H100 rejects missing shards as a sufficient explanation and prevents quality-adjusted economic claims."
+  },
+  "stock_control": {
+    "historical_negative_control": "v9 used revision 75fce703a93da3705c4cf8d3caadbac1d1072c78, loaded only 44 of 48 shards, and is invalid for intended-model quality or economics.",
+    "configuration": "stock_no_cache_fcfs",
+    "runtime": "SGLang 0.5.15 CUDA 13 pinned image",
+    "context_length": 32768,
+    "chunked_prefill_size": 8192,
+    "max_running_requests": 32,
+    "schedule_policy": "fcfs",
+    "radix_cache": false,
+    "quality_policy": "chat_template_kwargs.enable_thinking=false",
+    "candidate_change_only": "model revision changes to the first complete upstream commit and model delivery changes to a locally verified stream; runtime, hardware, workload, seeds, serving policy, and gates remain fixed"
+  },
+  "model": {
+    "id": "zai-org/GLM-4.7-Flash",
+    "revision": "33faccf4c2ba82142214d0d4e16232a4e9ccfe10",
+    "source": "official Hugging Face repository",
+    "shard_count_required": 48,
+    "weight_bytes_required": 62444175504,
+    "local_manifest_sha256": "515b831798895e737cfee5943cb522db95cf71d48bb15dfb3f49a016cab9e101",
+    "local_checksum_list_sha256": "04cb9abcf890cde361d0eb6bf087d0aa8f61d7bdf86286934f466b92138a8904",
+    "delivery": "all files are staged on the coordinator, SHA-256 verified against the official blobs=true API, streamed to the VM before container launch, and rehashed inside the container",
+    "missing_in_prior_revision": [
+      "model-00015-of-00048.safetensors",
+      "model-00020-of-00048.safetensors",
+      "model-00027-of-00048.safetensors",
+      "model-00028-of-00048.safetensors"
+    ]
+  },
+  "workload_geometry": {
+    "fixed_8k_1k_c1": "4 measured requests at concurrency 1, exactly 8192 input and 1024 output tokens each, after one warmup",
+    "fixed_8k_1k_c8": "16 measured requests at concurrency 8, exactly 8192 input and 1024 output tokens each, after four warmups",
+    "quality": "unchanged complete 32K reasoning-off development capture and frozen self-score",
+    "profiler": "one 8192-input/128-output batch-one trace after the fixed sequence",
+    "agent_tool_call_itl": "excluded and unclaimable"
+  },
+  "quality_gate": {
+    "frozen": true,
+    "recalibration_after_observation": false,
+    "absolute": "all existing strict schema, formatting, task, and teacher-forced NLL thresholds must pass; NLL ceiling remains 2.0",
+    "claim_boundary": "A quality failure can still preserve diagnostic throughput evidence, but cannot support quality-adjusted cost or promotion."
+  },
+  "service_contract": {
+    "request_success_fraction_min": 0.99,
+    "p95_ttft_ms_max": 10000,
+    "p95_inter_token_latency_ms_max": 100,
+    "silent_truncation_allowed": false
+  },
+  "hardware": {
+    "provider": "Nebius",
+    "region": "eu-north1",
+    "gpu": "1x NVIDIA H100 SXM 80GB",
+    "platform": "gpu-h100-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "purchase_model": "regular_on_demand",
+    "boot_disk_gib": 250,
+    "image_family": "ubuntu24.04-cuda13.0"
+  },
+  "identities": {
+    "container": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+    "runtime_source_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "harness_sha256": "96a616c7a5cdefab8f5991c3a07d5c6d02755601a403736614955940f5b678a1",
+    "orchestrator_sha256": "b5a90e4e01ac839bf3818d96d2c914dee34e672726328542ba0d3e5e4b59a3db",
+    "workload_sha256": "f47c7af5e53483524010d06a93313b29f1a10c08f7df4bf18638349b4767193a",
+    "quality_sha256": "152548d51fba8e8ff5e8f1e665c5af166fb6d97cdf3010723042112855964668",
+    "tokenizer_bindings_sha256": "ccbe405b3abcef13f95dc7882f3ab21f8fa3443a97a340f9e8c4070682ecb14c"
+  },
+  "predictions": {
+    "complete_checkpoint_load": "passes within 900 seconds after local transfer",
+    "quality": "teacher-forced NLL falls materially below 7.7076; full absolute screen may still expose independent prompt or formatting defects",
+    "fixed_c8_output_tokens_per_second": "260 to 330",
+    "peak_vram": "higher than v9 by approximately the four added BF16 shards, but below 80GB",
+    "business": "no cost win is predicted or claimable from this corrective control"
+  },
+  "budget": {
+    "h100_full_vm_hourly_rate_usd_authenticated_calculator": 3.85,
+    "network_ssd_250gib_hourly_rate_usd_authenticated_calculator": 0.0243055,
+    "absolute_allocation_seconds": 5400,
+    "compute_cap_usd": 5.775,
+    "compute_plus_disk_cap_usd": 5.81145825,
+    "absolute_all_in_cap_usd": 6.25,
+    "nebius_campaign_cap_usd": 25.0,
+    "reconstructed_full_vm_plus_disk_spend_before_usd": 11.281,
+    "conservative_remaining_before_usd": 13.719,
+    "limitations": "Public IPv4 and egress are excluded; provider invoice is pending. The run must stop if the reconstructed cap would be exceeded."
+  },
+  "timeouts_seconds": {
+    "absolute_allocation": 5400,
+    "ssh_readiness": 600,
+    "container_bootstrap": 1800,
+    "verified_model_transfer": 1800,
+    "server_startup": 900,
+    "workload_profile_each": 1800
+  },
+  "telemetry": [
+    "GPU utilization",
+    "VRAM",
+    "power",
+    "temperature",
+    "clocks",
+    "TTFT",
+    "token-level ITL/TPOT",
+    "throughput",
+    "queueing",
+    "failures",
+    "profiler",
+    "startup/load",
+    "transfer time",
+    "allocation cost"
+  ],
+  "artifact_contract": {
+    "host": [
+      "preregistration and SHA-256",
+      "sanitized provider request",
+      "state and phase events",
+      "bootstrap and transfer timing",
+      "summary with full-VM and disk cost"
+    ],
+    "remote": [
+      "hash-matched evidence archive",
+      "internal manifest",
+      "complete model checksum verification",
+      "typed allocation result",
+      "profiles",
+      "quality",
+      "telemetry",
+      "server logs",
+      "profiler"
+    ],
+    "cleanup": "retrieve and hash evidence before deletion; verify instance GET not-found and zero experiment-named instances/disks"
+  },
+  "falsification_rules": {
+    "checkpoint": "Any shard-count, byte-count, or SHA-256 mismatch invalidates the run before model load.",
+    "compatibility": "A complete checkpoint OOM or deterministic load failure falsifies one-H100 deployability at this geometry.",
+    "quality": "Failure of the unchanged absolute screen rejects missing shards as a sufficient correction.",
+    "service": "Any fixed sequence SLO failure rejects the stock service point.",
+    "repeat": "Do not repeat an identical placement or delivery failure.",
+    "business": "Do not compare cost to Fireworks or Baseten without a valid complete-checkpoint quality pass and matched provider workload/SLO evidence."
+  },
+  "adaptive_admission": {
+    "stock_only": true,
+    "mtp": false,
+    "reason": "A valid complete-checkpoint control must exist before spending on speculative decoding or representation candidates."
+  }
+}

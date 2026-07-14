@@ -1,0 +1,129 @@
+{
+  "experiment_id": "nebius_l40s_awq_smoke_v14",
+  "preregistered_at_utc": "2026-07-14T07:25:03Z",
+  "issue": "https://github.com/joshsny/gradiated/issues/11",
+  "decision": "Falsify or establish full-checkpoint compatibility of the existing GLM-specific four-part AWQ loader patch on the cheapest viable Nebius GPU before spending on performance or quality measurement.",
+  "causal_hypothesis": {
+    "primary": "The audited SGLang patch correctly composes fused Q/KV-A compressed metadata, recognizes packed compressed projections, and canonically dequantizes compressed KV-B during MLA post-load, allowing the exact public GLM-4.7-Flash INT4 checkpoint to load and produce deterministic greedy output on one L40S.",
+    "stock_control": "The valid complete BF16 v13 H100 control loaded 48 shards, passed the fixed service SLO at 305.045 output tok/s c8, and failed the absolute quality screen; v14 is compatibility-only and cannot be compared economically until it passes.",
+    "expected_direction": "Full load and two exact-identical greedy responses pass; model VRAM is materially below complete BF16, establishing eligibility for a matched L40S performance/paired-quality run.",
+    "falsification_value": "A deterministic loader exception, OOM, metadata rejection, non-deterministic output, or preemptible service failure rejects this exact patch/device path or records an infrastructure interruption without silently promoting it."
+  },
+  "changed_lineage": {
+    "prior_gpu_evidence": "RunPod attempt 2 reached all four shards and exposed the dense-only compressed KV-B defect; attempt 3 timed out after one cold shard before reaching the four-part patch; attempt 4 was interrupted without a valid artifact.",
+    "candidate_change": "Exact checkpoint is locally hash-verified and streamed to Nebius; runtime receives the completed four-part patch; provider, GPU, host memory, artifact delivery, and timeout all change.",
+    "repeat_classification": "First GPU execution that can reach the completed four-part patch; not an unchanged failed placement."
+  },
+  "model": {
+    "id": "cyankiwi/GLM-4.7-Flash-AWQ-4bit",
+    "revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "source_classification": "public third-party quantized checkpoint",
+    "shard_count_required": 4,
+    "weight_bytes_required": 20170199928,
+    "local_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86",
+    "local_checksum_list_sha256": "a54799210429cdc73654afc09ba1415d00400061b956bb3e5cb55cf4fc314b58",
+    "delivery_gate": "all local file hashes before provider mutation; tiny write/hash probe; tar over SSH; all hashes rechecked inside the container before load"
+  },
+  "intervention": {
+    "classification": "MODEL_SPECIFIC_SOFTWARE plus public quantized representation",
+    "runtime_patch": "GLM fused packed-module mapping and quant init; 2-vector fused weight_shape composition; compressed packed-projection detection; canonical INT4 KV-B dequantization before MLA decomposition",
+    "shared_experts_fusion": false,
+    "cuda_graphs": false,
+    "radix_cache": false,
+    "reason_for_disabled_optimizations": "isolate loader correctness and deterministic execution before performance tuning"
+  },
+  "workload_geometry": {
+    "server_context_tokens": 4096,
+    "max_running_requests": 1,
+    "request": "two sequential identical temperature-0 chat completions asking for a small JSON object",
+    "max_output_tokens": 64,
+    "seed": 20260713,
+    "thinking": false,
+    "throughput_profile": "not executed in this allocation",
+    "profiler": "not executed until compatibility passes"
+  },
+  "quality_gate": {
+    "scope": "loader/semantic smoke only",
+    "required": "both HTTP requests succeed and normalized content/reasoning/tool-call structures are exactly identical",
+    "absolute_quality": "not evaluated; complete BF16 absolute failure is carried forward",
+    "paired_quality": "not evaluated until a matched workload performance run is admitted",
+    "claim_limit": "pass establishes compatibility and determinism only, never quality parity or cost improvement"
+  },
+  "service_contract": {
+    "public_ip_and_ssh_readiness_seconds_max": 600,
+    "server_health_seconds_max_after_container_start": 1800,
+    "request_success_fraction_min": 1.0,
+    "per_request_timeout_seconds": 300,
+    "queueing": "sequential concurrency one; server request-time stats retained",
+    "preemption": "a provider stop before evidence completion is an infrastructure failure, not model evidence"
+  },
+  "hardware": {
+    "provider": "Nebius",
+    "region": "eu-north1",
+    "gpu": "1x NVIDIA L40S 48GB",
+    "platform": "gpu-l40s-a",
+    "preset": "1gpu-16vcpu-64gb",
+    "purchase_model": "preemptible with on-preemption stop",
+    "live_capacity_before_run": "HIGH, 8 available of limit 8",
+    "boot_disk_gib": 100,
+    "image_family": "ubuntu24.04-cuda13.0"
+  },
+  "identities": {
+    "container": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+    "runtime_source_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "orchestrator_sha256": "e2f21fd1882ed43b86760ad4d45a03c060aa20cc796c8d02da7af4a967109f11",
+    "remote_harness_sha256": "ab3b1103ca430c8253e92e1aada302c812ee0262909e400cae838eb2798155b3",
+    "patcher_sha256": "541834f89efe8dfb0e4f24db84ade858d4932eeed259ede3f1c203e4834a3b00",
+    "placement_control_sha256": "990700e78cc251bae08d0abf26455bb7358937a9abe924cc722b7c246a1ea38f"
+  },
+  "predictions": {
+    "full_load": "pass, but uncertainty is high because the completed KV-B branch has never run on GPU",
+    "load_time_seconds_after_transfer": "180 to 900",
+    "loaded_vram_mib": "22000 to 42000",
+    "determinism": "pass",
+    "business": "no cost claim; a pass admits an L40S fixed-workload and paired-quality experiment whose preemptible $0.88/M threshold is approximately 271 output tok/s including disk"
+  },
+  "budget": {
+    "preemptible_vm_hourly_rate_usd": 0.8484,
+    "network_ssd_100gib_hourly_rate_usd": 0.0097222,
+    "absolute_allocation_seconds": 4500,
+    "compute_plus_disk_cap_usd": 1.07265275,
+    "absolute_all_in_cap_usd": 1.10,
+    "nebius_campaign_cap_usd": 25.0,
+    "reconstructed_spend_before_usd": 13.768880805,
+    "reconstructed_remaining_before_usd": 11.231119195,
+    "limitations": "public IPv4 and egress excluded; provider invoice pending"
+  },
+  "timeouts_seconds": {
+    "absolute_allocation": 4500,
+    "ssh_readiness": 600,
+    "container_bootstrap": 1800,
+    "tiny_transfer_probe": 30,
+    "verified_model_transfer": 900,
+    "server_startup": 1800,
+    "each_completion": 300
+  },
+  "telemetry": [
+    "GPU utilization",
+    "VRAM",
+    "power",
+    "temperature",
+    "clocks",
+    "startup and model-load phases",
+    "server request-time stats and failures",
+    "allocation exposure and total cost"
+  ],
+  "artifact_contract": {
+    "host": ["preregistration and SHA-256", "sanitized provider request", "events", "bootstrap logs", "typed summary and full-VM/disk cost"],
+    "remote": ["hash-matched archive", "internal manifest", "four-shard checksum verification", "runtime patch before/after hashes", "checkpoint metadata gate", "native runtime and GPU identity", "typed smoke result", "two raw responses", "determinism record", "telemetry", "server logs and metrics"],
+    "cleanup": "retrieve and hash evidence before deletion; verify instance GET not-found and zero experiment-named instances/disks"
+  },
+  "falsification_rules": {
+    "delivery": "Any local or remote hash/count/byte mismatch stops before load.",
+    "compatibility": "Any deterministic patch, metadata, load, OOM, or generation failure rejects this exact patch/device configuration.",
+    "service": "Any missing response or non-identical greedy response fails the smoke.",
+    "preemption": "Record as infrastructure failure and do not treat as loader evidence; do not repeat unchanged on preemptible if it preempts.",
+    "repeat": "Do not repeat an identical model/runtime/device failure.",
+    "business": "No speed, quality parity, dollar-per-token, or provider comparison is admitted from this smoke."
+  }
+}

@@ -135,9 +135,14 @@ class SimpleLabHarnessTests(unittest.TestCase):
             self.assertIn("$researcher", runner.calls[1]["prompt"])
             self.assertIn("$research-supervisor", runner.calls[-1]["prompt"])
             self.assertIn(
+                "The model-specific objective and intervention scope",
+                runner.calls[-1]["prompt"],
+            )
+            self.assertIn(
                 "decision-relevant research progress per wall-clock hour",
                 runner.calls[0]["prompt"],
             )
+            self.assertIn("latency tradeoffs as authoritative", runner.calls[0]["prompt"])
             self.assertIn(
                 "produce new decision-relevant evidence quickly",
                 runner.calls[1]["prompt"],
@@ -146,6 +151,7 @@ class SimpleLabHarnessTests(unittest.TestCase):
                 "Keep documentation to a short handoff",
                 runner.calls[1]["prompt"],
             )
+            self.assertIn("trade latency as allowed", runner.calls[1]["prompt"])
             self.assertTrue((config.lab_dir / "STATUS.md").is_file())
             self.assertTrue((config.lab_dir / "runtime" / "events.jsonl").is_file())
             self.assertTrue((config.lab_dir / "projects" / "kernel" / "RESEARCH_LOG.md").is_file())

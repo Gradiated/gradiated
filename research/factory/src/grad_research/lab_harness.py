@@ -307,7 +307,7 @@ class LabHarness:
 Lab: {self.config.lab_dir}
 Read `CAMPAIGN.md`, `STATUS.md`, `DIRECTOR_LOG.md`, `SUPERVISOR_LOG.md`, the project briefs and the useful recent parts of their research logs. Inspect current telemetry and experiment artifacts when they matter. Use your best judgment.
 
-Maximize decision-relevant research progress per wall-clock hour. Review the evidence, improve the portfolio, and delegate or update independent projects under `projects/`. Keep useful work parallel, redirect lines that are stuck, and keep the log to a short decision handoff. Do not execute the delegated projects yourself.
+Maximize decision-relevant research progress per wall-clock hour. Treat the campaign's economic target, workload, quality requirement, and latency tradeoffs as authoritative. Review the evidence, improve the portfolio, and delegate or update independent projects under `projects/`. Keep useful work parallel, redirect lines that are stuck, and keep the log to a short decision handoff. Do not execute the delegated projects yourself.
 
 Shared tools available to all agents:
 {self._tools_text()}
@@ -316,7 +316,7 @@ Shared tools available to all agents:
     def _researcher_prompt(self, project: Path) -> str:
         return f"""Use `$researcher` to continue the project at `{project}`.
 
-Read its `PROJECT.md`, `STATUS.json`, and only the useful recent parts of `RESEARCH_LOG.md`, plus relevant code, telemetry, and artifacts. Use your best judgment to produce new decision-relevant evidence quickly. Spend the turn on experiments, simulations, falsification, or a working intervention; treat setup and validation as means to that end. If the route is stuck, change strategy instead of circling. Keep documentation to a short handoff, update `STATUS.json`, and stay within scope.
+Read its `PROJECT.md`, `STATUS.json`, and only the useful recent parts of `RESEARCH_LOG.md`, plus the campaign's economic target and relevant code, telemetry, and artifacts. Use your best judgment to produce new decision-relevant evidence quickly. Respect the workload and quality requirements, but trade latency as allowed by `CAMPAIGN.md`. Spend the turn on experiments, simulations, falsification, or a working intervention; treat setup and validation as means to that end. If the route is stuck, change strategy instead of circling. Keep documentation to a short handoff, update `STATUS.json`, and stay within scope.
 
 Shared tools available to all agents:
 {self._tools_text()}
@@ -325,7 +325,7 @@ Shared tools available to all agents:
     def _supervisor_prompt(self) -> str:
         return f"""Use `$research-supervisor` to review and improve the research process at `{self.config.lab_dir}`.
 
-Read `CAMPAIGN.md`, `STATUS.md`, director and project logs, `runtime/events.jsonl`, recent agent traces, experiment timings, and GPU outcomes. Use your best judgment to find the real bottleneck to effective research. Make a small safe improvement to the skills, shared tools, or harness when warranted, and append the evidence and expected effect to `SUPERVISOR_LOG.md`. Do not take over the scientific portfolio or disrupt active experiments.
+Read `CAMPAIGN.md`, `STATUS.md`, director and project logs, `runtime/events.jsonl`, recent agent traces, experiment timings, and GPU outcomes. The model-specific objective and intervention scope in `CAMPAIGN.md` define research progress; generic activity and process cleanliness do not. Use your best judgment to find the real bottleneck to reaching that objective. Make a small safe improvement to the skills, shared tools, or harness when warranted, and append the evidence and expected effect to `SUPERVISOR_LOG.md`. Do not take over the scientific portfolio or disrupt active experiments.
 
 Shared tools:
 {self._tools_text()}

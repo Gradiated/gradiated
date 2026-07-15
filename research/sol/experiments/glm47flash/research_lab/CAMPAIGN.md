@@ -16,6 +16,8 @@ Use available GPU resources efficiently and explore independent opportunities in
 
 Researchers may use the already configured external provider credentials and the existing campaign budget authority. Every paid experiment still needs a bounded deadline and reliable cleanup through the provider tools it uses. Do not expose credentials in logs or repository files.
 
+Nebius is an experimental venue, not the production deployment assumption or the boundary of the opportunity search. Use current online evidence for this exact model—including reproducible serving benchmarks, runtime and quantization results, hardware specifications, provider catalogs, spot/preemptible markets, reserved capacity, and owned-hardware economics—to generate and rank candidates. Search across providers and hardware before spending, and refresh prices because marketplace availability and rates change. Treat online results as priors unless model, representation, runtime, workload, concurrency, quality, and cost scope match; use them to select cheap falsifiers and experiments, not as substitutes for our measured result. Rank production candidates by sustainable all-in dollars per output token, while choosing the safest convenient provider for experiments independently. A production provider's inaccessible catalog or control plane does not by itself kill the hardware or software candidate: benchmark the same mechanism wherever it is safely available (including Nebius), then separately verify that the proposed production placement and all-in rate are real before making the economic claim.
+
 ## Lab files
 
 - `DIRECTOR_LOG.md`: portfolio decisions from the Sol research director.

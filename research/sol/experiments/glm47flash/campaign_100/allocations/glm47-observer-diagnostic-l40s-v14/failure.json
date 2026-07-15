@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v14",
+  "failure_class": "operational_failure",
+  "stage": "nsys_launch_output_option_rejected_before_b1_server_start",
+  "message": "Provider readiness, exact Nsight Systems 2026.3.1.157 semantic capability preflight, tiny transfer, verified checkpoint transfer, excluded STOCK_STARTUP, and the A1 observer-off arm completed. A1 retained all eight raw request rows and scheduler events and passed its geometry and SLO gate, but it lacks the full quality and low-overhead host/GPU telemetry contract and cannot stand alone as scientific evidence. B1 then exited before server startup because nsys launch rejected the unsupported --output option; B1 and A2 produced no scored requests, so no observer bracket or scientific result exists. The controller skipped an unchanged retry, retained and hashed a 32-file partial archive, cleaned the instance and disk, verified direct instance not-found, and reconciled zero final instances and disks."
+}

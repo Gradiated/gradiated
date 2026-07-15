@@ -1,0 +1,6 @@
+{
+  "status": "complete",
+  "priority": 90,
+  "summary": "No scope-matched dense, MoE, or routing operation has a defensible conservative >=5% c8 ceiling; do not promote custom kernel work.",
+  "next_action": "Move capacity to serving mechanisms or representation/runtime controls. Do not spend on an observer repair, component kernel, or server A/B under this project."
+}

@@ -1,0 +1,347 @@
+Synchronizing state of docker.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install enable docker
+time="2026-07-15T05:46:02Z" level=info msg="Loading config from /etc/docker/daemon.json"
+time="2026-07-15T05:46:02Z" level=info msg="Wrote updated config to /etc/docker/daemon.json"
+time="2026-07-15T05:46:02Z" level=info msg="It is recommended that docker daemon be restarted."
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 293B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/vllm/vllm-openai:v0.15.0@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/2] FROM docker.io/vllm/vllm-openai:v0.15.0@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543
+#4 DONE 0.3s
+
+#5 [2/2] RUN python3 -m pip install --no-cache-dir --upgrade https://github.com/huggingface/transformers/archive/1618d44b9295361607ec74d7be860ba886aac039.tar.gz
+#5 0.421 Collecting https://github.com/huggingface/transformers/archive/1618d44b9295361607ec74d7be860ba886aac039.tar.gz
+#5 1.107   Downloading https://github.com/huggingface/transformers/archive/1618d44b9295361607ec74d7be860ba886aac039.tar.gz
+#5 3.417      | 18.6 MB 8.1 MB/s 0:00:02
+#5 5.042   Installing build dependencies: started
+#5 6.233   Installing build dependencies: finished with status 'done'
+#5 6.234   Getting requirements to build wheel: started
+#5 6.845   Getting requirements to build wheel: finished with status 'done'
+#5 6.846   Preparing metadata (pyproject.toml): started
+#5 7.329   Preparing metadata (pyproject.toml): finished with status 'done'
+#5 7.514 Collecting huggingface-hub<2.0,>=1.3.0 (from transformers==5.3.0.dev0)
+#5 7.593   Downloading huggingface_hub-1.23.0-py3-none-any.whl.metadata (14 kB)
+#5 7.611 Requirement already satisfied: numpy>=1.17 in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (2.2.6)
+#5 7.611 Requirement already satisfied: packaging>=20.0 in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (26.0)
+#5 7.612 Requirement already satisfied: pyyaml>=5.1 in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (6.0.3)
+#5 7.612 Requirement already satisfied: regex!=2019.12.17 in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (2026.1.15)
+#5 7.613 Requirement already satisfied: tokenizers<=0.23.0,>=0.22.0 in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (0.22.2)
+#5 7.613 Requirement already satisfied: typer in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (0.21.1)
+#5 7.613 Requirement already satisfied: safetensors>=0.4.3 in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (0.7.0)
+#5 7.613 Requirement already satisfied: tqdm>=4.27 in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (4.67.1)
+#5 7.627 Collecting click<9.0.0,>=8.4.2 (from huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0)
+#5 7.638   Downloading click-8.4.2-py3-none-any.whl.metadata (2.6 kB)
+#5 7.639 Requirement already satisfied: filelock>=3.10.0 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (3.20.3)
+#5 7.640 Requirement already satisfied: fsspec>=2023.5.0 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (2026.1.0)
+#5 7.667 Collecting hf-xet<2.0.0,>=1.5.1 (from huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0)
+#5 7.677   Downloading hf_xet-1.5.1-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (4.9 kB)
+#5 7.679 Requirement already satisfied: httpx<1,>=0.23.0 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (0.28.1)
+#5 7.680 Requirement already satisfied: typing-extensions>=4.1.0 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (4.15.0)
+#5 7.682 Requirement already satisfied: anyio in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (4.12.1)
+#5 7.682 Requirement already satisfied: certifi in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (2026.1.4)
+#5 7.683 Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (1.0.9)
+#5 7.683 Requirement already satisfied: idna in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (3.11)
+#5 7.685 Requirement already satisfied: h11>=0.16 in /usr/local/lib/python3.12/dist-packages (from httpcore==1.*->httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (0.16.0)
+#5 7.730 Requirement already satisfied: shellingham>=1.3.0 in /usr/local/lib/python3.12/dist-packages (from typer->transformers==5.3.0.dev0) (1.5.4)
+#5 7.731 Requirement already satisfied: rich>=10.11.0 in /usr/local/lib/python3.12/dist-packages (from typer->transformers==5.3.0.dev0) (14.3.1)
+#5 7.732 Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.12/dist-packages (from rich>=10.11.0->typer->transformers==5.3.0.dev0) (4.0.0)
+#5 7.733 Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.12/dist-packages (from rich>=10.11.0->typer->transformers==5.3.0.dev0) (2.19.2)
+#5 7.734 Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.12/dist-packages (from markdown-it-py>=2.2.0->rich>=10.11.0->typer->transformers==5.3.0.dev0) (0.1.2)
+#5 7.748 Downloading huggingface_hub-1.23.0-py3-none-any.whl (770 kB)
+#5 7.838    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 770.3/770.3 kB 10.1 MB/s  0:00:00
+#5 7.848 Downloading click-8.4.2-py3-none-any.whl (119 kB)
+#5 7.866 Downloading hf_xet-1.5.1-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.5 MB)
+#5 8.063    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 24.1 MB/s  0:00:00
+#5 8.076 Building wheels for collected packages: transformers
+#5 8.077   Building wheel for transformers (pyproject.toml): started
+#5 11.10   Building wheel for transformers (pyproject.toml): finished with status 'done'
+#5 11.12   Created wheel for transformers: filename=transformers-5.3.0.dev0-py3-none-any.whl size=11513733 sha256=4dd2474d95a5498843cda7ccad208b7dc630efeff2f196060ab649b8cf26ec35
+#5 11.12   Stored in directory: /tmp/pip-ephem-wheel-cache-ysc7qai9/wheels/a0/74/af/7986843ee4caa8dd20b7d8c5445fca82b340d02b978caab59d
+#5 11.13 Successfully built transformers
+#5 11.41 Installing collected packages: hf-xet, click, huggingface-hub, transformers
+#5 11.41   Attempting uninstall: hf-xet
+#5 11.42     Found existing installation: hf-xet 1.2.0
+#5 11.42     Uninstalling hf-xet-1.2.0:
+#5 11.44       Successfully uninstalled hf-xet-1.2.0
+#5 11.52   Attempting uninstall: click
+#5 11.52     Found existing installation: click 8.3.1
+#5 11.52     Uninstalling click-8.3.1:
+#5 11.53       Successfully uninstalled click-8.3.1
+#5 11.60   Attempting uninstall: huggingface-hub
+#5 11.60     Found existing installation: huggingface-hub 0.36.0
+#5 11.61     Uninstalling huggingface-hub-0.36.0:
+#5 11.65       Successfully uninstalled huggingface-hub-0.36.0
+#5 12.02   Attempting uninstall: transformers
+#5 12.03     Found existing installation: transformers 4.57.6
+#5 12.15     Uninstalling transformers-4.57.6:
+#5 12.92       Successfully uninstalled transformers-4.57.6
+#5 18.73 
+#5 18.74 ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+#5 18.74 vllm 0.15.0 requires transformers<5,>=4.56.0, but you have transformers 5.3.0.dev0 which is incompatible.
+#5 18.74 Successfully installed click-8.4.2 hf-xet-1.5.1 huggingface-hub-1.23.0 transformers-5.3.0.dev0
+#5 18.74 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#5 18.84 
+#5 18.84 [notice] A new release of pip is available: 25.3 -> 26.1.2
+#5 18.84 [notice] To update, run: python3 -m pip install --upgrade pip
+#5 DONE 20.5s
+
+#6 exporting to image
+#6 exporting layers
+#6 exporting layers 0.6s done
+#6 writing image sha256:35917bac7fd689e9230bfce4c9b365326886878f61f8d3873623e8a6c60d779e done
+#6 naming to docker.io/library/glm-vllm:0.15.0-transformers-1618d44 done
+#6 DONE 0.6s
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 842B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/glm-vllm:0.15.0-transformers-1618d44
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/2] FROM docker.io/library/glm-vllm:0.15.0-transformers-1618d44
+#4 DONE 0.0s
+
+#5 [2/2] RUN set -eux;     apt-get update;     apt-get install -y --no-install-recommends curl ca-certificates gnupg;     curl -fsSL 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xF60F4B3D7FA2AF80' -o /tmp/nvidia-devtools.asc;     gpg --show-keys --with-colons /tmp/nvidia-devtools.asc | grep -F 'fpr:::::::::AE09FE4BBD223A84B2CCFCE3F60F4B3D7FA2AF80:';     gpg --dearmor -o /usr/share/keyrings/nvidia-devtools.gpg /tmp/nvidia-devtools.asc;     echo 'deb [signed-by=/usr/share/keyrings/nvidia-devtools.gpg] https://developer.download.nvidia.com/devtools/repos/ubuntu2204/amd64/ /' > /etc/apt/sources.list.d/nvidia-devtools.list;     apt-get update;     apt-get install -y --no-install-recommends nsight-systems-cli=2026.3.1.157;     rm -rf /var/lib/apt/lists/*
+#5 0.055 + apt-get update
+#5 0.109 Get:1 http://security.ubuntu.com/ubuntu jammy-security InRelease [129 kB]
+#5 0.176 Get:2 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64  InRelease [1581 B]
+#5 0.229 Get:3 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 Packages [77.8 kB]
+#5 0.246 Get:4 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [4089 kB]
+#5 0.272 Get:5 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64  Packages [2820 kB]
+#5 0.296 Get:6 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 Packages [7332 kB]
+#5 0.304 Get:7 http://archive.ubuntu.com/ubuntu jammy InRelease [270 kB]
+#5 0.324 Get:8 https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy InRelease [18.1 kB]
+#5 0.327 Get:9 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [1312 kB]
+#5 0.475 Get:10 https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy/main amd64 Packages [38.6 kB]
+#5 0.908 Get:11 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [128 kB]
+#5 1.052 Get:12 http://archive.ubuntu.com/ubuntu jammy-backports InRelease [127 kB]
+#5 1.196 Get:13 http://archive.ubuntu.com/ubuntu jammy/main amd64 Packages [1792 kB]
+#5 1.525 Get:14 http://archive.ubuntu.com/ubuntu jammy/universe amd64 Packages [17.5 MB]
+#5 2.055 Get:15 http://archive.ubuntu.com/ubuntu jammy/restricted amd64 Packages [164 kB]
+#5 2.055 Get:16 http://archive.ubuntu.com/ubuntu jammy/multiverse amd64 Packages [266 kB]
+#5 2.059 Get:17 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 Packages [4426 kB]
+#5 2.173 Get:18 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 Packages [86.4 kB]
+#5 2.178 Get:19 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 Packages [7619 kB]
+#5 2.380 Get:20 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 Packages [1615 kB]
+#5 2.435 Get:21 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 Packages [82.8 kB]
+#5 2.436 Get:22 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 Packages [35.6 kB]
+#5 3.186 Fetched 49.9 MB in 3s (16.1 MB/s)
+#5 3.186 Reading package lists...
+#5 4.258 + apt-get install -y --no-install-recommends curl ca-certificates gnupg
+#5 4.294 Reading package lists...
+#5 5.356 Building dependency tree...
+#5 5.567 Reading state information...
+#5 5.733 The following additional packages will be installed:
+#5 5.733   dirmngr gnupg-l10n gnupg-utils gpg gpg-agent gpg-wks-client gpg-wks-server
+#5 5.734   gpgconf gpgsm gpgv libcurl4
+#5 5.735 Suggested packages:
+#5 5.735   dbus-user-session pinentry-gnome3 tor parcimonie xloadimage scdaemon
+#5 5.771 The following packages will be upgraded:
+#5 5.771   ca-certificates curl dirmngr gnupg gnupg-l10n gnupg-utils gpg gpg-agent
+#5 5.772   gpg-wks-client gpg-wks-server gpgconf gpgsm gpgv libcurl4
+#5 5.998 14 upgraded, 0 newly installed, 0 to remove and 120 not upgraded.
+#5 5.998 Need to get 2873 kB of archives.
+#5 5.998 After this operation, 53.2 kB disk space will be freed.
+#5 5.998 Get:1 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gpg-wks-client amd64 2.2.27-3ubuntu2.5 [62.7 kB]
+#5 6.360 Get:2 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 dirmngr amd64 2.2.27-3ubuntu2.5 [293 kB]
+#5 6.627 Get:3 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gpg-wks-server amd64 2.2.27-3ubuntu2.5 [57.6 kB]
+#5 6.654 Get:4 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gnupg-utils amd64 2.2.27-3ubuntu2.5 [309 kB]
+#5 6.749 Get:5 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gpg-agent amd64 2.2.27-3ubuntu2.5 [209 kB]
+#5 6.788 Get:6 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gpg amd64 2.2.27-3ubuntu2.5 [519 kB]
+#5 6.859 Get:7 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gpgconf amd64 2.2.27-3ubuntu2.5 [94.3 kB]
+#5 6.869 Get:8 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gnupg-l10n all 2.2.27-3ubuntu2.5 [54.5 kB]
+#5 6.874 Get:9 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gnupg all 2.2.27-3ubuntu2.5 [315 kB]
+#5 6.901 Get:10 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gpgsm amd64 2.2.27-3ubuntu2.5 [197 kB]
+#5 6.916 Get:11 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gpgv amd64 2.2.27-3ubuntu2.5 [137 kB]
+#5 6.925 Get:12 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 ca-certificates all 20260601~22.04.1 [141 kB]
+#5 6.935 Get:13 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 curl amd64 7.81.0-1ubuntu1.25 [194 kB]
+#5 6.949 Get:14 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libcurl4 amd64 7.81.0-1ubuntu1.25 [291 kB]
+#5 7.092 debconf: delaying package configuration, since apt-utils is not installed
+#5 7.118 Fetched 2873 kB in 1s (2419 kB/s)
+#5 7.140 (Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 23667 files and directories currently installed.)
+#5 7.153 Preparing to unpack .../00-gpg-wks-client_2.2.27-3ubuntu2.5_amd64.deb ...
+#5 7.162 Unpacking gpg-wks-client (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.4) ...
+#5 7.214 Preparing to unpack .../01-dirmngr_2.2.27-3ubuntu2.5_amd64.deb ...
+#5 7.248 Unpacking dirmngr (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.4) ...
+#5 7.307 Preparing to unpack .../02-gpg-wks-server_2.2.27-3ubuntu2.5_amd64.deb ...
+#5 7.315 Unpacking gpg-wks-server (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.4) ...
+#5 7.349 Preparing to unpack .../03-gnupg-utils_2.2.27-3ubuntu2.5_amd64.deb ...
+#5 7.357 Unpacking gnupg-utils (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.4) ...
+#5 7.417 Preparing to unpack .../04-gpg-agent_2.2.27-3ubuntu2.5_amd64.deb ...
+#5 7.424 Unpacking gpg-agent (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.4) ...
+#5 7.483 Preparing to unpack .../05-gpg_2.2.27-3ubuntu2.5_amd64.deb ...
+#5 7.490 Unpacking gpg (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.4) ...
+#5 7.532 Preparing to unpack .../06-gpgconf_2.2.27-3ubuntu2.5_amd64.deb ...
+#5 7.544 Unpacking gpgconf (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.4) ...
+#5 7.585 Preparing to unpack .../07-gnupg-l10n_2.2.27-3ubuntu2.5_all.deb ...
+#5 7.591 Unpacking gnupg-l10n (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.4) ...
+#5 7.669 Preparing to unpack .../08-gnupg_2.2.27-3ubuntu2.5_all.deb ...
+#5 7.677 Unpacking gnupg (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.4) ...
+#5 7.717 Preparing to unpack .../09-gpgsm_2.2.27-3ubuntu2.5_amd64.deb ...
+#5 7.724 Unpacking gpgsm (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.4) ...
+#5 7.755 Preparing to unpack .../10-gpgv_2.2.27-3ubuntu2.5_amd64.deb ...
+#5 7.761 Unpacking gpgv (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.4) ...
+#5 7.804 Setting up gpgv (2.2.27-3ubuntu2.5) ...
+#5 7.839 (Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 23667 files and directories currently installed.)
+#5 7.850 Preparing to unpack .../ca-certificates_20260601~22.04.1_all.deb ...
+#5 7.856 Unpacking ca-certificates (20260601~22.04.1) over (20240203~22.04.1) ...
+#5 8.094 Preparing to unpack .../curl_7.81.0-1ubuntu1.25_amd64.deb ...
+#5 8.100 Unpacking curl (7.81.0-1ubuntu1.25) over (7.81.0-1ubuntu1.21) ...
+#5 8.140 Preparing to unpack .../libcurl4_7.81.0-1ubuntu1.25_amd64.deb ...
+#5 8.150 Unpacking libcurl4:amd64 (7.81.0-1ubuntu1.25) over (7.81.0-1ubuntu1.21) ...
+#5 8.199 Setting up ca-certificates (20260601~22.04.1) ...
+#5 9.362 Updating certificates in /etc/ssl/certs...
+#5 10.03 rehash: warning: skipping ca-certificates.crt,it does not contain exactly one certificate or CRL
+#5 10.06 14 added, 39 removed; done.
+#5 10.08 Setting up gnupg-l10n (2.2.27-3ubuntu2.5) ...
+#5 10.09 Setting up gpgconf (2.2.27-3ubuntu2.5) ...
+#5 10.10 Setting up libcurl4:amd64 (7.81.0-1ubuntu1.25) ...
+#5 10.11 Setting up curl (7.81.0-1ubuntu1.25) ...
+#5 10.12 Setting up gpg (2.2.27-3ubuntu2.5) ...
+#5 10.13 Setting up gnupg-utils (2.2.27-3ubuntu2.5) ...
+#5 10.13 Setting up gpg-agent (2.2.27-3ubuntu2.5) ...
+#5 10.53 Setting up gpgsm (2.2.27-3ubuntu2.5) ...
+#5 10.54 Setting up dirmngr (2.2.27-3ubuntu2.5) ...
+#5 10.66 Setting up gpg-wks-server (2.2.27-3ubuntu2.5) ...
+#5 10.68 Setting up gpg-wks-client (2.2.27-3ubuntu2.5) ...
+#5 10.69 Setting up gnupg (2.2.27-3ubuntu2.5) ...
+#5 10.70 Processing triggers for libc-bin (2.35-0ubuntu3.10) ...
+#5 10.73 Processing triggers for ca-certificates (20260601~22.04.1) ...
+#5 10.73 Updating certificates in /etc/ssl/certs...
+#5 11.14 0 added, 0 removed; done.
+#5 11.14 Running hooks in /etc/ca-certificates/update.d...
+#5 11.14 done.
+#5 11.17 + curl -fsSL https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xF60F4B3D7FA2AF80 -o /tmp/nvidia-devtools.asc
+#5 11.34 + gpg --show-keys --with-colons /tmp/nvidia-devtools.asc
+#5 11.34 + grep -F fpr:::::::::AE09FE4BBD223A84B2CCFCE3F60F4B3D7FA2AF80:
+#5 11.35 gpg: directory '/root/.gnupg' created
+#5 11.35 gpg: keybox '/root/.gnupg/pubring.kbx' created
+#5 11.35 gpg: /root/.gnupg/trustdb.gpg: trustdb created
+#5 11.35 fpr:::::::::AE09FE4BBD223A84B2CCFCE3F60F4B3D7FA2AF80:
+#5 11.35 + gpg --dearmor -o /usr/share/keyrings/nvidia-devtools.gpg /tmp/nvidia-devtools.asc
+#5 11.35 + echo deb [signed-by=/usr/share/keyrings/nvidia-devtools.gpg] https://developer.download.nvidia.com/devtools/repos/ubuntu2204/amd64/ /
+#5 11.35 + apt-get update
+#5 11.46 Hit:1 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64  InRelease
+#5 11.48 Hit:2 http://archive.ubuntu.com/ubuntu jammy InRelease
+#5 11.52 Hit:3 http://archive.ubuntu.com/ubuntu jammy-updates InRelease
+#5 11.54 Hit:4 http://security.ubuntu.com/ubuntu jammy-security InRelease
+#5 11.55 Hit:5 http://archive.ubuntu.com/ubuntu jammy-backports InRelease
+#5 11.63 Hit:6 https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy InRelease
+#5 12.07 Get:7 https://developer.download.nvidia.com/devtools/repos/ubuntu2204/amd64  InRelease [1379 B]
+#5 13.32 Get:8 https://developer.download.nvidia.com/devtools/repos/ubuntu2204/amd64  Packages [21.2 kB]
+#5 13.33 Fetched 22.6 kB in 2s (11.7 kB/s)
+#5 13.33 Reading package lists...
+#5 14.39 + apt-get install -y --no-install-recommends nsight-systems-cli=2026.3.1.157
+#5 14.43 Reading package lists...
+#5 15.49 Building dependency tree...
+#5 15.69 Reading state information...
+#5 15.86 The following additional packages will be installed:
+#5 15.86   nsight-systems-cli-2026.3.1
+#5 15.88 The following NEW packages will be installed:
+#5 15.88   nsight-systems-cli nsight-systems-cli-2026.3.1
+#5 16.62 0 upgraded, 2 newly installed, 0 to remove and 120 not upgraded.
+#5 16.62 Need to get 215 MB of archives.
+#5 16.62 After this operation, 0 B of additional disk space will be used.
+#5 16.62 Get:1 https://developer.download.nvidia.com/devtools/repos/ubuntu2204/amd64  nsight-systems-cli-2026.3.1 2026.3.1.157-263138048394v0 [215 MB]
+#5 21.00 Get:2 https://developer.download.nvidia.com/devtools/repos/ubuntu2204/amd64  nsight-systems-cli 2026.3.1.157 [2026 B]
+#5 21.11 debconf: delaying package configuration, since apt-utils is not installed
+#5 21.14 Fetched 215 MB in 5s (42.1 MB/s)
+#5 21.16 Selecting previously unselected package nsight-systems-cli-2026.3.1.
+#5 21.16 (Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 23642 files and directories currently installed.)
+#5 21.17 Preparing to unpack .../nsight-systems-cli-2026.3.1_2026.3.1.157-263138048394v0_amd64.deb ...
+#5 21.18 Unpacking nsight-systems-cli-2026.3.1 (2026.3.1.157-263138048394v0) ...
+#5 24.52 Selecting previously unselected package nsight-systems-cli.
+#5 24.52 Preparing to unpack .../nsight-systems-cli_2026.3.1.157_amd64.deb ...
+#5 24.52 Unpacking nsight-systems-cli (2026.3.1.157) ...
+#5 24.55 Setting up nsight-systems-cli-2026.3.1 (2026.3.1.157-263138048394v0) ...
+#5 24.56 update-alternatives: using /opt/nvidia/nsight-systems-cli/2026.3.1/target-linux-x64/nsys to provide /usr/local/bin/nsys (nsys) in auto mode
+#5 24.57 Setting up nsight-systems-cli (2026.3.1.157) ...
+#5 24.62 + rm -rf /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy-backports_InRelease /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy-backports_main_binary-amd64_Packages.lz4 /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy-backports_universe_binary-amd64_Packages.lz4 /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy-updates_InRelease /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy-updates_main_binary-amd64_Packages.lz4 /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy-updates_multiverse_binary-amd64_Packages.lz4 /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy-updates_restricted_binary-amd64_Packages.lz4 /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy-updates_universe_binary-amd64_Packages.lz4 /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy_InRelease /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy_main_binary-amd64_Packages.lz4 /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy_multiverse_binary-amd64_Packages.lz4 /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy_restricted_binary-amd64_Packages.lz4 /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy_universe_binary-amd64_Packages.lz4 /var/lib/apt/lists/auxfiles /var/lib/apt/lists/developer.download.nvidia.com_compute_cuda_repos_ubuntu2204_x86%5f64_InRelease /var/lib/apt/lists/developer.download.nvidia.com_compute_cuda_repos_ubuntu2204_x86%5f64_Packages.lz4 /var/lib/apt/lists/developer.download.nvidia.com_devtools_repos_ubuntu2204_amd64_InRelease /var/lib/apt/lists/developer.download.nvidia.com_devtools_repos_ubuntu2204_amd64_Packages.lz4 /var/lib/apt/lists/lock /var/lib/apt/lists/partial /var/lib/apt/lists/ppa.launchpadcontent.net_deadsnakes_ppa_ubuntu_dists_jammy_InRelease /var/lib/apt/lists/ppa.launchpadcontent.net_deadsnakes_ppa_ubuntu_dists_jammy_main_binary-amd64_Packages.lz4 /var/lib/apt/lists/security.ubuntu.com_ubuntu_dists_jammy-security_InRelease /var/lib/apt/lists/security.ubuntu.com_ubuntu_dists_jammy-security_main_binary-amd64_Packages.lz4 /var/lib/apt/lists/security.ubuntu.com_ubuntu_dists_jammy-security_multiverse_binary-amd64_Packages.lz4 /var/lib/apt/lists/security.ubuntu.com_ubuntu_dists_jammy-security_restricted_binary-amd64_Packages.lz4 /var/lib/apt/lists/security.ubuntu.com_ubuntu_dists_jammy-security_universe_binary-amd64_Packages.lz4
+#5 DONE 33.7s
+
+#6 exporting to image
+#6 exporting layers
+#6 exporting layers 1.2s done
+#6 writing image sha256:144319557b92c538ab1013a1f78bceaa0f00cef287958783c373747dced28742 done
+#6 naming to docker.io/library/glm-vllm:0.15.0-transformers-1618d44 done
+#6 DONE 1.2s
+bash: line 33: session: unbound variable

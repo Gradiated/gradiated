@@ -1,0 +1,125 @@
+== python compilation ==
+== focused observer tests ==
+..........F....................
+======================================================================
+FAIL: test_nsys_help_fail_closed_controls (tests.test_observer_diagnostic_control.ObserverDiagnosticControlTests.test_nsys_help_fail_closed_controls) (name='version_drift')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/root/workspace/research/sol/experiments/glm47flash/campaign_100/tests/test_observer_diagnostic_control.py", line 85, in test_nsys_help_fail_closed_controls
+    with self.assertRaises(observer_control.ObserverDiagnosticError):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ObserverDiagnosticError not raised
+
+----------------------------------------------------------------------
+Ran 31 tests in 0.061s
+
+FAILED (failures=1)
+== focused preparation tests ==
+E
+======================================================================
+ERROR: test_prepare_observer_paid_run (unittest.loader._FailedTest.test_prepare_observer_paid_run)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_prepare_observer_paid_run
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/unittest/loader.py", line 137, in loadTestsFromName
+    module = __import__(module_name)
+  File "/root/workspace/research/sol/experiments/glm47flash/campaign_100/tests/test_prepare_observer_paid_run.py", line 11, in <module>
+    from grad_research.admission import PREFLIGHT_BINDINGS, PREFLIGHT_CHECKS, validate_paid_run
+ModuleNotFoundError: No module named 'grad_research'
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (errors=1)
+== full campaign unittest suite ==
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/usr/lib/python3.13/unittest/__main__.py", line 18, in <module>
+    main(module=None)
+    ~~~~^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/unittest/main.py", line 103, in __init__
+    self.parseArgs(argv)
+    ~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/unittest/main.py", line 119, in parseArgs
+    self._do_discovery(argv[2:])
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/usr/lib/python3.13/unittest/main.py", line 242, in _do_discovery
+    self.createTests(from_discovery=True, Loader=Loader)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/unittest/main.py", line 149, in createTests
+    self.test = loader.discover(self.start, self.pattern, self.top)
+                ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/unittest/loader.py", line 308, in discover
+    raise ImportError('Start directory is not importable: %r' % start_dir)
+ImportError: Start directory is not importable: '/root/workspace/research/sol/experiments/glm47flash/campaign_100/tests'
+== factory validation tests ==
+...............................F...........F......................
+======================================================================
+FAIL: test_key_glm_outcomes_and_final_resume_state_are_normalized (test_legacy_and_demo.LegacyAndDemoTests.test_key_glm_outcomes_and_final_resume_state_are_normalized)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/root/workspace/research/factory/tests/test_legacy_and_demo.py", line 67, in test_key_glm_outcomes_and_final_resume_state_are_normalized
+    self.assertEqual("SPLIT8_STOP_DENSE_RESIDUAL_AND_QUALITY_CALIBRATION_NEXT", state["legacy"]["phase"])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'SPLIT8_STOP_DENSE_RESIDUAL_AND_QUALITY_CALIBRATION_NEXT' != 'OBSERVER_V37_B1_NSYS_LAUNCH_OPERATIONAL_FAILURE_CLEANED_SETTLED'
+- SPLIT8_STOP_DENSE_RESIDUAL_AND_QUALITY_CALIBRATION_NEXT
++ OBSERVER_V37_B1_NSYS_LAUNCH_OPERATIONAL_FAILURE_CLEANED_SETTLED
+
+
+======================================================================
+FAIL: test_bootstrap_follows_final_dense_residual_and_is_idempotent (test_sol_glm47.SolGlm47BootstrapTests.test_bootstrap_follows_final_dense_residual_and_is_idempotent)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/root/workspace/research/factory/tests/test_sol_glm47.py", line 24, in test_bootstrap_follows_final_dense_residual_and_is_idempotent
+    self.assertIn("Calibrate", state["next_action"])
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'Calibrate' not found in 'In the next bounded cycle only, resume with owner supervisor-glm47 and reconcile provider state, then prepare a new immutable identity that removes the unsupported nsys launch --force-overwrite=true option and adds an exact-version pre-transfer nsys launch --help capability fixture/gate. Preserve the verified startup isolation, A1/B1/A2 science geometry, existing budget authority, paid deadline, partial-evidence contract, and cleanup policy.'
+
+----------------------------------------------------------------------
+Ran 66 tests in 0.435s
+
+FAILED (failures=2)
+== devex check ==
+validated 4 repo-local skills
+repo: /root/workspace
+python: /usr/bin/python3
+
+Commands:
+  git      ok (/usr/bin/git)
+  docker   ok (/usr/bin/docker)
+  uv       ok (/root/.local/bin/uv)
+  cargo    ok (/root/.cargo/bin/cargo)
+  rustc    ok (/root/.cargo/bin/rustc)
+  gh       ok (/usr/bin/gh)
+  node     ok (/usr/bin/node)
+
+Python modules:
+  playwright       ok (tools/browser)
+  browser_use      ok (tools/browser)
+  pytest           ok (tools/browser)
+
+Repo paths:
+  AGENTS.md                        present
+  README.md                        present
+  docs/CONTEXT_INDEX.md            present
+  docs/ARCHITECTURE.md             present
+  docs/decisions                   present
+  research/README.md               present
+  .agents/skills                   present
+  tasks                            present
+  tasks/inbox                      present
+  tasks/active                     present
+  tasks/done                       present
+  Makefile                         present
+  tools/devex/context.py           present
+  tools/devex/claim.py             present
+  tools/devex/start.py             present
+  tools/browser/pyproject.toml     present
+  tools/github/agent.py            present
+  research/sol                     present
+  research/fable                   present
+
+Credential variables present (values hidden):
+  GH_TOKEN, OPENAI_API_KEY, RUNPOD_API_KEY

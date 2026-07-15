@@ -1,0 +1,22 @@
+{
+  "combined_hourly_rate_usd": 0.8581222000000001,
+  "controller_pid": 871272,
+  "derived_cost_usd": 0.025058393,
+  "direct_resource_absent": true,
+  "disk_name": "glm47-durable-instance-9efb3c701a-boot",
+  "error": null,
+  "exposure_seconds": 105.125,
+  "final_disk_count": 0,
+  "final_instance_count": 0,
+  "finished_at_epoch": 1784105635.5780861,
+  "identity_sha256": "9efb3c701a1b5faff98b3080783f009b8115af4e82b8fcc5589cc6134b003e6d",
+  "instance_id": "computeinstance-e00zta08fshfbtq30q",
+  "inventory_absent": true,
+  "kind": "nebius_instance_boot_disk_lifecycle_canary",
+  "name": "glm47-durable-instance-9efb3c701a",
+  "observed_direct": true,
+  "observed_inventory": true,
+  "pass": true,
+  "schema_version": 1,
+  "started_at_epoch": 1784105530.4529574
+}

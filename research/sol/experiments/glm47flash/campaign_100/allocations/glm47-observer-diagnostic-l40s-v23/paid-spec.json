@@ -1,0 +1,514 @@
+{
+  "arm_role": "diagnostic",
+  "artifact_contract": {
+    "hash_manifest": true,
+    "required": [
+      {
+        "media_type": "application/json",
+        "path": "cost.json",
+        "role": "cost"
+      },
+      {
+        "media_type": "application/zstd",
+        "path": "deep-trace.tar.zst",
+        "role": "deep_trace"
+      },
+      {
+        "media_type": "application/x-ndjson",
+        "path": "events.jsonl",
+        "role": "events"
+      },
+      {
+        "media_type": "application/json",
+        "path": "identities.json",
+        "role": "identities"
+      },
+      {
+        "media_type": "application/zstd",
+        "path": "logs.tar.zst",
+        "role": "logs"
+      },
+      {
+        "media_type": "application/json",
+        "path": "measurement.json",
+        "role": "measurement_summary"
+      },
+      {
+        "media_type": "application/json",
+        "path": "quality-and-correctness.json",
+        "role": "quality"
+      },
+      {
+        "media_type": "application/x-ndjson",
+        "path": "system-samples.jsonl",
+        "role": "system_samples"
+      },
+      {
+        "media_type": "application/json",
+        "path": "telemetry.json",
+        "role": "telemetry_summary"
+      }
+    ],
+    "root": "runs/glm47-observer-diagnostic-l40s-v23"
+  },
+  "baseline_id": "glm47-l40s-vllm-awq-split4-v28",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "budget": {
+    "cleanup_reserve_usd": 0.07,
+    "hourly_rate_usd": 0.8581222,
+    "max_spend_usd": 0.55,
+    "timeout_seconds": 2000
+  },
+  "campaign_id": "glm47-nebius-25",
+  "candidate_id": "glm47-stock-observer-on",
+  "candidate_identity_overrides": {
+    "configuration_sha256": "2a2fdee8efb53521a00a1d69b919085ed9b015f2ea997da3a3607c486ca463d4",
+    "harness_sha256": "532bc7a3bafdfe2d8eabbab46a79c794fe23caea35f3ecacf22e1cebbbd525a0"
+  },
+  "changed_identity_fields": [
+    "configuration_sha256",
+    "harness_sha256"
+  ],
+  "changed_variable": "observer state and its harness/configuration identity only",
+  "claim_scope": {
+    "claim": "diagnostic localization only; no quality, economics, provider, or candidate-performance claim",
+    "hardware": "Nebius L40S 48GB; gpu-l40s-a; 1gpu-16vcpu-64gb",
+    "model": "GLM-4.7-Flash revision ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "workload": "A1 observer-off / B1 observer-on / A2 observer-off; 8 requests; c8; 8192 input + 32 output tokens"
+  },
+  "cleanup": {
+    "delete_attached_storage": true,
+    "delete_compute": true,
+    "verify_get_not_found": true,
+    "verify_inventory_absent": true
+  },
+  "control_id": "glm47-stock-observer-off",
+  "fidelity": "matched_server",
+  "gates": {
+    "correctness": {
+      "policy_sha256": "79e9a05c971ef3ecb4e719a28e4c529a00d9600f5ab69576554491ca5d51b94a",
+      "required": true
+    },
+    "quality": {
+      "policy_sha256": "99effb41fdab608ce8d7861109d7f89291f012a8cfad951cd6f43156aa3a28ce",
+      "required": true
+    },
+    "slo": {
+      "policy_sha256": "c9654a1d8920c15bf6a7a72390177b4520a8b96424999e0adb1c82c19474e0a2",
+      "required": true
+    }
+  },
+  "host_bootstrap_launcher": {
+    "byte_length": 8765,
+    "bytes": "c2V0IC1FZXVvIHBpcGVmYWlsCmV4cG9ydCBERUJJQU5fRlJPTlRFTkQ9bm9uaW50ZXJhY3RpdmUKaWYgISBjb21tYW5kIC12IGRvY2tlciA+L2Rldi9udWxsIDI+JjE7IHRoZW4KICBzdWRvIGFwdC1nZXQgdXBkYXRlCiAgc3VkbyBhcHQtZ2V0IGluc3RhbGwgLXkgZG9ja2VyLmlvIGN1cmwgY2EtY2VydGlmaWNhdGVzIGdudXBnCmZpCnN1ZG8gc3lzdGVtY3RsIGVuYWJsZSAtLW5vdyBkb2NrZXIKaWYgISBjb21tYW5kIC12IG52aWRpYS1jdGsgPi9kZXYvbnVsbCAyPiYxOyB0aGVuCiAgY3VybCAtZnNTTCBodHRwczovL252aWRpYS5naXRodWIuaW8vbGlibnZpZGlhLWNvbnRhaW5lci9ncGdrZXkgfCBzdWRvIGdwZyAtLWRlYXJtb3IgLS15ZXMgLW8gL3Vzci9zaGFyZS9rZXlyaW5ncy9udmlkaWEtY29udGFpbmVyLXRvb2xraXQta2V5cmluZy5ncGcKICBjdXJsIC1mc1NMIGh0dHBzOi8vbnZpZGlhLmdpdGh1Yi5pby9saWJudmlkaWEtY29udGFpbmVyL3N0YWJsZS9kZWIvbnZpZGlhLWNvbnRhaW5lci10b29sa2l0Lmxpc3QgfCBzZWQgJ3MjZGViIGh0dHBzOi8vI2RlYiBbc2lnbmVkLWJ5PS91c3Ivc2hhcmUva2V5cmluZ3MvbnZpZGlhLWNvbnRhaW5lci10b29sa2l0LWtleXJpbmcuZ3BnXSBodHRwczovLyMnIHwgc3VkbyB0ZWUgL2V0Yy9hcHQvc291cmNlcy5saXN0LmQvbnZpZGlhLWNvbnRhaW5lci10b29sa2l0Lmxpc3QgPi9kZXYvbnVsbAogIHN1ZG8gYXB0LWdldCB1cGRhdGUKICBzdWRvIGFwdC1nZXQgaW5zdGFsbCAteSBudmlkaWEtY29udGFpbmVyLXRvb2xraXQKZmkKc3VkbyBudmlkaWEtY3RrIHJ1bnRpbWUgY29uZmlndXJlIC0tcnVudGltZT1kb2NrZXIKc3VkbyBzeXN0ZW1jdGwgcmVzdGFydCBkb2NrZXIKc3VkbyBkb2NrZXIgcHVsbCB2bGxtL3ZsbG0tb3BlbmFpOnYwLjE1LjBAc2hhMjU2Ojk3MTg3Yzk1MzVmZDZkNjA0MDQ0NGQ2OGJiMDczZjE3MzQ0ZmQ0NTRlOTI0MWNjN2E0ZTk5ODE0MWYyNDQ1NDMKc3VkbyBkb2NrZXIgaW1hZ2UgaW5zcGVjdCB2bGxtL3ZsbG0tb3BlbmFpOnYwLjE1LjBAc2hhMjU2Ojk3MTg3Yzk1MzVmZDZkNjA0MDQ0NGQ2OGJiMDczZjE3MzQ0ZmQ0NTRlOTI0MWNjN2E0ZTk5ODE0MWYyNDQ1NDMgLS1mb3JtYXQgJ3t7anNvbiAuUmVwb0RpZ2VzdHN9fScKc3VkbyBkb2NrZXIgcnVuIC0tcm0gLS1ncHVzIGFsbCAtLWVudHJ5cG9pbnQgbnZpZGlhLXNtaSB2bGxtL3ZsbG0tb3BlbmFpOnYwLjE1LjBAc2hhMjU2Ojk3MTg3Yzk1MzVmZDZkNjA0MDQ0NGQ2OGJiMDczZjE3MzQ0ZmQ0NTRlOTI0MWNjN2E0ZTk5ODE0MWYyNDQ1NDMgLS1xdWVyeS1ncHU9bmFtZSxtZW1vcnkudG90YWwsZHJpdmVyX3ZlcnNpb24gLS1mb3JtYXQ9Y3N2LG5vaGVhZGVyLG5vdW5pdHMKc3VkbyBkb2NrZXIgYnVpbGQgLS1uZXR3b3JrPWhvc3QgLXQgZ2xtLXZsbG06MC4xNS4wLXRyYW5zZm9ybWVycy0xNjE4ZDQ0IC0gPDwnRE9DS0VSRklMRScKRlJPTSB2bGxtL3ZsbG0tb3BlbmFpOnYwLjE1LjBAc2hhMjU2Ojk3MTg3Yzk1MzVmZDZkNjA0MDQ0NGQ2OGJiMDczZjE3MzQ0ZmQ0NTRlOTI0MWNjN2E0ZTk5ODE0MWYyNDQ1NDMKUlVOIHB5dGhvbjMgLW0gcGlwIGluc3RhbGwgLS1uby1jYWNoZS1kaXIgLS11cGdyYWRlIGh0dHBzOi8vZ2l0aHViLmNvbS9odWdnaW5nZmFjZS90cmFuc2Zvcm1lcnMvYXJjaGl2ZS8xNjE4ZDQ0YjkyOTUzNjE2MDdlYzc0ZDdiZTg2MGJhODg2YWFjMDM5LnRhci5negpET0NLRVJGSUxFCnN1ZG8gZG9ja2VyIGltYWdlIGluc3BlY3QgZ2xtLXZsbG06MC4xNS4wLXRyYW5zZm9ybWVycy0xNjE4ZDQ0IC0tZm9ybWF0ICd7ey5JZH19JwpzdWRvIGRvY2tlciBydW4gLS1ybSAtLWdwdXMgYWxsIC12IC9ob21lL2dsbXJ1bm5lci9pbnB1dDovaW5wdXQ6cm8gLS1lbnRyeXBvaW50IGJhc2ggZ2xtLXZsbG06MC4xNS4wLXRyYW5zZm9ybWVycy0xNjE4ZDQ0IC1sYyAncm0gLWYgL2V0Yy9sZC5zby5jb25mLmQvMDAtY3VkYS1jb21wYXQuY29uZiAvZXRjL2xkLnNvLmNvbmYuZC9jdWRhLWNvbXBhdC5jb25mOyBsZGNvbmZpZzsgbGRjb25maWcgLXAgfCBncmVwIGxpYmN1ZGEuc28uMTsgZXhlYyBweXRob24zIC9pbnB1dC92bGxtX3ByZWZsaWdodC5weScKZG9ja2VyIC0tdmVyc2lvbgpzdWRvIGRwa2ctcXVlcnkgLVcgLWY9JyR7UGFja2FnZX09JHtWZXJzaW9ufQonIGRvY2tlci5pbyBudmlkaWEtY29udGFpbmVyLXRvb2xraXQKCnN1ZG8gZG9ja2VyIGJ1aWxkIC0tbmV0d29yaz1ob3N0IC10IGdsbS12bGxtOjAuMTUuMC10cmFuc2Zvcm1lcnMtMTYxOGQ0NCAtIDw8J05TWVNfRE9DS0VSRklMRScKRlJPTSBnbG0tdmxsbTowLjE1LjAtdHJhbnNmb3JtZXJzLTE2MThkNDQKUlVOIHNldCAtZXV4OyAgICAgYXB0LWdldCB1cGRhdGU7ICAgICBhcHQtZ2V0IGluc3RhbGwgLXkgLS1uby1pbnN0YWxsLXJlY29tbWVuZHMgY3VybCBjYS1jZXJ0aWZpY2F0ZXMgZ251cGc7ICAgICBjdXJsIC1mc1NMICdodHRwczovL2tleXNlcnZlci51YnVudHUuY29tL3Brcy9sb29rdXA/b3A9Z2V0JnNlYXJjaD0weEY2MEY0QjNEN0ZBMkFGODAnIC1vIC90bXAvbnZpZGlhLWRldnRvb2xzLmFzYzsgICAgIGdwZyAtLXNob3cta2V5cyAtLXdpdGgtY29sb25zIC90bXAvbnZpZGlhLWRldnRvb2xzLmFzYyB8IGdyZXAgLUYgJ2Zwcjo6Ojo6Ojo6OkFFMDlGRTRCQkQyMjNBODRCMkNDRkNFM0Y2MEY0QjNEN0ZBMkFGODA6JzsgICAgIGdwZyAtLWRlYXJtb3IgLW8gL3Vzci9zaGFyZS9rZXlyaW5ncy9udmlkaWEtZGV2dG9vbHMuZ3BnIC90bXAvbnZpZGlhLWRldnRvb2xzLmFzYzsgICAgIGVjaG8gJ2RlYiBbc2lnbmVkLWJ5PS91c3Ivc2hhcmUva2V5cmluZ3MvbnZpZGlhLWRldnRvb2xzLmdwZ10gaHR0cHM6Ly9kZXZlbG9wZXIuZG93bmxvYWQubnZpZGlhLmNvbS9kZXZ0b29scy9yZXBvcy91YnVudHUyMjA0L2FtZDY0LyAvJyA+IC9ldGMvYXB0L3NvdXJjZXMubGlzdC5kL252aWRpYS1kZXZ0b29scy5saXN0OyAgICAgYXB0LWdldCB1cGRhdGU7ICAgICBhcHQtZ2V0IGluc3RhbGwgLXkgLS1uby1pbnN0YWxsLXJlY29tbWVuZHMgbnNpZ2h0LXN5c3RlbXMtY2xpPTIwMjYuMy4xLjE1NzsgICAgIHJtIC1yZiAvdmFyL2xpYi9hcHQvbGlzdHMvKgpOU1lTX0RPQ0tFUkZJTEUKc3VkbyBkb2NrZXIgcnVuIC0tcm0gLS1ncHVzIGFsbCAtLXBpZD1ob3N0ICAgLS1jYXAtYWRkIFNZU19BRE1JTiAtLWNhcC1hZGQgU1lTX1BUUkFDRSAtLWNhcC1hZGQgUEVSRk1PTiAtLXNlY3VyaXR5LW9wdCBzZWNjb21wPXVuY29uZmluZWQgICAtdiAvaG9tZS9nbG1ydW5uZXIvaW5wdXQ6L2lucHV0OnJvIC0tZW50cnlwb2ludCBiYXNoIGdsbS12bGxtOjAuMTUuMC10cmFuc2Zvcm1lcnMtMTYxOGQ0NCAtbGMgIiQoY2F0IDw8J1JFTU9URV9TQ1JJUFQnCnNldCAtRWV1byBwaXBlZmFpbApybSAtZiAvZXRjL2xkLnNvLmNvbmYuZC8wMC1jdWRhLWNvbXBhdC5jb25mIC9ldGMvbGQuc28uY29uZi5kL2N1ZGEtY29tcGF0LmNvbmYKbGRjb25maWcKdGVzdCAtcyAvaW5wdXQvbnN5cy1sYXVuY2gtaGVscC0yMDI2LjMuMS4xNTcudHh0CnNoYTI1NnN1bSAvaW5wdXQvbnN5cy1sYXVuY2gtaGVscC0yMDI2LjMuMS4xNTcudHh0Cm5zeXMgLS12ZXJzaW9uIHwgdGVlIC90bXAvbnN5cy12ZXJzaW9uLnR4dApncmVwIC1GICIyMDI2LjMuMS4xNTciIC90bXAvbnN5cy12ZXJzaW9uLnR4dApuc3lzIHN0YXR1cyAtZSB8IHRlZSAvdG1wL25zeXMtc3RhdHVzLnR4dApncmVwIC1GICJDUFUgUHJvZmlsaW5nIEVudmlyb25tZW50IChwcm9jZXNzLXRyZWUpOiBPSyIgL3RtcC9uc3lzLXN0YXR1cy50eHQKbnN5cyBwcm9maWxlIC0taGVscCA+IC90bXAvbnN5cy1wcm9maWxlLWhlbHAudHh0CmZvciBmbGFnIGluIGN1ZGEtZ3JhcGgtdHJhY2Ugc2FtcGxlIGNwdWN0eHN3OyBkbyBncmVwIC1GIC0tICItLSRmbGFnIiAvdG1wL25zeXMtcHJvZmlsZS1oZWxwLnR4dDsgZG9uZQpuc3lzIGxhdW5jaCAtLWhlbHAgfCB0ZWUgL3RtcC9uc3lzLWxhdW5jaC1oZWxwLTIwMjYuMy4xLjE1Ny50eHQKcHl0aG9uMyAtIC9pbnB1dC9uc3lzLWxhdW5jaC1oZWxwLTIwMjYuMy4xLjE1Ny50eHQgL3RtcC9uc3lzLWxhdW5jaC1oZWxwLTIwMjYuMy4xLjE1Ny50eHQgPDwnUFknCmltcG9ydCBkaWZmbGliCmltcG9ydCByZQppbXBvcnQgc3lzCgpyZXF1aXJlZCA9ICgiLS1zZXNzaW9uLW5ldyIsICItLXRyYWNlIiwgIi0tY3VkYS1ncmFwaC10cmFjZSIsICItLWN1ZGEtZXZlbnQtdHJhY2UiLAogICAgICAgICAgICAiLS1zYW1wbGUiLCAiLS1jcHVjdHhzdyIpCmZvcmJpZGRlbiA9ICgiLS1mb3JjZS1vdmVyd3JpdGUiLCkKCmRlZiBub3JtYWxpemUocmF3KToKICAgIGxpbmVzID0gcmF3LmRlY29kZSgpLnJlcGxhY2UoIlxyXG4iLCAiXG4iKS5yZXBsYWNlKCJcciIsICJcbiIpLnNwbGl0KCJcbiIpCiAgICByZXN1bHQgPSBbXQogICAgcHJldmlvdXNfYmxhbmsgPSBGYWxzZQogICAgZm9yIGxpbmUgaW4gbGluZXM6CiAgICAgICAgbGluZSA9IGxpbmUucnN0cmlwKCIgXHQiKQogICAgICAgIGlmIG5vdCBsaW5lLnN0cmlwKCk6CiAgICAgICAgICAgIGlmIHByZXZpb3VzX2JsYW5rOgogICAgICAgICAgICAgICAgY29udGludWUKICAgICAgICAgICAgcmVzdWx0LmFwcGVuZCgiIikKICAgICAgICAgICAgcHJldmlvdXNfYmxhbmsgPSBUcnVlCiAgICAgICAgICAgIGNvbnRpbnVlCiAgICAgICAgcHJldmlvdXNfYmxhbmsgPSBGYWxzZQogICAgICAgIGlmIHJlLnNlYXJjaChyIig/Ol58WyBcdF0pLVstQS1aYS16MC05XSIsIGxpbmUpOgogICAgICAgICAgICBsaW5lID0gcmUuc3ViKHIiWyBcdF0rIiwgIiAiLCBsaW5lKS5sc3RyaXAoKQogICAgICAgIHJlc3VsdC5hcHBlbmQobGluZSkKICAgIHdoaWxlIHJlc3VsdCBhbmQgcmVzdWx0WzBdID09ICIiOgogICAgICAgIHJlc3VsdC5wb3AoMCkKICAgIHdoaWxlIHJlc3VsdCBhbmQgcmVzdWx0Wy0xXSA9PSAiIjoKICAgICAgICByZXN1bHQucG9wKCkKICAgIHJldHVybiAiXG4iLmpvaW4ocmVzdWx0KSArICJcbiIKCmV4cGVjdGVkID0gbm9ybWFsaXplKG9wZW4oc3lzLmFyZ3ZbMV0sICJyYiIpLnJlYWQoKSkKb2JzZXJ2ZWQgPSBub3JtYWxpemUob3BlbihzeXMuYXJndlsyXSwgInJiIikucmVhZCgpKQppZiBleHBlY3RlZCAhPSBvYnNlcnZlZDoKICAgIHN5cy5zdGRlcnIud3JpdGUoIiIuam9pbihkaWZmbGliLnVuaWZpZWRfZGlmZihleHBlY3RlZC5zcGxpdGxpbmVzKFRydWUpLCBvYnNlcnZlZC5zcGxpdGxpbmVzKFRydWUpLCAiZml4dHVyZSIsICJ0YXJnZXQiKSkpCiAgICByYWlzZSBTeXN0ZW1FeGl0KCJuc3lzIGxhdW5jaCBjYXBhYmlsaXR5IHNlbWFudGljIG1pc21hdGNoIikKZm9yIGZsYWcgaW4gcmVxdWlyZWQ6CiAgICBpZiBub3QgcmUuc2VhcmNoKHIiKD88IVtBLVphLXowLTlfLV0pIiArIHJlLmVzY2FwZShmbGFnKSArIHIiKD89JHxbPSAsXSkiLCBvYnNlcnZlZCwgcmUuTVVMVElMSU5FKToKICAgICAgICByYWlzZSBTeXN0ZW1FeGl0KCJyZXF1aXJlZCBuc3lzIGxhdW5jaCBmbGFnIG1pc3Npbmc6ICIgKyBmbGFnKQpmb3IgZmxhZyBpbiBmb3JiaWRkZW46CiAgICBpZiByZS5zZWFyY2gociIoPzwhW0EtWmEtejAtOV8tXSkiICsgcmUuZXNjYXBlKGZsYWcpICsgciIoPz0kfFs9ICxdKSIsIG9ic2VydmVkLCByZS5NVUxUSUxJTkUpOgogICAgICAgIHJhaXNlIFN5c3RlbUV4aXQoImZvcmJpZGRlbiBuc3lzIGxhdW5jaCBmbGFnIHByZXNlbnQ6ICIgKyBmbGFnKQpQWQp0ZXN0ICIkKHNoYTI1NnN1bSAvaW5wdXQvcmVtb3RlX29ic2VydmVyX2RpYWdub3N0aWMuc2gpIiA9ICJiY2U2ZjY3ZjU0ZTlkYTM5ZjcyMTg5MmZlMmU1NDE5OTEzYTE1ZjMxNDQyOTNhZjJmOGQyZjk0OWExYTZlZjhhICAvaW5wdXQvcmVtb3RlX29ic2VydmVyX2RpYWdub3N0aWMuc2giCm5zeXMgc3RhcnQgLS1oZWxwID4gL3RtcC9uc3lzLXN0YXJ0LWhlbHAtMjAyNi4zLjEuMTU3LnR4dAp0ZXN0ICIkKHNoYTI1NnN1bSAvdG1wL25zeXMtc3RhcnQtaGVscC0yMDI2LjMuMS4xNTcudHh0IHwgY3V0IC1kICIgIiAtZjEpIiA9ICIxYjRlMDcxNWYxOTQwNjg0ZTI3MjE0Y2NjOTY3ODBhZDNiNWNhYmJmMDlmMzBkZDNlNGFkMWUzMTZhNmZlY2I2IgpncmVwIC1GIC0tICctYiwgLS1iYWNrdHJhY2U9JyAvdG1wL25zeXMtc3RhcnQtaGVscC0yMDI2LjMuMS4xNTcudHh0CmdyZXAgLUYgLS0gIlNlbGVjdCAnbm9uZScgdG8gZGlzYWJsZSBiYWNrdHJhY2UgY29sbGVjdGlvbi4iIC90bXAvbnN5cy1zdGFydC1oZWxwLTIwMjYuMy4xLjE1Ny50eHQKZ3JlcCAtRiAtLSAnbnN5cyBsYXVuY2ggLS1zZXNzaW9uLW5ldz0iJHNlc3Npb24iJyAvaW5wdXQvcmVtb3RlX29ic2VydmVyX2RpYWdub3N0aWMuc2gKZ3JlcCAtRiAtLSAnLS10cmFjZT1jdWRhLG52dHgsb3NydCcgL2lucHV0L3JlbW90ZV9vYnNlcnZlcl9kaWFnbm9zdGljLnNoCmdyZXAgLUYgLS0gJy0tY3VkYS1ncmFwaC10cmFjZT1ub2RlJyAvaW5wdXQvcmVtb3RlX29ic2VydmVyX2RpYWdub3N0aWMuc2gKZ3JlcCAtRiAtLSAnLS1jdWRhLWV2ZW50LXRyYWNlPXRydWUnIC9pbnB1dC9yZW1vdGVfb2JzZXJ2ZXJfZGlhZ25vc3RpYy5zaApncmVwIC1GIC0tICctLXNhbXBsZT0iJHNhbXBsZV9tb2RlIicgL2lucHV0L3JlbW90ZV9vYnNlcnZlcl9kaWFnbm9zdGljLnNoCmdyZXAgLUYgLS0gJy0tY3B1Y3R4c3c9IiRjb250ZXh0X3N3aXRjaF9tb2RlIicgL2lucHV0L3JlbW90ZV9vYnNlcnZlcl9kaWFnbm9zdGljLnNoCmlmIGdyZXAgLUYgLS0gJy0tYmFja3RyYWNlJyAvaW5wdXQvcmVtb3RlX29ic2VydmVyX2RpYWdub3N0aWMuc2g7IHRoZW4KICBlY2hvICJjb25zdHJ1Y3RlZCBiYWNrdHJhY2Ugb3B0aW9uIGxlYWtlZCBpbnRvIGxhdW5jaC9zdGFydCIgPiYyCiAgZXhpdCAxCmZpCmdyZXAgLUYgLS0gJy0tc2Vzc2lvbj0iJHNlc3Npb24iJyAvaW5wdXQvcmVtb3RlX29ic2VydmVyX2RpYWdub3N0aWMuc2gKZ3JlcCAtRiAtLSAnLS1vdXRwdXQ9IiRhcm1fZGlyL3RyYWNlIicgL2lucHV0L3JlbW90ZV9vYnNlcnZlcl9kaWFnbm9zdGljLnNoCmlmIGdyZXAgLUYgLS0gJy0tb3V0cHV0PSIkYXJtX2Rpci90cmFjZSInIC9pbnB1dC9yZW1vdGVfb2JzZXJ2ZXJfZGlhZ25vc3RpYy5zaCB8IGdyZXAgLUYgIm5zeXMgbGF1bmNoIjsgdGhlbgogIGVjaG8gIm5zeXMgc3RhcnQtb25seSBvdXRwdXQgb3B0aW9uIGxlYWtlZCBvbnRvIGxhdW5jaCIgPiYyCiAgZXhpdCAxCmZpCmlmIG5zeXMgbGF1bmNoIC0tc2Vzc2lvbi1uZXc9YmFja3RyYWNlLW5lZ2F0aXZlIC0tYmFja3RyYWNlPW5vbmUgL2Jpbi90cnVlID4vdG1wL25zeXMtbGF1bmNoLWJhY2t0cmFjZS1uZWdhdGl2ZS5sb2cgMj4mMTsgdGhlbgogIGVjaG8gIm5zeXMgbGF1bmNoIHVuZXhwZWN0ZWRseSBhY2NlcHRlZCAtLWJhY2t0cmFjZT1ub25lIiA+JjIKICBleGl0IDEKZmkKZ3JlcCAtRiAtLSAibm90IHN1cHBvcnRlZCBieSB0aGUgbGF1bmNoIGNvbW1hbmQiIC90bXAvbnN5cy1sYXVuY2gtYmFja3RyYWNlLW5lZ2F0aXZlLmxvZwppZiBuc3lzIGxhdW5jaCAtLXNlc3Npb24tbmV3PW91dHB1dC1uZWdhdGl2ZSAtLW91dHB1dD0vdG1wL2xlYWsgL2Jpbi90cnVlID4vdG1wL25zeXMtbGF1bmNoLW91dHB1dC1uZWdhdGl2ZS5sb2cgMj4mMTsgdGhlbgogIGVjaG8gIm5zeXMgbGF1bmNoIHVuZXhwZWN0ZWRseSBhY2NlcHRlZCAtLW91dHB1dCIgPiYyCiAgZXhpdCAxCmZpCmdyZXAgLUYgLS0gInVucmVjb2duaXNlZCBvcHRpb24gJyInIictLW91dHB1dCIgL3RtcC9uc3lzLWxhdW5jaC1vdXRwdXQtbmVnYXRpdmUubG9nCm5zeXMgbGF1bmNoIC0tc2Vzc2lvbi1uZXc9YXJndi1jb250cmFjdC1wcm9iZSAtLXRyYWNlPWN1ZGEsbnZ0eCxvc3J0ICAgLS1jdWRhLWdyYXBoLXRyYWNlPW5vZGUgLS1jdWRhLWV2ZW50LXRyYWNlPXRydWUgLS1zYW1wbGU9cHJvY2Vzcy10cmVlICAgLS1jcHVjdHhzdz1wcm9jZXNzLXRyZWUgL2Jpbi90cnVlCm5zeXMgc3RhcnQgLS1zZXNzaW9uPWFyZ3YtY29udHJhY3QtcHJvYmUgLS1iYWNrdHJhY2U9bm9uZSAtLW91dHB1dD0vdG1wL2FyZ3YtY29udHJhY3QtcHJvYmUKZWNobyBncHVfbWV0cmljc19jb2xsZWN0b3I9dW5zdXBwb3J0ZWRfb25fbDQwcwpjYXQgPiAvdG1wL25zeXMtcHJvYmUucHkgPDwiUFkiCmltcG9ydCB0b3JjaAp4ID0gdG9yY2gub25lcygxMDI0LCBkZXZpY2U9ImN1ZGEiKQpncmFwaCA9IHRvcmNoLmN1ZGEuQ1VEQUdyYXBoKCkKdG9yY2guY3VkYS5zeW5jaHJvbml6ZSgpCndpdGggdG9yY2guY3VkYS5ncmFwaChncmFwaCk6CiAgICB4LmFkZF8oMSkKZ3JhcGgucmVwbGF5KCkKdG9yY2guY3VkYS5zeW5jaHJvbml6ZSgpClBZCm5zeXMgcHJvZmlsZSAtLWZvcmNlLW92ZXJ3cml0ZT10cnVlIC0tdHJhY2U9Y3VkYSxudnR4LG9zcnQgLS1jdWRhLWdyYXBoLXRyYWNlPW5vZGUgICAtLWN1ZGEtZXZlbnQtdHJhY2U9dHJ1ZSAtLXNhbXBsZT1wcm9jZXNzLXRyZWUgLS1jcHVjdHhzdz1wcm9jZXNzLXRyZWUgLS1iYWNrdHJhY2U9bm9uZSAgIC0tZHVyYXRpb249MiAtLW91dHB1dD0vdG1wL25zeXMtY2FwYWJpbGl0eS1wcm9iZSBweXRob24zIC90bXAvbnN5cy1wcm9iZS5weQp0ZXN0IC1zIC90bXAvbnN5cy1jYXBhYmlsaXR5LXByb2JlLm5zeXMtcmVwCm5zeXMgZXhwb3J0IC0tZm9yY2Utb3ZlcndyaXRlPXRydWUgLS10eXBlPXNxbGl0ZSAtLW91dHB1dD0vdG1wL25zeXMtY2FwYWJpbGl0eS1wcm9iZS5zcWxpdGUgL3RtcC9uc3lzLWNhcGFiaWxpdHktcHJvYmUubnN5cy1yZXAKdGVzdCAtcyAvdG1wL25zeXMtY2FwYWJpbGl0eS1wcm9iZS5zcWxpdGUKUkVNT1RFX1NDUklQVAopIgo=",
+    "encoding": "base64",
+    "sha256": "abbf463008cee4fe0c61203989cdae05360f14fcbf17055baf356d12d5d83cdb"
+  },
+  "identities": {
+    "checkpoint_manifest_sha256": "4f91ee774f30cd357273822a362429260fe3bc03458b60db9637c793dbe2726b",
+    "configuration_sha256": "619b460d666c1f530a562fd8815aa2d09fb1be2030e39c70f9c049ad0a1c2eea",
+    "hardware_scope": "Nebius L40S 48GB; gpu-l40s-a; 1gpu-16vcpu-64gb",
+    "harness_sha256": "b22a76c46aad7eb29c4f10eb2d5cc467c1ebd671dee0349fc1d7cd39038a8365",
+    "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "runtime_manifest_sha256": "1dbeb6d2eb1ec9e5756a529bc9d7d54310a2784acee3fa8dd7b1d550faf12b8e",
+    "tokenizer_manifest_sha256": "ccbe405b3abcef13f95dc7882f3ab21f8fa3443a97a340f9e8c4070682ecb14c",
+    "workload_manifest_sha256": "9c5064811ef81a7f8b61c5e17613e57e89143369c9bccc3817497b56b342343f"
+  },
+  "measurement_contract": {
+    "effect_formula": "candidate_over_control_minus_one",
+    "minimum_candidate_repetitions": 1,
+    "protocol": "bracketed",
+    "statistic": "median"
+  },
+  "observer_dependency_attribution_contract": {
+    "attribution": "union_of_non_overlapping_dependency_linked_intervals",
+    "contract_id": "observer-dependency-attribution-v1",
+    "fail_closed": true,
+    "forbid_sum_or_timestamp_containment": true,
+    "input_artifact_refs": [
+      "18b738029e74f8169c57e6aa07ba2206553fb10a8b891c06ef4f119e94a36b3f",
+      "b671c91a027b26c46b6cc86aa0e580a1a5a7426c6a3367d244d20bbb0ec9bc9d",
+      "78eb2fb15013ceb0c1b07fcc14cdd2628998e0e585e342162a3630b61bd44862",
+      "7472f76da4bcc3eb77cd659cc7008d214ad7727581407c8c3805b2fce7b214a0",
+      "2902b0a101af27e95577a90a63c4a4d7265c27437524f18c0ea2769a12baad8e",
+      "c86034940baff28908d80bf5ebf01511a47dacdfffad781a25703281147cd7b9"
+    ],
+    "required_event_kinds": [
+      "clock_calibration",
+      "dependency",
+      "graph_launch",
+      "graph_node",
+      "kernel",
+      "request",
+      "scheduler_iteration",
+      "stream"
+    ]
+  },
+  "operational_startup_isolation": {
+    "excluded_from_measurement": true,
+    "failure_classification": "operational_only_no_scientific_update",
+    "kill_fallback": true,
+    "patch_state": "unpatched",
+    "readiness_attempts": 180,
+    "readiness_interval_seconds": 2,
+    "requests": 0,
+    "server_configuration": "exact_same_command_checkpoint_and_runtime_as_A1",
+    "stage_id": "STOCK_STARTUP",
+    "success_gate": "healthy_then_stopped_and_process_absent_before_patch",
+    "term_timeout_seconds": 30
+  },
+  "post_run_recording": {
+    "primary": {
+      "record_type": "paid_result",
+      "scout_id": "glm47-dense-resource-signature"
+    },
+    "secondary": {
+      "additional_paid_run": false,
+      "additional_reservation": false,
+      "disposition": "typed_observation_same_evidence_bundle",
+      "packet": "glm47-host-scheduler-critical-path",
+      "record_type": "typed_observation"
+    }
+  },
+  "prediction": {
+    "expected_direction": "increase",
+    "falsifier": "Dense work contributes under 20% of the covered decode dependency union, or the trace cannot attribute at least 95% of eligible scheduler-to-CUDA intervals without observer invalidation.",
+    "metric": "dense_decode_dependency_union_fraction",
+    "minimum_effect_fraction": 0.2,
+    "plausible_ceiling_fraction": 1.0,
+    "point_estimate_fraction": 0.2
+  },
+  "preflight": {
+    "artifact_paths": {
+      "bound_sha256": "532bc7a3bafdfe2d8eabbab46a79c794fe23caea35f3ecacf22e1cebbbd525a0",
+      "evidence_sha256": "3e9201dcbce730dbc5b770777e9dcd33730fd9b9f7ace2dc167cc92b5646701c",
+      "pass": true
+    },
+    "checkpoint_closure": {
+      "bound_sha256": "4f91ee774f30cd357273822a362429260fe3bc03458b60db9637c793dbe2726b",
+      "evidence_sha256": "fa4c911794b4cc1f7cea9905f1f7552259d29fe458cce5b7258c36d86b1b4393",
+      "pass": true
+    },
+    "configuration_identity": {
+      "bound_sha256": "2a2fdee8efb53521a00a1d69b919085ed9b015f2ea997da3a3607c486ca463d4",
+      "evidence_sha256": "caed533a6c4ce7fc2a7c5843701aae51277e8f12028d5b49c671835bf737f223",
+      "pass": true
+    },
+    "local_tests": {
+      "bound_sha256": "532bc7a3bafdfe2d8eabbab46a79c794fe23caea35f3ecacf22e1cebbbd525a0",
+      "evidence_sha256": "e511bcabfe5b38ebd29afa78ce1f29b9f5b11c37731b06a2c62a79e752bf1b9f",
+      "pass": true
+    },
+    "parser_fixture": {
+      "bound_sha256": "532bc7a3bafdfe2d8eabbab46a79c794fe23caea35f3ecacf22e1cebbbd525a0",
+      "evidence_sha256": "106ff75a0f32a64abf1b285d6c3adb103854a6ac529e990547e45a7f0afd306a",
+      "pass": true
+    },
+    "protocol_fixture": {
+      "bound_sha256": "532bc7a3bafdfe2d8eabbab46a79c794fe23caea35f3ecacf22e1cebbbd525a0",
+      "evidence_sha256": "fbd602a2eb21640cdf491fb18d14d6deaa99594152bc2b9979c88350f643818d",
+      "pass": true
+    },
+    "provider_fixture": {
+      "bound_sha256": "532bc7a3bafdfe2d8eabbab46a79c794fe23caea35f3ecacf22e1cebbbd525a0",
+      "evidence_sha256": "14fc2481c2e394813ea0acd5da1e54d7e9a659cff09bedb036e99e22b20df596",
+      "pass": true
+    },
+    "runtime_probe": {
+      "bound_sha256": "1dbeb6d2eb1ec9e5756a529bc9d7d54310a2784acee3fa8dd7b1d550faf12b8e",
+      "evidence_sha256": "d7ff7f88ee9c9c12c68cea285bfdb21eb2a5dd0d080802f18d3d71e9618bb830",
+      "pass": true
+    },
+    "tokenizer_identity": {
+      "bound_sha256": "ccbe405b3abcef13f95dc7882f3ab21f8fa3443a97a340f9e8c4070682ecb14c",
+      "evidence_sha256": "9be57363a0885d26b0cbba74c47dbe9b7f75ce66097194ab63dbf85199fe8066",
+      "pass": true
+    }
+  },
+  "program_id": "glm-4.7-flash",
+  "provider_contract": {
+    "idempotency_key": "glm47-observer-diagnostic-l40s-v23",
+    "inventory_reconcile": true,
+    "nsys_launch_capability": {
+      "before_model_transfer": true,
+      "command": "nsys launch --help",
+      "fixture_sha256": "d914582d6f494bece8c94b478f46a620550f4c6d23631194e7bea9b57540dcb0",
+      "forbidden_flags": [
+        "--force-overwrite"
+      ],
+      "package_version": "2026.3.1.157",
+      "required_flags": [
+        "--session-new",
+        "--trace",
+        "--cuda-graph-trace",
+        "--cuda-event-trace",
+        "--sample",
+        "--cpuctxsw"
+      ]
+    },
+    "operational_startup_isolation": {
+      "excluded_from_measurement": true,
+      "failure_classification": "operational_only_no_scientific_update",
+      "kill_fallback": true,
+      "patch_state": "unpatched",
+      "readiness_attempts": 180,
+      "readiness_interval_seconds": 2,
+      "requests": 0,
+      "server_configuration": "exact_same_command_checkpoint_and_runtime_as_A1",
+      "stage_id": "STOCK_STARTUP",
+      "success_gate": "healthy_then_stopped_and_process_absent_before_patch",
+      "term_timeout_seconds": 30
+    },
+    "provider": "nebius",
+    "resource_tags": {
+      "campaign_id": "glm47-nebius-25",
+      "program_id": "glm-4.7-flash",
+      "run_id": "glm47-observer-diagnostic-l40s-v23"
+    }
+  },
+  "provider_dispatch_contract": {
+    "controller_sha256": "134c84bb8cbfaadf3fce7f9be956439f1ffbdc8ab45edcf35634a5adaa005df0",
+    "execution_geometry": "supervisor_bound_direct_dispatch",
+    "factory_identity_tuple": {
+      "campaign_id": "glm47-nebius-25",
+      "program_id": "glm-4.7-flash",
+      "run_id": "glm47-observer-diagnostic-l40s-v23",
+      "setup_key": "l40s:vllm:glm47:observer"
+    },
+    "launcher_byte_length": 8765,
+    "launcher_sha256": "abbf463008cee4fe0c61203989cdae05360f14fcbf17055baf356d12d5d83cdb",
+    "parent_failure_bundle_sha256": "fc2794ca93124de55c785e4be2b5aab5cb5e6b3f10ab7a8235dfdc6c7b9691f3",
+    "remote_harness_sha256": "0f9e26da6d0d81719025a92eeb6746d68971e03b55ec783df908ffe56b39bc1f",
+    "retired_run_ids": [
+      "glm47-observer-diagnostic-l40s-v17",
+      "glm47-observer-diagnostic-l40s-v18"
+    ],
+    "schema_version": 1,
+    "supervisor_sha256": "0fc455901465492a588f3b6485e6bb7ce03970de783b911d85ea257dbe8be224"
+  },
+  "run_id": "glm47-observer-diagnostic-l40s-v23",
+  "schema_version": 1,
+  "scout_id": "glm47-dense-resource-signature",
+  "setup_key": "l40s:vllm:glm47:observer",
+  "telemetry_contract": {
+    "clock_basis": "monotonic_ns_with_wall_clock_anchor",
+    "collection_budget": {
+      "max_artifact_bytes": 8589934592,
+      "max_bytes_per_request": 1048576,
+      "max_cpu_overhead_fraction": 0.1,
+      "max_event_rate_hz": 200000
+    },
+    "correlation_keys": [
+      "run_id",
+      "monotonic_ns",
+      "request_id",
+      "iteration_id"
+    ],
+    "critical_path_coverage_gate": 0.95,
+    "critical_path_method": "dependency_union",
+    "observer_effect": {
+      "action_on_breach": "classify the trace as harness-invalid and reduce duration or sampling",
+      "bracket": [
+        "observer_off",
+        "observer_on",
+        "observer_off"
+      ],
+      "max_median_latency_change_fraction": 0.03,
+      "max_tail_latency_change_fraction": 0.05,
+      "max_throughput_change_fraction": 0.03,
+      "required": true
+    },
+    "schema_version": 1,
+    "scoring_mode": "diagnostic_only",
+    "signals": [
+      {
+        "artifact_role": "identities",
+        "category": "provenance",
+        "fields": [
+          "model",
+          "revision",
+          "code",
+          "runtime",
+          "hardware",
+          "configuration",
+          "operator_shape_dictionary"
+        ],
+        "name": "identity_and_environment",
+        "sampling": "once per run and whenever identity changes",
+        "status": "capture",
+        "tier": "always_on"
+      },
+      {
+        "artifact_role": "events",
+        "category": "request",
+        "fields": [
+          "request_id",
+          "arrival_ns",
+          "prompt_tokens",
+          "output_tokens",
+          "queue_ns",
+          "ttft_ns",
+          "tpot_ns",
+          "end_to_end_ns",
+          "status"
+        ],
+        "name": "request_timeline",
+        "sampling": "one lifecycle record per request",
+        "status": "capture",
+        "tier": "always_on"
+      },
+      {
+        "artifact_role": "events",
+        "category": "scheduler",
+        "fields": [
+          "request_id",
+          "iterations",
+          "scheduled_prefill_tokens",
+          "scheduled_decode_tokens",
+          "mean_batch_size",
+          "max_waiting_requests",
+          "preemptions",
+          "kv_occupancy_summary"
+        ],
+        "name": "scheduler_timeline",
+        "sampling": "one aggregate per request plus queue, preemption, and overload state changes",
+        "status": "capture",
+        "tier": "always_on"
+      },
+      {
+        "artifact_role": "system_samples",
+        "category": "accelerator",
+        "fields": [
+          "monotonic_ns",
+          "utilization",
+          "vram_bytes",
+          "clock_hz",
+          "power_w",
+          "temperature_c"
+        ],
+        "name": "accelerator_health",
+        "sampling": "one hertz by default; increase only around a decision boundary",
+        "status": "capture",
+        "tier": "always_on"
+      },
+      {
+        "artifact_role": "system_samples",
+        "category": "host",
+        "fields": [
+          "monotonic_ns",
+          "cpu_utilization",
+          "rss_bytes",
+          "io_bytes",
+          "network_bytes"
+        ],
+        "name": "host_and_transfer_health",
+        "sampling": "one hertz by default plus resource failures",
+        "status": "capture",
+        "tier": "always_on"
+      },
+      {
+        "artifact_role": "identities",
+        "category": "model",
+        "fields": [
+          "module_dictionary",
+          "shape_dictionary",
+          "dtype",
+          "layout",
+          "architecture_aggregates"
+        ],
+        "name": "model_structure",
+        "sampling": "once per run plus architecture-specific aggregate counters",
+        "status": "capture",
+        "tier": "always_on"
+      },
+      {
+        "artifact_role": "quality",
+        "category": "quality",
+        "fields": [
+          "sample_id",
+          "policy_sha256",
+          "score",
+          "pass",
+          "error"
+        ],
+        "name": "quality_and_correctness",
+        "sampling": "one record per evaluated sample",
+        "status": "capture",
+        "tier": "always_on"
+      },
+      {
+        "artifact_role": "cost",
+        "category": "economics",
+        "fields": [
+          "allocation_id",
+          "start_ns",
+          "end_ns",
+          "gpu_seconds",
+          "rate",
+          "currency",
+          "total_cost"
+        ],
+        "name": "resource_and_cost_ledger",
+        "sampling": "allocation start, stop, and rate or resource changes",
+        "status": "capture",
+        "tier": "always_on"
+      },
+      {
+        "artifact_role": "deep_trace",
+        "category": "scheduler",
+        "fields": [
+          "iteration_id",
+          "phase",
+          "start_ns",
+          "end_ns",
+          "scheduled_tokens",
+          "batch_composition",
+          "kv_state"
+        ],
+        "name": "scheduler_iteration_trace",
+        "sampling": "one bounded post-warmup window in the observer-on arm",
+        "status": "capture",
+        "tier": "sampled_trace"
+      },
+      {
+        "artifact_role": "deep_trace",
+        "category": "host",
+        "fields": [
+          "thread_id",
+          "stream_id",
+          "correlation_id",
+          "start_ns",
+          "end_ns",
+          "dependency"
+        ],
+        "name": "cpu_gpu_dependency_trace",
+        "sampling": "one bounded post-warmup window in the observer-on arm",
+        "status": "capture",
+        "tier": "deep_profile"
+      },
+      {
+        "artifact_role": "deep_trace",
+        "category": "accelerator",
+        "fields": [
+          "kernel",
+          "grid",
+          "block",
+          "registers",
+          "shared_memory",
+          "start_ns",
+          "end_ns"
+        ],
+        "name": "kernel_resource_trace",
+        "sampling": "one bounded post-warmup window in the observer-on arm",
+        "status": "capture",
+        "tier": "deep_profile"
+      }
+    ]
+  },
+  "watchdog": {
+    "absolute_deadline_utc": "2026-07-15T07:07:36Z",
+    "delete_on_deadline": true,
+    "independent": true,
+    "verify_absent": true
+  }
+}

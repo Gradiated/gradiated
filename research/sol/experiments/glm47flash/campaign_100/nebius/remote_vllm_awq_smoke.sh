@@ -8,6 +8,8 @@ TOKENIZER=/input/tokenizer
 QUALITY=/input/quality
 VLLM_DTYPE="${VLLM_DTYPE:-bfloat16}"
 VLLM_MAX_NUM_BATCHED_TOKENS="${VLLM_MAX_NUM_BATCHED_TOKENS:-32768}"
+VLLM_MAX_NUM_SEQS="${VLLM_MAX_NUM_SEQS:-8}"
+VLLM_FRONTIER_CONCURRENCIES="${VLLM_FRONTIER_CONCURRENCIES:-1,8}"
 VLLM_DECODE_BLOCK_N="${VLLM_DECODE_BLOCK_N:-32}"
 VLLM_DECODE_NUM_STAGES="${VLLM_DECODE_NUM_STAGES:-2}"
 VLLM_NUM_KV_SPLITS="${VLLM_NUM_KV_SPLITS:-4}"
@@ -110,7 +112,7 @@ CMD=(
   --host 127.0.0.1
   --port 30000
   --max-model-len 32768
-  --max-num-seqs 8
+  --max-num-seqs "$VLLM_MAX_NUM_SEQS"
   --max-num-batched-tokens "$VLLM_MAX_NUM_BATCHED_TOKENS"
   --gpu-memory-utilization 0.90
   --no-enable-prefix-caching
@@ -153,6 +155,7 @@ python3 /input/vllm_batched_runner.py \
   --tokenizer "$TOKENIZER" \
   --quality "$QUALITY" \
   --bf16-responses /input/bf16-control-responses.jsonl \
+  --concurrencies "$VLLM_FRONTIER_CONCURRENCIES" \
   > "$OUT/batch-runner.stdout.log" 2> "$OUT/batch-runner.stderr.log"
 RUNNER_RC=$?
 set -e
@@ -164,7 +167,7 @@ import os
 from pathlib import Path
 path = Path("/workspace/campaign-100-vllm-awq-batch/allocation-result.json")
 value = json.loads(path.read_text())
-value.update({"runtime": "vllm-0.15.0", "dtype": os.environ["VLLM_DTYPE"], "max_num_batched_tokens": int(os.environ["VLLM_MAX_NUM_BATCHED_TOKENS"]), "decode_grouped_block_n": int(os.environ["VLLM_DECODE_BLOCK_N"]), "decode_grouped_num_stages": int(os.environ["VLLM_DECODE_NUM_STAGES"]), "num_kv_splits": int(os.environ["VLLM_NUM_KV_SPLITS"]), "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "full_load_pass": True, "experiment_spec_sha256": os.environ["EXPERIMENT_SPEC_SHA256"]})
+value.update({"runtime": "vllm-0.15.0", "dtype": os.environ["VLLM_DTYPE"], "max_num_batched_tokens": int(os.environ["VLLM_MAX_NUM_BATCHED_TOKENS"]), "max_num_seqs": int(os.environ["VLLM_MAX_NUM_SEQS"]), "frontier_concurrencies": [int(value) for value in os.environ["VLLM_FRONTIER_CONCURRENCIES"].split(",")], "decode_grouped_block_n": int(os.environ["VLLM_DECODE_BLOCK_N"]), "decode_grouped_num_stages": int(os.environ["VLLM_DECODE_NUM_STAGES"]), "num_kv_splits": int(os.environ["VLLM_NUM_KV_SPLITS"]), "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "full_load_pass": True, "experiment_spec_sha256": os.environ["EXPERIMENT_SPEC_SHA256"]})
 path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 PY
 fi

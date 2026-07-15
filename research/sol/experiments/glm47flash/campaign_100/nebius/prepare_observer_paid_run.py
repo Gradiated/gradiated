@@ -24,6 +24,9 @@ from grad_research.util import (
     require_sha256,
 )
 
+from launcher_retention import launcher_record
+from observer_dependency_contract import binding as dependency_contract_binding
+
 
 HERE = Path(__file__).resolve().parent
 NSYS_LAUNCH_FIXTURE = HERE / "fixtures" / "nsys-launch-help-2026.3.1.157.txt"
@@ -259,6 +262,11 @@ def prepare_observer_paid_run(
         }
     )
     deadline = now + timedelta(seconds=SCIENCE_AND_WATCHDOG_TIMEOUT_SECONDS)
+    # Generate once during immutable preparation. Admission and later recovery
+    # must consume these bytes, never reconstruct them from the working tree.
+    from observer_diagnostic_control import build_host_bootstrap
+
+    host_bootstrap_launcher = launcher_record(build_host_bootstrap().encode("utf-8"))
     spec = {
         "schema_version": 1,
         "run_id": run_id,
@@ -330,13 +338,14 @@ def prepare_observer_paid_run(
                 "fixture_sha256": hashlib.sha256(NSYS_LAUNCH_FIXTURE.read_bytes()).hexdigest(),
                 "required_flags": [
                     "--session-new", "--trace", "--cuda-graph-trace", "--cuda-event-trace",
-                    "--sample", "--cpuctxsw", "--backtrace", "--output",
+                    "--sample", "--cpuctxsw",
                 ],
                 "forbidden_flags": ["--force-overwrite"],
             },
         },
         "operational_startup_isolation": EXPECTED_OPERATIONAL_STARTUP_ISOLATION,
         "preflight": preflight,
+        "host_bootstrap_launcher": host_bootstrap_launcher,
         "telemetry_contract": telemetry,
         "artifact_contract": artifacts,
         "cleanup": {
@@ -355,6 +364,7 @@ def prepare_observer_paid_run(
                 "additional_reservation": False,
             },
         },
+        "observer_dependency_attribution_contract": dependency_contract_binding(),
     }
     validate_paid_run(spec, now=now)
     return spec

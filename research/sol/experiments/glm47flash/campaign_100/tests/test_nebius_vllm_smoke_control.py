@@ -14,6 +14,7 @@ from vllm_smoke_control import (  # noqa: E402
     build_container_command,
     build_host_bootstrap,
     required_quality_files,
+    validate_timeout_seconds,
 )
 
 
@@ -29,6 +30,11 @@ class NebiusVllmSmokeControlTests(unittest.TestCase):
             "vllm/vllm-openai:v0.15.0@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543",
         )
         self.assertEqual(ABSOLUTE_TIMEOUT_SECONDS, 4500)
+
+    def test_frontier_timeout_is_bounded_to_project_limit(self):
+        self.assertEqual(validate_timeout_seconds(3600), 3600)
+        with self.assertRaises(RuntimeError):
+            validate_timeout_seconds(3601)
 
     def test_bootstrap_pulls_vllm_not_sglang(self):
         script = build_host_bootstrap()
@@ -65,6 +71,14 @@ class NebiusVllmSmokeControlTests(unittest.TestCase):
         self.assertIn("VLLM_MAX_NUM_BATCHED_TOKENS=65536", joined)
         script = (ROOT / "nebius" / "remote_vllm_awq_smoke.sh").read_text()
         self.assertIn('--max-num-batched-tokens "$VLLM_MAX_NUM_BATCHED_TOKENS"', script)
+
+    def test_frontier_arm_can_raise_sequence_limit_and_request_c16_ladder(self):
+        joined = " ".join(build_container_command("g" * 64, 1783990000, max_num_seqs=16, frontier_concurrencies=(1, 8, 16)))
+        self.assertIn("VLLM_MAX_NUM_SEQS=16", joined)
+        self.assertIn("VLLM_FRONTIER_CONCURRENCIES=1,8,16", joined)
+        script = (ROOT / "nebius" / "remote_vllm_awq_smoke.sh").read_text()
+        self.assertIn('--max-num-seqs "$VLLM_MAX_NUM_SEQS"', script)
+        self.assertIn('--concurrencies "$VLLM_FRONTIER_CONCURRENCIES"', script)
 
     def test_retained_arm_can_change_glm_mla_decode_tile(self):
         joined = " ".join(build_container_command("e" * 64, 1783990000, decode_block_n=64, decode_num_stages=1))

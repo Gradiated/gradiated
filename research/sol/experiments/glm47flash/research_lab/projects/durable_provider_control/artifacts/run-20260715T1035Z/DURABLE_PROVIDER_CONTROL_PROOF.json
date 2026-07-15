@@ -1,0 +1,81 @@
+{
+  "kind": "durable_zero_provider_proof",
+  "pass": true,
+  "runs": [
+    {
+      "controller_unit": {
+        "ActiveState": "active",
+        "ControlGroup": "/user.slice/user-0.slice/user@0.service/app.slice/durable-control-controller-5b76f4152230.service",
+        "MainPID": "861515"
+      },
+      "launcher_exited_before_terminal": true,
+      "launcher_returncode": 0,
+      "pass": true,
+      "scenario": "failure",
+      "terminal": {
+        "allocation_state": "cleaned",
+        "cleanup": [
+          {
+            "allocation_id": "allocation-failure",
+            "status": "cleaned"
+          }
+        ],
+        "controller_state": "failure_injected",
+        "direct_resource_absent": true,
+        "duplicate_ownership_rejected": true,
+        "finished_at": 1784104327.8611531,
+        "identity_mismatch_rejected": true,
+        "inventory_absent": true,
+        "kind": "zero_provider_terminal_result",
+        "missing_terminal_artifact_rejected": true,
+        "scenario": "failure",
+        "schema_version": 1,
+        "trigger": "stale_controller_heartbeat",
+        "watchdog_pid": 861517
+      },
+      "watchdog_unit": {
+        "ActiveState": "active",
+        "ControlGroup": "/user.slice/user-0.slice/user@0.service/app.slice/durable-control-watchdog-5b76f4152230.service",
+        "MainPID": "861517"
+      }
+    },
+    {
+      "controller_unit": {
+        "ActiveState": "active",
+        "ControlGroup": "/user.slice/user-0.slice/user@0.service/app.slice/durable-control-controller-3147c6fda9a2.service",
+        "MainPID": "861524"
+      },
+      "launcher_exited_before_terminal": true,
+      "launcher_returncode": 0,
+      "pass": true,
+      "scenario": "deadline",
+      "terminal": {
+        "allocation_state": "cleaned",
+        "cleanup": [
+          {
+            "allocation_id": "allocation-deadline",
+            "status": "cleaned"
+          }
+        ],
+        "controller_state": "running",
+        "direct_resource_absent": true,
+        "duplicate_ownership_rejected": true,
+        "finished_at": 1784104329.2483234,
+        "identity_mismatch_rejected": true,
+        "inventory_absent": true,
+        "kind": "zero_provider_terminal_result",
+        "missing_terminal_artifact_rejected": true,
+        "scenario": "deadline",
+        "schema_version": 1,
+        "trigger": "absolute_deadline",
+        "watchdog_pid": 861526
+      },
+      "watchdog_unit": {
+        "ActiveState": "active",
+        "ControlGroup": "/user.slice/user-0.slice/user@0.service/app.slice/durable-control-watchdog-3147c6fda9a2.service",
+        "MainPID": "861526"
+      }
+    }
+  ],
+  "schema_version": 1
+}

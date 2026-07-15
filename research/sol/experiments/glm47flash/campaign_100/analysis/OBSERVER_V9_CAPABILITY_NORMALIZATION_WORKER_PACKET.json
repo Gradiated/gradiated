@@ -1,0 +1,56 @@
+{
+  "artifact_refs": [
+    "8df92724bbd1cfbe9dddb00867038a9f02f2105fecf84dec96dc9a6f28535c46",
+    "4a8e70c69ab9438457c708f891963ae6b09b9f922e1789078cfe99547c49aaf9"
+  ],
+  "baseline_id": "glm47-l40s-vllm-awq-split4-v28",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "candidate_id": "v9-normalized-nsys-launch-capability-gate",
+  "changed_variable": "Normalize only harmless Nsight launch-help formatting before comparing the pinned 2026.3.1.157 fixture with the captured target output, retain a strict semantic flag diff, and add positive, formatting-drift negative-control, and required-flag rejection tests at the pre-transfer boundary.",
+  "claim_scope": {
+    "claim_limit": "Operational capability-gate diagnosis and repair only; no scientific bottleneck, performance, quality, SLO, cost, provider, or promotion claim",
+    "hardware": "Recorded V9 target-L40S capability evidence plus local CPU/reference tests; no provider access or mutation",
+    "model": "GLM-4.7-Flash AWQ; no model execution",
+    "software": "Nsight Systems 2026.3.1.157 launch-help fixture comparator, observer bootstrap, deterministic tests, and immutable preparation inputs",
+    "workload": "Pre-transfer capability gate only; the excluded STOCK_STARTUP and A1/B1/A2 science geometry remain untouched"
+  },
+  "command": "Work only on the V9 nsys launch-help capability mismatch. Preserve all unrelated and existing uncommitted campaign edits. Extract the captured target nsys launch --help bytes from the deep-verified V9 evidence bundle, store their hash in the worker output, and produce a deterministic normalized semantic diff against nebius/fixtures/nsys-launch-help-2026.3.1.157.txt. Normalize only harmless presentation drift such as CRLF versus LF, trailing horizontal whitespace, blank-line multiplicity, and whitespace between option tokens; do not normalize option names, spelling, value syntax, or presence. Add a negative control proving harmless formatting drift passes and at least one fail-closed control proving a missing or renamed required flag fails before model transfer. If the captured target output identifies a fixture defect, implement the minimum fixture/comparator repair and bind it in deterministic tests; otherwise record the concrete falsifier and do not broaden scope. Preserve the 2000-second/$0.55/$0.07 contract, readiness, startup isolation, unchanged A1/B1/A2 8-request c8 8192-input/32-output geometry, telemetry, partial-evidence, and cleanup policy. Run Bash syntax, Python compilation, focused observer and preparation tests, the full campaign unittest suite, factory paid-spec validation with a local-only future-safe fixture time, and python3 tools/devex/check.py. Write result.md, raw hashes, normalized diff, negative-control evidence, verification.log, and verification-exit.txt below the supervisor-provided worker output directory. Do not inspect or mutate a provider, admit or prepare a paid identity, change budget authority or any paid deadline, make a scientific decision, commit, or push.",
+  "control_id": "v9-byte-sensitive-launch-help-comparison",
+  "execution_kind": "local",
+  "fidelity": "reference",
+  "gates": {
+    "correctness": {
+      "policy_sha256": "478a6bba4feb6c0565f9aca45575186d1cd2cff0772c06ce2891aeab02e8267a",
+      "required": true
+    },
+    "quality": {
+      "policy_sha256": "99effb41fdab608ce8d7861109d7f89291f012a8cfad951cd6f43156aa3a28ce",
+      "required": true
+    },
+    "slo": {
+      "policy_sha256": "c9654a1d8920c15bf6a7a72390177b4520a8b96424999e0adb1c82c19474e0a2",
+      "required": true
+    }
+  },
+  "max_cost_usd": 0.0,
+  "measurement_contract": {
+    "effect_formula": "candidate_over_control_minus_one",
+    "minimum_candidate_repetitions": 1,
+    "protocol": "deterministic",
+    "statistic": "median"
+  },
+  "prediction": {
+    "expected_direction": "increase",
+    "falsifier": "Normalization does not make the captured V9 target help and pinned fixture semantically equivalent; a required or forbidden option differs; harmless formatting drift still fails; a missing or renamed required flag passes; the gate can run after model transfer; any focused/full verification fails; or budget, deadline, startup-isolation, A1/B1/A2, telemetry, partial-evidence, or cleanup contracts drift.",
+    "metric": "v9_normalized_capability_gate_pass_fraction",
+    "minimum_effect_fraction": 1.0,
+    "plausible_ceiling_fraction": 1.0,
+    "point_estimate_fraction": 1.0
+  },
+  "program_id": "glm-4.7-flash",
+  "run_id": "glm47-observer-v9-capability-normalization-c1",
+  "schema_version": 1,
+  "scout_id": "glm47-dense-resource-signature",
+  "seed": 470210,
+  "timeout_seconds": 480
+}

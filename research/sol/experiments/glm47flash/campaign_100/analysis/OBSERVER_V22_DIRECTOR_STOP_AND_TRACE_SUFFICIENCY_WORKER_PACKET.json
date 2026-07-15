@@ -1,0 +1,83 @@
+{
+  "artifact_refs": [
+    "e51b5324a7c2c28dc66122f1f5776bb898fd0573106d51311da89edf3c031131",
+    "ee02f29271da526920d81b7910c7f44c428a21ef0e1a313245020cac0178bb74",
+    "f3e2f078673af89aab21a54158b6fc1fded71cec564c2d5526f82519bd898f82",
+    "9226fcbc9c65d5be88ceed8526d5574cf3c21f2c71f28f41956ed61f806ac754"
+  ],
+  "baseline_id": "glm47-l40s-vllm-awq-split4-v28",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "candidate_id": "existing-trace-request-dependency-union-replay",
+  "changed_variable": "Audit only the already stored dense-residual trace and request evidence for sufficient identities, clocks, scheduler iterations, CUDA ranges, streams, and dependency edges to reconstruct a non-overlapping request dependency union at at least 95% coverage; if sufficient, build a deterministic replay fixture and parser test, otherwise retain an exact missing-field matrix and kill replay without inventing attribution.",
+  "claim_scope": {
+    "claim_limit": "Offline trace-sufficiency and parser-contract decision only; no device-criticality, speed, quality-adjusted cost, provider, or end-to-end performance claim.",
+    "hardware": "Previously captured Nebius L40S metadata only; this worker must not access a provider, GPU, network, checkpoint, model, or live server.",
+    "model": "GLM-4.7-Flash AWQ baseline identity retained as metadata; no inference.",
+    "software": "Content-addressed dense-residual evidence plus repository-local deterministic analysis/tests; immutable V22 audit evidence is classification input only.",
+    "workload": "Previously captured fixed c8, 8192-input decode evidence; no new scored requests."
+  },
+  "command": "Run exactly one bounded zero-cost parallel_offline trace-sufficiency falsifier. Preserve unrelated and existing uncommitted work. First verify all four content-addressed input references and bind their object hashes. Treat the V22 verification result as an operational failure: permanently retire V22, prohibit unchanged retry, and do not update dense-device or host-scheduler scientific beliefs. Inspect only the stored dense-residual raw trace/request evidence for request identity, scheduler iteration identity, CPU and CUDA clock domains, stream identity, graph-launch boundaries, kernel intervals, and dependency edges. Define request dependency union as the union of non-overlapping dependency-linked intervals inside each exact request/iteration scope; never substitute summed kernel duration or timestamp containment. The causal hypothesis is that the existing evidence is sufficient to reconstruct at least 95% request-to-phase attribution and cheaply separate host/launch gaps from dense device work. The stock control is a synthetic fixture with one required identity/dependency field removed, which must fail closed. Accept only if every required identity and clock mapping is present, deterministic replay reaches at least 0.95 coverage, repeated replay is byte-identical, and mutation controls for missing request IDs, clock mapping, stream IDs, and dependency edges all fail closed. If any sufficiency gate fails, record a measured missing-field matrix, classify the replay as harness-invalid or operationally insufficient, kill this offline lineage, and specify the minimal observer fields needed by a future A1/B1/A2 bracket without preparing or admitting a paid identity. Quality and SLO are not applicable to this lower-fidelity replay but their frozen policies must remain unchanged. Maximum spend is $0.00; wall-clock timeout is 480 seconds; seed is 47022301. Retain exact input inventory, hashes, sufficiency matrix, replay fixture or fail-closed result, negative controls, command log, tests, result.md, result-record.json, hashes.txt, verification.log, and verification-exit.txt below the supervisor-provided worker output directory; store the evidence and record the typed result. Run only narrow deterministic Python tests and python3 tools/devex/check.py. Do not edit or regenerate V22, inspect or mutate a provider, admit a paid run, launch or poll a provider controller, change budget authority, alter any paid-run deadline, update scientific beliefs from operational failures, commit, or push.",
+  "control_id": "missing-required-trace-identity-fails-closed",
+  "director_contract": {
+    "artifact_contract": "Content-addressed input inventory, exact sufficiency matrix, deterministic replay fixture or fail-closed insufficiency result, mutation controls, raw command/test logs, typed result, and hashed manifest.",
+    "budget": "$0.00 maximum; no provider reservation or mutation.",
+    "causal_hypothesis": "Existing stored trace and request evidence may already contain enough cross-domain identity and dependency information to reconstruct at least 95% request dependency-union coverage, avoiding another paid diagnostic solely to discover a schema gap.",
+    "decision": "Permanently retire V22 as an operational verification failure and admit only this offline sufficiency measurement; scientific beliefs remain unchanged.",
+    "falsifier": "Any missing request, iteration, clock-domain, stream, graph-launch, interval, or dependency-edge identity; coverage below 0.95; non-byte-identical replay; or any negative control that does not fail closed.",
+    "quality_gate": "No model output is produced; frozen quality policy identity remains unchanged and no quality claim is permitted.",
+    "residual_bottleneck": "Matched target-L40S observer bracket remains unexecuted; dense-device versus host/scheduler request-critical attribution remains unresolved until a valid dependency-union measurement exists.",
+    "slo_gate": "480-second local timeout; no live service or serving SLO claim.",
+    "stock_control": "Synthetic copy of the stored trace fixture with exactly one required identity or dependency field removed; parser must fail closed.",
+    "timeout_seconds": 480
+  },
+  "execution_kind": "local",
+  "fidelity": "reduced_replay",
+  "gates": {
+    "correctness": {
+      "policy_sha256": "79e9a05c971ef3ecb4e719a28e4c529a00d9600f5ab69576554491ca5d51b94a",
+      "required": true
+    },
+    "quality": {
+      "policy_sha256": "99effb41fdab608ce8d7861109d7f89291f012a8cfad951cd6f43156aa3a28ce",
+      "required": true
+    },
+    "slo": {
+      "policy_sha256": "c9654a1d8920c15bf6a7a72390177b4520a8b96424999e0adb1c82c19474e0a2",
+      "required": true
+    }
+  },
+  "max_cost_usd": 0.0,
+  "measurement_contract": {
+    "effect_formula": "candidate_over_control_minus_one",
+    "minimum_candidate_repetitions": 2,
+    "protocol": "deterministic",
+    "statistic": "median"
+  },
+  "prediction": {
+    "expected_direction": "increase",
+    "falsifier": "Any required cross-domain identity or dependency edge is absent, deterministic request-to-phase attribution coverage is below 0.95, replay is not byte-identical, or a missing-field negative control does not fail closed.",
+    "metric": "request_to_phase_attribution_coverage_fraction",
+    "minimum_effect_fraction": 0.95,
+    "plausible_ceiling_fraction": 1.0,
+    "point_estimate_fraction": 0.95
+  },
+  "program_id": "glm-4.7-flash",
+  "provider_reconciliation": {
+    "active_allocations": 0,
+    "active_reservations": 0,
+    "artifact_sha256": "9226fcbc9c65d5be88ceed8526d5574cf3c21f2c71f28f41956ed61f806ac754",
+    "deep_artifact_audit_pass": true,
+    "deep_artifact_references_checked": 147,
+    "event_head_before_transition": "159b487e95925cc465ff3d434b0c937325a464f3bdab948730b1a12884e22f50",
+    "lease_epoch": 3,
+    "owner": "supervisor-glm47",
+    "p0_actions_pending": 0,
+    "provider_mutation_performed": false,
+    "safe_to_start_new_provider_mutation": true
+  },
+  "run_id": "glm47-existing-trace-dependency-union-sufficiency-c1",
+  "schema_version": 1,
+  "scout_id": "glm47-host-scheduler-critical-path",
+  "seed": 47022301,
+  "timeout_seconds": 480
+}

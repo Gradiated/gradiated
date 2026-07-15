@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "execution_kind": "local",
+  "run_id": "glm47-observer-v13-immutable-identity-preparation-c1",
+  "program_id": "glm-4.7-flash",
+  "scout_id": "glm47-dense-resource-signature",
+  "fidelity": "reference",
+  "baseline_id": "glm47-l40s-vllm-awq-split4-v28",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "control_id": "v12-retired-identity-with-passed-readiness-event-contract",
+  "candidate_id": "v13-fresh-immutable-observer-identity-with-readiness-events",
+  "changed_variable": "Prepare one fresh immutable V13 observer paid-spec identity that binds the passed public-IP and SSH/cloud-init readiness event contract; do not change readiness geometry, provider state, budget authority, or observer science.",
+  "claim_scope": {
+    "claim_limit": "Operational paid-spec preparation and validation only; no provider, placement-reliability, performance, quality, SLO, cost-efficiency, bottleneck, or promotion claim",
+    "hardware": "Local CPU/reference validation only; no provider inventory or mutation",
+    "model": "GLM-4.7-Flash AWQ identity retained but not executed",
+    "software": "Current reusable observer controller, passed readiness phase-event contract, repaired Nsight Systems 2026.3.1.157 capability gate, immutable preparation inputs, and factory paid-spec validator",
+    "workload": "Offline identity validation for unchanged excluded STOCK_STARTUP plus A1/B1/A2, 8 requests at c8, 8192 input and 32 output tokens; no arm execution"
+  },
+  "prediction": {
+    "metric": "v13_immutable_paid_spec_validation_pass_fraction",
+    "expected_direction": "increase",
+    "point_estimate_fraction": 1.0,
+    "minimum_effect_fraction": 1.0,
+    "plausible_ceiling_fraction": 1.0,
+    "falsifier": "The exact fresh V13 fenced run ID is rejected or a malformed, foreign, V12, or other retired identity is accepted; the prepared identity omits the passed public_ip_ready, ssh_cloud_init_probe_started, or bounded ssh_cloud_init_attempt contract; any current input is not content-bound; factory validation fails; or any readiness, watchdog, spend, science, evidence, telemetry, partial-recovery, or cleanup contract drifts."
+  },
+  "measurement_contract": {
+    "protocol": "deterministic",
+    "effect_formula": "candidate_over_control_minus_one",
+    "minimum_candidate_repetitions": 1,
+    "statistic": "median"
+  },
+  "gates": {
+    "correctness": {
+      "policy_sha256": "478a6bba4feb6c0565f9aca45575186d1cd2cff0772c06ce2891aeab02e8267a",
+      "required": true
+    },
+    "quality": {
+      "policy_sha256": "99effb41fdab608ce8d7861109d7f89291f012a8cfad951cd6f43156aa3a28ce",
+      "required": true
+    },
+    "slo": {
+      "policy_sha256": "c9654a1d8920c15bf6a7a72390177b4520a8b96424999e0adb1c82c19474e0a2",
+      "required": true
+    }
+  },
+  "command": "Prepare only the fresh immutable glm47-observer-diagnostic-l40s-v13 paid-spec identity; do not admit or launch it. Preserve all unrelated and existing uncommitted work. Start from the completed V12 provider reconciliation and the passed V12 readiness evidence contract. Use test-driven development and verify with deterministic positive and fail-closed tests that the reusable observer controller accepts only the exact fresh V13 run ID supplied through fenced supervisor arguments and rejects malformed, foreign, V12, and other retired identities. Generate fresh V13 preregistration, artifact-contract, identities, preflight, and paid-spec files below the supervisor-provided worker output directory, binding the current controller, remote harness, exact Nsight Systems 2026.3.1.157 launch-help fixture, workload, tokenizer, checkpoint, runtime, configuration, and readiness-event implementation hashes. Prove that public_ip_ready records the first observed public-IP attempt without the address; ssh_cloud_init_probe_started precedes the first probe and records immutable deadline geometry; bounded ssh_cloud_init_attempt events retain timestamps and typed outcomes without command, IP, key path, stdout, stderr, or secrets; and these events survive pre-bootstrap failure packaging. Use one explicit current UTC --now value. Preserve the exact public-IP cap at start plus 420 seconds, SSH/cloud-init cap at min(absolute deadline, start plus 480 seconds), 2000-second watchdog, 240-second cleanup reserve, $0.55 maximum spend, and $0.07 cleanup reserve; do not alter, extend, or reuse V12's settled deadline or reservation. Preserve STOCK_STARTUP exclusion and isolation, A1/B1/A2 ordering, 8 requests at c8 with 8192 input and 32 output tokens, observer-off/on/off perturbation gates, at least 95% dependency attribution, exact raw request/event/quality/cost/host-GPU telemetry and log retention, hashed manifests, partial-evidence recovery, and verified compute/disk cleanup. Run Bash syntax, Python compilation, focused placement, observer, and preparation tests, the full campaign unittest suite, relevant factory supervisor/operations tests, factory validate-paid-run against the exact V13 spec at the recorded preparation time, and python3 tools/devex/check.py. Write result.md, paid-spec.json, preregistration.json, artifact-contract.json, identities.json, preflight files, hashes.txt, verification.log, and verification-exit.txt below the worker output directory. Classify evidence; report zero paid cost; preserve the unchanged scientific residual bottleneck. Do not call admit-paid-run, inspect or mutate a provider, change budget authority, modify any existing deadline, update scientific beliefs, commit, or push. If a gate fails, record the operational preparation failure and do not retry unchanged work.",
+  "seed": 470213,
+  "timeout_seconds": 600,
+  "max_cost_usd": 0.0,
+  "artifact_refs": [
+    "76fe1e86515c31d525022ddd9831819b3d5562bd36b4c691bb62a020eaa30147",
+    "6447023834548eeb5db0685acf55e4c35dc8d89852526aa896a9711e042571d0",
+    "7cb4703566aa997e41cf96ae3f6936e1fa86e0ca291665af68716026620f89d4"
+  ],
+  "director_contract": {
+    "decision": "Register exactly one parallel_offline V13 immutable-identity preparation packet; retain the prohibition on paid admission and provider launch in this transition.",
+    "causal_hypothesis": "Binding the already-passed readiness phase-event implementation into a fresh immutable identity can make the next observer placement diagnosable without changing its readiness allowance or scientific geometry.",
+    "stock_control": "Retired, cleaned, and settled V12 identity, whose failure evidence lacked the now-implemented readiness phase events.",
+    "candidate_change": "Fresh V13 identity content-bound to the passed readiness event implementation and otherwise unchanged contracts.",
+    "quality_gate": "No model arm executes; preparation passes only if all scientific, quality, telemetry, identity, artifact, and cleanup contracts remain byte- or policy-bound and unchanged in meaning.",
+    "slo_gate": "Public IP remains capped at start+420 seconds; SSH/cloud-init remains capped at min(absolute deadline, start+480 seconds); watchdog remains 2000 seconds; cleanup reserve remains 240 seconds.",
+    "maximum_spend_usd": 0.0,
+    "wall_clock_timeout_seconds": 600,
+    "cleanup": "No provider or retained resources; remove only worker-temporary files after content-addressed packaging.",
+    "artifact_contract": "Retain exact identities and raw preparation inputs, tests and typed readiness fixtures, validation logs and exit codes, generated preregistration and paid spec, and a hashed manifest in the worker output directory.",
+    "residual_bottleneck": "The matched target-L40S observer bracket remains unexecuted; dense-device versus host/scheduler critical-path attribution remains unresolved. This preparation cannot update scientific mechanism beliefs."
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "allocation_state": "cleaned",
+  "cleanup": [
+    {
+      "allocation_id": "allocation-failure",
+      "status": "cleaned"
+    }
+  ],
+  "controller_state": "failure_injected",
+  "direct_resource_absent": true,
+  "duplicate_ownership_rejected": true,
+  "finished_at": 1784104327.8611531,
+  "identity_mismatch_rejected": true,
+  "inventory_absent": true,
+  "kind": "zero_provider_terminal_result",
+  "missing_terminal_artifact_rejected": true,
+  "scenario": "failure",
+  "schema_version": 1,
+  "trigger": "stale_controller_heartbeat",
+  "watchdog_pid": 861517
+}

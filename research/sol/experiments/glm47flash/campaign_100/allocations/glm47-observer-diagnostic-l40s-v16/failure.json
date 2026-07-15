@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v16",
+  "failure_class": "operational_failure",
+  "stage": "host_bootstrap_nsys_capability_gate_unbound_positional_parameter_before_checkpoint_transfer",
+  "message": "The tagged L40S instance reached SSH/cloud-init readiness and verified the pinned GPU, CUDA, vLLM, Transformers, Docker, NVIDIA container toolkit, and Nsight Systems installation. During the pre-transfer Nsight capability gate, the host bootstrap exited under set -u with 'bash: line 33: $1: unbound variable'. No checkpoint transfer, model load, inference request, scored arm, deep profile, or scientific result occurred. The controller skipped an unchanged repair, deleted the instance and disk, verified direct instance not-found, and reconciled zero final instances and disks."
+}

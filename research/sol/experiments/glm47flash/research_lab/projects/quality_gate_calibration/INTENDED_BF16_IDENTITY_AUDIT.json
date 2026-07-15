@@ -1,0 +1,14 @@
+{
+  "authorized_spend_usd": 0.0,
+  "classification": "derived_prelaunch_identity_falsifier",
+  "complete_v13_model_revision": "33faccf4c2ba82142214d0d4e16232a4e9ccfe10",
+  "decision": "PASS identity rebind: protocol and suite bind the measured complete intended BF16 checkpoint. A fresh admission remains required before launch.",
+  "holdout_status": "not_generated_not_inspected",
+  "identity_ready_for_fresh_admission": true,
+  "protocol_model_revision": "33faccf4c2ba82142214d0d4e16232a4e9ccfe10",
+  "same_intended_checkpoint": true,
+  "schema_version": 1,
+  "suite_long_context_checkpoint_bindings": [
+    "33faccf4c2ba82142214d0d4e16232a4e9ccfe10"
+  ]
+}

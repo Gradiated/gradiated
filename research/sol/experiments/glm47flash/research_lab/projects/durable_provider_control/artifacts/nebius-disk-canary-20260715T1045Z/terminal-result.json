@@ -1,0 +1,17 @@
+{
+  "controller_pid": 865747,
+  "delete_requested": false,
+  "direct_resource_absent": true,
+  "disk_id": null,
+  "error": "RuntimeError: Nebius command failed: compute disk create; exit=3",
+  "finished_at_epoch": 1784104845.5566413,
+  "identity_sha256": "ea1c44da1f876005e197cd4583d2e54219e6702092dfd3644b883a721d3a31e1",
+  "inventory_absent": true,
+  "kind": "nebius_disk_lifecycle_canary",
+  "name": "glm47-durable-canary-ea1c44da1f87",
+  "observed_direct": false,
+  "observed_inventory": false,
+  "pass": false,
+  "schema_version": 1,
+  "started_at_epoch": 1784104845.3066578
+}

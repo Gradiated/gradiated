@@ -1,0 +1,71 @@
+{
+  "experiment_id": "nebius_l40s_vllm_awq_frontier_c16_v31",
+  "preregistered_at_utc": "2026-07-15T00:00:00Z",
+  "parent_control": "nebius_l40s_vllm_awq_prefill65k_v21",
+  "causal_hypothesis": "After V21 removed c8 prompt-budget queueing at 65,536 batched tokens, admitting sixteen live sequences may raise cache-off fixed-workload SLO-goodput by at least 5% without violating the fixed SLO. The only intended server change is --max-num-seqs from 8 to 16.",
+  "falsifiers": [
+    "p95 TTFT exceeds 10,000 ms because the 65,536-token scheduler budget requires an adverse second prompt wave",
+    "p95 TPOT exceeds 100 ms or conservative c16 throughput improves c8 by less than 5% because decode is already saturated",
+    "OOM, KV-capacity, exact-geometry, semantic, prospective-quality/NLL, prefix-cache, or cleanup failure"
+  ],
+  "fixed_identity": {
+    "model": "cyankiwi/GLM-4.7-Flash-AWQ-4bit",
+    "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86",
+    "runtime": "vllm-0.15.0",
+    "transformers_revision": "1618d44b9295361607ec74d7be860ba886aac039",
+    "quantization": "compressed-tensors",
+    "dtype": "bfloat16",
+    "max_model_len": 32768,
+    "max_num_batched_tokens": 65536,
+    "max_num_seqs": 16,
+    "frontier_concurrencies": [1, 8, 16],
+    "prefix_caching": false,
+    "seed": 470100,
+    "generation": "temperature=0, ignore_eos=true, max_tokens=1024"
+  },
+  "workload": {
+    "c1": "4 requests at concurrency 1",
+    "c8_adjacent_control": "16 requests at concurrency 8",
+    "c16_candidate": "32 requests at concurrency 16",
+    "input_tokens_per_request": 8192,
+    "output_tokens_per_request": 1024,
+    "quality_suite_sha256": "152548d51fba8e8ff5e8f1e665c5af166fb6d97cdf3010723042112855964668"
+  },
+  "gates": {
+    "fixed_slo": "all requests succeed with exact geometry, p95 TTFT <= 10000 ms, p95 TPOT <= 100 ms, and zero prefix-cache query/hit deltas",
+    "prospective_quality": "semantic determinism plus existing paired overall/category and NLL gates",
+    "useful_tuned_incumbent": "c16 throughput >= 373.560629 output tok/s (5% above V21 c8)",
+    "strong_compute_condition": "c16 throughput >= 397.278796 output tok/s ($0.60/M at $0.8581222/hour); conditional on separate quality gate",
+    "reject": "OOM, truncation, geometry, semantic, quality, SLO, prefix-cache, harness, or verified-cleanup failure; also reject c16 gain <5%"
+  },
+  "resource_and_slo_prior": {
+    "v21_kv_cache_tokens": 333488,
+    "c16_live_token_upper_bound": 147456,
+    "c16_kv_headroom_tokens": 186032,
+    "c16_two_wave_ttft_proxy_ms": 9902.751488,
+    "interpretation": "The proxy is a conservative retained-evidence screen, not a performance forecast. c32 is excluded from this session."
+  },
+  "telemetry_and_artifacts": [
+    "immutable preregistration and source hashes",
+    "server command, loaded KV capacity, raw c1/c8/c16 request rows, metrics deltas, server logs",
+    "one-hertz GPU utilization, VRAM, power, telemetry errors, and profiler admission result",
+    "semantic, paired quality/NLL, prefix-cache, model/runtime/tokenizer identity, archive manifest/hash",
+    "allocation exposure, useful-GPU timing where available, cost, watchdog, and verified teardown"
+  ],
+  "budget": {
+    "session_cap_usd": 1.5,
+    "absolute_timeout_seconds": 3600,
+    "hourly_vm_plus_disk_usd": 0.8581222,
+    "maximum_derived_vm_plus_disk_usd": 0.8581222,
+    "one_provider_owner": "batching_slo_frontier",
+    "sequential_arms_on_one_server": true
+  },
+  "source_hashes": {
+    "batch_runner": "5661b52d8739f629b61c486c766b4f13212d363398af7b7664653f1c84d87b34",
+    "remote_launcher": "78b88ad433af3b696477e0dbd5b44edaa1f318a4639ead5a71baa00a364335ca",
+    "primary_control": "aeeb000c7240708087245664c1e3109dec20382b384f04888f916cb516123f4c",
+    "retained_recovery": "2dc744ba6e4e91d2ac45ed9aec4484fb1d5a0b4472b1771a5a80d1318e64161a"
+  },
+  "stop_rules": "No c32, batching-budget change, prefix caching, kernel change, workload amendment, quality recalibration, or overlapping allocation. On infrastructure failure, preserve the archive and use only the existing bounded repair window; do not repeat unchanged."
+}

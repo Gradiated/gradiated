@@ -26,7 +26,7 @@ Then read, in order:
 1. [`AGENTS.md`](../AGENTS.md) — repository invariants and safety rules.
 2. The linked GitHub issue and its Project status — canonical scope, owner, and state.
 3. [`docs/AGENT_OPERATING_SYSTEM.md`](AGENT_OPERATING_SYSTEM.md) — concurrency and handoff rules.
-4. The nearest workstream instructions and start document from [`research/README.md`](../research/README.md). For continuous model research, read the shared [`research/factory/README.md`](../research/factory/README.md) and [`research/factory/OBSERVABILITY.md`](../research/factory/OBSERVABILITY.md) before the model-specific handoff.
+4. The nearest workstream instructions and start document from [`research/README.md`](../research/README.md). For continuous model research, read the shared [`research/factory/README.md`](../research/factory/README.md) before the model-specific campaign file.
 5. The task packet in `tasks/active/`, or the most recent handoff/report named by the context command.
 
 Do not infer current state from filenames, chat history, or an old report when a newer handoff, issue, or machine-readable status artifact exists.
@@ -40,7 +40,7 @@ Do not infer current state from filenames, chat history, or an old report when a
 | Product source | Product workstream directory | Code, tests, configuration, and implementation handoffs |
 | Research source material | `research/<workstream>/evidence/` | Raw captures, measurements, logs, hashes, and provenance |
 | Research synthesis | `research/<workstream>/docs/` | Reports, decision briefs, and uncertainty-labeled conclusions |
-| Per-model research state | Persistent research-factory root | Hash-chained events, generated state/context, and content-addressed run bundles; do not place a real campaign only under `.agents/runtime/` |
+| Per-model research state | Model workstream `research_lab/` | Campaign brief, director/supervisor logs, project briefs and research logs; harness runtime contains thread IDs, timings, and traces |
 | Current workstream state | Workstream `README`, `AGENTS.md`/`CLAUDE.md`, handoff, or report | The latest accepted facts, blockers, and next decisive actions |
 | Ephemeral runtime state | `.agents/runtime/` | Caches, browser profiles, temporary logs, and resumable process state; never commit |
 

@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v18",
+  "failure_class": "factory_identity_drift",
+  "stage": "pre_provider_identity_gate",
+  "message": "The deterministic provider command exited 1 before provider mutation. The measured traceback reports ObserverDiagnosticError: factory program, campaign, run, or setup identity drifted. The failing tuple member is not observable in the retained stderr, so field-level attribution remains uncertain."
+}

@@ -1,0 +1,100 @@
+{
+  "artifacts": {
+    "per_capture": [
+      "raw-response-bytes",
+      "normalized-output-bytes",
+      "transform-decisions",
+      "responses.jsonl",
+      "runtime-evidence.json",
+      "identity-manifest.json",
+      "capture-result.json"
+    ],
+    "session": [
+      "preregistration.json",
+      "content-hashes.json",
+      "retrieval-log",
+      "cleanup-verification.json"
+    ]
+  },
+  "authorization": {
+    "director_admission_required": true,
+    "holdout_access": false,
+    "model_launch": false,
+    "provider_mutation": false
+  },
+  "captures": {
+    "absolute_session_timeout_seconds": 3600,
+    "candidate": "not_admitted",
+    "capture_timeout_seconds": 900,
+    "checkpoint_reuse": "only while storage identity, checkpoint revision, tokenizer binding, and verified 48-shard marker remain identical; otherwise stop",
+    "control": "intended BF16 only",
+    "count": 3,
+    "phases": {
+      "capture_1_seconds": 900,
+      "capture_2_seconds": 900,
+      "capture_3_seconds": 900,
+      "provision_load_verify_seconds": 900
+    },
+    "sequence": "one_fresh_vm_then_three_fresh_server_process_captures_with_identity_bound_resident_checkpoint"
+  },
+  "classification": "prepared_not_admitted_bf16_development_capture",
+  "cleanup": {
+    "on_any_exit": [
+      "retrieve and hash artifacts",
+      "delete compute and named disks",
+      "verify instance not found",
+      "verify zero named resources"
+    ],
+    "watchdog_seconds": 3900
+  },
+  "controller": {
+    "not_started": true,
+    "required": "durable external controller with one owner, absolute watchdog, terminal result artifact, and verified cleanup"
+  },
+  "development_gate": {
+    "category_minimum": "at least 5 of 6 point score in every category",
+    "failure": "do not generate holdout, do not admit AWQ, preserve raw artifacts and classify failure"
+  },
+  "economics": {
+    "authorized_spend_usd": 0.0,
+    "conditional_spend_cap_usd": 4.27,
+    "measured_v13_cost_reconciliation": "BF16_CAPTURE_COST_RECONCILIATION.json",
+    "provider_admission_required_before_spend": true
+  },
+  "nll_calibration": {
+    "failure": "missing or malformed runtime logprobs fails capture",
+    "required_raw_fields": [
+      "input_token_logprobs",
+      "token_sequence_sha256",
+      "raw_response_sha256"
+    ],
+    "rule": "For each of six sequences, freeze ceiling to maximum of the three runtime-derived control mean NLL values times 1.05."
+  },
+  "question": "Three intended-BF16 captures calibrate per-sequence NLL ceilings and test the executable development-only screen.",
+  "runtime_identity": {
+    "container": "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af",
+    "minimum_context_length": 32768,
+    "model_revision": "33faccf4c2ba82142214d0d4e16232a4e9ccfe10",
+    "request_policy": {
+      "chat_endpoint": "/v1/chat/completions",
+      "enable_thinking": false,
+      "logprob_endpoint": "/generate",
+      "max_output_tokens": 256,
+      "temperature": 0.0,
+      "top_p": 1.0
+    },
+    "runtime_source_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "tokenizer_bindings_sha256": "ccbe405b3abcef13f95dc7882f3ab21f8fa3443a97a340f9e8c4070682ecb14c"
+  },
+  "schema_version": 1,
+  "stop_rules": [
+    "Any identity mismatch, missing raw evidence, transport mutation failure, timeout, or cleanup failure stops the lineage.",
+    "No performance workload, candidate representation, or holdout operation is in scope."
+  ],
+  "suite": {
+    "case_count": 36,
+    "fixture_sha256": "4953e524526106b353a7df8de6d84e45fa18d96464935117ca926f483d03a6b7",
+    "holdout_status": "not_generated_not_inspected",
+    "manifest_sha256": "d304c6b323cd382b0a952b3389267b8d4881096cb4dc0622b051014769852351"
+  }
+}

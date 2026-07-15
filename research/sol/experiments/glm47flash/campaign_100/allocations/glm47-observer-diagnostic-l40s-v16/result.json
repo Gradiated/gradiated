@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "id": "glm47-observer-diagnostic-l40s-v16-result",
+  "run_id": "glm47-observer-diagnostic-l40s-v16",
+  "scout_id": "glm47-dense-resource-signature",
+  "control_id": "glm47-stock-observer-off",
+  "candidate_id": "glm47-stock-observer-on",
+  "changed_variable": "observer state and its harness/configuration identity only",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "prediction_sha256": "70bd80f5ba174e34bb8e666effaf71611dd319caac14c5c648d7a2a38f81779b",
+  "outcome_class": "operational_failure",
+  "failure_class": "operational_failure",
+  "fidelity": "matched_server",
+  "scope": {
+    "claim": "diagnostic localization only; no quality, economics, provider, or candidate-performance claim",
+    "hardware": "Nebius L40S 48GB; gpu-l40s-a; 1gpu-16vcpu-64gb",
+    "model": "GLM-4.7-Flash revision ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "workload": "A1 observer-off / B1 observer-on / A2 observer-off; 8 requests; c8; 8192 input + 32 output tokens"
+  },
+  "cost_usd": 0.125600679,
+  "artifact_bundle_sha256": "084d4f10c170e8d4d31c02eded7b95ce3cb2676ee0e9c39bef40ef3f6fb21ad6",
+  "artifact_refs": [
+    "084d4f10c170e8d4d31c02eded7b95ce3cb2676ee0e9c39bef40ef3f6fb21ad6"
+  ],
+  "telemetry_summary": {
+    "schema_version": 1,
+    "run_id": "glm47-observer-diagnostic-l40s-v16",
+    "failure_stage": "host_bootstrap_nsys_capability_gate_unbound_positional_parameter_before_checkpoint_transfer",
+    "captured_signals": [
+      "identity_and_environment",
+      "resource_and_cost_ledger"
+    ],
+    "missing_signals": [
+      "request_timeline",
+      "scheduler_timeline",
+      "accelerator_health",
+      "host_and_transfer_health",
+      "model_structure",
+      "quality_and_correctness",
+      "scheduler_iteration_trace",
+      "cpu_gpu_dependency_trace",
+      "kernel_resource_trace"
+    ]
+  },
+  "next_action": "Dispatch exactly one bounded parallel_offline V16 capability-gate shell-contract falsifier over the immutable V16 launcher bytes. Reproduce the line-33 unbound positional parameter locally, identify the exact empty-argument call path, bind the minimum repair and a mutation negative control, and prove the repaired bootstrap reaches the existing pre-transfer capability decision without provider, GPU, checkpoint transfer, model load, inference, or scored-arm access. Preserve all scientific, budget, deadline, telemetry, partial-evidence, and cleanup contracts; do not reuse or readmit V16."
+}

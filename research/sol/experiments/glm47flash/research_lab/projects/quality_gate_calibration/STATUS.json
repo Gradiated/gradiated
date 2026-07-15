@@ -1,0 +1,32 @@
+{
+  "status": "active",
+  "priority": 100,
+  "summary": "The V2 three-phase artifact contract passes a local fake end-to-end proof; paid authority remains revoked pending external systemd/H100 adapter binding.",
+  "next_action": "Bind the locally proven V2 contract to the existing external systemd controller/watchdog and complete-H100 adapter, then run a fake durable-service proof before seeking fresh paid admission.",
+  "latest_evidence": "Positive fake V2 controller proof retained all six required per-phase artifacts and terminal cleanup state; phase-2 missing artifact control failed closed. This is local-only and does not prove durable or provider execution.",
+  "artifacts": [
+    "ARCHIVED_RESPONSE_BOUNDARY_AUDIT.json",
+    "PROSPECTIVE_SUITE_DESIGN.json",
+    "audit_archived_quality.py",
+    "DEVELOPMENT_CALIBRATION_PACKET.json",
+    "validate_development_calibration_packet.py",
+    "DEVELOPMENT_CAPTURE_PREREGISTRATION_AUDIT.json",
+    "audit_capture_preregistration.py",
+    "executable_development_v2/MANIFEST.json",
+    "EXECUTABLE_DEVELOPMENT_SUITE_AUDIT.json",
+    "build_executable_development_suite.py",
+    "audit_executable_development_suite.py",
+    "BF16_DEVELOPMENT_CAPTURE_PREREGISTRATION.json",
+    "BF16_DEVELOPMENT_CAPTURE_PREREGISTRATION_AUDIT.json",
+    "prepare_bf16_capture_preregistration.py",
+    "validate_bf16_capture_preregistration.py",
+    "BF16_CAPTURE_COST_RECONCILIATION.json",
+    "reconcile_bf16_capture_budget.py"
+  ],
+  "provider_mutation": "prohibited_controller_implementation_only",
+  "authorized_spend_usd": 0.0,
+  "implementation_timeout_seconds": 900,
+  "active_experiment": null,
+  "conditional_future_spend_cap_usd": 4.27,
+  "identity_falsifier": "INTENDED_BF16_IDENTITY_AUDIT.json"
+}

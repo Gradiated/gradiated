@@ -24,6 +24,7 @@ This repository is the complete project state for the research and product-build
 - Put decision-relevant browser captures and research outputs in the relevant `research/<workstream>/docs/` or `research/<workstream>/evidence/` directory.
 - Use `.env.example` for variable names and external secret storage for values.
 - Do not make Notion, Drive, Jira, or Slack a required source of truth. GitHub Issues/Projects own work state; the repository owns code, research, prompts, and artifacts.
+- Harness-launched `$research-director`, `$researcher`, and `$research-supervisor` turns are already claimed by their lab and project assignment. They update the lab/project logs directly and do not create a GitHub issue or task packet for each turn.
 
 ## Agent operating contract
 
@@ -42,6 +43,9 @@ This repository is the complete project state for the research and product-build
 
 ## Skills
 
+- `$research-director`: Sol-led opportunity selection and parallel project delegation.
+- `$researcher`: autonomous execution and logging for one research project.
+- `$research-supervisor`: periodic improvement of research speed and effectiveness.
 - `$evidence-research`: source-backed, falsifiable technical or market research.
 - `$browser-research`: reproducible research on JavaScript-heavy or interactive websites.
 - `$product-build`: repository-first product implementation, verification, and handoff.

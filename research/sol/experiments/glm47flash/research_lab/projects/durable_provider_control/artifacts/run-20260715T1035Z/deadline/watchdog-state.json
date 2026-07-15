@@ -1,0 +1,8 @@
+{
+  "controller_identity_sha256": "d4c4cc7c1a78461b0242ed748dc9afb799e56b2dffaa69f94d14317835bfa0de",
+  "heartbeat_at": 1784104329.2484903,
+  "scenario": "deadline",
+  "schema_version": 1,
+  "state": "terminal_written",
+  "watchdog_pid": 861526
+}

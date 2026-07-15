@@ -1,0 +1,84 @@
+{
+  "artifact_refs": [
+    "18b738029e74f8169c57e6aa07ba2206553fb10a8b891c06ef4f119e94a36b3f",
+    "b671c91a027b26c46b6cc86aa0e580a1a5a7426c6a3367d244d20bbb0ec9bc9d",
+    "78eb2fb15013ceb0c1b07fcc14cdd2628998e0e585e342162a3630b61bd44862",
+    "7472f76da4bcc3eb77cd659cc7008d214ad7727581407c8c3805b2fce7b214a0",
+    "2902b0a101af27e95577a90a63c4a4d7265c27437524f18c0ea2769a12baad8e",
+    "c86034940baff28908d80bf5ebf01511a47dacdfffad781a25703281147cd7b9"
+  ],
+  "baseline_id": "glm47-l40s-vllm-awq-split4-v28",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "candidate_id": "observer-dependency-contract-bound-next-spec",
+  "changed_variable": "Bind the validated identity-bound dependency-attribution event contract into the next immutable A1/B1/A2 observer specification and its deterministic pre-admission gates; do not prepare or admit a paid identity.",
+  "claim_scope": {
+    "claim_limit": "Offline integration and fail-closed specification decision only; no provider, device-criticality, performance, quality-adjusted cost, or end-to-end claim.",
+    "hardware": "Local CPU/filesystem only; no provider, network, GPU, checkpoint transfer, model load, inference, or scored arm.",
+    "model": "GLM-4.7-Flash AWQ baseline identity retained as metadata only.",
+    "software": "Current observer event producers, parsers, immutable-spec preparation, partial-evidence packaging, and validated dependency-attribution schema/fixtures.",
+    "workload": "Frozen future STOCK_STARTUP plus A1/B1/A2 geometry: 8 requests at c8, 8192 input tokens, and 32 output tokens; no live requests."
+  },
+  "command": "Run exactly one bounded zero-cost parallel_offline observer dependency-contract integration. Preserve all unrelated and existing uncommitted work. Verify and bind the six content-addressed inputs, including the reconciled result. Treat the prior initial result-record mismatch as an operational failure only; do not update scientific beliefs. Using test-driven development, integrate the validated versioned event contract into the next-observer specification and deterministic preparation gates without creating a fresh paid identity or provider launcher. Require exact request_id and scheduler_iteration_id; explicit CPU and CUDA clock domains plus calibration mapping; cuda_stream_id; graph_launch_id and graph_node_id boundaries; kernel start/end intervals; and request/iteration-scoped dependency edges. Define attribution from the union of non-overlapping dependency-linked intervals only, never summed kernel duration or timestamp containment. Bind stable event IDs, monotonic per-domain timestamps, referential integrity, graph/stream linkage for every kernel interval, and fail-closed rejection of absent or cross-wired fields. Prove the unchanged stored-trace stock control remains rejected at 0.0 coverage, the integrated synthetic candidate reaches at least 0.95 coverage, two replays are byte-identical, and mutations for every required field class fail closed. Prove eligible partial-evidence packaging retains the exact raw request and event rows needed by the contract and its hashed manifest. Preserve STOCK_STARTUP exclusion, A1/B1/A2 ordering, observer-off/on/off perturbation gates, frozen quality/correctness and SLO policy hashes, exact raw request/event identities, cost, low-overhead host/GPU telemetry, logs, observer-bracketed deep profiling, existing maximum future paid-run spend and cleanup reserve, every historical deadline, partial-evidence recovery, and verified compute/disk cleanup. Maximum spend is $0.00; timeout is 480 seconds; seed is 47022501. Retain immutable input inventory, integration-manifest.json, schema-binding.json, valid integrated fixture, missing/cross-wire mutation results, partial-packaging result, focused test logs, result.md, result-record.json, hashes.txt, verification.log, and verification-exit.txt below the supervisor-provided worker output directory; store the evidence and call record --kind result. Run only narrow deterministic Python tests and python3 tools/devex/check.py. Do not inspect or mutate a provider, prepare or admit a paid identity, launch or poll a provider controller, change budget authority, alter any paid-run deadline, update scientific beliefs, commit, or push. If a gate fails, retain the operational result, prohibit promotion, and name the exact missing integration requirement without retrying unchanged work.",
+  "control_id": "current-next-observer-spec-without-bound-dependency-contract",
+  "director_contract": {
+    "artifact_contract": "Content-addressed input inventory, integration manifest, exact schema binding, deterministic fixture and replay, missing/cross-wire controls, partial-packaging proof, raw test logs, typed result, and hashed manifest.",
+    "budget": "$0.00 maximum; no provider reservation or mutation and no new budget authority.",
+    "causal_hypothesis": "Binding the validated event contract into immutable-spec preparation and partial packaging will make the next observer bracket structurally capable of at least 95% request dependency-union attribution before paid admission.",
+    "decision": "Prepare exactly one parallel_offline integration packet; do not admit or launch provider work from the reconciled contract result.",
+    "falsifier": "Any required identity, clock, stream, graph, interval, or dependency relation is not bound into immutable preparation and partial packaging; candidate coverage is below 0.95; replay differs; a mutation passes; or an existing science, quality/SLO, telemetry, budget, deadline, or cleanup invariant changes.",
+    "quality_gate": "No model output is produced; frozen quality/correctness policy remains unchanged and no quality claim is permitted.",
+    "residual_bottleneck": "Matched target-L40S observer bracket remains unexecuted; dense-device versus host/scheduler request-critical attribution remains unresolved until a valid bracket emits the integrated contract.",
+    "slo_gate": "480-second local timeout and zero spend; all existing paid-run and cleanup deadline geometry remains unchanged.",
+    "stock_control": "Current next-observer specification path without the validated dependency-attribution contract bound into immutable preparation and partial packaging.",
+    "timeout_seconds": 480
+  },
+  "execution_kind": "local",
+  "fence": {
+    "active_allocations": 0,
+    "active_reservations": 0,
+    "artifact_audit_pass": true,
+    "artifact_references_checked": 160,
+    "event_head_before_transition": "c36c3eff85c0fbf68e83b9c53418734773b9827c7115bd18867ccd8dc6b0879d",
+    "lease_epoch": 3,
+    "owner": "supervisor-glm47",
+    "p0_actions_pending": 0,
+    "provider_mutation_performed": false,
+    "safe_to_start_new_provider_mutation": true
+  },
+  "fidelity": "reference",
+  "gates": {
+    "correctness": {
+      "policy_sha256": "79e9a05c971ef3ecb4e719a28e4c529a00d9600f5ab69576554491ca5d51b94a",
+      "required": true
+    },
+    "quality": {
+      "policy_sha256": "99effb41fdab608ce8d7861109d7f89291f012a8cfad951cd6f43156aa3a28ce",
+      "required": true
+    },
+    "slo": {
+      "policy_sha256": "c9654a1d8920c15bf6a7a72390177b4520a8b96424999e0adb1c82c19474e0a2",
+      "required": true
+    }
+  },
+  "max_cost_usd": 0.0,
+  "measurement_contract": {
+    "effect_formula": "candidate_over_control_minus_one",
+    "minimum_candidate_repetitions": 2,
+    "protocol": "deterministic",
+    "statistic": "median"
+  },
+  "prediction": {
+    "expected_direction": "increase",
+    "falsifier": "The integrated specification cannot attain at least 0.95 dependency-union coverage or fails any identity, clock, stream, graph, interval, edge, replay, partial-packaging, or invariant-preservation gate.",
+    "metric": "immutable_observer_dependency_contract_integration_pass_fraction",
+    "minimum_effect_fraction": 1.0,
+    "plausible_ceiling_fraction": 1.0,
+    "point_estimate_fraction": 1.0
+  },
+  "program_id": "glm-4.7-flash",
+  "run_id": "glm47-observer-dependency-attribution-integration-c1",
+  "schema_version": 1,
+  "scout_id": "glm47-host-scheduler-critical-path",
+  "seed": 47022501,
+  "timeout_seconds": 480
+}

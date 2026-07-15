@@ -36,9 +36,10 @@ A persistent local supervisor will safely resume the GLM-4.7 research program, r
 
 ## Result
 
-- status: active
+- status: done
 - verification:
 - changed paths:
 - limitations or blocked paths:
 - commit:
 - next action:
+- released: 2026-07-15T06:41:51+00:00

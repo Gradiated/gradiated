@@ -1,4 +1,5 @@
 import json
+import subprocess
 import sys
 import time
 import unittest
@@ -18,9 +19,82 @@ from placement_control import (  # noqa: E402
     watchdog,
     validate_gpu_csv,
 )
+import placement_control  # noqa: E402
 
 
 class NebiusPlacementControlTests(unittest.TestCase):
+    def test_wait_ssh_emits_ordered_success_attempt_without_sensitive_fields(self):
+        clock = mock.Mock(side_effect=[100.0, 100.0, 101.5])
+        observed = []
+        probe = mock.Mock(return_value=mock.Mock(returncode=0, stdout="secret", stderr="private"))
+        with mock.patch.object(placement_control, "refresh_ephemeral_host_key"), \
+             mock.patch.object(placement_control.time, "time", clock), \
+             mock.patch.object(placement_control.subprocess, "run", probe):
+            placement_control.wait_ssh(
+                "8.8.8.8", Path("/secret/key"), 200.0,
+                observer=lambda event, fields: observed.append((event, fields)),
+            )
+        self.assertEqual([event for event, _ in observed], ["ssh_cloud_init_attempt"])
+        self.assertEqual(observed[0][1]["attempt_number"], 1)
+        self.assertEqual(observed[0][1]["return_code"], 0)
+        self.assertTrue(observed[0][1]["success"])
+        self.assertNotIn("8.8.8.8", json.dumps(observed))
+        self.assertNotIn("secret", json.dumps(observed))
+        self.assertNotIn("private", json.dumps(observed))
+        self.assertNotIn("/secret/key", json.dumps(observed))
+        probe.assert_called_once()
+
+    def test_wait_ssh_retry_timeout_error_and_deadline_are_typed_and_bounded(self):
+        cases = [
+            ("retry_then_success", [mock.Mock(returncode=1), mock.Mock(returncode=0)], None),
+            ("subprocess_timeout", [subprocess.TimeoutExpired(["ssh"], 20)], placement_control.PlacementError),
+            ("subprocess_error", [OSError("transport")], placement_control.PlacementError),
+            ("deadline_timeout", [mock.Mock(returncode=1)], placement_control.PlacementError),
+        ]
+        for name, outcomes, expected_error in cases:
+            with self.subTest(name=name):
+                now = [100.0]
+                observed = []
+                def fake_time():
+                    return now[0]
+                def fake_sleep(seconds):
+                    now[0] += seconds
+                def fake_run(*_args, **_kwargs):
+                    result = outcomes.pop(0)
+                    if isinstance(result, BaseException):
+                        raise result
+                    return result
+                with mock.patch.object(placement_control, "refresh_ephemeral_host_key"), \
+                     mock.patch.object(placement_control.time, "time", side_effect=fake_time), \
+                     mock.patch.object(placement_control.time, "sleep", side_effect=fake_sleep), \
+                     mock.patch.object(placement_control.subprocess, "run", side_effect=fake_run):
+                    if expected_error:
+                        with self.assertRaises(expected_error):
+                            placement_control.wait_ssh(
+                                "192.0.2.1", Path("key"), 108.0,
+                                observer=lambda event, fields: observed.append((event, fields)),
+                            )
+                    else:
+                        placement_control.wait_ssh(
+                            "192.0.2.1", Path("key"), 200.0,
+                            observer=lambda event, fields: observed.append((event, fields)),
+                        )
+                self.assertTrue(observed)
+                self.assertEqual(
+                    [fields["attempt_number"] for _, fields in observed],
+                    list(range(1, len(observed) + 1)),
+                )
+                self.assertTrue(all("outcome" in fields and "success" in fields for _, fields in observed))
+                if name == "deadline_timeout":
+                    self.assertEqual(len(observed), 1)
+                    self.assertEqual(observed[0][1]["outcome"], "return_code")
+
+    def test_readiness_geometry_is_fail_closed_and_provider_commands_are_not_in_fixture_tests(self):
+        source = (ROOT / "nebius" / "observer_diagnostic_control.py").read_text()
+        self.assertIn("started + 420", source)
+        self.assertIn("started + 480", source)
+        self.assertIn("ABSOLUTE_TIMEOUT_SECONDS = 2000", source)
+        self.assertIn("CLEANUP_RESERVE_SECONDS = 240", source)
     def test_create_command_is_exact_regular_h100_geometry(self):
         command = build_create_command(
             name="glm-nebius-h100-smoke-test",

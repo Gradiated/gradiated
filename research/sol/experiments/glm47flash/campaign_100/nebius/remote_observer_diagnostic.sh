@@ -45,7 +45,7 @@ refresh_partial_archive() {
   local name
   rm -rf "$staging"
   mkdir -p "$staging/arms"
-  for name in phases.jsonl allocation-result.json nvidia-smi-final.txt; do
+  for name in phases.jsonl allocation-result.json nvidia-smi-final.txt host-bootstrap-launcher.sh host-bootstrap-launcher.json; do
     [ ! -f "$OUT/$name" ] || cp "$OUT/$name" "$staging/$name"
   done
   for arm_dir in "$OUT"/arms/*; do
@@ -55,9 +55,13 @@ refresh_partial_archive() {
       server.stdout.log server.stderr.log health-attempts.jsonl health-curl.stderr.log \
       workload.json workload.stdout.log workload.stderr.log gate.json \
       scheduler-events.jsonl request-events.jsonl request-event.jsonl \
+      raw-request.jsonl raw-events.jsonl dependency-events.jsonl dependency-manifest.json \
       metrics-before.txt metrics-after.txt nvidia-smi-loaded.txt telemetry.csv telemetry.stderr.log; do
       [ ! -f "$arm_dir/$name" ] || cp "$arm_dir/$name" "$staging/arms/$(basename "$arm_dir")/$name"
     done
+  done
+  for name in host-bootstrap-launcher.sh host-bootstrap-launcher.json; do
+    [ ! -f "/input/$name" ] || cp "/input/$name" "$staging/$name"
   done
   printf '{"schema_version":1,"complete":false,"classification":"diagnostic_partial","timestamp":"%s","phase":"%s","arm":"%s","mode":"%s"}\n' \
     "$(date -u +%FT%TZ)" "$CURRENT_PHASE" "$CURRENT_ARM" "$CURRENT_MODE" > "$staging/partial-metadata.json"
@@ -486,8 +490,8 @@ run_arm() {
     ACTIVE_SESSION="$session"
     nsys launch --session-new="$session" \
       --trace=cuda,nvtx,osrt --cuda-graph-trace=node --cuda-event-trace=true \
-      --sample="$sample_mode" --cpuctxsw="$context_switch_mode" --backtrace=none \
-      --output="$arm_dir/trace" "${CMD[@]}" \
+      --sample="$sample_mode" --cpuctxsw="$context_switch_mode" \
+      "${CMD[@]}" \
       > "$arm_dir/server.stdout.log" 2> "$arm_dir/server.stderr.log" &
     SERVER=$!
   else
@@ -501,7 +505,7 @@ run_arm() {
   run_warmup "$arm"
   curl -fsS http://127.0.0.1:30000/metrics > "$arm_dir/metrics-before.txt"
   if [[ "$mode" = nsys-* ]]; then
-    nsys start --session="$session" > "$arm_dir/nsys-start.log" 2>&1
+    nsys start --session="$session" --output="$arm_dir/trace" > "$arm_dir/nsys-start.log" 2>&1
   fi
   set +e
   python3 /input/observer_workload.py \

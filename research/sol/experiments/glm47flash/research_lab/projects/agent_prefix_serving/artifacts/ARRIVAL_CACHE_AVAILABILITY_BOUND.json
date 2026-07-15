@@ -1,0 +1,88 @@
+{
+  "cases": [
+    {
+      "assumption": "cache insertion occurs at predecessor scheduler-step completion",
+      "case": "optimistic_zero_intercept_scaled_c1",
+      "clears_five_percent_input_target": true,
+      "eligible_reuse_requests": 16,
+      "eligible_reused_input_share": 0.6411657559198543,
+      "eligible_reused_tokens": 2816,
+      "latency_ms": 12.96431888269043
+    },
+    {
+      "assumption": "cache insertion occurs at predecessor scheduler-step completion",
+      "case": "v21_c1_observed",
+      "clears_five_percent_input_target": false,
+      "eligible_reuse_requests": 0,
+      "eligible_reused_input_share": 0.0,
+      "eligible_reused_tokens": 0,
+      "latency_ms": 580.348089
+    },
+    {
+      "assumption": "cache insertion occurs at predecessor scheduler-step completion",
+      "case": "v21_c8_p50_observed",
+      "clears_five_percent_input_target": false,
+      "eligible_reuse_requests": 0,
+      "eligible_reused_input_share": 0.0,
+      "eligible_reused_tokens": 0,
+      "latency_ms": 4809.273679999933
+    },
+    {
+      "assumption": "cache insertion occurs at predecessor scheduler-step completion",
+      "case": "v21_c8_p95_observed",
+      "clears_five_percent_input_target": false,
+      "eligible_reuse_requests": 0,
+      "eligible_reused_input_share": 0.0,
+      "eligible_reused_tokens": 0,
+      "latency_ms": 4951.375743999961
+    },
+    {
+      "assumption": "cache insertion occurs at predecessor scheduler-step completion",
+      "case": "v21_c8_p95_scheduler_step_proxy",
+      "clears_five_percent_input_target": true,
+      "eligible_reuse_requests": 16,
+      "eligible_reused_input_share": 0.6411657559198543,
+      "eligible_reused_tokens": 2816,
+      "latency_ms": 18.789291881720185
+    }
+  ],
+  "decision_rule": "kill paid smoke if no latency case supported by scope-matched evidence reaches two eligible hits; preserve only if timing-feasible reuse is material and later measured.",
+  "evidence_class": "derived simulation from frozen schedule and measured V21 telemetry",
+  "inputs": {
+    "full_cache_block_tokens": 16,
+    "input_tokens": 4392,
+    "minimum_hits_for_five_percent": 2,
+    "plan_sha256": "c495e44058647992103b1d40bb0d86328b5ac3198284deafb7287e0fbad9b04a",
+    "potential_reuse_requests": 16,
+    "potential_reused_input_share": 0.6411657559198543,
+    "requests": 24,
+    "reusable_tokens_per_hit": 176,
+    "session_count": 8,
+    "v21_summary": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/allocations/nebius_l40s_vllm_awq_prefill65k_v21/summary.json",
+    "within_session_gap_ms": 100
+  },
+  "question": "Can the frozen 100 ms within-session gaps make enough exact prefixes cache-eligible to clear the 5% target?",
+  "schema_version": 1,
+  "source_audit": {
+    "interpretation": "V21 TTFT is not the cache-availability latency; V21 TPOT p95 is a measured scheduler-step proxy, not a direct V2 measurement",
+    "runtime": "vllm-0.15.0",
+    "source_commit": "f176443446f659dbab5315e056e605d8984fd976",
+    "source_files": {
+      "vllm/v1/core/kv_cache_manager.py": {
+        "finding": "cache lookup is scheduler-visible and full blocks are committed by allocate_slots; cache hits cap at prompt_length minus one",
+        "lines": "164-204,360-376,475-484",
+        "sha256": "770f754b33b5ecef9e403ac41baea34b18100e45a0d24f69859d006b04e1470e"
+      },
+      "vllm/v1/core/sched/scheduler.py": {
+        "finding": "scheduler allocates and commits cache blocks before the next scheduler iteration",
+        "lines": "710-719,1913-1924",
+        "sha256": "96f7360982899fffdbd627f51e3daf8afbe7a79fad5dc17d6dc0eb093aa516a0"
+      },
+      "vllm/v1/request.py": {
+        "finding": "block hashes are initialized and extended as tokens are appended",
+        "lines": "160-164,208-209",
+        "sha256": "1adfbf02cf4d5e5783504dba4fbdbbd0b35dc32a7be4e27c048c16ccc7eb0a9f"
+      }
+    }
+  }
+}

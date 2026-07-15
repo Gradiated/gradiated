@@ -1,0 +1,1 @@
+{"builder_sha256":"4c23692bf4a91a7db3137a47ca9e320c9b3527396fc1d0696c60f7e9483a1f3a","case_count":36,"fixture_sha256":"4953e524526106b353a7df8de6d84e45fa18d96464935117ca926f483d03a6b7","holdout_status":"not_generated_not_inspected","nll_status":"unfrozen_requires_three_bf16_captures","schema_version":1,"split":"development_calibration"}

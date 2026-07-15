@@ -1,0 +1,15 @@
+{
+  "allocation_id": "allocation-failure",
+  "controller_pid": 861515,
+  "duplicate_ownership_rejected": true,
+  "epoch": 1,
+  "heartbeat_at": 1784104326.9130182,
+  "identity_mismatch_rejected": true,
+  "identity_sha256": "662a6f17e72d0e33afbcf44c1ba4a745a422f30c70252e732c98d503c6d80df9",
+  "owner": "controller-failure",
+  "resource_id": "fake-failure",
+  "scenario": "failure",
+  "schema_version": 1,
+  "started_at": 1784104325.8245635,
+  "state": "failure_injected"
+}

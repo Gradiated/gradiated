@@ -1,0 +1,11 @@
+{
+  "status": "complete",
+  "priority": 95,
+  "summary": "Passed the actual Nebius L40S-plus-managed-boot-disk lifecycle canary: separate durable controller/watchdog services created, two-view observed, and deleted the resource; both final inventories are empty.",
+  "next_action": "Release provider ownership to the director for the intended quality capture. This proof establishes lifecycle ownership and deletion only; it does not authorize a scientific result by itself.",
+  "provider_mutation": "canary_complete_cleanup_verified_provider_ownership_released",
+  "evidence": "artifacts/nebius-instance-canary-20260715T1053Z/terminal-result.json",
+  "zero_provider_proof_completed_at_utc": "2026-07-15T10:35:30Z",
+  "previous_disk_canary_completed_at_utc": "2026-07-15T10:45:00Z",
+  "completed_at_utc": "2026-07-15T10:54:00Z"
+}

@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v12",
+  "failure_class": "operational_failure",
+  "stage": "ssh_cloud_init_readiness_slo_before_bootstrap",
+  "message": "The tagged L40S instance was created, but SSH/cloud-init readiness did not pass within the preregistered SLO. No bootstrap, checkpoint transfer, model load, inference request, scored arm, or scientific result occurred. The controller skipped an unchanged retry, cleaned the instance and disk, verified direct instance not-found, and reconciled zero final instances and disks."
+}

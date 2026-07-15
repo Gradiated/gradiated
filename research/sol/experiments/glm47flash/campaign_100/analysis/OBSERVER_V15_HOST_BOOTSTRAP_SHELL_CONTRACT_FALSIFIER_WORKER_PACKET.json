@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "execution_kind": "local",
+  "run_id": "glm47-observer-v15-host-bootstrap-shell-contract-falsifier-c1",
+  "program_id": "glm-4.7-flash",
+  "scout_id": "glm47-dense-resource-signature",
+  "fidelity": "reference",
+  "baseline_id": "glm47-l40s-vllm-awq-split4-v28",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "control_id": "immutable-v15-host-bootstrap-a3df570b-shell-parse-failure",
+  "candidate_id": "minimum-v15-quote-boundary-repair",
+  "changed_variable": "Repair only the shell quote boundary in the immutable V15 host-bootstrap construction and bind a syntax-negative control plus pre-transfer capability-gate reachability proof.",
+  "claim_scope": {
+    "claim_limit": "Operational shell-contract correctness only; no provider, placement, model, quality, performance, SLO, economics, bottleneck, or paid-run admission claim",
+    "hardware": "Local CPU/shell execution plus the cleaned and settled V15 failure bundle only; no provider access, GPU, or retained resource",
+    "model": "GLM-4.7-Flash AWQ identity retained but no checkpoint transfer, model load, or inference",
+    "software": "Exact V15 controller source, generated 8725-byte host bootstrap SHA-256 a3df570b8cf70e1c10ad680e55a3461ca4501cb09a0d31120bb697b1fd4415ed, remote harness SHA-256 bce6f67f54e9da39f721892fe2e5419913a15f3144293af2f8d2f949a1a6ef8a, Bash parser, and deterministic stubs",
+    "workload": "Host bootstrap parsing and pre-transfer capability-gate reachability only; unchanged excluded STOCK_STARTUP and A1/B1/A2 8-request c8 8192-input/32-output observer contract"
+  },
+  "prediction": {
+    "metric": "host_bootstrap_shell_contract_pass_fraction",
+    "expected_direction": "increase",
+    "point_estimate_fraction": 1.0,
+    "minimum_effect_fraction": 1.0,
+    "plausible_ceiling_fraction": 1.0,
+    "falsifier": "The immutable V15 launcher does not reproduce the exact line-125 unmatched-double-quote failure; the minimum repair changes any non-quoting command or weakens a capability, signing-key, version, parser, source-parity, or pre-transfer gate; Bash syntax still fails; the negative control no longer fails with the exact diagnostic; deterministic execution cannot reach the pre-transfer capability gate without executing transfer/provider/GPU work; any verification fails; or any science, budget, deadline, telemetry, evidence, or cleanup contract drifts."
+  },
+  "measurement_contract": {
+    "protocol": "deterministic",
+    "effect_formula": "candidate_over_control_minus_one",
+    "minimum_candidate_repetitions": 1,
+    "statistic": "median"
+  },
+  "gates": {
+    "correctness": {
+      "policy_sha256": "478a6bba4feb6c0565f9aca45575186d1cd2cff0772c06ce2891aeab02e8267a",
+      "required": true
+    },
+    "quality": {
+      "policy_sha256": "99effb41fdab608ce8d7861109d7f89291f012a8cfad951cd6f43156aa3a28ce",
+      "required": true
+    },
+    "slo": {
+      "policy_sha256": "c9654a1d8920c15bf6a7a72390177b4520a8b96424999e0adb1c82c19474e0a2",
+      "required": true
+    }
+  },
+  "command": "Run exactly one bounded zero-cost parallel_offline host-bootstrap shell-contract falsifier for the cleaned and settled V15 operational failure. Preserve all unrelated and existing uncommitted work. Do not access or inspect a provider and do not require a GPU. Reconstruct the exact immutable V15 launcher bytes from research/sol/experiments/glm47flash/campaign_100/nebius/observer_diagnostic_control.py and verify byte length 8725, SHA-256 a3df570b8cf70e1c10ad680e55a3461ca4501cb09a0d31120bb697b1fd4415ed, controller source SHA-256 9ffec99c30828da0c4a6f9e0d0babfcd68294959982f2f56e86d31f5364ee723, and remote harness SHA-256 bce6f67f54e9da39f721892fe2e5419913a15f3144293af2f8d2f949a1a6ef8a. Retain the exact raw launcher bytes. First run a syntax-only negative control proving bash -n exits 2 with the recorded line-125 unexpected EOF while looking for a matching double quote; bind the diagnostic and its raw hash. Identify the first unmatched quote and the complete quote-state transition that makes the Python heredoc body at generated line 125 parse as shell text. Use test-driven development to implement the minimum quote-boundary repair in the controller; do not change any command, flag, option ownership, parser rule, package/signing-key/version check, source/bootstrap parity check, remote harness, science geometry, transfer behavior, deadline, spend, telemetry, artifact, partial-evidence, or cleanup contract. Prove the repaired launcher passes bash -n. Add deterministic no-network/no-provider stubs for sudo, docker, nsys, sha256sum, grep, and other external effects as needed, with exact fixtures and fail-closed sentinels, then execute only far enough to prove control flow reaches the existing pre-transfer capability gate and aborts before checkpoint transfer, model load, inference, or scored arms. Include a mutation negative control that restores the original quote boundary and recovers the exact failure, plus controls for premature heredoc termination, deleted capability gate, and any transfer command reached before the gate. Run focused shell-contract tests, Bash syntax, Python compilation, the full campaign unittest suite, relevant factory validation tests, and python3 tools/devex/check.py. Write result.md, immutable-v15-host-bootstrap.sh, repaired-host-bootstrap.sh, quote-state.json, syntax-negative-control.json, pre-transfer-reachability.json, source-hashes.txt, raw-hashes.txt, hashes.txt, verification.log, and verification-exit.txt below the supervisor-provided worker output directory. Classify evidence; report zero paid cost; retain the unchanged scientific residual bottleneck; store the evidence; and call record --kind result. Do not prepare a fresh paid identity, admit or reuse V15, launch or poll a provider controller, mutate provider state, change budget authority, modify any paid-run deadline, update scientific beliefs, commit, or push. If any gate fails, record the operational falsifier and do not retry unchanged work.",
+  "seed": 47021503,
+  "timeout_seconds": 480,
+  "max_cost_usd": 0.0,
+  "artifact_refs": [
+    "eca4216b0d44b29d643e49dc5b4d91daf2c1f4ad67b86009166f9abd4a8b1533"
+  ],
+  "director_contract": {
+    "decision": "Register exactly one parallel_offline V15 host-bootstrap shell-contract falsifier; prohibit fresh identity preparation, paid admission, provider launch, and scientific belief updates in this transition.",
+    "causal_hypothesis": "V15 was operationally blocked by a malformed nested shell quote boundary in the generated host bootstrap; a minimum boundary-only repair should preserve every command and reach the already-bound pre-transfer capability gate locally.",
+    "stock_control": "The exact 8725-byte V15 launcher at SHA-256 a3df570b8cf70e1c10ad680e55a3461ca4501cb09a0d31120bb697b1fd4415ed, which locally reproduces Bash exit 2 and the line-125 unmatched-double-quote diagnostic.",
+    "candidate_change": "Change only the minimum shell quote boundary required to make the exact launcher syntactically valid, with command-semantic parity and deterministic pre-transfer reachability.",
+    "quality_gate": "No model arm executes; operational evidence cannot update scientific beliefs, and all observer correctness, quality, telemetry, identity, artifact, and cleanup contracts remain unchanged in meaning.",
+    "slo_gate": "Public IP remains capped at start+420 seconds; SSH/cloud-init remains capped at min(absolute deadline,start+480 seconds); watchdog remains 2000 seconds; cleanup reserve remains 240 seconds.",
+    "maximum_spend_usd": 0.0,
+    "wall_clock_timeout_seconds": 480,
+    "cleanup": "No provider or retained resources; remove only worker-temporary local files after content-addressed packaging.",
+    "artifact_contract": "Retain exact failing and repaired launcher bytes, identities and hashes, quote-state attribution, syntax negative and mutation controls, pre-transfer gate reachability evidence, complete verification logs and exits, and a hashed manifest in the worker output directory.",
+    "residual_bottleneck": "The matched target-L40S observer bracket remains unexecuted; dense-device versus host/scheduler critical-path attribution remains unresolved. This operational falsifier cannot update scientific mechanism beliefs."
+  }
+}

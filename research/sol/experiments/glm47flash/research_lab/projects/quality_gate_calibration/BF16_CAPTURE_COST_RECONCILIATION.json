@@ -1,0 +1,46 @@
+{
+  "authorization": {
+    "provider_mutation": false,
+    "spend_authorized_usd": 0.0
+  },
+  "classification": "derived_measured_phase_cost_reconciliation",
+  "costs": {
+    "current_cap_seconds_at_measured_rate": 1393.7983287394577,
+    "current_conditional_cap_usd": 1.5,
+    "measured_v13_session_cost_usd": 2.053254722,
+    "recommended_conditional_all_in_cap_usd": 4.27,
+    "reserve_fraction": 0.1,
+    "session_cap_cost_usd": 3.8743051190796916
+  },
+  "decision": "Current $1.50 cap is infeasible: it buys less than the measured V13 session duration. Preserve three captures and 3600-second session; require at least the rounded-up $4.27 conditional all-in authority after director admission.",
+  "phase_model": {
+    "allocation": "one fresh VM and one verified resident checkpoint",
+    "checkpoint_reuse": "Allowed only across the three fresh server-process captures while storage identity, model revision, tokenizer binding, and 48-shard verification marker remain identical; otherwise stop.",
+    "phases": [
+      {
+        "cap_seconds": 900,
+        "name": "provision_load_verify"
+      },
+      {
+        "cap_seconds": 900,
+        "name": "capture_1_fresh_server"
+      },
+      {
+        "cap_seconds": 900,
+        "name": "capture_2_fresh_server"
+      },
+      {
+        "cap_seconds": 900,
+        "name": "capture_3_fresh_server"
+      }
+    ],
+    "session_cap_seconds": 3600
+  },
+  "schema_version": 1,
+  "source": {
+    "allocation_seconds": 1907.882,
+    "cost_usd_derived": 2.053254722,
+    "effective_all_in_rate_usd_per_second": 0.0010761958664110254,
+    "summary": "campaign_100/allocations/nebius_h100_complete_stock_v13/summary.json"
+  }
+}

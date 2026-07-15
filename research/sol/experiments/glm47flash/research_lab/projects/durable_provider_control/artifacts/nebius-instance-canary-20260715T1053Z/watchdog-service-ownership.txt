@@ -1,0 +1,3 @@
+MainPID=871271
+ControlGroup=/user.slice/user-0.slice/user@0.service/app.slice/durable-nebius-canary-watchdog-1784105530342151499.service
+ActiveState=active

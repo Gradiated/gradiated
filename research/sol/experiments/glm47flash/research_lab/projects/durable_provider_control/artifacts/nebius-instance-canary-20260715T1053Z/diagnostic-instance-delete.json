@@ -1,0 +1,16 @@
+{
+  "command_identity": [
+    "nebius",
+    "compute",
+    "instance",
+    "delete"
+  ],
+  "elapsed_seconds": 57.156,
+  "exit_code": 0,
+  "finished_at_epoch": 1784105634.8486207,
+  "sha256": "31a108ff1fc6d115d86d46f7c8f609cc368e1eba5a7fe59957f5fe198f4731b3",
+  "stage": "instance-delete",
+  "stderr": "waiting for operation \"computeoperation-e00yrm9g9efgastr5g\" over resource \"computeinstance-e00zta08fshfbtq30q\" to complete\n",
+  "stdout": "{\n  \"id\": \"computeoperation-e00yrm9g9efgastr5g\",\n  \"description\": \"Delete Instance\",\n  \"created_at\": \"2026-07-15T08:52:57.992348Z\",\n  \"finished_at\": \"2026-07-15T08:53:54.458746Z\",\n  \"resource_id\": \"computeinstance-e00zta08fshfbtq30q\",\n  \"status\": {},\n  \"progress_tracker\": {\n    \"description\": \"Deleting instance\",\n    \"started_at\": \"2026-07-15T08:52:57.992348Z\",\n    \"finished_at\": \"2026-07-15T08:53:54.458746Z\"\n  }\n}\n",
+  "timed_out": false
+}

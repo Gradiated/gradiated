@@ -1,0 +1,15 @@
+{"disk_count": 0, "event": "stock_control", "instance_count": 0, "matching_labeled_resources": 0, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "timestamp": "2026-07-15T01:58:23.678359Z"}
+{"action": "register-allocation", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-15T01:59:08.786693Z"}
+{"event": "instance_created", "instance_id": "computeinstance-e00e0x6jn8gccwjn9k", "timestamp": "2026-07-15T01:59:08.786789Z"}
+{"attempt_number": 1, "elapsed_seconds": 45.971, "event": "public_ip_ready", "timestamp": "2026-07-15T01:59:08.998779Z"}
+{"absolute_deadline_epoch": 1784082290.0, "absolute_watchdog_seconds": 2000, "attempt_number": 1, "cleanup_reserve_seconds": 240, "elapsed_seconds": 45.971, "event": "ssh_cloud_init_probe_started", "public_ip_deadline_epoch": 1784081123.0276413, "science_deadline_epoch": 1784082050.0, "ssh_deadline_epoch": 1784081183.0276413, "timestamp": "2026-07-15T01:59:08.998881Z"}
+{"attempt_number": 1, "elapsed_seconds": 55.994, "event": "ssh_cloud_init_attempt", "event_timestamp": "2026-07-15T01:59:19.021472Z", "outcome": "return_code", "return_code": 255, "success": false, "timestamp": "2026-07-15T01:59:19.021605Z"}
+{"attempt_number": 2, "elapsed_seconds": 71.188, "event": "ssh_cloud_init_attempt", "event_timestamp": "2026-07-15T01:59:34.215711Z", "outcome": "return_code", "return_code": 255, "success": false, "timestamp": "2026-07-15T01:59:34.215836Z"}
+{"attempt_number": 3, "elapsed_seconds": 81.609, "event": "ssh_cloud_init_attempt", "event_timestamp": "2026-07-15T01:59:44.636827Z", "outcome": "return_code", "return_code": 1, "success": false, "timestamp": "2026-07-15T01:59:44.636956Z"}
+{"attempt_number": 4, "elapsed_seconds": 90.191, "event": "ssh_cloud_init_attempt", "event_timestamp": "2026-07-15T01:59:53.218283Z", "outcome": "return_code", "return_code": 0, "success": true, "timestamp": "2026-07-15T01:59:53.218418Z"}
+{"elapsed_seconds": 90.191, "event": "ssh_ready", "timestamp": "2026-07-15T01:59:53.218518Z"}
+{"error_type": "ObserverDiagnosticError", "event": "experiment_error", "message": "pinned vLLM/Nsight/CUDA capability preflight failed", "timestamp": "2026-07-15T02:07:21.662335Z"}
+{"event": "repair_window_skipped", "reason": "no_tested_action_within_ten_minutes", "timestamp": "2026-07-15T02:07:21.662419Z"}
+{"action": "request-cleanup", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-15T02:07:21.713681Z"}
+{"action": "mark-cleanup-verified", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-15T02:08:21.936050Z"}
+{"cleanup_pass": true, "event": "cleanup_verified", "final_disk_count": 0, "final_instance_count": 0, "instance_get_not_found": true, "timestamp": "2026-07-15T02:08:21.936411Z"}

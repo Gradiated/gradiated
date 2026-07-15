@@ -41,7 +41,7 @@ HASHES = {name: f"{index:064x}" for index, name in enumerate(
     start=1,
 )}
 PROGRAM_ID = "glm-4.7-flash"
-RUN_ID = "glm47-observer-diagnostic-l40s-v8"
+RUN_ID = "glm47-observer-diagnostic-l40s-v17"
 SCOUT_ID = "glm47-dense-resource-signature"
 NOW = datetime(2026, 7, 14, 12, 0, tzinfo=timezone.utc)
 
@@ -252,8 +252,6 @@ class ObserverPaidRunPreparationTests(unittest.TestCase):
                 "--cuda-event-trace",
                 "--sample",
                 "--cpuctxsw",
-                "--backtrace",
-                "--output",
             },
             set(capability["required_flags"]),
         )
@@ -281,6 +279,10 @@ class ObserverPaidRunPreparationTests(unittest.TestCase):
             spec["post_run_recording"]["secondary"]["disposition"],
         )
         self.assertFalse(spec["post_run_recording"]["secondary"]["additional_paid_run"])
+        contract = spec["observer_dependency_attribution_contract"]
+        self.assertEqual(contract["contract_id"], "observer-dependency-attribution-v1")
+        self.assertEqual(len(contract["input_artifact_refs"]), 6)
+        self.assertTrue(contract["fail_closed"])
 
     def test_preflight_references_are_deeply_verified_and_identity_bound(self):
         manifest = json.loads(self.preflight_path.read_text())

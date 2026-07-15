@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "id": "glm47-observer-v12-placement-readiness-audit-c1-result",
+  "run_id": "glm47-observer-v12-placement-readiness-audit-c1",
+  "scout_id": "glm47-dense-resource-signature",
+  "control_id": "v12-shared-start-anchored-readiness-window",
+  "candidate_id": "v12-evidence-selected-single-readiness-variable",
+  "changed_variable": "Use the existing V12 timestamps to select and deterministically test exactly one readiness-window variable; prefer anchoring the SSH/cloud-init allowance at public-IP acquisition instead of controller start only if the measured timeline falsifies the current shared-window geometry.",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "prediction_sha256": "b5ef33f51c55bbb35d0cf9ba3a0945ea2d0d3c030696b2437537e52088fa70dc",
+  "outcome_class": "diagnostic_valid",
+  "fidelity": "reference",
+  "scope": {
+    "claim_limit": "Operational placement-readiness attribution only; no model, quality, performance, provider-reliability, cost-efficiency, bottleneck, or promotion claim",
+    "hardware": "Existing recorded Nebius L40S V12 evidence only; no inventory call or provider mutation",
+    "model": "GLM-4.7-Flash AWQ identity retained but not executed",
+    "software": "Current observer controller readiness timestamps, placement helper semantics, and deterministic local replay",
+    "workload": "Unchanged excluded STOCK_STARTUP plus A1/B1/A2 8-request c8 8192-input/32-output observer contract; no arm execution"
+  },
+  "cost_usd": 0.0,
+  "artifact_refs": [
+    "bd4b2818c96ff75e811c8c8e864f655552c381b3a65d988e311279a2e41ae7cc",
+    "42829ba01b051dfd0beb8fc8a182527f519d96f792e898b812c0e877874bc4c5",
+    "f126bc5195d5cba163cf351b0d3871483589d8421ba4a77403d089666920b7b3",
+    "0bafd04ca5f5f6c3f131f0cfd60617314c927044a095cfc07231d8344ea93fff",
+    "6889a6e8ee7ffab97f1c28c182db4d9058e23a5ed9df5a33ab7ad54ad1edce2f",
+    "a774c4372951234f8f3da26c662b5a44792c4cf8236de9d1910aa0bbd497a586",
+    "9b1cf0dbb1f163b8632cbcdd6f78c3fc2f5f0964552c819d580cd63216d62fff",
+    "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  ],
+  "gates": {
+    "correctness": true,
+    "quality": true,
+    "slo": true
+  },
+  "diagnostic_summary": "V12 failed readiness 487.247 seconds after the first controller event, 7.247 seconds after the shared start-anchored 480-second window. The retained evidence has no public-IP acquisition or SSH/cloud-init probe timestamps, so controller/SLO truncation and provider boot variance remain observationally inseparable. Deterministic boundary and negative controls passed, but no recovery variable is supported for admission.",
+  "residual_bottleneck": "The matched target-L40S observer bracket remains unexecuted; dense-device versus host/scheduler critical-path attribution remains unresolved. This operational result does not update scientific mechanism beliefs.",
+  "next_action": "Prepare one zero-cost parallel_offline packet that adds and deterministically tests retention of public_ip_ready plus SSH/cloud-init probe-start and attempt timestamps, without changing the 480-second readiness window, 2000-second watchdog, 240-second cleanup reserve, paid budget, provider state, or observer science contract. Do not prepare or admit another paid identity until that evidence contract passes."
+}

@@ -1,0 +1,9 @@
+{
+  "base_bundle_sha256": "f47c7af5e53483524010d06a93313b29f1a10c08f7df4bf18638349b4767193a",
+  "plan_path": "artifacts/agent_prefix_c8_v2_tenant_isolated.plan.json",
+  "plan_sha256": "c495e44058647992103b1d40bb0d86328b5ac3198284deafb7287e0fbad9b04a",
+  "schema_version": 2,
+  "server_smoke_required": true,
+  "v2_bundle_sha256": "cb6617da379ab40cab6ed513e6ed562eeef82afd93ec5f6c82978d7f865288f2",
+  "validation": "local schema, V1 fixture/tokenizer identity, per-session salt binding, fixed arrival schedule, and HTTP payload construction passed"
+}

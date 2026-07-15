@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "classification": "derived_offline_archived_response_boundary_audit",
+  "input_archive": "campaign_100/allocations/nebius_h100_32k_quality_mtp_v9/stock_no_cache_fcfs-artifact.tar.gz",
+  "input_archive_sha256": "a9dedff69e0cb402a0710c69adfa335af809a52cf9195be3461a94b8b992ce41",
+  "input_response_member": "campaign-100-phase-b-stock/quality-stock_no_cache_fcfs-responses.jsonl",
+  "input_response_member_sha256": "5ff102b18c914fa5dc396ab809bcc71fee893b1d5a92dfd174717fe906dd1e4d",
+  "findings": {
+    "coding": "Confirmed scorer/presentation defect: deterministic removal of one Python fenced block yields behaviorally correct clamp code.",
+    "tool_call": "Presentation is removable, but file_path differs from the frozen path schema; do not classify it as scorer-only.",
+    "retrieval": "The expected value is returned with its requested key, while the prompt did not demand value-only output; exact equality is an underspecified contract.",
+    "continuation": "The output [development] contains no requested parameter name and remains a likely task/reasoning-policy failure.",
+    "teacher_forced_loss": "Runtime-produced logprobs are bound to the sequence, but the observed NLL 7.707581659158071 is not interpretable against the uncalibrated 2.0 ceiling.",
+    "serving": "After deterministic JSON unfencing, the output is a different readiness schema; the expected schema was absent from the prompt."
+  },
+  "mutation_controls_passed": [
+    "single exact JSON fenced block is accepted by diagnostic unwrapping",
+    "prose around a fenced block is rejected",
+    "wrong fence language is rejected",
+    "wrong retrieval value remains rejected",
+    "tool file_path does not silently become path",
+    "readiness true does not silently become the frozen readiness object"
+  ],
+  "frozen_gate_effect": "Unchanged: the frozen V1 result remains failed and cannot be rescored post hoc.",
+  "decision": "The archived zero cannot support a six-category capability-failure claim. A new prospective suite must separate transport presentation, explicit interface schemas, task behavior, and calibrated NLL.",
+  "reproducer": "audit_archived_quality.py"
+}

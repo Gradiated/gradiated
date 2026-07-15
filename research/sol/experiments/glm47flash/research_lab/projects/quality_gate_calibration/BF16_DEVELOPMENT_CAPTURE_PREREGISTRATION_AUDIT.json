@@ -1,0 +1,14 @@
+{
+  "checks": {
+    "cleanup_bound": true,
+    "controller_not_started": true,
+    "feasible_conditional_cap": true,
+    "holdout_sealed": true,
+    "no_spend": true,
+    "not_admitted": true,
+    "three_captures": true
+  },
+  "classification": "zero_cost_preregistration_validation",
+  "pass": true,
+  "schema_version": 1
+}

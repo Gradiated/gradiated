@@ -1,0 +1,8 @@
+{"disk_count": 0, "event": "stock_control", "instance_count": 0, "matching_labeled_resources": 0, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "timestamp": "2026-07-14T23:17:23.617031Z"}
+{"action": "register-allocation", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-14T23:18:08.821569Z"}
+{"event": "instance_created", "instance_id": "computeinstance-e00v2vr2111bpethsc", "timestamp": "2026-07-14T23:18:08.821681Z"}
+{"error_type": "PlacementError", "event": "experiment_error", "message": "SSH/cloud-init readiness SLO exceeded", "timestamp": "2026-07-14T23:25:30.864365Z"}
+{"event": "repair_window_skipped", "reason": "no_tested_action_within_ten_minutes", "timestamp": "2026-07-14T23:25:30.864527Z"}
+{"action": "request-cleanup", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-14T23:25:30.930529Z"}
+{"action": "mark-cleanup-verified", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-14T23:26:15.624155Z"}
+{"cleanup_pass": true, "event": "cleanup_verified", "final_disk_count": 0, "final_instance_count": 0, "instance_get_not_found": true, "timestamp": "2026-07-14T23:26:15.624475Z"}

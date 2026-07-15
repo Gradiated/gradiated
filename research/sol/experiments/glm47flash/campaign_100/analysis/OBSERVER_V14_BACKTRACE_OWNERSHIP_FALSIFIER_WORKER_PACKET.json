@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "execution_kind": "local",
+  "run_id": "glm47-observer-v14-backtrace-ownership-falsifier-c1",
+  "program_id": "glm-4.7-flash",
+  "scout_id": "glm47-dense-resource-signature",
+  "fidelity": "reference",
+  "baseline_id": "glm47-l40s-vllm-awq-split4-v28",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "control_id": "v14-output-moved-to-start-with-backtrace-none-on-launch",
+  "candidate_id": "exact-2026.3.1.157-backtrace-option-ownership",
+  "changed_variable": "Remove --backtrace=none from nsys launch, determine the exact Nsight Systems 2026.3.1.157 owner and accepted backtrace value form, and retain the fail-closed launch/start argv gate before checkpoint transfer.",
+  "claim_scope": {
+    "claim_limit": "Operational argv-contract correctness only; no provider, placement-reliability, model, quality, performance, SLO, cost-efficiency, bottleneck, or paid-run admission claim",
+    "hardware": "Local CPU/container execution plus recorded V14 target-L40S and completed launch/start falsifier evidence only; no provider access or mutation",
+    "model": "GLM-4.7-Flash AWQ identity retained but not executed",
+    "software": "Exact nsight-systems-cli 2026.3.1.157 help and executable parser behavior, current observer remote harness, bootstrap pre-transfer gate, and deterministic tests",
+    "workload": "Pre-transfer argv validation only; unchanged excluded STOCK_STARTUP and A1/B1/A2 8-request c8 8192-input/32-output observer contract"
+  },
+  "prediction": {
+    "metric": "nsys_backtrace_ownership_argv_contract_pass_fraction",
+    "expected_direction": "increase",
+    "point_estimate_fraction": 1.0,
+    "minimum_effect_fraction": 1.0,
+    "plausible_ceiling_fraction": 1.0,
+    "falsifier": "The exact 2026.3.1.157 parser rejects the candidate launch/start argv after --backtrace=none is removed from launch; help and executable-parser controls cannot identify backtrace ownership and accepted value forms; any required backtrace placement is unsupported by its owning subcommand; the embedded pre-transfer gate does not validate the exact constructed argv; any verification fails; or readiness, watchdog, spend, science, evidence, telemetry, partial-recovery, or cleanup contracts drift."
+  },
+  "measurement_contract": {
+    "protocol": "deterministic",
+    "effect_formula": "candidate_over_control_minus_one",
+    "minimum_candidate_repetitions": 1,
+    "statistic": "median"
+  },
+  "gates": {
+    "correctness": {
+      "policy_sha256": "478a6bba4feb6c0565f9aca45575186d1cd2cff0772c06ce2891aeab02e8267a",
+      "required": true
+    },
+    "quality": {
+      "policy_sha256": "99effb41fdab608ce8d7861109d7f89291f012a8cfad951cd6f43156aa3a28ce",
+      "required": true
+    },
+    "slo": {
+      "policy_sha256": "c9654a1d8920c15bf6a7a72390177b4520a8b96424999e0adb1c82c19474e0a2",
+      "required": true
+    }
+  },
+  "command": "Run exactly one bounded zero-cost parallel_offline backtrace-ownership repair/falsifier for the cleaned and settled V14 lineage. Preserve all unrelated and existing uncommitted work. Start from the completed launch/start falsifier, the verified remote harness SHA-256 25a0e40feea1413584f499da66198fbfb82c4bcb1a75f3cd49f17f241cbc8dc7, and its measured exact-parser result: --output is owned by nsys start, while nsys launch rejects --backtrace=none. Do not access a provider or require a GPU. Using the already captured exact nsight-systems-cli 2026.3.1.157 launch/start help bytes and bounded local CPU/container executable-parser controls, identify the exact owner and accepted value form for backtrace; capture additional exact subcommand help only if needed and retain its raw bytes, package identity, source, and SHA-256. Remove --backtrace=none from nsys launch. Add backtrace elsewhere only if the exact owner, accepted value, and diagnostic need are all proven; otherwise omit it from launch/start and record why the separate preregistered nsys profile probe is unchanged. Parse the current remote_observer_diagnostic.sh argv without shell execution and prove every constructed launch option and every constructed start option is accepted by its owning exact-version parser. Retain mandatory negative controls proving the stock --backtrace=none launch argv fails specifically at parsing and --output on launch still fails, plus controls for unsupported backtrace values or owners, removal or movement of each required launch/start option, package-version drift, and source/bootstrap parity. Keep the fail-closed exact package-version, normalized help, executable-parser, required/forbidden-option, and signing-key gate before checkpoint transfer. Use test-driven development and make only the minimum backtrace ownership and deterministic gate changes. Preserve public-IP cap at start+420 seconds, SSH/cloud-init cap at min(absolute deadline,start+480 seconds), 2000-second watchdog, 240-second cleanup reserve, $0.55 maximum paid-run cap, $0.07 cleanup reserve, STOCK_STARTUP exclusion/isolation, A1/B1/A2 ordering, 8 requests at c8 with 8192 input and 32 output tokens, observer-off/on/off perturbation gates, at least 95% dependency attribution, exact raw request/event/quality/cost/host-GPU telemetry and logs, hashed manifests, partial-evidence recovery, and verified compute/disk cleanup. Run Bash syntax, Python compilation, focused observer and preparation tests, the full campaign unittest suite, relevant factory validation tests, and python3 tools/devex/check.py. Write result.md, exact captured help bytes used, backtrace-ownership.json, parser-cases.json, comparator-parity.json, source-hashes.txt, raw-hashes.txt, hashes.txt, verification.log, and verification-exit.txt below the supervisor-provided worker output directory. Classify evidence; report zero paid cost; retain the unchanged scientific residual bottleneck; store the evidence; and call record --kind result. Do not prepare or admit a fresh paid identity, inspect or mutate a provider, launch or poll a provider controller, change budget authority, modify any paid deadline, update scientific beliefs, commit, or push. If any gate fails, record the operational falsifier and do not retry unchanged work.",
+  "seed": 47021502,
+  "timeout_seconds": 480,
+  "max_cost_usd": 0.0,
+  "artifact_refs": [
+    "f414c458e338815f178c0f8f1abc8accc73c1c1ec64bc060a5e798d7e4516e73",
+    "6dcd16d9018fc6f9352d50b8cee591765c28e99cb7754d7355c7f7e0e429eea3",
+    "1b4e0715f1940684e27214ccc96780ad3b5cabbf09f30dd3e4ad1e316a6fecb6",
+    "88e07870d1f161528ae342adb90e59ec1983332cc15607313cbe0e5ac52a1fc0",
+    "8292ef852b1ec51752160cdfb0191183a6d5276e79040c7f14f102791ab15196"
+  ],
+  "director_contract": {
+    "decision": "Register exactly one parallel_offline backtrace-ownership repair/falsifier; prohibit fresh paid identity preparation, paid admission, and provider launch in this transition.",
+    "causal_hypothesis": "After correctly moving --output to nsys start, the remaining operational blocker is the unsupported --backtrace=none launch argument; removing it from launch and proving any retained backtrace setting against its exact owner should make the constructed argv fail-closed and parser-valid without changing scientific geometry.",
+    "stock_control": "Completed V14 launch/start boundary candidate with --output on start and --backtrace=none still on launch; the exact 2026.3.1.157 parser rejects the latter.",
+    "candidate_change": "Remove --backtrace=none from launch, place no replacement unless exact help and executable parsing prove the owner and accepted value, and retain exact launch/start argv validation before transfer.",
+    "quality_gate": "No model arm executes; operational evidence cannot update scientific beliefs, and all observer quality, correctness, telemetry, identity, artifact, and cleanup contracts remain unchanged in meaning.",
+    "slo_gate": "Public IP remains capped at start+420 seconds; SSH/cloud-init remains capped at min(absolute deadline,start+480 seconds); watchdog remains 2000 seconds; cleanup reserve remains 240 seconds.",
+    "maximum_spend_usd": 0.0,
+    "wall_clock_timeout_seconds": 480,
+    "cleanup": "No provider or retained resources; remove only worker-temporary local container/build files after content-addressed packaging.",
+    "artifact_contract": "Retain exact 2026.3.1.157 help bytes and package identity used, raw hashes, extracted launch/start argv, backtrace ownership and accepted-value evidence, positive and negative parser cases, local/bootstrap parity, source hashes, verification logs and exit status, and a hashed manifest in the worker output directory.",
+    "residual_bottleneck": "The matched target-L40S observer bracket remains unexecuted; dense-device versus host/scheduler critical-path attribution remains unresolved. This operational falsifier cannot update scientific mechanism beliefs."
+  }
+}

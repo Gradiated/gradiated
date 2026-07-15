@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v13",
+  "failure_class": "operational_failure",
+  "stage": "pinned_nsys_launch_capability_semantic_mismatch_before_checkpoint_transfer",
+  "message": "Provider readiness passed within the immutable windows, but the exact Nsight Systems 2026.3.1.157 nsys launch help gate rejected the target output because it contained one leading blank line absent from the pinned fixture. No checkpoint transfer, model load, inference request, scored arm, or scientific result occurred. The controller skipped an unchanged retry, cleaned the instance and disk, verified direct instance not-found, and reconciled zero final instances and disks."
+}

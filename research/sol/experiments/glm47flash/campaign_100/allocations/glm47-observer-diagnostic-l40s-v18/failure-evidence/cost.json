@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v18",
+  "currency": "USD",
+  "line_items": [
+    {
+      "name": "provider_compute_before_identity_gate",
+      "quantity": 0.0,
+      "unit_rate_usd": 0.8581222,
+      "cost_usd": 0.0
+    }
+  ],
+  "result_cost_usd": 0.0
+}

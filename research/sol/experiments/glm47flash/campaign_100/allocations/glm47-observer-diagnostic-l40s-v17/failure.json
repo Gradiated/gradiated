@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v17",
+  "failure_class": "operational_failure",
+  "stage": "host_bootstrap_nsys_capability_gate_session_unbound_variable_before_checkpoint_transfer",
+  "message": "The tagged L40S instance reached SSH/cloud-init readiness and built the pinned vLLM and Nsight Systems 2026.3.1.157 image. During the pre-transfer Nsight capability gate, the immutable host bootstrap exited under set -u with 'bash: line 33: session: unbound variable'. No checkpoint transfer, model load, inference request, scored arm, deep profile, or scientific result occurred. The controller skipped an unchanged repair, deleted the instance and disk, verified direct instance not-found, and reconciled zero final instances and disks."
+}

@@ -1,0 +1,12 @@
+{"event": "stock_control", "instance_count": 0, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "timestamp": "2026-07-15T07:34:40.304515Z"}
+{"event": "instance_created", "instance_id": "computeinstance-e00zhxe3m62va05fd9", "timestamp": "2026-07-15T07:35:19.263927Z"}
+{"event": "repair_01_begin", "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "repair_spec_sha256": "fba406af59a27cca9574c48a9b26a5feca7199baa891759f8e532ac59a444846", "timestamp": "2026-07-15T07:35:54.738123Z"}
+{"event": "repair_01_error", "message": "input transfer failed", "timestamp": "2026-07-15T07:35:56.295528Z", "type": "StockError"}
+{"event": "repair_window_open", "maximum_seconds": 600.0, "timestamp": "2026-07-15T07:35:56.295715Z"}
+{"elapsed_seconds": 84.584, "event": "ssh_ready", "timestamp": "2026-07-15T07:36:04.657669Z"}
+{"event": "cuda_and_transformers_preflight_passed", "timestamp": "2026-07-15T07:42:51.517053Z", "transformers_revision": "1618d44b9295361607ec74d7be860ba886aac039"}
+{"event": "tiny_transfer_probe_passed", "sha256": "6967780b45a5e9e86c4e5ac54e2595fcf2add1a66cdd63cb8df63017fa8c8d11", "timestamp": "2026-07-15T07:42:58.264932Z"}
+{"event": "repair_01_begin", "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "repair_spec_sha256": "fba406af59a27cca9574c48a9b26a5feca7199baa891759f8e532ac59a444846", "timestamp": "2026-07-15T07:52:51.930080Z"}
+{"event": "repair_01_cuda_transformers_preflight_passed", "timestamp": "2026-07-15T07:53:09.998876Z", "transformers_revision": "1618d44b9295361607ec74d7be860ba886aac039"}
+{"event": "repair_01_inputs_staged", "timestamp": "2026-07-15T07:53:16.507618Z"}
+{"event": "repair_01_tiny_transfer_probe_passed", "sha256": "6967780b45a5e9e86c4e5ac54e2595fcf2add1a66cdd63cb8df63017fa8c8d11", "timestamp": "2026-07-15T07:53:17.113743Z"}

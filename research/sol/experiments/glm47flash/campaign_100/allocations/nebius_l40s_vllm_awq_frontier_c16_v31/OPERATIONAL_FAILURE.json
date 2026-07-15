@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "experiment_id": "nebius_l40s_vllm_awq_frontier_c16_v31",
+  "outcome": "OPERATIONAL_FAILURE_NO_SCIENTIFIC_RESULT",
+  "terminal_at_utc": "2026-07-15T08:10:26Z",
+  "reason": "Both turn-scoped primary and recovery controllers disappeared before artifact retrieval. The primary checkpoint transfer was incomplete and failed checksum; the recovery controller also disappeared before server launch or archive retrieval.",
+  "measured_evidence": {
+    "runtime_preflight_passed": true,
+    "tiny_transfer_probe_passed": true,
+    "remote_idle_before_cleanup": {
+      "gpu_utilization_percent": 0,
+      "memory_used_mib": 0,
+      "power_watts": 98.24
+    },
+    "performance_archive_present": false,
+    "request_level_performance_present": false,
+    "quality_result_present": false,
+    "provider_cleanup_verified": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0
+  },
+  "derived_accounting": {
+    "allocation_started_at_utc": "2026-07-15T07:34:40.304515Z",
+    "cleanup_verified_at_utc": "2026-07-15T08:10:26Z",
+    "provider_exposure_seconds": 2146.089,
+    "vm_plus_disk_hourly_usd": 0.8581222,
+    "vm_plus_disk_cost_usd_derived": 0.511557399,
+    "note": "Public IPv4/egress and invoice reconciliation are excluded."
+  },
+  "claim_limit": "No throughput, SLO, quality, cost-per-token, or c16 frontier claim is admissible from V31.",
+  "next_condition": "A future c16 attempt requires a durable non-Codex controller that owns setup, transfer, execution, retrieval, and cleanup through a terminal artifact."
+}

@@ -1,0 +1,97 @@
+{
+  "artifact_refs": [
+    "18b738029e74f8169c57e6aa07ba2206553fb10a8b891c06ef4f119e94a36b3f",
+    "b671c91a027b26c46b6cc86aa0e580a1a5a7426c6a3367d244d20bbb0ec9bc9d",
+    "78eb2fb15013ceb0c1b07fcc14cdd2628998e0e585e342162a3630b61bd44862",
+    "7472f76da4bcc3eb77cd659cc7008d214ad7727581407c8c3805b2fce7b214a0",
+    "2902b0a101af27e95577a90a63c4a4d7265c27437524f18c0ea2769a12baad8e",
+    "c86034940baff28908d80bf5ebf01511a47dacdfffad781a25703281147cd7b9",
+    "9226fcbc9c65d5be88ceed8526d5574cf3c21f2c71f28f41956ed61f806ac754"
+  ],
+  "baseline_id": "glm47-l40s-vllm-awq-split4-v28",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "candidate_id": "observer-dependency-contract-production-wiring",
+  "changed_variable": "Wire observer-dependency-attribution-v1 into the actual scheduler/NVTX/Nsight-export/raw-request production and partial-packaging path, with a fail-closed exact-version target-schema probe; do not prepare or admit a paid identity.",
+  "claim_scope": {
+    "claim_limit": "Offline production-wiring and deterministic fixture decision only; no provider, target-schema availability, device-criticality, performance, quality-adjusted cost, or end-to-end claim.",
+    "hardware": "Local CPU/filesystem only; no provider, network, GPU, checkpoint transfer, model load, inference, or scored arm.",
+    "model": "GLM-4.7-Flash AWQ baseline identity retained as metadata only.",
+    "software": "Pinned vLLM observer patch, remote observer harness, Nsight Systems 2026.3.1.157 export analyzer, immutable-spec preparation, partial-evidence packaging, and observer-dependency-attribution-v1.",
+    "workload": "Synthetic representation of the frozen future STOCK_STARTUP plus A1/B1/A2 geometry: 8 requests at c8, 8192 input tokens, and 32 output tokens; no live requests."
+  },
+  "command": "Run exactly one bounded zero-cost parallel_offline observer dependency-attribution production-wiring falsifier. Preserve all unrelated and existing uncommitted work. Verify all seven content-addressed inputs and the completed integration evidence at /root/.local/share/gradiated/research-lab/supervisor/glm-4.7-flash/workers/registered-glm47-observer-dependency-attribution-integration-c1, including exact SHA-256 values: integration-manifest.json 82ad2816e6f258afdcdfb8e670536e749f6bccabfb7ca1be8a387c6a68453bd9, schema-binding.json 6dd167fd03cc41eba37df8fb4db3bbd40e147e44d4d2156a4b7671ffbf01bcce, coverage-result.json 3fc3772bc23c260d219dda57a0caf14e389de11e6206449aa47a3f8f6435c55d, replay-result.json 5a4a5955d19dea7a6105d306a8df10de8294000563403d16742ab6d82ab34927, missing-cross-wire-mutation-results.json 3f4bcb36922c67f56e2519f5ea2dfea602aba5fe87a862c0b5308fdeda34c65d, partial-packaging-result.json 411f8fd4d3d7b282086917e3870dd87f4c1bba9c44c15a9c1978d8376a336559, and result-record.json c2640fed97d90101b39f15d910805554c5095be8835a5d265910901e6d4c68ba. Treat the integration result as synthetic/reference evidence only. First retain the measured stock-control gaps: the current vLLM patch derives iteration_id only from scheduled-token content and does not prove a unique iteration identity; the current analyzer accepts timestamp overlap rather than explicit dependency edges; and the current live harness does not materialize the full request, scheduler-iteration, CPU-to-CUDA clock calibration, CUDA stream, graph-launch, graph-node, kernel, and dependency event set. Use test-driven development to make the minimum production-path changes that can close those gaps without changing the scientific arm. Introduce one unique stable scheduler_iteration_id for every scheduler step and carry the exact same identity into its GPU NVTX range. Retain exact request IDs and raw request rows. Add a deterministic Nsight Systems 2026.3.1.157 SQLite-export materializer that binds NVTX, CUDA runtime/activity correlation IDs, stream IDs, graph launch/node IDs, kernel intervals, and explicit dependency edges to exact request/iteration scopes. Require an explicit clock-domain mapping wherever request/scheduler and CUDA timestamps cross domains. Compute attribution only as the union of non-overlapping dependency-linked intervals; prohibit summed kernel duration and timestamp containment as substitutes. Generate raw-events.jsonl, dependency-events.jsonl, and dependency-manifest.json for each eligible arm, validate observer-dependency-attribution-v1 at at least 0.95 coverage before scoring, and make both full and partial packaging retain the exact raw request/event rows plus their content hashes. Add a bounded pre-transfer target-schema probe contract for the exact Nsight version that records required tables/columns and fails before checkpoint transfer when unavailable or semantically incompatible; this worker must only validate the probe against exact synthetic positive and negative fixtures and must not run it on a provider. Include fail-closed mutations for duplicate/reused iteration identity, request/iteration cross-wire, absent or invalid clock mapping, stream cross-wire, graph launch/node cross-wire, dangling or timestamp-only dependency, interval corruption, missing raw rows, manifest mismatch, missing/renamed Nsight table or column, and a one-byte source mutation. Preserve exact STOCK_STARTUP exclusion, A1/B1/A2 ordering, observer-off/on/off perturbation gates, 8 requests at c8 with 8192 input and 32 output tokens, frozen quality/correctness and SLO policy hashes, exact identity/request/event retention, cost, low-overhead host/GPU telemetry, logs, observer-bracketed deep profiling, the existing future $0.55 paid-run cap and $0.07 cleanup reserve, the exact 2000-second watchdog and 240-second cleanup reserve, every historical paid-run deadline, partial-evidence recovery, and verified compute/disk cleanup. Maximum spend is $0.00; timeout is 600 seconds; seed is 47022601. Retain immutable-input-inventory.json, production-gap-matrix.json, target-schema-contract.json, exact positive and negative SQLite fixtures, producer-binding.json, coverage-result.json, mutation-controls.json, partial-packaging-result.json, source hashes, focused test logs, result.md, result-record.json, hashes.txt, verification.log, and verification-exit.txt below the supervisor-provided worker output directory; store the evidence and call record --kind result. Run Bash syntax, Python compilation, focused deterministic observer dependency, analyzer, remote-harness, preparation, and partial-packaging tests, the full campaign unittest suite with unrelated pre-existing failures classified rather than masked, and python3 tools/devex/check.py. Do not inspect or mutate a provider, prepare or admit a paid identity, launch or poll a provider controller, change or grant budget authority, alter any paid-run deadline, update scientific mechanism beliefs, commit, or push. If any production relation is infeasible or any gate fails, retain the exact gap, prohibit paid promotion, and do not retry unchanged work.",
+  "control_id": "observer-contract-bound-to-spec-but-not-live-producers",
+  "director_contract": {
+    "artifact_contract": "Content-addressed inputs, exact production-gap matrix, versioned target-schema contract and fixtures, producer binding, dependency-union output, mutation controls, raw-row partial-packaging proof, source hashes, raw test logs, typed result, and hashed manifest.",
+    "budget": "$0.00 maximum; no provider reservation or mutation and no new budget authority.",
+    "causal_hypothesis": "The validated reference contract can be wired into the pinned live observer path so every future scored request has a unique request/iteration identity and explicit Nsight-derived dependency graph sufficient for at least 95% non-overlapping dependency-union attribution.",
+    "decision": "Stop paid promotion and register exactly one zero-cost parallel_offline production-wiring falsifier; require a separate director decision before preparing any fresh paid identity.",
+    "falsifier": "Any required live producer relation is absent or ambiguous; an iteration identity can be reused; exact Nsight table/column semantics are unexpressed; candidate coverage is below 0.95; replay differs; any mutation passes; raw rows or hashes are omitted from partial packaging; or a science, quality/SLO, telemetry, budget, deadline, or cleanup invariant changes.",
+    "quality_gate": "No model output is produced; frozen quality/correctness policy remains unchanged and no quality claim is permitted.",
+    "residual_bottleneck": "Matched target-L40S observer bracket remains unexecuted; dense-device versus host/scheduler request-critical attribution remains unresolved until a valid live bracket emits and passes the integrated production contract.",
+    "slo_gate": "600-second local timeout and zero spend; all existing paid-run and cleanup deadline geometry remains unchanged.",
+    "stock_control": "Current observer path with a contract bound into the paid spec and partial allowlist but without proven unique live iteration identities or explicit Nsight-derived dependency-edge materialization.",
+    "timeout_seconds": 600
+  },
+  "execution_kind": "local",
+  "fence": {
+    "active_allocations": 0,
+    "active_reservations": 0,
+    "artifact_audit_pass": true,
+    "artifact_references_checked": 160,
+    "event_head_before_transition": "74dd47de4dc1ae3e1a2733a4c5d5caebf0cba92bcc92d6b624f37c81404b6495",
+    "lease_epoch": 3,
+    "owner": "supervisor-glm47",
+    "p0_actions_pending": 0,
+    "provider_mutation_performed": false,
+    "safe_to_start_new_provider_mutation": true
+  },
+  "fidelity": "reference",
+  "gates": {
+    "correctness": {
+      "policy_sha256": "79e9a05c971ef3ecb4e719a28e4c529a00d9600f5ab69576554491ca5d51b94a",
+      "required": true
+    },
+    "quality": {
+      "policy_sha256": "99effb41fdab608ce8d7861109d7f89291f012a8cfad951cd6f43156aa3a28ce",
+      "required": true
+    },
+    "slo": {
+      "policy_sha256": "c9654a1d8920c15bf6a7a72390177b4520a8b96424999e0adb1c82c19474e0a2",
+      "required": true
+    }
+  },
+  "max_cost_usd": 0.0,
+  "measurement_contract": {
+    "effect_formula": "candidate_over_control_minus_one",
+    "minimum_candidate_repetitions": 2,
+    "protocol": "deterministic",
+    "statistic": "median"
+  },
+  "prediction": {
+    "expected_direction": "increase",
+    "falsifier": "The live-path fixture cannot attain at least 0.95 dependency-union coverage or fails any unique-identity, clock, stream, graph, interval, dependency-edge, exact-schema, replay, raw-row packaging, or invariant-preservation gate.",
+    "metric": "production_observer_dependency_contract_pass_fraction",
+    "minimum_effect_fraction": 1.0,
+    "plausible_ceiling_fraction": 1.0,
+    "point_estimate_fraction": 1.0
+  },
+  "program_id": "glm-4.7-flash",
+  "provider_reconciliation": {
+    "active_allocations": 0,
+    "active_reservations": 0,
+    "artifact_audit_pass": true,
+    "artifact_references_checked": 160,
+    "event_head_before_transition": "74dd47de4dc1ae3e1a2733a4c5d5caebf0cba92bcc92d6b624f37c81404b6495",
+    "lease_epoch": 3,
+    "owner": "supervisor-glm47",
+    "p0_actions_pending": 0,
+    "provider_mutation_performed": false,
+    "safe_to_start_new_provider_mutation": true
+  },
+  "run_id": "glm47-observer-dependency-attribution-producer-wiring-c1",
+  "schema_version": 1,
+  "scout_id": "glm47-host-scheduler-critical-path",
+  "seed": 47022601,
+  "timeout_seconds": 600
+}

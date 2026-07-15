@@ -16,7 +16,7 @@ import tarfile
 import tempfile
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 
 NEBIUS = Path("/root/.nebius/bin/nebius")
@@ -30,6 +30,7 @@ HOURLY_RATE_USD = 2.95
 ABSOLUTE_TIMEOUT_SECONDS = 900
 READY_TIMEOUT_SECONDS = 600
 SSH_USER = "glmrunner"
+CAMPAIGN_KNOWN_HOSTS = Path("/root/.config/nebius/glm-campaign/known_hosts")
 
 
 class PlacementError(RuntimeError):
@@ -281,19 +282,70 @@ def ssh_base(ip: str, key_path: Path) -> list[str]:
         "ssh", "-i", str(key_path),
         "-o", "BatchMode=yes",
         "-o", "StrictHostKeyChecking=accept-new",
-        "-o", "UserKnownHostsFile=/root/.config/nebius/glm-campaign/known_hosts",
+        "-o", f"UserKnownHostsFile={CAMPAIGN_KNOWN_HOSTS}",
         "-o", "ConnectTimeout=10",
         f"{SSH_USER}@{ip}",
     ]
 
 
-def wait_ssh(ip: str, key_path: Path, deadline: float) -> None:
+def refresh_ephemeral_host_key(ip: str) -> None:
+    """Forget a reused ephemeral IP before accepting its new host key.
+
+    Provider public IPs are reused across short-lived experiments. The
+    instance identity is already bound to the factory allocation and labels;
+    removing only this IP's old key lets StrictHostKeyChecking=accept-new
+    verify the newly created instance instead of retrying a stale key forever.
+    """
+    CAMPAIGN_KNOWN_HOSTS.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        ["ssh-keygen", "-R", ip, "-f", str(CAMPAIGN_KNOWN_HOSTS)],
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+
+
+def wait_ssh(
+    ip: str,
+    key_path: Path,
+    deadline: float,
+    *,
+    observer: Callable[[str, dict[str, Any]], None] | None = None,
+    started_at: float | None = None,
+) -> None:
+    probe_started = time.time() if started_at is None else started_at
+    refresh_ephemeral_host_key(ip)
+    attempt = 0
     while time.time() < deadline:
-        proc = subprocess.run(
-            [*ssh_base(ip, key_path), "test -f /var/tmp/glm-cloud-init-ready"],
-            capture_output=True, text=True, timeout=20,
-        )
-        if proc.returncode == 0:
+        attempt += 1
+        outcome = "return_code"
+        return_code = None
+        success = False
+        try:
+            proc = subprocess.run(
+                [*ssh_base(ip, key_path), "test -f /var/tmp/glm-cloud-init-ready"],
+                capture_output=True, text=True, timeout=20,
+            )
+            return_code = proc.returncode
+            success = return_code == 0
+        except subprocess.TimeoutExpired:
+            outcome = "subprocess_timeout"
+        except OSError:
+            outcome = "subprocess_error"
+        if observer is not None:
+            observer(
+                "ssh_cloud_init_attempt",
+                {
+                    "event_timestamp": utc_now(),
+                    "elapsed_seconds": round(time.time() - probe_started, 3),
+                    "attempt_number": attempt,
+                    "return_code": return_code,
+                    "outcome": outcome,
+                    "success": success,
+                },
+            )
+        if success:
             return
         time.sleep(8)
     raise PlacementError("SSH/cloud-init readiness SLO exceeded")

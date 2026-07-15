@@ -1,0 +1,97 @@
+{
+  "artifact_refs": [
+    "18b738029e74f8169c57e6aa07ba2206553fb10a8b891c06ef4f119e94a36b3f",
+    "b671c91a027b26c46b6cc86aa0e580a1a5a7426c6a3367d244d20bbb0ec9bc9d",
+    "78eb2fb15013ceb0c1b07fcc14cdd2628998e0e585e342162a3630b61bd44862",
+    "7472f76da4bcc3eb77cd659cc7008d214ad7727581407c8c3805b2fce7b214a0",
+    "2902b0a101af27e95577a90a63c4a4d7265c27437524f18c0ea2769a12baad8e",
+    "c86034940baff28908d80bf5ebf01511a47dacdfffad781a25703281147cd7b9",
+    "9226fcbc9c65d5be88ceed8526d5574cf3c21f2c71f28f41956ed61f806ac754"
+  ],
+  "baseline_id": "glm47-l40s-vllm-awq-split4-v28",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "candidate_id": "explicit-clock-and-graph-dependency-production-repair",
+  "changed_variable": "Replace the incomplete producer materializer and legacy timestamp-overlap attribution route with an explicit calibrated CPU-to-CUDA clock mapping and correlation-ID-bound graph, stream, kernel-interval, and dependency-edge production path; do not prepare or admit a paid identity.",
+  "claim_scope": {
+    "claim_limit": "Offline production-path repair and deterministic falsification only; no provider, device-criticality, performance, quality-adjusted cost, or end-to-end claim.",
+    "hardware": "Local CPU/filesystem only using exact synthetic Nsight Systems 2026.3.1.157 SQLite fixtures; no provider, network, GPU, checkpoint transfer, model load, inference, or scored arm.",
+    "model": "GLM-4.7-Flash AWQ baseline identity retained as metadata only.",
+    "software": "Pinned observer dependency producer/materializer/analyzer, immutable-spec preparation, and partial-evidence packaging paths.",
+    "workload": "Synthetic representation of frozen STOCK_STARTUP plus A1/B1/A2 geometry: 8 requests at c8, 8192 input tokens, and 32 output tokens; no live requests."
+  },
+  "command": "Run exactly one bounded zero-cost parallel_offline observer dependency-attribution production repair C2. Preserve unrelated and existing uncommitted work. Start from the completed producer-wiring C1 worker output at /root/.local/share/gradiated/research-lab/supervisor/glm-4.7-flash/workers/registered-glm47-observer-dependency-attribution-producer-wiring-c1 and verify its hashed manifest and seven artifact references. Treat C1 as an operational failure only: synthetic fixture coverage was 1.0, but scoring eligibility was false because complete CPU-to-CUDA clock mapping, CUDA activity to graph launch/node and kernel binding, and removal of the legacy timestamp-overlap route were unproven. Use test-driven development to make the minimum production-path repair. Define an explicit versioned CPU-to-CUDA affine clock mapping from at least two ordered calibration pairs, retain raw pairs and clock domains, record slope, offset, maximum residual in nanoseconds, and calibration validity interval, and fail closed for missing, singular, non-monotonic, extrapolated, excessive-residual, or cross-arm mappings. Materialize exact Nsight Systems 2026.3.1.157 SQLite relations from NVTX and CUDA runtime/activity correlation IDs through request_id, scheduler_iteration_id, cuda_stream_id, graph_launch_id, graph_node_id, kernel interval, and explicit request/iteration-scoped dependency edges. Delete or hard-disable every production timestamp-containment/overlap fallback; attribution must be the union of non-overlapping dependency-linked intervals only. Add exact positive fixtures plus negative mutations for every clock, correlation, graph, stream, interval, edge, cross-arm, missing-table/column, duplicate identity, timestamp-only fallback, and one-byte source case. Require byte-identical repeated materialization, at least 0.95 candidate coverage, 0.0 control eligibility, exact raw request/event retention, and manifest hashes in full and partial packaging. Preserve STOCK_STARTUP exclusion, A1/B1/A2 ordering, observer-off/on/off perturbation gates, frozen quality/correctness and SLO policy hashes, exact identities and raw request/event data, cost, low-overhead host/GPU telemetry, logs, observer-bracketed profiling, the existing future $0.55 paid-run cap and $0.07 cleanup reserve, the 2000-second watchdog and 240-second cleanup reserve, every historical paid deadline, recovery, and verified cleanup contracts. Maximum spend is $0.00; timeout is 540 seconds; seed is 47022701. Retain immutable-input-inventory.json, production-repair-matrix.json, clock-calibration-contract.json, target-schema-contract.json, exact positive and negative SQLite fixtures, producer-binding.json, coverage-result.json, replay-result.json, mutation-controls.json, partial-packaging-result.json, source hashes, focused test logs, result.md, result-record.json, hashes.txt, verification.log, and verification-exit.txt below the supervisor-provided worker output directory; store the evidence and call record --kind result. Run Bash syntax, Python compilation, focused deterministic producer/materializer/analyzer/packaging tests, the full campaign unittest suite with unrelated pre-existing failures classified rather than masked, and python3 tools/devex/check.py. Do not inspect or mutate a provider, prepare or admit a paid identity, launch or poll a provider controller, grant or change budget authority, alter any paid deadline, update scientific mechanism beliefs, commit, or push. If any required relation remains ambiguous or any gate fails, retain the exact gap, prohibit paid promotion, and do not retry unchanged work.",
+  "control_id": "c1-materializer-with-incomplete-clock-and-graph-dependency-binding",
+  "director_contract": {
+    "artifact_contract": "Content-addressed C1 inputs, exact gap/repair matrix, versioned clock and target-schema contracts, positive and negative SQLite fixtures, producer binding, deterministic dependency-union output, mutation controls, partial-packaging proof, source hashes, raw test logs, typed result, and hashed manifest.",
+    "budget": "$0.00 maximum; no provider reservation or mutation and no new budget authority.",
+    "causal_hypothesis": "An explicit calibrated clock transform plus correlation-ID-bound graph/stream/kernel dependency materialization can close C1's production relations and make the future observer path structurally capable of at least 95% request dependency-union attribution.",
+    "decision": "Register exactly one zero-cost parallel_offline C2 repair packet; keep paid promotion prohibited pending a separate director decision.",
+    "falsifier": "Any clock mapping is absent, ambiguous, extrapolated, or outside its residual bound; any CUDA activity lacks exact request/iteration/stream/graph/kernel/dependency binding; a timestamp-overlap fallback remains reachable; coverage is below 0.95; replay differs; a mutation passes; or any science, quality/SLO, telemetry, budget, deadline, recovery, or cleanup invariant changes.",
+    "quality_gate": "No model output is produced; frozen quality/correctness policy remains unchanged and no quality claim is permitted.",
+    "residual_bottleneck": "Matched target-L40S observer bracket remains unexecuted; dense-device versus host/scheduler request-critical attribution remains unresolved until a valid live bracket emits the integrated production contract.",
+    "slo_gate": "540-second local timeout and zero spend; all existing paid-run and cleanup deadline geometry remains unchanged.",
+    "stock_control": "C1 production path with 1.0 synthetic fixture coverage but incomplete clock mapping, graph/kernel/dependency binding, and a reachable timestamp-overlap attribution route.",
+    "timeout_seconds": 540
+  },
+  "execution_kind": "local",
+  "fence": {
+    "active_allocations": 0,
+    "active_reservations": 0,
+    "artifact_audit_pass": true,
+    "artifact_references_checked": 160,
+    "event_head_before_transition": "02009f709a1121c1c19ecf9438f1c05bb4cb4a00d02b10253bcf474e539ed1f7",
+    "lease_epoch": 3,
+    "owner": "supervisor-glm47",
+    "p0_actions_pending": 0,
+    "provider_mutation_performed": false,
+    "safe_to_start_new_provider_mutation": true
+  },
+  "fidelity": "reference",
+  "gates": {
+    "correctness": {
+      "policy_sha256": "79e9a05c971ef3ecb4e719a28e4c529a00d9600f5ab69576554491ca5d51b94a",
+      "required": true
+    },
+    "quality": {
+      "policy_sha256": "99effb41fdab608ce8d7861109d7f89291f012a8cfad951cd6f43156aa3a28ce",
+      "required": true
+    },
+    "slo": {
+      "policy_sha256": "c9654a1d8920c15bf6a7a72390177b4520a8b96424999e0adb1c82c19474e0a2",
+      "required": true
+    }
+  },
+  "max_cost_usd": 0.0,
+  "measurement_contract": {
+    "effect_formula": "candidate_over_control_minus_one",
+    "minimum_candidate_repetitions": 2,
+    "protocol": "deterministic",
+    "statistic": "median"
+  },
+  "prediction": {
+    "expected_direction": "increase",
+    "falsifier": "The repaired production path cannot attain at least 0.95 dependency-union coverage or fails any clock, correlation, graph, stream, kernel, edge, replay, fallback-removal, packaging, or invariant-preservation gate.",
+    "metric": "production_observer_explicit_dependency_contract_pass_fraction",
+    "minimum_effect_fraction": 1.0,
+    "plausible_ceiling_fraction": 1.0,
+    "point_estimate_fraction": 1.0
+  },
+  "program_id": "glm-4.7-flash",
+  "provider_reconciliation": {
+    "active_allocations": 0,
+    "active_reservations": 0,
+    "artifact_audit_pass": true,
+    "artifact_references_checked": 160,
+    "event_head_before_transition": "02009f709a1121c1c19ecf9438f1c05bb4cb4a00d02b10253bcf474e539ed1f7",
+    "lease_epoch": 3,
+    "owner": "supervisor-glm47",
+    "p0_actions_pending": 0,
+    "provider_mutation_performed": false,
+    "safe_to_start_new_provider_mutation": true
+  },
+  "run_id": "glm47-observer-dependency-attribution-production-repair-c2",
+  "schema_version": 1,
+  "scout_id": "glm47-host-scheduler-critical-path",
+  "seed": 47022701,
+  "timeout_seconds": 540
+}

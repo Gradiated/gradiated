@@ -1,0 +1,13 @@
+# Research log
+
+## 2026-07-15 — Trace-resident residual attribution and promotion falsifier
+
+Question: can a named dense GEMM/GEMV, MoE expert, or routing operation in the matching AWQ/vLLM/L40S c8 decode trace support a correctness-preserving intervention with a conservative >=5% c8 ceiling?
+
+Experiment contract: use only retained V24R2/V25R1 trace bundles; no provider allocation, runtime mutation, observer repair, quality change, or server A/B. Extract interval unions rather than summed-kernel durations, recover CPU launch attribution and recorded tensor shapes through `ac2g` flows where available, and compare any residual with the already measured same-stack split-MLA A/B. Artifact contract: reusable analyzer plus immutable JSON outputs and a promotion decision.
+
+Measured evidence: `analyze_l40s_residual_ceiling.py` processed the V24R2 and V25R1 torch traces. Dense GEMM/GEMV consumed 20.2623% and 20.2041% of the decode-annotation interval union; routing consumed 2.1966% in V24R2. The largest exact residual was `cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_128x2_tn_align8`, with 12,446 V24R2 launches and a 14.0915% trace-resident union. Its captured graph-launch attribution is BF16 `aten::mm`, `[8,2048] x [2048,154880]`, with 120 registers/thread, 16,896 bytes shared memory, block `[32,1,1]`, and a representative logits-scale grid `[8,1210,1]`. This identifies it as the vocabulary projection, not a MoE or routing operation. CUDA Graph replay left direct CPU flow attribution for only 127 launches, so this shape attribution cannot establish a c8 critical path.
+
+Derived falsifier: the prior same-server MLA A/B saved 14.3529% of summed decode kernel work and returned only +1.0461% c8 throughput. Its observed summed-component-to-c8 transfer is 0.0728874. Applying that factor to an impossible 100% removal of the whole 29.3064% dense summed family predicts only +2.1361% c8 throughput. This calibration is not a universal bound, but it is the only scope-matched end-to-end evidence and is materially below the 5% gate.
+
+Interpretation and decision: the trace has a real, named dense residual, but its 14.1% interval-union figure is an optimistic observer ceiling rather than a conservative serving-wall fraction. The project cannot defend a >=5% c8 ceiling or an independent correctness oracle for a new logits kernel. Do not promote a component allocation or full-server A/B. Stop custom dense/MoE/routing kernel work on this AWQ/L40S c8 stack and move capacity to serving or representation/runtime controls. Raw-derived outputs: `L40S_V24R2_RESIDUAL_TRACE_CEILING.json`, `L40S_V25R1_RESIDUAL_TRACE_CEILING.json`, and `L40S_DENSE_RESIDUAL_FALSIFICATION.json`.

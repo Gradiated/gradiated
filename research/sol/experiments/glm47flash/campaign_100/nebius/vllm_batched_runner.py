@@ -27,6 +27,20 @@ class BatchError(RuntimeError):
     pass
 
 
+def parse_concurrencies(raw: str) -> tuple[int, ...]:
+    try:
+        values = tuple(int(value) for value in raw.split(","))
+    except ValueError as error:
+        raise BatchError("concurrencies must be comma-separated integers") from error
+    if values not in {(1, 8), (1, 8, 16)}:
+        raise BatchError("concurrencies must be the fixed c1,c8 control or c1,c8,c16 frontier")
+    return values
+
+
+def requests_for_concurrency(concurrency: int) -> int:
+    return 4 if concurrency == 1 else concurrency * 2
+
+
 def canonical(value: object) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
 
@@ -397,7 +411,7 @@ def profile_if_admitted(output: Path, prompt: str, quality: dict, performance: d
     return result
 
 
-def performance_batch(output: Path, tokenizer_dir: Path) -> tuple[dict, str]:
+def performance_batch(output: Path, tokenizer_dir: Path, concurrencies: tuple[int, ...]) -> tuple[dict, str]:
     from transformers import AutoTokenizer
 
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir)
@@ -412,12 +426,22 @@ def performance_batch(output: Path, tokenizer_dir: Path) -> tuple[dict, str]:
     warmup = stream_completion(prompt)
     if warmup["input_tokens"] != 8192 or warmup["output_tokens"] != 1024:
         raise BatchError("warmup geometry mismatch")
-    c1 = run_profile(prompt, 1, 4, output, "fixed_8k_1k_c1")
-    c8 = run_profile(prompt, 8, 16, output, "fixed_8k_1k_c8")
-    rate = c8["output_tokens_per_second_conservative"]
+    profiles = [
+        run_profile(prompt, concurrency, requests_for_concurrency(concurrency), output, f"fixed_8k_1k_c{concurrency}")
+        for concurrency in concurrencies
+    ]
+    c8 = next(profile for profile in profiles if profile["concurrency"] == 8)
+    terminal = profiles[-1]
+    rate = terminal["output_tokens_per_second_conservative"]
     result = {
         "prompt_sha256": prompt_hash, "authoritative_tokenizer": str(tokenizer_dir), "warmup": warmup,
-        "profiles": [c1, c8], "fixed_slo_pass": c1["slo_pass"] and c8["slo_pass"] and c1["exact_geometry_pass"] and c8["exact_geometry_pass"] and c1["prefix_cache_zero_delta"] and c8["prefix_cache_zero_delta"],
+        "profiles": profiles,
+        "frontier_concurrencies": list(concurrencies),
+        "terminal_profile_id": terminal["profile_id"],
+        "fixed_slo_pass": all(
+            profile["slo_pass"] and profile["exact_geometry_pass"] and profile["prefix_cache_zero_delta"]
+            for profile in profiles
+        ),
         "l40s_full_vm_plus_disk_hourly_usd": L40S_HOURLY_USD,
         "steady_state_usd_per_million_output_tokens": L40S_HOURLY_USD / 3600 / rate * 1_000_000,
         "beats_complete_bf16_h100_cost": rate >= 67.565,
@@ -434,6 +458,7 @@ def main() -> int:
     parser.add_argument("--tokenizer", type=Path, required=True)
     parser.add_argument("--quality", type=Path, required=True)
     parser.add_argument("--bf16-responses", type=Path, required=True)
+    parser.add_argument("--concurrencies", default="1,8")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     result = {
@@ -454,7 +479,7 @@ def main() -> int:
                 "pass": False,
                 "quality_error": {"type": type(error).__name__, "message": str(error)[:1000]},
             }
-        result["performance"], fixed_prompt = performance_batch(args.output, args.tokenizer)
+        result["performance"], fixed_prompt = performance_batch(args.output, args.tokenizer, parse_concurrencies(args.concurrencies))
         result["profiler"] = profile_if_admitted(args.output, fixed_prompt, result["quality"], result["performance"])
         result["batch_pass"] = bool(
             result["semantic"]["pass"] and result["quality"]["pass"] and result["performance"]["fixed_slo_pass"]

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v14",
+  "failure_stage": "nsys_launch_output_option_rejected_before_b1_server_start",
+  "captured_signals": [
+    "identity_and_environment",
+    "request_timeline",
+    "scheduler_timeline",
+    "resource_and_cost_ledger"
+  ],
+  "missing_signals": [
+    "accelerator_health",
+    "host_and_transfer_health",
+    "model_structure",
+    "quality_and_correctness",
+    "scheduler_iteration_trace",
+    "cpu_gpu_dependency_trace",
+    "kernel_resource_trace"
+  ]
+}

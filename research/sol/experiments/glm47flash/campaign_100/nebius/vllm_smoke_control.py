@@ -123,7 +123,22 @@ sudo dpkg-query -W -f='${{Package}}=${{Version}}\n' docker.io nvidia-container-t
 '''
 
 
-def build_container_command(spec_hash: str, deadline_epoch: int, dtype: str = "bfloat16", max_num_batched_tokens: int = 32768, decode_block_n: int = 32, decode_num_stages: int = 2, num_kv_splits: int = 4) -> list[str]:
+def validate_frontier_concurrencies(values: tuple[int, ...], max_num_seqs: int) -> tuple[int, ...]:
+    if values not in {(1, 8), (1, 8, 16)}:
+        raise VllmSmokeError("frontier concurrencies must be c1,c8 or c1,c8,c16")
+    if max_num_seqs < max(values):
+        raise VllmSmokeError("max_num_seqs cannot admit the requested frontier")
+    return values
+
+
+def validate_timeout_seconds(value: int) -> int:
+    if value <= 0 or value > 3600:
+        raise VllmSmokeError("frontier timeout must be positive and no more than 3600 seconds")
+    return value
+
+
+def build_container_command(spec_hash: str, deadline_epoch: int, dtype: str = "bfloat16", max_num_batched_tokens: int = 32768, max_num_seqs: int = 8, frontier_concurrencies: tuple[int, ...] = (1, 8), decode_block_n: int = 32, decode_num_stages: int = 2, num_kv_splits: int = 4) -> list[str]:
+    frontier_concurrencies = validate_frontier_concurrencies(frontier_concurrencies, max_num_seqs)
     return [
         "sudo", "docker", "run", "--rm", "--gpus", "all", "--ipc=host", "--shm-size=24g",
         "--cap-add", "SYS_NICE", "-v", "/home/glmrunner/input:/input:ro", "-v", "/workspace:/workspace",
@@ -131,6 +146,8 @@ def build_container_command(spec_hash: str, deadline_epoch: int, dtype: str = "b
         "-e", "VLLM_RPC_TIMEOUT=1800000",
         "-e", f"VLLM_DTYPE={dtype}",
         "-e", f"VLLM_MAX_NUM_BATCHED_TOKENS={max_num_batched_tokens}",
+        "-e", f"VLLM_MAX_NUM_SEQS={max_num_seqs}",
+        "-e", f"VLLM_FRONTIER_CONCURRENCIES={','.join(str(value) for value in frontier_concurrencies)}",
         "-e", f"VLLM_DECODE_BLOCK_N={decode_block_n}",
         "-e", f"VLLM_DECODE_NUM_STAGES={decode_num_stages}",
         "-e", f"VLLM_NUM_KV_SPLITS={num_kv_splits}",
@@ -140,10 +157,12 @@ def build_container_command(spec_hash: str, deadline_epoch: int, dtype: str = "b
     ]
 
 
-def run(output_dir: Path, name: str, key: Path, public_key: Path, model_dir: Path, tokenizer_dir: Path, spec_hash: str, keep_instance_after_result: bool = False, num_kv_splits: int = 4) -> int:
+def run(output_dir: Path, name: str, key: Path, public_key: Path, model_dir: Path, tokenizer_dir: Path, spec_hash: str, keep_instance_after_result: bool = False, num_kv_splits: int = 4, max_num_seqs: int = 8, frontier_concurrencies: tuple[int, ...] = (1, 8), absolute_timeout_seconds: int = 3600) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     if (output_dir / "summary.json").exists():
         raise VllmSmokeError("completed output directory already exists")
+    frontier_concurrencies = validate_frontier_concurrencies(frontier_concurrencies, max_num_seqs)
+    absolute_timeout_seconds = validate_timeout_seconds(absolute_timeout_seconds)
     identities = validate_local_model(model_dir)
     remote_script = HERE / "remote_vllm_awq_smoke.sh"
     batch_runner = HERE / "vllm_batched_runner.py"
@@ -156,7 +175,7 @@ def run(output_dir: Path, name: str, key: Path, public_key: Path, model_dir: Pat
         raise VllmSmokeError("batched vLLM inputs are incomplete")
     events = output_dir / "events.jsonl"
     started = time.time()
-    deadline = started + ABSOLUTE_TIMEOUT_SECONDS
+    deadline = started + absolute_timeout_seconds
     instance_id = None
     disk_name = name + "-boot"
     outcome = "FAIL"
@@ -173,8 +192,8 @@ def run(output_dir: Path, name: str, key: Path, public_key: Path, model_dir: Pat
         "derived_runtime_image": RUNTIME_IMAGE, "transformers_revision": TRANSFORMERS_REVISION,
         "hourly_rate_usd_vendor_calculator": HOURLY_RATE_USD,
         "disk_hourly_rate_usd_vendor_calculator": DISK_HOURLY_RATE_USD,
-        "absolute_timeout_seconds": ABSOLUTE_TIMEOUT_SECONDS,
-        "max_total_cost_usd": (HOURLY_RATE_USD + DISK_HOURLY_RATE_USD) * ABSOLUTE_TIMEOUT_SECONDS / 3600,
+        "absolute_timeout_seconds": absolute_timeout_seconds,
+        "max_total_cost_usd": (HOURLY_RATE_USD + DISK_HOURLY_RATE_USD) * absolute_timeout_seconds / 3600,
         **identities,
     }, indent=2, sort_keys=True) + "\n")
     try:
@@ -230,7 +249,7 @@ def run(output_dir: Path, name: str, key: Path, public_key: Path, model_dir: Pat
         transfer_started = time.time()
         transfer_local_model(ip, key, model_dir)
         emit(events, "verified_local_awq_transferred", elapsed_seconds=round(time.time() - transfer_started, 3))
-        remote = run_ssh(ip, key, build_container_command(spec_hash, int(deadline), max_num_batched_tokens=65536, num_kv_splits=num_kv_splits), timeout=max(60, int(deadline - time.time()) + 180))
+        remote = run_ssh(ip, key, build_container_command(spec_hash, int(deadline), max_num_batched_tokens=65536, max_num_seqs=max_num_seqs, frontier_concurrencies=frontier_concurrencies, num_kv_splits=num_kv_splits), timeout=max(60, int(deadline - time.time()) + 180))
         (output_dir / "remote.stdout.log").write_text(remote.stdout)
         (output_dir / "remote.stderr.log").write_text(remote.stderr)
         archive = output_dir / "vllm-awq-batch.tar.gz"
@@ -298,8 +317,15 @@ def main() -> int:
     parser.add_argument("--experiment-spec-sha256", required=True)
     parser.add_argument("--keep-instance-after-result", action="store_true")
     parser.add_argument("--num-kv-splits", type=int, choices=(4, 8, 16), default=4)
+    parser.add_argument("--max-num-seqs", type=int, choices=(8, 16), default=8)
+    parser.add_argument("--frontier-concurrencies", default="1,8")
+    parser.add_argument("--absolute-timeout-seconds", type=int, default=3600)
     args = parser.parse_args()
-    return run(args.output_dir, args.name, args.ssh_key, args.ssh_public_key, args.local_model_dir, args.reference_tokenizer_dir, args.experiment_spec_sha256, args.keep_instance_after_result, args.num_kv_splits)
+    try:
+        concurrencies = tuple(int(value) for value in args.frontier_concurrencies.split(","))
+    except ValueError as error:
+        raise VllmSmokeError("frontier concurrencies must be comma-separated integers") from error
+    return run(args.output_dir, args.name, args.ssh_key, args.ssh_public_key, args.local_model_dir, args.reference_tokenizer_dir, args.experiment_spec_sha256, args.keep_instance_after_result, args.num_kv_splits, args.max_num_seqs, concurrencies, args.absolute_timeout_seconds)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "status": "design_only_not_frozen",
+  "purpose": "Blueprint for a new quality gate; it does not modify or reinterpret quality v1.",
+  "suite_geometry": {
+    "development_cases": 36,
+    "holdout_cases": 36,
+    "categories": ["tool_call", "coding", "long_context_retrieval", "multi_turn_continuation", "teacher_forced_loss", "serving_correctness"],
+    "cases_per_category_per_split": 6,
+    "disjointness": "Separate generated inputs, expected outputs, identifiers, and content hashes. Generate and seal holdout only after development calibration and policy selection; do not inspect holdout responses during development."
+  },
+  "contract_repairs": {
+    "tool_call": "Embed the exact JSON schema and required argument spelling in every prompt; score parsed objects exactly after transport normalization only.",
+    "coding": "Allow exactly one whole-response fenced Python block or bare Python, reject prose and non-Python fences, then run a category-specific executable oracle and adversarial mutations.",
+    "long_context_retrieval": "State 'return only the value' and use values whose distractor/key mutations prove the scorer rejects wrong values.",
+    "multi_turn_continuation": "Give an explicit output-format instruction and include order, omission, and unrelated-turn mutation controls.",
+    "teacher_forced_loss": "Use twelve fixed synthetic sequences. On development only, measure intended BF16 controls across three cold-start captures, then freeze each sequence ceiling as the maximum observed control mean NLL plus a preregistered 5% tolerance before sealing holdout.",
+    "serving_correctness": "Supply the exact required JSON schema in the prompt; retain two deterministic repetitions and reject type, field, and truncation mutations."
+  },
+  "transport_policy": {
+    "allowed": "Bare output or one complete language-matched fenced block with no leading/trailing prose.",
+    "rejected": ["multiple blocks", "prose surrounding a block", "wrong fence language", "partial JSON", "schema coercion", "semantic synonym expansion"],
+    "evidence": "Retain raw response bytes, normalized output bytes, transform decision, and hashes for each case."
+  },
+  "eligibility_policy_to_freeze_after_development": {
+    "absolute_control": "All critical category point scores must be at least 5/6 and no category may be zero; report exact binomial intervals rather than treating six cases as a certification.",
+    "paired_awq": "On the untouched holdout, retain category-stratified paired bootstrap intervals and reject any critical-category point regression over 1/6 or overall lower confidence bound below -0.05.",
+    "nll": "Reject missing runtime input-token logprobs, token-sequence hash mismatches, or any candidate sequence above its frozen calibrated ceiling."
+  },
+  "promotion_rule": "A passing new gate supports only the specified model revision, transport policy, workload-independent capability screen, and exact representation pair. It does not repair V1 or establish provider equivalence."
+}

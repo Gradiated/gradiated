@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "glm47-observer-diagnostic-l40s-v18",
+  "failure_stage": "pre_provider_identity_gate",
+  "captured_signals": [],
+  "missing_signals": [
+    "identity_and_environment",
+    "request_timeline",
+    "scheduler_timeline",
+    "accelerator_health",
+    "host_and_transfer_health",
+    "model_structure",
+    "quality_and_correctness",
+    "resource_and_cost_ledger",
+    "scheduler_iteration_trace",
+    "cpu_gpu_dependency_trace",
+    "kernel_resource_trace"
+  ]
+}

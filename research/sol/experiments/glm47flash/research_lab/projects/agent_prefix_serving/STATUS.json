@@ -1,0 +1,7 @@
+{
+  "status": "paused",
+  "priority": 80,
+  "summary": "Pinned vLLM 0.15.0 source shows cache blocks become scheduler-visible before request completion; retained V21 TPOT p95 (18.79 ms) supports 16 timing-eligible hits under the fixed 100 ms gaps.",
+  "next_action": "Await explicit post-quality ownership handoff, then run the immutable V2 cache-on smoke; require at least 2 measured hits to continue and a matched >=5% SLO-goodput or token-cost gain plus semantic/SLO gates for promotion.",
+  "provider_mutation": "paused_pending_quality_capture_no_ownership"
+}

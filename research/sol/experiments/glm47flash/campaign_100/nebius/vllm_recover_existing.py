@@ -18,7 +18,7 @@ from placement_control import delete_disk, delete_instance, extract_public_ipv4,
 from stock_control import extract_member, run_ssh, scp_from, scp_to, verify_internal_manifest
 from vllm_smoke_control import (
     HERE, TRANSFORMERS_REVISION, allocation_has_harness_error, build_container_command, build_host_bootstrap,
-    hold_for_repair_decision, required_quality_files,
+    hold_for_repair_decision, required_quality_files, validate_frontier_concurrencies,
 )
 
 
@@ -27,6 +27,7 @@ def run(args: argparse.Namespace) -> int:
     out.mkdir(parents=True, exist_ok=True)
     events = out / "events.jsonl"
     identities = validate_local_model(args.local_model_dir)
+    frontier_concurrencies = validate_frontier_concurrencies(tuple(int(value) for value in args.frontier_concurrencies.split(",")), args.max_num_seqs)
     if not events.exists():
         emit(
             events,
@@ -91,7 +92,7 @@ def run(args: argparse.Namespace) -> int:
         else:
             emit(events, "repair_01_reused_verified_runtime_and_checkpoint")
 
-        remote = run_ssh(ip, args.ssh_key, build_container_command(args.repair_spec_sha256, int(deadline), dtype=args.dtype, max_num_batched_tokens=args.max_num_batched_tokens, decode_block_n=args.decode_block_n, decode_num_stages=args.decode_num_stages, num_kv_splits=args.num_kv_splits), timeout=max(60, int(deadline - time.time()) + 180))
+        remote = run_ssh(ip, args.ssh_key, build_container_command(args.repair_spec_sha256, int(deadline), dtype=args.dtype, max_num_batched_tokens=args.max_num_batched_tokens, max_num_seqs=args.max_num_seqs, frontier_concurrencies=frontier_concurrencies, decode_block_n=args.decode_block_n, decode_num_stages=args.decode_num_stages, num_kv_splits=args.num_kv_splits), timeout=max(60, int(deadline - time.time()) + 180))
         (out / "repair-01-remote.stdout.log").write_text(remote.stdout)
         (out / "repair-01-remote.stderr.log").write_text(remote.stderr)
         archive = out / "vllm-awq-batch.tar.gz"
@@ -160,6 +161,8 @@ def main() -> int:
     parser.add_argument("--keep-instance-after-result", action="store_true")
     parser.add_argument("--dtype", choices=("bfloat16", "float16"), default="bfloat16")
     parser.add_argument("--max-num-batched-tokens", type=int, default=32768)
+    parser.add_argument("--max-num-seqs", type=int, choices=(8, 16), default=8)
+    parser.add_argument("--frontier-concurrencies", default="1,8")
     parser.add_argument("--decode-block-n", type=int, choices=(32, 64), default=32)
     parser.add_argument("--decode-num-stages", type=int, choices=(1, 2), default=2)
     parser.add_argument("--num-kv-splits", type=int, choices=(4, 8, 16), default=4)

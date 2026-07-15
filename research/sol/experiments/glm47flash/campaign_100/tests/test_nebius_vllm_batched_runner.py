@@ -48,13 +48,25 @@ class VllmBatchedRunnerTests(unittest.TestCase):
     def test_quality_failure_does_not_suppress_fixed_performance(self):
         source = SOURCE.read_text()
         self.assertIn('"quality_error"', source)
-        self.assertIn("performance_batch(args.output, args.tokenizer)", source)
+        self.assertIn("performance_batch(args.output, args.tokenizer, parse_concurrencies(args.concurrencies))", source)
 
     def test_prefix_cache_counters_are_part_of_slo_evidence(self):
         text = "vllm:prefix_cache_queries_total 0\nvllm:prefix_cache_hits_total 0\n"
         totals = module.metric_totals(text)
         self.assertEqual(totals["prefix_cache_queries_total"], 0)
         self.assertEqual(totals["prefix_cache_hits_total"], 0)
+
+    def test_frontier_concurrency_contract_is_sorted_unique_and_keeps_adjacent_c8_control(self):
+        self.assertEqual(module.parse_concurrencies("1,8,16"), (1, 8, 16))
+        with self.assertRaises(module.BatchError):
+            module.parse_concurrencies("1,16")
+        with self.assertRaises(module.BatchError):
+            module.parse_concurrencies("1,8,8")
+
+    def test_higher_frontier_profiles_use_two_full_batches(self):
+        self.assertEqual(module.requests_for_concurrency(1), 4)
+        self.assertEqual(module.requests_for_concurrency(8), 16)
+        self.assertEqual(module.requests_for_concurrency(16), 32)
 
 
 if __name__ == "__main__":

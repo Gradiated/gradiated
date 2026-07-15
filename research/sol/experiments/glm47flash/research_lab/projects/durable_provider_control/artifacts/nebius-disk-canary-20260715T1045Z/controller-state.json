@@ -1,0 +1,9 @@
+{
+  "controller_pid": 865747,
+  "disk_id": null,
+  "heartbeat_at": 1784104845.5569782,
+  "identity_sha256": "ea1c44da1f876005e197cd4583d2e54219e6702092dfd3644b883a721d3a31e1",
+  "name": "glm47-durable-canary-ea1c44da1f87",
+  "schema_version": 1,
+  "state": "terminal"
+}

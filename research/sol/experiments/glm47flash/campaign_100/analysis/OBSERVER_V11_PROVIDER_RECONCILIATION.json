@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "glm47-observer-diagnostic-l40s-v11-provider-reconciliation",
+  "run_id": "glm47-observer-diagnostic-l40s-v11",
+  "recorded_at": "2026-07-14T22:48:58Z",
+  "outcome_class": "operational_failure",
+  "scientific_belief_update_permitted": false,
+  "hypothesis": "The V11 controller failed at its local immutable-identity gate before its first provider inventory or creation command, so the matching Nebius instance and disk inventories should both be empty and provider compute exposure should be zero.",
+  "scope": {
+    "program_id": "glm-4.7-flash",
+    "campaign_id": "glm47-nebius-25",
+    "provider": "nebius",
+    "provider_project_id": "project-e00h1vhmpr00vbmfd5k7pg",
+    "provider_profile": "glm-campaign",
+    "provider_idempotency_key": "glm47-observer-diagnostic-l40s-v11",
+    "reservation_id": "reservation:glm47-observer-diagnostic-l40s-v11",
+    "admission_sha256": "3daff067223643f3ab7f13369d753f4fbcf4318f5dfb35c386df21c5988bf1de",
+    "supervisor_command_sha256": "d7563caa3c8028b16489d59bb3621f5e3fb4e3622b5865b0bb86c1c14f460f41",
+    "absolute_deadline_utc": "2026-07-14T23:16:10Z"
+  },
+  "failure": {
+    "classification": "operational_only_no_scientific_update",
+    "message": "factory program, campaign, run, or setup identity drifted",
+    "cause": "The controller version executed by the supervisor still pinned the reusable identity guard to a retired run ID; V11 was rejected before provider inventory reconciliation or resource creation.",
+    "provider_stdout_bytes": 0,
+    "provider_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "provider_stderr_bytes": 820,
+    "provider_stderr_sha256": "9e2b1387ce459012ce878c8f330116b96bebfa22d19d5760d6079869e365475c"
+  },
+  "reconciliation": {
+    "method": "One read-only list of all compute instances and managed disks in the pinned Nebius project, filtered by exact program_id, campaign_id, and run_id labels and by the V11 instance/disk names.",
+    "checked_at": "2026-07-14T22:48:58Z",
+    "instance_inventory_count": 0,
+    "disk_inventory_count": 0,
+    "matching_instance_ids": [],
+    "matching_disk_ids": [],
+    "provider_mutation_performed": false,
+    "provider_resources_absent": true
+  },
+  "cost": {
+    "actual_cost_usd": 0.0,
+    "evidence_class": "derived",
+    "basis": "The controller raised before its first provider list/create call, and the one reconciled provider inventory contained zero instances and zero disks."
+  },
+  "scientific_disposition": {
+    "arm_admissible": false,
+    "quality_scored": false,
+    "performance_scored": false,
+    "prediction_scored": false,
+    "mechanism_belief_changed": false,
+    "residual_bottleneck": "Dense-device versus host/scheduler critical-path attribution remains unresolved because no STOCK_STARTUP or A1/B1/A2 arm ran."
+  },
+  "decision": "Settle the V11 reservation at zero after verified provider absence. Do not relaunch the terminal V11 supervisor job or create a provider resource from its interrupted intent.",
+  "next_action": "On the next bounded director cycle, resume as supervisor-glm47, preserve the existing budget authority and 2000-second/$0.55/$0.07 contract, prepare a fresh immutable observer identity from the repaired reusable run-ID guard, and make the fenced admission decision without changing the STOCK_STARTUP or A1/B1/A2 science geometry."
+}

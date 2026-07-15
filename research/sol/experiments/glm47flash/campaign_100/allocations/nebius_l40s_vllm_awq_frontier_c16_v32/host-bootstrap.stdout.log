@@ -1,0 +1,148 @@
+docker.io/vllm/vllm-openai@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543: Pulling from vllm/vllm-openai
+66587c81b81a: Pulling fs layer
+f29b1d4013a9: Pulling fs layer
+340d44d2921c: Pulling fs layer
+59a4bcbddda3: Pulling fs layer
+6e8af4fd0a07: Pulling fs layer
+1a1a55aaa388: Pulling fs layer
+464c5b3f81aa: Pulling fs layer
+68e4de9afc11: Pulling fs layer
+1a938c5c6db5: Pulling fs layer
+4662b839137c: Pulling fs layer
+cb5a12d960fc: Pulling fs layer
+ad20ba183afe: Pulling fs layer
+91b371710dd4: Pulling fs layer
+87ba41f1bcbb: Pulling fs layer
+c6fb2cee6f50: Pulling fs layer
+59a4bcbddda3: Waiting
+14441f884a6e: Pulling fs layer
+6e8af4fd0a07: Waiting
+22021d405c49: Pulling fs layer
+1a1a55aaa388: Waiting
+464c5b3f81aa: Waiting
+ad20ba183afe: Waiting
+50727175ad61: Pulling fs layer
+68e4de9afc11: Waiting
+6350f9886343: Pulling fs layer
+91b371710dd4: Waiting
+61ba3cbba362: Pulling fs layer
+87ba41f1bcbb: Waiting
+e76b10623bd6: Pulling fs layer
+1a938c5c6db5: Waiting
+41f2f9128abb: Pulling fs layer
+c6fb2cee6f50: Waiting
+b603a15f1ff9: Pulling fs layer
+14441f884a6e: Waiting
+5bd392afdaa2: Pulling fs layer
+22021d405c49: Waiting
+4662b839137c: Waiting
+37414ff7d784: Pulling fs layer
+cb5a12d960fc: Waiting
+50727175ad61: Waiting
+02604edead5f: Pulling fs layer
+6350f9886343: Waiting
+654620e72928: Pulling fs layer
+e76b10623bd6: Waiting
+41f2f9128abb: Waiting
+37414ff7d784: Waiting
+02604edead5f: Waiting
+b603a15f1ff9: Waiting
+66587c81b81a: Verifying Checksum
+66587c81b81a: Download complete
+f29b1d4013a9: Verifying Checksum
+f29b1d4013a9: Download complete
+59a4bcbddda3: Verifying Checksum
+59a4bcbddda3: Download complete
+6e8af4fd0a07: Download complete
+340d44d2921c: Verifying Checksum
+340d44d2921c: Download complete
+1a1a55aaa388: Download complete
+464c5b3f81aa: Verifying Checksum
+464c5b3f81aa: Download complete
+4662b839137c: Verifying Checksum
+4662b839137c: Download complete
+66587c81b81a: Pull complete
+cb5a12d960fc: Download complete
+f29b1d4013a9: Pull complete
+68e4de9afc11: Verifying Checksum
+68e4de9afc11: Download complete
+ad20ba183afe: Verifying Checksum
+ad20ba183afe: Download complete
+91b371710dd4: Verifying Checksum
+91b371710dd4: Download complete
+340d44d2921c: Pull complete
+59a4bcbddda3: Pull complete
+6e8af4fd0a07: Pull complete
+1a1a55aaa388: Pull complete
+464c5b3f81aa: Pull complete
+1a938c5c6db5: Verifying Checksum
+1a938c5c6db5: Download complete
+14441f884a6e: Download complete
+22021d405c49: Verifying Checksum
+22021d405c49: Download complete
+50727175ad61: Verifying Checksum
+50727175ad61: Download complete
+6350f9886343: Verifying Checksum
+6350f9886343: Download complete
+c6fb2cee6f50: Verifying Checksum
+c6fb2cee6f50: Download complete
+e76b10623bd6: Verifying Checksum
+e76b10623bd6: Download complete
+41f2f9128abb: Verifying Checksum
+41f2f9128abb: Download complete
+b603a15f1ff9: Verifying Checksum
+b603a15f1ff9: Download complete
+5bd392afdaa2: Download complete
+37414ff7d784: Verifying Checksum
+37414ff7d784: Download complete
+02604edead5f: Download complete
+654620e72928: Verifying Checksum
+654620e72928: Download complete
+61ba3cbba362: Verifying Checksum
+61ba3cbba362: Download complete
+68e4de9afc11: Pull complete
+87ba41f1bcbb: Verifying Checksum
+87ba41f1bcbb: Download complete
+1a938c5c6db5: Pull complete
+4662b839137c: Pull complete
+cb5a12d960fc: Pull complete
+ad20ba183afe: Pull complete
+91b371710dd4: Pull complete
+87ba41f1bcbb: Pull complete
+c6fb2cee6f50: Pull complete
+14441f884a6e: Pull complete
+22021d405c49: Pull complete
+50727175ad61: Pull complete
+6350f9886343: Pull complete
+61ba3cbba362: Pull complete
+e76b10623bd6: Pull complete
+41f2f9128abb: Pull complete
+b603a15f1ff9: Pull complete
+5bd392afdaa2: Pull complete
+37414ff7d784: Pull complete
+02604edead5f: Pull complete
+654620e72928: Pull complete
+Digest: sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543
+Status: Downloaded newer image for vllm/vllm-openai@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543
+docker.io/vllm/vllm-openai:v0.15.0@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543
+["vllm/vllm-openai@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543"]
+NVIDIA L40S, 46068, 580.159.04
+sha256:00756039db7c41eafde872cc376619998b8b2a9eb2471cf3fed44c95364faa53
+	libcuda.so.1 (libc6,x86-64) => /lib/x86_64-linux-gnu/libcuda.so.1
+{
+  "capability": [
+    8,
+    9
+  ],
+  "cuda": "12.9",
+  "gpu": "NVIDIA L40S",
+  "model_type": "glm4_moe_lite",
+  "tensor": 1.0,
+  "torch": "2.9.1+cu129",
+  "transformers": "5.3.0.dev0",
+  "vllm": "0.15.0",
+  "vllm_glm_module": "vllm.model_executor.models.glm4_moe_lite"
+}
+Docker version 29.5.3, build d1c06ef
+docker.io=
+nvidia-container-toolkit=1.19.1-1

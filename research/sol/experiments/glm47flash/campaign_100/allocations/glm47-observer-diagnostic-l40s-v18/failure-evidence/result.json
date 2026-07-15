@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "id": "glm47-observer-diagnostic-l40s-v18-result",
+  "run_id": "glm47-observer-diagnostic-l40s-v18",
+  "scout_id": "glm47-dense-resource-signature",
+  "control_id": "glm47-stock-observer-off",
+  "candidate_id": "glm47-stock-observer-on",
+  "changed_variable": "observer state and its harness/configuration identity only",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "prediction_sha256": "70bd80f5ba174e34bb8e666effaf71611dd319caac14c5c648d7a2a38f81779b",
+  "outcome_class": "operational_failure",
+  "failure_class": "factory_identity_drift",
+  "fidelity": "matched_server",
+  "scope": {
+    "claim": "diagnostic localization only; no quality, economics, provider, or candidate-performance claim",
+    "hardware": "Nebius L40S 48GB; gpu-l40s-a; 1gpu-16vcpu-64gb",
+    "model": "GLM-4.7-Flash revision ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "workload": "A1 observer-off / B1 observer-on / A2 observer-off; 8 requests; c8; 8192 input + 32 output tokens"
+  },
+  "cost_usd": 0.0,
+  "artifact_refs": [
+    "fc2794ca93124de55c785e4be2b5aab5cb5e6b3f10ab7a8235dfdc6c7b9691f3"
+  ],
+  "artifact_bundle_sha256": "fc2794ca93124de55c785e4be2b5aab5cb5e6b3f10ab7a8235dfdc6c7b9691f3",
+  "telemetry_summary": {
+    "schema_version": 1,
+    "run_id": "glm47-observer-diagnostic-l40s-v18",
+    "failure_stage": "pre_provider_identity_gate",
+    "captured_signals": [],
+    "missing_signals": [
+      "identity_and_environment",
+      "request_timeline",
+      "scheduler_timeline",
+      "accelerator_health",
+      "host_and_transfer_health",
+      "model_structure",
+      "quality_and_correctness",
+      "resource_and_cost_ledger",
+      "scheduler_iteration_trace",
+      "cpu_gpu_dependency_trace",
+      "kernel_resource_trace"
+    ]
+  },
+  "residual_bottleneck": "The matched target-L40S observer bracket remains unexecuted; dense-device versus host/scheduler request-critical attribution remains unresolved.",
+  "next_action": "Retire the V17/V18 nested-controller launch lineage. Prepare one fresh immutable paid spec with unchanged scientific scope using a materially different execution geometry that binds and validates the factory identity tuple before controller dispatch; leave provider execution to the deterministic supervisor."
+}

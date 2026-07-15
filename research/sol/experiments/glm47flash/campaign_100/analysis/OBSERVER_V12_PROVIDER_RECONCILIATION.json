@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "id": "glm47-observer-diagnostic-l40s-v12-provider-reconciliation",
+  "run_id": "glm47-observer-diagnostic-l40s-v12",
+  "recorded_at": "2026-07-14T23:30:56Z",
+  "outcome_class": "operational_failure",
+  "scientific_belief_update_permitted": false,
+  "hypothesis": "V12 failed before bootstrap because the created instance did not satisfy the SSH/cloud-init readiness SLO; therefore it produced no scientifically admissible arm and its measured provider exposure should be settled after verified resource absence.",
+  "scope": {
+    "program_id": "glm-4.7-flash",
+    "campaign_id": "glm47-nebius-25",
+    "provider": "nebius",
+    "reservation_id": "reservation:glm47-observer-diagnostic-l40s-v12",
+    "allocation_id": "allocation:glm47-observer-diagnostic-l40s-v12",
+    "admission_sha256": "f91c29df41ea352c0061fbc0c34dd892c6e574d6fcac4e8f1b3caaa08767e19c",
+    "absolute_deadline_utc": "2026-07-14T23:42:50Z"
+  },
+  "failure": {
+    "classification": "operational_only_no_scientific_update",
+    "stage": "ssh_cloud_init_readiness_slo_before_bootstrap",
+    "message": "SSH/cloud-init readiness SLO exceeded",
+    "provider_process_returncode": 1,
+    "model_transfer_started": false,
+    "scored_arm_started": false
+  },
+  "reconciliation": {
+    "failure_bundle_sha256": "bd4b2818c96ff75e811c8c8e864f655552c381b3a65d988e311279a2e41ae7cc",
+    "instance_id": "computeinstance-e00v2vr2111bpethsc",
+    "cleanup_verified": true,
+    "instance_get_not_found": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "cleanup_evidence_sha256": "efd6c2b5edcec7970490d35cb81cac2b885e5dc0fe0868fcb9a2c4781df863b9",
+    "provider_mutation_performed_by_director": false
+  },
+  "cost": {
+    "actual_cost_usd": 0.116268181,
+    "evidence_class": "derived",
+    "basis": "Measured 487.769-second controller exposure at authenticated Nebius preemptible VM and disk rates; public IPv4, egress, and invoice reconciliation excluded."
+  },
+  "scientific_disposition": {
+    "arm_admissible": false,
+    "quality_scored": false,
+    "performance_scored": false,
+    "prediction_scored": false,
+    "mechanism_belief_changed": false,
+    "residual_bottleneck": "The matched target-L40S observer bracket remains unexecuted. Dense-device versus host/scheduler critical-path attribution is unresolved because V12 failed before bootstrap."
+  },
+  "decision": "Record V12 as an operational failure and settle its cleaned reservation at the measured $0.116268181 exposure. Do not retry the unchanged placement or update scientific beliefs.",
+  "next_action": "Dispatch one bounded parallel_offline placement-readiness audit over the existing V12 controller timestamps and readiness logic. It must distinguish a controller/SLO defect from provider boot variance and name one materially changed, locally testable recovery variable before any fresh paid identity."
+}

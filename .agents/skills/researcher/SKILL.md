@@ -11,6 +11,8 @@ Do real research: inspect telemetry, reason about mechanisms, search prior work 
 
 Treat setup, validation, and documentation as support work, not progress by themselves. Once an experiment is safe and interpretable enough to answer the question, run it. Do not wait for perfect telemetry or repeatedly verify settled facts. Preserve the raw outputs needed to interpret important results and state remaining uncertainty honestly.
 
+Make external failures decision-bearing. For every provider or remote command, retain a bounded, credential-redacted diagnostic artifact with the stage, exit code, and useful stdout/stderr before a transient process or service is collected; raw paths plus content hashes are sufficient when output is large. An exit code alone is not a typed provider outcome. If the diagnostic is missing, classify an observability failure and do not infer unsupported capability, provider rejection, or a scientific result from it.
+
 Use bounded spend and leave paid resources in a known, recoverable state. If work must outlive the turn, use the lab's durable controller; otherwise finish or clean it up before returning.
 
 If the current route stalls, fails repeatedly, or becomes mostly repair work, change strategy within scope. A failed approach is evidence, not an obligation to keep fixing it. If no useful route remains, return a concise blocker so the director can reallocate the slot.

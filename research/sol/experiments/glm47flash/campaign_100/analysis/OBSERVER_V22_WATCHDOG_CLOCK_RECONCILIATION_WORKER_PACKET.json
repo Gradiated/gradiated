@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "execution_kind": "local",
+  "run_id": "glm47-observer-v22-watchdog-clock-reconciliation-c1",
+  "program_id": "glm-4.7-flash",
+  "scout_id": "glm47-dense-resource-signature",
+  "fidelity": "reference",
+  "baseline_id": "glm47-l40s-vllm-awq-split4-v28",
+  "baseline_sha256": "72592b31d28e21d6cac6a96a173d4c14a07a87da94420e0e2f91cc145097c1d8",
+  "control_id": "v21-future-clock-paid-spec-rejected-by-current-time-validation",
+  "candidate_id": "v22-authoritative-utc-watchdog-geometry",
+  "changed_variable": "Use the supervisor host's authoritative timezone-aware UTC for one fresh V22 identity and derive its immutable watchdog deadline from that instant; do not modify, admit, launch, or reuse V21.",
+  "claim_scope": {
+    "claim_limit": "Operational clock and paid-spec admission geometry only; no provider, model, quality, performance, SLO, economics, placement, or scientific-mechanism claim",
+    "hardware": "Local CPU/filesystem tests only; no provider access, network, GPU, checkpoint transfer, or model load",
+    "model": "GLM-4.7-Flash AWQ identity retained as metadata only; no inference or scored arm",
+    "software": "Current observer preparation/controller, immutable-launcher retention, corrected durable supervisor renderer, factory paid-run validator, and deterministic clock fixtures",
+    "workload": "Fresh V22 identity preparation and validation only; excluded STOCK_STARTUP plus A1/B1/A2 at 8 requests, c8, 8192 input and 32 output tokens remains unchanged and unexecuted"
+  },
+  "prediction": {
+    "metric": "fresh_paid_spec_current_time_validation_pass_fraction",
+    "expected_direction": "increase",
+    "point_estimate_fraction": 1.0,
+    "minimum_effect_fraction": 1.0,
+    "plausible_ceiling_fraction": 1.0,
+    "falsifier": "The exact V21 spec does not reproduce AdmissionError watchdog deadline exceeds the paid-run timeout at authoritative UTC 2026-07-15T04:34:05Z; any V21 byte or deadline changes; a fresh V22 spec uses naive, local, future-skewed, or mislabeled UTC, has a watchdog later than preparation plus 2000 seconds, lacks the 240-second cleanup reserve, fails validation at its recorded UTC preparation instant or immediately afterward, changes the $0.55 maximum spend or $0.07 cleanup reserve, loses the exact retained launcher or durable supervisor binding, reaches provider/network/GPU/model/scored-arm paths, or any verification gate fails."
+  },
+  "measurement_contract": {
+    "protocol": "deterministic",
+    "effect_formula": "candidate_over_control_minus_one",
+    "minimum_candidate_repetitions": 2,
+    "statistic": "median"
+  },
+  "gates": {
+    "correctness": {
+      "policy_sha256": "79e9a05c971ef3ecb4e719a28e4c529a00d9600f5ab69576554491ca5d51b94a",
+      "required": true
+    },
+    "quality": {
+      "policy_sha256": "99effb41fdab608ce8d7861109d7f89291f012a8cfad951cd6f43156aa3a28ce",
+      "required": true
+    },
+    "slo": {
+      "policy_sha256": "c9654a1d8920c15bf6a7a72390177b4520a8b96424999e0adb1c82c19474e0a2",
+      "required": true
+    }
+  },
+  "command": "Run exactly one bounded zero-cost parallel_offline V21 watchdog-clock reconciliation. Preserve unrelated and existing uncommitted work. Do not access or inspect a provider and do not require a GPU. First bind and reproduce the measured control: exact V21 paid-spec SHA-256 bed75f0940726332f7af98aa023e34e2f59463cca1a3f434989db5682f6d310b records preparation time 2026-07-15T06:30:00Z and watchdog 2026-07-15T07:03:20Z, while authoritative supervisor-host UTC was 2026-07-15T04:34:05Z; factory validate-paid-run at that authoritative instant fails closed with AdmissionError: watchdog deadline exceeds the paid-run timeout. Retain the exact validation command, stdout/stderr, exit, independent host UTC readings, monotonic ordering, and hashes. Do not edit, regenerate, admit, reuse, launch, or alter any V21 file, identity, or deadline. Use test-driven development to locate the clock-source regression that allowed a future preparation instant despite the prior V18/V19 controls, then make the minimum preparation-only repair that obtains timezone-aware UTC from the supervisor host and rejects naive, local-offset-mislabeled-as-Z, backward, future-skewed, and deadline-over-timeout inputs. Prepare only one fresh immutable glm47-observer-diagnostic-l40s-v22 identity below the supervisor-provided worker output directory. Derive its exact 2000-second watchdog from one recorded authoritative UTC preparation instant and prove factory validation passes at that instant and one second later. Prove the actual durable supervisor renderer emits exactly one absolute --host-bootstrap-launcher path bound to the retained V22 bytes, length, SHA-256, and identity manifest, and the complete observer argv reaches the fail-closed pre-provider sentinel. Preserve public-IP start+420 seconds, SSH/cloud-init min(absolute deadline,start+480 seconds), 240-second cleanup reserve, $0.55 maximum future paid-run spend, $0.07 cleanup reserve, STOCK_STARTUP exclusion and isolation, A1/B1/A2 ordering, 8 requests at c8 with 8192 input and 32 output tokens, observer perturbation gates, at least 95% dependency attribution, exact identities and raw request/event data, quality/correctness, cost, low-overhead host/GPU telemetry, logs, hashed manifests, observer-bracketed profiling, partial-evidence recovery, verified compute/disk cleanup, and exact generated-launcher byte retention. Run Bash syntax, Python compilation, focused clock/preparation/retention/identity/supervisor-renderer tests, relevant factory supervisor/operations/admission tests, the full campaign unittest suite with unrelated pre-existing failures classified rather than masked, validate-paid-run against the exact V22 spec at both recorded instants, and python3 tools/devex/check.py. Retain result.md, v21-validation-control.json, clock-contract.json, paid-spec.json, preregistration.json, artifact-contract.json, identities.json, exact host-bootstrap bytes and manifest, sanitized rendered-command evidence, preflight inputs/results, mutation controls, source/input hashes, hashes.txt, hashes.txt.sha256, verification.log, and verification-exit.txt. Classify evidence, report zero paid cost, preserve the unchanged scientific residual bottleneck, store all result evidence, and call record --kind result using this unique local-run identity. Do not admit a paid run, launch or poll a provider controller, mutate provider state, change or grant budget authority, alter any historical paid-run deadline, update scientific beliefs, commit, or push. If any gate fails, retain and record the operational failure and do not retry unchanged work.",
+  "seed": 47022201,
+  "timeout_seconds": 600,
+  "max_cost_usd": 0.0,
+  "artifact_refs": [
+    "a98fc942acdd5672f3f84315c24b42c4d166b9dee3d5d4ca8c3a69491c3f4e9b",
+    "bed75f0940726332f7af98aa023e34e2f59463cca1a3f434989db5682f6d310b",
+    "9226fcbc9c65d5be88ceed8526d5574cf3c21f2c71f28f41956ed61f806ac754"
+  ],
+  "director_contract": {
+    "decision": "Reject V21 admission and register exactly one parallel_offline fresh-identity clock-reconciliation packet; prohibit provider launch, historical deadline edits, and scientific belief updates in this transition.",
+    "causal_hypothesis": "V21 is admission-invalid because its preparation instant is about two hours ahead of authoritative supervisor-host UTC, placing the watchdog more than 2000 seconds after current UTC; restoring the already intended timezone-aware authoritative UTC source should recover bounded paid-run geometry for one fresh identity without changing the scientific experiment.",
+    "stock_control": "Immutable V21 paid spec SHA-256 bed75f0940726332f7af98aa023e34e2f59463cca1a3f434989db5682f6d310b, which fails authoritative current-time factory validation without provider access.",
+    "candidate_change": "Fresh V22 preparation using supervisor-host timezone-aware UTC, fail-closed skew checks, and deadline derivation bounded by the existing 2000-second timeout.",
+    "quality_gate": "No model arm executes; operational evidence cannot update scientific beliefs, and all observer correctness, quality, telemetry, identity, artifact, partial-recovery, and cleanup contracts remain unchanged in meaning.",
+    "slo_gate": "All historical paid deadlines remain immutable; the local packet has a 600-second timeout and zero authorized spend; future V22 watchdog geometry must remain within the existing 2000-second paid timeout with 240 seconds reserved for cleanup.",
+    "maximum_spend_usd": 0.0,
+    "wall_clock_timeout_seconds": 600,
+    "cleanup": "No provider or retained resources; remove only worker-temporary local files after content-addressed packaging.",
+    "artifact_contract": "Retain the exact V21 fail-closed control, authoritative clock evidence, clock-source diagnosis, deterministic skew controls, fresh V22 immutable spec and launcher bytes, durable rendered command, two-time validation outputs, verification logs/exits, and a hashed manifest in the worker output directory.",
+    "residual_bottleneck": "The matched target-L40S observer bracket remains unexecuted; dense-device versus host/scheduler critical-path attribution remains unresolved. This operational recovery cannot update scientific mechanism beliefs."
+  },
+  "provider_reconciliation": {
+    "artifact_sha256": "9226fcbc9c65d5be88ceed8526d5574cf3c21f2c71f28f41956ed61f806ac754",
+    "checked_at": "2026-07-15T04:08:14Z",
+    "instance_count": 0,
+    "disk_count": 0,
+    "v19_reservation_state": "settled",
+    "v19_actual_cost_usd": 0.0,
+    "provider_mutation_performed": false,
+    "safe_to_start_new_provider_mutation": true
+  },
+  "fence": {
+    "owner": "supervisor-glm47",
+    "lease_epoch": 3,
+    "event_head_before_transition": "3d39e305a322033737fc42d4509bc76e628eb37f8b59642b469cfa0c0cf586bf",
+    "p0_actions_pending": 0,
+    "active_allocations": 0,
+    "active_reservations": 0,
+    "artifact_audit_references_checked": 146
+  }
+}

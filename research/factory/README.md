@@ -77,10 +77,33 @@ PYTHONPATH=research/factory/src python3 -m grad_research.lab_harness --config <c
 
 The systemd unit is `systemd/gradiated-research-lab@.service`. See `SUPERVISOR.md` for installation and cutover.
 
+## WhatsApp result notifications
+
+`grad_research.result_notifier` tails completed researcher turns independently of the lab and sends the project's compact `STATUS.json` result and next action through Meta's WhatsApp Cloud API. Notification failures retry with backoff and never block research. New notifier state starts at the end of the event log, so enabling it does not replay historical turns.
+
+Install `systemd/gradiated-research-notifier@.service`, then create the host-only file `/root/.config/gradiated/research-lab/whatsapp.env`:
+
+```bash
+WHATSAPP_ACCESS_TOKEN=<permanent-system-user-token>
+WHATSAPP_PHONE_NUMBER_ID=<business-phone-number-id>
+WHATSAPP_RECIPIENT=<international-number-with-country-code>
+WHATSAPP_GRAPH_VERSION=v23.0
+WHATSAPP_TEMPLATE_NAME=research_result
+WHATSAPP_TEMPLATE_LANGUAGE=en_US
+```
+
+For unattended notifications, create and approve a utility template named `research_result` whose body contains one text variable, for example `Research result: {{1}}`. Omit `WHATSAPP_TEMPLATE_NAME` only when a free-form customer-service conversation window is deliberately being used. Keep tokens and phone numbers outside the repository.
+
+```bash
+systemctl --user enable --now gradiated-research-notifier@glm47.service
+journalctl --user -u gradiated-research-notifier@glm47.service -f
+```
+
 ## Verify
 
 ```bash
 PYTHONPATH=research/factory/src:research/factory/tests \
-  python3 -m unittest research/factory/tests/test_lab_harness.py -v
+  python3 -m unittest research/factory/tests/test_lab_harness.py \
+    research/factory/tests/test_result_notifier.py -v
 python3 tools/devex/check.py
 ```

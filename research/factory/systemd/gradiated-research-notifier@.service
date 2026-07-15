@@ -1,0 +1,17 @@
+[Unit]
+Description=Gradiated WhatsApp research-result notifier (%i)
+After=network-online.target gradiated-research-lab@%i.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/workspace
+Environment=PYTHONPATH=/root/workspace/research/factory/src
+EnvironmentFile=/root/.config/gradiated/research-lab/whatsapp.env
+ExecStart=/usr/bin/python3 -m grad_research.result_notifier --lab-config /root/.config/gradiated/research-lab/%i.json --state-file /root/.local/state/gradiated-research-lab/%i-whatsapp.json
+Restart=on-failure
+RestartSec=30
+TimeoutStopSec=10
+
+[Install]
+WantedBy=default.target

@@ -15,6 +15,7 @@ from .labd import LabDatabase
 from .operations import resume_program
 from .portfolio import select_portfolio
 from .telemetry import build_telemetry_contract
+from .util import parse_utc
 
 
 def _write(value: object, path: Path | None = None) -> None:
@@ -27,7 +28,7 @@ def _write(value: object, path: Path | None = None) -> None:
 
 
 def _now(value: str | None) -> datetime:
-    return datetime.fromisoformat(value.replace("Z", "+00:00")) if value else datetime.now(timezone.utc)
+    return parse_utc(value, "--now") if value else datetime.now(timezone.utc)
 
 
 def _lab_path(root: Path, explicit: Path | None) -> Path:
@@ -358,11 +359,7 @@ def main() -> int:
         finally:
             lab.close()
     elif args.command == "validate-paid-run":
-        now = (
-            datetime.fromisoformat(args.now.replace("Z", "+00:00"))
-            if args.now
-            else datetime.now(timezone.utc)
-        )
+        now = _now(args.now)
         _write(validate_paid_run(json.loads(args.spec.read_text()), now=now))
     elif args.command == "telemetry-template":
         _write(build_telemetry_contract(args.mode), args.output)

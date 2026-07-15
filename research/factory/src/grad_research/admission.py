@@ -193,8 +193,8 @@ def validate_paid_run(spec: dict[str, Any], *, now: datetime | None = None) -> d
         raise AdmissionError("max_spend_usd is below maximum exposure plus cleanup reserve")
 
     clock = now or datetime.now(timezone.utc)
-    if clock.tzinfo is None:
-        raise AdmissionError("admission clock must be timezone-aware")
+    if clock.tzinfo is None or clock.utcoffset() != timezone.utc.utcoffset(clock):
+        raise AdmissionError("admission clock must be authoritative UTC")
     watchdog = _required(
         spec["watchdog"],
         {"independent", "absolute_deadline_utc", "delete_on_deadline", "verify_absent"},

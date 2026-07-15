@@ -98,6 +98,64 @@ class ResumeOperationsTests(unittest.TestCase):
             self.assertEqual("cleanup_now", resumed["actions"][0]["action"])
             lab.close()
 
+    def test_settled_provider_intent_without_allocation_is_not_reconciled_again(self):
+        with tempfile.TemporaryDirectory() as directory:
+            director = ResearchDirector(directory, "glm47")
+            director.state = lambda: {
+                "event_head_sha256": HASH_A,
+                "observations": {},
+                "scouts": {},
+                "portfolios": {},
+                "runs": {
+                    "run-1": {
+                        "status": "admitted",
+                        "admission": {"reservation_id": "reservation-1"},
+                        "spec": {
+                            "artifact_refs": [],
+                            "scout_id": "scout-1",
+                            "provider_contract": {
+                                "provider": "fake",
+                                "idempotency_key": "run-1",
+                                "resource_tags": {"run_id": "run-1"},
+                            },
+                        },
+                    }
+                },
+                "residual_bottleneck": "unchanged",
+                "next_action": "prepare a fresh identity",
+            }
+            director.write_state = lambda: Path(directory) / "STATE.json"
+            director.write_coordinator_context = lambda: Path(directory) / "COORDINATOR.md"
+            lab = LabDatabase(Path(directory) / "lab.sqlite3")
+            lease = lab.acquire_coordinator("glm47", "old-codex", ttl_seconds=30, now=1000)
+            lab.ensure_budget("campaign", authorized_usd=1.0)
+            lab.reserve(
+                reservation_id="reservation-1",
+                campaign_id="campaign",
+                program_id="glm47",
+                owner="old-codex",
+                epoch=lease["epoch"],
+                amount_usd=0.5,
+                cleanup_reserve_usd=0.1,
+                expires_at=1200,
+                admission_sha256=HASH_A,
+                now=1001,
+            )
+            lab.settle_session(
+                "reservation-1", actual_cost_usd=0, cost_evidence_sha256=HASH_A
+            )
+
+            resumed = resume_program(
+                director,
+                lab,
+                owner="new-codex",
+                ttl_seconds=300,
+                now=datetime.fromtimestamp(1040, timezone.utc),
+            )
+
+            self.assertEqual([], resumed["actions"])
+            lab.close()
+
 
 if __name__ == "__main__":
     unittest.main()

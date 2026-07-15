@@ -7,6 +7,7 @@ dependencies = []
 
 [project.scripts]
 grad-research = "grad_research.cli:main"
+grad-research-lab = "grad_research.lab_harness:main"
 
 [build-system]
 requires = ["hatchling"]

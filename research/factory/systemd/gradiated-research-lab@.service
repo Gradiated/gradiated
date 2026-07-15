@@ -1,0 +1,18 @@
+[Unit]
+Description=Gradiated simple research lab (%i)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/workspace
+Environment=PYTHONPATH=/root/workspace/research/factory/src
+Environment=PATH=/root/.local/bin:/root/.codex/packages/standalone/current/bin:/root/.codex/packages/standalone/current/codex-path:/root/.nebius/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/usr/bin/python3 -m grad_research.lab_harness --config /root/.config/gradiated/research-lab/%i.json
+Restart=on-failure
+RestartSec=15
+TimeoutStopSec=30
+KillMode=control-group
+
+[Install]
+WantedBy=default.target

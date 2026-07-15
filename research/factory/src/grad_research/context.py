@@ -82,19 +82,4 @@ def build_coordinator_context(state: dict[str, Any]) -> str:
             f"- Imported cumulative spend: ${legacy.get('cumulative_spend_usd', 0.0):.6f}. "
             "Do not repeat a stopped lineage without new scope-matched evidence and an explicit revisit reason."
         )
-    lines.extend(
-        [
-            "",
-            "## Research-director instructions",
-            "- Attack the residual bottleneck, but preserve at least one cross-stack, one model/representation, and one adversarial route.",
-            "- Prefer the cheapest measurement that separates competing explanations; a speculative candidate is welcome when its falsifier is cheap.",
-            "- Score the prediction after every valid result. A proxy win that does not transfer is a model update, not a success.",
-            "- Parallelize source work, simulations, oracles, and candidate preparation. Serialize mutable provider state and setup-affine scientific arms.",
-            "- Preserve exact raw events, per-request samples, identities, quality, cost, logs, and measurement summaries in a content-addressed evidence bundle.",
-            "- Keep low-overhead correlated telemetry on scored arms. Run deep profilers as separate observer-off/on/off diagnostics; never score a candidate from a perturbed profile.",
-            "- Treat missing attribution as research debt: rank the instrumentation fix by decision impact and add it when the gap blocks the next bottleneck decision.",
-            "- Harness-invalid and operational outcomes may improve reliability tooling but must not update scientific mechanism beliefs.",
-            "- A valid result must name the new residual bottleneck and next action.",
-        ]
-    )
     return "\n".join(lines) + "\n"

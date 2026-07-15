@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import unittest
+from datetime import timedelta, timezone
 
 from grad_research.admission import AdmissionError, validate_paid_run
 
@@ -39,6 +40,12 @@ class PaidAdmissionTests(unittest.TestCase):
         spec["budget"]["max_spend_usd"] = 0.11
         with self.assertRaisesRegex(AdmissionError, "maximum exposure"):
             validate_paid_run(spec, now=now)
+
+    def test_admission_clock_must_be_authoritative_utc(self):
+        spec, now = paid_run_spec()
+        local_clock = now.astimezone(timezone(timedelta(hours=2)))
+        with self.assertRaisesRegex(AdmissionError, "admission clock must be authoritative UTC"):
+            validate_paid_run(spec, now=local_clock)
 
     def test_candidate_must_change_one_named_variable(self):
         spec, now = paid_run_spec()

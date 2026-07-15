@@ -176,6 +176,8 @@ def resume_program(
         admission = run["admission"]
         reservation = reservation_by_id.get(admission["reservation_id"])
         allocation = allocation_by_reservation.get(admission["reservation_id"])
+        if reservation and reservation["state"] == "settled":
+            continue
         if allocation is None:
             contract = run["spec"]["provider_contract"]
             actions.append(

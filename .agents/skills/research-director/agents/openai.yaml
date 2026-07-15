@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Director"
+  short_description: "Direct a parallel model research portfolio"
+  default_prompt: "Use $research-director to review the lab evidence and direct the next research portfolio."

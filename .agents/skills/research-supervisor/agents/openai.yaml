@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Supervisor"
+  short_description: "Improve research-lab speed and effectiveness"
+  default_prompt: "Use $research-supervisor to inspect the research process and make the smallest useful improvement."

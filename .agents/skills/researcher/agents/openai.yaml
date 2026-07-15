@@ -1,0 +1,4 @@
+interface:
+  display_name: "Researcher"
+  short_description: "Run one autonomous research project"
+  default_prompt: "Use $researcher to advance this project through experiments and record the evidence in its research log."

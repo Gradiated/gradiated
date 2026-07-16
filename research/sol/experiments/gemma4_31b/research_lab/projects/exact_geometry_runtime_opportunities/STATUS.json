@@ -1,0 +1,13 @@
+{
+  "status": "active",
+  "priority": 110,
+  "summary": "Reconstruct exact Gemma 4 31B geometry, prepare the MTP/async retained-session arm, and rank at most three next cost interventions at $0.",
+  "next_action": "Publish the identity-bound MTP/async adjacent-arm packet within 45 minutes, then finish exact geometry and the top-three opportunity rank without delaying the paid stock run.",
+  "provider_mutation": "prohibited_zero_cost_offline",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 7200,
+  "compute_budget": "4 local CPU-hours",
+  "storage_budget": "2 GiB",
+  "active_session": null,
+  "terminal_artifact": "OPPORTUNITY_RANK.md"
+}

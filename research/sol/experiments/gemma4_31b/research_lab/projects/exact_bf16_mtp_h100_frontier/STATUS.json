@@ -1,0 +1,14 @@
+{
+  "status": "active",
+  "priority": 120,
+  "summary": "Establish the first exact pinned BF16 H100 control and measure native Gemma 4 MTP, with async scheduling as the retained-session fallback.",
+  "next_action": "Start the grouped source/runtime/provider preflight, then launch the bounded one-H100 durable owner immediately; do not wait for the offline opportunity project before beginning the stock control.",
+  "provider_mutation": "exclusive_authorized_nebius_owner",
+  "authorized_spend_usd": 8.0,
+  "absolute_timeout_seconds": 14400,
+  "provider_exposure_timeout_seconds": 10800,
+  "compute_budget": "3 H100-hours and 2 local CPU-hours",
+  "storage_budget": "one 200 GiB provider disk and 8 GiB retrieved artifacts",
+  "active_session": null,
+  "terminal_artifact": "artifacts/<run-id>/summary.json"
+}

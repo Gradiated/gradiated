@@ -36,6 +36,7 @@ class LegacyAndDemoTests(unittest.TestCase):
     def test_key_glm_outcomes_and_final_resume_state_are_normalized(self):
         workspace = Path(__file__).resolve().parents[3]
         campaign = workspace / "research/sol/experiments/glm47flash/campaign_100"
+        status = json.loads((campaign / "CAMPAIGN_STATUS.json").read_text())
         rows = [json.loads(line) for line in (campaign / "CAMPAIGN_LEDGER.jsonl").read_text().splitlines()]
         self.assertEqual("operational_failure", classify_legacy_event(rows[61]))
         self.assertEqual("scientific_negative", classify_legacy_event(rows[67]))
@@ -64,13 +65,16 @@ class LegacyAndDemoTests(unittest.TestCase):
             self.assertEqual(event_count, state["event_count"])
             self.assertEqual("CONTINUE_NARROWLY", state["legacy"]["campaign_decision"])
             self.assertEqual("STOP_NUM_KV_SPLITS_8", state["legacy"]["lineage_decision"])
-            self.assertEqual("SPLIT8_STOP_DENSE_RESIDUAL_AND_QUALITY_CALIBRATION_NEXT", state["legacy"]["phase"])
-            self.assertFalse(state["legacy"]["claims_permitted"])
-            self.assertEqual("nebius_l40s_vllm_awq_splits_ab_v28r1", state["legacy"]["last_experiment_id"])
+            self.assertEqual(status["current_phase"], state["legacy"]["phase"])
+            self.assertEqual(status["claims_permitted"], state["legacy"]["claims_permitted"])
+            self.assertEqual(status["last_experiment_id"], state["legacy"]["last_experiment_id"])
             self.assertIn("Dense GEMM/GEMV", state["residual_bottleneck"])
-            self.assertIn("Calibrate", state["next_action"])
-            self.assertEqual(25.0, state["legacy"]["budgets"]["nebius"]["authorized_usd"])
-            self.assertEqual([], state["legacy"]["cleanup"]["active_pods"])
+            self.assertEqual(status["next_action"], state["next_action"])
+            self.assertEqual(
+                status["nebius_budget"]["authorized_usd"],
+                state["legacy"]["budgets"]["nebius"]["authorized_usd"],
+            )
+            self.assertEqual(status["active_pod_inventory"], state["legacy"]["cleanup"]["active_pods"])
 
     def test_legacy_replay_accepts_append_only_growth_and_rejects_rewrites(self):
         with tempfile.TemporaryDirectory() as directory:

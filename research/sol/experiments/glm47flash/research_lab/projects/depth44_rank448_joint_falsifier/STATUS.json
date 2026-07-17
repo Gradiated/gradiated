@@ -1,0 +1,37 @@
+{
+  "status": "completed",
+  "priority": 0,
+  "summary": "JOINT_PROXY_CLOSE: rank448 representation is group-32 coherent and clears robust c32 memory by 785.129 MiB, but its optimistic scope-matched endpoint is only 594.526 tok/s, below 606.355.",
+  "next_action": "Terminal; no successor.",
+  "provider_mutation": "prohibited_zero_cost_joint_architecture_falsifier",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 900,
+  "terminal_result": "JOINT_PROXY_CLOSE",
+  "active_experiment": null,
+  "resource_cap": {
+    "peak_rss_gib": 6,
+    "new_artifacts_mib": 24
+  },
+  "memory_gate": {
+    "rank512_depth44_projected_c32_peak_mib": 45154.87075805664,
+    "rank448_c32_kv_savings_mib": 1408.0,
+    "rank448_depth44_projected_c32_peak_mib": 43746.87075805664,
+    "robust_peak_limit_mib": 44532.0
+  },
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "required_output_tokens_per_second": 594.466,
+    "robust_output_tokens_per_second": 606.355,
+    "background_arm_envelope_seconds": 300
+  },
+  "stop_rule": "one terminal NOMINATE_JOINT_PROXY or JOINT_PROXY_CLOSE result; no successor",
+  "quality_policy": "architecture-cost proxy only; rank-reduction quality is deferred and full quality remains mandatory",
+  "terminal_artifact": "artifacts/JOINT_PROXY_CLOSE_2026-07-16.json",
+  "measured_endpoint": {
+    "depth42_c32_conservative_tok_s": 686.910494257713,
+    "depth43_c32_conservative_tok_s": 636.4690998062557,
+    "depth44_rank448_optimistic_scope_matched_tok_s": 594.5262981939073,
+    "robust_gate_tok_s": 606.355,
+    "shortfall_tok_s": 11.828701806092681
+  }
+}

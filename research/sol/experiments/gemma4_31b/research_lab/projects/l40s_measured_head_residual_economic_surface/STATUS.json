@@ -1,0 +1,18 @@
+{
+  "status": "complete",
+  "priority": 150,
+  "summary": "Recompute L40S c8/c16/c32 residual endpoint economics using the actual tied-head rows.",
+  "next_action": "No further action in this project; director may schedule the ranked c16 direct falsifier if exact checkpoint and quality authority are available.",
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0,
+  "wall_clock_budget_minutes": 35,
+  "compute_budget": "1 local CPU-hour; no GPU",
+  "storage_budget": "512 MiB project-local; no shared /tmp",
+  "active_session": null,
+  "terminal_artifact": {
+    "surface": "RESIDUAL_SURFACE.json",
+    "decision": "DECISION.md",
+    "decision_type": "retain_c16_c32_with_one_ranked_direct_falsifier",
+    "direct_falsifier": "exact-revision W4 c16 endpoint with raw quality capture and measured queue/service telemetry"
+  }
+}

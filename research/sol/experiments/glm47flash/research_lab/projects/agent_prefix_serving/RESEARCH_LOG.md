@@ -105,3 +105,15 @@ Decision-relevant evidence: retained V21 c8 TPOT p95 is 18.789 ms. Treating that
 Interpretation: the prior timing concern does not kill prefix caching; it used the wrong service event. The paid cache-on smoke is preserved and now has a stronger local admission rationale, while the empirical gate remains unchanged: require positive aggregate hit/query deltas, positive per-request cached tokens, at least two same-session hits, deterministic semantics, and the declared quality boundary. No cache-off arm is admitted before that evidence.
 
 Next move: remain provider-local-only until sole ownership and zero inventory are explicitly handed off, then execute the existing V2 cache-on smoke unchanged.
+
+## 2026-07-15 — V33 precreate tokenizer gate failed closed
+
+Question: can the direct V2 smoke bind the exact V21 tokenizer and reproduce all 24 frozen request counts before provider creation?
+
+Action: verified the three locally retained tokenizer files against the frozen identities, then ran the exact retained `bind_tokenizer` bytecode with the V21 Transformers revision and a separate direct verifier with PyPI Transformers 5.12.1. No provider command or controller was started.
+
+Evidence: source bytes match exactly (`tokenizer.json` 20,217,442 bytes / `19e773…a82d`; `tokenizer_config.json` 7,226 / `31a173…c86d`; chat template 3,120 / `d63ad5…1375`). The retained V21 runtime freeze points to Transformers commit `1618d44…`, which reports version `5.3.0.dev0`; the frozen binding requires `5.12.1`, so the exact binder exits 1 with `RuntimeError: requires transformers 5.12.1, got 5.3.0.dev0`. With PyPI 5.12.1 and the exact source bytes, all 24 V2 requests render 164 tokens instead of the frozen 183, and rendered hashes disagree. The complete diagnostic is `artifacts/TOKENIZER_REPRODUCTION_GATE_FAILURE_V33.json`.
+
+Interpretation: this is a typed precreate identity failure, not model, cache, quality, or provider evidence. The 2,700-second/$0.71359165 budget and controller path were not exercised. Creating a server with either identity would violate the fixed workload/tokenizer contract, so the project is paused as required.
+
+Next move: reopen only after one exact tokenizer/runtime identity reproduces every V2 count and a local identity-to-terminal controller proof is supplied. Do not spend another preparation turn or create a provider allocation under the current identity.

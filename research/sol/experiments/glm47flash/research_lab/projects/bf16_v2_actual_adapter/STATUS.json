@@ -1,0 +1,23 @@
+{
+  "status": "complete",
+  "priority": 95,
+  "summary": "The container capture path is retained, but V34 exposed a missing SSH-key argument in the actual address path before model execution.",
+  "next_action": "Remain complete and unscheduled; quality_gate_calibration owns the one focused call-contract correction, regression, and immediate V35 retry.",
+  "provider_mutation": "prohibited_zero_cost_actual_adapter_implementation",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": null,
+  "decision": "implementation_retained_with_provider_discovered_address_call_defect_delegated_to_quality_owner",
+  "evidence": {
+    "tests": "test_actual_adapter.py:8 passed",
+    "systemd_precreate": "artifacts/precreate-systemd/precreate-terminal.json",
+    "review": "ADAPTER_REVIEW.json",
+    "provider_created": false,
+    "holdout_accessed": false,
+    "mutation_spy_provider_calls": 0,
+    "remote_capture_script": "remote_v2_capture.sh",
+    "disk_cleanup_two_view": true,
+    "container_execution": true,
+    "provider_calls": 0
+  }
+}

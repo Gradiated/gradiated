@@ -1,0 +1,113 @@
+{
+  "future_admission_identity": {
+    "checksum_list_sha256": "87e5f71388c1cd5293e13681641a0575136930e360bdbd52db0cc59ba5a045eb",
+    "contract_sha256": "5820e0c579653f6c73d131da25ac3752ab977d777ce796cf61aac1240c2778b4",
+    "root_basename": "glm47flash-awq-minimal-depth43-v2-5820e0c57965",
+    "runtime_manifest_sha256": "745fdda3cd7c4ef43ad4a88cb10a05628e1887085528419bf7a004af80b47741"
+  },
+  "idempotence": "PASS",
+  "root": "/root/.cache/glm47flash-awq-minimal-depth43-v2-5820e0c57965",
+  "schema_version": 2,
+  "semantic_contract": {
+    "artifact_policy": "v2-served-payload-allowlist-12-files",
+    "builder_sha256": "9710f8a62d1ad4215c840eb9f4c70fe8d18c8bf26b2fe27d52904760785cefeb",
+    "control_names": [
+      "model-files-manifest.json",
+      "model-files.sha256"
+    ],
+    "mapping": {
+      "0": 0,
+      "1": 1,
+      "2": 2,
+      "3": 3,
+      "4": 4,
+      "5": 5,
+      "7": 6,
+      "8": 7,
+      "9": 8,
+      "10": 9,
+      "11": 10,
+      "12": 11,
+      "13": 12,
+      "14": 13,
+      "16": 14,
+      "17": 15,
+      "18": 16,
+      "19": 17,
+      "20": 18,
+      "21": 19,
+      "22": 20,
+      "23": 21,
+      "25": 22,
+      "26": 23,
+      "27": 24,
+      "28": 25,
+      "29": 26,
+      "30": 27,
+      "31": 28,
+      "32": 29,
+      "34": 30,
+      "35": 31,
+      "36": 32,
+      "37": 33,
+      "38": 34,
+      "39": 35,
+      "40": 36,
+      "41": 37,
+      "42": 38,
+      "43": 39,
+      "44": 40,
+      "45": 41,
+      "46": 42
+    },
+    "payload_allowlist": [
+      ".gitattributes",
+      "README.md",
+      "chat_template.jinja",
+      "config.json",
+      "generation_config.json",
+      "model-00001-of-00004.safetensors",
+      "model-00002-of-00004.safetensors",
+      "model-00003-of-00004.safetensors",
+      "model-00004-of-00004.safetensors",
+      "model.safetensors.index.json",
+      "tokenizer.json",
+      "tokenizer_config.json"
+    ],
+    "schema_version": 2,
+    "skipped_source_layers": [
+      6,
+      15,
+      24,
+      33
+    ],
+    "source_config_sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9",
+    "source_index_sha256": "b9c53433e94f2fe7870cdbc3fcb6ed1431eb500c5242a039de93fef4bb988695",
+    "source_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "source_tensor_keys": 28221
+  },
+  "source": {
+    "config_sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9",
+    "index_sha256": "b9c53433e94f2fe7870cdbc3fcb6ed1431eb500c5242a039de93fef4bb988695",
+    "revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "root": "/root/.cache/glm47flash-awq-ab31d120"
+  },
+  "status": "PASS",
+  "verification": {
+    "checksum_list_sha256": "87e5f71388c1cd5293e13681641a0575136930e360bdbd52db0cc59ba5a045eb",
+    "config_index_key_layer_closure": true,
+    "control_file_count": 2,
+    "full_checksum_check": true,
+    "index_payload_bytes": 17025518880,
+    "no_symlinks": true,
+    "payload_file_count": 12,
+    "runtime_manifest_sha256": "745fdda3cd7c4ef43ad4a88cb10a05628e1887085528419bf7a004af80b47741",
+    "shard_sha256": {
+      "model-00001-of-00004.safetensors": "5ec8d5d01d2c5f1fee801ff956f35e21b5a3a277fb8a68bd3bfd75373492ef27",
+      "model-00002-of-00004.safetensors": "0ee094ece398850293f49d016911ee90dbfa67c7efa4d6b00354748f705f7ba7",
+      "model-00003-of-00004.safetensors": "2736cd1009fe7659a407ca9841f1376d4e0dd3ed3c65d2a64597a5d052524248",
+      "model-00004-of-00004.safetensors": "961822a66fc456159765ae9c1a27036160e57378944be6e3c8841bad95c614c9"
+    },
+    "status": "PASS"
+  }
+}

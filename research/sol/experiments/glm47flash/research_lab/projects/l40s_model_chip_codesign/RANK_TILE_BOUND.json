@@ -1,0 +1,202 @@
+{
+  "capacity_model": {
+    "conservative_non_kv_gib": 10.0,
+    "device_budget_gib": 43.2,
+    "sequences": [
+      8,
+      16,
+      32
+    ],
+    "tokens_per_sequence": 8192
+  },
+  "decision": "CLOSE_MLA_RANK_TILE_LINEAGE",
+  "decision_reason": "Rank 256 is the only envelope-legal two-stage BLOCK_N=64 candidate, but its retained-transfer endpoint bound is 3.25%, below the 10% gate; it makes c32 capacity plausible but does not establish c32 throughput or a cheaper-chip boundary.",
+  "evidence_class": "derived_calibrated_proxy; no provider or GPU mutation",
+  "hardware": {
+    "chip": "L40S Ada SM89",
+    "register_file_32bit_per_sm": 65536,
+    "shared_limit_bytes": 101376,
+    "sm_count": 142
+  },
+  "legal_two_stage_block64_candidates": [
+    {
+      "attention_work_reduction_proxy": 0.4444444444444444,
+      "c32_conservative_headroom_gib": 24.938281250000003,
+      "c32_kv_gib": 8.26171875,
+      "decision_relevant": false,
+      "endpoint_transfer_bound_from_retained_split": 0.032520325203252036,
+      "rank": 256,
+      "tile": {
+        "block_n": 64,
+        "blocks_per_sm_shared_only": 1,
+        "hardware_legal_envelope": true,
+        "kv_bytes_per_token": 30080,
+        "kv_lora_rank": 256,
+        "num_stages": 2,
+        "query_width": 320,
+        "shared_bytes_envelope": 93440,
+        "value_width": 256,
+        "warps": 4
+      }
+    }
+  ],
+  "next_move": "Return capacity to depth or draft-head architecture; compile rank 256 only if a future independent exact-source GPU slot exists and the campaign reopens MLA.",
+  "question": "Can a tile-aligned MLA rank make BLOCK_N=64/stage=2 legal and clear the 10% endpoint-cost path?",
+  "rows": [
+    {
+      "block_n": 32,
+      "blocks_per_sm_shared_only": 2,
+      "hardware_legal_envelope": true,
+      "kv_bytes_per_token": 54144,
+      "kv_lora_rank": 512,
+      "num_stages": 1,
+      "query_width": 576,
+      "shared_bytes_envelope": 37888,
+      "value_width": 512,
+      "warps": 4
+    },
+    {
+      "block_n": 32,
+      "blocks_per_sm_shared_only": 1,
+      "hardware_legal_envelope": true,
+      "kv_bytes_per_token": 54144,
+      "kv_lora_rank": 512,
+      "num_stages": 2,
+      "query_width": 576,
+      "shared_bytes_envelope": 89088,
+      "value_width": 512,
+      "warps": 4
+    },
+    {
+      "block_n": 64,
+      "blocks_per_sm_shared_only": 0,
+      "hardware_legal_envelope": false,
+      "kv_bytes_per_token": 54144,
+      "kv_lora_rank": 512,
+      "num_stages": 1,
+      "query_width": 576,
+      "shared_bytes_envelope": 108544,
+      "value_width": 512,
+      "warps": 4
+    },
+    {
+      "block_n": 64,
+      "blocks_per_sm_shared_only": 0,
+      "hardware_legal_envelope": false,
+      "kv_bytes_per_token": 54144,
+      "kv_lora_rank": 512,
+      "num_stages": 2,
+      "query_width": 576,
+      "shared_bytes_envelope": 159744,
+      "value_width": 512,
+      "warps": 4
+    },
+    {
+      "block_n": 32,
+      "blocks_per_sm_shared_only": 4,
+      "hardware_legal_envelope": true,
+      "kv_bytes_per_token": 42112,
+      "kv_lora_rank": 384,
+      "num_stages": 1,
+      "query_width": 448,
+      "shared_bytes_envelope": 21504,
+      "value_width": 384,
+      "warps": 4
+    },
+    {
+      "block_n": 32,
+      "blocks_per_sm_shared_only": 1,
+      "hardware_legal_envelope": true,
+      "kv_bytes_per_token": 42112,
+      "kv_lora_rank": 384,
+      "num_stages": 2,
+      "query_width": 448,
+      "shared_bytes_envelope": 72704,
+      "value_width": 384,
+      "warps": 4
+    },
+    {
+      "block_n": 64,
+      "blocks_per_sm_shared_only": 1,
+      "hardware_legal_envelope": true,
+      "kv_bytes_per_token": 42112,
+      "kv_lora_rank": 384,
+      "num_stages": 1,
+      "query_width": 448,
+      "shared_bytes_envelope": 75520,
+      "value_width": 384,
+      "warps": 4
+    },
+    {
+      "block_n": 64,
+      "blocks_per_sm_shared_only": 0,
+      "hardware_legal_envelope": false,
+      "kv_bytes_per_token": 42112,
+      "kv_lora_rank": 384,
+      "num_stages": 2,
+      "query_width": 448,
+      "shared_bytes_envelope": 126720,
+      "value_width": 384,
+      "warps": 4
+    },
+    {
+      "block_n": 32,
+      "blocks_per_sm_shared_only": 20,
+      "hardware_legal_envelope": true,
+      "kv_bytes_per_token": 30080,
+      "kv_lora_rank": 256,
+      "num_stages": 1,
+      "query_width": 320,
+      "shared_bytes_envelope": 4864,
+      "value_width": 256,
+      "warps": 4
+    },
+    {
+      "block_n": 32,
+      "blocks_per_sm_shared_only": 1,
+      "hardware_legal_envelope": true,
+      "kv_bytes_per_token": 30080,
+      "kv_lora_rank": 256,
+      "num_stages": 2,
+      "query_width": 320,
+      "shared_bytes_envelope": 56064,
+      "value_width": 256,
+      "warps": 4
+    },
+    {
+      "block_n": 64,
+      "blocks_per_sm_shared_only": 2,
+      "hardware_legal_envelope": true,
+      "kv_bytes_per_token": 30080,
+      "kv_lora_rank": 256,
+      "num_stages": 1,
+      "query_width": 320,
+      "shared_bytes_envelope": 42240,
+      "value_width": 256,
+      "warps": 4
+    },
+    {
+      "block_n": 64,
+      "blocks_per_sm_shared_only": 1,
+      "hardware_legal_envelope": true,
+      "kv_bytes_per_token": 30080,
+      "kv_lora_rank": 256,
+      "num_stages": 2,
+      "query_width": 320,
+      "shared_bytes_envelope": 93440,
+      "value_width": 256,
+      "warps": 4
+    }
+  ],
+  "schema_version": 1,
+  "source_calibration": {
+    "failed_v22_bn64_stage2_shared_bytes": 159744,
+    "failed_v23r1_bn64_stage1_shared_bytes": 108544,
+    "inferred_scope_matched_endpoint_share": 0.07317073170731708,
+    "retained_microbench": "campaign_100/allocations/nebius_l40s_mla_microbench_v23r1/summary.json",
+    "retained_split_component_reduction": 0.1435,
+    "retained_split_endpoint_reduction": 0.0105,
+    "stock_bn32_stage2_shared_bytes": 89088,
+    "unscoped_trace_share": 0.3738261181394841
+  }
+}

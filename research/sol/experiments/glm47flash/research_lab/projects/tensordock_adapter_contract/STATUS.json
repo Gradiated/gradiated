@@ -1,0 +1,13 @@
+{
+  "status": "complete",
+  "priority": 85,
+  "summary": "Fake lifecycle and execution-equivalent systemd contract pass; live exact A40 inventory remains, but the provider path is closed pending an authenticated delete/direct-instance contract.",
+  "next_action": "Remain complete. Reopen only with explicit TensorDock account/session/funding authority and authenticated delete plus direct-instance evidence; a40_exact_memory_admission owns the remaining $0 scientific falsifier.",
+  "provider_mutation": "prohibited_zero_cost_tensordock_adapter_contract",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": null,
+  "last_experiment": "tensordock_zero_cost_fake_lifecycle_contract_2026-07-15",
+  "decision": "conditional_path_closed_until_authenticated_delete_contract",
+  "artifacts": ["tensordock_adapter_contract.py", "FAKE_LIFECYCLE_RESULT.json", "PUBLIC_CONTRACT_2026-07-15.json"]
+}

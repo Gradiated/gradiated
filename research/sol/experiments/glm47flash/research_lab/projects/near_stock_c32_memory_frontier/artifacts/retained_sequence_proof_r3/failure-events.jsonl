@@ -1,0 +1,2 @@
+{"event": "control_started", "pid": 1226438, "systemd_exec_pid": "1226438", "time_ns": 1784159964590524245}
+{"event": "control_failed", "pid": 1226438, "time_ns": 1784159964590749135}

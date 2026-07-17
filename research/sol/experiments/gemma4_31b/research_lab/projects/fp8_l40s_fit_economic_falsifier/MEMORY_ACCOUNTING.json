@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "evidence_type": "measured_metadata_plus_derived_bound",
+  "target": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "source_index": {
+    "path": "../exact_bf16_mtp_h100_frontier/artifacts/preflight-20260717T000000Z/model.safetensors.index.json",
+    "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "note": "Immutable metadata index; no shard was materialized."
+  },
+  "metadata_measured": {
+    "parameters": 32682372656,
+    "bf16_bytes": 62546177752,
+    "bf16_gib": 58.256,
+    "vocab": 262144,
+    "hidden": 5376,
+    "layers": 60,
+    "sliding_layers": 50,
+    "full_layers": 10,
+    "intermediate": 21504,
+    "vision_hidden": 1152,
+    "vision_layers": 27
+  },
+  "class_accounting": {
+    "embedding_and_tied_output": {
+      "parameters": 1409286144,
+      "bf16_bytes": 2818572288,
+      "fp8_consumer_bytes": 2818572288,
+      "status": "derived_from_vocab_times_hidden; remains BF16 because tied embedding/output is excluded from vLLM online FP8 linear quantization"
+    },
+    "language_mlp_linear": {
+      "parameters": 20808990720,
+      "bf16_bytes": 41617981440,
+      "fp8_weight_bytes": 20808990720,
+      "status": "derived: 60 * 3 * hidden * intermediate; quantized by the nominated W8A8 FP8 path"
+    },
+    "language_attention_linear": {
+      "parameters": 8587837440,
+      "bf16_bytes": 17175674880,
+      "fp8_weight_bytes": 8587837440,
+      "status": "derived from 50 sliding and 10 global Q/K/V/O shapes; quantized by the nominated path"
+    },
+    "vision_and_small_non_linear_remainder": {
+      "parameters": 1876258352,
+      "bf16_bytes": 3752516704,
+      "fp8_weight_bytes_upper_bound": 1876258352,
+      "status": "derived residual from authoritative total after explicit text classes; includes vision projection/blocks and norms/scalars. Treating all residual bytes as FP8 is optimistic for fit, while the bound below retains a BF16 scratch allowance"
+    }
+  },
+  "steady_state_bound": {
+    "fp8_linear_plus_bf16_embedding_and_residual_gb_decimal": 34.09,
+    "scale_and_allocator_allowance_percent": 8,
+    "weights_and_scales_gib_conservative": 34.35,
+    "runtime_reservation_gib": 5.0,
+    "kv_primary_4214_tokens_gib": 0.712,
+    "kv_10k_tokens_gib": 1.154,
+    "total_at_10k_gib": 40.504,
+    "l40s_capacity_gib_assumed": 44.704,
+    "headroom_at_10k_gib": 4.20,
+    "interpretation": "Fits at gpu_memory_utilization=0.92 under the stated conservative allowance; this is a bound, not a CUDA measurement. Enforce eager and max_model_len=10000 for the first arm."
+  },
+  "load_time": {
+    "bf16_full_model_gib": 58.256,
+    "required_behavior": "CPU-side shard streaming or layerwise on-load quantization; do not stage a full BF16 copy on the L40S",
+    "closure_condition": "If the pinned image attempts full-GPU BF16 materialization and OOMs before the first request, record typed load_memory_oom and close this route; do not create a successor."
+  },
+  "kv_method": "2 bytes per BF16 scalar; K and V counted; sliding layers capped at 1024; full layers retain context",
+  "uncertainty": [
+    "Online FP8 scale storage and temporary workspaces are runtime-dependent.",
+    "The exact CUDA load path and Gemma4 FP8 numerical behavior require the nominated L40S consumer run.",
+    "No throughput or quality is transferred from H100 or third-party FP8 services."
+  ]
+}

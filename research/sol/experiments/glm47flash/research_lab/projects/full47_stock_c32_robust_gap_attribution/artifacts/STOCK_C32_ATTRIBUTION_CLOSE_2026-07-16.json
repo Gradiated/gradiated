@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "decision": "ATTRIBUTION_CLOSE",
+  "question": "What source does the unchanged-stock c32 gain identify, and is there one exact-model mechanism with a conservative path to 606.355 tok/s?",
+  "scope": {
+    "archive_sha256": "ff873b597b33775787eada26ded437d1da91f326a47a8beb3ab8c994cc27cb4c",
+    "manifest_file_count": 40,
+    "provider_mutation": false,
+    "checkpoint_mutation": false,
+    "shared_runtime_mutation": false,
+    "cost_usd": 0.0
+  },
+  "evidence_labels": {
+    "measured": "archive request profiles, Prometheus deltas, nvidia-smi telemetry, and server logs",
+    "source_bound": "pinned vLLM 0.15.0 command and recorded MLA/decode source hashes",
+    "derived": "phase deltas, throughput ratios, capacity arithmetic, and gap bounds",
+    "inferred": "concurrency raises batch saturation; no single causal kernel share is established"
+  },
+  "measured_frontier": {
+    "c16": {
+      "requests": 32,
+      "output_tokens": 32768,
+      "wall_seconds": 59.47997671100006,
+      "output_tokens_per_second": 550.9080838953989,
+      "p95_ttft_ms": 9825.686773999905,
+      "p95_tpot_ms": 23.792236141740094,
+      "queue_seconds_mean": 2.0166982237187554,
+      "prefill_time_sum_seconds": 229.16400552199866,
+      "decode_time_sum_seconds": 676.8048852090019,
+      "inference_time_sum_seconds": 905.9688907310006,
+      "queue_time_sum_seconds": 64.53434315900017
+    },
+    "c32": {
+      "requests": 64,
+      "output_tokens": 65536,
+      "wall_seconds": 109.80277019203,
+      "output_tokens_per_second": 596.8519727271398,
+      "p95_ttft_ms": 20017.737901000146,
+      "p95_tpot_ms": 44.7178197067447,
+      "queue_seconds_mean": 3.372497400671854,
+      "prefill_time_sum_seconds": 565.8136530490024,
+      "decode_time_sum_seconds": 2605.588297579001,
+      "inference_time_sum_seconds": 3171.401950628004,
+      "queue_time_sum_seconds": 151.3054904839985
+    },
+    "c32_gain_percent": 8.343101,
+    "robust_gap_tok_s": 9.503027272860232,
+    "robust_gap_percent": 1.592,
+    "economic_margin_percent": 0.401,
+    "all_requests_within_background_300_seconds": true
+  },
+  "attribution": {
+    "identified_source": "higher admitted concurrency / larger decode batch increases device saturation and amortizes fixed per-step overhead",
+    "supporting_observations": [
+      "c32 doubles requests and output work while wall time rises only 1.846x",
+      "c32 TPOT worsens from 19.954 ms p50 to 39.157 ms p50, but aggregate throughput rises",
+      "queue mean rises from 2.017 s to 3.372 s and p95 TTFT reaches 20.018 s, so the gain is not a latency improvement",
+      "prefix cache is disabled and both cache counters have zero delta",
+      "GPU telemetry reaches 100% utilization, 43,719 MiB FB use, 2,520 MHz SM and 9,001 MHz memory clocks during active samples"
+    ],
+    "phase_caution": "Summed request phase times overlap and are not converted into wall-time shares. The archive has no scheduler iteration trace or kernel interval union, so it cannot causally apportion the residual among MoE GEMM, MLA, routing, host scheduling, or graph boundaries."
+  },
+  "source_configuration": {
+    "runtime": "vllm-0.15.0",
+    "max_num_seqs": 32,
+    "max_num_batched_tokens": 65536,
+    "num_kv_splits": 4,
+    "decode_block_n": 32,
+    "decode_num_stages": 2,
+    "kv_cache_dtype": "auto",
+    "prefix_cache": false,
+    "mla_backend_source_sha256": "647a6d5f4c46f3057fdedce04cc2ee3b15ade713b1d7752df00e347efbd62ef6",
+    "decode_source_sha256": "cf4debbbbdf2245355177dd7be91c4ac75730a9207a10cd7dab6306a5c3bdec4",
+    "mla_patch_effect": "no effective source change; before/after hashes and block/stage/split values are identical",
+    "runtime_observation": "TritonMLABackend disables full CUDA graphs and falls back to piecewise mode"
+  },
+  "candidate_screen": {
+    "candidate": "rank448_plus_c40_capacity_tile_interaction",
+    "status": "not_nominated",
+    "why": [
+      "The stock archive measures c16/c32 only; it contains no c40 endpoint or component result.",
+      "Rank448 is a semantics-changing representation requiring deferred quality evidence, and the source/tile evidence retains legal BLOCK_N=32 but does not legalize the desired BLOCK_N=64 stage-2 tile on SM89.",
+      "Capacity admission alone cannot conservatively transfer the observed c32 rate to c40 or supply the 1.592% robust margin."
+    ],
+    "required_falsifier": "One exact rank448 loader-valid c40 run with independent quality, memory-reserve, and endpoint measurement; owned by the separate rebase/frontier project."
+  },
+  "terminal_reason": "No one source-bound intervention in the unchanged c16/c32 archive has both an observable falsifier and a conservative >=606.355 tok/s path. Preserve the measured concurrency result and leave c40/rank448 to its independent project."
+}

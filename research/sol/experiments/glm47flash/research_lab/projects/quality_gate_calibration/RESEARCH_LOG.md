@@ -87,3 +87,41 @@ Interpretation: do not start the admitted H100 allocation. The required executio
 Action: implemented and ran a zero-provider fake end-to-end controller proof for three V2 capture phases. It retains raw response, normalized output, transform decision, runtime-logprob, identity manifest, and per-capture result artifacts, then emits a typed terminal record. The positive path passes; a missing capture-result artifact in phase 2 fails closed. Proof SHA-256: `612e60371cf0955e22c345c00fa7580ffd556d1dc063f029d4abfbc6390cf6a8`.
 
 Interpretation: the V2 artifact and terminal contract is now executable locally, but this is not yet a durable systemd/provider adapter: it proves local contract behavior only. Next work must bind this proven contract to the existing external systemd ownership/watchdog boundary and the H100 adapter before fresh paid admission. No provider action or holdout access occurred.
+
+## 2026-07-15 — final external systemd V2 binding proof
+
+Question/action: does the exact local V2 artifact contract survive the allowed external controller/watchdog boundary when bound to the complete-V13 H100 adapter contract? Ran `v2_systemd_capture_proof.py` through four ephemeral `systemd-run --user --collect` units under explicit runtime limits; budget $0.00, no provider mutation, model launch, or holdout access.
+
+Measured evidence: `V2_SYSTEMD_CAPTURE_PROOF.json` passed (SHA-256 `22a742624b3ff5e116fce7c717cc8f6337a1c21cdb0113ebf8b0aecabade71e7`). The positive controller retained revision `33faccf4c2ba82142214d0d4e16232a4e9ccfe10`, all three phases, the exact seven preregistered per-phase artifacts (including `responses.jsonl`), a typed external terminal result, and both direct/inventory cleanup booleans; its missing-artifact negative control remained rejected. A separate controller with `RuntimeMaxSec=1s` produced the watchdog's typed `terminal_timeout` state. Launches all returned zero and the collected units/processes were absent after completion.
+
+Interpretation: the final allowed zero-provider integration gate passes. This proves durable fake-service control-plane behavior only, not H100 availability, model quality, or economic performance. The project should now wait for a fresh director admission before any conditional $4.27 capture lineage; do not add more controller work.
+
+## 2026-07-15 — actual-adapter preflight and stop
+
+Question/action: can the freshly admitted exact V13 protocol be launched faithfully? Queried Nebius inventory and checked the retained complete checkpoint before any provider create. `ACTUAL_ADAPTER_PREFLIGHT.json` records zero instances/disks and the local 48-file, 62,444,175,504-byte V13 checkpoint with the historical verified manifest hash.
+
+Evidence/interpretation: the actual adapter is absent: the available V2 and systemd implementations are fake-only, while `campaign_100/nebius/stock_control.py` executes the forbidden historical frozen-V1 workload rather than the 36-case V2 captures and their artifact contract. Creating an H100 would therefore not answer the preregistered question. Per the explicit actual-adapter stop rule, the lineage is paused with $0.00 consumed; no provider, model, or holdout action occurred.
+
+## 2026-07-15 — Cycle 25 admitted H100 session launched
+
+Action: the supplied independently reviewed `bf16_v2_actual_adapter` supersedes the earlier adapter-absence stop. Grouped mutable pre-create checks passed, then launched its exact `--mutate` path under `glm47-bf16-v2-v34.service` with a 3,900-second systemd bound. Nebius created `computeinstance-e00kk3ctyk0bamznzz` and its named 250-GiB boot disk; the controller remains active while the instance reaches SSH/bootstrap. No second resource was created, and no holdout/AWQ/performance operation is in scope.
+
+Next: observe this one owner through the three frozen capture phases, retrieval, NLL calibration, and verified cleanup. Treat any terminal failure as the preregistered stop result.
+
+## 2026-07-15 — Cycle 26 V35 corrected launch
+
+Action: patched the independently supplied adapter to call `wait_ssh(ip, key, deadline)`, added a focused actual-backend regression, and ran its full local suite (9 passing). Launched the unchanged V35 protocol under `glm47-bf16-v2-v35.service`; Nebius created `computeinstance-e00tm1zs0ds353wzv7`. This is the sole remaining authorized H100 session under the reduced $4.14 cap.
+
+Next: retain and assess the three capture artifacts and final cleanup from this existing unit only; any terminal defect closes the route.
+
+## 2026-07-15 — V35 live transfer observation
+
+Read-only SSH observation at `2026-07-15T12:46:52Z` found the V35 controller healthy, the H100 instance running, and the verified checkpoint transfer active (`tar` into `/workspace/model-bf16`, 4.4 GiB materialized). No capture phase has begun and no additional provider action was taken. Continue only this bounded session.
+
+Follow-up at `2026-07-15T13:01:52Z`: 46,988,963,759 checkpoint bytes were staged, the same tar stream remained active, and GPU utilization/memory were `0/0`; this is continued transfer progress, not a stall or model result.
+
+## 2026-07-15 — V35 terminal capture defect and cleanup
+
+V35 completed checkpoint transfer but produced no scientific phase. Capture 1 stopped at Docker exit 125 because the adapter attempted to bind a file at `/input/remote_v2_capture.sh` while `/input` was a read-only mount, so the container never started. `actual_v13_capture_v35/adapter-error.json` retains the exact diagnostic; `terminal-result.json` records `outcome: FAIL`, zero phases, and passing direct and inventory cleanup with zero instances and disks. The durable service ran for 1,768 seconds; at the V13 measured all-in rate this is a derived conservative exposure bound of about $1.90, not a model-result cost.
+
+Interpretation: this is scientifically null and is the preregistered terminal adapter defect. Close the route without V36. No BF16 ceilings, category result, AWQ quality admission, or quality-adjusted economic claim follows; the sealed holdout remains untouched.

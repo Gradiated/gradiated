@@ -1,0 +1,37 @@
+{
+  "artifact_sha256": "d38e88468f2f365394c305117945df45f997311e316b57e32990721e973d1e4a",
+  "artifact_path": "ncu_permission_probe_v2_20260715/ncu-probe.tar.gz",
+  "classification": "measured_target_provider_counter_limitation",
+  "cost_usd_derived": 0.07792,
+  "experiment": "one L40S (AD102) CUDA saxpy counter-permission probe",
+  "gpu": {
+    "driver": "580.159.04",
+    "name": "NVIDIA L40S",
+    "uuid": "GPU-bf314247-06da-b673-a825-4765e0b4b62b"
+  },
+  "instrumentation": {
+    "ncu_version": "2025.2.1.0",
+    "route_1_query_metrics": {
+      "exit_code": 0,
+      "result": "counter measurement library reported Unknown Error on device 0"
+    },
+    "route_2_profile": {
+      "exit_code": 9,
+      "result": "driver reported profiling failed because a driver resource was unavailable; no .ncu-rep was produced"
+    }
+  },
+  "interpretation": "The unprofiled CUDA control passed cudaDeviceSynchronize with no error, while both counter-library access and replay profiling failed. This is not evidence about GLM cache traffic, occupancy, expert routing, or the 16-expert intervention. It is a target-venue counter limitation, plausibly compatible with concurrent provider/DCGM profiling ownership but not sufficient to identify its owner.",
+  "next_cheapest_falsifier": "Profile the exact 64-versus-16-expert synthetic grouped-GEMM proxy on a venue with confirmed exclusive Nsight Compute counter access; retain L2 hit/miss and DRAM bytes, achieved occupancy, and dispatch group-M distribution before making any cache-fit speed claim.",
+  "provider_cleanup": {
+    "instance_absent": true,
+    "named_disk_remaining": false,
+    "named_instance_remaining": false
+  },
+  "raw_files": [
+    "ncu-probe/nvidia-smi.txt",
+    "ncu-probe/ncu-version.txt",
+    "ncu-probe/ncu-query-metrics.txt",
+    "ncu-probe/ncu.stdout.log",
+    "ncu-probe/control.stdout.log"
+  ]
+}

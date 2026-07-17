@@ -1,0 +1,16 @@
+{
+  "status": "complete",
+  "priority": 210,
+  "summary": "ROUTER_GEOMETRY_UNIDENTIFIABLE: hash-bound current-AWQ/depth42/depth43 archives contain no routed-expert IDs; depth42/depth43 contain output-vocabulary histograms only.",
+  "next_action": "Remain complete. Freeze worst-case four-trunk accounting; do not request an observer/provider successor.",
+  "provider_mutation": "prohibited_offline_archive_recovery",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 600,
+  "quality_policy": "Exact archived routing evidence only; no transfer across model identities or inference from aggregate kernel timing.",
+  "consumers": [
+    "shared_as_65th_marlin_expert_gate",
+    "future_exact_moe_geometry"
+  ],
+  "stop_rule": "Satisfied: one bounded archive audit returned ROUTER_GEOMETRY_UNIDENTIFIABLE. No observer, model execution, GPU, or provider successor.",
+  "terminal_result": {"classification":"ROUTER_GEOMETRY_UNIDENTIFIABLE","artifact":"artifacts/ROUTER_GEOMETRY_AUDIT_2026-07-16.json","exact_M":null,"cooccurrence":null,"trunk_geometry":null,"worst_case_four_trunk_accounting":"preserved"}
+}

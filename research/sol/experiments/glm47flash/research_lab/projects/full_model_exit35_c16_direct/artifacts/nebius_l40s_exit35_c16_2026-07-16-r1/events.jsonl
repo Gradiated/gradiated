@@ -1,0 +1,5 @@
+{"derived_identity": null, "derived_student": false, "event": "stock_control", "instance_count": 0, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "timestamp": "2026-07-16T02:02:16.591340Z"}
+{"event": "phase_started", "phase": "provider_create", "timestamp": "2026-07-16T02:02:16.591609Z"}
+{"elapsed_seconds": 0.523, "error_type": "VllmSmokeError", "event": "phase_finished", "outcome": "FAIL", "phase": "provider_create", "timestamp": "2026-07-16T02:02:17.114916Z"}
+{"error_type": "VllmSmokeError", "event": "experiment_error", "message": "instance create failed with exit 3", "timestamp": "2026-07-16T02:02:17.115050Z"}
+{"cleanup_pass": true, "elapsed_seconds": 0.741, "event": "cleanup_verified", "instance_get_not_found": true, "timestamp": "2026-07-16T02:02:17.856260Z", "useful_gpu_seconds": null}

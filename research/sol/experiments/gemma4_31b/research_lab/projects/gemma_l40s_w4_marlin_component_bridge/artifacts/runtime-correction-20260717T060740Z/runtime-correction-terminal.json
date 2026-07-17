@@ -1,0 +1,13 @@
+{
+  "classification": "exact_image_runtime_consumer_resolution_fail",
+  "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+  "inspection_sha256": "62d4a8937df225c7a0c45f24c879ac3ae1c6643f950beecf7a9a31c3147d30fd",
+  "observed_runtime": null,
+  "pass": false,
+  "probe_returncode": 0,
+  "provider_mutation": false,
+  "pull_returncode": 0,
+  "resolved_fp8_candidates": [],
+  "resolved_w4_candidates": [],
+  "schema_version": 1
+}

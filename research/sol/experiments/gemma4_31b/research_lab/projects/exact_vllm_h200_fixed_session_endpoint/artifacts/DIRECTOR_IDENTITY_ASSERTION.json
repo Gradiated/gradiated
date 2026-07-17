@@ -1,0 +1,71 @@
+{
+  "authoritative_inputs": {
+    "checkpoint_terminal": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_h200_matched_endpoint_falsifier/artifacts/checkpoint-owner-20260717T072831Z/CHECKPOINT_TERMINAL.json",
+      "sha256": "5f0765fa37f308e21d665571a92c29ba1998b22b5ee67d1edbfac103dafec481"
+    },
+    "economic_gate": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h200_campaign_economic_gate_reconciliation/H200_ECONOMIC_GATE.json",
+      "sha256": "3f4ce08c7e3a6649c18af99f14e0d48dcaf3979ac818462f7cf159cd9dab9afd"
+    },
+    "prior_owner": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_h200_vllm_baseline_shared_runner/vllm_h200_owner.py",
+      "sha256": "0046e08ef011674bc425cc3909dcc5f4ce384e09934a9e52aaf65fdbfe0a8da5"
+    },
+    "prior_runner": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_h200_vllm_baseline_shared_runner/gemma_exact_vllm_runner.py",
+      "sha256": "ff43414d5b7910f770e39ed2f687c423bb547b97ccde939f004ce06f96b797c8"
+    },
+    "project_brief": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_vllm_h200_fixed_session_endpoint/PROJECT.md",
+      "sha256": "7fe4f6ed42a5450c153796c104c870ce348fbf0ce2d210ea12c95c941f0f37d3"
+    },
+    "session_staging": {
+      "path": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/session_staging.py",
+      "sha256": "63d035c832776ec0c295cf23aad0a3d3b3fc2a77df1d193e48b81de4804c858c"
+    },
+    "start_packet": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_gemma4_exact_precreate_binding/START_PACKET.json",
+      "sha256": "20bb47c82e7ca258423f5494b96e60b7a90e3dbad807cc6595a065ed0c380846"
+    },
+    "trace_packet": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma_exact_cache_trace_contract/TRACE_PACKET.json",
+      "sha256": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68"
+    }
+  },
+  "bound": {
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "checkpoint_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_h200_matched_endpoint_falsifier/artifacts/checkpoint-owner-20260717T072831Z/checkpoint",
+    "market_planning_base_rps": [
+      2.094181,
+      2.118591
+    ],
+    "model": "google/gemma-4-31B-it",
+    "primary_concurrency": [
+      1,
+      4,
+      8,
+      16
+    ],
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "sglang_conditional_image": "docker.io/lmsysorg/sglang:dev-gemma4@sha256:380cc6c6654b479c464177aa684aca520d6bd6e9833b23eba1df2f8396f63427",
+    "vllm_image": "vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79"
+  },
+  "checks": {
+    "brief_identities": true,
+    "brief_market": true,
+    "brief_owner": true,
+    "brief_workload": true,
+    "checkpoint_pass": true,
+    "fixed_staging": true,
+    "index": true,
+    "model": true,
+    "primary_groups": true,
+    "prior_programs": true,
+    "revision": true,
+    "vllm_image": true
+  },
+  "classification": "director_predelegation_identity_assertion",
+  "pass": true,
+  "schema_version": 1
+}

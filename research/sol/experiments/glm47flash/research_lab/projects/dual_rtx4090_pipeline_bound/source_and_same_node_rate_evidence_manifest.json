@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "retrieved_at": "2026-07-15",
+  "evidence": [
+    {"path": "/root/.cache/glm47flash-awq-ab31d120/config.json", "sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9", "type": "local_checkpoint_identity"},
+    {"path": "/root/.cache/glm47flash-awq-ab31d120/model.safetensors.index.json", "sha256": "b9c53433e94f2fe7870cdbc3fcb6ed1431eb500c5242a039de93fef4bb988695", "type": "local_checkpoint_identity"},
+    {"path": "../nebius_current_awq_c16_direct/artifacts/nebius_current_awq_c16_direct_2026-07-15-r2/summary.json", "sha256": "4ae280a18bac7fb7e2e4849808c0f89e7d25220e7f5a657f709c729391cd4286", "type": "measured_control"},
+    {"path": "../current_awq_saturation_bound/SATURATION_BOUND.json", "sha256": "02f1d2a138c55209eada0c1e0417e4ae348d6f65fa92168dff4fd9df7e927a49", "type": "derived_memory_and_saturation_bound"},
+    {"url": "https://docs.syaala.com/billing/pricing", "type": "current_market_reference", "notes": "Page lists 2x RTX 4090 at $1.48/hour on RunPod and $1.38/hour on Vast.ai; not a written quote."},
+    {"url": "https://raw.githubusercontent.com/vllm-project/vllm/v0.15.0/vllm/model_executor/models/glm4_moe_lite.py", "type": "pinned_runtime_source", "notes": "Exact model class inherits SupportsPP and rank-localizes embedding/head."},
+    {"url": "https://docs.vllm.ai/en/stable/models/supported_models/", "type": "runtime_model_registry", "notes": "Lists Glm4MoeLiteForCausalLM / GLM-4.7-Flash as supported."}
+  ]
+}

@@ -1,0 +1,4 @@
+{"aggregate_provider_seconds_max": 4799.999, "deadline_epoch": 1784282530.0983145, "event": "owner_started", "timestamp_utc": "2026-07-17T08:42:55.098395Z"}
+{"event": "provider_created", "instance_id": "computeinstance-e00rvwpqj3a9gm2zet", "timestamp_utc": "2026-07-17T08:43:40.975526Z"}
+{"event": "ssh_ready", "timestamp_utc": "2026-07-17T08:44:18.578274Z"}
+{"elapsed_seconds": 946.697381734848, "event": "checkpoint_transferred", "scheduled_bytes": 62578655922, "timestamp_utc": "2026-07-17T09:00:05.275797Z"}

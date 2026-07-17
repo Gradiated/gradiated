@@ -1,0 +1,37 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "logprobs": null,
+      "message": {
+        "annotations": null,
+        "audio": null,
+        "content": "```json\n{\n  \"alpha\": 17,\n  \"beta\": \"smoke\"\n}\n```",
+        "function_call": null,
+        "reasoning": null,
+        "reasoning_content": null,
+        "refusal": null,
+        "role": "assistant",
+        "tool_calls": []
+      },
+      "stop_reason": 154827,
+      "token_ids": null
+    }
+  ],
+  "created": 1784139163,
+  "id": "chatcmpl-b4934e73f5a35006",
+  "kv_transfer_params": null,
+  "model": "glm-4.7-flash-awq",
+  "object": "chat.completion",
+  "prompt_logprobs": null,
+  "prompt_token_ids": null,
+  "service_tier": null,
+  "system_fingerprint": null,
+  "usage": {
+    "completion_tokens": 22,
+    "prompt_tokens": 24,
+    "prompt_tokens_details": null,
+    "total_tokens": 46
+  }
+}

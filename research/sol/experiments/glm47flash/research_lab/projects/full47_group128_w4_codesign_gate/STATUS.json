@@ -1,0 +1,56 @@
+{
+  "status": "closed",
+  "priority": 250,
+  "summary": "Closed at $0: ParallelLMHead is unbound; a director audit also corrects serving-only robust margin to 6.595 MiB, while sampled numerical evidence is provisional.",
+  "next_action": "No successor under this contract. Preserve GROUP128_OFFICIAL_GATE.json as representation/runtime/numerical/memory negative evidence; do not materialize or create.",
+  "provider_mutation": "prohibited_zero_cost_representation_gate",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 1200,
+  "quality_policy": "Architecture-cost proxy; artifact numerical samples are provisional because they used manual absmax rather than the checkpoint MSE observer; full quality deferred.",
+  "memory_gate": {
+    "stock_full47_c32_peak_mib": 46875.7,
+    "robust_peak_limit_mib": 44532.0,
+    "artifact_all_checkpoint_group32_scale_bytes": 1838104576,
+    "serving_group128_existing_scale_savings_bytes": 1349246976,
+    "serving_group128_existing_scale_savings_mib": 1286.7421875,
+    "serving_head_shared_group128_savings_mib": 1063.5525665283203,
+    "serving_corrected_projected_c32_mib": 44525.40524597168,
+    "serving_corrected_robust_margin_mib": 6.594754028323218,
+    "minimum_robust_margin_mib": 64.0
+  },
+  "runtime_gate": {
+    "official_packer": "compressed_tensors.pack_to_int32 uint4b8",
+    "required_targets": ["Linear", "ParallelLMHead", "fused_MoE"],
+    "fallback_or_duplicate_bf16_allowed": false
+  },
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "required_output_tokens_per_second": 594.466,
+    "robust_output_tokens_per_second": 606.355
+  },
+  "stop_rule": "Completed: one offline representation/runtime/numerical/memory gate returned RUNTIME_CLOSE_GROUP128_COMBINED. No materialization, GPU, provider, controller, or active session.",
+  "decision": "RUNTIME_CLOSE_GROUP128_COMBINED",
+  "artifact": "artifacts/official_gate/GROUP128_OFFICIAL_GATE.json",
+  "result": {
+    "native_dispatch": {
+      "ordinary_linear": "CompressedTensorsLinearMethod",
+      "parallel_lm_head": null,
+      "fused_moe": "CompressedTensorsWNA16MarlinMoEMethod"
+    },
+    "robust_margin_mib": 6.594754028323218,
+    "required_margin_mib": 64.0,
+    "artifact_sample_relative_l2_range": [0.10330560058355331, 0.11935348808765411],
+    "quality_threshold": 0.1,
+    "provider_or_model_mutation": false,
+    "director_audit_correction": {
+      "artifact_reported_saving_bytes": 2493794128,
+      "nonserving_layer47_mtp_saving_bytes_excluded": 29331456,
+      "serving_corrected_saving_bytes": 2464462672,
+      "serving_corrected_saving_mib": 2350.2947540283203,
+      "serving_corrected_projected_c32_peak_mib": 44525.40524597168,
+      "serving_corrected_robust_margin_mib": 6.594754028323218,
+      "numerical_evidence": "provisional_manual_absmax_sample_not_checkpoint_mse_observer",
+      "decision_effect": "none; runtime and corrected memory gates independently close"
+    }
+  }
+}

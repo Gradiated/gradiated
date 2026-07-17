@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "artifact": "sglang_gemma4_31b_h100_bf16_fp8e5m2_capacity_cost_bound",
+  "classification": "derived deterministic runtime-specific capacity and economic screening; no CUDA, endpoint, quality, provider, or cost measurement",
+  "decision": "typed_none_immutable_h100_command_does_not_admit_checkpoint",
+  "identities": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "sglang_commit": "2813cb6d9a5b6e8fb02435647917e6f1652d7940",
+    "sglang_image_manifest": "docker.io/lmsysorg/sglang:dev-gemma4@sha256:380cc6c6654b479c464177aa684aca520d6bd6e9833b23eba1df2f8396f63427",
+    "hardware": "one H100 SXM 80 GB decimal, TP=1",
+    "weights_bf16_bytes": 62546177752,
+    "source_sha256": {"server_args.py": "27178e43bc54574d8a39651db57900d045719e23f21cfd19268f867d761acfcd", "gemma4_causal.py": "17d17e54ec25a593504d46a92abbe8014e704dc95aede01d2f34ebbaf655b68c", "config.json": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"}
+  },
+  "runtime_geometry": {
+    "binding_observation": "gemma4_causal.py uses config.num_key_value_heads (16) and config.head_dim (256) for full layers, and falls back to those same fields for sliding layers because the pinned config lacks swa_num_key_value_heads and swa_head_dim. The config's num_global_key_value_heads=4 and global_head_dim=512 are not read by this implementation.",
+    "layers": {"sliding": 50, "full": 10, "sliding_window_tokens": 1024},
+    "kv_payload_formula_bytes": "50*min(T,1024)*(2*16*256*1) + 10*T*(2*16*256*1)",
+    "fp8_payload_bytes_per_layer_token": 8192,
+    "scale_metadata_case": "128 bytes per layer-token (one conservative fp32 scale per K/V head); the pinned source set does not retain the FP8 cache implementation, so this is a 1.5625% sensitivity rather than a claimed runtime allocation.",
+    "page_size": 1,
+    "page_rounding_bytes": 0
+  },
+  "non_kv_accounting": {
+    "device_capacity_gib": 74.505805969238,
+    "weights_gib": 58.25066729635,
+    "text_only_vision_residency": "The exact server command does not set --language-only. server_args.py identifies the model as multimodal and reduces mem_fraction_static by 0.95*(1-0.1*((27*1152^2)/(24*1024^2)-1)) = 0.909736328125. The BF16 weight total already includes the checkpoint's vision component; this is the source's additional VLM workspace/reserve heuristic, not double-counted weights.",
+    "source_default_reserve_gib": {"constant_metadata_and_output_head_workspace": 0.5, "chunked_prefill_activation_workspace": 12.0, "cuda_graph_capture": 0.5, "tp_pp_adjustment": 0.125, "piecewise_cuda_graph": 0.0, "scheduler_request_state_and_fragmentation": "unknown; not fabricated"},
+    "configured_memory_fraction": {"source_base": "round((80,000,000,000 B - 13.125 GiB) / 80,000,000,000 B, 3)", "source_base_value": 0.824, "vlm_adjustment": 0.909736328125, "effective_value": 0.749622734375, "weights_plus_kv_cap_gib": 55.851245997474, "weight_only_headroom_gib": -2.399421298876},
+    "conservative_case": {"mem_fraction_static": 0.75, "weights_plus_kv_cap_gib": 55.879354476929, "weight_only_headroom_gib": -2.371312819421, "interpretation": "Even a nominal 0.75 static fraction does not admit the exact weights."}
+  },
+  "surface": {
+    "primary_4214_input_358_output": {"resident_tokens_per_request": 4572, "fp8_payload_gib_per_request": 0.739440917969, "scale_metadata_gib_per_request": 0.011553764343, "total_kv_gib_per_request": 0.750994682312, "rows": [
+      {"concurrency": 1, "raw_headroom_gib": 15.504143990576, "configured_headroom_gib": -3.150415981188, "conservative_0_75_headroom_gib": -3.122307501733, "raw_fit": true, "configured_fit": false, "conservative_fit": false},
+      {"concurrency": 2, "raw_headroom_gib": 14.753149308264, "configured_headroom_gib": -3.9014106635, "conservative_0_75_headroom_gib": -3.873302184045, "raw_fit": true, "configured_fit": false, "conservative_fit": false},
+      {"concurrency": 4, "raw_headroom_gib": 13.25115994364, "configured_headroom_gib": -5.403400028124, "conservative_0_75_headroom_gib": -5.375291548669, "raw_fit": true, "configured_fit": false, "conservative_fit": false},
+      {"concurrency": 8, "raw_headroom_gib": 10.247181214392, "configured_headroom_gib": -8.407378757372, "conservative_0_75_headroom_gib": -8.379270277917, "raw_fit": true, "configured_fit": false, "conservative_fit": false},
+      {"concurrency": 16, "raw_headroom_gib": 4.239223755896, "configured_headroom_gib": -14.415336215869, "conservative_0_75_headroom_gib": -14.387227736413, "raw_fit": true, "configured_fit": false, "conservative_fit": false},
+      {"concurrency": 32, "raw_headroom_gib": -7.776691161096, "configured_headroom_gib": -26.431251132861, "conservative_0_75_headroom_gib": -26.403142653406, "raw_fit": false, "configured_fit": false, "conservative_fit": false}
+    ]},
+    "10k_input_358_output": {"resident_tokens_per_request": 10358, "fp8_payload_gib_per_request": 1.180877685547, "scale_metadata_gib_per_request": 0.018451213837, "total_kv_gib_per_request": 1.199328899384, "rows": [
+      {"concurrency": 1, "raw_headroom_gib": 15.055809773505, "configured_headroom_gib": -3.59875019826, "conservative_0_75_headroom_gib": -3.570641718805, "raw_fit": true, "configured_fit": false, "conservative_fit": false},
+      {"concurrency": 2, "raw_headroom_gib": 13.856480874121, "configured_headroom_gib": -4.798079097643, "conservative_0_75_headroom_gib": -4.769970618188, "raw_fit": true, "configured_fit": false, "conservative_fit": false},
+      {"concurrency": 4, "raw_headroom_gib": 11.457823075354, "configured_headroom_gib": -7.196736896411, "conservative_0_75_headroom_gib": -7.168628416955, "raw_fit": true, "configured_fit": false, "conservative_fit": false},
+      {"concurrency": 8, "raw_headroom_gib": 6.66050747782, "configured_headroom_gib": -11.994052493945, "conservative_0_75_headroom_gib": -11.96594401449, "raw_fit": true, "configured_fit": false, "conservative_fit": false},
+      {"concurrency": 16, "raw_headroom_gib": -2.934123717248, "configured_headroom_gib": -21.588683689013, "conservative_0_75_headroom_gib": -21.560575209558, "raw_fit": false, "configured_fit": false, "conservative_fit": false}
+    ]}
+  },
+  "economic_floor": {
+    "formula": "required_completed_requests_per_second = gpu_rate_usd_per_hour / (3600 * hurdle_usd_per_request)",
+    "market_hurdle_usd_per_request": [0.000614, 0.000621],
+    "rows": [{"h100_rate_usd_per_hour": 2.5, "required_rps_at_0_000614": 1.131017010496, "required_rps_at_0_000621": 1.118268026481}, {"h100_rate_usd_per_hour": 2.8, "required_rps_at_0_000614": 1.266739051755, "required_rps_at_0_000621": 1.252460189658}, {"h100_rate_usd_per_hour": 3.1, "required_rps_at_0_000614": 1.402461093015, "required_rps_at_0_000621": 1.386652352836}],
+    "packet_floor_rps": 1.825,
+    "reconciliation": "At the $2.80/hour planning rate and stricter $0.000621 hurdle, the market floor is 1.252460 rps. The 1.825-rps packet floor is 1.457x stricter and implies only 68.63% usable completed-request capacity (31.37% utilization/headroom/fixed-cost derate) relative to the bare market calculation. The retained inputs do not identify that derate, so it is retained as an independent packet gate rather than falsely attributed to the market hurdle.",
+    "at_packet_floor_cost_usd_per_request_at_2_80": 0.000426179604262,
+    "matched_vllm_gate": "Measure independently: sustainable_cost_per_request_sglang <= 0.90 * sustainable_cost_per_request_vllm on the same H100, identities, requests, and contemporaneous utilization. Capacity arithmetic cannot decide it."
+  },
+  "terminal_reason": "Raw HBM has room at c1, but the immutable command's source-defined multimodal static-memory configuration does not admit the 58.251 GiB exact checkpoint even before KV allocation: cap 55.851 GiB, a 2.399 GiB shortfall. The first allocator-sensitive point is therefore weight loading, not a concurrency step.",
+  "required_stop": "Do not create an H100 owner for this immutable command. H200 is not nominated by this H100 screen; any later route must materially change and rebind the runtime configuration (for example a content-bound language-only configuration) before provider admission.",
+  "limitations": ["FP8 scale allocation and allocator fragmentation were conservatively bounded but are not needed for the c1 close.", "This result does not establish endpoint throughput, latency, quality, sustainable cost, vLLM comparison, or H200 economics."]
+}

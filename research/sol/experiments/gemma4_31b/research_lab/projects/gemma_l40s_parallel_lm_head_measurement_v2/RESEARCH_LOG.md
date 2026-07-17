@@ -1,0 +1,9 @@
+# Research log
+
+## 2026-07-17 — director delegation
+
+Activated as the sole paid successor after the first head owner failed before GPU creation because the shared controller did not retain its provider response. Repair and test only that shared observability boundary at `$0`, gate provider creation on `CONTROLLER_TERMINAL.json`, then run the already audited six-row actual-consumer measurement once. No adjacent retained arm is compatible with the checkpoint-free resident image; cleanup is immediate after the head terminal. Budgets are 80 wall minutes, 20 provider minutes, 0.34 L40S-hours, 3 CPU-hours, one 100-GiB disk, 10 GiB temporary/4 GiB artifacts, and `$0.50`.
+
+## 2026-07-17 — typed second pre-GPU close
+
+Question: can the audited pinned-image six-row `ParallelLMHead` sweep reach L40S after repairing create observability? Action: patched the shared `mla_microbench_control.py` from `1c7448…` to `b29ab7…` to retain the redacted create diagnostic and reconcile a named instance before watchdog startup; `CONTROLLER_TERMINAL.json` passed deterministic failure/success/reconciliation/redaction/cleanup cases and authenticated empty inventory. The refreshed exact-image audit passed with the post-patch controller (`final-staged-audit-post-controller-20260717T064759Z.json`). Evidence: the single durable systemd owner `gemma-l40s-head-v2-20260717T064847Z.service` reached provider create, retained `provider-create-diagnostic.json` (SHA-256 `cd000209…`), and received exit 3 / `InvalidArgument`: `spec.hostname` must be a valid hostname; no instance ID or watchdog was created. Its verified cleanup and final authenticated inventory both contain zero matching or global instances/disks. Interpretation: this is an operational provider-validation terminal, not GPU/head evidence; the project’s explicit second pre-GPU stop rule closes the project with no retry. See `artifacts/SUMMARY.json`.

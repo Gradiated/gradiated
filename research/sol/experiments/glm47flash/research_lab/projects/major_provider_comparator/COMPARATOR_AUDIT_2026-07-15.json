@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "audit_id": "major_provider_comparator_cloudflare_2026-07-15",
+  "retrieved_at_utc": "2026-07-15T10:14:11Z",
+  "method": "zero_cost documentation audit; no account access, credentials, requests, or provider mutation",
+  "decision": "RETAIN_CLOUDFLARE_AS_EXACT_MODEL_VENDOR_PRICE_ANCHOR_NOT_MATCHED_COMPARATOR",
+  "named_offering": {
+    "provider": "Cloudflare Workers AI",
+    "exact_model_id": "@cf/zai-org/glm-4.7-flash",
+    "model_identity_status": "exact_model_documented",
+    "context_window_tokens_vendor_reported": 131072,
+    "function_calling_vendor_reported": true
+  },
+  "economics": {
+    "evidence_label": "vendor_reported_and_derived",
+    "input_usd_per_million_tokens": 0.06,
+    "output_usd_per_million_tokens": 0.4,
+    "campaign_input_to_output_ratio": 8,
+    "formula": "output_price + 8 * input_price",
+    "usd_per_million_output_equivalent_tokens": 0.88,
+    "cached_input_price_status": "not listed for this model on the retrieved pricing/model pages",
+    "batch_discount_status": "not listed for this model on the retrieved pricing/model pages",
+    "threshold_interpretation": "A local result must be below $0.88/M output-equivalent tokens before non-GPU and quality adjustments to clear this vendor-listed price anchor; it is not a delivered-cost or matched-performance threshold."
+  },
+  "campaign_binding": {
+    "fixed_workload": "8,192 input / 1,024 maximum output tokens",
+    "cheapest_replay_sequence": ["development_smoke", "fixed_8k_1k_c1", "fixed_8k_1k_c8"],
+    "measured_request_limit_before_headline": 25,
+    "quality_requirement": "Frozen quality execution requires /v1/chat/completions plus /generate returning raw teacher-forced input-token logprobs; missing input-token logprobs fail closed."
+  },
+  "service_capability_audit": {
+    "openai_compatible_chat_endpoint_documented": true,
+    "streaming_documented": true,
+    "chat_usage_object_documented": true,
+    "tools_and_tool_choice_documented": true,
+    "output_logprobs_documented": true,
+    "teacher_forced_input_logprobs_documented": false,
+    "sglang_generate_endpoint_documented": false,
+    "documented_text_generation_rate_limit_rpm": 300,
+    "reliability_terms": "Retrieved Workers AI product documentation exposes limits and typed errors but no model-specific uptime/SLA commitment was identified in the audited sources.",
+    "matched_replay_status": "not_technically_runnable_against_the_frozen_unmodified_campaign_contract_from_public_documentation",
+    "falsifier": "The frozen scorer requires /generate and raw input-token logprobs, while the provider documentation only exposes OpenAI-compatible chat completions and describes logprobs as output-token log probabilities."
+  },
+  "minimal_next_authority": {
+    "for_partial_endpoint_probe": "A Cloudflare account ID and API token with permission to invoke Workers AI, plus explicit approval for bounded paid or free-tier requests and raw response retention.",
+    "for_a_claimable_matched_replay": "In addition to endpoint authority, a provider-supported way to obtain raw teacher-forced input-token logprobs under the frozen quality contract. Changing the scorer would require explicit campaign authorization and would not validate the current gate."
+  },
+  "source_identities": [
+    {
+      "url": "https://developers.cloudflare.com/workers-ai/models/glm-4.7-flash/index.md",
+      "http_status": 200,
+      "bytes": 9906,
+      "sha256": "11b07d405722eda3b0d3d39c99b84b14235bf2c46adf27fb0d111dbac9a506b7",
+      "supports": ["exact model identity", "131072 context", "function calling", "price", "streaming", "output logprobs parameter"]
+    },
+    {
+      "url": "https://developers.cloudflare.com/workers-ai/configuration/open-ai-compatibility/index.md",
+      "http_status": 200,
+      "bytes": 3845,
+      "sha256": "c125266868dc5d1b29f47c7446b60058c3533cd994ed715adf6c6e88d9ea2420",
+      "supports": ["/v1/chat/completions endpoint"]
+    },
+    {
+      "url": "https://developers.cloudflare.com/workers-ai/platform/pricing/index.md",
+      "http_status": 200,
+      "bytes": 17478,
+      "sha256": "c0bc61cfe7f43a06ceb07e812d87d767f70950e20bec33a25b79753fe66ec47e",
+      "supports": ["current GLM-4.7-Flash input and output price listing", "daily free allocation and paid billing model"]
+    },
+    {
+      "url": "https://developers.cloudflare.com/workers-ai/platform/limits/index.md",
+      "http_status": 200,
+      "bytes": 4337,
+      "sha256": "e6fa918d0cb4ce6c632113579dbb9870eb595d8646a8eb2e5eefafb159679134",
+      "supports": ["300 RPM text-generation rate limit"]
+    },
+    {
+      "url": "https://developers.cloudflare.com/workers-ai/platform/errors/index.md",
+      "http_status": 200,
+      "bytes": 5725,
+      "sha256": "d0f252f8a323793111d68e8addc7507f3e62f93db04778ff537869336d1bcfdd",
+      "supports": ["documented typed platform error surface"]
+    }
+  ],
+  "local_contract_identities": {
+    "quality_runner_interface_sha256": "e8b87d3cf8eba425515a21470ff6208669bd492d8896377a36fb600672f72999",
+    "quality_runner_sha256": "0eceb814eed0a6b6b5de65cb6e359e37222abf8b83c7cc06975eaf4935300c52",
+    "workload_runner_interface_sha256": "243d63ecc6bfb6bb6a22107f4e0cc6a6224f98893a5767b682681e7493647c83",
+    "prior_provider_anchor_sha256": "b927eedeb5eb172caa52966b70ca5212d6a5bf7f07df8756aca90fc4cc4b9d13"
+  },
+  "claim_limits": [
+    "No provider request, raw provider response, measured latency, availability, quality, or reliability result was produced.",
+    "This does not establish that the Cloudflare deployment has identical checkpoint revision, tokenizer behavior, reasoning behavior, or output quality to the local checkpoint.",
+    "Cloudflare is retained only as the best currently documented exact-model price anchor, not as a matched provider control."
+  ]
+}

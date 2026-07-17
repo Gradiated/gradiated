@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "checked_at_utc": "2026-07-16T10:50:35.630982Z",
+  "outcome": "PASS",
+  "corrected_w4": {
+    "status": "complete",
+    "active_session": null,
+    "terminal_classification": "REPRESENTATION_CLOSE_MODEL_IDENTITY_STAGING_GAP",
+    "cleanup_pass": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0
+  },
+  "authenticated_provider_inventory": {
+    "instance_count": 0,
+    "disk_count": 0
+  },
+  "one_time_rehash": {
+    "experiment_spec_sha256": "c6c0912dc294883c771955f6829d8e05db821ad39015c98c725bb9900ec5813b",
+    "launch_packet_sha256": "db986e116b708bb6346bfd68aca2635d1ec0de2b118a81b398238ba6882b3977",
+    "bindings": {
+      "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/vllm_smoke_control.py": "edaeb5cc81577ef410b704588918c7841f7d3d003e40c83e27618746adca5636",
+      "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/vllm_recover_existing.py": "9dfa0187188fb4d4c0a216487b77c2c6cc2b22691c4e3cf783a6348778acaeda",
+      "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/vllm_batched_runner.py": "0db2de2bd749c18bcd2ca45c16e7b3617daf5307665456b1dac039c81f90fa72",
+      "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/remote_vllm_awq_smoke.sh": "29766910f0b3252ef0dd2e42051dfb5ab0b6a3fbd3e736187184bb0e7dc1defa"
+    }
+  },
+  "command_contract": {
+    "keep_instance_after_result": false,
+    "repair_window_seconds": 0,
+    "absolute_timeout_seconds": 4200,
+    "maximum_spend_usd": 1.1
+  }
+}

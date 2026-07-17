@@ -1,4 +1,8 @@
 import sys
+import io
+import json
+import tarfile
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -16,6 +20,9 @@ from mla_microbench_control import (  # noqa: E402
     PRESET,
     build_container_command,
     build_host_bootstrap,
+    conditional_trigger,
+    read_stage_terminal,
+    validate_durable_owner,
 )
 from vllm_mla_microbench import (  # noqa: E402
     E2E_SHARE_STATUS,
@@ -124,6 +131,13 @@ class NebiusMlaMicrobenchTests(unittest.TestCase):
         self.assertIn("EXPERIMENT_SPEC_SHA256=" + "a" * 64, command)
         self.assertNotIn("model-awq", command)
 
+    def test_explicit_runtime_image_reaches_bootstrap_and_container(self):
+        image = "docker.io/vllm/vllm-openai:gemma4@sha256:" + "b" * 64
+        self.assertIn(image, build_host_bootstrap(image))
+        command = " ".join(build_container_command("a" * 64, 1783990000, runtime_image=image))
+        self.assertIn(image, command)
+        self.assertIn("RUNTIME_IMAGE_IDENTITY=" + image, command)
+
     def test_remote_harness_captures_telemetry_and_content_addressed_artifact(self):
         source = (ROOT / "nebius" / "remote_mla_microbench.sh").read_text()
         self.assertIn("nvidia-smi --query-gpu=", source)
@@ -137,11 +151,49 @@ class NebiusMlaMicrobenchTests(unittest.TestCase):
         self.assertIn("< sequence_lengths[:, None]", source)
         self.assertIn('masked_fill(~valid_tokens[:, None, :], float("-inf"))', source)
 
-    def test_infrastructure_failure_opens_bounded_repair_window(self):
+    def test_infrastructure_error_is_owned_by_verified_cleanup(self):
         source = (ROOT / "nebius" / "mla_microbench_control.py").read_text()
-        self.assertIn("time.time() + 600", source)
-        self.assertIn("repair-decision.json", source)
-        self.assertIn("hold_for_repair_decision(output_dir, events, deadline)", source)
+        self.assertIn('with VerifiedRetainedOwner(name, output_dir / "cleanup.json")', source)
+        self.assertIn('emit(events, "experiment_error"', source)
+
+    def test_create_path_persists_diagnostic_and_reconciles_before_watchdog(self):
+        source = (ROOT / "nebius" / "mla_microbench_control.py").read_text()
+        self.assertIn("write_create_diagnostic(output_dir, proc)", source)
+        self.assertIn("resolve_created_instance(proc, name)", source)
+        self.assertLess(
+            source.index("write_create_diagnostic(output_dir, proc)"),
+            source.index("start_independent_watchdog(instance_id"),
+        )
+        self.assertLess(
+            source.index("retained.bind_instance(instance_id)"),
+            source.index("start_independent_watchdog(instance_id"),
+        )
+
+    def test_owner_rejection(self):
+        with self.assertRaisesRegex(RuntimeError, "durable service ownership"):
+            validate_durable_owner({})
+
+    def test_primary_artifact_preservation(self):
+        terminal = {"stage": "primary", "pass": True, "all_actual_consumers_pass": True, "economic_both_envelopes_falsified": False}
+        with tempfile.TemporaryDirectory() as directory:
+            archive = Path(directory) / "primary.tar.gz"
+            with tarfile.open(archive, "w:gz") as bundle:
+                data = json.dumps(terminal).encode()
+                member = tarfile.TarInfo("artifact/stage-terminal.json"); member.size = len(data)
+                bundle.addfile(member, io.BytesIO(data))
+            self.assertEqual(read_stage_terminal(archive), terminal)
+
+    def test_true_branch_sequences_only_after_primary_terminal(self):
+        self.assertTrue(conditional_trigger({"stage": "primary", "pass": True, "all_actual_consumers_pass": True, "economic_both_envelopes_falsified": False}))
+
+    def test_false_trigger_cleanup_branch_is_not_eligible_for_conditional(self):
+        self.assertFalse(conditional_trigger({"stage": "primary", "pass": True, "all_actual_consumers_pass": True, "economic_both_envelopes_falsified": True}))
+
+    def test_error_contract_keeps_verified_owner_cleanup(self):
+        source = (ROOT / "nebius" / "mla_microbench_control.py").read_text()
+        self.assertIn('with VerifiedRetainedOwner(name, output_dir / "cleanup.json")', source)
+        self.assertIn('except Exception as error:', source)
+        self.assertIn('"cleanup_pass": cleanup', source)
 
 
 if __name__ == "__main__":

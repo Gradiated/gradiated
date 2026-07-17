@@ -1,0 +1,4 @@
+unit=glm47-full47-stock-maxseq36-split8-r1
+artifact_root=/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/full47_stock_maxseq36_split8_frontier/artifacts/l40s_stock_maxseq36_split8_20260716_r1
+spec_sha256=2e513aad30c6712d3cd31b70554f6b581549ddcc5b6b7812f7c043e2885bc771
+deadline_epoch=1784204100

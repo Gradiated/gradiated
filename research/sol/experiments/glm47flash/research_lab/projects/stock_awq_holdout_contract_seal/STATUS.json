@@ -1,0 +1,42 @@
+{
+  "status": "complete",
+  "priority": 250,
+  "summary": "QUALITY_POLICY_CLOSE after director audit: the deterministic 36-case bytes and token-ID equality pass, but aggregation/pairing/bootstrap/request/runtime-hash semantics are not uniquely frozen and several manifest claims are not revalidated.",
+  "next_action": "Consumed by stock_awq_holdout_scoring_seal_repair. Do not execute captures from this predecessor policy or alter its useful immutable bytes.",
+  "provider_mutation": "prohibited_zero_cost_quality_instrument",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 900,
+  "resource_cap": {
+    "peak_rss_gib": 6,
+    "new_artifacts_mib": 32
+  },
+  "allowed_results": [
+    "HOLDOUT_CONTRACT_SEALED",
+    "PAIR_NLL_CLOSE",
+    "QUALITY_POLICY_CLOSE"
+  ],
+  "future_capture_order": [
+    "three_fresh_process_bf16_holdout_controls",
+    "freeze_sequence_specific_holdout_nll_ceilings",
+    "three_current_awq_holdout_candidates"
+  ],
+  "stop_rule": "One terminal sealed-instrument or typed-close result; no model/provider/controller/runner work, paid command, or execution successor preparation.",
+  "quality_policy": "This project creates a frozen scientific instrument only and cannot itself satisfy quality eligibility.",
+  "terminal_result": "QUALITY_POLICY_CLOSE",
+  "director_correction": {
+    "audited_at_utc": "2026-07-16T12:31:30Z",
+    "preserved_evidence": "36 cases, 6x6 geometry, deterministic build, actual BF16/AWQ token-ID equality with truncation disabled, and implemented validator/mutation passes",
+    "first_blocker": "identical future captures can receive different pass/fail decisions because repeated-capture aggregation, ordinal pairing, bootstrap resampling unit, per-capture BF16 threshold, request settings, scorer implementation, and runtime token hash are not all frozen"
+  },
+  "evidence": {
+    "policy": "POST_DEVELOPMENT_QUALITY_POLICY.json",
+    "builder": "build_holdout.py",
+    "holdout": "sealed_holdout_v2/holdout.jsonl",
+    "manifest": "sealed_holdout_v2/MANIFEST.json",
+    "validator": "validate_holdout.py",
+    "tests": "test_holdout_contract.py",
+    "holdout_sha256": "77a32ac6b0de7d5304c4f5e2f11aabdc57cfa27fd4fa7b3846a6c7324c100552",
+    "canonical_tokenizer_sha256_truncation_disabled": "9c5c13b8607f091a66086621493e0e5bb136b332590174e1f556d73b7369324a",
+    "validation": "36 real tokenizer re-encodes, deterministic rebuild, and four fail-closed mutations passed"
+  }
+}

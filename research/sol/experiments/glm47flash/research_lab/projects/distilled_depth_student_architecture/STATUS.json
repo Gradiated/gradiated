@@ -1,0 +1,63 @@
+{
+  "status": "completed",
+  "priority": 0,
+  "summary": "The exact physical 39-layer AWQ student passed the L40S economic proxy at c16, c24, and c32; quality recovery and provider-matched graduation remain separate work.",
+  "next_action": "Remain complete without another depth proxy or provider allocation. student39_recovery_distillation owns recovery feasibility; preserve this checkpoint and terminal performance archive as the immutable cost denominator.",
+  "provider_mutation": "completed_with_verified_zero_inventory",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 3900,
+  "active_experiment": null,
+  "artifact_root": "artifacts/nebius_l40s_student39_c16_c24_c32_2026-07-15-r2-repair02",
+  "quality_policy": "physical_student_cost_proxy_only_distillation_and_full_quality_deferred",
+  "economic_gate": {
+    "control_output_tok_s": 535.286,
+    "planning_l40s_usd_per_hour": 1.1,
+    "promotion_output_tok_s": 594.466,
+    "target_usd_per_million_output_tokens": 0.514
+  },
+  "artifact_contract": [
+    "distilled_depth_student_bound.json",
+    "source_bound_depth_student_fixture.py",
+    "build_student39_checkpoint.py",
+    "student39_checkpoint_manifest.json",
+    "student39_runtime_preflight.json",
+    "STUDENT39_L40S_REPAIR_02.json",
+    "RESEARCH_LOG.md"
+  ],
+  "stop_rule": "satisfied_by_complete_c16_c24_c32_cost_proxy_and_verified_cleanup",
+  "decision": "economic_proxy_pass_open_distillation_and_quality_recovery",
+  "result": {
+    "student_39_fixed_cost_bound_tok_s": 631.3116785904964,
+    "student_39_fixed_cost_bound_usd_per_million": 0.48400111374108723,
+    "student_34_c32_peak_mib": 41249.840072631836,
+    "student_34_c32_headroom_mib": 4818.159927368164,
+    "provider_spend_usd_derived": 0.76682765,
+    "nomination": "one_candidate_only_39_layer_l40s_c16_c24_c32_session",
+    "student_root": "/root/.cache/glm47flash-awq-student39-183247870f89",
+    "manifest_contract_sha256": "183247870f8965b8b92260b167eb5c22f486210bf86ffb8a8a4bb0226799caf1",
+    "static_preflight": "STRUCTURAL_ONLY_LOADER_CLOSURE_NOT_PROVEN",
+    "student_tensor_keys": 22815,
+    "student_weight_bytes": 15544868264,
+    "shared_launcher_validation": "PASS_44_focused_tests",
+    "provider_create_attempted": true,
+    "loader_contract_diagnostic": "student39_loader_contract_diagnostic.json",
+    "corrected_student39_c32_peak_mib": 44459.51696777344,
+    "corrected_student39_c32_headroom_mib": 1608.4830322265625,
+    "measured_output_tok_s": {
+      "c16": 674.423576364909,
+      "c24": 661.6607656099549,
+      "c32": 734.5565331529764
+    },
+    "planning_usd_per_million_at_1_10_hour": {
+      "c16": 0.453061794,
+      "c24": 0.461800928,
+      "c32": 0.415972824
+    },
+    "economic_gate_pass": true,
+    "semantic_smoke_pass": true,
+    "quality_status": "deferred_recovery_required",
+    "useful_gpu_seconds": 212.091,
+    "artifact_sha256": "f9f3f77da53d30e87604d8a0f8c1ddd81e8bed65bab100896b06b5c6a7b35383",
+    "cleanup_pass": true
+  }
+}

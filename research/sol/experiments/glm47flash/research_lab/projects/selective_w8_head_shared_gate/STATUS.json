@@ -1,0 +1,15 @@
+{
+  "status": "active",
+  "priority": 300,
+  "summary": "Test whether selective W8A16 for the exact head-plus-shared tensor set offers a native SM89 runtime path and a less lossy, materially smaller representation than BF16/W4.",
+  "next_action": "Bind exact 139-tensor geometry to the pinned constructor/loader/SM89 dispatch, calculate payload, and compare deterministic W8 versus W4 dequantization error within the offline budget.",
+  "provider_mutation": "prohibited_zero_cost_offline_gate",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 1200,
+  "compute_budget_cpu_hours": 4,
+  "maximum_peak_rss_gib": 16,
+  "maximum_new_artifacts_mib": 64,
+  "checkpoint_materialization": "prohibited",
+  "promotion_payload_saving_mib": 512,
+  "stop_rule": "One typed W8_REPRESENTATION_NOMINATED, W8_RUNTIME_CLOSE, W8_PAYLOAD_CLOSE, W8_NUMERICAL_CLOSE, or operational close. No patch, checkpoint rewrite, CUDA, provider, controller, adapter, or successor preparation."
+}

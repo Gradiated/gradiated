@@ -1,0 +1,4 @@
+{"event": "instance_created", "instance_id": "computeinstance-e00p5aq7rh3ttebf2v", "timestamp": "2026-07-17T04:34:34.960496Z"}
+{"elapsed_seconds": 85.816, "event": "ssh_ready", "timestamp": "2026-07-17T04:35:19.092123Z"}
+{"event": "artifact_retrieved", "manifest_files": 14, "outcome": "PASS", "sha256": "922ebaeb41d3b8d1353e68c6fc37e707192cdb3be29216fa26f751ed81336146", "timestamp": "2026-07-17T04:44:15.264932Z"}
+{"cleanup_pass": true, "event": "cleanup_verified", "instance_get_not_found": true, "timestamp": "2026-07-17T04:45:01.587728Z"}

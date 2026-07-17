@@ -1,0 +1,12 @@
+{"event": "retained_arm_control", "instance_id": "computeinstance-e00h6hhcqgfkyqa86k", "parent_experiment_id": "full47_top2_shared_c32_direct_corrected", "timestamp": "2026-07-16T17:05:19.971570Z"}
+{"derived_identity": null, "derived_student": false, "event": "repair_01_begin", "minimal_depth42_v2": false, "minimal_depth43_v2": false, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "official_selective_w4": false, "repair_spec_sha256": "860e2afda0e3b2fc0dcb0e70f7fcffc7991790a62c8799bd7356cc9aed43ca59", "timestamp": "2026-07-16T17:05:20.459857Z"}
+{"event": "config_override_applied", "sha256": "b592960b89f80337618f980dbfb0ec048698f3b8fa30c5cb14479b24170ef255", "timestamp": "2026-07-16T17:05:21.234496Z"}
+{"event": "repair_01_reused_verified_runtime", "timestamp": "2026-07-16T17:05:21.234595Z"}
+{"event": "repair_01_inputs_staged", "timestamp": "2026-07-16T17:05:29.532612Z"}
+{"event": "repair_01_reused_verified_runtime_and_checkpoint", "timestamp": "2026-07-16T17:05:29.532709Z"}
+{"event": "phase_started", "phase": "scientific_workload", "timestamp": "2026-07-16T17:05:29.532748Z"}
+{"elapsed_seconds": 354.332, "event": "phase_finished", "outcome": "PASS", "phase": "scientific_workload", "timestamp": "2026-07-16T17:11:23.864906Z"}
+{"background_pass": false, "event": "repair_01_artifact_retrieved", "manifest_files": 32, "outcome": "FAIL", "sha256": "015dedee5bc56b734109ec7e36350fba73ab6ec923b6a3ae26561b87b17289f3", "timestamp": "2026-07-16T17:11:26.162519Z"}
+{"event": "repair_01_error", "message": "typed allocation result contains a harness error", "timestamp": "2026-07-16T17:11:26.162598Z", "type": "RuntimeError"}
+{"event": "repair_window_skipped", "timestamp": "2026-07-16T17:11:26.162627Z"}
+{"cleanup_pass": true, "event": "cleanup_verified", "instance_get_not_found": true, "timestamp": "2026-07-16T17:12:17.896355Z"}

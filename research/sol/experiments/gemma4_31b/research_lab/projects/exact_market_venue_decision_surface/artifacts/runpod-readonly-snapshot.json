@@ -1,0 +1,18 @@
+{
+  "provider": "runpod",
+  "reads": [
+    {
+      "bytes": 3,
+      "path": "/v1/pods",
+      "pod_count": 0,
+      "pods": [],
+      "status": "http_200"
+    },
+    {
+      "body": "[{\"error\":\"At #/paths/get for GET https://rest.runpod.io/v1/gpus, The GET request contains a path of '/v1/gpus' however that path, or the GET method for that path does not exist in the specification. Suggestion: Check the path is correct, and check that the correct HTTP method has been used (e.g. GET, POST, PUT, DELETE)\"}]",
+      "path": "/v1/gpus",
+      "status": "http_400"
+    }
+  ],
+  "retrieved_at_epoch": 1784251896.3954022
+}

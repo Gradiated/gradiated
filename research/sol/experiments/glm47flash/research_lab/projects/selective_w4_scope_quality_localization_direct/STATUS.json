@@ -1,0 +1,93 @@
+{
+  "status": "active",
+  "priority": 400,
+  "summary": "Directly localize the combined selective-W4 development regression by measuring official head-only W4, then conditionally shared-only W4, under one retained full-47 L40S owner.",
+  "next_action": "Start one bounded durable local pre-create owner. Reuse the admitted head-only root, validate the complete shared-only candidate before rematerializing it, finish the exact two-root admission and six-mutation raw consumer, and emit a typed local terminal. Provider create remains forbidden until that terminal passes; then run the existing one-create head-only/conditional-shared-only sequence.",
+  "provider_mutation": "gated_by_typed_durable_local_precreate_terminal_then_one_sequential_nebius_l40s_owner",
+  "authorized_spend_usd": 0.72,
+  "absolute_timeout_seconds": 3000,
+  "provider_creates": 0,
+  "retries": 0,
+  "primary_scope": "official_head_only_w4_shared_bf16",
+  "conditional_scope": "official_shared_only_w4_bf16_head",
+  "conditional_trigger": "VALID_HEAD_ONLY_ENABLES_SHARED_ONLY_SCOPE",
+  "minimum_followup_reserve_seconds": 1250,
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "authoritative_usd_per_million_output_tokens": 0.514,
+    "minimum_economic_output_tokens_per_second": 594.466,
+    "minimum_robust_output_tokens_per_second": 606.355,
+    "minimum_memory_headroom_mib": 512
+  },
+  "quality_scope": "Fresh raw-bound development localization only; no quality eligibility, holdout, deployment, or provider claim.",
+  "stop_rule": "One bounded durable local pre-create owner and, only after its typed pass, one sequential L40S create. No duplicate materializer, retry, third scope, combined/stock repetition, split8, c36, training, broad evaluation, seal project, or support successor.",
+  "active_session": null,
+  "durable_local_reactivation": {
+    "classification": "TURN_BOUND_CLOSE_SUPERSEDED_BY_RESOURCE_BUDGET",
+    "local_owner_required": true,
+    "wall_clock_seconds": 7200,
+    "maximum_cpu_hours": 16,
+    "maximum_rss_gib": 32,
+    "maximum_incremental_storage_gib": 25,
+    "authorized_spend_usd": 0.0,
+    "provider_creates_before_typed_pass": 0,
+    "required_status_fields": [
+      "unit",
+      "unit_manager",
+      "deadline",
+      "artifact_root",
+      "typed_terminal"
+    ],
+    "retained_head_only_root": "/root/.cache/glm47flash-awq-full47-official-head-w4-shared-bf16-43f13895167a",
+    "shared_only_candidate": "/root/.cache/official-full47-official-shared-w4-bf16-head-nd9n5e_5",
+    "reuse_prohibited_shared_temp": "/root/.cache/official-full47-official-shared-w4-bf16-head-_b36ckwt",
+    "pass_condition": "Both isolated roots pass checkpoint/scope admission and the actual raw consumer rejects all six identity mutations."
+  },
+  "director_reactivation": {
+    "cycle": 189,
+    "classification": "PRIOR_LOCAL_CLOSE_SUPERSEDED_BY_ASSIGNED_IMPLEMENTATION",
+    "provider_spend_remains_gated": true,
+    "scope_tool_focused_tests": "51/51 passed for pure scope plus shared launcher; execution-path gaps remain",
+    "mandatory_corrections": [
+      "exact 1-plus-46x3 candidate geometry and exact W4/native-Linear dispatch closure",
+      "bounded all-selected-tensor pack/dequant admission and wrong-root pre-create rejection",
+      "retained recovery propagation of selective scope with binder and CUDA oracle",
+      "AWQ serialized raw-to-normalized-to-scorer binding with six identity mutation failures"
+    ]
+  },
+  "cycle_190_execution_audit": {
+    "classification": "PREPARATION_PROGRESS_WITH_MATERIALIZATION_CODE_FAILURE",
+    "provider_inventory": "authenticated_zero_instances_zero_disks",
+    "provider_creates": 0,
+    "scientific_endpoints": 0,
+    "materialization_failure": "NameError: host materializer omitted is_selective_candidate import after conversion",
+    "invalid_local_root": "/root/.cache/official-full47-official-head-w4-shared-bf16-4171ugxc",
+    "invalid_root_reason": "not content-addressed or admitted; lm_head remains BF16 and ignored",
+    "residual_gates": [
+      "main launcher rejects checkpoint/scope mismatch before create",
+      "raw binding includes model/runtime/normalizer/BF16-control identities and six mutation failures",
+      "one foreground materialization emits admitted head-only and shared-only content addresses"
+    ],
+    "final_turn_stop_rule": "No further support, controller, seal, or materialization-retry cycle. Reach an admitted isolated root and provider create in the next researcher turn or close this localization line."
+  },
+  "prior_local_close": {
+    "classification": "PRECREATE_SCOPE_PACKET_NOT_EXECUTABLE",
+    "artifact": "artifacts/SCOPE_ADMISSION_BLOCKER_2026-07-16.json",
+    "provider_spend_usd": 0,
+    "provider_creates": 0,
+    "head_only_packet": "MISSING",
+    "shared_only_packet": "FAIL_CLOSED: BF16 lm_head coexists with parallel_lm_head_w4 config and would invoke the forbidden head adapter",
+    "raw_quality_consumer": "NOT_RUN: no valid isolated scope packet"
+  },
+  "terminal_evidence": {
+    "classification": "W4_LOCALIZATION_FINAL_TURN_EXHAUSTED",
+    "artifact": "artifacts/CYCLE190_FINAL_CLOSE.json",
+    "provider_creates": 0,
+    "provider_spend_usd": 0
+  },
+  "local_housekeeping": {
+    "quarantine_only": "/root/.cache/official-full47-official-shared-w4-bf16-head-_b36ckwt",
+    "reason": "incomplete foreground shared-only materialization; never content-addressed or admitted",
+    "reuse_prohibited": true
+  }
+}

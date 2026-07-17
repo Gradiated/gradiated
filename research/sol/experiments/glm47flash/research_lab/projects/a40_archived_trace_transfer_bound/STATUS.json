@@ -1,0 +1,12 @@
+{
+  "status": "completed",
+  "priority": 100,
+  "summary": "Archived transfer bound is partial-identification only: compute scaling yields 149.116 tok/s, trace-classified surrogate 190.793 tok/s, and memory scaling 293.924 tok/s against 166.819/176.968 gates.",
+  "next_action": "If TensorDock authority becomes available, run exactly one matched A40 c8 8192x1024 stock-AWQ measurement; otherwise keep A40 conditional rather than preparing a controller.",
+  "provider_mutation": "prohibited_zero_cost_archived_trace_bound",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": null,
+  "result_artifact": "A40_ARCHIVED_TRACE_TRANSFER_BOUND_2026-07-15.json",
+  "decision": "CONDITIONAL_DIRECT_A40_C8_MEASUREMENT_ONLY"
+}

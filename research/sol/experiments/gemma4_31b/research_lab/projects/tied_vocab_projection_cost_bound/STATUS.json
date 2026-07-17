@@ -1,0 +1,19 @@
+{
+  "status": "complete",
+  "priority": 123,
+  "summary": "Independent $0 bound on whether the exact tied 262144 x 5376 vocabulary projection can clear 5% whole-request relevance or unlock L40S capacity.",
+  "next_action": null,
+  "provider_mutation": "prohibited_zero_cost_offline",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 30,
+  "compute_budget": "1 local CPU-hour; no CUDA",
+  "storage_budget": "128 MiB",
+  "active_session": null,
+  "last_result_classification": "closed_no_credible_tied_vocab_candidate",
+  "last_terminal_artifacts": {
+    "bound": "VOCAB_BOUND.json",
+    "decision": "DECISION.md",
+    "runner": "run_bound.py"
+  },
+  "terminal_artifact": "DECISION.md"
+}

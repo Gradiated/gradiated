@@ -1,0 +1,27 @@
+{
+  "classification": "typed_pre_gpu_checkpoint_integrity_failure",
+  "provider_mutation": false,
+  "candidate_root": "/root/.cache/glm47flash-awq-minimal-depth-4c84badbce22",
+  "candidate_manifest_sha256": "a41e353015487ff58d367bf5ce42ae7c7d49de87c339c49deab714a69a42a584",
+  "checksum_list_sha256": "eb65906a02e4ed6a69a04e403592157ece5a9e672aabe27bdcc1633b42c441dd",
+  "derived_identity_map": {
+    "student42": {
+      "config_sha256": "3859511a5a451f8d9a5fd0dd10e25edd98dd40cc4e970d4a124047dc86982899",
+      "index_sha256": "8758d9236670cb1c0f693ce6b54f7a9318c85c76feb8b333b8e0429a0113edde",
+      "weight_bytes": 16658558680
+    }
+  },
+  "integrity_result": {
+    "verified_rows": 13,
+    "matching_rows": 12,
+    "mismatch": {
+      "path": "minimal_depth_checkpoint_manifest.json",
+      "bytes": 4232,
+      "expected_sha256": "42940771cc9de0dd1d0a509f64008a3388c770c1776c517067ad94269c901262",
+      "observed_sha256": "cb075aad0a735a46e3a580c5a4552ac42b83e6b8e7a6d5f40952701bcfd9c8c8"
+    },
+    "all_weight_shards_match": true,
+    "mutation_performed": false
+  },
+  "decision": "Do not create an L40S instance. The content-addressed candidate cannot pass the required local/remote full-manifest validation, so a load or throughput result would not be attributable to the admitted frozen checkpoint."
+}

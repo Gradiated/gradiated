@@ -1,0 +1,45 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "MARKET_ONLY_HEADROOM: raw exact-model economics retain retail headroom, but no conservative sustainable all-in envelope fits $0.514/M.",
+  "next_action": "Terminal and superseded by top3_shared_sustainable_envelope_adjudication: mathematical base-rate envelopes exist, but no conservative production policy is admitted. Do not reuse MARKET_ONLY_HEADROOM as the portfolio classification.",
+  "provider_mutation": "prohibited_zero_cost_economics_bound",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 600,
+  "resource_cap": {
+    "peak_rss_gib": 4,
+    "new_artifacts_mib": 32
+  },
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "authoritative_usd_per_million_output_tokens": 0.514,
+    "candidate_tokens_per_second": 644.31800498966,
+    "raw_planning_gpu_usd_per_million_output_tokens": 0.474230974750518
+  },
+  "allowed_results": [
+    "SUSTAINABLE_HEADROOM_ADMISSION",
+    "MARKET_ONLY_HEADROOM",
+    "SUSTAINABLE_HEADROOM_CLOSE"
+  ],
+  "stop_rule": "One offline economics bound using settled prices/lifecycle evidence; no price search, provider/model action, new lifecycle study, launch preparation, or spend authorization.",
+  "result": {
+    "classification": "MARKET_ONLY_HEADROOM",
+    "artifact": "artifacts/SUSTAINABLE_COGS_DECISION_2026-07-16.json",
+    "typed_summaries_verified": 3,
+    "candidate_raw_planning_gpu_usd_per_million_output_tokens": 0.474230974750518,
+    "minimum_productive_fraction_for_target": 0.9226283555457548,
+    "observed_settled_productive_fraction": 0.154695879873146,
+    "minimum_64_request_batches_at_settled_loss": 135,
+    "remaining_budget_usd_per_million_at_integer_threshold": 0.000009289639713,
+    "authenticated_cleanup": {
+      "instance_count": 0,
+      "disk_count": 0
+    }
+  },
+  "director_disposition": {
+    "accepted": false,
+    "reason": "The 135-batch calculation is the minimum integer break-even point, so its near-zero residual allowance is true by construction and does not falsify longer conservative sessions. The measured artifact is preserved; independent adjudication returned ENVELOPE_EVIDENCE_OPEN.",
+    "superseding_project": "../top3_shared_sustainable_envelope_adjudication",
+    "superseding_classification": "ENVELOPE_EVIDENCE_OPEN"
+  }
+}

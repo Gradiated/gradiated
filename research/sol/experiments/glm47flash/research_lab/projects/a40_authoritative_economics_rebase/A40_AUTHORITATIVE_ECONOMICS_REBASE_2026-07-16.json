@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "analysis_id": "a40_authoritative_economics_rebase_2026-07-16",
+  "evidence_labels": {
+    "throughput_interval": "derived conditional scaling scenarios; not a conservative measured throughput bound",
+    "venue_and_rate": "vendor-reported public read-only inventory snapshot retrieved 2026-07-15",
+    "economics": "derived"
+  },
+  "scope": {
+    "checkpoint_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "workload": "stock vLLM current AWQ, c8, 8192 input tokens and 1024 output tokens per request",
+    "provider_mutation": false,
+    "spend_usd": 0
+  },
+  "authoritative_target_usd_per_million_output_tokens": 0.514,
+  "venue": {
+    "provider": "TensorDock",
+    "sku": "a40-pcie-48gb",
+    "public_orderability_signal": "Two matching A40 hostnodes in unauthenticated official inventory; this is a listing signal, not an authenticated allocation guarantee.",
+    "listed_minimum_hourly_usd": 0.3475,
+    "included_terms": "Minimum GPU, 2 vCPU, 4 GB RAM, and 20 GB local NVMe; public contract says millisecond proration and no ingress/egress fee. Local storage is not replicated.",
+    "unbound_terms": "Authenticated direct-instance lookup, deletion, checkout identity, and funded-account authorization remain unavailable in public evidence."
+  },
+  "throughput_scenarios_output_tokens_per_second": {
+    "conservative_compute": 149.115845215,
+    "trace_classified_surrogate": 190.792603797,
+    "optimistic_memory": 293.923567313
+  },
+  "reserve_sensitivity": [
+    {
+      "omitted_cost_reserve_fraction": 0.0,
+      "effective_hourly_usd": 0.3475,
+      "required_output_tokens_per_second": 187.797233031,
+      "cost_usd_per_million_at_conservative_compute": 0.647334142,
+      "cost_usd_per_million_at_trace_classified_surrogate": 0.505930397,
+      "cost_usd_per_million_at_optimistic_memory": 0.328411153,
+      "scenario_passes": {"conservative_compute": false, "trace_classified_surrogate": true, "optimistic_memory": true}
+    },
+    {
+      "omitted_cost_reserve_fraction": 0.05,
+      "effective_hourly_usd": 0.364875,
+      "required_output_tokens_per_second": 197.187094682,
+      "cost_usd_per_million_at_conservative_compute": 0.67970085,
+      "cost_usd_per_million_at_trace_classified_surrogate": 0.531226917,
+      "cost_usd_per_million_at_optimistic_memory": 0.344831711,
+      "scenario_passes": {"conservative_compute": false, "trace_classified_surrogate": false, "optimistic_memory": true}
+    },
+    {
+      "omitted_cost_reserve_fraction": 0.1,
+      "effective_hourly_usd": 0.38225,
+      "required_output_tokens_per_second": 206.576956334,
+      "cost_usd_per_million_at_conservative_compute": 0.712067557,
+      "cost_usd_per_million_at_trace_classified_surrogate": 0.556523437,
+      "cost_usd_per_million_at_optimistic_memory": 0.361252269,
+      "scenario_passes": {"conservative_compute": false, "trace_classified_surrogate": false, "optimistic_memory": true}
+    }
+  ],
+  "decision": "A40_DIRECT_MEASUREMENT_ONLY",
+  "interpretation": "The retained conditional interval 149.116-293.924 tok/s crosses every corrected threshold. Its lower scenario fails even the raw 187.797 tok/s threshold, and its 190.793 tok/s trace surrogate clears only the no-reserve case. Therefore neither a target close nor authority-worth-seeking is supported: the conservative lower scenario does not clear with lifecycle headroom.",
+  "one_future_measurement": {
+    "signal": "aggregate output tokens / measured matched-arm wall seconds",
+    "required_scope": "exact revision, stock vLLM current AWQ, c8, 8192x1024 background workload, request rows, and GPU telemetry",
+    "decision_boundaries_output_tokens_per_second": {"raw_listed": 187.797233031, "five_percent_reserve": 197.187094682, "ten_percent_reserve": 206.576956334},
+    "external_authority_required": "A funded authenticated TensorDock account with exact A40 hostnode revalidation, direct-instance lookup, and verified authenticated delete authority."
+  },
+  "source_sha256": {
+    "a40_archived_trace_transfer_bound": "2f9fa2a1bb0b40b0089bb994518c47dfdc8f6fc92ebd29befb0d1d2fa50da7b9",
+    "a40_alternate_venue_verification": "3fc2bb1f183ce971bf5684b27c8f0b9eb609f36e7c9a928848ec02cbc0f268f9",
+    "tensordock_public_contract": "5ef1793d73a8fcc86ebea0983dea33503424174b7dececd3fa6ec2ef51afb230"
+  }
+}

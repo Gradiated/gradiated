@@ -1,0 +1,14 @@
+{
+  "status": "complete",
+  "priority": 139,
+  "summary": "Bound the native Gemma 4 assistant acceptance and verification efficiency required for a 5%+ sustainable-cost gain on the exact background workload.",
+  "next_action": "Terminal derived bound recorded; admit at most one matched native MTP arm only if the exact identity, quality, acceptance, and >=5% all-in gates pass.",
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0,
+  "wall_clock_budget_minutes": 45,
+  "compute_budget": "1.5 local CPU-hours; no GPU",
+  "storage_budget": "1 GiB project-local; no shared /tmp",
+  "active_session": null,
+  "last_result_classification": "matched_arm_candidate_with_hard_negative_gate",
+  "terminal_artifact": "MTP_BOUND.json"
+}

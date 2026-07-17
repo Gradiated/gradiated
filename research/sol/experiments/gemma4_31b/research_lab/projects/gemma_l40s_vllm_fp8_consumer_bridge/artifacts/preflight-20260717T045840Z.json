@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "generated_utc": "2026-07-17T04:58:40.348525Z",
+  "classification": "typed_precreate_lifecycle_controller_blocker",
+  "decision": "do_not_create_provider_resource",
+  "scope": "checkpoint-free pinned-vLLM FP8 consumer bridge and its conditional same-session BF16 ParallelLMHead arm",
+  "identity_assertion": {
+    "path": "IDENTITY_ASSERTION.json",
+    "status": "pass",
+    "model": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "vllm_source_revision": "ab0a20d15129b322f911db578b50c6b35b3167e7",
+    "tp_size": 1,
+    "source_derived_tp1_shapes": {
+      "sliding_qkv": [5376, 16384],
+      "global_qkv": [5376, 20480],
+      "sliding_output": [8192, 5376],
+      "global_output": [16384, 5376],
+      "merged_gate_up": [5376, 43008],
+      "down": [21504, 5376]
+    },
+    "matched_input_hashes": {
+      "hf_config": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "geometry": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72",
+      "fp8_packet": "6c8e4e6cafbc9a1ba12e203c8045d9c82bee7c3b7ad1477a42ce5e38d4f7d880",
+      "saturation_gate": "690e0e457c6e8e9121b54fb7f88abc92c3dcc358e1d71accffddb083878d00d6",
+      "predecessor_summary": "4a5634b97ace9b5c1825f72a86dd06370b4d9f4ec942a827080dfea388ebc94f"
+    }
+  },
+  "controller_audit": {
+    "requested_controller": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py",
+    "sha256": "354ee04bd4d98c39d0c39b159aa3bace2548bda4f3cb7653fa50d6762de70a68",
+    "accepts_custom_remote_and_benchmark_inputs": true,
+    "durable_service_owner": false,
+    "evidence": [
+      "The controller has no systemd-run, INVOCATION_ID, or SYSTEMD_EXEC_PID owner gate.",
+      "It invokes a detached cleanup watchdog, but that watchdog does not own or sequence scientific work.",
+      "Its run() has one remote runner, retrieves one allocation result, then unconditionally delete_instance() in finally.",
+      "It has no typed primary-success evaluator, retained-instance handoff, conditional ParallelLMHead trigger, or false-trigger cleanup branch."
+    ],
+    "contract_failure": "The project requires one durable sequential owner that persists every actual-consumer stage and can start the BF16 ParallelLMHead arm only after the typed FP8 primary result. Running this foreground controller under an ad-hoc wrapper would not establish a controller-owned retained session and would still unconditionally tear down before the conditional arm."
+  },
+  "provider_precreate_gate": {
+    "inventory_checked": true,
+    "provider_create_attempted": false,
+    "reason": "The only named controller that accepts the custom scripts fails the mandatory durable-owner and conditional-arm semantics before any provider mutation."
+  },
+  "required_next_move": "Use an existing shared durable controller that can accept custom remote/benchmark inputs and has one typed sequential retained-session evaluator, or explicitly authorize its narrowly scoped implementation and its owner-gate tests. Revalidate these immutable identities before any create; do not use a standalone systemd wrapper around mla_microbench_control.py."
+}

@@ -1,0 +1,16 @@
+{
+  "status": "complete",
+  "priority": 120,
+  "summary": "Closed RTX 6000 Ada: conservative retained throughput is 0.821-0.990x (439.546-529.933 tok/s); RunPod's $0.77/h listing only passes before lifecycle costs and fails at a conservative $0.847/h all-in rate.",
+  "next_action": "Retain A40 as the only conditional cheap-hardware lead; do not nominate RTX 6000 Ada measurement without a sustainable all-in quote <= $0.813/h.",
+  "provider_mutation": "none_zero_cost_hardware_transfer_screen",
+  "authorized_spend_usd": 0.0,
+  "quality_policy": "bit_identical_current_awq_target_same_runtime_expected_but_must_be_verified_in_any_later_measurement",
+  "artifact_contract": [
+    "rtx6000ada_c16_transfer_bound.json",
+    "source_and_rate_evidence_manifest.json",
+    "RESEARCH_LOG.md"
+  ],
+  "decision": "closed_no_measurement_nomination",
+  "decision_artifact": "rtx6000ada_c16_transfer_bound.json"
+}

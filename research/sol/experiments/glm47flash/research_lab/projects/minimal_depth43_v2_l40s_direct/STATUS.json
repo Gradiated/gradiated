@@ -1,0 +1,52 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "QUALITY_PROXY_CLOSE: depth43 passed the architecture-cost gate at c16/c32 but its frozen development screen was strictly worse than depth42.",
+  "next_action": "Terminal with cleanup verified. Preserve the endpoint as non-deployable performance evidence; depth42_depth43_quality_signal_adjudication owns the $0 interpretation of the tiny V1 screen.",
+  "provider_mutation": "released_after_verified_zero_instance_and_disk",
+  "authorized_spend_usd": 1.0,
+  "absolute_timeout_seconds": 3900,
+  "active_experiment": null,
+  "active_session": null,
+  "candidate": {
+    "source_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "layers": 43,
+    "skipped_source_layers": [6, 15, 24, 33],
+    "restored_vs_depth42": 42,
+    "c32_admission_peak_mib": 44532,
+    "device_envelope_mib": 46068
+  },
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "required_output_tokens_per_second": 594.466,
+    "robust_marker_output_tokens_per_second": 606.355,
+    "background_arm_envelope_seconds": 300
+  },
+  "workload": {
+    "input_tokens": 8192,
+    "output_tokens": 1024,
+    "concurrencies": [16, 32],
+    "batches_per_concurrency": 2,
+    "cache": "off"
+  },
+  "stop_rule": "terminal QUALITY_PROXY_CLOSE recorded; no successor",
+  "quality_policy": "architecture-cost proxy only; full quality remains mandatory",
+  "terminal_result": {
+    "classification": "QUALITY_PROXY_CLOSE",
+    "artifact": "artifacts/nebius_l40s_minimal_depth43_v2_c16c32_2026-07-16-r2/summary.json",
+    "archive_sha256": "8db63070ed174a9710f181e17d3cb747f9ca70b54775ee6eaf0bfa3beaad8120",
+    "c16_output_tokens_per_second": 600.7044604894742,
+    "c32_output_tokens_per_second": 636.4690998062557,
+    "c16_planning_usd_per_million_output_tokens": 0.5086620387446077,
+    "c32_planning_usd_per_million_output_tokens": 0.4800791674702954,
+    "candidate_development_score": 0.0,
+    "control_development_score": 0.3333333333333333,
+    "allocation_seconds": 1263.034,
+    "useful_gpu_seconds": 157.517,
+    "derived_provider_exposure_usd": 0.30106605,
+    "cleanup_pass": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "retained_for_next_experiment": false
+  }
+}

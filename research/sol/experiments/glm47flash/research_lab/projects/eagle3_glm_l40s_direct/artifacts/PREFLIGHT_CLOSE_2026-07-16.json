@@ -1,0 +1,39 @@
+{
+  "schema": "eagle3_glm_l40s_direct_preflight.v1",
+  "classification": "RUNTIME_CLOSE",
+  "provider_spend_usd": 0.0,
+  "provider_create_attempted": false,
+  "draft": {
+    "revision": "c43b5f18f59b8fba69e8c0d585fb0e614cf42af1",
+    "content_address_root": "artifacts/draft-c43b5f18f59b8fba69e8c0d585fb0e614cf42af1",
+    "content_manifest_sha256": "24a38a1f0f95dc5eb9550fa5e390ffbb27082f19c883ca57b0b80aa63a56c1e6",
+    "weights_sha256": "ea0f7a60a8efd7bb2c42d4db2e2b6995bc1cac800abee9a7eb14e352ee4fda46",
+    "weights_bytes": 290884320,
+    "payload_bytes": 290882816,
+    "tensor_count": 15,
+    "config_sha256": "543261d86f82efef374e9ee50ae02f225d16d759b1407c0d339f9c1725efd7ee",
+    "architecture": "LlamaForCausalLMEagle3",
+    "max_position_embeddings": 4096,
+    "card_defined_proposal_length": 6
+  },
+  "fixed_workload": {
+    "input_tokens": 8192,
+    "output_tokens": 1024,
+    "concurrency": 16,
+    "required_output_tokens_per_second": 594.466,
+    "contextual_stock_output_tokens_per_second": 552.1710554232396
+  },
+  "pinned_runtime": {
+    "vllm_version": "0.15.0",
+    "speculative_source_sha256": "75f4956a1399790f7e7fdf80d14eeb5524da486a1b94077fdf5fb37f8ee138b5",
+    "draft_length_rule": "SpeculativeConfig._maybe_override_draft_max_model_len returns min(draft_max_model_len, target_max_model_len) when no smaller explicit limit is supplied; an explicit limit cannot exceed the draft maximum.",
+    "resolved_draft_max_model_len": 4096,
+    "result": "The first fixed request is already 8192 tokens, so EAGLE3 is outside its admitted proposal range before any generated token. A target-only fallback would emit zero draft/accepted tokens and cannot establish the required target-verified EAGLE3 execution path."
+  },
+  "additional_checks": {
+    "target_type_allowlist": "The sole source intervention would append glm4_moe_lite to the EAGLE3 target allowlist. It cannot change the draft's 4096-token context contract, so it is not applied.",
+    "scheduler": "Pinned vLLM enables asynchronous scheduling for EagleModelTypes, unlike ngram; this does not repair the context-length exclusion.",
+    "memory": "The fully addressed 277.41 MiB draft payload and one-layer BF16 GQA state do not need a paid residence test once the mandatory request cannot invoke the draft."
+  },
+  "decision": "RUNTIME_CLOSE at $0. No source patch, provider create, alternative context length, proposal-length sweep, or successor is authorized by this project."
+}

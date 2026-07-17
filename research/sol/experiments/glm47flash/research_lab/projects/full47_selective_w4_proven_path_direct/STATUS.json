@@ -1,0 +1,72 @@
+{
+  "status": "complete",
+  "priority": 400,
+  "summary": "W4_ROBUST_PASS for architecture-cost discovery: official full-47 head+shared group-32 W4 loaded on SM89 and c32 delivered 630.195 tok/s with 2,323 MiB observed HBM headroom, but the development-quality screen failed; cleanup is authenticated zero.",
+  "next_action": "Terminal. Preserve selective W4 as the strongest exact full-47 architecture-cost candidate, not a quality-eligible or deployable result. Do not retry, run split8, replay the known-unbound quality archive, or open a combined endpoint while performance discovery remains the active phase.",
+  "provider_mutation": "prohibited_terminal",
+  "authorized_spend_usd": 0.6,
+  "absolute_timeout_seconds": 2400,
+  "provider_creates": 1,
+  "retries": 0,
+  "primary_arms": [
+    "official_selective_w4_c16",
+    "official_selective_w4_c32"
+  ],
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "authoritative_usd_per_million_output_tokens": 0.514,
+    "minimum_economic_output_tokens_per_second": 594.466,
+    "minimum_robust_output_tokens_per_second": 606.355,
+    "minimum_memory_headroom_mib": 512
+  },
+  "conditional_followup": {
+    "arm": "official_selective_w4_c32_split8",
+    "trigger": "W4_C32_NEAR_ROBUST_SPLIT8",
+    "primary_throughput_minimum_inclusive": 600.086,
+    "primary_throughput_maximum_exclusive": 606.355,
+    "minimum_followup_output_tokens_per_second": 606.355,
+    "minimum_ratio_to_primary": 1.005,
+    "minimum_remaining_seconds": 660,
+    "status": "disabled_unrun",
+    "reason": "The four-split c32 result exceeded the 606.355 robust gate, so the near-robust throughput trigger was false. The frozen owner also lacked the required sequential retained execution path."
+  },
+  "result": {
+    "classification": "W4_ROBUST_PASS",
+    "claim_scope": "exact-full47-architecture-cost-only",
+    "c16_output_tokens_per_second": 585.4371640786468,
+    "c32_output_tokens_per_second": 630.1953984207183,
+    "c32_planning_gpu_usd_per_million_output_tokens": 0.4848584364806274,
+    "c32_requests_complete": "64/64",
+    "c32_background_envelope_seconds": 103.993,
+    "semantic_pass": true,
+    "prefix_cache_disabled_and_zero": true,
+    "official_sm89_wna16_oracle_pass": true,
+    "full_load_pass": true,
+    "oracle_evidence_limit": "The persisted oracle proves SM89 CompressedTensors WNA16 method/scheme selection. Local admission proves finite representative dequantization and exact 139 packed/scale/shape triplets with no selected BF16 duplicate weights; full-load plus endpoint generation proves executable head/sampler/shared paths. The archive does not separately persist Marlin kernel-class identity or the requested separate-versus-shared exact-sum comparison.",
+    "peak_hbm_used_mib": 43745,
+    "peak_hbm_headroom_mib": 2323,
+    "development_quality_pass": false,
+    "quality_limit": "Candidate overall 0.0 versus carried BF16 control 0.333333; retrieval and continuation regress. The identical archive schema is already known not to bind serialized raw responses through the normalized consumer.",
+    "allocation_seconds": 1310.638,
+    "useful_gpu_seconds": 159.965,
+    "actual_cost_usd_derived": 0.312413211,
+    "archive_sha256": "58349e47b405ae7f62645be89aa0b9c256de1c6082b1671ad64a69a5185c2a72",
+    "cleanup_pass": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "ended_at_utc": "2026-07-16T20:10:11.462414Z",
+    "artifact_root": "artifacts/l40s_full47_selective_w4_proven_path_20260716_r1"
+  },
+  "director_live_contract_correction": {
+    "observed_command": "vllm_smoke_control.py with --keep-instance-after-result and no sequential trigger/recovery owner",
+    "verified_retained_owner_used": false,
+    "split8_disabled_for_live_run": true,
+    "reason": "The frozen command has no typed W4_C32_NEAR_ROBUST_SPLIT8 evaluator, recovery call, false-trigger cleanup branch, or single sequential VerifiedRetainedOwner. The existing recovery tool also does not stage the W4 binder/oracle or enable head_shared_w4, so it cannot execute this candidate after the primary container exits. A later manual recovery would violate the content and one-owner contracts.",
+    "effective_watchdog_deadline_epoch": 1784233661.5588439,
+    "effective_watchdog_deadline_utc": "2026-07-16T20:27:41Z",
+    "superseded_reported_deadline_epoch": 1784234846,
+    "terminal_truth": "Owner exit and retained instance are not terminal success. After the primary endpoint, perform no recovery; require immediate cleanup by the existing owner path or watchdog and a fresh authenticated zero-instance/zero-disk inventory."
+  },
+  "quality_claim_limit": "Architecture-cost discovery only; inherited development-quality failure is not quality eligibility.",
+  "stop_rule": "One real shared-transfer preflight and one provider create. Direct CUDA load plus c16/c32 or close; split8 only on the named near-robust trigger. No retry, packet, readiness successor, c36, ablation, quality arm, or post-result retention."
+}

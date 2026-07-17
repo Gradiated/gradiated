@@ -1,0 +1,2 @@
+{"checks": {"assertion_pass": true, "checkpoint_exists": true, "checkpoint_index": true, "checkpoint_pass": true, "checkpoint_terminal_hash": true, "groups": true, "model": true, "revision": true, "separate_10k": true, "trace_hash": true}, "deadline_epoch": 1784288391.6868951, "epoch": 1784282991.6870086, "event": "owner_started"}
+{"epoch": 1784282992.4984741, "error_type": "FileNotFoundError", "event": "owner_failure", "message": "[Errno 2] No such file or directory: 'nebius'"}

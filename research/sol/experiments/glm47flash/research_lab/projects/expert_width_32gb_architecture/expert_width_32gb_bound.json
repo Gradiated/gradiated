@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "evidence_label": "derived_exact_shape_and_transfer_bound",
+  "fixture": "source_bound_width_fixture.json",
+  "decision": "close",
+  "candidate": "width_512_routed_and_shared",
+  "observed_checkpoint": {
+    "config_sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9",
+    "index_sha256": "b9c53433e94f2fe7870cdbc3fcb6ed1431eb500c5242a039de93fef4bb988695",
+    "moe_layers": 47,
+    "routed_experts": 64,
+    "top_k": 4,
+    "source_width": 1536,
+    "candidate_width": 512
+  },
+  "results": {
+    "group32_and_128_tile_legal": true,
+    "candidate_expert_weight_gib": 5.232421875,
+    "source_expert_weight_gib": 15.697265625,
+    "weight_reduction_gib": 10.46484375,
+    "projected_peak_gib_from_43_07": 32.60515625,
+    "nominal_32gb_capacity_gib": 32.0,
+    "conservative_l40s_endpoint_ceiling": 0.08505632554812554,
+    "required_l40s_endpoint_reduction": 0.09955144882554656
+  },
+  "falsifiers": [
+    "measured exact W4 runtime with allocator/KV peak <=31.4 GiB on a 32 GiB device",
+    "matched L40S endpoint >=594.466 output tok/s with semantic diagnostics",
+    "future trace proves standard Marlin share is width-sensitive and supplies enough measured credit"
+  ],
+  "scope_result": "No checkpoint conversion, training, GPU execution, runtime mutation, or provider spend."
+}

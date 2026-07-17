@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "decision": "typed_none",
+  "evidence_scope": "measured metadata and first-party source inspection plus deterministic derived arithmetic; no weights, CUDA, provider, or quality run",
+  "target": {"model": "google/gemma-4-31B-it", "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4", "tp": 1, "hardware": "NVIDIA L40S SM89, 48 GiB, 864 GB/s", "workload": {"primary_input_tokens": 4214, "primary_output_tokens": 358, "aa_input_tokens": 10000, "background_concurrency": [8, 16, 32]}},
+  "input_hashes": {"geometry": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72", "fp8_memory": "eaeb0586196cac27d45b32168b41565d701b5a952d64b13c414fcc76e6f9f5be", "saturation_gate": "690e0e457c6e8e9121b54fb7f88abc92c3dcc358e1d71accffddb083878d00d6", "fp8_shape_summary": "4a5634b97ace9b5c1825f72a86dd06370b4d9f4ec942a827080dfea388ebc94f", "fp8_identity": "8fc4a47bcb5f09783385b90d92269f57fedae86fcf2bb32e51cef41c8f612c73", "delivery_route": "3b488da5060674e4bc545fb1e3ea458c01c4492f696ba7e9c7b255e59b40dedc", "gpu_prices": "3f403d67a92fc91be85bbd27dede85f5f91c3fd2df25ef8dcef2a344acbd1e01", "accelerator_inventory": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8"},
+  "accounting": {
+    "representation": "AWQ-style W4, group_size=128, zero_point=true, packed INT4; no tile padding because all listed K/N satisfy Marlin constraints",
+    "formula_per_quantized_weight": "0.5 packed INT4 byte + 2.0 FP16 scale bytes / group + 0.5 packed 4-bit zero-point bytes / group",
+    "quantized_parameter_bytes": 29396828160,
+    "quantized_payload_bytes": 15272570880,
+    "quantized_payload_gib": 14.227,
+    "bf16_embedding_tied_output_bytes": 2818572288,
+    "bf16_vision_and_small_remainder_bytes": 3752516704,
+    "total_weights_bytes": 21843659872,
+    "total_weights_gib": 20.343494,
+    "workspace_reserve_gib": 5.0,
+    "kv": {"bf16_primary_per_request_gib": 0.712128, "bf16_10k_per_request_gib": 1.153564, "fp8_per_token_head_primary_per_request_gib": 0.555684, "fp8_per_token_head_10k_per_request_gib": 0.778127, "fp8_layout": "one FP8 byte per K/V scalar plus inline FP32 scale per token-head"},
+    "concurrency_totals_gib": {"primary_bf16_kv": {"c8": 31.040515, "c16": 36.737537, "c32": 48.131579}, "primary_fp8_token_head_kv": {"c8": 29.788965, "c16": 34.234437, "c32": 43.125381}, "aa_10k_fp8_token_head_kv": {"c8": 31.568507, "c16": 37.793521, "c32": 50.243548}},
+    "capacity_envelope_gib": 44.704,
+    "fit_interpretation": "c16 fits with 7.966 GiB BF16-KV slack at primary and 6.910 GiB slack at 10K explicit FP8-KV; c32 fails primary BF16-KV but fits explicit FP8-KV. No allocator measurement was performed."
+  },
+  "bandwidth_bound": {
+    "bandwidth_gb_s": 864,
+    "equations": {"decode": "req/s >= M * 864e9 / (weight_bytes * 358)", "primary_mix": "req/s >= M * 864e9 / (weight_bytes * (4214+358))", "cost": "$1.10 / 3600 / req_per_s"},
+    "optimistic_lower_bound": {"W4_decode_req_s": {"c8": 0.883884, "c16": 1.767768, "c32": 3.535536}, "W4_primary_mix_req_s": {"c8": 0.069211, "c16": 0.138421, "c32": 0.276842}, "FP8_conservative_decode_req_s": {"c8": 0.523473, "c16": 1.046945, "c32": 2.093891}, "FP8_conservative_primary_mix_req_s": {"c8": 0.040989, "c16": 0.081979, "c32": 0.163957}, "W4_vs_FP8_primary_mix_reduction": 0.407759, "planning_cost_per_request_at_c16_primary_mix_usd": 0.002207},
+    "interpretation": "This is a weight-streaming ceiling, not endpoint throughput: it excludes launch, compute, attention, scheduling, prefill overlap, and quality."
+  },
+  "consumer_audit": {
+    "runtime": "vLLM ab0a20d15129b322f911db578b50c6b35b3167e7; image docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "consumer": "first-party vLLM AutoAWQ/AutoGPTQ -> Marlin WNA16 CUDA linear consumer",
+    "source": "https://github.com/vllm-project/vllm/blob/ab0a20d15129b322f911db578b50c6b35b3167e7/vllm/model_executor/layers/quantization/utils/marlin_utils.py",
+    "source_hashes": {"marlin_utils.py": "e09f6cd5869e5d14121f296eafc9bb0fc7b6768c8c6470d1348ffcc84bf2bfd7"},
+    "support": {"sm89": "accepted; Marlin minimum capability is 75", "formats": "AWQ uint4 with runtime zero-points or GPTQ symmetric uint4b8", "group_sizes": [-1, 32, 64, 128], "activation_dtype": ["float16", "bfloat16"], "tile_restrictions": "N divisible by 64 and K divisible by 128; tile padding allowed for non-act-order layers; group boundaries must divide partition K", "workspace": "runtime Marlin workspace allocated by marlin_make_workspace_new"},
+    "shape_results": [{"name": "sliding_qkv", "KxN": [5376, 16384], "supported": true}, {"name": "global_qkv", "KxN": [5376, 20480], "supported": true}, {"name": "sliding_output", "KxN": [8192, 5376], "supported": true}, {"name": "global_output", "KxN": [16384, 5376], "supported": true}, {"name": "merged_gate_up", "KxN": [5376, 43008], "supported": true}, {"name": "down", "KxN": [21504, 5376], "supported": true}, {"name": "tied_head", "KxN": [5376, 262144], "supported": false, "reason": "retained BF16 in this bound"}],
+    "checkpoint_route": "none: no exact-revision W4 producer/checkpoint metadata exists; source audit proves only a synthetic checkpoint-free component proxy, not an exact quality-preserving route"
+  },
+  "nomination": {"decision": "none", "reason": "Economic and c16 capacity gates pass, but no exact target-revision W4 producer/checkpoint route or authorized actual CUDA execution-equivalent result is bound. Do not promote source arithmetic alone."},
+  "uncertainties": ["No CUDA execution, kernel timing, allocator telemetry, numerical oracle, raw output, or feature quality gate.", "Marlin workspace and transformed-checkpoint padding are runtime-dependent; 5 GiB is inherited conservative allowance, not measured W4 allocation.", "Zero-point accounting assumes packed 4-bit zeros at 0.5 byte/group; wider producer storage increases bytes.", "No quality transfers from BF16 or community quantized checkpoints."],
+  "generated_utc": "2026-07-17T07:15:00Z"
+}

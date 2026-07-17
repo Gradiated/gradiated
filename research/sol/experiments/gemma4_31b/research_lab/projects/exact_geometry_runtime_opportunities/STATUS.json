@@ -1,13 +1,19 @@
 {
-  "status": "active",
+  "status": "complete",
   "priority": 110,
   "summary": "Reconstruct exact Gemma 4 31B geometry, prepare the MTP/async retained-session arm, and rank at most three next cost interventions at $0.",
-  "next_action": "Publish the identity-bound MTP/async adjacent-arm packet within 45 minutes, then finish exact geometry and the top-three opportunity rank without delaying the paid stock run.",
+  "next_action": "Paid owner: start stock immediately; retain only for the typed MTP arm, or async fallback when MTP fails its pre-workload gate.",
   "provider_mutation": "prohibited_zero_cost_offline",
   "authorized_spend_usd": 0.0,
   "absolute_timeout_seconds": 7200,
   "compute_budget": "4 local CPU-hours",
   "storage_budget": "2 GiB",
   "active_session": null,
-  "terminal_artifact": "OPPORTUNITY_RANK.md"
+  "terminal_artifact": "OPPORTUNITY_RANK.md",
+  "artifacts": {
+    "GEOMETRY.json": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72",
+    "ADJACENT_ARM_PACKET.json": "53ad920c00ee4acf224ebb135b5dbff3488897e71e432c5ee93732190d2db08f",
+    "OPPORTUNITY_RANK.md": "5dd4152edc3f87d1dfb1488a76583b045c774dfe0be38482e5f827b4b50237ce"
+  },
+  "evidence_boundary": "offline measured metadata/source and derived geometry; no provider mutation, endpoint timing, quality result, or transfer claim"
 }

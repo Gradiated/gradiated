@@ -1,0 +1,30 @@
+{
+  "status": "closed",
+  "priority": 180,
+  "summary": "Run exact SGLang BF16+FP8-KV versus matched vLLM BF16 on one H200 at the campaign workloads.",
+  "next_action": null,
+  "provider_mutation": "forbidden_closed_lineage",
+  "authorized_spend_usd": 0,
+  "wall_clock_budget_minutes": 150,
+  "provider_exposure_budget_minutes": 90,
+  "compute_budget": "1.5 H200 GPU-hours and 3 local CPU-hours",
+  "storage_budget": "one 250 GiB provider disk; 90 GiB local checkpoint/temp and 10 GiB retained artifacts; no shared /tmp",
+  "active_session": null,
+  "checkpoint_terminal": "artifacts/checkpoint-owner-20260717T072831Z/CHECKPOINT_TERMINAL.json",
+  "identity_assertion": "artifacts/checkpoint-owner-20260717T072831Z/IDENTITY_ASSERTION.json",
+  "checkpoint_materialization": "pass; elapsed_seconds=311.706; no provider spend",
+  "authenticated_empty_inventory": "artifacts/provider-inventory-authenticated-empty-20260717T0746Z.json",
+  "terminal_artifact": "artifacts/h200-retry-20260717t08141784276043z/FINAL_PROGRAM_AUDIT.json",
+  "last_result_classification": "terminal_pre_gpu_final_retry_owner_output_collision_and_invalid_audit",
+  "launch_readiness": "closed: the single admitted retry terminated before provider create and its audit deferred mandatory checks",
+  "last_attempt": {
+    "unit": "gemma-h200-retry-20260717t08141784276043z.service",
+    "state": "terminal_pre_provider_owner_initialization",
+    "failure": "systemd owner exited before provider mutation because its output directory had been pre-created by the audit",
+    "diagnostic": "artifacts/h200-retry-20260717t08141784276043z/FINAL_PROGRAM_AUDIT.json",
+    "cleanup": "authenticated inventory refreshed at 2026-07-17T08:17:02.735865Z",
+    "reason": "single admitted retry exhausted; audit also deferred exact-token/cache-mix/atomic-stage checks instead of proving them",
+    "cleanup_pass": true,
+    "provider_resources_after_cleanup": 0
+  }
+}

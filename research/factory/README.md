@@ -45,6 +45,39 @@ runtime/
 
 Existing artifact, telemetry, admission, provider, and experiment scripts remain available as optional tools. Researchers use them when they improve a project; they are not orchestration prerequisites.
 
+## Shared GPU profiling
+
+[`PROFILING.md`](PROFILING.md) documents the provider-neutral `research/factory/tools/grad-profile` command. It records profiler-off baselines, bounded NVIDIA Nsight or AMD ROCm captures, exact-shape/codegen artifacts, normalized timeline/counter summaries, energy, and $/token comparisons. Deep profiling is optional and question-driven; it must not delay credible experiments.
+
+[`data/providers.json`](data/providers.json) tracks Nebius, RunPod, Scaleway, and Gcore interfaces and verified profiler-access status without storing credentials. [`docs/GCORE.md`](docs/GCORE.md) contains the Gcore usage guide plus its daily-refreshed Markdown price/availability snapshot. [`data/profiling_shape_atlas.json`](data/profiling_shape_atlas.json) is the shared exact-shape measurement inventory.
+
+## Shared GPU price inventory
+
+[`data/gpu_prices.json`](data/gpu_prices.json) is the single reusable price source for research economics. It separates actual experimental rates from the base production rate: a reasonable 12–24 month, 8–64 GPU, non-preemptible commitment rather than on-demand, spot, promotional, or hyperscale-floor pricing. A current matching written quote supersedes the planning estimate.
+
+The director owns one refresh when the seven-day window expires. Ordinary researchers consume the fresh inventory and do not repeat market searches unless their project is the refresh owner or needs an accelerator/topology that is absent. Validate it or inspect one accelerator with:
+
+```bash
+PYTHONPATH=research/factory/src python3 -m grad_research gpu-prices --require-fresh
+PYTHONPATH=research/factory/src python3 -m grad_research gpu-prices --accelerator amd-mi355x
+```
+
+During a weekly refresh, update source retrieval timestamps, public/quoted reference rates, the evidence range, and the derived planning rate together. Preserve prior rates in version history; do not silently substitute an experimental preemptible rate into production economics.
+
+## Shared accelerator capability inventory
+
+[`data/accelerator_inventory.json`](data/accelerator_inventory.json) is the reusable hardware source for model–chip co-design. It covers practically obtainable NVIDIA, AMD, Intel, Google, and AWS inference/training accelerators, with separate architecture profiles for execution geometry shared by several SKUs. The fields include compute-unit geometry, concurrency limits, local/shared memory, cache, HBM capacity and bandwidth, numeric formats, peak vendor math, links, partitioning, power, software, availability, and concrete co-design implications.
+
+Hardware capabilities have a 90-day review cadence; changing market rates remain in the weekly price inventory. Unknown or undisclosed fields are `null`, not estimates. Vendor peak figures are useful ceilings, not measured application throughput. Query one chip or screen candidates without duplicating hardware research:
+
+```bash
+PYTHONPATH=research/factory/src python3 -m grad_research accelerators --accelerator nvidia-l40s
+PYTHONPATH=research/factory/src python3 -m grad_research accelerators --vendor AMD --min-memory-gb 250 --format fp4
+PYTHONPATH=research/factory/src python3 -m grad_research accelerators --require-current
+```
+
+Each chip may reference a matching `price_inventory_id`. Keep model-specific measurements, exact tensor-shape analysis, and runtime compatibility findings in the research project; promote only reusable hardware corrections back into this inventory.
+
 ## Run
 
 Create an external config containing the repository, lab directory, models, cadence, and shared tool paths. No credentials belong in it.

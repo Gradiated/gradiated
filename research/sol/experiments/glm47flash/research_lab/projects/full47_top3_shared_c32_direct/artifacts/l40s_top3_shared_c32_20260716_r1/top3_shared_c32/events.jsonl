@@ -1,0 +1,11 @@
+{"event": "retained_arm_control", "instance_id": "computeinstance-e00zkwpx1nhsrw9jqj", "parent_experiment_id": "full47_top3_shared_c32_direct", "timestamp": "2026-07-16T17:58:31.910848Z"}
+{"derived_identity": null, "derived_student": false, "event": "repair_01_begin", "minimal_depth42_v2": false, "minimal_depth43_v2": false, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "official_selective_w4": false, "repair_spec_sha256": "acbd35e99352b562ce042edcecb86f116261a7ad974062c1ebddedcc30744691", "timestamp": "2026-07-16T17:58:32.176735Z"}
+{"event": "config_override_applied", "sha256": "836bba9776aa1de99d7d8121a8f3abce374b1630f1821fb4d39813b1d06b3861", "timestamp": "2026-07-16T17:58:32.916537Z"}
+{"event": "repair_01_reused_verified_runtime", "timestamp": "2026-07-16T17:58:32.916663Z"}
+{"event": "repair_01_inputs_staged", "timestamp": "2026-07-16T17:58:39.742077Z"}
+{"event": "repair_01_reused_verified_runtime_and_checkpoint", "timestamp": "2026-07-16T17:58:39.742168Z"}
+{"event": "phase_started", "phase": "scientific_workload", "timestamp": "2026-07-16T17:58:39.742224Z"}
+{"elapsed_seconds": 350.986, "event": "phase_finished", "outcome": "PASS", "phase": "scientific_workload", "timestamp": "2026-07-16T18:04:30.728689Z"}
+{"background_pass": true, "event": "repair_01_artifact_retrieved", "manifest_files": 37, "outcome": "PASS", "sha256": "7d232e1637cb2b7ea03f1890880598a14b26fd8cc8683b8b5723420eda77e10d", "timestamp": "2026-07-16T18:04:32.915716Z"}
+{"event": "instance_retained_for_next_preregistered_experiment", "instance_id": "computeinstance-e00zkwpx1nhsrw9jqj", "timestamp": "2026-07-16T18:04:32.915814Z"}
+{"cleanup_pass": false, "event": "cleanup_verified", "instance_get_not_found": false, "timestamp": "2026-07-16T18:04:33.414282Z"}

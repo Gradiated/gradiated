@@ -1,0 +1,1595 @@
+{
+  "bound": {
+    "best_case_if_every_selected_residual_wall_time_were_halved": 0.10594999999999999,
+    "best_case_usd_per_million_if_that_bound_transferred": 0.510347536681158,
+    "interpretation": "An optimistic trace-resident ceiling only barely crosses 10%; FP8 halves representation bytes, not GEMM work, and no current trace proves residual wall-time is byte-limited. This is not a promotion bound.",
+    "retained_trace_ceiling_head_plus_shared": 0.21189999999999998
+  },
+  "c32": {
+    "current_l40s_loaded_mib": 38985,
+    "fp8_saved_mib": 804.59375,
+    "judgment": "insufficient for c32: doubling the observed c16 KV-resident band needs multiple GiB, while selective residual FP8 saves under 0.8 GiB",
+    "l40s_capacity_mib": 46068
+  },
+  "checkpoint": "/root/.cache/glm47flash-awq-ab31d120",
+  "checkpoint_index_total_bytes": 20166726064,
+  "economic_target": {
+    "control_usd_per_million_output": 0.5708266167229551,
+    "promotion_target_usd_per_million_output": 0.514,
+    "required_throughput_multiplier": 1.1105576200835703
+  },
+  "evidence_label": "measured safetensors headers; derived FP8 storage and endpoint ceilings; no quality claim",
+  "exact_runtime_status": "generic Ada FP8 primitive exists in pinned vLLM, but current compressed-tensors pack-quantized W4 config maps ignored residual modules to UnquantizedLinearMethod; no exact mixed W4-plus-selective-FP8 checkpoint/config path is present",
+  "families": {
+    "dense_layer_0": {
+      "bytes": 169355776,
+      "dtypes": {
+        "BF16": 12
+      },
+      "matmul_flops": 169345024,
+      "mib": 161.51025390625,
+      "scale_bytes": 160000,
+      "tensors": 12
+    },
+    "lm_head": {
+      "bytes": 634388480,
+      "dtypes": {
+        "BF16": 1
+      },
+      "matmul_flops": 634388480,
+      "mib": 605.0,
+      "scale_bytes": 619520,
+      "tensors": 1
+    },
+    "other": {
+      "bytes": 16637633792,
+      "dtypes": {
+        "BF16": 243,
+        "F32": 47,
+        "I32": 9259
+      },
+      "matmul_flops": 0,
+      "mib": 15866.884033203125,
+      "scale_bytes": 0,
+      "tensors": 9549
+    },
+    "quant_metadata": {
+      "bytes": 1838252720,
+      "dtypes": {
+        "BF16": 9259,
+        "I64": 9259
+      },
+      "matmul_flops": 0,
+      "mib": 1753.0944061279297,
+      "scale_bytes": 0,
+      "tensors": 18518
+    },
+    "shared_experts": {
+      "bytes": 887095296,
+      "dtypes": {
+        "BF16": 141
+      },
+      "matmul_flops": 887095296,
+      "mib": 846.0,
+      "scale_bytes": 962560,
+      "tensors": 141
+    }
+  },
+  "schema_version": 1,
+  "selected_residual": {
+    "bytes": 1690839552,
+    "checkpoint_fraction": 0.08384303662548129,
+    "families": [
+      "lm_head",
+      "dense_layer_0",
+      "shared_experts"
+    ],
+    "fp8_e4m3_payload_plus_per_output_channel_fp32_scales_bytes": 847161856,
+    "fp8_mib": 807.91650390625,
+    "matrix_flops_per_single_token": 1690828800,
+    "mib": 1612.51025390625,
+    "saved_mib": 804.59375,
+    "tensor_rows": [
+      {
+        "bytes": 634388480,
+        "flops": 634388480,
+        "name": "lm_head.weight",
+        "scale_bytes": 619520,
+        "shape": [
+          154880,
+          2048
+        ]
+      },
+      {
+        "bytes": 41943040,
+        "flops": 41943040,
+        "name": "model.layers.0.mlp.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          10240
+        ]
+      },
+      {
+        "bytes": 41943040,
+        "flops": 41943040,
+        "name": "model.layers.0.mlp.gate_proj.weight",
+        "scale_bytes": 40960,
+        "shape": [
+          10240,
+          2048
+        ]
+      },
+      {
+        "bytes": 41943040,
+        "flops": 41943040,
+        "name": "model.layers.0.mlp.up_proj.weight",
+        "scale_bytes": 40960,
+        "shape": [
+          10240,
+          2048
+        ]
+      },
+      {
+        "bytes": 2359296,
+        "flops": 2359296,
+        "name": "model.layers.0.self_attn.kv_a_proj_with_mqa.weight",
+        "scale_bytes": 2304,
+        "shape": [
+          576,
+          2048
+        ]
+      },
+      {
+        "bytes": 9175040,
+        "flops": 9175040,
+        "name": "model.layers.0.self_attn.kv_b_proj.weight",
+        "scale_bytes": 35840,
+        "shape": [
+          8960,
+          512
+        ]
+      },
+      {
+        "bytes": 20971520,
+        "flops": 20971520,
+        "name": "model.layers.0.self_attn.o_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          5120
+        ]
+      },
+      {
+        "bytes": 3145728,
+        "flops": 3145728,
+        "name": "model.layers.0.self_attn.q_a_proj.weight",
+        "scale_bytes": 3072,
+        "shape": [
+          768,
+          2048
+        ]
+      },
+      {
+        "bytes": 7864320,
+        "flops": 7864320,
+        "name": "model.layers.0.self_attn.q_b_proj.weight",
+        "scale_bytes": 20480,
+        "shape": [
+          5120,
+          768
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.1.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.1.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.1.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.10.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.10.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.10.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.11.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.11.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.11.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.12.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.12.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.12.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.13.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.13.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.13.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.14.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.14.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.14.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.15.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.15.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.15.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.16.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.16.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.16.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.17.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.17.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.17.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.18.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.18.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.18.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.19.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.19.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.19.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.2.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.2.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.2.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.20.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.20.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.20.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.21.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.21.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.21.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.22.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.22.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.22.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.23.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.23.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.23.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.24.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.24.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.24.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.25.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.25.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.25.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.26.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.26.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.26.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.27.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.27.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.27.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.28.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.28.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.28.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.29.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.29.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.29.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.3.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.3.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.3.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.30.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.30.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.30.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.31.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.31.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.31.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.32.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.32.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.32.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.33.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.33.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.33.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.34.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.34.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.34.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.35.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.35.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.35.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.36.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.36.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.36.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.37.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.37.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.37.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.38.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.38.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.38.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.39.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.39.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.39.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.4.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.4.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.4.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.40.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.40.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.40.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.41.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.41.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.41.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.42.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.42.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.42.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.43.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.43.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.43.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.44.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.44.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.44.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.45.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.45.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.45.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.46.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.46.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.46.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.47.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.47.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.47.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.5.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.5.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.5.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.6.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.6.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.6.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.7.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.7.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.7.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.8.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.8.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.8.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.9.mlp.shared_experts.down_proj.weight",
+        "scale_bytes": 8192,
+        "shape": [
+          2048,
+          1536
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.9.mlp.shared_experts.gate_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      },
+      {
+        "bytes": 6291456,
+        "flops": 6291456,
+        "name": "model.layers.9.mlp.shared_experts.up_proj.weight",
+        "scale_bytes": 6144,
+        "shape": [
+          1536,
+          2048
+        ]
+      }
+    ]
+  }
+}

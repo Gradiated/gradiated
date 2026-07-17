@@ -1,0 +1,159 @@
+{
+  "contract": {
+    "batches": [
+      1,
+      8,
+      32
+    ],
+    "block_h": 16,
+    "block_n": 32,
+    "contexts": [
+      8193,
+      8449,
+      8705,
+      8961,
+      9215
+    ],
+    "heads": 20,
+    "num_stages": 2,
+    "num_warps": 4,
+    "page_size": 16,
+    "seed": 1234,
+    "splits": 4,
+    "value_width": 512,
+    "width": 576
+  },
+  "decision": "GPU_REQUIRED",
+  "elapsed_seconds": 0.0047034749877639115,
+  "error": "No module named 'torch'",
+  "error_type": "ModuleNotFoundError",
+  "matrix": [
+    {
+      "batch": 1,
+      "bf16_cache_bytes": 9455616,
+      "context": 8193,
+      "fp8_cache_bytes": 4760640,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 513
+    },
+    {
+      "batch": 1,
+      "bf16_cache_bytes": 9750528,
+      "context": 8449,
+      "fp8_cache_bytes": 4909120,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 529
+    },
+    {
+      "batch": 1,
+      "bf16_cache_bytes": 10045440,
+      "context": 8705,
+      "fp8_cache_bytes": 5057600,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 545
+    },
+    {
+      "batch": 1,
+      "bf16_cache_bytes": 10340352,
+      "context": 8961,
+      "fp8_cache_bytes": 5206080,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 561
+    },
+    {
+      "batch": 1,
+      "bf16_cache_bytes": 10616832,
+      "context": 9215,
+      "fp8_cache_bytes": 5345280,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 576
+    },
+    {
+      "batch": 8,
+      "bf16_cache_bytes": 75644928,
+      "context": 8193,
+      "fp8_cache_bytes": 38085120,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 4104
+    },
+    {
+      "batch": 8,
+      "bf16_cache_bytes": 78004224,
+      "context": 8449,
+      "fp8_cache_bytes": 39272960,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 4232
+    },
+    {
+      "batch": 8,
+      "bf16_cache_bytes": 80363520,
+      "context": 8705,
+      "fp8_cache_bytes": 40460800,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 4360
+    },
+    {
+      "batch": 8,
+      "bf16_cache_bytes": 82722816,
+      "context": 8961,
+      "fp8_cache_bytes": 41648640,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 4488
+    },
+    {
+      "batch": 8,
+      "bf16_cache_bytes": 84934656,
+      "context": 9215,
+      "fp8_cache_bytes": 42762240,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 4608
+    },
+    {
+      "batch": 32,
+      "bf16_cache_bytes": 302579712,
+      "context": 8193,
+      "fp8_cache_bytes": 152340480,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 16416
+    },
+    {
+      "batch": 32,
+      "bf16_cache_bytes": 312016896,
+      "context": 8449,
+      "fp8_cache_bytes": 157091840,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 16928
+    },
+    {
+      "batch": 32,
+      "bf16_cache_bytes": 321454080,
+      "context": 8705,
+      "fp8_cache_bytes": 161843200,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 17440
+    },
+    {
+      "batch": 32,
+      "bf16_cache_bytes": 330891264,
+      "context": 8961,
+      "fp8_cache_bytes": 166594560,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 17952
+    },
+    {
+      "batch": 32,
+      "bf16_cache_bytes": 339738624,
+      "context": 9215,
+      "fp8_cache_bytes": 171048960,
+      "fp8_savings_fraction": 0.4965277777777778,
+      "pages": 18432
+    }
+  ],
+  "platform": "Linux-6.12.95+deb13-amd64-x86_64-with-glibc2.41",
+  "runtime": {
+    "cuda_available": false,
+    "torch": null,
+    "triton": null
+  },
+  "schema_version": 1
+}

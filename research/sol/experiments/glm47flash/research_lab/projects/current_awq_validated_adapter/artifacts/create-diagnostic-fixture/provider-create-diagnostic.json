@@ -1,0 +1,1 @@
+{"returncode":3,"stage":"provider_create","stderr":"quota exhausted","stderr_sha256":"ee503d1efdb86b9a9f62dee8b533ae792eefa6c3667438c37ad5d2352d2f4304","stdout":"capacity token=[REDACTED]","stdout_sha256":"2f4b997bf735192ee46b0461b6d96ab4877b630c7b64b7f8731b48e5822c6d83","truncated":false}

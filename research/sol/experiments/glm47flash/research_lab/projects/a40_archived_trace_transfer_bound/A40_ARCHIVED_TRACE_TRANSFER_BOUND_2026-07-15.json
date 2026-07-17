@@ -1,0 +1,161 @@
+{
+  "analysis_id": "a40_archived_trace_transfer_bound_2026-07-15",
+  "bands": {
+    "central_trace_classification": {
+      "five_percent_gate_pass": true,
+      "mechanism": "Non-overlapping surrogate only: attention/MLA and copy/cast scale with HBM; remaining trace families scale with tensor compute.",
+      "output_tokens_per_second": 190.792603797,
+      "strong_gate_pass": true,
+      "transfer_fraction_of_l40s": 0.522904792
+    },
+    "conservative_compute_bound": {
+      "five_percent_gate_pass": false,
+      "mechanism": "All request-critical serving work scales no better than dense BF16 tensor compute.",
+      "output_tokens_per_second": 149.115845215,
+      "strong_gate_pass": false,
+      "transfer_fraction_of_l40s": 0.408681409
+    },
+    "optimistic_memory_bound": {
+      "five_percent_gate_pass": true,
+      "mechanism": "All request-critical serving work scales with stated HBM bandwidth.",
+      "output_tokens_per_second": 293.923567313,
+      "strong_gate_pass": true,
+      "transfer_fraction_of_l40s": 0.805555556
+    }
+  },
+  "decision": "CONDITIONAL_DIRECT_A40_C8_MEASUREMENT_ONLY",
+  "economic_gates": {
+    "five_percent_cost_gate_tok_s": 166.81941171336302,
+    "required_transfer_fraction_five_percent": 0.457201527,
+    "required_transfer_fraction_strong": 0.48501462,
+    "strong_0_60_per_million_tok_s": 176.9675925925926
+  },
+  "evidence_labels": {
+    "bands": "derived conditional scaling scenarios",
+    "gpu_telemetry": "measured sampled telemetry",
+    "hardware_specs": "vendor-reported",
+    "l40s_c8_rate": "measured",
+    "trace_family_mix": "measured summed profiler work, explicitly non-additive wall time"
+  },
+  "hardware": {
+    "a40_bf16_dense_tensor_tflops": 149.7,
+    "a40_memory_bandwidth_gb_s": 696.0,
+    "compute_transfer_fraction": 0.408681409,
+    "l40s_bf16_dense_tensor_tflops": 366.3,
+    "l40s_memory_bandwidth_gb_s": 864.0,
+    "memory_transfer_fraction": 0.805555556,
+    "source": "NVIDIA A40 and L40S product materials; dense BF16 tensor peak and stated memory bandwidth",
+    "sources": [
+      "https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/a40/proviz-print-nvidia-a40-datasheet-us-nvidia-1469711-r8-web.pdf",
+      "https://www.nvidia.com/en-us/data-center/l40s/"
+    ]
+  },
+  "identification": {
+    "archive_can_promote_or_close": false,
+    "excluded_interpretation": "Kernel-family shares are not summed into an Amdahl coefficient.",
+    "reason": "The retained trace supplies summed GPU component durations rather than a request-critical non-overlapping wall decomposition. It cannot exclude host/scheduler time or prove the selected family mapping; therefore the compute and memory scenarios are conditional bounds, not conservative throughput bounds."
+  },
+  "inputs": {
+    "c8_profile": {
+      "concurrency": 8,
+      "output_tokens_per_second_conservative": 364.8706352846219,
+      "profile_id": "fixed_8k_1k_c8",
+      "total_input_tokens": 131072,
+      "total_output_tokens": 16384,
+      "tpot_ms": {
+        "p50": 17.291106251221613,
+        "p95": 17.87428008113408,
+        "p99": 17.87428008113408
+      },
+      "ttft_ms": {
+        "p50": 4761.554177999642,
+        "p95": 4800.770650999766,
+        "p99": 4800.770650999766
+      },
+      "wall_seconds": 44.90358613599983
+    },
+    "checkpoint_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "source_sha256": {
+      "campaign_100/allocations/nebius_l40s_vllm_awq_splits_ab_v24r2/summary.json": "19dff7111174b775de2979b36eed8cff63f4a117544229c5ea383cf626d039ef",
+      "campaign_100/allocations/nebius_l40s_vllm_awq_splits_ab_v24r2/telemetry-summary.json": "54fd1bd3714dbed9674d0e0e189d536d367671953abeff9b9f3cb073122ce2df",
+      "campaign_100/allocations/nebius_l40s_vllm_awq_splits_ab_v24r2/trace-regions.json": "7c56b418a7ed0c9d8cbccb23d42dafefb465f86dfc879cffc905e88e091f80ad",
+      "campaign_100/allocations/nebius_l40s_vllm_awq_splits_ab_v24r2/trace-validation.json": "c7e6550b485a1de31ab8a8db6777995e54e2538f043e0d773c399685eeaa4fdd",
+      "research_lab/projects/a40_exact_memory_admission/A40_ADMISSION_RESULT.json": "24cf425e58d57e277726b9a71c741c357b33bfda38acc8d6c4affef0dea70903"
+    },
+    "telemetry": {
+      "gpu_util_pct": {
+        "max": 100.0,
+        "mean": 64.93518518518519,
+        "p50": 98.0,
+        "p95": 100.0
+      },
+      "memory_clock_mhz": {
+        "max": 9001.0,
+        "mean": 9001.0,
+        "p50": 9001.0,
+        "p95": 9001.0
+      },
+      "memory_total_mib": {
+        "max": 46068.0,
+        "mean": 46068.0,
+        "p50": 46068.0,
+        "p95": 46068.0
+      },
+      "memory_used_mib": {
+        "max": 42827.0,
+        "mean": 42542.78703703704,
+        "p50": 42815.0,
+        "p95": 42827.0
+      },
+      "memory_util_pct": {
+        "max": 72.0,
+        "mean": 32.333333333333336,
+        "p50": 41.0,
+        "p95": 72.0
+      },
+      "power_draw_w": {
+        "max": 331.67,
+        "mean": 188.51703703703703,
+        "p50": 187.88,
+        "p95": 321.98
+      },
+      "power_limit_w": {
+        "max": 350.0,
+        "mean": 350.0,
+        "p50": 350.0,
+        "p95": 350.0
+      },
+      "sm_clock_mhz": {
+        "max": 2520.0,
+        "mean": 2442.4305555555557,
+        "p50": 2520.0,
+        "p95": 2520.0
+      },
+      "temperature_c": {
+        "max": 61.0,
+        "mean": 48.398148148148145,
+        "p50": 48.0,
+        "p95": 58.0
+      }
+    },
+    "trace": {
+      "decode_kernel_family_shares": {
+        "attention_mla": 0.4292903435365476,
+        "copy_cast": 0.014088623603793746,
+        "dense_gemm_gemv": 0.29306366058556066,
+        "moe_routing_sort": 0.03177015132773824,
+        "norm_rope_activation": 0.0062713898720646545,
+        "other": 0.22551583107429513
+      },
+      "decode_status": "measured_summed_profiler_work_not_wall_time",
+      "validation_pass": true
+    }
+  },
+  "next_decisive_signal": {
+    "decision_rule": "Promote only if the conservative measured rate is at least 176.967593 tok/s; close the 5% route if it is below 166.819412 tok/s; otherwise retain only the narrower conditional interval.",
+    "minimum_contract": "Exact ab31d120 AWQ checkpoint, stock vLLM settings, c8 with 8,192 input and 1,024 output tokens, aggregate output tokens divided by measured arm wall time, plus request rows and GPU telemetry.",
+    "signal": "matched_A40_c8_8192x1024_aggregate_output_tokens_per_second"
+  },
+  "schema_version": 1,
+  "scope": "Zero-cost archived-evidence transfer falsifier; not an A40 throughput prediction or delivered-cost claim."
+}

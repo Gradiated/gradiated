@@ -1,0 +1,31 @@
+{
+  "status": "complete",
+  "priority": 240,
+  "summary": "PACKET_CLOSE: director audit found deterministic pinned-kernel signature, stride, split-selection, saturation, numerical-reference, command, and retention defects; do not spend.",
+  "next_action": "Terminal. Park FP8 MLA; no paid successor or further readiness gate under this lineage.",
+  "provider_mutation": "prohibited_zero_cost_packet_rehabilitation",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 900,
+  "quality_policy": "Component numerical and byte sanity only; no endpoint, economic, or deployment-quality claim.",
+  "expected_capacity_saving_mib_at_c32": 7561.125,
+  "terminal_results": [
+    "PACKET_READY_FOR_CUDA",
+    "PACKET_CLOSE"
+  ],
+  "stop_rule": "Satisfied: one bounded packet correction, no provider call, custom kernel, runtime survey, second controller, or readiness successor.",
+  "terminal_result": "PACKET_CLOSE",
+  "researcher_result_overridden": "PACKET_READY_FOR_CUDA",
+  "packet_manifest": "PACKET_MANIFEST.json",
+  "experiment_spec_sha256": "20fce2c7ee8933e8872ea35e7fbe6668f7882d09be1e8cf0d99f3d21a620884c",
+  "active_session": null,
+  "validation": {"positive_evidence": "image/source hashes, slot construction, artifact roots, and 256^-0.5 scale are improved", "cuda_science": "none", "packet_admission": "failed director pinned-source audit"},
+  "director_audit": {
+    "kernel_call": "stale _fwd_grouped_kernel_stage1 signature omits required scale/runtime arguments, shifts strides, and omits IS_MLA=True",
+    "page_stride": "packet supplies 576; pinned page stride is 9216",
+    "split_selection": "pinned selection is 16 at context 8193 and 32 at 9215 on 142 SMs; packet forces 32",
+    "saturation": "absmax/448 scaling produces a stored maximum near 448 while the predicate rejects >=448",
+    "numerical_reference": "reference is reconstructed from already-quantized cache rather than independent BF16 inputs",
+    "command_contract": "manifest omits required output-dir, name, and ssh-key arguments and does not bind a checked spec artifact",
+    "retention": "trigger is text only; no pass evaluator or recovery invocation exists"
+  }
+}

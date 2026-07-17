@@ -1,0 +1,171 @@
+{
+  "pass": true,
+  "results": {
+    "failure": {
+      "cleanup": null,
+      "command": [
+        "systemd-run",
+        "--user",
+        "--wait",
+        "--pipe",
+        "--collect",
+        "--unit=glm47-near-stock-proof-failure-cc7abdfcf1",
+        "--property=Type=oneshot",
+        "--property=RuntimeMaxSec=20s",
+        "--property=ExecStartPost=/usr/bin/python3 /root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/retained_sequence_proof.py recovery --control-summary /root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/failure-summary.jsonl --events /root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/failure-events.jsonl --cleanup /root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/failure-cleanup.jsonl --parent-experiment-id 99dd188923b37c4f5a6711c1690db2b1c620f4add3f910c69e1794bbfb8ad123 --max-num-batched-tokens 65536 --max-num-seqs 32 --frontier-concurrencies 32 --num-kv-splits 4 --kv-cache-dtype fp8_e4m3fn",
+        "/usr/bin/python3",
+        "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/retained_sequence_proof.py",
+        "control",
+        "--summary",
+        "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/failure-summary.jsonl",
+        "--events",
+        "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/failure-events.jsonl",
+        "--fail-control"
+      ],
+      "events": [
+        {
+          "event": "control_started",
+          "pid": 1226438,
+          "systemd_exec_pid": "1226438",
+          "time_ns": 1784159964590524245
+        },
+        {
+          "event": "control_failed",
+          "pid": 1226438,
+          "time_ns": 1784159964590749135
+        }
+      ],
+      "returncode": 72,
+      "stderr": "Running as unit: glm47-near-stock-proof-failure-cc7abdfcf1.service; invocation ID: 6c872dd3ed844f3d9718eae0afd77e86\nFinished with result: exit-code\nMain processes terminated with: code=exited, status=72/OSFILE\nService runtime: 79ms\nCPU time consumed: 52ms\nMemory peak: 6.9M (swap: 0B)\n",
+      "stdout": "",
+      "summary_exists": false
+    },
+    "retained_exit_one": {
+      "cleanup": {
+        "deleted_disk": "proof-boot",
+        "deleted_instance": "computeinstance-proof",
+        "final_disk_count": 0,
+        "final_instance_count": 0,
+        "scientific_failure": true
+      },
+      "command": [
+        "systemd-run",
+        "--user",
+        "--wait",
+        "--pipe",
+        "--collect",
+        "--unit=glm47-near-stock-proof-retained_exit_one-045aa3ae34",
+        "--property=Type=oneshot",
+        "--property=RuntimeMaxSec=20s",
+        "--property=SuccessExitStatus=1",
+        "--property=ExecStartPost=/usr/bin/python3 /root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/retained_sequence_proof.py recovery --control-summary /root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/retained_exit_one-summary.jsonl --events /root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/retained_exit_one-events.jsonl --cleanup /root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/retained_exit_one-cleanup.jsonl --parent-experiment-id 99dd188923b37c4f5a6711c1690db2b1c620f4add3f910c69e1794bbfb8ad123 --max-num-batched-tokens 65536 --max-num-seqs 32 --frontier-concurrencies 32 --num-kv-splits 4 --kv-cache-dtype fp8_e4m3fn",
+        "/usr/bin/python3",
+        "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/retained_sequence_proof.py",
+        "control",
+        "--summary",
+        "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/retained_exit_one-summary.jsonl",
+        "--events",
+        "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/retained_exit_one-events.jsonl",
+        "--retained-exit-one"
+      ],
+      "events": [
+        {
+          "event": "control_started",
+          "pid": 1226443,
+          "systemd_exec_pid": "1226443",
+          "time_ns": 1784159964680090227
+        },
+        {
+          "event": "control_retained",
+          "instance_id": "computeinstance-proof",
+          "pid": 1226443,
+          "time_ns": 1784159964680330581
+        },
+        {
+          "event": "control_retained_exit_one",
+          "pid": 1226443,
+          "time_ns": 1784159964680359975
+        },
+        {
+          "event": "recovery_started",
+          "frontier_concurrencies": "32",
+          "instance_id": "computeinstance-proof",
+          "kv_cache_dtype": "fp8_e4m3fn",
+          "max_num_batched_tokens": "65536",
+          "max_num_seqs": "32",
+          "pid": 1226445,
+          "time_ns": 1784159964764743768
+        },
+        {
+          "event": "recovery_cleanup_verified",
+          "pid": 1226445,
+          "time_ns": 1784159964764913594
+        }
+      ],
+      "returncode": 0,
+      "stderr": "Running as unit: glm47-near-stock-proof-retained_exit_one-045aa3ae34.service; invocation ID: aa1158a8964140eab7d7b2b48c13d941\nFinished with result: success\nMain processes terminated with: code=exited, status=1/FAILURE\nService runtime: 155ms\nCPU time consumed: 95ms\nMemory peak: 6.9M (swap: 0B)\n",
+      "stdout": "",
+      "summary_exists": true
+    },
+    "success": {
+      "cleanup": {
+        "deleted_disk": "proof-boot",
+        "deleted_instance": "computeinstance-proof",
+        "final_disk_count": 0,
+        "final_instance_count": 0,
+        "scientific_failure": true
+      },
+      "command": [
+        "systemd-run",
+        "--user",
+        "--wait",
+        "--pipe",
+        "--collect",
+        "--unit=glm47-near-stock-proof-success-abe6099117",
+        "--property=Type=oneshot",
+        "--property=RuntimeMaxSec=20s",
+        "--property=ExecStartPost=/usr/bin/python3 /root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/retained_sequence_proof.py recovery --control-summary /root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/success-summary.jsonl --events /root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/success-events.jsonl --cleanup /root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/success-cleanup.jsonl --parent-experiment-id 99dd188923b37c4f5a6711c1690db2b1c620f4add3f910c69e1794bbfb8ad123 --max-num-batched-tokens 65536 --max-num-seqs 32 --frontier-concurrencies 32 --num-kv-splits 4 --kv-cache-dtype fp8_e4m3fn",
+        "/usr/bin/python3",
+        "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/retained_sequence_proof.py",
+        "control",
+        "--summary",
+        "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/success-summary.jsonl",
+        "--events",
+        "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/near_stock_c32_memory_frontier/artifacts/retained_sequence_proof_r3/success-events.jsonl"
+      ],
+      "events": [
+        {
+          "event": "control_started",
+          "pid": 1226432,
+          "systemd_exec_pid": "1226432",
+          "time_ns": 1784159964426430461
+        },
+        {
+          "event": "control_retained",
+          "instance_id": "computeinstance-proof",
+          "pid": 1226432,
+          "time_ns": 1784159964426679920
+        },
+        {
+          "event": "recovery_started",
+          "frontier_concurrencies": "32",
+          "instance_id": "computeinstance-proof",
+          "kv_cache_dtype": "fp8_e4m3fn",
+          "max_num_batched_tokens": "65536",
+          "max_num_seqs": "32",
+          "pid": 1226433,
+          "time_ns": 1784159964496657497
+        },
+        {
+          "event": "recovery_cleanup_verified",
+          "pid": 1226433,
+          "time_ns": 1784159964496843369
+        }
+      ],
+      "returncode": 0,
+      "stderr": "Running as unit: glm47-near-stock-proof-success-abe6099117.service; invocation ID: 66ffd09fb33b413caccd8b81ba0ba1a9\nFinished with result: success\nMain processes terminated with: code=exited, status=0/SUCCESS\nService runtime: 128ms\nCPU time consumed: 84ms\nMemory peak: 6.9M (swap: 0B)\n",
+      "stdout": "",
+      "summary_exists": true
+    }
+  }
+}

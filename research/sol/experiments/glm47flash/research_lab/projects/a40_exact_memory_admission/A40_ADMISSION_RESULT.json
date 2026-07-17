@@ -1,0 +1,179 @@
+{
+  "allocation_bands": {
+    "a40_total_gib_vendor": 48,
+    "conservative_non_kv_gib": 10.0,
+    "gpu_memory_utilization": 0.9,
+    "historical_l40s_calibration": {
+      "available_kv_gib": 16.82,
+      "inferred_non_kv_gib": 5.799453125000003,
+      "interpretation": "calibration only; differs in GPU/driver and is not performance-transferable",
+      "model_loading_gib": 17.87,
+      "requested_budget_gib": 40.489453125000004
+    },
+    "redundancy_buffer_gib": 0.146484375,
+    "requested_budget_gib": 43.19999999925494,
+    "rows": [
+      {
+        "classification": "safely_admissible",
+        "concurrency": 1,
+        "conservative_headroom_gib": 13.803831417113543,
+        "conservative_upper_gib": 29.3961685821414,
+        "hard_lower_gib": 19.246448919177055,
+        "kv_blocks_16_tokens": 576,
+        "kv_gib": 0.4647216796875,
+        "live_tokens": 9216,
+        "source_derived_expected_gib": 24.280659179687504
+      },
+      {
+        "classification": "safely_admissible",
+        "concurrency": 8,
+        "conservative_headroom_gib": 10.550779659301043,
+        "conservative_upper_gib": 32.6492203399539,
+        "hard_lower_gib": 22.499500676989555,
+        "kv_blocks_16_tokens": 4608,
+        "kv_gib": 3.7177734375,
+        "live_tokens": 73728,
+        "source_derived_expected_gib": 27.533710937500004
+      },
+      {
+        "classification": "safely_admissible",
+        "concurrency": 16,
+        "conservative_headroom_gib": 6.833006221801043,
+        "conservative_upper_gib": 36.3669937774539,
+        "hard_lower_gib": 26.217274114489555,
+        "kv_blocks_16_tokens": 9216,
+        "kv_gib": 7.435546875,
+        "live_tokens": 147456,
+        "source_derived_expected_gib": 31.251484375000004
+      },
+      {
+        "classification": "exact_load_required",
+        "concurrency": 32,
+        "conservative_headroom_gib": -0.6025406531989574,
+        "conservative_upper_gib": 43.8025406524539,
+        "hard_lower_gib": 33.652820989489555,
+        "kv_blocks_16_tokens": 18432,
+        "kv_gib": 14.87109375,
+        "live_tokens": 294912,
+        "source_derived_expected_gib": 38.687031250000004
+      }
+    ]
+  },
+  "checkpoint_tensor_payload": {
+    "active_routed_expert_bytes_max": 997991232,
+    "active_routed_expert_bytes_min": 997991232,
+    "family_bytes": {
+      "attention": 618868400,
+      "dense_mlp_and_router": 138161920,
+      "embedding_and_lm_head": 1268776960,
+      "norms_and_other": 1285963776,
+      "routed_experts": 15967859712,
+      "shared_experts": 887095296
+    },
+    "index_total_size_bytes": 20166726064,
+    "manifest_weight_bytes": 20170199928,
+    "payload_bytes": 20166726064,
+    "routed_layers": 47,
+    "tensor_count": 28221
+  },
+  "claim_scope": "offline capacity and physical lower-bound only; no A40 load, provider action, quality, or throughput measurement",
+  "decision": {
+    "a40": "retain one later exact-load measurement contingent on authenticated TensorDock account/funding and delete/direct-lookup authority",
+    "c16": "admit: conservative headroom exceeds 4 GiB",
+    "c32": "exact_load_required: plausible in hard/expected bands but not conservative band",
+    "c8": "admit: conservative headroom exceeds 4 GiB"
+  },
+  "economics": {
+    "measured_model_identity_setup_seconds": 97,
+    "rate_sensitivity": [
+      {
+        "lifecycle_overhead_fraction": 0.1,
+        "measured_setup_seconds_per_recovery": 0,
+        "required_output_tokens_per_second": 166.81941171336302,
+        "setup_time_fraction_if_1000h_productive": 0.0,
+        "target_usd_per_million_output": 0.6365
+      },
+      {
+        "lifecycle_overhead_fraction": 0.1,
+        "measured_setup_seconds_per_recovery": 0,
+        "required_output_tokens_per_second": 176.9675925925926,
+        "setup_time_fraction_if_1000h_productive": 0.0,
+        "target_usd_per_million_output": 0.6
+      },
+      {
+        "lifecycle_overhead_fraction": 0.2,
+        "measured_setup_seconds_per_recovery": 0,
+        "required_output_tokens_per_second": 181.9848127782142,
+        "setup_time_fraction_if_1000h_productive": 0.0,
+        "target_usd_per_million_output": 0.6365
+      },
+      {
+        "lifecycle_overhead_fraction": 0.2,
+        "measured_setup_seconds_per_recovery": 0,
+        "required_output_tokens_per_second": 193.05555555555554,
+        "setup_time_fraction_if_1000h_productive": 0.0,
+        "target_usd_per_million_output": 0.6
+      },
+      {
+        "lifecycle_overhead_fraction": 0.1,
+        "measured_setup_seconds_per_recovery": 97,
+        "required_output_tokens_per_second": 166.81941171336302,
+        "setup_time_fraction_if_1000h_productive": 2.6944444444444445e-05,
+        "target_usd_per_million_output": 0.6365
+      },
+      {
+        "lifecycle_overhead_fraction": 0.1,
+        "measured_setup_seconds_per_recovery": 97,
+        "required_output_tokens_per_second": 176.9675925925926,
+        "setup_time_fraction_if_1000h_productive": 2.6944444444444445e-05,
+        "target_usd_per_million_output": 0.6
+      }
+    ],
+    "tensordock_all_in_hourly_usd_at_10pct_lifecycle": 0.38225,
+    "tensordock_listed_hourly_usd": 0.3475
+  },
+  "inputs": {
+    "a40_vendor_datasheet": "https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/a40/proviz-print-nvidia-a40-datasheet-us-nvidia-1469711-r8-web.pdf",
+    "checkpoint_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "config_sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9",
+    "index_sha256": "b9c53433e94f2fe7870cdbc3fcb6ed1431eb500c5242a039de93fef4bb988695",
+    "manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86",
+    "vllm_0_15_0_source_tarball_sha256": "50c5950718583a56d1aefa680ad1044f4e6a10d1a8b654eb00ab5b75e2a66983",
+    "vllm_source_lines": [
+      "vllm/attention/layer.py:532 sets MLA cache head_size=kv_lora_rank+qk_rope_head_dim",
+      "vllm/v1/kv_cache_interface.py:196-206 sizes MLA pages as block_size*num_kv_heads*head_size*dtype_bytes",
+      "vllm/v1/worker/gpu_worker.py:318-341 profiles non-KV use and allocates requested_memory-non_kv_cache_memory",
+      "vllm/v1/worker/gpu_worker.py:467-505 reports 150 MiB redundancy buffer and non-KV terms"
+    ]
+  },
+  "kv_geometry": {
+    "bf16_bytes_per_element": 2,
+    "block_size_tokens": 16,
+    "bytes_per_block": 866304,
+    "bytes_per_token": 54144,
+    "kv_lora_rank": 512,
+    "layers": 47,
+    "mla_cache_width": 576,
+    "qk_rope_head_dim": 64
+  },
+  "physical_lower_bounds": {
+    "a40_vendor_bf16_tensor_tflops": 149.7,
+    "a40_vendor_hbm_gbs": 696,
+    "active_parameter_floor": 3890479104,
+    "active_weight_bytes_max_single_token": 5196857584,
+    "active_weight_bytes_min_single_token": 5196857584,
+    "c8_weight_traffic_scenarios": {
+      "expert_diverse_hbm_gbs_at_required_rate": 269.49501449699073,
+      "expert_diverse_per_output_token_bytes": 1522849526.0,
+      "ideal_all_weight_reuse_per_output_token_bytes": 649607198.0,
+      "ideal_hbm_gbs_at_required_rate": 114.95942196087964,
+      "interpretation": "ideal reuse is the physical lower bound; expert-diverse and no-reuse values are traffic stress cases, not lower bounds",
+      "no_cross_request_reuse_per_output_token_bytes": 5196857584,
+      "no_reuse_hbm_gbs_at_required_rate": 919.6753756870371
+    },
+    "compute_floor_fraction_of_a40_bf16_tensor_peak": 0.009198246106435094,
+    "compute_floor_tflops_bf16_fma_counting": 1.3769774421333334,
+    "required_rate_for_0_60_at_10pct_overhead": 176.9675925925926
+  },
+  "schema_version": 1
+}

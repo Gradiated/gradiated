@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "artifact": "gemma_l40s_fp8_exact_shape_microbench_preflight",
+  "evidence_type": "measured_local_identity_controller_test_and_provider_inventory",
+  "pass": true,
+  "provider_create_gate": "passed",
+  "identity_validator": "validate_identity_contract.py",
+  "identity_assertion_sha256": "b34b4718c6e2e5946764eeeb241f3fdc07233b4ce4406a4355d59ea1a6772dce",
+  "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+  "runtime_amd64_manifest": "sha256:8e86cb93b724092cd4dc892fb129a6c5538613b38a5cd34e40aab9e6aea72b03",
+  "controller": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py",
+  "controller_explicit_image_argument_test": "research/sol/experiments/glm47flash/campaign_100/tests/test_nebius_mla_microbench.py::test_explicit_runtime_image_reaches_bootstrap_and_container",
+  "benchmark_sha256": "9a6d378a5faece86670b15417ae45a3504354d84b9af79b1b03b46bbb06c1dd3",
+  "remote_script_sha256": "8dda7c171bb855425580468523e5452e049438c309e81801f77b35a867a91fa8",
+  "provider_inventory": {"instances": 0, "disks": 0},
+  "measurement": {"seed": 1729, "reference_dtype": "bfloat16", "candidate_dtype": "float8_e4m3fn", "tied_vocab_dtype": "bfloat16", "max_absolute_error": 0.25, "warmup_iterations": 2, "timed_iterations": 5, "decode_m": [1, 2, 4, 8], "prefill_m": 4214, "linear_shapes": [[5376,12288],[5376,6144],[8192,5376],[5376,21504],[21504,5376],[5376,262144]], "kv_conditional": ["c8_4214", "single_10000"]},
+  "owner": {"unit": "gemma-l40s-fp8-exact-shape-owner.service", "unit_manager": "systemd --user", "timeout_seconds": 5400, "provider_exposure_seconds_max": 2700, "cleanup": "shared controller watchdog plus authenticated controller cleanup", "terminal": "artifacts/summary.json"}
+}

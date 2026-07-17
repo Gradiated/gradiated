@@ -1,0 +1,47 @@
+{
+  "project": "exit35_endpoint_phase_attribution",
+  "classification": "UNIDENTIFIABLE",
+  "decision": "The terminal artifacts prove the endpoint result but cannot causally allocate its 0.826414-second contextual wall-time difference among decode layers, prefill, output head, scheduler, or intervention overhead. No residual work family is nominated and decode-layer work is not broadly closed by these artifacts.",
+  "inputs": {
+    "exit35_summary": {
+      "path": "../full_model_exit35_c16_corrected_key/artifacts/nebius_l40s_exit35_c16_2026-07-16-r1/summary.json",
+      "sha256": "6e84e8c2095e64cc4cca84e49c76bdd5ade62a1768d02299b66f48594d65bca1",
+      "archive_sha256": "342e2b0786492a2cd4c4e6ab49defb6569b5c2f0e693a27f059f57eafed70d3c"
+    },
+    "stock_r3_summary": {
+      "path": "../near_stock_c32_memory_frontier/artifacts/near_stock_c32_memory_frontier_r3_control/summary.json",
+      "sha256": "23bce62e7a9f10c4d5708630a5351146f0c785ef2bc1281c6757459fb31c8218",
+      "archive_sha256": "91b02fdfae81bae2c3d608051a3419333dcca26490b5a82ade7d0118cf907833"
+    }
+  },
+  "comparability": {
+    "same_model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "same_endpoint_geometry": "cache-off, 8192 input, 1024 output, c16, max_num_seqs=16, max_num_batched_tokens=65536, num_kv_splits=4",
+    "requests_complete": "32/32 in each endpoint profile",
+    "control_identity": "contextual, not adjacent; the exit project explicitly disallows treating it as an adjacent control"
+  },
+  "measured_endpoint": {
+    "stock_r3": {"output_tokens_per_second": 552.1710554232396, "wall_seconds": 59.34392916499996, "output_tokens": 32768},
+    "exit35": {"output_tokens_per_second": 559.9690973028701, "wall_seconds": 58.517514909000056, "output_tokens": 32768, "verified_decode_layers": 35, "verified_prefill_layers": 47},
+    "contextual_uplift_percent": 1.4122511136794857,
+    "wall_seconds_saved_contextually": 0.8264142559999073,
+    "gate_output_tokens_per_second": 594.466,
+    "gate_wall_seconds_for_32768_outputs": 55.121739510754146,
+    "additional_seconds_required_from_exit": 3.39577539824591,
+    "minimum_removable_fraction_of_exit_endpoint_time": 0.0580300684936228
+  },
+  "attribution_assessment": {
+    "prefill": "not separately timed in either c16/1024 request profile; fixed 8192-token prefill may dilute decode savings",
+    "decode_layers": "patch evidence verifies full prefill and 35-layer decode, but no c16/1024 phase-bounded decode wall-time interval exists",
+    "output_head": "no endpoint-bound head interval or counter exists",
+    "scheduler_queue": "server metrics provide aggregate queue and TTFT sums only; they do not partition endpoint wall time",
+    "intervention_overhead": "no matched stock/exit phase timing or instrumentation isolates patch overhead",
+    "trace_exclusion": "both retained profiler artifacts are fixed_8k_128_c8 (8 requests, 128 outputs, c8), so their kernel intervals are out of scope for the fixed_8k_1k_c16 endpoint and cannot be converted into wall-time shares"
+  },
+  "stress_cases": {
+    "sampling": "The 32 rows are correlated members of a c16 batch schedule, so row resampling would not estimate aggregate wall-time uncertainty. Sorted eight-row mean end-to-end clusters span 29.226-30.107 seconds for r3 and 29.171-29.332 seconds for exit35.",
+    "contextual_control": "The observed 1.4123% difference is a contextual run-to-run contrast, not a randomized adjacent control.",
+    "overlap_or_replacement": "Without target-geometry phase ranges, skipped layer work could have been overlapped, hidden by prefill, or replaced by a different bottleneck. Summed kernel durations would not resolve this."
+  },
+  "resolving_measurement": "One matched alternating stock-versus-exit35 c16, cache-off 8192/1024 run with request-bound NVTX ranges for prefill, decode, final norm/head, and scheduler wait, reported as interval-union wall time; no such measurement is prepared or run by this project."
+}

@@ -1,0 +1,34 @@
+{
+  "status": "closed",
+  "priority": 0,
+  "summary": "Falsify whether top-2/no-shared can use stock config/checkpoint semantics instead of the closed patched-forward implementation, and whether the native path still clears 594.466 tok/s conservatively.",
+  "next_action": "No successor: native top-2/no-shared route is terminally closed.",
+  "provider_mutation": "prohibited_zero_cost_local_falsifier",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 1200,
+  "active_experiment": null,
+  "terminal_decision": "RUNTIME_CLOSE",
+  "terminal_artifact": "NATIVE_PROXY_FALSIFIER_2026-07-16.json",
+  "terminal_evidence": {
+    "stock_constructor": "PASS",
+    "candidate_constructor": "PASS",
+    "candidate_shared_state_keys": 138,
+    "checkpoint_shared_gate_shape": [1536, 2048],
+    "candidate_shared_gate_shape": [0, 2048],
+    "silent_drop_required": true,
+    "derived_endpoint_transfer_tok_per_s": 636.7879018411893,
+    "endpoint_transfer_admissible": false
+  },
+  "resource_cap": {
+    "peak_rss_gib": 12,
+    "new_artifacts_mib": 64
+  },
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "target_usd_per_million_output_tokens": 0.514,
+    "required_output_tokens_per_second": 594.466,
+    "current_identity_r3_c16_output_tokens_per_second": 552.1710554232396
+  },
+  "stop_rule": "one terminal NOMINATE_NATIVE_PROXY, RUNTIME_CLOSE, or ECONOMIC_CLOSE result; no successor",
+  "quality_policy": "semantics-changing architecture-cost proxy only; full quality deferred and mandatory before promotion"
+}

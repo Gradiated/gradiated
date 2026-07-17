@@ -1,0 +1,34 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "SCIENTIFIC_FAIL: fp8_e4m3 was accepted, but exact GLM MLA initialization found no L40S-compatible vLLM 0.15.0 attention backend for BF16 compute with FP8 KV; no model-load or throughput endpoint exists.",
+  "next_action": "Remain closed. Do not retry FP8 KV on this L40S/vLLM/GLM geometry; the fresh full_model_moe_top2_no_shared_c16_direct project owns the next paid measurement.",
+  "provider_mutation": "released_cleanup_verified",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 3300,
+  "active_session": null,
+  "decision": "scientific_fail_exact_attention_backend_incompatibility",
+  "quality_policy": "full quality deferred; no deployable claim",
+  "evidence": {
+    "terminal_artifact": "artifacts/full_model_fp8_kv_c32_corrected_2026-07-16-r1",
+    "corrected_kv_cache_dtype": "fp8_e4m3",
+    "server_command_accepted_token": true,
+    "model_load_completed": false,
+    "attention_selector": {
+      "head_size": 576,
+      "compute_dtype": "bfloat16",
+      "kv_cache_dtype": "fp8_e4m3",
+      "use_mla": true,
+      "classification": "no_valid_attention_backend_on_l40s_sm89"
+    },
+    "throughput_output_tokens_per_second": null,
+    "allocation_seconds": 1043.319,
+    "actual_spend_usd_derived": 0.248693024,
+    "cleanup_pass": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "archive_sha256": "6cc3edb28639f6a014035805532fe2dba7e78ea6112a49769578c2b9b572b757",
+    "summary_sha256": "f138dc36227b886b422c5ff1b4a118ddb8effac33039969804961a78e766df79",
+    "events_sha256": "aff8220f22c847689b3b54d97600f0c55acc3009fb4e30943ecad7c0f15e1d16"
+  }
+}

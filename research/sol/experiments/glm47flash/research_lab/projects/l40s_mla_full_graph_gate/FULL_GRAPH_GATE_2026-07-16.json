@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "decision": "RUNTIME_CLOSE",
+  "evidence_label": "measured r3 runtime plus static source audit",
+  "scope": {
+    "gpu": "NVIDIA L40S SM89",
+    "checkpoint": "exact r3 current AWQ GLM-4.7-Flash",
+    "runtime": "vLLM 0.15.0-derived pinned runtime",
+    "workload": "cache-off c16, 8192 input / 1024 output, mixed prefill/decode",
+    "economic_target_output_tokens_per_second": 594.466,
+    "robust_nomination_output_tokens_per_second": 606.355
+  },
+  "r3_measured_admission": {
+    "archive": "../near_stock_c32_memory_frontier/artifacts/near_stock_c32_memory_frontier_r3_control/vllm-awq-batch.tar.gz",
+    "archive_sha256": "91b02fdfae81bae2c3d608051a3419333dcca26490b5a82ade7d0118cf907833",
+    "summary_sha256": "23bce62e7a9f10c4d5708630a5351146f0c785ef2bc1281c6757459fb31c8218",
+    "requested_cudagraph_mode": "FULL_AND_PIECEWISE",
+    "capture_sizes": [1, 2, 4, 8, 16, 24, 32],
+    "selected_mla_backend": "TritonMLABackend / TRITON_MLA",
+    "selected_quantization": "compressed-tensors W4A16 / Marlin WNA16",
+    "compile_partitions": ["vllm::unified_mla_attention", "vllm::unified_mla_attention_with_output"],
+    "observed_resolution": "PIECEWISE",
+    "observed_warning": "FULL_AND_PIECEWISE is not supported with TritonMLABackend (AttentionCGSupport.NEVER); attention is compiled piecewise",
+    "measured_c16_output_tokens_per_second": 552.1710554232396,
+    "cuda_graph_launch_calls": 6096
+  },
+  "source_audit": {
+    "pinned_v015": {
+      "tree": "/tmp/vllm-v015",
+      "triton_mla_sha256": "647a6d5f4c46f3057fdedce04cc2ee3b15ade713b1d7752df00e347efbd62ef6",
+      "gpu_model_runner_sha256": "e8a73e1ccbfff37b880cd47ba9c115db572aef3c9d4d9eee50b18b729117f9bb",
+      "triton_cudagraph_support": "inherited NEVER",
+      "triton_kv_cache_support": ["auto", "bfloat16"],
+      "triton_compute_capability": "unrestricted source predicate",
+      "resolution_logic": "NEVER plus piecewise attention forces PIECEWISE for decode full-graph request"
+    },
+    "cached_v0251": {
+      "tree": "/tmp/vllm0251-src",
+      "commit": "752a3a504485790a2e8491cacbb35c137339ad34",
+      "triton_mla_sha256": "5e9aa13eca7ce718ce0648f11454bb0e0e98e9f5da40ee22bd8d0b05f4ba1d03",
+      "gpu_model_runner_sha256": "6c92ded8468f44d6df863a617ce588f132fa6df7031feecc0cc421702a41610e",
+      "triton_cudagraph_support": "UNIFORM_BATCH",
+      "triton_kv_cache_support": ["auto", "float16", "bfloat16", "fp8", "fp8_e4m3"],
+      "triton_compute_capability": "unrestricted source predicate",
+      "resolution": "uniform decode support does not admit the required mixed prefill/decode full graph"
+    },
+    "other_cached_mla_backends": "Audited v0.15.0/v0.25.1 MLA declarations expose NEVER, UNIFORM_SINGLE_TOKEN_DECODE, or UNIFORM_BATCH; no unchanged backend provides ALWAYS mixed-batch full-graph support on this exact path. FlashMLA/FlashInfer/CUTLASS capability or dependency differences do not create an exact unchanged SM89 compressed-tensors route."
+  },
+  "bound": {
+    "classification": "not_needed_after_runtime_admission_failure",
+    "reason": "No admissible unchanged SM89 full-graph MLA path survives source admission; retained interval evidence cannot promote a nonexistent path.",
+    "no_inference_from_call_count": true
+  },
+  "cost_usd": 0.0,
+  "provider_mutation": false,
+  "next_action": "Stop this lineage; do not build a backend, prepare provider work, or run a successor matched A/B."
+}

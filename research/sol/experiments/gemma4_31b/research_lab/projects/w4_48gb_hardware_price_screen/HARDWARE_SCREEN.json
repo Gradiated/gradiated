@@ -1,0 +1,198 @@
+{
+  "assumptions": {
+    "all_in_factor": "Candidate and L40S use the same saturation-gate utilization/headroom/non-GPU/reliability/storage factors; therefore they cancel in rate/throughput ratios.",
+    "bandwidth_proportional": "An analytical decode weight-stream prior only, not transferred performance evidence.",
+    "conservative_efficiency_discount": 0.85
+  },
+  "candidates": [
+    {
+      "break_even": {
+        "equal_all_in_max_rate_usd_per_gpu_hour": {
+          "bandwidth_proportional": 0.8861111111111112,
+          "conservative_85pct_efficiency": 0.7531944444444445,
+          "measured_live_terminal_parameterized": "1.10 * R_matched, where R_matched = candidate whole-workload throughput / measured L40S whole-workload throughput"
+        },
+        "minimum_matched_throughput_ratio_at_observed_public_rate": {
+          "equal_all_in": 0.39999999999999997,
+          "ten_percent_better_all_in": 0.4444444444444444
+        },
+        "ten_percent_better_all_in_max_rate_usd_per_gpu_hour": {
+          "bandwidth_proportional": 0.7975000000000001,
+          "conservative_85pct_efficiency": 0.6778750000000001,
+          "measured_live_terminal_parameterized": "0.99 * R_matched"
+        }
+      },
+      "capacity": {
+        "allocator_risk": "c16 has 13.545735 GiB logical slack; c32 has 7.730963 GiB. 10K c32 has only 0.612795 GiB and remains allocator-sensitive on all three cards.",
+        "logical_fit": "same 48-GB capacity as L40S; inherits W4 c16 31.158265 GiB and c32 36.973037 GiB logical totals"
+      },
+      "consumer_support": {
+        "capability": "A40 SM86 / RTX 6000 Ada SM89 both exceed the source minimum 75",
+        "source": "pinned vLLM AutoAWQ source; get_min_capability=75 and CUDA Marlin selection is conditional on check_marlin_supported and layer support",
+        "status": "source-supported candidate only; fresh CUDA six-shape Marlin execution is required before any throughput or production claim"
+      },
+      "evidence": "inventory + first_party_source + vendor_reported_public_on_demand + derived + inferred",
+      "hardware": {
+        "architecture_profile": "nvidia-sm86",
+        "capacity_gb": 48,
+        "l2_mb": 6,
+        "memory_bandwidth_gb_s": 696,
+        "numeric_formats": [
+          "fp32",
+          "tf32",
+          "bf16",
+          "fp16",
+          "int8",
+          "int4"
+        ],
+        "power_w": 300,
+        "sm_count": 84,
+        "topology": "one optional bridge"
+      },
+      "id": "nvidia-a40",
+      "mechanism_risk": "SM86 has 84 SMs, 6-MB L2, and 696 GB/s versus L40S's 142 SMs, 96-MB L2, and 864 GB/s; the large repeated W4 active stream is likely DRAM-bound, but smaller L2 and fewer SMs can worsen tile/grid occupancy and scale below bandwidth.",
+      "model": "A40",
+      "observed_public_rate_usd_per_gpu_hour": 0.44,
+      "rate_evidence": "ultralytics_cloud_gpu_training_pricing_2026_07_17"
+    },
+    {
+      "break_even": {
+        "equal_all_in_max_rate_usd_per_gpu_hour": {
+          "bandwidth_proportional": 1.2222222222222223,
+          "conservative_85pct_efficiency": 1.038888888888889,
+          "measured_live_terminal_parameterized": "1.10 * R_matched, where R_matched = candidate whole-workload throughput / measured L40S whole-workload throughput"
+        },
+        "minimum_matched_throughput_ratio_at_observed_public_rate": {
+          "equal_all_in": 0.7,
+          "ten_percent_better_all_in": 0.7777777777777777
+        },
+        "ten_percent_better_all_in_max_rate_usd_per_gpu_hour": {
+          "bandwidth_proportional": 1.1,
+          "conservative_85pct_efficiency": 0.935,
+          "measured_live_terminal_parameterized": "0.99 * R_matched"
+        }
+      },
+      "capacity": {
+        "allocator_risk": "c16 has 13.545735 GiB logical slack; c32 has 7.730963 GiB. 10K c32 has only 0.612795 GiB and remains allocator-sensitive on all three cards.",
+        "logical_fit": "same 48-GB capacity as L40S; inherits W4 c16 31.158265 GiB and c32 36.973037 GiB logical totals"
+      },
+      "consumer_support": {
+        "capability": "A40 SM86 / RTX 6000 Ada SM89 both exceed the source minimum 75",
+        "source": "pinned vLLM AutoAWQ source; get_min_capability=75 and CUDA Marlin selection is conditional on check_marlin_supported and layer support",
+        "status": "source-supported candidate only; fresh CUDA six-shape Marlin execution is required before any throughput or production claim"
+      },
+      "evidence": "inventory + first_party_source + vendor_reported_public_on_demand + derived + inferred",
+      "hardware": {
+        "architecture_profile": "nvidia-sm89",
+        "capacity_gb": 48,
+        "l2_mb": 96,
+        "memory_bandwidth_gb_s": 960,
+        "numeric_formats": [
+          "fp32",
+          "tf32",
+          "bf16",
+          "fp16",
+          "fp8",
+          "int8",
+          "int4"
+        ],
+        "power_w": 300,
+        "sm_count": 142,
+        "topology": "single workstation PCIe device"
+      },
+      "id": "nvidia-rtx-6000-ada",
+      "mechanism_risk": "Same SM89 count and 96-MB L2 as L40S, with 960 versus 864 GB/s, so bandwidth scaling is a useful but unmeasured prior; workstation cooling/sustained clocks and specialist-cloud host topology can erase it.",
+      "model": "RTX 6000 Ada",
+      "observed_public_rate_usd_per_gpu_hour": 0.77,
+      "rate_evidence": "ultralytics_cloud_gpu_training_pricing_2026_07_17"
+    }
+  ],
+  "condition": "Only if the separate live L40S W4 mechanism emits a passing typed terminal. Then require one fresh matched CUDA, six-shape, c16/c32 whole-workload measurement and a current written 12-24 month committed quote before a production claim.",
+  "decision": "conditional_matched_gpu_nominee",
+  "decision_basis": "RTX 6000 Ada's observed $0.77/h is below both the $0.99/h conservative 10%-better ceiling and $1.10/h bandwidth-proportional 10%-better ceiling. Its SM89, SM count, 96-MB L2, INT4, and source capability gate match L40S; no throughput has been transferred.",
+  "economic_target": {
+    "conservative_required_requests_per_second": 1.1583551336753017,
+    "planning_required_requests_per_second": 0.7170614380702235
+  },
+  "generated_utc": "2026-07-17T06:10:00Z",
+  "inputs": {
+    "factory/data/accelerator_inventory.json": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8",
+    "factory/data/gpu_prices.json": "3f403d67a92fc91be85bbd27dede85f5f91c3fd2df25ef8dcef2a344acbd1e01",
+    "sol/experiments/gemma4_31b/research_lab/projects/gemma_l40s_w4_c16_economic_bound/W4_C16_BOUND_V2.json": "b697e8c43bcdecac9b0261ab79e363b39e11e9c37a0be282d357a21c9e24fe9d",
+    "sol/experiments/gemma4_31b/research_lab/projects/gemma_l40s_w4_c16_economic_bound/W4_COMPONENT_PACKET.json": "3ac9ff0868ed63bd06bb263c78576ba8d00c67244a1ca636e82f00be65ed8aad",
+    "sol/experiments/gemma4_31b/research_lab/projects/l40s_saturation_economic_gate/SATURATION_GATE.json": "690e0e457c6e8e9121b54fb7f88abc92c3dcc358e1d71accffddb083878d00d6"
+  },
+  "l40s_reference": {
+    "hardware": {
+      "bandwidth_gb_s": 864,
+      "l2_mb": 96,
+      "power_w": 350,
+      "sm": 142
+    },
+    "planning_rate_usd_per_gpu_hour": 1.1,
+    "shared_price_age_days_at_director_turn": 1.688,
+    "shared_price_refreshed_at_utc": "2026-07-15T13:15:00Z"
+  },
+  "nominee": "nvidia-rtx-6000-ada",
+  "non_nominee": {
+    "id": "nvidia-a40",
+    "reason": "Its $0.44/h marketplace-like on-demand rate can beat the L40S cost surface only if it retains at least 44.4% of L40S throughput for 10% improvement; that is plausible but its lower bandwidth/L2 and SM86 kernel behavior create too much unmeasured performance risk for the sole nominee."
+  },
+  "public_rate_source": {
+    "id": "ultralytics_cloud_gpu_training_pricing_2026_07_17",
+    "label": "vendor_reported_public_on_demand",
+    "note": "Lists A40 $0.44/h, RTX 6000 Ada $0.77/h, and L40S $0.86/h. This is an on-demand vendor listing, not a 12-24 month committed production quote.",
+    "retrieved_at_utc": "2026-07-17T06:00:00Z",
+    "url": "https://docs.ultralytics.com/platform/train/cloud-training"
+  },
+  "schema_version": 1,
+  "workload": {
+    "concurrency": [
+      16,
+      32
+    ],
+    "exact_w4_active_text_stream_gib": 16.84869,
+    "logical_totals_gib": {
+      "c16": 31.158265,
+      "c32": 36.973037,
+      "c8": 28.250879
+    },
+    "request_mix": {
+      "aa_input_tokens": 10000,
+      "concurrency": [
+        8,
+        16,
+        32
+      ],
+      "primary_input_tokens": 4214,
+      "primary_output_tokens": 358,
+      "prompt_cache_read_fraction": 0.127
+    },
+    "six_marlin_shapes": [
+      [
+        5376,
+        16384
+      ],
+      [
+        5376,
+        20480
+      ],
+      [
+        5376,
+        43008
+      ],
+      [
+        8192,
+        5376
+      ],
+      [
+        16384,
+        5376
+      ],
+      [
+        21504,
+        5376
+      ]
+    ]
+  }
+}

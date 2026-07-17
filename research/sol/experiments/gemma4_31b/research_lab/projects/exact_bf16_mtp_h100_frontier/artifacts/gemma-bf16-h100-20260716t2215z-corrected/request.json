@@ -1,0 +1,17 @@
+{
+  "deadline_epoch": 1784250936.0,
+  "disk_gib": 200,
+  "image": "vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+  "model": "google/gemma-4-31B-it",
+  "name": "gemma-bf16-h100-20260716t2215z-corrected",
+  "platform": "gpu-h100-sxm",
+  "preemptible": true,
+  "preset": "1gpu-16vcpu-200gb",
+  "prior_attempt": {
+    "allocation_seconds": 125.189,
+    "classification": "pre_gpu_remote_workspace_permission_failure_cleanup_verified",
+    "run": "gemma-bf16-h100-20260716t2210z"
+  },
+  "remote_workspace": "/home/glmrunner/gemma-workspace",
+  "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+}

@@ -1,14 +1,20 @@
 {
-  "status": "active",
+  "status": "complete",
   "priority": 120,
-  "summary": "Establish the first exact pinned BF16 H100 control and measure native Gemma 4 MTP, with async scheduling as the retained-session fallback.",
-  "next_action": "Start the grouped source/runtime/provider preflight, then launch the bounded one-H100 durable owner immediately; do not wait for the offline opportunity project before beginning the stock control.",
-  "provider_mutation": "exclusive_authorized_nebius_owner",
+  "summary": "Closed as an operational canary: the corrected owner timed out without scientific output, and typed cleanup verified zero instances and disks.",
+  "next_action": "Do not repair or retry this lineage and do not use it as a baseline. The director has activated the direct FP8 L40S arm.",
+  "provider_mutation": "closed_cleanup_verified",
   "authorized_spend_usd": 8.0,
   "absolute_timeout_seconds": 14400,
   "provider_exposure_timeout_seconds": 10800,
   "compute_budget": "3 H100-hours and 2 local CPU-hours",
   "storage_budget": "one 200 GiB provider disk and 8 GiB retrieved artifacts",
   "active_session": null,
-  "terminal_artifact": "artifacts/<run-id>/summary.json"
+  "last_experiment": "gemma-bf16-h100-20260716t2215z-corrected",
+  "last_result_classification": "operational_canary_timeout_no_scientific_output_cleanup_verified",
+  "last_terminal_artifacts": {
+    "failure": "artifacts/gemma-bf16-h100-20260716t2215z-corrected/failure.json",
+    "cleanup": "artifacts/gemma-bf16-h100-20260716t2215z-corrected/cleanup.json"
+  },
+  "terminal_artifact": "artifacts/gemma-bf16-h100-20260716t2215z-corrected/cleanup.json"
 }

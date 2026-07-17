@@ -1,0 +1,40 @@
+{
+  "classification": "OPERATIONAL_NULL_MODEL_IDENTITY_STAGING",
+  "evidence_type": "measured_operational_and_dispatch_selection",
+  "archive": {
+    "path": "vllm-awq-batch.tar.gz",
+    "sha256": "fb5e62f453f76d6a7d8f9bc0861648589cc08cb7b83268a32b2a2ced44042e17",
+    "internal_manifest_file_count": 11
+  },
+  "gpu_dispatch_selection_probe": {
+    "pass": true,
+    "cuda_capability": [8, 9],
+    "head_method": "CompressedTensorsLinearMethod",
+    "head_scheme": "CompressedTensorsWNA16",
+    "shared_scheme": "CompressedTensorsWNA16",
+    "scope": "SM89 visibility plus get_quant_method class selection only",
+    "weight_load_executed": false,
+    "kernel_executed": false,
+    "inference_executed": false
+  },
+  "failure": {
+    "phase": "model_identity",
+    "cause": "checksum-required .campaign-local-integrity-v1.json was excluded from transfer by session_staging.checkpoint_files",
+    "diagnostic_member": "campaign-100-vllm-awq-batch/model-manifest-verification.log",
+    "diagnostic_sha256": "1b32460f4daa1e3be25df9e82a139c3748cf59c2ef42f74c7d4677fcaa456245"
+  },
+  "measurement": {
+    "scientific_workload_returncode": 1,
+    "scientific_workload_seconds": 127.194,
+    "c16_c32_result": "not_reached",
+    "useful_gpu_seconds": null,
+    "allocation_seconds": 1017.562,
+    "cost_usd_derived": 0.242553459
+  },
+  "cleanup": {
+    "pass": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0
+  },
+  "retry_permitted": false
+}

@@ -1,0 +1,16 @@
+{
+  "changed_occurrences": 1,
+  "decode_grouped_block_n_after": 32,
+  "decode_grouped_block_n_before": 32,
+  "decode_grouped_num_stages_after": 2,
+  "decode_grouped_num_stages_before": 2,
+  "mla_backend_changed_occurrences": 1,
+  "mla_backend_source": "/usr/local/lib/python3.12/dist-packages/vllm/v1/attention/backends/mla/triton_mla.py",
+  "mla_backend_source_sha256_after": "647a6d5f4c46f3057fdedce04cc2ee3b15ade713b1d7752df00e347efbd62ef6",
+  "mla_backend_source_sha256_before": "647a6d5f4c46f3057fdedce04cc2ee3b15ade713b1d7752df00e347efbd62ef6",
+  "num_kv_splits_after": 4,
+  "num_kv_splits_before": 4,
+  "source": "/usr/local/lib/python3.12/dist-packages/vllm/v1/attention/ops/triton_decode_attention.py",
+  "source_sha256_after": "cf4debbbbdf2245355177dd7be91c4ac75730a9207a10cd7dab6306a5c3bdec4",
+  "source_sha256_before": "cf4debbbbdf2245355177dd7be91c4ac75730a9207a10cd7dab6306a5c3bdec4"
+}

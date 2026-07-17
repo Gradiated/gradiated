@@ -1,0 +1,60 @@
+{
+  "ceilings": {
+    "cal_dev_loss_01": {
+      "ceiling": 8.852074560752282,
+      "control_mean_nll": [
+        8.43054720071646,
+        8.43054720071646,
+        8.43054720071646
+      ],
+      "max_control_mean_nll": 8.43054720071646
+    },
+    "cal_dev_loss_02": {
+      "ceiling": 9.050586569309235,
+      "control_mean_nll": [
+        8.619606256484985,
+        8.619606256484985,
+        8.619606256484985
+      ],
+      "max_control_mean_nll": 8.619606256484985
+    },
+    "cal_dev_loss_03": {
+      "ceiling": 9.093979090910693,
+      "control_mean_nll": [
+        8.660932467533993,
+        8.660932467533993,
+        8.660932467533993
+      ],
+      "max_control_mean_nll": 8.660932467533993
+    },
+    "cal_dev_loss_04": {
+      "ceiling": 9.296213744236873,
+      "control_mean_nll": [
+        8.853536899273212,
+        8.853536899273212,
+        8.853536899273212
+      ],
+      "max_control_mean_nll": 8.853536899273212
+    },
+    "cal_dev_loss_05": {
+      "ceiling": 9.043885192504296,
+      "control_mean_nll": [
+        8.613223992861235,
+        8.613223992861235,
+        8.613223992861235
+      ],
+      "max_control_mean_nll": 8.613223992861235
+    },
+    "cal_dev_loss_06": {
+      "ceiling": 9.350286577298093,
+      "control_mean_nll": [
+        8.905034835521992,
+        8.905034835521992,
+        8.905034835521992
+      ],
+      "max_control_mean_nll": 8.905034835521992
+    }
+  },
+  "rule": "1.05 * max(control mean NLL across three captures)",
+  "schema_version": 1
+}

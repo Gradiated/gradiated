@@ -1,0 +1,195 @@
+{
+  "arms": {
+    "c16": {
+      "economics": {
+        "conservative_lifecycle_usd_per_hour": {
+          "cost_at_95pct_productive_utilization_usd_per_million": 0.4248444014926144,
+          "maximum_lifecycle_overhead_fraction": 0.21478174821403972,
+          "rate_usd_per_hour": 0.847,
+          "required_productive_utilization": 0.7852182517859603
+        },
+        "listed_usd_per_hour": {
+          "cost_at_95pct_productive_utilization_usd_per_million": 0.386222183175104,
+          "maximum_lifecycle_overhead_fraction": 0.28616522564912705,
+          "rate_usd_per_hour": 0.77,
+          "required_productive_utilization": 0.713834774350873
+        },
+        "sensitivity_high_usd_per_hour": {
+          "cost_at_95pct_productive_utilization_usd_per_million": 0.5015872508767584,
+          "maximum_lifecycle_overhead_fraction": 0.07294185149237276,
+          "rate_usd_per_hour": 1.0,
+          "required_productive_utilization": 0.9270581485076272
+        },
+        "sensitivity_low_usd_per_hour": {
+          "cost_at_95pct_productive_utilization_usd_per_million": 0.3511110756137309,
+          "maximum_lifecycle_overhead_fraction": 0.3510592960446609,
+          "rate_usd_per_hour": 0.7,
+          "required_productive_utilization": 0.6489407039553391
+        }
+      },
+      "measured_l40s_output_tok_s": 674.423576364909,
+      "performance_retained_output_tok_s_interval": [
+        582.9447624667728,
+        674.423576364909
+      ],
+      "performance_retention_interval": [
+        0.86436,
+        1.0
+      ],
+      "productive_utilization_interval": [
+        0.95,
+        0.99
+      ],
+      "required_output_tok_s_at_conservative_rate": 457.73886727194116,
+      "sustainable_output_tok_s_interval": [
+        553.797524343434,
+        667.6793406012599
+      ],
+      "sustainable_retention_interval": [
+        0.8211419999999999,
+        0.99
+      ]
+    },
+    "c32": {
+      "economics": {
+        "conservative_lifecycle_usd_per_hour": {
+          "cost_at_95pct_productive_utilization_usd_per_million": 0.3900653900978748,
+          "maximum_lifecycle_overhead_fraction": 0.279062022192644,
+          "rate_usd_per_hour": 0.847,
+          "required_productive_utilization": 0.720937977807356
+        },
+        "listed_usd_per_hour": {
+          "cost_at_95pct_productive_utilization_usd_per_million": 0.3546049000889771,
+          "maximum_lifecycle_overhead_fraction": 0.344601838356949,
+          "rate_usd_per_hour": 0.77,
+          "required_productive_utilization": 0.655398161643051
+        },
+        "sensitivity_high_usd_per_hour": {
+          "cost_at_95pct_productive_utilization_usd_per_million": 0.4605258442713988,
+          "maximum_lifecycle_overhead_fraction": 0.148833556307726,
+          "rate_usd_per_hour": 1.0,
+          "required_productive_utilization": 0.851166443692274
+        },
+        "sensitivity_low_usd_per_hour": {
+          "cost_at_95pct_productive_utilization_usd_per_million": 0.32236809098997915,
+          "maximum_lifecycle_overhead_fraction": 0.40418348941540827,
+          "rate_usd_per_hour": 0.7,
+          "required_productive_utilization": 0.5958165105845917
+        }
+      },
+      "measured_l40s_output_tok_s": 734.5565331529764,
+      "performance_retained_output_tok_s_interval": [
+        634.9212849961067,
+        734.5565331529764
+      ],
+      "performance_retention_interval": [
+        0.86436,
+        1.0
+      ],
+      "productive_utilization_interval": [
+        0.95,
+        0.99
+      ],
+      "required_output_tok_s_at_conservative_rate": 457.73886727194116,
+      "sustainable_output_tok_s_interval": [
+        603.1752207463013,
+        727.2109678214466
+      ],
+      "sustainable_retention_interval": [
+        0.8211419999999999,
+        0.99
+      ]
+    }
+  },
+  "capacity": {
+    "c16_headroom_mib_if_target_reports_source_visible_capacity": 2760.4830322265625,
+    "c16_peak_mib_derived_from_corrected_c32_minus_exact_kv_delta": 43307.51696777344,
+    "c32_admission_gate": {
+      "reason": "The source L40S reports 46,068 MiB rather than treating nominal 48 GB as card-visible memory. The RTX has the same vendor-reported 48-GB ECC GDDR6 capacity, but its driver-visible value is unmeasured.",
+      "target_loaded_and_8k_1k_c32_memory_used_mib_max": 44459.51696777344,
+      "target_nvidia_smi_memory_total_mib_min": 46068
+    },
+    "c32_headroom_fraction_of_visible_capacity": 0.03491540835778767,
+    "c32_headroom_mib_if_target_reports_source_visible_capacity": 1608.4830322265625,
+    "c32_peak_mib_corrected_analytical": 44459.51696777344,
+    "same_nominal_memory_vendor_reported_gb": 48,
+    "source_card_visible_mib_measured": 46068
+  },
+  "decision": {
+    "economics": "c16 and c32 pass at the conservative floor; c32 has the stronger 0.3901/M bound at $0.847/h.",
+    "nominate_later_arm": {
+      "falsifiers": [
+        "RTX 6000 Ada nvidia-smi reports less than 46,068 MiB visible memory or c32 used memory exceeds 44,459.517 MiB.",
+        "Raw c32 output is below 634.921 tok/s at the 72.094% productive-utilization floor, or their product is below 457.739 lifecycle-adjusted tok/s.",
+        "The RTX dispatches a materially different compressed-tensors kernel, throttles, or fails the recovered-quality contract."
+      ],
+      "memory_gate": {
+        "reason": "The source L40S reports 46,068 MiB rather than treating nominal 48 GB as card-visible memory. The RTX has the same vendor-reported 48-GB ECC GDDR6 capacity, but its driver-visible value is unmeasured.",
+        "target_loaded_and_8k_1k_c32_memory_used_mib_max": 44459.51696777344,
+        "target_nvidia_smi_memory_total_mib_min": 46068
+      },
+      "minimum_lifecycle_adjusted_throughput_output_tok_s": 457.73886727194116,
+      "minimum_productive_utilization_at_0_847_per_hour": 0.720937977807356,
+      "minimum_raw_throughput_output_tok_s_at_minimum_utilization": 634.9212849961067,
+      "nominate": true,
+      "quality_gate": "Use the recovered 39-layer checkpoint only after its recovery project passes the campaign quality gate; preserve the manifest/revision and perform paired quality output capture before economic interpretation.",
+      "reliability_gate": "All 64 requests succeed at exact geometry; prefix-cache deltas remain zero; record interruption/reload/retry time and retain at least the required productive utilization.",
+      "runtime_and_workload": "Pinned vLLM 0.15.0 compressed-tensors AWQ path; BF16 activations, KV auto, --max-model-len 32768, --max-num-seqs 32, --max-num-batched-tokens 65536, --gpu-memory-utilization 0.90, prefix cache disabled, seed 1234; exact 8,192-input/1,024-output c32 workload with two 32-request waves.",
+      "spend_and_cleanup_gate": "No allocation is authorized by this bound. Any later owner must set a capped spend and absolute watchdog before creation, retain raw telemetry plus request rows, and verify instance and disk absence after the arm.",
+      "status": "conditional_after_quality_recovery",
+      "why_decisive": "At the conservative 0.821142 sustainable retention floor, c32 is 603.175 output tok/s and $0.3901/M at $0.847/h, leaving 21.58% cost margin below the $0.514/M gate. The one remaining material uncertainty is exact RTX card-visible capacity and sustained runtime behavior."
+    },
+    "placement": "conditional_candidate_only"
+  },
+  "evidence_hashes": {
+    "accelerator_inventory_sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8",
+    "prior_transfer_sha256": "8d61a0c26fa4c817d5a1b60f8e7fb193c6ab6cde0b7bc9254b1c149b894b77bd",
+    "student_status_sha256": "0c71a4aebfe923689a081672a21ecd7712a23fa015056d6453c1a28355554965",
+    "student_summary_sha256": "5b2c9f57573dd8f53024bcea7109c920781d78f603a2694bd154c490691bad89",
+    "student_terminal_artifact_sha256": "f9f3f77da53d30e87604d8a0f8c1ddd81e8bed65bab100896b06b5c6a7b35383"
+  },
+  "evidence_labels": {
+    "0.77_rate": "vendor_listed_prior_evidence",
+    "chip_identity": "vendor_reported/shared_inventory",
+    "later_arm": "conditional_inferred",
+    "student_throughput_and_source_memory": "measured",
+    "transfer_and_economics": "derived_conservative"
+  },
+  "invariants": [
+    "SM89",
+    "142 SMs",
+    "568 Tensor Cores",
+    "96 MB L2",
+    "48-GB ECC GDDR6 nominal capacity",
+    "PCIe Gen4 x16",
+    "vLLM compressed-tensors legality"
+  ],
+  "question": "Exact zero-provider RTX 6000 Ada capacity, retention, utilization, and lifecycle bound for measured student39 c16/c32.",
+  "schema_version": 1,
+  "source_runtime": {
+    "cuda": "13.0",
+    "driver": "580.159.04",
+    "gpu": "L40S",
+    "quantization": "compressed-tensors",
+    "runtime": "vLLM 0.15.0",
+    "source_c32_telemetry_memory_total_mib": 46068,
+    "source_c32_telemetry_memory_used_mib": 43665
+  },
+  "transfer_components": {
+    "lifecycle_productive_utilization": 0.95,
+    "method": "Separate same-chip performance transfer from productive utilization; do not claim the 960/864 GB/s bandwidth ratio as realized throughput.",
+    "performance_only": {
+      "kernel_legality_and_shape": 0.98,
+      "runtime_driver_support": 0.98,
+      "sustained_clock_power_cooling": 0.9
+    },
+    "prior_c16_full_model_sustainable_floor": 0.821142
+  },
+  "unmeasured_target_differences": [
+    "driver-visible memory total",
+    "sustained clocks/cooling under c32",
+    "actual kernel dispatch",
+    "runtime workspace/fragmentation",
+    "interruption/reload behavior"
+  ]
+}

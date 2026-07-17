@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "generated_utc": "2026-07-17T05:12:53Z",
+  "classification": "refreshed_precreate_identity_and_controller_gate",
+  "pass": true,
+  "identity_input_hashes": {"hf_config": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1", "geometry": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72", "fp8_packet": "6c8e4e6cafbc9a1ba12e203c8045d9c82bee7c3b7ad1477a42ce5e38d4f7d880", "saturation_gate": "690e0e457c6e8e9121b54fb7f88abc92c3dcc358e1d71accffddb083878d00d6", "predecessor_summary": "4a5634b97ace9b5c1825f72a86dd06370b4d9f4ec942a827080dfea388ebc94f"},
+  "controller_terminal": "artifacts/controller-terminal.json",
+  "controller_sha256": "1c7448d956d9c65eaf64494bf3bbd16afcf813e30f57604a36affc873d23af2b",
+  "stage_scripts": {"remote_consumer_stage.sh": "3d63de77823552f3971aaed508a544b4efad1af56f85d973a56ca612298622b2", "actual_vllm_consumer.py": "14cb9ca9c5e4209a7490330ed84762f35715a7522a560ee02132ff12b4529057"},
+  "provider_create_gated_until_this_record": true
+}

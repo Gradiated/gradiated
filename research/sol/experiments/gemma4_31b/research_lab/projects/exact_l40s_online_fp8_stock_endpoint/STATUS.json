@@ -1,0 +1,21 @@
+{
+  "status": "closed",
+  "priority": 0,
+  "summary": "Closed after the sole allocation failed exact-image bootstrap on an unoverridden vLLM entrypoint before checkpoint, model, or request; cleanup verified empty.",
+  "next_action": null,
+  "provider_mutation": "forbidden_closed_paid_pre_science_bootstrap_failure_cleanup_verified",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 110,
+  "provider_exposure_budget_minutes": 80,
+  "compute_budget": "1.34 L40S GPU-hours and 3 local CPU-hours",
+  "storage_budget": "read-only verified checkpoint; one 200 GiB provider disk and 12 GiB project artifacts; no shared /tmp",
+  "active_session": null,
+  "terminal_artifact": "artifacts/gemma-l40s-fp8-20260717t092300z/SUMMARY.json",
+  "last_result_classification": "closed_exact_image_entrypoint_bootstrap_failure_cleanup_verified",
+  "measured_provider_seconds": 389.7316246032715,
+  "measured_cost_usd_derived": 0.09395177997634761,
+  "useful_gpu_seconds": 0.0,
+  "cleanup_pass": true,
+  "final_instance_count": 0,
+  "final_disk_count": 0
+}

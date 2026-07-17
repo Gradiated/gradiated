@@ -1,0 +1,29 @@
+{
+  "status": "closed",
+  "priority": 0,
+  "summary": "Closed after two pre-science owner failures; the corrected owner transferred the exact checkpoint but failed on remote workspace ownership before model load, then cleaned empty.",
+  "next_action": "None. Preserve the exact checkpoint and transfer timing, but do not repair, retry, or infer H200 performance from this lineage.",
+  "provider_mutation": "forbidden_closed_second_pre_science_failure_cleanup_verified",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 110,
+  "provider_exposure_budget_minutes": 80,
+  "compute_budget": "1.34 H200 GPU-hours and 2 local CPU-hours",
+  "storage_budget": "reuse verified checkpoint read-only; one 250 GiB provider disk and 10 GiB project artifacts; no shared /tmp",
+  "active_session": null,
+  "last_owner": {
+    "state": "terminal_pre_science_transfer_failure_cleaned",
+    "unit": "gemma-vllm-h200-20260717t082403z-owner.service",
+    "resource_name": "gemma-vllm-h200-20260717t082403z",
+    "artifact_root": "artifacts/gemma-vllm-h200-20260717t082403z",
+    "failure": "raw scp host-key verification failure before checkpoint transfer",
+    "cleanup_pass": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0
+  },
+  "correction_budget": "exhausted; lineage closed",
+  "terminal_artifact": "artifacts/gemma-vllm-h200-20260717t084247z/SUMMARY.json",
+  "last_result_classification": "closed_second_pre_science_program_directory_permission_failure_cleanup_verified",
+  "measured_provider_seconds": 1131.6008431186676,
+  "measured_cost_usd_derived": 0.7777572749814323,
+  "useful_gpu_seconds": 0.0
+}

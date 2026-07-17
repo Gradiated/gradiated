@@ -1,0 +1,21 @@
+{
+  "status": "completed",
+  "priority": 300,
+  "summary": "QUALITY_ARTIFACT_CLOSE: archive digests and normalized-score replay support the observed retrieval difference, but the immutable captures cannot prove the required raw-to-normalized identity-bound consumer bridge.",
+  "next_action": "Terminal. Preserve top-3/shared only as bracketed architecture-cost evidence; this close makes no quality or deployability claim.",
+  "provider_mutation": "prohibited_zero_cost_artifact_adjudication",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 600,
+  "resource_cap": {
+    "peak_rss_gib": 4,
+    "new_artifacts_mib": 32
+  },
+  "allowed_results": [
+    "QUALITY_REGRESSION_CONFIRMED",
+    "QUALITY_SIGNAL_INCONCLUSIVE",
+    "QUALITY_ARTIFACT_CLOSE"
+  ],
+  "stop_rule": "One immutable-capture adjudication; no new evaluation, policy/holdout work, model execution, provider action, training, repair, or successor preparation.",
+  "result": "QUALITY_ARTIFACT_CLOSE",
+  "evidence_artifact": "artifacts/QUALITY_ARTIFACT_CLOSE_2026-07-16.json"
+}

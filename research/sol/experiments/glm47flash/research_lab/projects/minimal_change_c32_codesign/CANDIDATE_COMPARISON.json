@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "evidence_class": "derived_exact_headers_and_closed_bounds_plus_measured_local_proxy",
+  "baseline": {
+    "serving_layers": 47,
+    "stock_c32_peak_mib": 46875.7,
+    "l40s_capacity_mib": 46068.0,
+    "stock_c32_deficit_mib": 807.7,
+    "promotion_tok_s": 594.466,
+    "planning_rate_usd_per_hour": 1.1,
+    "stock_c16_measured_tok_s": 535.2861037029285
+  },
+  "candidates": [
+    {
+      "name": "rank384",
+      "changed_tensors": "MLA KV projection shapes only; checkpoint rewrite required",
+      "changed_payload_bytes": 32935936,
+      "c32_peak_mib_rank_only": 44795.0,
+      "c32_headroom_mib_rank_only": 1273.0,
+      "c32_headroom_mib_with_projection_credit": 1304.41015625,
+      "kv_bytes_per_token": 42112,
+      "stock_kv_bytes_per_token": 54144,
+      "kv_traffic_reduction_fraction": 0.2222222222,
+      "tile_legality": "static shape envelope only; prior calibrated BLOCK_N=64/stage-2 legality is rank-256-specific and compile remains unmeasured",
+      "loader_kernel_path": "pinned source accepts dynamic kv_lora_rank; no rewritten checkpoint loaded; no kernel compile",
+      "throughput_bound_tok_s": null,
+      "decision": "REJECT",
+      "reason": "fails the 1536 MiB robust headroom rule and has no conservative 594.466 tok/s path"
+    },
+    {
+      "name": "rank448_plus_head_shared_residual_w4",
+      "changed_tensors": "MLA KV projections plus lm_head and 138 shared-expert linears",
+      "changed_payload_bytes": 32935936,
+      "residual_saved_bytes": 1079998288,
+      "c32_headroom_mib_projection": 3085.666629,
+      "kv_bytes_per_token": 48128,
+      "stock_kv_bytes_per_token": 54144,
+      "kv_traffic_reduction_fraction": 0.1111111111,
+      "tile_legality": "head/shared W4 group-32 legal; rank-448 MLA and mixed checkpoint dispatch unproven",
+      "loader_kernel_path": "synthetic residual dispatch contract only; pinned loader has no exact mixed checkpoint path",
+      "throughput_bound_tok_s": null,
+      "decision": "REJECT",
+      "reason": "capacity clears only by combining two unmaterialized representations; no real loader/kernel path or conservative throughput bound"
+    },
+    {
+      "name": "physical_depth_even5",
+      "changed_tensors": "remove complete source blocks 6,15,24,33,42; renumber retained blocks 0..41",
+      "changed_payload_bytes": 1855640720,
+      "removed_awq_bytes": 1855640720,
+      "removed_kv_c16_gib": 0.703125,
+      "removed_kv_c32_gib": 1.40625,
+      "c32_projected_peak_mib": 43666.023104858396,
+      "c32_headroom_mib": 2401.9768951416045,
+      "kv_bytes_per_token": 48384,
+      "stock_kv_bytes_per_token": 54144,
+      "kv_traffic_reduction_fraction": 0.1063829787,
+      "per_token_work_reduction_proxy": 0.1063829787,
+      "tile_legality": "preserves all existing MLA and compressed-tensors W4 shapes; no new tile is required",
+      "loader_kernel_path": "content-addressed byte-preserving shard rewrite; structural key/config closure PASS; runtime model instantiation still unmeasured without CUDA",
+      "conservative_throughput_bound_tok_s": 597.5285581395348,
+      "conservative_cost_lower_bound_usd_per_million": 0.511365609883038,
+      "decision": "WINNER_ZERO_COST_PROXY",
+      "reason": "smallest screened physical-depth change clears 1536 MiB and narrowly clears the 594.466 tok/s conservative bound"
+    }
+  ],
+  "ranking": ["physical_depth_even5", "rank448_plus_head_shared_residual_w4", "rank384"],
+  "nomination": {
+    "later_l40s_arm": "CLOSED",
+    "reason": "proxy has a real structural rewrite route and robust headroom, but no actual GPU loader/kernel result; the 597.529 tok/s figure is an inherited conservative bound, not a measured endpoint",
+    "provider_mutation": false,
+    "quality": "deferred_by_campaign_policy"
+  }
+}

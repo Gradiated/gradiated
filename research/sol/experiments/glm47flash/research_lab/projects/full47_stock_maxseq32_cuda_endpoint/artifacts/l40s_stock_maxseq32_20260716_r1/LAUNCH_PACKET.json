@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "packet_id": "full47_stock_maxseq32_cuda_endpoint_20260716_r1",
+  "status": "READY_WAITING_FOR_AUTHORIZATION_PRECONDITIONS",
+  "experiment_spec": {
+    "path": "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/full47_stock_maxseq32_cuda_endpoint/artifacts/l40s_stock_maxseq32_20260716_r1/EXPERIMENT_SPEC.json",
+    "sha256": "c6c0912dc294883c771955f6829d8e05db821ad39015c98c725bb9900ec5813b"
+  },
+  "launcher_bindings": {
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/vllm_smoke_control.py": "edaeb5cc81577ef410b704588918c7841f7d3d003e40c83e27618746adca5636",
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/vllm_recover_existing.py": "9dfa0187188fb4d4c0a216487b77c2c6cc2b22691c4e3cf783a6348778acaeda",
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/vllm_batched_runner.py": "0db2de2bd749c18bcd2ca45c16e7b3617daf5307665456b1dac039c81f90fa72",
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/remote_vllm_awq_smoke.sh": "29766910f0b3252ef0dd2e42051dfb5ab0b6a3fbd3e736187184bb0e7dc1defa"
+  },
+  "identity": {
+    "unit": "glm47-full47-stock-maxseq32-r1.service",
+    "provider_name": "glm47-full47-stock-maxseq32-r1",
+    "artifact_root": "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/full47_stock_maxseq32_cuda_endpoint/artifacts/l40s_stock_maxseq32_20260716_r1",
+    "checkpoint": "/root/.cache/glm47flash-awq-ab31d120",
+    "tokenizer": "/root/.cache/glm47flash-awq-ab31d120"
+  },
+  "authorization": {
+    "launch_now": false,
+    "required_before_launch": [
+      "corrected W4 owner is terminal",
+      "authenticated provider inventory contains zero instances and zero disks",
+      "all bound file hashes still match this packet"
+    ],
+    "maximum_spend_usd": 1.1,
+    "absolute_timeout_seconds": 4200,
+    "maximum_derived_exposure_usd": 1.001142567
+  },
+  "scientific_arms": [
+    "unchanged stock c16",
+    "unchanged stock c32"
+  ],
+  "retention": {
+    "keep_instance_after_result": false,
+    "repair_window_seconds": 0,
+    "adjacent_follow_up": null,
+    "cleanup": "normal cleanup after c16/c32 or any typed failure"
+  },
+  "systemd_run_argv": [
+    "/usr/bin/systemd-run",
+    "--user",
+    "--no-block",
+    "--collect",
+    "--unit=glm47-full47-stock-maxseq32-r1",
+    "--property=RuntimeMaxSec=4200s",
+    "/usr/bin/python3",
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/vllm_smoke_control.py",
+    "--output-dir",
+    "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/full47_stock_maxseq32_cuda_endpoint/artifacts/l40s_stock_maxseq32_20260716_r1",
+    "--name",
+    "glm47-full47-stock-maxseq32-r1",
+    "--ssh-key",
+    "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "--ssh-public-key",
+    "/root/.config/nebius/glm-campaign/ssh_ed25519.pub",
+    "--local-model-dir",
+    "/root/.cache/glm47flash-awq-ab31d120",
+    "--reference-tokenizer-dir",
+    "/root/.cache/glm47flash-awq-ab31d120",
+    "--experiment-spec-sha256",
+    "c6c0912dc294883c771955f6829d8e05db821ad39015c98c725bb9900ec5813b",
+    "--num-kv-splits",
+    "4",
+    "--max-num-seqs",
+    "32",
+    "--frontier-concurrencies",
+    "16,32",
+    "--absolute-timeout-seconds",
+    "4200",
+    "--background-arm-envelope-seconds",
+    "300",
+    "--kv-cache-dtype",
+    "auto",
+    "--scientific-mode",
+    "awq",
+    "--profile",
+    "l40s-awq",
+    "--repair-window-seconds",
+    "0"
+  ],
+  "prohibited": [
+    "--keep-instance-after-result",
+    "provider interaction before the authorization preconditions",
+    "c24 arm",
+    "controller edit",
+    "runtime or checkpoint substitution"
+  ]
+}

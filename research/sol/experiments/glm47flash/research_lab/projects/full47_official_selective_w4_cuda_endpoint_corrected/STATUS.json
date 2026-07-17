@@ -1,0 +1,58 @@
+{
+  "status": "complete",
+  "priority": 270,
+  "summary": "OPERATIONAL_NULL_MODEL_IDENTITY_STAGING: corrected W4 reached an SM89 dispatch-selection probe but no weight load or kernel; checksum transfer omitted a required local marker before full47 load, and cleanup verified zero inventory.",
+  "next_action": "Terminal lineage: do not retry or create a successor. The stock endpoint may use the authenticated zero-inventory cleanup after its one frozen-packet rehash.",
+  "provider_mutation": "prohibited_terminal_operational_null",
+  "authorized_spend_usd": 1.25,
+  "absolute_timeout_seconds": 4500,
+  "quality_policy": "Architecture-cost proxy with exact semantic/numerical checks; full quality remains mandatory before deployment claims.",
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "required_output_tokens_per_second": 594.466,
+    "robust_output_tokens_per_second": 606.355
+  },
+  "active_session": null,
+  "launcher_bindings": {
+    "corrected_remote_vllm_awq_smoke_sha256": "29766910f0b3252ef0dd2e42051dfb5ab0b6a3fbd3e736187184bb0e7dc1defa",
+    "packet_vllm_smoke_control_sha256": "07f5842b98368ba7da31f10f77131884e864daa8f0811f7c87a28beb8f8e9e9b",
+    "current_vllm_smoke_control_sha256": "edaeb5cc81577ef410b704588918c7841f7d3d003e40c83e27618746adca5636",
+    "packet_focused_test_sha256": "c570fdd8aa2470e71cff306d32ee4551b00b6ac4dd29e59825daf43768219e99",
+    "current_focused_test_sha256": "ba5593a11997b9ec5187523ac5287966ba966a5cb3b2e98e688eacf08d1572a2",
+    "controller_rebind_reason": "audited shared safeguards only: durable systemd invocation ownership guard plus truthful remote-failure attribution/archive ordering; the frozen direct systemd-run command remains compatible and model, workload, scientific flags, spend, deadline, and cleanup are unchanged"
+  },
+  "retention_trigger": "none: named trigger-aware evaluator was unavailable; normal cleanup completed",
+  "stop_rule": "Satisfied: one corrected packet and one fresh provider create ended in a typed model-identity staging null, with archive integrity and zero instance/disk inventory verified. No retry or readiness successor.",
+  "terminal_result": {
+    "classification": "OPERATIONAL_NULL_MODEL_IDENTITY_STAGING",
+    "artifact_root": "artifacts/l40s_official_w4_corrected_20260716_r1",
+    "artifact_sha256": "fb5e62f453f76d6a7d8f9bc0861648589cc08cb7b83268a32b2a2ced44042e17",
+    "archive_manifest_file_count": 11,
+    "instance_id": "computeinstance-e00k06hez0ch8bspby",
+    "allocation_seconds": 1017.562,
+    "cost_usd_derived": 0.242553459,
+    "useful_gpu_seconds": null,
+    "gpu_dispatch_selection_probe": {
+      "pass": true,
+      "cuda_capability": [8, 9],
+      "head_method": "CompressedTensorsLinearMethod",
+      "head_scheme": "CompressedTensorsWNA16",
+      "shared_scheme": "CompressedTensorsWNA16",
+      "scope": "SM89 visibility plus get_quant_method class selection only",
+      "weight_load_executed": false,
+      "kernel_executed": false,
+      "inference_executed": false
+    },
+    "failure_evidence": {
+      "phase": "model_identity",
+      "message": "model-files.sha256 requires .campaign-local-integrity-v1.json, but session_staging.checkpoint_files excludes that LOCAL_INTEGRITY_MARKER from transfer",
+      "diagnostic_member": "campaign-100-vllm-awq-batch/model-manifest-verification.log",
+      "diagnostic_sha256": "1b32460f4daa1e3be25df9e82a139c3748cf59c2ef42f74c7d4677fcaa456245"
+    },
+    "c16_c32_result": "not_reached",
+    "cleanup_pass": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "ended_at_utc": "2026-07-16T10:41:17.519845Z"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-vllm-h200-20260717t082403z-watchdog.service",
+  "deadline_epoch": 1784283249.554669,
+  "main_pid": 1945500,
+  "unit": "gemma-vllm-h200-20260717t082403z-watchdog.service"
+}\n

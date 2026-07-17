@@ -1,0 +1,30 @@
+{
+  "status": "REPRESENTATION_CLOSE",
+  "priority": 0,
+  "summary": "Audit one current stable SGLang release for an unchanged exact GLM-4.7-Flash AWQ SM89 path and conservative robust-gate reach.",
+  "next_action": "Terminal: v0.5.15.post1 registers the exact model but stock exact compressed-tensors AWQ loading fails in MLA post-load processing; do not patch, build, load, or run a successor.",
+  "provider_mutation": "prohibited_zero_cost_source_gate",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 1200,
+  "active_experiment": null,
+  "terminal_result": {
+    "decision": "REPRESENTATION_CLOSE",
+    "artifact": "SGLANG_RUNTIME_GATE_2026-07-16.json",
+    "reason": "Official v0.5.15.post1 has exact model registration, but the unchanged 0.5.15 L40S/SM89 runtime fails loading the exact group-32 compressed-tensors AWQ checkpoint with AttributeError on kv_b_proj.weight. The retained smoke required two source patches.",
+    "cost_usd": 0.0,
+    "provider_mutation": false
+  },
+  "resource_cap": {
+    "peak_rss_gib": 12,
+    "new_artifacts_mib": 96
+  },
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "target_usd_per_million_output_tokens": 0.514,
+    "required_output_tokens_per_second": 594.466,
+    "robust_nomination_output_tokens_per_second": 606.355,
+    "r3_c16_output_tokens_per_second": 552.1710554232396
+  },
+  "stop_rule": "one terminal NOMINATE_SGLANG_L40S_AB, MODEL_CLOSE, REPRESENTATION_CLOSE, ECONOMIC_CLOSE, or UNIDENTIFIABLE result; no successor",
+  "quality_policy": "exact checkpoint, tokenizer, reasoning-off generation, and request semantics only; target verification remains mandatory"
+}

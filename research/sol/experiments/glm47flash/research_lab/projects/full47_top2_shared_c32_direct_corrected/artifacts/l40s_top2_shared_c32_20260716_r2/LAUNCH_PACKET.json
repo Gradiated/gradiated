@@ -1,0 +1,31 @@
+{
+  "checkpoint": "/root/.cache/glm47flash-awq-ab31d120",
+  "checkpoint_config_sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9",
+  "conditional": "TOP2_SHARED_PASS_ENABLES_TOP3_RECOVERY",
+  "configs": {
+    "top2": {
+      "n_shared_experts": 1,
+      "num_experts_per_tok": 2,
+      "path": "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/full47_top2_shared_c32_direct_corrected/artifacts/l40s_top2_shared_c32_20260716_r2/configs/top2_shared_config.json",
+      "sha256": "b592960b89f80337618f980dbfb0ec048698f3b8fa30c5cb14479b24170ef255"
+    },
+    "top3": {
+      "n_shared_experts": 1,
+      "num_experts_per_tok": 3,
+      "path": "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/full47_top2_shared_c32_direct_corrected/artifacts/l40s_top2_shared_c32_20260716_r2/configs/top3_shared_config.json",
+      "sha256": "836bba9776aa1de99d7d8121a8f3abce374b1630f1821fb4d39813b1d06b3861"
+    },
+    "top4": {
+      "n_shared_experts": 1,
+      "num_experts_per_tok": 4,
+      "path": "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/full47_top2_shared_c32_direct_corrected/artifacts/l40s_top2_shared_c32_20260716_r2/configs/top4_shared_config.json",
+      "sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9"
+    }
+  },
+  "deadline_epoch": 1784222636.3506627,
+  "sequence": [
+    "top4_shared_c32_pre",
+    "top2_shared_c32",
+    "top4_shared_c32_post"
+  ]
+}

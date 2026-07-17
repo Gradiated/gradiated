@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "classification": "provider_inventory_observability_failure_precreate",
+  "timestamp_utc": "2026-07-17T07:35:00Z",
+  "command": [
+    "/root/.nebius/bin/nebius",
+    "compute",
+    "instance",
+    "list",
+    "--parent-id",
+    "project-e00h1vhmpr00vbmfd5k7pg",
+    "--all",
+    "--profile",
+    "glm-campaign",
+    "--format",
+    "json",
+    "--no-progress",
+    "--timeout",
+    "30s"
+  ],
+  "returncode": 0,
+  "stdout": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "decision": "not_an_authenticated_empty_inventory",
+  "provider_create_allowed": false
+}

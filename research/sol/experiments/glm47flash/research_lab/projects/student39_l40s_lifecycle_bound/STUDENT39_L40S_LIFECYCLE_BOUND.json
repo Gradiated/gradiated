@@ -1,0 +1,3210 @@
+{
+  "evidence_labels": {
+    "derived": "deterministic arithmetic from measured values",
+    "inferred": "production-envelope interpretation, not an observed production quote or warm-start result",
+    "measured": "content-bound event or summary telemetry"
+  },
+  "exact_session_timeline": {
+    "cleanup_verified_at_utc": "2026-07-15T21:33:42.102908Z",
+    "productive_profile_phases": [
+      {
+        "evidence_type": "measured",
+        "name": "c16_exploration",
+        "seconds": 48.58667630900004
+      },
+      {
+        "evidence_type": "measured",
+        "name": "c24_exploration",
+        "seconds": 74.28580105499987
+      },
+      {
+        "evidence_type": "measured",
+        "name": "c32_production_unit",
+        "seconds": 89.21845636400008
+      }
+    ],
+    "reproducible_cold_path_overhead_seconds": 1208.167873272,
+    "reproducible_cold_path_phases": [
+      {
+        "evidence_type": "measured",
+        "name": "provider_create",
+        "seconds": 54.237
+      },
+      {
+        "evidence_type": "measured",
+        "name": "ssh_readiness",
+        "seconds": 44.73
+      },
+      {
+        "evidence_type": "measured_interval",
+        "name": "orchestration_between_ssh_and_bootstrap",
+        "seconds": 2.864416
+      },
+      {
+        "evidence_type": "measured",
+        "name": "runtime_bootstrap",
+        "seconds": 403.513
+      },
+      {
+        "evidence_type": "measured_interval",
+        "name": "tiny_checkpoint_probe",
+        "seconds": 7.45237
+      },
+      {
+        "evidence_type": "measured",
+        "name": "checkpoint_transfer",
+        "seconds": 291.339
+      },
+      {
+        "evidence_type": "measured_interval",
+        "name": "repair_input_staging",
+        "seconds": 7.432157
+      },
+      {
+        "evidence_type": "derived",
+        "name": "model_load_compile_warmup",
+        "seconds": 338.444066272
+      },
+      {
+        "evidence_type": "measured_interval",
+        "name": "artifact_retrieval",
+        "seconds": 2.001646
+      },
+      {
+        "evidence_type": "measured_interval",
+        "name": "cleanup",
+        "seconds": 56.154218
+      }
+    ],
+    "research_only_failures": [
+      {
+        "classification": "one_time_research_harness_failure_excluded_from_production_model",
+        "description": "First allocation ended in artifact-retrieval parser StockError after a successful scientific workload.",
+        "end_at_utc": "2026-07-15T20:54:08.908725Z",
+        "exposure_seconds": 983.374271,
+        "start_at_utc": "2026-07-15T20:37:45.534454Z"
+      },
+      {
+        "classification": "one_time_research_harness_failure_excluded_from_production_model",
+        "description": "Retry's pre-repair scientific workload did not materialize the valid result; repair reused its resident runtime and checkpoint.",
+        "end_at_utc": "2026-07-15T21:23:25.763024Z",
+        "exposure_seconds": 867.074447,
+        "start_at_utc": "2026-07-15T21:08:58.688577Z"
+      }
+    ],
+    "valid_c32_repair_finished_at_utc": "2026-07-15T21:32:43.947044Z",
+    "valid_c32_repair_started_at_utc": "2026-07-15T21:23:25.979424Z",
+    "valid_retry_allocation_created_at_utc": "2026-07-15T20:56:28.788537Z"
+  },
+  "fixed_measured_inputs": {
+    "c32_batch_output_tokens": 65536,
+    "c32_batch_wall_seconds": 89.21845636400008,
+    "c32_output_tokens_per_second": 734.5565331529764,
+    "c32_steady_state_usd_per_million_at_1_10": 0.4159728240983755,
+    "production_rates_usd_per_hour": [
+      1.0,
+      1.1,
+      1.25
+    ],
+    "target_usd_per_million_output_tokens": 0.514
+  },
+  "formula": {
+    "all_in_usd_per_million": "steady_state_usd_per_million / (background_productive_utilization * (1 - lifecycle_overhead_seconds/session_seconds) * (1 - retry_or_interruption_loss_fraction))",
+    "minimum_utilization": "steady_state_usd_per_million / (target * (1 - lifecycle_overhead_seconds/session_seconds) * (1 - retry_or_interruption_loss_fraction))",
+    "retry_interpretation": "fraction of otherwise productive output-time lost to retries or interruptions; no warm-start or provider recovery mechanism is assumed"
+  },
+  "lifecycle_fraction_sensitivity": [
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.05,
+      "minimum_background_productive_utilization": 0.7744360287051095,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.05,
+      "minimum_background_productive_utilization": 0.7902408456174587,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.05,
+      "minimum_background_productive_utilization": 0.815195819689589,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.05,
+      "minimum_background_productive_utilization": 0.8604844763390106,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.05,
+      "minimum_background_productive_utilization": 0.8518796315756205,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.05,
+      "minimum_background_productive_utilization": 0.8692649301792046,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.05,
+      "minimum_background_productive_utilization": 0.8967154016585479,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.05,
+      "minimum_background_productive_utilization": 0.9465329239729117,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.05,
+      "minimum_background_productive_utilization": 0.9680450358813869,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.05,
+      "minimum_background_productive_utilization": 0.9878010570218234,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.05,
+      "minimum_background_productive_utilization": 1.0189947746119863,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.05,
+      "minimum_background_productive_utilization": 1.075605595423763,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.1,
+      "minimum_background_productive_utilization": 0.8174602525220601,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.1,
+      "minimum_background_productive_utilization": 0.8341431148184286,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.1,
+      "minimum_background_productive_utilization": 0.8604844763390107,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.1,
+      "minimum_background_productive_utilization": 0.9082891694689555,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.1,
+      "minimum_background_productive_utilization": 0.8992062777742661,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.1,
+      "minimum_background_productive_utilization": 0.9175574263002715,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.1,
+      "minimum_background_productive_utilization": 0.9465329239729118,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.1,
+      "minimum_background_productive_utilization": 0.9991180864158511,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.1,
+      "minimum_background_productive_utilization": 1.021825315652575,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.1,
+      "minimum_background_productive_utilization": 1.0426788935230358,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.1,
+      "minimum_background_productive_utilization": 1.0756055954237633,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.1,
+      "minimum_background_productive_utilization": 1.1353614618361945,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.2,
+      "minimum_background_productive_utilization": 0.9196427840873176,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.2,
+      "minimum_background_productive_utilization": 0.9384110041707322,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02
+    },
+    {
+      "feasible": true,
+      "lifecycle_overhead_fraction": 0.2,
+      "minimum_background_productive_utilization": 0.968045035881387,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.2,
+      "minimum_background_productive_utilization": 1.021825315652575,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.2,
+      "minimum_background_productive_utilization": 1.0116070624960494,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.2,
+      "minimum_background_productive_utilization": 1.0322521045878055,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.2,
+      "minimum_background_productive_utilization": 1.0648495394695257,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.2,
+      "minimum_background_productive_utilization": 1.1240078472178325,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.2,
+      "minimum_background_productive_utilization": 1.149553480109147,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.2,
+      "minimum_background_productive_utilization": 1.1730137552134152,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.2,
+      "minimum_background_productive_utilization": 1.2100562948517337,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05
+    },
+    {
+      "feasible": false,
+      "lifecycle_overhead_fraction": 0.2,
+      "minimum_background_productive_utilization": 1.2772816445657187,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1
+    }
+  ],
+  "portfolio_decision": {
+    "decision": "PRESERVE_L40S_AS_CONDITIONAL_RECOVERY_DENOMINATOR",
+    "evidence_type": "inferred_from_measured_throughput_and_derived_lifecycle_model",
+    "production_boundary": "This is not a production quote, a quality result, or evidence of warm-start/recovery semantics. Any placement claim above $1.10/hour requires materially longer or near-saturated sessions, lower retry loss, or a measured lifecycle reduction.",
+    "reason": "At $1.10/hour, an 8-hour session at 90% productive utilization and 5% retry loss is below target; the same is true at $1.00/hour. The bound fails for a 2-hour session and does not support $1.25/hour at that representative envelope."
+  },
+  "representative_90pct_utilization_5pct_retry": [
+    {
+      "all_in_usd_per_million_output_tokens": 0.5314703220456181,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5846173542501799,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6643379025570225,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4616555994410575,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5078211593851633,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5770694993013219,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4485614459327466,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.49341759052602124,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5607018074159332,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    }
+  ],
+  "schema_version": 1,
+  "scope": "zero-provider student39 L40S sustainable lifecycle bound",
+  "session_grid": [
+    {
+      "all_in_usd_per_million_output_tokens": 0.6058761671320045,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 50.36933251469358,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6182409868693926,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 50.36933251469358,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6377643864547418,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 50.36933251469358,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6731957412577828,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 50.36933251469358,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5680089066862543,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 53.72728801567316,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5796009251900555,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 53.72728801567316,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5979041123013203,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 53.72728801567316,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6311210074291714,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 53.72728801567316,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.534596618057651,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 57.08524351665273,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5455067531200521,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 57.08524351665273,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5627332821659485,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 57.08524351665273,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5939962422862789,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 57.08524351665273,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5048968059433371,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5152008223911603,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5314703220456181,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5609964510481523,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.47832328984105627,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 63.801154518611874,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4880849896337309,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 63.801154518611874,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5034981998326908,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 63.801154518611874,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5314703220456181,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 63.801154518611874,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4544071253490034,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 67.15911001959145,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4636807401520443,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 67.15911001959145,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.47832328984105627,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 67.15911001959145,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5048968059433371,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 67.15911001959145,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6664637838452051,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 50.36933251469358,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6800650855563318,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 50.36933251469358,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.701540825100216,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 50.36933251469358,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.7405153153835612,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 50.36933251469358,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6248097973548797,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 53.72728801567316,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.637561017709061,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 53.72728801567316,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6576945235314524,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 53.72728801567316,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6942331081720886,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 53.72728801567316,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5880562798634162,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 57.08524351665273,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6000574284320573,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 57.08524351665273,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6190066103825435,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 57.08524351665273,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6533958665149069,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 57.08524351665273,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5553864865376709,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5667209046302764,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5846173542501799,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6170960961529676,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5261556188251619,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 63.801154518611874,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5368934885971041,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 63.801154518611874,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5538480198159599,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 63.801154518611874,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5846173542501799,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 63.801154518611874,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4998478378839038,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 67.15911001959145,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5100488141672488,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 67.15911001959145,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5261556188251619,
+      "background_productive_utilization": 1.0,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 67.15911001959145,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5553864865376709,
+      "background_productive_utilization": 1.0,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 67.15911001959145,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.7573452089150058,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 50.36933251469358,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.7728012335867406,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 50.36933251469358,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.7972054830684272,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 50.36933251469358,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.8414946765722285,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 50.36933251469358,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.7100111333578178,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 53.72728801567316,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.7245011564875693,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 53.72728801567316,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.7473801403766505,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 53.72728801567316,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.7889012592864643,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 53.72728801567316,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6682457725720639,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 57.08524351665273,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6818834414000651,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 57.08524351665273,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.7034166027074357,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 57.08524351665273,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.7424953028578487,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 57.08524351665273,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6311210074291713,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6440010279889503,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6643379025570225,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.7012455638101903,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 60.44319901763231,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5979041123013203,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 63.801154518611874,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6101062370421636,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 63.801154518611874,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6293727497908636,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 63.801154518611874,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6643379025570225,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 63.801154518611874,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5680089066862543,
+      "background_productive_utilization": 1.0,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 67.15911001959145,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5796009251900555,
+      "background_productive_utilization": 1.0,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 67.15911001959145,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5979041123013203,
+      "background_productive_utilization": 1.0,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 67.15911001959145,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6311210074291713,
+      "background_productive_utilization": 1.0,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.16780109351,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 67.15911001959145,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5262873833628054,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 231.946112255267,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5370279422069443,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 231.946112255267,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.553986719329269,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 231.946112255267,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5847637592920061,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 231.946112255267,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.49339442190263005,
+      "background_productive_utilization": 0.8,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 247.40918640561816,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5034636958190103,
+      "background_productive_utilization": 0.8,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 247.40918640561816,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5193625493711896,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 247.40918640561816,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5482160243362556,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 247.40918640561816,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4643712206142402,
+      "background_productive_utilization": 0.85,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 262.8722605559692,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4738481843002451,
+      "background_productive_utilization": 0.85,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 262.8722605559692,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.48881181117288447,
+      "background_productive_utilization": 0.85,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 262.8722605559692,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5159680229047113,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 262.8722605559692,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.43857281946900456,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.44752328517245366,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4616555994410575,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4873031327433384,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.41549003949695174,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 293.7984088566715,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.423969428058114,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 293.7984088566715,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4373579363125808,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 293.7984088566715,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4616555994410575,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 293.7984088566715,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.3947155375221041,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 309.26148300702266,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4027709566552083,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 309.26148300702266,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.41549003949695174,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 309.26148300702266,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.43857281946900456,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 309.26148300702266,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.578916121699086,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 231.946112255267,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5907307364276388,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 231.946112255267,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6093853912621959,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 231.946112255267,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6432401352212067,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 231.946112255267,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5427338640928931,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 247.40918640561816,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5538100654009113,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 247.40918640561816,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5712988043083086,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 247.40918640561816,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6030376267698813,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 247.40918640561816,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5108083426756642,
+      "background_productive_utilization": 0.85,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 262.8722605559692,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5212330027302696,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 262.8722605559692,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.537692992290173,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 262.8722605559692,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5675648251951825,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 262.8722605559692,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.48243010141590503,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4922756136896991,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5078211593851633,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5360334460176723,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4570390434466469,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 293.7984088566715,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.46636637086392546,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 293.7984088566715,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4810937299438389,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 293.7984088566715,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5078211593851633,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 293.7984088566715,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.43418709127431454,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 309.26148300702266,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.44304805232072914,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 309.26148300702266,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4570390434466469,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 309.26148300702266,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.48243010141590503,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 309.26148300702266,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6578592292035068,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 231.946112255267,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6712849277586804,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 231.946112255267,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6924833991615862,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 231.946112255267,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.7309546991150077,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 231.946112255267,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6167430273782876,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 247.40918640561816,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6293296197737628,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 247.40918640561816,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.649203186713987,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 247.40918640561816,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6852700304203195,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 247.40918640561816,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5804640257678002,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 262.8722605559692,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5923102303753064,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 262.8722605559692,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6110147639661055,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 262.8722605559692,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6449600286308892,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 262.8722605559692,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5482160243362557,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.559404106465567,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5770694993013219,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6091289159291731,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 278.3353347063204,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5193625493711896,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 293.7984088566715,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5299617850726425,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 293.7984088566715,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.546697420390726,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 293.7984088566715,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5770694993013219,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 293.7984088566715,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4933944219026301,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 309.26148300702266,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5034636958190103,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 309.26148300702266,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5193625493711896,
+      "background_productive_utilization": 1.0,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 309.26148300702266,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5482160243362557,
+      "background_productive_utilization": 1.0,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.0419502733775,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 309.26148300702266,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5113600483633312,
+      "background_productive_utilization": 0.75,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 716.1508582301293,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5217959677176848,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 716.1508582301293,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.538273735119296,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 716.1508582301293,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5681778315148124,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 716.1508582301293,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4794000453406229,
+      "background_productive_utilization": 0.8,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 763.8942487788047,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.48918371973532954,
+      "background_productive_utilization": 0.8,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 763.8942487788047,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5046316266743399,
+      "background_productive_utilization": 0.8,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 763.8942487788047,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5326667170451366,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 763.8942487788047,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4512000426735274,
+      "background_productive_utilization": 0.85,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 811.63763932748,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.46040820680972183,
+      "background_productive_utilization": 0.85,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 811.63763932748,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.47494741334055524,
+      "background_productive_utilization": 0.85,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 811.63763932748,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5013333807483638,
+      "background_productive_utilization": 0.85,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 811.63763932748,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.42613337363610926,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.43482997309807064,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4485614459327466,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4734815262623436,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4037053013394719,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 907.1244204248305,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.41194418504027747,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 907.1244204248305,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.42495294877839157,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 907.1244204248305,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4485614459327466,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 907.1244204248305,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.38352003627249837,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 954.8678109735058,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.3913469757882636,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 954.8678109735058,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4037053013394719,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 954.8678109735058,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.42613337363610926,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 954.8678109735058,
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5624960531996642,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 716.1508582301293,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5739755644894533,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 716.1508582301293,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5921011086312256,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 716.1508582301293,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6249956146662935,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 716.1508582301293,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5273400498746852,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 763.8942487788047,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5381020917088625,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 763.8942487788047,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5550947893417739,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 763.8942487788047,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5859333887496502,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 763.8942487788047,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.49632004694088017,
+      "background_productive_utilization": 0.85,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 811.63763932748,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.506449027490694,
+      "background_productive_utilization": 0.85,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 811.63763932748,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5224421546746107,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 811.63763932748,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5514667188232002,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 811.63763932748,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.46874671099972015,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4783129704078777,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.49341759052602124,
+      "background_productive_utilization": 0.9,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5208296788885779,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4440758314734191,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 907.1244204248305,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4531386035443052,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 907.1244204248305,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4674482436562307,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 907.1244204248305,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.49341759052602124,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 907.1244204248305,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.42187203989974814,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 954.8678109735058,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.43048167336709,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 954.8678109735058,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4440758314734191,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 954.8678109735058,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.46874671099972015,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 954.8678109735058,
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6392000604541639,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 716.1508582301293,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.652244959647106,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 716.1508582301293,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.67284216889912,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 716.1508582301293,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.7102222893935154,
+      "background_productive_utilization": 0.75,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 716.1508582301293,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5992500566757786,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 763.8942487788047,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6114796496691619,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 763.8942487788047,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6307895333429249,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 763.8942487788047,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6658333963064207,
+      "background_productive_utilization": 0.8,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 763.8942487788047,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5640000533419093,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 811.63763932748,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5755102585121523,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 811.63763932748,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.593684266675694,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 811.63763932748,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.6266667259354547,
+      "background_productive_utilization": 0.85,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 811.63763932748,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5326667170451366,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5435374663725883,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5607018074159332,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5918519078279295,
+      "background_productive_utilization": 0.9,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 859.3810298761553,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5046316266743399,
+      "background_productive_utilization": 0.95,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 907.1244204248305,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5149302313003469,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 907.1244204248305,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5311911859729894,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 907.1244204248305,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5607018074159332,
+      "background_productive_utilization": 0.95,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 907.1244204248305,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.4794000453406229,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 954.8678109735058,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.48918371973532954,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 954.8678109735058,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5046316266743399,
+      "background_productive_utilization": 1.0,
+      "beats_target": true,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 954.8678109735058,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "all_in_usd_per_million_output_tokens": 0.5326667170451366,
+      "background_productive_utilization": 1.0,
+      "beats_target": false,
+      "lifecycle_overhead_fraction_of_session": 0.013983424459166666,
+      "lifecycle_overhead_seconds": 1208.167873272,
+      "productive_batches_expected": 954.8678109735058,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    }
+  ],
+  "sustainable_frontier": [
+    {
+      "minimum_background_productive_utilization": 0.8840605551537032,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 37.697100575771515,
+        "whole_batches": 38
+      },
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.9021026072996972,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 40.78341216522409,
+        "whole_batches": 41
+      },
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.9305900580565296,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 46.493088311094525,
+        "whole_batches": 47
+      },
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.9822895057263369,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 60.64315363277748,
+        "whole_batches": 61
+      },
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.9724666106690735,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 57.463363877482585,
+        "whole_batches": 58
+      },
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.9923128680296669,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 64.1954709178595,
+        "whole_batches": 65
+      },
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "minimum_background_productive_utilization": 1.0236490638621827,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 77.8818087184643,
+        "whole_batches": 78
+      },
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "minimum_background_productive_utilization": 1.0805184562989705,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 120.80875947970046,
+        "whole_batches": 121
+      },
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "minimum_background_productive_utilization": 1.105075693942129,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 154.97686241052025,
+        "whole_batches": 155
+      },
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 2.0
+    },
+    {
+      "minimum_background_productive_utilization": 1.1276282591246214,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 206.33008010522678,
+        "whole_batches": 207
+      },
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 2.0
+    },
+    {
+      "minimum_background_productive_utilization": 1.163237572570662,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 410.2322568055231,
+        "whole_batches": 411
+      },
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 2.0
+    },
+    {
+      "minimum_background_productive_utilization": 1.227861882157921,
+      "minimum_batches_if_no_background_idle": null,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 2.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.7679290613270509,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 37.697100575771515,
+        "whole_batches": 38
+      },
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.7836010829867865,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 40.78341216522409,
+        "whole_batches": 41
+      },
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.8083463803442641,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 46.493088311094525,
+        "whole_batches": 47
+      },
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.853254512585612,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 60.64315363277748,
+        "whole_batches": 61
+      },
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.8447219674597559,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 57.463363877482585,
+        "whole_batches": 58
+      },
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.8619611912854652,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 64.1954709178595,
+        "whole_batches": 65
+      },
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.8891810183786905,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 77.8818087184643,
+        "whole_batches": 78
+      },
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.9385799638441732,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 120.80875947970046,
+        "whole_batches": 121
+      },
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.9599113266588135,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 154.97686241052025,
+        "whole_batches": 155
+      },
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 8.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.9795013537334832,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 206.33008010522678,
+        "whole_batches": 207
+      },
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 8.0
+    },
+    {
+      "minimum_background_productive_utilization": 1.01043297543033,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 410.2322568055231,
+        "whole_batches": 411
+      },
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 8.0
+    },
+    {
+      "minimum_background_productive_utilization": 1.066568140732015,
+      "minimum_batches_if_no_background_idle": null,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 8.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.7461479304912418,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 37.697100575771515,
+        "whole_batches": 38
+      },
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.7613754392767774,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 40.78341216522409,
+        "whole_batches": 41
+      },
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.7854188742013073,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 46.493088311094525,
+        "whole_batches": 47
+      },
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.8290532561013798,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 60.64315363277748,
+        "whole_batches": 61
+      },
+      "rate_usd_per_hour": 1.0,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.8207627235403661,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 57.463363877482585,
+        "whole_batches": 58
+      },
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.8375129832044552,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 64.1954709178595,
+        "whole_batches": 65
+      },
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.863960761621438,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 77.8818087184643,
+        "whole_batches": 78
+      },
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.9119585817115178,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 120.80875947970046,
+        "whole_batches": 121
+      },
+      "rate_usd_per_hour": 1.1,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.9326849131140523,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 154.97686241052025,
+        "whole_batches": 155
+      },
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.0,
+      "session_hours": 24.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.9517192990959717,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 206.33008010522678,
+        "whole_batches": 207
+      },
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.02,
+      "session_hours": 24.0
+    },
+    {
+      "minimum_background_productive_utilization": 0.9817735927516341,
+      "minimum_batches_if_no_background_idle": {
+        "continuous": 410.2322568055231,
+        "whole_batches": 411
+      },
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.05,
+      "session_hours": 24.0
+    },
+    {
+      "minimum_background_productive_utilization": 1.0363165701267247,
+      "minimum_batches_if_no_background_idle": null,
+      "rate_usd_per_hour": 1.25,
+      "retry_or_interruption_loss_fraction": 0.1,
+      "session_hours": 24.0
+    }
+  ]
+}

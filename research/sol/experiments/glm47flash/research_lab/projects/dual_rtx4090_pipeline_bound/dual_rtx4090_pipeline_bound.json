@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "project": "dual_rtx4090_pipeline_bound",
+  "decision": "close_no_measurement",
+  "decision_basis": "The exact pinned runtime supports PP and the 23/24-layer split is analytically plausible, but no current orderable same-node rate plus conservative throughput lower bound jointly clears $0.514/M after lifecycle costs.",
+  "scope": {
+    "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "checkpoint": "/root/.cache/glm47flash-awq-ab31d120",
+    "runtime": "vllm/vllm-openai:v0.15.0@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543",
+    "workload": {"input_tokens": 8192, "output_tokens": 1024, "background_concurrency": 16},
+    "quality_limit": "Inherited current-AWQ absolute-quality failure; this is placement/economics evidence only."
+  },
+  "exact_runtime": {
+    "architecture": "Glm4MoeLiteForCausalLM",
+    "vllm_0_15_supports_pp": true,
+    "compressed_tensors_config": "pack-quantized int4, group size 32, quant_method compressed-tensors",
+    "placement": "vLLM source creates embed_tokens only on first PP rank, lm_head only on last PP rank, and uses make_layers over num_hidden_layers; no new model implementation is indicated.",
+    "source_urls": [
+      "https://raw.githubusercontent.com/vllm-project/vllm/v0.15.0/vllm/model_executor/models/glm4_moe_lite.py",
+      "https://docs.vllm.ai/en/stable/models/supported_models/"
+    ]
+  },
+  "memory_bound": {
+    "gpu": "RTX 4090 24 GiB, 450 W, SM89, 128 SM, 1008 GB/s, PCIe Gen4 x16, no NVLink, no ECC",
+    "checkpoint_weight_total_gib": 18.7816,
+    "serving_layers": 47,
+    "split_candidates": [
+      {
+        "split": "rank0_layers_0_22__rank1_layers_23_46",
+        "rank0_layer_weights_gib": 7.7618,
+        "rank1_layer_weights_gib": 8.2954,
+        "rank0_embedding_gib": 0.5908,
+        "rank1_lm_head_gib": 0.5908,
+        "rank0_kv_gib_at_control": 3.638,
+        "rank1_kv_gib_at_control": 3.798,
+        "rank0_weights_plus_kv_gib": 11.991,
+        "rank1_weights_plus_kv_gib": 12.684
+      },
+      {
+        "split": "rank0_layers_0_23__rank1_layers_24_46",
+        "rank0_layer_weights_gib": 8.1074,
+        "rank1_layer_weights_gib": 7.9497,
+        "rank0_embedding_gib": 0.5908,
+        "rank1_lm_head_gib": 0.5908,
+        "rank0_kv_gib_at_control": 3.717,
+        "rank1_kv_gib_at_control": 3.719,
+        "rank0_weights_plus_kv_gib": 12.415,
+        "rank1_weights_plus_kv_gib": 12.260
+      }
+    ],
+    "kv_basis": "7.436 GiB total c16 BF16 MLA KV band from retained current-AWQ control, divided by serving-layer count; MTP weights excluded because speculative/MTP was not enabled in the control.",
+    "admission": "Both splits leave about 9.2-12.6 GiB below a 22.118 GiB 90%-utilization budget before framework buffers. This is plausible, not a credible measured admission: the single-card control's non-weight/non-KV peak was about 17.3 GiB and PP duplicates runtime state. A later run must record per-rank peak VRAM and load success before throughput is interpretable."
+  },
+  "communication_bound": {
+    "boundary_tensor": "hidden_states plus residual, BF16, hidden_size 2048",
+    "prefill_bytes_one_way_at_c16": 536870912,
+    "prefill_bytes_one_way_mib": 512,
+    "decode_bytes_one_way_at_c16": 65536,
+    "decode_bytes_one_way_kib": 64,
+    "ideal_pcie_gen4_x16_prefill_lower_bound_ms": 21.5,
+    "host_staging_prefill_lower_bound_ms": 43.0,
+    "interpretation": "Decode transfer is negligible; long-prefill transfer is not free and can consume roughly 21.5-43 ms per microbatch before software overhead. With only two stages, pipeline bubble and boundary scheduling—not tensor size alone—remain an unmeasured throughput risk."
+  },
+  "economics": {
+    "target_usd_per_million_output_tokens": 0.514,
+    "measured_control_output_tok_s": 535.2861,
+    "same_node_market_references": [
+      {"venue": "RunPod", "pair_rate_usd_per_hour": 1.48, "evidence_type": "third_party_market_reference", "url": "https://docs.syaala.com/billing/pricing"},
+      {"venue": "Vast.ai", "pair_rate_usd_per_hour": 1.38, "evidence_type": "third_party_market_reference", "url": "https://docs.syaala.com/billing/pricing"}
+    ],
+    "required_output_tok_s_at_pair_rates": {
+      "0.80": 432.34,
+      "1.00": 540.42,
+      "1.38": 745.01,
+      "1.48": 800.00
+    },
+    "required_output_tok_s_before_lifecycle_at_pair_rates": {
+      "0.80": 540.42,
+      "1.00": 675.53,
+      "1.38": 931.26,
+      "1.48": 1000.00
+    },
+    "lifecycle_assumption": "20% allowance for interruption, reload, orchestration, cooling/power, and non-ECC consumer reliability; required rates above are the resulting raw-rate hurdle divided by 0.8.",
+    "control_cost_at_1_48_usd_per_million": 0.991,
+    "interpretation": "The current 2x market references are not a written matching quote or 12-24 month committed rate, and the 20%-lifecycle raw hurdle is 1000 tok/s at $1.48/hour. No measured or transferable exact-model PP result establishes that floor."
+  },
+  "nomination": null,
+  "uncertainty": [
+    "Per-stage vLLM allocator overhead, CUDA graph footprint, and exact PP microbatch schedule were not measured.",
+    "RTX 4090 frequency/power/cooling behavior and P2P/host-staging path are venue-specific.",
+    "The market page is a current reference, not a topology-matched written quote or sustainable committed rate."
+  ]
+}

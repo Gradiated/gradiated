@@ -1,0 +1,11 @@
+{
+  "error_type": "CalledProcessError",
+  "instance_id": "computeinstance-e00gy2yzmrw5wt71st",
+  "message": "Command '['scp', '-i', '/root/.config/nebius/glm-campaign/ssh_ed25519', '-o', 'StrictHostKeyChecking=yes', '/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/vllm_methodology_runner.py', 'glmrunner@89.169.121.154:/home/glmrunner/gemma-fp8/vllm_methodology_runner.py']' returned non-zero exit status 255.",
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-fp8-l40s-20260717t013820z-watchdog.service",
+    "deadline_epoch": 1784259509.0,
+    "main_pid": 1817949,
+    "unit": "gemma-fp8-l40s-20260717t013820z-watchdog.service"
+  }
+}

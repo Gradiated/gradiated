@@ -1,0 +1,23 @@
+{
+  "authenticated_at_utc": "2026-07-16T14:43:15Z",
+  "authenticator": "campaign_100/nebius/vllm_smoke_control.py:list_items",
+  "decision": "PRECREATE_CLOSE_SHARED65_NONZERO_INVENTORY",
+  "instances": [
+    {
+      "id": "computeinstance-e00bwz6fs4z3sa3dme",
+      "name": "glm47-shared65-20260716-r1",
+      "platform": "gpu-l40s-a",
+      "preset": "1gpu-8vcpu-32gb",
+      "state": "RUNNING"
+    }
+  ],
+  "disks": [
+    {
+      "id": "computedisk-e00rmrskbwp8wjst7w",
+      "name": "glm47-shared65-20260716-r1-boot",
+      "managed_by": "computeinstance-e00bwz6fs4z3sa3dme",
+      "state": "READY"
+    }
+  ],
+  "interpretation": "The required authenticated zero inventory is false. The scheduled contract forbids provider mutation before that dependency clears, so no packet freeze, service-owner launch, or L40S create was attempted."
+}

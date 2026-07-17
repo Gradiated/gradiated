@@ -1,0 +1,13 @@
+{
+  "status": "complete",
+  "priority": 100,
+  "summary": "Live non-reasoning AA page is Amazon/Novita at $0.103/M 7:2:1 and $0.960/M at campaign 8:1; c16 clears that hurdle conditionally after lifecycle sensitivity, while the older reasoning/DeepInfra $0.568889/M hurdle remains stricter and variant-mismatched.",
+  "next_action": "No further comparator spend; retain c16 as quality-conditional economic leader and require quality plus measured production lifecycle evidence for business claims.",
+  "provider_mutation": "prohibited_zero_cost_market_and_economic_reconciliation",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": null,
+  "terminal_artifact": "COMPARATOR_ECONOMICS_2026-07-15.json",
+  "result_classification": "zero_cost_live_variant_reconciliation_with_conditional_sustainable_economic_lead",
+  "source_sha256": "fb015657e86a9819da65d99930bac859c02acfb09ba3a82c9782c91ef4b6da50"
+}

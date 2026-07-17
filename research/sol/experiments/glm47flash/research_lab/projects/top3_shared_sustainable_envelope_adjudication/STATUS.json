@@ -1,0 +1,35 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "Independently adjudicate the top-3/shared sustainable COGS frontier across longer sessions, explicit reserves, and the fresh planning-rate range.",
+  "next_action": "Completed. Do not authorize top-3/shared spend from economics alone; a production session/reliability policy must bound the omitted terms within a selected frontier cell before a new admission decision.",
+  "provider_mutation": "prohibited_zero_cost_economics_adjudication",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 600,
+  "resource_cap": {
+    "peak_rss_gib": 4,
+    "new_artifacts_mib": 32
+  },
+  "allowed_results": [
+    "SUSTAINABLE_ENVELOPE_ADMISSION",
+    "ENVELOPE_EVIDENCE_OPEN",
+    "MARKET_ONLY_HEADROOM_CONFIRMED"
+  ],
+  "stop_rule": "One offline adjudication of existing measurements; no price search, provider/model action, launcher work, new lifecycle study, or spend authorization.",
+  "result": {
+    "classification": "ENVELOPE_EVIDENCE_OPEN",
+    "artifact": "artifacts/SUSTAINABLE_ENVELOPE_FRONTIER_2026-07-16.json",
+    "artifact_sha256": "ac841c7e3eb9c56ca909e4533ecad87521b34d3a674137193a33a105648b2c59",
+    "archives_verified": 3,
+    "admissible_cells": 8,
+    "base_rate_admissible_reserves": [0.01, 0.02, 0.03, 0.05],
+    "base_rate_required_productive_hours_by_reserve": {
+      "0.01": 4.40759580105,
+      "0.02": 5.1704489204625,
+      "0.03": 6.2440940514875,
+      "0.05": 10.792958948725
+    },
+    "high_rate_1_25_steady_state_gpu_cogs_usd_per_million": 0.5388988349437704,
+    "single_missing_policy_fact": "A production maximum-session/reliability policy that bounds interruption/retry and recurring storage, transfer, orchestration, and cleanup within one selected reserve cell."
+  }
+}

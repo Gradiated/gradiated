@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "reviewed_at_utc": "2026-07-15T00:00:00Z",
+  "scope": "Candidate infrastructure for repeatable model-serving experiments and bare-metal GPU profiling. This registry records interfaces and verified capability, not prices or credentials.",
+  "providers": [
+    {
+      "id": "nebius",
+      "name": "Nebius",
+      "interfaces": ["cli", "api", "terraform"],
+      "access_profiles": ["gpu_vm", "bare_metal_candidate"],
+      "credentials": [
+        {"env": "NEBIUS_IAM_TOKEN", "purpose": "API authentication", "required": false}
+      ],
+      "profiling": {
+        "hardware_counters": "restricted",
+        "verified_profile": "gpu_vm",
+        "note": "System and timeline profiling are usable on the tested VM. Full performance-counter access was restricted; re-test on bare metal."
+      }
+    },
+    {
+      "id": "runpod",
+      "name": "RunPod",
+      "interfaces": ["api", "graphql"],
+      "access_profiles": ["gpu_pod", "secure_cloud", "community_cloud"],
+      "credentials": [
+        {"env": "RUNPOD_API_KEY", "purpose": "API authentication", "required": true}
+      ],
+      "profiling": {
+        "hardware_counters": "unverified",
+        "verified_profile": null,
+        "note": "Provisioning is already used by the lab. Verify driver counter permissions and host controls on each pool before deep profiling."
+      }
+    },
+    {
+      "id": "scaleway",
+      "name": "Scaleway",
+      "interfaces": ["cli", "api", "terraform"],
+      "access_profiles": ["gpu_instance", "bare_metal_candidate"],
+      "credentials": [
+        {"env": "SCW_ACCESS_KEY", "purpose": "API identity", "required": true},
+        {"env": "SCW_SECRET_KEY", "purpose": "API authentication", "required": true},
+        {"env": "SCW_DEFAULT_PROJECT_ID", "purpose": "project selection", "required": true},
+        {"env": "SCW_DEFAULT_REGION", "purpose": "region selection", "required": false}
+      ],
+      "profiling": {
+        "hardware_counters": "unverified",
+        "verified_profile": null,
+        "note": "Add credentials later, then verify root access, driver controls, Nsight Compute counters, clocks, power limits, and topology."
+      }
+    },
+    {
+      "id": "gcore",
+      "name": "Gcore",
+      "interfaces": ["api", "python_sdk", "terraform"],
+      "access_profiles": ["gpu_bare_metal", "user_managed_cluster"],
+      "credentials": [
+        {"env": "GCORE_API_KEY", "purpose": "API authentication", "required": true},
+        {"env": "GCORE_PROJECT_ID", "purpose": "cloud project selection", "required": true},
+        {"env": "GCORE_REGION_ID", "purpose": "optional pinned region; blank enables discovery across GPU bare-metal regions", "required": false},
+        {"env": "GCORE_SSH_KEY_NAME", "purpose": "SSH key name for a user-managed cluster", "required": false},
+        {"env": "GCORE_SSH_USERNAME", "purpose": "optional image-specific OS login username; auto is supported by the setup wrapper", "required": false},
+        {"env": "GCORE_SSH_PRIVATE_KEY_PATH", "purpose": "external local path to the SSH private key; never store in this repository", "required": false}
+      ],
+      "inventory": {
+        "command": "grad-profile providers --provider gcore",
+        "snapshot_path": "research/factory/docs/GCORE.md",
+        "refresh_interval_hours": 24,
+        "read_only_endpoints": ["GPU regions", "GPU bare-metal flavors with capacity and prices", "GPU images", "user-managed clusters", "one-server quota check"],
+        "provisioning": "not performed by grad-profile"
+      },
+      "profiling": {
+        "hardware_counters": "unverified",
+        "verified_profile": null,
+        "note": "API access and GPU bare-metal catalog discovery are verified. Nsight Systems/Compute access, driver controls, clocks, power limits, and topology remain unverified until a user-managed host is created and probed."
+      }
+    }
+  ]
+}

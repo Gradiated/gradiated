@@ -1,0 +1,30 @@
+{
+  "status": "closed",
+  "priority": 125,
+  "summary": "Closed: source fixture passed, but the optimistic last-12 MoE-bypass ceiling is 567.053 output tok/s ($0.539/M), below the 594.466 tok/s ($0.514/M) gate.",
+  "next_action": "No further work in this route; reallocate to an intervention that can reduce retained attention/KV or fixed scheduling work.",
+  "provider_mutation": "not_authorized_zero_cost",
+  "authorized_spend_usd": 0.0,
+  "quality_policy": "semantics_changing_architecture_cost_proxy_only_full_quality_deferred",
+  "economic_gate": {
+    "control_output_tok_s": 535.286,
+    "planning_l40s_usd_per_hour": 1.1,
+    "target_usd_per_million_output_tokens": 0.514,
+    "promotion_output_tok_s": 594.466
+  },
+  "artifact_contract": [
+    "decode_tail_moe_bypass_bound.json",
+    "source_bound_decode_tail_moe_bypass.py",
+    "RESEARCH_LOG.md"
+  ],
+  "stop_rule": "triggered: source fixture passed but the optimistic prefill-diluted endpoint upper ceiling is below 594.466 output tok/s",
+  "decision_artifact": "decode_tail_moe_bypass_bound.json",
+  "decision": "close_no_future_L40S_ceiling_nomination",
+  "evidence": {
+    "fixture": "passed",
+    "ideal_decode_trace_kernel_work_ceiling_output_tok_s": 572.9734143585514,
+    "optimistic_prefill_diluted_endpoint_ceiling_output_tok_s": 567.0525135473903,
+    "optimistic_prefill_diluted_cost_usd_per_million_output": 0.5388487807664385,
+    "promotion_gap_output_tok_s": 27.41348645260973
+  }
+}

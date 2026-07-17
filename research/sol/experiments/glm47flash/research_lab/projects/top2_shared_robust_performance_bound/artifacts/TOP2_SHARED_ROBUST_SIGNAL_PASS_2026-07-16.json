@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "classification": "ROBUST_SIGNAL_PASS",
+  "evidence_type": "derived_from_measured_archives",
+  "scope": "performance and planning economics only; no quality, formal-bracket, deployment, provider-beating, retry, or top-3 claim",
+  "candidate": {
+    "source": "../full47_top2_shared_c32_direct_corrected/artifacts/l40s_top2_shared_c32_20260716_r2/top2_shared_c32/summary.json",
+    "sha256": "030da87e5a28dc5040e113f9dffa34a472bd702eec9dede6a8e10dd13697c362",
+    "throughput_tokens_per_second": 666.8608532991316,
+    "completed_requests": 64,
+    "input_tokens_per_request": 8192,
+    "output_tokens_per_request": 1024,
+    "total_output_tokens": 65536,
+    "useful_gpu_seconds": 98.275,
+    "non_quality_performance_evidence": {
+      "semantic_json_pass": true,
+      "exact_normalized_identity": true,
+      "prefix_cache_disabled": true,
+      "prefix_cache_zero_delta": true,
+      "all_output_token_ids_complete": true
+    },
+    "terminal_failure_preserved": {
+      "typed_harness_error": "typed allocation result contains a harness error",
+      "quality_error": "quality response truncated: dev_retrieval_01",
+      "post_control_ran": false,
+      "top3_triggered": false
+    }
+  },
+  "compatibility_contract": {
+    "checkpoint": "/root/.cache/glm47flash-awq-ab31d120",
+    "top4_control_config_sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9",
+    "candidate_config_sha256": "b592960b89f80337618f980dbfb0ec048698f3b8fa30c5cb14479b24170ef255",
+    "runtime": "vllm-0.15.0",
+    "server": "c32; max_num_batched_tokens=65536; prefix cache disabled; BF16 KV requested",
+    "workload": "64 exact requests; 8192 input and 1024 output tokens per request",
+    "admissible_control_rule": "same checkpoint/runtime/workload/c32 evidence, a top-4/shared stock control where configuration is bound, valid semantic and zero-prefix-cache evidence, and complete 64-request throughput."
+  },
+  "compatible_controls_tokens_per_second": [
+    {
+      "name": "corrected_immediate_top4_pre",
+      "value": 611.7645585359348,
+      "source": "../full47_top2_shared_c32_direct_corrected/artifacts/l40s_top2_shared_c32_20260716_r2/top4_shared_c32_pre/summary.json",
+      "sha256": "da276a4e0a5dfaaa75c9c9f257dfa7525bcf025cac6ce56f00d7e28a7fb0ec7c"
+    },
+    {
+      "name": "prior_exact_top4_pre",
+      "value": 614.9256260882358,
+      "source": "../full47_top2_shared_c32_direct/artifacts/l40s_top2_shared_c32_20260716_r1/top4_shared_c32_pre/summary.json",
+      "sha256": "a386251d3dcb511ab2ab11b8b2dce56bcdeb88b264b1599411e82b42fcf682ba"
+    },
+    {
+      "name": "background_knee_c32_pre",
+      "value": 608.5829484418432,
+      "source": "../full47_current_background_knee_direct/artifacts/l40s_background_knee_20260716_r1/summary.json",
+      "sha256": "1e7e06ab05b4eb40e9794190e03004cd28792ee92f47aa369fe0465f774bb070"
+    },
+    {
+      "name": "background_knee_c32_post",
+      "value": 595.7312930085642,
+      "source": "../full47_current_background_knee_direct/artifacts/l40s_background_knee_20260716_r1/summary.json",
+      "sha256": "1e7e06ab05b4eb40e9794190e03004cd28792ee92f47aa369fe0465f774bb070"
+    }
+  ],
+  "conservative_control_bound": {
+    "drift_limit_fraction": 0.03,
+    "method": "For every admissible pre-control, maximize the unobserved post-control as pre_control * 1.03. Use the largest such value as the candidate's adverse anchor.",
+    "largest_measured_control_tokens_per_second": 614.9256260882358,
+    "worst_admissible_post_control_tokens_per_second": 633.373394870883,
+    "adverse_anchor_source": "prior_exact_top4_pre",
+    "candidate_to_adverse_anchor_ratio": 1.0528715899648347,
+    "candidate_uplift_over_adverse_anchor_percent": 5.287158996483465,
+    "absolute_gate_tokens_per_second": 606.355,
+    "relative_gate_ratio": 1.03,
+    "required_candidate_at_adverse_anchor_tokens_per_second": 652.3745967170095,
+    "candidate_headroom_over_both_gates_tokens_per_second": 14.48625658212211,
+    "all_compatible_controls_pass_under_adverse_post_control": true
+  },
+  "planning_economics": {
+    "formula": "USD per M output = planning USD per GPU hour * 1000000 / (3600 * output tokens per second)",
+    "price_inventory": "research/factory/data/gpu_prices.json",
+    "price_inventory_sha256": "3f403d67a92fc91be85bbd27dede85f5f91c3fd2df25ef8dcef2a344acbd1e01",
+    "planning_l40s_usd_per_gpu_hour": 1.1,
+    "planning_rate_sensitivity_usd_per_gpu_hour": [1.0, 1.25],
+    "candidate_usd_per_m_output": {
+      "at_1_00": 0.41654533536275207,
+      "at_1_10": 0.45819986889902725,
+      "at_1_25": 0.5206816692034401
+    },
+    "worst_admissible_control_usd_per_m_output": {
+      "at_1_00": 0.438568749535816,
+      "at_1_10": 0.4824256244893976,
+      "at_1_25": 0.54821093691977
+    },
+    "base_case_saving_usd_per_m_output": 0.02422575559037036,
+    "base_case_saving_percent": 5.021639065484523,
+    "experiment_spend_interpretation": "Not used for planning economics. The terminated paid sequence's actual exposure remains $0.385266343 as recorded by its owner."
+  },
+  "decision": {
+    "result": "ROBUST_SIGNAL_PASS",
+    "reason": "The measured candidate clears 606.355 tok/s and 1.03x the maximum 3%-drift-adverse compatible c32 anchor; its non-quality performance record is internally complete.",
+    "claim_limits": [
+      "The corrected paid project remains TOP2_SHARED_TYPED_QUALITY_HARNESS_CLOSE.",
+      "This does not repair dev_retrieval_01, supply a post-control, or cause the top-3 trigger to be true.",
+      "This is architecture-cost and planning sensitivity evidence only, not a deployable-quality, formal bracket-pass, or provider comparison result."
+    ],
+    "next_move": "No action in this terminal project; a future director may use the robust signal only to prioritize an independently admitted quality/recovery effort."
+  }
+}

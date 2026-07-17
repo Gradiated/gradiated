@@ -198,63 +198,244 @@ def analyze_subagents(
     }
 
 
+def _campaign_row_time(row: dict[str, Any]) -> datetime | None:
+    timestamp = row.get("timestamp") or row.get("timestamp_utc")
+    return parse_time(timestamp) if isinstance(timestamp, str) else None
+
+
 def _event_time(rows: list[dict[str, Any]], event: str, *, action: str | None = None) -> datetime | None:
     for row in rows:
         if row.get("event") == event and (action is None or row.get("action") == action):
-            timestamp = row.get("timestamp")
-            if timestamp:
-                return parse_time(timestamp)
+            timestamp = _campaign_row_time(row)
+            if timestamp is not None:
+                return timestamp
     return None
+
+
+def _allocation_event_paths(campaign_dir: Path) -> list[Path]:
+    roots = [campaign_dir / "allocations"]
+    if campaign_dir.name == "campaign_100":
+        roots.append(campaign_dir.parent / "research_lab" / "projects")
+    if campaign_dir.name == "research_lab":
+        roots.append(campaign_dir / "projects")
+    roots.extend([campaign_dir / "research_lab" / "projects", campaign_dir / "projects"])
+    paths = set()
+    for root in roots:
+        if root.is_dir():
+            paths.update(root.rglob("events.jsonl"))
+    return sorted(paths)
+
+
+def _phase_durations(events: list[dict[str, Any]]) -> tuple[dict[str, float], str | None]:
+    starts: dict[str, datetime] = {}
+    durations: defaultdict[str, float] = defaultdict(float)
+    failed_phase = None
+    for row in events:
+        phase = row.get("phase")
+        timestamp = row.get("timestamp")
+        if not isinstance(phase, str) or not timestamp:
+            continue
+        if row.get("event") == "phase_started":
+            starts[phase] = parse_time(timestamp)
+        elif row.get("event") == "phase_finished":
+            start = starts.pop(phase, None)
+            if start is not None:
+                durations[phase] += max(0.0, (parse_time(timestamp) - start).total_seconds())
+            if row.get("outcome") == "FAIL":
+                failed_phase = phase
+    return ({name: round(seconds, 3) for name, seconds in sorted(durations.items())}, failed_phase)
+
+
+def _allocation_result_has_harness_error(value: Any) -> bool:
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if (key == "error" or key.endswith("_error")) and isinstance(child, dict):
+                return True
+            if _allocation_result_has_harness_error(child):
+                return True
+    elif isinstance(value, list):
+        return any(_allocation_result_has_harness_error(child) for child in value)
+    return False
+
+
+def _profile_useful_gpu_seconds(allocation_result: Any) -> float | None:
+    if not isinstance(allocation_result, dict):
+        return None
+    performance = allocation_result.get("performance")
+    profiles = performance.get("profiles") if isinstance(performance, dict) else None
+    if not isinstance(profiles, list):
+        return None
+    seconds = [
+        float(row["wall_seconds"])
+        for row in profiles
+        if isinstance(row, dict) and isinstance(row.get("wall_seconds"), (int, float))
+    ]
+    return round(sum(seconds), 3) if seconds else None
+
+
+def _typed_stage_scientific_result(summary: dict[str, Any]) -> bool:
+    records = summary.get("stage_records")
+    if summary.get("outcome") != "PASS" or not isinstance(records, list) or not records:
+        return False
+    has_rows = False
+    for record in records:
+        if not isinstance(record, dict) or record.get("returncode") != 0:
+            return False
+        terminal = record.get("terminal")
+        result = terminal.get("result") if isinstance(terminal, dict) else None
+        if (
+            not isinstance(terminal, dict)
+            or terminal.get("pass") is not True
+            or not isinstance(result, dict)
+            or result.get("pass") is not True
+            or _allocation_result_has_harness_error(result)
+        ):
+            return False
+        rows = result.get("rows")
+        has_rows = has_rows or isinstance(rows, list) and bool(rows)
+    return has_rows
+
+
+def _staged_useful_gpu_seconds(summary: dict[str, Any]) -> float | None:
+    records = summary.get("stage_records")
+    if not isinstance(records, list):
+        return None
+    seconds = []
+    for record in records:
+        terminal = record.get("terminal") if isinstance(record, dict) else None
+        result = terminal.get("result") if isinstance(terminal, dict) else None
+        value = result.get("useful_gpu_seconds") if isinstance(result, dict) else None
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            seconds.append(float(value))
+    return round(sum(seconds), 3) if seconds else None
+
+
+def _strings(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, dict):
+        return [item for child in value.values() for item in _strings(child)]
+    if isinstance(value, list):
+        return [item for child in value for item in _strings(child)]
+    return []
+
+
+def _project_rejects_allocation_scope(directory: Path) -> bool:
+    if directory.parent.name != "artifacts":
+        return False
+    status_path = directory.parent.parent / "STATUS.json"
+    if not status_path.is_file():
+        return False
+    status = json.loads(status_path.read_text())
+    references = _strings(status.get("terminal_artifact")) + _strings(
+        status.get("last_terminal_artifacts")
+    )
+    if not any(directory.name in reference for reference in references):
+        return False
+    classification = str(status.get("last_result_classification", "")).lower()
+    return any(
+        marker in classification
+        for marker in ("claim_rejected", "scope_rejected", "generic_")
+    )
 
 
 def analyze_campaign(campaign_dir: Path | None, *, since: datetime, now: datetime) -> dict[str, Any]:
     allocations = []
     if campaign_dir is None:
         return {"available": False, "allocations": [], "summary": {}}
-    allocation_root = campaign_dir / "allocations"
-    if not allocation_root.is_dir():
+    event_paths = _allocation_event_paths(campaign_dir)
+    if not event_paths:
         return {"available": True, "allocations": [], "summary": {}}
-    for directory in sorted(path for path in allocation_root.iterdir() if path.is_dir()):
-        events_path = directory / "events.jsonl"
-        if not events_path.is_file():
-            continue
+    for events_path in event_paths:
+        directory = events_path.parent
         events = load_jsonl(events_path)
         parse_error_count = sum("_parse_error" in row for row in events)
-        timestamped = [parse_time(row["timestamp"]) for row in events if row.get("timestamp")]
+        timestamped = [timestamp for row in events if (timestamp := _campaign_row_time(row))]
         if not timestamped or max(timestamped) < since or min(timestamped) > now:
             continue
         first, last = min(timestamped), min(max(timestamped), now)
-        created = _event_time(events, "instance_created")
+        created = _event_time(events, "instance_created") or _event_time(events, "provider_created")
         ssh = _event_time(events, "ssh_ready")
-        failed = _event_time(events, "experiment_error")
+        failed = _event_time(events, "experiment_error") or _event_time(events, "owner_error")
         cleanup_requested = _event_time(events, "factory_lifecycle", action="request-cleanup")
         cleanup_verified = _event_time(events, "cleanup_verified")
-        outcome_time = failed or cleanup_requested or cleanup_verified or last
+        cleanup_path = directory / "cleanup.json"
+        cleanup = json.loads(cleanup_path.read_text()) if cleanup_path.is_file() else {}
+        if cleanup_verified is None and cleanup.get("cleanup_pass") is True:
+            verified_at = cleanup.get("verified_at_utc")
+            if isinstance(verified_at, str):
+                cleanup_verified = min(parse_time(verified_at), now)
+        observed_end = cleanup_verified or (now if failed is None else last)
+        outcome_time = failed or cleanup_requested or cleanup_verified or observed_end
         result_path = directory / "factory-result.json"
         result = json.loads(result_path.read_text()) if result_path.is_file() else {}
+        failure_path = directory / "failure.json"
+        failure = json.loads(failure_path.read_text()) if failure_path.is_file() else {}
         summary_path = directory / "summary.json"
         summary = json.loads(summary_path.read_text()) if summary_path.is_file() else {}
-        outcome = result.get("outcome_class") or summary.get("outcome") or "in_progress"
+        allocation_result = summary.get("allocation_result")
+        outcome = result.get("outcome_class")
+        if not outcome and isinstance(allocation_result, dict) and not _allocation_result_has_harness_error(allocation_result):
+            outcome = "scientific_result"
+        if not outcome and _typed_stage_scientific_result(summary):
+            outcome = "scientific_result"
+        if outcome == "scientific_result" and _project_rejects_allocation_scope(directory):
+            outcome = "scope_rejected_result"
+        if not outcome and failure:
+            outcome = "operational_failure"
+        outcome = outcome or summary.get("outcome") or "in_progress"
         cost = summary.get("cost_usd_derived", result.get("cost_usd", 0.0))
+        useful_gpu_seconds = summary.get("useful_gpu_seconds")
+        useful_gpu_source = "summary"
+        if useful_gpu_seconds is None:
+            useful_gpu_seconds = _staged_useful_gpu_seconds(summary)
+            useful_gpu_source = (
+                "stage_records[].terminal.result.useful_gpu_seconds"
+                if useful_gpu_seconds is not None
+                else None
+            )
+        if useful_gpu_seconds is None:
+            useful_gpu_seconds = _profile_useful_gpu_seconds(allocation_result)
+            useful_gpu_source = "allocation_result.performance.profiles" if useful_gpu_seconds is not None else None
+        phase_seconds, failed_phase = _phase_durations(events)
+        if failed_phase is None and failure:
+            failed_phase = "provider_create" if created is None else "ssh_readiness" if ssh is None else "runtime_bootstrap"
+        setup_seconds = sum(
+            phase_seconds.get(name, 0.0)
+            for name in ("provider_create", "ssh_readiness", "runtime_bootstrap", "checkpoint_transfer")
+        )
+        try:
+            allocation_id = str(directory.relative_to(campaign_dir))
+        except ValueError:
+            allocation_id = str(directory)
         allocations.append(
             {
-                "allocation_id": directory.name,
+                "allocation_id": allocation_id,
                 "start": iso(first),
-                "end": iso(cleanup_verified or last),
+                "end": iso(observed_end),
                 "completed": cleanup_verified is not None,
                 "outcome": outcome,
-                "failure_class": result.get("failure_class"),
+                "failure_class": result.get("failure_class") or failure.get("error_type"),
                 "cost_usd": round(float(cost or 0.0), 9),
-                "provider_active_seconds": round(((cleanup_verified or last) - first).total_seconds(), 3),
+                "provider_active_seconds": round((observed_end - first).total_seconds(), 3),
                 "provisioning_seconds": round((created - first).total_seconds(), 3) if created else None,
                 "ssh_ready_seconds": round((ssh - created).total_seconds(), 3) if created and ssh else None,
                 "remote_execution_seconds": round((outcome_time - ssh).total_seconds(), 3) if ssh else None,
                 "cleanup_seconds": (
                     round((cleanup_verified - cleanup_requested).total_seconds(), 3)
                     if cleanup_requested and cleanup_verified
+                    else cleanup.get("cleanup_elapsed_seconds")
+                ),
+                "useful_gpu_seconds": useful_gpu_seconds,
+                "useful_gpu_seconds_source": useful_gpu_source,
+                "useful_gpu_to_provider_fraction": (
+                    round(float(useful_gpu_seconds) / (observed_end - first).total_seconds(), 4)
+                    if useful_gpu_seconds is not None and observed_end > first
                     else None
                 ),
-                "useful_gpu_seconds": summary.get("useful_gpu_seconds"),
+                "phase_seconds": phase_seconds,
+                "setup_phase_seconds": round(setup_seconds, 3),
+                "failed_phase": failed_phase,
                 "event_parse_errors": parse_error_count,
             }
         )
@@ -264,7 +445,20 @@ def analyze_campaign(campaign_dir: Path | None, *, since: datetime, now: datetim
     total_cost = sum(row["cost_usd"] for row in completed)
     invalid_cost = sum(row["cost_usd"] for row in invalid)
     provider_seconds = sum(row["provider_active_seconds"] for row in completed)
-    useful_values = [float(row["useful_gpu_seconds"]) for row in completed if row["useful_gpu_seconds"] is not None]
+    useful_values = [
+        float(row["useful_gpu_seconds"])
+        for row in scientific
+        if row["useful_gpu_seconds"] is not None
+    ]
+    aggregate_phases: defaultdict[str, float] = defaultdict(float)
+    for row in completed:
+        for name, seconds in row["phase_seconds"].items():
+            aggregate_phases[name] += seconds
+    pre_science_failures = [
+        row
+        for row in completed
+        if row["failed_phase"] in {"provider_create", "ssh_readiness", "runtime_bootstrap", "checkpoint_transfer"}
+    ]
     return {
         "available": True,
         "campaign_dir": str(campaign_dir),
@@ -278,8 +472,18 @@ def analyze_campaign(campaign_dir: Path | None, *, since: datetime, now: datetim
             "invalid_spend_fraction": round(invalid_cost / total_cost, 4) if total_cost else None,
             "provider_active_seconds": round(provider_seconds, 3),
             "useful_gpu_seconds_observed": round(sum(useful_values), 3),
+            "useful_gpu_to_provider_fraction": (
+                round(sum(useful_values) / provider_seconds, 4) if provider_seconds else None
+            ),
             "allocations_missing_useful_gpu_timing": sum(
                 row["useful_gpu_seconds"] is None for row in completed
+            ),
+            "phase_seconds": {
+                name: round(seconds, 3) for name, seconds in sorted(aggregate_phases.items())
+            },
+            "pre_science_failure_count": len(pre_science_failures),
+            "pre_science_failure_provider_seconds": round(
+                sum(row["provider_active_seconds"] for row in pre_science_failures), 3
             ),
         },
     }
@@ -308,8 +512,15 @@ def build_report(
         recommendations.append("route routine subagents to a faster model or lower reasoning effort")
     if campaign_summary.get("invalid_or_operational_outcomes", 0):
         recommendations.append("prebuild and locally validate the provider image before another paid allocation")
+    if campaign_summary.get("pre_science_failure_count", 0) >= 2:
+        recommendations.append("stop project-local lifecycle repair and reuse the last transport that produced a valid model result")
     if campaign_summary.get("allocations_missing_useful_gpu_timing", 0):
         recommendations.append("emit useful_gpu_seconds from model-transfer start through the final scored arm")
+    if (
+        campaign_summary.get("scientific_outcomes", 0)
+        and (campaign_summary.get("useful_gpu_to_provider_fraction") or 0) < 0.01
+    ):
+        recommendations.append("queue compatible decision-bearing arms in one retained allocation to amortize immutable setup")
     primary = (
         "model_orchestration"
         if (codex["model_orchestration_fraction"] or 0) >= 0.5
@@ -362,6 +573,9 @@ def markdown(report: dict[str, Any]) -> str:
         f"| Invalid/operational spend | ${campaign.get('invalid_or_operational_cost_usd', 0):.4f} |",
         f"| Provider-active minutes | {campaign.get('provider_active_seconds', 0) / 60:.1f} |",
         f"| Useful GPU seconds observed | {campaign.get('useful_gpu_seconds_observed', 0):.1f} |",
+        f"| Useful/provider time | {(campaign.get('useful_gpu_to_provider_fraction') or 0) * 100:.2f}% |",
+        f"| Pre-science failures | {campaign.get('pre_science_failure_count', 0)} |",
+        f"| Pre-science failure minutes | {campaign.get('pre_science_failure_provider_seconds', 0) / 60:.1f} |",
         "",
         "## Actions",
         "",

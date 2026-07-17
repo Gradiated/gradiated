@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "evidence_type": "derived_surface_from_execution_equivalent_measured_head_and_analytical_non_head_bound",
+  "generated_utc": "2026-07-17T07:45:00Z",
+  "decision": "retain_c16_c32_with_one_ranked_direct_falsifier",
+  "scope": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "hardware": "NVIDIA L40S SM89, 48 GiB",
+    "representation": "W4 language linears with BF16 tied head; one-byte tied-head consumer remains closed",
+    "workload": {"primary_input_tokens": 4214, "output_tokens": 358, "aa_input_tokens": 10000},
+    "concurrency": [8, 16, 32]
+  },
+  "inputs": {
+    "head_summary": "../gemma_l40s_parallel_lm_head_measurement_final/artifacts/gemma-l40s-head-final-20260717t065653z/summary.json",
+    "head_runtime": "vllm 0.19.1.dev6+g6d4a8e6d2 ParallelLMHead / UnquantizedEmbeddingMethod",
+    "head_consumer_source_sha256": "5cdbd9058a99424bf71732d17027c9bc1b6da032f5c1d35b755365f22bb85494",
+    "economic_gate": "../l40s_saturation_economic_gate/SATURATION_GATE.json",
+    "corrected_w4_bound": "../gemma_l40s_w4_c16_economic_bound/W4_C16_BOUND_V2.json",
+    "queue_bound": "../w4_background_batching_queue_bound/QUEUE_BOUND.json",
+    "kv_contract": "../fp8_kv_contract_reconciliation/KV_CONTRACT.json",
+    "rejected_inputs_excluded": ["generic-Ada exact-shape claim", "zero-row consumer attempts", "incorrect-unit bandwidth values"]
+  },
+  "method": {
+    "non_head_decode_batch_s": 6.328218027,
+    "prefill_s": {"primary_4214": 0.597408, "aa_10000": 1.417674419},
+    "overhead_s": {"kv_cache": 0.015714, "kv_head": 0.010849549, "scheduler": 0.008, "sampling": 0.006},
+    "overhead_total_s": 0.040563549,
+    "formula": "cycle = analytical prefill + W4 non-head decode batch + measured head_seconds_per_request*M + explicit overhead; throughput=M/cycle",
+    "bound_labels": {
+      "optimistic": "BF16 head rows are measured, while non-head decoder work, prefill, and overhead use the admitted analytical lower bound",
+      "conservative": "subtract the 0.86329 s/request conservative service envelope; no extra bytes are charged for resident vision or KV"
+    }
+  },
+  "head_measurements": {
+    "seconds_per_request_at_358_steps": {"c8": 0.178123619, "c16": 0.090521728, "c32": 0.049803529},
+    "head_batch_seconds": {"c8": 1.424988949, "c16": 1.448347652, "c32": 1.593712943},
+    "correctness": "all actual consumers pass; max absolute error against zero oracle is 0"
+  },
+  "surfaces": {
+    "primary_4214": {
+      "planning_envelope_s_per_request": 1.394581,
+      "conservative_envelope_s_per_request": 0.86329,
+      "rows": {
+        "c8": {"capacity": "logical_fit", "memory_10k_gib": 30.030421, "memory_10k_headroom_gib": 14.673579, "cycle_s": 8.391178525, "throughput_req_s": 0.953382171, "residual_planning_s": 0.345683684, "residual_conservative_s": -0.185607316, "queue_stable_at_conservative_hurdle": false, "cost_usd_per_request": {"planning_1.1": 0.000462020, "production_1.0": 0.000678505, "production_1.25": 0.000848132}},
+        "c16": {"capacity": "logical_fit", "memory_10k_gib": 34.717349, "memory_10k_headroom_gib": 9.986651, "cycle_s": 8.414537228, "throughput_req_s": 1.901471176, "residual_planning_s": 0.868672423, "residual_conservative_s": 0.337381423, "queue_stable_at_conservative_hurdle": true, "cost_usd_per_request": {"planning_1.1": 0.000231653, "production_1.0": 0.000340197, "production_1.25": 0.000425246}},
+        "c32": {"capacity": "allocator_sensitive", "memory_10k_gib": 44.091205, "memory_10k_headroom_gib": 0.612795, "cycle_s": 8.559902519, "throughput_req_s": 3.738360329, "residual_planning_s": 1.127084046, "residual_conservative_s": 0.595793046, "queue_stable_at_conservative_hurdle": true, "cost_usd_per_request": {"planning_1.1": 0.000117827, "production_1.0": 0.000173037, "production_1.25": 0.000216296}}
+      }
+    },
+    "aa_10000": {
+      "planning_envelope_s_per_request": 1.394581,
+      "conservative_envelope_s_per_request": 0.86329,
+      "rows": {
+        "c8": {"capacity": "logical_fit", "cycle_s": 9.211444944, "throughput_req_s": 0.868484809, "residual_planning_s": 0.243150382, "residual_conservative_s": -0.288140618},
+        "c16": {"capacity": "logical_fit", "cycle_s": 9.234803647, "throughput_req_s": 1.732576091, "residual_planning_s": 0.817405772, "residual_conservative_s": 0.286114772},
+        "c32": {"capacity": "allocator_sensitive", "cycle_s": 9.380168937, "throughput_req_s": 3.411452418, "residual_planning_s": 1.101450721, "residual_conservative_s": 0.570159721}
+      }
+    }
+  },
+  "economic_hurdles": {
+    "planning_min_completed_requests_per_second": 0.717061,
+    "conservative_min_completed_requests_per_second": 1.158355,
+    "planning_rate_usd_per_gpu_hour": 1.1,
+    "production_rate_usd_per_gpu_hour": [1.0, 1.25],
+    "interpretation": "c16 and c32 clear both request-rate and cost hurdles in the conditional W4 analytical surface; c8 does not clear the conservative surface"
+  },
+  "direct_falsifier": {
+    "rank": 1,
+    "arm": "exact-revision W4 c16 endpoint with raw quality capture and measured queue/service telemetry",
+    "why": "c16 has 9.99 GiB logical 10K headroom and 0.286 s/request conservative 10K residual; it is less allocator-sensitive than c32",
+    "required_gate": "pinned checkpoint and producer/loader identity, actual consumer call, c16 and 10K workload, raw serialized quality captures consumed by the exact scorer",
+    "boundary": "This is a future direct falsifier only. It must acknowledge absent exact-revision checkpoint provenance and quality evidence and cannot reopen the closed tied one-byte consumer lineage.",
+    "provider_action": "none"
+  },
+  "uncertainty": [
+    "Non-head decoder and prefill values are analytical lower bounds, not L40S endpoint measurements.",
+    "c32 10K capacity has only 0.612795 GiB logical headroom and is allocator-sensitive.",
+    "No exact-revision checkpoint quality result exists; BF16 measured head timing does not validate W4 semantics."
+  ]
+}

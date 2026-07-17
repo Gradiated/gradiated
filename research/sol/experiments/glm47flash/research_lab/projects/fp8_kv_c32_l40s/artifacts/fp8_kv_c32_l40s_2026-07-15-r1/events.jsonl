@@ -1,0 +1,10 @@
+{"event": "stock_control", "instance_count": 0, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "timestamp": "2026-07-15T16:23:57.423008Z"}
+{"create_returncode": 0, "event": "instance_created", "instance_id": "computeinstance-e00d2yj3m27hk4zzya", "reconciled_nonzero_exit": false, "timestamp": "2026-07-15T16:24:43.709591Z"}
+{"event": "repair_01_begin", "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "repair_spec_sha256": "0a49213197f75d21b29e6e94ec06f771a1659ce8eeeb7f9ad45fca5b942cb1d4", "timestamp": "2026-07-15T16:25:23.292038Z"}
+{"elapsed_seconds": 90.746, "event": "ssh_ready", "timestamp": "2026-07-15T16:25:27.895899Z"}
+{"event": "repair_01_inputs_staged", "timestamp": "2026-07-15T16:25:29.569010Z"}
+{"event": "repair_01_reused_verified_runtime_and_checkpoint", "timestamp": "2026-07-15T16:25:29.569133Z"}
+{"event": "repair_01_error", "message": "artifact retrieval failed: /workspace/public-vllm-awq-batch/vllm-awq-batch.tar.gz", "timestamp": "2026-07-15T16:25:32.273947Z", "type": "StockError"}
+{"event": "repair_window_open", "maximum_seconds": 600.0, "timestamp": "2026-07-15T16:25:32.274079Z"}
+{"error_type": "VllmSmokeError", "event": "experiment_error", "message": "vLLM host bootstrap failed", "timestamp": "2026-07-15T16:26:24.250323Z"}
+{"event": "repair_window_open", "maximum_seconds": 600.0, "timestamp": "2026-07-15T16:26:24.250447Z"}

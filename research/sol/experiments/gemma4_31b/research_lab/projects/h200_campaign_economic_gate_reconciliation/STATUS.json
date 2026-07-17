@@ -1,0 +1,15 @@
+{
+  "status": "complete",
+  "priority": 170,
+  "summary": "Reconcile the H200 market throughput hurdle with the campaign's current rate and all-in factors.",
+  "next_action": null,
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0,
+  "wall_clock_budget_minutes": 25,
+  "compute_budget": "0.5 local CPU-hour; no GPU",
+  "storage_budget": "256 MiB project-local; no shared /tmp",
+  "active_session": null,
+  "terminal_artifact": "H200_ECONOMIC_GATE.json",
+  "terminal_type": "identity_corrected_replacement",
+  "terminal_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+}

@@ -1,0 +1,46 @@
+{
+  "status": "complete",
+  "priority": 400,
+  "summary": "TOP3_RAW_QUALITY_SIGNAL_FAIL: exact top-3/shared c32 repeated strong architecture-cost performance, but the frozen development protocol again regressed retrieval; top-2 was not admitted and cleanup is authenticated zero.",
+  "next_action": "Terminal. Preserve 646.210929 tok/s as candidate-specific architecture-cost evidence and the raw response as format-localized diagnostic evidence only. Do not retry top-3, run top-2, or open a consumer/seal successor.",
+  "provider_mutation": "prohibited_terminal_cleanup_authenticated_zero_inventory",
+  "authorized_spend_usd": 0.7,
+  "absolute_timeout_seconds": 2800,
+  "provider_creates": 1,
+  "retries": 0,
+  "primary_arm": "top3_shared_c32_raw_quality",
+  "conditional_arm": "top2_shared_c32_raw_quality",
+  "conditional_trigger": "VALID_TOP3_RAW_QUALITY_ENABLES_TOP2_RAW_QUALITY",
+  "minimum_followup_reserve_seconds": 800,
+  "economic_context": {
+    "authoritative_usd_per_million_output_tokens": 0.514,
+    "top3_output_tokens_per_second": 644.318005,
+    "top3_raw_planning_gpu_usd_per_million": 0.474231,
+    "top2_output_tokens_per_second_unbracketed": 666.860853
+  },
+  "quality_scope": "Fresh identity-bound six-case development signal only; no holdout, deployability, provider, or sustainable all-in claim.",
+  "stop_rule": "One actual-consumer correction and one sequential create. No readiness return, retry, seal/support successor, third arm, performance bracket repetition, training, broad evaluation, or second provider session.",
+  "active_session": null,
+  "terminal_result": {
+    "classification": "TOP3_RAW_QUALITY_SIGNAL_FAIL",
+    "output_tokens_per_second": 646.2109285744998,
+    "requests": "64/64 exact 8192-input/1024-output",
+    "quality_candidate_overall": 0.16666666666666666,
+    "quality_control_overall": 0.3333333333333333,
+    "quality_reject_reasons": [
+      "overall_point_regression",
+      "critical_category_regression",
+      "catastrophic_category_failure"
+    ],
+    "raw_retrieval_interpretation": "The response contains the requested amber-orbit-17 value with a K-4702 label prefix; this fails the frozen exact protocol but is not evidence of substantive retrieval amnesia.",
+    "identity_claim_limit": "Raw bytes and hash bindings exist, but six fail-closed mutation results and the complete checkpoint/config/runtime/server/normalizer/BF16-control manifest do not.",
+    "top2_run": false,
+    "allocation_seconds": 1284.226,
+    "useful_gpu_seconds": 101.416,
+    "cost_usd_derived": 0.306117473,
+    "artifact_sha256": "5a2a92b4eb889171938334a52bc6f8614d182aba5f7730a9ce30fe5ebe762714",
+    "cleanup_pass": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0
+  }
+}

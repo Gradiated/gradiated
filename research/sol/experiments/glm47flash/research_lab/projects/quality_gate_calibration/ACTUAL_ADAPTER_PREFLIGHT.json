@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "classification": "zero_cost_actual_adapter_preflight",
+  "admission": "glm47-bf16-development-capture-v13-v34",
+  "provider_inventory": {
+    "instances": {"count": 0, "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"},
+    "disks": {"count": 0, "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"}
+  },
+  "complete_checkpoint": {
+    "revision": "33faccf4c2ba82142214d0d4e16232a4e9ccfe10",
+    "path": "/root/.cache/glm47flash-bf16-33faccf4",
+    "file_count": 48,
+    "weight_bytes": 62444175504,
+    "manifest_sha256": "515b831798895e737cfee5943cb522db95cf71d48bb15dfb3f49a016cab9e101",
+    "size_and_count_pass": true
+  },
+  "actual_adapter": {
+    "present": false,
+    "required_capabilities": ["H100 bootstrap", "48-shard transfer verification", "three fresh server-process V2 captures", "raw/normalized/transform/runtime-logprob retrieval", "typed terminal result", "two-view provider cleanup"],
+    "available_implementations": ["v2_capture_controller_proof.py (fake local)", "v2_systemd_capture_proof.py (fake systemd)", "campaign_100/nebius/stock_control.py (historical frozen-V1 workload)"],
+    "reason": "No implementation binds the actual Nebius H100 lifecycle to the frozen V2 suite and preregistered artifact contract."
+  },
+  "decision": "PAUSE without provider create: the admitted exact capture cannot be executed faithfully; the project stop rule forbids another controller/readiness cycle.",
+  "provider_mutation": false,
+  "authorized_spend_consumed_usd": 0.0
+}

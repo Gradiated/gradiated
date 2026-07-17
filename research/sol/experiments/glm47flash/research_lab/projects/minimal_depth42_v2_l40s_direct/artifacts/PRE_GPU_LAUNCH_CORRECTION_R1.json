@@ -1,0 +1,14 @@
+{
+  "classification": "LOCAL_LAUNCH_DEFECT_CORRECTED",
+  "evidence_type": "measured",
+  "provider_inventory_after_failure": {
+    "disk": 0,
+    "instance": 0
+  },
+  "result": "The direct systemd launcher rejected the project-required c16,c32 pair before output-directory creation or provider mutation because its static allowlist omitted that pair.",
+  "service_unit": "glm47-minimal-depth42-v2-c16c32-20260716.service",
+  "source": "vllm_smoke_control.validate_frontier_concurrencies",
+  "stage": "local_argument_validation",
+  "systemd_exit_status": 1,
+  "timestamp": "2026-07-16T06:39:05+02:00"
+}

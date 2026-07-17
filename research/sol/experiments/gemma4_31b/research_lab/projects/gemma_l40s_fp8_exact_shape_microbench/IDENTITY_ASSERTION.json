@@ -1,0 +1,39 @@
+{
+  "artifact": "director_immutable_identity_assertion",
+  "evidence_type": "mechanically_extracted_local_authoritative_artifacts",
+  "expected": {
+    "model": "google/gemma-4-31B-it",
+    "model_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_amd64_manifest": "sha256:8e86cb93b724092cd4dc892fb129a6c5538613b38a5cd34e40aab9e6aea72b03",
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "vllm_source_revision": "ab0a20d15129b322f911db578b50c6b35b3167e7",
+    "workload": "text-only non-reasoning; primary 4214 input/358 output centered workload, then one 10K single-stream comparator"
+  },
+  "pass": true,
+  "project_brief_matches": {
+    "model": true,
+    "model_index_sha256": true,
+    "revision": true,
+    "runtime_amd64_manifest": true,
+    "runtime_image": true,
+    "vllm_source_revision": true,
+    "workload": true
+  },
+  "schema_version": 1,
+  "source_agreements": {
+    "geometry_amd64_manifest": true,
+    "geometry_model": true,
+    "geometry_revision": true,
+    "kv_model": true,
+    "kv_revision": true,
+    "kv_runtime_image": true,
+    "kv_vllm_source_revision": true
+  },
+  "source_sha256": {
+    "FP8_KV_ARM.json": "5472deb0d1961416e2dbf49025da1b42d22c7a8d11e673a2a21adaa905afbb89",
+    "FP8_L40S_PACKET.json": "6c8e4e6cafbc9a1ba12e203c8045d9c82bee7c3b7ad1477a42ce5e38d4f7d880",
+    "GEOMETRY.json": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72",
+    "PROJECT.md": "33782738bf5542cd8b744f819ec3209a1ceb91243dd398d6351a4749c42c81d1"
+  }
+}

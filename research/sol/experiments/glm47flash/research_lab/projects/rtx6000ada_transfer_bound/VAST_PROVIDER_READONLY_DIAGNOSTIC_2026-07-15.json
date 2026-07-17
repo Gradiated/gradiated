@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "stage": "read_only_vast_rtx6000ada_inventory_refresh",
+  "url": "https://api.vast.ai/bundles/?q=%7B%22gpu_name%22:%22RTX%206000%20Ada%22,%22rentable%22:%22true%22%7D",
+  "method": "GET",
+  "exit_code": 6,
+  "http_status": 0,
+  "stdout_tail_redacted": "",
+  "stderr_tail_redacted": "Could not resolve host: api.vast.ai",
+  "classification": "provider_path_observability_failure; not evidence of unavailable RTX 6000 Ada capacity",
+  "retrieved_at_utc": "2026-07-15T16:00:00Z"
+}

@@ -1,0 +1,4 @@
+{"deadline_epoch": 1784250653.0, "event": "owner_started", "image": "vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79", "model": "google/gemma-4-31B-it", "name": "gemma-bf16-h100-20260716t2210z", "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4", "timestamp": "2026-07-16T22:10:53.199778Z"}
+{"event": "instance_created", "instance_id": "computeinstance-e00pmr66j0jjafxy1r", "timestamp": "2026-07-16T22:11:32.621978Z", "watchdog": {"control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-bf16-h100-20260716t2210z-watchdog.service", "deadline_epoch": 1784250653.0, "main_pid": 1764744, "unit": "gemma-bf16-h100-20260716t2210z-watchdog.service"}}
+{"event": "ssh_ready", "instance_id": "computeinstance-e00pmr66j0jjafxy1r", "timestamp": "2026-07-16T22:12:10.233349Z"}
+{"error_type": "RuntimeError", "event": "owner_error", "message": "remote stock workload returned 1", "timestamp": "2026-07-16T22:12:58.388962Z"}

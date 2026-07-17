@@ -1,0 +1,33 @@
+{
+  "status": "closed",
+  "priority": 190,
+  "summary": "Q_RANK_CLOSE: the retained source-bound q-a -> q-RMSNorm -> q-b trace gives only 0.0964%/0.1927% optimistic endpoint reduction for ranks 640/512, below the 3.5% stop gate.",
+  "next_action": "Closed; do not reconstruct, mutate checkpoint/runtime, use CUDA/provider resources, or prepare an endpoint for this lineage.",
+  "provider_mutation": "prohibited_zero_cost_falsifier",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 1200,
+  "resource_cap": {
+    "peak_rss_gib": 8,
+    "new_artifacts_mib": 48
+  },
+  "ranks": [640, 512],
+  "economic_gate": {
+    "absolute_output_tokens_per_second": 606.355,
+    "minimum_ratio_to_contemporaneous_control": 1.03,
+    "minimum_optimistic_endpoint_reduction": 0.035
+  },
+  "quality_policy": "Architecture-cost proxy only; no deployable quality claim.",
+  "stop_rule": "One trace-first rank640/512 screen; nominate at most one or close without checkpoint, runtime, CUDA, provider, or preparation successor.",
+  "decision": "Q_RANK_CLOSE",
+  "decision_artifact": "artifacts/Q_RANK_TRACE_CEILING_2026-07-16.json",
+  "evidence": {
+    "archive_sha256": "9ce5d882e93a5c96fd1dc2a00a6759d7797c22b569f3d853301d89003b3eb2e9",
+    "trace_decode_annotation_union_ms": 3630.826889770508,
+    "rank640_impossible_endpoint_reduction_ceiling": 0.0009637276614268299,
+    "rank512_impossible_endpoint_reduction_ceiling": 0.0019274553228536598,
+    "rank640_optimistic_endpoint_tok_s": 602.7379962796076,
+    "rank512_optimistic_endpoint_tok_s": 603.3199933325328,
+    "provider_mutation": false,
+    "cuda_mutation": false
+  }
+}

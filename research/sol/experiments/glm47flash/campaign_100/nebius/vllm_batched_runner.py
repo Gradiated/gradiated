@@ -27,13 +27,27 @@ class BatchError(RuntimeError):
     pass
 
 
+def accumulate_output_token_histogram(histogram: dict[int, int], token_ids: object) -> int:
+    if token_ids is None:
+        return 0
+    if not isinstance(token_ids, list) or any(not isinstance(token_id, int) for token_id in token_ids):
+        raise BatchError("stream output token IDs are malformed")
+    for token_id in token_ids:
+        histogram[token_id] = histogram.get(token_id, 0) + 1
+    return len(token_ids)
+
+
 def parse_concurrencies(raw: str) -> tuple[int, ...]:
     try:
         values = tuple(int(value) for value in raw.split(","))
     except ValueError as error:
         raise BatchError("concurrencies must be comma-separated integers") from error
-    if values not in {(1, 8), (1, 8, 16)}:
-        raise BatchError("concurrencies must be the fixed c1,c8 control or c1,c8,c16 frontier")
+    if not values or any(value <= 0 for value in values):
+        raise BatchError("concurrencies must be positive integers")
+    if values == (32, 24, 28, 30, 32):
+        return values
+    if values != tuple(sorted(set(values))):
+        raise BatchError("concurrencies must be strictly increasing and unique")
     return values
 
 
@@ -53,7 +67,7 @@ def percentile(values: list[float], quantile: float) -> float:
     return rows[index]
 
 
-def post_json(endpoint: str, payload: dict, timeout: int = 300) -> tuple[dict, str]:
+def post_json(endpoint: str, payload: dict, timeout: int = 300) -> tuple[dict, bytes]:
     request = urllib.request.Request(
         BASE_URL + endpoint,
         data=canonical(payload),
@@ -69,7 +83,7 @@ def post_json(endpoint: str, payload: dict, timeout: int = 300) -> tuple[dict, s
     value = json.loads(raw)
     if not isinstance(value, dict) or "error" in value:
         raise BatchError("endpoint returned an error or non-object")
-    return value, hashlib.sha256(raw).hexdigest()
+    return value, raw
 
 
 def parse_json_content(content: str) -> object:
@@ -92,10 +106,10 @@ def semantic_smoke(output: Path) -> dict:
     responses = []
     hashes = []
     for index in (1, 2):
-        response, digest = post_json("/v1/chat/completions", payload)
+        response, raw = post_json("/v1/chat/completions", payload)
         (output / f"semantic-response-{index}.json").write_text(json.dumps(response, indent=2, sort_keys=True) + "\n")
         responses.append(response)
-        hashes.append(digest)
+        hashes.append(hashlib.sha256(raw).hexdigest())
     messages = [row["choices"][0]["message"] for row in responses]
     normalized = [{key: row.get(key) for key in ("content", "reasoning_content", "tool_calls")} for row in messages]
     parsed = [parse_json_content(str(row.get("content") or "")) for row in messages]
@@ -122,7 +136,7 @@ def messages_for_case(case: dict) -> list[dict]:
     return [{"role": "user", "content": case["prompt"]}]
 
 
-def chat_quality(case: dict) -> tuple[str, list[str]]:
+def chat_quality(case: dict) -> tuple[str, list[bytes]]:
     payload = {
         "model": MODEL,
         "messages": messages_for_case(case),
@@ -134,9 +148,9 @@ def chat_quality(case: dict) -> tuple[str, list[str]]:
         "chat_template_kwargs": {"enable_thinking": False},
     }
     repetitions = int(case.get("deterministic_repetitions", 1))
-    outputs, hashes = [], []
+    outputs, raw_rows = [], []
     for _ in range(repetitions):
-        response, digest = post_json("/v1/chat/completions", payload)
+        response, raw = post_json("/v1/chat/completions", payload)
         choice = response["choices"][0]
         if choice.get("finish_reason") == "length":
             raise BatchError(f"quality response truncated: {case['case_id']}")
@@ -150,10 +164,10 @@ def chat_quality(case: dict) -> tuple[str, list[str]]:
         if not isinstance(content, str):
             raise BatchError(f"quality response lacks content: {case['case_id']}")
         outputs.append(content)
-        hashes.append(digest)
+        raw_rows.append(raw)
     if len(set(outputs)) != 1:
         raise BatchError(f"quality response nondeterministic: {case['case_id']}")
-    return outputs[0], hashes
+    return outputs[0], raw_rows
 
 
 def extract_teacher_forced_logprobs(response: dict, minimum_scored_tokens: int) -> list[dict]:
@@ -183,7 +197,7 @@ def extract_teacher_forced_logprobs(response: dict, minimum_scored_tokens: int) 
     return values
 
 
-def teacher_forced_quality(case: dict) -> tuple[dict, str]:
+def teacher_forced_quality(case: dict) -> tuple[dict, bytes]:
     payload = {
         "model": MODEL,
         "prompt": case["teacher_forced_text"],
@@ -192,28 +206,40 @@ def teacher_forced_quality(case: dict) -> tuple[dict, str]:
         "prompt_logprobs": 1,
         "return_token_ids": True,
     }
-    response, digest = post_json("/v1/completions", payload)
+    response, raw = post_json("/v1/completions", payload)
     values = extract_teacher_forced_logprobs(response, int(case["scorer"]["minimum_scored_tokens"]))
     return {
         "source": "runtime_teacher_forced_input_token_logprobs",
         "token_sequence_sha256": case["token_sequence_sha256"],
         "input_token_logprobs": values,
-    }, digest
+    }, raw
 
 
 def quality_capture(output: Path, quality_dir: Path, bf16_responses: Path) -> dict:
     cases = [json.loads(line) for line in (quality_dir / "development.jsonl").read_text().splitlines()]
-    responses, evidence = [], []
+    responses, evidence, raw_rows = [], [], []
     for case in cases:
         if case["category"] == "teacher_forced_loss":
-            value, digest = teacher_forced_quality(case)
-            evidence.append({"case_id": case["case_id"], "mode": "vllm_completion_prompt_logprobs", "raw_response_sha256": digest})
+            value, raw = teacher_forced_quality(case)
+            digests = [hashlib.sha256(raw).hexdigest()]
+            raw_rows.append({"case_id": case["case_id"], "repetition": 0, "raw": raw})
+            evidence.append({"case_id": case["case_id"], "mode": "vllm_completion_prompt_logprobs", "raw_response_sha256": digests})
         else:
-            value, digests = chat_quality(case)
-            evidence.append({"case_id": case["case_id"], "mode": "deterministic_chat_completion", "raw_response_sha256": digests, "exact_repetition_identity": True})
+            value, raws = chat_quality(case)
+            digests = [hashlib.sha256(raw).hexdigest() for raw in raws]
+            raw_rows.extend({"case_id": case["case_id"], "repetition": index, "raw": raw} for index, raw in enumerate(raws))
+            evidence.append({"case_id": case["case_id"], "mode": "deterministic_chat_completion", "raw_response_sha256": digests, "exact_repetition_identity": len(set(digests)) == 1})
         responses.append({"case_id": case["case_id"], "output": value})
     candidate = output / "quality-awq-responses.jsonl"
     candidate.write_bytes(b"".join(canonical(row) + b"\n" for row in responses))
+    raw_dir = output / "quality-raw-response-bytes"
+    raw_dir.mkdir(exist_ok=True)
+    bindings = []
+    for row in raw_rows:
+        path = raw_dir / f"{row['case_id']}-{row['repetition']}.json"
+        path.write_bytes(row["raw"])
+        bindings.append({"case_id": row["case_id"], "repetition": row["repetition"], "raw_path": str(path.name), "raw_sha256": hashlib.sha256(row["raw"]).hexdigest()})
+    (output / "quality-raw-binding.json").write_text(json.dumps({"schema_version": 1, "raw_rows": bindings, "normalized_candidate_sha256": hashlib.sha256(candidate.read_bytes()).hexdigest(), "suite_sha256": hashlib.sha256((quality_dir / "FROZEN_MANIFEST.json").read_bytes()).hexdigest(), "scorer_sha256": hashlib.sha256((quality_dir / "score_pair.py").read_bytes()).hexdigest()}, indent=2, sort_keys=True) + "\n")
     (output / "quality-evidence.json").write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n")
     process = subprocess.run(
         ["python3", str(quality_dir / "score_pair.py"), str(quality_dir), "development", str(bf16_responses), str(candidate)],
@@ -276,6 +302,7 @@ def stream_completion(prompt: str, timeout: int = 300, max_tokens: int = 1024) -
     usage = None
     finish_reason = None
     token_events = 0
+    output_token_histogram: dict[int, int] = {}
     raw_hash = hashlib.sha256()
     with urllib.request.urlopen(request, timeout=timeout) as response:
         for raw in response:
@@ -293,21 +320,24 @@ def stream_completion(prompt: str, timeout: int = 300, max_tokens: int = 1024) -
             choices = value.get("choices") or []
             if choices:
                 choice = choices[0]
-                token_ids = choice.get("token_ids") or []
+                token_id_count = accumulate_output_token_histogram(output_token_histogram, choice.get("token_ids"))
                 text = choice.get("text") or ""
-                if token_ids or text:
+                if token_id_count or text:
                     if first is None: first = time.monotonic()
-                    token_events += len(token_ids) if token_ids else 1
+                    token_events += token_id_count if token_id_count else 1
                 if choice.get("finish_reason") is not None:
                     finish_reason = choice["finish_reason"]
     if first is None or end is None or not isinstance(usage, dict):
         raise BatchError("stream lacks timing or usage evidence")
     output_tokens = int(usage["completion_tokens"])
+    retained_token_ids = sum(output_token_histogram.values())
     return {
         "status": "success", "input_tokens": int(usage["prompt_tokens"]), "output_tokens": output_tokens,
         "finish_reason": finish_reason, "ttft_ms": (first - start) * 1000,
         "tpot_ms": ((end - first) * 1000 / max(1, output_tokens - 1)),
         "end_to_end_ms": (end - start) * 1000, "token_event_count": token_events,
+        "output_token_histogram": {str(token_id): output_token_histogram[token_id] for token_id in sorted(output_token_histogram)},
+        "output_token_ids_complete": retained_token_ids == output_tokens,
         "stream_sha256": raw_hash.hexdigest(),
     }
 
@@ -411,6 +441,12 @@ def profile_if_admitted(output: Path, prompt: str, quality: dict, performance: d
     return result
 
 
+def arm_identities(concurrencies: tuple[int, ...]) -> tuple[str, ...]:
+    if concurrencies == (32, 24, 28, 30, 32):
+        return ("c32_pre", "c24", "c28", "c30", "c32_post")
+    return tuple(f"c{concurrency}" for concurrency in concurrencies)
+
+
 def performance_batch(output: Path, tokenizer_dir: Path, concurrencies: tuple[int, ...]) -> tuple[dict, str]:
     from transformers import AutoTokenizer
 
@@ -426,17 +462,18 @@ def performance_batch(output: Path, tokenizer_dir: Path, concurrencies: tuple[in
     warmup = stream_completion(prompt)
     if warmup["input_tokens"] != 8192 or warmup["output_tokens"] != 1024:
         raise BatchError("warmup geometry mismatch")
+    arm_ids = arm_identities(concurrencies)
     profiles = [
-        run_profile(prompt, concurrency, requests_for_concurrency(concurrency), output, f"fixed_8k_1k_c{concurrency}")
-        for concurrency in concurrencies
+        run_profile(prompt, concurrency, requests_for_concurrency(concurrency), output, f"fixed_8k_1k_{arm_id}")
+        for concurrency, arm_id in zip(concurrencies, arm_ids, strict=True)
     ]
-    c8 = next(profile for profile in profiles if profile["concurrency"] == 8)
     terminal = profiles[-1]
     rate = terminal["output_tokens_per_second_conservative"]
     result = {
         "prompt_sha256": prompt_hash, "authoritative_tokenizer": str(tokenizer_dir), "warmup": warmup,
         "profiles": profiles,
         "frontier_concurrencies": list(concurrencies),
+        "ordered_arm_ids": list(arm_ids),
         "terminal_profile_id": terminal["profile_id"],
         "fixed_slo_pass": all(
             profile["slo_pass"] and profile["exact_geometry_pass"] and profile["prefix_cache_zero_delta"]

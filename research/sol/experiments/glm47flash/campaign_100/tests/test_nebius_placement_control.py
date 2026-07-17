@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import json
 import subprocess
 import sys
+import tempfile
 import time
 import unittest
-from unittest import mock
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,19 +25,133 @@ from placement_control import (  # noqa: E402
 import placement_control  # noqa: E402
 
 
+def item(name: str, identifier: str) -> dict:
+    return {"metadata": {"name": name, "id": identifier}}
+
+
+class VerifiedRetainedOwnerTests(unittest.TestCase):
+    def test_unbound_early_terminal_finds_and_cleans_named_resources(self):
+        with tempfile.TemporaryDirectory() as directory:
+            evidence_path = Path(directory) / "terminal.json"
+            owner = placement_control.VerifiedRetainedOwner(
+                "retained", evidence_path
+            )
+            with (
+                mock.patch.object(
+                    placement_control,
+                    "list_items",
+                    side_effect=[
+                        [item("retained", "instance-1")],
+                        [item("retained-boot", "disk-1")],
+                        [],
+                        [],
+                    ],
+                ),
+                mock.patch.object(placement_control, "delete_instance") as delete_instance,
+                mock.patch.object(placement_control, "delete_disk") as delete_disk,
+                mock.patch.object(placement_control, "wait_absent", return_value=True),
+            ):
+                with owner:
+                    owner.complete("TYPED_OPERATIONAL_CLOSE")
+
+            delete_instance.assert_called_once_with("instance-1")
+            delete_disk.assert_called_once_with("disk-1")
+            evidence = json.loads(evidence_path.read_text())
+            self.assertTrue(evidence["cleanup_pass"])
+            self.assertEqual("TYPED_OPERATIONAL_CLOSE", evidence["classification"])
+
+    def test_false_cleanup_forces_failure_and_writes_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            evidence_path = Path(directory) / "terminal.json"
+            owner = placement_control.VerifiedRetainedOwner(
+                "retained", evidence_path
+            )
+            with (
+                mock.patch.object(
+                    placement_control,
+                    "list_items",
+                    side_effect=[
+                        [],
+                        [],
+                        [item("retained", "instance-1")],
+                        [],
+                    ],
+                ),
+                self.assertRaises(placement_control.PlacementError),
+            ):
+                with owner:
+                    owner.complete("SCIENCE_PASS")
+
+            evidence = json.loads(evidence_path.read_text())
+            self.assertFalse(evidence["cleanup_pass"])
+            self.assertEqual(1, evidence["matching_instance_count"])
+
+    def test_missing_typed_terminal_forces_failure_after_cleanup(self):
+        with tempfile.TemporaryDirectory() as directory:
+            evidence_path = Path(directory) / "terminal.json"
+            owner = placement_control.VerifiedRetainedOwner(
+                "retained", evidence_path
+            )
+            with (
+                mock.patch.object(
+                    placement_control,
+                    "list_items",
+                    side_effect=[[], [], [], []],
+                ),
+                self.assertRaises(placement_control.PlacementError),
+            ):
+                with owner:
+                    pass
+
+            evidence = json.loads(evidence_path.read_text())
+            self.assertTrue(evidence["cleanup_pass"])
+            self.assertIsNone(evidence["classification"])
+
+    def test_inventory_error_is_fail_closed_and_persisted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            evidence_path = Path(directory) / "terminal.json"
+            owner = placement_control.VerifiedRetainedOwner(
+                "retained", evidence_path
+            )
+            with (
+                mock.patch.object(
+                    placement_control,
+                    "list_items",
+                    side_effect=placement_control.PlacementError("inventory failed"),
+                ),
+                self.assertRaises(placement_control.PlacementError),
+            ):
+                with owner:
+                    owner.complete("SCIENCE_PASS")
+
+            evidence = json.loads(evidence_path.read_text())
+            self.assertFalse(evidence["cleanup_pass"])
+            self.assertEqual("PlacementError", evidence["cleanup_error_type"])
+
+
 class NebiusPlacementControlTests(unittest.TestCase):
     def test_wait_ssh_emits_ordered_success_attempt_without_sensitive_fields(self):
         clock = mock.Mock(side_effect=[100.0, 100.0, 101.5])
         observed = []
-        probe = mock.Mock(return_value=mock.Mock(returncode=0, stdout="secret", stderr="private"))
-        with mock.patch.object(placement_control, "refresh_ephemeral_host_key"), \
-             mock.patch.object(placement_control.time, "time", clock), \
-             mock.patch.object(placement_control.subprocess, "run", probe):
+        probe = mock.Mock(
+            return_value=mock.Mock(
+                returncode=0, stdout="secret", stderr="private"
+            )
+        )
+        with (
+            mock.patch.object(placement_control, "refresh_ephemeral_host_key"),
+            mock.patch.object(placement_control.time, "time", clock),
+            mock.patch.object(placement_control.subprocess, "run", probe),
+        ):
             placement_control.wait_ssh(
-                "8.8.8.8", Path("/secret/key"), 200.0,
+                "8.8.8.8",
+                Path("/secret/key"),
+                200.0,
                 observer=lambda event, fields: observed.append((event, fields)),
             )
-        self.assertEqual([event for event, _ in observed], ["ssh_cloud_init_attempt"])
+        self.assertEqual(
+            [event for event, _ in observed], ["ssh_cloud_init_attempt"]
+        )
         self.assertEqual(observed[0][1]["attempt_number"], 1)
         self.assertEqual(observed[0][1]["return_code"], 0)
         self.assertTrue(observed[0][1]["success"])
@@ -46,48 +163,100 @@ class NebiusPlacementControlTests(unittest.TestCase):
 
     def test_wait_ssh_retry_timeout_error_and_deadline_are_typed_and_bounded(self):
         cases = [
-            ("retry_then_success", [mock.Mock(returncode=1), mock.Mock(returncode=0)], None),
-            ("subprocess_timeout", [subprocess.TimeoutExpired(["ssh"], 20)], placement_control.PlacementError),
-            ("subprocess_error", [OSError("transport")], placement_control.PlacementError),
-            ("deadline_timeout", [mock.Mock(returncode=1)], placement_control.PlacementError),
+            (
+                "retry_then_success",
+                [mock.Mock(returncode=1), mock.Mock(returncode=0)],
+                None,
+            ),
+            (
+                "subprocess_timeout",
+                [subprocess.TimeoutExpired(["ssh"], 20)],
+                placement_control.PlacementError,
+            ),
+            (
+                "subprocess_error",
+                [OSError("transport")],
+                placement_control.PlacementError,
+            ),
+            (
+                "deadline_timeout",
+                [mock.Mock(returncode=1)],
+                placement_control.PlacementError,
+            ),
         ]
         for name, outcomes, expected_error in cases:
             with self.subTest(name=name):
                 now = [100.0]
                 observed = []
+
                 def fake_time():
                     return now[0]
+
                 def fake_sleep(seconds):
                     now[0] += seconds
+
                 def fake_run(*_args, **_kwargs):
                     result = outcomes.pop(0)
                     if isinstance(result, BaseException):
                         raise result
                     return result
-                with mock.patch.object(placement_control, "refresh_ephemeral_host_key"), \
-                     mock.patch.object(placement_control.time, "time", side_effect=fake_time), \
-                     mock.patch.object(placement_control.time, "sleep", side_effect=fake_sleep), \
-                     mock.patch.object(placement_control.subprocess, "run", side_effect=fake_run):
+
+                with (
+                    mock.patch.object(
+                        placement_control,
+                        "refresh_ephemeral_host_key",
+                    ),
+                    mock.patch.object(
+                        placement_control.time,
+                        "time",
+                        side_effect=fake_time,
+                    ),
+                    mock.patch.object(
+                        placement_control.time,
+                        "sleep",
+                        side_effect=fake_sleep,
+                    ),
+                    mock.patch.object(
+                        placement_control.subprocess,
+                        "run",
+                        side_effect=fake_run,
+                    ),
+                ):
                     if expected_error:
                         with self.assertRaises(expected_error):
                             placement_control.wait_ssh(
-                                "192.0.2.1", Path("key"), 108.0,
-                                observer=lambda event, fields: observed.append((event, fields)),
+                                "192.0.2.1",
+                                Path("key"),
+                                108.0,
+                                observer=lambda event, fields: observed.append(
+                                    (event, fields)
+                                ),
                             )
                     else:
                         placement_control.wait_ssh(
-                            "192.0.2.1", Path("key"), 200.0,
-                            observer=lambda event, fields: observed.append((event, fields)),
+                            "192.0.2.1",
+                            Path("key"),
+                            200.0,
+                            observer=lambda event, fields: observed.append(
+                                (event, fields)
+                            ),
                         )
                 self.assertTrue(observed)
                 self.assertEqual(
                     [fields["attempt_number"] for _, fields in observed],
                     list(range(1, len(observed) + 1)),
                 )
-                self.assertTrue(all("outcome" in fields and "success" in fields for _, fields in observed))
+                self.assertTrue(
+                    all(
+                        "outcome" in fields and "success" in fields
+                        for _, fields in observed
+                    )
+                )
                 if name == "deadline_timeout":
                     self.assertEqual(len(observed), 1)
-                    self.assertEqual(observed[0][1]["outcome"], "return_code")
+                    self.assertEqual(
+                        observed[0][1]["outcome"], "return_code"
+                    )
 
     def test_readiness_geometry_is_fail_closed_and_provider_commands_are_not_in_fixture_tests(self):
         source = (ROOT / "nebius" / "observer_diagnostic_control.py").read_text()
@@ -95,6 +264,7 @@ class NebiusPlacementControlTests(unittest.TestCase):
         self.assertIn("started + 480", source)
         self.assertIn("ABSOLUTE_TIMEOUT_SECONDS = 2000", source)
         self.assertIn("CLEANUP_RESERVE_SECONDS = 240", source)
+
     def test_create_command_is_exact_regular_h100_geometry(self):
         command = build_create_command(
             name="glm-nebius-h100-smoke-test",
@@ -133,11 +303,16 @@ class NebiusPlacementControlTests(unittest.TestCase):
             cloud_init="#cloud-config\nusers: []\n",
             labels=labels,
         )
-        encoded = "program_id=glm-4-7-flash,campaign_id=glm47-nebius-25,run_id=glm47-observer-diagnostic-l40s-v1"
+        encoded = (
+            "program_id=glm-4-7-flash,campaign_id=glm47-nebius-25,"
+            "run_id=glm47-observer-diagnostic-l40s-v1"
+        )
         self.assertEqual(encoded, command[command.index("--labels") + 1])
         self.assertEqual(
             encoded,
-            command[command.index("--boot-disk-managed-disk-labels") + 1],
+            command[
+                command.index("--boot-disk-managed-disk-labels") + 1
+            ],
         )
 
     def test_create_command_rejects_unsafe_factory_labels(self):
@@ -159,7 +334,12 @@ class NebiusPlacementControlTests(unittest.TestCase):
         list_items.return_value = [
             {"metadata": {"id": "disk-example", "name": "observer-boot"}}
         ]
-        self.assertEqual(0, watchdog("instance-example", "observer-boot", time.time() + 60))
+        self.assertEqual(
+            0,
+            watchdog(
+                "instance-example", "observer-boot", time.time() + 60
+            ),
+        )
         delete_disk.assert_called_once_with("disk-example")
 
     def test_instance_id_is_found_in_resource_or_operation_shape(self):
@@ -169,30 +349,41 @@ class NebiusPlacementControlTests(unittest.TestCase):
             {"result": {"metadata": {"id": "computeinstance-e00ghi"}}},
         ):
             with self.subTest(payload=payload):
-                self.assertTrue(extract_instance_id(payload).startswith("computeinstance-"))
+                self.assertTrue(
+                    extract_instance_id(payload).startswith("computeinstance-")
+                )
 
     def test_public_ipv4_is_found_without_accepting_private_address(self):
         payload = {
             "status": {
-                "network_interfaces": [{
-                    "ip_address": {"address": "10.0.0.4"},
-                    "public_ip_address": {"address": "8.8.8.8/32"},
-                }]
+                "network_interfaces": [
+                    {
+                        "ip_address": {"address": "10.0.0.4"},
+                        "public_ip_address": {"address": "8.8.8.8/32"},
+                    }
+                ]
             }
         }
         self.assertEqual(extract_public_ipv4(payload), "8.8.8.8")
 
     def test_gpu_gate_accepts_one_80gb_h100_without_mig(self):
-        row = "NVIDIA H100 80GB HBM3, 81559, Disabled, 550.90.07, 1, 12, 65.0"
+        row = (
+            "NVIDIA H100 80GB HBM3, 81559, Disabled, 550.90.07, "
+            "1, 12, 65.0"
+        )
         parsed = validate_gpu_csv(row)
         self.assertEqual(parsed["gpu_count"], 1)
         self.assertGreaterEqual(parsed["memory_mib"], 80000)
 
     def test_gpu_gate_rejects_wrong_gpu_or_mig(self):
         with self.assertRaisesRegex(ValueError, "H100"):
-            validate_gpu_csv("NVIDIA A100-SXM4-80GB, 81920, Disabled, 550.1, 0, 0, 50")
+            validate_gpu_csv(
+                "NVIDIA A100-SXM4-80GB, 81920, Disabled, 550.1, 0, 0, 50"
+            )
         with self.assertRaisesRegex(ValueError, "MIG"):
-            validate_gpu_csv("NVIDIA H100 80GB HBM3, 81559, Enabled, 550.1, 0, 0, 50")
+            validate_gpu_csv(
+                "NVIDIA H100 80GB HBM3, 81559, Enabled, 550.1, 0, 0, 50"
+            )
 
     def test_cost_is_conservative_and_capped_geometry_is_below_budget(self):
         self.assertEqual(HOURLY_RATE_USD, 2.95)

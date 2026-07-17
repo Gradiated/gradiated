@@ -10,11 +10,12 @@ def capture(root,n,missing=False):
  write(d/"raw-response-bytes.json",{"sha256":sha(raw)})
  write(d/"normalized-output-bytes.json",{"output":"ok","sha256":sha(b"ok")})
  write(d/"transform-decisions.json",{"single_fence":False})
+ write(d/"responses.jsonl",{"phase":n,"normalized_output":"ok"})
  write(d/"runtime-evidence.json",{"input_token_logprobs":[{"token_id":1,"logprob":-1.0}],"token_sequence_sha256":"fake-sequence","raw_response_sha256":sha(raw)})
  write(d/"identity-manifest.json",{"model_revision":"33faccf4c2ba82142214d0d4e16232a4e9ccfe10","checkpoint_marker":"fake-48-shard-verified"})
  if not missing: write(d/"capture-result.json",{"phase":n,"pass":True})
  return d
-def validate(d): return all((d/n).is_file() for n in ["raw-response-bytes.json","normalized-output-bytes.json","transform-decisions.json","runtime-evidence.json","identity-manifest.json","capture-result.json"])
+def validate(d): return all((d/n).is_file() for n in ["raw-response-bytes.json","normalized-output-bytes.json","transform-decisions.json","responses.jsonl","runtime-evidence.json","identity-manifest.json","capture-result.json"])
 def run(root,missing=False):
  root.mkdir(parents=True,exist_ok=True); phases=[capture(root,n,missing and n==2) for n in range(1,4)]
  good=all(validate(p) for p in phases)

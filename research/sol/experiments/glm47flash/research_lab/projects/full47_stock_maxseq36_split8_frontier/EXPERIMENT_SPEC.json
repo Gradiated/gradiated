@@ -1,0 +1,25 @@
+{
+  "checkpoint": {
+    "path": "/root/.cache/glm47flash-awq-ab31d120",
+    "revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86"
+  },
+  "execution": {
+    "profile": "l40s-awq",
+    "max_num_batched_tokens": 65536,
+    "max_num_seqs": 36,
+    "frontier_concurrencies": [32, 36],
+    "num_kv_splits": 4,
+    "kv_cache_dtype": "auto",
+    "prefix_cache": false,
+    "background_arm_envelope_seconds": 300
+  },
+  "conditional_retained_followup": {
+    "frontier_concurrencies": [36],
+    "num_kv_splits": 8,
+    "trigger": "valid split-4 c36 output_tokens_per_second_conservative in [600.086, 606.355)",
+    "recovery": "campaign_100/nebius/vllm_recover_existing.py with the retained instance, verified runtime/checkpoint, and the original absolute deadline"
+  },
+  "budget": {"maximum_usd": 0.6, "absolute_timeout_seconds": 2400},
+  "decision_gates": {"economic": 594.466, "robust": 606.355}
+}

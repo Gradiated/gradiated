@@ -1,0 +1,30 @@
+{
+  "decision": "conditional_c32_candidate_only: exact checkpoint and static pinned path pass, but GPU loader consumption and throughput remain explicit open questions",
+  "evidence_class": "pinned_runtime_executable_source_contract_plus_no_cuda_dry_load",
+  "executable_dry_load": {
+    "artifact": "student34_pinned_runtime_dry_load.json",
+    "returncode": 1,
+    "sha256": "11c98de45c99d4e120bd50a57e7fe1790d37e850fafdf8d48a338a46f85ca3b2",
+    "status": "BLOCKED_NO_CUDA"
+  },
+  "loader_key_closure": {
+    "consumed": "UNMEASURED: model instantiation did not occur",
+    "missing": "UNMEASURED: model instantiation did not occur",
+    "structural_checkpoint_key_closure": "PASS: index/header contract is exact; this is not a loader pass",
+    "unexpected": "UNMEASURED: model instantiation did not occur"
+  },
+  "pinned_runtime": {
+    "image": "glm-vllm:0.15.0-transformers-1618d44",
+    "image_id": "sha256:4672d4aa966cf5f4d437d9f7fd9fb4d1b662a067455f3db46d2ab6cce3f3f62c"
+  },
+  "provider_create_attempted": false,
+  "provider_spend_usd": 0.0,
+  "schema_version": 1,
+  "source_contract": {
+    "artifact": "student34_pinned_runtime_source_probe.json",
+    "sha256": "3f8efaa947b76b1ba706d5ac6294f61427ce06cf5562dcb73e1b23f5aaa19587",
+    "status": "PASS"
+  },
+  "student_manifest_sha256": "a5919cbda3a52508d615387f8763f3cdcb8a03c50e18cb5282c4ecca81f6c0ab",
+  "student_root": "/root/.cache/glm47flash-awq-student34-183b4521333e"
+}

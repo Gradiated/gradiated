@@ -1,0 +1,15 @@
+{
+  "status": "complete",
+  "priority": 137,
+  "summary": "Derive the stable background batching/queueing and all-in cost regions for W4 c16 versus c32 under the exact campaign mix.",
+  "next_action": "Conditional successor only after exact-revision W4 producer/consumer/quality passes: paired c16/c32 at 1.08 req/s, 0.25 s pooling; gate c32 10K on allocator reserve.",
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0,
+  "wall_clock_budget_minutes": 45,
+  "compute_budget": "2 local CPU-hours; no GPU",
+  "storage_budget": "2 GiB project-local; no shared /tmp",
+  "active_session": null,
+  "last_result_classification": "conditional_c16_geometry_c32_allocator_sensitive",
+  "terminal_artifact": "QUEUE_BOUND.json",
+  "artifacts": {"script": "queue_bound.py", "queue_bound": "QUEUE_BOUND.json", "decision": "DECISION.md"}
+}

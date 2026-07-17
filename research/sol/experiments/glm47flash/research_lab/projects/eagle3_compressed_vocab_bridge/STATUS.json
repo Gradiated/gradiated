@@ -1,0 +1,25 @@
+{
+  "status": "closed",
+  "priority": 0,
+  "summary": "Determine whether the exact-model EAGLE3 candidate's 32k draft vocabulary has a provable target-token bridge, pinned-runtime path, L40S c16 residence, and robust economics.",
+  "next_action": "Remain closed under the unchanged pinned vLLM 0.15.0 scope. Reopen only with an approved runtime intervention or a new unchanged runtime that admits glm4_moe_lite EAGLE3.",
+  "provider_mutation": "prohibited_zero_cost_source_and_header_gate",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 1200,
+  "active_experiment": null,
+  "decision": "RUNTIME_CLOSE",
+  "evidence": "eagle3_mapping_runtime_audit_2026-07-16.json",
+  "resource_cap": {
+    "peak_rss_gib": 10,
+    "new_artifacts_mib": 96
+  },
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "target_usd_per_million_output_tokens": 0.514,
+    "required_output_tokens_per_second": 594.466,
+    "robust_nomination_output_tokens_per_second": 606.355,
+    "r3_c16_output_tokens_per_second": 552.1710554232396
+  },
+  "stop_rule": "one terminal NOMINATE_EAGLE3_L40S_AB, MAPPING_CLOSE, TARGET_CLOSE, RUNTIME_CLOSE, MEMORY_CLOSE, ECONOMIC_CLOSE, or UNIDENTIFIABLE result; no successor",
+  "quality_policy": "all accepted tokens must be verified in the exact target token space; no target-model quality change"
+}

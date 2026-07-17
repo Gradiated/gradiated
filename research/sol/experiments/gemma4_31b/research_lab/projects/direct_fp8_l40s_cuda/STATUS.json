@@ -1,0 +1,21 @@
+{
+  "status": "complete",
+  "priority": 125,
+  "summary": "Closed after the shared-transport owner spent about two hours in remote setup and timed out without a model-load, request, or useful-GPU artifact. Cleanup is verified and provider inventory is empty. This is an operational endpoint-staging result, not an FP8/L40S scientific result.",
+  "next_action": "Do not retry full checkpoint staging in this lineage. Use the checkpoint-free exact-shape CUDA microbenchmark project for the next paid decision evidence.",
+  "provider_mutation": "closed_remote_setup_timeout_cleanup_verified",
+  "authorized_spend_usd": 6.0,
+  "wall_clock_budget_minutes": 180,
+  "compute_budget": "one L40S allocation, at most 2.5 GPU-hours and 4 CPU-hours",
+  "storage_budget": "150 GiB boot disk; at most 10 GiB retained local artifacts",
+  "active_session": null,
+  "last_experiment": "gemma-fp8-l40s-20260717t014650z",
+  "last_result_classification": "remote_setup_timeout_no_load_or_request_artifact_cleanup_verified",
+  "last_terminal_artifacts": [
+    "artifacts/gemma-fp8-l40s-20260717t014650z/audit.json",
+    "artifacts/gemma-fp8-l40s-20260717t014650z/provider_create.json",
+    "artifacts/gemma-fp8-l40s-20260717t014650z/failure.json",
+    "artifacts/gemma-fp8-l40s-20260717t014650z/cleanup.json"
+  ],
+  "terminal_artifact": "artifacts/gemma-fp8-l40s-20260717t014650z/cleanup.json"
+}

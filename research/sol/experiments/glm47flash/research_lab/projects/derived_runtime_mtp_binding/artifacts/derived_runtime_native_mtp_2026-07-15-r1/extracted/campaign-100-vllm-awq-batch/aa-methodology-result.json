@@ -1,0 +1,10 @@
+{
+  "error": {
+    "message": "<urlopen error [Errno 111] Connection refused>",
+    "type": "URLError"
+  },
+  "pass": false,
+  "schema_version": 1,
+  "single_request": null,
+  "system_load": null
+}

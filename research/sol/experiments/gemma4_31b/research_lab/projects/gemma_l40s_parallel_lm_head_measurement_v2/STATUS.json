@@ -1,0 +1,14 @@
+{
+  "status": "closed",
+  "priority": 160,
+  "summary": "Repair the shared create-diagnostic boundary offline, then make one actual pinned-image ParallelLMHead L40S measurement.",
+  "next_action": "Closed: the sole owner retained a typed second pre-GPU provider validation terminal (spec.hostname InvalidArgument); do not create again.",
+  "provider_mutation": "closed_after_second_pre_gpu_terminal",
+  "authorized_spend_usd": 0.5,
+  "wall_clock_budget_minutes": 80,
+  "provider_exposure_budget_minutes": 20,
+  "compute_budget": "0.34 L40S GPU-hours and 3 local CPU-hours",
+  "storage_budget": "one 100 GiB provider disk; 10 GiB project-local temporary and 4 GiB retained artifacts; no shared /tmp",
+  "active_session": null,
+  "terminal_artifact": "artifacts/SUMMARY.json"
+}

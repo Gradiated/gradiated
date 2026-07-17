@@ -1,0 +1,207 @@
+[
+  {
+    "bytes": 198,
+    "path": "aa-methodology-result.json",
+    "sha256": "a8bcb585e33a91e185c49f7e9bbdafdffd5ee9f5027b00c22e6bde8cd5bb7e81"
+  },
+  {
+    "bytes": 0,
+    "path": "aa-methodology.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "bytes": 0,
+    "path": "aa-methodology.stdout.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "bytes": 4604,
+    "path": "allocation-result.json",
+    "sha256": "902563a49e4063d42ad2aac1bf020fab432ffeb0f4a98b19b52e026fa0ea8414"
+  },
+  {
+    "bytes": 0,
+    "path": "batch-runner.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "bytes": 3252,
+    "path": "batch-runner.stdout.log",
+    "sha256": "dcbd3ea3e552a937f741f1eae15584037b25bc57efcca145e2bf83717ed4da61"
+  },
+  {
+    "bytes": 0,
+    "path": "metrics-after.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "bytes": 48353,
+    "path": "metrics-before.txt",
+    "sha256": "e84a34971e912bb846b7d224dfa8d6aa8cabc1464b8e53625d582c6b33917694"
+  },
+  {
+    "bytes": 52040,
+    "path": "metrics-fixed_8k_1k_c1-after.txt",
+    "sha256": "6b2c3179f8a747ffc720b8d64d73a2a6508f2eabd5b4a3f3c04e6b34db1dc7d1"
+  },
+  {
+    "bytes": 52018,
+    "path": "metrics-fixed_8k_1k_c1-before.txt",
+    "sha256": "89616b24147ef4f99b9da453c2f7b5afb6f09c87886f54b0c75a949b6978d318"
+  },
+  {
+    "bytes": 52059,
+    "path": "metrics-fixed_8k_1k_c16-before.txt",
+    "sha256": "d5186efcd6ab1a8ed95692be4f14cf76b81162e1f152e94078668ebb5b23491b"
+  },
+  {
+    "bytes": 52059,
+    "path": "metrics-fixed_8k_1k_c8-after.txt",
+    "sha256": "d5186efcd6ab1a8ed95692be4f14cf76b81162e1f152e94078668ebb5b23491b"
+  },
+  {
+    "bytes": 52040,
+    "path": "metrics-fixed_8k_1k_c8-before.txt",
+    "sha256": "f2fe9bdc175ddd82591cb22319b7626f1643a08934c3bb855e20c3f3523ec22e"
+  },
+  {
+    "bytes": 1070,
+    "path": "model-files.sha256",
+    "sha256": "a54799210429cdc73654afc09ba1415d00400061b956bb3e5cb55cf4fc314b58"
+  },
+  {
+    "bytes": 162,
+    "path": "model-integrity-marker.txt",
+    "sha256": "a0655db1d09f428fbbdcaf84de3ebfca5a62d3c47aca6cfe3f81740d1b32f3a6"
+  },
+  {
+    "bytes": 346,
+    "path": "model-manifest-verification.log",
+    "sha256": "c9b32dd287dad80b9ef7a340f9ed400ee2bf9e669edb4b4a93cc93425a1c1e89"
+  },
+  {
+    "bytes": 33,
+    "path": "model-size.txt",
+    "sha256": "59cd7caa6713c71d28b3787196cf57da805bd9086e77b91ca00dd51b19daefb6"
+  },
+  {
+    "bytes": 159,
+    "path": "native-import.json",
+    "sha256": "e0e3a618bc67c8bf42aa694775a3307363e9de0e038102865ef7c06cdf0c1e52"
+  },
+  {
+    "bytes": 14067,
+    "path": "nvidia-smi-final.txt",
+    "sha256": "25f051010b945c3e24a50e37d7dd0424d0460d0f9f79e8388bc9df605d30f44f"
+  },
+  {
+    "bytes": 14065,
+    "path": "nvidia-smi-initial.txt",
+    "sha256": "919129b259ff7f148474db0cdc17f09ff40b581842b963d3fed533e74491f97a"
+  },
+  {
+    "bytes": 14339,
+    "path": "nvidia-smi-loaded.txt",
+    "sha256": "a500fdadc452fa4c8e858483ffcfb0ef0c54021b6a9e37b450b6e7c60befb2a1"
+  },
+  {
+    "bytes": 3331,
+    "path": "paired-quality.json",
+    "sha256": "d92a79c146af24204f69a0486ee4838503b2454fe02e49496a42524e92275274"
+  },
+  {
+    "bytes": 0,
+    "path": "paired-quality.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "bytes": 2039,
+    "path": "paired-quality.stdout.log",
+    "sha256": "e0752163e6e681249c4baff5406969dcd48090452f28f017409c5a4cfecbfc5d"
+  },
+  {
+    "bytes": 738,
+    "path": "phases.jsonl",
+    "sha256": "8285be8c731a790a5174aa40d7538f21c055cb5c860d36e32ec8450c8d9acb4f"
+  },
+  {
+    "bytes": 4865,
+    "path": "pip-freeze.txt",
+    "sha256": "ee901aede5a3336543f034f0f7dccedc58c53defef94083ca4cfea11230e505c"
+  },
+  {
+    "bytes": 2580,
+    "path": "profile-fixed_8k_1k_c1.json",
+    "sha256": "9a10e15c91681395615d68a3e6b745039b57ca72d69c4bb40bef9774a3a7635a"
+  },
+  {
+    "bytes": 6979,
+    "path": "profile-fixed_8k_1k_c8.json",
+    "sha256": "bef98c67354cc371d0e9aa8527e1126aedf250855dd8c26867a532304e2233bc"
+  },
+  {
+    "bytes": 2084,
+    "path": "quality-awq-responses.jsonl",
+    "sha256": "200a30859810845a9020602524f81c39e9de91a032cb3073dd4bb25cc5c23dcc"
+  },
+  {
+    "bytes": 1428,
+    "path": "quality-evidence.json",
+    "sha256": "363cdfae35b85e84bed71bdec27c1640664f776c1394fd153dde768823557d50"
+  },
+  {
+    "bytes": 602,
+    "path": "semantic-determinism.json",
+    "sha256": "d31bc77c14c78c7e63cba8e6de164f34b5560dcdd618c641ab31e5838d21e695"
+  },
+  {
+    "bytes": 889,
+    "path": "semantic-response-1.json",
+    "sha256": "5c7400fd42458fc554487a50d319a17c424039e4d917eb08444f8def8b75f8ba"
+  },
+  {
+    "bytes": 889,
+    "path": "semantic-response-2.json",
+    "sha256": "c03359e40fc7836319337f46f33751384d27837a2802fa608b4bdd74313bf702"
+  },
+  {
+    "bytes": 828,
+    "path": "server-command.txt",
+    "sha256": "198df7d897ea05e92efc0fd46b160a97970a21d7569bd55fe430d9667b410c4e"
+  },
+  {
+    "bytes": 19760,
+    "path": "server.stderr.log",
+    "sha256": "0b4283edc531c50f2395971e91f75fe7ed780db3e813f6393683fd632cff4b6a"
+  },
+  {
+    "bytes": 348557,
+    "path": "server.stdout.log",
+    "sha256": "ae2f719ab47372096524287cfcf1cf39eb994e9231bc6ff12d60b97d0bff10d3"
+  },
+  {
+    "bytes": 225849,
+    "path": "telemetry.csv",
+    "sha256": "fa5122c7a0f1f7eee19ec898493b501dee915575e0c6f26d6c6c4b5f50e54f5f"
+  },
+  {
+    "bytes": 0,
+    "path": "telemetry.stderr.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "bytes": 306,
+    "path": "tokenizer-hashes.sha256",
+    "sha256": "5a63edc073e683132c9d99ceb6b809d3f932484e19a1638a75a56b699393f66c"
+  },
+  {
+    "bytes": 129,
+    "path": "uname.txt",
+    "sha256": "10ed21ef0361fdddd74fe887867a2a347af03833e21521c0c5b1a0c296f42edf"
+  },
+  {
+    "bytes": 900,
+    "path": "vllm-decode-kernel-patch.json",
+    "sha256": "222d87d8b3c2031a20bec0c3a9aeee2db0ebe6b1d2b0d9bb6d09accba4b364b7"
+  }
+]

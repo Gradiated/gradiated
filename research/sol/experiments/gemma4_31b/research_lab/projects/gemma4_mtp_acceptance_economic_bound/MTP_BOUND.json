@@ -1,0 +1,867 @@
+{
+  "async_fallback": {
+    "extra_weight_gib": 0.0,
+    "promotion_gate": "matched c8/c16 completed-request cost or throughput gain >=5%; otherwise no MTP retention",
+    "quality_risk": "none expected but output IDs and failures must be matched",
+    "status": "comparison_only"
+  },
+  "capacity": {
+    "assistant_weight_gib": 0.87455153465271,
+    "h100_bf16": {
+      "c16_target_plus_assistant_approx": 70.5225515346527,
+      "c32_target_plus_assistant_approx": 81.9145515346527
+    },
+    "primary_target_kv_gib_per_request": 0.712,
+    "w4_l40s": {
+      "c16": 32.03255153465271,
+      "c32": 37.84755153465271
+    }
+  },
+  "economic_surface": [
+    {
+      "hardware": "h100_bf16",
+      "rows": [
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.2749999999999999,
+            "ten_percent": 0.7000000000000002
+          },
+          "one_token_upper_bound_gain": 0.12250000000000005,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.3374999999999999,
+            "ten_percent": 0.7833333333333334
+          },
+          "one_token_upper_bound_gain": 0.11624999999999996,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.40000000000000013,
+            "ten_percent": 0.8666666666666669
+          },
+          "one_token_upper_bound_gain": 0.10999999999999999,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.5249999999999999,
+            "ten_percent": 1.0333333333333332
+          },
+          "one_token_upper_bound_gain": 0.09750000000000003,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.3125,
+            "ten_percent": 0.7500000000000002
+          },
+          "one_token_upper_bound_gain": 0.11875000000000002,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.375,
+            "ten_percent": 0.8333333333333335
+          },
+          "one_token_upper_bound_gain": 0.11250000000000004,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.4375,
+            "ten_percent": 0.916666666666667
+          },
+          "one_token_upper_bound_gain": 0.10624999999999996,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.5625,
+            "ten_percent": 1.0833333333333335
+          },
+          "one_token_upper_bound_gain": 0.09375,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.375,
+            "ten_percent": 0.8333333333333335
+          },
+          "one_token_upper_bound_gain": 0.11250000000000004,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.4375,
+            "ten_percent": 0.916666666666667
+          },
+          "one_token_upper_bound_gain": 0.10624999999999996,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.5000000000000002,
+            "ten_percent": 1.0000000000000004
+          },
+          "one_token_upper_bound_gain": 0.09999999999999998,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.625,
+            "ten_percent": 1.166666666666667
+          },
+          "one_token_upper_bound_gain": 0.08750000000000002,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.1333333333333333,
+            "ten_percent": 0.2749999999999999
+          },
+          "one_token_upper_bound_gain": 0.245,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.18888888888888888,
+            "ten_percent": 0.3374999999999999
+          },
+          "one_token_upper_bound_gain": 0.23249999999999993,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.24444444444444446,
+            "ten_percent": 0.40000000000000013
+          },
+          "one_token_upper_bound_gain": 0.21999999999999997,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.3555555555555554,
+            "ten_percent": 0.5249999999999999
+          },
+          "one_token_upper_bound_gain": 0.19500000000000006,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.16666666666666674,
+            "ten_percent": 0.3125
+          },
+          "one_token_upper_bound_gain": 0.23750000000000004,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.22222222222222232,
+            "ten_percent": 0.375
+          },
+          "one_token_upper_bound_gain": 0.22499999999999998,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.2777777777777779,
+            "ten_percent": 0.4375
+          },
+          "one_token_upper_bound_gain": 0.2124999999999999,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.38888888888888884,
+            "ten_percent": 0.5625
+          },
+          "one_token_upper_bound_gain": 0.1875,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.22222222222222232,
+            "ten_percent": 0.375
+          },
+          "one_token_upper_bound_gain": 0.22499999999999998,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.2777777777777779,
+            "ten_percent": 0.4375
+          },
+          "one_token_upper_bound_gain": 0.2124999999999999,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.3333333333333335,
+            "ten_percent": 0.5000000000000002
+          },
+          "one_token_upper_bound_gain": 0.19999999999999996,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.4444444444444444,
+            "ten_percent": 0.625
+          },
+          "one_token_upper_bound_gain": 0.17500000000000004,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.09285714285714275,
+            "ten_percent": 0.17692307692307696
+          },
+          "one_token_upper_bound_gain": 0.36749999999999994,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.14642857142857157,
+            "ten_percent": 0.23461538461538467
+          },
+          "one_token_upper_bound_gain": 0.34875,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.20000000000000018,
+            "ten_percent": 0.2923076923076924
+          },
+          "one_token_upper_bound_gain": 0.32999999999999996,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.30714285714285716,
+            "ten_percent": 0.4076923076923076
+          },
+          "one_token_upper_bound_gain": 0.2925,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.125,
+            "ten_percent": 0.21153846153846145
+          },
+          "one_token_upper_bound_gain": 0.35624999999999996,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.1785714285714286,
+            "ten_percent": 0.2692307692307694
+          },
+          "one_token_upper_bound_gain": 0.3374999999999999,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.2321428571428572,
+            "ten_percent": 0.3269230769230771
+          },
+          "one_token_upper_bound_gain": 0.31875,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.3392857142857142,
+            "ten_percent": 0.4423076923076923
+          },
+          "one_token_upper_bound_gain": 0.28125,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.1785714285714286,
+            "ten_percent": 0.2692307692307694
+          },
+          "one_token_upper_bound_gain": 0.3374999999999999,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.2321428571428572,
+            "ten_percent": 0.3269230769230771
+          },
+          "one_token_upper_bound_gain": 0.31875,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.2857142857142858,
+            "ten_percent": 0.3846153846153848
+          },
+          "one_token_upper_bound_gain": 0.29999999999999993,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.3928571428571428,
+            "ten_percent": 0.5
+          },
+          "one_token_upper_bound_gain": 0.26249999999999996,
+          "proposer_verification_overhead": 0.2
+        }
+      ]
+    },
+    {
+      "hardware": "w4_l40s",
+      "rows": [
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.2749999999999999,
+            "ten_percent": 0.7000000000000002
+          },
+          "one_token_upper_bound_gain": 0.12250000000000005,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.3374999999999999,
+            "ten_percent": 0.7833333333333334
+          },
+          "one_token_upper_bound_gain": 0.11624999999999996,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.40000000000000013,
+            "ten_percent": 0.8666666666666669
+          },
+          "one_token_upper_bound_gain": 0.10999999999999999,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.5249999999999999,
+            "ten_percent": 1.0333333333333332
+          },
+          "one_token_upper_bound_gain": 0.09750000000000003,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.3125,
+            "ten_percent": 0.7500000000000002
+          },
+          "one_token_upper_bound_gain": 0.11875000000000002,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.375,
+            "ten_percent": 0.8333333333333335
+          },
+          "one_token_upper_bound_gain": 0.11250000000000004,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.4375,
+            "ten_percent": 0.916666666666667
+          },
+          "one_token_upper_bound_gain": 0.10624999999999996,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.5625,
+            "ten_percent": 1.0833333333333335
+          },
+          "one_token_upper_bound_gain": 0.09375,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.375,
+            "ten_percent": 0.8333333333333335
+          },
+          "one_token_upper_bound_gain": 0.11250000000000004,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.4375,
+            "ten_percent": 0.916666666666667
+          },
+          "one_token_upper_bound_gain": 0.10624999999999996,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.5000000000000002,
+            "ten_percent": 1.0000000000000004
+          },
+          "one_token_upper_bound_gain": 0.09999999999999998,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.25,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.625,
+            "ten_percent": 1.166666666666667
+          },
+          "one_token_upper_bound_gain": 0.08750000000000002,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.1333333333333333,
+            "ten_percent": 0.2749999999999999
+          },
+          "one_token_upper_bound_gain": 0.245,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.18888888888888888,
+            "ten_percent": 0.3374999999999999
+          },
+          "one_token_upper_bound_gain": 0.23249999999999993,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.24444444444444446,
+            "ten_percent": 0.40000000000000013
+          },
+          "one_token_upper_bound_gain": 0.21999999999999997,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.3555555555555554,
+            "ten_percent": 0.5249999999999999
+          },
+          "one_token_upper_bound_gain": 0.19500000000000006,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.16666666666666674,
+            "ten_percent": 0.3125
+          },
+          "one_token_upper_bound_gain": 0.23750000000000004,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.22222222222222232,
+            "ten_percent": 0.375
+          },
+          "one_token_upper_bound_gain": 0.22499999999999998,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.2777777777777779,
+            "ten_percent": 0.4375
+          },
+          "one_token_upper_bound_gain": 0.2124999999999999,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.38888888888888884,
+            "ten_percent": 0.5625
+          },
+          "one_token_upper_bound_gain": 0.1875,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.22222222222222232,
+            "ten_percent": 0.375
+          },
+          "one_token_upper_bound_gain": 0.22499999999999998,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.2777777777777779,
+            "ten_percent": 0.4375
+          },
+          "one_token_upper_bound_gain": 0.2124999999999999,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.3333333333333335,
+            "ten_percent": 0.5000000000000002
+          },
+          "one_token_upper_bound_gain": 0.19999999999999996,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.5,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.4444444444444444,
+            "ten_percent": 0.625
+          },
+          "one_token_upper_bound_gain": 0.17500000000000004,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.09285714285714275,
+            "ten_percent": 0.17692307692307696
+          },
+          "one_token_upper_bound_gain": 0.36749999999999994,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.14642857142857157,
+            "ten_percent": 0.23461538461538467
+          },
+          "one_token_upper_bound_gain": 0.34875,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.20000000000000018,
+            "ten_percent": 0.2923076923076924
+          },
+          "one_token_upper_bound_gain": 0.32999999999999996,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.02,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.30714285714285716,
+            "ten_percent": 0.4076923076923076
+          },
+          "one_token_upper_bound_gain": 0.2925,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.125,
+            "ten_percent": 0.21153846153846145
+          },
+          "one_token_upper_bound_gain": 0.35624999999999996,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.1785714285714286,
+            "ten_percent": 0.2692307692307694
+          },
+          "one_token_upper_bound_gain": 0.3374999999999999,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.2321428571428572,
+            "ten_percent": 0.3269230769230771
+          },
+          "one_token_upper_bound_gain": 0.31875,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.05,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.3392857142857142,
+            "ten_percent": 0.4423076923076923
+          },
+          "one_token_upper_bound_gain": 0.28125,
+          "proposer_verification_overhead": 0.2
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.1785714285714286,
+            "ten_percent": 0.2692307692307694
+          },
+          "one_token_upper_bound_gain": 0.3374999999999999,
+          "proposer_verification_overhead": 0.0
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.2321428571428572,
+            "ten_percent": 0.3269230769230771
+          },
+          "one_token_upper_bound_gain": 0.31875,
+          "proposer_verification_overhead": 0.05
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.2857142857142858,
+            "ten_percent": 0.3846153846153848
+          },
+          "one_token_upper_bound_gain": 0.29999999999999993,
+          "proposer_verification_overhead": 0.1
+        },
+        {
+          "assistant_to_target_verify_cost": 0.1,
+          "decode_fraction": 0.75,
+          "min_accepted_for_5pct": {
+            "five_percent": 0.3928571428571428,
+            "ten_percent": 0.5
+          },
+          "one_token_upper_bound_gain": 0.26249999999999996,
+          "proposer_verification_overhead": 0.2
+        }
+      ]
+    }
+  ],
+  "evidence_type": "derived_and_synthetic; no provider/CUDA/quality execution",
+  "identities": {
+    "assistant": "google/gemma-4-31B-it-assistant@627c5ec1458b9086b841a91e0512fd31fd2fbbf1",
+    "device": "one nvidia-h100-sxm 80GB; tensor_parallel_size=1",
+    "image": "vllm/vllm-openai:gemma4@sha256:8e86cb93b724092cd4dc892fb129a6c5538613b38a5cd34e40aab9e6aea72b03",
+    "runtime_source": "vllm@ab0a20d15129b322f911db578b50c6b35b3167e7",
+    "target": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+  },
+  "inputs": {
+    "assistant_weight_gib": 0.87455153465271,
+    "cache_prompt_fraction": 0.127,
+    "fresh_prompt_tokens": 3678.822,
+    "input_sha256": {
+      "adjacent_packet": "53ad920c00ee4acf224ebb135b5dbff3488897e71e432c5ee93732190d2db08f",
+      "geometry": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72",
+      "market": "5d636809dc25450050c565cdc108bf7e91eaa60ce07c027ca390c8011e3b8e51",
+      "prices": "3f403d67a92fc91be85bbd27dede85f5f91c3fd2df25ef8dcef2a344acbd1e01"
+    },
+    "output_tokens": 358,
+    "prompt_tokens": 4214,
+    "target_bf16_weight_gib": 58.256
+  },
+  "market_break_even": {
+    "conditional_rows": [
+      {
+        "hardware": "h100_bf16",
+        "market_required_rps": 1.8252472969060232,
+        "min_accepted_at_f05_ar002_oh005": null,
+        "required_all_in_gain": 0.5890967753951342,
+        "stock_completed_requests_per_second": 0.75
+      },
+      {
+        "hardware": "h100_bf16",
+        "market_required_rps": 1.8252472969060232,
+        "min_accepted_at_f05_ar002_oh005": 10.175876384808598,
+        "required_all_in_gain": 0.4521290338601788,
+        "stock_completed_requests_per_second": 1.0
+      },
+      {
+        "hardware": "h100_bf16",
+        "market_required_rps": 1.8252472969060232,
+        "min_accepted_at_f05_ar002_oh005": 0.6624899883573279,
+        "required_all_in_gain": 0.17819355079026822,
+        "stock_completed_requests_per_second": 1.5
+      },
+      {
+        "hardware": "h100_bf16",
+        "market_required_rps": 1.8252472969060232,
+        "min_accepted_at_f05_ar002_oh005": 0.10044323599828808,
+        "required_all_in_gain": 0.013832260948321795,
+        "stock_completed_requests_per_second": 1.8
+      },
+      {
+        "hardware": "w4_l40s",
+        "market_required_rps": 0.7170614380702235,
+        "min_accepted_at_f05_ar002_oh005": 8.250892719658777,
+        "required_all_in_gain": 0.4421677435667275,
+        "stock_completed_requests_per_second": 0.4
+      },
+      {
+        "hardware": "w4_l40s",
+        "market_required_rps": 0.7170614380702235,
+        "min_accepted_at_f05_ar002_oh005": 1.7117397271764139,
+        "required_all_in_gain": 0.30270967945840943,
+        "stock_completed_requests_per_second": 0.5
+      },
+      {
+        "hardware": "w4_l40s",
+        "market_required_rps": 0.7170614380702235,
+        "min_accepted_at_f05_ar002_oh005": 0.5887232853579931,
+        "required_all_in_gain": 0.16325161535009136,
+        "stock_completed_requests_per_second": 0.6
+      },
+      {
+        "hardware": "w4_l40s",
+        "market_required_rps": 0.7170614380702235,
+        "min_accepted_at_f05_ar002_oh005": 0.12346231638627647,
+        "required_all_in_gain": 0.023793551241773292,
+        "stock_completed_requests_per_second": 0.7
+      }
+    ],
+    "overhead_factor": 1.4415758823529419,
+    "required_completed_requests_per_second": {
+      "h100_bf16": 1.8252472969060232,
+      "w4_l40s": 0.7170614380702235
+    },
+    "retail_request_cost_usd": 0.000614287
+  },
+  "matched_arm": {
+    "gate": "run only with exact target/assistant/runtime/image identities; exact-greedy output IDs equal stock; complete requests >=30 per arm; mean accepted_tokens >= threshold for measured decode fraction and overhead; all-in cost reduction >=5%",
+    "hard_negative": "typed none if mean accepted_tokens < threshold, output IDs differ, any nested/empty result, or MTP all-in cost reduction <5%; do not claim 10% or market break-even from this bound",
+    "name": "native_mtp_num_speculative_tokens_1",
+    "scope": "one later matched arm only",
+    "telemetry": [
+      "accepted_tokens",
+      "draft_calls",
+      "verify_calls",
+      "output_ids",
+      "complete_requests",
+      "prefill_wall_s",
+      "decode_wall_s",
+      "request_wall_s",
+      "HBM_GiB",
+      "power_W"
+    ]
+  },
+  "model": {
+    "baseline_target_calls": 358,
+    "mtp_formula": "draft_calls=verify_calls=ceil(output_tokens/(1+accepted_tokens)); each proposal pays one target verification pass plus assistant work; rejected tokens are represented by accepted_tokens=0..1",
+    "quality_policy": "exact-greedy output IDs must match stock; sampled operation remains a separate quality/acceptance measurement",
+    "target_verification_not_elided": true
+  },
+  "question": "Can native four-layer Gemma 4 MTP clear 5% sustainable cost on 4214/358 background traffic?",
+  "schema_version": 1,
+  "status": "matched_arm_candidate_with_hard_negative_gate"
+}

@@ -1,0 +1,81 @@
+{
+  "decision": "ECONOMIC_CLOSE",
+  "decision_time_utc": "2026-07-16T00:00:00Z",
+  "scope": {
+    "cost_usd": 0.0,
+    "provider_mutation": false,
+    "credentials_used": false,
+    "controller_or_cuda": false,
+    "venues_inspected": 1,
+    "stop_rule": "single targeted venue/economic gate"
+  },
+  "target": {
+    "accelerator_id": "nvidia-rtx-pro-6000-blackwell-server",
+    "model": "RTX PRO 6000 Blackwell Server Edition",
+    "architecture": "sm_120",
+    "checkpoint_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86",
+    "workload": "cache-off c32, 8192 input tokens, 1024 output tokens, complete within 300 seconds"
+  },
+  "venue": {
+    "provider": "Google Cloud Compute Engine",
+    "product": "G4 Standard",
+    "shape": "g4-standard-48",
+    "gpu_count": 1,
+    "host_contract": "48 vCPU, 180 GiB instance memory, one full GPU; custom image or container launch is supported",
+    "region_zone": "us-central1-b (Iowa; documented one-full-GPU G4 zone)",
+    "orderability_evidence": "G4 is documented GA/current in Compute Engine; exact shape and zone are public. Actual quota/capacity remains account-specific and was not queried.",
+    "container_contract": "Compute Engine supports custom images and create-with-container with --container-privileged; GPU driver installation is documented for G4/CUDA 13.1+. The unchanged published vLLM container can therefore be supplied without provider mutation in this gate.",
+    "billing_minimum": "not separately bound in this zero-cost gate; Compute Engine public pricing and per-second billing are documented",
+    "storage_network_inclusions": "not included in the GPU/VM rate; disk, image, networking, and egress are separate charges",
+    "retrieval_time": "2026-07-16"
+  },
+  "rate": {
+    "basis": "public on-demand whole-instance rate, not experimental metered rate",
+    "usd_per_gpu_hour": 4.49993,
+    "source_url": "https://cloud.google.com/products/compute/pricing/accelerator-optimized",
+    "rate_scope_note": "The displayed G4 Standard on-demand price is for the one-GPU g4-standard-48 VM; disk, image, networking, and egress remain excluded, so this is a lower bound on all-in cost."
+  },
+  "economic_gate": {
+    "target_usd_per_million_output_tokens": 0.514,
+    "required_throughput_formula": "rate_usd_per_hour * 1000000 / (3600 * target_usd_per_million_output_tokens)",
+    "required_throughput_output_tok_s": 2431.86878512754,
+    "venue_rate_only_usd_per_million_at_envelope": 0.8818968425275582,
+    "venue_rate_only_usd_per_million_note": "At the generous measured-envelope cap below; actual performance and all non-VM costs are unknown."
+  },
+  "physical_envelope": {
+    "evidence_class": "derived conservative bound, not transferred throughput",
+    "measured_reference": {
+      "venue": "Nebius preemptible L40S plus disk",
+      "workload_match": "current AWQ, cache-off, 8192 input, 1024 output",
+      "c16_output_tok_s": 535.2861037029285,
+      "rate_usd_per_hour": 0.8581222,
+      "artifact": "research/sol/experiments/glm47flash/research_lab/projects/nebius_current_awq_c16_direct/artifacts/nebius_current_awq_c16_direct_2026-07-15-r2/summary.json"
+    },
+    "target_geometry": {
+      "sm_count": 188,
+      "memory_gb": 96,
+      "memory_bandwidth_gb_s": 1597,
+      "power_w": 600,
+      "reference_l40s_sm_count": 142,
+      "reference_l40s_memory_bandwidth_gb_s": 864
+    },
+    "bound_method": "Start with measured L40S c16 throughput; apply the smaller SM or bandwidth scale factor (min(188/142, 1597/864)=1.32394), then multiply by 2.0 to allow a very generous c32/Blackwell/runtime benefit.",
+    "sm_or_bandwidth_scaled_tok_s": 708.6886443390885,
+    "generous_2x_envelope_tok_s": 1417.377288678177,
+    "margin_to_required": 0.582659994697981,
+    "interpretation": "Even the 2x envelope is 41.7% below the 2431.869 tok/s requirement; this is an economic close, not a claim that SM120 cannot run the model."
+  },
+  "sources": [
+    {"title": "Google Cloud accelerator-optimized VM pricing", "url": "https://cloud.google.com/products/compute/pricing/accelerator-optimized", "evidence": "g4-standard-48 one-GPU on-demand $4.49993/hour; page labels columns and separates disk/network pricing", "retrieved": "2026-07-16"},
+    {"title": "Google Cloud GPU machine types", "url": "https://docs.cloud.google.com/compute/docs/gpus", "evidence": "G4 is RTX PRO 6000, 96 GB GDDR7 ECC, 1597 GB/s; intended for ML inference", "retrieved": "2026-07-16"},
+    {"title": "Google Cloud GPU locations", "url": "https://docs.cloud.google.com/compute/docs/regions-zones/gpu-regions-zones?hl=en", "evidence": "full-GPU G4 shapes are documented and fractional G4 shapes are restricted to us-central1-b", "retrieved": "2026-07-16"},
+    {"title": "Google Cloud install GPU drivers", "url": "https://docs.cloud.google.com/compute/docs/gpus/install-drivers-gpu?hl=en", "evidence": "G4/CUDA 13.1 driver path documented", "retrieved": "2026-07-16"},
+    {"title": "Google Cloud create-with-container", "url": "https://docs.cloud.google.com/sdk/gcloud/reference/compute/instances/create-with-container", "evidence": "container image, privileged container, accelerator, and host mounts are supported by the public launch contract", "retrieved": "2026-07-16"}
+  ],
+  "uncertainties": [
+    "Quota and instantaneous capacity were not queried; no account-specific order guarantee is claimed.",
+    "The physical envelope is deliberately conservative but analytical; only the L40S reference is measured.",
+    "Disk, image, networking, egress, and license charges can only increase the required throughput."
+  ]
+}

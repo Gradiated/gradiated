@@ -1,0 +1,23 @@
+{
+  "status": "complete",
+  "priority": 115,
+  "summary": "Test whether source-backed 8K agent prompts contain enough legitimate tenant-safe prefix reuse to clear the 10% L40S gate without exploiting the duplicated synthetic benchmark prompt.",
+  "next_action": "Reopen only with source-backed current-runtime 8K request content and exact tenant/session cache identity; no provider arm is nominated.",
+  "provider_mutation": "none_zero_cost_current_8k_prefix_reuse_bound",
+  "authorized_spend_usd": 0.0,
+  "quality_policy": "exact_semantic_identity_required_for_any_later_cache_arm_absolute_quality_remains_deferred",
+  "artifact_contract": [
+    "current_8k_prefix_reuse_bound.json",
+    "typed_absence_of_admissible_content_addressed_8k_replay",
+    "RESEARCH_LOG.md"
+  ],
+  "result_classification": "closed_zero_cost_bound_no_source_backed_8k_reuse",
+  "promotion": {
+    "provider_arm_nominated": false,
+    "required_prefill_work_removed": 0.6712616744526219,
+    "required_reusable_8192_prefix_tokens_linear_bound": 5498.975637115878,
+    "strongest_admissible_proxy_reusable_tokens": 176,
+    "strongest_admissible_proxy_equivalent_output_tok_s": 536.9971036447911,
+    "gate_cleared": false
+  }
+}

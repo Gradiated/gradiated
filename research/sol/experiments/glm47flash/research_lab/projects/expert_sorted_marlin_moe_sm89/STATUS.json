@@ -1,0 +1,19 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "MECHANISM_DUPLICATE: pinned vLLM already expert-sorts top-k IDs and globally schedules one routed Marlin gate/up and one down launch per MoE invocation.",
+  "next_action": "Terminal. Do not implement the duplicate scheduler; marlin_moe_microblock_sm89 owns the distinct block-4 specialization question.",
+  "provider_mutation": "prohibited_terminal_duplicate",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "terminal_result": "MECHANISM_DUPLICATE",
+  "evidence": {
+    "stock_sort": "moe_align_block_size",
+    "stock_gate_up_launches_per_invocation": 1,
+    "stock_down_launches_per_invocation": 1,
+    "retained_signature_launches": 11684,
+    "retained_signature_factorization": "46 layers x 254 steps",
+    "retained_grid_blocks": 426
+  },
+  "stop_rule": "Satisfied before implementation; no successor using the same expert-sort premise."
+}

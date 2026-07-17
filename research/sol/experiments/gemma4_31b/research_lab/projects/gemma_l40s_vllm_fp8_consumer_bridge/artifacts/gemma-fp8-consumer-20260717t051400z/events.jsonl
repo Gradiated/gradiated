@@ -1,0 +1,4 @@
+{"event": "instance_created", "instance_id": "computeinstance-e00a1v402ma5kwfhye", "timestamp": "2026-07-17T05:14:04.959506Z", "watchdog": {"control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-fp8-consumer-20260717t051400z-watchdog.service", "deadline_epoch": 1784266413.9092348, "main_pid": 1874888, "unit": "gemma-fp8-consumer-20260717t051400z-watchdog.service"}}
+{"elapsed_seconds": 66.192, "event": "ssh_ready", "timestamp": "2026-07-17T05:14:40.101146Z"}
+{"error_type": "FileNotFoundError", "event": "experiment_error", "message": "[Errno 2] No such file or directory: '/var/tmp/tmpq8o34jyz/primary/manifest.json'", "timestamp": "2026-07-17T05:24:33.111527Z"}
+{"cleanup_pass": true, "event": "cleanup_verified", "timestamp": "2026-07-17T05:24:33.111778Z"}

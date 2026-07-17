@@ -1,0 +1,20 @@
+{
+  "status": "closed",
+  "priority": 120,
+  "summary": "Closed: the ideal combined MoE ceiling requires at least 74.918% qualified token-layer decisions at zero overhead, but no exact router-confidence artifact or existing low-overhead runtime observer is available.",
+  "next_action": "Do not run a provider experiment or nominate an observer; reopen only with an independently admitted, source-bound non-synchronizing router-statistic observer.",
+  "provider_mutation": "none_zero_cost_parallel_to_native_mtp",
+  "authorized_spend_usd": 0.0,
+  "quality_policy": "semantics_changing_architecture_bound_only_full_quality_deferred",
+  "artifact_contract": [
+    "adaptive_moe_budget_bound.json",
+    "source_bound_policy_fixture.py",
+    "RESEARCH_LOG.md"
+  ],
+  "economic_gate": {
+    "promotion_output_tokens_per_second": 594.466,
+    "required_nonoverlapped_wall_time_reduction": 0.09955144882554656,
+    "combined_fixed_proxy_ideal_ceiling": 0.13288073811278622,
+    "zero_overhead_minimum_qualifying_fraction": 0.7491789272050062
+  }
+}

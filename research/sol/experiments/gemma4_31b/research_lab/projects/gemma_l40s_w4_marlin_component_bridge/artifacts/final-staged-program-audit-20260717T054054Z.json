@@ -1,0 +1,35 @@
+{
+  "authoritative_dependencies": {
+    "../fp8_kv_contract_reconciliation/KV_CONTRACT.json": "d495553dab98eac4d101802e668469fea3758ba378a8bd89641075a277a07802",
+    "../gemma_l40s_vllm_fp8_consumer_bridge/IDENTITY_ASSERTION.json": "8fc4a47bcb5f09783385b90d92269f57fedae86fcf2bb32e51cef41c8f612c73",
+    "../gemma_l40s_w4_c16_economic_bound/W4_C16_BOUND_V2.json": "b697e8c43bcdecac9b0261ab79e363b39e11e9c37a0be282d357a21c9e24fe9d",
+    "../gemma_l40s_w4_c16_economic_bound/W4_COMPONENT_PACKET.json": "3ac9ff0868ed63bd06bb263c78576ba8d00c67244a1ca636e82f00be65ed8aad",
+    "../l40s_saturation_economic_gate/SATURATION_GATE.json": "690e0e457c6e8e9121b54fb7f88abc92c3dcc358e1d71accffddb083878d00d6",
+    "../tied_vocab_projection_cost_bound/VOCAB_BOUND.json": "5bbd3d06f6e606005a61dc4327e38ee4326b65f781febdc4d1d2a47affb15fa3"
+  },
+  "checks": {
+    "actual_fp8_method_same_config_context": true,
+    "actual_w4_method_and_marlin_kernel_gate": true,
+    "aggregate_and_25_percent_gate": true,
+    "all_six_shapes_and_m_1_2_4_8_16": true,
+    "conditional_parallel_lm_head_real_consumer": true,
+    "nonzero_typed_failures": true,
+    "oracle_consumes_timed_consumer_output": true,
+    "shared_owner_sequences_typed_trigger_and_cleanup": true,
+    "stage_terminal_and_internal_manifest": true,
+    "timing_memory_and_useful_gpu_required": true
+  },
+  "classification": "final_staged_scientific_program_audit",
+  "controller": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py",
+  "controller_change_explanation": "Current shared upstream adds parameterized pinned image/staged files plus typed primary/conditional retrieval and VerifiedRetainedOwner cleanup required by this project.",
+  "controller_sha256_current": "1c7448d956d9c65eaf64494bf3bbd16afcf813e30f57604a36affc873d23af2b",
+  "controller_sha256_prior_project": "1c7448d956d9c65eaf64494bf3bbd16afcf813e30f57604a36affc873d23af2b",
+  "pass": true,
+  "schema_version": 1,
+  "staged_files": {
+    "remote_parallel_lm_head_stage.sh": "7d4181d4fda2b6d00891f0dff05c3c2d0ac15ce31b81e1b43464edebd57ad6be",
+    "remote_w4_fp8_stage.sh": "b8f1894742d0a6c9c460d63728a6ff33a9c8195d64dbd0fc2bd975842685713b",
+    "vllm_parallel_lm_head_bench.py": "d687c4af53349d3424602de916c39fb942d0d17d19cf79fdeb64d6d47ebbb071",
+    "vllm_w4_fp8_microbench.py": "f20098ccb66df34277fb9956883d35521880359c7ad3b5393832f6567fd97c28"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "status": "complete",
+  "priority": 119,
+  "summary": "Derive the exact L40S throughput and concurrency envelope needed to beat the measured campaign-mix retail cost.",
+  "next_action": "Director reconciles the eventual direct L40S result against SATURATION_GATE.json; no provider successor is nominated here.",
+  "provider_mutation": "prohibited_zero_cost_offline",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 3600,
+  "compute_budget": "2 local CPU-hours",
+  "storage_budget": "512 MiB",
+  "active_session": null,
+  "terminal_artifact": "DECISION.md",
+  "terminal_packet": "SATURATION_GATE.json",
+  "terminal_result": "c4_guaranteed_fit_bound_c8_runtime_dependent",
+  "evidence": {
+    "planning_rate_usd_per_gpu_hour": 1.1,
+    "production_rate_range_usd_per_gpu_hour": [1.0, 1.25],
+    "planning_base_cheapest_endpoint_required_requests_per_second": 0.7170614380702235,
+    "conservative_cheapest_endpoint_required_requests_per_second": 1.1583551336753017,
+    "memory_capacity_gib": 44.704,
+    "c4_total_gib": 42.198,
+    "c8_total_gib": 45.046,
+    "c8_headroom_gib": -0.342,
+    "single_10k_total_gib": 40.504,
+    "provider_run": "not launched: provider_mutation prohibited_zero_cost_offline"
+  }
+}

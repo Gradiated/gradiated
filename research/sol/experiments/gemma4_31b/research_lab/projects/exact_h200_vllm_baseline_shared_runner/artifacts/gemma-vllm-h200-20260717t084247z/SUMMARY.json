@@ -1,0 +1,31 @@
+{
+  "absolute_limits": {
+    "artifact_gib": 10,
+    "h200_hours": 1.34,
+    "provider_minutes": 80,
+    "spend_usd": 4.0
+  },
+  "aggregate_cost_usd_derived": 0.7777572749814323,
+  "aggregate_provider_seconds": 1131.6008431186676,
+  "all_in_cost_usd_derived": 0.7468291435385157,
+  "cleanup_path": "cleanup.json",
+  "compute_cost_usd_derived": 0.7394929210113155,
+  "disk_cost_usd_derived": 0.007336222527200215,
+  "disk_rate_basis": "Nebius 250-GiB vendor-calculator rate used by shared lifecycle",
+  "disk_rate_usd_per_hour": 0.0243055,
+  "ended_at_utc": "2026-07-17T09:01:01.700194Z",
+  "first_owner_cost_usd_derived": 0.030928131442916673,
+  "first_owner_provider_seconds": 44.999,
+  "instance_id": "computeinstance-e00rvwpqj3a9gm2zet",
+  "name": "gemma-vllm-h200-20260717t084247z",
+  "outcome": "CLOSED_SECOND_PRE_SCIENCE_FAILURE",
+  "planning_rate_usd_per_hour": 3.25,
+  "provider_rate_basis": "fresh shared inventory public_preemptible H200 reference; invoice pending",
+  "provider_rate_usd_per_hour": 2.45,
+  "provider_seconds": 1086.6018431186676,
+  "schema_version": 2,
+  "useful_gpu_seconds": 0.0,
+  "within_compute_limit": true,
+  "within_provider_limit": true,
+  "within_spend_limit": true
+}

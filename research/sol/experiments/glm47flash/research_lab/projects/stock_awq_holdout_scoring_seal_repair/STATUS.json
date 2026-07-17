@@ -1,0 +1,55 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "QUALITY_POLICY_CLOSE: independent audit rejects the claimed executable bridge; JSON scorer ingestion still fails, raw seven-file holdout scoring is absent, caller assertions remain trusted, and identity/disjointness mutations pass.",
+  "next_action": "Terminal under the Cycle 123 final-repair stop rule. Preserve the historical r4 adjudication evidence, but do not open another seal project or authorize spend from this bridge.",
+  "provider_mutation": "prohibited_terminal_quality_policy_close",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 1200,
+  "resource_cap": {
+    "peak_rss_gib": 6,
+    "new_artifacts_mib": 48
+  },
+  "allowed_results": [
+    "HOLDOUT_EXECUTABLE_BRIDGE_PASS",
+    "QUALITY_POLICY_CLOSE"
+  ],
+  "stop_rule": "Terminal QUALITY_POLICY_CLOSE after the final same-project repair failed independent executable audit; no provider mutation occurred.",
+  "quality_policy": "Instrument repair only; no model-quality eligibility is conferred.",
+  "rejected_result": "HOLDOUT_CONTRACT_RESEALED",
+  "rejected_evidence": {
+    "holdout": "sealed_holdout_v3/holdout.jsonl",
+    "manifest": "sealed_holdout_v3/MANIFEST.json",
+    "validation": {"command": "python3 validate_resealed_holdout.py", "result": {"pass": true, "cases": 36}},
+    "mutation_tests": {"command": "python3 test_resealed_holdout.py", "result": {"pass": true, "mutations_rejected": 11}},
+    "artifact_size_kib": 584
+  },
+  "director_correction": {
+    "audited_at_utc": "2026-07-16T12:46:00Z",
+    "first_reproduced_failure": "JSON capture ordinal keys deserialize as strings; score_resealed_holdout.py raises capture_ordinals",
+    "paid_trigger": "HOLDOUT_EXECUTABLE_BRIDGE_PASS; authenticated_AA_cleanup_still_required"
+  },
+  "result": "QUALITY_POLICY_CLOSE",
+  "rejected_result_2": "HOLDOUT_EXECUTABLE_BRIDGE_PASS",
+  "director_terminal_audit": {
+    "audited_at_utc": "2026-07-16T13:01:22Z",
+    "json_boundary": "On-disk JSON evidence still raises ValueError: capture_ordinals because ordinal keys deserialize as strings.",
+    "raw_capture_boundary": "The bridge invokes the old development adjudicator and checks archive hashes/files/PIDs; it does not derive holdout scores or NLL from future seven-file captures.",
+    "trusted_inputs": "score_resealed_holdout.py still accepts caller-supplied pass booleans and preassembled prompt_logprobs.",
+    "identity_boundary": "The future manifest omits policy/scorer/runner/checkpoint/process identity and trusts caller-supplied suite identity.",
+    "accepted_mutations": [
+      "bf16_revision",
+      "awq_revision",
+      "runner_model_alias",
+      "normalization",
+      "canonical_token_sequence",
+      "development_holdout_prompt_overlap"
+    ]
+  },
+  "evidence": {
+    "bridge": "EXECUTABLE_CAPTURE_BRIDGE.json",
+    "real_archive": "../bf16_vllm_quality_bridge/artifacts/nebius_h100_bf16_vllm_v2_2026-07-15-r4/vllm-awq-batch.tar.gz",
+    "real_capture_result": {"r4_category_repeatability": "6 categories x three captures, all >= 5/6", "fresh_api_server_pids": [886, 1742, 2259]},
+    "commands": ["python3 executable_capture_bridge.py", "python3 test_executable_capture_bridge.py", "python3 validate_resealed_holdout.py", "python3 test_resealed_holdout.py"]
+  }
+}

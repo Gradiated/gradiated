@@ -1,0 +1,22 @@
+{
+  "actual_rate_usd_per_hour": 0.8581222,
+  "authorized_cost_usd": 0.75,
+  "classification": "TOP3_REAL_ARTIFACT_AND_MEASURED_BUDGET_PASS",
+  "corrected_background_evaluator": {
+    "conservative_tok_s": 611.7645585359348,
+    "deferred_quality_marker": true,
+    "pass": true
+  },
+  "measured_seconds": {
+    "absolute_budget": 3000.0,
+    "fresh_bootstrap_and_pre_arm": 1250.081,
+    "measured_phase_seconds_fresh": 1239.958,
+    "measured_phase_seconds_retained": 354.332,
+    "planned_top4_top3_top4_plus_cleanup": 2222.463,
+    "reserve": 777.537,
+    "retained_arm_with_failure_cleanup": 366.191
+  },
+  "real_artifact": "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/full47_top2_shared_c32_direct_corrected/artifacts/l40s_top2_shared_c32_20260716_r2/top4_shared_c32_pre/summary.json",
+  "real_artifact_sha256": "da276a4e0a5dfaaa75c9c9f257dfa7525bcf025cac6ce56f00d7e28a7fb0ec7c",
+  "worst_case_cost_usd": 0.715102
+}

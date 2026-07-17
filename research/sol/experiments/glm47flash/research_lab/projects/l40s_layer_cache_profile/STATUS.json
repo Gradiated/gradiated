@@ -1,0 +1,18 @@
+{
+  "status": "closed",
+  "priority": 0,
+  "summary": "COUNTER_LINEAGE_CLOSE: Nebius L40S counters are unavailable, and the later exact expert-count screen closed a standalone 16-expert/top-k endpoint path.",
+  "next_action": "Terminal; do not seek another profiling venue or run the 64-vs-16 proxy for this campaign. Reopen only with a separately admitted executable 16-expert checkpoint.",
+  "provider_mutation": "released_after_verified_zero_named_instance_and_disk",
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.07792,
+  "allocation_timeout_seconds": 1200,
+  "quality_policy": "synthetic_component_cost_evidence_only_no_quality_or_endpoint_claim",
+  "decision": "COUNTER_LINEAGE_CLOSE",
+  "result": "Nsight Compute 2025.2.1.0 was present on a measured L40S, but query-metrics returned a counter-library Unknown Error and a CUDA saxpy profile failed with driver resource unavailable; no .ncu-rep was emitted.",
+  "artifacts": {
+    "summary": "artifacts/MEASURED_NCU_COUNTER_LIMITATION_20260715.json",
+    "raw_archive": "artifacts/ncu_permission_probe_v2_20260715/ncu-probe.tar.gz",
+    "raw_archive_sha256": "d38e88468f2f365394c305117945df45f997311e316b57e32990721e973d1e4a"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "allocation_result": null,
+  "allocation_seconds": 1017.562,
+  "artifact_sha256": "fb5e62f453f76d6a7d8f9bc0861648589cc08cb7b83268a32b2a2ced44042e17",
+  "background_arm_envelope_seconds": 300.0,
+  "background_pass": false,
+  "cleanup_pass": true,
+  "compute_cost_usd_derived": 0.23980542,
+  "cost_basis": "measured exposure at authenticated Nebius preemptible VM and disk rates; public IPv4/egress excluded; invoice pending",
+  "cost_usd_derived": 0.242553459,
+  "disk_cost_usd_derived": 0.002748039,
+  "ended_at_utc": "2026-07-16T10:41:17.519845Z",
+  "final_disk_count": 0,
+  "final_instance_count": 0,
+  "instance_id": "computeinstance-e00k06hez0ch8bspby",
+  "manifest_file_count": 11,
+  "outcome": "FAIL",
+  "retained_for_next_experiment": false,
+  "useful_gpu_seconds": null
+}

@@ -1,0 +1,13 @@
+.gitattributes: OK
+README.md: OK
+chat_template.jinja: OK
+config.json: OK
+generation_config.json: OK
+model-00001-of-00004.safetensors: OK
+model-00002-of-00004.safetensors: OK
+model-00003-of-00004.safetensors: OK
+model-00004-of-00004.safetensors: OK
+model.safetensors.index.json: OK
+tokenizer.json: OK
+tokenizer_config.json: OK
+marker_reused=false

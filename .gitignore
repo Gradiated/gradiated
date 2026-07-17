@@ -22,3 +22,9 @@ tools/browser/.browser-data/
 **/.pytest_cache/
 **/.events.lock
 target/
+
+# Downloaded or generated model checkpoint payloads
+**/*.safetensors
+**/*.pt
+**/*.pth
+**/*.ckpt

@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "scan_id": "glm47_exact_model_external_scan_2026-07-15",
+  "retrieved_at_utc": "2026-07-15",
+  "budget_usd": 0.0,
+  "decision": "PROMOTE_CONDITIONAL_AWQ_REPLAY; RETAIN_A40_AS_PLACEMENT_HYPOTHESIS; PARK_NVFP4_AND_MLX",
+  "campaign": {
+    "workload": "8192 input / 1024 output background workload",
+    "control_tok_s": 355.772,
+    "control_hourly_usd": 0.8581222,
+    "target_usd_per_million_output_equivalent": 0.6365,
+    "strong_target_usd_per_million_output_equivalent": 0.6,
+    "preliminary_75pct_control_tok_s": 266.829,
+    "a40_break_even_tok_s": {"target": 192.022, "strong": 203.704},
+    "a40_cost_at_75pct_control_usd_per_million": 0.4581,
+    "cloudflare_vendor_anchor_usd_per_million_output_equivalent": 0.88
+  },
+  "ranked_candidates": [
+    {
+      "rank": 1,
+      "name": "current exact AWQ 4-bit checkpoint",
+      "checkpoint": "cyankiwi/GLM-4.7-Flash-AWQ-4bit@87c9a07f5f890ced4b4d5d567500393cad51a828",
+      "scope": "AWQ v1.0, 4-bit, group size 32, compressed-tensors; 20.2 GB repository",
+      "measurement_venue": "Nebius L40S current runnable-control project, only after its fresh control gates pass; no allocation in this scan",
+      "production_hypothesis": "one verified 48 GiB A40 or equivalent low-rate venue; RunPod $0.44/hour catalog price is not capacity evidence",
+      "evidence": ["model card reports 17.2 GB memory estimate and perplexity 1.60292 to 1.6096 (0.417%); card documents vLLM/SGLang but says no MTP", "local V21 AWQ is historical and non-transferable"],
+      "labels": ["vendor_reported", "repository_metadata", "local_scope_boundary"],
+      "credible_path": "weight traffic plus cheap 48 GiB hardware could clear 192.022 tok/s, but throughput, quality, capacity, interruption, transfer, and orchestration are unmeasured",
+      "cheap_falsifier": "offline bind revision, tokenizer, config, shard manifest, and quality-contract compatibility",
+      "admit": "exact load and <=46,068 MiB residence, then frozen quality/SLO and sustained >=192.022 tok/s",
+      "stop": "identity, load, memory, quality, SLO, or artifact failure"
+    },
+    {
+      "rank": 2,
+      "name": "NVIDIA A40 placement",
+      "scope": "hardware-only isolation with exact AWQ/vLLM if possible",
+      "measurement_venue": "A40 venue with readable capacity control; existing RunPod path is closed",
+      "production_hypothesis": "RunPod catalog-listed A40 at $0.44/hour",
+      "evidence": ["A40 is 48 GiB and 696 GB/s; bandwidth-only scaling predicts 286.7 tok/s, analytical only", "75%-control margin permits $0.1714/hour overhead at the 5% gate", "REST 400 and GraphQL 403 capacity path means no availability result"],
+      "labels": ["vendor_reported", "derived", "operational_control_plane"],
+      "cheap_falsifier": "read-only capacity and provider-rate check on another authorized venue",
+      "admit": "48 GiB identity, exact load, residence, quality/SLO, and >=192.022 tok/s",
+      "stop": "no capacity evidence or any failed gate"
+    },
+    {
+      "rank": 3,
+      "name": "NVFP4 exact-model derivative",
+      "checkpoint": "unsloth/GLM-4.7-Flash-NVFP4@98b0362133bda9ee3b1b875636636c07861f5947",
+      "scope": "NVFP4 compressed-tensors; model.safetensors plus model_mtp.safetensors; modified 2026-07-15; zero downloads",
+      "measurement_venue": "Blackwell-capable venue not established",
+      "production_hypothesis": "Blackwell cloud or owned hardware, not A40/L40S until support is proven",
+      "evidence": ["no public quality or throughput evidence found", "official vLLM recipe covers GLM-4.7-Flash FP8/BF16 and AMD paths, not this NVFP4 artifact"],
+      "labels": ["repository_metadata", "negative_scan", "inferred_scope"],
+      "cheap_falsifier": "GPU-free loader/config capability check against exact pinned runtime",
+      "admit": "validated loader, exact-output identity, quality suite, and prospective throughput/cost gate",
+      "stop": "unsupported format, missing quality evidence, or no measurement venue"
+    }
+  ],
+  "not_promoted": {
+    "mtp": "Already closed by mtp_acceptance_bound; official recipe support does not reopen it.",
+    "mlx_mxfp4": "Exact derivative reports ~18 GB RAM but has no matched quality, throughput, or production economics and no venue in scope.",
+    "cloudflare": "Current exact-model $0.88/M output-equivalent vendor anchor, not a matched replay because public docs lack frozen teacher-forced input-logprobs."
+  },
+  "sources": [
+    {"url": "https://huggingface.co/zai-org/GLM-4.7-Flash", "revision": "7dd20894a642a0aa287e9827cb1a1f7f91386b67", "supports": "exact model and serving guidance"},
+    {"url": "https://github.com/vllm-project/recipes/blob/main/GLM/GLM.md", "retrieved": "2026-07-15", "sha256": "430298388e36332f42a55290f6daa2d8205cdb051bc28b7ee2365307b1aa7ad4", "supports": "official FP8/BF16/MTP recipe and benchmark geometry"},
+    {"url": "https://huggingface.co/cyankiwi/GLM-4.7-Flash-AWQ-4bit", "revision": "87c9a07f5f890ced4b4d5d567500393cad51a828", "supports": "AWQ derivation, memory, perplexity, runtime caveats"},
+    {"url": "https://huggingface.co/unsloth/GLM-4.7-Flash-NVFP4", "revision": "98b0362133bda9ee3b1b875636636c07861f5947", "supports": "fresh NVFP4 metadata"},
+    {"url": "https://www.runpod.io/pricing", "retrieved": "2026-07-15", "supports": "A40 catalog price"},
+    {"url": "https://www.nvidia.com/en-au/data-center/a40/", "retrieved": "2026-07-15", "supports": "A40 memory and bandwidth"}
+  ],
+  "claim_boundary": "No measured cost reduction, quality-eligible result, capacity result, or provider comparison was produced. Only a conditional AWQ replay is promoted."
+}

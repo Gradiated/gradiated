@@ -1,0 +1,22 @@
+{
+  "cleanup": {
+    "direct_absent": true,
+    "final_disk_count": 0,
+    "final_instance_count": 0,
+    "inventory_absent": true,
+    "pass": true
+  },
+  "identity": {
+    "model_manifest_sha256": "515b831798895e737cfee5943cb522db95cf71d48bb15dfb3f49a016cab9e101",
+    "model_revision": "33faccf4c2ba82142214d0d4e16232a4e9ccfe10",
+    "shard_count": 48,
+    "spec_sha256": "1191fc7643120e8bb1f8eab796fbd22f29e7065b26a1c7b4e28387eddd0b32d8",
+    "suite_sha256": "d304c6b323cd382b0a952b3389267b8d4881096cb4dc0622b051014769852351",
+    "weight_bytes": 62444175504
+  },
+  "kind": "actual_v2_adapter_terminal",
+  "outcome": "FAIL",
+  "pass": false,
+  "phases": [],
+  "schema_version": 1
+}

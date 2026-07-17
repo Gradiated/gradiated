@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "Falsify exact current-AWQ W4A16 runtime and economic admission on 96-GB SM120 hardware without touching the live L40S session.",
+  "next_action": "Terminal result GPU_REQUIRED: unchanged vLLM v0.25.1 is source/config compatible, but exact SM120 MLA/graph/no-fallback runtime evidence requires a target GPU; no rate query or successor preflight authorized.",
+  "provider_mutation": "prohibited_zero_cost_sm120_admission",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 600,
+  "active_experiment": null,
+  "terminal_decision": "GPU_REQUIRED",
+  "portfolio_disposition": "park_until_an_authorized_target_gpu_measurement_and_content_bound_rate_exist",
+  "result_artifact": "artifacts/SM120_AWQ_ADMISSION_SCREEN_2026-07-16.json",
+  "target_accelerator": "nvidia-rtx-pro-6000-blackwell-server",
+  "resource_cap": {
+    "peak_rss_gib": 4,
+    "new_artifacts_mib": 32,
+    "attempts": 1
+  },
+  "economic_gate": {
+    "target_usd_per_million_output_tokens": 0.514,
+    "required_throughput_formula": "all_in_usd_per_hour * 1000000 / (3600 * 0.514)",
+    "background_arm_envelope_seconds": 300
+  },
+  "stop_rule": "complete after one NOMINATE_EXACT_LOAD, TECHNICAL_CLOSE, PRICE_UNBOUND, or GPU_REQUIRED result; no successor runtime/venue preflight",
+  "quality_policy": "exact checkpoint and BF16-KV placement screen only; full quality remains mandatory before a deployable claim"
+}

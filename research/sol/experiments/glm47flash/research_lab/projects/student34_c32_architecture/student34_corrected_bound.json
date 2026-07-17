@@ -1,0 +1,29 @@
+{
+  "card_mib": 46068,
+  "decision": "capacity_and_fixed_cost_gate_pass_only; throughput_and_quality_unmeasured",
+  "economics": {
+    "fixed_cost_endpoint_bound_output_tok_s": 711.0323355381839,
+    "fixed_cost_endpoint_bound_usd_per_million": 0.4297351052597053,
+    "planning_l40s_usd_per_hour": 1.1,
+    "promotion_output_tok_s": 594.466,
+    "target_usd_per_million_output_tokens": 0.514
+  },
+  "evidence_class": "derived_corrected_memory_and_fixed_cost_bound_not_measured",
+  "memory_mib": {
+    "c16": {
+      "headroom": 14315.319854736328,
+      "peak": 31752.680145263672
+    },
+    "c24": {
+      "headroom": 12443.319854736328,
+      "peak": 33624.68014526367
+    },
+    "c32": {
+      "headroom": 4818.159927368164,
+      "peak": 41249.840072631836
+    }
+  },
+  "removed_awq_mib_applied_each_concurrency": 4601.159927368164,
+  "schema_version": 1,
+  "source": "distilled_depth_student_bound.json student_34_even plus corrected omitted removed-AWQ term"
+}

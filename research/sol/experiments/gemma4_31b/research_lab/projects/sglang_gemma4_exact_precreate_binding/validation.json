@@ -1,0 +1,48 @@
+{
+  "classification": "cpu_safe_contract_pass",
+  "target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "config": {
+    "architecture": "Gemma4ForConditionalGeneration",
+    "dtype": "bfloat16",
+    "layers": 60,
+    "sliding_layers": 50,
+    "full_layers": 10,
+    "sliding_window": 1024,
+    "kv_shared_layers": 0,
+    "global_kv_heads": 4,
+    "attention_heads": 32,
+    "kv_heads": 16,
+    "hidden_size": 5376,
+    "vocab_size": 262144
+  },
+  "source": {
+    "ast_parse": "pass",
+    "gemma4_registration": "pass",
+    "shared_kv_path": "pass",
+    "fp8_e5m2_option": "pass",
+    "metrics_and_cache_hooks": "pass",
+    "served_model_default": "pass"
+  },
+  "file_hashes": {
+    "chat_template.jinja": {
+      "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+      "bytes": 18683
+    },
+    "config.json": {
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "bytes": 4621
+    },
+    "processor_config.json": {
+      "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c",
+      "bytes": 1689
+    },
+    "tokenizer.json": {
+      "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f",
+      "bytes": 32169626
+    },
+    "tokenizer_config.json": {
+      "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df",
+      "bytes": 2095
+    }
+  }
+}

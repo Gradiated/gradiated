@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "evidence_label": "measured_zero_cost_source_config_market_gate",
+  "decision": "RUNTIME_CLOSE",
+  "question": "Exact current GLM-4.7-Flash compressed-tensors AWQ W4A16 on one MI210/gfx90a",
+  "checkpoint": {
+    "root": "/root/.cache/glm47flash-awq-ab31d120",
+    "revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "config_sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9",
+    "index_sha256": "b9c53433e94f2fe7870cdbc3fcb6ed1431eb500c5242a039de93fef4bb988695",
+    "architecture": "Glm4MoeLiteForCausalLM",
+    "model_type": "glm4_moe_lite",
+    "layers": 47,
+    "routed_experts": 64,
+    "top_k": 4,
+    "quantization": "compressed-tensors pack-quantized symmetric INT4 W4A16 group-32",
+    "weight_keys_ignored_by_quantizer": 150
+  },
+  "hardware": {
+    "inventory_id": "amd-mi210",
+    "programming_target": "gfx90a",
+    "capacity_gb": 64,
+    "bandwidth_gb_s": 1600,
+    "source": "research/factory/data/accelerator_inventory.json",
+    "price_inventory_id": null
+  },
+  "candidate_matrix": [
+    {
+      "candidate": "SGLang current ROCm",
+      "result": "FAIL_EXACT_BOUNDARY",
+      "checks": {
+        "architecture_registration": "not exact-pinned for this checkpoint",
+        "quantization_parsing": "generic compressed-tensors partial on AMD",
+        "non_cuda_w4a16_kernel": "not established; current matrix binds compressed-tensors AMD to partial Aiter FP8/MoE paths, while AWQ is a separate Triton route",
+        "mla_support": "not exact-validated for this compressed checkpoint",
+        "gfx90a_scope": "current AMD examples/matrix target MI300X/MI325X/MI350X, not MI210",
+        "fallback": "would require dense/dequantized or unsupported fallback"
+      },
+      "source": "https://github.com/sgl-project/sglang/blob/main/docs/advanced_features/quantization.md"
+    },
+    {
+      "candidate": "vLLM ROCm current",
+      "result": "FAIL_EXACT_BOUNDARY",
+      "checks": {
+        "architecture_registration": "historical local source fixture only; no current ROCm exact-load result",
+        "quantization_parsing": "platform advertises compressed-tensors, but this does not prove W4A16 dispatch",
+        "non_cuda_w4a16_kernel": "current release notes identify native W4A16/fused-MoE HIP work for RDNA3 gfx1100; no gfx90a exact kernel binding",
+        "mla_support": "not exact-validated for this checkpoint",
+        "fallback": "CUDA Marlin is inadmissible on ROCm and dense/dequantized fallback is forbidden"
+      },
+      "source": "https://docs.vllm.ai/en/stable/features/quantization/index.html"
+    }
+  ],
+  "prior_exact_evidence": {
+    "adjacent_screen": "../amd_awq_multi_replica_screen/AMD_SCREEN_2026-07-15.json",
+    "adjacent_screen_sha256": "7ab40c9097c08d98deda1ae5ff77bf083438c5ac5c13c79a8d38068d2eb724cb",
+    "finding": "generic AMD AWQ/model support did not establish exact compressed-tensors W4A16 ROCm support; this MI210 check independently reaches the same fail-closed technical boundary"
+  },
+  "economic_gate": {
+    "target_usd_per_million_output_tokens": 0.514,
+    "robust_margin_fraction": 0.02,
+    "workload": "cache-off 8192 input / 1024 output, complete within 300 seconds",
+    "l40s_context_tok_s": 552.1710554232396,
+    "venue_search": "not entered because exact runtime gate failed",
+    "spend_usd": 0.0
+  },
+  "terminal_reason": "No candidate provides a pinned, exact GLM-4.7 compressed-tensors W4A16 loader plus non-CUDA kernel and MLA path on gfx90a without forbidden fallback. Stop before venue/economic binding.",
+  "sources": [
+    "https://github.com/sgl-project/sglang/blob/main/docs/platforms/amd_gpu.md",
+    "https://docs.vllm.ai/en/latest/api/vllm/platforms/rocm/",
+    "https://github.com/vllm-project/vllm/releases"
+  ]
+}

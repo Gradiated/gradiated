@@ -1,0 +1,17 @@
+{
+  "status": "closed",
+  "priority": 125,
+  "summary": "Closed for the base vLLM 0.15.0 image: its bundled Transformers cannot parse the exact glm4_moe_lite config before layer-47 binding.",
+  "next_action": "Remain closed in base-image scope. derived_runtime_mtp_binding independently tests the actual Transformers-derived runtime used by the measured c16 service.",
+  "provider_mutation": "none_zero_cost_current_awq_mtp_screen",
+  "authorized_spend_usd": 0.0,
+  "quality_policy": "verification_preserves_target_outputs_if_runtime_is_valid_quality_identity_must_be_measured_later",
+  "artifact_contract": [
+    "current_awq_mtp_bound.json",
+    "content_bound_loader_or_planner_fixture",
+    "RESEARCH_LOG.md"
+  ],
+  "decision": "closed_exact_runtime_binding_failure",
+  "evidence": "current_awq_mtp_bound.json",
+  "provider_spend_usd": 0.0
+}

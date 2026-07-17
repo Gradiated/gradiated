@@ -1,0 +1,22 @@
+{"derived_identity": null, "derived_student": false, "event": "stock_control", "instance_count": 0, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "timestamp": "2026-07-15T23:59:52.101371Z"}
+{"event": "phase_started", "phase": "provider_create", "timestamp": "2026-07-15T23:59:52.101662Z"}
+{"elapsed_seconds": 52.497, "event": "phase_finished", "outcome": "PASS", "phase": "provider_create", "timestamp": "2026-07-16T00:00:44.598261Z"}
+{"create_returncode": 0, "event": "instance_created", "instance_id": "computeinstance-e00cvg7rbk9p5dm59w", "reconciled_nonzero_exit": false, "timestamp": "2026-07-16T00:00:44.598319Z"}
+{"event": "phase_started", "phase": "ssh_readiness", "timestamp": "2026-07-16T00:00:44.598972Z"}
+{"elapsed_seconds": 35.161, "event": "phase_finished", "outcome": "PASS", "phase": "ssh_readiness", "timestamp": "2026-07-16T00:01:19.760542Z"}
+{"elapsed_seconds": 87.855, "event": "ssh_ready", "timestamp": "2026-07-16T00:01:19.760642Z"}
+{"event": "phase_started", "phase": "runtime_bootstrap", "timestamp": "2026-07-16T00:01:22.334922Z"}
+{"elapsed_seconds": 404.488, "event": "phase_finished", "outcome": "PASS", "phase": "runtime_bootstrap", "timestamp": "2026-07-16T00:08:06.823201Z"}
+{"event": "cuda_and_transformers_preflight_passed", "timestamp": "2026-07-16T00:08:06.823273Z", "transformers_revision": "1618d44b9295361607ec74d7be860ba886aac039"}
+{"event": "tiny_transfer_probe_passed", "sha256": "6967780b45a5e9e86c4e5ac54e2595fcf2add1a66cdd63cb8df63017fa8c8d11", "timestamp": "2026-07-16T00:08:14.548499Z"}
+{"event": "phase_started", "phase": "checkpoint_transfer", "timestamp": "2026-07-16T00:08:14.548624Z"}
+{"elapsed_seconds": 355.61, "event": "phase_finished", "outcome": "PASS", "phase": "checkpoint_transfer", "timestamp": "2026-07-16T00:14:10.158419Z"}
+{"attempts": 1, "elapsed_seconds": 355.60625957295997, "event": "checkpoint_transfer_completed", "files_reused": 0, "files_scheduled": 14, "files_total": 14, "marker_manifest_match": false, "reusable_bytes": 0, "scheduled_bytes": 20193158555, "timestamp": "2026-07-16T00:14:10.158526Z", "total_bytes": 20193158555}
+{"elapsed_seconds": 355.606, "event": "verified_local_awq_transferred", "reusable_bytes": 0, "timestamp": "2026-07-16T00:14:10.158560Z"}
+{"event": "phase_started", "phase": "scientific_workload", "timestamp": "2026-07-16T00:14:10.158591Z"}
+{"elapsed_seconds": 2144.851, "event": "phase_finished", "outcome": "PASS", "phase": "scientific_workload", "timestamp": "2026-07-16T00:49:55.009967Z"}
+{"event": "phase_started", "phase": "artifact_retrieval", "timestamp": "2026-07-16T00:49:55.010268Z"}
+{"elapsed_seconds": 2.59, "event": "phase_finished", "outcome": "PASS", "phase": "artifact_retrieval", "timestamp": "2026-07-16T00:49:57.600478Z"}
+{"background_pass": true, "event": "artifact_retrieved", "manifest_files": 57, "outcome": "PASS", "sha256": "91b02fdfae81bae2c3d608051a3419333dcca26490b5a82ade7d0118cf907833", "timestamp": "2026-07-16T00:49:57.600586Z"}
+{"event": "instance_retained_for_next_preregistered_experiment", "instance_id": "computeinstance-e00cvg7rbk9p5dm59w", "timestamp": "2026-07-16T00:49:57.600618Z"}
+{"cleanup_pass": false, "elapsed_seconds": 0.366, "event": "cleanup_verified", "instance_get_not_found": false, "timestamp": "2026-07-16T00:49:57.966157Z", "useful_gpu_seconds": 177.131}

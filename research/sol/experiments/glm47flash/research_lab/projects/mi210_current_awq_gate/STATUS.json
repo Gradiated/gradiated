@@ -1,0 +1,25 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "RUNTIME_CLOSE: exact current compressed-tensors W4A16 GLM path is not bound to a non-CUDA MI210/gfx90a kernel and MLA loader on either current ROCm candidate.",
+  "next_action": "Terminal result recorded in MI210_GATE_2026-07-16.json; no successor, provider, runtime, or controller work.",
+  "provider_mutation": "prohibited_zero_cost_source_and_market_gate",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 1200,
+  "active_experiment": null,
+  "terminal_result": "RUNTIME_CLOSE",
+  "terminal_artifact": "MI210_GATE_2026-07-16.json",
+  "terminal_at_utc": "2026-07-16",
+  "resource_cap": {
+    "peak_rss_gib": 10,
+    "new_artifacts_mib": 64
+  },
+  "economic_gate": {
+    "target_usd_per_million_output_tokens": 0.514,
+    "robust_margin_fraction": 0.02,
+    "workload": "cache-off 8192-input 1024-output within 300 seconds",
+    "comparison_l40s_r3_output_tokens_per_second": 552.1710554232396
+  },
+  "stop_rule": "one terminal NOMINATE_MI210_LOAD, RUNTIME_CLOSE, VENUE_CLOSE, or ECONOMIC_CLOSE result; no successor",
+  "quality_policy": "exact current checkpoint candidate; full quality remains mandatory before a deployable claim"
+}

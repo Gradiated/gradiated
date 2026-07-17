@@ -1,0 +1,33 @@
+{
+  "status": "complete",
+  "priority": 125,
+  "summary": "Real head W4 pack/unpack passes, but pinned vLLM cannot select compressed-tensors W4 for ParallelLMHead; the bridge closes before CUDA.",
+  "next_action": "Closed at zero spend. Reopen only with a source-supported quantized ParallelLMHead path or separately approved output-layer runtime intervention.",
+  "provider_mutation": "none_complete_released",
+  "authorized_spend_usd": 0.0,
+  "conditional_future_component_timing_cap_usd": 0.0,
+  "quality_policy": "architecture_cost_bridge_only_full_quality_deferred",
+  "artifact_contract": [
+    "lm_head_w4_bridge.json",
+    "source_bound_head_pack_fixture.py",
+    "RESEARCH_LOG.md"
+  ],
+  "economic_gate": {
+    "promotion_output_tokens_per_second": 594.466,
+    "head_interval_ceiling": 0.1409,
+    "minimum_component_speedup": 3.4076163734378415,
+    "maximum_candidate_time_ratio": 0.29346026383572343,
+    "ideal_packed_byte_ratio": 0.28125002522113896,
+    "optimistic_endpoint_reduction": 0.10127187144634152
+  },
+  "decision": "close_exact_head_w4_bridge_loader_no_match",
+  "result": {
+    "source_head_sha256": "9cf128f300306127d2eae6c5dffaf03840a83923b14c853dd3507c2d3bba5eb0",
+    "packed_mib": 170.15626525878906,
+    "roundtrip_relative_l2": 0.09260840427759735,
+    "marlin_shape_gate_sm89": "pass",
+    "actual_parallel_lm_head_quant_method": null,
+    "exact_loader_gate": "fail_no_matching_target_for_lm_head",
+    "paid_component_timing_nominated": false
+  }
+}

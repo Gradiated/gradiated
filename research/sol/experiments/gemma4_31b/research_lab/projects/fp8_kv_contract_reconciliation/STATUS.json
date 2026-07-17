@@ -1,0 +1,20 @@
+{
+  "status": "complete",
+  "priority": 124,
+  "summary": "Complete $0 reconciliation: the exact FP8-per-token-head primary payload is 0.363423228 GiB; the 0.558736 GiB prior count retained the BF16 local payload. A bounded per-layer/tiled corrected arm now protects primary rows before KV work.",
+  "next_action": "Closed. The exclusive paid owner may consume CORRECTED_ARM.md only after its typed terminal/cleanup reconciliation and only as its one in-place repair; reopen solely if pinned-source or actual consumer evidence contradicts this contract.",
+  "provider_mutation": "prohibited_zero_cost_offline",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 30,
+  "compute_budget": "1 local CPU-hour; no CUDA",
+  "storage_budget": "128 MiB",
+  "active_session": null,
+  "last_result_classification": "source_bound_fp8_kv_contract_resolved_with_harness_transient_isolation",
+  "last_terminal_artifacts": {
+    "contract": "KV_CONTRACT.json",
+    "contract_sha256": "d495553dab98eac4d101802e668469fea3758ba378a8bd89641075a277a07802",
+    "corrected_arm": "CORRECTED_ARM.md",
+    "corrected_arm_sha256": "ef9c8710d005e94078ccba63cee3c7d3b250b4a5bae1f4f8c7f2a8ae424022fe"
+  },
+  "terminal_artifact": "CORRECTED_ARM.md"
+}

@@ -1,0 +1,5 @@
+2026-07-17T09:20:25Z systemd started gemma-l40s-fp8-20260717t091500z-owner.service.
+2026-07-17T09:20:26Z owner exited before provider mutation.
+Typed failure: FileNotFoundError [Errno 2] creating /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_l40s_online_fp8_stock_endpoint/artifacts/gemma-l40s-fp8-20260717t091500z.
+Provider resources, checkpoint transfer, model load, request execution, and watchdog creation: none.
+Source: journalctl --user -u gemma-l40s-fp8-20260717t091500z-owner.service.

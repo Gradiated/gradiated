@@ -1,0 +1,23 @@
+{
+  "absolute_timeout_seconds": 2700,
+  "artifact_reserve_seconds": 300,
+  "background_arm_envelope_seconds": 300.0,
+  "base_container_image": "vllm/vllm-openai:v0.15.0@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543",
+  "boot_disk_gib": 100,
+  "derived_runtime_image": "glm-vllm:0.15.0-transformers-1618d44",
+  "derived_student": true,
+  "disk_hourly_rate_usd_vendor_calculator": 0.0097222,
+  "hourly_rate_usd_vendor_calculator": 0.8484,
+  "max_total_cost_usd": 0.64359165,
+  "model_manifest_sha256": "d09c1b7dbd10c91eec8aba98fc3f14878bf8d1784d610499935c3e355ba9e86a",
+  "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+  "model_shard_count": 4,
+  "model_weight_bytes": 15544868264,
+  "name": "glm47-student39-l40s-r2-retry",
+  "platform": "gpu-l40s-a",
+  "preset": "1gpu-16vcpu-64gb",
+  "purchase_model": "preemptible_stop",
+  "repair_window_seconds": 0,
+  "scientific_mode": "awq",
+  "transformers_revision": "1618d44b9295361607ec74d7be860ba886aac039"
+}

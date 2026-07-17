@@ -1,0 +1,37 @@
+{
+  "status": "invalidated",
+  "priority": 0,
+  "summary": "Invalidated: inherited c32 accounting omitted removed student weights, so rank 256 is not the minimal candidate and the claimed loader pass was only shape divisibility.",
+  "next_action": "Do not materialize rank 256. Retain rank 384 only as a conditional fallback after direct stock-rank student measurement and a fresh exact loader/recovery decision.",
+  "provider_mutation": "not_authorized_zero_cost",
+  "authorized_spend_usd": 0.0,
+  "quality_policy": "architecture_cost_and_capacity_proxy_only_full_quality_deferred",
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "promotion_output_tok_s": 594.466,
+    "target_usd_per_million_output_tokens": 0.514,
+    "minimum_c32_headroom_gib": 3.0
+  },
+  "artifact_contract": [
+    "DEPTH_MLA_C32_BOUND.json",
+    "depth_mla_c32_fixture.py",
+    "RESEARCH_LOG.md"
+  ],
+  "stop_rule": "close_at_zero_if_no_source_supported_minimal_rank_has_both_three_gib_c32_headroom_and_a_conservative_economic_path",
+  "decision": "invalidate_rank256_nomination_memory_and_loader_overclaim",
+  "evidence": {
+    "artifact": "DEPTH_MLA_C32_BOUND.json",
+    "fixture": "depth_mla_c32_fixture.py",
+    "corrected_student39_c32_headroom_mib": 1608.4830322265625,
+    "corrected_rank448_c32_headroom_mib": 2856.4830322265625,
+    "corrected_rank384_c32_headroom_mib": 4104.4830322265625,
+    "corrected_rank256_c32_headroom_mib": 6600.4830322265625,
+    "corrected_student34_c32_headroom_mib": 4818.159927368164,
+    "rank256_c32_kv_saved_mib": 4992.0,
+    "rank256_projection_payload_saved_mib": 62.8203125,
+    "rank256_requires_checkpoint_rewrite_and_recovery": true,
+    "required_c32_retention_of_student_fixed_cost_bound": 0.94163631081123,
+    "pinned_loader_runtime_load_status": "unmeasured_shape_check_only",
+    "artifact_valid_for_nomination": false
+  }
+}

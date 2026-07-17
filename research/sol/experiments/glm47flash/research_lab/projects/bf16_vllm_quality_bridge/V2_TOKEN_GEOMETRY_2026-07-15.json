@@ -1,0 +1,324 @@
+{
+  "by_category": {
+    "coding": {
+      "max_prompt_tokens": 33,
+      "max_total_tokens": 289
+    },
+    "long_context_retrieval": {
+      "max_prompt_tokens": 42289,
+      "max_total_tokens": 42545
+    },
+    "multi_turn_continuation": {
+      "max_prompt_tokens": 40,
+      "max_total_tokens": 296
+    },
+    "serving_correctness": {
+      "max_prompt_tokens": 28,
+      "max_total_tokens": 284
+    },
+    "teacher_forced_loss": {
+      "max_prompt_tokens": 18,
+      "max_total_tokens": 274
+    },
+    "tool_call": {
+      "max_prompt_tokens": 31,
+      "max_total_tokens": 287
+    }
+  },
+  "cases": 36,
+  "context_limit": 32768,
+  "context_limit_pass": false,
+  "max_prompt_tokens": 42289,
+  "max_total_tokens": 42545,
+  "rows": [
+    {
+      "case_id": "cal_dev_tool_01",
+      "category": "tool_call",
+      "output_budget": 256,
+      "prompt_tokens": 31,
+      "token_ids_sha256": "8777a0e85f2c547f17ede60873537989d4d7bac0ba41d28adf4dd67fc5253d66",
+      "total_tokens": 287
+    },
+    {
+      "case_id": "cal_dev_code_01",
+      "category": "coding",
+      "output_budget": 256,
+      "prompt_tokens": 33,
+      "token_ids_sha256": "79456006776db65723de49e128f58eaad3182266857150917a58ea4d9349eba3",
+      "total_tokens": 289
+    },
+    {
+      "case_id": "cal_dev_retrieval_01",
+      "category": "long_context_retrieval",
+      "output_budget": 256,
+      "prompt_tokens": 34097,
+      "token_ids_sha256": "ad1215f35d627cbe1f88cfdeaaf5d7c6cc9854b19a618a0e166399fe90b133a9",
+      "total_tokens": 34353
+    },
+    {
+      "case_id": "cal_dev_continuation_01",
+      "category": "multi_turn_continuation",
+      "output_budget": 256,
+      "prompt_tokens": 40,
+      "token_ids_sha256": "84440f265bdc9169fc2734fb32cab90ab17627222485387a47790496d49cfde1",
+      "total_tokens": 296
+    },
+    {
+      "case_id": "cal_dev_loss_01",
+      "category": "teacher_forced_loss",
+      "output_budget": 256,
+      "prompt_tokens": 18,
+      "token_ids_sha256": "988c53aa4480dd74c9228510acb302cb02ec90149a81b95e1c29edd8fbc395b7",
+      "total_tokens": 274
+    },
+    {
+      "case_id": "cal_dev_serving_01",
+      "category": "serving_correctness",
+      "output_budget": 256,
+      "prompt_tokens": 28,
+      "token_ids_sha256": "c9d8bd2fecb708d67ff86b81dbd66f3ab127924b5baeb83bb7be1beeb67a9505",
+      "total_tokens": 284
+    },
+    {
+      "case_id": "cal_dev_tool_02",
+      "category": "tool_call",
+      "output_budget": 256,
+      "prompt_tokens": 31,
+      "token_ids_sha256": "0ccfc03dfe837f10c740bded92a04cc75e64844d5d78197a49002bb1c5e71047",
+      "total_tokens": 287
+    },
+    {
+      "case_id": "cal_dev_code_02",
+      "category": "coding",
+      "output_budget": 256,
+      "prompt_tokens": 33,
+      "token_ids_sha256": "78e90e36396dcf334b596c576a461aa63e2affd5d3499ba58678faf8eff30460",
+      "total_tokens": 289
+    },
+    {
+      "case_id": "cal_dev_retrieval_02",
+      "category": "long_context_retrieval",
+      "output_budget": 256,
+      "prompt_tokens": 42289,
+      "token_ids_sha256": "5b3c135e315eb64adbf7cc991569fb8d46694f027c2f4e4c0ae6e4a0358df90c",
+      "total_tokens": 42545
+    },
+    {
+      "case_id": "cal_dev_continuation_02",
+      "category": "multi_turn_continuation",
+      "output_budget": 256,
+      "prompt_tokens": 40,
+      "token_ids_sha256": "32f8c1be09a44fb38278b0092a24a875d54fc1cb57ebe743e3e5f19959b1422b",
+      "total_tokens": 296
+    },
+    {
+      "case_id": "cal_dev_loss_02",
+      "category": "teacher_forced_loss",
+      "output_budget": 256,
+      "prompt_tokens": 18,
+      "token_ids_sha256": "988c53aa4480dd74c9228510acb302cb02ec90149a81b95e1c29edd8fbc395b7",
+      "total_tokens": 274
+    },
+    {
+      "case_id": "cal_dev_serving_02",
+      "category": "serving_correctness",
+      "output_budget": 256,
+      "prompt_tokens": 28,
+      "token_ids_sha256": "d4a71fd46bf0a0a1493612d1d28942fd4b25084ebbee12435dcb12c282200d6a",
+      "total_tokens": 284
+    },
+    {
+      "case_id": "cal_dev_tool_03",
+      "category": "tool_call",
+      "output_budget": 256,
+      "prompt_tokens": 31,
+      "token_ids_sha256": "8207eaa72e0f4f9f6047a32168f17e3cf6a83f161084cd4f3302175905bd1443",
+      "total_tokens": 287
+    },
+    {
+      "case_id": "cal_dev_code_03",
+      "category": "coding",
+      "output_budget": 256,
+      "prompt_tokens": 33,
+      "token_ids_sha256": "632b89432c6418b30658ba7aebe777b0bbdb77dc683389f8de38f3f128490458",
+      "total_tokens": 289
+    },
+    {
+      "case_id": "cal_dev_retrieval_03",
+      "category": "long_context_retrieval",
+      "output_budget": 256,
+      "prompt_tokens": 42289,
+      "token_ids_sha256": "ba12e9bfa2c903859c19ef3e224891bb4a7e3bda90012127b92ae2df90f69628",
+      "total_tokens": 42545
+    },
+    {
+      "case_id": "cal_dev_continuation_03",
+      "category": "multi_turn_continuation",
+      "output_budget": 256,
+      "prompt_tokens": 40,
+      "token_ids_sha256": "755bdff5c997aa38fdfc8b5e5b797f951e006fa50afeeadb76e05801cb253f80",
+      "total_tokens": 296
+    },
+    {
+      "case_id": "cal_dev_loss_03",
+      "category": "teacher_forced_loss",
+      "output_budget": 256,
+      "prompt_tokens": 18,
+      "token_ids_sha256": "988c53aa4480dd74c9228510acb302cb02ec90149a81b95e1c29edd8fbc395b7",
+      "total_tokens": 274
+    },
+    {
+      "case_id": "cal_dev_serving_03",
+      "category": "serving_correctness",
+      "output_budget": 256,
+      "prompt_tokens": 28,
+      "token_ids_sha256": "35a358d336ef200aa2f85065b7fbf7bd4dbc506fa0a5029ab23dc3225689c6d8",
+      "total_tokens": 284
+    },
+    {
+      "case_id": "cal_dev_tool_04",
+      "category": "tool_call",
+      "output_budget": 256,
+      "prompt_tokens": 31,
+      "token_ids_sha256": "b8adb159a81e46e89f42e09956b987ec5fd45d5095a79823464a15a017c0bf3f",
+      "total_tokens": 287
+    },
+    {
+      "case_id": "cal_dev_code_04",
+      "category": "coding",
+      "output_budget": 256,
+      "prompt_tokens": 33,
+      "token_ids_sha256": "9ed4e58bfd35bf4c5933fdb0ed681b3045aea37d9062c9c32e425104c36801e6",
+      "total_tokens": 289
+    },
+    {
+      "case_id": "cal_dev_retrieval_04",
+      "category": "long_context_retrieval",
+      "output_budget": 256,
+      "prompt_tokens": 42289,
+      "token_ids_sha256": "8ab3fc0292faf1f9f1d7825d353d357df92116b28d77560f53f0ad643f19aaff",
+      "total_tokens": 42545
+    },
+    {
+      "case_id": "cal_dev_continuation_04",
+      "category": "multi_turn_continuation",
+      "output_budget": 256,
+      "prompt_tokens": 40,
+      "token_ids_sha256": "4b45c98820f108ff08f4651d1ebd8871f8e2839c2189614796290ba5af332159",
+      "total_tokens": 296
+    },
+    {
+      "case_id": "cal_dev_loss_04",
+      "category": "teacher_forced_loss",
+      "output_budget": 256,
+      "prompt_tokens": 18,
+      "token_ids_sha256": "988c53aa4480dd74c9228510acb302cb02ec90149a81b95e1c29edd8fbc395b7",
+      "total_tokens": 274
+    },
+    {
+      "case_id": "cal_dev_serving_04",
+      "category": "serving_correctness",
+      "output_budget": 256,
+      "prompt_tokens": 28,
+      "token_ids_sha256": "113a34a948a60dfef9e5cc78efa4c26a703aca8a331fb533158973a532f45b5d",
+      "total_tokens": 284
+    },
+    {
+      "case_id": "cal_dev_tool_05",
+      "category": "tool_call",
+      "output_budget": 256,
+      "prompt_tokens": 31,
+      "token_ids_sha256": "f280ce303ae4ba53ce87889deec8c7d58e27aef7c6ea7cecd0eb6906870724b9",
+      "total_tokens": 287
+    },
+    {
+      "case_id": "cal_dev_code_05",
+      "category": "coding",
+      "output_budget": 256,
+      "prompt_tokens": 33,
+      "token_ids_sha256": "ad94e13977d7bdea4d95cdfd3a4850ee72a91983dfe3467c53a05bf0737e973b",
+      "total_tokens": 289
+    },
+    {
+      "case_id": "cal_dev_retrieval_05",
+      "category": "long_context_retrieval",
+      "output_budget": 256,
+      "prompt_tokens": 42289,
+      "token_ids_sha256": "674bcaf8f9a6b9f4144f629b0294531dcedb02ef5299f55547ae3f7eb7eec49e",
+      "total_tokens": 42545
+    },
+    {
+      "case_id": "cal_dev_continuation_05",
+      "category": "multi_turn_continuation",
+      "output_budget": 256,
+      "prompt_tokens": 40,
+      "token_ids_sha256": "6bf5851778c03163d27ae0376fe494521b0a73b0dc3e83c772403c044a296cf1",
+      "total_tokens": 296
+    },
+    {
+      "case_id": "cal_dev_loss_05",
+      "category": "teacher_forced_loss",
+      "output_budget": 256,
+      "prompt_tokens": 18,
+      "token_ids_sha256": "988c53aa4480dd74c9228510acb302cb02ec90149a81b95e1c29edd8fbc395b7",
+      "total_tokens": 274
+    },
+    {
+      "case_id": "cal_dev_serving_05",
+      "category": "serving_correctness",
+      "output_budget": 256,
+      "prompt_tokens": 28,
+      "token_ids_sha256": "1d43bad91e1caa548b42d6d06742d02f87e2b4749c941c96d6feef387bcb073c",
+      "total_tokens": 284
+    },
+    {
+      "case_id": "cal_dev_tool_06",
+      "category": "tool_call",
+      "output_budget": 256,
+      "prompt_tokens": 31,
+      "token_ids_sha256": "5e64df8c64234f2dcf46cf43d28e1a62215ec05c0aeb4aa853358bd288330d80",
+      "total_tokens": 287
+    },
+    {
+      "case_id": "cal_dev_code_06",
+      "category": "coding",
+      "output_budget": 256,
+      "prompt_tokens": 33,
+      "token_ids_sha256": "3bcf2edbd0fdc640b9ee78a3dbac7199c5103aed8b5a33fe05fbcfab2ef3292d",
+      "total_tokens": 289
+    },
+    {
+      "case_id": "cal_dev_retrieval_06",
+      "category": "long_context_retrieval",
+      "output_budget": 256,
+      "prompt_tokens": 42289,
+      "token_ids_sha256": "ecf4fa412a02ee119f7bb80c7a29d829679931cedeca6ee3fb987dfa759c7930",
+      "total_tokens": 42545
+    },
+    {
+      "case_id": "cal_dev_continuation_06",
+      "category": "multi_turn_continuation",
+      "output_budget": 256,
+      "prompt_tokens": 40,
+      "token_ids_sha256": "b16ef5ade1ceb8b69c21b4a98d3942f6e9f764c76b871ae9e20fbda9f4163f5b",
+      "total_tokens": 296
+    },
+    {
+      "case_id": "cal_dev_loss_06",
+      "category": "teacher_forced_loss",
+      "output_budget": 256,
+      "prompt_tokens": 18,
+      "token_ids_sha256": "988c53aa4480dd74c9228510acb302cb02ec90149a81b95e1c29edd8fbc395b7",
+      "total_tokens": 274
+    },
+    {
+      "case_id": "cal_dev_serving_06",
+      "category": "serving_correctness",
+      "output_budget": 256,
+      "prompt_tokens": 28,
+      "token_ids_sha256": "9015e8cc14fec42ef22aab3261274d684fb08a209206c941c6d0b838591caa5d",
+      "total_tokens": 284
+    }
+  ],
+  "tokenizer": "TokenizersBackend"
+}

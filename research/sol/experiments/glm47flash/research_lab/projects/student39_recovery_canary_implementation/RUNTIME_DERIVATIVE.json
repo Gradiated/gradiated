@@ -1,0 +1,10 @@
+{
+  "base_image": "glm-vllm:0.15.0-transformers-1618d44",
+  "base_image_id": "sha256:4672d4aa966cf5f4d437d9f7fd9fb4d1b662a067455f3db46d2ab6cce3f3f62c",
+  "derivative_image": "student39-peft:0.19.1",
+  "derivative_image_id": "sha256:4e7d66c0f29301823701f466ca485c5ddde7c6e48fff3eadb900c4bb2cc2f0d3",
+  "added_only": {"peft": "0.19.1"},
+  "inherited_versions": {"torch": "2.9.1+cu129", "transformers": "5.3.0.dev0", "safetensors": "0.7.0", "accelerate": "1.12.0"},
+  "provider_mutation": false,
+  "model_or_corpus_download": false
+}

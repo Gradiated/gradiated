@@ -1,0 +1,10 @@
+{
+  "allocation_seconds": 148.818,
+  "derived_cost_usd": 0.031373,
+  "ended_at": "2026-07-15T17:37:16.105516Z",
+  "error": "RuntimeError: host setup exit 100",
+  "instance_absent": true,
+  "named_disk_remaining": false,
+  "named_instance_remaining": false,
+  "remote_returncode": null
+}

@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "classification": "MARKET_ONLY_HEADROOM",
+  "quality_status": "conditional_on_top3_quality_adjudication; architecture_cost_only_until_resolved",
+  "question": "Does the bracketed 644.318005-tok/s top-3/shared result fit a conservative sustainable all-in envelope at or below $0.514/M?",
+  "typed_summary_verification": {
+    "evidence_type": "measured_immutable_typed_summaries",
+    "common_contract": {
+      "requests": 64,
+      "exact_geometry_pass": true,
+      "semantic_pass": true,
+      "prefix_cache_disabled": true,
+      "prefix_cache_zero_delta": true,
+      "background_pass": true,
+      "outcome": "PASS"
+    },
+    "arms": [
+      {
+        "arm": "top4_shared_c32_pre",
+        "output_tokens_per_second": 611.3262485541758,
+        "useful_gpu_seconds": 107.203,
+        "allocation_seconds": 1321.987,
+        "cost_usd_derived": 0.315118377,
+        "artifact_sha256": "8070ea8b1bb8af12628c1f7d8fa3d1ecace82f892802ae5f9780f44e482ea765",
+        "cleanup_pass": false
+      },
+      {
+        "arm": "top3_shared_c32",
+        "output_tokens_per_second": 644.31800498966,
+        "useful_gpu_seconds": 101.714,
+        "allocation_seconds": 361.005,
+        "cost_usd_derived": 0.086051767,
+        "artifact_sha256": "7d232e1637cb2b7ea03f1890880598a14b26fd8cc8683b8b5723420eda77e10d",
+        "cleanup_pass": false
+      },
+      {
+        "arm": "top4_shared_c32_post",
+        "output_tokens_per_second": 601.3719811225931,
+        "useful_gpu_seconds": 108.977,
+        "allocation_seconds": 371.969,
+        "cost_usd_derived": 0.088665153,
+        "artifact_sha256": "b7a7a5392e3792ddfbe79412fcf3e86fce38d7d3d33154322e93c858b2c47eaf",
+        "cleanup_pass": false
+      }
+    ]
+  },
+  "economics": {
+    "evidence_type": {
+      "planning_rate": "derived_shared_inventory",
+      "raw_throughput": "measured",
+      "bounds": "derived",
+      "lifecycle": "measured_settled_archive",
+      "market_hurdle": "settled_campaign_evidence"
+    },
+    "planning_rate_usd_per_gpu_hour": 1.1,
+    "planning_rate_range_usd_per_gpu_hour": [1.0, 1.25],
+    "authoritative_target_usd_per_million_output_tokens": 0.514,
+    "candidate_raw_planning_gpu_usd_per_million_output_tokens": 0.474230974750518,
+    "candidate_raw_cogs_target_fraction": 0.9226283555457548,
+    "candidate_raw_max_lifecycle_loss_fraction": 0.0773716444542452,
+    "planning_range_raw_gpu_usd_per_million_output_tokens": {
+      "low_rate_1_00": 0.4311190679550163,
+      "base_rate_1_10": 0.474230974750518,
+      "high_rate_1_25": 0.5388988349437704
+    },
+    "maximum_planning_rate_for_raw_target_usd_per_gpu_hour": 1.192246036432867,
+    "settled_lifecycle": {
+      "allocation_seconds": 2054.961,
+      "useful_gpu_seconds": 317.894,
+      "observed_productive_fraction": 0.154695879873146,
+      "observed_lifecycle_loss_fraction": 0.845304120126854,
+      "additional_non_gpu_terms_priced": false,
+      "cleanup_authenticated_zero_inventory": true,
+      "interpretation": "The measured lifecycle archive is optimistic for COGS because cleanup and non-GPU terms were not fully priced; it is not a production utilization assumption."
+    },
+    "amortization_bound": {
+      "settled_lifecycle_loss_seconds": 1151.243,
+      "productive_seconds_per_candidate_64_request_batch": 101.713749255,
+      "minimum_64_request_batches": 135,
+      "minimum_productive_hours": 3.814265599,
+      "productive_fraction_at_minimum_batches": 0.922645030720694,
+      "all_in_cogs_at_minimum_batches_usd_per_million": 0.513990710360287,
+      "remaining_budget_for_storage_transfer_orchestration_retry_interruption_and_headroom_usd_per_million": 0.000009289639713,
+      "interpretation": "The integer threshold leaves effectively zero conservative allowance; any real non-GPU, interruption, retry, or cleanup term consumes it."
+    },
+    "experimental_typed_cost": {
+      "typed_cost_usd_through_post_retrieval": 0.489835297,
+      "typed_allocation_seconds_through_post_retrieval": 2054.961,
+      "cleanup_tail_aggregated": false,
+      "authenticated_final_instance_count": 0,
+      "authenticated_final_disk_count": 0
+    },
+    "retail_hurdle": {
+      "exact_model_non_reasoning_campaign_mix_usd_per_million": 0.96,
+      "raw_gpu_cogs_below_hurdle": true,
+      "interpretation": "The exact-model retail comparison remains feasible, but it does not establish sustainable self-hosted COGS."
+    }
+  },
+  "decision_basis": "MARKET_ONLY_HEADROOM: raw exact-model economics retain retail headroom, while the conservative sustainable all-in test fails because measured lifecycle utilization is far below the 92.263% minimum and the amortized threshold leaves only $0.00000929/M for all omitted terms. No new spend, price search, lifecycle study, or provider action was used."
+}

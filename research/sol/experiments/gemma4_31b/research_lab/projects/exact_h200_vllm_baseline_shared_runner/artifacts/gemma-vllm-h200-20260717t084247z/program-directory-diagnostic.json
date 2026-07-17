@@ -1,0 +1,10 @@
+{
+  "returncode": 1,
+  "stage": "program-directory",
+  "stderr_bytes": 84,
+  "stderr_sha256": "3e42246ba8cacd996fafd0226b8d70ca43ae2151eb6be6bb4fe91ad4e47a4757",
+  "stderr_tail": "mkdir: cannot create directory \u2018/home/glmrunner/gemma/input\u2019: Permission denied\n",
+  "stdout_bytes": 0,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout_tail": ""
+}

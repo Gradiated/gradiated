@@ -1,0 +1,32 @@
+{
+  "checks": {
+    "assertion_pass": true,
+    "atomic_terminals": true,
+    "checkpoint_exists": true,
+    "checkpoint_index": true,
+    "checkpoint_pass": true,
+    "checkpoint_terminal_hash": true,
+    "cleanup": true,
+    "conditional_vllm": true,
+    "entrypoint_override": true,
+    "exact_images": true,
+    "fp8_kv": true,
+    "groups": true,
+    "model": true,
+    "name": true,
+    "revision": true,
+    "semantic_first": true,
+    "separate_10k": true,
+    "shared_controller": true,
+    "simultaneous": true,
+    "systemd_owner": true,
+    "telemetry": true,
+    "token_arrays": true,
+    "trace_hash": true,
+    "watchdog": true,
+    "workspace_before_transfer": true
+  },
+  "classification": "final_program_audit",
+  "deadline_seconds": 5400,
+  "pass": true
+}

@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "artifact": "gemma_l40s_fp8_exact_shape_microbench_preflight",
+  "created_at_utc": "2026-07-17T00:00:00Z",
+  "evidence_type": "measured_local_registry_and_provider_inventory",
+  "provider_create_gate": "fail_closed",
+  "pass": false,
+  "classification": "typed_precreate_external_blocker_image_identity_unresolvable",
+  "inputs": {
+    "geometry_sha256": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72",
+    "fp8_packet_sha256": "6c8e4e6cafbc9a1ba12e203c8045d9c82bee7c3b7ad1477a42ce5e38d4f7d880",
+    "fp8_kv_packet_sha256": "5472deb0d1961416e2dbf49025da1b42d22c7a8d11e673a2a21adaa905afbb89",
+    "controller_sha256": "a29eb5822d84e5ec35d9fa7b6d2d7a006733c75fb503ca9b8b23103b2b613ed1"
+  },
+  "frozen_measurement_contract": {
+    "seed": 1729,
+    "reference_dtype": "bfloat16",
+    "candidate_dtype": "float8_e4m3fn_weight_float8_e4m3fn_activation",
+    "tied_vocab_dtype": "bfloat16",
+    "error_tolerances": {"max_relative_error": 0.05, "max_absolute_error": 0.25, "non_finite_allowed": false},
+    "linear_cases": [
+      {"name": "qkv_sliding", "m": [1, 2, 4, 8, 4214], "k": 5376, "n": 8192},
+      {"name": "qkv_global", "m": [1, 2, 4, 8, 4214], "k": 5376, "n": 4096},
+      {"name": "attention_output", "m": [1, 2, 4, 8, 4214], "k": 8192, "n": 5376},
+      {"name": "mlp_gate_up", "m": [1, 2, 4, 8, 4214], "k": 5376, "n": 21504},
+      {"name": "mlp_down", "m": [1, 2, 4, 8, 4214], "k": 21504, "n": 5376},
+      {"name": "tied_vocab", "m": [1, 2, 4, 8, 4214], "k": 5376, "n": 262144, "dtype": "bfloat16"}
+    ],
+    "attention_geometry": "50 sliding layers: 16 KV heads x 256 with 1024-token window; 10 global layers: 4 KV heads x 512; five sliding then one global",
+    "timing": {"warmup_iterations": 25, "timed_iterations": 100, "sources": ["cuda_events", "wall_clock"]},
+    "required_telemetry": ["allocated_bytes", "reserved_bytes", "peak_allocated_bytes", "gpu_clock_mhz", "power_w", "utilization_pct", "useful_gpu_seconds", "achieved_bandwidth", "achieved_flops"],
+    "conditional_kv_arm": {"trigger": "all primary FP8 kernel and numerical gates pass and at least 600 seconds remain", "cases": ["c8 primary 4214-token residency", "single 10000-token residency"], "dtype": "fp8_per_token_head_e4m3", "false_branch": "evaluate false trigger then verified cleanup"}
+  },
+  "planned_owner": {
+    "controller": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py",
+    "command_template": "systemd-run --user --unit gemma-l40s-fp8-exact-shape-owner --collect --wait python3 /root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py --output-dir <absolute-artifact-root> --name <lowercase-rfc1123-name> --ssh-key /root/.config/nebius/glm-campaign/ssh_ed25519 --ssh-public-key /root/.config/nebius/glm-campaign/ssh_ed25519.pub --experiment-spec-sha256 <spec-sha256> --remote-script <absolute-remote-script> --benchmark-script <absolute-benchmark-script> --input-file <absolute-preflight> --artifact-basename gemma-l40s-fp8-exact-shape --absolute-timeout-seconds 5400",
+    "platform": "gpu-l40s-a",
+    "preset": "1gpu-8vcpu-32gb",
+    "absolute_timeout_seconds": 5400,
+    "provider_exposure_seconds_max": 2700,
+    "cleanup": "VerifiedRetainedOwner plus named placement_control watchdog; typed summary and authenticated empty instance/disk inventory required",
+    "terminal_schema": "artifacts/summary.json: classification, evidence labels, raw paths, setup/useful-GPU timing, primary result, retained-arm disposition, cleanup proof, next decision"
+  },
+  "mutable_checks": {
+    "provider_inventory": {"instance_count": 0, "disk_count": 0, "pass": true},
+    "required_local_paths": {"pass": true},
+    "runtime_identity": {
+      "project_required_manifest_list_digest": "sha256:952594c7e9337f1d3495ef2f0b3ebf3049791484a9d937c9d0da9f8488ea2520",
+      "required_packets_manifest_list_digest": "sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+      "required_packets_amd64_manifest_digest": "sha256:8e86cb93b724092cd4dc892fb129a6c5538613b38a5cd34e40aab9e6aea72b03",
+      "registry_check": {
+        "project_required_digest": "manifest verification failed",
+        "packet_digest": "resolved manifest list with recorded amd64 child"
+      },
+      "pass": false,
+      "failure": "PROJECT.md requires an unavailable manifest-list digest, while both authoritative FP8 and FP8-KV packets pin a different resolvable digest. Selecting the packet digest without a director correction would mutate the frozen image identity."
+    }
+  },
+  "next_required_action": "Director must reconcile PROJECT.md's runtime digest with the completed packet identity or supply a new resolvable immutable digest and amd64 child manifest. Re-run this preflight, then launch the single durable owner; no provider resource was created."
+}

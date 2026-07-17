@@ -1,0 +1,22 @@
+{
+  "status": "complete",
+  "priority": 118,
+  "summary": "Bind the current exact-model component market target and one read-only experimental venue fallback while the corrected L40S owner runs.",
+  "next_action": "Capture current exact-model provider evidence, normalize it to the campaign mix, and return at most one typed fallback packet without provider mutation.",
+  "provider_mutation": "prohibited_zero_cost_offline",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 5400,
+  "compute_budget": "3 local CPU-hours",
+  "storage_budget": "1 GiB",
+  "active_session": null,
+  "last_experiment": "exact-market-normalization-20260717T013136Z",
+  "last_result_classification": "measured_public_market_target_typed_negative_provider_fallback",
+  "last_terminal_artifacts": {
+    "market_target": "MARKET_TARGET.json",
+    "venue_fallback": "VENUE_FALLBACK.json",
+    "decision": "DECISION.md",
+    "openrouter_capture": "artifacts/openrouter-endpoints.json",
+    "runpod_capture": "artifacts/runpod-readonly-snapshot.json"
+  },
+  "terminal_artifact": "DECISION.md"
+}

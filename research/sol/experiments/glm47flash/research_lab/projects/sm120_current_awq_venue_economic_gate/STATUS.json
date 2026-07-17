@@ -1,0 +1,20 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "ECONOMIC_CLOSE: Google G4 binds the exact 96-GB SM120 venue and public rate, but the $4.49993/hour one-GPU shape requires 2431.869 tok/s; a generous 2x L40S-derived physical envelope reaches only 1417.377 tok/s.",
+  "next_action": "Remain closed. Reopen only with a materially lower content-bound all-in rate or new measured SM120 evidence that invalidates the 1417.377-tok/s generous envelope.",
+  "provider_mutation": "prohibited_zero_cost_external_evidence_only",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 900,
+  "active_experiment": null,
+  "terminal_decision": "ECONOMIC_CLOSE",
+  "terminal_artifact": "artifacts/SM120_VENUE_ECONOMIC_GATE_2026-07-16.json",
+  "target_accelerator": "nvidia-rtx-pro-6000-blackwell-server",
+  "economic_gate": {
+    "target_usd_per_million_output_tokens": 0.514,
+    "required_throughput_formula": "all_in_usd_per_hour * 1000000 / (3600 * 0.514)",
+    "workload": "cache-off c32 8192-input 1024-output within 300 seconds"
+  },
+  "stop_rule": "one terminal NOMINATE_TARGET_GPU, ECONOMIC_CLOSE, or VENUE_CLOSE result; no successor preflight",
+  "quality_policy": "exact current checkpoint placement candidate; full quality remains mandatory before a deployable claim"
+}

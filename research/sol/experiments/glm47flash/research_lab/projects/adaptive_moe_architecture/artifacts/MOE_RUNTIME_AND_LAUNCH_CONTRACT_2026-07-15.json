@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "evidence_label": "measured_local_container_source_and_launcher_contract",
+  "question": "Can the Cycle 35 admitted L40S top-2-plus-no-shared arm use the named proven launcher without violating its hardware and spend contract?",
+  "runtime_source": {
+    "image": "vllm/vllm-openai:v0.15.0@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543",
+    "glm4_moe_py": "/usr/local/lib/python3.12/dist-packages/vllm/model_executor/models/glm4_moe.py",
+    "sha256": "2a1e1e0a56009cc98b3c0fc5ec106ee7a3c4f219469df2f3a21e40eb9401d2f8",
+    "mechanism": "Glm4MoE constructs SharedFusedMoE with top_k=config.num_experts_per_tok and separately constructs shared_experts when config.n_shared_experts is present. Its CUDA native path uses moe_forward_shared whenever shared_experts is non-null.",
+    "local_patch_probe": "A source-pinned copy changing exactly top_k to 2 and suppressing shared-expert construction compiled successfully with Python 3.12. This establishes a syntactically feasible runtime proxy only; it does not handle skipped shared-weight loading and is not a model-load or GPU result."
+  },
+  "launcher_contract": {
+    "launcher": "../../../../campaign_100/nebius/vllm_smoke_control.py",
+    "sha256": "b1fb53254c05a03fb1308f167901cf61da1339740bc8edff7b6f36b526a09b92",
+    "remote_script": "../../../../campaign_100/nebius/remote_vllm_awq_smoke.sh",
+    "remote_script_sha256": "62b31b48438adf53cd1b5094bd460d569ac3a305398e0a12ac12085bd104fe8e",
+    "observed_platform": "gpu-h100-sxm",
+    "observed_preset": "1gpu-16vcpu-200gb",
+    "observed_hourly_rate_usd": 3.85,
+    "observed_disk_hourly_rate_usd": 0.0243055,
+    "conflict": "The admitted experiment requires an L40S 1gpu-16vcpu-64gb session under $1.00. The named launcher currently creates an H100 venue and would derive more than $4.19 for 3,900 seconds before any provider overhead. It also stages no MoE patch and has no execution-equivalent no-mutation service mode."
+  },
+  "decision": "do_not_create_provider_resource",
+  "next_move": "A director or owner of the shared launcher must restore/identify the last L40S-capable vLLM launch path and add one source-hashed switch that (1) selects top_k=2, (2) prevents shared-expert execution while deliberately skipping only its checkpoint weights, and (3) retains an exact service-level no-mutation precreate artifact. Then this project may consume its one admitted session."
+}

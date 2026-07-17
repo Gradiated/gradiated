@@ -1,0 +1,76 @@
+{
+  "classification": "authenticated_empty_provider_inventory",
+  "pass": true,
+  "profile": "glm-campaign",
+  "project_id": "project-e00h1vhmpr00vbmfd5k7pg",
+  "provider_create_allowed_by_inventory_gate": true,
+  "repair": "replace zero-byte JSON rendering with explicit YAML empty-mapping rendering",
+  "resources": [
+    {
+      "command": [
+        "/root/.nebius/bin/nebius",
+        "compute",
+        "instance",
+        "list",
+        "--parent-id",
+        "project-e00h1vhmpr00vbmfd5k7pg",
+        "--all",
+        "--profile",
+        "glm-campaign",
+        "--format",
+        "yaml",
+        "--no-progress",
+        "--timeout",
+        "30s"
+      ],
+      "empty": true,
+      "kind": "instance",
+      "parsed_type": "dict",
+      "returncode": 0,
+      "stderr": {
+        "bytes": 0,
+        "sanitized_text": "",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 4,
+        "sanitized_text": "{}\n\n",
+        "sha256": "c5c24f7ca1c946fa4dfd44407409c8e11ec6e41f0e1c7c45bf8381b42afb31f1"
+      }
+    },
+    {
+      "command": [
+        "/root/.nebius/bin/nebius",
+        "compute",
+        "disk",
+        "list",
+        "--parent-id",
+        "project-e00h1vhmpr00vbmfd5k7pg",
+        "--all",
+        "--profile",
+        "glm-campaign",
+        "--format",
+        "yaml",
+        "--no-progress",
+        "--timeout",
+        "30s"
+      ],
+      "empty": true,
+      "kind": "disk",
+      "parsed_type": "dict",
+      "returncode": 0,
+      "stderr": {
+        "bytes": 0,
+        "sanitized_text": "",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 4,
+        "sanitized_text": "{}\n\n",
+        "sha256": "c5c24f7ca1c946fa4dfd44407409c8e11ec6e41f0e1c7c45bf8381b42afb31f1"
+      }
+    }
+  ],
+  "schema_version": 1,
+  "timestamp_utc": "2026-07-17T08:17:02.735865Z"
+}

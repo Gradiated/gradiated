@@ -1,0 +1,108 @@
+Get:1 https://nvidia.github.io/libnvidia-container/stable/deb/amd64  InRelease [1477 B]
+Get:2 https://download.docker.com/linux/ubuntu noble InRelease [48.5 kB]
+Get:3 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64  InRelease [1581 B]
+Hit:4 http://archive.ubuntu.com/ubuntu noble InRelease
+Get:5 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+Get:6 https://dr.nebius.cloud stable InRelease [3807 B]
+Get:7 http://archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Get:8 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64  Packages [1659 kB]
+Get:9 https://dr.nebius.cloud noble InRelease [2980 B]
+Get:10 http://archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+Get:11 https://download.docker.com/linux/ubuntu noble/stable amd64 Packages [60.9 kB]
+Get:12 https://dr.nebius.cloud stable/main amd64 Packages [18.8 kB]
+Get:13 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages [836 kB]
+Get:14 https://dr.nebius.cloud noble/main amd64 Packages [21.2 kB]
+Get:15 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1096 kB]
+Get:16 http://security.ubuntu.com/ubuntu noble-security/main Translation-en [189 kB]
+Get:17 http://security.ubuntu.com/ubuntu noble-security/main amd64 Components [44.9 kB]
+Get:18 http://security.ubuntu.com/ubuntu noble-security/main amd64 c-n-f Metadata [11.9 kB]
+Get:19 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1177 kB]
+Get:20 http://archive.ubuntu.com/ubuntu noble-updates/main Translation-en [270 kB]
+Get:21 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [180 kB]
+Get:22 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 c-n-f Metadata [17.7 kB]
+Get:23 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1661 kB]
+Get:24 http://security.ubuntu.com/ubuntu noble-security/universe Translation-en [232 kB]
+Ign:25 https://linux.mellanox.com/public/repo/doca/3.1.0/ubuntu24.04/x86_64 ./ InRelease
+Get:26 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Components [76.2 kB]
+Get:27 http://security.ubuntu.com/ubuntu noble-security/universe amd64 c-n-f Metadata [24.2 kB]
+Get:28 http://security.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1139 kB]
+Get:29 http://archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [328 kB]
+Get:30 http://security.ubuntu.com/ubuntu noble-security/restricted Translation-en [260 kB]
+Get:31 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [388 kB]
+Get:32 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Packages [35.3 kB]
+Get:33 http://security.ubuntu.com/ubuntu noble-security/multiverse Translation-en [10.1 kB]
+Get:34 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 c-n-f Metadata [34.9 kB]
+Get:35 http://archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1229 kB]
+Get:36 http://archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [278 kB]
+Get:37 http://archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [40.4 kB]
+Get:38 http://archive.ubuntu.com/ubuntu noble-updates/multiverse Translation-en [11.8 kB]
+Get:39 http://archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+Get:40 http://archive.ubuntu.com/ubuntu noble-backports/main amd64 Packages [40.6 kB]
+Get:41 http://archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [5776 B]
+Get:42 http://archive.ubuntu.com/ubuntu noble-backports/main amd64 c-n-f Metadata [368 B]
+Get:43 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [31.0 kB]
+Get:44 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [10.5 kB]
+Get:45 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 c-n-f Metadata [1588 B]
+Hit:46 https://linux.mellanox.com/public/repo/doca/3.1.0/ubuntu24.04/x86_64 ./ Release
+Fetched 11.9 MB in 2s (6410 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+nvidia-container-toolkit is already the newest version (1.19.1-1).
+The following packages were automatically installed and are no longer required:
+  linux-image-6.8.0-117-generic linux-modules-6.8.0-117-generic
+  linux-tools-6.8.0-117 linux-tools-6.8.0-117-generic
+Use 'sudo apt autoremove' to remove them.
+0 upgraded, 0 newly installed, 0 to remove and 105 not upgraded.
+12.9.1-devel-ubuntu22.04: Pulling from nvidia/cuda
+1d387567261e: Pulling fs layer
+f29b1d4013a9: Pulling fs layer
+340d44d2921c: Pulling fs layer
+59a4bcbddda3: Pulling fs layer
+6e8af4fd0a07: Pulling fs layer
+8ea5fd421fac: Pulling fs layer
+5de956dea272: Pulling fs layer
+fe0519e81d20: Pulling fs layer
+4a20f2253cd0: Pulling fs layer
+cf7979b2359a: Pulling fs layer
+7eb010f4bfa0: Pulling fs layer
+4a20f2253cd0: Waiting
+fe0519e81d20: Waiting
+cf7979b2359a: Waiting
+7eb010f4bfa0: Waiting
+8ea5fd421fac: Waiting
+59a4bcbddda3: Waiting
+5de956dea272: Waiting
+6e8af4fd0a07: Waiting
+f29b1d4013a9: Verifying Checksum
+f29b1d4013a9: Download complete
+1d387567261e: Download complete
+59a4bcbddda3: Verifying Checksum
+59a4bcbddda3: Download complete
+6e8af4fd0a07: Download complete
+340d44d2921c: Verifying Checksum
+340d44d2921c: Download complete
+5de956dea272: Download complete
+4a20f2253cd0: Download complete
+fe0519e81d20: Verifying Checksum
+fe0519e81d20: Download complete
+7eb010f4bfa0: Download complete
+1d387567261e: Pull complete
+f29b1d4013a9: Pull complete
+340d44d2921c: Pull complete
+59a4bcbddda3: Pull complete
+6e8af4fd0a07: Pull complete
+8ea5fd421fac: Verifying Checksum
+8ea5fd421fac: Download complete
+cf7979b2359a: Verifying Checksum
+cf7979b2359a: Download complete
+8ea5fd421fac: Pull complete
+5de956dea272: Pull complete
+fe0519e81d20: Pull complete
+4a20f2253cd0: Pull complete
+cf7979b2359a: Pull complete
+7eb010f4bfa0: Pull complete
+Digest: sha256:bd4e2680a261c212f1e2fea241606f71497dc67a417f73175d794ec8212b5ba8
+Status: Downloaded newer image for nvidia/cuda:12.9.1-devel-ubuntu22.04
+docker.io/nvidia/cuda:12.9.1-devel-ubuntu22.04

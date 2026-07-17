@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "scope": "Exact model-operation shapes measured on specific accelerator, runtime, kernel, compiler, and workload identities.",
+  "records": []
+}

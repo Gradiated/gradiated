@@ -1,0 +1,7 @@
+{
+  "classification": "second_pre_science_failure_closes_lineage",
+  "error_type": "ContractError",
+  "failure_stage": "program_transfer",
+  "instance_id": "computeinstance-e00rvwpqj3a9gm2zet",
+  "message": "remote program directory preparation failed"
+}

@@ -1,0 +1,6 @@
+Running as unit: glm47-awq-validated-adapter-1784113258.service; invocation ID: c8de1833f0ed430189f083cb8944ae89
+Finished with result: exit-code
+Main processes terminated with: code=exited, status=2/INVALIDARGUMENT
+Service runtime: 55ms
+CPU time consumed: 17ms
+Memory peak: 3.1M (swap: 0B)

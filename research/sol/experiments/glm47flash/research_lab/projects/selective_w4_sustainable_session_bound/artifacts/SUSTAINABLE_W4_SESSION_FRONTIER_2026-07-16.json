@@ -1,0 +1,180 @@
+{
+  "classification": "W4_ENVELOPE_EVIDENCE_OPEN",
+  "evidence": {
+    "allocation_seconds_measured": 1310.638,
+    "archive_sha256": "58349e47b405ae7f62645be89aa0b9c256de1c6082b1671ad64a69a5185c2a72",
+    "c32_productive_seconds_per_64_request_batch": 103.99314270499985,
+    "candidate_throughput_tokens_per_second": 630.1953984207183,
+    "cleanup_pass": true,
+    "final_disk_count": 0,
+    "final_instance_count": 0,
+    "fixed_lifecycle_loss_seconds_derived": 1150.673,
+    "measured_allocation_cost_usd": 0.312413211,
+    "measured_productive_fraction": 0.12205124527138692,
+    "price_inventory_sha256": "3f403d67a92fc91be85bbd27dede85f5f91c3fd2df25ef8dcef2a344acbd1e01",
+    "price_range_usd_per_gpu_hour": [
+      1.0,
+      1.25
+    ],
+    "raw_planning_gpu_usd_per_million_output_tokens_at_1_10": 0.4848584364806274,
+    "summary_sha256": "7ba910af19eedc654c9934e71eb77cc6c689d3d64f211a1db78c2a9490bc525a",
+    "useful_gpu_seconds_measured": 159.965
+  },
+  "frontier": [
+    {
+      "admissible": true,
+      "fixed_loss_slack_seconds": 5.790535672010947,
+      "max_fixed_loss_seconds_at_integer_threshold": 1156.463535672011,
+      "max_loss_fraction": 0.13378847462844323,
+      "productive_fraction_required": 0.8662115253715568,
+      "productive_hours": 2.0798628540999973,
+      "productive_seconds": 7487.5062747599895,
+      "rate": 1.0,
+      "raw_cogs": 0.44078039680057035,
+      "required_batches": 72,
+      "reserve": 0.01,
+      "total_hours_with_measured_loss": 2.399494242988886
+    },
+    {
+      "admissible": true,
+      "fixed_loss_slack_seconds": 7.573601746013537,
+      "max_fixed_loss_seconds_at_integer_threshold": 1158.2466017460135,
+      "max_loss_fraction": 0.12494958151240709,
+      "productive_fraction_required": 0.8750504184875929,
+      "productive_hours": 2.2531847586083305,
+      "productive_seconds": 8111.465130989989,
+      "rate": 1.0,
+      "raw_cogs": 0.44078039680057035,
+      "required_batches": 78,
+      "reserve": 0.02,
+      "total_hours_with_measured_loss": 2.5728161474972193
+    },
+    {
+      "admissible": true,
+      "fixed_loss_slack_seconds": 8.441167355014159,
+      "max_fixed_loss_seconds_at_integer_threshold": 1159.1141673550142,
+      "max_loss_fraction": 0.11592844317748341,
+      "productive_fraction_required": 0.8840715568225166,
+      "productive_hours": 2.4553936472013858,
+      "productive_seconds": 8839.417129924988,
+      "rate": 1.0,
+      "raw_cogs": 0.44078039680057035,
+      "required_batches": 85,
+      "reserve": 0.03,
+      "total_hours_with_measured_loss": 2.7750250360902746
+    },
+    {
+      "admissible": true,
+      "fixed_loss_slack_seconds": 4.08894042501629,
+      "max_fixed_loss_seconds_at_integer_threshold": 1154.7619404250163,
+      "max_loss_fraction": 0.09731641040227246,
+      "productive_fraction_required": 0.9026835895977275,
+      "productive_hours": 2.975359360726385,
+      "productive_seconds": 10711.293698614985,
+      "rate": 1.0,
+      "raw_cogs": 0.44078039680057035,
+      "required_batches": 103,
+      "reserve": 0.05,
+      "total_hours_with_measured_loss": 3.2949907496152737
+    },
+    {
+      "admissible": true,
+      "fixed_loss_slack_seconds": 2.454417120035032,
+      "max_fixed_loss_seconds_at_integer_threshold": 1153.127417120035,
+      "max_loss_fraction": 0.0471673220912876,
+      "productive_fraction_required": 0.9528326779087124,
+      "productive_hours": 6.470684434977769,
+      "productive_seconds": 23294.463965919967,
+      "rate": 1.1,
+      "raw_cogs": 0.4848584364806274,
+      "required_batches": 224,
+      "reserve": 0.01,
+      "total_hours_with_measured_loss": 6.790315823866657
+    },
+    {
+      "admissible": true,
+      "fixed_loss_slack_seconds": 2.281839911412135,
+      "max_fixed_loss_seconds_at_integer_threshold": 1152.9548399114121,
+      "max_loss_fraction": 0.0374445396636478,
+      "productive_fraction_required": 0.9625554603363522,
+      "productive_hours": 8.232790464145822,
+      "productive_seconds": 29638.04567092496,
+      "rate": 1.1,
+      "raw_cogs": 0.4848584364806274,
+      "required_batches": 285,
+      "reserve": 0.02,
+      "total_hours_with_measured_loss": 8.55242185303471
+    },
+    {
+      "admissible": true,
+      "fixed_loss_slack_seconds": 0.048172788700867386,
+      "max_fixed_loss_seconds_at_integer_threshold": 1150.7211727887009,
+      "max_loss_fraction": 0.02752128749523175,
+      "productive_fraction_required": 0.9724787125047683,
+      "productive_hours": 11.294810777126374,
+      "productive_seconds": 40661.318797654945,
+      "rate": 1.1,
+      "raw_cogs": 0.4848584364806274,
+      "required_batches": 391,
+      "reserve": 0.03,
+      "total_hours_with_measured_loss": 11.614442166015264
+    },
+    {
+      "admissible": true,
+      "fixed_loss_slack_seconds": 0.10526574161531244,
+      "max_fixed_loss_seconds_at_integer_threshold": 1150.7782657416153,
+      "max_loss_fraction": 0.007048051442499759,
+      "productive_fraction_required": 0.9929519485575002,
+      "productive_hours": 45.03480818808188,
+      "productive_seconds": 162125.30947709476,
+      "rate": 1.1,
+      "raw_cogs": 0.4848584364806274,
+      "required_batches": 1559,
+      "reserve": 0.05,
+      "total_hours_with_measured_loss": 45.35443957697077
+    },
+    {
+      "admissible": false,
+      "rate": 1.25,
+      "raw_cogs": 0.5509754960007129,
+      "reason": "steady_state_gpu_cogs_exceeds_reserved_target",
+      "reserve": 0.01
+    },
+    {
+      "admissible": false,
+      "rate": 1.25,
+      "raw_cogs": 0.5509754960007129,
+      "reason": "steady_state_gpu_cogs_exceeds_reserved_target",
+      "reserve": 0.02
+    },
+    {
+      "admissible": false,
+      "rate": 1.25,
+      "raw_cogs": 0.5509754960007129,
+      "reason": "steady_state_gpu_cogs_exceeds_reserved_target",
+      "reserve": 0.03
+    },
+    {
+      "admissible": false,
+      "rate": 1.25,
+      "raw_cogs": 0.5509754960007129,
+      "reason": "steady_state_gpu_cogs_exceeds_reserved_target",
+      "reserve": 0.05
+    }
+  ],
+  "interpretation": {
+    "decision": "Mathematical cells exist at $1.00/hour and the authoritative $1.10/hour base rate for every requested reserve, so a market-only close is unsupported. No production maximum-session/reliability or recurring omitted-cost bound is evidenced; no conservative sustainable admission is justified.",
+    "measured_geometry_compatible": false,
+    "measured_geometry_reason": "The observed 12.2051% productive fraction is below every admissible required fraction.",
+    "quality_scope": "This economics result neither establishes quality eligibility nor authorizes spend.",
+    "single_missing_policy_fact": "A production session/reliability policy that selects a maximum session duration and bounds interruption/retry plus recurring storage, transfer, orchestration, and cleanup within one reserve cell."
+  },
+  "method": {
+    "all_in_gpu_cogs": "raw_gpu_cogs / productive_fraction",
+    "fixed_loss_treatment": "Measured allocation minus useful GPU time, amortized once per hypothetical session; not a production recurrence or reliability policy.",
+    "raw_gpu_cogs": "rate * 1e6 / (3600 * measured_tokens_per_second)",
+    "reserve_treatment": "Reserve is withheld from target for storage, transfer, orchestration, interruption, retry, cleanup, and other omitted costs.",
+    "reserved_gpu_budget": "0.514 * (1 - reserve)"
+  },
+  "schema_version": 1
+}

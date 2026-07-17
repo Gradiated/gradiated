@@ -1,0 +1,9 @@
+{"event": "retained_arm_control", "instance_id": "computeinstance-e00cvg7rbk9p5dm59w", "parent_experiment_id": "99dd188923b37c4f5a6711c1690db2b1c620f4add3f910c69e1794bbfb8ad123", "timestamp": "2026-07-16T00:49:58.510952Z"}
+{"derived_identity": null, "derived_student": false, "event": "repair_01_begin", "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "repair_spec_sha256": "25b08942e4e07921299494708c4852611bde000b9202f6953bab43b2787de9c4", "timestamp": "2026-07-16T00:49:58.723656Z"}
+{"event": "repair_01_inputs_staged", "timestamp": "2026-07-16T00:50:05.535585Z"}
+{"event": "repair_01_reused_verified_runtime_and_checkpoint", "timestamp": "2026-07-16T00:50:05.535726Z"}
+{"event": "phase_started", "phase": "scientific_workload", "timestamp": "2026-07-16T00:50:05.535790Z"}
+{"elapsed_seconds": 20.12, "event": "phase_finished", "outcome": "PASS", "phase": "scientific_workload", "timestamp": "2026-07-16T00:50:25.656266Z"}
+{"event": "repair_01_error", "message": "expected one artifact member ending in /allocation-result.json", "timestamp": "2026-07-16T00:50:27.512244Z", "type": "StockError"}
+{"event": "repair_window_skipped", "timestamp": "2026-07-16T00:50:27.512317Z"}
+{"cleanup_pass": true, "event": "cleanup_verified", "instance_get_not_found": true, "timestamp": "2026-07-16T00:51:18.890238Z"}

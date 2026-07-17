@@ -1,0 +1,10 @@
+{
+  "after_disks": 0,
+  "after_instances": 0,
+  "before_disk_count": 1,
+  "before_instance_count": 1,
+  "cleanup_pass": true,
+  "instance_absent": true,
+  "instance_id": "computeinstance-e00p6jv8na6cy76vep",
+  "stage": "orphan_cleanup"
+}

@@ -1,0 +1,27 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "MECHANISM_CLOSE: pinned vLLM c32 already enables async scheduling and chunked prefill and fully packs its 32 admitted decode sequences; no distinct source-bound scheduler arm has identified leverage to reach 700.649 tok/s.",
+  "next_action": "Closed at $0; do not launch a successor from this project.",
+  "provider_mutation": "prohibited_zero_cost_source_falsifier",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 900,
+  "active_experiment": null,
+  "terminal_result": "MECHANISM_CLOSE",
+  "decision_artifact": "artifacts/DECODE_PACKING_SOURCE_DECISION_2026-07-16.json",
+  "completed_at": "2026-07-16T07:24:39+02:00",
+  "resource_cap": {
+    "peak_rss_gib": 6,
+    "new_artifacts_mib": 24
+  },
+  "source_frontier": {
+    "c16_output_tokens_per_second": 616.6020873243186,
+    "c32_output_tokens_per_second": 686.910494257713,
+    "nomination_output_tokens_per_second": 700.649,
+    "peak_memory_limit_mib": 44532,
+    "background_arm_envelope_seconds": 300
+  },
+  "excluded_live_project": "minimal_depth43_v2_l40s_direct",
+  "stop_rule": "one terminal NOMINATE_SCHEDULER_ARM or MECHANISM_CLOSE result; no successor",
+  "quality_policy": "semantics-preserving runtime screen only; parent quality failure remains binding"
+}

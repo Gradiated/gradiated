@@ -1,0 +1,100 @@
+{
+  "status": "complete",
+  "priority": 300,
+  "summary": "TYPED_OPERATIONAL_CLOSE: fresh top-3/shared c32 transferred at 641.127088 tok/s, while the diagnostic c36 arm fell to 582.718388 tok/s and emitted 72 rather than the preregistered 64 requests; c40 failed performance and memory admission, and cleanup is authenticated zero.",
+  "next_action": "Terminal. Do not retry c36/c40 or higher-concurrency tuning. Preserve c32 as architecture-cost evidence only; the A40 authoritative-economics rebase owns the materially different $0 next decision.",
+  "provider_mutation": "authorized_sole_nebius_l40s_owner_when_inventory_zero",
+  "authorized_spend_usd": 0.8,
+  "absolute_timeout_seconds": 3300,
+  "provider_creates": 1,
+  "retries": 0,
+  "primary_sequence": [
+    "top3_shared_c32_control",
+    "top3_shared_c36"
+  ],
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "authoritative_usd_per_million_output_tokens": 0.514,
+    "minimum_c36_output_tokens_per_second": 663.647545,
+    "minimum_ratio_to_fresh_c32": 1.03,
+    "minimum_memory_headroom_mib": 512,
+    "implied_raw_gpu_usd_per_million_output_tokens": 0.460418422
+  },
+  "conditional_followup": {
+    "arm": "top3_shared_c40",
+    "trigger": "TOP3_C36_PASS_AND_C40_MEMORY_ADMISSION",
+    "maximum_predicted_peak_mib": 45556,
+    "minimum_ratio_to_c36": 1.03,
+    "maximum_recovery_plus_arm_seconds": 600
+  },
+  "allowed_results": [
+    "TOP3_C36_PASS",
+    "TOP3_HIGHER_CONCURRENCY_CLOSE",
+    "CONTROL_TRANSFER_CLOSE",
+    "TYPED_OPERATIONAL_CLOSE"
+  ],
+  "stop_rule": "One real-artifact/budget preflight and one provider create; no readiness-only return, retry, second correction, extra arm, quality/recovery work, or post-result retention beyond the pre-registered c40 trigger."
+  ,"latest_typed_arm": {
+    "arm": "bootstrap_stock_c32_maxseq36",
+    "outcome": "PASS",
+    "conservative_output_tokens_per_second": 606.1189970979434,
+    "exact_requests": 64,
+    "semantic_pass": true,
+    "prefix_cache_disabled": true,
+    "prefix_cache_zero_delta": true,
+    "useful_gpu_seconds": 108.124,
+    "allocation_seconds": 1286.754,
+    "cost_usd_derived": 0.306720071,
+    "artifact_sha256": "5a7e9af36e47fa3b878cc270928c3098d72b214a82ade08d8326c97cabe298e3",
+    "retained_for_next_experiment": true,
+    "claim_limit": "Stock bootstrap/control only; absolute development quality remains failed and this is not the top-3 c32/c36 primary result."
+  }
+  ,"director_terminal_reconciliation": {
+    "live_owner_mutation_prohibited": true,
+    "c32_control_transfer_gate": "fresh c32 must be within plus or minus 3% of 644.318005 tok/s; the frozen owner implements only the lower bound",
+    "c40_minimum_remaining_seconds_before_start": 652.065,
+    "c40_note": "The frozen 2538 MiB four-sequence KV increment is conservative rather than exact; it may reject c40 but cannot create an unsafe memory admission.",
+    "c40_terminal_gate": "The frozen owner does not consume the c40 typed result. Any c40 claim independently requires a complete typed arm and at least 1.03x the admitted c36 throughput; owner exit alone cannot promote it.",
+    "cleanup_truth": "Owner exit or cleanup invocation is insufficient. Every terminal path requires a fresh authenticated zero-instance/zero-disk inventory; if bootstrap or a typed trigger fails before explicit cleanup, treat the remaining watchdog interval as pending cleanup, not a scientific terminal."
+  }
+  ,"active_session": {
+    "unit": "glm47-top3-shared-c36-20260716-r1.service",
+    "unit_manager": "systemd --user",
+    "controller_pid": 1697790,
+    "controller_cgroup": "/user.slice/user-0.slice/user@0.service/app.slice/glm47-top3-shared-c36-20260716-r1.service",
+    "watchdog": {
+      "unit": "glm47-top3-shared-c36-20260716-r1-watchdog.service",
+      "pid": 1698074,
+      "cgroup": "/user.slice/user-0.slice/user@0.service/app.slice/glm47-top3-shared-c36-20260716-r1-watchdog.service"
+    },
+    "resource_identity": "Nebius computeinstance-e00ahkks3qshscm2q0; glm47-top3-shared-c36-20260716-r1; preemptible gpu-l40s-a / 1gpu-16vcpu-64gb; managed boot disk glm47-top3-shared-c36-20260716-r1-boot (computedisk-e00f2x1qk66jgbgnfs).",
+    "deadline_epoch_seconds": 1784231047.0480895,
+    "artifact_root": "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/top3_shared_c36_direct/artifacts/l40s_top3_shared_c36_20260716_r1",
+    "forward_progress": "Stock maxseq36 c32 bootstrap completed and retained after a typed background pass; top-3 config/runtime/checkpoint reuse passed and the c32/c36 primary entered scientific_workload at 2026-07-16T19:10:57.637422Z.",
+    "launch_packet": "artifacts/l40s_top3_shared_c36_20260716_r1/LAUNCH_PACKET.json"
+  }
+  ,"terminal_result": {
+    "classification": "TYPED_OPERATIONAL_CLOSE",
+    "diagnostic_scientific_result": "TOP3_HIGHER_CONCURRENCY_CLOSE",
+    "fresh_c32_output_tokens_per_second": 641.1270881978057,
+    "c32_ratio_to_prior": 0.995047606,
+    "c32_requests": 64,
+    "c36_output_tokens_per_second": 582.7183875318156,
+    "c36_ratio_to_fresh_c32": 0.908897,
+    "c36_requests": 72,
+    "geometry_claim_limit": "The project preregistered exactly 64 requests per primary arm, but the c36 frontier profile emitted two full waves, 72 requests. This bars a formal primary pass; the large negative remains diagnostic evidence against higher concurrency.",
+    "peak_memory_used_mib": 43727,
+    "memory_headroom_mib": 2341,
+    "c40_predicted_peak_mib": 46265,
+    "c40_admission_limit_mib": 45556,
+    "c40_ran": false,
+    "combined_allocation_seconds": 1773.875,
+    "combined_cost_usd_derived": 0.422833882,
+    "combined_useful_gpu_seconds": 336.868,
+    "primary_artifact_sha256": "5ee764841cc7763b8f48f03f5606700889e7c3b04f1cf56174bff4af2eb648f2",
+    "cleanup_verified_at_utc": "2026-07-16T19:19:43.719634Z",
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "quality_claim_limit": "QUALITY_ARTIFACT_CLOSE remains in force; this is not a deployable or quality-preserving result."
+  }
+}

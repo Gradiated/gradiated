@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "classification": "terminal_controller_artifact_failure_after_execution_equivalent_precreate_pass",
+  "no_mutation_precreate": {
+    "pass": true,
+    "provider_create_reached": false,
+    "artifact": "artifacts/no_mutation_service_precreate_final/precreate-terminal.json",
+    "sha256": "4bcc78bf58bcc839e73863e94d511466586b46a74bc09743e6a32358cc3dbc7d"
+  },
+  "mutation": {
+    "scientific_result": false,
+    "reason": "The mutation controller did not leave a completed terminal/summary; its typed create diagnostic was superseded by cleanup.",
+    "provider_create_diagnostic": "artifacts/glm47_current_awq_l40s_frontier_service_boundary/provider-create-diagnostic.json",
+    "sha256": "fa16f9b198df7884d9702280100581fb2991b062be1e0e1b81dc2fb621085018"
+  },
+  "cleanup": {
+    "direct_instance_inventory": "empty",
+    "direct_disk_inventory": "empty"
+  },
+  "decision": "No c8/c16/c32, quality, throughput, or economics evidence exists. Close this Nebius route without retry."
+}

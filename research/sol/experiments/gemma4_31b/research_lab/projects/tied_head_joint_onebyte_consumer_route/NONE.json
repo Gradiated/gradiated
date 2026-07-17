@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "terminal": "NONE",
+  "reason_type": "no_pinned_execution_equivalent_joint_onebyte_consumer",
+  "decision": "close",
+  "question": "Does one truthful single-storage one-byte tied embedding/output consumer warrant a later CUDA and quality falsifier?",
+  "scope": {
+    "target": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "geometry": {"vocab_rows": 262144, "hidden_size": 5376, "tied_parameters": 1409286144},
+    "representation": "one byte per weight plus explicit scales, shared by token embedding and output projection",
+    "cuda_or_provider_run": false,
+    "quality_run": false,
+    "budget": {"wall_minutes": 50, "cpu_hours": 2, "storage_gib": 2, "spend_usd": 0}
+  },
+  "measured_exact_consumer": {
+    "runtime": "vllm 0.19.1.dev6+g6d4a8e6d2, CUDA 12.9, NVIDIA L40S SM89",
+    "consumer": "vllm.model_executor.layers.vocab_parallel_embedding.ParallelLMHead",
+    "consumer_source_sha256": "5cdbd9058a99424bf71732d17027c9bc1b6da032f5c1d35b755365f22bb85494",
+    "quantization_method": "vllm.model_executor.layers.vocab_parallel_embedding.UnquantizedEmbeddingMethod",
+    "method_source_sha256": "306785c7b7be41d938e40b29cf78377600c4342f5d402009ae8c0dde1bff1c92",
+    "measurement_summary": "../gemma_l40s_parallel_lm_head_measurement_final/artifacts/gemma-l40s-head-final-20260717t065653z/summary.json",
+    "rows": [
+      {"m": 1, "head_seconds_at_358_steps": 1.402981910, "peak_allocated_gib": 2.636},
+      {"m": 2, "head_seconds_at_358_steps": 0.703266656, "peak_allocated_gib": 2.639},
+      {"m": 4, "head_seconds_at_358_steps": 0.353297302, "peak_allocated_gib": 2.645},
+      {"m": 8, "head_seconds_at_358_steps": 0.178123619, "peak_allocated_gib": 2.656},
+      {"m": 16, "head_seconds_at_358_steps": 0.090521728, "peak_allocated_gib": 2.679},
+      {"m": 32, "head_seconds_at_358_steps": 0.049803529, "peak_allocated_gib": 2.727}
+    ]
+  },
+  "consumer_inspection": {
+    "vllm": "Only the measured UnquantizedEmbeddingMethod consumer is pinned. No installed one-byte embedding method, weight-loader/tie path, or SM89 joint embedding-plus-projection kernel was available locally; the exact image is remote and this project forbids CUDA/provider work.",
+    "sglang_source": {
+      "source": "../sglang_gemma4_exact_precreate_binding/probes/source/gemma4_causal.py",
+      "revision": "6e3be088a9b7b1ec1f34b0fc0f3eb421e2bd05e2",
+      "binding": "When tie_word_embeddings is true, self.lm_head = self.model.embed_tokens; ParallelLMHead is constructed only in the untied branch.",
+      "interpretation": "The source confirms the tied alias but does not provide a shared one-byte consumer or execution-equivalent quantized embedding lookup. Generic fp8/int8 quantization choices in server_args.py are not consumer evidence."
+    }
+  },
+  "analytical_bound": {
+    "bf16_tied_matrix_gib": 2.625,
+    "one_byte_shared_matrix_gib": 1.3125,
+    "conservative_primary_c8_before_gib": 45.046,
+    "conservative_primary_c8_after_gib": 43.7335,
+    "capacity_discontinuity": true,
+    "source": "../tied_vocab_projection_cost_bound/VOCAB_BOUND.json",
+    "interpretation": "Capacity relevance is real, but the bound is hypothetical and cannot establish a runnable or quality-preserving implementation."
+  },
+  "quality_boundary_for_any_future_candidate": {
+    "required": [
+      "raw serialized captures consumed by the exact runner/normalizer/scorer",
+      "held-out common, rare multilingual, code, and tool tokens",
+      "exact token embeddings and logits/output IDs where deterministic",
+      "logprobs, sampling, stop behavior, finite scales",
+      "mutation rejection for checkpoint, tokenizer, tie/layout, and scorer identities"
+    ],
+    "proxy_status": "No proxy was run; embedding and logits changes are semantics-changing until this boundary passes."
+  },
+  "closure": "Do not create a provider, download checkpoint weights, compile CUDA, or open a successor from this project. A future project may only reopen with a pinned runtime consumer and official producer/loader identity."
+}

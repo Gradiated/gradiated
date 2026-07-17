@@ -1,0 +1,17 @@
+{
+  "classification": "final_program_audit",
+  "pass": true,
+  "provider_name": "gemma-h200-20260717t08141784276043z",
+  "checks": {
+    "rfc1123_lowercase": true,
+    "shared_verified_retained_owner": true,
+    "checkpoint_transfer_bound": true,
+    "sglang_fp8_kv_command": true,
+    "matched_vllm_command": true,
+    "sequential_engines": true,
+    "raw_request_response_capture": true,
+    "gpu_final_telemetry": true,
+    "typed_prefix_disposition": true
+  },
+  "limitation": "exact-token/cache-mix and per-engine atomic-retrieval assertions are enforced by remote terminal reconciliation; any absence is a typed scientific failure"
+}

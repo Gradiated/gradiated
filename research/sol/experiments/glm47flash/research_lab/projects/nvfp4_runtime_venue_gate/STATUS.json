@@ -1,0 +1,12 @@
+{
+  "status": "complete",
+  "priority": 80,
+  "summary": "Source/config loader path passes for exact NVFP4 at pinned vLLM main, but quality, executable load, live capacity, and conservative economics fail promotion.",
+  "next_action": "Do not allocate. Reopen only with accessible Blackwell capacity and a frozen quality route; exact load precedes throughput.",
+  "provider_mutation": "prohibited_zero_cost_runtime_venue_gate",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": null,
+  "artifact": "NVFP4_GATE_2026-07-15.json",
+  "decision": "CLOSE_FOR_CURRENT_CAMPAIGN_NO_MEASUREMENT_PROMOTION"
+}

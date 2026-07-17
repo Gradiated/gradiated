@@ -1,0 +1,110 @@
+{
+  "checkpoint": "/root/.cache/glm47flash-awq-ab31d120",
+  "checkpoint_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+  "config_sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9",
+  "expected_base_digest": "sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543",
+  "fixture_sha256": "034239f85527ceb3f126631e45da2fc97c0c003ed62fe75d124acc58dc543b0a",
+  "index_sha256": "b9c53433e94f2fe7870cdbc3fcb6ed1431eb500c5242a039de93fef4bb988695",
+  "probe": {
+    "head": {
+      "bytes": 634388480,
+      "dtype": "BF16",
+      "name": "lm_head.weight",
+      "raw_sha256": "9cf128f300306127d2eae6c5dffaf03840a83923b14c853dd3507c2d3bba5eb0",
+      "shape": [
+        154880,
+        2048
+      ],
+      "shard": "model-00001-of-00004.safetensors"
+    },
+    "loader": {
+      "lm_head_class_mro": [
+        "ParallelLMHead",
+        "VocabParallelEmbedding",
+        "CustomOp",
+        "Module",
+        "object"
+      ],
+      "lm_head_removed_from_ignore": true,
+      "matched_scheme_class": null,
+      "quant_method_for_actual_parallel_lm_head": null,
+      "scheme_group_size": null,
+      "scheme_selection_failure": "Unable to find matching target for lm_head in the compressed-tensors config.",
+      "scheme_symmetric": null,
+      "scheme_weight_type": "None"
+    },
+    "marlin": {
+      "dispatch_contract": {
+        "1": "MarlinLinearKernel.apply_weights [M,2048] x [2048,154880]",
+        "16": "MarlinLinearKernel.apply_weights [M,2048] x [2048,154880]",
+        "8": "MarlinLinearKernel.apply_weights [M,2048] x [2048,154880]"
+      },
+      "limitation": "no CUDA allocation by project scope; live_cpu_can_implement is expected false only because Marlin requires CUDA",
+      "live_cpu_can_implement": {
+        "pass": false,
+        "reason": "Marlin only supported on CUDA"
+      },
+      "runtime": "0.15.0",
+      "shape_gate": {
+        "pass": true,
+        "reason": null
+      },
+      "target_compute_capability": 89
+    },
+    "packing": {
+      "candidate_bytes": 178421776,
+      "error": {
+        "mae": 0.0024433508986791918,
+        "max_abs": 0.0283203125,
+        "relative_l2": 0.09260840427759735,
+        "rmse": 0.0029477386462583156,
+        "source_abs_max": 0.404296875
+      },
+      "pack_factor": 8,
+      "quantized_values": {
+        "abs_ge_7_fraction": 0.044956686477030605,
+        "elements": 317194240,
+        "minus_8_fraction": 0.0,
+        "plus_7_fraction": 0.021814491335025502
+      },
+      "scheme": "symmetric_int4_group32_two_complement_K_packed",
+      "weight_packed": {
+        "bytes": 158597120,
+        "dtype": "I32",
+        "name": "lm_head.weight_packed",
+        "sha256": "e3d5f8d570be2d96bc4d7754c263c39a3e3b2f3f7a8ecf2fdbbad4573e8e1a09",
+        "shape": [
+          154880,
+          256
+        ]
+      },
+      "weight_scale": {
+        "bytes": 19824640,
+        "dtype": "BF16",
+        "name": "lm_head.weight_scale",
+        "sha256": "90030e8e86a12a9e60486161ce56d0b1659c000c8e343131bcc3a93e71c7c2d3",
+        "shape": [
+          154880,
+          64
+        ]
+      },
+      "weight_shape": {
+        "bytes": 16,
+        "dtype": "I64",
+        "name": "lm_head.weight_shape",
+        "shape": [
+          2
+        ],
+        "value": [
+          154880,
+          2048
+        ]
+      }
+    }
+  },
+  "probe_exit_code": 0,
+  "probe_stderr_tail": "W0715 11:50:39.339000 10 torch/utils/cpp_extension.py:117] No CUDA runtime is found, using CUDA_HOME='/usr/local/cuda'\n",
+  "probe_stdout_tail": "b14c853dd3507c2d3bba5eb0\", \"shape\": [154880, 2048], \"shard\": \"model-00001-of-00004.safetensors\"}, \"loader\": {\"lm_head_class_mro\": [\"ParallelLMHead\", \"VocabParallelEmbedding\", \"CustomOp\", \"Module\", \"object\"], \"lm_head_removed_from_ignore\": true, \"matched_scheme_class\": null, \"quant_method_for_actual_parallel_lm_head\": null, \"scheme_group_size\": null, \"scheme_selection_failure\": \"Unable to find matching target for lm_head in the compressed-tensors config.\", \"scheme_symmetric\": null, \"scheme_weight_type\": \"None\"}, \"marlin\": {\"dispatch_contract\": {\"1\": \"MarlinLinearKernel.apply_weights [M,2048] x [2048,154880]\", \"16\": \"MarlinLinearKernel.apply_weights [M,2048] x [2048,154880]\", \"8\": \"MarlinLinearKernel.apply_weights [M,2048] x [2048,154880]\"}, \"limitation\": \"no CUDA allocation by project scope; live_cpu_can_implement is expected false only because Marlin requires CUDA\", \"live_cpu_can_implement\": {\"pass\": false, \"reason\": \"Marlin only supported on CUDA\"}, \"runtime\": \"0.15.0\", \"shape_gate\": {\"pass\": true, \"reason\": null}, \"target_compute_capability\": 89}, \"packing\": {\"candidate_bytes\": 178421776, \"error\": {\"mae\": 0.0024433508986791918, \"max_abs\": 0.0283203125, \"relative_l2\": 0.09260840427759735, \"rmse\": 0.0029477386462583156, \"source_abs_max\": 0.404296875}, \"pack_factor\": 8, \"quantized_values\": {\"abs_ge_7_fraction\": 0.044956686477030605, \"elements\": 317194240, \"minus_8_fraction\": 0.0, \"plus_7_fraction\": 0.021814491335025502}, \"scheme\": \"symmetric_int4_group32_two_complement_K_packed\", \"weight_packed\": {\"bytes\": 158597120, \"dtype\": \"I32\", \"name\": \"lm_head.weight_packed\", \"sha256\": \"e3d5f8d570be2d96bc4d7754c263c39a3e3b2f3f7a8ecf2fdbbad4573e8e1a09\", \"shape\": [154880, 256]}, \"weight_scale\": {\"bytes\": 19824640, \"dtype\": \"BF16\", \"name\": \"lm_head.weight_scale\", \"sha256\": \"90030e8e86a12a9e60486161ce56d0b1659c000c8e343131bcc3a93e71c7c2d3\", \"shape\": [154880, 64]}, \"weight_shape\": {\"bytes\": 16, \"dtype\": \"I64\", \"name\": \"lm_head.weight_shape\", \"shape\": [2], \"value\": [154880, 2048]}}}\n",
+  "runtime_image": "glm-vllm:0.15.0-transformers-1618d44",
+  "schema_version": 1
+}

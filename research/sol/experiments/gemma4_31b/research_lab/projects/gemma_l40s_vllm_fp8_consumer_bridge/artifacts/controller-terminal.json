@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "generated_utc": "2026-07-17T05:12:53Z",
+  "classification": "shared_controller_extension_pass_no_provider",
+  "controller": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py",
+  "controller_sha256": "1c7448d956d9c65eaf64494bf3bbd16afcf813e30f57604a36affc873d23af2b",
+  "tests": {
+    "command": "python3 -m unittest tests.test_nebius_mla_microbench tests.test_nebius_placement_control",
+    "passed": 34,
+    "named_behavioral_tests": ["owner_rejection", "primary_artifact_preservation", "true_branch_sequencing", "false_trigger_cleanup", "unconditional_error_cleanup"]
+  },
+  "provider_mutation": false,
+  "terminal": "pass"
+}

@@ -1,0 +1,96 @@
+{
+  "checks": {
+    "commands_pass": true,
+    "empty_disks": true,
+    "empty_instances": true,
+    "eu_north1_h200_preemptible_available": true,
+    "rate_usd_per_hour_2_45": true
+  },
+  "classification": "authenticated_provider_preflight",
+  "diagnostics": {
+    "capacity": {
+      "returncode": 0,
+      "stderr": ""
+    },
+    "disks": {
+      "returncode": 0,
+      "stderr": ""
+    },
+    "instances": {
+      "returncode": 0,
+      "stderr": ""
+    },
+    "rate": {
+      "returncode": 0,
+      "stderr": ""
+    }
+  },
+  "observed_epoch": 1784286408.1863194,
+  "pass": true,
+  "placement": [
+    {
+      "metadata": {
+        "created_at": "2026-07-17T11:06:48.146674Z",
+        "parent_id": "tenant-e00q6qkagqjr7vx294",
+        "resource_version": "1",
+        "updated_at": "2026-07-17T11:06:48.146675Z"
+      },
+      "spec": {
+        "compute_instance": {
+          "gpu_memory_gigabytes": 141,
+          "platform": "gpu-h200-sxm",
+          "preset": {
+            "name": "1gpu-16vcpu-200gb",
+            "resources": {
+              "gpu_count": 1,
+              "memory_gibibytes": 200,
+              "vcpu_count": 16
+            }
+          }
+        },
+        "fabric": "fabric-7",
+        "region": "eu-north1"
+      },
+      "status": {
+        "on_demand": {
+          "availability_level": "AVAILABILITY_LEVEL_LOW",
+          "available": 2,
+          "data_state": "DATA_STATE_FRESH",
+          "effective_at": "2026-07-17T10:48:51.330Z",
+          "limit": 32
+        },
+        "preemptible": {
+          "availability_level": "AVAILABILITY_LEVEL_HIGH",
+          "available": 8,
+          "data_state": "DATA_STATE_FRESH",
+          "effective_at": "2026-07-17T10:48:51.330Z",
+          "limit": 8
+        },
+        "reserved": {
+          "availability_level": "AVAILABILITY_LEVEL_LIMIT_REACHED",
+          "data_state": "DATA_STATE_FRESH",
+          "effective_at": "2026-07-17T11:06:47.882950Z"
+        }
+      }
+    }
+  ],
+  "rate": {
+    "hourly_cost": {
+      "general": {
+        "total": {
+          "cost": "2.45",
+          "cost_rounded": "2.45"
+        }
+      }
+    },
+    "monthly_cost": {
+      "general": {
+        "total": {
+          "cost": "1788.5",
+          "cost_rounded": "1788.5"
+        }
+      }
+    }
+  },
+  "schema_version": 1
+}

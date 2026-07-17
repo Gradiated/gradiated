@@ -1,0 +1,24 @@
+{
+  "checks": {
+    "actual_pinned_consumer_and_method": true,
+    "all_six_required_m_rows": true,
+    "budget_translation": true,
+    "cuda_and_wall_timing_memory_telemetry": true,
+    "exact_image_cpu_safe_consumer_construction": false,
+    "oracle_consumes_timed_outputs": true,
+    "shared_durable_controller": true,
+    "typed_nonzero_failure_and_manifest": true
+  },
+  "classification": "final_staged_exact_image_parallel_lm_head_audit",
+  "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+  "image_probe_returncode": 0,
+  "image_probe_stderr_tail": "W0717 06:36:13.947000 1 torch/utils/cpp_extension.py:118] No CUDA runtime is found, using CUDA_HOME='/usr/local/cuda'\n[W717 06:36:14.804615431 socket.cpp:207] [c10d] The hostname of the client socket cannot be retrieved. err=-3\n[W717 06:36:14.805275321 ProcessGroupGloo.cpp:511] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())\n",
+  "observed_runtime": null,
+  "pass": false,
+  "schema_version": 1,
+  "staged_files": {
+    "mla_microbench_control.py": "1c7448d956d9c65eaf64494bf3bbd16afcf813e30f57604a36affc873d23af2b",
+    "remote_parallel_lm_head_stage.sh": "e7a947f9124541e387af448c4a11653f7040b45c78c2ebe9e036fd94f91ec255",
+    "vllm_parallel_lm_head_bench.py": "de7f843a07e10322446a5e173ef60df7dc14763f0924102a2a612e34bdf0ab71"
+  }
+}

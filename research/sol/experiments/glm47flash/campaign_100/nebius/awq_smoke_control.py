@@ -48,12 +48,50 @@ from stock_control import (  # noqa: E402
     transfer_local_model as stream_local_model,
     verify_internal_manifest,
 )
+from session_staging import validate_local_files_cached  # noqa: E402
 
 
 IMAGE = "lmsysorg/sglang:v0.5.15-cu130@sha256:655d004115e384b56b73ad6869bb04b29cce7ba3e597ce8f92eeeb49e2acb0af"
 MODEL_REVISION = "ab31d120fbe79988fe2a0259993cf3c222aa8881"
 MODEL_SHARD_COUNT = 4
 MODEL_WEIGHT_BYTES = 20_170_199_928
+DERIVED_STUDENT_REPOSITORY = "local-derived/glm47flash-student39"
+MINIMAL_DEPTH42_V2_REPOSITORY = "local-derived/glm47flash-minimal-depth42-v2"
+MINIMAL_DEPTH43_V2_REPOSITORY = "local-derived/glm47flash-minimal-depth43-v2"
+DERIVED_AWQ_IDENTITIES = {
+    "official-selective-w4": {
+        "manifest_sha256": "7ab75a5258cce406351790cefe1f3f8ba2c63aa4ad618f8d94c5ac3a65ec7778",
+        "config_sha256": "",
+        "index_sha256": "",
+        "weight_bytes": 19090237368,
+    },
+    "student39": {
+        "manifest_sha256": "d09c1b7dbd10c91eec8aba98fc3f14878bf8d1784d610499935c3e355ba9e86a",
+        "config_sha256": "07b92832975cb7d174660e88127e91b6269605fe0cfb1bd9bfd282056969be54",
+        "index_sha256": "407b00ffcfa0a69174d4d65473f3fd889ccc9cadb88a75d98393ff2034d8153e",
+        "weight_bytes": 15_544_868_264,
+    },
+    "student42": {
+        "manifest_sha256": "a41e353015487ff58d367bf5ce42ae7c7d49de87c339c49deab714a69a42a584",
+        "config_sha256": "3859511a5a451f8d9a5fd0dd10e25edd98dd40cc4e970d4a124047dc86982899",
+        "index_sha256": "8758d9236670cb1c0f693ce6b54f7a9318c85c76feb8b333b8e0429a0113edde",
+        "weight_bytes": 16_658_558_680,
+    },
+}
+MINIMAL_DEPTH42_V2_IDENTITY = {
+    "manifest_sha256": "cfee71f350b69a931bc6700712db9850780c30f2e8aa51a406ce9ac7a668cdda",
+    "checksum_list_sha256": "87d080fa3b10a184abf39e050f6dd67264b32394b43d45caecd93d32e3512950",
+    "config_sha256": "3859511a5a451f8d9a5fd0dd10e25edd98dd40cc4e970d4a124047dc86982899",
+    "index_sha256": "8758d9236670cb1c0f693ce6b54f7a9318c85c76feb8b333b8e0429a0113edde",
+    "weight_bytes": 16_658_558_680,
+}
+MINIMAL_DEPTH43_V2_IDENTITY = {
+    "manifest_sha256": "745fdda3cd7c4ef43ad4a88cb10a05628e1887085528419bf7a004af80b47741",
+    "checksum_list_sha256": "87e5f71388c1cd5293e13681641a0575136930e360bdbd52db0cc59ba5a045eb",
+    "config_sha256": "a400acbe6b5322ba4ad2ef14e3892105bc516bd802584e60775b492b5ca68e7c",
+    "index_sha256": "fb7aaed29073ab00a662526aab18e977de284b88533c777db7ea039b4c76764d",
+    "weight_bytes": 17_029_788_816,
+}
 PLATFORM = "gpu-l40s-a"
 PRESET = "1gpu-16vcpu-64gb"
 DISK_GIB = 100
@@ -66,6 +104,10 @@ class AwqSmokeError(RuntimeError):
     pass
 
 
+def derived_awq_identity(observed: dict[str, Any]) -> str | None:
+    return next((name for name, identity in DERIVED_AWQ_IDENTITIES.items() if observed == identity), None)
+
+
 def emit(path: Path, event: str, **fields: Any) -> None:
     with path.open("a") as handle:
         handle.write(json.dumps({"timestamp": utc_now(), "event": event, **fields}, sort_keys=True) + "\n")
@@ -74,6 +116,8 @@ def emit(path: Path, event: str, **fields: Any) -> None:
 def validate_local_model(model_dir: Path) -> dict[str, Any]:
     manifest_path = model_dir / "model-files-manifest.json"
     checksum_path = model_dir / "model-files.sha256"
+    if model_dir.is_symlink() or manifest_path.is_symlink() or checksum_path.is_symlink():
+        raise AwqSmokeError("local model contract must not use symlinks")
     if not manifest_path.is_file() or not checksum_path.is_file():
         raise AwqSmokeError("local model lacks manifest contract")
     manifest = json.loads(manifest_path.read_text())
@@ -81,37 +125,68 @@ def validate_local_model(model_dir: Path) -> dict[str, Any]:
         raise AwqSmokeError("local model revision mismatch")
     if manifest.get("shard_count") != MODEL_SHARD_COUNT:
         raise AwqSmokeError("local model shard count mismatch")
-    if manifest.get("weight_bytes") != MODEL_WEIGHT_BYTES:
+    repository = manifest.get("repository")
+    derived_student = repository == DERIVED_STUDENT_REPOSITORY
+    official_selective_w4 = repository == "local-derived/glm47flash-full47-official-selective-w4"
+    minimal_depth42_v2 = repository == MINIMAL_DEPTH42_V2_REPOSITORY
+    minimal_depth43_v2 = repository == MINIMAL_DEPTH43_V2_REPOSITORY
+    derived_identity = None
+    if derived_student or official_selective_w4 or minimal_depth42_v2 or minimal_depth43_v2:
+        rows_by_path = {row.get("path"): row for row in manifest.get("files", []) if isinstance(row, dict)}
+        observed = {
+            "manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+            "config_sha256": rows_by_path.get("config.json", {}).get("sha256"),
+            "index_sha256": rows_by_path.get("model.safetensors.index.json", {}).get("sha256"),
+            "weight_bytes": manifest.get("weight_bytes"),
+        }
+        if minimal_depth42_v2 or minimal_depth43_v2:
+            identity = MINIMAL_DEPTH42_V2_IDENTITY if minimal_depth42_v2 else MINIMAL_DEPTH43_V2_IDENTITY
+            expected = {**identity}
+            expected.pop("checksum_list_sha256")
+            if observed != expected or hashlib.sha256(checksum_path.read_bytes()).hexdigest() != identity["checksum_list_sha256"]:
+                raise AwqSmokeError("minimal depth v2 identity is not allowlisted")
+            derived_identity = "minimal-depth42-v2" if minimal_depth42_v2 else "minimal-depth43-v2"
+            expected_weight_bytes = identity["weight_bytes"]
+        elif official_selective_w4:
+            expected = DERIVED_AWQ_IDENTITIES["official-selective-w4"]
+            if hashlib.sha256(manifest_path.read_bytes()).hexdigest() != expected["manifest_sha256"] or observed["weight_bytes"] != expected["weight_bytes"]:
+                raise AwqSmokeError("official selective W4 identity is not allowlisted")
+            derived_identity = "official-selective-w4"
+            expected_weight_bytes = expected["weight_bytes"]
+        else:
+            derived_identity = derived_awq_identity(observed)
+            if derived_identity is None:
+                raise AwqSmokeError("derived AWQ identity is not allowlisted")
+            expected_weight_bytes = DERIVED_AWQ_IDENTITIES[derived_identity]["weight_bytes"]
+    else:
+        expected_weight_bytes = MODEL_WEIGHT_BYTES
+    if manifest.get("weight_bytes") != expected_weight_bytes:
         raise AwqSmokeError("local model weight bytes mismatch")
     rows = manifest.get("files")
     if not isinstance(rows, list) or not rows:
         raise AwqSmokeError("local model manifest files invalid")
     shard_rows = [row for row in rows if row.get("path", "").endswith(".safetensors")]
-    if len(shard_rows) != MODEL_SHARD_COUNT or sum(row["bytes"] for row in shard_rows) != MODEL_WEIGHT_BYTES:
+    if len(shard_rows) != MODEL_SHARD_COUNT or sum(row["bytes"] for row in shard_rows) != expected_weight_bytes:
         raise AwqSmokeError("local AWQ shard geometry mismatch")
-    for row in rows:
-        path = model_dir / row["path"]
-        if not path.is_file() or path.stat().st_size != row["bytes"]:
-            raise AwqSmokeError(f"local model file missing or truncated: {row['path']}")
-        digest = hashlib.sha256()
-        with path.open("rb") as handle:
-            for chunk in iter(lambda: handle.read(16 * 1024 * 1024), b""):
-                digest.update(chunk)
-        if digest.hexdigest() != row["sha256"]:
-            raise AwqSmokeError(f"local model checksum mismatch: {row['path']}")
+    validate_local_files_cached(model_dir, rows, persist_marker=False)
     return {
         "model_revision": MODEL_REVISION,
         "model_shard_count": MODEL_SHARD_COUNT,
-        "model_weight_bytes": MODEL_WEIGHT_BYTES,
+        "model_weight_bytes": expected_weight_bytes,
         "model_manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+        "derived_student": derived_student,
+        "official_selective_w4": official_selective_w4,
+        "minimal_depth42_v2": minimal_depth42_v2,
+        "minimal_depth43_v2": minimal_depth43_v2,
+        "derived_identity": derived_identity,
     }
 
 
-def build_model_transfer_command() -> str:
+def build_model_transfer_command(target: str = "/workspace/model-awq") -> str:
     return (
-        "sudo rm -rf /workspace/model-awq && "
-        f"sudo install -d -o {SSH_USER} -g {SSH_USER} /workspace/model-awq && "
-        "tar -C /workspace/model-awq -xf -"
+        f"sudo rm -rf {target} && "
+        f"sudo install -d -o {SSH_USER} -g {SSH_USER} {target} && "
+        f"tar -C {target} -xf -"
     )
 
 
@@ -128,13 +203,13 @@ def probe_transfer(ip: str, key: Path) -> str:
     return expected
 
 
-def transfer_local_model(ip: str, key: Path, model_dir: Path) -> None:
+def transfer_local_model(ip: str, key: Path, model_dir: Path, target: str = "/workspace/model-awq", timeout: int = 900) -> None:
     # Reuse the tested streaming implementation with only the target path changed.
     import stock_control
     original = stock_control.build_model_transfer_command
-    stock_control.build_model_transfer_command = build_model_transfer_command
+    stock_control.build_model_transfer_command = lambda: build_model_transfer_command(target)
     try:
-        stream_local_model(ip, key, model_dir, timeout=900)
+        stream_local_model(ip, key, model_dir, timeout=timeout)
     finally:
         stock_control.build_model_transfer_command = original
 

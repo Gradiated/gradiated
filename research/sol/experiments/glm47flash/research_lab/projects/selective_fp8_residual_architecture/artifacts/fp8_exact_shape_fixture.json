@@ -1,0 +1,64 @@
+{
+  "ada_sm89_supported": true,
+  "cutlass_fp8_support_by_compute_capability": {
+    "80": false,
+    "86": false,
+    "89": true,
+    "90": true
+  },
+  "evidence_label": "measured pinned-container torch storage fixture and vLLM capability predicate; no GPU execution",
+  "fp8_dtype": "torch.float8_e4m3fn",
+  "limitation": "The fixture validates one-byte E4M3 storage and the pinned Ada dispatch predicate. It does not execute scaled GEMM because this container has no GPU.",
+  "shapes": {
+    "dense_layer_0_mlp": {
+      "bytes": 20971520,
+      "dtype": "torch.float8_e4m3fn",
+      "k": 2048,
+      "m": 16,
+      "n": 10240,
+      "shape": [
+        10240,
+        2048
+      ]
+    },
+    "lm_head_c16": {
+      "bytes": 317194240,
+      "dtype": "torch.float8_e4m3fn",
+      "k": 2048,
+      "m": 16,
+      "n": 154880,
+      "shape": [
+        154880,
+        2048
+      ]
+    },
+    "shared_expert_down": {
+      "bytes": 3145728,
+      "dtype": "torch.float8_e4m3fn",
+      "k": 1536,
+      "m": 16,
+      "n": 2048,
+      "shape": [
+        2048,
+        1536
+      ]
+    },
+    "shared_expert_gate_up": {
+      "bytes": 3145728,
+      "dtype": "torch.float8_e4m3fn",
+      "k": 2048,
+      "m": 16,
+      "n": 1536,
+      "shape": [
+        1536,
+        2048
+      ]
+    }
+  },
+  "torch": "2.9.1+cu129",
+  "vllm_fp8_config": {
+    "activation_scheme": "dynamic",
+    "class": "Fp8Config",
+    "min_capability": 75
+  }
+}

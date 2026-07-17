@@ -1,0 +1,9 @@
+{
+  "authenticated_inventory": {"disk_ids": [], "disk_names": [], "disks": 0, "instance_ids": [], "instance_names": [], "instances": 0},
+  "classification": "lowercase_rfc1123_create_preflight",
+  "create_argv_inspection": {"argv_sha256": "7002cba7bb3d7e99ed33ff0745c7f3c6c0bd3a7934323c7faaf8ec5a5ce55ca4", "disk_name": "gemma-l40s-head-final-20260717t065653z-boot", "hostname": "gemma-l40s-head-final-20260717t065653z", "identical": true, "length": 38, "lowercase": true, "max_length": 63, "name": "gemma-l40s-head-final-20260717t065653z", "platform": "gpu-l40s-a", "preset": "1gpu-8vcpu-32gb", "rfc1123_match": true, "rfc1123_pattern": "^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"},
+  "immutable_hashes": {"actual": {"benchmark": "de7f843a07e10322446a5e173ef60df7dc14763f0924102a2a612e34bdf0ab71", "controller": "b29ab7bddf8022cf4ca0ec9ff9d6fbbb4b0dbed2311f7e8489571e37df594cad", "wrapper": "e7a947f9124541e387af448c4a11653f7040b45c78c2ebe9e036fd94f91ec255"}, "expected": {"benchmark": "de7f843a07e10322446a5e173ef60df7dc14763f0924102a2a612e34bdf0ab71", "controller": "b29ab7bddf8022cf4ca0ec9ff9d6fbbb4b0dbed2311f7e8489571e37df594cad", "wrapper": "e7a947f9124541e387af448c4a11653f7040b45c78c2ebe9e036fd94f91ec255"}},
+  "pass": true,
+  "schema_version": 1,
+  "spec_sha256": "94f48c6a36e16bcc375e0b379af56e4e1fbc2dd0ea6a71c5a62abe7448a93bb7"
+}

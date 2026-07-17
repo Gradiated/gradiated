@@ -1,0 +1,24 @@
+{
+  "logical_student_layers": 39,
+  "model_class": "Glm4MoeLiteForCausalLM",
+  "model_type": "glm4_moe_lite",
+  "removed_layers": [
+    5,
+    10,
+    15,
+    20,
+    26,
+    31,
+    36,
+    41
+  ],
+  "runtime_source_requirement": "Transformers 5.3.0.dev0 model class plus PEFT target discovery; not available on this host",
+  "source_indexed_layers": 47,
+  "student_config_sha256": "07b92832975cb7d174660e88127e91b6269605fe0cfb1bd9bfd282056969be54",
+  "student_root": "/root/.cache/glm47flash-awq-student39-183247870f89",
+  "student_tokenizer_sha256": "353a3ff93723c098ac93fb593d4d1b93faede916fe502b005cd503871023e012",
+  "teacher_config_sha256": "dc9b97c7c9bed726a2e6939da4234d5c43abb3edec8812068c9a1af1dbc13acb",
+  "teacher_revision": "33faccf4c2ba82142214d0d4e16232a4e9ccfe10",
+  "teacher_root": "/root/.cache/glm47flash-bf16-33faccf4",
+  "tokenizer_bound": "student tokenizer is the only local tokenizer; teacher runtime must use this exact file"
+}

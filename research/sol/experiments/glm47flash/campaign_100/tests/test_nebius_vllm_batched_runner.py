@@ -56,17 +56,41 @@ class VllmBatchedRunnerTests(unittest.TestCase):
         self.assertEqual(totals["prefix_cache_queries_total"], 0)
         self.assertEqual(totals["prefix_cache_hits_total"], 0)
 
-    def test_frontier_concurrency_contract_is_sorted_unique_and_keeps_adjacent_c8_control(self):
+    def test_frontier_concurrency_contract_accepts_any_positive_increasing_frontier(self):
         self.assertEqual(module.parse_concurrencies("1,8,16"), (1, 8, 16))
+        self.assertEqual(module.parse_concurrencies("16,24,32"), (16, 24, 32))
+        self.assertNotIn('next(profile for profile in profiles if profile["concurrency"] == 8)', SOURCE.read_text())
         with self.assertRaises(module.BatchError):
-            module.parse_concurrencies("1,16")
+            module.parse_concurrencies("16,8")
         with self.assertRaises(module.BatchError):
             module.parse_concurrencies("1,8,8")
+        with self.assertRaises(module.BatchError):
+            module.parse_concurrencies("0,8")
+
+    def test_scheduling_knee_preserves_duplicate_c32_anchors_with_unique_artifact_ids(self):
+        values = module.parse_concurrencies("32,24,28,30,32")
+        self.assertEqual(values, (32, 24, 28, 30, 32))
+        self.assertEqual(module.arm_identities(values), ("c32_pre", "c24", "c28", "c30", "c32_post"))
+        self.assertEqual(len(set(module.arm_identities(values))), 5)
+
+    def test_scheduling_knee_uses_two_complete_waves_per_ordered_arm(self):
+        for concurrency in (32, 24, 28, 30, 32):
+            self.assertEqual(module.requests_for_concurrency(concurrency), concurrency * 2)
 
     def test_higher_frontier_profiles_use_two_full_batches(self):
         self.assertEqual(module.requests_for_concurrency(1), 4)
         self.assertEqual(module.requests_for_concurrency(8), 16)
         self.assertEqual(module.requests_for_concurrency(16), 32)
+
+    def test_stream_token_ids_are_retained_as_an_order_free_histogram(self):
+        histogram = {}
+        self.assertEqual(module.accumulate_output_token_histogram(histogram, [5, 2, 5]), 3)
+        self.assertEqual(histogram, {2: 1, 5: 2})
+        with self.assertRaises(module.BatchError):
+            module.accumulate_output_token_histogram(histogram, [5, "invalid"])
+        source = SOURCE.read_text()
+        self.assertIn('"output_token_histogram"', source)
+        self.assertIn('"output_token_ids_complete"', source)
 
 
 if __name__ == "__main__":

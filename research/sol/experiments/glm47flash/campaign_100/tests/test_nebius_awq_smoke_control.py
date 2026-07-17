@@ -1,4 +1,6 @@
 import json
+import hashlib
+import os
 import sys
 import tempfile
 import unittest
@@ -16,8 +18,12 @@ from awq_smoke_control import (  # noqa: E402
     MODEL_REVISION,
     MODEL_SHARD_COUNT,
     MODEL_WEIGHT_BYTES,
+    DERIVED_AWQ_IDENTITIES,
+    MINIMAL_DEPTH42_V2_IDENTITY,
+    MINIMAL_DEPTH43_V2_IDENTITY,
     build_container_command,
     build_model_transfer_command,
+    derived_awq_identity,
     validate_local_model,
 )
 
@@ -64,6 +70,62 @@ class NebiusAwqSmokeControlTests(unittest.TestCase):
             }))
             with self.assertRaisesRegex(RuntimeError, "revision"):
                 validate_local_model(root)
+
+    def test_derived_identity_map_cross_rejects_known_variants_and_drift(self):
+        self.assertEqual(
+            set(DERIVED_AWQ_IDENTITIES),
+            {"official-selective-w4", "student39", "student42"},
+        )
+        for name, identity in DERIVED_AWQ_IDENTITIES.items():
+            self.assertEqual(derived_awq_identity(identity), name)
+            drift = {**identity, "weight_bytes": identity["weight_bytes"] + 1}
+            self.assertIsNone(derived_awq_identity(drift))
+        self.assertNotEqual(DERIVED_AWQ_IDENTITIES["student39"], DERIVED_AWQ_IDENTITIES["student42"])
+
+    def test_remote_identity_gate_includes_only_the_bound_clean_v2_root(self):
+        script = (ROOT / "nebius" / "remote_vllm_awq_smoke.sh").read_text()
+        self.assertIn('"student39"', script)
+        self.assertIn('"student42"', script)
+        self.assertIn(MINIMAL_DEPTH42_V2_IDENTITY["manifest_sha256"], script)
+        self.assertIn(MINIMAL_DEPTH42_V2_IDENTITY["checksum_list_sha256"], script)
+        self.assertIn(MINIMAL_DEPTH43_V2_IDENTITY["manifest_sha256"], script)
+        self.assertIn(MINIMAL_DEPTH43_V2_IDENTITY["checksum_list_sha256"], script)
+        self.assertIn("derived_identity is None", script)
+
+    def test_clean_v2_validator_is_exact_and_does_not_mutate_candidate(self):
+        root = Path("/root/.cache/glm47flash-awq-minimal-depth42-v2-5dbf26dc16a1")
+        if not root.is_dir():
+            self.skipTest("clean v2 root is unavailable")
+        before = {path.name: (path.stat().st_size, path.stat().st_mtime_ns) for path in root.iterdir()}
+        identities = validate_local_model(root)
+        after = {path.name: (path.stat().st_size, path.stat().st_mtime_ns) for path in root.iterdir()}
+        self.assertEqual(identities["derived_identity"], "minimal-depth42-v2")
+        self.assertEqual(before, after)
+        stale = Path("/root/.cache/glm47flash-awq-minimal-depth-4c84badbce22")
+        if stale.exists():
+            with self.assertRaises(RuntimeError):
+                validate_local_model(stale)
+
+    def test_depth43_v2_validator_is_exact_and_does_not_mutate_candidate(self):
+        root = Path("/root/.cache/glm47flash-awq-minimal-depth43-v2-5820e0c57965")
+        if not root.is_dir():
+            self.skipTest("depth43 v2 root is unavailable")
+        before = {path.name: (path.stat().st_size, path.stat().st_mtime_ns) for path in root.iterdir()}
+        identities = validate_local_model(root)
+        after = {path.name: (path.stat().st_size, path.stat().st_mtime_ns) for path in root.iterdir()}
+        self.assertEqual(identities["derived_identity"], "minimal-depth43-v2")
+        self.assertEqual(before, after)
+
+    def test_validator_rejects_symlinked_payload(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "target"
+            target.write_bytes(b"payload")
+            link = root / "model"
+            os.symlink(target, link)
+            with self.assertRaisesRegex(RuntimeError, "symlink"):
+                from session_staging import validate_local_files_cached
+                validate_local_files_cached(root, [{"path": "model", "bytes": 7, "sha256": hashlib.sha256(b"payload").hexdigest()}])
 
 
 if __name__ == "__main__":

@@ -1,0 +1,20 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "Directly measure actual pinned-vLLM W4 Marlin against a matched actual online-FP8 comparator at every active Gemma TP=1 text-linear shape on one L40S.",
+  "next_action": "Closed. Preserve both paid/local terminals and exact-image source discovery. Do not repair, retry, or open another W4 consumer bridge from this lineage.",
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0.5,
+  "wall_clock_budget_minutes": 150,
+  "provider_exposure_budget_minutes": 40,
+  "provider_exposure_remaining_minutes": 20,
+  "compute_budget": "0.68 L40S GPU-hours and 6 local CPU-hours",
+  "storage_budget": "one 100 GiB provider disk at a time; 50 GiB bounded local image temporary plus 6 GiB retained artifacts",
+  "active_session": null,
+  "last_result_classification": "closed_after_regenerated_terminal_failed_exact_consumer_cardinality_gate_no_final_allocation",
+  "runtime_correction_artifact": "artifacts/runtime-correction-final-20260717T061647Z/runtime-correction-terminal.json",
+  "runtime_inspection_artifact": "artifacts/runtime-correction-20260717T060740Z/exact-image-inspection.json",
+  "last_terminal_artifact": "artifacts/gemma-w4-marlin-20260717t054054z/summary.json",
+  "measured_cost_usd_derived": 0.139461523,
+  "terminal_artifact": "artifacts/runtime-correction-final-20260717T061647Z/runtime-correction-terminal.json"
+}

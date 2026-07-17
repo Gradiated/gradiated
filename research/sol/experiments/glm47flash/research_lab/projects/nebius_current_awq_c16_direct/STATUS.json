@@ -1,0 +1,23 @@
+{
+  "status": "complete",
+  "priority": 120,
+  "summary": "Measured current-AWQ L40S c16 at 535.286 output tok/s versus c8 at 352.112 (+52.02%), or $0.445308/M output tokens; the background cost gate is met.",
+  "next_action": "Close this batching geometry and assign the next provider session to a materially different software or model intervention; preserve the inherited absolute-quality limitation.",
+  "provider_mutation": "released_cleanup_verified",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": null,
+  "last_experiment": "nebius_current_awq_c16_direct_2026-07-15",
+  "controller_state": "terminal_cleanup_verified",
+  "terminal_artifact": "artifacts/nebius_current_awq_c16_direct_2026-07-15-r2/summary.json",
+  "result_classification": "measured_background_cost_promotion_with_inherited_absolute_quality_limit",
+  "promotion": {
+    "c8_output_tokens_per_second": 352.11187024973486,
+    "c16_output_tokens_per_second": 535.2861037029285,
+    "c16_throughput_gain_percent": 52.02160135166063,
+    "c16_usd_per_million_output_tokens": 0.4453081746916901,
+    "background_cost_gate_usd_per_million": 0.6,
+    "interactive_ttft_screen": "failed_at_c16_but_not_a_background_acceptance_gate"
+  },
+  "launcher_fix": "persist redacted create diagnostics and accept authenticated named-instance reconciliation after nonzero CLI exit"
+}

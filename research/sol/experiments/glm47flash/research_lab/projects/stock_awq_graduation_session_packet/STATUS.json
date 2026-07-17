@@ -1,0 +1,41 @@
+{
+  "status": "complete",
+  "priority": 265,
+  "summary": "QUALITY_CONTRACT_CLOSE: no frozen post-development candidate/holdout policy or disjoint holdout exists, and the available V2 runner is BF16-only; an AWQ-only session cannot qualify.",
+  "next_action": "Closed. A future portfolio decision must first freeze the holdout/NLL/paired-BF16 policy and content, then bind actual BF16-control and AWQ-candidate captures; do not relabel development evidence.",
+  "provider_mutation": "prohibited_zero_cost_packet_only",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 600,
+  "resource_cap": {
+    "peak_rss_gib": 6,
+    "new_artifacts_mib": 32
+  },
+  "allowed_results": [
+    "GRADUATION_PACKET_READY",
+    "QUALITY_CONTRACT_CLOSE",
+    "WALLCLOCK_CLOSE",
+    "EXECUTION_PATH_CLOSE"
+  ],
+  "future_execution_contract": {
+    "provider_creates": 1,
+    "retries": 0,
+    "durable_sequential_owner_watchdog": true,
+    "quality_failure_action": "archive_then_immediate_cleanup_skip_methodology",
+    "quality_pass_action": "run_every_methodology_and_internal_control_arm_then_cleanup",
+    "partial_arm_policy": "does_not_satisfy_graduation"
+  },
+  "stop_rule": "One terminal packet-ready or typed close result in this offline turn; no provider call, model call, service, controller successor, or later readiness project.",
+  "quality_policy": "Do not transfer the BF16 development pass into candidate/holdout eligibility; preserve the exact frozen V2 policy and close if required evidence is absent."
+  ,"decision": "QUALITY_CONTRACT_CLOSE",
+  "terminal_artifact": "artifacts/QUALITY_CONTRACT_CLOSE_2026-07-16.json",
+  "result_classification": "frozen_quality_contract_missing_required_holdout_and_awq_admission",
+  "active_session": null,
+  "provider_calls": 0,
+  "model_calls": 0,
+  "spend_usd": 0.0
+  ,"director_correction": {
+    "applied_utc": "2026-07-16T12:03:49Z",
+    "artifact_preserved": true,
+    "correction": "The BF16 preregistration forbids AWQ only inside that development run, not permanently. The binding campaign blocker is the absence of a frozen post-development eligibility policy and disjoint holdout, including holdout-specific NLL thresholds and paired BF16 control outputs. The later zero-phase V35 attempt is scientifically null and not support for the AWQ close."
+  }
+}

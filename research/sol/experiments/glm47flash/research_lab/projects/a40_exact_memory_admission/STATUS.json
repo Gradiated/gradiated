@@ -1,0 +1,12 @@
+{
+  "status": "complete",
+  "priority": 100,
+  "summary": "Exact AWQ/vLLM analysis admits A40 c8/c16: conservative headroom is 10.551/6.833 GiB; c32 needs exact load. No physical lower bound kills the 166.819/176.968 tok/s economic targets.",
+  "next_action": "Only after authenticated TensorDock account/funding and delete/direct-lookup authority, run one exact-load c8/c16 measurement; do not pursue c32 first.",
+  "provider_mutation": "prohibited_zero_cost_a40_admission",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": null,
+  "result_artifact": "A40_ADMISSION_RESULT.json",
+  "decision": "admit_c8_c16_then_exact_load_authority_gate"
+}

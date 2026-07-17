@@ -1,0 +1,24 @@
+{
+  "node_id": "TA_kwDOLCAjRtoAKDY1OGUwYTk0MmVjNzcxYWVlZWYxYjFhZGY0MTgwNzY0Y2FjZDc5YjI",
+  "sha": "658e0a942ec771aeeef1b1adf4180764cacd79b2",
+  "url": "https://api.github.com/repos/sgl-project/sglang/git/tags/658e0a942ec771aeeef1b1adf4180764cacd79b2",
+  "tagger": {
+    "name": "Baizhou Zhang",
+    "email": "sobereddiezhang@gmail.com",
+    "date": "2026-07-14T04:12:27Z"
+  },
+  "object": {
+    "sha": "0b3bb0cbe31873994c9f989fddfe2f87ca839fdd",
+    "type": "commit",
+    "url": "https://api.github.com/repos/sgl-project/sglang/git/commits/0b3bb0cbe31873994c9f989fddfe2f87ca839fdd"
+  },
+  "tag": "v0.5.15.post1",
+  "message": "bump to v0.5.15.post1\n",
+  "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null,
+    "verified_at": null
+  }
+}

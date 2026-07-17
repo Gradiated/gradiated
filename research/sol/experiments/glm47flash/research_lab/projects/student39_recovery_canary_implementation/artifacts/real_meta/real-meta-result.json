@@ -1,0 +1,45 @@
+{
+  "backend": "real_transformers_peft_meta",
+  "base_image": "sha256:4672d4aa966cf5f4d437d9f7fd9fb4d1b662a067455f3db46d2ab6cce3f3f62c",
+  "bridge_hook_count": 16,
+  "cache_sha256": "31e0f8405cf028c554b9ca3322580bac3c71b7beb58f7f1f47371f3c89ef5303",
+  "cache_shapes": {
+    "bridge_hidden_bf16": [
+      1,
+      1,
+      2048
+    ],
+    "top64_ids": [
+      1,
+      1,
+      64
+    ],
+    "top64_logits_bf16": [
+      1,
+      1,
+      64
+    ]
+  },
+  "checkpoint_reload": true,
+  "checkpoint_sha256": "4ff0946493d24bf012985a373370ef810f173fdbdf07c397e014bb951d6c9aea",
+  "deterministic_cache_hash": true,
+  "frozen_parameters": 24860900096,
+  "lora_module_count": 1395,
+  "loss": {
+    "bridge_mse": 1.9136749505996704,
+    "finite": true,
+    "kl": 1.2771906852722168,
+    "total": 1.755609393119812
+  },
+  "model_class": "PeftModelForCausalLM",
+  "module_count": 2335,
+  "negative_controls": [
+    "cache mapping drift",
+    "checkpoint mapping drift"
+  ],
+  "no_cuda": true,
+  "resume_step": 3,
+  "student_layers": 39,
+  "teacher_layers": 47,
+  "trainable_parameters": 11188224
+}

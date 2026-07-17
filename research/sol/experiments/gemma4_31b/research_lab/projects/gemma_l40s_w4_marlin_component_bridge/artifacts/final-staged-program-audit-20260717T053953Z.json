@@ -1,0 +1,27 @@
+{
+  "checks": {
+    "actual_fp8_method_same_config_context": true,
+    "actual_w4_method_and_marlin_kernel_gate": true,
+    "aggregate_and_25_percent_gate": true,
+    "all_six_shapes_and_m_1_2_4_8_16": true,
+    "conditional_parallel_lm_head_real_consumer": true,
+    "nonzero_typed_failures": true,
+    "oracle_consumes_timed_consumer_output": true,
+    "shared_owner_sequences_typed_trigger_and_cleanup": true,
+    "stage_terminal_and_internal_manifest": true,
+    "timing_memory_and_useful_gpu_required": true
+  },
+  "classification": "final_staged_scientific_program_audit",
+  "controller": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py",
+  "controller_change_explanation": "Current shared upstream adds parameterized pinned image/staged files plus typed primary/conditional retrieval and VerifiedRetainedOwner cleanup required by this project.",
+  "controller_sha256_current": "1c7448d956d9c65eaf64494bf3bbd16afcf813e30f57604a36affc873d23af2b",
+  "controller_sha256_prior_project": "1c7448d956d9c65eaf64494bf3bbd16afcf813e30f57604a36affc873d23af2b",
+  "pass": true,
+  "schema_version": 1,
+  "staged_files": {
+    "remote_parallel_lm_head_stage.sh": "7d4181d4fda2b6d00891f0dff05c3c2d0ac15ce31b81e1b43464edebd57ad6be",
+    "remote_w4_fp8_stage.sh": "b8f1894742d0a6c9c460d63728a6ff33a9c8195d64dbd0fc2bd975842685713b",
+    "vllm_parallel_lm_head_bench.py": "c6ae06c18adb7d366f08f5617b19529ecae3df3788dd464928aaf6fe25c9b317",
+    "vllm_w4_fp8_microbench.py": "36337f927b6ae01e747a06b9350c25daf5c147b8e52dee6819d1b2c614cb4230"
+  }
+}

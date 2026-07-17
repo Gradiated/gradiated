@@ -1,0 +1,7 @@
+{
+  "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-vllm-transfer-20260717-watchdog.service",
+  "deadline_epoch": 1784291808.3691683,
+  "main_pid": 1989061,
+  "unit": "gemma-vllm-transfer-20260717-watchdog.service",
+  "unit_manager": "user"
+}

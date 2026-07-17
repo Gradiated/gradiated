@@ -1,0 +1,117 @@
+Synchronizing state of docker.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install enable docker
+time="2026-07-16T19:49:08Z" level=info msg="Loading config from /etc/docker/daemon.json"
+time="2026-07-16T19:49:08Z" level=info msg="Wrote updated config to /etc/docker/daemon.json"
+time="2026-07-16T19:49:08Z" level=info msg="It is recommended that docker daemon be restarted."
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 352B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/vllm/vllm-openai:v0.15.0@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/3] FROM docker.io/vllm/vllm-openai:v0.15.0@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543
+#4 DONE 97.3s
+
+#5 [2/3] RUN python3 -m pip install --no-cache-dir --upgrade https://github.com/huggingface/transformers/archive/1618d44b9295361607ec74d7be860ba886aac039.tar.gz
+#5 0.422 Collecting https://github.com/huggingface/transformers/archive/1618d44b9295361607ec74d7be860ba886aac039.tar.gz
+#5 1.123   Downloading https://github.com/huggingface/transformers/archive/1618d44b9295361607ec74d7be860ba886aac039.tar.gz
+#5 3.613      - 18.6 MB 7.6 MB/s 0:00:02
+#5 5.238   Installing build dependencies: started
+#5 6.447   Installing build dependencies: finished with status 'done'
+#5 6.447   Getting requirements to build wheel: started
+#5 7.057   Getting requirements to build wheel: finished with status 'done'
+#5 7.058   Preparing metadata (pyproject.toml): started
+#5 7.536   Preparing metadata (pyproject.toml): finished with status 'done'
+#5 7.719 Collecting huggingface-hub<2.0,>=1.3.0 (from transformers==5.3.0.dev0)
+#5 7.774   Downloading huggingface_hub-1.23.0-py3-none-any.whl.metadata (14 kB)
+#5 7.789 Requirement already satisfied: numpy>=1.17 in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (2.2.6)
+#5 7.789 Requirement already satisfied: packaging>=20.0 in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (26.0)
+#5 7.790 Requirement already satisfied: pyyaml>=5.1 in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (6.0.3)
+#5 7.790 Requirement already satisfied: regex!=2019.12.17 in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (2026.1.15)
+#5 7.791 Requirement already satisfied: tokenizers<=0.23.0,>=0.22.0 in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (0.22.2)
+#5 7.791 Requirement already satisfied: typer in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (0.21.1)
+#5 7.791 Requirement already satisfied: safetensors>=0.4.3 in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (0.7.0)
+#5 7.791 Requirement already satisfied: tqdm>=4.27 in /usr/local/lib/python3.12/dist-packages (from transformers==5.3.0.dev0) (4.67.1)
+#5 7.805 Collecting click<9.0.0,>=8.4.2 (from huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0)
+#5 7.808   Downloading click-8.4.2-py3-none-any.whl.metadata (2.6 kB)
+#5 7.809 Requirement already satisfied: filelock>=3.10.0 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (3.20.3)
+#5 7.810 Requirement already satisfied: fsspec>=2023.5.0 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (2026.1.0)
+#5 7.839 Collecting hf-xet<2.0.0,>=1.5.1 (from huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0)
+#5 7.841   Downloading hf_xet-1.5.2-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (4.9 kB)
+#5 7.843 Requirement already satisfied: httpx<1,>=0.23.0 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (0.28.1)
+#5 7.844 Requirement already satisfied: typing-extensions>=4.1.0 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (4.15.0)
+#5 7.846 Requirement already satisfied: anyio in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (4.12.1)
+#5 7.847 Requirement already satisfied: certifi in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (2026.1.4)
+#5 7.847 Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (1.0.9)
+#5 7.847 Requirement already satisfied: idna in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (3.11)
+#5 7.849 Requirement already satisfied: h11>=0.16 in /usr/local/lib/python3.12/dist-packages (from httpcore==1.*->httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.3.0->transformers==5.3.0.dev0) (0.16.0)
+#5 7.888 Requirement already satisfied: shellingham>=1.3.0 in /usr/local/lib/python3.12/dist-packages (from typer->transformers==5.3.0.dev0) (1.5.4)
+#5 7.889 Requirement already satisfied: rich>=10.11.0 in /usr/local/lib/python3.12/dist-packages (from typer->transformers==5.3.0.dev0) (14.3.1)
+#5 7.890 Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.12/dist-packages (from rich>=10.11.0->typer->transformers==5.3.0.dev0) (4.0.0)
+#5 7.891 Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.12/dist-packages (from rich>=10.11.0->typer->transformers==5.3.0.dev0) (2.19.2)
+#5 7.893 Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.12/dist-packages (from markdown-it-py>=2.2.0->rich>=10.11.0->typer->transformers==5.3.0.dev0) (0.1.2)
+#5 7.899 Downloading huggingface_hub-1.23.0-py3-none-any.whl (770 kB)
+#5 7.930    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 770.3/770.3 kB 130.7 MB/s  0:00:00
+#5 7.933 Downloading click-8.4.2-py3-none-any.whl (119 kB)
+#5 7.936 Downloading hf_xet-1.5.2-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.4 MB)
+#5 7.956    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 245.8 MB/s  0:00:00
+#5 7.968 Building wheels for collected packages: transformers
+#5 7.969   Building wheel for transformers (pyproject.toml): started
+#5 11.00   Building wheel for transformers (pyproject.toml): finished with status 'done'
+#5 11.02   Created wheel for transformers: filename=transformers-5.3.0.dev0-py3-none-any.whl size=11513733 sha256=d8754d8934222530906b097629c166b608f04220e4b6849c593305c80baa2cb7
+#5 11.02   Stored in directory: /tmp/pip-ephem-wheel-cache-7ue803mu/wheels/a0/74/af/7986843ee4caa8dd20b7d8c5445fca82b340d02b978caab59d
+#5 11.03 Successfully built transformers
+#5 11.31 Installing collected packages: hf-xet, click, huggingface-hub, transformers
+#5 11.31   Attempting uninstall: hf-xet
+#5 11.31     Found existing installation: hf-xet 1.2.0
+#5 11.31     Uninstalling hf-xet-1.2.0:
+#5 11.33       Successfully uninstalled hf-xet-1.2.0
+#5 11.40   Attempting uninstall: click
+#5 11.40     Found existing installation: click 8.3.1
+#5 11.41     Uninstalling click-8.3.1:
+#5 11.42       Successfully uninstalled click-8.3.1
+#5 11.48   Attempting uninstall: huggingface-hub
+#5 11.49     Found existing installation: huggingface-hub 0.36.0
+#5 11.49     Uninstalling huggingface-hub-0.36.0:
+#5 11.53       Successfully uninstalled huggingface-hub-0.36.0
+#5 11.89   Attempting uninstall: transformers
+#5 11.90     Found existing installation: transformers 4.57.6
+#5 12.01     Uninstalling transformers-4.57.6:
+#5 12.73       Successfully uninstalled transformers-4.57.6
+#5 18.43 
+#5 18.44 ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+#5 18.44 vllm 0.15.0 requires transformers<5,>=4.56.0, but you have transformers 5.3.0.dev0 which is incompatible.
+#5 18.44 Successfully installed click-8.4.2 hf-xet-1.5.2 huggingface-hub-1.23.0 transformers-5.3.0.dev0
+#5 18.44 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#5 18.53 
+#5 18.53 [notice] A new release of pip is available: 25.3 -> 26.1.2
+#5 18.53 [notice] To update, run: python3 -m pip install --upgrade pip
+#5 DONE 20.3s
+
+#6 [3/3] RUN python3 -m pip install --no-cache-dir tiktoken==0.12.0
+#6 0.404 Requirement already satisfied: tiktoken==0.12.0 in /usr/local/lib/python3.12/dist-packages (0.12.0)
+#6 0.405 Requirement already satisfied: regex>=2022.1.18 in /usr/local/lib/python3.12/dist-packages (from tiktoken==0.12.0) (2026.1.15)
+#6 0.405 Requirement already satisfied: requests>=2.26.0 in /usr/local/lib/python3.12/dist-packages (from tiktoken==0.12.0) (2.32.5)
+#6 0.408 Requirement already satisfied: charset_normalizer<4,>=2 in /usr/local/lib/python3.12/dist-packages (from requests>=2.26.0->tiktoken==0.12.0) (3.4.4)
+#6 0.408 Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.12/dist-packages (from requests>=2.26.0->tiktoken==0.12.0) (3.11)
+#6 0.409 Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.12/dist-packages (from requests>=2.26.0->tiktoken==0.12.0) (2.6.3)
+#6 0.409 Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.12/dist-packages (from requests>=2.26.0->tiktoken==0.12.0) (2026.1.4)
+#6 0.704 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#6 0.821 
+#6 0.821 [notice] A new release of pip is available: 25.3 -> 26.1.2
+#6 0.821 [notice] To update, run: python3 -m pip install --upgrade pip
+#6 DONE 0.9s
+
+#7 exporting to image
+#7 exporting layers
+#7 exporting layers 0.6s done
+#7 writing image sha256:4b37e07207839bb462e7dc84cd2b7345e9ce63184b9399f85699c83038b34a88 done
+#7 naming to docker.io/library/glm-vllm:0.15.0-transformers-1618d44 done
+#7 DONE 0.6s

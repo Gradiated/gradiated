@@ -1,0 +1,1585 @@
+{
+  "assumption": {
+    "cogs_ratio_to_cheapest_schedule": 1.25,
+    "demand": "market volume and workload mix remain constant",
+    "fitness": "empirical distribution among currently stable incumbent endpoints",
+    "price_change": "input, cache-read, and output prices scale proportionally",
+    "routing_status": "stable; 99% clears the documented 95% normal-routing gate",
+    "tool_request_fraction_proxy": 0.5905305934902653,
+    "uptime": ">=99%"
+  },
+  "cheapest_common_mix_price_per_million": 0.3442777495814474,
+  "cheapest_listed_provider": "Inceptron",
+  "cheapest_listed_schedule_per_million": {
+    "cache": 0.16999999999999998,
+    "input": 0.94,
+    "output": 2.9000000000000004
+  },
+  "endpoint_age_and_share_snapshot": [
+    {
+      "age_days": 29.745963310763887,
+      "created_at": "2026-06-16T18:12:57.786Z",
+      "current_status": 0,
+      "provider": "DeepInfra",
+      "provider_token_share": 2.243454929944715e-06,
+      "requests_last_30_minutes": 85,
+      "three_day_mean_uptime_percent": 98.28097910855514
+    },
+    {
+      "age_days": 19.84067023240741,
+      "created_at": "2026-06-26T15:56:35.108Z",
+      "current_status": 0,
+      "provider": "Inceptron",
+      "provider_token_share": 0.004699093368442285,
+      "requests_last_30_minutes": 6144,
+      "three_day_mean_uptime_percent": 95.57682829963466
+    },
+    {
+      "age_days": 29.354057709305554,
+      "created_at": "2026-06-17T03:37:18.430Z",
+      "current_status": 0,
+      "provider": "StreamLake",
+      "provider_token_share": 0.2927202239853447,
+      "requests_last_30_minutes": 80001,
+      "three_day_mean_uptime_percent": 99.6813446414351
+    },
+    {
+      "age_days": 27.990448774143516,
+      "created_at": "2026-06-18T12:20:54.242Z",
+      "current_status": 0,
+      "provider": "Baidu Qianfan",
+      "provider_token_share": 0.010991347962843942,
+      "requests_last_30_minutes": 1426,
+      "three_day_mean_uptime_percent": 99.66127652300692
+    },
+    {
+      "age_days": 22.87153504732639,
+      "created_at": "2026-06-23T15:12:08.388Z",
+      "current_status": 0,
+      "provider": "DigitalOcean",
+      "provider_token_share": 0.003015176036662562,
+      "requests_last_30_minutes": 2013,
+      "three_day_mean_uptime_percent": 97.73551058097087
+    },
+    {
+      "age_days": 28.312699202453704,
+      "created_at": "2026-06-18T04:36:51.805Z",
+      "current_status": 0,
+      "provider": "Wafer",
+      "provider_token_share": 0.005239346971928048,
+      "requests_last_30_minutes": 1149,
+      "three_day_mean_uptime_percent": 99.62434181655716
+    },
+    {
+      "age_days": 20.84379640155093,
+      "created_at": "2026-06-25T15:52:05.007Z",
+      "current_status": 0,
+      "provider": "Alibaba Cloud Int.",
+      "provider_token_share": 0.33554550562941143,
+      "requests_last_30_minutes": 37375,
+      "three_day_mean_uptime_percent": 99.77111938046495
+    },
+    {
+      "age_days": 28.984065730277777,
+      "created_at": "2026-06-17T12:30:05.737Z",
+      "current_status": 0,
+      "provider": "AtlasCloud",
+      "provider_token_share": 0.02564866315738324,
+      "requests_last_30_minutes": 6802,
+      "three_day_mean_uptime_percent": 99.50262570479583
+    },
+    {
+      "age_days": 23.902332211782408,
+      "created_at": "2026-06-22T14:27:47.513Z",
+      "current_status": 0,
+      "provider": "AkashML",
+      "provider_token_share": 0.00017526742112318082,
+      "requests_last_30_minutes": 381,
+      "three_day_mean_uptime_percent": 98.83730799685365
+    },
+    {
+      "age_days": 29.288371806712963,
+      "created_at": "2026-06-17T05:11:53.692Z",
+      "current_status": 0,
+      "provider": "SiliconFlow",
+      "provider_token_share": 0.06733657794052046,
+      "requests_last_30_minutes": 15368,
+      "three_day_mean_uptime_percent": 98.15272644329877
+    },
+    {
+      "age_days": 22.814599688680556,
+      "created_at": "2026-06-23T16:34:07.603Z",
+      "current_status": 0,
+      "provider": "Weights & Biases",
+      "provider_token_share": 0.0032351157864303976,
+      "requests_last_30_minutes": 5132,
+      "three_day_mean_uptime_percent": 99.86463350382915
+    },
+    {
+      "age_days": 29.85675431834491,
+      "created_at": "2026-06-16T15:33:25.443Z",
+      "current_status": 0,
+      "provider": "Z.ai",
+      "provider_token_share": 0.09698034653782402,
+      "requests_last_30_minutes": 18942,
+      "three_day_mean_uptime_percent": 99.6232953150273
+    },
+    {
+      "age_days": 29.62445669105324,
+      "created_at": "2026-06-16T21:07:55.958Z",
+      "current_status": 0,
+      "provider": "Fireworks",
+      "provider_token_share": 0.04771534072029779,
+      "requests_last_30_minutes": 7182,
+      "three_day_mean_uptime_percent": 99.58312562314993
+    },
+    {
+      "age_days": 29.85367714246528,
+      "created_at": "2026-06-16T15:37:51.311Z",
+      "current_status": 0,
+      "provider": "Cloudflare",
+      "provider_token_share": 0.002638619770038776,
+      "requests_last_30_minutes": 444,
+      "three_day_mean_uptime_percent": 99.57061577788342
+    },
+    {
+      "age_days": 29.829301077673612,
+      "created_at": "2026-06-16T16:12:57.403Z",
+      "current_status": 0,
+      "provider": "Friendli",
+      "provider_token_share": 0.012994354502831368,
+      "requests_last_30_minutes": 3983,
+      "three_day_mean_uptime_percent": 99.6016890068857
+    },
+    {
+      "age_days": 29.77013474667824,
+      "created_at": "2026-06-16T17:38:09.374Z",
+      "current_status": 0,
+      "provider": "Parasail",
+      "provider_token_share": 0.0043169528899598296,
+      "requests_last_30_minutes": 1605,
+      "three_day_mean_uptime_percent": 99.02049897104187
+    },
+    {
+      "age_days": 28.680220614756944,
+      "created_at": "2026-06-17T19:47:37.955Z",
+      "current_status": 0,
+      "provider": "Phala",
+      "provider_token_share": 0.0001879592443803419,
+      "requests_last_30_minutes": 434,
+      "three_day_mean_uptime_percent": 93.05616969524243
+    },
+    {
+      "age_days": 29.704370255983797,
+      "created_at": "2026-06-16T19:12:51.426Z",
+      "current_status": 0,
+      "provider": "Baseten",
+      "provider_token_share": 0.003377720724319708,
+      "requests_last_30_minutes": 9646,
+      "three_day_mean_uptime_percent": 99.84484077101598
+    },
+    {
+      "age_days": 29.75971475832176,
+      "created_at": "2026-06-16T17:53:09.661Z",
+      "current_status": 0,
+      "provider": "io.net",
+      "provider_token_share": 0.00022962737385611308,
+      "requests_last_30_minutes": 368,
+      "three_day_mean_uptime_percent": 98.64850194563594
+    },
+    {
+      "age_days": 20.58481931851852,
+      "created_at": "2026-06-25T22:05:00.627Z",
+      "current_status": 0,
+      "provider": "Fireworks Fast",
+      "provider_token_share": 0.021761893053822944,
+      "requests_last_30_minutes": 3244,
+      "three_day_mean_uptime_percent": 99.79902347767283
+    },
+    {
+      "age_days": 20.641438010671294,
+      "created_at": "2026-06-25T20:43:28.772Z",
+      "current_status": 0,
+      "provider": "Wafer Fast",
+      "provider_token_share": 0.0001327370598734856,
+      "requests_last_30_minutes": 541,
+      "three_day_mean_uptime_percent": 99.89883822804005
+    },
+    {
+      "age_days": 29.81185885560185,
+      "created_at": "2026-06-16T16:38:04.411Z",
+      "current_status": -2,
+      "provider": "NovitaAI",
+      "provider_token_share": 0.03173798342084533,
+      "requests_last_30_minutes": 17545,
+      "three_day_mean_uptime_percent": 98.74163059451219
+    },
+    {
+      "age_days": 29.763355649641206,
+      "created_at": "2026-06-16T17:47:55.088Z",
+      "current_status": -2,
+      "provider": "GMICloud",
+      "provider_token_share": 0.004745294095879403,
+      "requests_last_30_minutes": 2011,
+      "three_day_mean_uptime_percent": 91.05728513865145
+    },
+    {
+      "age_days": 18.645935765393517,
+      "created_at": "2026-06-27T20:37:00.166Z",
+      "current_status": -2,
+      "provider": "Ambient",
+      "provider_token_share": 0.0009732919365405089,
+      "requests_last_30_minutes": 2292,
+      "three_day_mean_uptime_percent": 98.94875834208759
+    },
+    {
+      "age_days": 25.62910602008102,
+      "created_at": "2026-06-20T21:01:14.256Z",
+      "current_status": -2,
+      "provider": "Decart",
+      "provider_token_share": 0.018841291331676724,
+      "requests_last_30_minutes": 298,
+      "three_day_mean_uptime_percent": 92.60036888912254
+    },
+    {
+      "age_days": 29.763133983067128,
+      "created_at": "2026-06-16T17:48:14.240Z",
+      "current_status": -2,
+      "provider": "Venice",
+      "provider_token_share": 0.0006122206128118724,
+      "requests_last_30_minutes": 819,
+      "three_day_mean_uptime_percent": 98.42261037336417
+    },
+    {
+      "age_days": 25.765878369664353,
+      "created_at": "2026-06-20T17:44:17.125Z",
+      "current_status": -2,
+      "provider": "Together",
+      "provider_token_share": 0.006735869818320627,
+      "requests_last_30_minutes": 1846,
+      "three_day_mean_uptime_percent": 98.21583619592847
+    },
+    {
+      "age_days": 25.22293701552083,
+      "created_at": "2026-06-21T06:46:07.258Z",
+      "current_status": -5,
+      "provider": "Morph",
+      "provider_token_share": 1.598691782135102e-05,
+      "requests_last_30_minutes": 752,
+      "three_day_mean_uptime_percent": 96.62791169860364
+    }
+  ],
+  "endpoint_count_before_entry": 28,
+  "evidence_window": {
+    "complete_utc_days": 7,
+    "end": "2026-07-15",
+    "start": "2026-07-09"
+  },
+  "fitness_scenarios": {
+    "p10": 0.006382861069830555,
+    "p25": 0.007920543465972789,
+    "p50": 0.020786346178959966,
+    "p75": 0.11008515756376328,
+    "p90": 0.28121587084582117
+  },
+  "interpretation": {
+    "insufficient_data_tool_lower_bound": "zero tool-cohort share until the endpoint reaches a known-good tier",
+    "known_good_tool_tier": "tool cohort holds its anchor share while only non-tool traffic reprices",
+    "not_included": "new-endpoint ramp, capacity ceilings, explicit provider pinning, or guaranteed Auto Exacto tier",
+    "p10_p90": "empirical stable-incumbent scenario band, not a calibrated confidence interval",
+    "p50": "median stable-incumbent-equivalent planning case after ramp",
+    "revenue": "gross customer-facing endpoint billings before OpenRouter/provider commercial terms",
+    "top_level_scenario_fields": "optimistic upper-elasticity case where all traffic is price weighted"
+  },
+  "market": {
+    "monthly_cached_prompt_tokens": 11777565361323.75,
+    "monthly_output_tokens": 274529412670.71426,
+    "monthly_requests": 304335300.8035714,
+    "monthly_total_tokens": 14319840619334.062,
+    "monthly_uncached_prompt_tokens": 2267745845339.598,
+    "whole_market_billings_at_cheapest_schedule": 4930002.502789331
+  },
+  "model": "GLM-5.2",
+  "permaslug": "z-ai/glm-5.2-20260616",
+  "points": [
+    {
+      "common_mix_price_per_million": 0.25820831218608553,
+      "price_rank_after_entry": 1,
+      "price_ratio_to_cheapest_listed_schedule": 0.75,
+      "scenarios": {
+        "p10": {
+          "displayed_price_per_million": {
+            "cache_read": 0.1275,
+            "input": 0.705,
+            "output": 2.1750000000000003
+          },
+          "gross_endpoint_billings_monthly": 41485.940958975254,
+          "gross_margin_before_platform_terms_monthly": -27657.293972650186,
+          "inference_cogs_monthly": 69143.23493162544,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.1275,
+              "input": 0.705,
+              "output": 2.1750000000000003
+            },
+            "gross_endpoint_billings_monthly": 16987.223622969497,
+            "gross_margin_before_platform_terms_monthly": -11324.815748646335,
+            "inference_cogs_monthly": 28312.039371615832,
+            "required_average_output_tokens_per_second": 479.6010891784124,
+            "served_cached_prompt_tokens_monthly": 54109002017.40943,
+            "served_output_tokens_monthly": 1261254944.321389,
+            "served_requests_monthly": 1398190.449379811,
+            "served_uncached_prompt_tokens_monthly": 10418576399.788334,
+            "token_share": 0.004594243407478556
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.1275,
+              "input": 0.705,
+              "output": 2.1750000000000003
+            },
+            "gross_endpoint_billings_monthly": 25870.551216429445,
+            "gross_margin_before_platform_terms_monthly": -17247.034144286303,
+            "inference_cogs_monthly": 43117.58536071575,
+            "required_average_output_tokens_per_second": 730.4044978997298,
+            "served_cached_prompt_tokens_monthly": 82404855497.89766,
+            "served_output_tokens_monthly": 1920817748.5767093,
+            "served_requests_monthly": 2129362.5393906347,
+            "served_uncached_prompt_tokens_monthly": 15866884450.06121,
+            "token_share": 0.006996764863518082
+          },
+          "required_average_output_tokens_per_second": 1171.2745361527034,
+          "served_cached_prompt_tokens_monthly": 132144187470.87283,
+          "served_output_tokens_monthly": 3080217775.1743793,
+          "served_requests_monthly": 3414639.597370189,
+          "served_uncached_prompt_tokens_monthly": 25444089922.60241,
+          "token_share": 0.011219991858828484
+        },
+        "p25": {
+          "displayed_price_per_million": {
+            "cache_read": 0.1275,
+            "input": 0.705,
+            "output": 2.1750000000000003
+          },
+          "gross_endpoint_billings_monthly": 51341.461433129734,
+          "gross_margin_before_platform_terms_monthly": -34227.64095541983,
+          "inference_cogs_monthly": 85569.10238854957,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.1275,
+              "input": 0.705,
+              "output": 2.1750000000000003
+            },
+            "gross_endpoint_billings_monthly": 21022.757742366066,
+            "gross_margin_before_platform_terms_monthly": -14015.171828244045,
+            "inference_cogs_monthly": 35037.92957061011,
+            "required_average_output_tokens_per_second": 593.5365151218373,
+            "served_cached_prompt_tokens_monthly": 66963293492.827286,
+            "served_output_tokens_monthly": 1560882327.4674077,
+            "served_requests_monthly": 1730348.628321845,
+            "served_uncached_prompt_tokens_monthly": 12893643630.906351,
+            "token_share": 0.005685665198066104
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.1275,
+              "input": 0.705,
+              "output": 2.1750000000000003
+            },
+            "gross_endpoint_billings_monthly": 32035.356570384345,
+            "gross_margin_before_platform_terms_monthly": -21356.90438025624,
+            "inference_cogs_monthly": 53392.260950640586,
+            "required_average_output_tokens_per_second": 904.4557394652915,
+            "served_cached_prompt_tokens_monthly": 102041464324.4889,
+            "served_output_tokens_monthly": 2378537703.6458235,
+            "served_requests_monthly": 2636777.533123348,
+            "served_uncached_prompt_tokens_monthly": 19647872856.145176,
+            "token_share": 0.008664054173673452
+          },
+          "required_average_output_tokens_per_second": 1449.5259125243747,
+          "served_cached_prompt_tokens_monthly": 163536743962.42178,
+          "served_output_tokens_monthly": 3811963244.7566004,
+          "served_requests_monthly": 4225831.2851041,
+          "served_uncached_prompt_tokens_monthly": 31488661731.31256,
+          "token_share": 0.013885445671094192
+        },
+        "p50": {
+          "displayed_price_per_million": {
+            "cache_read": 0.1275,
+            "input": 0.705,
+            "output": 2.1750000000000003
+          },
+          "gross_endpoint_billings_monthly": 131766.4205892583,
+          "gross_margin_before_platform_terms_monthly": -87844.28039283887,
+          "inference_cogs_monthly": 219610.7009820972,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.1275,
+              "input": 0.705,
+              "output": 2.1750000000000003
+            },
+            "gross_endpoint_billings_monthly": 53954.3180365957,
+            "gross_margin_before_platform_terms_monthly": -35969.54535773048,
+            "inference_cogs_monthly": 89923.86339432618,
+            "required_average_output_tokens_per_second": 1523.2948167727916,
+            "served_cached_prompt_tokens_monthly": 171859414362.60263,
+            "served_output_tokens_monthly": 4005960709.1490874,
+            "served_requests_monthly": 4440891.216594332,
+            "served_uncached_prompt_tokens_monthly": 33091174699.24057,
+            "token_share": 0.014592100242293739
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.1275,
+              "input": 0.705,
+              "output": 2.1750000000000003
+            },
+            "gross_endpoint_billings_monthly": 82620.47630668982,
+            "gross_margin_before_platform_terms_monthly": -55080.31753779322,
+            "inference_cogs_monthly": 137700.79384448304,
+            "required_average_output_tokens_per_second": 2332.62782103771,
+            "served_cached_prompt_tokens_monthly": 263169050951.51315,
+            "served_output_tokens_monthly": 6134344643.76497,
+            "served_requests_monthly": 6800355.57658898,
+            "served_uncached_prompt_tokens_monthly": 50672656326.50083,
+            "token_share": 0.02234494506103374
+          },
+          "required_average_output_tokens_per_second": 3720.167593855578,
+          "served_cached_prompt_tokens_monthly": 419712466011.8333,
+          "served_output_tokens_monthly": 9783296738.3214,
+          "served_requests_monthly": 10845477.454464607,
+          "served_uncached_prompt_tokens_monthly": 80814767045.24896,
+          "token_share": 0.03563660681435262
+        },
+        "p75": {
+          "displayed_price_per_million": {
+            "cache_read": 0.1275,
+            "input": 0.705,
+            "output": 2.1750000000000003
+          },
+          "gross_endpoint_billings_monthly": 605187.420736971,
+          "gross_margin_before_platform_terms_monthly": -403458.280491314,
+          "inference_cogs_monthly": 1008645.701228285,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.1275,
+              "input": 0.705,
+              "output": 2.1750000000000003
+            },
+            "gross_endpoint_billings_monthly": 247805.73399632465,
+            "gross_margin_before_platform_terms_monthly": -165203.82266421645,
+            "inference_cogs_monthly": 413009.5566605411,
+            "required_average_output_tokens_per_second": 6996.31102569295,
+            "served_cached_prompt_tokens_monthly": 789329749129.943,
+            "served_output_tokens_monthly": 18398898735.36732,
+            "served_requests_monthly": 20396482.57215606,
+            "served_uncached_prompt_tokens_monthly": 151983810259.3376,
+            "token_share": 0.067019772331047
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.1275,
+              "input": 0.705,
+              "output": 2.1750000000000003
+            },
+            "gross_endpoint_billings_monthly": 391517.1719460528,
+            "gross_margin_before_platform_terms_monthly": -261011.4479640352,
+            "inference_cogs_monthly": 652528.619910088,
+            "required_average_output_tokens_per_second": 11053.722860484408,
+            "served_cached_prompt_tokens_monthly": 1247090396692.8633,
+            "served_output_tokens_monthly": 29069080378.501896,
+            "served_requests_monthly": 32225134.76793048,
+            "served_uncached_prompt_tokens_monthly": 240124675949.6045,
+            "token_share": 0.1058869433905392
+          },
+          "required_average_output_tokens_per_second": 17086.285115483028,
+          "served_cached_prompt_tokens_monthly": 1927689191380.84,
+          "served_output_tokens_monthly": 44933512596.697266,
+          "served_requests_monthly": 49811981.67162985,
+          "served_uncached_prompt_tokens_monthly": 371172565869.64166,
+          "token_share": 0.16367467572807218
+        },
+        "p90": {
+          "displayed_price_per_million": {
+            "cache_read": 0.1275,
+            "input": 0.705,
+            "output": 2.1750000000000003
+          },
+          "gross_endpoint_billings_monthly": 1232400.913921524,
+          "gross_margin_before_platform_terms_monthly": -821600.609281016,
+          "inference_cogs_monthly": 2054001.5232025401,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.1275,
+              "input": 0.705,
+              "output": 2.1750000000000003
+            },
+            "gross_endpoint_billings_monthly": 504630.47080550116,
+            "gross_margin_before_platform_terms_monthly": -336420.31387033424,
+            "inference_cogs_monthly": 841050.7846758354,
+            "required_average_output_tokens_per_second": 14247.25598500282,
+            "served_cached_prompt_tokens_monthly": 1607387514810.852,
+            "served_output_tokens_monthly": 37467433789.36041,
+            "served_requests_monthly": 41535304.43858079,
+            "served_uncached_prompt_tokens_monthly": 309499140674.12585,
+            "token_share": 0.13647875987080815
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.1275,
+              "input": 0.705,
+              "output": 2.1750000000000003
+            },
+            "gross_endpoint_billings_monthly": 837670.6549786689,
+            "gross_margin_before_platform_terms_monthly": -558447.1033191126,
+            "inference_cogs_monthly": 1396117.7582977815,
+            "required_average_output_tokens_per_second": 23649.995279825194,
+            "served_cached_prompt_tokens_monthly": 2668212544095.668,
+            "served_output_tokens_monthly": 62194757586.8843,
+            "served_requests_monthly": 68947294.4792003,
+            "served_uncached_prompt_tokens_monthly": 513758805468.0821,
+            "token_share": 0.22655043400207223
+          },
+          "required_average_output_tokens_per_second": 34794.43337768411,
+          "served_cached_prompt_tokens_monthly": 3925537510877.843,
+          "served_output_tokens_monthly": 91502400896.63367,
+          "served_requests_monthly": 101436893.15551667,
+          "served_uncached_prompt_tokens_monthly": 755854126715.4907,
+          "token_share": 0.3333063659972445
+        }
+      }
+    },
+    {
+      "common_mix_price_per_million": 0.3442777495814474,
+      "price_rank_after_entry": 1,
+      "price_ratio_to_cheapest_listed_schedule": 1.0,
+      "scenarios": {
+        "p10": {
+          "displayed_price_per_million": {
+            "cache_read": 0.16999999999999998,
+            "input": 0.94,
+            "output": 2.9000000000000004
+          },
+          "gross_endpoint_billings_monthly": 31267.942118737814,
+          "gross_margin_before_platform_terms_monthly": -7816.985529684451,
+          "inference_cogs_monthly": 39084.927648422265,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.16999999999999998,
+              "input": 0.94,
+              "output": 2.9000000000000004
+            },
+            "gross_endpoint_billings_monthly": 12803.265702140307,
+            "gross_margin_before_platform_terms_monthly": -3200.8164255350785,
+            "inference_cogs_monthly": 16004.082127675385,
+            "required_average_output_tokens_per_second": 271.10640526408025,
+            "served_cached_prompt_tokens_monthly": 30586454785.780804,
+            "served_output_tokens_monthly": 712955624.5634782,
+            "served_requests_monthly": 790361.813513145,
+            "served_uncached_prompt_tokens_monthly": 5889358592.897323,
+            "token_share": 0.002597009980197046
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.16999999999999998,
+              "input": 0.94,
+              "output": 2.9000000000000004
+            },
+            "gross_endpoint_billings_monthly": 24647.702493420238,
+            "gross_margin_before_platform_terms_monthly": -6161.925623355059,
+            "inference_cogs_monthly": 30809.628116775297,
+            "required_average_output_tokens_per_second": 521.9098139853976,
+            "served_cached_prompt_tokens_monthly": 58882308266.26903,
+            "served_output_tokens_monthly": 1372518428.8187985,
+            "served_requests_monthly": 1521533.9035239685,
+            "served_uncached_prompt_tokens_monthly": 11337666643.1702,
+            "token_share": 0.004999531436236572
+          },
+          "required_average_output_tokens_per_second": 662.0919681764675,
+          "served_cached_prompt_tokens_monthly": 74697777903.59448,
+          "served_output_tokens_monthly": 1741169457.9104743,
+          "served_requests_monthly": 1930209.6834293164,
+          "served_uncached_prompt_tokens_monthly": 14382902603.389761,
+          "token_share": 0.0063423785487019164
+        },
+        "p25": {
+          "displayed_price_per_million": {
+            "cache_read": 0.16999999999999998,
+            "input": 0.94,
+            "output": 2.9000000000000004
+          },
+          "gross_endpoint_billings_monthly": 38741.44580526232,
+          "gross_margin_before_platform_terms_monthly": -9685.36145131557,
+          "inference_cogs_monthly": 48426.80725657789,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.16999999999999998,
+              "input": 0.94,
+              "output": 2.9000000000000004
+            },
+            "gross_endpoint_billings_monthly": 15863.43682120981,
+            "gross_margin_before_platform_terms_monthly": -3965.8592053024495,
+            "inference_cogs_monthly": 19829.29602651226,
+            "required_average_output_tokens_per_second": 335.9048723805755,
+            "served_cached_prompt_tokens_monthly": 37897072853.67926,
+            "served_output_tokens_monthly": 883362633.3864375,
+            "served_requests_monthly": 979270.0539259015,
+            "served_uncached_prompt_tokens_monthly": 7297002977.94007,
+            "token_share": 0.00321773402999988
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.16999999999999998,
+              "input": 0.94,
+              "output": 2.9000000000000004
+            },
+            "gross_endpoint_billings_monthly": 30546.901925234182,
+            "gross_margin_before_platform_terms_monthly": -7636.725481308553,
+            "inference_cogs_monthly": 38183.627406542735,
+            "required_average_output_tokens_per_second": 646.8240967240296,
+            "served_cached_prompt_tokens_monthly": 72975243685.3409,
+            "served_output_tokens_monthly": 1701018009.564853,
+            "served_requests_monthly": 1885698.9587274047,
+            "served_uncached_prompt_tokens_monthly": 14051232203.178894,
+            "token_share": 0.006196123005607228
+          },
+          "required_average_output_tokens_per_second": 820.341805859896,
+          "served_cached_prompt_tokens_monthly": 92551658930.29498,
+          "served_output_tokens_monthly": 2157334881.0503545,
+          "served_requests_monthly": 2391558.5349173592,
+          "served_uncached_prompt_tokens_monthly": 17820630459.644836,
+          "token_share": 0.007858301447786875
+        },
+        "p50": {
+          "displayed_price_per_million": {
+            "cache_read": 0.16999999999999998,
+            "input": 0.94,
+            "output": 2.9000000000000004
+          },
+          "gross_endpoint_billings_monthly": 100389.99744629451,
+          "gross_margin_before_platform_terms_monthly": -25097.49936157363,
+          "inference_cogs_monthly": 125487.49680786814,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.16999999999999998,
+              "input": 0.94,
+              "output": 2.9000000000000004
+            },
+            "gross_endpoint_billings_monthly": 41106.632673848,
+            "gross_margin_before_platform_terms_monthly": -10276.658168461996,
+            "inference_cogs_monthly": 51383.290842309994,
+            "required_average_output_tokens_per_second": 870.4241305290527,
+            "served_cached_prompt_tokens_monthly": 98201989314.66127,
+            "served_output_tokens_monthly": 2289041378.465303,
+            "served_requests_monthly": 2537564.5170036606,
+            "served_uncached_prompt_tokens_monthly": 18908589885.964043,
+            "token_share": 0.00833805513295184
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.16999999999999998,
+              "input": 0.94,
+              "output": 2.9000000000000004
+            },
+            "gross_endpoint_billings_monthly": 79328.17703397351,
+            "gross_margin_before_platform_terms_monthly": -19832.044258493377,
+            "inference_cogs_monthly": 99160.22129246689,
+            "required_average_output_tokens_per_second": 1679.7571347939715,
+            "served_cached_prompt_tokens_monthly": 189511625903.57184,
+            "served_output_tokens_monthly": 4417425313.081186,
+            "served_requests_monthly": 4897028.876998309,
+            "served_uncached_prompt_tokens_monthly": 36490071513.22431,
+            "token_share": 0.016090899951691842
+          },
+          "required_average_output_tokens_per_second": 2125.736664793684,
+          "served_cached_prompt_tokens_monthly": 239827415072.89294,
+          "served_output_tokens_monthly": 5590262281.07443,
+          "served_requests_monthly": 6197201.73634836,
+          "served_uncached_prompt_tokens_monthly": 46178272626.369,
+          "token_share": 0.02036307230868446
+        },
+        "p75": {
+          "displayed_price_per_million": {
+            "cache_read": 0.16999999999999998,
+            "input": 0.94,
+            "output": 2.9000000000000004
+          },
+          "gross_endpoint_billings_monthly": 488899.52145688154,
+          "gross_margin_before_platform_terms_monthly": -122224.88036422036,
+          "inference_cogs_monthly": 611124.4018211019,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.16999999999999998,
+              "input": 0.94,
+              "output": 2.9000000000000004
+            },
+            "gross_endpoint_billings_monthly": 200189.3968938426,
+            "gross_margin_before_platform_terms_monthly": -50047.34922346065,
+            "inference_cogs_monthly": 250236.74611730326,
+            "required_average_output_tokens_per_second": 4238.967543632341,
+            "served_cached_prompt_tokens_monthly": 478243916758.10156,
+            "served_output_tokens_monthly": 11147636846.244331,
+            "served_requests_monthly": 12357945.109947253,
+            "served_uncached_prompt_tokens_monthly": 92084876798.78383,
+            "token_share": 0.040606347923875914
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.16999999999999998,
+              "input": 0.94,
+              "output": 2.9000000000000004
+            },
+            "gross_endpoint_billings_monthly": 391804.6474934801,
+            "gross_margin_before_platform_terms_monthly": -97951.16187337006,
+            "inference_cogs_monthly": 489755.8093668502,
+            "required_average_output_tokens_per_second": 8296.379378423799,
+            "served_cached_prompt_tokens_monthly": 936004564321.0216,
+            "served_output_tokens_monthly": 21817818489.378906,
+            "served_requests_monthly": 24186597.305721674,
+            "served_uncached_prompt_tokens_monthly": 180225742489.0507,
+            "token_share": 0.0794735189833681
+          },
+          "required_average_output_tokens_per_second": 10352.3425101884,
+          "served_cached_prompt_tokens_monthly": 1167960070166.394,
+          "served_output_tokens_monthly": 27224590333.293453,
+          "served_requests_monthly": 30180386.894554123,
+          "served_uncached_prompt_tokens_monthly": 224888295278.7697,
+          "token_share": 0.09916820958615509
+        },
+        "p90": {
+          "displayed_price_per_million": {
+            "cache_read": 0.16999999999999998,
+            "input": 0.94,
+            "output": 2.9000000000000004
+          },
+          "gross_endpoint_billings_monthly": 1082093.1730877813,
+          "gross_margin_before_platform_terms_monthly": -270523.2932719453,
+          "inference_cogs_monthly": 1352616.4663597266,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.16999999999999998,
+              "input": 0.94,
+              "output": 2.9000000000000004
+            },
+            "gross_endpoint_billings_monthly": 443084.04937248945,
+            "gross_margin_before_platform_terms_monthly": -110771.01234312239,
+            "inference_cogs_monthly": 553855.0617156118,
+            "required_average_output_tokens_per_second": 9382.209715068795,
+            "served_cached_prompt_tokens_monthly": 1058508864669.3308,
+            "served_output_tokens_monthly": 24673335108.687916,
+            "served_requests_monthly": 27352139.754644524,
+            "served_uncached_prompt_tokens_monthly": 203813692088.8386,
+            "token_share": 0.08987501509822729
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.16999999999999998,
+              "input": 0.94,
+              "output": 2.9000000000000004
+            },
+            "gross_endpoint_billings_monthly": 887137.6282700464,
+            "gross_margin_before_platform_terms_monthly": -221784.40706751158,
+            "inference_cogs_monthly": 1108922.035337558,
+            "required_average_output_tokens_per_second": 18784.949009891174,
+            "served_cached_prompt_tokens_monthly": 2119333893954.147,
+            "served_output_tokens_monthly": 49400658906.21181,
+            "served_requests_monthly": 54764129.795264035,
+            "served_uncached_prompt_tokens_monthly": 408073356882.79486,
+            "token_share": 0.17994668922949136
+          },
+          "required_average_output_tokens_per_second": 22913.090858341675,
+          "served_cached_prompt_tokens_monthly": 2585074361701.222,
+          "served_output_tokens_monthly": 60256846339.26694,
+          "served_requests_monthly": 66798982.58526978,
+          "served_uncached_prompt_tokens_monthly": 497750720441.16956,
+          "token_share": 0.2194914044111635
+        }
+      }
+    },
+    {
+      "common_mix_price_per_million": 0.4303471869768093,
+      "price_rank_after_entry": 10,
+      "price_ratio_to_cheapest_listed_schedule": 1.25,
+      "scenarios": {
+        "p10": {
+          "displayed_price_per_million": {
+            "cache_read": 0.21249999999999997,
+            "input": 1.1749999999999998,
+            "output": 3.6250000000000004
+          },
+          "gross_endpoint_billings_monthly": 25071.598579835438,
+          "gross_margin_before_platform_terms_monthly": 0.0,
+          "inference_cogs_monthly": 25071.598579835438,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.21249999999999997,
+              "input": 1.1749999999999998,
+              "output": 3.6250000000000004
+            },
+            "gross_endpoint_billings_monthly": 10266.052590735524,
+            "gross_margin_before_platform_terms_monthly": 0.0,
+            "inference_cogs_monthly": 10266.052590735524,
+            "required_average_output_tokens_per_second": 173.905169438828,
+            "served_cached_prompt_tokens_monthly": 19620128845.25164,
+            "served_output_tokens_monthly": 457335814.59022987,
+            "served_requests_monthly": 506989.146800486,
+            "served_uncached_prompt_tokens_monthly": 3777815219.770186,
+            "token_share": 0.0016658900412204053
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.21249999999999997,
+              "input": 1.1749999999999998,
+              "output": 3.6250000000000004
+            },
+            "gross_endpoint_billings_monthly": 25071.598579835438,
+            "gross_margin_before_platform_terms_monthly": 0.0,
+            "inference_cogs_monthly": 25071.598579835438,
+            "required_average_output_tokens_per_second": 424.7085781601453,
+            "served_cached_prompt_tokens_monthly": 47915982325.73986,
+            "served_output_tokens_monthly": 1116898618.84555,
+            "served_requests_monthly": 1238161.2368113096,
+            "served_uncached_prompt_tokens_monthly": 9226123270.043062,
+            "token_share": 0.004068411497259931
+          },
+          "required_average_output_tokens_per_second": 424.7085781601453,
+          "served_cached_prompt_tokens_monthly": 47915982325.73986,
+          "served_output_tokens_monthly": 1116898618.84555,
+          "served_requests_monthly": 1238161.2368113096,
+          "served_uncached_prompt_tokens_monthly": 9226123270.043062,
+          "token_share": 0.004068411497259931
+        },
+        "p25": {
+          "displayed_price_per_million": {
+            "cache_read": 0.21249999999999997,
+            "input": 1.1749999999999998,
+            "output": 3.6250000000000004
+          },
+          "gross_endpoint_billings_monthly": 31081.084675984763,
+          "gross_margin_before_platform_terms_monthly": 0.0,
+          "inference_cogs_monthly": 31081.084675984763,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.21249999999999997,
+              "input": 1.1749999999999998,
+              "output": 3.6250000000000004
+            },
+            "gross_endpoint_billings_monthly": 12726.753295954291,
+            "gross_margin_before_platform_terms_monthly": 0.0,
+            "inference_cogs_monthly": 12726.753295954291,
+            "required_average_output_tokens_per_second": 215.58901717846376,
+            "served_cached_prompt_tokens_monthly": 24322935932.910904,
+            "served_output_tokens_monthly": 566955997.375924,
+            "served_requests_monthly": 628510.8845905351,
+            "served_uncached_prompt_tokens_monthly": 4683330995.508936,
+            "token_share": 0.0020651921841830564
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.21249999999999997,
+              "input": 1.1749999999999998,
+              "output": 3.6250000000000004
+            },
+            "gross_endpoint_billings_monthly": 31081.084675984763,
+            "gross_margin_before_platform_terms_monthly": 0.0,
+            "inference_cogs_monthly": 31081.084675984763,
+            "required_average_output_tokens_per_second": 526.5082415219177,
+            "served_cached_prompt_tokens_monthly": 59401106764.572525,
+            "served_output_tokens_monthly": 1384611373.5543394,
+            "served_requests_monthly": 1534939.7893920382,
+            "served_uncached_prompt_tokens_monthly": 11437560220.74776,
+            "token_share": 0.005043581159790404
+          },
+          "required_average_output_tokens_per_second": 526.5082415219177,
+          "served_cached_prompt_tokens_monthly": 59401106764.572525,
+          "served_output_tokens_monthly": 1384611373.5543394,
+          "served_requests_monthly": 1534939.7893920382,
+          "served_uncached_prompt_tokens_monthly": 11437560220.74776,
+          "token_share": 0.005043581159790404
+        },
+        "p50": {
+          "displayed_price_per_million": {
+            "cache_read": 0.21249999999999997,
+            "input": 1.1749999999999998,
+            "output": 3.6250000000000004
+          },
+          "gross_endpoint_billings_monthly": 80905.08938372973,
+          "gross_margin_before_platform_terms_monthly": 0.0,
+          "inference_cogs_monthly": 80905.08938372973,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.21249999999999997,
+              "input": 1.1749999999999998,
+              "output": 3.6250000000000004
+            },
+            "gross_endpoint_billings_monthly": 33128.15893357285,
+            "gross_margin_before_platform_terms_monthly": -7.275957614183426e-12,
+            "inference_cogs_monthly": 33128.15893357286,
+            "required_average_output_tokens_per_second": 561.1853282086727,
+            "served_cached_prompt_tokens_monthly": 63313405122.16341,
+            "served_output_tokens_monthly": 1475805176.1231673,
+            "served_requests_monthly": 1636034.579440982,
+            "served_uncached_prompt_tokens_monthly": 12190865175.886507,
+            "token_share": 0.0053757634264614464
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.21249999999999997,
+              "input": 1.1749999999999998,
+              "output": 3.6250000000000004
+            },
+            "gross_endpoint_billings_monthly": 80905.08938372973,
+            "gross_margin_before_platform_terms_monthly": 0.0,
+            "inference_cogs_monthly": 80905.08938372973,
+            "required_average_output_tokens_per_second": 1370.518332473591,
+            "served_cached_prompt_tokens_monthly": 154623041711.07394,
+            "served_output_tokens_monthly": 3604189110.73905,
+            "served_requests_monthly": 3995498.93943563,
+            "served_uncached_prompt_tokens_monthly": 29772346803.146774,
+            "token_share": 0.013128608245201448
+          },
+          "required_average_output_tokens_per_second": 1370.518332473591,
+          "served_cached_prompt_tokens_monthly": 154623041711.07394,
+          "served_output_tokens_monthly": 3604189110.73905,
+          "served_requests_monthly": 3995498.93943563,
+          "served_uncached_prompt_tokens_monthly": 29772346803.146774,
+          "token_share": 0.013128608245201448
+        },
+        "p75": {
+          "displayed_price_per_million": {
+            "cache_read": 0.21249999999999997,
+            "input": 1.1749999999999998,
+            "output": 3.6250000000000004
+          },
+          "gross_endpoint_billings_monthly": 405599.7536620351,
+          "gross_margin_before_platform_terms_monthly": 5.820766091346741e-11,
+          "inference_cogs_monthly": 405599.75366203504,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.21249999999999997,
+              "input": 1.1749999999999998,
+              "output": 3.6250000000000004
+            },
+            "gross_endpoint_billings_monthly": 166080.69041248815,
+            "gross_margin_before_platform_terms_monthly": 2.9103830456733704e-11,
+            "inference_cogs_monthly": 166080.69041248813,
+            "required_average_output_tokens_per_second": 2813.378399480026,
+            "served_cached_prompt_tokens_monthly": 317407739323.4847,
+            "served_output_tokens_monthly": 7398622514.952572,
+            "served_requests_monthly": 8201897.154535258,
+            "served_uncached_prompt_tokens_monthly": 61116203565.56985,
+            "token_share": 0.026950199772681146
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.21249999999999997,
+              "input": 1.1749999999999998,
+              "output": 3.6250000000000004
+            },
+            "gross_endpoint_billings_monthly": 405599.7536620351,
+            "gross_margin_before_platform_terms_monthly": 5.820766091346741e-11,
+            "inference_cogs_monthly": 405599.75366203504,
+            "required_average_output_tokens_per_second": 6870.7902342714815,
+            "served_cached_prompt_tokens_monthly": 775168386886.4048,
+            "served_output_tokens_monthly": 18068804158.087143,
+            "served_requests_monthly": 20030549.350309677,
+            "served_uncached_prompt_tokens_monthly": 149257069255.83673,
+            "token_share": 0.06581737083217333
+          },
+          "required_average_output_tokens_per_second": 6870.7902342714815,
+          "served_cached_prompt_tokens_monthly": 775168386886.4048,
+          "served_output_tokens_monthly": 18068804158.087143,
+          "served_requests_monthly": 20030549.350309677,
+          "served_uncached_prompt_tokens_monthly": 149257069255.83673,
+          "token_share": 0.06581737083217333
+        },
+        "p90": {
+          "displayed_price_per_million": {
+            "cache_read": 0.21249999999999997,
+            "input": 1.1749999999999998,
+            "output": 3.6250000000000004
+          },
+          "gross_endpoint_billings_monthly": 939946.1767785555,
+          "gross_margin_before_platform_terms_monthly": 0.0,
+          "inference_cogs_monthly": 939946.1767785555,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.21249999999999997,
+              "input": 1.1749999999999998,
+              "output": 3.6250000000000004
+            },
+            "gross_endpoint_billings_monthly": 384879.2031566094,
+            "gross_margin_before_platform_terms_monthly": 5.820766091346741e-11,
+            "inference_cogs_monthly": 384879.2031566093,
+            "required_average_output_tokens_per_second": 6519.7876639394635,
+            "served_cached_prompt_tokens_monthly": 735567978933.3154,
+            "served_output_tokens_monthly": 17145737598.628,
+            "served_requests_monthly": 19007264.681822553,
+            "served_uncached_prompt_tokens_monthly": 141632092628.3007,
+            "token_share": 0.06245501140234305
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.21249999999999997,
+              "input": 1.1749999999999998,
+              "output": 3.6250000000000004
+            },
+            "gross_endpoint_billings_monthly": 939946.1767785555,
+            "gross_margin_before_platform_terms_monthly": 0.0,
+            "inference_cogs_monthly": 939946.1767785555,
+            "required_average_output_tokens_per_second": 15922.526958761842,
+            "served_cached_prompt_tokens_monthly": 1796393008218.1316,
+            "served_output_tokens_monthly": 41873061396.15189,
+            "served_requests_monthly": 46419254.72244207,
+            "served_uncached_prompt_tokens_monthly": 345891757422.25696,
+            "token_share": 0.15252668553360713
+          },
+          "required_average_output_tokens_per_second": 15922.526958761842,
+          "served_cached_prompt_tokens_monthly": 1796393008218.1316,
+          "served_output_tokens_monthly": 41873061396.15189,
+          "served_requests_monthly": 46419254.72244207,
+          "served_uncached_prompt_tokens_monthly": 345891757422.25696,
+          "token_share": 0.15252668553360713
+        }
+      }
+    },
+    {
+      "common_mix_price_per_million": 0.5164166243721711,
+      "price_rank_after_entry": 15,
+      "price_ratio_to_cheapest_listed_schedule": 1.5,
+      "scenarios": {
+        "p10": {
+          "displayed_price_per_million": {
+            "cache_read": 0.255,
+            "input": 1.41,
+            "output": 4.3500000000000005
+          },
+          "gross_endpoint_billings_monthly": 20919.00376847041,
+          "gross_margin_before_platform_terms_monthly": 3486.5006280784,
+          "inference_cogs_monthly": 17432.50314039201,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.255,
+              "input": 1.41,
+              "output": 4.3500000000000005
+            },
+            "gross_endpoint_billings_monthly": 8565.692057850485,
+            "gross_margin_before_platform_terms_monthly": 1427.6153429750811,
+            "inference_cogs_monthly": 7138.076714875404,
+            "required_average_output_tokens_per_second": 120.91779479953178,
+            "served_cached_prompt_tokens_monthly": 13642048257.139496,
+            "served_output_tokens_monthly": 317989616.76380867,
+            "served_requests_monthly": 352514.015634106,
+            "served_uncached_prompt_tokens_monthly": 2626748169.756983,
+            "token_share": 0.0011583080066733067
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.255,
+              "input": 1.41,
+              "output": 4.3500000000000005
+            },
+            "gross_endpoint_billings_monthly": 26332.34724477038,
+            "gross_margin_before_platform_terms_monthly": 4388.724540795061,
+            "inference_cogs_monthly": 21943.622703975318,
+            "required_average_output_tokens_per_second": 371.7212035208491,
+            "served_cached_prompt_tokens_monthly": 41937901737.627716,
+            "served_output_tokens_monthly": 977552421.0191289,
+            "served_requests_monthly": 1083686.1056449295,
+            "served_uncached_prompt_tokens_monthly": 8075056220.02986,
+            "token_share": 0.0035608294627128326
+          },
+          "required_average_output_tokens_per_second": 295.3036121311717,
+          "served_cached_prompt_tokens_monthly": 33316404205.683117,
+          "served_output_tokens_monthly": 776589439.1825553,
+          "served_requests_monthly": 860904.4046511087,
+          "served_uncached_prompt_tokens_monthly": 6415004706.083053,
+          "token_share": 0.0028288023189487516
+        },
+        "p25": {
+          "displayed_price_per_million": {
+            "cache_read": 0.255,
+            "input": 1.41,
+            "output": 4.3500000000000005
+          },
+          "gross_endpoint_billings_monthly": 25940.88123939734,
+          "gross_margin_before_platform_terms_monthly": 4323.480206566219,
+          "inference_cogs_monthly": 21617.40103283112,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.255,
+              "input": 1.41,
+              "output": 4.3500000000000005
+            },
+            "gross_endpoint_billings_monthly": 10621.997245435541,
+            "gross_margin_before_platform_terms_monthly": 1770.3328742392569,
+            "inference_cogs_monthly": 8851.664371196284,
+            "required_average_output_tokens_per_second": 149.94567568041631,
+            "served_cached_prompt_tokens_monthly": 16916998420.06669,
+            "served_output_tokens_monthly": 394327137.9043588,
+            "served_requests_monthly": 437139.5653444181,
+            "served_uncached_prompt_tokens_monthly": 3257333048.535159,
+            "token_share": 0.001436374827994611
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.255,
+              "input": 1.41,
+              "output": 4.3500000000000005
+            },
+            "gross_endpoint_billings_monthly": 32647.194901472103,
+            "gross_margin_before_platform_terms_monthly": 5441.199150245353,
+            "inference_cogs_monthly": 27205.99575122675,
+            "required_average_output_tokens_per_second": 460.8649000238703,
+            "served_cached_prompt_tokens_monthly": 51995169251.72832,
+            "served_output_tokens_monthly": 1211982514.0827742,
+            "served_requests_monthly": 1343568.4701459212,
+            "served_uncached_prompt_tokens_monthly": 10011562273.773983,
+            "token_share": 0.004414763803601959
+          },
+          "required_average_output_tokens_per_second": 366.1950643847466,
+          "served_cached_prompt_tokens_monthly": 41314438029.119286,
+          "served_output_tokens_monthly": 963019780.3190067,
+          "served_requests_monthly": 1067575.6439792176,
+          "served_uncached_prompt_tokens_monthly": 7955009572.754782,
+          "token_share": 0.0035078929100908606
+        },
+        "p50": {
+          "displayed_price_per_million": {
+            "cache_read": 0.255,
+            "input": 1.41,
+            "output": 4.3500000000000005
+          },
+          "gross_endpoint_billings_monthly": 67692.45741143049,
+          "gross_margin_before_platform_terms_monthly": 11282.076235238412,
+          "inference_cogs_monthly": 56410.38117619207,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.255,
+              "input": 1.41,
+              "output": 4.3500000000000005
+            },
+            "gross_endpoint_billings_monthly": 27717.99036144394,
+            "gross_margin_before_platform_terms_monthly": 4619.665060240655,
+            "inference_cogs_monthly": 23098.325301203284,
+            "required_average_output_tokens_per_second": 391.2816673941398,
+            "served_cached_prompt_tokens_monthly": 44144729876.80991,
+            "served_output_tokens_monthly": 1028992528.9131088,
+            "served_requests_monthly": 1140711.1091117167,
+            "served_uncached_prompt_tokens_monthly": 8499976412.826519,
+            "token_share": 0.0037482050425953423
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.255,
+              "input": 1.41,
+              "output": 4.3500000000000005
+            },
+            "gross_endpoint_billings_monthly": 85050.30690163218,
+            "gross_margin_before_platform_terms_monthly": 14175.051150272033,
+            "inference_cogs_monthly": 70875.25575136015,
+            "required_average_output_tokens_per_second": 1200.614671659058,
+            "served_cached_prompt_tokens_monthly": 135454366465.72044,
+            "served_output_tokens_monthly": 3157376463.528991,
+            "served_requests_monthly": 3500175.4691063645,
+            "served_uncached_prompt_tokens_monthly": 26081458040.086784,
+            "token_share": 0.011501049861335343
+          },
+          "required_average_output_tokens_per_second": 955.5821782373805,
+          "served_cached_prompt_tokens_monthly": 107809592548.3029,
+          "served_output_tokens_monthly": 2512990012.3286633,
+          "served_requests_monthly": 2785827.441505321,
+          "served_uncached_prompt_tokens_monthly": 20758514012.754307,
+          "token_share": 0.009153809742575314
+        },
+        "p75": {
+          "displayed_price_per_million": {
+            "cache_read": 0.255,
+            "input": 1.41,
+            "output": 4.3500000000000005
+          },
+          "gross_endpoint_billings_monthly": 344936.770969872,
+          "gross_margin_before_platform_terms_monthly": 57489.46182831196,
+          "inference_cogs_monthly": 287447.30914156005,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.255,
+              "input": 1.41,
+              "output": 4.3500000000000005
+            },
+            "gross_endpoint_billings_monthly": 141241.05489241783,
+            "gross_margin_before_platform_terms_monthly": 23540.175815402967,
+            "inference_cogs_monthly": 117700.87907701486,
+            "required_average_output_tokens_per_second": 1993.832696460087,
+            "served_cached_prompt_tokens_monthly": 224945897391.41022,
+            "served_output_tokens_monthly": 5243381225.150737,
+            "served_requests_monthly": 5812659.513820743,
+            "served_uncached_prompt_tokens_monthly": 43312867183.12235,
+            "token_share": 0.019099524433980913
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.255,
+              "input": 1.41,
+              "output": 4.3500000000000005
+            },
+            "gross_endpoint_billings_monthly": 428663.9307918741,
+            "gross_margin_before_platform_terms_monthly": 71443.9884653124,
+            "inference_cogs_monthly": 357219.9423265617,
+            "required_average_output_tokens_per_second": 6051.244531251544,
+            "served_cached_prompt_tokens_monthly": 682706544954.3303,
+            "served_output_tokens_monthly": 15913562868.28531,
+            "served_requests_monthly": 17641311.709595162,
+            "served_uncached_prompt_tokens_monthly": 131453732873.38924,
+            "token_share": 0.0579666954934731
+          },
+          "required_average_output_tokens_per_second": 4869.308096678733,
+          "served_cached_prompt_tokens_monthly": 549359473052.75006,
+          "served_output_tokens_monthly": 12805306432.645731,
+          "served_requests_monthly": 14195589.270922862,
+          "served_uncached_prompt_tokens_monthly": 105778030042.13608,
+          "token_share": 0.04664457009568269
+        },
+        "p90": {
+          "displayed_price_per_million": {
+            "cache_read": 0.255,
+            "input": 1.41,
+            "output": 4.3500000000000005
+          },
+          "gross_endpoint_billings_monthly": 821578.4534987372,
+          "gross_margin_before_platform_terms_monthly": 136929.74224978941,
+          "inference_cogs_monthly": 684648.7112489478,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.255,
+              "input": 1.41,
+              "output": 4.3500000000000005
+            },
+            "gross_endpoint_billings_monthly": 336411.24175531365,
+            "gross_margin_before_platform_terms_monthly": 56068.54029255221,
+            "inference_cogs_monthly": 280342.70146276144,
+            "required_average_output_tokens_per_second": 4748.957261607727,
+            "served_cached_prompt_tokens_monthly": 535781389673.4785,
+            "served_output_tokens_monthly": 12488807806.576,
+            "served_requests_monthly": 13844728.124090549,
+            "served_uncached_prompt_tokens_monthly": 103163598177.28444,
+            "token_share": 0.04549169316715716
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.255,
+              "input": 1.41,
+              "output": 4.3500000000000005
+            },
+            "gross_endpoint_billings_monthly": 1002491.6101016488,
+            "gross_margin_before_platform_terms_monthly": 167081.9350169414,
+            "inference_cogs_monthly": 835409.6750847074,
+            "required_average_output_tokens_per_second": 14151.696556430106,
+            "served_cached_prompt_tokens_monthly": 1596606418958.2947,
+            "served_output_tokens_monthly": 37216131604.09989,
+            "served_requests_monthly": 41256718.16471006,
+            "served_uncached_prompt_tokens_monthly": 307423262971.24066,
+            "token_share": 0.13556336729842122
+          },
+          "required_average_output_tokens_per_second": 11597.831696602772,
+          "served_cached_prompt_tokens_monthly": 1308477217481.0593,
+          "served_output_tokens_monthly": 30499977795.72597,
+          "served_requests_monthly": 33811385.915497944,
+          "served_uncached_prompt_tokens_monthly": 251944581297.63065,
+          "token_share": 0.1110991259516128
+        }
+      }
+    },
+    {
+      "common_mix_price_per_million": 0.6885554991628948,
+      "price_rank_after_entry": 24,
+      "price_ratio_to_cheapest_listed_schedule": 2.0,
+      "scenarios": {
+        "p10": {
+          "displayed_price_per_million": {
+            "cache_read": 0.33999999999999997,
+            "input": 1.88,
+            "output": 5.800000000000001
+          },
+          "gross_endpoint_billings_monthly": 15708.693921887636,
+          "gross_margin_before_platform_terms_monthly": 5890.760220707865,
+          "inference_cogs_monthly": 9817.93370117977,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.33999999999999997,
+              "input": 1.88,
+              "output": 5.800000000000001
+            },
+            "gross_endpoint_billings_monthly": 6432.229577238407,
+            "gross_margin_before_platform_terms_monthly": 2412.086091464403,
+            "inference_cogs_monthly": 4020.1434857740037,
+            "required_average_output_tokens_per_second": 68.10054087321201,
+            "served_cached_prompt_tokens_monthly": 7683160832.28187,
+            "served_output_tokens_monthly": 179090802.38837296,
+            "served_requests_monthly": 198534.84071447433,
+            "served_uncached_prompt_tokens_monthly": 1479376723.6223443,
+            "token_share": 0.0006523556097181629
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.33999999999999997,
+              "input": 1.88,
+              "output": 5.800000000000001
+            },
+            "gross_endpoint_billings_monthly": 30121.10315979827,
+            "gross_margin_before_platform_terms_monthly": 11295.413684924351,
+            "inference_cogs_monthly": 18825.689474873918,
+            "required_average_output_tokens_per_second": 318.90394959452937,
+            "served_cached_prompt_tokens_monthly": 35979014312.770096,
+            "served_output_tokens_monthly": 838653606.6436933,
+            "served_requests_monthly": 929706.9307252978,
+            "served_uncached_prompt_tokens_monthly": 6927684773.895222,
+            "token_share": 0.003054877065757689
+          },
+          "required_average_output_tokens_per_second": 166.3141123379458,
+          "served_cached_prompt_tokens_monthly": 18763699339.035263,
+          "served_output_tokens_monthly": 437372852.6263299,
+          "served_requests_monthly": 484858.78934585163,
+          "served_uncached_prompt_tokens_monthly": 3612911490.0973043,
+          "token_share": 0.0015931730169507887
+        },
+        "p25": {
+          "displayed_price_per_million": {
+            "cache_read": 0.33999999999999997,
+            "input": 1.88,
+            "output": 5.800000000000001
+          },
+          "gross_endpoint_billings_monthly": 19485.565488246586,
+          "gross_margin_before_platform_terms_monthly": 7307.087058092473,
+          "inference_cogs_monthly": 12178.478430154113,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.33999999999999997,
+              "input": 1.88,
+              "output": 5.800000000000001
+            },
+            "gross_endpoint_billings_monthly": 7978.742935978898,
+            "gross_margin_before_platform_terms_monthly": 2992.0286009920865,
+            "inference_cogs_monthly": 4986.714334986811,
+            "required_average_output_tokens_per_second": 84.47408521475157,
+            "served_cached_prompt_tokens_monthly": 9530438004.4964,
+            "served_output_tokens_monthly": 222149949.29775366,
+            "served_requests_monthly": 246268.95524714814,
+            "served_uncached_prompt_tokens_monthly": 1835066121.5548673,
+            "token_share": 0.0008092027267191679
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.33999999999999997,
+              "input": 1.88,
+              "output": 5.800000000000001
+            },
+            "gross_endpoint_billings_monthly": 37345.67314402765,
+            "gross_margin_before_platform_terms_monthly": 14004.627429010368,
+            "inference_cogs_monthly": 23341.04571501728,
+            "required_average_output_tokens_per_second": 395.3933095582056,
+            "served_cached_prompt_tokens_monthly": 44608608836.15802,
+            "served_output_tokens_monthly": 1039805325.4761691,
+            "served_requests_monthly": 1152697.8600486512,
+            "served_uncached_prompt_tokens_monthly": 8589295346.793692,
+            "token_share": 0.0037875917023265154
+          },
+          "required_average_output_tokens_per_second": 206.30133502475303,
+          "served_cached_prompt_tokens_monthly": 23275091747.959015,
+          "served_output_tokens_monthly": 542531250.8480955,
+          "served_requests_monthly": 601434.322887059,
+          "served_uncached_prompt_tokens_monthly": 4481570765.437004,
+          "token_share": 0.0019762226770901137
+        },
+        "p50": {
+          "displayed_price_per_million": {
+            "cache_read": 0.33999999999999997,
+            "input": 1.88,
+            "output": 5.800000000000001
+          },
+          "gross_endpoint_billings_monthly": 50973.48123632778,
+          "gross_margin_before_platform_terms_monthly": 19115.05546362292,
+          "inference_cogs_monthly": 31858.42577270486,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.33999999999999997,
+              "input": 1.88,
+              "output": 5.800000000000001
+            },
+            "gross_endpoint_billings_monthly": 20872.081109574236,
+            "gross_margin_before_platform_terms_monthly": 7827.030416090338,
+            "inference_cogs_monthly": 13045.050693483898,
+            "required_average_output_tokens_per_second": 220.98092047918104,
+            "served_cached_prompt_tokens_monthly": 24931255040.51755,
+            "served_output_tokens_monthly": 581135624.6761503,
+            "served_requests_monthly": 644230.0058960288,
+            "served_uncached_prompt_tokens_monthly": 4800461581.210956,
+            "token_share": 0.0021168428512729036
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.33999999999999997,
+              "input": 1.88,
+              "output": 5.800000000000001
+            },
+            "gross_endpoint_billings_monthly": 97315.16982982524,
+            "gross_margin_before_platform_terms_monthly": 36493.18868618446,
+            "inference_cogs_monthly": 60821.98114364078,
+            "required_average_output_tokens_per_second": 1030.3139247440997,
+            "served_cached_prompt_tokens_monthly": 116240891629.4281,
+            "served_output_tokens_monthly": 2709519559.292033,
+            "served_requests_monthly": 3003694.365890677,
+            "served_uncached_prompt_tokens_monthly": 22381943208.471222,
+            "token_share": 0.009869687670012905
+          },
+          "required_average_output_tokens_per_second": 539.6762663242521,
+          "served_cached_prompt_tokens_monthly": 60886734501.18876,
+          "served_output_tokens_monthly": 1419240645.1795182,
+          "served_requests_monthly": 1573328.7900245434,
+          "served_uncached_prompt_tokens_monthly": 11723614768.022552,
+          "token_share": 0.005169721638831588
+        },
+        "p75": {
+          "displayed_price_per_million": {
+            "cache_read": 0.33999999999999997,
+            "input": 1.88,
+            "output": 5.800000000000001
+          },
+          "gross_endpoint_billings_monthly": 264091.9015074646,
+          "gross_margin_before_platform_terms_monthly": 99034.4630652992,
+          "inference_cogs_monthly": 165057.43844216538,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.33999999999999997,
+              "input": 1.88,
+              "output": 5.800000000000001
+            },
+            "gross_endpoint_billings_monthly": 108137.55417428885,
+            "gross_margin_before_platform_terms_monthly": 40551.58281535831,
+            "inference_cogs_monthly": 67585.97135893053,
+            "required_average_output_tokens_per_second": 1144.894758426373,
+            "served_cached_prompt_tokens_monthly": 129167998553.83342,
+            "served_output_tokens_monthly": 3010844235.709676,
+            "served_requests_monthly": 3337734.1146555813,
+            "served_uncached_prompt_tokens_monthly": 24871030903.653923,
+            "token_share": 0.010967292015887014
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.33999999999999997,
+              "input": 1.88,
+              "output": 5.800000000000001
+            },
+            "gross_endpoint_billings_monthly": 491368.0553735639,
+            "gross_margin_before_platform_terms_monthly": 184263.02076508646,
+            "inference_cogs_monthly": 307105.03460847744,
+            "required_average_output_tokens_per_second": 5202.30659321783,
+            "served_cached_prompt_tokens_monthly": 586928646116.7535,
+            "served_output_tokens_monthly": 13681025878.844248,
+            "served_requests_monthly": 15166386.31043,
+            "served_uncached_prompt_tokens_monthly": 113011896593.92079,
+            "token_share": 0.0498344630753792
+          },
+          "required_average_output_tokens_per_second": 2796.0446866722245,
+          "served_cached_prompt_tokens_monthly": 315452135129.8136,
+          "served_output_tokens_monthly": 7353038317.010616,
+          "served_requests_monthly": 8151363.842065768,
+          "served_uncached_prompt_tokens_monthly": 60739656023.75873,
+          "token_share": 0.026784154912502058
+        },
+        "p90": {
+          "displayed_price_per_million": {
+            "cache_read": 0.33999999999999997,
+            "input": 1.88,
+            "output": 5.800000000000001
+          },
+          "gross_endpoint_billings_monthly": 647664.1164184397,
+          "gross_margin_before_platform_terms_monthly": 242874.0436569149,
+          "inference_cogs_monthly": 404790.07276152476,
+          "insufficient_data_tool_lower_bound": {
+            "displayed_price_per_million": {
+              "cache_read": 0.33999999999999997,
+              "input": 1.88,
+              "output": 5.800000000000001
+            },
+            "gross_endpoint_billings_monthly": 265198.64136751025,
+            "gross_margin_before_platform_terms_monthly": 99449.49051281635,
+            "inference_cogs_monthly": 165749.1508546939,
+            "required_average_output_tokens_per_second": 2807.762176256514,
+            "served_cached_prompt_tokens_monthly": 316774112251.7618,
+            "served_output_tokens_monthly": 7383852971.119381,
+            "served_requests_monthly": 8185524.068965017,
+            "served_uncached_prompt_tokens_monthly": 60994199983.73341,
+            "token_share": 0.026896400277430316
+          },
+          "known_good_tool_tier": {
+            "displayed_price_per_million": {
+              "cache_read": 0.33999999999999997,
+              "input": 1.88,
+              "output": 5.800000000000001
+            },
+            "gross_endpoint_billings_monthly": 1153305.799162624,
+            "gross_margin_before_platform_terms_monthly": 432489.6746859838,
+            "inference_cogs_monthly": 720816.1244766401,
+            "required_average_output_tokens_per_second": 12210.501471078893,
+            "served_cached_prompt_tokens_monthly": 1377599141536.5781,
+            "served_output_tokens_monthly": 32111176768.643272,
+            "served_requests_monthly": 35597514.10958453,
+            "served_uncached_prompt_tokens_monthly": 265253864777.68967,
+            "token_share": 0.11696807440869439
+          },
+          "required_average_output_tokens_per_second": 6857.074378741802,
+          "served_cached_prompt_tokens_monthly": 773620952422.0725,
+          "served_output_tokens_monthly": 18032734201.21519,
+          "served_requests_monthly": 19990563.24802721,
+          "served_uncached_prompt_tokens_monthly": 148959113951.00363,
+          "token_share": 0.06568598251745306
+        }
+      }
+    }
+  ],
+  "qualification_traffic": {
+    "documented_general_minimum": "100 requests in a 30-minute window",
+    "documented_tool_minimum": "200 tool-call requests in a 2-hour window",
+    "limiting_minimum_market_share": 0.0004800626138809248,
+    "market_requests_per_hour": 416612.3214285714,
+    "market_tool_calls_per_hour": 246022.32142857142,
+    "minimum_market_share_for_general_threshold": 0.0004800626138809248,
+    "minimum_market_share_for_tool_threshold_proxy": 0.000406467183218712
+  },
+  "retrieved_at": "2026-07-16T12:07:09.016000+00:00",
+  "uptime_qualification": {
+    "minimum_three_day_mean_percent": 99.0,
+    "provider_means_percent": {
+      "AkashML": 98.83730799685365,
+      "Alibaba Cloud Int.": 99.77111938046495,
+      "Ambient": 98.94875834208759,
+      "AtlasCloud": 99.50262570479583,
+      "Baidu Qianfan": 99.66127652300692,
+      "Baseten": 99.84484077101598,
+      "Cloudflare": 99.57061577788342,
+      "Decart": 92.60036888912254,
+      "DeepInfra": 98.28097910855514,
+      "DigitalOcean": 97.73551058097087,
+      "Fireworks": 99.58312562314993,
+      "Fireworks Fast": 99.79902347767283,
+      "Friendli": 99.6016890068857,
+      "GMICloud": 91.05728513865145,
+      "Inceptron": 95.57682829963466,
+      "Morph": 96.62791169860364,
+      "NovitaAI": 98.74163059451219,
+      "Parasail": 99.02049897104187,
+      "Phala": 93.05616969524243,
+      "SiliconFlow": 98.15272644329877,
+      "StreamLake": 99.6813446414351,
+      "Together": 98.21583619592847,
+      "Venice": 98.42261037336417,
+      "Wafer": 99.62434181655716,
+      "Wafer Fast": 99.89883822804005,
+      "Weights & Biases": 99.86463350382915,
+      "Z.ai": 99.6232953150273,
+      "io.net": 98.64850194563594
+    }
+  },
+  "uptime_qualified_incumbent_count": 14
+}

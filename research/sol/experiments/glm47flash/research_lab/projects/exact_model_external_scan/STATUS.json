@@ -1,0 +1,10 @@
+{
+  "status": "complete",
+  "priority": 90,
+  "summary": "Zero-cost current scan promotes one conditional fresh AWQ replay, retains A40 as an unverified placement hypothesis, and parks NVFP4/MLX for missing runtime, quality, venue, or economics evidence.",
+  "next_action": "Remain complete. The verified current AWQ replay is delegated to current_awq_frontier_v2; the parked NVFP4 candidate receives one independent GPU-free runtime/venue falsifier.",
+  "provider_mutation": "prohibited_zero_cost_external_scan",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": null
+}

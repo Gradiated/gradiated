@@ -1,0 +1,26 @@
+{
+  "status": "closed_pre_science_route",
+  "priority": 0,
+  "summary": "Closed under the r4 readiness-only stop rule: the top-2/no-shared proxy remains scientifically unmeasured after another launcher-integration-only return.",
+  "next_action": "Do not retry this integration lineage. Preserve the source patch and optimistic proxy as unresolved evidence; pursue measured cost through the physical depth student.",
+  "provider_mutation": "released_no_provider_create",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 3900,
+  "active_experiment": null,
+  "artifact_root": null,
+  "quality_policy": "semantics_changing_architecture_cost_proxy_only_full_quality_deferred",
+  "last_evidence": "artifacts/MOE_RUNTIME_AND_LAUNCH_CONTRACT_2026-07-15.json",
+  "provider_result": "terminal_readiness_only_return_zero_spend",
+  "decision": "closed_pre_science_after_cycle51_stop_rule",
+  "last_trace": "runtime/traces/20260715T200333Z-1784145813341135850-researcher-adaptive_moe_architecture.jsonl",
+  "actual_spend_usd": 0.0,
+  "final_inventory": {"instances": 0, "disks": 0},
+  "l40s_reference_commit": "6de92ead9f2220cd5582efd922e56139985606ac",
+  "l40s_reference_launcher_sha256": "aeeb000c7240708087245664c1e3109dec20382b384f04888f916cb516123f4c",
+  "current_control": {
+    "output_tok_s": 535.2861037029285,
+    "summary_sha256": "4ae280a18bac7fb7e2e4849808c0f89e7d25220e7f5a657f709c729391cd4286"
+  },
+  "promotion_output_tok_s": 594.466,
+  "patch_sha256": "69f34087f816038a8ba7e9c3874b42fb6837d4f4df794a11f0d8c797820dfa7e"
+}

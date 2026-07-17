@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "decision": "ADMITTED",
+  "candidate_root": "/root/.cache/glm47flash-awq-minimal-depth43-v2-5820e0c57965",
+  "identity": {
+    "contract_sha256": "5820e0c579653f6c73d131da25ac3752ab977d777ce796cf61aac1240c2778b4",
+    "manifest_sha256": "745fdda3cd7c4ef43ad4a88cb10a05628e1887085528419bf7a004af80b47741",
+    "checksum_list_sha256": "87e5f71388c1cd5293e13681641a0575136930e360bdbd52db0cc59ba5a045eb",
+    "weight_bytes": 17029788816
+  },
+  "memory_projection": {
+    "parent_measured_c32_peak_mib": 43871.0,
+    "restored_payload_delta_mib": 353.9353790283203,
+    "restored_32x8k_bf16_kv_delta_mib": 288.0,
+    "projected_c32_peak_mib": 44512.93537902832,
+    "admission_limit_mib": 44532.0,
+    "margin_mib": 19.064620971679688
+  },
+  "gates": {
+    "payload_checksum": "PASS",
+    "exact_shared_and_remote_identity": "PASS",
+    "focused_launcher_tests": "PASS: 47 tests",
+    "remote_shell_syntax": "PASS",
+    "no_mutation_snapshot": "PASS"
+  },
+  "cpu_loader_probe": {
+    "decision": "RESOURCE_OR_RUNTIME_BOUND",
+    "reason": "vLLM CPU/meta constructor requires an initialized pipeline model-parallel group; this was a no-mutation environment bound, not a loader rejection."
+  }
+}

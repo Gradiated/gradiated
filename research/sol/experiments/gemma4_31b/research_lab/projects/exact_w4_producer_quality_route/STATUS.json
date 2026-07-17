@@ -1,0 +1,14 @@
+{
+  "status": "complete",
+  "priority": 135,
+  "summary": "Find or reject one provenance-bound exact-revision W4 producer/checkpoint route and specify the cheapest later raw-output/feature falsifier.",
+  "next_action": null,
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0,
+  "wall_clock_budget_minutes": 60,
+  "compute_budget": "2 local CPU-hours; no GPU",
+  "storage_budget": "2 GiB project-local total; at most 256 MiB bounded metadata/source probes; no shared /tmp",
+  "active_session": null,
+  "last_result_classification": "typed_none_missing_exact_base_revision_and_immutable_producer_manifest",
+  "terminal_artifact": "ROUTE_DECISION.json"
+}

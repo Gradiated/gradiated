@@ -1,0 +1,30 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "FULL47_RANK_CLOSE: rank384 alone clears robust c32 memory, but its optimistic endpoint upper bound is only 594.559066 tok/s, 11.795934 below the 606.355 robust gate.",
+  "next_action": "Terminal; no successor.",
+  "provider_mutation": "prohibited_zero_cost_full47_rank_falsifier",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 600,
+  "active_experiment": null,
+  "resource_cap": {
+    "peak_rss_gib": 4,
+    "new_artifacts_mib": 12
+  },
+  "ranks": [448, 416, 384],
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "required_output_tokens_per_second": 594.466,
+    "robust_output_tokens_per_second": 606.355,
+    "background_arm_envelope_seconds": 300
+  },
+  "memory_gate": {
+    "stock_full47_c32_peak_mib": 46875.7,
+    "robust_peak_limit_mib": 44532.0,
+    "device_visible_mib": 46068.0
+  },
+  "stop_rule": "satisfied: FULL47_RANK_CLOSE; no successor",
+  "terminal_result": "FULL47_RANK_CLOSE",
+  "artifact": "artifacts/FULL47_RANK_CLOSE_2026-07-16.json",
+  "quality_policy": "architecture-cost evidence only; full quality remains mandatory and deferred"
+}

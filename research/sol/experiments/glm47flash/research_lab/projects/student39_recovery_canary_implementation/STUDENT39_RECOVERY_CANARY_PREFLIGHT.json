@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "decision": "CLOSE_AT_ZERO_NO_CANARY_BF16_GATE_UNAVAILABLE",
+  "evidence_class": {
+    "source_binding": "measured_local_checkpoint_metadata",
+    "loss_optimizer_checkpoint": "measured_real_torch_meta_contract",
+    "negative_controls": "measured_real_entrypoint_fail_closed",
+    "real_model_module_construction": "measured_local_derivative_image",
+    "quality": "unmeasured"
+  },
+  "source_contract": {
+    "teacher": "/root/.cache/glm47flash-bf16-33faccf4",
+    "teacher_revision": "33faccf4c2ba82142214d0d4e16232a4e9ccfe10",
+    "student": "/root/.cache/glm47flash-awq-student39-183247870f89",
+    "model_class": "Glm4MoeLiteForCausalLM",
+    "logical_layers": 39,
+    "source_indexed_layers": 47,
+    "removed_layers": [5, 10, 15, 20, 26, 31, 36, 41],
+    "mapping_sha256": "e501ab11290cd38424fd5ed93f9e9fd55145a7ed98cb6acddcc21b4122accb3a",
+    "no_mtp": true,
+    "lora_targets": ["q_a_proj", "q_b_proj", "o_proj", "mlp.gate"],
+    "lora_rank": 16,
+    "lora_parameters": 11188224
+  },
+  "same_code_measurement": {
+    "command": "docker run --rm -v checkpoint:ro -v project:/work student39-peft:0.19.1 python3 /work/student39_recovery.py --real-meta-run /work/artifacts/real_meta",
+    "backend": "real_transformers_peft_meta",
+    "model_class": "PeftModelForCausalLM wrapping Glm4MoeLiteForCausalLM",
+    "student_layers": 39,
+    "teacher_layers": 47,
+    "module_count": 2335,
+    "lora_module_count": 1395,
+    "trainable_parameters": 11188224,
+    "frozen_parameters": 24860900096,
+    "bridge_hook_count": 16,
+    "cache_shapes": {"top64_ids": [1, 1, 64], "top64_logits_bf16": [1, 1, 64], "bridge_hidden_bf16": [1, 1, 2048]},
+    "finite_loss": {"kl": 1.2771906852722168, "bridge_mse": 1.9136749505996704, "total": 1.755609393119812},
+    "deterministic_cache_hash": true,
+    "real_optimizer_steps": "meta construction only; optimizer not stepped because weights are intentionally unmaterialized",
+    "command_tiny_contract": "python3 student39_recovery.py --tiny-run artifact",
+    "optimizer_steps": 2,
+    "checkpoint_reload": true,
+    "resume_step": 3,
+    "negative_controls": ["mapping drift", "teacher revision drift", "cache top64 shape drift", "malformed checkpoint"],
+    "w4_contract": {"bits": 4, "group_size": 32, "symmetric": true},
+    "artifact": "artifacts/real_meta/real-meta-result.json"
+  },
+  "cache_accounting": {
+    "bytes_per_token": {"top64_token_ids_int32": 256, "top64_logits_bf16": 128, "eight_bridge_states_bf16_2048": 32768, "total": 33152},
+    "clean_canary_tokens_max": 250000,
+    "cache_payload_bytes_at_max": 8288000000,
+    "cache_payload_gib_at_max": 7.714629173278809,
+    "free_disk_requirement_gib": 9.26,
+    "note": "9.26 GiB is payload plus 20% shard/index/temp headroom; no corpus or holdout was accessed."
+  },
+  "blocker": {
+    "type": "portfolio_gate_missing_zero_cost",
+    "stage": "BF16_V2_control_and_frozen_NLL_ceilings",
+    "exit_code": 0,
+    "diagnostic": "quality_gate_calibration is terminally closed after V35 adapter defect; zero BF16 capture phases and no frozen NLL ceilings exist",
+    "required": ["fresh adjudicated BF16 V2 control", "frozen development NLL ceilings"],
+    "provider_work": false
+  },
+  "canary": null,
+  "quality_claim": "none"
+}

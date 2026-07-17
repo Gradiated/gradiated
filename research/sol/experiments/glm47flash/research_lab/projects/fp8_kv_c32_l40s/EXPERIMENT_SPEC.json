@@ -1,0 +1,23 @@
+{
+  "experiment_id": "fp8_kv_c32_l40s_2026-07-15-r1",
+  "arm": "fp8_e4m3fn_kv_c32",
+  "baseline": "nebius_current_awq_c16_direct_2026-07-15-r2",
+  "checkpoint_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+  "runtime": "vllm/vllm-openai:v0.15.0@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543",
+  "hardware": "Nebius preemptible L40S 1gpu-16vcpu-64gb",
+  "workload": {
+    "input_tokens": 8192,
+    "output_tokens": 1024,
+    "concurrency": 32,
+    "num_kv_splits": 4,
+    "prefix_cache": false,
+    "completion_envelope_seconds": 300
+  },
+  "representation": {
+    "kv_cache_dtype": "fp8_e4m3fn",
+    "quality_scope": "semantics-changing cost proxy; compact diagnostics only"
+  },
+  "gate_output_tokens_per_second": 594.466,
+  "maximum_provider_exposure_seconds": 3900,
+  "maximum_spend_usd": 1.0
+}

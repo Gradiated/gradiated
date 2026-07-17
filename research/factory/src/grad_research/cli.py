@@ -5,11 +5,13 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .accelerator_inventory import AcceleratorInventoryError, load_accelerator_inventory
 from .admission import validate_paid_run
 from .artifacts import ArtifactStore, package_run_directory
 from .demo import run_demo
 from .director import ResearchDirector
 from .events import EventStore
+from .gpu_prices import PriceInventoryError, load_gpu_price_inventory
 from .legacy import import_legacy_campaign, replay_legacy_ledger
 from .labd import LabDatabase
 from .operations import resume_program
@@ -210,6 +212,38 @@ def main() -> int:
     bootstrap.add_argument("--root", type=Path, required=True)
     bootstrap.add_argument("--campaign-dir", type=Path, required=True)
     bootstrap.add_argument("--program", default="glm-4.7-flash")
+
+    gpu_prices = commands.add_parser("gpu-prices", help="validate and report the shared GPU price inventory")
+    gpu_prices.add_argument(
+        "--inventory",
+        type=Path,
+        default=Path("research/factory/data/gpu_prices.json"),
+    )
+    gpu_prices.add_argument("--accelerator", help="return one accelerator id")
+    gpu_prices.add_argument("--require-fresh", action="store_true", help="return exit 2 when the weekly refresh is overdue")
+    gpu_prices.add_argument("--now", help="RFC3339 UTC timestamp; defaults to current UTC")
+
+    accelerators = commands.add_parser(
+        "accelerators", help="validate and query the shared accelerator capability inventory"
+    )
+    accelerators.add_argument(
+        "--inventory",
+        type=Path,
+        default=Path("research/factory/data/accelerator_inventory.json"),
+    )
+    accelerators.add_argument("--accelerator", help="return one accelerator id")
+    accelerators.add_argument("--vendor", help="filter by vendor")
+    accelerators.add_argument("--min-memory-gb", type=float, help="filter by minimum device memory")
+    accelerators.add_argument("--format", dest="required_format", help="filter by supported numeric format")
+    accelerators.add_argument(
+        "--availability",
+        choices=("broad_cloud", "specialist_cloud", "platform_cloud", "single_cloud"),
+        help="filter by practical availability class",
+    )
+    accelerators.add_argument(
+        "--require-current", action="store_true", help="return exit 2 when the capability review is overdue"
+    )
+    accelerators.add_argument("--now", help="RFC3339 UTC timestamp; defaults to current UTC")
 
     args = parser.parse_args()
     if args.command == "demo":
@@ -424,4 +458,58 @@ def main() -> int:
         from .sol_glm47 import bootstrap_glm47
 
         _write(bootstrap_glm47(args.root, args.campaign_dir, program_id=args.program))
+    elif args.command == "gpu-prices":
+        try:
+            report = load_gpu_price_inventory(args.inventory, now=_now(args.now))
+        except PriceInventoryError as error:
+            parser.error(str(error))
+        if args.accelerator:
+            accelerator = report["accelerators"].get(args.accelerator)
+            if accelerator is None:
+                parser.error(f"unknown accelerator: {args.accelerator}")
+            report = {
+                key: report[key]
+                for key in (
+                    "schema_version",
+                    "inventory_path",
+                    "refreshed_at_utc",
+                    "refresh_interval_days",
+                    "age_days",
+                    "fresh",
+                    "production_pricing_policy",
+                )
+            } | {"accelerator": accelerator}
+        _write(report)
+        if args.require_fresh and not report["fresh"]:
+            return 2
+    elif args.command == "accelerators":
+        try:
+            report = load_accelerator_inventory(
+                args.inventory,
+                now=_now(args.now),
+                vendor=args.vendor,
+                min_memory_gb=args.min_memory_gb,
+                required_format=args.required_format,
+                availability=args.availability,
+            )
+        except AcceleratorInventoryError as error:
+            parser.error(str(error))
+        if args.accelerator:
+            accelerator = report["accelerators"].get(args.accelerator)
+            if accelerator is None:
+                parser.error(f"unknown accelerator or excluded by filters: {args.accelerator}")
+            report = {
+                key: report[key]
+                for key in (
+                    "schema_version",
+                    "inventory_path",
+                    "reviewed_at_utc",
+                    "review_interval_days",
+                    "age_days",
+                    "current",
+                )
+            } | {"accelerator": accelerator}
+        _write(report)
+        if args.require_current and not report["current"]:
+            return 2
     return 0

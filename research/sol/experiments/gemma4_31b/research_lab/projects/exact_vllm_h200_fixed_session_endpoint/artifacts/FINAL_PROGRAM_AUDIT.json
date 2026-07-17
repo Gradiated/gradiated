@@ -1,0 +1,31 @@
+{
+  "checks": {
+    "assertion_pass": true,
+    "atomic_terminal": true,
+    "checkpoint_index": true,
+    "checkpoint_pass": true,
+    "checkpoint_terminal_hash": true,
+    "conditional_trigger": true,
+    "durable_user_owner": true,
+    "entrypoint_override": true,
+    "exact_image": true,
+    "groups": true,
+    "model": true,
+    "revision": true,
+    "rfc1123": true,
+    "semantic_first": true,
+    "separate_10k": true,
+    "session_owner_fix": true,
+    "shared_retained_owner": true,
+    "shared_staging": true,
+    "simultaneous": true,
+    "telemetry": true,
+    "trace_arrays": true,
+    "trace_hash": true,
+    "user_watchdog": true
+  },
+  "classification": "final_program_audit",
+  "deadline_seconds": 5400,
+  "name": "gemma-vllm-fixed-20260717t10351784284530z",
+  "pass": true
+}

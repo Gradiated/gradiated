@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "decision": "SERIAL_DEPTH_CLOSE",
+  "classification": "offline_frozen_v1_quality_signal_adjudication",
+  "scope": "directional frozen-development adjudication only; no deployable or full-quality claim",
+  "identity": {
+    "depth42_archive_sha256": "ee0f3f3b3d3abfa2f9610320a5be44934be8493a61f52a0d339e83ca4b3d8541",
+    "depth43_archive_sha256": "8db63070ed174a9710f181e17d3cb747f9ca70b54775ee6eaf0bfa3beaad8120",
+    "depth42_raw_response_sha256": "780d4c7a3bc4b600d8437d60cf3a3e729c3348c6a9b5be5c58fec0f9740bdf94",
+    "depth43_raw_response_sha256": "d3c4f443d096c1765da64c5c8e12f2a6828c5d63dc20f04dcf8b733c0856a8ec",
+    "depth42_paired_quality_sha256": "43a74cb23689710f4b080b2a7e8ac0eb8fc05a9091a0e1bf33b1e75d0707e6a6",
+    "depth43_paired_quality_sha256": "6e54fe59ac7c2cf13365eae9a8dc1ec126686339d1ed50a0d4cf83792f36aeb5",
+    "development_suite_sha256": "350d35be3267bb08a47fea8046fa2eab78e7be1cdfc08f64c0c239f9bbf66681",
+    "archive_manifest_files_each": 40,
+    "identity_checks": "PASS: archive, internal manifest, response member, paired-quality member, and suite"
+  },
+  "reproduction": {
+    "method": "fresh extraction plus frozen score_pair.py; control fixture matched only to archived control scores",
+    "score_pair_sha256": "080e105e5a43640b3b8d9a91caf872e8491db6524cda1189950f29161e2c41af",
+    "depth42_overall": 0.16666666666666666,
+    "depth43_overall": 0.0,
+    "depth42_nll": 7.582576970259349,
+    "depth43_nll": 7.507868369420369,
+    "scores_unchanged": true
+  },
+  "delta_adjudication": {
+    "tool_call": "transport_formatting: identical JSON fence failure; no depth43 delta",
+    "coding": "transport_formatting: identical Python fence failure; no depth43 delta",
+    "retrieval": "underspecified_contract: depth42 is value-only and passes; depth43 prefixes the key, while the prompt does not require value-only output",
+    "continuation": "unambiguous_semantic_behavior: both emit parameter names in the wrong order/content contract and both fail; no improvement",
+    "teacher_forced_loss": "underspecified_calibration_boundary: depth43 NLL is lower, but both exceed the frozen absolute ceiling and the archived policy forbids interpreting this uncalibrated sentinel as quality",
+    "serving_correctness": "transport_formatting_and_underspecified_contract: both are fenced and neither matches the frozen readiness schema; no directional improvement"
+  },
+  "calibration_policy": {
+    "audit_sha256": "bb2d78e82a707c06e3d58709f1fb9dabecfd17b12379d050c7c32c60fd8104f8",
+    "reproducer_sha256": "5f1b866a38c7dd194e7f8fb8f084799f267f56772c6b0c4613bc7fbcf9607efd",
+    "applied": "fail-closed single-fence boundary normalization and category-boundary reasoning only",
+    "original_scores_preserved": true,
+    "unambiguous_depth43_semantic_improvement": false
+  },
+  "terminal_interpretation": "No quality-restoration grounds support serial depth44 funding. Preserve depth42 as the eventual V2-canary finalist; this does not claim production quality."
+}

@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "classification": "QUALITY_CONTRACT_CLOSE",
+  "evidence_class": "derived_zero_cost_frozen_contract_audit",
+  "question": "Whether one resident current-AWQ session can be emitted as a graduation packet without weakening the frozen V2 quality policy.",
+  "decision": "close",
+  "first_binding_reason": "The frozen BF16 V2 policy has no generated or inspected holdout and explicitly prohibits AWQ admission; the only later real capture reached zero phases. Therefore no current-AWQ quality arm can be called quality-eligible.",
+  "frozen_contract": {
+    "preregistration_path": "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/quality_gate_calibration/BF16_DEVELOPMENT_CAPTURE_PREREGISTRATION.json",
+    "preregistration_sha256": "1191fc7643120e8bb1f8eab796fbd22f29e7065b26a1c7b4e28387eddd0b32d8",
+    "classification": "prepared_not_admitted_bf16_development_capture",
+    "holdout_access": false,
+    "holdout_status": "not_generated_not_inspected",
+    "candidate": "not_admitted",
+    "development_failure_policy": "do not generate holdout, do not admit AWQ, preserve raw artifacts and classify failure"
+  },
+  "actual_capture_boundary": {
+    "terminal_result_path": "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/quality_gate_calibration/actual_v13_capture_v35/terminal-result.json",
+    "terminal_result_sha256": "2eff000a3a9d8a9cfbdb76cc69fe863a3821df0a9e91b5b92641cefa638828c4",
+    "pass": false,
+    "phases": [],
+    "quality_result_exists": false,
+    "cleanup_pass": true
+  },
+  "control_boundary": {
+    "adjudication_path": "/root/workspace/research/sol/experiments/glm47flash/research_lab/projects/bf16_v2_capture_adjudication/BF16_V2_CONTROL_ADJUDICATION.json",
+    "adjudication_sha256": "393cb6e89cb8c4b8b2b6de4c2f8da98507129805fa898d85c511dbee7d56f49c",
+    "classification": "BF16_V2_development_control_adjudication",
+    "gate_decision": "establish_bf16_development_control_unlock_bounded_student_recovery_canary",
+    "is_awq_candidate_or_holdout_evidence": false
+  },
+  "secondary_execution_observation": {
+    "quality_runner_path": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/vllm_v2_quality_runner.py",
+    "quality_runner_sha256": "b0222e81147ee19afe837819efac8d3a273df76afec4796aa16e9268bb65d804",
+    "pinned_model": "glm-4.7-flash-bf16",
+    "interpretation": "The named runner is a BF16 development-capture consumer, not proof of an admitted current-AWQ quality capture path. This reinforces, but does not supersede, the frozen-contract close."
+  },
+  "required_smallest_missing_evidence": "A policy-authorized, sealed and disjoint holdout contract plus an execution-equivalent current-AWQ V2 capture path whose identity, scorer, response-boundary rules, and calibrated ceilings are bound to that holdout. The existing policy must first admit this use; the BF16 development pass cannot be relabeled.",
+  "schedule_and_packet": {
+    "worst_case_schedule_produced": false,
+    "absolute_command_produced": false,
+    "reason": "The fixed project stop rule requires this first quality-contract close rather than a paid packet that could not graduate."
+  },
+  "provider_mutation": "none",
+  "model_calls": 0,
+  "spend_usd": 0.0,
+  "active_session": null
+}

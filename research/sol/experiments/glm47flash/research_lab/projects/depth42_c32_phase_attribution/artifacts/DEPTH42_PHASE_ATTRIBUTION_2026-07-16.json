@@ -1,0 +1,72 @@
+{
+  "result": "NOMINATE_MECHANISM",
+  "evidence_class": "measured",
+  "source_archive_sha256": "ee0f3f3b3d3abfa2f9610320a5be44934be8493a61f52a0d339e83ca4b3d8541",
+  "workload": {
+    "geometry": "cache-off, 8192 input / 1024 output, 96 total requests",
+    "arms": {"c16": 32, "c32": 64},
+    "phase_reconstruction": {
+      "telemetry_file": "vllm-awq-batch.tar.gz::campaign-100-vllm-awq-batch/telemetry.csv",
+      "c16_window_utc": ["2026-07-16T04:59:13Z", "2026-07-16T05:00:05Z"],
+      "c32_window_utc": ["2026-07-16T05:00:17Z", "2026-07-16T05:01:33Z"],
+      "boundary_uncertainty_seconds": 1.1,
+      "method": "request-row endpoint span aligned to 1-second telemetry and phases.jsonl; boundaries are descriptive, not causal timestamps"
+    }
+  },
+  "measured_phase_summary": {
+    "c16": {
+      "wall_seconds": 53.142863,
+      "output_tokens_per_second": 616.602087,
+      "ttft_ms": {"mean": 8075.19, "p50": 8103.56, "p95": 8717.30},
+      "tpot_ms": {"mean": 18.0722, "p50": 17.9978, "p95": 21.2621},
+      "queue_seconds_mean": 1.76025,
+      "gpu_util_percent": {"mean": 99.98, "range": [99.0, 100.0]},
+      "memory_used_mib": {"mean": 43869.0, "peak": 43869.0},
+      "power_w": {"mean": 325.11, "range": [304.55, 342.60]},
+      "sm_clock_mhz": {"mean": 2218.8, "range": [1335, 2520]}
+    },
+    "c32": {
+      "wall_seconds": 95.406899,
+      "output_tokens_per_second": 686.910494,
+      "ttft_ms": {"mean": 12446.70, "p50": 13163.83, "p95": 17737.11},
+      "tpot_ms": {"mean": 34.4393, "p50": 34.0943, "p95": 38.5801},
+      "queue_seconds_mean": 2.97778,
+      "gpu_util_percent": {"mean": 100.0, "range": [100.0, 100.0]},
+      "memory_used_mib": {"mean": 43869.76, "peak": 43871.0},
+      "power_w": {"mean": 325.00, "range": [299.22, 344.92]},
+      "sm_clock_mhz": {"mean": 2231.55, "range": [1395, 2445]}
+    }
+  },
+  "interpretation": {
+    "gain_percent": 11.398,
+    "ttft_change_percent": 54.1,
+    "tpot_change_percent": 90.6,
+    "queue_change_seconds": 1.2175,
+    "identified_critical_path": "continuous decode batching / scheduler packing across more simultaneously live sequences",
+    "ruled_down_or_not_identified": [
+      "prefix reuse: disabled and zero hit/query deltas",
+      "frequency or power headroom: both arms saturate GPU at about 325 W, below 350 W limit",
+      "memory capacity: same 43869-43871 MiB peak and successful c32",
+      "prefill as gain source: c32 TTFT is slower, not faster",
+      "output histogram as usage evidence: fixed synthetic output is degenerate and excluded"
+    ],
+    "uncertainty": "Aggregate telemetry cannot split MLA, MoE, and decode-kernel subcomponents within a saturated iteration; the nomination is at the vLLM scheduler/decode-batching boundary only."
+  },
+  "nomination": {
+    "mechanism": "runtime continuous-decode batch packing (scheduler admission/packing policy), independent of model depth",
+    "source_bound_path": "Preserve the proven max_num_seqs=32 and max_num_batched_tokens=65536 runtime path, then tune only decode admission/packing to retain the c32-style full batches without increasing the c16 latency tail.",
+    "conservative_endpoint": {"target_output_tokens_per_second": 606.355, "required_fraction_of_measured_c16": 0.9834, "baseline_c16": 616.602087},
+    "bounded_falsifier": "One matched cache-off c16 arm with the scheduler change falsifies the nomination if complete output throughput is <606.355 tok/s, peak memory exceeds 44532 MiB, or GPU utilization falls below 95% during the request interval.",
+    "quality_scope": "performance attribution only; parent development quality failure remains binding"
+  },
+  "economics": {
+    "planning_usd_per_gpu_hour": 1.1,
+    "measured_c16_usd_per_million_output_tokens": 0.495547,
+    "measured_c32_usd_per_million_output_tokens": 0.444826,
+    "offline_spend_usd": 0.0
+  },
+  "reproduction_inputs": [
+    "../minimal_depth42_v2_l40s_direct/artifacts/nebius_l40s_minimal_depth42_v2_c16c32_2026-07-16-r2/summary.json",
+    "../minimal_depth42_v2_l40s_direct/artifacts/nebius_l40s_minimal_depth42_v2_c16c32_2026-07-16-r2/vllm-awq-batch.tar.gz"
+  ]
+}

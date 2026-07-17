@@ -1,0 +1,29 @@
+HTTP/2 302 
+content-type: text/plain; charset=utf-8
+content-length: 1040
+location: https://cas-bridge.xethub.hf.co/xet-bridge-us/69b1b2ec895b2d5026e6bc2e/b860ca5d6a139707f8a126ae91609835515fdabe4a8efb349e8443b83679d67c?Expires=1784243274&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9jYXMtYnJpZGdlLnhldGh1Yi5oZi5jby94ZXQtYnJpZGdlLXVzLzY5YjFiMmVjODk1YjJkNTAyNmU2YmMyZS9iODYwY2E1ZDZhMTM5NzA3ZjhhMTI2YWU5MTYwOTgzNTUxNWZkYWJlNGE4ZWZiMzQ5ZTg0NDNiODM2NzlkNjdjKiIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc4NDI0MzI3NH19fV19&Signature=MEQCIGXiSFoGDo-j9fkCtAslPfvcWh7DSG9uuwv06zsgjCm0AiAv1Yn7xHjsVJxpVfmR-PCv2yJTFHFa9aKTrAFeu2Ao5Q__&Key-Pair-Id=K3EPXBYC3CKDRZ&X-Xet-Cas-Uid=public&response-content-disposition=inline%3B+filename*%3DUTF-8%27%27model-00001-of-00002.safetensors%3B+filename%3D%22model-00001-of-00002.safetensors%22%3B&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=cas%2F20260716%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260716T220754Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=689778398ad62a9e5bed0c826b850d58ffc697ad79d2d3be38867a09a1731ec8
+date: Thu, 16 Jul 2026 22:07:54 GMT
+x-powered-by: huggingface-moon
+x-request-id: Root=1-6a59563a-11ff536355a9ba621b22b98f
+ratelimit: "resolvers";r=2985;t=10
+ratelimit-policy: "fixed window";"resolvers";q=3000;w=300
+cross-origin-opener-policy: same-origin
+referrer-policy: strict-origin-when-cross-origin
+access-control-max-age: 86400
+access-control-allow-origin: https://huggingface.co
+vary: Origin, Accept
+access-control-expose-headers: X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash
+x-repo-commit: b9ea41a2887d8607f594846523f94c6cc75ac8a4
+accept-ranges: bytes
+x-hub-cache: MISS
+x-linked-size: 49784788364
+x-linked-etag: "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+cache-control: no-store
+x-xet-hash: b860ca5d6a139707f8a126ae91609835515fdabe4a8efb349e8443b83679d67c
+link: <https://huggingface.co/api/models/google/gemma-4-31B-it/xet-read-token/b9ea41a2887d8607f594846523f94c6cc75ac8a4>; rel="xet-auth", <https://cas-server.xethub.hf.co/v1/reconstructions/b860ca5d6a139707f8a126ae91609835515fdabe4a8efb349e8443b83679d67c>; rel="xet-reconstruction-info"
+x-cache: Miss from cloudfront
+via: 1.1 385cb8def78c1bb03b9aa3bd53bf1f06.cloudfront.net (CloudFront)
+x-amz-cf-pop: FRA50-P2
+alt-svc: h3=":443"; ma=86400
+x-amz-cf-id: usmC6_b_OipVFtCPpfMzC4fWwAbpxF-r4Lr1jPxvEKXiLUY_QtF_nw==
+

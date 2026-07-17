@@ -1,0 +1,241 @@
+{
+  "checkpoint": {
+    "config_sha256": "07b92832975cb7d174660e88127e91b6269605fe0cfb1bd9bfd282056969be54",
+    "index_sha256": "407b00ffcfa0a69174d4d65473f3fd889ccc9cadb88a75d98393ff2034d8153e",
+    "layers": 39,
+    "root": "/root/.cache/glm47flash-awq-student39-183247870f89",
+    "source_projection_payload_bytes": 134808768,
+    "stock_kv_lora_rank": 512
+  },
+  "decision": "NOMINATE_CONDITIONAL_R256_C32_ARM",
+  "decision_reason": "Ranks 448/384/320 miss the 3-GiB c32 headroom rule without relying on allocator savings. Rank 256 clears it by 3,769 MiB (3.68 GiB) before weight credit and has group-32-aligned source shapes plus a dynamic pinned-loader config path. It still needs a rewritten/recovered checkpoint and a measured c32 endpoint/quality arm before promotion.",
+  "economic_condition": {
+    "campaign_gate_tok_s": 594.466,
+    "interpretation": "The rank-256 c32 arm must retain at least 94.16% of the student's derived c16 endpoint bound. This is a conditional path, not a measured throughput claim.",
+    "maximum_c32_regression_percent_before_gate": 5.836368918877,
+    "required_c32_retention_of_student_bound": 0.94163631081123,
+    "student_fixed_cost_endpoint_bound_tok_s": 631.3116785904964
+  },
+  "evidence_labels": {
+    "derived": "W4/BF16 payload and c16/c24/c32 memory projections",
+    "inferred": "endpoint condition and any later rank-recovery path",
+    "measured": "student c16 anchor and retained L40S MLA compiler calibration",
+    "source_bound": "student config/index/safetensor headers and vLLM v0.15.0 source"
+  },
+  "memory_model": {
+    "card_mib": 46068.0,
+    "conservatism": "admission uses rank-only headroom and grants no transformed-weight allocation credit",
+    "formula": "rank-only c16 KV saving = 39 * 0.140625 GiB * (512-rank)/576; c32 saving is twice c16; c24 linearly interpolates the c16/c32 state projection",
+    "minimum_c32_headroom_mib": 3072,
+    "student_c16_mib": 38843.51696777344,
+    "student_c32_mib": 47291.0
+  },
+  "next_move": "At most one later rank-256 c32 arm: materialize a content-addressed group-32 W4 rewrite, static-load it with the pinned image, then measure c32 throughput, memory, and recovery quality. Do not grant a cost or quality claim from this fixture.",
+  "pinned_loader": {
+    "contract": "Glm4MoeLiteDecoderLayer reads config.kv_lora_rank and passes it into Glm4MoeLiteMLAAttention; static loading of a rewritten rank-256 checkpoint remains unmeasured",
+    "runtime": "vllm/vllm-openai:v0.15.0 sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543",
+    "source_sha256": "6a984f701d46dfa05389a45d7aedde6a10ef45a6f59e73d3bbfa1e82f556b4a9",
+    "source_url": "https://raw.githubusercontent.com/vllm-project/vllm/v0.15.0/vllm/model_executor/models/glm4_moe_lite.py"
+  },
+  "question": "Can a minimal MLA reduction make the physical 39-layer student c32-admissible with a credible economic path?",
+  "rows": [
+    {
+      "c32_kv_saved_mib": 1248.0,
+      "evidence_class": "derived_exact_safetensor_headers_and_pinned_vllm_source_contract",
+      "kv_lora_rank": 448,
+      "loader_static_contract_passes": true,
+      "memory_peak_mib": {
+        "c16_rank_only": 38219.51696777344,
+        "c24_rank_only_linear": 42131.25848388672,
+        "c32_headroom_rank_only_mib": 25.0,
+        "c32_headroom_with_weight_credit_mib": 40.705078125,
+        "c32_rank_only": 46043.0,
+        "c32_with_full_projection_payload_credit": 46027.294921875
+      },
+      "minimum_headroom_passes_without_weight_credit": false,
+      "projection_payload": {
+        "saved_bytes": 16467968,
+        "saved_mib": 15.705078125,
+        "stock_bytes": 134808768,
+        "transformed_bytes": 118340800
+      },
+      "requires_checkpoint_rewrite_and_recovery": true,
+      "static_tensor_contract": {
+        "kv_a_bf16": [
+          512,
+          2048
+        ],
+        "kv_a_w4_packed_i32": [
+          512,
+          256
+        ],
+        "kv_a_w4_scale_bf16": [
+          512,
+          64
+        ],
+        "kv_b_bf16": [
+          8960,
+          448
+        ],
+        "kv_b_w4_packed_i32": [
+          8960,
+          56
+        ],
+        "kv_b_w4_scale_bf16": [
+          8960,
+          14
+        ]
+      },
+      "tile_evidence": "rank-256 only: retained calibrated BLOCK_N=64/stage-2 envelope is 93,440 B <= 101,376 B; compilation remains unmeasured"
+    },
+    {
+      "c32_kv_saved_mib": 2496.0,
+      "evidence_class": "derived_exact_safetensor_headers_and_pinned_vllm_source_contract",
+      "kv_lora_rank": 384,
+      "loader_static_contract_passes": true,
+      "memory_peak_mib": {
+        "c16_rank_only": 37595.51696777344,
+        "c24_rank_only_linear": 41195.25848388672,
+        "c32_headroom_rank_only_mib": 1273.0,
+        "c32_headroom_with_weight_credit_mib": 1304.41015625,
+        "c32_rank_only": 44795.0,
+        "c32_with_full_projection_payload_credit": 44763.58984375
+      },
+      "minimum_headroom_passes_without_weight_credit": false,
+      "projection_payload": {
+        "saved_bytes": 32935936,
+        "saved_mib": 31.41015625,
+        "stock_bytes": 134808768,
+        "transformed_bytes": 101872832
+      },
+      "requires_checkpoint_rewrite_and_recovery": true,
+      "static_tensor_contract": {
+        "kv_a_bf16": [
+          448,
+          2048
+        ],
+        "kv_a_w4_packed_i32": [
+          448,
+          256
+        ],
+        "kv_a_w4_scale_bf16": [
+          448,
+          64
+        ],
+        "kv_b_bf16": [
+          8960,
+          384
+        ],
+        "kv_b_w4_packed_i32": [
+          8960,
+          48
+        ],
+        "kv_b_w4_scale_bf16": [
+          8960,
+          12
+        ]
+      },
+      "tile_evidence": "rank-256 only: retained calibrated BLOCK_N=64/stage-2 envelope is 93,440 B <= 101,376 B; compilation remains unmeasured"
+    },
+    {
+      "c32_kv_saved_mib": 3744.0,
+      "evidence_class": "derived_exact_safetensor_headers_and_pinned_vllm_source_contract",
+      "kv_lora_rank": 320,
+      "loader_static_contract_passes": true,
+      "memory_peak_mib": {
+        "c16_rank_only": 36971.51696777344,
+        "c24_rank_only_linear": 40259.25848388672,
+        "c32_headroom_rank_only_mib": 2521.0,
+        "c32_headroom_with_weight_credit_mib": 2568.115234375,
+        "c32_rank_only": 43547.0,
+        "c32_with_full_projection_payload_credit": 43499.884765625
+      },
+      "minimum_headroom_passes_without_weight_credit": false,
+      "projection_payload": {
+        "saved_bytes": 49403904,
+        "saved_mib": 47.115234375,
+        "stock_bytes": 134808768,
+        "transformed_bytes": 85404864
+      },
+      "requires_checkpoint_rewrite_and_recovery": true,
+      "static_tensor_contract": {
+        "kv_a_bf16": [
+          384,
+          2048
+        ],
+        "kv_a_w4_packed_i32": [
+          384,
+          256
+        ],
+        "kv_a_w4_scale_bf16": [
+          384,
+          64
+        ],
+        "kv_b_bf16": [
+          8960,
+          320
+        ],
+        "kv_b_w4_packed_i32": [
+          8960,
+          40
+        ],
+        "kv_b_w4_scale_bf16": [
+          8960,
+          10
+        ]
+      },
+      "tile_evidence": "rank-256 only: retained calibrated BLOCK_N=64/stage-2 envelope is 93,440 B <= 101,376 B; compilation remains unmeasured"
+    },
+    {
+      "c32_kv_saved_mib": 4992.0,
+      "evidence_class": "derived_exact_safetensor_headers_and_pinned_vllm_source_contract",
+      "kv_lora_rank": 256,
+      "loader_static_contract_passes": true,
+      "memory_peak_mib": {
+        "c16_rank_only": 36347.51696777344,
+        "c24_rank_only_linear": 39323.25848388672,
+        "c32_headroom_rank_only_mib": 3769.0,
+        "c32_headroom_with_weight_credit_mib": 3831.8203125,
+        "c32_rank_only": 42299.0,
+        "c32_with_full_projection_payload_credit": 42236.1796875
+      },
+      "minimum_headroom_passes_without_weight_credit": true,
+      "projection_payload": {
+        "saved_bytes": 65871872,
+        "saved_mib": 62.8203125,
+        "stock_bytes": 134808768,
+        "transformed_bytes": 68936896
+      },
+      "requires_checkpoint_rewrite_and_recovery": true,
+      "static_tensor_contract": {
+        "kv_a_bf16": [
+          320,
+          2048
+        ],
+        "kv_a_w4_packed_i32": [
+          320,
+          256
+        ],
+        "kv_a_w4_scale_bf16": [
+          320,
+          64
+        ],
+        "kv_b_bf16": [
+          8960,
+          256
+        ],
+        "kv_b_w4_packed_i32": [
+          8960,
+          32
+        ],
+        "kv_b_w4_scale_bf16": [
+          8960,
+          8
+        ]
+      },
+      "tile_evidence": "rank-256 only: retained calibrated BLOCK_N=64/stage-2 envelope is 93,440 B <= 101,376 B; compilation remains unmeasured"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "zero-cost static screen; no checkpoint write, CUDA, provider, runtime load, training, or quality claim"
+}

@@ -1,0 +1,82 @@
+{
+  "decision": "close_without_gpu_ab",
+  "screen_date": "2026-07-15",
+  "baseline": {
+    "release": "v0.15.0",
+    "commit": "f176443446f659dbab5315e056e605d8984fd976",
+    "runtime_role": "retained_campaign_runtime"
+  },
+  "candidate": {
+    "release": "v0.25.1",
+    "published_at_utc": "2026-07-14T08:51:20Z",
+    "commit": "752a3a504485790a2e8491cacbb35c137339ad34",
+    "source": "https://github.com/vllm-project/vllm"
+  },
+  "economic_target": {
+    "minimum_cost_reduction_fraction": 0.05,
+    "strong_gate_dollars_per_million_output_tokens": 0.60,
+    "scope": "same GLM-4.7-Flash AWQ checkpoint, tokenizer, L40S, workload and quality contract"
+  },
+  "model_metadata": {
+    "config_path": "/root/.cache/glm47flash-awq-ab31d120/config.json",
+    "architecture": "Glm4MoeLiteForCausalLM",
+    "model_type": "glm4_moe_lite",
+    "max_position_embeddings": 202752,
+    "quant_method": "compressed-tensors",
+    "compression_format": "pack-quantized",
+    "weight_bits": 4,
+    "group_size": 32,
+    "symmetric": true,
+    "weight_bytes": 20170199928,
+    "weight_index_entries": 28221,
+    "weight_scale_entries": 9259
+  },
+  "compatibility": {
+    "exact_architecture_registry": {
+      "result": "pass",
+      "evidence": "vllm/model_executor/models/registry.py maps Glm4MoeLiteForCausalLM to glm4_moe_lite in both baseline and candidate"
+    },
+    "exact_model_source": {
+      "result": "pass",
+      "evidence": "candidate contains Glm4MoeLiteForCausalLM and GLM4-MoE-Lite attention/MoE implementation"
+    },
+    "quantization_config_route": {
+      "result": "pass_static",
+      "evidence": "candidate compressed_tensors.py selects CompressedTensorsWNA16 for pack-quantized group/channel weight-only format; 4-bit and group-size 32 are accepted"
+    },
+    "context_and_scheduler_flags": {
+      "result": "pass_static",
+      "evidence": "candidate exposes max_model_len, max_num_batched_tokens, max_num_seqs, enable_chunked_prefill and long_prefill_token_threshold; 32768 context and 65536 batched tokens are not rejected by the shown bounds"
+    },
+    "prompt_logprobs": {
+      "result": "pass_static",
+      "evidence": "candidate OpenAI completion protocol and serving paths retain prompt_logprobs"
+    },
+    "no_fallback_proof": {
+      "result": "not_proven",
+      "reason": "metadata/source inspection cannot select the actual L40S kernel backend or prove resident-weight loading without a GPU/runtime launch; no weights were loaded"
+    }
+  },
+  "delta_evidence": {
+    "glm4_moe_lite_py": {"added": 10, "removed": 9, "interpretation": "no material candidate-specific L40S serving mechanism identified"},
+    "glm4_moe_py": {"added": 159, "removed": 90, "interpretation": "primarily ROCm AITER fused shared-expert/generalized FusedMoE path; not applicable evidence for campaign L40S"},
+    "compressed_tensors_py": {"added": 243, "removed": 224, "interpretation": "broader quantization/backend refactor and WNA16 routing; no exact-model throughput result"},
+    "scheduler_py": {"added": 326, "removed": 95, "interpretation": "generic scheduler evolution; no scope-matched GLM workload result"},
+    "openai_completion_paths": {"protocol_added": 162, "protocol_removed": 38, "serving_added": 169, "serving_removed": 184, "interpretation": "interface compatibility, not cost evidence"}
+  },
+  "quality_and_performance_evidence": {
+    "exact_model_candidate_benchmark": "none found",
+    "transferable_numeric_result": false,
+    "current_campaign_control": "not measured; neighboring current_awq_frontier_v2 create attempt was an observability failure",
+    "credible_ge_5_percent_path": false
+  },
+  "checks": {
+    "weights_downloaded": false,
+    "provider_mutated": false,
+    "gpu_run": false,
+    "cost_usd": 0.0,
+    "source_pins_retrieved": true,
+    "metadata_hashes_or_weights_loaded": false
+  },
+  "next_move": "Do not spend on a v0.25.1 runtime A/B. Keep v0.15.0 as the declared denominator for existing work; revisit only if exact v0.25.1 L40S throughput/quality evidence or a concrete backend mechanism emerges."
+}

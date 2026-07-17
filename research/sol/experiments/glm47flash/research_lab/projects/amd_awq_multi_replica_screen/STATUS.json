@@ -1,0 +1,10 @@
+{
+  "status": "complete",
+  "priority": 100,
+  "summary": "Closed AMD for this GLM-4.7 AWQ campaign: generic AMD AWQ/model support is documented, but exact compressed-tensors W4A16 ROCm support and current selected capacity are not bound. MI325X is only a conditional analytical economics lead.",
+  "next_action": "No exact-load nomination; preserve AMD as a later branch only after a pinned ROCm runtime proves this checkpoint loads and passes quality.",
+  "provider_mutation": "prohibited_zero_cost_amd_awq_multi_replica_screen",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": "amd_awq_multi_replica_screen_2026-07-15"
+}

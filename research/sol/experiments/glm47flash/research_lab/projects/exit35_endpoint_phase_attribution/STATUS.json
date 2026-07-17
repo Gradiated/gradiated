@@ -1,0 +1,33 @@
+{
+  "status": "closed",
+  "priority": 0,
+  "summary": "UNIDENTIFIABLE: exit-35 verified 35-layer decode and reached 559.969097 tok/s, but the contextual r3 contrast and non-binding c8/128 profiler traces cannot allocate endpoint wall time among decode, prefill, head, scheduler, or intervention overhead.",
+  "next_action": "Closed: do not run or prepare a successor. A future owner would need one matched alternating c16/1,024 stock-versus-exit phase-timed measurement to resolve causal attribution.",
+  "provider_mutation": "prohibited_zero_cost_artifact_attribution",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 900,
+  "active_experiment": null,
+  "resource_cap": {
+    "peak_rss_gib": 6,
+    "new_artifacts_mib": 64
+  },
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "target_usd_per_million_output_tokens": 0.514,
+    "required_output_tokens_per_second": 594.466,
+    "stock_context_output_tokens_per_second": 552.1710554232396,
+    "exit35_output_tokens_per_second": 559.9690973028701
+  },
+  "stop_rule": "one terminal DECODE_LAYERWORK_CLOSED, RESIDUAL_MECHANISM_NOMINATED, or UNIDENTIFIABLE result; no successor",
+  "quality_policy": "performance attribution only; full model quality remains authoritative and unchanged",
+  "active_session": null,
+  "terminal_result": {
+    "classification": "UNIDENTIFIABLE",
+    "reason": "No target-geometry phase-bounded telemetry exists. Both profiler traces are fixed_8k_128_c8 and cannot attribute fixed_8k_1k_c16 endpoint wall time; r3 is contextual rather than adjacent.",
+    "artifact": "terminal_attribution.json",
+    "exit35_output_tokens_per_second": 559.9690973028701,
+    "contextual_r3_output_tokens_per_second": 552.1710554232396,
+    "minimum_removable_fraction_to_gate_from_exit": 0.0580300684936228,
+    "provider_or_gpu_action": "none"
+  }
+}

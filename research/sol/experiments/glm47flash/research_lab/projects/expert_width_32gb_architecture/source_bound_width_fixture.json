@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "evidence_label": "source_bound_synthetic_exact_shape_fixture",
+  "purpose": "Validate the W4A16 group-32 tensor shapes and configuration contract without rewriting checkpoint shards.",
+  "sources": {
+    "checkpoint_root": "/root/.cache/glm47flash-awq-ab31d120",
+    "config_sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9",
+    "index_sha256": "b9c53433e94f2fe7870cdbc3fcb6ed1431eb500c5242a039de93fef4bb988695",
+    "header_sample": "model-00001-of-00004.safetensors",
+    "header_sample_layer": 1,
+    "observed_moe_layers": 47,
+    "observed_routed_experts": 64,
+    "observed_top_k": 4
+  },
+  "representation": {
+    "quantization": "compressed-tensors W4A16 symmetric group-32",
+    "hidden_size": 2048,
+    "widths_tested": [1024, 768, 512],
+    "group_size": 32,
+    "packed_int4_values_per_I32": 8,
+    "source_shapes": {
+      "gate_proj.weight_packed": [1536, 256],
+      "up_proj.weight_packed": [1536, 256],
+      "down_proj.weight_packed": [2048, 192],
+      "gate_proj.weight_scale": [1536, 64],
+      "up_proj.weight_scale": [1536, 64],
+      "down_proj.weight_scale": [2048, 48],
+      "shared_experts.gate_proj.weight": [1536, 2048],
+      "shared_experts.up_proj.weight": [1536, 2048],
+      "shared_experts.down_proj.weight": [2048, 1536]
+    },
+    "width_shapes": {
+      "1024": {
+        "gate_proj.weight_packed": [1024, 256],
+        "up_proj.weight_packed": [1024, 256],
+        "down_proj.weight_packed": [2048, 128],
+        "gate_proj.weight_scale": [1024, 64],
+        "up_proj.weight_scale": [1024, 64],
+        "down_proj.weight_scale": [2048, 32],
+        "shared_experts.gate_proj.weight": [1024, 2048],
+        "shared_experts.up_proj.weight": [1024, 2048],
+        "shared_experts.down_proj.weight": [2048, 1024]
+      },
+      "768": {
+        "gate_proj.weight_packed": [768, 256],
+        "up_proj.weight_packed": [768, 256],
+        "down_proj.weight_packed": [2048, 96],
+        "gate_proj.weight_scale": [768, 64],
+        "up_proj.weight_scale": [768, 64],
+        "down_proj.weight_scale": [2048, 24],
+        "shared_experts.gate_proj.weight": [768, 2048],
+        "shared_experts.up_proj.weight": [768, 2048],
+        "shared_experts.down_proj.weight": [2048, 768]
+      },
+      "512": {
+        "gate_proj.weight_packed": [512, 256],
+        "up_proj.weight_packed": [512, 256],
+        "down_proj.weight_packed": [2048, 64],
+        "gate_proj.weight_scale": [512, 64],
+        "up_proj.weight_scale": [512, 64],
+        "down_proj.weight_scale": [2048, 16],
+        "shared_experts.gate_proj.weight": [512, 2048],
+        "shared_experts.up_proj.weight": [512, 2048],
+        "shared_experts.down_proj.weight": [2048, 512]
+      }
+    }
+  },
+  "loader_contract": {
+    "config_patch": {
+      "moe_intermediate_size": "WIDTH",
+      "n_routed_experts": 64,
+      "num_experts_per_tok": 4,
+      "n_shared_experts": 1,
+      "num_hidden_layers": 47
+    },
+    "tensor_contract": "For each model.layers.1..47.mlp.experts.0..63, slice the width dimension and regenerate weight_shape metadata; retain packed INT32 and BF16 scales, with every width divisible by group_size and 8.",
+    "shared_contract": "Apply the same WIDTH to shared_experts gate/up output and down input dimensions; shared expert remains one expert.",
+    "fixture_validation": [
+      "all width dimensions are divisible by 32 and 8",
+      "packed K dimensions equal source hidden_size/8 or WIDTH/8",
+      "scale K dimensions equal source hidden_size/32 or WIDTH/32",
+      "routed expert cardinality and top-k remain unchanged",
+      "47 sparse layer IDs and 64 expert IDs are contiguous"
+    ]
+  },
+  "derived_cost_and_capacity": {
+    "units": "GiB uses 2^30 bytes; FLOPs are multiply-add counted as 2 operations",
+    "per_routed_expert_bytes": {"1024": 3623872, "768": 2717904, "512": 1811968, "1536": 5435904},
+    "routed_weight_gib": {"1024": 9.9140625, "768": 7.435546875, "512": 4.95703125, "1536": 14.87109375},
+    "shared_weight_gib": {"1024": 0.55078125, "768": 0.4130859375, "512": 0.275390625, "1536": 0.826171875},
+    "expert_weight_gib": {"1024": 10.46484375, "768": 7.8486328125, "512": 5.232421875, "1536": 15.697265625},
+    "active_expert_flops_per_moe_layer": {"1024": 62914560, "768": 47185920, "512": 31457280, "1536": 94371840},
+    "tile_model": {
+      "assumed_n_tile": 128,
+      "l40s_sm_count": 142,
+      "rtx5090_sm_count": 170,
+      "gate_up_n_tiles_per_expert": {"1024": 8, "768": 6, "512": 4, "1536": 12},
+      "down_k_tiles_per_expert": {"1024": 8, "768": 6, "512": 4, "1536": 12},
+      "prefill_8192_expected_rows_per_expert": 512,
+      "decode_c16_expected_rows_per_expert": 1,
+      "interpretation": "Widths are exact 128-N-tile multiples; decode remains tiny-M/routing limited, while prefill has enough rows to fill grouped GEMMs."
+    },
+    "peak_memory_screen": {
+      "measured_source_peak_gib": 43.07,
+      "width_1536_to_512_saved_gib": 10.46484375,
+      "projected_width_512_peak_before_allocator_or_kv_gib": 32.60515625,
+      "device_capacity_gib": 32.0,
+      "decision": "fail_closed_capacity",
+      "reason": "The projected peak exceeds nominal capacity by 0.605 GiB before safety headroom; RTX 5090 runtime support is also unbound and its W4 serving path has not been validated."
+    },
+    "l40s_transfer_screen": {
+      "control_output_tok_s": 535.2861037029285,
+      "campaign_gate_output_tok_s": 594.466,
+      "required_wall_time_reduction": 0.09955144882554656,
+      "explicit_fused_routed_share": 0.12374032074627163,
+      "explicit_shared_residual_share": 0.003844167705916698,
+      "conservative_width_512_credit": 0.08505632554812554,
+      "conservative_ideal_output_tok_s": 585.0,
+      "decision": "fail_closed_below_gate",
+      "reason": "Only explicitly attributed routed fused and shared residual work is credited; standard Marlin attribution is not assumed to be width-sensitive."
+    },
+    "rtx5090_economics": {
+      "production_price": "not refreshed",
+      "reason": "Exact 32 GB capacity and W4 runtime screen failed; project scope forbids broad market refresh before that screen passes."
+    }
+  },
+  "decision": "close_width_reduction_without_checkpoint_conversion_or_provider_spend"
+}

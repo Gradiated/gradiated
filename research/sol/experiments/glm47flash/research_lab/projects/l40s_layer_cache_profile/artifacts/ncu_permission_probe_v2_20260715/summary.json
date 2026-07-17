@@ -1,0 +1,10 @@
+{
+  "allocation_seconds": 369.62,
+  "derived_cost_usd": 0.07792,
+  "ended_at": "2026-07-15T17:43:51.803564Z",
+  "error": null,
+  "instance_absent": true,
+  "named_disk_remaining": false,
+  "named_instance_remaining": false,
+  "remote_returncode": 0
+}

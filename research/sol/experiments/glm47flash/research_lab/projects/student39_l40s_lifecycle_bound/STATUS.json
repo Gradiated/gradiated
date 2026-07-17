@@ -1,0 +1,31 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "Measured student39 c32 clears $0.514/M only for high-utilization 8-24h L40S sessions at $1.10/hour (and at $1.00/hour); preserve it as a conditional recovery denominator, not a robust $1.25/hour placement.",
+  "next_action": "Use the conditional L40S denominator for recovery economics; require a measured lifecycle reduction, lower committed rate, or near-saturated long sessions before claiming production placement.",
+  "provider_mutation": "prohibited_zero_cost_lifecycle_bound",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": null,
+  "economic_gate": {
+    "target_usd_per_million_output_tokens": 0.514,
+    "planning_l40s_usd_per_hour": 1.1,
+    "production_rate_range_usd_per_hour": [1.0, 1.25],
+    "measured_c32_output_tok_s": 734.5565331529764,
+    "measured_c32_steady_state_usd_per_million": 0.415972824
+  },
+  "artifact_contract": [
+    "STUDENT39_L40S_LIFECYCLE_BOUND.json",
+    "reproducible_calculator",
+    "RESEARCH_LOG.md"
+  ],
+  "stop_rule": "satisfied_exact_artifact_bound_classified_the_sustainable_L40S_region_without_provider_work",
+  "result": {
+    "decision": "PRESERVE_L40S_AS_CONDITIONAL_RECOVERY_DENOMINATOR",
+    "reproducible_cold_lifecycle_overhead_seconds": 1208.167873272,
+    "representative_envelope": "90% background productive utilization and 5% retry/interruption loss",
+    "all_in_usd_per_million_at_1_10_for_2h_8h_24h": [0.584617, 0.507821, 0.493418],
+    "artifact": "STUDENT39_L40S_LIFECYCLE_BOUND.json",
+    "calculator": "lifecycle_bound.py"
+  }
+}

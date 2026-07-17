@@ -238,8 +238,19 @@ class CodexAgentRunner:
 
 
 class LabHarness:
-    def __init__(self, config: LabConfig, *, runner: Any | None = None):
+    def __init__(
+        self,
+        config: LabConfig,
+        *,
+        runner: Any | None = None,
+        unit_is_active: Callable[[str, str], bool] | None = None,
+        lab_active_units: Callable[[], list[dict[str, str]]] | None = None,
+    ):
         self.config = config
+        self._source_path = Path(__file__).resolve()
+        self._source_sha256 = self._source_digest(self._source_path)
+        self._unit_is_active = unit_is_active or self._systemd_unit_is_active
+        self._lab_active_units = lab_active_units or self._systemd_lab_active_units
         self.runtime_dir = config.lab_dir / "runtime"
         self.runtime_dir.mkdir(parents=True, exist_ok=True)
         (config.lab_dir / "projects").mkdir(exist_ok=True)
@@ -267,6 +278,54 @@ class LabHarness:
         if not path.exists():
             path.write_text(heading)
 
+    @staticmethod
+    def _source_digest(path: Path) -> str:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    @staticmethod
+    def _systemd_unit_is_active(unit: str, unit_manager: str = "user") -> bool:
+        if unit_manager not in {"system", "user"}:
+            return False
+        try:
+            result = subprocess.run(
+                [
+                    "systemctl",
+                    f"--{unit_manager}",
+                    "show",
+                    unit,
+                    "--property=ActiveState",
+                    "--value",
+                ],
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+                timeout=3,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return False
+        return result.returncode == 0 and result.stdout.strip() in {
+            "active",
+            "activating",
+            "reloading",
+            "deactivating",
+        }
+
+    def _restart_if_source_changed(self) -> None:
+        try:
+            current_sha256 = self._source_digest(self._source_path)
+        except OSError:
+            current_sha256 = "unavailable"
+        if current_sha256 == self._source_sha256:
+            return
+        self._record(
+            "harness_reload_requested",
+            previous_source_sha256=self._source_sha256,
+            current_source_sha256=current_sha256,
+        )
+        self.close()
+        raise SystemExit(75)
+
     def close(self) -> None:
         if not self._lock_handle.closed:
             fcntl.flock(self._lock_handle, fcntl.LOCK_UN)
@@ -276,12 +335,14 @@ class LabHarness:
         if self.state_path.is_file():
             state = json.loads(self.state_path.read_text())
             state.setdefault("project_routes", {})
+            state.setdefault("director_observation_sha256", None)
             return state
         return {
             "schema_version": 1,
             "cycle_count": 0,
             "threads": {"director": None, "supervisor": None, "projects": {}},
             "project_routes": {},
+            "director_observation_sha256": None,
             "active_agents": {},
             "last_runs": {},
             "updated_at": utc_now(),
@@ -301,6 +362,17 @@ class LabHarness:
         paths = [str(path) for path in self.config.tools if path.exists()]
         return "\n".join(f"- {path}" for path in paths) or "- Use relevant repository tools."
 
+    def _latest_director_decision(self) -> str:
+        path = self.config.lab_dir / "DIRECTOR_LOG.md"
+        try:
+            lines = path.read_text().splitlines()
+        except OSError:
+            return "No director decision is available."
+        starts = [index for index, line in enumerate(lines) if line.startswith("## ")]
+        if not starts:
+            return "No director decision is available."
+        return "\n".join(lines[starts[-1] :]).strip()
+
     def _director_prompt(self) -> str:
         return f"""Use `$research-director` as the Sol research director for this lab.
 
@@ -309,14 +381,49 @@ Read `CAMPAIGN.md`, `STATUS.md`, `DIRECTOR_LOG.md`, `SUPERVISOR_LOG.md`, the pro
 
 Maximize decision-relevant research progress per wall-clock hour. Treat the campaign's economic target, workload, quality requirement, and latency tradeoffs as authoritative. Review the evidence, improve the portfolio, and delegate or update independent projects under `projects/`. Keep useful work parallel, redirect lines that are stuck, and keep the log to a short decision handoff. Do not execute the delegated projects yourself.
 
+Treat a durable experiment owner as exclusive for provider mutation and spend, not for offline scientific work or successor planning. Once its scientific endpoint is known, use free researcher slots for materially different `$0` evidence unless terminal artifacts are genuinely required for the next decision.
+
+Budget projects with explicit wall-clock, compute, storage, and spend limits, never with an agent-turn boundary. “Same researcher turn” may prohibit a support successor, but it must not force deterministic checkpoint materialization, compilation, or an actual quality-consumer run to fit inside one model response. When required local work can outlive a response, require one bounded durable local owner in the same project and keep provider creation gated until its typed terminal passes; do not make the researcher kill/restart correct work or weaken a pre-create gate to satisfy turn cadence.
+
+When measured setup, bootstrap, and checkpoint staging materially exceed scored GPU time, preregister one adjacent conditional follow-up before the live owner ends if it can be ready within ten minutes. Search across already-ranked project boundaries, not only the current experiment lineage, for a decision-relevant arm compatible with the resident checkpoint and runtime; prepare that arm offline while the owner runs. Require the existing retained-session path and one sequential owner/watchdog so the follow-up reuses only content-bound runtime/checkpoint state; otherwise clean up normally. Retain only behind a named decision trigger and tear down immediately when that trigger fails.
+
 Shared tools available to all agents:
 {self._tools_text()}
 """
 
     def _researcher_prompt(self, project: Path) -> str:
+        try:
+            status = json.loads((project / "STATUS.json").read_text())
+            next_action = str(status.get("next_action", "")).strip()
+        except (OSError, ValueError, TypeError):
+            status = {}
+            next_action = ""
+        scheduled_action = next_action or "choose the fastest in-scope evidence path"
+        active_session = status.get("active_session")
+        if isinstance(active_session, dict) and active_session:
+            session_guidance = f"""
+Durable active session from `STATUS.json`: {json.dumps(active_session, sort_keys=True)}
+If its independent owner is still active and forward progress is visible, take one grouped snapshot, record ownership, and return; do not sleep or poll. If it is terminal, reconcile artifacts, spend, and cleanup.
+"""
+        else:
+            session_guidance = ""
         return f"""Use `$researcher` to continue the project at `{project}`.
 
+Current scheduled action from `STATUS.json`: {scheduled_action}
+Treat it as this turn's default execution contract. If it calls for integration and measurement, do not substitute another readiness artifact: continue to the measured result or a typed in-scope external blocker. Deviate only when new evidence invalidates the action, and record that evidence.
+{session_guidance}
+
+An agent-turn boundary is not a scientific wall-clock budget. If required deterministic local work such as checkpoint materialization, compilation, or an actual quality-consumer run can outlive this response, start it once as a bounded durable service in the same project, keep every dependent provider create gated, and record its deadline, artifact root, expected typed terminal, and canonical `unit` and `unit_manager` keys in `STATUS.json.active_session`. Do not kill and restart correct local computation merely to return, and do not weaken a pre-create gate to launch within the turn.
+
+If you start a durable local or provider experiment owner in this turn, the experiment has been executed rather than left at readiness. After one grouped snapshot confirms its PID/cgroup, watchdog when provider cleanup is relevant, resource identity, deadline, artifact root, and forward progress, write those fields to `STATUS.json.active_session`, record the handoff, and return immediately. Do not sleep, poll checkpoint transfer, wait for model load, or wait for the scientific terminal; the harness will defer this project while the declared owner remains active and will reschedule terminal reconciliation.
+
+Latest director decision:
+{self._latest_director_decision()}
+Treat it as the current cross-project dependency state. Before declaring a prerequisite missing, check the named project or artifact once instead of relying on older project-local history.
+
 Read its `PROJECT.md`, `STATUS.json`, and only the useful recent parts of `RESEARCH_LOG.md`, plus the campaign's economic target and relevant code, telemetry, and artifacts. Use your best judgment to produce new decision-relevant evidence quickly. Respect the workload and quality requirements, but trade latency as allowed by `CAMPAIGN.md`. Spend the turn on experiments, simulations, falsification, or a working intervention; treat setup and validation as means to that end. If the route is stuck, change strategy instead of circling. Keep documentation to a short handoff, update `STATUS.json`, and stay within scope.
+
+Before constructing a provider, background-process, or systemd wrapper, check the listed shared tools once for an existing durable controller that accepts the experiment's script or inputs. Use that controller with absolute paths; a custom component benchmark is not a reason to create a custom lifecycle owner.
 
 Shared tools available to all agents:
 {self._tools_text()}
@@ -344,6 +451,9 @@ Shared tools:
             priority = status.get("priority", 0)
             if not isinstance(priority, (int, float)):
                 priority = 0
+            authorized_spend_usd = status.get("authorized_spend_usd", 0)
+            if not isinstance(authorized_spend_usd, (int, float)):
+                authorized_spend_usd = 0
             rows.append(
                 {
                     "id": project.name,
@@ -352,9 +462,123 @@ Shared tools:
                     "priority": priority,
                     "summary": str(status.get("summary", "")),
                     "next_action": str(status.get("next_action", "")),
+                    "active_session": status.get("active_session"),
+                    "authorized_spend_usd": authorized_spend_usd,
                 }
             )
         return sorted(rows, key=lambda row: (-row["priority"], row["id"]))
+
+    def _durable_session_owner(self, row: dict[str, Any]) -> tuple[str, str] | None:
+        active_session = row.get("active_session")
+        if not isinstance(active_session, dict):
+            return None
+        unit = active_session.get("unit") or active_session.get("controller_unit")
+        if not isinstance(unit, str) or not unit.strip():
+            return None
+        unit_manager = active_session.get("unit_manager", "user")
+        if unit_manager == "systemd --user":
+            unit_manager = "user"
+        if unit_manager not in {"system", "user"}:
+            return None
+        return unit, unit_manager
+
+    def _durable_session_is_running(self, row: dict[str, Any]) -> bool:
+        owner = self._durable_session_owner(row)
+        if owner is None:
+            return False
+        unit, unit_manager = owner
+        try:
+            return self._unit_is_active(unit, unit_manager)
+        except Exception:
+            return False
+
+    def _director_observation_sha256(self) -> str:
+        observations = []
+        for row in self._project_rows():
+            project = Path(row["path"])
+            status_path = project / "STATUS.json"
+            try:
+                status_sha256 = hashlib.sha256(status_path.read_bytes()).hexdigest()
+            except OSError:
+                status_sha256 = "unavailable"
+            summaries = []
+            artifacts = project / "artifacts"
+            if artifacts.is_dir():
+                for summary_path in sorted(artifacts.rglob("summary.json")):
+                    try:
+                        summary_sha256 = hashlib.sha256(summary_path.read_bytes()).hexdigest()
+                    except OSError:
+                        summary_sha256 = "unavailable"
+                    summaries.append(
+                        {
+                            "path": str(summary_path.relative_to(project)),
+                            "sha256": summary_sha256,
+                        }
+                    )
+            observations.append(
+                {
+                    "id": row["id"],
+                    "status_sha256": status_sha256,
+                    "summaries": summaries,
+                }
+            )
+        encoded = json.dumps(observations, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(encoded.encode()).hexdigest()
+
+    def _director_can_defer(self) -> tuple[bool, str]:
+        runnable = [
+            row
+            for row in self._project_rows()
+            if row["status"] in {"active", "ready"}
+        ]
+        observation_sha256 = self._director_observation_sha256()
+        if not runnable or not all(
+            self._durable_session_is_running(row) for row in runnable
+        ):
+            return False, observation_sha256
+        return (
+            self.state.get("director_observation_sha256") == observation_sha256,
+            observation_sha256,
+        )
+
+    def _systemd_lab_active_units(self) -> list[dict[str, str]]:
+        project_root = str(self.config.lab_dir / "projects")
+        matches = []
+        for unit_manager in ("user", "system"):
+            try:
+                result = subprocess.run(
+                    [
+                        "systemctl",
+                        f"--{unit_manager}",
+                        "list-units",
+                        "--type=service",
+                        "--state=active,activating,reloading,deactivating",
+                        "--no-legend",
+                        "--no-pager",
+                        "--plain",
+                        "--full",
+                    ],
+                    check=False,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    timeout=3,
+                )
+            except (OSError, subprocess.SubprocessError):
+                continue
+            if result.returncode != 0:
+                continue
+            for line in result.stdout.splitlines():
+                if project_root not in line:
+                    continue
+                unit = line.split(maxsplit=1)[0]
+                if unit:
+                    matches.append({"unit": unit, "unit_manager": unit_manager})
+        return matches
+
+    @staticmethod
+    def _provider_capable(row: dict[str, Any]) -> bool:
+        return row.get("authorized_spend_usd", 0) > 0
 
     def _run_agent(
         self,
@@ -432,9 +656,47 @@ Shared tools:
         return result
 
     def _run_researchers(self) -> list[dict[str, Any]]:
-        active = [
-            row for row in self._project_rows() if row["status"] in {"active", "ready"}
-        ][: self.config.max_parallel_researchers]
+        rows = [
+            row
+            for row in self._project_rows()
+            if row["status"] in {"active", "ready"}
+        ]
+        running_owners = {
+            row["id"]: self._durable_session_owner(row)
+            for row in rows
+            if self._durable_session_is_running(row)
+        }
+        try:
+            undeclared_lab_owners = self._lab_active_units()
+        except Exception:
+            undeclared_lab_owners = []
+        provider_lane_reserved = bool(running_owners or undeclared_lab_owners)
+        active = []
+        for row in rows:
+            owner = running_owners.get(row["id"])
+            if owner is not None:
+                unit, unit_manager = owner
+                self._record(
+                    "researcher_deferred",
+                    label=row["id"],
+                    reason="durable_session_active",
+                    unit=unit,
+                    unit_manager=unit_manager,
+                )
+                continue
+            if self._provider_capable(row) and provider_lane_reserved:
+                self._record(
+                    "researcher_deferred",
+                    label=row["id"],
+                    reason="provider_lane_reserved",
+                    observed_active_units=undeclared_lab_owners,
+                )
+                continue
+            active.append(row)
+            if self._provider_capable(row):
+                provider_lane_reserved = True
+            if len(active) >= self.config.max_parallel_researchers:
+                break
         if not active:
             return []
         routes = self.config.researcher_routes or (self.config.researcher,)
@@ -455,6 +717,8 @@ Shared tools:
         ) as executor:
             futures = {}
             for row, route in assignments:
+                project = Path(row["path"])
+                (project / "artifacts").mkdir(parents=True, exist_ok=True)
                 previous = self.state["last_runs"].get(f"researcher:{row['id']}", {})
                 thread_id = self.state["threads"]["projects"].get(row["id"])
                 if previous.get("model") not in {None, route.model}:
@@ -463,7 +727,7 @@ Shared tools:
                     self._run_agent,
                     role="researcher",
                     label=row["id"],
-                    prompt=self._researcher_prompt(Path(row["path"])),
+                    prompt=self._researcher_prompt(project),
                     route=route,
                     thread_id=thread_id,
                     timeout_seconds=self.config.researcher_timeout_seconds,
@@ -524,17 +788,32 @@ Shared tools:
 
     def cycle(self) -> dict[str, Any]:
         self.render_status()
-        self._run_agent(
-            role="director",
-            label="director",
-            prompt=self._director_prompt(),
-            route=self.config.director,
-            thread_id=self.state["threads"]["director"],
-            timeout_seconds=self.config.director_timeout_seconds,
-        )
+        director_deferred, observation_sha256 = self._director_can_defer()
+        if director_deferred:
+            self._record(
+                "director_deferred",
+                reason="unchanged_durable_sessions",
+                observation_sha256=observation_sha256,
+            )
+        else:
+            self._run_agent(
+                role="director",
+                label="director",
+                prompt=self._director_prompt(),
+                route=self.config.director,
+                thread_id=self.state["threads"]["director"],
+                timeout_seconds=self.config.director_timeout_seconds,
+            )
+            self.state["director_observation_sha256"] = (
+                self._director_observation_sha256()
+            )
+            self._save_state()
         self._run_researchers()
         next_cycle = self.state["cycle_count"] + 1
-        if next_cycle % self.config.supervisor_every_cycles == 0:
+        if (
+            not director_deferred
+            and next_cycle % self.config.supervisor_every_cycles == 0
+        ):
             self._run_agent(
                 role="supervisor",
                 label="supervisor",
@@ -550,6 +829,8 @@ Shared tools:
 
     def run_forever(self, *, once: bool = False) -> None:
         while True:
+            if not once:
+                self._restart_if_source_changed()
             try:
                 self.cycle()
             except Exception as error:
@@ -559,6 +840,7 @@ Shared tools:
                 self.render_status()
             if once:
                 return
+            self._restart_if_source_changed()
             time.sleep(self.config.cycle_interval_seconds)
 
 

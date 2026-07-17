@@ -1,0 +1,23 @@
+{
+  "status": "completed",
+  "priority": 0,
+  "summary": "Falsify the last zero-cost student42 loader uncertainty with the real pinned constructor and loader path, without touching the live full-model session.",
+  "next_action": "Terminal resource-bound result; no successor preflight. The independent measured-depth result PARKS student42, so do not pursue the CUDA/process-group boundary without genuinely new measured evidence.",
+  "provider_mutation": "prohibited_zero_cost_local_falsifier",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 900,
+  "active_experiment": null,
+  "decision": "resource-bound",
+  "terminal_artifact": "minimal_depth42_exact_loader_falsifier_r1.json",
+  "terminal_observation": "Pinned registry resolved Glm4MoeLiteForCausalLM and exact 42-layer ModelConfig before construction reached an uninitialized pipeline model-parallel group; AssertionError. Header-only metadata parsed all 24,615 keys; loader and negative controls were not reached.",
+  "candidate_root": "/root/.cache/glm47flash-awq-minimal-depth42-v2-5dbf26dc16a1",
+  "candidate_contract_sha256": "5dbf26dc16a1cabbdb36eb256a996a11cf44c71c702b72686806a68a3bb1a290",
+  "resource_cap": {
+    "peak_rss_gib": 8,
+    "new_artifacts_mib": 64,
+    "attempts": 1
+  },
+  "stop_rule": "complete after one exact loader pass, typed GPU_REQUIRED/resource-bound result, or supersession by a valid full-model r3 economic pass; no second preflight",
+  "conflicts": "must not touch provider inventory, the active near-stock service, shared launchers/scripts, checkpoint payloads, CUDA, network, training, inference, or quality",
+  "quality_policy": "performance admission only; no quality or deployable claim"
+}

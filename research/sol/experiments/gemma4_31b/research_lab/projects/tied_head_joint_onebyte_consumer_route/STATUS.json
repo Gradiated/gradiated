@@ -1,0 +1,13 @@
+{
+  "status": "complete",
+  "priority": 155,
+  "summary": "Find or reject one single-storage joint one-byte tied embedding/output consumer after measured head latency changed the prior.",
+  "next_action": null,
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0,
+  "wall_clock_budget_minutes": 50,
+  "compute_budget": "2 local CPU-hours; no GPU",
+  "storage_budget": "2 GiB project-local including at most 512 MiB probes; no shared /tmp",
+  "active_session": null,
+  "terminal_artifact": "NONE.json"
+}

@@ -1,0 +1,31 @@
+{
+  "status": "completed",
+  "priority": 170,
+  "summary": "Completed $0 adjudication: immutable archive, all identities, per-case raw-response bindings, and frozen negative controls pass; BF16 development control passes every capture with 6/6 in five categories and 5/6 tool-call score.",
+  "next_action": "BF16 development control established; only a bounded recovered-student canary may next run the identical frozen evaluator.",
+  "provider_mutation": "prohibited_offline_archive_adjudication",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": null,
+  "decision": "establish_bf16_development_control_unlock_bounded_student_recovery_canary",
+  "category_repeatability": {
+    "coding": [6, 6, 6],
+    "long_context_retrieval": [6, 6, 6],
+    "multi_turn_continuation": [6, 6, 6],
+    "serving_correctness": [6, 6, 6],
+    "teacher_forced_loss": [6, 6, 6],
+    "tool_call": [5, 5, 5]
+  },
+  "nll_ceilings_artifact": "BF16_V2_NLL_CEILINGS.json",
+  "legacy_packaging_classification": "missing allocation-result.json is a legacy outer-controller packaging defect and not part of the V2 scientific capture contract",
+  "archive_sha256": "98e34729b73048ab97e20e66eda4ee807bb6a6e41fbe9c403273135035b39dba",
+  "suite_fixture_sha256": "4953e524526106b353a7df8de6d84e45fa18d96464935117ca926f483d03a6b7",
+  "preregistration_sha256": "1191fc7643120e8bb1f8eab796fbd22f29e7065b26a1c7b4e28387eddd0b32d8",
+  "artifact_contract": [
+    "adjudicate_bf16_v2_capture.py",
+    "BF16_V2_CONTROL_ADJUDICATION.json",
+    "BF16_V2_NLL_CEILINGS.json_if_valid",
+    "RESEARCH_LOG.md"
+  ],
+  "stop_rule": "valid_archive_and_at_least_five_of_six_in_every_category_establishes_control_else_close_gate_without_provider_retry"
+}

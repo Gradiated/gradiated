@@ -1,0 +1,22 @@
+{
+  "status": "complete",
+  "priority": 115,
+  "summary": "Bind and size one exact Gemma 4 31B FP8 consumer for a direct L40S cost test, correcting the unsupported MI300X rate lead.",
+  "next_action": "Director may schedule the one nominated direct CUDA L40S arm; this project does not launch it and does not create a successor.",
+  "provider_mutation": "prohibited_zero_cost_offline",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 7200,
+  "compute_budget": "4 local CPU-hours",
+  "storage_budget": "3 GiB",
+  "active_session": null,
+  "terminal_artifact": "DECISION.md",
+  "terminal_packet": "FP8_L40S_PACKET.json",
+  "terminal_result": "nominate_one_direct_cuda_paid_arm",
+  "evidence": {
+    "memory_accounting": "MEMORY_ACCOUNTING.json",
+    "steady_10k_bound_gib": 40.504,
+    "l40s_headroom_at_10k_gib": 4.2,
+    "raw_gpu_break_even_fraction": 0.3928571429,
+    "provider_run": "not launched: project provider_mutation is prohibited_zero_cost_offline"
+  }
+}

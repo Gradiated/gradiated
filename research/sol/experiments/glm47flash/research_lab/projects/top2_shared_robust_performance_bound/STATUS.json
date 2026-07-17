@@ -1,0 +1,19 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "ROBUST_SIGNAL_PASS: 666.861 tok/s clears 606.355 and 1.03x every compatible c32 control even against the worst 3%-drift-admissible post-control (633.373 tok/s; 1.05287x).",
+  "next_action": "Terminal. Preserve the corrected paid lane's typed quality/harness close; do not retry, repair capture, claim quality/formal bracket success, or prepare a successor here.",
+  "provider_mutation": "prohibited",
+  "authorized_spend_usd": 0,
+  "dependency": "terminal corrected top2 artifacts available",
+  "stop_rule": "Satisfied by one offline adjudication; no GPU, provider, capture repair, retry, quality claim, or successor preparation.",
+  "terminal_result": {
+    "classification": "ROBUST_SIGNAL_PASS",
+    "artifact": "artifacts/TOP2_SHARED_ROBUST_SIGNAL_PASS_2026-07-16.json",
+    "candidate_tokens_per_second": 666.8608532991316,
+    "worst_admissible_post_control_tokens_per_second": 633.373394870883,
+    "robust_ratio": 1.0528715899648347,
+    "planning_l40s_usd_per_m_output_base_case": 0.45819986889902725,
+    "quality_and_harness_limit_preserved": true
+  }
+}

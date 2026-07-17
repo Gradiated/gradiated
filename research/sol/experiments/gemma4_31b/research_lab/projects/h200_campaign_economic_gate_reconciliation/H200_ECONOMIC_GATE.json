@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "evidence_type": "derived_economic_gate_from_content_addressed_market_and_price_inputs",
+  "scope": "H200 production economics only; no endpoint, quality, provider, or H200-vs-H100 performance claim",
+  "identities": {
+    "model": "google/gemma-4-31b-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "workload_campaign_mix": {"prompt_tokens": 4214, "output_tokens": 358, "cache_prompt_fraction": 0.127, "fresh_prompt_tokens": 3678.822, "cache_prompt_tokens": 535.178, "total_tokens": 4572},
+    "market_target_sha256": "5d636809dc25450050c565cdc108bf7e91eaa60ce07c027ca390c8011e3b8e51",
+    "price_inventory_sha256": "3f403d67a92fc91be85bbd27dede85f5f91c3fd2df25ef8dcef2a344acbd1e01",
+    "source_price_record": "nvidia-h200-sxm",
+    "price_inventory_refreshed_at_utc": "2026-07-15T13:15:00Z"
+  },
+  "inputs": {
+    "h200_planning_usd_per_gpu_hour": 3.25,
+    "h200_production_range_usd_per_gpu_hour": [2.925, 3.6],
+    "market_request_cost_usd": {
+      "WandB": 0.000614925,
+      "Venice": 0.000618505,
+      "DeepInfra_fp8": 0.000614287,
+      "SiliconFlow_fp8": 0.000621447,
+      "Parasail_fp8": 0.000727134,
+      "AA_7_2_1_blend": 0.00064008
+    },
+    "scenario_factors": {
+      "ideal": {"utilization": 1.0, "replica_headroom": 1.0, "non_gpu": 1.0, "reliability": 1.0, "storage_orchestration": 1.0},
+      "planning_base": {"utilization": 0.85, "replica_headroom": 1.1, "non_gpu": 1.05, "reliability": 1.03, "storage_orchestration": 1.03},
+      "conservative": {"utilization": 0.7, "replica_headroom": 1.25, "non_gpu": 1.15, "reliability": 1.05, "storage_orchestration": 1.08}
+    }
+  },
+  "formula": {
+    "raw_gpu_only_threshold_rps": "gpu_rate_usd_per_hour / (3600 * market_request_cost_usd)",
+    "all_in_required_completed_requests_per_second": "raw_gpu_only_threshold_rps * replica_headroom * non_gpu * reliability * storage_orchestration / utilization",
+    "factor_multiplier_over_raw": {"ideal": 1.0, "planning_base": 1.4415758824, "conservative": 2.32875},
+    "factor_semantics": "utilization is a divisor; all other factors are multiplicative cost burdens"
+  },
+  "gate_by_market_target": {
+    "rate_order_usd_per_gpu_hour": [2.925, 3.25, 3.6],
+    "rate_labels": ["production_low", "planning", "production_high"],
+    "required_completed_requests_per_second": {
+      "WandB": {"ideal": [1.321299, 1.468110, 1.626215], "planning_base": [1.904753, 2.116393, 2.344312], "conservative": [3.076976, 3.418862, 3.787047]},
+      "Venice": {"ideal": [1.313651, 1.459613, 1.616802], "planning_base": [1.893728, 2.104143, 2.330742], "conservative": [3.059166, 3.399073, 3.765127]},
+      "DeepInfra_fp8": {"ideal": [1.322672, 1.469635, 1.627904], "planning_base": [1.906732, 2.118591, 2.346747], "conservative": [3.080172, 3.422413, 3.790980]},
+      "SiliconFlow_fp8": {"ideal": [1.307432, 1.452703, 1.609148], "planning_base": [1.884763, 2.094181, 2.319708], "conservative": [3.044683, 3.382982, 3.747303]},
+      "Parasail_fp8": {"ideal": [1.117401, 1.241556, 1.375262], "planning_base": [1.610818, 1.789798, 1.982545], "conservative": [2.602147, 2.891274, 3.202642]},
+      "AA_7_2_1_blend": {"ideal": [1.269373, 1.410414, 1.562305], "planning_base": [1.829897, 2.033219, 2.252181], "conservative": [2.956051, 3.284502, 3.638217]}
+    },
+    "frontier_summary_at_planning_rate": {
+      "market_endpoints_excluding_AA_blend": {"ideal_rps_range": [1.241556, 1.469635], "planning_base_rps_range": [1.789798, 2.118591], "conservative_rps_range": [2.891274, 3.422413]},
+      "including_AA_blend": {"ideal_rps_range": [1.241556, 1.469635], "planning_base_rps_range": [1.789798, 2.118591], "conservative_rps_range": [2.891274, 3.422413]},
+      "strict_frontier_request_cost_range_usd": [0.000614287, 0.000621447]
+    }
+  },
+  "campaign_mix_throughput_interpretation": {
+    "planning_rate_frontier_rps": {"raw_gpu_only": [1.452703, 1.469635], "planning_base_all_in": [2.094181, 2.118591], "conservative_all_in": [3.382982, 3.422413]},
+    "planning_base_frontier_token_rates_for_3678_822_prompt_358_output": {"prompt_tokens_per_second": [6584.347, 7793.918], "output_tokens_per_second": [640.748, 758.455], "total_tokens_per_second": [8182.955, 9686.196]},
+    "interpretation": "A measured primary endpoint must use completed requests and the actual observed factors; token rates are a conversion, not a substitute for complete-request accounting."
+  },
+  "single_stream_10k_interpretation": {
+    "workload": "10000 input / 358 output, concurrency 1",
+    "separation_rule": "Do not apply the campaign-mix request cost or background utilization gate to this arm.",
+    "methodology_comparator": "AA's $0.14/M and $0.00064008/request are a 7:2:1 blend view, not component pricing for this exact 10000/358 request.",
+    "fresh_input_no_cache_sensitivity_request_cost_usd": {"WandB": 0.0013253, "Venice": 0.00132888, "DeepInfra_fp8": 0.00143604, "SiliconFlow_fp8": 0.0014432, "Parasail_fp8": 0.0016432},
+    "planning_rate_ideal_rps_for_no_cache_sensitivity": {"WandB": 0.681187, "Venice": 0.679352, "DeepInfra_fp8": 0.628658, "SiliconFlow_fp8": 0.625539, "Parasail_fp8": 0.549402},
+    "interpretation": "Report 10K raw throughput, latency, and measured cost separately; it is a methodology/latency comparator and does not establish campaign-mix economics."
+  },
+  "actual_provider_rate_accounting": {
+    "formula": "measured_sustainable_cost_per_request = ((actual_metered_gpu_usd_per_hour + actual_disk_usd_per_hour + other_metered_provider_usd_per_hour) / 3600 / completed_requests_per_second) * measured_replica_headroom * measured_non_gpu * measured_reliability * measured_storage_orchestration / measured_utilization",
+    "production_rule": "Use $3.25/hour and $2.925-$3.60/hour for production planning/sensitivity. Record authenticated experiment/preemptible rate and disk separately for experiment spend; never substitute the $2.45/hour preemptible reference for the production planning rate.",
+    "required_measurements": ["completed requests", "actual GPU and disk meter", "provider-active seconds", "utilization/headroom", "queueing", "failures/reloads", "storage/orchestration burden"]
+  },
+  "independent_matched_comparator_gate": {
+    "rule": "candidate_sustainable_cost_per_request <= 0.90 * matched_vllm_control_sustainable_cost_per_request",
+    "scope": "same H200, identities, request bytes, engine-valid saturation point, contemporaneous telemetry and quality boundary",
+    "combined_promotion_rule": "Promote only if the candidate passes this <=0.90x matched-control gate, clears the H200 campaign-mix market gate at the measured production scenario, and passes raw-output, failure/reload, and required quality checks."
+  },
+  "inherited_1_825_rps_disposition": {
+    "status": "typed_correction_independent_floor_not_market_derivation",
+    "origin": "H100-context promotion packet; provenance for its utilization/headroom derate is not present in the retained inputs",
+    "planning_rate_raw_gpu_cost_per_request_usd": 0.000494673,
+    "planning_rate_all_in_cost_per_request_usd": 0.000713108,
+    "comparison": "1.825 rps exceeds the raw H200 market floor but is only 86.14% of the cheapest planning-base frontier threshold and misses the all-in market gate.",
+    "disposition": "Retain as a separate promotion/packet floor until the active endpoint contract is explicitly corrected; do not label it the H200 market hurdle."
+  },
+  "replacement_terminal": {
+    "type": "identity_corrected_typed_terminal",
+    "identity_check": "pass",
+    "revision_check": "gate, active endpoint PROJECT.md, and checkpoint CHECKPOINT_TERMINAL.json all equal b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_terminal_ref": "../sglang_h200_matched_endpoint_falsifier/artifacts/checkpoint-owner-20260717T072831Z/CHECKPOINT_TERMINAL.json",
+    "checkpoint_terminal_status": "pass",
+    "source_hash_revalidation": {
+      "market_target_sha256": "5d636809dc25450050c565cdc108bf7e91eaa60ce07c027ca390c8011e3b8e51",
+      "gpu_prices_sha256": "3f403d67a92fc91be85bbd27dede85f5f91c3fd2df25ef8dcef2a344acbd1e01",
+      "status": "pass"
+    },
+    "arithmetic_revalidation": "pass; all 18 endpoint/scenario rows recompute from stored costs, rates, and factors"
+  },
+  "evidence_boundary": "All results are derived from measured public market capture, fresh shared price inventory, and explicit scenario factors. No provider was queried or mutated by this project."
+}

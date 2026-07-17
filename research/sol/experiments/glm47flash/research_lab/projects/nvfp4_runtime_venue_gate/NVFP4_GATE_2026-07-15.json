@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "experiment": "gpu_free_nvfp4_runtime_venue_gate",
+  "retrieved_at_utc": "2026-07-15",
+  "budget_usd": 0.0,
+  "decision": "CLOSE_FOR_CURRENT_CAMPAIGN_NO_MEASUREMENT_PROMOTION",
+  "candidate": {
+    "repo": "unsloth/GLM-4.7-Flash-NVFP4",
+    "revision": "98b0362133bda9ee3b1b875636636c07861f5947",
+    "config_sha256": "c9a94c0b43288570173f7ad359a5ca2428f1c1d95857817f4af74deaa409efc4",
+    "index_sha256": "839906024a440f91db46ddc8898dde3cc5b5e148441bccfafd762d927624ce84",
+    "index_total_size_bytes": 21264115952,
+    "index_tensor_count": 35688,
+    "main_tensor_count": 35476,
+    "mtp_tensor_count": 212,
+    "weight_files": ["model.safetensors", "model_mtp.safetensors"],
+    "architecture": "Glm4MoeLiteForCausalLM",
+    "model_type": "glm4_moe_lite",
+    "layers": 47,
+    "nextn_predict_layers": 1,
+    "quantization": {
+      "format": "mixed-precision",
+      "method": "compressed-tensors",
+      "attention_and_selected_layers": "float-quantized W8A8-style FP8 channel weights with dynamic token activations",
+      "moe": "nvfp4-pack-quantized W4A4, group_size=16, FP8 E4M3 scales, dynamic local activations"
+    },
+    "metadata_only": true,
+    "weights_downloaded": false
+  },
+  "runtime_check": {
+    "runtime": "vllm main",
+    "vllm_revision": "66b6c684ab5a32dabcd2e69daaa60ff5d5198392",
+    "vllm_commit_date": "2026-07-15",
+    "recipe_declared_minimum": "vllm>=0.25.0",
+    "architecture_registry": "PASS: Glm4MoeLiteForCausalLM -> glm4_moe_lite",
+    "mtp_registry": "PASS: Glm4MoeLiteMTP -> glm4_moe_lite_mtp",
+    "quant_loader": "PASS: CompressedTensorsW4A4Nvfp4MoEMethod recognizes group-16 compressed-tensors NVFP4 MoE",
+    "blackwell_requirement": "PASS: official vLLM docs state NVFP4 minimum compute capability SM100; source selects Blackwell NVFP4 backends",
+    "exact_config_mapping": "PASS at source/config level",
+    "actual_model_construction": "NOT_RUN: vLLM/Transformers are absent locally and construction requires a GPU runtime",
+    "silent_fallback": "NOT_OBSERVED; source path is explicit, but no executable load was performed",
+    "quality": "FAIL_FOR_PROMOTION: no public quality result or frozen campaign quality capture",
+    "runtime_evidence_class": "source_and_metadata_measured; no GPU execution"
+  },
+  "economics": {
+    "control_output_tok_s": 355.772,
+    "control_hourly_usd": 0.8581222,
+    "target_usd_per_million_output": 0.6365,
+    "strong_target_usd_per_million_output": 0.60,
+    "lifecycle_overhead_factor": 1.15,
+    "assumptions": [
+      "15% multiplicative allowance for storage, transfer, orchestration, interruption/recovery, and nonproductive lifecycle time",
+      "100% sustained utilization after allowance; no quality adjustment; therefore optimistic for production",
+      "catalog price is not capacity evidence"
+    ],
+    "venues": [
+      {
+        "name": "RunPod RTX Pro 6000 Blackwell",
+        "rate_usd_per_hour": 1.99,
+        "memory_gb": 96,
+        "catalog_status": "listed; live capacity not established",
+        "required_tok_s_target": 998.734,
+        "required_tok_s_strong": 1059.491,
+        "vs_control_target_multiplier": 2.807
+      },
+      {
+        "name": "RunPod B200",
+        "rate_usd_per_hour": 5.89,
+        "memory_gb": 180,
+        "catalog_status": "listed; live capacity not established",
+        "required_tok_s_target": 2956.053,
+        "required_tok_s_strong": 3135.880,
+        "vs_control_target_multiplier": 8.309
+      },
+      {
+        "name": "Google Cloud RTX PRO 6000 Virtual Workstation",
+        "rate_usd_per_hour": 1.09565,
+        "memory_gb": 96,
+        "catalog_status": "official price and regions listed; allocatable capacity not established",
+        "required_tok_s_target": 549.881,
+        "required_tok_s_strong": 583.332,
+        "vs_control_target_multiplier": 1.546
+      }
+    ],
+    "production_placement": "RTX PRO 6000 Blackwell-class 96 GB placement is the only plausible single-device hypothesis in this screen; it still needs capacity, exact runtime load, quality, throughput, and all-in utilization evidence.",
+    "economic_evidence_class": "vendor_reported_rates_plus_derived_break_even"
+  },
+  "sources": [
+    {"url": "https://huggingface.co/unsloth/GLM-4.7-Flash-NVFP4", "supports": "exact revision and metadata"},
+    {"url": "https://github.com/vllm-project/vllm", "revision": "66b6c684ab5a32dabcd2e69daaa60ff5d5198392", "supports": "architecture, MTP, and NVFP4 loader source"},
+    {"url": "https://docs.vllm.ai/projects/llm-compressor/en/stable/steps/choosing-scheme/", "supports": "NVFP4 SM100 requirement"},
+    {"url": "https://www.runpod.io/pricing", "retrieved": "2026-07-15", "supports": "RTX Pro 6000 $1.99/h and B200 $5.89/h catalog rates"},
+    {"url": "https://cloud.google.com/products/compute/gpus-pricing?hl=en", "retrieved": "2026-07-15", "supports": "RTX PRO 6000 $1.09565/h official price and 96 GB memory"}
+  ],
+  "claim_boundary": "This artifact proves a credible source/config loader path, but not executable loading, output correctness, quality retention, capacity, throughput, or delivered cost."
+}

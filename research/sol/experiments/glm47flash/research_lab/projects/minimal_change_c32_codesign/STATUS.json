@@ -1,0 +1,37 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "Find and implement the smallest 47-layer model/representation change that robustly admits c32 on L40S with a conservative cost path.",
+  "next_action": "Closed at $0: retain the five-block physical-depth proxy; reopen only for an authorized GPU loader/kernel measurement.",
+  "provider_mutation": "prohibited_zero_cost_codesign",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": "minimal_change_c32_codesign_2026-07-16_complete",
+  "capacity_gate": {
+    "stock_c32_memory_deficit_mib": 807.7,
+    "minimum_projected_post_allocation_headroom_mib": 1536.0,
+    "preserve_serving_layers": 47
+  },
+  "stop_rule": "satisfied: one ranked exact comparison and one executable proxy; no later arm nominated without GPU loader/kernel evidence",
+  "quality_policy": "cost-mechanism proxy only; training and full quality explicitly deferred",
+  "decision": "close_zero_cost_no_nomination",
+  "winner": {
+    "name": "physical_depth_even5",
+    "proxy_root": "/root/.cache/glm47flash-awq-minimal-depth-4c84badbce22",
+    "contract_sha256": "4c84badbce2290a95ebc83bbceb784fce28507e15038fc6a60105ed5350697cf",
+    "layers": 42,
+    "skipped_source_layers": [6, 15, 24, 33, 42],
+    "c32_headroom_mib": 2401.9768951416045,
+    "conservative_throughput_bound_tok_s": 597.5285581395348,
+    "loader_consumption": "UNMEASURED_NO_MODEL_INSTANTIATION",
+    "later_arm_nomination": "CLOSED_GPU_EVIDENCE_REQUIRED"
+  },
+  "artifacts": [
+    "CANDIDATE_COMPARISON.json",
+    "build_minimal_depth_proxy.py",
+    "minimal_depth_checkpoint_manifest.json",
+    "minimal_depth_runtime_preflight.json",
+    "minimal_depth_pinned_source_probe.py",
+    "RESEARCH_LOG.md"
+  ]
+}

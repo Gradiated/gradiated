@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "retrieved_at_utc": "2026-07-16T10:20:55Z",
+  "question": "How do measured GLM-4.7-Flash L40S costs compare with current provider prices, and what traffic does the exact model receive on OpenRouter?",
+  "decision": "CLOSE_ON_WORKLOAD_COST_NOT_OUTPUT_ONLY_PARITY; OPENROUTER_TRAFFIC_IS_MATERIAL_BUT_LOW_ARPU",
+  "scope": {
+    "model": "z-ai/glm-4.7-flash-20260119",
+    "local_model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "local_hardware": "one NVIDIA L40S",
+    "planning_rate_usd_per_gpu_hour": 1.1,
+    "local_workload": "cache-off, thinking-disabled, 8192 input / 1024 output tokens per request, c16 unless noted",
+    "traffic_window": "seven complete UTC days, 2026-07-09 through 2026-07-15"
+  },
+  "hypothesis_and_falsification": {
+    "hypothesis": "The measured exact-model deployment is commercially close even if it has not reached output-only retail parity, and OpenRouter carries material exact-model demand.",
+    "falsified_if": "Normalized local cost is not competitive at reasonable utilization, or the exact OpenRouter permaslug has negligible seven-day traffic."
+  },
+  "provider_snapshot": {
+    "openrouter_list_usd_per_million": {
+      "input": 0.06,
+      "output": 0.4,
+      "cache_read": 0.01
+    },
+    "artificial_analysis_non_reasoning": {
+      "amazon_blended_7_2_1": 0.1,
+      "novita_blended_7_2_1": 0.1,
+      "amazon_output_tokens_per_second_p50": 146.5,
+      "novita_output_tokens_per_second_p50": 94.3,
+      "input_usd_per_million": 0.07,
+      "output_usd_per_million": 0.4
+    }
+  },
+  "local_cost_comparison": {
+    "exact_full47_stock_c16": {
+      "measured_output_tokens_per_second": 552.1710554232396,
+      "usd_per_million_output_equivalent_at_100pct_utilization": 0.5534,
+      "usd_per_million_output_equivalent_at_85pct_utilization": 0.651,
+      "usd_per_million_output_equivalent_at_70pct_utilization": 0.7905,
+      "provider_8_input_to_1_output_retail_anchor": 0.88,
+      "savings_vs_0_88_at_100pct_percent": 37.11,
+      "savings_vs_0_88_at_85pct_percent": 26.02,
+      "savings_vs_0_88_at_70pct_percent": 10.17,
+      "break_even_utilization_vs_0_88": 0.6289,
+      "premium_vs_0_40_output_only_at_100pct_percent": 38.35,
+      "output_tokens_per_second_for_0_40_parity_at_100pct_utilization": 763.888889,
+      "output_tokens_per_second_for_0_40_parity_at_85pct_utilization": 898.69281
+    },
+    "modified_quality_deferred_proxies": {
+      "depth43_c32_usd_per_million_output_equivalent_at_100pct_utilization": 0.480079,
+      "depth39_c32_usd_per_million_output_equivalent_at_100pct_utilization": 0.415973,
+      "claim_limit": "Both alter model depth and are architecture-cost evidence only; neither is currently quality eligible."
+    }
+  },
+  "openrouter_traffic": {
+    "cached_at_utc": "2026-07-16T09:42:40.800Z",
+    "complete_days": 7,
+    "prompt_tokens": 56669091935,
+    "completion_tokens_including_reasoning": 3495269533,
+    "total_tokens": 60164361468,
+    "requests": 6122094,
+    "cached_prompt_tokens": 24325518991,
+    "native_reasoning_tokens": 2184330639,
+    "tool_calls": 632335,
+    "average_total_tokens_per_day": 8594915924,
+    "average_requests_per_day": 874585,
+    "prompt_to_completion_ratio": 16.2131,
+    "cached_share_of_prompt_tokens": 0.4293,
+    "thirty_complete_day_total_tokens": 277492918654,
+    "thirty_complete_day_requests": 25042917
+  },
+  "derived_market_proxy": {
+    "method": "Apply the lowest displayed OpenRouter list rates to public aggregate tokens, charging reported cached prompt tokens at the displayed cache-read rate; upper bound charges all prompt tokens at input rate.",
+    "weekly_retail_value_low_usd": 3581.98,
+    "weekly_retail_value_high_usd": 4798.25,
+    "annualized_low_usd": 186263,
+    "annualized_high_usd": 249509,
+    "claim_limit": "This is not OpenRouter revenue, provider revenue, or model-wide TAM; actual provider routing, discounts, free traffic, cache accounting, and reasoning billing can differ."
+  },
+  "sources": [
+    {
+      "url": "https://openrouter.ai/z-ai/glm-4.7-flash",
+      "title": "Z.ai: GLM 4.7 Flash",
+      "retrieved_at_utc": "2026-07-16T10:15:00Z",
+      "evidence_type": "vendor-reported public model page and page payload"
+    },
+    {
+      "url": "https://openrouter.ai/api/frontend/v1/stats/model-activity?permaslug=z-ai%2Fglm-4.7-flash-20260119",
+      "title": "OpenRouter model activity JSON used by the public model page",
+      "retrieved_at_utc": "2026-07-16T10:20:55Z",
+      "evidence_type": "measured public API snapshot"
+    },
+    {
+      "url": "https://artificialanalysis.ai/models/glm-4-7-flash-non-reasoning/providers",
+      "title": "GLM-4.7-Flash Non-reasoning provider benchmarking",
+      "retrieved_at_utc": "2026-07-16T10:10:00Z",
+      "evidence_type": "third-party measured and vendor-price aggregation"
+    }
+  ],
+  "limitations": [
+    "The local 552.171 tok/s figure is aggregate c16 throughput, whereas Artificial Analysis reports one-request-at-a-time post-first-token speed; speed values are not directly comparable.",
+    "The local workload uses an 8:1 input/output ratio with cache disabled; Artificial Analysis's headline blend uses 7 cache-hit input : 2 uncached input : 1 output. Blended prices are therefore not matched claims.",
+    "Local figures are accelerator COGS at a planning rate, not fully loaded delivered cost or retail price, and exclude orchestration, storage, failures, headroom, margin, and quality risk.",
+    "OpenRouter traffic is one distribution channel and includes reasoning/cached-token accounting exposed by that platform; it is not total global model usage.",
+    "The current selective-W4 full47 experiment has no scientific result yet and is excluded."
+  ],
+  "next_action": "Measure the corrected full47 selective-W4 c16/c32 endpoint, then run an Artificial Analysis methodology-matched service test and recompute fully loaded cost at observed utilization."
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "decision": "MODEL_CLOSE",
+  "evidence_label": "official source audit plus exact local checkpoint identity",
+  "audited_at_utc": "2026-07-16",
+  "scope": {
+    "checkpoint_path": "/root/.cache/glm47flash-awq-ab31d120",
+    "checkpoint_revision": "cyankiwi/GLM-4.7-Flash-AWQ-4bit@ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "checkpoint_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86",
+    "architecture": "Glm4MoeLiteForCausalLM",
+    "model_type": "glm4_moe_lite",
+    "hardware": "NVIDIA L40S SM89",
+    "workload": "cache-off 8192 input / 1024 output / 32 requests / c16"
+  },
+  "official_binding": {
+    "repository": "https://github.com/NVIDIA/TensorRT-LLM",
+    "release_tag": "v1.2.1",
+    "release_url": "https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v1.2.1",
+    "tag_commit": "376f7e1bd8ed543f75014309e3fd4b237e9b0e73",
+    "recursive_tree_sha256": "a56d78249feb474b42b70f66c1f6494fb0ec8cd5ea5d35400fd73ea616fbc5af",
+    "source_urls": {
+      "modeling_glm": "https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/v1.2.1/tensorrt_llm/_torch/models/modeling_glm.py",
+      "model_registry": "https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/v1.2.1/tensorrt_llm/_torch/models/__init__.py",
+      "supported_models": "https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/v1.2.1/docs/source/models/supported-models.md"
+    },
+    "source_sha256": {
+      "modeling_glm.py": "c37c37d43de300e883e048307ad0d400a9ccc4d2b1193ce95e0af6e0cab3162b",
+      "models_init.py": "79960b508b9af8f9dd7ae6905f5b485ece94fe6fd89c73b4068e3c6135c2cb41",
+      "supported_models.md": "e145c90d930ac01e2037dbad60ece63b420369fa9ce74e6378e87bc88dc5c378"
+    }
+  },
+  "model_gate": {
+    "checkpoint_architecture_observed": "Glm4MoeLiteForCausalLM",
+    "checkpoint_model_type_observed": "glm4_moe_lite",
+    "official_registered_architecture": "Glm4MoeForCausalLM",
+    "official_source_classes": ["Glm4WeightLoader", "Glm4Attention", "Glm4MoE", "Glm4Model", "Glm4MoeForCausalLM"],
+    "exact_loader_match": false,
+    "supported_models_table_contains_exact_architecture": false,
+    "reason": "v1.2.1 exposes a Glm4 MoE loader/model for Glm4MoeForCausalLM, but no Glm4MoeLiteForCausalLM or glm4_moe_lite registration. Admitting the checkpoint would require model/runtime source work, which is outside this unchanged-release gate."
+  },
+  "downstream_gates": {
+    "representation_awq": "not_reached_after_model_close",
+    "sm89_moe_mla_kernels": "not_reached_after_model_close",
+    "memory_correctness": "not_reached_after_model_close",
+    "economic_bound": "not_reached_after_model_close"
+  },
+  "cost_usd": 0.0,
+  "provider_mutation": false,
+  "next_action": "Stop this lineage; do not build an engine, convert weights, patch TensorRT-LLM, or prepare an L40S endpoint."
+}

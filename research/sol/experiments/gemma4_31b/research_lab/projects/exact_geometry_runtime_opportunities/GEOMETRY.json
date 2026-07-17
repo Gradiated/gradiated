@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "artifact": "exact_gemma4_31b_geometry",
+  "generated_utc": "2026-07-17T00:00:00Z",
+  "evidence_scope": "metadata/source only; no weight shards downloaded; no CUDA measurement",
+  "identities": {
+    "target_model": {
+      "id": "google/gemma-4-31B-it",
+      "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+      "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "config_url": "https://huggingface.co/google/gemma-4-31B-it/resolve/b9ea41a2887d8607f594846523f94c6cc75ac8a4/config.json",
+      "model_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+    },
+    "assistant": {
+      "id": "google/gemma-4-31B-it-assistant",
+      "revision": "627c5ec1458b9086b841a91e0512fd31fd2fbbf1",
+      "config_sha256": "d09487c1083a334a97545f204dd41ab1a40b0438bdead19558f0e1357e26d66a",
+      "model_safetensors_sha256": "9f80df6099fa1fd7db71220ec9ee864d5ecff769878697dd5763e4285b15a1da",
+      "model_safetensors_bytes": 939042560,
+      "alias_named_by_vllm_docs": "gg-hf-am/gemma-4-31B-it-assistant"
+    },
+    "runtime": {
+      "vllm_git_revision": "ab0a20d15129b322f911db578b50c6b35b3167e7",
+      "gemma4_mtp_source_sha256": "4eee061c81430be28f029ed66360887a57f8711a75c863067d30e3840a488918",
+      "gemma4_proposer_source_sha256": "df4c3ed4a95e7340a2538257f167dc178ff44631d3e7707708f46e65d09b398e",
+      "image": "vllm/vllm-openai:gemma4",
+      "image_amd64_manifest_digest": "sha256:8e86cb93b724092cd4dc892fb129a6c5538613b38a5cd34e40aab9e6aea72b03"
+    }
+  },
+  "target_text_geometry_measured_from_config": {
+    "num_hidden_layers": 60,
+    "attention_pattern": {"sliding_attention_layers": 50, "full_attention_layers": 10, "pattern": "five sliding then one full, repeated"},
+    "hidden_size": 5376,
+    "intermediate_size": 21504,
+    "num_attention_heads": 32,
+    "head_dim_sliding": 256,
+    "num_key_value_heads_sliding": 16,
+    "global_head_dim": 512,
+    "num_global_key_value_heads": 4,
+    "sliding_window_tokens": 1024,
+    "vocab_size": 262144,
+    "tie_word_embeddings": true,
+    "dtype": "bfloat16",
+    "max_position_embeddings": 262144,
+    "vision": {"hidden_size": 1152, "layers": 27, "heads": 16, "head_dim": 72, "soft_tokens_per_image": 280},
+    "parameter_metadata": 32682372656,
+    "bf16_weight_bytes_metadata": 62546177752,
+    "bf16_weight_gib_metadata": 58.256,
+    "provenance": "measured from official config.json and model.safetensors.index.json metadata"
+  },
+  "derived_geometry": {
+    "sliding_kv_bytes_per_token_per_layer": 8192,
+    "global_kv_bytes_per_token_per_layer": 8192,
+    "full_unwindowed_kv_bytes_per_token": 491520,
+    "full_unwindowed_kv_kib_per_token": 480,
+    "primary_prompt_tokens": 4214,
+    "primary_unwindowed_kv_bytes": 2071265280,
+    "primary_resident_kv_bytes_with_1024_sliding_window": 764641280,
+    "primary_resident_kv_gib": 0.712,
+    "aa_prompt_tokens": 10000,
+    "aa_unwindowed_kv_bytes": 4915200000,
+    "aa_resident_kv_bytes_with_1024_sliding_window": 1238630400,
+    "aa_resident_kv_gib": 1.154,
+    "method": "2 bytes per BF16 scalar; K and V each counted; sliding layers capped at 1024 resident tokens; full layers retain context"
+  },
+  "assistant_geometry_measured_from_config": {
+    "layers": 4,
+    "layer_pattern": ["sliding_attention", "sliding_attention", "sliding_attention", "full_attention"],
+    "hidden_size": 1024,
+    "intermediate_size": 8192,
+    "backbone_hidden_size": 5376,
+    "num_attention_heads": 32,
+    "num_kv_heads": 16,
+    "global_kv_heads": 4,
+    "num_centroids": 2048,
+    "centroid_intermediate_top_k": 32,
+    "dtype": "bfloat16",
+    "weight_bytes": 939042560,
+    "provenance": "measured from official assistant config and HF LFS manifest"
+  },
+  "hardware_mapping": {
+    "device": "nvidia-h100-sxm",
+    "inventory_measured_priors": {"sms": 132, "tensor_cores": 528, "hbm_gib_decimal": 80, "hbm_bandwidth_gb_s": 3350, "l2_mb": 50, "bf16_peak_tflops": 989.5},
+    "dominant_shapes": ["prefill/decode Mx5376 by 5376x21504", "MLP projection 5376x21504", "tied output 262144x5376", "attention local KV 16x256 and global KV 4x512"],
+    "tile_observation": "5376=42x128 and 21504=168x128; vocab=2048x128, so K/N dimensions are tensor-core tile friendly. Decode M is request batch and is usually small, leaving launch/grid and weight streaming exposed.",
+    "limiter_prior": "decode weight streaming/HBM traffic plus scheduler underfill; prompt-heavy prefill is more tensor-core efficient but the 62.55 GB BF16 weights do not fit L2 and are repeatedly streamed from HBM. KV is material at long context but only 1.154 GiB resident at 10K because local layers are windowed.",
+    "falsifier": "measured H100 trace showing decode arithmetic saturation with low HBM bytes/token, or async/MTP no-op at concurrency 1 but a material gain at the workload knee, would revise this ranking; peak FLOPS is not used as a throughput claim"
+  }
+}

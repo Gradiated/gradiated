@@ -1,0 +1,19 @@
+{
+  "status": "complete",
+  "priority": 121,
+  "summary": "Start-ready same-session FP8-KV c8 packet bound to explicit Ada per-token-head E4M3 bytes and dynamic FP32 K/V scales.",
+  "next_action": "The paid retained owner consumes FP8_KV_ARM.json only if its typed trigger passes; this offline project must not be rescheduled to wait or mutate the owner.",
+  "provider_mutation": "prohibited_zero_cost_offline",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 2700,
+  "compute_budget": "2 local CPU-hours",
+  "storage_budget": "512 MiB",
+  "active_session": null,
+  "last_result_classification": "start_ready_conditional_pinned_fp8_per_token_head_scale_contract",
+  "last_terminal_artifacts": {
+    "packet": "FP8_KV_ARM.json",
+    "decision": "DECISION.md",
+    "source_excerpt": "PINNED_SOURCE_EXCERPT.md"
+  },
+  "terminal_artifact": "DECISION.md"
+}

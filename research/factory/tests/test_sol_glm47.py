@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,6 +12,7 @@ class SolGlm47BootstrapTests(unittest.TestCase):
     def test_bootstrap_follows_final_dense_residual_and_is_idempotent(self):
         workspace = Path(__file__).resolve().parents[3]
         campaign = workspace / "research/sol/experiments/glm47flash/campaign_100"
+        status = json.loads((campaign / "CAMPAIGN_STATUS.json").read_text())
         with tempfile.TemporaryDirectory() as directory:
             first = bootstrap_glm47(directory, campaign)
             first_event_count = first["state"]["event_count"]
@@ -21,7 +23,7 @@ class SolGlm47BootstrapTests(unittest.TestCase):
             self.assertEqual(first_event_count, state["event_count"])
             self.assertEqual("glm47-l40s-vllm-awq-split4-v28", state["baseline"]["id"])
             self.assertIn("Dense GEMM/GEMV", state["residual_bottleneck"])
-            self.assertIn("Calibrate", state["next_action"])
+            self.assertEqual(status["next_action"], state["next_action"])
             self.assertTrue(state["portfolios"]["1"]["coverage"]["ready"])
             self.assertIn("glm47-dense-resource-signature", selected)
             self.assertIn("glm47-host-scheduler-critical-path", selected)

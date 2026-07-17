@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "decision": "none",
+  "decision_type": "typed_none",
+  "target": {"repo": "google/gemma-4-31B-it", "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4", "index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2", "bf16_weight_bytes": 62546177752, "bf16_weight_gib": 58.256, "shard_count": 2},
+  "route": null,
+  "candidates": [
+    {
+      "repo": "jamesleeht/gemma-4-31B-it-FP8-block-8192",
+      "revision": "31a4fb8ac7f0e439d0b1469730f95c34f3a7a297",
+      "evidence": "measured_metadata_and_first_party_runtime_source",
+      "producer": "llm-compressor model_free_ptq, FP8_BLOCK, block [128,128], dynamic group-128 activation; README recipe says base google/gemma-4-31B-it but discloses no base revision",
+      "format": "compressed-tensors FP8_BLOCK; FP8 weights and dynamic FP8 activations; vision, embedding and lm_head ignored",
+      "weight_bytes": 33263025112,
+      "weight_gib": 30.963,
+      "reduction_vs_target_bytes": 0.4681,
+      "shard_count": 2,
+      "metadata_sha256": {"config.json": "15e576f112929b4309bf083f51c15ffae736cf2efe9d3546d07e8fc5089130af", "model.safetensors.index.json": "de0e034aa6479d1214c1f3af2d28063322896752f8837cd3b2167fcf1d633637", "tokenizer_config.json": "72721d931b59e55cf44ed6d57704ea574770ed6c859141afd3cb03e94411b9ef"},
+      "weight_shards": [{"file": "model-00001-of-00002.safetensors", "bytes": 26881224964, "x_linked_etag": "af0753963ba92662910620a1b2b155a39455c1ac5253f8fe6139e0f0a5a85547"}, {"file": "model-00002-of-00002.safetensors", "bytes": 6382013964, "x_linked_etag": "4e84a7a6b74c900c300e8300397c8545f33c80d9ec3db660e35169ef53cd2afb"}],
+      "runtime_claim": "README provides vLLM serve instructions and claims ready for vLLM",
+      "sm89_consumer": {"status": "unsupported_for_this_format_in_pinned_vllm", "reason": "Pinned vLLM source's cutlass_scaled_mm_supports_block_fp8 requires SM90 or newer; the source tree has a separate SM89 per-tensor FP8 path. This candidate is FP8_BLOCK.", "source_url": "https://github.com/vllm-project/vllm/blob/ab0a20d15129b322f911db578b50c6b35b3167e7/csrc/libtorch_stable/quantization/w8a8/cutlass/scaled_mm_entry.cu", "source_lines": "145-175, 161-174"},
+      "quality": "vendor_reported_only; no campaign raw-output/feature gate was executed",
+      "additional_blockers": ["base model revision is not disclosed", "vLLM issue 39407 reports FP8_BLOCK Gemma4 repetitive output from scale double-application"],
+      "urls": ["https://huggingface.co/jamesleeht/gemma-4-31B-it-FP8-block-8192", "https://github.com/vllm-project/vllm/issues/39407"]
+    },
+    {
+      "repo": "jtchen0528/gemma-4-31B-it-FP8",
+      "revision": "af39ed6392e7cb5da4b4e3ea089c6d547c6000a7",
+      "evidence": "measured_metadata_and_producer_card",
+      "producer": "NVIDIA TensorRT Model Optimizer 0.45.0; per-tensor FP8 E4M3 W8A8 with calibrated FP8 KV",
+      "base_revision_claimed": "419b2efe421994fdfd3394e621983d4cc511cd4f",
+      "access": "gated; unauthenticated shard HEAD returned HTTP 401",
+      "exact_target_match": false,
+      "reason_not_route": "The disclosed base revision differs from the campaign target and the weights are not publicly retrievable in this probe.",
+      "urls": ["https://huggingface.co/jtchen0528/gemma-4-31B-it-FP8"]
+    }
+  ],
+  "bounded_probes": {"metadata_download_bytes_retained": 0, "weight_transfer_budget_bytes": 536870912, "range_head_probe": {"request": "Range: bytes=0-65535, no redirect follow", "result": "HTTP 302 metadata response; no weight bytes transferred", "target_shard_sizes": [49784788364, 12761549884], "candidate_shard_sizes": [26881224964, 6382013964]}, "followed_range_attempt": {"result": "typed_external_transfer_probe_failure", "curl_exit": 23, "bytes_received_before_write_failure": 290816, "interpretation": "delivery transport behavior only; not model or consumer evidence"}},
+  "quality_boundary": "No derivative inherits BF16 quality or production eligibility. Any later route must run the exact checkpoint through the real vLLM consumer, capture raw output, and pass the campaign quality/feature gate.",
+  "non_checkpoint_alternative": {"rank": 1, "route": "provider-resident exact endpoint or durable pre-GPU materialization", "status": "not nominated", "reason": "No content identity, byte movement, and zero-cost bounded staging contract was established in this offline turn."}
+}

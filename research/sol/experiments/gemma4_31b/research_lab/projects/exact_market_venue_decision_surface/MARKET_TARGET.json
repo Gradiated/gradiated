@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "captured_at_utc": "2026-07-17T01:31:36Z",
+  "model": "google/gemma-4-31b-it",
+  "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "mode": "text_only_non_reasoning",
+  "campaign_mix": {
+    "prompt_tokens": 4214,
+    "output_tokens": 358,
+    "prompt_cache_fraction": 0.127,
+    "cache_prompt_tokens": 535.178,
+    "fresh_prompt_tokens": 3678.822,
+    "total_tokens": 4572
+  },
+  "openrouter_exact_endpoint_capture": {
+    "source_url": "https://openrouter.ai/api/v1/models/google/gemma-4-31b-it/endpoints",
+    "retrieval": "measured_public_http_capture",
+    "endpoint_count": 15,
+    "selected_component_frontier": [
+      {"provider": "WandB", "tag": "wandb/bf16", "quantization": "bf16", "fresh_input_usd_per_million": 0.12, "cache_read_usd_per_million": 0.09, "output_usd_per_million": 0.35, "uptime_1d_percent": 99.7964, "status": 0},
+      {"provider": "DeepInfra", "tag": "deepinfra/fp8", "quantization": "fp8", "fresh_input_usd_per_million": 0.13, "cache_read_usd_per_million": null, "output_usd_per_million": 0.38, "uptime_1d_percent": 98.7363, "status": 0},
+      {"provider": "SiliconFlow", "tag": "siliconflow/fp8", "quantization": "fp8", "fresh_input_usd_per_million": 0.13, "cache_read_usd_per_million": null, "output_usd_per_million": 0.40, "uptime_1d_percent": 38.6147, "status": 0},
+      {"provider": "Parasail", "tag": "parasail/fp8", "quantization": "fp8", "fresh_input_usd_per_million": 0.15, "cache_read_usd_per_million": 0.06, "output_usd_per_million": 0.40, "uptime_1d_percent": 90.2063, "status": 0},
+      {"provider": "Venice", "tag": "venice/bf16", "quantization": "bf16", "fresh_input_usd_per_million": 0.12, "cache_read_usd_per_million": 0.09, "output_usd_per_million": 0.36, "uptime_1d_percent": 99.6677, "status": 0}
+    ],
+    "headline": {"fresh_input_usd_per_million": 0.12, "cache_read_usd_per_million": 0.09, "output_usd_per_million": 0.35}
+  },
+  "campaign_mix_normalization_usd": {
+    "formula": "(cache_prompt_tokens*cache_price + fresh_prompt_tokens*fresh_input_price + output_tokens*output_price)/1e6",
+    "WandB": {"request_cost": 0.000614925, "usd_per_million_total_tokens": 0.134498},
+    "Venice": {"request_cost": 0.000618505, "usd_per_million_total_tokens": 0.135281},
+    "DeepInfra_fp8": {"request_cost": 0.000614287, "usd_per_million_total_tokens": 0.134358, "cache_component": "missing; calculation conservatively uses fresh-input price for cached tokens"},
+    "SiliconFlow_fp8": {"request_cost": 0.000621447, "usd_per_million_total_tokens": 0.135925, "cache_component": "missing; calculation conservatively uses fresh-input price for cached tokens"},
+    "Parasail_fp8": {"request_cost": 0.000727134, "usd_per_million_total_tokens": 0.159041}
+  },
+  "artificial_analysis_methodology_view": {
+    "source_url": "https://artificialanalysis.ai/models/gemma-4-31b-non-reasoning/providers",
+    "retrieval": "measured_public_page_capture",
+    "providers_listed": 8,
+    "benchmark_input_tokens": 10000,
+    "single_stream": true,
+    "blend": "7:2:1 cache-input-output",
+    "median_window": "past 72 hours",
+    "lowest_blended_price_usd_per_million": 0.14,
+    "lowest_price_provider": "Parasail",
+    "lowest_price_campaign_request_cost_if_blend_applied": 0.00064008,
+    "performance_examples": {"Cerebras_output_tps": 1280.5, "Cerebras_ttft_seconds": 0.64, "Parasail_output_tps": 36.1, "Parasail_ttft_seconds": 2.83},
+    "component_prices": "not exposed in the captured rendered page; do not infer them from the blend",
+    "scope_note": "AA 10K single-stream performance and 7:2:1 price are kept separate from the campaign mix and OpenRouter endpoint feed."
+  },
+  "uncertainty": [
+    "OpenRouter prices and uptime are point-in-time public endpoint data and can change without notice.",
+    "OpenRouter status 0 is endpoint metadata, not a matched model-quality or campaign-throughput result.",
+    "The campaign cache fraction is applied to prompt tokens; provider-specific cache write/storage fees are not represented.",
+    "AA component prices were unavailable in the rendered capture; no component inference was made."
+  ],
+  "raw_artifacts": [
+    "artifacts/openrouter-endpoints.json",
+    "artifacts/runpod-readonly-snapshot.json"
+  ]
+}

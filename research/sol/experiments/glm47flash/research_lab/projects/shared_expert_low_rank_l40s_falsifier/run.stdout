@@ -1,0 +1,146 @@
+layer=1 elapsed=17.8s
+layer=2 elapsed=19.8s
+layer=3 elapsed=21.6s
+layer=4 elapsed=23.2s
+layer=5 elapsed=25.0s
+layer=6 elapsed=26.7s
+layer=7 elapsed=28.4s
+layer=8 elapsed=30.1s
+layer=9 elapsed=32.3s
+layer=10 elapsed=34.2s
+layer=11 elapsed=36.0s
+layer=12 elapsed=37.7s
+layer=13 elapsed=39.3s
+layer=14 elapsed=41.9s
+layer=15 elapsed=44.0s
+layer=16 elapsed=45.6s
+layer=17 elapsed=47.5s
+layer=18 elapsed=49.6s
+layer=19 elapsed=51.7s
+layer=20 elapsed=53.8s
+layer=21 elapsed=55.1s
+layer=22 elapsed=56.9s
+layer=23 elapsed=58.8s
+layer=24 elapsed=60.6s
+layer=25 elapsed=62.4s
+layer=26 elapsed=64.0s
+layer=27 elapsed=65.6s
+layer=28 elapsed=67.2s
+layer=29 elapsed=69.2s
+layer=30 elapsed=70.8s
+layer=31 elapsed=72.6s
+layer=32 elapsed=74.1s
+layer=33 elapsed=76.0s
+layer=34 elapsed=77.6s
+layer=35 elapsed=79.0s
+layer=36 elapsed=80.4s
+layer=37 elapsed=82.3s
+layer=38 elapsed=84.0s
+layer=39 elapsed=85.8s
+layer=40 elapsed=87.6s
+layer=41 elapsed=89.3s
+layer=42 elapsed=90.8s
+layer=43 elapsed=92.7s
+layer=44 elapsed=94.5s
+layer=45 elapsed=96.3s
+layer=46 elapsed=98.1s
+{
+  "decision": "SHARED_FACTOR_CLOSE",
+  "variants": {
+    "joint_gate_up_rank512_plus_down_rank512": {
+      "finite": true,
+      "gate_up_frobenius_stats": {
+        "median": 0.5891093909740448,
+        "p05": 0.5488443225622177,
+        "p95": 0.6348169893026352,
+        "max": 0.6724051237106323,
+        "min": 0.5431368947029114
+      },
+      "down_frobenius_stats": {
+        "median": 0.5276905000209808,
+        "p05": 0.481686607003212,
+        "p95": 0.61385378241539,
+        "max": 0.6334998607635498,
+        "min": 0.45032355189323425
+      },
+      "proxy_cosine_stats": {
+        "median": 0.6257703602313995,
+        "p05": 0.5082740396261215,
+        "p95": 0.7724620699882506,
+        "max": 0.9172348976135254,
+        "min": 0.333823561668396
+      },
+      "proxy_relative_l2_stats": {
+        "median": 0.7829814255237579,
+        "p05": 0.6464667767286301,
+        "p95": 0.8631010234355926,
+        "max": 0.9663036465644836,
+        "min": 0.41055044531822205
+      },
+      "layer_relative_l2_stats": {
+        "median": 0.7797342240810394,
+        "p05": 0.6549622416496277,
+        "p95": 0.8386823534965515,
+        "max": 0.8457211852073669,
+        "min": 0.6215720772743225
+      },
+      "economic_reduction": 0.5277777778,
+      "gates": {
+        "component_reduction": 0.5277777778,
+        "component_gate": true,
+        "endpoint_ceiling": 0.037477500001578005,
+        "endpoint_gate": true,
+        "frob_gate": false,
+        "proxy_gate": false
+      }
+    },
+    "independent_gate_up_down_rank384": {
+      "finite": true,
+      "gate_up_frobenius_stats": {
+        "median": 0.5872139996545597,
+        "p05": 0.5543254846496031,
+        "p95": 0.6219880361213164,
+        "max": 0.6577517257285428,
+        "min": 0.5536467234597875
+      },
+      "down_frobenius_stats": {
+        "median": 0.6226931214332581,
+        "p05": 0.5761701315641403,
+        "p95": 0.6969470530748367,
+        "max": 0.7191572189331055,
+        "min": 0.5390943884849548
+      },
+      "proxy_cosine_stats": {
+        "median": 0.5392706096172333,
+        "p05": 0.41495473980903624,
+        "p95": 0.6875597029924388,
+        "max": 0.894543468952179,
+        "min": 0.17484168708324432
+      },
+      "proxy_relative_l2_stats": {
+        "median": 0.8462451696395874,
+        "p05": 0.749651163816452,
+        "p95": 0.9115180462598801,
+        "max": 1.006269097328186,
+        "min": 0.48101356625556946
+      },
+      "layer_relative_l2_stats": {
+        "median": 0.8473800122737885,
+        "p05": 0.7567889988422394,
+        "p95": 0.8906071186065674,
+        "max": 0.9066019058227539,
+        "min": 0.7077712416648865
+      },
+      "economic_reduction": 0.5625,
+      "gates": {
+        "component_reduction": 0.5625,
+        "component_gate": true,
+        "endpoint_ceiling": 0.039943125,
+        "endpoint_gate": true,
+        "frob_gate": false,
+        "proxy_gate": false
+      }
+    }
+  },
+  "seconds": 98.07925128936768
+}

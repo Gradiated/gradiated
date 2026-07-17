@@ -1,0 +1,25 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "IMPLEMENTATION_CLOSE: the exhausted source lineage never launches full attention, uses 20 KV heads against the one-head MLA contract, and invalidates its own byte accounting.",
+  "next_action": "Terminal. Park FP8 MLA as an untested capacity prior; do not nominate this source for GPU or make a capacity claim from its matrix.",
+  "provider_mutation": "prohibited_terminal_implementation_close",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "terminal_result": "MECHANISM_UNTESTED_IMPLEMENTATION_CLOSE",
+  "quality_policy": "No valid attention output/LSE oracle was run; no quality or numerical claim.",
+  "evidence": {
+    "artifact_root": "artifacts/source_correction_20260716_r1",
+    "runner_launches_triton_kernels": false,
+    "contract_kv_heads": 1,
+    "implementation_kv_heads": 20,
+    "split_reduction_full_attention": false,
+    "valid_attention_numerical_rows": 0,
+    "timing_rows": 0,
+    "compile_result": "zero_active_cuda_drivers",
+    "paid_r3_operational_null_seconds": 1208.537,
+    "paid_r3_derived_cost_usd": 0.254773662,
+    "cleanup_pass": true
+  },
+  "stop_rule": "Satisfied: the one allowed correction remains contract-inconsistent; no retry or successor under this project."
+}

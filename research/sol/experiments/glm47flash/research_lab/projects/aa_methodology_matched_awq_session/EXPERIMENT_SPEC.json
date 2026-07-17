@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "decision": "Measure Artificial Analysis methodology-matched c1 performance and the public 1K/1K load ladder on the current AWQ L40S stack, while retaining the exact 8K/1K c16 internal control in the same allocation.",
+  "fixed": {
+    "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "runtime": "vllm-0.15.0",
+    "representation": "AWQ compressed-tensors",
+    "prefix_cache": "disabled",
+    "thinking": "disabled",
+    "single_request": {"count": 7, "input_tokens_o200k": 10000, "minimum_output_tokens": 1500, "streaming": true},
+    "system_load": {"input_tokens_o200k": 1000, "output_tokens": 1000, "phase_seconds": 180, "concurrencies": [1, 2, 4, 8, 16, 32, 64]},
+    "internal_control": {"input_tokens": 8192, "output_tokens": 1024, "concurrency": 16}
+  },
+  "plateau_rule": "Stop after two adjacent admitted concurrency steps each gain less than 5 percent aggregate output throughput; an admission or memory ceiling is reported separately.",
+  "budget": {"all_in_usd": 1.0, "absolute_timeout_seconds": 3900, "provider": "Nebius L40S", "one_retained_allocation": true},
+  "quality_limit": "Paired diagnostic and semantic evidence are required for the internal control; absolute quality gate remains unresolved and no quality-eligible provider claim follows.",
+  "artifact_contract": ["raw request rows", "o200k counts", "streaming TTFT and post-first-token speed", "per-phase throughput", "GPU/server telemetry", "cost accounting", "archive manifest", "two-view cleanup"]
+}

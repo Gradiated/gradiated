@@ -1,0 +1,10 @@
+{
+  "cap_seconds": 1200,
+  "image": "nvidia/cuda:12.9.1-devel-ubuntu22.04",
+  "max_cost_usd": 0.25297406666666666,
+  "platform": "gpu-l40s-a",
+  "preset": "1gpu-8vcpu-32gb",
+  "question": "Are Nsight Compute counters permitted on one Nebius L40S?",
+  "rate_usd_per_hour": 0.7589222,
+  "started_at": "2026-07-15T17:37:42.183149Z"
+}

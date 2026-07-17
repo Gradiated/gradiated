@@ -1,0 +1,35 @@
+{
+  "adapter": {
+    "current_tokenizer_hashes": [
+      "353a3ff93723c098ac93fb593d4d1b93faede916fe502b005cd503871023e012",
+      "b6b807f7bfaf4fb4bd3952f58a70d61442620df8e5d8a904dcf4bc6ca7946940",
+      "d63ad536c3c81880043e22ec7fd08db42b4d8fb7c89c7138bc562bfa25281375"
+    ],
+    "frontier": [1, 8, 16, 32],
+    "project_local_tests": {
+      "passed": 4,
+      "run": "python3 -m unittest .../test_frontier_v2.py"
+    }
+  },
+  "identity_and_workload": {
+    "input_tokens": 8192,
+    "max_output_tokens": 1024,
+    "one_token_atom": true,
+    "prompt_sha256": "9025685ddb4cc8cfb044beb8fadb6a720c7de1138f9806b45e05da5b6398924b",
+    "source": "local cached transformers tokenizer execution",
+    "transformers_version": "5.12.1"
+  },
+  "provider_attempt": {
+    "attempted_at_utc": "2026-07-15T10:45:15Z",
+    "create_returncode": 3,
+    "instance_count_after": 0,
+    "disk_count_after": 0,
+    "outcome": "observability_failure",
+    "reason": "The retained controller recorded only a generic create exit code and discarded provider stdout/stderr. It is not evidence of stock, account, quota, or runtime capability."
+  },
+  "prior_paid_exposure": {
+    "v32_cost_usd_derived": 0.301978509,
+    "v32_outcome": "archive retrieval contract failure after verified transfer; no allocation-result member existed"
+  },
+  "decision": "No current c8 denominator or c16/c32 comparison was measured. The V2 adapter is locally admitted, but a fresh paid retry is not scientifically interpretable until create diagnostics are retained."
+}

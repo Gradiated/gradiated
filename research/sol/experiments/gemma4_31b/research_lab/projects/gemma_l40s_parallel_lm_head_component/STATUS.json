@@ -1,0 +1,21 @@
+{
+  "status": "blocked",
+  "priority": 151,
+  "summary": "Measure the actual pinned-image BF16 ParallelLMHead at M=1-32 on L40S and determine whether this representation-independent component already falsifies endpoint economics.",
+  "next_action": "Do not create again in this project. The one authorized shared-controller owner reached provider create and returned exit 3 without a retained provider diagnostic; repair the shared controller's create-diagnostic retention before any separately authorized reactivation.",
+  "provider_mutation": "blocked_provider_create_observability_failure_cleanup_verified",
+  "authorized_spend_usd": 0.5,
+  "wall_clock_budget_minutes": 90,
+  "provider_exposure_budget_minutes": 20,
+  "compute_budget": "0.34 L40S GPU-hours and 3 local CPU-hours",
+  "storage_budget": "one 100 GiB provider disk; 20 GiB local temporary and 4 GiB retained artifacts; no shared /tmp",
+  "active_session": null,
+  "last_result_classification": "provider_create_observability_failure_cleanup_verified_no_scientific_result",
+  "last_terminal_artifacts": {
+    "final_staged_audit": "artifacts/final-staged-audit-20260717T063629Z.json",
+    "typed_terminal": "artifacts/l40s-parallel-lm-head-20260717T063711Z/typed-terminal.json",
+    "shared_controller_summary": "artifacts/l40s-parallel-lm-head-20260717T063711Z/summary.json",
+    "cleanup": "artifacts/l40s-parallel-lm-head-20260717T063711Z/cleanup.json"
+  },
+  "terminal_artifact": "artifacts/l40s-parallel-lm-head-20260717T063711Z/typed-terminal.json"
+}

@@ -1,0 +1,63 @@
+{
+  "classification": "authenticated_empty_provider_inventory",
+  "pass": true,
+  "profile": "glm-campaign",
+  "project_id": "project-e00h1vhmpr00vbmfd5k7pg",
+  "resources": [
+    {
+      "command": [
+        "/root/.nebius/bin/nebius",
+        "compute",
+        "instance",
+        "list",
+        "--parent-id",
+        "project-e00h1vhmpr00vbmfd5k7pg",
+        "--all",
+        "--profile",
+        "glm-campaign",
+        "--format",
+        "json",
+        "--no-progress",
+        "--timeout",
+        "30s"
+      ],
+      "empty": true,
+      "kind": "instance",
+      "parsed_type": "dict",
+      "returncode": 0,
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 3,
+      "stdout_sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    {
+      "command": [
+        "/root/.nebius/bin/nebius",
+        "compute",
+        "disk",
+        "list",
+        "--parent-id",
+        "project-e00h1vhmpr00vbmfd5k7pg",
+        "--all",
+        "--profile",
+        "glm-campaign",
+        "--format",
+        "json",
+        "--no-progress",
+        "--timeout",
+        "30s"
+      ],
+      "empty": true,
+      "kind": "disk",
+      "parsed_type": "dict",
+      "returncode": 0,
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 3,
+      "stdout_sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    }
+  ],
+  "schema_version": 2,
+  "timestamp_epoch": 1784277768.25748,
+  "timestamp_utc": "2026-07-17T08:42:48.257429Z"
+}

@@ -1,0 +1,64 @@
+docker.io/vllm/vllm-openai@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79: Pulling from vllm/vllm-openai
+388b88574f8d: Pulling fs layer
+f04f8a9e5fa6: Pulling fs layer
+43e75570c095: Pulling fs layer
+69d5b5e9af84: Pulling fs layer
+19326e78108b: Pulling fs layer
+7f645960f85e: Pulling fs layer
+6894a8df454a: Pulling fs layer
+daab0c1f73bf: Pulling fs layer
+778156a34eea: Pulling fs layer
+f651047ab6d8: Pulling fs layer
+8dac561b0161: Pulling fs layer
+81da01ce11f6: Pulling fs layer
+aa9a5993a1ab: Pulling fs layer
+53822fd078d4: Pulling fs layer
+439e7c329efa: Pulling fs layer
+3481bfd332ab: Pulling fs layer
+e1a7b13974ee: Pulling fs layer
+82e5bfe21f36: Pulling fs layer
+7671a32e2501: Pulling fs layer
+85cc7c27afc2: Pulling fs layer
+439e7c329efa: Already exists
+82e5bfe21f36: Already exists
+388b88574f8d: Already exists
+69d5b5e9af84: Already exists
+81da01ce11f6: Already exists
+53822fd078d4: Already exists
+7671a32e2501: Already exists
+85cc7c27afc2: Already exists
+daab0c1f73bf: Already exists
+19326e78108b: Already exists
+778156a34eea: Already exists
+3481bfd332ab: Already exists
+43e75570c095: Already exists
+8dac561b0161: Already exists
+aa9a5993a1ab: Already exists
+e1a7b13974ee: Already exists
+f04f8a9e5fa6: Already exists
+6894a8df454a: Download complete
+f651047ab6d8: Download complete
+f651047ab6d8: Pull complete
+388b88574f8d: Pull complete
+19326e78108b: Pull complete
+f04f8a9e5fa6: Pull complete
+7f645960f85e: Download complete
+7f645960f85e: Pull complete
+778156a34eea: Pull complete
+8dac561b0161: Pull complete
+6894a8df454a: Pull complete
+53822fd078d4: Pull complete
+7671a32e2501: Pull complete
+e1a7b13974ee: Pull complete
+85cc7c27afc2: Pull complete
+43e75570c095: Pull complete
+81da01ce11f6: Pull complete
+aa9a5993a1ab: Pull complete
+439e7c329efa: Pull complete
+82e5bfe21f36: Pull complete
+daab0c1f73bf: Pull complete
+3481bfd332ab: Pull complete
+69d5b5e9af84: Pull complete
+Digest: sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79
+Status: Downloaded newer image for vllm/vllm-openai@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79
+docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79

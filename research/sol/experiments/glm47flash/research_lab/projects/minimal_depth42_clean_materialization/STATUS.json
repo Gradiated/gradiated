@@ -1,0 +1,13 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "Rebuild the 42-layer proxy under a clean content address after its metadata file was rewritten after checksum generation; preserve every model tensor byte.",
+  "next_action": "Materialization is terminal and the measured transfer PARKS this candidate. Preserve the v2 identity read-only; do not admit a direct L40S arm without genuinely new measured evidence that invalidates the 568.750-tok/s robust lower bound.",
+  "provider_mutation": "prohibited_zero_cost_clean_materialization",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": "minimal_depth42_clean_materialization_r1_complete",
+  "frozen_failed_root": "/root/.cache/glm47flash-awq-minimal-depth-4c84badbce22",
+  "quality_policy": "architecture_cost_proxy_only_quality_and_recovery_deferred",
+  "stop_rule": "complete after one independently admissible clean root passes all checksum and idempotence gates or the materialization lineage closes"
+}

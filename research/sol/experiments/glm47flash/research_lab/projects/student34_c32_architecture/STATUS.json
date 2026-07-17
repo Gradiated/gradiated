@@ -1,0 +1,48 @@
+{
+  "status": "complete",
+  "priority": 20,
+  "summary": "Exact 34-layer AWQ fallback is materialized at $0, but it is parked because the less destructive 39-layer student already cleared the measured L40S economic gate.",
+  "next_action": "Remain parked without GPU work, recovery, or launcher changes. Reopen only if 39-layer recovery fails for a mechanism-specific reason that 34 layers can plausibly avoid.",
+  "provider_mutation": "not_authorized_zero_cost",
+  "authorized_spend_usd": 0.0,
+  "quality_policy": "physical_student_cost_proxy_only_recovery_and_full_quality_deferred",
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "promotion_output_tok_s": 594.466,
+    "target_usd_per_million_output_tokens": 0.514,
+    "minimum_c32_headroom_gib": 3.0
+  },
+  "corrected_prior": {
+    "c32_peak_mib": 41249.840072631836,
+    "c32_headroom_mib": 4818.159927368164,
+    "fixed_cost_bound_tok_s": 711.0323355381839,
+    "fixed_cost_bound_usd_per_million": 0.4297351052597053
+  },
+  "artifact_contract": [
+    "build_student34_checkpoint.py",
+    "student34_checkpoint_manifest.json",
+    "student34_runtime_preflight.json",
+    "student34_corrected_bound.json",
+    "RESEARCH_LOG.md"
+  ],
+  "stop_rule": "close_at_zero_if_exact_checkpoint_loader_contract_three_gib_c32_headroom_or_conservative_economic_path_fails",
+  "result": {
+    "student_root": "/root/.cache/glm47flash-awq-student34-183b4521333e",
+    "manifest_contract_sha256": "183b4521333e67158721ef715e669c03a87856c97e2e4dc99ca7f6bcf8a8dd6b",
+    "student_keys": 19815,
+    "student_weight_bytes": 13687865528,
+    "corrected_memory_mib": {
+      "c16_peak": 31752.680145263672,
+      "c24_peak": 33624.68014526367,
+      "c32_peak": 41249.840072631836,
+      "c32_headroom": 4818.159927368164
+    },
+    "pinned_runtime_source_contract": "PASS",
+    "pinned_runtime_dry_load": "BLOCKED_NO_CUDA",
+    "loader_consumed_missing_unexpected": "UNMEASURED_NO_MODEL_INSTANTIATION",
+    "provider_create_attempted": false,
+    "provider_spend_usd": 0.0,
+    "later_arm_nomination": "one conditional stock-vLLM L40S c32 cost arm; requires an authorized derived-checkpoint path"
+  },
+  "decision": "parked_unmeasured_fallback_after_student39_measured_economic_pass"
+}

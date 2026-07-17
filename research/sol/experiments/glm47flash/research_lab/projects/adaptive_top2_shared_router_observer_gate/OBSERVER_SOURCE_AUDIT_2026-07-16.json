@@ -1,0 +1,65 @@
+{
+  "decision": "OBSERVER_SOURCE_OVERHEAD_FAILURE",
+  "question": "Can the pinned GLM-4.7/vLLM route expose a bounded device-resident confidence histogram without synchronization or material timed-path overhead?",
+  "scope": "$0 source and artifact audit only; no model, CUDA, provider, runtime edit, observer capture, endpoint, or training",
+  "identities": {
+    "checkpoint_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "transformers_revision": "1618d44b9295361607ec74d7be860ba886aac039",
+    "base_image": "vllm/vllm-openai:v0.15.0@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543",
+    "model_config_sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9",
+    "local_pinned_source_path": "/root/.cache/uv/archive-v0/4VZeS96SlACbZR16/lib/python3.13/site-packages/transformers/models/glm4_moe_lite/modeling_glm4_moe_lite.py",
+    "local_pinned_source_sha256": "135165c589b3dda793902842b2225aa201fcd2429822459b27e92bdc3af5c3b2"
+  },
+  "geometry": {
+    "hidden_size": 2048,
+    "layers": 47,
+    "sparse_layers": 46,
+    "routed_experts": 64,
+    "control_top_k": 4,
+    "shared_experts": 1,
+    "group_count": 1,
+    "topk_group": 1,
+    "normalized_topk": true,
+    "routed_scaling_factor": 1.8
+  },
+  "source_trace": {
+    "source_line_bindings": {
+      "router_logits": 380,
+      "route_point": 493,
+      "topk_selection": 482,
+      "topk_weight_normalization": 483,
+      "shared_expert_add": 497
+    },
+    "router_logits": "Glm4MoeLiteTopkRouter.forward computes FP32 F.linear(hidden_states, weight) on device.",
+    "route_point": "Glm4MoeLiteMoE.forward calls route_tokens_to_experts(router_logits) before expert execution.",
+    "confidence_candidates": [
+      "source-defined sigmoid score gap between selected rank 2 and rank 3",
+      "source-defined normalized top-k weight at rank 2"
+    ],
+    "device_resident": true,
+    "host_sync_or_item_in_pinned_route": false,
+    "existing_fixed_histogram_update": false,
+    "per_token_export_or_logging": false
+  },
+  "overhead_recompute": {
+    "measured_wall_time_signal": "8.262%",
+    "zero_overhead_qualification_fraction_director_bound": 0.35253,
+    "qualification_fraction_sensitivity_model": "q(h) = 0.35253 + h / 0.08262, where h is additive observer wall-time fraction",
+    "qualification_fraction": {
+      "0.000": 0.35253,
+      "0.005": 0.41304,
+      "0.010": 0.47354,
+      "0.020": 0.59456,
+      "0.030": 0.71557,
+      "0.040": 0.83659,
+      "0.050": 0.95760
+    },
+    "interpretation": "The 3% opportunity has only a narrow overhead budget. The curve is a derived sensitivity bound, not a measurement of an observer implementation."
+  },
+  "failure": {
+    "type": "OBSERVER_SOURCE_NO_BOUNDED_UPDATE_AND_OVERHEAD_UNMEASURED",
+    "reason": "The exact pinned source exposes logits and the route point, but contains no fixed-size histogram buffer or update primitive. A framework implementation would allocate temporary tensors (bucketization/scatter path); a custom atomic device update would be a runtime/kernel change and its contention/wall-time cost is unmeasured. Therefore non-synchronizing and materially non-perturbing behavior cannot be established by source inspection.",
+    "not_claimed": ["router qualification distribution", "observer performance", "quality retention", "endpoint readiness"]
+  },
+  "next_move": "Close adaptive observer line; no provider or observer successor. Preserve the measured unconditional top-2/shared signal only as an unqualified performance bound."
+}

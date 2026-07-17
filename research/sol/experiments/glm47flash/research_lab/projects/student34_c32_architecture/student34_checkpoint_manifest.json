@@ -1,0 +1,210 @@
+{
+  "evidence_class": "content_addressed_byte_preserving_tensor_payload_rewrite",
+  "manifest_contract_sha256": "183b4521333e67158721ef715e669c03a87856c97e2e4dc99ca7f6bcf8a8dd6b",
+  "runtime": {
+    "files": [
+      {
+        "bytes": 181,
+        "path": ".campaign-local-integrity-v1.json",
+        "sha256": "6260593cd62b946878ca3f08137fa1e418b8909d2f5291616c938029ec612794"
+      },
+      {
+        "bytes": 1570,
+        "path": ".gitattributes",
+        "sha256": "34448b82c17d60fec9b65b1f093c115ddbaadc04beb1b0140b6bfed2e012a930"
+      },
+      {
+        "bytes": 9742,
+        "path": "README.md",
+        "sha256": "1618f8ca7d2fac303c5d125402c29de8d2d67773735f2d942d1fffa71b2c1f58"
+      },
+      {
+        "bytes": 3120,
+        "path": "chat_template.jinja",
+        "sha256": "d63ad536c3c81880043e22ec7fd08db42b4d8fb7c89c7138bc562bfa25281375"
+      },
+      {
+        "bytes": 8328,
+        "path": "config.json",
+        "sha256": "805074cbdcd586f558afe6e76368e6712aad7106432716e8f73574e58f33c4d4"
+      },
+      {
+        "bytes": 181,
+        "path": "generation_config.json",
+        "sha256": "3b8cc4bc6db8b3affa713e161ddbd0c5733d513f2becedc49ff4ee7d9767937d"
+      },
+      {
+        "bytes": 4255834096,
+        "path": "model-00001-of-00004.safetensors",
+        "sha256": "143a5e5cbf9c7752c11d7a558155bacf58041436e41194480a44fe4691cb4317"
+      },
+      {
+        "bytes": 3512240792,
+        "path": "model-00002-of-00004.safetensors",
+        "sha256": "30536f602bcf16cee34eb4af0570024ebaca42fe5b56dc29ece0dea0b0a4f85f"
+      },
+      {
+        "bytes": 3883716512,
+        "path": "model-00003-of-00004.safetensors",
+        "sha256": "2422044823ca35b3fbed5163f4a0e2c298252c08bb6e5e88484ab3e1b6b2b865"
+      },
+      {
+        "bytes": 2036074128,
+        "path": "model-00004-of-00004.safetensors",
+        "sha256": "5e9d3d9e01b1167a10d5a6ee89cec28f8ffd36d34da18da85a91cd23a404b5f7"
+      },
+      {
+        "bytes": 1902981,
+        "path": "model.safetensors.index.json",
+        "sha256": "6747ec7fb767cf94726630b63188ee29c1386f9cb40b88d7da62f4eaac39e8c1"
+      },
+      {
+        "bytes": 20217541,
+        "path": "tokenizer.json",
+        "sha256": "353a3ff93723c098ac93fb593d4d1b93faede916fe502b005cd503871023e012"
+      },
+      {
+        "bytes": 305,
+        "path": "tokenizer_config.json",
+        "sha256": "b6b807f7bfaf4fb4bd3952f58a70d61442620df8e5d8a904dcf4bc6ca7946940"
+      }
+    ],
+    "repository": "local-derived/glm47flash-student34",
+    "revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "schema_version": 1,
+    "shard_count": 4,
+    "weight_bytes": 13687865528
+  },
+  "runtime_manifest_sha256": "a5919cbda3a52508d615387f8763f3cdcb8a03c50e18cb5282c4ecca81f6c0ab",
+  "schema_version": 1,
+  "source": {
+    "skipped_source_layers": [
+      3,
+      7,
+      10,
+      13,
+      16,
+      20,
+      23,
+      26,
+      30,
+      33,
+      36,
+      39,
+      43
+    ],
+    "source_config_sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9",
+    "source_index_sha256": "b9c53433e94f2fe7870cdbc3fcb6ed1431eb500c5242a039de93fef4bb988695",
+    "source_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "source_to_student_layer": {
+      "0": 0,
+      "1": 1,
+      "2": 2,
+      "4": 3,
+      "5": 4,
+      "6": 5,
+      "8": 6,
+      "9": 7,
+      "11": 8,
+      "12": 9,
+      "14": 10,
+      "15": 11,
+      "17": 12,
+      "18": 13,
+      "19": 14,
+      "21": 15,
+      "22": 16,
+      "24": 17,
+      "25": 18,
+      "27": 19,
+      "28": 20,
+      "29": 21,
+      "31": 22,
+      "32": 23,
+      "34": 24,
+      "35": 25,
+      "37": 26,
+      "38": 27,
+      "40": 28,
+      "41": 29,
+      "42": 30,
+      "44": 31,
+      "45": 32,
+      "46": 33
+    }
+  },
+  "source_shard_sha256": {
+    "model-00001-of-00004.safetensors": "2d6793b5b0d81858925f3f5bd69da53d2e5f892c1a0182079097874555346e25",
+    "model-00002-of-00004.safetensors": "6e7608d383596150c03f40ce3f6c6e463654578065052bfd40f8d52529549a60",
+    "model-00003-of-00004.safetensors": "8401718639c81db88a209db5fc46fd80f3df038e4e33e41f904990c0b995cd1e",
+    "model-00004-of-00004.safetensors": "49fa9892731203f6d251c5a6794a7975724ba7f59bd8099f2082b1a194d35508"
+  },
+  "student": {
+    "excluded_mtp": true,
+    "excluded_source_layer_ids": [
+      47
+    ],
+    "layer_count": 34,
+    "skipped_source_layers": [
+      3,
+      7,
+      10,
+      13,
+      16,
+      20,
+      23,
+      26,
+      30,
+      33,
+      36,
+      39,
+      43
+    ],
+    "source_to_student_layer": {
+      "0": 0,
+      "1": 1,
+      "11": 8,
+      "12": 9,
+      "14": 10,
+      "15": 11,
+      "17": 12,
+      "18": 13,
+      "19": 14,
+      "2": 2,
+      "21": 15,
+      "22": 16,
+      "24": 17,
+      "25": 18,
+      "27": 19,
+      "28": 20,
+      "29": 21,
+      "31": 22,
+      "32": 23,
+      "34": 24,
+      "35": 25,
+      "37": 26,
+      "38": 27,
+      "4": 3,
+      "40": 28,
+      "41": 29,
+      "42": 30,
+      "44": 31,
+      "45": 32,
+      "46": 33,
+      "5": 4,
+      "6": 5,
+      "8": 6,
+      "9": 7
+    }
+  },
+  "student_config_sha256": "805074cbdcd586f558afe6e76368e6712aad7106432716e8f73574e58f33c4d4",
+  "student_index_sha256": "6747ec7fb767cf94726630b63188ee29c1386f9cb40b88d7da62f4eaac39e8c1",
+  "student_root": "/root/.cache/glm47flash-awq-student34-183b4521333e",
+  "student_shard_sha256": {
+    "model-00001-of-00004.safetensors": "143a5e5cbf9c7752c11d7a558155bacf58041436e41194480a44fe4691cb4317",
+    "model-00002-of-00004.safetensors": "30536f602bcf16cee34eb4af0570024ebaca42fe5b56dc29ece0dea0b0a4f85f",
+    "model-00003-of-00004.safetensors": "2422044823ca35b3fbed5163f4a0e2c298252c08bb6e5e88484ab3e1b6b2b865",
+    "model-00004-of-00004.safetensors": "5e9d3d9e01b1167a10d5a6ee89cec28f8ffd36d34da18da85a91cd23a404b5f7"
+  },
+  "whole_manifest_payload_sha256": "e428c6513d83e107e8eeb504f74a02d7efc9fec598b112c598211e806a1e978f"
+}

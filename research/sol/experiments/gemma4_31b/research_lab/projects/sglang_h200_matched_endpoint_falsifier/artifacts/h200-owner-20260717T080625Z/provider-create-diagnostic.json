@@ -1,0 +1,8 @@
+{
+  "returncode": 3,
+  "stage": "provider_create",
+  "stderr_sha256": "317c88a6b65211fbb2f4e3c4b3cccf3b4a324d76f986a5b43f2cce0c6de0725f",
+  "stderr_tail_redacted": "Error: rpc error: code = InvalidArgument desc = validation failed: validation error: spec.hostname: value must be a valid hostname request = 7394cf35-eec3-46a6-9112-7dc0e0f51bc8\n\nThis issue may be linked to API request calls. The following information may be helpful while debugging the issue:\n  Trace ID: 631b27e30c011a9094df0e1c9a96f2e2\n",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout_tail_redacted": ""
+}

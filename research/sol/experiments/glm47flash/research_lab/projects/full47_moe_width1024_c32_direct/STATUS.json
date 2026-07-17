@@ -1,0 +1,62 @@
+{
+  "status": "parked_per_user_architecture_kernel_priority",
+  "priority": 0,
+  "summary": "Parked before provider creation: broad MoE-width reduction is another approximately proportional parameter-removal proxy, not the requested architecture/kernel co-design result.",
+  "next_action": "No materialization, provider creation, or width-768 successor. Preserve the brief only as a historical bound.",
+  "provider_mutation": "prohibited_by_user_direction_before_create",
+  "authorized_spend_usd": 1.25,
+  "absolute_timeout_seconds": 4500,
+  "active_experiment": "width1024_c16_c32_then_triggered_width768_c32",
+  "active_session": null,
+  "resource_cap": {
+    "peak_rss_gib": 8,
+    "local_content_addressed_scratch_gib": 40,
+    "new_repository_artifacts_mib": 64
+  },
+  "candidate": {
+    "serving_layers": 47,
+    "serving_moe_layers": 46,
+    "mtp_payload_excluded": 47,
+    "stock_moe_width": 1536,
+    "primary_moe_width": 1024,
+    "conditional_moe_width": 768,
+    "routed_experts": 64,
+    "experts_per_token": 4,
+    "shared_expert": true,
+    "kv_lora_rank": 512,
+    "quantization": "symmetric_group32_w4a16"
+  },
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "measured_experimental_l40s_vm_plus_disk_usd_per_hour": 0.8581222,
+    "target_usd_per_million_output_tokens": 0.514,
+    "required_output_tokens_per_second": 594.466,
+    "robust_output_tokens_per_second": 606.355,
+    "background_arm_envelope_seconds": 300
+  },
+  "memory_gate": {
+    "stock_full47_c32_peak_mib": 46875.7,
+    "projected_width1024_c32_peak_mib": 41631.7,
+    "robust_peak_limit_mib": 44532.0,
+    "device_visible_mib": 46068.0
+  },
+  "retention_contract": {
+    "setup_dominance_seconds": 838.036,
+    "scored_gpu_seconds": 157.517,
+    "named_trigger": "valid width1024 c32 endpoint >=592.9 and <606.355 tok/s",
+    "conditional_root_ready_within_seconds": 600,
+    "reuse": "verified runtime only; restage and verify changed checkpoint",
+    "owner": "same sequential external-systemd owner and cleanup watchdog",
+    "cleanup_on_trigger_failure": "immediate"
+  },
+  "workload": {
+    "input_tokens": 8192,
+    "output_tokens": 1024,
+    "primary_concurrencies": [16, 32],
+    "conditional_concurrencies": [32],
+    "cache": "off",
+    "num_kv_splits": 4
+  },
+  "stop_rule": "one terminal NOMINATE_WIDTH1024, NOMINATE_WIDTH768, or WIDTH_FAMILY_CLOSE result; no second create or successor",
+  "quality_policy": "semantics-changing architecture-cost proxy only; full quality remains mandatory and deferred"
+}

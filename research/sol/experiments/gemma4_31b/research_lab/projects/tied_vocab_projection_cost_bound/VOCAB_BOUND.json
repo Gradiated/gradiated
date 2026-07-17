@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "evidence_type": "derived_exact_geometry_bound_no_cuda_no_provider",
+  "target": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "inputs_sha256": {
+    "gemma4_31b/research_lab/projects/exact_geometry_runtime_opportunities/GEOMETRY.json": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72",
+    "gemma4_31b/research_lab/projects/fp8_l40s_fit_economic_falsifier/MEMORY_ACCOUNTING.json": "eaeb0586196cac27d45b32168b41565d701b5a952d64b13c414fcc76e6f9f5be",
+    "gemma4_31b/research_lab/projects/l40s_saturation_economic_gate/SATURATION_GATE.json": "690e0e457c6e8e9121b54fb7f88abc92c3dcc358e1d71accffddb083878d00d6"
+  },
+  "geometry": {
+    "vocab_rows": 262144,
+    "hidden_size": 5376,
+    "tied_parameters": 1409286144,
+    "bf16_bytes": 2818572288,
+    "bf16_gib": 2.625,
+    "fp8_or_int8_one_byte_bytes": 1409286144,
+    "fp8_or_int8_one_byte_gib": 1.3125,
+    "logits_flops_per_token": 2818572288
+  },
+  "representation_cases": {
+    "output_only_fp8_or_int8_with_bf16_input_embedding": {
+      "resident_delta_gib": 1.3125,
+      "c8_total_conservative_gib": 46.3585,
+      "fits_l40s_envelope": false,
+      "interpretation": "No: tied weights must be duplicated to use different representations; this worsens c8 residency."
+    },
+    "joint_tied_fp8_or_int8_input_and_output": {
+      "resident_delta_gib": -1.3125,
+      "c8_total_conservative_gib": 43.7335,
+      "fits_l40s_envelope": true,
+      "interpretation": "Hypothetically yes, but it changes embedding lookup and output numerics and has no pinned execution-equivalent consumer."
+    },
+    "perfect_shortlist": {
+      "storage_status": "impossible_without_full_vocab_correctness_exception",
+      "saved_storage_upper_bound_gib": 2.625,
+      "interpretation": "Analytical ceiling only; full logits, logprobs, tokenizer coverage, and exact API semantics require all rows."
+    }
+  },
+  "whole_request_bounds": {
+    "primary_4214_358": {
+      "prompt_tokens": 4214,
+      "output_tokens": 358,
+      "logits_positions": 359,
+      "decoder_flops_per_token": 58793656320,
+      "decoder_flops": 268804596695040,
+      "full_vocab_projection_flops": 1011867451392,
+      "whole_request_flop_denominator": 269816464146432,
+      "perfect_shortlist_saved_fraction_percent": 0.3750206476810288,
+      "shortlist_proxy_rows": [
+        {
+          "retained_rows": 262144,
+          "saved_logits_flops": 0,
+          "saved_fraction_percent": 0.0,
+          "semantic_status": "full_vocab_control"
+        },
+        {
+          "retained_rows": 131072,
+          "saved_logits_flops": 505933725696,
+          "saved_fraction_percent": 0.1875103238405144,
+          "semantic_status": "proxy_requires_tokenizer_and_output_semantics_review"
+        },
+        {
+          "retained_rows": 65536,
+          "saved_logits_flops": 758900588544,
+          "saved_fraction_percent": 0.28126548576077154,
+          "semantic_status": "proxy_requires_tokenizer_and_output_semantics_review"
+        },
+        {
+          "retained_rows": 32768,
+          "saved_logits_flops": 885384019968,
+          "saved_fraction_percent": 0.32814306672090016,
+          "semantic_status": "proxy_requires_tokenizer_and_output_semantics_review"
+        },
+        {
+          "retained_rows": 16384,
+          "saved_logits_flops": 948625735680,
+          "saved_fraction_percent": 0.35158185720096446,
+          "semantic_status": "proxy_requires_tokenizer_and_output_semantics_review"
+        },
+        {
+          "retained_rows": 8192,
+          "saved_logits_flops": 980246593536,
+          "saved_fraction_percent": 0.3633012524409966,
+          "semantic_status": "proxy_requires_tokenizer_and_output_semantics_review"
+        },
+        {
+          "retained_rows": 4096,
+          "saved_logits_flops": 996057022464,
+          "saved_fraction_percent": 0.3691609500610127,
+          "semantic_status": "proxy_requires_tokenizer_and_output_semantics_review"
+        }
+      ]
+    },
+    "comparator_10000_358": {
+      "prompt_tokens": 10000,
+      "output_tokens": 358,
+      "logits_positions": 359,
+      "decoder_flops_per_token": 58793656320,
+      "decoder_flops": 608984692162560,
+      "full_vocab_projection_flops": 1011867451392,
+      "whole_request_flop_denominator": 609996559613952,
+      "perfect_shortlist_saved_fraction_percent": 0.16588084562843758,
+      "shortlist_proxy_rows": [
+        {
+          "retained_rows": 262144,
+          "saved_logits_flops": 0,
+          "saved_fraction_percent": 0.0,
+          "semantic_status": "full_vocab_control"
+        },
+        {
+          "retained_rows": 131072,
+          "saved_logits_flops": 505933725696,
+          "saved_fraction_percent": 0.08294042281421879,
+          "semantic_status": "proxy_requires_tokenizer_and_output_semantics_review"
+        },
+        {
+          "retained_rows": 65536,
+          "saved_logits_flops": 758900588544,
+          "saved_fraction_percent": 0.1244106342213282,
+          "semantic_status": "proxy_requires_tokenizer_and_output_semantics_review"
+        },
+        {
+          "retained_rows": 32768,
+          "saved_logits_flops": 885384019968,
+          "saved_fraction_percent": 0.1451457399248829,
+          "semantic_status": "proxy_requires_tokenizer_and_output_semantics_review"
+        },
+        {
+          "retained_rows": 16384,
+          "saved_logits_flops": 948625735680,
+          "saved_fraction_percent": 0.15551329277666023,
+          "semantic_status": "proxy_requires_tokenizer_and_output_semantics_review"
+        },
+        {
+          "retained_rows": 8192,
+          "saved_logits_flops": 980246593536,
+          "saved_fraction_percent": 0.16069706920254892,
+          "semantic_status": "proxy_requires_tokenizer_and_output_semantics_review"
+        },
+        {
+          "retained_rows": 4096,
+          "saved_logits_flops": 996057022464,
+          "saved_fraction_percent": 0.16328895741549326,
+          "semantic_status": "proxy_requires_tokenizer_and_output_semantics_review"
+        }
+      ]
+    }
+  },
+  "capacity_context": {
+    "l40s_usable_envelope_gib": 44.704,
+    "current_fp8_decoder_plus_bf16_tied_weights_gib": 34.35,
+    "runtime_reservation_gib": 5.0,
+    "primary_c8_kv_gib": 5.696,
+    "current_primary_c8_total_gib": 45.046,
+    "joint_tied_one_byte_primary_c8_total_gib": 43.7335,
+    "capacity_interpretation": "Joint one-byte tied storage would cross c8, but output-only representation cannot and the joint consumer is unproven."
+  },
+  "quality_and_consumer_constraints": [
+    "Tied embedding/output weights cannot be independently represented without duplicate storage.",
+    "Joint low-bit embedding changes prompt token vectors as well as logits.",
+    "Shortlists risk tokenizer coverage, rare and multilingual/code/tool tokens, logprobs, sampling, and exact OpenAI-compatible outputs.",
+    "No CUDA, quality, throughput, or endpoint-cost result is claimed."
+  ],
+  "decision": {
+    "nominee": null,
+    "close": true,
+    "reason": "No credible isolated candidate clears 5%; the only capacity-crossing case is a hypothetical joint tied one-byte consumer excluded by the pinned runtime."
+  }
+}

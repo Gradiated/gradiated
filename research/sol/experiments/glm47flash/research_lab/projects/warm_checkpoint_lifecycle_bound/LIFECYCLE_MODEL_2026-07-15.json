@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "scope": "zero-provider warm checkpoint lifecycle bound",
+  "checkpoint": {
+    "revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "bytes": 20170199928,
+    "manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86"
+  },
+  "inputs": {
+    "rate_usd_per_hour": 0.8581222,
+    "boot_disk_rate_usd_per_hour": 0.0097222,
+    "arm_seconds": 61.216,
+    "tokens_per_arm": 32768,
+    "steady_state_usd_per_m_output": 0.4453081747,
+    "strict_hurdle_usd_per_m_output": 0.5688888888888889,
+    "measured_session_seconds": 1412.452,
+    "measured_lifecycle_overhead_seconds": 1412.452,
+    "measured_setup_before_c16_seconds": 1351.236
+  },
+  "phases": [
+    {
+      "name": "allocation",
+      "seconds": 44.293035,
+      "evidence": "measured events.jsonl"
+    },
+    {
+      "name": "ssh_cloud_init",
+      "seconds": 45.36428,
+      "evidence": "measured events.jsonl"
+    },
+    {
+      "name": "image_bootstrap_and_preflight",
+      "seconds": 406.139974,
+      "evidence": "measured events.jsonl; phase boundary includes bootstrap"
+    },
+    {
+      "name": "checkpoint_transfer_and_integrity",
+      "seconds": 466.479022,
+      "evidence": "measured events.jsonl; includes 7.592 s tiny probe"
+    },
+    {
+      "name": "model_load_compile_warmup",
+      "seconds": 110.0,
+      "evidence": "measured runner progress; model identity is separated"
+    },
+    {
+      "name": "science_c16",
+      "seconds": 61.216,
+      "evidence": "measured summary: c16 arm"
+    },
+    {
+      "name": "remaining_arms_retrieval",
+      "seconds": 215.245616,
+      "evidence": "interval-censored measured event boundary"
+    },
+    {
+      "name": "cleanup",
+      "seconds": 53.16946,
+      "evidence": "measured events.jsonl"
+    }
+  ],
+  "independent_transfer": {
+    "checkpoint": "V35 BF16",
+    "bytes_staged": 46988963759,
+    "bytes_total": 62444175504,
+    "observation_window_seconds": 900.0,
+    "staged_fraction": 0.7524955430949684,
+    "observed_rate_mb_s_decimal": 52.209959732222224,
+    "full_transfer_seconds_at_observed_rate": 1196.0203728228805,
+    "evidence": "quality_gate_calibration RESEARCH_LOG.md, read-only observations at 12:46:52Z and 13:01:52Z",
+    "label": "measured transfer only; not serving-throughput evidence"
+  },
+  "mechanism_catalog": [
+    {
+      "mechanism": "persistent managed disk",
+      "current_evidence": "100-GiB boot disk rate only; no current attach/restore benchmark",
+      "production_boundary": "provider-specific attach, regional, preemption, integrity and deletion contract required"
+    },
+    {
+      "mechanism": "snapshot/clone",
+      "current_evidence": "no content-bound current catalog or rate in repository",
+      "production_boundary": "must prove atomic clone/restore and hash verification"
+    },
+    {
+      "mechanism": "custom image",
+      "current_evidence": "runtime image is built during bootstrap; no model-bearing image artifact",
+      "production_boundary": "image publication, region, refresh, and immutable checkpoint identity required"
+    },
+    {
+      "mechanism": "regional object/cache staging",
+      "current_evidence": "no content-bound provider cache evidence",
+      "production_boundary": "must measure cache-hit transfer and egress/storage"
+    },
+    {
+      "mechanism": "retained warm allocation",
+      "current_evidence": "V19 amendment documents reuse intent; no current recovery measurement",
+      "production_boundary": "idle cost, preemption, watchdog ownership and cleanup dominate"
+    }
+  ],
+  "scenarios": [
+    {
+      "mechanism": "ephemeral_staging",
+      "status": "measured baseline",
+      "removed_seconds_assumed": 0.0,
+      "remaining_overhead_seconds": 1412.452,
+      "minimum_batches_to_hurdle": 84,
+      "economics_at_minimum": {
+        "batches": 84,
+        "active_seconds": 6554.596,
+        "productive_utilization": 0.784509678,
+        "cost_usd": 1.562401205,
+        "usd_per_m_output": 0.567627391
+      },
+      "economics_at_84_batches": {
+        "batches": 84,
+        "active_seconds": 6554.596,
+        "productive_utilization": 0.784509678,
+        "cost_usd": 1.562401205,
+        "usd_per_m_output": 0.567627391
+      },
+      "best_case_100_batch_utilization": {
+        "batches": 100,
+        "active_seconds": 7534.052,
+        "productive_utilization": 0.812524257,
+        "cost_usd": 1.795871466,
+        "usd_per_m_output": 0.548056478
+      }
+    },
+    {
+      "mechanism": "persistent_disk_attach_only",
+      "status": "conditional: removes AWQ network transfer only; attach/restore rate unmeasured",
+      "removed_seconds_assumed": 458.887,
+      "remaining_overhead_seconds": 953.565,
+      "minimum_batches_to_hurdle": 57,
+      "economics_at_minimum": {
+        "batches": 57,
+        "active_seconds": 4442.877,
+        "productive_utilization": 0.785372181,
+        "cost_usd": 1.059036496,
+        "usd_per_m_output": 0.567004018
+      },
+      "economics_at_84_batches": {
+        "batches": 84,
+        "active_seconds": 6095.709,
+        "productive_utilization": 0.843567828,
+        "cost_usd": 1.45301756,
+        "usd_per_m_output": 0.52788782
+      },
+      "best_case_100_batch_utilization": {
+        "batches": 100,
+        "active_seconds": 7075.165,
+        "productive_utilization": 0.865223638,
+        "cost_usd": 1.686487821,
+        "usd_per_m_output": 0.514675238
+      }
+    },
+    {
+      "mechanism": "custom_image_or_snapshot",
+      "status": "conditional: removes transfer and image/bootstrap work; clone/restore and image semantics unmeasured",
+      "removed_seconds_assumed": 865.027,
+      "remaining_overhead_seconds": 547.425,
+      "minimum_batches_to_hurdle": 33,
+      "economics_at_minimum": {
+        "batches": 33,
+        "active_seconds": 2567.553,
+        "productive_utilization": 0.786791159,
+        "cost_usd": 0.612020619,
+        "usd_per_m_output": 0.565981426
+      },
+      "economics_at_84_batches": {
+        "batches": 84,
+        "active_seconds": 5689.569,
+        "productive_utilization": 0.903784452,
+        "cost_usd": 1.356207074,
+        "usd_per_m_output": 0.492716135
+      },
+      "best_case_100_batch_utilization": {
+        "batches": 100,
+        "active_seconds": 6669.025,
+        "productive_utilization": 0.917915287,
+        "cost_usd": 1.589677335,
+        "usd_per_m_output": 0.485131023
+      }
+    },
+    {
+      "mechanism": "retained_warm_allocation",
+      "status": "conditional: avoids measured allocation through model-load path; idle retention and preemption behavior unmeasured",
+      "removed_seconds_assumed": 1196.769,
+      "remaining_overhead_seconds": 215.683,
+      "minimum_batches_to_hurdle": 13,
+      "economics_at_minimum": {
+        "batches": 13,
+        "active_seconds": 1011.491,
+        "productive_utilization": 0.786767257,
+        "cost_usd": 0.241106356,
+        "usd_per_m_output": 0.56599862
+      },
+      "economics_at_84_batches": {
+        "batches": 84,
+        "active_seconds": 5357.827,
+        "productive_utilization": 0.959744314,
+        "cost_usd": 1.277130637,
+        "usd_per_m_output": 0.463987309
+      },
+      "best_case_100_batch_utilization": {
+        "batches": 100,
+        "active_seconds": 6337.283,
+        "productive_utilization": 0.965966014,
+        "cost_usd": 1.510600897,
+        "usd_per_m_output": 0.460998809
+      }
+    }
+  ],
+  "decision": "CLOSE_WARM_TOPOLOGY_NO_CANARY",
+  "decision_rule": "No later canary: zero-cost evidence does not bind a current executable provider warm path or prove >=5% measured setup/recovery reduction.",
+  "next_move": "Treat >=84 c16 batches per fresh ephemeral session and >=78.3% productive utilization as the conservative production requirement; revisit only after a provider-supported warm path has current rates, semantics, and an authorized canary."
+}

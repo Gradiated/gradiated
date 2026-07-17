@@ -1,0 +1,39 @@
+{
+  "decision": "REPRESENTATION_CLOSE",
+  "evidence_class": "measured_and_source_bound",
+  "official_identity": {
+    "release": "v0.5.15.post1",
+    "release_api_sha256": "b20a7f6c676bf318c80622feeb1bd3b1f42e94590758bee1a4b4e069726136f8",
+    "annotated_tag_object": "658e0a942ec771aeeef1b1adf4180764cacd79b2",
+    "commit": "0b3bb0cbe31873994c9f989fddfe2f87ca839fdd",
+    "published_at": "2026-07-14T08:43:33Z",
+    "source": "https://github.com/sgl-project/sglang/releases/tag/v0.5.15.post1"
+  },
+  "checkpoint": {
+    "path": "/root/.cache/glm47flash-awq-ab31d120",
+    "revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "architecture": "Glm4MoeLiteForCausalLM",
+    "model_type": "glm4_moe_lite",
+    "awq": "compressed-tensors pack-quantized int4 group-32"
+  },
+  "gate_1_model_registration": {
+    "result": "PASS",
+    "source_file": "python/sglang/srt/models/glm4_moe_lite.py",
+    "source_sha256": "2dc2c064b24be8c5633ef403f0447880e111c5a5c3ed4ef621e1aec52e2abe89",
+    "observed": "EntryClass = [Glm4MoeLiteForCausalLM]"
+  },
+  "gate_2_exact_awq_loading": {
+    "result": "FAIL",
+    "stage": "post_load_weights",
+    "runtime_identity": "SGLang 0.5.15 on L40S SM89; torch 2.11.0+cu130; compressed-tensors 0.17.1",
+    "stock_source_file": "python/sglang/srt/models/deepseek_common/deepseek_weight_loader.py",
+    "stock_source_sha256": "f93da8b322813ce47b3cabdb4edf7de6f05f02b6cfc93ae6a66485d07bbfeb2c",
+    "diagnostic": "AttributeError: 'ColumnParallelLinear' object has no attribute 'weight'",
+    "diagnostic_artifact": "/root/workspace/research/sol/experiments/glm47flash/evidence/phase3-attempt2/phase2-awq-smoke/server.stderr.log",
+    "required_patch_evidence": "/root/workspace/research/sol/experiments/glm47flash/evidence/phase3-attempt2/phase2-awq-smoke/runtime-patch.json",
+    "interpretation": "The exact architecture is present, but unchanged stock runtime cannot consume this exact compressed-tensors AWQ MLA projection. The retained smoke's successful load/memory signal is patched evidence and is inadmissible for this gate."
+  },
+  "not_reached": ["SM89 MLA/MoE execution", "semantics and 48-GiB residence", "economic 606.355 tok/s bound"],
+  "cost_usd": 0.0,
+  "provider_mutation": false
+}

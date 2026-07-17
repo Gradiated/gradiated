@@ -1,0 +1,56 @@
+{
+  "status": "closed",
+  "priority": 240,
+  "summary": "Operational-null: the one authorized upstream v0.25.1 MLA allocation attempt failed before instance creation with provider exit 3; no MLA science ran and authenticated cleanup is zero.",
+  "next_action": "Terminal for this packet. Do not retry: malformed PEM cloud-init and multiple deterministic benchmark/controller mismatches must be corrected in any separately admitted successor.",
+  "provider_mutation": "authorized_sole_provider_lane",
+  "authorized_spend_usd": 0.55,
+  "absolute_timeout_seconds": 2100,
+  "quality_policy": "Exact component output/LSE oracle now; full-model semantics and campaign quality remain mandatory after integration.",
+  "geometry": {
+    "page_size": 16,
+    "kv_heads": 1,
+    "cache_width": 576,
+    "value_width": 512,
+    "batches": [1, 8, 32],
+    "contexts": [8193, 9215],
+    "kv_splits": 4
+  },
+  "performance_gate": {
+    "b32_minimum_p50_improvement_fraction": 0.1,
+    "p95_regression_allowed": false,
+    "required_output_tokens_per_second_after_integration": 594.466,
+    "robust_output_tokens_per_second_after_integration": 606.355
+  },
+  "active_session": null,
+  "terminal_result": {
+    "kind": "operational_null",
+    "stage": "provider_create",
+    "exit_code": 3,
+    "allocation_seconds": 0.613,
+    "artifact_root": "artifacts/upstream_onehead_l40s_20260716_r1",
+    "science_reached": false,
+    "provider_stdout_stderr": "missing_from_shared_controller",
+    "cleanup_pass": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "image_correction": "old pinned digest failed local registry manifest resolution; controller used immutable v0.25.1-x86_64-cu129 digest 94a0aff7a289f23bcefa189d11841e487991405d86da782a63bf6e5f95d0d39a"
+  },
+  "director_audit": {
+    "provider_exit_cause": "14-line public.pem embedded into cloud-init instead of one-line ssh_ed25519.pub; matches retained invalid YAML line 10 diagnostic",
+    "packet_blockers": [
+      "wrong v0.25.1 source hashes",
+      "cross-sequence padded reshape and slot truncation",
+      "exact byte formula omits page-size factor",
+      "self-failing saturation predicate",
+      "wrong 512^-0.5 scale instead of exact 256^-0.5",
+      "missing separate stage timing",
+      "hardcoded 4 splits instead of upstream-selected 32",
+      "remote artifact path disagrees with controller retrieval",
+      "no pass-triggered retained-session handoff"
+    ],
+    "decision_effect": "keep scientific FP8 hypothesis unmeasured; no immediate paid retry"
+  },
+  "retention_trigger": "UPSTREAM_ONEHEAD_FP8_COMPONENT_PASS with a content-hashed full47 integration packet ready within ten minutes through the existing retained-session path and same sequential owner/watchdog; otherwise cleanup",
+  "stop_rule": "One provider create and one matched upstream BF16/FP8 component matrix; return pass, typed scientific close, or operational null with verified cleanup. No unchanged retry or custom provider wrapper."
+}

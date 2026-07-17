@@ -1,0 +1,8 @@
+Synchronizing state of docker.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install enable docker
+time="2026-07-17T09:44:11Z" level=info msg="Loading config from /etc/docker/daemon.json"
+time="2026-07-17T09:44:11Z" level=info msg="Wrote updated config to /etc/docker/daemon.json"
+time="2026-07-17T09:44:11Z" level=info msg="It is recommended that docker daemon be restarted."
+usage: vllm [-h] [-v]
+            {chat,complete,serve,launch,bench,collect-env,run-batch} ...
+vllm: error: unrecognized arguments: --query-gpu=name,memory.total,driver_version --format=csv,noheader,nounits

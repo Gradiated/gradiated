@@ -1,0 +1,6 @@
+{
+  "error_type": "PlacementError",
+  "instance_id": null,
+  "message": "provider create returned 3",
+  "watchdog": null
+}

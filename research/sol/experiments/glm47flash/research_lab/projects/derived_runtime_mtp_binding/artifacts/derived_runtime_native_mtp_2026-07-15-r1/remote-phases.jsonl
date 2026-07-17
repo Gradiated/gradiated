@@ -1,0 +1,9 @@
+{"timestamp":"2026-07-15T18:08:29Z","phase":"allocation_bootstrap","state":"begin"}
+{"timestamp":"2026-07-15T18:08:36Z","phase":"allocation_bootstrap","state":"complete"}
+{"timestamp":"2026-07-15T18:08:36Z","phase":"model_identity","state":"begin"}
+{"timestamp":"2026-07-15T18:10:13Z","phase":"model_identity","state":"complete"}
+{"timestamp":"2026-07-15T18:10:13Z","phase":"model_load","state":"begin"}
+{"timestamp":"2026-07-15T18:12:41Z","phase":"model_load","state":"complete"}
+{"timestamp":"2026-07-15T18:12:41Z","phase":"conditional_semantic_quality_performance_batch","state":"begin"}
+{"timestamp":"2026-07-15T18:37:02Z","phase":"teardown","state":"begin"}
+{"timestamp":"2026-07-15T18:37:02Z","phase":"teardown","state":"complete"}

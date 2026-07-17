@@ -1,0 +1,20 @@
+{
+  "archive_sha256_local": "5f587cb79bba628c237620e10ee9963eb6990611341987ce18b39a1ec27543de",
+  "cleanup_pass": true,
+  "disk_name": "derived-runtime-native-mtp-20260715-r1-boot",
+  "final_disk_count": 0,
+  "final_instance_count": 0,
+  "instance_absent": true,
+  "instance_id": "computeinstance-e00c841fb9m9bg1wrb",
+  "oom": "CUDA out of memory: tried 562.00 MiB; 167.38 MiB free; 44.22 GiB in use",
+  "provider_exposure_seconds": 2607.296,
+  "provider_cost_usd_derived": 0.621494,
+  "remote_archive_sha256": "5f587cb79bba628c237620e10ee9963eb6990611341987ce18b39a1ec27543de",
+  "result_classification": "terminal_native_mtp_cuda_oom_during_fixed_workload",
+  "scientific_result": {
+    "load_residency": "pass",
+    "performance": "fail_engine_dead_oom",
+    "promotion": "fail",
+    "semantic_identity": "pass"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "authenticated_initial_inventory": {
+    "disks": [],
+    "empty": true,
+    "instances": []
+  },
+  "classification": "no_provider_controller_terminal",
+  "controller_after_sha256": "b29ab7bddf8022cf4ca0ec9ff9d6fbbb4b0dbed2311f7e8489571e37df594cad",
+  "controller_before_sha256": "1c7448d956d9c65eaf64494bf3bbd16afcf813e30f57604a36affc873d23af2b",
+  "controller_path": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py",
+  "fixture_checks": {
+    "failure_diagnostic": {
+      "returncode": 3,
+      "stage": "provider_create",
+      "stderr_sha256": "1e3242187866e780a1511e63144090beff2931c008f8cfddcc7aa5f905bda06d",
+      "stderr_tail_redacted": "access_token=<redacted> authorization <redacted> bearer<redacted> password=<redacted> secret=<redacted> <redacted-private-key>",
+      "stdout_sha256": "1e3242187866e780a1511e63144090beff2931c008f8cfddcc7aa5f905bda06d",
+      "stdout_tail_redacted": "access_token=<redacted> authorization <redacted> bearer<redacted> password=<redacted> secret=<redacted> <redacted-private-key>"
+    },
+    "fixture_sha256": {
+      "create_failure": "1e3242187866e780a1511e63144090beff2931c008f8cfddcc7aa5f905bda06d",
+      "reconciled_nonzero": "81624e673ee7ab03a1fb23a41c45953d0d68d3bd418c70242a5d76433833be9e",
+      "success": "5232bfcff047d51e34ce75243fb3427f67bab695434c43626ec9e7ed283d77b0"
+    },
+    "nonzero_created_instance_reconciles_before_watchdog": true,
+    "nonzero_empty_instance_is_terminal": true,
+    "pass": true,
+    "successful_create_resolves_instance": true
+  },
+  "pass": true,
+  "provider_mutation_occurred": false,
+  "schema_version": 1,
+  "test_command": [
+    "/usr/bin/python3",
+    "-m",
+    "unittest",
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/tests/test_nebius_mla_microbench.py",
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/tests/test_nebius_vllm_smoke_control.py"
+  ],
+  "test_returncode": 0,
+  "test_stderr_sha256": "56afda13d5400548865f6593f837aa387fbcfcc5b4aae6d06b131f1360e70410",
+  "test_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

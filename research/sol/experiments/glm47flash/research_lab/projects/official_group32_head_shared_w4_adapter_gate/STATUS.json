@@ -1,0 +1,32 @@
+{
+  "status": "closed",
+  "priority": 260,
+  "summary": "Closed: the minimal pre-import ParallelLMHead adapter reaches the pinned WNA16 create-weights dispatch, but the no-CUDA fresh process cannot select Marlin; official producer/load/post-load/logits cannot execute in this $0 scope.",
+  "next_action": "Consumed by full47_official_selective_w4_cuda_endpoint, which combines target-CUDA validation and the full endpoint in one authorized session; no separate validation ladder.",
+  "provider_mutation": "prohibited_zero_cost_runtime_adapter_gate",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 1200,
+  "quality_policy": "Architecture-cost proxy; deterministic real-tensor numerical and exact logits/shared-sum semantics now, full campaign quality deferred.",
+  "memory_gate": {
+    "stock_full47_c32_peak_mib": 46875.7,
+    "official_selective_saving_mib": 1029.966629,
+    "projected_c32_peak_mib": 45845.733371,
+    "visible_device_mib": 46068.0,
+    "visible_margin_mib": 222.266629,
+    "robust_peak_limit_mib": 44532.0,
+    "classification": "nominal_fit_only"
+  },
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "required_output_tokens_per_second": 594.466,
+    "robust_output_tokens_per_second": 606.355
+  },
+  "stop_rule": "Executed once. Typed terminal close at the pinned WNA16 CUDA-kernel selection boundary; no checkpoint materialization, GPU, provider, controller, or successor validation ladder.",
+  "terminal_decision": "OFFICIAL_SELECTIVE_W4_RUNTIME_CLOSE_CUDA_KERNEL_SELECTION_BOUNDARY",
+  "evidence": {
+    "artifact": "artifacts/official_group32_adapter_gate/OFFICIAL_GROUP32_ADAPTER_GATE.json",
+    "stage": "actual ParallelLMHead construction -> CompressedTensorsLinearMethod.create_weights -> CompressedTensorsWNA16.create_weights -> choose_mp_linear_kernel",
+    "boundary": "MarlinLinearKernel cannot implement because the fresh pinned process has no CUDA; all WNA16 alternatives also reject the CPU/device-capability=-1 environment.",
+    "adapter_scope": "one pre-import selector predicate expansion from LinearBase to (LinearBase, ParallelLMHead); no broad matcher, loader rewrite, checkpoint mutation, provider, or GPU"
+  }
+}

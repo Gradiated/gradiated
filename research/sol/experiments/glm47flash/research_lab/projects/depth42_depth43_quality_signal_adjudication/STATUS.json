@@ -1,0 +1,22 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "Adjudicate whether the apparent depth42-to-depth43 V1 quality loss is an unambiguous semantic signal or an underspecified formatting artifact.",
+  "next_action": "Terminal; do not fund depth44 on quality-restoration grounds. Preserve depth42 as the eventual V2-canary finalist.",
+  "terminal_result": "SERIAL_DEPTH_CLOSE",
+  "decision_artifact": "QUALITY_SIGNAL_ADJUDICATION.json",
+  "provider_mutation": "prohibited_zero_cost_artifact_adjudication",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 600,
+  "active_experiment": null,
+  "resource_cap": {
+    "peak_rss_gib": 2,
+    "new_artifacts_mib": 16
+  },
+  "source_archives": {
+    "depth42_sha256": "ee0f3f3b3d3abfa2f9610320a5be44934be8493a61f52a0d339e83ca4b3d8541",
+    "depth43_sha256": "8db63070ed174a9710f181e17d3cb747f9ca70b54775ee6eaf0bfa3beaad8120"
+  },
+  "stop_rule": "one terminal SERIAL_DEPTH_CLOSE, DEPTH43_SIGNAL, or EVIDENCE_CLOSE result; no successor",
+  "quality_policy": "directional frozen-development adjudication only; no deployable or full-quality claim"
+}

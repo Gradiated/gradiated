@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "packet": "gemma4_31b_fp8_l40s_direct_cuda",
+  "decision": "nominate_one_direct_cuda_paid_arm",
+  "terminal_scope": "This packet is the only successor; no support project is required.",
+  "identities": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "model_index": "../exact_bf16_mtp_h100_frontier/artifacts/preflight-20260717T000000Z/model.safetensors.index.json",
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "runtime_amd64_manifest": "sha256:8e86cb93b724092cd4dc892fb129a6c5538613b38a5cd34e40aab9e6aea72b03",
+    "vllm_source_revision": "ab0a20d15129b322f911db578b50c6b35b3167e7",
+    "consumer": "vLLM online FP8: --quantization fp8; dtype bfloat16; one CUDA L40S"
+  },
+  "content_addressed_inputs": {
+    "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "model_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "geometry_packet_sha256": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72",
+    "image_record_sha256": "85d389cc8d0616170727e9173732b74f912bd12e407d678802541cffdd2996d9"
+  },
+  "consumer_command_delta": {
+    "quantization": "fp8",
+    "dtype": "bfloat16",
+    "gpu_memory_utilization": 0.92,
+    "max_model_len": 10000,
+    "max_num_seqs": 8,
+    "max_num_batched_tokens": 8192,
+    "enforce_eager": true,
+    "limit_mm_per_prompt": {"image": 0, "audio": 0},
+    "tensor_parallel_size": 1
+  },
+  "direct_arm": {
+    "placement": "one nvidia-l40s, 48 GB, SM89, CUDA, single PCIe device",
+    "lifecycle": "existing proven sequential Nebius owner used by campaign; retain one owner and cleanup watchdog",
+    "workload": "text-only non-reasoning; primary 4214 input/358 output centered workload, then one 10K single-stream comparator",
+    "first_request_gate": "health, complete request, output is non-empty and not degenerate repetition; capture raw response before any score",
+    "matched_h100_fields": ["model_revision", "image_identity", "tokenizer", "prompt_ids", "input_output_geometry", "sampling", "concurrency", "completion accounting"],
+    "telemetry": ["load duration", "GPU memory", "prompt/decode tokens/s", "TTFT", "inter-token latency", "utilization", "power", "failures/reloads", "actual meter", "cleanup inventory"],
+    "spend_cap_usd": 8.0,
+    "stop_rules": ["load_memory_oom", "consumer_import_or_kernel_failure", "first request timeout", "degenerate output", "cleanup failure", "absolute arm deadline"],
+    "quality_boundary": "FP8 is not production-eligible until exact raw outputs pass the campaign quality/feature gate; third-party FP8 throughput is not evidence."
+  },
+  "economics": {
+    "l40s_planning_usd_per_gpu_hour": 1.1,
+    "l40s_experimental_reference_usd_per_gpu_hour": 0.8581222,
+    "h100_sxm_planning_usd_per_gpu_hour": 2.8,
+    "raw_gpu_break_even_l40s_over_h100_throughput": 0.3928571429,
+    "formula": "throughput_l40s / throughput_h100 > rate_l40s / rate_h100; overhead, replicas, failures, and cache are added only after measurement",
+    "rate_sensitivity": {"l40s_range": [1.0, 1.25], "h100_range": [2.5, 3.1], "break_even_range": [0.3225806452, 0.5]},
+    "retail_components_usd_per_million": {"fresh_input": 0.12, "cache_read": 0.09, "output": 0.35},
+    "cache_claim": "not measured; no cache savings claimed"
+  },
+  "risk_evidence": {
+    "official_runtime_route": "vLLM exposes fp8 online quantization and the pinned Gemma4 image/source is content-bound.",
+    "current_first_party_warning": "vLLM issue #39049 reports Gemma4 dynamic FP8 gibberish output; issue #39407 reports FP8_BLOCK scale double-application. These are reasons to make the first CUDA request a correctness falsifier, not reasons to transfer quality or silently promote.",
+    "sources": ["https://docs.vllm.ai/en/latest/features/quantization/fp8/", "https://github.com/vllm-project/vllm/issues/39049", "https://github.com/vllm-project/vllm/issues/39407"]
+  },
+  "memory_artifact": "MEMORY_ACCOUNTING.json"
+}

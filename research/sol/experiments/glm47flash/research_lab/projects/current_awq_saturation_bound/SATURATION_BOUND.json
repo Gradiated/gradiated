@@ -1,0 +1,58 @@
+{
+  "question": "current-AWQ c24/c32 L40S saturation bound",
+  "evidence_class": "measured inputs plus derived conservative/optimistic bounds",
+  "source_artifact": "../nebius_current_awq_c16_direct/artifacts/nebius_current_awq_c16_direct_2026-07-15-r2/vllm-awq-batch.tar.gz",
+  "geometry": {
+    "input_tokens": 8192,
+    "output_tokens": 1024,
+    "max_num_batched_tokens": 65536,
+    "c16_max_num_seqs": 16,
+    "prefix_cache": false,
+    "vllm": "0.15.0"
+  },
+  "c16": {
+    "throughput_tps": 535.2861037029285,
+    "c8_throughput_tps": 352.11187024973486,
+    "target_tps": 562.05,
+    "gpu_mean_fraction": 0.9836,
+    "gpu_p95_fraction": 1.0,
+    "memory_total_mib": 46068.0,
+    "memory_peak_mib": 44103.0,
+    "memory_mean_mib": 42716.65,
+    "queue_mean_seconds": 2.072266995874962,
+    "ttft_p95_seconds": 10.061244281999961,
+    "e2e_max_seconds": 30.64113109699997,
+    "arm_envelope_seconds": 300.0
+  },
+  "derived_assumptions": {
+    "kv_increment_mib_per_sequence": 173.294,
+    "optimistic_ceiling": "perfectly convert every sampled mean GPU-idle fraction to useful work; zero new overhead",
+    "scheduler": "summed queue time is not treated as wall-time share; no queue credit is granted",
+    "reliability": "c16 all 32 requests completed; c24/c32 receive no unmeasured reliability credit",
+    "memory": "linear c16 incremental envelope; fragmentation and allocator effects are unresolved"
+  },
+  "arms": {
+    "24": {
+      "predicted_peak_memory_mib_linear": 45489.35,
+      "memory_headroom_mib_linear": 578.65,
+      "memory_fit_under_linear_envelope": true,
+      "conservative_tps": 535.286,
+      "optimistic_tps_perfect_idle_recovery": 544.211,
+      "optimistic_gain_percent_vs_c16": 1.667,
+      "beats_562_050": false,
+      "nominate": false
+    },
+    "32": {
+      "predicted_peak_memory_mib_linear": 46875.7,
+      "memory_headroom_mib_linear": -807.7,
+      "memory_fit_under_linear_envelope": false,
+      "conservative_tps": 0.0,
+      "optimistic_tps_perfect_idle_recovery": 544.211,
+      "optimistic_gain_percent_vs_c16": 1.667,
+      "beats_562_050": false,
+      "nominate": false
+    }
+  },
+  "decision": "close_c24_c32_and_retain_c16",
+  "decision_reason": "Even the perfect-idle-recovery ceiling is below the 562.050 tps hurdle; c32 also exceeds the linear memory envelope."
+}

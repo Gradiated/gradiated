@@ -1,0 +1,23 @@
+{"derived_identity": null, "derived_student": false, "event": "stock_control", "instance_count": 0, "minimal_depth42_v2": false, "minimal_depth43_v2": false, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "official_selective_w4": false, "timestamp": "2026-07-16T17:36:13.543035Z"}
+{"event": "phase_started", "phase": "provider_create", "timestamp": "2026-07-16T17:36:13.543279Z"}
+{"elapsed_seconds": 37.674, "event": "phase_finished", "outcome": "PASS", "phase": "provider_create", "timestamp": "2026-07-16T17:36:51.216898Z"}
+{"create_returncode": 0, "event": "instance_created", "instance_id": "computeinstance-e00zkwpx1nhsrw9jqj", "reconciled_nonzero_exit": false, "timestamp": "2026-07-16T17:36:51.216954Z"}
+{"control_group": "/user.slice/user-0.slice/user@0.service/app.slice/glm47-top3-shared-c32-20260716-r1-watchdog.service", "deadline_epoch": 1784226373.3482087, "event": "independent_watchdog_started", "main_pid": 1666663, "timestamp": "2026-07-16T17:36:51.236286Z", "unit": "glm47-top3-shared-c32-20260716-r1-watchdog.service"}
+{"event": "phase_started", "phase": "ssh_readiness", "timestamp": "2026-07-16T17:36:51.236377Z"}
+{"elapsed_seconds": 35.257, "event": "phase_finished", "outcome": "PASS", "phase": "ssh_readiness", "timestamp": "2026-07-16T17:37:26.493775Z"}
+{"elapsed_seconds": 73.147, "event": "ssh_ready", "timestamp": "2026-07-16T17:37:26.495340Z"}
+{"event": "phase_started", "phase": "runtime_bootstrap", "timestamp": "2026-07-16T17:37:28.807376Z"}
+{"elapsed_seconds": 408.703, "event": "phase_finished", "outcome": "PASS", "phase": "runtime_bootstrap", "timestamp": "2026-07-16T17:44:17.509939Z"}
+{"event": "cuda_and_transformers_preflight_passed", "timestamp": "2026-07-16T17:44:17.510011Z", "transformers_revision": "1618d44b9295361607ec74d7be860ba886aac039"}
+{"event": "tiny_transfer_probe_passed", "sha256": "6967780b45a5e9e86c4e5ac54e2595fcf2add1a66cdd63cb8df63017fa8c8d11", "timestamp": "2026-07-16T17:44:25.724898Z"}
+{"event": "phase_started", "phase": "checkpoint_transfer", "timestamp": "2026-07-16T17:44:25.725021Z"}
+{"elapsed_seconds": 466.199, "event": "phase_finished", "outcome": "PASS", "phase": "checkpoint_transfer", "timestamp": "2026-07-16T17:52:11.923868Z"}
+{"attempts": 1, "elapsed_seconds": 466.19732327299425, "event": "checkpoint_transfer_completed", "files_reused": 0, "files_scheduled": 14, "files_total": 14, "marker_manifest_match": false, "reusable_bytes": 0, "scheduled_bytes": 20193158555, "timestamp": "2026-07-16T17:52:11.923975Z", "total_bytes": 20193158555}
+{"elapsed_seconds": 466.197, "event": "verified_local_awq_transferred", "reusable_bytes": 0, "timestamp": "2026-07-16T17:52:11.924010Z"}
+{"event": "phase_started", "phase": "scientific_workload", "timestamp": "2026-07-16T17:52:11.924043Z"}
+{"elapsed_seconds": 361.286, "event": "phase_finished", "outcome": "FAIL", "phase": "scientific_workload", "returncode": 1, "timestamp": "2026-07-16T17:58:13.210121Z"}
+{"event": "phase_started", "phase": "artifact_retrieval", "timestamp": "2026-07-16T17:58:13.210419Z"}
+{"elapsed_seconds": 2.124, "event": "phase_finished", "outcome": "PASS", "phase": "artifact_retrieval", "timestamp": "2026-07-16T17:58:15.334810Z"}
+{"background_pass": true, "event": "artifact_retrieved", "manifest_files": 37, "methodology_pass": null, "outcome": "PASS", "remote_returncode": 1, "sha256": "8070ea8b1bb8af12628c1f7d8fa3d1ecace82f892802ae5f9780f44e482ea765", "timestamp": "2026-07-16T17:58:15.334911Z"}
+{"event": "instance_retained_for_next_preregistered_experiment", "instance_id": "computeinstance-e00zkwpx1nhsrw9jqj", "timestamp": "2026-07-16T17:58:15.334943Z"}
+{"cleanup_pass": false, "elapsed_seconds": 0.488, "event": "cleanup_verified", "instance_get_not_found": false, "timestamp": "2026-07-16T17:58:15.823359Z", "useful_gpu_seconds": 107.203}

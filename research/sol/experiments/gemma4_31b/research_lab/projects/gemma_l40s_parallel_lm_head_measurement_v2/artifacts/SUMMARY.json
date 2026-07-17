@@ -1,0 +1,30 @@
+{
+  "classification": "terminal_pre_gpu_provider_validation_failure",
+  "controller_terminal": "CONTROLLER_TERMINAL.json",
+  "controller_terminal_pass": true,
+  "exact_image_audit": "final-staged-audit-post-controller-20260717T064759Z.json",
+  "exact_image_audit_pass": true,
+  "final_authenticated_inventory": {
+    "disk_count": 0,
+    "instance_count": 0
+  },
+  "measurement_reached_gpu": false,
+  "outcome": "closed",
+  "provider_create": {
+    "diagnostic_sha256": "cd0002092e838523533c9d93e92c441abd6a433fbaac4e5304b6067b3b3d4b20",
+    "error_class": "InvalidArgument",
+    "error_field": "spec.hostname",
+    "instance_id": null,
+    "returncode": 3,
+    "stderr_sha256": "e673f702c934d4e04833e55574619a3461316ca2168c934a5c9de19411a3cbff"
+  },
+  "provider_mutation_occurred": true,
+  "resource_cleanup_pass": true,
+  "service": {
+    "artifact_root": "gemma-l40s-head-v2-20260717T064847Z",
+    "deadline_epoch": 1784272127,
+    "unit": "gemma-l40s-head-v2-20260717T064847Z.service",
+    "unit_manager": "systemd --user"
+  },
+  "stop_rule": "second pre-GPU operational terminal closes this project without another create"
+}

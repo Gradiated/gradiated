@@ -1,0 +1,10 @@
+{
+  "deadline_epoch": 1784258741.0,
+  "disk_gib": 200,
+  "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+  "model": "google/gemma-4-31B-it",
+  "name": "gemma-fp8-l40s-20260717T012541Z",
+  "platform": "gpu-l40s-a",
+  "preset": "1gpu-16vcpu-64gb",
+  "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+}

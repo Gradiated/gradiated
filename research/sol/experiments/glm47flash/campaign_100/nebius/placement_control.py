@@ -240,6 +240,104 @@ def wait_absent(instance_id: str, deadline: float) -> bool:
     return False
 
 
+class VerifiedRetainedOwner:
+    def __init__(
+        self,
+        name: str,
+        evidence_path: Path,
+        *,
+        cleanup_timeout_seconds: int = 240,
+    ):
+        self.name = name
+        self.disk_name = f"{name}-boot"
+        self.evidence_path = evidence_path
+        self.cleanup_timeout_seconds = cleanup_timeout_seconds
+        self.instance_id: str | None = None
+        self.classification: str | None = None
+
+    def __enter__(self) -> "VerifiedRetainedOwner":
+        return self
+
+    def bind_instance(self, instance_id: str) -> None:
+        self.instance_id = instance_id
+
+    def complete(self, classification: str) -> None:
+        if not classification.strip():
+            raise ValueError("retained owner classification must not be empty")
+        self.classification = classification
+
+    def _write_evidence(self, evidence: dict[str, Any]) -> None:
+        self.evidence_path.parent.mkdir(parents=True, exist_ok=True)
+        self.evidence_path.write_text(
+            json.dumps(evidence, indent=2, sort_keys=True) + "\n"
+        )
+
+    def cleanup(self) -> bool:
+        started = time.time()
+        try:
+            initial_instances = list_items("instance")
+            instance_ids = {
+                metadata_id(item)
+                for item in initial_instances
+                if metadata_name(item) == self.name and metadata_id(item)
+            }
+            if self.instance_id:
+                instance_ids.add(self.instance_id)
+            for instance_id in instance_ids:
+                delete_instance(instance_id)
+            absent = all(
+                wait_absent(
+                    instance_id, time.time() + self.cleanup_timeout_seconds
+                )
+                for instance_id in instance_ids
+            )
+            for disk in list_items("disk"):
+                if metadata_name(disk) == self.disk_name and metadata_id(disk):
+                    delete_disk(metadata_id(disk))
+            final_instances = list_items("instance")
+            final_disks = list_items("disk")
+            matching_instances = sum(
+                metadata_name(item) == self.name for item in final_instances
+            )
+            matching_disks = sum(
+                metadata_name(item) == self.disk_name for item in final_disks
+            )
+            cleanup_pass = (
+                absent and matching_instances == 0 and matching_disks == 0
+            )
+            error_type = None
+        except Exception as error:
+            final_instances = []
+            final_disks = []
+            matching_instances = None
+            matching_disks = None
+            cleanup_pass = False
+            error_type = type(error).__name__
+        self._write_evidence(
+            {
+                "schema_version": 1,
+                "classification": self.classification,
+                "cleanup_pass": cleanup_pass,
+                "cleanup_error_type": error_type,
+                "cleanup_elapsed_seconds": round(time.time() - started, 3),
+                "final_instance_count": len(final_instances),
+                "final_disk_count": len(final_disks),
+                "matching_instance_count": matching_instances,
+                "matching_disk_count": matching_disks,
+                "verified_at_utc": utc_now(),
+            }
+        )
+        return cleanup_pass
+
+    def __exit__(self, exc_type, exc_value, traceback) -> bool:
+        cleanup_pass = self.cleanup()
+        if not cleanup_pass:
+            raise PlacementError("retained owner cleanup verification failed")
+        if exc_type is None and self.classification is None:
+            raise PlacementError("retained owner exited without a typed terminal")
+        return False
+
+
 def make_cloud_init(public_key: str) -> str:
     return "\n".join([
         "#cloud-config",

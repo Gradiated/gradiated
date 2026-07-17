@@ -1,0 +1,21 @@
+{
+  "status": "complete",
+  "priority": 100,
+  "summary": "Zero-cost bound closes c24/c32: c16 is at 98.36% mean GPU utilization, the perfect-idle ceiling is 544.211 tok/s (<562.050), and c32 exceeds the linear memory envelope.",
+  "next_action": "Retain c16; move future cost work to a materially different representation, kernel, hardware, or serving mechanism.",
+  "provider_mutation": "prohibited_zero_cost_current_awq_saturation_bound_complete",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": null,
+  "last_experiment": "current_awq_c24_c32_saturation_bound_2026-07-15",
+  "terminal_artifact": "SATURATION_BOUND.json",
+  "result_classification": "derived_saturation_bound_closes_higher_concurrency",
+  "decision": {
+    "c16_throughput_tps": 535.2861037029285,
+    "promotion_hurdle_tps": 562.05,
+    "optimistic_perfect_idle_ceiling_tps": 544.211,
+    "c24_predicted_peak_memory_mib": 45489.35,
+    "c32_predicted_peak_memory_mib": 46875.7,
+    "c24_or_c32_nominated": false
+  }
+}

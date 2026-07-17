@@ -1,0 +1,22 @@
+{
+  "status": "closed",
+  "priority": 0,
+  "summary": "Closed after the sole H200 allocation reached SSH/session-parent setup but the shared transfer contract required a nonexistent local model-files.sha256 marker; cleanup verified empty.",
+  "next_action": null,
+  "provider_mutation": "forbidden_closed_single_allocation_missing_local_transfer_marker_cleanup_verified",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 130,
+  "provider_exposure_budget_minutes": 90,
+  "compute_budget": "1.5 H200 GPU-hours and 3 local CPU-hours",
+  "storage_budget": "read-only verified checkpoint; one 250 GiB provider disk; at most 12 GiB project artifacts; no shared /tmp",
+  "active_session": null,
+  "director_identity_assertion": "artifacts/DIRECTOR_IDENTITY_ASSERTION.json",
+  "terminal_artifact": "artifacts/gemma-vllm-fixed-20260717t10351784284530z-run/cleanup.json",
+  "last_result_classification": "closed_missing_local_transfer_marker_before_checkpoint_transfer_no_science_cleanup_verified",
+  "measured_provider_seconds": 131.54359,
+  "measured_cost_usd_derived": 0.09041084117409583,
+  "useful_gpu_seconds": 0.0,
+  "cleanup_pass": true,
+  "final_instance_count": 0,
+  "final_disk_count": 0
+}

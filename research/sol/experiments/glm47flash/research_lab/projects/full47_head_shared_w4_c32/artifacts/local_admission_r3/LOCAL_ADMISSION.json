@@ -1,0 +1,33 @@
+{
+  "combined": {
+    "binding_sha256": "d688c5a4d31b8b0a972193f9719df08e85ea6f216cba01a45fec6f8339e419cf",
+    "changed_bf16_tensors": 139,
+    "closure_pass": true,
+    "derived_w4_tensors": 417,
+    "label": "full47-head-shared-w4",
+    "manifest_sha256": "1bd3249b9802cf6c2991fd17475618f30330f63c33c524668d65c75e5bcf3381",
+    "root": "/root/.cache/glm47flash-awq-full47-head-shared-w4-1bd3249b9802",
+    "source_config_sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9",
+    "source_index_sha256": "b9c53433e94f2fe7870cdbc3fcb6ed1431eb500c5242a039de93fef4bb988695",
+    "unrelated_byte_identity_pass": true,
+    "unrelated_tensor_count": 28082,
+    "weight_bytes": 19090237368
+  },
+  "pass": true,
+  "schema_version": 1,
+  "shared_w4_bf16_head": {
+    "binding_sha256": "48aaef8ff50748e41daa2c4cede4f28d0c22c0830ba17f896a4e7ee12575e374",
+    "changed_bf16_tensors": 138,
+    "closure_pass": true,
+    "derived_w4_tensors": 414,
+    "label": "full47-shared-w4-bf16-head",
+    "manifest_sha256": "6cd4cde5185cb9c3730f3a4e0bb1e710a03ad45e04b49cb1a4a77b8d6f758920",
+    "root": "/root/.cache/glm47flash-awq-full47-shared-w4-bf16-head-6cd4cde5185c",
+    "source_config_sha256": "079f8fcd477b07378deafc21ecc5c3b974bf109ce5c9115854d97f88fa7622b9",
+    "source_index_sha256": "b9c53433e94f2fe7870cdbc3fcb6ed1431eb500c5242a039de93fef4bb988695",
+    "unrelated_byte_identity_pass": true,
+    "unrelated_tensor_count": 28083,
+    "weight_bytes": 19546203552
+  },
+  "source": "/root/.cache/glm47flash-awq-ab31d120"
+}

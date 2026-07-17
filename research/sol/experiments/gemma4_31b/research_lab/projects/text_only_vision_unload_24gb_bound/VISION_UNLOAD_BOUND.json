@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "decision": "none",
+  "decision_type": "typed_none",
+  "evidence_scope": "bounded exact safetensors header reads, pinned vLLM source audit, derived capacity/economics; no weights, CUDA, provider, or quality run",
+  "target": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "vllm@ab0a20d15129b322f911db578b50c6b35b3167e7",
+    "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "mode": "text_only_non_reasoning",
+    "geometry": {"hidden_size": 5376, "layers": 60, "vision_hidden_size": 1152, "vision_layers": 27, "vocab_size": 262144, "tie_word_embeddings": true}
+  },
+  "exact_bytes": {
+    "source_index": {"path": "../exact_bf16_mtp_h100_frontier/artifacts/preflight-20260717T000000Z/model.safetensors.index.json", "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"},
+    "header_probe": {"method": "HTTP Range bytes 0-16777215 per shard; parsed safetensors header in memory", "bounded_bytes": 33554432, "full_weights_downloaded": false},
+    "tensor_bytes_bf16": {
+      "language_model": {"bytes": 61394690680, "gib": 57.193594, "tensor_count": 832},
+      "vision_tower": {"bytes": 1139100768, "gib": 1.060863, "tensor_count": 355},
+      "vision_projector": {"bytes": 12386304, "gib": 0.011543, "tensor_count": 1},
+      "vision_exclusive_total": {"bytes": 1151487072, "gib": 1.072406, "tensor_count": 356}
+    },
+    "header_artifacts": [
+      {"shard": "model-00001-of-00002.safetensors", "header_bytes": 136896, "range_sha256": "5ac8da38c72788726d8d4b8a6cff033997fa68477a75c71c2315665888546fe3"},
+      {"shard": "model-00002-of-00002.safetensors", "header_bytes": 23584, "range_sha256": "51846559a98f4b88bde6a94cdd85161775894ee2c2efdc4a0c864ccc1fd0eeef"}
+    ],
+    "accounting_note": "The prior 3.752517 GB BF16 vision-and-small remainder cannot be subtracted wholesale; exact vision-exclusive bytes are only the two namespaces above."
+  },
+  "runtime_audit": {
+    "exact_config_architecture": "Gemma4ForConditionalGeneration",
+    "pinned_source": "vllm/model_executor/models/gemma4_mm.py",
+    "current_exact_path": "negative_unload_gate",
+    "observations": [
+      "Gemma4ForConditionalGeneration.__init__ unconditionally constructs vision_tower=AutoModel.from_config(config.vision_config) and embed_vision.",
+      "Its load_weights maps model.vision_tower and model.embed_vision and has no text-only skip gate.",
+      "A separate Gemma4ForCausalLM path exists in gemma4.py and skips audio_tower, vision_tower, embed_audio, and embed_vision; it is not the architecture selected by the exact checkpoint config.",
+      "Therefore a text-only unload is implementable only as a future architecture/config/runtime intervention; current source does not prove exact output equality or load-time omission."
+    ],
+    "quality": "not executed; required later raw text output/logit comparison against unmodified exact checkpoint, with vision eligibility forfeited"
+  },
+  "capacity": {
+    "prior_resident_w4_gib": 20.343493551,
+    "removed_exact_vision_gib": 1.072405905,
+    "text_only_resident_w4_gib": 19.271087646,
+    "reserve_gib": 5.0,
+    "kv_gib_per_request": {"primary": 0.363423228, "primary_peak_4572": 0.377186537, "aa_10k": 0.585865974},
+    "conservative_24_gib_envelope": {"assumption": "92% of nominal 24 GiB before the separately charged 5-GiB runtime reserve, matching the 44.704-GiB envelope convention", "gib": 22.08},
+    "totals_gib": {
+      "primary_c1_c2_c4_c8": {"c1": 24.634511, "c2": 24.997934, "c4": 25.724781, "c8": 27.178473},
+      "aa_10k_c1_c2_c4_c8": {"c1": 24.856954, "c2": 25.442820, "c4": 26.614552, "c8": 28.958015}
+    },
+    "headroom_gib_vs_22_08": {
+      "primary_c1_c2_c4_c8": {"c1": -2.554511, "c2": -2.917934, "c4": -3.644781, "c8": -5.098473},
+      "aa_10k_c1_c2_c4_c8": {"c1": -2.776954, "c2": -3.362820, "c4": -4.534552, "c8": -6.878015}
+    },
+    "gate": "fail: c1 is already 2.554511 GiB over the conservative envelope (and 0.634511 GiB over nominal 24 GiB) before allocator/page uncertainty"
+  },
+  "economics": {
+    "l40s_planning_rate_usd_per_gpu_hour": 1.10,
+    "ten_percent_better_max_candidate_rate_formula": "1.089 * matched_throughput_ratio USD/GPU-hour",
+    "bandwidth_proportional_priors": {
+      "l4_300_gbps": {"matched_ratio_prior": 0.347222, "max_rate_10pct_usd_per_hour": 0.378125, "conservative_85pct_max_rate": 0.321406},
+      "a10_600_gbps": {"matched_ratio_prior": 0.694444, "max_rate_10pct_usd_per_hour": 0.756250, "conservative_85pct_max_rate": 0.642813},
+      "rtx4090_1008_gbps": {"matched_ratio_prior": 1.166667, "max_rate_10pct_usd_per_hour": 1.270500, "conservative_85pct_max_rate": 1.079925}
+    },
+    "price_evidence": "shared inventory contains no current production planning rate for L4, A10, or RTX 4090; ratios are bandwidth priors only and do not establish endpoint economics",
+    "economic_gate": "not reached because capacity fails; no 24-GiB nominee is credible"
+  },
+  "nomination": {"decision": "none", "reason": "Exact vision unload saves only 1.072406 GiB; current pinned multimodal runtime allocates the tower unconditionally, and even a hypothetical exact unload leaves c1 at 24.634511 GiB versus a conservative 22.08-GiB 24-card envelope. No quality or price evidence can rescue the capacity failure."}
+}

@@ -1,0 +1,376 @@
+{
+  "schema_version": 1,
+  "classification": "CORPUS_CLOSE",
+  "decision": "Do not nominate a vocabulary shortlist: the only retained exact corpus is degenerate and method-conditioned.",
+  "evidence_class": "measured retained-artifact audit; token IDs are used only as retained histogram identities",
+  "source": {
+    "archive": "research/sol/experiments/glm47flash/research_lab/projects/ngram_speculative_c16_direct/artifacts/ngram_speculative_c16_direct_2026-07-16-r1/vllm-awq-batch.tar.gz",
+    "archive_sha256": "b1a2381cb414a424bddcc3ce2a2b4fc234e397a154616fd15691ea8f13c593c7",
+    "profile_id": "fixed_8k_1k_c16",
+    "requests": 32,
+    "reported_output_tokens": 32768,
+    "histograms_complete": true
+  },
+  "completeness": {
+    "all_rows": [
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      },
+      {
+        "output_tokens": 1024,
+        "event_count": 1024,
+        "histogram_sum": 1024,
+        "complete": true
+      }
+    ]
+  },
+  "diversity": {
+    "distinct_histogram_patterns": 6,
+    "pattern_counts": [
+      13,
+      11,
+      4,
+      2,
+      1,
+      1
+    ],
+    "per_request_distinct_token_counts": {
+      "5": 17,
+      "4": 14,
+      "16": 1
+    },
+    "aggregate_distinct_tokens": 17,
+    "aggregate_top_tokens": [
+      {
+        "token_id": 154822,
+        "count": 31608,
+        "share": 0.964599609375
+      },
+      {
+        "token_id": 198,
+        "count": 586,
+        "share": 0.01788330078125
+      },
+      {
+        "token_id": 474,
+        "count": 457,
+        "share": 0.013946533203125
+      },
+      {
+        "token_id": 1208,
+        "count": 38,
+        "share": 0.00115966796875
+      },
+      {
+        "token_id": 3422,
+        "count": 32,
+        "share": 0.0009765625
+      },
+      {
+        "token_id": 75,
+        "count": 18,
+        "share": 0.00054931640625
+      },
+      {
+        "token_id": 2,
+        "count": 7,
+        "share": 0.000213623046875
+      },
+      {
+        "token_id": 262,
+        "count": 5,
+        "share": 0.000152587890625
+      },
+      {
+        "token_id": 286,
+        "count": 4,
+        "share": 0.0001220703125
+      },
+      {
+        "token_id": 322,
+        "count": 4,
+        "share": 0.0001220703125
+      }
+    ],
+    "halves": {
+      "first_16": {
+        "requests": 16,
+        "tokens": 16384,
+        "distinct_tokens": 17,
+        "top_token_share": 0.93377685546875,
+        "distinct_histogram_patterns": 4
+      },
+      "last_16": {
+        "requests": 16,
+        "tokens": 16384,
+        "distinct_tokens": 5,
+        "top_token_share": 0.99542236328125,
+        "distinct_histogram_patterns": 5
+      }
+    },
+    "leave_one_request_out_top_k_coverage": {
+      "1": {
+        "min": 0.0,
+        "mean": 0.964599609375,
+        "max": 0.9970703125
+      },
+      "2": {
+        "min": 0.5166015625,
+        "mean": 0.98248291015625,
+        "max": 0.998046875
+      },
+      "4": {
+        "min": 0.5244140625,
+        "mean": 0.983673095703125,
+        "max": 0.9990234375
+      },
+      "8": {
+        "min": 0.5380859375,
+        "mean": 0.985565185546875,
+        "max": 1.0
+      },
+      "16": {
+        "min": 0.9990234375,
+        "mean": 0.999969482421875,
+        "max": 1.0
+      },
+      "32": {
+        "min": 1.0,
+        "mean": 1.0,
+        "max": 1.0
+      },
+      "64": {
+        "min": 1.0,
+        "mean": 1.0,
+        "max": 1.0
+      },
+      "128": {
+        "min": 1.0,
+        "mean": 1.0,
+        "max": 1.0
+      },
+      "256": {
+        "min": 1.0,
+        "mean": 1.0,
+        "max": 1.0
+      },
+      "512": {
+        "min": 1.0,
+        "mean": 1.0,
+        "max": 1.0
+      },
+      "1024": {
+        "min": 1.0,
+        "mean": 1.0,
+        "max": 1.0
+      }
+    }
+  },
+  "representativeness": {
+    "independent_groups": 1,
+    "required_leave_group_out_coverage": 0.999,
+    "coverage_claim_admissible": false,
+    "failure_reasons": [
+      "n-gram prompt-lookup arm is a single method-conditioned source group",
+      "only 6 histogram patterns across 32 requests; 11 and 13 rows repeat the dominant pattern",
+      "aggregate top token share is 0.964599609375",
+      "the corpus cannot support a leave-one-independent-group-out claim"
+    ]
+  },
+  "economics": {
+    "exact_representation_tested": false,
+    "conservative_endpoint_transfer_tested": false,
+    "reason": "Corpus fails representativeness before the contract permits an output-head shortlist/economics test.",
+    "robust_nomination_tok_per_s": 606.355
+  },
+  "scope_compliance": {
+    "provider_spend_usd": 0.0,
+    "cuda_used": false,
+    "network_used": false,
+    "checkpoint_mutated": false,
+    "shared_runtime_mutated": false
+  }
+}

@@ -1,0 +1,48 @@
+[
+  {
+    "case_id": "dev_tool_01",
+    "exact_repetition_identity": true,
+    "mode": "deterministic_chat_completion",
+    "raw_response_sha256": [
+      "85207ed35c27aac6078da947ab83b9532e2c2c68c5a0378e76f43d6fca8d9ba3"
+    ]
+  },
+  {
+    "case_id": "dev_code_01",
+    "exact_repetition_identity": true,
+    "mode": "deterministic_chat_completion",
+    "raw_response_sha256": [
+      "8a7172ae649149a5926ec04535dba9ac917f2bbc5abfe6d1ecca44974063b8c8"
+    ]
+  },
+  {
+    "case_id": "dev_retrieval_01",
+    "exact_repetition_identity": true,
+    "mode": "deterministic_chat_completion",
+    "raw_response_sha256": [
+      "04f963d9de551e19502e6301dd865c2f2818878e4bf894bdca9b63837ed65783"
+    ]
+  },
+  {
+    "case_id": "dev_continuation_01",
+    "exact_repetition_identity": true,
+    "mode": "deterministic_chat_completion",
+    "raw_response_sha256": [
+      "a99672420b1a14dbec434778251147efe39544b40611ea95878b0fab3c8c8a51"
+    ]
+  },
+  {
+    "case_id": "dev_loss_01",
+    "mode": "vllm_completion_prompt_logprobs",
+    "raw_response_sha256": "1bc90ba36292a86157f4e65abad8588b1eabc0e2b593987a97dd930764a97e54"
+  },
+  {
+    "case_id": "dev_serving_01",
+    "exact_repetition_identity": true,
+    "mode": "deterministic_chat_completion",
+    "raw_response_sha256": [
+      "8a0d7ee413bf96e44a3cc7ee8988f636fc81f36dd9dad2056d719701595495db",
+      "0fa631cf0cce03bf4efe76f2c2098332ac2fc1303ad862cb560f86382ba66650"
+    ]
+  }
+]

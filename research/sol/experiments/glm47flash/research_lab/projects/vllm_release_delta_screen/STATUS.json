@@ -1,0 +1,14 @@
+{
+  "status": "complete",
+  "priority": 85,
+  "summary": "v0.25.1 is statically compatible with the exact GLM-Lite compressed-tensors AWQ config, but targeted deltas provide no credible >=5% same-L40S path.",
+  "next_action": "No runtime A/B; retain v0.15.0 denominator and require exact-model L40S evidence before revisiting.",
+  "provider_mutation": "prohibited_zero_cost_runtime_screen",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 0,
+  "active_experiment": null,
+  "last_experiment": "glm47_vllm_v0251_exact_awq_source_and_metadata_screen",
+  "decision": "closed_no_a_b",
+  "artifact": "artifacts/VLLM_RELEASE_DELTA_SCREEN_2026-07-15.json",
+  "cost_usd": 0.0
+}

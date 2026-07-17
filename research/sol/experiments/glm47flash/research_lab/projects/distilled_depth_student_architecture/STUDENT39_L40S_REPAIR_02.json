@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "experiment_id": "glm47-student39-l40s-c16-c24-c32-20260715-r2-repair02",
+  "parent_experiment_id": "glm47-student39-l40s-r2-retry",
+  "classification": "in_place_harness_repair",
+  "hypothesis": "The physical 39-layer AWQ student exceeds 594.466 output tokens/s at one or more of c16, c24, or c32 on the retained Nebius L40S.",
+  "measured_failure": "The previous arm loaded the exact student and passed semantic smoke, but the remote runner rejected the authorized 16,24,32 frontier before performance measurement.",
+  "causal_change": "Accept any positive strictly increasing concurrency frontier in the remote runner; fix the result-envelope embedded Python indentation. Model, runtime, kernels, workload, and hardware are unchanged.",
+  "resident_state": {
+    "instance_id": "computeinstance-e00y3yp3sqfw2f2avg",
+    "hardware": "Nebius L40S 48GB",
+    "runtime_image": "glm-vllm:0.15.0-transformers-1618d44",
+    "checkpoint": "/workspace/model-awq",
+    "checkpoint_manifest_sha256": "d09c1b7dbd10c91eec8aba98fc3f14878bf8d1784d610499935c3e355ba9e86a"
+  },
+  "workload": {
+    "frontier_concurrencies": [16, 24, 32],
+    "max_num_seqs": 32,
+    "max_num_batched_tokens": 65536,
+    "seed": 1234
+  },
+  "gates": {
+    "correctness": "semantic smoke must pass; quality is a recorded diagnostic because this is a physical-student cost proxy",
+    "economic": "at least 594.466 output tokens/s or no more than $0.514 per million output tokens at $1.10 per L40S-hour",
+    "latency": "background completion envelope 300 seconds per arm"
+  },
+  "budget": {
+    "campaign_project_cap_usd": 1.0,
+    "session_deadline_epoch": 1784151634.327586,
+    "cleanup": "retrieve and hash artifacts, delete instance and managed disk, and verify absence"
+  },
+  "artifacts": "artifacts/nebius_l40s_student39_c16_c24_c32_2026-07-15-r2-repair02"
+}

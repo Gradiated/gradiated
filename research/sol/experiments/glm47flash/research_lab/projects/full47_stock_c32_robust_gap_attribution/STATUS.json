@@ -1,0 +1,29 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "ATTRIBUTION_CLOSE: c32 gain is measured concurrency/device-saturation benefit; archive lacks causal kernel attribution and no conservative single mechanism reaches 606.355 tok/s.",
+  "next_action": "Terminal. Preserve stock result; separate rank448+c40 project owns the only remaining capacity/tile falsifier.",
+  "provider_mutation": "prohibited_zero_cost_archive_attribution",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 900,
+  "resource_cap": {
+    "peak_rss_gib": 6,
+    "new_artifacts_mib": 24
+  },
+  "economic_gate": {
+    "stock_c32_output_tokens_per_second": 596.8519727271398,
+    "robust_output_tokens_per_second": 606.355,
+    "gap_output_tokens_per_second": 9.503027272860232
+  },
+  "stop_rule": "One terminal NOMINATE_POST_C36_MECHANISM or ATTRIBUTION_CLOSE result; no successor or launch preparation.",
+  "quality_policy": "Performance attribution only; preserve the stock archive's explicit quality claim limit."
+  ,"terminal_result": {
+    "classification": "ATTRIBUTION_CLOSE",
+    "artifact": "artifacts/STOCK_C32_ATTRIBUTION_CLOSE_2026-07-16.json",
+    "archive_sha256": "ff873b597b33775787eada26ded437d1da91f326a47a8beb3ab8c994cc27cb4c",
+    "identified_source": "higher admitted concurrency and improved batch/device saturation",
+    "robust_gap_output_tokens_per_second": 9.503027272860232,
+    "conservative_mechanism_nominated": false,
+    "missing_measurement": "exact rank448+c40 loader/quality/memory-reserve/endpoint falsifier in the independent rebase project"
+  }
+}

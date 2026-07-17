@@ -1,0 +1,37 @@
+{
+  "classification": "QUALITY_ARTIFACT_CLOSE",
+  "decision": "The top-3 retrieval signal cannot be confirmed as a complete identity-bound quality result from these archives. This closes interpretation of the signal; it does not change the bracketed architecture-cost pass or establish deployable quality.",
+  "scope": "offline immutable archive replay; no model, provider, training, policy, or holdout work",
+  "archive_sha256": {
+    "top4_shared_c32_pre": "8070ea8b1bb8af12628c1f7d8fa3d1ecace82f892802ae5f9780f44e482ea765",
+    "top3_shared_c32": "7d232e1637cb2b7ea03f1890880598a14b26fd8cc8683b8b5723420eda77e10d",
+    "top4_shared_c32_post": "b7a7a5392e3792ddfbe79412fcf3e86fce38d7d3d33154322e93c858b2c47eaf"
+  },
+  "replay": {
+    "consumer": "campaign_100/quality/run_pair.py --mode score using score_pair.py",
+    "quality_suite_sha256": "152548d51fba8e8ff5e8f1e665c5af166fb6d97cdf3010723042112855964668",
+    "top4_pre_vs_top3": {
+      "overall_regression": 0.16666666666666666,
+      "retrieval_regression": 1.0,
+      "candidate_minus_control_paired_ci": [-0.5, 0.0],
+      "result_sha256": "8d708ffb428ff340e0be656fb211e1eb115e19093ea58a74ce2fd8c2fb049113"
+    },
+    "top4_post_vs_top3": {
+      "overall_regression": 0.16666666666666666,
+      "retrieval_regression": 1.0,
+      "candidate_minus_control_paired_ci": [-0.5, 0.0],
+      "result_sha256": "8d708ffb428ff340e0be656fb211e1eb115e19093ea58a74ce2fd8c2fb049113"
+    },
+    "scorer_rejects_missing_case": true
+  },
+  "binding_audit": {
+    "archive_integrity": "pass",
+    "all_arms_share_model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "all_arms_share_runtime": "vllm-0.15.0",
+    "complete_case_sets_and_recorded_raw_digests": "pass",
+    "raw_response_bytes_serialized_in_archive": false,
+    "evidence_binds_raw_digests_to_response_file_bytes": false,
+    "existing_scorer_consumes_raw_evidence_or_identity_manifest": false
+  },
+  "reason": "The persisted quality-evidence.json files contain raw response SHA-256 values, while the archives contain normalized quality-awq-responses.jsonl rather than the raw response bytes. The existing scorer accepts only the normalized response files, so replay proves the normalized scoring outcome but cannot validate raw capture integrity, normalization, checkpoint/runtime/config/prompt binding, or the evidence association required for QUALITY_REGRESSION_CONFIRMED."
+}

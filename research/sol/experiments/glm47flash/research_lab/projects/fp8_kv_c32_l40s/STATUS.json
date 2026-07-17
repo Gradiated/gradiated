@@ -1,0 +1,25 @@
+{
+  "status": "complete",
+  "priority": 130,
+  "summary": "Closed after r2 stock BF16-KV c16 never became healthy; its typed remote diagnostic retained repeated localhost refusal, the remote archive was unavailable after deadline, FP8 c16/c32 never started, and zero instance/disk inventory was verified.",
+  "next_action": "Do not retry FP8 KV on this route. Redirect the measured lane away from KV precision/higher concurrency; treat r2 only as a typed server-start/observability failure.",
+  "provider_mutation": "released_r2_cleanup_verified_route_closed",
+  "authorized_spend_usd": 1.0,
+  "absolute_timeout_seconds": 3900,
+  "active_experiment": "fp8_kv_c32_l40s_2026-07-15-r2",
+  "quality_policy": "semantics_may_change_cost_proxy_only_compact_diagnostics_required_full_quality_deferred",
+  "decision": "route_closed_pre_measurement_stock_c16_server_start_or_health_failure",
+  "prior_result": "r1_pre_measurement_bootstrap_recovery_race_no_scientific_evidence_cleanup_verified",
+  "r2_controller": "fp8-kv-c32-r2.service",
+  "r2_observed_state": "control_c16_checkpoint_transfer_verified_then_127_0_0_1_30000_refused_archive_unavailable_deadline_cleanup_verified",
+  "r2_terminal_artifact": "artifacts/fp8_kv_c32_l40s_2026-07-15-r2/R2_TERMINAL.json",
+  "r2_cost_usd_derived": 0.587918106,
+  "prior_artifacts": [
+    "EXPERIMENT_SPEC.json",
+    "artifacts/fp8_kv_c32_l40s_2026-07-15-r1/events.jsonl",
+    "artifacts/fp8_kv_c32_l40s_2026-07-15-r1/provider-create-diagnostic.json",
+    "artifacts/fp8_kv_c32_l40s_2026-07-15-r1/repair-01-remote.stderr.log",
+    "artifacts/fp8_kv_c32_l40s_2026-07-15-r1-recovery/events.jsonl"
+  ],
+  "terminal_stop_rule": "another durable admission/bootstrap/arm-start failure or a sub-594.466-tok-s c32 result closes FP8 KV without a third attempt"
+}

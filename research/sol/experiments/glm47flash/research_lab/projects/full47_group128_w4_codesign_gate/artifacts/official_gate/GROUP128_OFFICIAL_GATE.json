@@ -1,0 +1,196 @@
+{
+  "checkpoint": "/model",
+  "decision": "RUNTIME_CLOSE_GROUP128_COMBINED",
+  "dispatch": {
+    "config_group_size": 128,
+    "fused_moe": "CompressedTensorsWNA16MarlinMoEMethod",
+    "ordinary_linear": "CompressedTensorsLinearMethod",
+    "parallel_lm_head": null
+  },
+  "memory": {
+    "minimum_margin_mib": 64.0,
+    "pass": false,
+    "projected_c32_peak_mib": 44497.43258972168,
+    "robust_limit_mib": 44532.0,
+    "robust_margin_mib": 34.56741027832322
+  },
+  "native_dispatch_pass": false,
+  "numerical_pass": false,
+  "payload": {
+    "existing_group128_scale_bytes": 459526144,
+    "existing_group32_scale_bytes": 1838104576,
+    "final_bytes": 17672931936,
+    "head_shared_bf16_bytes": 1502609408,
+    "head_shared_group128_bytes": 387393712,
+    "mandatory_duplicate_or_repack_bytes": 0,
+    "original_bytes": 20166726064,
+    "saving_bytes": 2493794128,
+    "saving_mib": 2378.2674102783203
+  },
+  "representation": "official compressed_tensors.pack_to_int32 uint4b8",
+  "runtime_note": "Pinned get_quant_method only recognizes LinearBase; ParallelLMHead remains unbound without a source change, which this gate forbids.",
+  "samples": [
+    {
+      "family": "routed_gate",
+      "max_abs_error": 0.0071847103536129,
+      "official_pack_roundtrip_exact": true,
+      "packed_sha256": "9f82107970b70bf205711d139eded12b28f2e32f5d78dce9d23275522dd56bc7",
+      "packed_shape": [
+        128,
+        256
+      ],
+      "relative_l2": 0.10341069102287292,
+      "saturation_count": 0,
+      "saturation_fraction": 0.0,
+      "scale_shape": [
+        128,
+        16
+      ],
+      "shape": [
+        128,
+        2048
+      ],
+      "source": "model.layers.1.mlp.experts.0.gate_proj.weight",
+      "source_kind": "group32"
+    },
+    {
+      "family": "routed_up",
+      "max_abs_error": 0.007638115435838699,
+      "official_pack_roundtrip_exact": true,
+      "packed_sha256": "e1d80a5ebfd939d9ef87e5d9aa902e0b26fc58fb592737e36d806d7dbe18e8c1",
+      "packed_shape": [
+        128,
+        256
+      ],
+      "relative_l2": 0.10372252762317657,
+      "saturation_count": 0,
+      "saturation_fraction": 0.0,
+      "scale_shape": [
+        128,
+        16
+      ],
+      "shape": [
+        128,
+        2048
+      ],
+      "source": "model.layers.1.mlp.experts.0.up_proj.weight",
+      "source_kind": "group32"
+    },
+    {
+      "family": "routed_down",
+      "max_abs_error": 0.007533482275903225,
+      "official_pack_roundtrip_exact": true,
+      "packed_sha256": "251f661bbb6b72759aba3bd65c2b0b0df8fb8d28d2fb330711884a51f199ed9a",
+      "packed_shape": [
+        128,
+        192
+      ],
+      "relative_l2": 0.1046723946928978,
+      "saturation_count": 0,
+      "saturation_fraction": 0.0,
+      "scale_shape": [
+        128,
+        12
+      ],
+      "shape": [
+        128,
+        1536
+      ],
+      "source": "model.layers.1.mlp.experts.0.down_proj.weight",
+      "source_kind": "group32"
+    },
+    {
+      "family": "ordinary_attention",
+      "max_abs_error": 0.0068359375,
+      "official_pack_roundtrip_exact": true,
+      "packed_sha256": "d64fc1247bcc2864bf74f79d06fb8b715d2961bce20e3d54df482197839996c2",
+      "packed_shape": [
+        128,
+        256
+      ],
+      "relative_l2": 0.10381816327571869,
+      "saturation_count": 0,
+      "saturation_fraction": 0.0,
+      "scale_shape": [
+        128,
+        16
+      ],
+      "shape": [
+        128,
+        2048
+      ],
+      "source": "model.layers.1.self_attn.q_a_proj.weight",
+      "source_kind": "group32"
+    },
+    {
+      "family": "ordinary_linear",
+      "max_abs_error": 0.0149274542927742,
+      "official_pack_roundtrip_exact": true,
+      "packed_sha256": "3535c715c53bbb5f8d58dd57969e102b9b9d094f446a296393150fae67940bce",
+      "packed_shape": [
+        128,
+        64
+      ],
+      "relative_l2": 0.10330560058355331,
+      "saturation_count": 0,
+      "saturation_fraction": 0.0,
+      "scale_shape": [
+        128,
+        4
+      ],
+      "shape": [
+        128,
+        512
+      ],
+      "source": "model.layers.1.self_attn.kv_b_proj.weight",
+      "source_kind": "group32"
+    },
+    {
+      "family": "lm_head",
+      "max_abs_error": 0.025390625,
+      "official_pack_roundtrip_exact": true,
+      "packed_sha256": "35cd494dcc29c0bf6ba13a15863a1253a2ac919719c3d9990b5a6141ad3db173",
+      "packed_shape": [
+        128,
+        256
+      ],
+      "relative_l2": 0.11180733889341354,
+      "saturation_count": 0,
+      "saturation_fraction": 0.0,
+      "scale_shape": [
+        128,
+        16
+      ],
+      "shape": [
+        128,
+        2048
+      ],
+      "source": "lm_head.weight",
+      "source_kind": "bf16"
+    },
+    {
+      "family": "shared_expert",
+      "max_abs_error": 0.01556396484375,
+      "official_pack_roundtrip_exact": true,
+      "packed_sha256": "db72611890f22a64dbed31487f4861415a2108de3a31bce6374c239e781e425a",
+      "packed_shape": [
+        128,
+        256
+      ],
+      "relative_l2": 0.11935348808765411,
+      "saturation_count": 0,
+      "saturation_fraction": 0.0,
+      "scale_shape": [
+        128,
+        16
+      ],
+      "shape": [
+        128,
+        2048
+      ],
+      "source": "model.layers.1.mlp.shared_experts.gate_proj.weight",
+      "source_kind": "bf16"
+    }
+  ],
+  "terminal": true
+}

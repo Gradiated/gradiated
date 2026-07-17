@@ -15,6 +15,8 @@ Periodic research supervisor
 
 The roles use `$research-director`, `$researcher`, and `$research-supervisor`. They are intentionally judgment-based. The scheduler does not rank hypotheses, impose experiment workflows, or decide when a line should be abandoned.
 
+Projects default to the fast execution researcher pool. A director may set `researcher_profile: deep` in `STATUS.json` when the next result requires mechanism-level source, model, and accelerator reasoning; the harness routes that project to the configured Sol-high `deep_researcher`. Switching back to `execution` returns implementation and sweeps to the fast pool. The profile changes model allocation only and adds no experiment gate.
+
 ## What the harness does
 
 `grad_research.lab_harness` uses the installed `codex` CLI and saved ChatGPT/Codex login. It explicitly removes API-key environment variables from child Codex processes. It:
@@ -92,6 +94,7 @@ Create an external config containing the repository, lab directory, models, cade
   "routes": {
     "director": {"model": "gpt-5.6-sol", "reasoning_effort": "high"},
     "researcher": {"model": "gpt-5.6-terra", "reasoning_effort": "medium"},
+    "deep_researcher": {"model": "gpt-5.6-sol", "reasoning_effort": "high"},
     "supervisor": {"model": "gpt-5.6-sol", "reasoning_effort": "high"}
   },
   "tools": [

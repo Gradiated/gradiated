@@ -63,6 +63,7 @@ class LabConfig:
     director: ModelRoute = ModelRoute("gpt-5.6-sol", "high")
     researcher: ModelRoute = ModelRoute("gpt-5.6-terra", "medium")
     researcher_routes: tuple[ModelRoute, ...] = ()
+    deep_researcher: ModelRoute = ModelRoute("gpt-5.6-sol", "high")
     supervisor: ModelRoute = ModelRoute("gpt-5.6-sol", "high")
     tools: tuple[Path, ...] = ()
 
@@ -98,6 +99,7 @@ class LabConfig:
             director=route("director", cls.director),
             researcher=route("researcher", cls.researcher),
             researcher_routes=researcher_routes,
+            deep_researcher=route("deep_researcher", cls.deep_researcher),
             supervisor=route("supervisor", cls.supervisor),
             tools=tuple(Path(value).expanduser().resolve() for value in raw.get("tools", [])),
         )
@@ -381,6 +383,8 @@ Read `CAMPAIGN.md`, `STATUS.md`, `DIRECTOR_LOG.md`, `SUPERVISOR_LOG.md`, the pro
 
 Maximize decision-relevant research progress per wall-clock hour. Treat the campaign's economic target, workload, quality requirement, and latency tradeoffs as authoritative. Review the evidence, improve the portfolio, and delegate or update independent projects under `projects/`. Keep useful work parallel, redirect lines that are stuck, and keep the log to a short decision handoff. Do not execute the delegated projects yourself.
 
+Mark `STATUS.json` with `researcher_profile: deep` only when a project's next result requires mechanism-level causal reasoning across source, model geometry, and accelerator behavior. Use `execution` for routine implementation, provider operations, and sweeps; switching profiles is a model-routing decision, not an experiment gate.
+
 Treat a durable experiment owner as exclusive for provider mutation and spend, not for offline scientific work or successor planning. Once its scientific endpoint is known, use free researcher slots for materially different `$0` evidence unless terminal artifacts are genuinely required for the next decision.
 
 Budget projects with explicit wall-clock, compute, storage, and spend limits, never with an agent-turn boundary. “Same researcher turn” may prohibit a support successor, but it must not force deterministic checkpoint materialization, compilation, or an actual quality-consumer run to fit inside one model response. When required local work can outlive a response, require one bounded durable local owner in the same project and keep provider creation gated until its typed terminal passes; do not make the researcher kill/restart correct work or weaken a pre-create gate to satisfy turn cadence.
@@ -399,6 +403,7 @@ Shared tools available to all agents:
             status = {}
             next_action = ""
         scheduled_action = next_action or "choose the fastest in-scope evidence path"
+        researcher_profile = str(status.get("researcher_profile", "execution"))
         active_session = status.get("active_session")
         if isinstance(active_session, dict) and active_session:
             session_guidance = f"""
@@ -410,6 +415,7 @@ If its independent owner is still active and forward progress is visible, take o
         return f"""Use `$researcher` to continue the project at `{project}`.
 
 Current scheduled action from `STATUS.json`: {scheduled_action}
+Researcher profile: {researcher_profile}
 Treat it as this turn's default execution contract. If it calls for integration and measurement, do not substitute another readiness artifact: continue to the measured result or a typed in-scope external blocker. Deviate only when new evidence invalidates the action, and record that evidence.
 {session_guidance}
 
@@ -462,6 +468,9 @@ Shared tools:
                     "priority": priority,
                     "summary": str(status.get("summary", "")),
                     "next_action": str(status.get("next_action", "")),
+                    "researcher_profile": str(
+                        status.get("researcher_profile", "execution")
+                    ),
                     "active_session": status.get("active_session"),
                     "authorized_spend_usd": authorized_spend_usd,
                 }
@@ -704,12 +713,16 @@ Shared tools:
         route_counts = {route.model: 0 for route in routes}
         assignments = []
         for row in active:
-            model = self.state["project_routes"].get(row["id"])
-            if model not in routes_by_model:
-                model = min(route_counts, key=lambda name: route_counts[name])
-                self.state["project_routes"][row["id"]] = model
-            route_counts[model] += 1
-            assignments.append((row, routes_by_model[model]))
+            if row["researcher_profile"] == "deep":
+                route = self.config.deep_researcher
+            else:
+                model = self.state["project_routes"].get(row["id"])
+                if model not in routes_by_model:
+                    model = min(route_counts, key=lambda name: route_counts[name])
+                route = routes_by_model[model]
+                route_counts[model] += 1
+            self.state["project_routes"][row["id"]] = route.model
+            assignments.append((row, route))
         self._save_state()
         results = []
         with ThreadPoolExecutor(

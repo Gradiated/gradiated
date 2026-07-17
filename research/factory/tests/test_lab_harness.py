@@ -102,6 +102,7 @@ class SimpleLabHarnessTests(unittest.TestCase):
                 ModelRoute("gpt-terra", "medium"),
                 ModelRoute("gpt-luna", "medium"),
             ),
+            deep_researcher=ModelRoute("gpt-sol", "high"),
             supervisor=ModelRoute("gpt-sol", "high"),
             tools=(root / "tools",),
         )
@@ -165,6 +166,7 @@ class SimpleLabHarnessTests(unittest.TestCase):
                 "produce new decision-relevant evidence quickly",
                 runner.calls[1]["prompt"],
             )
+            self.assertIn("Researcher profile: execution", runner.calls[1]["prompt"])
             self.assertIn(
                 "Current scheduled action from `STATUS.json`: run the experiment",
                 runner.calls[1]["prompt"],
@@ -197,6 +199,46 @@ class SimpleLabHarnessTests(unittest.TestCase):
             self.assertTrue((config.lab_dir / "projects" / "kernel" / "RESEARCH_LOG.md").is_file())
             self.assertTrue((config.lab_dir / "projects" / "kernel" / "artifacts").is_dir())
             self.assertTrue((config.lab_dir / "projects" / "scheduler" / "artifacts").is_dir())
+            harness.close()
+
+    def test_deep_profile_routes_causal_work_to_sol(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = self._config(root)
+            runner = FakeRunner(config.lab_dir)
+            harness = LabHarness(config, runner=runner)
+            for name, priority, profile in (
+                ("kernel", 2, "deep"),
+                ("scheduler", 1, "execution"),
+            ):
+                project = config.lab_dir / "projects" / name
+                project.mkdir()
+                (project / "PROJECT.md").write_text(f"# {name}\n")
+                (project / "STATUS.json").write_text(
+                    json.dumps(
+                        {
+                            "status": "active",
+                            "priority": priority,
+                            "summary": "ready",
+                            "next_action": "continue",
+                            "researcher_profile": profile,
+                        }
+                    )
+                )
+
+            harness._run_researchers()
+
+            calls = {
+                call["label"]: call
+                for call in runner.calls
+                if call["role"] == "researcher"
+            }
+            self.assertEqual("gpt-sol", calls["kernel"]["model"])
+            self.assertIn("Researcher profile: deep", calls["kernel"]["prompt"])
+            self.assertIn(calls["scheduler"]["model"], {"gpt-terra", "gpt-luna"})
+            self.assertIn(
+                "Researcher profile: execution", calls["scheduler"]["prompt"]
+            )
             harness.close()
 
     def test_threads_survive_restart_and_completed_projects_are_not_scheduled(self):

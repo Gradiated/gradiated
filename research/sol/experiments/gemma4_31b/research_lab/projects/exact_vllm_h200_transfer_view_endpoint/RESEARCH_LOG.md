@@ -39,3 +39,7 @@ Action: implemented only the admitted lower-program repairs. The rendered progra
 Evidence: `artifacts/FINAL_PROGRAM_AUDIT.json` passes all 32 rendered behavioral/identity checks. Fresh `artifacts/PROVIDER_PREFLIGHT_FINAL.json` passed authenticated empty instance/disk inventory, `$2.45/hour` H200 rate, and fresh `eu-north1` preemptible capacity. The sole owner is running as user-systemd `gemma-vllm-transfer-20260717.service` (PID `1988826`, cgroup and deadline in `STATUS.json`); no second allocation is authorized.
 
 Next: reconcile this owner only after it emits a typed endpoint outcome; retrieve and interpret the semantic and c1/c4/c8/c16/10K evidence, then evaluate the persisted SGLang trigger and verified cleanup.
+
+## 2026-07-17 — director terminal reconciliation
+
+The sole allocation is terminal. The corrected owner/watchdog, create, SSH, and remote session-parent ownership passed, but shared staging raised `FileNotFoundError` for the previously validated cross-project `corrected-transfer-view/model-files.sha256`. Cleanup passed with zero instances/disks. Provider exposure was 144.482 seconds; derived compute plus disk cost was `$0.099304`; useful GPU seconds were zero. Close under the paid pre-semantic rule. The manifest later reappeared during a bulk workspace rewrite, confirming the scientific program had depended on mutable cross-project artifact state. This is no vLLM, H200, checkpoint, semantic, throughput, quality, or economic evidence.

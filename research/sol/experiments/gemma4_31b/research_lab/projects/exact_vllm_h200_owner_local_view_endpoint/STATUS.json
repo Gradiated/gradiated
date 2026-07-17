@@ -1,0 +1,17 @@
+{
+  "status": "active",
+  "priority": 240,
+  "summary": "Run the exact vLLM H200 endpoint from a run-local hardlink view built and validated inside the sole durable owner, eliminating mutable cross-project staging state.",
+  "next_action": "Consume the director assertion, render/audit the corrected owner-local program, then launch the one owner that validates its run-local view before provider create or emit a typed blocker.",
+  "provider_mutation": "authorized_exclusive_after_owner_local_view_terminal_single_allocation",
+  "authorized_spend_usd": 4.0,
+  "wall_clock_budget_minutes": 130,
+  "provider_exposure_budget_minutes": 90,
+  "compute_budget": "1.5 H200 GPU-hours and 3 local CPU-hours",
+  "storage_budget": "zero-new-weight-byte owner-local hardlinks; one 250 GiB provider disk; at most 12 GiB project artifacts; no shared /tmp",
+  "active_session": null,
+  "director_identity_assertion": "artifacts/DIRECTOR_IDENTITY_ASSERTION.json",
+  "run_local_view_terminal": null,
+  "terminal_artifact": null,
+  "last_result_classification": "activated_owner_local_transfer_view_endpoint"
+}

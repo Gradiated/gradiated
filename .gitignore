@@ -28,3 +28,6 @@ target/
 **/*.pt
 **/*.pth
 **/*.ckpt
+
+# Reproducible third-party source probe checkouts
+research/sol/experiments/gemma4_31b/research_lab/projects/sglang_gemma4_exact_precreate_binding/probes/sglang/

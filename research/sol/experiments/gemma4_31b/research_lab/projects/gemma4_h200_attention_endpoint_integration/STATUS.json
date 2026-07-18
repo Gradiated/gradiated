@@ -1,0 +1,31 @@
+{
+  "status": "complete",
+  "priority": 520,
+  "researcher_profile": "deep",
+  "summary": "Performance terminal: explicit global repeated-KV plus local native-GQA SDPA is numerically valid and completes 32x358, but runs at 3.312839 s/request versus contemporaneous stock 0.784392 (4.22x slower) and misses the 0.620637 ceiling.",
+  "next_action": "Close this explicit-materialization route. Reopen attention only for a fused paged-GQA kernel that avoids dense FP8-to-BF16 cache gather and eightfold global KV repetition; do not promote or run broad quality on this candidate.",
+  "authorized_spend_usd": 6.0,
+  "provider_spend_usd": 1.7662281110833333,
+  "active_session": null,
+  "terminal_artifact": "artifacts/h200-attention-endpoint-20260718t1638z/TERMINAL.json",
+  "analysis_artifact": "artifacts/h200-attention-endpoint-20260718t1638z/ANALYSIS.json",
+  "identity_artifact": "IDENTITIES.json",
+  "provisioned_bench": {
+    "id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+    "artifact": "artifacts/director-bench/BENCH_SPEC.json",
+    "deadline_utc": "2026-07-18T18:48:52Z",
+    "maximum_lifecycle_cost_usd": 5.535
+  },
+  "comparator": {
+    "arm": "stock pinned SGLang BF16 weights / FP8-E5M2 KV c32",
+    "service_seconds_per_request": 0.7757958429062342,
+    "terminal_sha256": "4315123c4eebca244f306adad19c05199e70eec381d4210a53300b8f002fe317"
+  },
+  "candidate_gate": {
+    "maximum_service_seconds_per_request": 0.6206366743249874,
+    "minimum_reduction": 0.2,
+    "complete_requests": 32,
+    "output_tokens_per_request": 358,
+    "materialization_inside_timed_boundary": true
+  }
+}

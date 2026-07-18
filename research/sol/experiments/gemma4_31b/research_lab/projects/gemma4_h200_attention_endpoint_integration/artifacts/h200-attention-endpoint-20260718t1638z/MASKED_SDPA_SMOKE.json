@@ -1,0 +1,23 @@
+{
+  "pass": false,
+  "rows": [
+    {
+      "error": "RuntimeError: No available kernel. Aborting execution.",
+      "name": "local",
+      "operators": [],
+      "pass": false,
+      "peak_allocated_bytes": 16794624
+    },
+    {
+      "error": null,
+      "name": "global",
+      "operators": [
+        "aten::_efficient_attention_forward",
+        "aten::_scaled_dot_product_efficient_attention",
+        "aten::scaled_dot_product_attention"
+      ],
+      "pass": true,
+      "peak_allocated_bytes": 318476800
+    }
+  ]
+}

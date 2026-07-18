@@ -1,0 +1,5 @@
+NVIDIA H200, 143771 MiB
+da099dbf15fb5bb884f36b48a79ec8bfbe901c91ded2d1343a4efb2b5294085e
+patching file sglang/srt/layers/attention/gemma4_attention_endpoint.py
+patching file sglang/srt/layers/attention/triton_backend.py
+4dbe91c7eb3d017536ede6d0c711636ea4b22aa6bee07bf17df3b4c352eab5fc

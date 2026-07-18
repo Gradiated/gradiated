@@ -1,0 +1,8 @@
+{
+  "classification": "mechanism_oracle_failure",
+  "message": "pinned_runtime_inverse_frequency_mismatch",
+  "pass": false,
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp": "2026-07-18T22:47:53.159172Z"
+}

@@ -1,0 +1,25 @@
+Traceback (most recent call last):
+  File "/work/workspace/global-head256-rope/runtime_rotary_oracle.py", line 56, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/work/workspace/global-head256-rope/runtime_rotary_oracle.py", line 24, in main
+    original = build(512, 0.25)
+               ^^^^^^^^^^^^^^^^
+  File "/work/workspace/global-head256-rope/runtime_rotary_oracle.py", line 12, in build
+    return get_rope(
+           ^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/layers/rotary_embedding/factory.py", line 193, in get_rope
+    rotary_emb = RotaryEmbedding(
+                 ^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/layers/rotary_embedding/base.py", line 70, in __init__
+    cache = self._compute_cos_sin_cache()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/layers/rotary_embedding/base.py", line 143, in _compute_cos_sin_cache
+    inv_freq = self._compute_inv_freq(self.base)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/layers/rotary_embedding/base.py", line 126, in _compute_inv_freq
+    "cpu" if get_global_server_args().rl_on_policy_target is not None else None
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/server_args.py", line 7718, in get_global_server_args
+    raise ValueError("Global server args is not set yet!")
+ValueError: Global server args is not set yet!

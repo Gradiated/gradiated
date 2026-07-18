@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "kind": "gemma4_global_head256_load_time_slice_patch",
+  "activation_environment": "SGLANG_GEMMA4_GLOBAL_HEAD256_SLICE=1",
+  "base": {
+    "gemma4_causal.py": "683895c5140c920199713a18885006d17a1b1b3dda0ba01c797af02d09885856",
+    "gemma4_mm.py": "e0200b074c49624c5ecb58a0eb075cef696510274bada56dce0a6424b1acad14",
+    "model_config.py": "b212439c1cd2e32e289512d151bd4f185dbd13a6644d7d3ba7db7c93ef8b6b09"
+  },
+  "patched": {
+    "patch/gemma4_causal.py": "45d70e6d3943e349999d7d2a0a8e7e831a9440a7ca367120b58c428750d8da5d",
+    "patch/gemma4_mm.py": "94a5bca79a254ca2642dd300b45af549bfd23718340a56aa83a059df2f95bd45",
+    "patch/model_config.py": "ba6a44488466db5667c47c8266d33e79eaebb2b4143e6192b0aeb9ce62837132"
+  },
+  "transformation": {
+    "global_layer_ids": [5, 11, 17, 23, 29, 35, 41, 47, 53, 59],
+    "from_head_dim": 512,
+    "to_head_dim": 256,
+    "query_heads": 32,
+    "global_kv_heads": 4,
+    "tensor_suffixes": [
+      "q_proj.weight",
+      "k_proj.weight",
+      "o_proj.weight",
+      "q_norm.weight",
+      "k_norm.weight"
+    ],
+    "required_transformed_tensor_count": 50,
+    "attention_k_eq_v_required": true
+  }
+}

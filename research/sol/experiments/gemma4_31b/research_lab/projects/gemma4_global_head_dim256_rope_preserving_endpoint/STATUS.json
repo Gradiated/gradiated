@@ -1,0 +1,81 @@
+{
+  "status": "complete",
+  "priority": 630,
+  "researcher_profile": "deep",
+  "summary": "Restoring the original 128-coordinate full-attention rotary subspace passed the pinned-runtime inverse-frequency oracle but failed all three coherence rules; the frozen exact c32 consumer was not invoked.",
+  "next_action": null,
+  "authorized_spend_usd": 2.25,
+  "provider_spend_usd": 0.13656654193333334,
+  "active_session": null,
+  "bench_id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "claim_deadline_utc": "2026-07-18T23:20:00Z",
+  "lifecycle_deadline_utc": "2026-07-18T23:45:00Z",
+  "budgets": {
+    "wall_clock_minutes": 50,
+    "h200_compute_minutes": 50,
+    "temporary_storage_gib": 4,
+    "provider_spend_usd": 2.25,
+    "retrieval_release_reserve_minutes": 10
+  },
+  "comparator": {
+    "artifact": "../gemma4_h200_fused_qk_norm_rope_endpoint/artifacts/fused-qk-norm-rope-c32-canonical-20260718t1817z/TERMINAL.json",
+    "sha256": "1a7e778eff080bf2eec27da939ea85a894ea9884036bdebd562af371405e78c3",
+    "service_seconds_per_request": 0.9194573941250042,
+    "promotion_ceiling_seconds_per_request": 0.8734845244187539,
+    "cached_prompt_tokens": 17120,
+    "fresh_prompt_tokens": 117728
+  },
+  "candidate": {
+    "intervention": "preserve 128 full-attention rotary coordinates by changing only candidate partial_rotary_factor from 0.25 to 0.5",
+    "global_layer_ids": [5, 11, 17, 23, 29, 35, 41, 47, 53, 59],
+    "original_global_head_dim": 512,
+    "original_partial_rotary_factor": 0.25,
+    "original_rotary_dim": 128,
+    "candidate_global_head_dim": 256,
+    "candidate_partial_rotary_factor": 0.5,
+    "candidate_rotary_dim": 128,
+    "concurrency": 32,
+    "decode_backend": "triton",
+    "kv_dtype": "fp8_e5m2",
+    "quality_claim_authorized": false
+  },
+  "gates": {
+    "inverse_frequency_oracle_required": true,
+    "exact_transformed_layers": 10,
+    "exact_transformed_tensors": 50,
+    "resident_checkpoint_must_remain_unchanged": true,
+    "coherence_rules_required": 3,
+    "complete_requests_if_coherent": 32,
+    "required_cached_prompt_tokens": 17120,
+    "required_fresh_prompt_tokens": 117728,
+    "maximum_service_seconds_per_request": 0.8734845244187539
+  },
+  "bound_identities": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a",
+    "checkpoint": "eight files, 62578655208 bytes, /home/glmrunner/gemma-attention-endpoint/checkpoint",
+    "prior_terminal": "../gemma4_global_head_dim256_sliced_endpoint/artifacts/global-head256-sliced-c32-resume-20260718t2225z/TERMINAL.json",
+    "prior_terminal_sha256": "ffecdc4a6072189e0156463ae8c17c5371124f360c4aaf76cee2855d1cef8142",
+    "prior_coherence": "../gemma4_global_head_dim256_sliced_endpoint/artifacts/global-head256-sliced-c32-resume-20260718t2225z/global-head256-sliced-c32-resume-20260718t2225z/coherence.json",
+    "prior_coherence_sha256": "672d9ecec0cea693fcf03e586cd34e26752fd3bcb1c9654ea6d2ce6d7a095be3",
+    "prior_patch_manifest": "../gemma4_global_head_dim256_sliced_endpoint/PATCH_MANIFEST.json",
+    "prior_patch_manifest_sha256": "8f5358f4a2d74af0cbc2cf2b66430b704345f99a2d2f402421184a3c39b8dcf5",
+    "prior_model_source": "../gemma4_global_head_dim256_sliced_endpoint/patch/gemma4_causal.py",
+    "prior_model_source_sha256": "45d70e6d3943e349999d7d2a0a8e7e831a9440a7ca367120b58c428750d8da5d",
+    "prior_config_source": "../gemma4_global_head_dim256_sliced_endpoint/patch/model_config.py",
+    "prior_config_source_sha256": "ba6a44488466db5667c47c8266d33e79eaebb2b4143e6192b0aeb9ce62837132",
+    "proven_launcher": "../gemma4_global_head_dim256_sliced_endpoint/launch_owner.sh",
+    "proven_launcher_sha256": "f4d8389ba3e949ce377185f7d51ed6e1082212200a2808451d7e61c87a98599f",
+    "exact_runner": "../gemma4_background_serving_frontier/exact_mix_runner.py",
+    "exact_runner_sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+  },
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-head256-rope-h200-202607182240z-watchdog.service",
+    "main_pid": "2644980",
+    "unit": "gemma-head256-rope-h200-202607182240z-watchdog.service",
+    "deadline_utc": "2026-07-18T23:45:00Z"
+  },
+  "last_result_classification": "coherence_negative",
+  "terminal_artifact": "artifacts/global-head256-rope-c32-resume-20260718t2250z/TERMINAL.json",
+  "terminal_artifact_sha256": "f9226e55b48b96e32d22cb6c915aa749513dbc6d0a7d31062f2a1efb4b52c9ee"
+}

@@ -1,0 +1,10 @@
+{
+  "artifacts": "Retrieved under projects/gemma4_global_head_dim256_rope_preserving_endpoint/artifacts/global-head256-rope-c32-resume-20260718t2250z/.",
+  "caches": "Triton compilation cache remains available in the pinned image; no teardown performed.",
+  "checkpoint": "Exact eight-file BF16 checkpoint remains unchanged and read-only at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
+  "image": "Pinned SGLang v0.5.12 image and Triton cache remain resident.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_global_head_dim256_rope_preserving_endpoint",
+  "runtime": "Global-head256 RoPE-preserving candidate terminal: coherence_negative; exact c32 consumer not invoked.",
+  "server_state": "Healthy global-head256 RoPE-preserving candidate container retained and responded to final server-info; ready for director disposition."
+}

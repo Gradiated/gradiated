@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "type": "typed_external_gpu_pool_blocker",
+  "pass": false,
+  "stage": "claim_before_exact_shape_measurement",
+  "observed_at_utc": "2026-07-18T15:42:00Z",
+  "provider_spend_usd": 0.0,
+  "authorized_cumulative_spend_usd": 1.5,
+  "remaining_authorized_spend_usd": 1.5,
+  "bench_observation": {
+    "bench_id": "h200-generation-equivalence-e00ms57nn1c4k1cx0k",
+    "accelerator": "nvidia-h200-sxm",
+    "status": "claimed",
+    "claim_project": "gemma4_h200_critical_path_profile",
+    "claim_observed_at_utc": "2026-07-18T15:32:48.430301Z",
+    "lifecycle_deadline_utc": "2026-07-18T15:45:42.393928Z",
+    "atomic_claim_attempts": 3,
+    "claim_result": "no available GPU bench matches this project"
+  },
+  "exact_need": {
+    "accelerator": "nvidia-h200-sxm or another authenticated SM90+ CUDA bench",
+    "minimum_free_device_memory_gib": 12,
+    "minimum_safe_lifecycle_minutes_at_claim": 10,
+    "runtime": "PyTorch build exposing native torch._scaled_mm E4M3 and scaled-dot-product attention",
+    "checkpoint": "not required",
+    "maximum_bounded_measurement_minutes": 8,
+    "maximum_cost_at_current_2_46_usd_per_hour": 0.328,
+    "prepared_runner": "h200_fp8_exact_shape_falsifier.py"
+  },
+  "reason_no_late_claim": "The only bench remained claimed with under four minutes before its independent watchdog deadline, insufficient for the bounded sweep plus typed artifact retrieval.",
+  "provider_mutation_attempted": false,
+  "endpoint_nominee": null
+}

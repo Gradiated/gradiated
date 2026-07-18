@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "type": "price_normalized_premeasurement_frontier",
+  "as_of_utc": "2026-07-18T15:42:00Z",
+  "price_inventory_refreshed_at_utc": "2026-07-15T13:15:00Z",
+  "baseline": {
+    "accelerator": "nvidia-h200-sxm",
+    "production_planning_usd_per_gpu_hour": 3.25
+  },
+  "rows": [
+    {
+      "rank": 1,
+      "accelerator": "nvidia-l40s",
+      "precision": "FP8 or W4 required for 48 GiB capacity",
+      "production_planning_usd_per_gpu_hour": 1.1,
+      "throughput_fraction_of_h200_needed_for_cost_parity": 0.3384615384615385,
+      "evidence": "derived from shared committed price; inventory-supported formats; prior exact runtime route did not achieve valid FP8 context admission",
+      "currently_executable_in_pool": false,
+      "admission": "closed pending a materially different actual consumer or validated W4 endpoint"
+    },
+    {
+      "rank": 2,
+      "accelerator": "amd-mi355x",
+      "precision": "OCP FP8",
+      "production_planning_usd_per_gpu_hour": 2.6,
+      "throughput_fraction_of_h200_needed_for_cost_parity": 0.8,
+      "evidence": "derived from shared committed price and inventory capability only",
+      "currently_executable_in_pool": false,
+      "admission": "requires authenticated ROCm bench and exact Gemma consumer proof"
+    },
+    {
+      "rank": 3,
+      "accelerator": "nvidia-h100-sxm",
+      "precision": "FP8 or W4",
+      "production_planning_usd_per_gpu_hour": 2.8,
+      "throughput_fraction_of_h200_needed_for_cost_parity": 0.8615384615384616,
+      "evidence": "derived from shared committed price; SM90 formats and broad runtime support; prior exact W4 component consumers ran but did not produce an endpoint admission",
+      "currently_executable_in_pool": false,
+      "admission": "next only if a resident H100 bench is cheaper to access than H200"
+    },
+    {
+      "rank": 4,
+      "accelerator": "nvidia-h200-sxm",
+      "precision": "BF16 control and native FP8 candidate",
+      "production_planning_usd_per_gpu_hour": 3.25,
+      "throughput_fraction_of_h200_needed_for_cost_parity": 1.0,
+      "evidence": "shared committed price and authenticated compatible bench identity; measurement blocked by concurrent claim and lifecycle deadline",
+      "currently_executable_in_pool": false,
+      "admission": "selected exact-shape falsifier; first runnable pair when a safe claim exists"
+    },
+    {
+      "rank": 5,
+      "accelerator": "nvidia-b200-sxm",
+      "precision": "FP8",
+      "production_planning_usd_per_gpu_hour": 5.15,
+      "throughput_fraction_of_h200_needed_for_cost_parity": 1.5846153846153848,
+      "evidence": "derived from shared committed price and inventory capability only",
+      "currently_executable_in_pool": false,
+      "admission": "requires at least 1.585x H200 exact-workload throughput before utilization and headroom"
+    },
+    {
+      "rank": 6,
+      "accelerator": "nvidia-rtx-6000-ada",
+      "precision": "FP8 or W4 required for 48 GiB capacity",
+      "production_planning_usd_per_gpu_hour": null,
+      "throughput_fraction_of_h200_needed_for_cost_parity": null,
+      "evidence": "shared inventory capability only; no canonical committed planning rate",
+      "currently_executable_in_pool": false,
+      "admission": "not price-rankable without a matching committed rate; L40S results are not transferable"
+    },
+    {
+      "rank": 7,
+      "accelerator": "amd-mi300x or amd-mi325x",
+      "precision": "FP8",
+      "production_planning_usd_per_gpu_hour": null,
+      "throughput_fraction_of_h200_needed_for_cost_parity": null,
+      "evidence": "shared inventory capability only; no canonical committed planning rate",
+      "currently_executable_in_pool": false,
+      "admission": "not price-rankable without a matching committed rate and exact ROCm consumer"
+    },
+    {
+      "rank": 8,
+      "accelerator": "amd-mi210",
+      "precision": "BF16 or W4; no native FP8",
+      "production_planning_usd_per_gpu_hour": null,
+      "throughput_fraction_of_h200_needed_for_cost_parity": null,
+      "evidence": "shared inventory capability only; 64 GiB is marginal for BF16 runtime state",
+      "currently_executable_in_pool": false,
+      "admission": "not selected"
+    }
+  ],
+  "selected_falsifier": {
+    "accelerator": "nvidia-h200-sxm",
+    "candidate": "E4M3FN torch._scaled_mm linears and tied head plus E5M2 KV writes",
+    "control": "BF16 torch.mm, BF16 KV writes, and shared BF16 attention",
+    "geometry": "Gemma exact M12 decode, M3679 prefill, six layer-linear shapes, 262144x5376 tied head, local 16x256/1024 and global 4x512/4571 KV shapes",
+    "falsification_rule": "numerical-oracle failure or less than 20% weighted component-floor reduction versus BF16",
+    "runner": "../../h200_fp8_exact_shape_falsifier.py"
+  },
+  "measured_frontier": null,
+  "endpoint_nominee": null,
+  "claim_scope": "Price break-even frontier only; no component, full-model throughput, quality, or endpoint claim was measured this turn."
+}

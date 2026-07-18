@@ -1,0 +1,20 @@
+{
+  "status": "active",
+  "priority": 480,
+  "researcher_profile": "deep",
+  "summary": "H200 BF16/FP8 exact-shape falsifier is ready, but the only authenticated bench was concurrently claimed through its lifecycle deadline; no measured frontier or endpoint nominee exists.",
+  "next_action": "Claim one authenticated SM90+ bench with at least 12 GiB free and ten safe lifecycle minutes, then run h200_fp8_exact_shape_falsifier.py once. Retrieve SENTINEL.json and RESULT.json; nominate H200 FP8 only if all numerical oracles pass and the weighted component-floor margin over BF16 is at least 20%. Do not create an allocation or replay setup.",
+  "authorized_spend_usd": 1.5,
+  "provider_spend_usd": 0.0,
+  "active_session": null,
+  "latest_terminal": "artifacts/20260718t1532z-blocked/TERMINAL.json",
+  "frontier_artifact": "artifacts/20260718t1532z-blocked/FRONTIER.json",
+  "bench_need": {
+    "accelerator": "nvidia-h200-sxm or authenticated SM90+ CUDA",
+    "minimum_free_device_memory_gib": 12,
+    "minimum_safe_lifecycle_minutes": 10,
+    "checkpoint_required": false,
+    "maximum_measurement_minutes": 8,
+    "maximum_cost_at_2_46_usd_per_hour": 0.328
+  }
+}

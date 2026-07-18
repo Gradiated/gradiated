@@ -1,0 +1,20 @@
+{
+  "checks": {
+    "audit": true,
+    "budget": true,
+    "deadline": true,
+    "durable_owner": true,
+    "identity": true,
+    "inputs": true,
+    "inventory_empty": true,
+    "keys": true,
+    "name": true
+  },
+  "inventory": {
+    "disks": [],
+    "instances": []
+  },
+  "pass": true,
+  "schema_version": 1,
+  "type": "l40s_single_rank_typed_precreate"
+}

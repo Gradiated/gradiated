@@ -1,0 +1,12 @@
+{
+  "classification": null,
+  "cleanup_elapsed_seconds": 54.713,
+  "cleanup_error_type": null,
+  "cleanup_pass": true,
+  "final_disk_count": 0,
+  "final_instance_count": 0,
+  "matching_disk_count": 0,
+  "matching_instance_count": 0,
+  "schema_version": 1,
+  "verified_at_utc": "2026-07-18T10:22:41.629104Z"
+}

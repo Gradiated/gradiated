@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "type": "h100_w4_marlin_single_rank_tensor_parallel_adjacent_packet",
+  "immutable": true,
+  "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+  "observed_exact_image": {
+    "vllm": "0.19.1.dev6+g6d4a8e6d2",
+    "awq_marlin": "vllm.model_executor.layers.quantization.awq_marlin.AWQMarlinLinearMethod",
+    "ensure_signature": "(tensor_model_parallel_size: int, pipeline_model_parallel_size: int, prefill_context_model_parallel_size: int = 1, decode_context_model_parallel_size: int | None = 1, backend: str | None = None) -> None",
+    "init_signature": "(world_size: int = -1, rank: int = -1, distributed_init_method: str = 'env://', local_rank: int = -1, backend: str = 'nccl', timeout: datetime.timedelta | None = None)"
+  },
+  "files": {
+    "h100_w4_marlin_tp_single_rank.py": "e96b66c32cfb88fa9c591183ae843a5bfc9c57df67cfae99dd4d91cf9fc2be5e",
+    "h100_w4_marlin_falsifier.py": "9b44bb0b916fa7f3cd34f7b4df25c3b59959a29b23c1ab59e29ddde8cbc24bf8",
+    "h100_w4_contract.py": "7a2aafa6298f8a55be2a72ec90bff250fec68dd1a04279d5a0b3d7f9033c65f5",
+    "remote_sentinel.sh": "70d3e634435cfb73d8cd928290c058ca9d374b280f8b76d6a76ece64dda2c18c",
+    "remote_sweep_profile_head.sh": "3ab82d7659d233287ed3416da00461331f1a524e7334a574151d2adaf156143a"
+  },
+  "execution_contract": {
+    "entrypoint": "h100_w4_marlin_tp_single_rank.py",
+    "consumer": "AWQMarlinLinearMethod -> MarlinLinearKernel.apply_weights -> vllm._custom_ops.marlin_gemm",
+    "context": "real single-rank NCCL distributed context; rank/world/local rank 0/1/0; TP/PP/DP 1/1/1; all-reduce probe; teardown after result serialization",
+    "first_gpu_atom": "sliding-QKV M8 sentinel through the original actual producer/packing/repacking/consumer program",
+    "required_result": "typed sentinel before 24-row sweep; the wrapper appends observed tensor_parallel_context to the original result",
+    "no_new_provider_authority": true
+  },
+  "offline_verification": {
+    "host_python_parse": true,
+    "exact_image_import_and_parse": true,
+    "cuda_execution": false,
+    "reason_cuda_execution_not_run": "the only authorized retained H100 head owner already emitted its typed terminal and authenticated cleanup before this packet was ready"
+  },
+  "session_disposition": {
+    "head_owner_terminal": "artifacts/gemma-h100-head-dev-20260717t1953z/RECONCILED_TERMINAL.json",
+    "head_owner_cleanup_pass": true,
+    "final_matching_instances": 0,
+    "final_matching_disks": 0,
+    "sequential_execution_permitted": false,
+    "classification": "typed_no_live_owner_for_adjacent_packet"
+  }
+}

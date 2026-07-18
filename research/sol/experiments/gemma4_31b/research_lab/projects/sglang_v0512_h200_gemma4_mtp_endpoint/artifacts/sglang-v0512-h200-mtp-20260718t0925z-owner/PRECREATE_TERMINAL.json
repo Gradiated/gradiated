@@ -1,0 +1,18 @@
+{
+  "checks": {
+    "assistant_files": true,
+    "assistant_pass": true,
+    "checkpoint_files": true,
+    "checkpoint_terminal": true,
+    "empty_inventory": true,
+    "image": true,
+    "keypair": true,
+    "placement": true,
+    "runner": true,
+    "time_budget": true,
+    "trace_sha": true
+  },
+  "classification": "sglang_v0512_h200_mtp_precreate",
+  "deadline_epoch": 1784371871.0,
+  "pass": true
+}

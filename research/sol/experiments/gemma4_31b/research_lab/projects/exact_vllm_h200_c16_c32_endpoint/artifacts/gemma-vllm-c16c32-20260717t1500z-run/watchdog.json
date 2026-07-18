@@ -1,0 +1,7 @@
+{
+  "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-vllm-c16c32-20260717t1500z-watchdog.service",
+  "deadline_epoch": 1784296368.8918407,
+  "main_pid": 2010174,
+  "unit": "gemma-vllm-c16c32-20260717t1500z-watchdog.service",
+  "unit_manager": "user"
+}

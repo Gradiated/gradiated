@@ -1,0 +1,63 @@
+{
+  "calculator": {
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/l40s_fp8_c12_c14_background_queue_bound/calculate_queue_bound.py",
+    "sha256": "918376f9929e7c6188507ceb0215a4c3bfc13f3571da9e38efc96f202232fed2"
+  },
+  "schema_version": 1,
+  "semantic_identity_assertions": {
+    "all_source_hashes": true,
+    "attention_model": true,
+    "attention_operating_points": true,
+    "attention_revision": true,
+    "conservative_rate_consistent": true,
+    "fp8_kv_non_kv_base": true,
+    "kv_model": true,
+    "kv_revision": true,
+    "market_model": true,
+    "market_revision": true,
+    "market_workload": true,
+    "planning_rate_consistent": true
+  },
+  "sources": {
+    "attention_kv": {
+      "expected_sha256": "f38704b6ae0e47e389643062c239a492d430079bf80754d8819f9a36b79aef08",
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/l40s_fp8_attention_kv_residual_floor/ATTENTION_KV_RESIDUAL_FLOOR.json",
+      "sha256": "f38704b6ae0e47e389643062c239a492d430079bf80754d8819f9a36b79aef08"
+    },
+    "campaign": {
+      "expected_sha256": "39f80855336f43cec50f02f07fa02eb99925ba2fb24ff41b7eddd7f03f7ba232",
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/CAMPAIGN.md",
+      "sha256": "39f80855336f43cec50f02f07fa02eb99925ba2fb24ff41b7eddd7f03f7ba232"
+    },
+    "kv_contract": {
+      "expected_sha256": "d495553dab98eac4d101802e668469fea3758ba378a8bd89641075a277a07802",
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/fp8_kv_contract_reconciliation/KV_CONTRACT.json",
+      "sha256": "d495553dab98eac4d101802e668469fea3758ba378a8bd89641075a277a07802"
+    },
+    "market": {
+      "expected_sha256": "5d636809dc25450050c565cdc108bf7e91eaa60ce07c027ca390c8011e3b8e51",
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_market_venue_decision_surface/MARKET_TARGET.json",
+      "sha256": "5d636809dc25450050c565cdc108bf7e91eaa60ce07c027ca390c8011e3b8e51"
+    },
+    "memory": {
+      "expected_sha256": "eaeb0586196cac27d45b32168b41565d701b5a952d64b13c414fcc76e6f9f5be",
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/fp8_l40s_fit_economic_falsifier/MEMORY_ACCOUNTING.json",
+      "sha256": "eaeb0586196cac27d45b32168b41565d701b5a952d64b13c414fcc76e6f9f5be"
+    },
+    "prior_queue": {
+      "expected_sha256": "4c326c6e4893124435132f8a768cf54d0a0b28aed99800d971f7769c4a3c75ff",
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/w4_background_batching_queue_bound/QUEUE_BOUND.json",
+      "sha256": "4c326c6e4893124435132f8a768cf54d0a0b28aed99800d971f7769c4a3c75ff"
+    },
+    "prior_queue_calculator": {
+      "expected_sha256": "49292ee67f5cdaa8ed6df45a79339526f2175b2f533f2dc040d8d24c1f6e40e7",
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/w4_background_batching_queue_bound/queue_bound.py",
+      "sha256": "49292ee67f5cdaa8ed6df45a79339526f2175b2f533f2dc040d8d24c1f6e40e7"
+    },
+    "saturation": {
+      "expected_sha256": "690e0e457c6e8e9121b54fb7f88abc92c3dcc358e1d71accffddb083878d00d6",
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/l40s_saturation_economic_gate/SATURATION_GATE.json",
+      "sha256": "690e0e457c6e8e9121b54fb7f88abc92c3dcc358e1d71accffddb083878d00d6"
+    }
+  }
+}

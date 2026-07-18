@@ -1,0 +1,21 @@
+{
+  "checks": {
+    "authenticated_empty_inventory": true,
+    "behavioral_precreate": true,
+    "budget": true,
+    "deadline": true,
+    "durable_owner": true,
+    "keypair": true,
+    "lowercase_name": true,
+    "mechanical_identity": true,
+    "staged_inputs": true
+  },
+  "inventory": {
+    "disks": [],
+    "instances": []
+  },
+  "pass": true,
+  "schema_version": 1,
+  "timestamp": "2026-07-17T15:46:41.919636Z",
+  "type": "h100_actual_paged_fp8_kv_typed_precreate"
+}

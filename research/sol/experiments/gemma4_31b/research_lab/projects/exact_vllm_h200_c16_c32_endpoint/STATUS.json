@@ -1,0 +1,23 @@
+{
+  "active_session": null,
+  "authorized_spend_usd": 0.0,
+  "cleanup_pass": true,
+  "compute_budget": "1.42 H200 GPU-hours and 4 local CPU-hours",
+  "disk_and_other_cost_status": "unpriced_no_retained_rate",
+  "final_disk_count": 0,
+  "final_instance_count": 0,
+  "last_result_classification": "intentional_paid_pre_science_program_contract_failure_no_endpoint_inference_cleanup_verified",
+  "measured_cost_usd_derived_compute_only": 0.727553401264,
+  "measured_provider_seconds": 1069.058059,
+  "next_action": null,
+  "priority": 0,
+  "provider_exposure_budget_minutes": 85,
+  "provider_mutation": "forbidden_closed_single_allocation_intentional_program_transfer_failure_cleanup_verified",
+  "run_local_view_terminal": "artifacts/RUN_LOCAL_VIEW_TERMINAL.json",
+  "status": "closed",
+  "storage_budget": "zero-new-weight-byte hardlinks; one 250 GiB provider disk; 14 GiB retained plus 4 GiB temporary; no shared /tmp",
+  "summary": "Closed after the audited immutable program was intentionally failed at program transfer before remote execution; 62,578,655,922 checkpoint bytes transferred, useful GPU time and endpoint requests were zero, and cleanup verified zero instances/disks.",
+  "terminal_artifact": "artifacts/RECONCILED_FAILURE.json",
+  "useful_gpu_seconds": 0.0,
+  "wall_clock_budget_minutes": 120
+}

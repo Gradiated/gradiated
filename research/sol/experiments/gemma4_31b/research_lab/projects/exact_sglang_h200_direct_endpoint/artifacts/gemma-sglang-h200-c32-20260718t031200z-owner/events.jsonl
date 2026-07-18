@@ -1,0 +1,8 @@
+{"instance_id": "computeinstance-e00mcm2qt1zmxsgxgh", "phase": "provider_create", "timestamp": "2026-07-18T02:52:19.813388Z", "watchdog": {"control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-sglang-h200-c32-20260718t031200z-owner-watchdog.service", "deadline_epoch": 1784347890.5321448, "main_pid": 2280928, "unit": "gemma-sglang-h200-c32-20260718t031200z-owner-watchdog.service", "unit_manager": "user"}}
+{"phase": "workspace", "state": "start", "timeout_seconds": 60, "timestamp": "2026-07-18T02:52:57.399107Z"}
+{"phase": "workspace", "returncode": 0, "state": "complete", "timestamp": "2026-07-18T02:52:57.966403Z"}
+{"phase": "checkpoint_directory", "state": "start", "timeout_seconds": 60, "timestamp": "2026-07-18T02:52:59.131977Z"}
+{"phase": "checkpoint_directory", "returncode": 0, "state": "complete", "timestamp": "2026-07-18T02:52:59.682708Z"}
+{"event": "repair_window_open", "maximum_seconds": 600.0, "timestamp": "2026-07-18T02:52:59.836865Z"}
+{"event": "repair_window_expired", "timestamp": "2026-07-18T06:05:12.009800Z"}
+{"error_type": "RuntimeError", "message": "checkpoint_transfer_failed", "phase": "failure", "timestamp": "2026-07-18T06:05:13.128188Z"}

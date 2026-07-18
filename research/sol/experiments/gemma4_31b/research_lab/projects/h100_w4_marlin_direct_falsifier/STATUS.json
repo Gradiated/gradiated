@@ -1,0 +1,16 @@
+{
+  "active_session": null,
+  "authorized_spend_usd": 0.0,
+  "last_result_classification": "measured_actual_machete_w4_component_terminal",
+  "next_action": null,
+  "priority": 0,
+  "provider_mutation": "forbidden_complete",
+  "reconciliation_pending": false,
+  "researcher_profile": "execution",
+  "status": "complete",
+  "summary": "Measured actual H100 Machete W4 component terminal: all 24 rows/oracles passed and c32 floor is 0.463243 s/request; promote only the separate c32 FP8-KV residual question before checkpoint quality or endpoint spend.",
+  "terminal_artifact": "artifacts/RECONCILED_MACHETE_TERMINAL.json",
+  "terminal_artifact_sha256": "65f103eb84a94d8f985d7df072b24597cdb36532bd8f9b95b08860748f15beff",
+  "measured_provider_seconds": 951.101,
+  "measured_spend_usd": 0.570587362
+}

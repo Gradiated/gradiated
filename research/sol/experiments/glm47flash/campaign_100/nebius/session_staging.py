@@ -101,7 +101,8 @@ def validate_local_files_cached(
     rows: list[dict[str, object]],
     *,
     persist_marker: bool = True,
-) -> bool:
+) -> dict[str, object]:
+    """Validate payload bytes and report success, cache reuse, and transfer inventory."""
     if model_dir.is_symlink():
         raise StagingError("local checkpoint root must not be a symlink")
     normalized = []
@@ -151,8 +152,20 @@ def validate_local_files_cached(
         marker = json.loads(marker_path.read_text())
     except (OSError, json.JSONDecodeError):
         marker = None
+
+    def validation_result(marker_reused: bool) -> dict[str, object]:
+        transfer_files = checkpoint_files(model_dir)
+        return {
+            "pass": True,
+            "marker_reused": marker_reused,
+            "payload_files_total": len(normalized),
+            "payload_bytes": sum(int(row["bytes"]) for row in normalized),
+            "transfer_files_total": len(transfer_files),
+            "transfer_bytes": sum(row.bytes for row in transfer_files),
+            "transfer_files": [asdict(row) for row in transfer_files],
+        }
     if persist_marker and marker == {"contract_sha256": contract_sha256, "metadata_sha256": metadata_sha256}:
-        return True
+        return validation_result(True)
     for row in normalized:
         digest = hashlib.sha256()
         with (model_dir / row["path"]).open("rb") as handle:
@@ -171,7 +184,7 @@ def validate_local_files_cached(
             + "\n"
         )
         temporary.replace(marker_path)
-    return False
+    return validation_result(False)
 
 
 def checksum_manifest_sha256(model_dir: Path) -> str:

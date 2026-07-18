@@ -1,0 +1,52 @@
+{
+  "authoritative_hashes": {
+    "FINAL_STAGED_PROGRAM_AUDIT.json": "5bff874897d280a9a16318a854825ae47dbd936ef52c3341234d663065b77f15",
+    "SOURCE_MANIFEST.json": "a65a36ef7abec2765c301d5508e74dd0d212bc3e3083e01a18abf577ee61149c",
+    "STAGED_MANIFEST.json": "4b7fec791c1bd57686c3431e795e55a133adbfdd3a19381807dd769cd651f5e0",
+    "START_PACKET.json": "14bed1b4e33bd2c9dde062dec800c9a04080986d7cafcb080a5831ea156a4366",
+    "direct_fp8_kernel.py": "4c285c94daf032a56c0de2136badffab845503fa710dbca12027e6a345b92667",
+    "remote_stage.sh": "b1504265ab0131df0a1144292b0e3cbc3b6d9c9f6790c8d61ab4a1bab5a9cbc9"
+  },
+  "budgets": {
+    "allocation_count": 1,
+    "gpu_compute": "0.44 L40S GPU-hours maximum",
+    "local_compute": "2 CPU-hours maximum",
+    "provider_exposure_minutes": 26,
+    "provider_storage": "one 100 GiB network SSD",
+    "repair_count": 0,
+    "retained_artifacts": "1 GiB maximum",
+    "spend_usd": 0.42,
+    "temporary_artifacts": "512 MiB maximum",
+    "wall_clock_minutes": 38
+  },
+  "checks": {
+    "all_packet_hashes": true,
+    "audit_pass": true,
+    "budgets": true,
+    "compute_capability": true,
+    "gpu": true,
+    "model": true,
+    "one_allocation_no_repair": true,
+    "packet_pass": true,
+    "program": true,
+    "runtime_image": true,
+    "vllm": true,
+    "w4_omitted": true,
+    "wrapper": true
+  },
+  "identity": {
+    "compute_capability": [
+      8,
+      9
+    ],
+    "gpu": "NVIDIA L40S",
+    "model_geometry": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "program_sha256": "4c285c94daf032a56c0de2136badffab845503fa710dbca12027e6a345b92667",
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "vllm": "0.19.1.dev6+g6d4a8e6d2",
+    "wrapper_sha256": "b1504265ab0131df0a1144292b0e3cbc3b6d9c9f6790c8d61ab4a1bab5a9cbc9"
+  },
+  "pass": true,
+  "schema_version": 1,
+  "type": "l40s_direct_cutlass_fp8_director_identity_assertion"
+}

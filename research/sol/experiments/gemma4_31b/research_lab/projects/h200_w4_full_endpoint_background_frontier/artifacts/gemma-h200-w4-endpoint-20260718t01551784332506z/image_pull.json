@@ -1,0 +1,7 @@
+{
+  "completed_at_utc": "2026-07-18T02:06:04.116346Z",
+  "phase": "image_pull",
+  "returncode": 0,
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout_sha256": "326617cc85752700b15d9704cf9cbd750ac794330fd43884cd0518c269d6e051"
+}

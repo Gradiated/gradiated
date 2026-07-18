@@ -1,0 +1,13 @@
+{
+  "absolute_timeout_seconds": 1979,
+  "boot_disk_gib": 100,
+  "disk_hourly_rate_usd_vendor_calculator": 0.0097222,
+  "experiment_spec_sha256": "bb547ef98500a58dbfcc04edfe8980781c89ff0198ec15338cb0f4def664d119",
+  "hourly_rate_usd_vendor_calculator": 0.8581222,
+  "max_total_cost_usd": 0.47707335211111107,
+  "name": "gemma-l40s-context-20260717t14261784291198z",
+  "platform": "gpu-l40s-a",
+  "preset": "1gpu-8vcpu-32gb",
+  "purchase_model": "preemptible_stop",
+  "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79"
+}

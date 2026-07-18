@@ -1,0 +1,75 @@
+{
+  "classification": "measured_h100_w4_background_component_frontier",
+  "cleanup": {
+    "classification": null,
+    "cleanup_elapsed_seconds": 47.747,
+    "cleanup_error_type": null,
+    "cleanup_pass": true,
+    "final_disk_count": 0,
+    "final_instance_count": 0,
+    "matching_disk_count": 0,
+    "matching_instance_count": 0,
+    "schema_version": 1,
+    "verified_at_utc": "2026-07-17T22:26:42.491724Z"
+  },
+  "combined_by_concurrency": {
+    "128": {
+      "actual_head_seconds_per_request": 0.002772620502859354,
+      "combined_batch_duration_proxy_seconds": 7.308916656345128,
+      "combined_w4_linear_plus_actual_head_seconds_per_request": 0.057100911377696316,
+      "component_plausible_only": true,
+      "residual_to_planning_ceiling_seconds": 0.490874320141839,
+      "w4_decode_linear_seconds_per_request": 0.05432829087483696
+    },
+    "48": {
+      "actual_head_seconds_per_request": 0.007336613406737646,
+      "combined_batch_duration_proxy_seconds": 6.337917571127415,
+      "combined_w4_linear_plus_actual_head_seconds_per_request": 0.1320399493984878,
+      "component_plausible_only": true,
+      "residual_to_planning_ceiling_seconds": 0.4159352821210475,
+      "w4_decode_linear_seconds_per_request": 0.12470333599175015
+    },
+    "64": {
+      "actual_head_seconds_per_request": 0.005624179981648922,
+      "combined_batch_duration_proxy_seconds": 6.324399377524852,
+      "combined_w4_linear_plus_actual_head_seconds_per_request": 0.09881874027382581,
+      "component_plausible_only": true,
+      "residual_to_planning_ceiling_seconds": 0.4491564912457095,
+      "w4_decode_linear_seconds_per_request": 0.09319456029217689
+    },
+    "96": {
+      "actual_head_seconds_per_request": 0.003641933919241031,
+      "combined_batch_duration_proxy_seconds": 7.086555648908019,
+      "combined_w4_linear_plus_actual_head_seconds_per_request": 0.07381828800945853,
+      "component_plausible_only": true,
+      "residual_to_planning_ceiling_seconds": 0.47415694351007676,
+      "w4_decode_linear_seconds_per_request": 0.0701763540902175
+    }
+  },
+  "evidence_boundary": "Measured generated-token W4 linear plus actual tied-head components only; excludes prompt linears, attention, KV, scheduler, full-request throughput, checkpoint quality, and endpoint eligibility.",
+  "head": {
+    "path": "head-frontier.tar.gz",
+    "rows": 4,
+    "sha256": "b8c1c03c55322f00f8884f2e57b98b1c383e561f7fa9d1c5ad2fdc91bd9e99d9"
+  },
+  "pass": true,
+  "planning_ceiling_seconds_per_request": 0.5479752315195353,
+  "primary": {
+    "path": "REPAIRED_PRIMARY.json",
+    "rows": 24,
+    "sha256": "645ec7f793aa175c0d7e00e93cf28881cefdfae909490015fde8e77ff5e788a5"
+  },
+  "provider_summary": {
+    "allocation_seconds": 864.598,
+    "cleanup_pass": true,
+    "cost_usd_derived": 0.518692361,
+    "instance_id": "computeinstance-e00hmt044zjv0vm3ed"
+  },
+  "ranked_survivors": [
+    "128",
+    "96",
+    "64",
+    "48"
+  ],
+  "schema_version": 1
+}

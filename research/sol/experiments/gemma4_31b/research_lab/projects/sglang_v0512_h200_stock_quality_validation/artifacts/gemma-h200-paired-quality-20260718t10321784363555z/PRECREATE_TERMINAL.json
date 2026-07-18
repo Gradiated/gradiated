@@ -1,0 +1,14 @@
+{
+  "checks": {
+    "bindings": true,
+    "checkpoint": true,
+    "inventory_empty": true,
+    "keys": true,
+    "suite": true,
+    "suite_valid": true,
+    "time": true
+  },
+  "classification": "gemma_paired_quality_precreate",
+  "deadline_epoch": 1784374955.8630693,
+  "pass": true
+}

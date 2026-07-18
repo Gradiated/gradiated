@@ -1,0 +1,65 @@
+{
+  "authoritative_hashes": {
+    "/root/workspace/research/factory/data/accelerator_inventory.json": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8",
+    "/root/workspace/research/factory/data/gpu_prices.json": "3f403d67a92fc91be85bbd27dede85f5f91c3fd2df25ef8dcef2a344acbd1e01",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_bf16_mtp_h100_frontier/artifacts/preflight-20260717T000000Z/hf-config.json": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_geometry_runtime_opportunities/GEOMETRY.json": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_hybrid_attention_kernel_mechanism/MECHANISM.json": "3960c453e88b1a12e01351d2062dbaa7f8a800e63fe6674e997ddbbcfeebdda1",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/post_l40s_fp8_successor_selection/SELECTION.json": "f94e40c4d63d67a939d0b6c8fa855a995cff06d66b254cbf8a41727ecaf2d326"
+  },
+  "budgets": {
+    "allocations": 1,
+    "compute": "0.35 H100 GPU-hours plus 2 local CPU-hours",
+    "local_storage": "512 MiB retained plus 2 GiB temporary",
+    "provider_exposure_minutes": 25,
+    "provider_storage": "one 100-GiB network disk",
+    "repairs_or_restarts": 0,
+    "spend_usd_max": 1.3,
+    "wall_clock_minutes": 40
+  },
+  "checks": {
+    "adjacent_trigger": true,
+    "all_authoritative_hashes": true,
+    "budgets": true,
+    "checkpoint_free": true,
+    "first_rows": true,
+    "geometry": true,
+    "h100": true,
+    "model_revision": true,
+    "observed_vllm": true,
+    "runtime_image": true,
+    "selected_arm": true,
+    "selection_terminal": true,
+    "source_prior_distinguished": true,
+    "whole_request_hurdle": true
+  },
+  "mechanical_identity": {
+    "geometry": {
+      "block_size": 16,
+      "global": {
+        "head_dim": 512,
+        "kv_heads": 4,
+        "query_heads": 32
+      },
+      "global_layers": 10,
+      "layers": 60,
+      "local": {
+        "head_dim": 256,
+        "kv_heads": 16,
+        "query_heads": 32,
+        "window_tokens": 1024
+      },
+      "local_layers": 50,
+      "pattern": "five sliding_attention then one full_attention"
+    },
+    "model": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "observed_image_vllm": "0.19.1.dev6+g6d4a8e6d2",
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "source_revision": "ab0a20d15129b322f911db578b50c6b35b3167e7",
+    "workload": "4214 prompt / 358 output; decode contexts 4214..4571"
+  },
+  "pass": true,
+  "schema_version": 1,
+  "type": "h100_actual_paged_fp8_kv_director_identity_assertion"
+}

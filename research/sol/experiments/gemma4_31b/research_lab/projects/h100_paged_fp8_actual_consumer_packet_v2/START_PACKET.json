@@ -1,0 +1,72 @@
+{
+  "schema_version": 2,
+  "type": "h100_paged_fp8_actual_consumer_start_packet",
+  "decision": "start_one_sentinel_then_conditional_sweep",
+  "provider": {
+    "mutation": "allowed only to later owner",
+    "budget_usd": 1.30,
+    "exposure_minutes": 20,
+    "compute_gpu_hours": 0.34,
+    "shape": "gpu-h100-sxm / 1gpu-16vcpu-200gb",
+    "disk_gib": 100,
+    "repairs": 0
+  },
+  "identity": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "observed_vllm": "0.19.1.dev6+g6d4a8e6d2",
+    "program_sha256": "43efdf7af71cb1c388db45b735f5f6ec8517f75859e2652bb94491c1fc6d3ebf",
+    "mechanism_sha256": "3960c453e88b1a12e01351d2062dbaa7f8a800e63fe6674e997ddbbcfeebdda1",
+    "selection_sha256": "f94e40c4d63d67a939d0b6c8fa855cff06d66b254cbf8a41727ecaf2d326",
+    "geometry_sha256": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72",
+    "accelerator_inventory_sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8",
+    "gpu_prices_sha256": "3f403d67a92fc91be85bbd27dede85f5f91c3fd2df25ef8dcef2a344acbd1e01",
+    "owner_sha256": "6356910a62c5abefe52fc035eb27e43d5b2cb73066d68ba9f8c089bca31de62b",
+    "unit_manager_sha256": "87fdcb6115156bcb392b15f505dc4c1081201ace736999aa6f3e3554053a4e1c"
+  },
+  "actual_chain": {
+    "first_cuda_calls": [
+      "Attention(..., prefix=layer_name) registers static_forward_context[layer_name]",
+      "set_forward_context(attn_metadata, vllm_config, slot_mapping={layer_name: slot_mapping})",
+      "unified_kv_cache_update(nonzero_bf16_k, nonzero_bf16_v, layer_name)",
+      "unified_attention_with_output(q, k, v, output, layer_name, kv_cache_dummy_dep=dependency)"
+    ],
+    "required_runtime_observations": [
+      "Attention.impl and Attention.attn_backend concrete module/class",
+      "producer and consumer signatures/source hashes",
+      "native backend metadata builder result",
+      "cache shape/dtype, block table, slot mapping, seqused_k and scales"
+    ],
+    "forbidden_fallbacks": ["direct unified_attention call without registered layer", "dense varlen", "reshape-only writer", "self-authored metadata", "zero/constant K/V"]
+  },
+  "geometry": {
+    "batch": 8,
+    "page_size": 16,
+    "local": {"context": 1024, "q_heads": 32, "kv_heads": 16, "head_dim": 256, "layers": 50},
+    "global": {"contexts": [4214, 4393, 4571], "q_heads": 32, "kv_heads": 4, "head_dim": 512, "layers": 10},
+    "sweep_concurrency": [8, 16, 32]
+  },
+  "sentinel": {
+    "rows": ["local c8", "global c8 context 4214"],
+    "arms": "BF16 and E4M3 FP8, randomized paired order, 20 warmups and 100 repetitions",
+    "oracles": {"kernel_correctness": "finite, nonzero output plus native cache side-effect consumed", "representation_loss": "FP8 versus same-input BF16 output cosine >= 0.99 and normalized RMSE <= 0.05"},
+    "timing": "synchronized CUDA event and wall time around only actual consumer; interval union, p50",
+    "counter_range": "one named NVTX attention interval",
+    "counters": ["dram__bytes_read.sum", "lts__t_bytes.sum", "sm__cycles_elapsed.avg", "achieved_active_warps", "kernel launch count"],
+    "counter_failure": "typed sentinel failure; no silent omission"
+  },
+  "continuation": {
+    "trigger": "both sentinel rows pass identity, native consumer, dual oracle, counters; FP8 p50 >=10% below BF16; DRAM <=60%; launch count unchanged; >=7 provider minutes remain",
+    "sweep": "c8/c16/c32; local 1024; global 4214/4393/4571; same paired protocol",
+    "aggregation": "50 local + 10 global layers over 358 decode steps; compare measured saving against 0.027398761575976767 s/request",
+    "stop": ["identity/backend mismatch", "producer or consumer construction failure", "oracle failure", "counter missing", "sentinel threshold failure", "less than seven-minute reserve", "budget violation"]
+  },
+  "accounting": {
+    "separate_intervals": ["setup", "scored_cuda", "provider_exposure", "cleanup"],
+    "required": ["atomic sentinel artifact before sweep", "authenticated zero instances/disks", "content-addressed archive", "typed terminal on every failure"]
+  },
+  "command": "python3 /workspace/paged_consumer_program.py --stage primary --seed 17 --output /workspace/artifacts/primary.json",
+  "artifact_root": "project/artifacts/<run-id>/",
+  "status": "start_ready"
+}

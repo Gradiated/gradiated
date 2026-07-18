@@ -1,0 +1,21 @@
+{
+  "checks": {
+    "c128": true,
+    "dual_timing": true,
+    "global_none_window": true,
+    "mixed_358": true,
+    "numerical_oracle": true,
+    "real_symbols_executed": true,
+    "separate_components": true,
+    "shared_controller": true,
+    "typed_remote_terminal": true
+  },
+  "hashes": {
+    "BINDINGS.json": "f1b8667fcba7ea7dd4ade07a6d39dbb251ccf2d4368a355ad202952c36b2cbb3",
+    "decode_residual.py": "ae74ccfe4d5bca3a70381bc721b038543ee5d294d6070529ce0f98252071713b",
+    "h100_owner.py": "e94bbb7de66040e13758ab6ee57aaef2585bf17e6926af65940e48de3b74db41",
+    "remote_stage.sh": "a0edc65f7fdb2aa4034416afeda6347b9e2932b116daf2bac876041666eaa423"
+  },
+  "pass": true,
+  "schema_version": 1
+}

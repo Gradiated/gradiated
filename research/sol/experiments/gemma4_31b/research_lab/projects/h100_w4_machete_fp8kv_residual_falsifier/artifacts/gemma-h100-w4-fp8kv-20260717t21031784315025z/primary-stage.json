@@ -1,0 +1,47 @@
+{
+  "archive": "h100-w4-fp8kv-c32.tar.gz",
+  "label": "primary",
+  "manifest_file_count": 6,
+  "returncode": 1,
+  "sha256": "ef17c9fce4c990f7e8c14c8212dc2429ce015cf594665ccbf2cc5626c4622bd2",
+  "terminal": {
+    "all_actual_consumers_pass": false,
+    "economic_both_envelopes_falsified": false,
+    "pass": false,
+    "result": {
+      "counters": {
+        "attempted": true,
+        "ncu_path": null,
+        "requested": [
+          "dram__bytes_read.sum",
+          "lts__t_bytes.sum",
+          "sm__cycles_elapsed.avg",
+          "achieved_active_warps",
+          "launch_count"
+        ],
+        "status": "deferred_unavailable"
+      },
+      "error": {
+        "message": "Current vLLM config is not set. This typically means get_current_vllm_config() was called outside of a set_current_vllm_config() context, or a CustomOp was instantiated at module import time or model forward time when config is not set. For tests that directly test custom ops/modules, use the 'default_vllm_config' pytest fixture from tests/conftest.py.",
+        "type": "AssertionError"
+      },
+      "pass": false,
+      "rows": [],
+      "runtime": {
+        "consumer_source_sha256": "ddf567b33296f861b304cc9f30c729dce0bcf701487a24c28536936135b5480f",
+        "gpu": "NVIDIA H100 80GB HBM3",
+        "producer_source_sha256": "3be8b1b6913ee3ccab10466ee94d3048188cf2d761315c117509822195b95166",
+        "vllm": "0.19.1.dev6+g6d4a8e6d2"
+      },
+      "schema_version": 1,
+      "stage": "c32_residual",
+      "useful_gpu_seconds": 0.0
+    },
+    "schema_version": 1,
+    "stage": "c32_residual",
+    "typed_failure": {
+      "message": "Current vLLM config is not set. This typically means get_current_vllm_config() was called outside of a set_current_vllm_config() context, or a CustomOp was instantiated at module import time or model forward time when config is not set. For tests that directly test custom ops/modules, use the 'default_vllm_config' pytest fixture from tests/conftest.py.",
+      "type": "AssertionError"
+    }
+  }
+}

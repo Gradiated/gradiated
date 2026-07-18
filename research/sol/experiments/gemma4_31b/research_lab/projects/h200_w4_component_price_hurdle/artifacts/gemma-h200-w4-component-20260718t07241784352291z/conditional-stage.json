@@ -1,0 +1,109 @@
+{
+  "archive": "h200-head.tar.gz",
+  "label": "conditional",
+  "manifest_file_count": 5,
+  "returncode": 0,
+  "sha256": "bf591182dd55b081d51b24a1152d84f07f7e9d4ce2ebe4b37d78aa799322f017",
+  "terminal": {
+    "all_actual_consumers_pass": true,
+    "pass": true,
+    "result": {
+      "concurrency": [
+        96,
+        128
+      ],
+      "identity": {
+        "capability": [
+          9,
+          0
+        ],
+        "consumer": "vllm.model_executor.layers.vocab_parallel_embedding.ParallelLMHead",
+        "consumer_sha256": "5cdbd9058a99424bf71732d17027c9bc1b6da032f5c1d35b755365f22bb85494",
+        "gpu": "NVIDIA H200",
+        "vllm": "0.19.1.dev6+g6d4a8e6d2"
+      },
+      "pass": true,
+      "rows": [
+        {
+          "allocator": {
+            "peak_allocated_bytes": 3557806592,
+            "peak_reserved_bytes": 3558866944
+          },
+          "m": 96,
+          "oracle": {
+            "cosine_similarity": 1.0,
+            "normalized_rmse": 0.0,
+            "pass": true
+          },
+          "pass": true,
+          "per_request_head_seconds_at_358_steps": 0.0026839260707298917,
+          "timing": {
+            "cuda_event": {
+              "p50_ms": 0.7197120189666748,
+              "raw_ms": [
+                0.7221119999885559,
+                0.8777279853820801,
+                0.7197120189666748,
+                0.712448000907898,
+                0.705344021320343
+              ]
+            },
+            "iterations": 5,
+            "synchronized_wall": {
+              "p50_ms": 0.7277649999650748,
+              "raw_ms": [
+                0.7305899999892063,
+                0.8879000000092674,
+                0.7277649999650748,
+                0.7188669999891317,
+                0.7131050000452888
+              ]
+            }
+          }
+        },
+        {
+          "allocator": {
+            "peak_allocated_bytes": 3793031680,
+            "peak_reserved_bytes": 4364173312
+          },
+          "m": 128,
+          "oracle": {
+            "cosine_similarity": 1.0,
+            "normalized_rmse": 0.0,
+            "pass": true
+          },
+          "pass": true,
+          "per_request_head_seconds_at_358_steps": 0.0020393470665439964,
+          "timing": {
+            "cuda_event": {
+              "p50_ms": 0.7291520237922668,
+              "raw_ms": [
+                0.7386879920959473,
+                0.7291520237922668,
+                0.7288640141487122,
+                0.7228479981422424,
+                0.7292479872703552
+              ]
+            },
+            "iterations": 5,
+            "synchronized_wall": {
+              "p50_ms": 0.7371019999595774,
+              "raw_ms": [
+                0.7463770000413206,
+                0.7371019999595774,
+                0.7357050000109666,
+                0.7305469999892011,
+                0.7376080000085494
+              ]
+            }
+          }
+        }
+      ],
+      "schema_version": 1,
+      "stage": "conditional",
+      "type": "actual_h200_bf16_parallel_lm_head_component_frontier"
+    },
+    "schema_version": 1,
+    "stage": "conditional"
+  }
+}

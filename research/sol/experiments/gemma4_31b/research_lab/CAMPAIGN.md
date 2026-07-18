@@ -8,6 +8,12 @@ This is a fresh campaign. Do not inherit GLM-4.7 model identity, target prices, 
 
 Research progress means measured or tightly bounded movement in cost, throughput, capacity, or a causal bottleneck. Prefer a useful experiment over more process. One bounded compatibility check is enough before changing approach. Broad quality evaluation is deferred until a performance candidate deserves it, but no candidate becomes production-eligible without quality and feature validation.
 
+## Current portfolio priority — 2026-07-17
+
+The stock BF16 H200 floor has too little margin over the Artificial Analysis price frontier to be the default optimization path. Prioritize hardware placement, supported lower-precision execution, and kernel changes that can create a material cost margin. Keep one direct GPU lane measuring an actual runtime consumer and one independent lane comparing hardware/kernel opportunities from exact Gemma geometry and measured telemetry. Current leading branches are L40S online FP8 with a same-session W4 Marlin comparison, materially cheaper compatible 48-GiB hardware if that mechanism passes, and H200/H100/B200/AMD alternatives only where exact runtime support and price-normalized throughput justify a direct test.
+
+Prefer checkpoint-free exact-shape kernel falsifiers before another full checkpoint transfer. Focus custom-kernel work on measured or compulsory costs: prefill linears, paged hybrid local/global attention, KV reads/writes, precision conversion, normalization/activation fusion, and scheduler-visible batching. Reject nominal work reductions that cannot plausibly improve whole-request cost by at least 5%. Do not spend another allocation merely reproducing a known launcher failure or measuring a component already shown to be off the economic critical path.
+
 ## Market scorecard
 
 Use current external data and refresh it before any market claim. The launch-mode references at campaign start on 2026-07-16 are:
@@ -31,7 +37,7 @@ Use text-only, non-reasoning traffic for initial cost discovery. Vision/video an
 
 ## Autonomy, spend, and stopping
 
-The campaign has an initial autonomous experiment-spend cap of `$25` and at most one live paid provider allocation at a time. Each allocation needs a declared deadline, actual metered rate, durable telemetry, and reliable cleanup. A failed placement or runtime route is one branch result: switch hardware, provider, runtime, representation, or experiment geometry rather than spending cycles polishing the same failure.
+Experiment spend from `2026-07-17T21:59:00Z` onward has a hard cumulative authorization cap of `$100`. The harness durably reserves each paid project's full authorized maximum before scheduling it, never releases that reservation implicitly, and refuses projects whose combined reservations would exceed the cap. There is no separate concurrency cap on paid GPU experiments: the director may run independent allocations concurrently up to the harness's five-researcher limit while staying within the shared `$100` authority. Each allocation needs its own owner, declared deadline, actual metered rate, durable telemetry, and reliable cleanup. A failed placement or runtime route is one branch result: switch hardware, provider, runtime, representation, or experiment geometry rather than spending cycles polishing the same failure.
 
 The director should keep a small portfolio of independent, falsifiable projects and retire weak lines quickly. Researchers use their judgment, record concise decision-relevant evidence, and continue until the project decision is supported or its stated budget expires. The supervisor improves research cadence only when traces show a real bottleneck; it must not add ritual or deterministic gates.
 

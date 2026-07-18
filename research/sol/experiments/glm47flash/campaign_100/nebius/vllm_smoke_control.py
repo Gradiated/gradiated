@@ -58,6 +58,7 @@ TRANSFORMERS_REVISION = "1618d44b9295361607ec74d7be860ba886aac039"
 RUNTIME_IMAGE = "glm-vllm:0.15.0-transformers-1618d44"
 ABSOLUTE_TIMEOUT_SECONDS = 4500
 ARTIFACT_RESERVE_SECONDS = 300
+WATCHDOG_CLEANUP_RESERVE_SECONDS = 600
 RUNTIME_CONTRACT_SHA256 = hashlib.sha256(
     f"{IMAGE}\n{TRANSFORMERS_REVISION}\ntiktoken==0.12.0\n".encode()
 ).hexdigest()
@@ -441,7 +442,7 @@ def start_independent_watchdog(
     manager_flag = f"--{unit_manager}"
     command = [
         "systemd-run", manager_flag, "--no-block", "--collect", f"--unit={unit_name}",
-        f"--property=RuntimeMaxSec={max(1, int(deadline_epoch - time.time()) + 60)}s",
+        f"--property=RuntimeMaxSec={max(1, int(deadline_epoch - time.time()) + WATCHDOG_CLEANUP_RESERVE_SECONDS)}s",
         sys.executable, str(HERE / "placement_control.py"), "watchdog", instance_id, disk_name, str(deadline_epoch),
     ]
     launch = subprocess.run(command, capture_output=True, text=True, timeout=30)

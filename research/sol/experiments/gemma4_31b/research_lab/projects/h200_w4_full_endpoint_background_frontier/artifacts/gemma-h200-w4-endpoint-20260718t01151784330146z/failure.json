@@ -1,0 +1,13 @@
+{
+  "instance_id": "computeinstance-e00r8ncgc1zyry8z6h",
+  "message": "server readiness timeout or server exit",
+  "timestamp": "2026-07-18T01:47:16.786606Z",
+  "type": "RuntimeError",
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-h200-w4-endpoint-20260718t01151784330146z-watchdog.service",
+    "deadline_epoch": 1784342746.3003068,
+    "main_pid": 2254916,
+    "unit": "gemma-h200-w4-endpoint-20260718t01151784330146z-watchdog.service",
+    "unit_manager": "user"
+  }
+}

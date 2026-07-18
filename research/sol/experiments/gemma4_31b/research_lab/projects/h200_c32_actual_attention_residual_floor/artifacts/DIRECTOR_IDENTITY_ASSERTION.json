@@ -1,0 +1,49 @@
+{
+  "bound": {
+    "batch": 32,
+    "decode_contexts_inclusive": [
+      4214,
+      4571
+    ],
+    "global": {
+      "attention_k_eq_v": true,
+      "head_dim": 512,
+      "kv_heads": 4,
+      "layers": 10,
+      "q_heads": 32
+    },
+    "linears_head_seconds_per_request": 0.22476958992984145,
+    "model": "google/gemma-4-31B-it",
+    "optimistic_kv_seconds_per_request_reference_only": 0.05799790933333333,
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_image": "vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "sliding": {
+      "context": 1024,
+      "head_dim": 256,
+      "kv_heads": 16,
+      "layers": 50,
+      "q_heads": 32
+    },
+    "whole_service_ceiling_seconds_per_request": [
+      0.47201182295214134,
+      0.47751364375858635
+    ]
+  },
+  "checks": {
+    "attention_geometry": true,
+    "component_decision": true,
+    "component_sha": true,
+    "gate": true,
+    "gate_sha": true,
+    "geometry_sha": true,
+    "hybrid_layers": true,
+    "kv_decision": true,
+    "kv_sha": true,
+    "revision": true,
+    "runtime": true,
+    "window": true
+  },
+  "pass": true,
+  "schema_version": 1,
+  "type": "director_paid_actual_attention_identity_assertion"
+}

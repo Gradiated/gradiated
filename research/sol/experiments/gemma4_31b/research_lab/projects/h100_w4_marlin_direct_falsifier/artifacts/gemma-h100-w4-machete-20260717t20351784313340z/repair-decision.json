@@ -1,0 +1,6 @@
+{
+  "action": "teardown",
+  "reason": "in_place_conditional_repair_retrieved",
+  "repaired_archive": "h100-w4-conditional-repair.tar.gz",
+  "repaired_archive_sha256": "9bfcb97eb73c01d90a0e1b4252482c807115036d62923b6b4cb99e5cddc6bea7"
+}

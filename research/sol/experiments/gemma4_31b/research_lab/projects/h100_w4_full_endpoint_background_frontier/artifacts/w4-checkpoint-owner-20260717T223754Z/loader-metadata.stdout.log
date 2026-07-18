@@ -1,0 +1,6 @@
+INFO 07-17 23:15:08 [importing.py:44] Triton is installed but 0 active driver(s) found (expected 1). Disabling Triton to prevent runtime errors.
+INFO 07-17 23:15:08 [importing.py:68] Triton not installed or not compatible; certain GPU-related functions will not be available.
+WARNING 07-17 23:15:08 [interface.py:229] Failed to import from vllm._C: ImportError('libcuda.so.1: cannot open shared object file: No such file or directory')
+INFO 07-17 23:15:09 [model.py:549] Resolved architecture: Gemma4ForConditionalGeneration
+INFO 07-17 23:15:09 [model.py:1678] Using max model len 12000
+awq

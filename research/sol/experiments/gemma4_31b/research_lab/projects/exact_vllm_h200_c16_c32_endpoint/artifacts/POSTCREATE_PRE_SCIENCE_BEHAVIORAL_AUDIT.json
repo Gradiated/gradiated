@@ -1,0 +1,57 @@
+{
+  "active_session": {
+    "instance_id": "computeinstance-e00y1j6wgrw9jmrp0k",
+    "name": "gemma-vllm-c16c32-20260717t1500z",
+    "provider_deadline_epoch": 1784296368.8918407,
+    "stage": "checkpoint_transfer_then_program_transfer_fail_closed_cleanup",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-vllm-c16c32-20260717t1500z-watchdog.service",
+      "deadline_epoch": 1784296368.8918407,
+      "main_pid": 2010174,
+      "unit": "gemma-vllm-c16c32-20260717t1500z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "bound_executable_sha256": {
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_vllm_h200_c16_c32_endpoint/artifacts/gemma-vllm-c16c32-20260717t1500z-run/FINAL_AUDIT.json": "6f3ce4d292cf2f699d71b58810fb486886bbf4ada1b4de368d98584b0d1e57cc",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_vllm_h200_c16_c32_endpoint/artifacts/gemma-vllm-c16c32-20260717t1500z-run/RENDERED_REMOTE.sh": "c24a33f9dea5c94703606e60d2ed5b5069ce7358431101822740ece81b1e9cbd",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_vllm_h200_c16_c32_endpoint/launch_owner.py": "1bd48216e3073572be91b19669a349477129d1ecce3842a4ceb91ae0a9bbf2db",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_vllm_h200_c16_c32_endpoint/stale_trace_endpoint_runner.py": "4d212e0191657527ad35f109b9fd12449bf6979222989bbc6460cf2dcea8a986",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_vllm_h200_fixed_session_endpoint/vllm_fixed_session_owner.py": "80523f2c187f84582332e7266d92b1b6ae24d8518c6bd5ba8ba5d0707bc8bf4c",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_vllm_h200_transfer_view_endpoint/launch_transfer_view.py": "76c38689394e54f5dd235b0f0595fa85e7139e5fde96f98ea014bae0f98787cb",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma_exact_cache_trace_contract/TRACE_PACKET.json": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/prefix_cache_primary_mix_bound/PREFIX_ARM_PACKET.json": "ad31a492883fb432f1a0bdf765f22aeeaeea8c43d37e674d31405fa55bdc2a11",
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/placement_control.py": "87fdcb6115156bcb392b15f505dc4c1081201ace736999aa6f3e3554053a4e1c",
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/session_staging.py": "e9c4ab2b5b52646c3ffac2f5c6165fc627adaccc1dc77fd2adc59b6e16318295",
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/stock_control.py": "4ece68ccbb48e901eb31472c3cf0cc79efc6ad51d24a40f933f2c393b7334591"
+  },
+  "checks": {
+    "both_market_thresholds": false,
+    "c16_stable_repetitions": false,
+    "c32_independent_cache_state": false,
+    "c32_safe_decision_gate": false,
+    "create_to_cleanup_accounting": false,
+    "live_durable_owner": true,
+    "live_owner_can_consume_replacement": false,
+    "observed_reload_count": false,
+    "parsed_service_metrics": false,
+    "production_and_experiment_cost": false,
+    "rendered_captured_before_create": true,
+    "required_prefix_trigger_present": false,
+    "science_consumes_captured_local": true,
+    "science_does_not_reload_rendered_file": true,
+    "semantic_human_readable_validation": false,
+    "stale_conditional_sglang_absent": false,
+    "sudo_docker_info": false,
+    "ten_k_cache_contract": false
+  },
+  "classification": "postcreate_prescience_behavioral_audit_failed_live_program_immutable",
+  "decision": "fail_closed_at_program_transfer_then_existing_verified_retained_owner_cleanup",
+  "immutable_live_rendered_sha256": "c24a33f9dea5c94703606e60d2ed5b5069ce7358431101822740ece81b1e9cbd",
+  "observed_epoch": 1784292188.5883334,
+  "owner_cmdline": "/usr/bin/python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_vllm_h200_c16_c32_endpoint/launch_owner.py run --artifacts-parent /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_vllm_h200_c16_c32_endpoint/artifacts --name gemma-vllm-c16c32-20260717t1500z --wall-seconds 7200 --provider-seconds 5100",
+  "owner_pid": 2009215,
+  "pass": false,
+  "reason": "The live owner captured the stale rendered shell in a local variable before provider create; later source or artifact edits cannot change run_ssh(input_text=rendered).",
+  "schema_version": 1
+}

@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "project": "l40s_fp8_projection_oracle_failure_mechanism",
+  "generated_at": "2026-07-17T15:04:00Z",
+  "verdict": "oracle_invalid",
+  "decision": {
+    "online_fp8_numerically_disproven": false,
+    "online_fp8_priority": "do_not_keep_ahead_of_the_independent_direct_kernel_or_w4_alternatives",
+    "reason": "The five failures come from an oracle that conflates official quantization, kernel accumulation, and BF16-reference differences on a pathological constant-extreme FP8 input. The descriptive 3.112121484428023 s/request result is independently quarantined, so this project cannot close or promote the representation on economics."
+  },
+  "bound_identities": {
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "vllm_version": "0.19.1.dev6+g6d4a8e6d2",
+    "vllm_commit": "6d4a8e6d204a9b2827544003b26321fff62923da",
+    "fp8_parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+    "fp8_online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+    "paid_stage_sha256": "741ac3f0e3f44d9f7470ffd1c654ab53baa632461d9cc2cd62760906c12cdfb3",
+    "benchmark_sha256": "c04950a15e09b8b7b462387503b3b48aa3dfd4a42d4973c5aab1cf731f26e10e"
+  },
+  "evidence": {
+    "source_backed": [
+      "Fp8OnlineLinearMethod.process_weights_after_loading calls scaled_fp8_quant(layer.weight, scale=None), stores the returned per-tensor scale, and transposes the quantized weight before the CUTLASS consumer.",
+      "Fp8LinearMethod selects dynamic per-token activation quantization on CUTLASS-capable CUDA and CutlassFP8ScaledMMLinearKernel sends the quantized activation, transposed FP8 weight, activation scale, and weight scale to cutlass_scaled_mm.",
+      "The exact upstream class texts at vLLM commit 6d4a8e6d204a9b2827544003b26321fff62923da reproduce both source hashes retained by the paid run."
+    ],
+    "measured": {
+      "maximum_absolute_error_by_k_m": [
+        {"k": 5376, "m": 12, "n": [16384, 20480, 43008], "maximum_absolute": 0.01953125},
+        {"k": 5376, "m": 3679, "n": [16384, 20480, 43008], "maximum_absolute": 0.01953125},
+        {"k": 8192, "m": 12, "n": [5376], "maximum_absolute": 0.01953125},
+        {"k": 8192, "m": 3679, "n": [5376], "maximum_absolute": 0.12890625},
+        {"k": 16384, "m": 12, "n": [5376], "maximum_absolute": 0.12890625},
+        {"k": 16384, "m": 3679, "n": [5376], "maximum_absolute": 0.34765625},
+        {"k": 21504, "m": 12, "n": [5376], "maximum_absolute": 0.1796875},
+        {"k": 21504, "m": 3679, "n": [5376], "maximum_absolute": 0.5}
+      ],
+      "all_twelve_rows_used_the_same_official_producer_and_consumer_identity": true,
+      "all_rows_finite_and_nontrivial": true
+    },
+    "derived": [
+      "The harness fills both W[n,k] and X[m,k] with the same positive BF16 value 1/sqrt(k). Dynamic max-based weight and activation quantizers therefore map every element in each tensor to the same positive extreme FP8 code (up to the quantizer's exact finite maximum) and attach one weight scale plus one scale per activation row.",
+      "Every output dot product is consequently a fully coherent sum of k identical positive FP8 products. This is a worst-case accumulator stimulus, not a representative signed, varied-magnitude Gemma projection.",
+      "At k=5376 the error is exactly 0.01953125 for three different output widths and both m values. Error then grows with reduction length and changes with m/kernel geometry. That pattern is inconsistent with an output-width layout defect and does not isolate a scale defect."
+    ],
+    "inferred": [
+      "The most likely immediate source of the failed 0.08 gate is shape-dependent FP8 GEMM accumulation drift on the coherent extreme-code input. The retained artifact lacks candidate values, dequantized-quantized reference values, and CUTLASS accumulator-mode telemetry, so this project does not claim a specific CUTLASS fast-accum implementation defect."
+    ]
+  },
+  "causal_chain": [
+    "Constant positive BF16 W and X are constructed with one value per k.",
+    "The official online producer performs per-tensor FP8 weight quantization; the actual apply path performs dynamic per-token FP8 activation quantization.",
+    "Both tensors collapse to uniform positive extreme FP8 codes, making each exact-shape projection a coherent k-term reduction.",
+    "Observed error follows k and m/kernel geometry while remaining invariant across three n values at k=5376.",
+    "The single BF16-original oracle cannot distinguish quantization semantics from GEMM accumulation and its uncalibrated 0.08 maximum-element gate rejects a valid official consumer on an adversarial synthetic input.",
+    "Therefore the admission oracle is invalid; the evidence does not establish a producer/layout defect or representative online-FP8 quality failure."
+  ],
+  "falsified_explanations": [
+    {
+      "hypothesis": "wrong output-width layout or scale broadcasting",
+      "status": "disfavored",
+      "basis": "Three k=5376 projections with n=16384, 20480, and 43008 have identical error at both m values, and all rows are finite/nontrivial."
+    },
+    {
+      "hypothesis": "generic online producer failure",
+      "status": "disfavored",
+      "basis": "Seven rows pass the same 0.08 gate through the same content-bound producer and consumer; failures cluster by longer k and m-dependent kernel geometry."
+    },
+    {
+      "hypothesis": "representative online-FP8 numeric failure",
+      "status": "not_tested",
+      "basis": "The constant same-sign construction has no representative sign cancellation or magnitude distribution and drives every quantized element to one extreme code."
+    }
+  ],
+  "corrected_content_bound_oracle_contract": {
+    "purpose": "Separate consumer correctness from expected representation loss.",
+    "input": "For one exact-shape sentinel, generate W and X independently from a fixed content-bound seed with signed, varied magnitudes (for example clipped zero-mean normal values), then materialize W through the exact official Fp8OnlineLinearMethod producer.",
+    "consumer_oracle": "Explicitly quantize X with the same pinned scaled_fp8_quant per-token contract, dequantize X_q and the produced transposed W_q using the returned activation scales and layer.weight_scale, compute the quantized mathematical projection in FP32, and compare the actual timed kernel output to that result after the same output cast.",
+    "representation_oracle": "Separately compare the quantized mathematical projection with an FP32 accumulation of the original BF16 X and W. Report relative L2 error and maximum absolute error normalized by reference RMS; do not reuse the uncalibrated per-element 0.08 pass gate.",
+    "required_capture": [
+      "seed and generator algorithm identity",
+      "hashes of staged benchmark and pinned producer/consumer source",
+      "weight_scale and activation-scale shape/range",
+      "candidate, quantized-mathematical, and original-BF16 reference summary hashes",
+      "consumer error separated from representation error"
+    ]
+  },
+  "smallest_future_discriminating_check": "Change only the direct-kernel packet's first exact-shape sentinel data/oracle: replace constant W/X with independently seeded signed varied-magnitude tensors and add the dequantized-quantized FP32 oracle before any sweep. If actual kernel versus quantized-mathematical error remains shape-large, investigate accumulator mode; if only original-BF16 versus quantized-mathematical error is large, classify representation loss. Do not add another readiness project.",
+  "scope_limits": [
+    "No provider, service, allocation, GPU, image, checkpoint, or compilation action was performed.",
+    "Paid timings and fit/economic claims remain descriptive and quarantined.",
+    "No quality claim transfers from this synthetic component oracle to the exact campaign workload."
+  ]
+}

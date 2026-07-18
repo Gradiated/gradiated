@@ -1,0 +1,37 @@
+{
+  "authoritative_hashes": {
+    "CAMPAIGN.md": "39f80855336f43cec50f02f07fa02eb99925ba2fb24ff41b7eddd7f03f7ba232",
+    "H100_MECHANISM.json": "db28290a17865dae0dca487036abe96fe215fe971d868c6cafd54a43cb3eca94",
+    "H200_RECONCILED_TERMINAL.json": "9f12b3ae4c8d82176f0ec9b09845c6e97ab1f278a458bd023adcbe433fd004fe",
+    "PROJECT.md": "4615980bb72c02853008bcdb87c1e51dd1bf289865d1f8b98e73bd5043ee3755",
+    "W4_RECONCILED_TERMINAL.json": "30b42e46ac41f815164fcd6af600f9b21fa9181d0474194ed7bb2fbdb5a3a775",
+    "h200_bf16_linear_bench.py": "9d691834ce5dfcd551b0fb4c29418566eb01e43e3a4ddb8cf91c3f66ebc6880a"
+  },
+  "checks": {
+    "adjacent_trigger": true,
+    "brief_image": true,
+    "brief_model": true,
+    "brief_workload": true,
+    "budgets": true,
+    "campaign_model": true,
+    "h100_ceiling": true,
+    "h200_model_case_only_discontinuity": true,
+    "h200_program_hash_bound": true,
+    "h200_terminal_complete": true,
+    "one_allocation": true,
+    "sentinel_sweep": true,
+    "six_shapes": true,
+    "w4_cleanup": true,
+    "workload": true
+  },
+  "identity": {
+    "ceiling_seconds_per_request": 0.5479752315195353,
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "vllm": "0.19.1.dev6+g6d4a8e6d2"
+  },
+  "pass": true,
+  "schema_version": 1,
+  "type": "h100_bf16_linear_head_director_identity_assertion"
+}

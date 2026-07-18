@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "decision": "nominate_one_executable_hardware_kernel_experiment",
+  "generated_utc": "2026-07-17T14:00:00Z",
+  "identities": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "vllm_revision": "ab0a20d15129b322f911db578b50c6b35b3167e7",
+    "workload": {
+      "prompt_tokens": 4214,
+      "output_tokens": 358,
+      "prompt_cache_read_fraction": 0.127,
+      "aa_single_stream_prompt_tokens": 10000
+    },
+    "geometry": {
+      "layers": 60,
+      "sliding_layers": 50,
+      "global_layers": 10,
+      "hidden_size": 5376,
+      "intermediate_size": 21504,
+      "heads": 32,
+      "sliding_kv_heads": 16,
+      "sliding_head_dim": 256,
+      "global_kv_heads": 4,
+      "global_head_dim": 512,
+      "sliding_window": 1024,
+      "shapes_k_n": {
+        "sliding_qkv": [5376, 16384],
+        "global_qkv": [5376, 20480],
+        "sliding_output": [8192, 5376],
+        "global_output": [16384, 5376],
+        "merged_gate_up": [5376, 43008],
+        "down": [21504, 5376],
+        "tied_head": [5376, 262144]
+      }
+    }
+  },
+  "economic_gate": {
+    "market_request_cost_usd_range": [0.000614287, 0.000621447],
+    "planning_rate_usd_per_gpu_hour": {
+      "h100_sxm": 2.8,
+      "h200_sxm": 3.25,
+      "l40s": 1.1,
+      "mi355x": 2.6,
+      "b200_sxm": 5.15
+    },
+    "planning_base_required_rps_at_deepinfra_like_floor": {
+      "h100_sxm": 1.8249,
+      "h200_sxm": 2.118591,
+      "l40s": 0.717061,
+      "mi355x": 1.694873,
+      "b200_sxm": 3.355173
+    },
+    "promotion": "measured complete-request throughput and sustainable cost must clear the matched market gate and be at least 10 percent below the matched stock H100 control; component-only evidence cannot claim endpoint promotion"
+  },
+  "ranked_combinations": [
+    {
+      "rank": 1,
+      "combination": "H100 SXM + exact online FP8 linear/KV consumers + fused paged hybrid local/global attention",
+      "status": "nominate",
+      "why": "H100 is 13.8 percent below H200 planning cost, has broad exact vLLM support, 80 GiB HBM2e and 3.35 TB/s, while the exact 5376/21504 tiles are tensor-core friendly. A fused attention path targets the remaining compulsory KV/paging and scheduler boundary rather than repeating the live L40S rows.",
+      "limiter_hypothesis": "decode is dominated by repeated FP8 weight/HBM streams plus paged local/global KV reads and launch overhead; separate five-local/one-global dispatch wastes work at small M",
+      "uncertainty": "high: no H100 workload measurement and fused kernel availability must be pinned",
+      "expected_sustainable_effect": "10-25 percent versus matched stock H100 FP8 at the workload knee; enough only if complete-request rps is at least 1.8249 planning-base and the 10-percent matched-control gate passes"
+    },
+    {
+      "rank": 2,
+      "combination": "MI355X + ROCm/AITER exact Gemma BF16 or MXFP8 fused attention",
+      "status": "defer_typed_external_blocker",
+      "why": "8 TB/s HBM3e and 256 MiB cache are attractive for long prompt/KV traffic and the planning rate is below H200, but the current screen has no immutable ROCm image digest or self-service venue. Official model support is not execution evidence.",
+      "uncertainty": "very high",
+      "falsifier": "content-addressed image or venue probe fails before a matched control"
+    },
+    {
+      "rank": 3,
+      "combination": "B200 SXM + FP4/FP6 fused linear and paged attention",
+      "status": "defer",
+      "why": "8 TB/s HBM3e, 126 MiB L2 and native FP4 are mechanically interesting, but the 5.15 USD/GPU-hour planning rate implies 3.3552 requests/s at the same market floor and the runtime is rapidly maturing; no exact Gemma consumer or measured shape result is bound.",
+      "uncertainty": "very high",
+      "falsifier": "exact runtime cannot bind FP4/FP6 producer, consumer, and quality-preserving checkpoint"
+    }
+  ],
+  "first_experiment": {
+    "hardware": "one NVIDIA H100 SXM, TP=1",
+    "venue": "the shared Nebius H100 lifecycle/controller; activation requires a later nonzero authorization and an immutable vLLM image/source packet",
+    "stock_comparator": "same image and exact shapes using stock vLLM BF16 linear plus stock paged hybrid attention and BF16 KV",
+    "intervention": "actual pinned vLLM online-FP8 linear consumer and FP8-per-token-head KV writer, followed by one fused paged hybrid attention kernel that consumes local 16x256 and global 4x512 pages in one scheduler-visible decode step",
+    "measurement": {
+      "concurrency": [8, 16, 32],
+      "prefill_tokens": 4214,
+      "decode_steps": 358,
+      "aa_single_stream": "10000 input / 358 output",
+      "telemetry": ["completed requests/s", "TTFT and decode latency", "CUDA event and wall distributions", "HBM/L2 traffic", "allocator peak", "power/utilization", "queueing", "failures/reloads", "provider meter"],
+      "oracle": "finite outputs plus BF16 reference error on every timed component; complete-request raw outputs remain required for endpoint promotion"
+    },
+    "hypothesis": "fusing hybrid attention removes enough page-table, launch, and KV movement overhead to leave the H100 FP8 path below the planning market gate; a stock-vs-fused matched component result is the first falsifier",
+    "falsification": {
+      "component": "reject if fused attention is not at least 10 percent faster than matched stock attention at every engine-valid selected point or numerical oracle fails",
+      "whole_request": "reject if complete-request throughput is below 1.8249 requests/s at planning factors, or sustainable cost is not at least 10 percent below matched stock H100 control",
+      "mechanism": "reject if HBM/L2 and launch telemetry do not show the predicted reduction, even if elapsed time improves"
+    },
+    "budget": {
+      "wall_clock_minutes": 40,
+      "provider_exposure_minutes": 25,
+      "compute": "0.35 H100 GPU-hours plus 1 local CPU-hour",
+      "storage": "512 MiB retained plus 2 GiB temporary",
+      "spend_usd": 1.3,
+      "quality": "component oracle in first arm; exact checkpoint quality only after a complete-request pass"
+    },
+    "launcher_dependency": "reuse the shared retained-owner/controller and exact-image audit from the L40S online-FP8 lane; do not create a project-local lifecycle owner. Before provider create, bind the H100 image digest, fused-kernel source hash, actual consumer symbols, and output-consuming audit."
+  },
+  "evidence": [
+    {"path": "../h200_bf16_exact_linear_floor/artifacts/RECONCILED_TERMINAL.json", "type": "measured", "claim": "H200 BF16 linears/head close c1/c4/c8; c32 remains only a narrow stock point"},
+    {"path": "../l40s_fp8_attention_kv_residual_floor/ATTENTION_KV_RESIDUAL_FLOOR.json", "type": "derived", "claim": "L40S FP8 attention/KV residual is 0.164631539 s/request and does not itself close the candidate"},
+    {"path": "../post_bf16_c32_successor_selection/SUCCESSOR_RANK.json", "type": "measured-and-derived", "claim": "live L40S online FP8/W4 lane is pending and must not be duplicated"},
+    {"path": "../mi355x_exact_gemma4_runtime_cost_screen/MI355X_SCREEN.json", "type": "external-blocker", "claim": "MI355X lacks immutable runtime and executable venue in scope"},
+    {"path": "/root/workspace/research/factory/data/accelerator_inventory.json", "type": "vendor-reported-prior", "claim": "H100/L40S/H200/B200/MI355X hierarchy and formats"},
+    {"path": "/root/workspace/research/factory/data/gpu_prices.json", "type": "derived-planning-rate", "claim": "current committed planning rates"}
+  ]
+}

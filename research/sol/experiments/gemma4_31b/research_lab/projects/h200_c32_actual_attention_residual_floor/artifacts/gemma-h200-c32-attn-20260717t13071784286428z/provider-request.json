@@ -1,0 +1,13 @@
+{
+  "absolute_timeout_seconds": 1800,
+  "boot_disk_gib": 100,
+  "disk_hourly_rate_usd_vendor_calculator": 0.0097222,
+  "experiment_spec_sha256": "03170b32bd1c702f9f781c444cf2dd98af9748e9ba82140fc8d05dccb02e37fb",
+  "hourly_rate_usd_vendor_calculator": 2.45,
+  "max_total_cost_usd": 1.2298611,
+  "name": "gemma-h200-c32-attn-20260717t13071784286428z",
+  "platform": "gpu-h200-sxm",
+  "preset": "1gpu-16vcpu-200gb",
+  "purchase_model": "preemptible_stop",
+  "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79"
+}

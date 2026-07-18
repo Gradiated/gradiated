@@ -1,0 +1,76 @@
+{
+  "classification": "l40s_online_fp8_actual_consumer_terminal",
+  "completed_at_utc": "2026-07-17T13:55:07.786010Z",
+  "controller_returncode": 1,
+  "controller_summary": {
+    "allocation_seconds": 681.671,
+    "cleanup_pass": true,
+    "cost_basis": "measured exposure at authenticated Nebius preemptible VM and disk rates; invoice pending",
+    "cost_usd_derived": 0.164328957,
+    "ended_at_utc": "2026-07-17T13:55:07.785700Z",
+    "instance_id": "computeinstance-e00pq6c1wsmgx6c791",
+    "outcome": "FAIL",
+    "stage_records": [
+      {
+        "archive": "l40s-online-fp8.tar.gz",
+        "label": "primary",
+        "manifest_file_count": 10,
+        "returncode": 1,
+        "sha256": "cff6672390fde5aac4b19ae967648fa46b1761e35f2479c7a1f64f70fa95db8f",
+        "terminal": {
+          "all_actual_consumers_pass": false,
+          "economic_both_envelopes_falsified": false,
+          "pass": false,
+          "result": {
+            "all_actual_consumers_pass": false,
+            "economic_both_envelopes_falsified": false,
+            "error": {
+              "message": "tensor model parallel group is not initialized",
+              "type": "AssertionError"
+            },
+            "omitted_work": [
+              "attention read/compute",
+              "RMSNorm",
+              "rotary",
+              "SwiGLU/SiluAndMul",
+              "sampling",
+              "scheduler",
+              "queueing",
+              "reliability",
+              "orchestration",
+              "service overhead"
+            ],
+            "pass": false,
+            "rows": {
+              "head": [],
+              "kv_writer": [],
+              "linears": []
+            },
+            "schema_version": 2,
+            "scientific_wall_seconds": 0.3005898269999534,
+            "stage": "primary",
+            "useful_gpu_seconds": 0.0,
+            "workload": {
+              "decode_ms": [
+                12,
+                14
+              ],
+              "fresh_prompt_m": 3679,
+              "output_tokens": 358,
+              "ten_k_fresh_prompt_m": 8730
+            }
+          },
+          "stage": "primary",
+          "useful_gpu_seconds": 0.0
+        }
+      }
+    ],
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-l40s-fp8-20260717t13431784288625z-watchdog.service",
+      "deadline_epoch": 1784297925.114823,
+      "main_pid": 2037429,
+      "unit": "gemma-l40s-fp8-20260717t13431784288625z-watchdog.service",
+      "unit_manager": "user"
+    }
+  }
+}

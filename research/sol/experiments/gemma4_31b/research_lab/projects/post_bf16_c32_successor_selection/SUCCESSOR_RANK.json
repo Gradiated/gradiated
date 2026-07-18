@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-07-17T13:18:07Z",
+  "terminal_type": "ranked_primary_with_one_conditional_adjacent_backup",
+  "decision": "direct_l40s_online_fp8_actual_consumer_component",
+  "campaign_identity": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "mode": "text-only non-reasoning",
+    "primary_workload": {
+      "prompt_tokens": 4214,
+      "fresh_prompt_tokens": 3678.822,
+      "cache_read_prompt_fraction": 0.127,
+      "output_tokens": 358
+    },
+    "secondary_workload": "10000 input / 358 output / concurrency 1",
+    "quality_requirement": "No representation inherits BF16 quality. Production eligibility requires exact-revision raw-output, feature, stop/parser, long-context, and failure/reload checks through the real endpoint consumer.",
+    "strict_market_request_cost_usd": [
+      0.000614287,
+      0.000621447
+    ]
+  },
+  "shared_price_state": {
+    "checked_at_utc": "2026-07-17T13:17:00Z",
+    "fresh": true,
+    "age_days": 2.000286,
+    "inventory_sha256": "3f403d67a92fc91be85bbd27dede85f5f91c3fd2df25ef8dcef2a344acbd1e01",
+    "l40s_production_planning_usd_per_gpu_hour": 1.1,
+    "l40s_production_range_usd_per_gpu_hour": [1.0, 1.25],
+    "l40s_measured_experiment_vm_plus_disk_usd_per_hour": 0.8581222,
+    "planning_base_required_completed_requests_per_second": 0.7170614380702235,
+    "planning_base_service_ceiling_seconds_per_request": 1.3945806437,
+    "conservative_required_completed_requests_per_second": 1.1583551336753017,
+    "conservative_service_ceiling_seconds_per_request": 0.8632929962,
+    "evidence_label": "derived from fresh shared planning inventory and measured public market prices; not endpoint performance"
+  },
+  "evidence_reconciliation": {
+    "scientific_results": [
+      {
+        "result": "Stock H200 BF16 transformer linears plus the actual ParallelLMHead falsify c1/c4/c8; c16 was later closed by the optimistic KV floor and only c32 remained before the disjoint live work.",
+        "label": "measured CUDA components plus derived KV lower bound",
+        "scope_limit": "H200 BF16 only; no transfer to L40S or another representation"
+      },
+      {
+        "result": "The L40S generic torch._scaled_mm FP8 sweep executed and showed a partial mechanism pass, but its sliding/global QKV, global output, and gate/up dimensions were not the stock pinned-vLLM Gemma shapes and its KV copy was not the actual cache-writer consumer.",
+        "label": "measured partial generic-Ada mechanism",
+        "scope_limit": "not an exact-vLLM consumer or whole-request result"
+      },
+      {
+        "result": "The exact pinned image resolves Fp8LinearMethod and AWQMarlinLinearMethod with concrete create_weights/apply methods and source hashes; the prior W4/FP8 terminal failed a mistaken consumer-cardinality gate before CUDA science.",
+        "label": "measured CPU-safe exact-image runtime inspection",
+        "scope_limit": "consumer availability only, not execution"
+      },
+      {
+        "result": "The actual pinned-image BF16 ParallelLMHead was measured on L40S through m=32, so the next arm can reuse that component evidence or measure missing m=12/m=14 without a checkpoint.",
+        "label": "measured actual consumer",
+        "scope_limit": "head only"
+      },
+      {
+        "result": "Natural zero/2:4 structure, magnitude 2:4 error, rank-256 compression, tied-vocabulary specialization, 24-GiB vision unloading, and sub-1024 sliding-window changes failed their scientific or capacity gates.",
+        "label": "measured weight samples plus derived exact-geometry bounds",
+        "scope_limit": "these negatives do not reject online FP8 or W4"
+      }
+    ],
+    "pre_science_or_external_failures": [
+      {
+        "line": "L40S online FP8 endpoints",
+        "classification": "remote setup timeout or exact-image entrypoint/bootstrap failure before checkpoint/model/request",
+        "inference": "no FP8 throughput, quality, capacity, or endpoint conclusion"
+      },
+      {
+        "line": "SGLang H200 matched endpoint",
+        "classification": "pre-GPU program/audit/owner failure",
+        "inference": "no SGLang-vLLM scientific comparison"
+      },
+      {
+        "line": "BF16 H100 MTP canary",
+        "classification": "operational timeout with no scientific output",
+        "inference": "no MTP acceptance or H100 throughput conclusion"
+      },
+      {
+        "line": "MI355X",
+        "classification": "immutable ROCm image and executable self-service venue missing",
+        "inference": "no AMD hardware or throughput conclusion"
+      }
+    ]
+  },
+  "ranking": [
+    {
+      "rank": 1,
+      "candidate": "exact-revision online FP8 on L40S via the actual pinned-vLLM producer/consumer",
+      "status": "primary_direct_scientific_arm",
+      "why_now": [
+        "It is the only retained representation whose producer can start from the exact BF16 revision at runtime; it does not depend on an unbound community checkpoint.",
+        "Its missing decision fact is actual pinned-consumer time at the exact six stock Gemma shapes, not another endpoint controller or 62.5-GB checkpoint transfer.",
+        "L40S planning cost is 33.8% of H200 planning cost, so a slower service can still win the same whole-request market target.",
+        "Existing generic FP8 CUDA evidence is encouraging but invalid for the exact consumer/shape claim, making this a short, high-information correction rather than duplicated readiness work."
+      ],
+      "hypothesis": "At the maximum logically fitting online-FP8 concurrency, actual pinned-vLLM FP8 transformer linears, actual FP8 KV writer, and the BF16 tied head leave positive room under the 1.394581-second planning-base whole-service ceiling for attention and scheduler overhead.",
+      "capacity_prior": {
+        "online_fp8_resident_weights_gib": 34.35,
+        "runtime_reserve_gib": 5.0,
+        "primary_fp8_kv_gib_per_request": 0.363423228,
+        "derived_primary_c12_total_gib": 43.711078736,
+        "derived_primary_c14_total_gib": 44.437925192,
+        "derived_primary_c15_total_gib": 44.80134842,
+        "allocation_envelope_gib": 44.704,
+        "interpretation": "c12 is the robust point; c14 is allocator-sensitive but logically fits; c15 is outside the envelope. The 10K c1 logical total is 39.935866 GiB. These are capacity priors, not runtime allocations."
+      },
+      "first_scientific_arm": {
+        "hardware": "one NVIDIA L40S SM89",
+        "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+        "proven_lifecycle": "reuse the lifecycle path that produced gemma_l40s_parallel_lm_head_measurement_final; use one lowercase RFC-1123 allocation and no project-specific readiness/controller successor",
+        "checkpoint": "forbidden; create deterministic synthetic BF16 weights one exact shape at a time and let Fp8LinearMethod's online producer prepare the consumed weights",
+        "actual_consumer": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod create_weights/process_weights_after_loading/apply, plus the actual pinned-vLLM FP8 KV-cache writer; matched actual BF16 linear and BF16 ParallelLMHead consumers are comparators",
+        "exact_shapes": [
+          {"name": "sliding_qkv", "input": 5376, "output": 16384, "layers": 50},
+          {"name": "global_qkv_stock_k_equals_v_clone", "input": 5376, "output": 20480, "layers": 10},
+          {"name": "gate_up", "input": 5376, "output": 43008, "layers": 60},
+          {"name": "sliding_output", "input": 8192, "output": 5376, "layers": 50},
+          {"name": "global_output", "input": 16384, "output": 5376, "layers": 10},
+          {"name": "down", "input": 21504, "output": 5376, "layers": 60}
+        ],
+        "geometry": {
+          "decode_m": [12, 14],
+          "prefill_tokens_per_request": [3679, 8730],
+          "head_m": [12, 14],
+          "decode_steps": 358,
+          "kv_contexts": [4214, 4571, 10000]
+        },
+        "measurement": "Warmup then raw CUDA-event and synchronized wall distributions. Architecture-weight actual rows by layer multiplicity. Measure prefill work per request without dividing it by decode concurrency, decode work per request at m=12/m=14, the actual head, and actual FP8 KV writes. Require finite outputs and a small BF16 numerical oracle that consumes timed outputs. Preserve GPU identity, allocator peaks, power/utilization interval, concrete classes, and source hashes.",
+        "whole_request_decision": "Add only disjoint measured components. Do not double-count the head or KV writer and do not call an omitted attention/scheduler residual a pass. Compare the component lower bound with both L40S service ceilings.",
+        "comparator": "Same L40S, shapes, activations, order randomization, repetitions, BF16 source weights, and actual BF16 linear/head consumers. Production quality comparator remains the exact BF16 checkpoint at the same revision/tokenizer/prompts, not the synthetic oracle.",
+        "quality_boundary": "This component arm establishes only runnable mechanism and numerical sanity. An endpoint is admissible only after the component lower bound leaves positive planning margin; production requires raw exact-revision 4214/358 and 10K captures, local/global probes, stop/parser/logprob behavior, failures/reloads, and a sealed scorer against BF16.",
+        "scientific_stop_rule": "Typed negative if any required actual consumer cannot execute, any required row is missing/nonfinite, online production and timed consumption are disconnected, c12 and c14 both exceed the planning-base service ceiling before attention/scheduler, or c14 allocator peak exceeds the 44.704-GiB envelope. A valid positive only admits one later exact endpoint; it does not establish economics or quality.",
+        "pre_science_stop_rule": "If the exact image cannot import the already resolved concrete classes or the proven lifecycle fails before a GPU row, emit a typed operational failure, clean up, and do not repair or relaunch in this project.",
+        "prospective_budget": {
+          "wall_clock_minutes": 35,
+          "provider_active_minutes": 25,
+          "compute": "0.42 L40S GPU-hours plus 1 local CPU-hour",
+          "storage": "one 100-GiB provider boot disk; 512 MiB retained artifacts plus 2 GiB temporary",
+          "spend_usd": 0.4,
+          "allocation_limit": 1,
+          "paid_repair": "forbidden"
+        }
+      },
+      "promotion_trigger": "FP8_COMPONENT_ADMISSION: all required actual rows are valid, c12 or c14 logically fits measured allocator telemetry, and the disjoint measured component sum is below the 1.394581-second planning ceiling with a positive named residual for attention/scheduler. Then and only then consider one exact online-FP8 endpoint owner."
+    },
+    {
+      "rank": 2,
+      "candidate": "W4 Marlin on L40S as a semantics-changing exact-shape mechanism proxy",
+      "status": "conditional_same_session_backup",
+      "why_not_primary": "W4 has much better derived decode and capacity margins, but no candidate binds the exact base revision and immutable producer/calibration inputs. It cannot outrank exact-revision online FP8 until the actual Marlin advantage is large enough to justify creating and quality-testing an exact producer.",
+      "trigger": "W4_RESIDUAL_TRIGGER: the primary emits a valid scientific terminal and online FP8 either exceeds the planning ceiling or leaves less than 0.35 seconds/request for attention plus scheduler at its best fitting point; the W4 program is already staged, can start within ten minutes, and the retained owner has at least ten provider minutes remaining. A strong FP8 pass, invalid FP8 terminal, missed deadline, or unready W4 program forces immediate teardown.",
+      "first_scientific_arm": "In the same exact-image L40S session and sequential owner, invoke actual AWQMarlinLinearMethod on the same six shapes at m=14 and m=16 using deterministic synthetic group-128 asymmetric packed W4 weights and a dequantized BF16 oracle. Measure actual CUDA/wall distributions and architecture-weighted prefill/decode components; retain the BF16 tied head and the same FP8-KV contract.",
+      "comparator": "Matched actual online FP8 primary and BF16 consumers from the same session; no checkpoint or endpoint.",
+      "quality_boundary": "This is explicitly a semantics-changing synthetic mechanism proxy. It is not deployable until an exact-revision, content-addressed producer is created and representative raw outputs/features pass the exact quality consumer against BF16.",
+      "scientific_stop_rule": "Close W4 if any actual Marlin row is invalid, if its architecture-weighted component time is less than 20% better than matched online FP8, or if the c16 disjoint component floor exceeds 0.60 seconds/request. Passing only justifies exact-producer work; it does not justify a W4 endpoint.",
+      "prospective_incremental_budget": {
+        "wall_clock_minutes": 12,
+        "provider_active_minutes": 10,
+        "compute": "0.17 L40S GPU-hours; no extra local compute beyond the primary owner",
+        "storage": "no second disk; 256 MiB additional retained artifacts plus 1 GiB temporary",
+        "spend_usd": 0.17,
+        "allocation_limit": 0,
+        "paid_repair": "forbidden"
+      },
+      "combined_session_cap": {
+        "wall_clock_minutes": 50,
+        "provider_active_minutes": 35,
+        "compute": "0.59 L40S GPU-hours",
+        "storage": "one 100-GiB provider boot disk; 768 MiB retained plus 3 GiB temporary",
+        "spend_usd": 0.57,
+        "owner": "one sequential durable owner/watchdog; no second allocation"
+      }
+    }
+  ],
+  "rejected_or_deferred": [
+    {
+      "candidate": "native Gemma assistant/MTP",
+      "disposition": "defer",
+      "reason": "The official assistant is only 0.875 GiB and the acceptance gate is explicit, but useful benefit depends on measured decode fraction and accepted-token rate. Prompt-prefill dominates this workload, and the first acceptance result requires the exact target plus assistant endpoint/checkpoint rather than a checkpoint-free component. Reopen only behind an already resident exact endpoint and require >=5% all-in gain with exact greedy output IDs."
+    },
+    {
+      "candidate": "SGLang BF16+FP8-KV full stack",
+      "disposition": "defer",
+      "reason": "Public exact-model support is a useful prior and prior paid failures were pre-science, not a negative. The immutable H100 command fails static capacity before KV, and the H200 route's next result requires another full checkpoint endpoint after repeated pre-GPU program failures. It violates this successor's direct-mechanism criterion."
+    },
+    {
+      "candidate": "cheaper H100 BF16",
+      "disposition": "not nominated",
+      "reason": "H100 saves only 13.8% versus H200 at planning rates, while the exact BF16 route is capacity-limited to lower concurrency and has no scope-matched component evidence showing it can recover that gap. Its next credible result is checkpoint-first."
+    },
+    {
+      "candidate": "RTX 6000 Ada W4",
+      "disposition": "conditional_after_W4_only",
+      "reason": "Its $0.77/h public rate and SM89/96-MB-L2 geometry are attractive, but throughput and sustained placement are unmeasured. It is eligible only after the L40S actual Marlin mechanism passes, and then needs a matched component/workload result and current written committed quote."
+    },
+    {
+      "candidate": "MI355X BF16",
+      "disposition": "external-state blocked",
+      "reason": "Official support and $2.60/h planning price are priors only; no immutable ROCm image or executable self-service venue is bound. The next action would be access/runtime binding rather than science."
+    },
+    {
+      "candidate": "community FP8_BLOCK or W4 checkpoints",
+      "disposition": "not nominated",
+      "reason": "FP8_BLOCK lacks exact base revision and its pinned SM89 consumer is unsupported; W4 lacks exact base revision and immutable producer/calibration provenance. Neither should trigger a checkpoint transfer before the actual-consumer mechanism passes."
+    },
+    {
+      "candidate": "natural sparsity, low rank, tied-head specialization, sliding-window shrink, or text-only vision unload",
+      "disposition": "scientifically closed",
+      "reason": "Exact sampled weights and exact geometry/capacity bounds already fail their structure, >=5% whole-request, quality, or placement gates."
+    }
+  ],
+  "terminal_artifacts": [
+    {"path": "../gemma4_mtp_acceptance_economic_bound/MTP_BOUND.json", "sha256": "8f31a7071f2a4d0f7a31341211351327ce08264a4cf5b8644f0054a57636b795", "label": "derived_and_synthetic"},
+    {"path": "../exact_fp8_checkpoint_delivery_route/DELIVERY_ROUTE.json", "sha256": "3b488da5060674e4bc545fb1e3ea458c01c4492f696ba7e9c7b255e59b40dedc", "label": "measured metadata plus source inspection"},
+    {"path": "../exact_w4_producer_quality_route/ROUTE_DECISION.json", "sha256": "8253d13a33de76bdaeb9eed34365bbe6187208eae03268127a6b49d3ae99f475", "label": "measured metadata plus source inspection"},
+    {"path": "../gemma_l40s_w4_c16_economic_bound/W4_C16_BOUND_V2.json", "sha256": "b697e8c43bcdecac9b0261ab79e363b39e11e9c37a0be282d357a21c9e24fe9d", "label": "derived phase/capacity bound"},
+    {"path": "../w4_48gb_hardware_price_screen/HARDWARE_SCREEN.json", "sha256": "6d8695147d3c72995e5e0089288e5191e66e727192207f667f2b9adfbf846a20", "label": "derived and vendor/public-price prior"},
+    {"path": "../exact_gemma4_fullstack_alternative_prior/ALTERNATIVE_PRIOR.json", "sha256": "7d76b9036dd8e10f5d7ab328ae80218c314116d15b98c53860e2ce7b643099fd", "label": "external support prior"},
+    {"path": "../sglang_h100_capacity_economic_surface/CAPACITY_COST_BOUND.json", "sha256": "6c8332833d073f2e144769a724d479d8b4c5c7301883376080ce5dc7a86395a0", "label": "derived exact-runtime capacity negative"},
+    {"path": "../mi355x_exact_gemma4_runtime_cost_screen/MI355X_SCREEN.json", "sha256": "e1095a05a1cbd85af5e9aedc0a44c16ca376e9d703371e59cb749817f0fbe94a", "label": "official support plus external-state blocker"},
+    {"path": "../h200_bf16_exact_linear_floor/artifacts/RECONCILED_TERMINAL.json", "sha256": "9f12b3ae4c8d82176f0ec9b09845c6e97ab1f278a458bd023adcbe433fd004fe", "label": "measured H200 CUDA component floor"},
+    {"path": "../gemma_l40s_fp8_exact_shape_microbench/artifacts/gemma-l40s-fp8-corr-20260717t000000z/summary.json", "sha256": "4a5634b97ace9b5c1825f72a86dd06370b4d9f4ec942a827080dfea388ebc94f", "label": "measured partial generic L40S FP8 mechanism"},
+    {"path": "../gemma_l40s_w4_marlin_component_bridge/artifacts/runtime-correction-final-20260717T061647Z/runtime-correction-terminal.json", "sha256": "27befa1451fbbb06b6d77c28d7e1ff9cc33af4d156575b02b9ebbcb71637ebcd", "label": "measured exact-image consumer resolution"},
+    {"path": "../gemma_l40s_parallel_lm_head_measurement_final/artifacts/gemma-l40s-head-final-20260717t065653z/summary.json", "sha256": "4f2f5162791b1c5643e9ebe4608e8b7583d5c3713216ec5f75d49748ddf0d15b", "label": "measured actual L40S head consumer"},
+    {"path": "../h200_campaign_economic_gate_reconciliation/H200_ECONOMIC_GATE.json", "sha256": "3f4ce08c7e3a6649c18af99f14e0d48dcaf3979ac818462f7cf159cd9dab9afd", "label": "derived current market gate"},
+    {"path": "../exact_weight_structure_intervention_screen/WEIGHT_STRUCTURE_SCREEN.json", "sha256": "ea7257c933b841733d31452f72c1843669bb59213b5e1cd6ccf8060377695216", "label": "measured exact weight samples and derived structure negatives"},
+    {"path": "../tied_vocab_projection_cost_bound/DECISION.md", "sha256": "b44546592932ba07f6307854cde6872f06be1fa3b482e8aab2271a7d702ddd43", "label": "derived exact tied-head whole-request bound"},
+    {"path": "../sliding_window_capacity_cost_bound/DECISION.md", "sha256": "5e61fc94476277797c7ed7a25387a9d6bf5ddbdaf46d5779e6ecd364d8fbaa5a", "label": "derived exact sliding-window capacity and work bound"},
+    {"path": "../text_only_vision_unload_24gb_bound/VISION_UNLOAD_BOUND.json", "sha256": "513edd203906fc36a91a8aac02b7d4a2ce6ffc1506f2c09ee7b023325c1057a2", "label": "measured header bytes plus derived capacity negative"},
+    {"path": "../../../../../../factory/data/gpu_prices.json", "sha256": "3f403d67a92fc91be85bbd27dede85f5f91c3fd2df25ef8dcef2a344acbd1e01", "label": "fresh shared production price inventory"}
+  ],
+  "scope_compliance": {
+    "provider_queried_or_mutated": false,
+    "gpu_used": false,
+    "checkpoint_read_or_copied": false,
+    "image_pulled": false,
+    "compilation": false,
+    "live_paid_owner_polled_edited_waited_on_or_inferred_from": false,
+    "spend_usd": 0.0
+  }
+}

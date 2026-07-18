@@ -1,0 +1,9 @@
+{
+  "remote_files": {
+    "fp8_actual.py": "1fceb48a6afc3bd7db75b3368b22e83cfa3d031b6d1266c24086401d33315739",
+    "fp8_single_rank.py": "c04950a15e09b8b7b462387503b3b48aa3dfd4a42d4973c5aab1cf731f26e10e",
+    "w4_actual.py": "b75606c88e8470a94af3f1cd9fb69b9a9bd1cc94dfead1fc2177fad4a6d62273",
+    "w4_single_rank.py": "fa385c81e60bcc8f519a963f35066de8b63814e6421c7cc3e24231bc00a3e426"
+  },
+  "schema_version": 1
+}

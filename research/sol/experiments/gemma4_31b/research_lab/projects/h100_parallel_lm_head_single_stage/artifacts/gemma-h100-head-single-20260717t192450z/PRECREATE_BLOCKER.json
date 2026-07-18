@@ -1,0 +1,61 @@
+{
+  "audit": {
+    "budget": {
+      "disk_rate_usd_per_hour": 0.0097222,
+      "h100_hours": 0.3,
+      "max_cost_usd": 0.64791666,
+      "provider_seconds": 1080,
+      "rate_usd_per_h100_hour": 2.15,
+      "spend_cap_usd": 1.1,
+      "wall_seconds": 1500
+    },
+    "checks": {
+      "actual_consumer_oracle_and_timings": true,
+      "adjacent_omission_preregistered": true,
+      "bounded_provider_budget": true,
+      "bounded_wall_storage": true,
+      "conditional_omitted": true,
+      "durable_user_systemd_owner": true,
+      "empty_authenticated_inventory": true,
+      "h100_placement": true,
+      "identity_assertion": true,
+      "immutable_program": true,
+      "immutable_wrapper": true,
+      "lowercase_real_create_argv": true,
+      "no_checkpoint_no_repair": true,
+      "one_primary_container": false,
+      "single_h100_disk": true,
+      "six_exact_rows": true,
+      "successful_shared_controller_mechanics": true,
+      "telemetry_archive_manifest": true,
+      "watchdog_cleanup_accounting": true
+    },
+    "classification": "internal_behavioral_precreate_audit",
+    "create": {
+      "disk_name": "gemma-h100-head-single-20260717t192450z-boot",
+      "hostname": "gemma-h100-head-single-20260717t192450z",
+      "name": "gemma-h100-head-single-20260717t192450z",
+      "platform": "gpu-h100-sxm",
+      "preset": "1gpu-16vcpu-200gb"
+    },
+    "hashes": {
+      "controller": "6356910a62c5abefe52fc035eb27e43d5b2cb73066d68ba9f8c089bca31de62b",
+      "create_argv": "79bc684dc50194c57bd1f812ee3123d256725af711468445216507c8865a6f29",
+      "program": "de7f843a07e10322446a5e173ef60df7dc14763f0924102a2a612e34bdf0ab71",
+      "wrapper": "e7a947f9124541e387af448c4a11653f7040b45c78c2ebe9e036fd94f91ec255"
+    },
+    "inventory": {
+      "disks": [],
+      "instances": []
+    },
+    "pass": false,
+    "placement": {
+      "disk_gib": 100,
+      "platform": "gpu-h100-sxm",
+      "preset": "1gpu-16vcpu-200gb"
+    },
+    "schema_version": 1
+  },
+  "classification": "internal_behavioral_precreate_audit_failed",
+  "schema_version": 1
+}

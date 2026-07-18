@@ -1,0 +1,18 @@
+{
+  "status": "complete",
+  "priority": 205,
+  "researcher_profile": "deep",
+  "summary": "Terminal oracle_invalid: constant same-sign W/X collapse to uniform extreme FP8 codes and create a coherent reduction whose error follows k and m, while the BF16-only oracle cannot separate accumulation from representation loss.",
+  "next_action": "Director may fold the corrected dual-reference sentinel into the already-independent direct-kernel packet; do not open another gate project.",
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 20,
+  "compute_budget": "2 local CPU-hours; no GPU",
+  "storage_budget": "256 MiB retained plus 256 MiB temporary",
+  "active_session": null,
+  "last_result_classification": "oracle_invalid",
+  "terminal_artifact": {
+    "path": "MECHANISM.json",
+    "sha256": "f65eb0f1a50180cdd87b420e1377b1d28f9260da16515ba1b5620203183f436c"
+  }
+}

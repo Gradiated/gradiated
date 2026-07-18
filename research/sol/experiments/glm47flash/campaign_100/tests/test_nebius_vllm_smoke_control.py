@@ -185,6 +185,29 @@ class NebiusVllmSmokeControlTests(unittest.TestCase):
         self.assertIn("--system", run.call_args_list[0].args[0])
         self.assertIn("--system", run.call_args_list[1].args[0])
 
+    def test_cleanup_watchdog_runtime_includes_provider_deletion_reserve(self):
+        launched = CompletedProcess(["systemd-run"], 0, stdout="", stderr="")
+        shown = CompletedProcess(
+            ["systemctl"],
+            0,
+            stdout="Id=glm-test-watchdog.service\nActiveState=active\nMainPID=456\nControlGroup=/system.slice/watchdog\n",
+            stderr="",
+        )
+        with (
+            patch("vllm_smoke_control.time.time", return_value=1000.0),
+            patch(
+                "vllm_smoke_control.subprocess.run",
+                side_effect=[launched, shown],
+            ) as run,
+        ):
+            start_independent_watchdog(
+                "instance-1", "disk-1", 2000.0, "glm-test-watchdog"
+            )
+        self.assertIn(
+            "--property=RuntimeMaxSec=1600s",
+            run.call_args_list[0].args[0],
+        )
+
     def test_maxseq36_is_exposed_by_the_controller_cli(self):
         source = (ROOT / "nebius" / "vllm_smoke_control.py").read_text()
         self.assertIn('choices=(8, 16, 32, 36, 64)', source)

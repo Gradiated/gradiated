@@ -1,0 +1,34 @@
+{
+  "cleanup": {
+    "cleanup_elapsed_seconds": 58.614,
+    "final_disk_count": 0,
+    "final_instance_count": 0,
+    "pass": true
+  },
+  "classification": "h100_w4_full_endpoint_runtime_economic_closure",
+  "decision": "fail_complete_request_ceiling",
+  "evidence": {
+    "c128": {
+      "complete_count": 128,
+      "concurrency": 128,
+      "failure_count": 0,
+      "nonempty_outputs": true,
+      "requests_per_second": 0.609013487156557,
+      "service_seconds_per_request": 1.6419997604140635,
+      "terminal": "c128_repaired_terminal.json"
+    },
+    "c96": {
+      "complete_count": 96,
+      "concurrency": 96,
+      "failure_count": 0,
+      "nonempty_outputs": true,
+      "requests_per_second": 0.5304306134812964,
+      "service_seconds_per_request": 1.8852607194687512,
+      "terminal": "c96_repaired_terminal.json"
+    }
+  },
+  "pass": false,
+  "performance_proxy_only": true,
+  "reason": "Both structurally valid FP8-KV complete-request measurements exceed the 0.5479752315195353 s/request planning ceiling.",
+  "target_service_seconds_per_request": 0.5479752315195353
+}

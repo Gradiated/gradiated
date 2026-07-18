@@ -1,0 +1,20 @@
+{"phase": "repair_lease_preseeded", "retained_until_epoch": 1784358702.7530787, "timestamp": "2026-07-18T06:10:53.365595Z"}
+{"instance_id": "computeinstance-e00cbyv3mdazv0cbje", "phase": "provider_create", "timestamp": "2026-07-18T06:11:41.765171Z", "watchdog": {"control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-h200-w4-endpoint-20260718t06101784347852z-watchdog.service", "deadline_epoch": 1784358702.7530787, "main_pid": 2301625, "unit": "gemma-h200-w4-endpoint-20260718t06101784347852z-watchdog.service", "unit_manager": "user"}}
+{"phase": "workspace", "state": "start", "timeout_seconds": 60, "timestamp": "2026-07-18T06:12:19.295855Z"}
+{"phase": "workspace", "returncode": 0, "state": "complete", "timestamp": "2026-07-18T06:12:19.803230Z"}
+{"phase": "checkpoint_transfer", "state": "start", "timestamp": "2026-07-18T06:12:20.738621Z"}
+{"attempts": 1, "elapsed_seconds": 347.3246512360056, "files_reused": 0, "files_scheduled": 10, "files_total": 10, "marker_manifest_match": false, "phase": "checkpoint_transfer", "reusable_bytes": 0, "scheduled_bytes": 19220755443, "state": "complete", "timestamp": "2026-07-18T06:18:08.064374Z", "total_bytes": 19220755443}
+{"phase": "image_pull", "state": "start", "timeout_seconds": 1800, "timestamp": "2026-07-18T06:18:08.064447Z"}
+{"phase": "image_pull", "returncode": 0, "state": "complete", "timestamp": "2026-07-18T06:21:27.992075Z"}
+{"phase": "server_launch", "state": "start", "timeout_seconds": 180, "timestamp": "2026-07-18T06:21:27.992128Z"}
+{"phase": "server_launch", "returncode": 0, "state": "complete", "timestamp": "2026-07-18T06:21:53.195109Z"}
+{"phase": "telemetry_start", "state": "start", "timeout_seconds": 60, "timestamp": "2026-07-18T06:21:53.195152Z"}
+{"phase": "telemetry_start", "returncode": 0, "state": "complete", "timestamp": "2026-07-18T06:21:53.748724Z"}
+{"phase": "readiness_failure_diagnostic_capture", "state": "start", "timeout_seconds": 120, "timestamp": "2026-07-18T06:42:00.626807Z"}
+{"phase": "readiness_failure_diagnostic_capture", "returncode": 0, "state": "complete", "timestamp": "2026-07-18T06:42:01.385906Z"}
+{"exit_code": "1", "oom_killed": false, "phase": "readiness_failure", "state": "diagnostic_retrieved", "timestamp": "2026-07-18T06:42:05.758784Z"}
+{"event": "repair_window_open", "maximum_seconds": 600.0, "timestamp": "2026-07-18T06:42:05.758866Z"}
+{"action": "retain", "event": "repair_decision_received", "timestamp": "2026-07-18T06:42:05.758942Z"}
+{"event": "repair_retention_extended", "retained_until_epoch": 1784358702.7530787, "timestamp": "2026-07-18T06:42:05.759045Z"}
+{"event": "repair_window_expired", "timestamp": "2026-07-18T07:11:45.849172Z"}
+{"error_type": "RuntimeError", "message": "server readiness timeout or server exit", "phase": "failure", "timestamp": "2026-07-18T07:12:37.021377Z"}

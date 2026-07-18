@@ -1,0 +1,4 @@
+{"create_returncode": 0, "event": "instance_created", "instance_id": "computeinstance-e00cgdda9w2c0r48w7", "reconciled_nonzero_exit": false, "timestamp": "2026-07-17T17:44:01.849919Z", "watchdog": {"control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-h100-w4-marlin-20260717t17431784302994z-watchdog.service", "deadline_epoch": 1784311394.6522176, "main_pid": 2111499, "unit": "gemma-h100-w4-marlin-20260717t17431784302994z-watchdog.service", "unit_manager": "user"}}
+{"elapsed_seconds": 83.935, "event": "ssh_ready", "timestamp": "2026-07-17T17:44:39.587801Z"}
+{"error_type": "FileNotFoundError", "event": "experiment_error", "message": "[Errno 2] No such file or directory: '/tmp/tmp_rhskhii/h100-w4-primary/manifest.json'", "timestamp": "2026-07-17T17:52:43.532040Z"}
+{"cleanup_pass": true, "event": "cleanup_verified", "timestamp": "2026-07-17T17:52:43.532395Z"}

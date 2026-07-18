@@ -1,0 +1,22 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "researcher_profile": "execution",
+  "summary": "Content-bound H100 W4 Marlin exact-shape falsifier traces the actual producer/consumer path, corrects the all-zero oracle, isolates SM90 one-CTA/shared-memory and L2 effects, and binds a sentinel plus 24-row sweep; no CUDA, performance, checkpoint-quality, or endpoint claim.",
+  "next_action": null,
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 30,
+  "compute_budget": "3 local CPU-hours; no GPU",
+  "storage_budget": "768 MiB retained plus 384 MiB temporary",
+  "active_session": null,
+  "last_result_classification": "content_bound_h100_w4_direct_falsifier",
+  "terminal_artifact": "MECHANISM.json",
+  "terminal_artifact_sha256": "db28290a17865dae0dca487036abe96fe215fe971d868c6cafd54a43cb3eca94",
+  "local_contract_artifact": "CPU_CONTRACT.json",
+  "local_contract_pass": true,
+  "cuda_executed": false,
+  "provider_mutated": false,
+  "performance_claim": "none",
+  "quality_claim": "none"
+}

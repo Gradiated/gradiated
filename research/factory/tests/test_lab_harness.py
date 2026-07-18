@@ -20,6 +20,21 @@ from grad_research.lab_harness import (
 )
 
 
+def pool_bench_spec() -> dict:
+    return {
+        "id": "gemma-h200-1",
+        "provider": "nebius",
+        "accelerator": "h200-sxm",
+        "resource": {"instance_id": "instance-1"},
+        "contents": {"model": "google/gemma-4-31b-it", "runtime": "sglang"},
+        "lifecycle": {
+            "watchdog": {"unit": "gpu-watchdog.service", "unit_manager": "user"},
+            "deadline_utc": "2099-07-18T14:00:00Z",
+        },
+        "hourly_cost_usd": 2.65,
+    }
+
+
 class FakeRunner:
     def __init__(self, lab_dir: Path):
         self.lab_dir = lab_dir
@@ -139,6 +154,14 @@ class SimpleLabHarnessTests(unittest.TestCase):
             self.assertIn("$research-director", runner.calls[0]["prompt"])
             self.assertIn("$researcher", runner.calls[1]["prompt"])
             self.assertIn("$research-supervisor", runner.calls[-1]["prompt"])
+            self.assertIn("Shared GPU bench inventory", runner.calls[0]["prompt"])
+            self.assertIn("director owns allocation and teardown", runner.calls[0]["prompt"])
+            self.assertIn("claim a compatible lab bench", runner.calls[1]["prompt"])
+            self.assertIn("never create or tear down a provider GPU", runner.calls[1]["prompt"])
+            self.assertIn("warm-bench reuse", runner.calls[-1]["prompt"])
+            self.assertIn("provider resources that are absent from the inventory", runner.calls[-1]["prompt"])
+            self.assertIn("mark the registered bench draining", runner.calls[-1]["prompt"])
+            self.assertIn("Do not perform provider cleanup", runner.calls[-1]["prompt"])
             self.assertIn(
                 "The model-specific objective and intervention scope",
                 runner.calls[-1]["prompt"],
@@ -147,20 +170,36 @@ class SimpleLabHarnessTests(unittest.TestCase):
                 "decision-relevant research progress per wall-clock hour",
                 runner.calls[0]["prompt"],
             )
+            self.assertIn("Current active portfolio:", runner.calls[0]["prompt"])
+            self.assertIn("Latest director decision:", runner.calls[0]["prompt"])
+            self.assertIn("Latest supervisor handoff:", runner.calls[0]["prompt"])
+            self.assertIn("Do not leave a confirmed orphan merely documented", runner.calls[0]["prompt"])
             self.assertIn(
-                "exclusive for provider mutation and spend, not for offline scientific work",
+                "Do not begin by reading generated `STATUS.md`, full logs",
                 runner.calls[0]["prompt"],
             )
             self.assertIn(
-                "preregister one adjacent conditional follow-up",
+                "Do not wait, sleep, poll, monitor active work, or spawn internal subagents",
                 runner.calls[0]["prompt"],
             )
             self.assertIn(
-                "across already-ranked project boundaries",
+                "assign another researcher to prepare the best likely follow-up offline",
                 runner.calls[0]["prompt"],
             )
-            self.assertIn("existing retained-session path", runner.calls[0]["prompt"])
-            self.assertIn("one sequential owner/watchdog", runner.calls[0]["prompt"])
+            self.assertIn(
+                "exclusive only for mutation of that bench",
+                runner.calls[0]["prompt"],
+            )
+            self.assertIn("overall researcher-process cap of 2", runner.calls[0]["prompt"])
+            self.assertIn(
+                "keep the lab bench for in-place repair",
+                runner.calls[0]["prompt"],
+            )
+            self.assertIn(
+                "mutable retained development environment",
+                runner.calls[0]["prompt"],
+            )
+            self.assertIn("releasing never tears one down", runner.calls[0]["prompt"])
             self.assertIn("latency tradeoffs as authoritative", runner.calls[0]["prompt"])
             self.assertIn(
                 "produce new decision-relevant evidence quickly",
@@ -173,6 +212,10 @@ class SimpleLabHarnessTests(unittest.TestCase):
             )
             self.assertIn(
                 "do not substitute another readiness artifact",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "absence of project-local code is not a typed blocker",
                 runner.calls[1]["prompt"],
             )
             self.assertIn("Latest director decision", runner.calls[1]["prompt"])
@@ -196,9 +239,40 @@ class SimpleLabHarnessTests(unittest.TestCase):
             self.assertIn("trade latency as allowed", runner.calls[1]["prompt"])
             self.assertTrue((config.lab_dir / "STATUS.md").is_file())
             self.assertTrue((config.lab_dir / "runtime" / "events.jsonl").is_file())
+            self.assertTrue((config.lab_dir / "runtime" / "gpus.json").is_file())
             self.assertTrue((config.lab_dir / "projects" / "kernel" / "RESEARCH_LOG.md").is_file())
             self.assertTrue((config.lab_dir / "projects" / "kernel" / "artifacts").is_dir())
             self.assertTrue((config.lab_dir / "projects" / "scheduler" / "artifacts").is_dir())
+            harness.close()
+
+    def test_gpu_inventory_is_rendered_and_changes_wake_the_director(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = self._config(root)
+            harness = LabHarness(config, runner=FakeRunner(config.lab_dir))
+            before = harness._director_observation_sha256()
+            harness.gpu_pool.register(pool_bench_spec())
+            after = harness._director_observation_sha256()
+
+            status = harness.render_status()
+
+            self.assertNotEqual(before, after)
+            self.assertEqual("gemma-h200-1", status["gpu_pool"]["benches"][0]["id"])
+            self.assertIn("## GPU benches", (config.lab_dir / "STATUS.md").read_text())
+            harness.close()
+
+    def test_supervisor_handoff_changes_wake_the_director(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = self._config(root)
+            harness = LabHarness(config, runner=FakeRunner(config.lab_dir))
+            before = harness._director_observation_sha256()
+            with (config.lab_dir / "SUPERVISOR_LOG.md").open("a") as handle:
+                handle.write("\nOrphan bench needs director cleanup.\n")
+
+            after = harness._director_observation_sha256()
+
+            self.assertNotEqual(before, after)
             harness.close()
 
     def test_deep_profile_routes_causal_work_to_sol(self):
@@ -241,6 +315,111 @@ class SimpleLabHarnessTests(unittest.TestCase):
             )
             harness.close()
 
+    def test_development_session_keeps_the_launching_researcher_route(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = self._config(root)
+            runner = FakeRunner(config.lab_dir)
+            harness = LabHarness(
+                config,
+                runner=runner,
+                unit_is_active=lambda unit, manager: (
+                    unit == "retained.service" and manager == "user"
+                ),
+            )
+            project = config.lab_dir / "projects" / "retained"
+            project.mkdir()
+            (project / "PROJECT.md").write_text("# retained\n")
+            (project / "STATUS.json").write_text(
+                json.dumps(
+                    {
+                        "status": "active",
+                        "priority": 10,
+                        "researcher_profile": "execution",
+                        "active_session": {
+                            "mode": "development",
+                            "unit": "retained.service",
+                            "unit_manager": "user",
+                        },
+                    }
+                )
+            )
+            harness.state["project_routes"]["retained"] = "gpt-sol"
+
+            harness._run_researchers()
+
+            call = next(
+                call
+                for call in runner.calls
+                if call["role"] == "researcher" and call["label"] == "retained"
+            )
+            self.assertEqual("gpt-sol", call["model"])
+            harness.close()
+
+    def test_unchanged_development_session_waits_for_a_new_owner_artifact(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = self._config(root)
+            runner = FakeRunner(config.lab_dir)
+            harness = LabHarness(
+                config,
+                runner=runner,
+                unit_is_active=lambda unit, manager: (
+                    unit == "retained.service" and manager == "user"
+                ),
+            )
+            project = config.lab_dir / "projects" / "retained"
+            artifact_root = project / "artifacts" / "session"
+            artifact_root.mkdir(parents=True)
+            events = artifact_root / "events.jsonl"
+            events.write_text('{"event":"ssh_ready"}\n')
+            (project / "PROJECT.md").write_text("# retained\n")
+            (project / "STATUS.json").write_text(
+                json.dumps(
+                    {
+                        "status": "active",
+                        "priority": 10,
+                        "active_session": {
+                            "mode": "development",
+                            "unit": "retained.service",
+                            "unit_manager": "user",
+                            "artifact_root": "artifacts/session",
+                        },
+                    }
+                )
+            )
+
+            harness._run_researchers()
+            runner.calls.clear()
+            harness._run_researchers()
+
+            self.assertFalse(
+                any(call["role"] == "researcher" for call in runner.calls)
+            )
+            deferred = [
+                json.loads(line)
+                for line in harness.events_path.read_text().splitlines()
+            ]
+            self.assertTrue(
+                any(
+                    event.get("event") == "researcher_deferred"
+                    and event.get("label") == "retained"
+                    and event.get("reason") == "unchanged_development_session"
+                    for event in deferred
+                )
+            )
+
+            events.write_text(
+                '{"event":"ssh_ready"}\n'
+                '{"event":"repair_window_open"}\n'
+            )
+            harness._run_researchers()
+
+            self.assertTrue(
+                any(call["role"] == "researcher" for call in runner.calls)
+            )
+            harness.close()
+
     def test_threads_survive_restart_and_completed_projects_are_not_scheduled(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -275,6 +454,69 @@ class SimpleLabHarnessTests(unittest.TestCase):
                 )
             )
             second.close()
+
+    def test_exhausted_researcher_thread_is_replaced_on_the_same_route(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = self._config(root)
+            runner = FakeRunner(config.lab_dir)
+            harness = LabHarness(config, runner=runner)
+            project = config.lab_dir / "projects" / "retained"
+            project.mkdir()
+            (project / "PROJECT.md").write_text("# retained\n")
+            (project / "STATUS.json").write_text(
+                json.dumps(
+                    {
+                        "status": "active",
+                        "priority": 10,
+                        "summary": "ready",
+                        "next_action": "implement the runner",
+                    }
+                )
+            )
+            trace = config.lab_dir / "runtime" / "traces" / "exhausted.jsonl"
+            trace.parent.mkdir(parents=True, exist_ok=True)
+            trace.write_text(
+                json.dumps(
+                    {
+                        "type": "item.completed",
+                        "item": {
+                            "type": "agent_message",
+                            "text": "I cannot continue in the remaining response capacity.",
+                        },
+                    }
+                )
+                + "\n"
+            )
+            harness.state["threads"]["projects"]["retained"] = "exhausted-thread"
+            harness.state["project_routes"]["retained"] = "gpt-terra"
+            harness.state["last_runs"]["researcher:retained"] = {
+                "model": "gpt-terra",
+                "stdout_path": str(trace),
+            }
+
+            harness._run_researchers()
+
+            call = next(
+                call
+                for call in runner.calls
+                if call["role"] == "researcher" and call["label"] == "retained"
+            )
+            self.assertIsNone(call["thread_id"])
+            self.assertEqual("gpt-terra", call["model"])
+            events = [
+                json.loads(line)
+                for line in harness.events_path.read_text().splitlines()
+            ]
+            self.assertTrue(
+                any(
+                    event.get("event") == "researcher_thread_reset"
+                    and event.get("label") == "retained"
+                    and event.get("reason") == "response_capacity_exhausted"
+                    for event in events
+                )
+            )
+            harness.close()
 
     def test_codex_child_environment_uses_saved_login_not_api_key(self):
         with patch.dict(
@@ -376,14 +618,12 @@ class SimpleLabHarnessTests(unittest.TestCase):
 
             self.assertIn("An agent-turn boundary is not a scientific wall-clock budget", prompt)
             self.assertIn("deterministic local work", prompt)
-            self.assertIn("keep every dependent provider create gated", prompt)
             self.assertIn("Do not kill and restart correct local computation", prompt)
-            self.assertIn("If you start a durable local or provider experiment owner", prompt)
+            self.assertIn("If you start a durable local computation", prompt)
             self.assertIn("STATUS.json.active_session", prompt)
             self.assertIn("canonical `unit` and `unit_manager` keys", prompt)
-            self.assertIn("return immediately", prompt)
-            self.assertIn("Do not sleep, poll checkpoint transfer", prompt)
-            self.assertIn("reschedule terminal reconciliation", prompt)
+            self.assertIn("claimed GPU bench remains lab-owned", prompt)
+            self.assertIn("director supplies a lab bench", prompt)
             harness.close()
 
     def test_director_prompt_uses_resource_budgets_not_agent_turn_deadlines(self):
@@ -552,7 +792,69 @@ class SimpleLabHarnessTests(unittest.TestCase):
             )
             harness.close()
 
-    def test_unchanged_durable_session_defers_director_and_supervisor(self):
+    def test_development_session_stays_attached_while_other_paid_work_runs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = self._config(root)
+            runner = FakeRunner(config.lab_dir)
+            harness = LabHarness(
+                config,
+                runner=runner,
+                unit_is_active=lambda unit, manager: (
+                    unit == "development.service" and manager == "user"
+                ),
+            )
+            for name, priority, spend, active_session in (
+                (
+                    "development",
+                    30,
+                    1.0,
+                    {
+                        "unit": "development.service",
+                        "unit_manager": "user",
+                        "mode": "development",
+                        "state": "runtime_ready",
+                    },
+                ),
+                ("other-paid", 20, 1.0, None),
+                ("offline", 10, 0.0, None),
+            ):
+                project = config.lab_dir / "projects" / name
+                project.mkdir()
+                (project / "PROJECT.md").write_text(f"# {name}\n")
+                (project / "STATUS.json").write_text(
+                    json.dumps(
+                        {
+                            "status": "active",
+                            "priority": priority,
+                            "authorized_spend_usd": spend,
+                            "active_session": active_session,
+                        }
+                    )
+                )
+
+            harness._run_researchers()
+
+            researcher_calls = [
+                call for call in runner.calls if call["role"] == "researcher"
+            ]
+            self.assertEqual(
+                ["development", "other-paid"],
+                [call["label"] for call in researcher_calls],
+            )
+            development_prompt = researcher_calls[0]["prompt"]
+            self.assertIn("Mutable retained development session", development_prompt)
+            self.assertIn(
+                "Do not create a replacement resource for it", development_prompt
+            )
+            self.assertIn(
+                "Other projects may own independent GPU sessions concurrently",
+                development_prompt,
+            )
+            self.assertIn("patch the local or remote program", development_prompt)
+            harness.close()
+
+    def test_unchanged_durable_session_defers_director_but_runs_periodic_supervisor(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             config = self._config(root)
@@ -586,7 +888,7 @@ class SimpleLabHarnessTests(unittest.TestCase):
             status = harness.cycle()
 
             self.assertEqual(1, status["cycle_count"])
-            self.assertEqual([], runner.calls)
+            self.assertEqual(["supervisor"], [call["role"] for call in runner.calls])
             events = [
                 json.loads(line)
                 for line in harness.events_path.read_text().splitlines()
@@ -639,7 +941,7 @@ class SimpleLabHarnessTests(unittest.TestCase):
             self.assertEqual("director", runner.calls[0]["role"])
             harness.close()
 
-    def test_only_one_provider_capable_project_is_scheduled_per_cycle(self):
+    def test_multiple_provider_capable_projects_run_concurrently(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             config = self._config(root)
@@ -669,37 +971,66 @@ class SimpleLabHarnessTests(unittest.TestCase):
                 call for call in runner.calls if call["role"] == "researcher"
             ]
             self.assertEqual(
-                ["paid-primary", "offline"],
+                ["paid-primary", "paid-secondary"],
                 [call["label"] for call in researcher_calls],
-            )
-            events = [
-                json.loads(line)
-                for line in harness.events_path.read_text().splitlines()
-            ]
-            self.assertTrue(
-                any(
-                    event.get("event") == "researcher_deferred"
-                    and event.get("label") == "paid-secondary"
-                    and event.get("reason") == "provider_lane_reserved"
-                    for event in events
-                )
             )
             harness.close()
 
-    def test_undeclared_lab_owner_reserves_provider_lane(self):
+    def test_researcher_cap_limits_paid_projects_to_five(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            config = self._config(root)
-            runner = FakeRunner(config.lab_dir)
-            harness = LabHarness(
-                config,
-                runner=runner,
-                lab_active_units=lambda: [
-                    {"unit": "component.service", "unit_manager": "user"}
-                ],
+            base = self._config(root)
+            config = LabConfig(
+                **{
+                    **base.__dict__,
+                    "max_parallel_researchers": 5,
+                }
             )
+            runner = FakeRunner(config.lab_dir)
+            harness = LabHarness(config, runner=runner)
+            for index in range(6):
+                name = f"paid-{index}"
+                project = config.lab_dir / "projects" / name
+                project.mkdir()
+                (project / "PROJECT.md").write_text(f"# {name}\n")
+                (project / "STATUS.json").write_text(
+                    json.dumps(
+                        {
+                            "status": "active",
+                            "priority": 100 - index,
+                            "authorized_spend_usd": 1.0,
+                        }
+                    )
+                )
+
+            harness._run_researchers()
+
+            researcher_calls = [
+                call for call in runner.calls if call["role"] == "researcher"
+            ]
+            self.assertEqual(
+                [f"paid-{index}" for index in range(5)],
+                [call["label"] for call in researcher_calls],
+            )
+            harness.close()
+
+    def test_campaign_spend_cap_reserves_projects_and_rejects_overcommit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = self._config(root)
+            config = LabConfig(
+                **{
+                    **base.__dict__,
+                    "max_parallel_researchers": 5,
+                    "spend_cap_usd": 2.0,
+                    "spend_cap_starts_at": "2026-07-17T21:59:00Z",
+                }
+            )
+            runner = FakeRunner(config.lab_dir)
+            harness = LabHarness(config, runner=runner)
             for name, priority, spend in (
-                ("paid", 20, 1.0),
+                ("paid-primary", 30, 1.5),
+                ("paid-over-cap", 20, 1.0),
                 ("offline", 10, 0.0),
             ):
                 project = config.lab_dir / "projects" / name
@@ -721,8 +1052,22 @@ class SimpleLabHarnessTests(unittest.TestCase):
                 call for call in runner.calls if call["role"] == "researcher"
             ]
             self.assertEqual(
-                ["offline"], [call["label"] for call in researcher_calls]
+                ["paid-primary", "offline"],
+                [call["label"] for call in researcher_calls],
             )
+            self.assertIn(
+                "cumulative provider-spend ceiling across all of its allocations",
+                researcher_calls[0]["prompt"],
+            )
+            self.assertIn(
+                "Paid provider mutation is forbidden",
+                researcher_calls[1]["prompt"],
+            )
+            spend_cap = json.loads(harness.spend_cap_path.read_text())
+            self.assertEqual(
+                {"paid-primary"}, set(spend_cap["reservations"])
+            )
+            self.assertEqual(0.5, harness._spend_cap_snapshot()["available_usd"])
             events = [
                 json.loads(line)
                 for line in harness.events_path.read_text().splitlines()
@@ -730,14 +1075,34 @@ class SimpleLabHarnessTests(unittest.TestCase):
             self.assertTrue(
                 any(
                     event.get("event") == "researcher_deferred"
-                    and event.get("label") == "paid"
-                    and event.get("reason") == "provider_lane_reserved"
-                    and event.get("observed_active_units")
-                    == [{"unit": "component.service", "unit_manager": "user"}]
+                    and event.get("label") == "paid-over-cap"
+                    and event.get("reason") == "spend_cap_exceeded"
                     for event in events
                 )
             )
             harness.close()
+
+    def test_campaign_spend_cap_cannot_be_reset_implicitly(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = self._config(root)
+            configured = LabConfig(
+                **{
+                    **base.__dict__,
+                    "spend_cap_usd": 100.0,
+                    "spend_cap_starts_at": "2026-07-17T21:59:00Z",
+                }
+            )
+            first = LabHarness(configured, runner=FakeRunner(configured.lab_dir))
+            first.close()
+            changed = LabConfig(
+                **{
+                    **configured.__dict__,
+                    "spend_cap_starts_at": "2026-07-18T00:00:00Z",
+                }
+            )
+            with self.assertRaisesRegex(RuntimeError, "cannot be reset"):
+                LabHarness(changed, runner=FakeRunner(changed.lab_dir))
 
     def test_activating_systemd_unit_counts_as_owned_but_failed_unit_does_not(self):
         with patch("grad_research.lab_harness.subprocess.run") as run:

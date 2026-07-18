@@ -1,0 +1,39 @@
+{
+  "bound": {
+    "admitted_concurrency": [
+      16,
+      32
+    ],
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "component_combined_seconds_per_request": {
+      "16": 0.4424622218152508,
+      "32": 0.22476958992984145
+    },
+    "h200_planning_base_rps": [
+      2.094181,
+      2.118591
+    ],
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_image": "vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "staging_sha256": "e9c4ab2b5b52646c3ffac2f5c6165fc627adaccc1dc77fd2adc59b6e16318295",
+    "trace_sha256": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68"
+  },
+  "checks": {
+    "brief_narrowing": true,
+    "checkpoint_hash": true,
+    "checkpoint_pass": true,
+    "component_decision": true,
+    "component_hash": true,
+    "fixed_staging_hash": true,
+    "gate_hash": true,
+    "market_gate": true,
+    "model_revision_cross_source": true,
+    "runtime": true,
+    "trace_hash": true,
+    "workload": true
+  },
+  "pass": true,
+  "schema_version": 1,
+  "type": "director_paid_endpoint_identity_assertion"
+}

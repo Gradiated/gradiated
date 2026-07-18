@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "priority": 195,
+  "researcher_profile": "deep",
+  "summary": "Pinned-source trace rejects cross-layer hybrid fusion and retains FP8 paged KV: corrected exact BF16 reads are 429.133 GB/request, and the conservative H100 peak-HBM saving bound is 58.447 ms/request (10.67% of planning service time).",
+  "next_action": "Director may admit the content-bound actual paged producer/consumer BF16-vs-FP8 H100 falsifier in MECHANISM.json; first bind one immutable image to the pinned source revision.",
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 30,
+  "compute_budget": "3 local CPU-hours; no GPU",
+  "storage_budget": "512 MiB retained plus 256 MiB temporary",
+  "active_session": null,
+  "last_result_classification": "content_bound_exact_shape_fp8_kv_falsifier",
+  "terminal_artifact": {
+    "path": "MECHANISM.json",
+    "sha256": "3960c453e88b1a12e01351d2062dbaa7f8a800e63fe6674e997ddbbcfeebdda1"
+  },
+  "resources_used": {
+    "provider_queries": 0,
+    "provider_mutations": 0,
+    "gpu_seconds": 0,
+    "spend_usd": 0.0,
+    "retained_storage_bytes": 33847
+  },
+  "evidence_boundary": "Source-backed and exact-geometry analytical H100 peak bound only; no achieved H100 timing, endpoint throughput, quality, or economic acceptance claim."
+}

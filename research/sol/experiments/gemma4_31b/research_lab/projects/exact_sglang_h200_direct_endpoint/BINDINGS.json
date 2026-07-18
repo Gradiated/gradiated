@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "model": "google/gemma-4-31B-it",
+  "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "authoritative_inputs": [
+    {
+      "role": "sglang_runtime_and_model_packet",
+      "path": "../sglang_gemma4_exact_precreate_binding/START_PACKET.json",
+      "sha256": "20bb47c82e7ca258423f5494b96e60b7a90e3dbad807cc6595a065ed0c380846"
+    },
+    {
+      "role": "verified_bf16_checkpoint_terminal",
+      "path": "../sglang_h200_matched_endpoint_falsifier/artifacts/checkpoint-owner-20260717T072831Z/CHECKPOINT_TERMINAL.json",
+      "sha256": "5f0765fa37f308e21d665571a92c29ba1998b22b5ee67d1edbfac103dafec481"
+    },
+    {
+      "role": "exact_request_trace",
+      "path": "../gemma_exact_cache_trace_contract/TRACE_PACKET.json",
+      "sha256": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68"
+    },
+    {
+      "role": "h200_economic_gate",
+      "path": "../h200_campaign_economic_gate_reconciliation/H200_ECONOMIC_GATE.json",
+      "sha256": "3f4ce08c7e3a6649c18af99f14e0d48dcaf3979ac818462f7cf159cd9dab9afd"
+    },
+    {
+      "role": "h200_bf16_component_floor",
+      "path": "../h200_bf16_exact_linear_floor/artifacts/RECONCILED_TERMINAL.json",
+      "sha256": "9f12b3ae4c8d82176f0ec9b09845c6e97ab1f278a458bd023adcbe433fd004fe"
+    },
+    {
+      "role": "corrected_retained_h200_lifecycle",
+      "path": "../h200_w4_full_endpoint_background_frontier/h200_endpoint_owner.py",
+      "sha256": "a7f5eadcf3d3cd70dbf729e737dd7b2cb5e026b539e34057b2c1f11913aa3ff5"
+    },
+    {
+      "role": "corrected_owner_regression",
+      "path": "../h200_w4_full_endpoint_background_frontier/test_owner_regression.py",
+      "sha256": "f156238bc910724ced75f9ee1da14a8f694e8c6bed18a22e0bc700d03bbc4963"
+    }
+  ],
+  "checkpoint": {
+    "root": "../sglang_h200_matched_endpoint_falsifier/artifacts/checkpoint-owner-20260717T072831Z/checkpoint",
+    "files": 8,
+    "total_bytes": 62578655208,
+    "weight_bytes": 62546338248,
+    "terminal_pass": true
+  },
+  "runtime": {
+    "image": "docker.io/lmsysorg/sglang:dev-gemma4@sha256:380cc6c6654b479c464177aa684aca520d6bd6e9833b23eba1df2f8396f63427",
+    "amd64_child_manifest": "sha256:93379b0bc29b5724c6b5b787020eb9803d80e4ce17fabbccad62108c4164e318",
+    "source_commit": "2813cb6d9a5b6e8fb02435647917e6f1652d7940",
+    "weights": "bfloat16",
+    "kv_cache": "fp8_e5m2",
+    "tensor_parallel": 1
+  },
+  "workload": {
+    "prompt_tokens": 4214,
+    "output_tokens": 358,
+    "cache_prompt_fraction": 0.127,
+    "primary_concurrency": 32
+  },
+  "economic_gate": {
+    "planning_h200_usd_per_hour": 3.25,
+    "strict_required_completed_requests_per_second": 2.118591,
+    "strict_service_seconds_per_request": 0.47201182295214134,
+    "measured_c32_linear_plus_head_floor_seconds_per_request": 0.22476958992984145
+  },
+  "placement": {
+    "platform": "gpu-h200-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "disk_gib": 250
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "classification": "typed_paid_endpoint_failure",
+  "error_type": "StockError",
+  "instance_id": "computeinstance-e00y1j6wgrw9jmrp0k",
+  "message": "input transfer failed",
+  "observed_epoch": 1784292338.0964084,
+  "provider_mutations": 1,
+  "schema_version": 1,
+  "stage": "program_transfer"
+}

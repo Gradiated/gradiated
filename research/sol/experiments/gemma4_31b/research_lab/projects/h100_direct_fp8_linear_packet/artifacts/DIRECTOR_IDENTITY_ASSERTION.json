@@ -1,0 +1,23 @@
+{
+  "audit_sha256": "2c4de127d7596a323df4f38ce95843d245e2c3c6dcbc9232fe9958abd8d0f6a6",
+  "checks": {
+    "behavioral_audit_pass": true,
+    "exact_h100_identity": true,
+    "manifest_matches_files": true,
+    "one_allocation_no_repair": true,
+    "packet_matches_files": true,
+    "packet_pass": true,
+    "sentinel_first": true
+  },
+  "observed_sha256": {
+    "SOURCE_MANIFEST.json": "e6a1e2752c38dc53a1859d7945a7d7573fa276a3ccab7eb6b72889cdae5e29ea",
+    "STAGED_MANIFEST.json": "8a35a2574c58a541ba650e28e253d5ad952f2c4eb69f8bd06678d782f3ce3151",
+    "h100_contract.py": "4966dbbd51d46969e71ea20983fd8023267b3bc953bbbf6467a276280ed7bfbd",
+    "h100_direct_fp8_kernel.py": "5b949a02bbc5eed86637103ee9f07dcad1bda2feb784f92629ef30977172ca5c",
+    "remote_stage.sh": "81f0fd9c1077a97e03795be178b78cee4ca8ab46d9ce6dd20a1b6947b6bee41f"
+  },
+  "packet_sha256": "f6f467fedd60e56cf1a3718d4bdd12941fe7a52afcc7866786f9f428e835c87c",
+  "pass": true,
+  "schema_version": 1,
+  "type": "h100_direct_fp8_identity_assertion"
+}

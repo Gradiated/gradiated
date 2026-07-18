@@ -1,0 +1,452 @@
+{
+  "archive": "h200-parallel-lm-head.tar.gz",
+  "label": "conditional",
+  "manifest_file_count": 10,
+  "returncode": 0,
+  "sha256": "3f9ff786513d9eee1bd43d22be426bf6f27efa3655bf6a9814531255aec8ed71",
+  "terminal": {
+    "all_actual_consumers_pass": true,
+    "economic_both_envelopes_falsified": false,
+    "pass": true,
+    "result": {
+      "all_actual_consumers_pass": true,
+      "economic_both_envelopes_falsified": false,
+      "geometry": {
+        "dtype": "bfloat16",
+        "hidden": 5376,
+        "m_values": [
+          1,
+          2,
+          4,
+          8,
+          16,
+          32
+        ],
+        "vocab": 262144
+      },
+      "pass": true,
+      "rows": [
+        {
+          "activations_shape": [
+            1,
+            5376
+          ],
+          "bandwidth_floor_ms": 3262.2364444444447,
+          "conservative_budget_seconds": 0.86329,
+          "conservative_head_alone_exceeds": false,
+          "cuda_event_ms": {
+            "p50": 0.6782400012016296,
+            "p95": 0.6893119812011719,
+            "raw": [
+              0.7032319903373718,
+              0.6795200109481812,
+              0.6893119812011719,
+              0.681439995765686,
+              0.6787520051002502,
+              0.679423987865448,
+              0.6778240203857422,
+              0.6718080043792725,
+              0.6807360053062439,
+              0.677727997303009,
+              0.6782400012016296,
+              0.6703680157661438,
+              0.6704000234603882,
+              0.6704000234603882,
+              0.6755840182304382
+            ]
+          },
+          "finite": true,
+          "input_dtype": "torch.bfloat16",
+          "m": 1,
+          "max_absolute_error_zero_oracle": 0.0,
+          "output_dtype": "torch.bfloat16",
+          "pass": true,
+          "peak_allocated_bytes": 2855283200,
+          "peak_reserved_bytes": 2856321024,
+          "per_request_head_seconds_at_358_steps": 0.2428099204301834,
+          "planning_budget_seconds": 1.394581,
+          "planning_head_alone_exceeds": false,
+          "wall_ms": {
+            "p50": 0.6920320000176616,
+            "p95": 0.7050840000033531,
+            "raw": [
+              0.7549160000053234,
+              0.6963179999956992,
+              0.7050840000033531,
+              0.6956450000075165,
+              0.6929099999979371,
+              0.6935440000006565,
+              0.6910730000413423,
+              0.6857299999865063,
+              0.6951049999770476,
+              0.6920320000176616,
+              0.6912810000017089,
+              0.6837669999981699,
+              0.6843170000365717,
+              0.6856399999719542,
+              0.6900260000293201
+            ]
+          },
+          "weight_dtype": "torch.bfloat16",
+          "weight_shape": [
+            262144,
+            5376
+          ]
+        },
+        {
+          "activations_shape": [
+            2,
+            5376
+          ],
+          "bandwidth_floor_ms": 3262.2364444444447,
+          "conservative_budget_seconds": 0.86329,
+          "conservative_head_alone_exceeds": false,
+          "cuda_event_ms": {
+            "p50": 0.6777600049972534,
+            "p95": 0.6861760020256042,
+            "raw": [
+              0.6777600049972534,
+              0.688319981098175,
+              0.6790400147438049,
+              0.6805440187454224,
+              0.669215977191925,
+              0.6861760020256042,
+              0.6776319742202759,
+              0.6801599860191345,
+              0.6778879761695862,
+              0.6769279837608337,
+              0.6727039813995361,
+              0.6831039786338806,
+              0.6752319931983948,
+              0.6760960221290588,
+              0.67740797996521
+            ]
+          },
+          "finite": true,
+          "input_dtype": "torch.bfloat16",
+          "m": 2,
+          "max_absolute_error_zero_oracle": 0.0,
+          "output_dtype": "torch.bfloat16",
+          "pass": true,
+          "peak_allocated_bytes": 2858439680,
+          "peak_reserved_bytes": 2879389696,
+          "per_request_head_seconds_at_358_steps": 0.12131904089450836,
+          "planning_budget_seconds": 1.394581,
+          "planning_head_alone_exceeds": false,
+          "wall_ms": {
+            "p50": 0.6916039999964596,
+            "p95": 0.7050970000364032,
+            "raw": [
+              0.7058120000351664,
+              0.7050970000364032,
+              0.693656999999348,
+              0.6935939999834773,
+              0.6820740000534897,
+              0.7013229999870418,
+              0.6911520000016935,
+              0.6942699999967772,
+              0.6916039999964596,
+              0.6903749999764841,
+              0.6856549999838535,
+              0.6967459999600578,
+              0.6892019999895638,
+              0.6893379999723948,
+              0.6907409999712399
+            ]
+          },
+          "weight_dtype": "torch.bfloat16",
+          "weight_shape": [
+            262144,
+            5376
+          ]
+        },
+        {
+          "activations_shape": [
+            4,
+            5376
+          ],
+          "bandwidth_floor_ms": 3262.2364444444447,
+          "conservative_budget_seconds": 0.86329,
+          "conservative_head_alone_exceeds": false,
+          "cuda_event_ms": {
+            "p50": 0.6790400147438049,
+            "p95": 0.686847984790802,
+            "raw": [
+              0.678272008895874,
+              0.6793599724769592,
+              0.6831679940223694,
+              0.6774719953536987,
+              0.6790400147438049,
+              0.6850240230560303,
+              0.6845759749412537,
+              0.6781759858131409,
+              0.6888319849967957,
+              0.6776319742202759,
+              0.6800000071525574,
+              0.6787199974060059,
+              0.686847984790802,
+              0.6779199838638306,
+              0.67740797996521
+            ]
+          },
+          "finite": true,
+          "input_dtype": "torch.bfloat16",
+          "m": 4,
+          "max_absolute_error_zero_oracle": 0.0,
+          "output_dtype": "torch.bfloat16",
+          "pass": true,
+          "peak_allocated_bytes": 2864752640,
+          "peak_reserved_bytes": 2879389696,
+          "per_request_head_seconds_at_358_steps": 0.060774081319570544,
+          "planning_budget_seconds": 1.394581,
+          "planning_head_alone_exceeds": false,
+          "wall_ms": {
+            "p50": 0.6934379999847806,
+            "p95": 0.7004619999975148,
+            "raw": [
+              0.7003430000054323,
+              0.6938739999782229,
+              0.6966969999666617,
+              0.6908389999580322,
+              0.6922879999819997,
+              0.6975200000169934,
+              0.6979320000368716,
+              0.6920590000163429,
+              0.7031580000216309,
+              0.6905949999804761,
+              0.6934379999847806,
+              0.6927150000137772,
+              0.7004619999975148,
+              0.6911530000479615,
+              0.6908780000003389
+            ]
+          },
+          "weight_dtype": "torch.bfloat16",
+          "weight_shape": [
+            262144,
+            5376
+          ]
+        },
+        {
+          "activations_shape": [
+            8,
+            5376
+          ],
+          "bandwidth_floor_ms": 3262.2364444444447,
+          "conservative_budget_seconds": 0.86329,
+          "conservative_head_alone_exceeds": false,
+          "cuda_event_ms": {
+            "p50": 0.6847360134124756,
+            "p95": 0.6887680292129517,
+            "raw": [
+              0.6847360134124756,
+              0.6888319849967957,
+              0.6877120137214661,
+              0.6778560280799866,
+              0.6880000233650208,
+              0.6835839748382568,
+              0.6838719844818115,
+              0.6796479821205139,
+              0.6838719844818115,
+              0.6840000152587891,
+              0.6887680292129517,
+              0.6872959733009338,
+              0.6871359944343567,
+              0.688256025314331,
+              0.6801599860191345
+            ]
+          },
+          "finite": true,
+          "input_dtype": "torch.bfloat16",
+          "m": 8,
+          "max_absolute_error_zero_oracle": 0.0,
+          "output_dtype": "torch.bfloat16",
+          "pass": true,
+          "peak_allocated_bytes": 2877378560,
+          "peak_reserved_bytes": 2900361216,
+          "per_request_head_seconds_at_358_steps": 0.030641936600208284,
+          "planning_budget_seconds": 1.394581,
+          "planning_head_alone_exceeds": false,
+          "wall_ms": {
+            "p50": 0.7007329999737522,
+            "p95": 0.7042009999622678,
+            "raw": [
+              0.708559999964109,
+              0.7027110000308312,
+              0.7008169999949132,
+              0.6904789999566674,
+              0.7018580000135444,
+              0.6973469999707049,
+              0.6975549999879149,
+              0.6920189999846116,
+              0.697016000003714,
+              0.6974120000222683,
+              0.7033509999700982,
+              0.7042009999622678,
+              0.7007329999737522,
+              0.7014939999976377,
+              0.6926739999926212
+            ]
+          },
+          "weight_dtype": "torch.bfloat16",
+          "weight_shape": [
+            262144,
+            5376
+          ]
+        },
+        {
+          "activations_shape": [
+            16,
+            5376
+          ],
+          "bandwidth_floor_ms": 3262.2364444444447,
+          "conservative_budget_seconds": 0.86329,
+          "conservative_head_alone_exceeds": false,
+          "cuda_event_ms": {
+            "p50": 0.6926079988479614,
+            "p95": 0.6966080069541931,
+            "raw": [
+              0.6944000124931335,
+              0.6966080069541931,
+              0.7069759964942932,
+              0.6946880221366882,
+              0.6886720061302185,
+              0.6935679912567139,
+              0.6926079988479614,
+              0.6893119812011719,
+              0.6881279945373535,
+              0.6949120163917542,
+              0.6911680102348328,
+              0.6955199837684631,
+              0.6857280135154724,
+              0.6920959949493408,
+              0.6891840100288391
+            ]
+          },
+          "finite": true,
+          "input_dtype": "torch.bfloat16",
+          "m": 16,
+          "max_absolute_error_zero_oracle": 0.0,
+          "output_dtype": "torch.bfloat16",
+          "pass": true,
+          "peak_allocated_bytes": 2902630400,
+          "peak_reserved_bytes": 2933915648,
+          "per_request_head_seconds_at_358_steps": 0.015497103974223136,
+          "planning_budget_seconds": 1.394581,
+          "planning_head_alone_exceeds": false,
+          "wall_ms": {
+            "p50": 0.7062720000021727,
+            "p95": 0.7187879999719371,
+            "raw": [
+              0.7187879999719371,
+              0.7107469999709792,
+              0.7234610000068642,
+              0.7086710000407948,
+              0.7020550000333969,
+              0.7062720000021727,
+              0.7051519999663469,
+              0.7026089999726537,
+              0.7014849999791295,
+              0.7085529999812934,
+              0.7040350000124818,
+              0.7097970000131681,
+              0.6990899999550493,
+              0.7066910000048665,
+              0.7022539999752553
+            ]
+          },
+          "weight_dtype": "torch.bfloat16",
+          "weight_shape": [
+            262144,
+            5376
+          ]
+        },
+        {
+          "activations_shape": [
+            32,
+            5376
+          ],
+          "bandwidth_floor_ms": 3262.2364444444447,
+          "conservative_budget_seconds": 0.86329,
+          "conservative_head_alone_exceeds": false,
+          "cuda_event_ms": {
+            "p50": 0.7151359915733337,
+            "p95": 0.7205439805984497,
+            "raw": [
+              0.719871997833252,
+              0.7178879976272583,
+              0.7122560143470764,
+              0.7099519968032837,
+              0.7088959813117981,
+              0.7101119756698608,
+              0.7163519859313965,
+              0.7103679776191711,
+              0.7088959813117981,
+              0.7225279808044434,
+              0.7205439805984497,
+              0.7159039974212646,
+              0.7164160013198853,
+              0.7151359915733337,
+              0.7092480063438416
+            ]
+          },
+          "finite": true,
+          "input_dtype": "torch.bfloat16",
+          "m": 32,
+          "max_absolute_error_zero_oracle": 0.0,
+          "output_dtype": "torch.bfloat16",
+          "pass": true,
+          "peak_allocated_bytes": 2953134080,
+          "peak_reserved_bytes": 3001024512,
+          "per_request_head_seconds_at_358_steps": 0.008000583905726671,
+          "planning_budget_seconds": 1.394581,
+          "planning_head_alone_exceeds": false,
+          "wall_ms": {
+            "p50": 0.7287519999863434,
+            "p95": 0.7393879999995079,
+            "raw": [
+              0.7446039999763343,
+              0.7327650000092945,
+              0.7263570000191066,
+              0.7233900000187532,
+              0.722254000038447,
+              0.7227119999697607,
+              0.7303990000195881,
+              0.7243759999937538,
+              0.7217040000000452,
+              0.7393879999995079,
+              0.7347729999764852,
+              0.7300190000023576,
+              0.7299680000301123,
+              0.7287519999863434,
+              0.7234919999632439
+            ]
+          },
+          "weight_dtype": "torch.bfloat16",
+          "weight_shape": [
+            262144,
+            5376
+          ]
+        }
+      ],
+      "runtime": {
+        "consumer": "vllm.model_executor.layers.vocab_parallel_embedding.ParallelLMHead",
+        "consumer_source_sha256": "5cdbd9058a99424bf71732d17027c9bc1b6da032f5c1d35b755365f22bb85494",
+        "method_source_sha256": "306785c7b7be41d938e40b29cf78377600c4342f5d402009ae8c0dde1bff1c92",
+        "quantization_method": "vllm.model_executor.layers.vocab_parallel_embedding.UnquantizedEmbeddingMethod",
+        "vllm_version": "0.19.1.dev6+g6d4a8e6d2"
+      },
+      "schema_version": 1,
+      "stage": "conditional",
+      "timing_contract": {
+        "cuda_event_and_wall": true,
+        "repetitions": 15,
+        "setup_outside_timing": true,
+        "warmups": 5
+      },
+      "useful_gpu_seconds": 1.0293474939999783
+    },
+    "stage": "conditional",
+    "useful_gpu_seconds": 1.0293474939999783
+  }
+}

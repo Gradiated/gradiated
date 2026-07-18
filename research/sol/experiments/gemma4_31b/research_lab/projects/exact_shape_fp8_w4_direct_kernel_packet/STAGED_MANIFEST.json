@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "type": "exact_shape_direct_fp8_staged_manifest",
+  "remote_files": {
+    "direct_fp8_kernel.py": "4c285c94daf032a56c0de2136badffab845503fa710dbca12027e6a345b92667",
+    "remote_stage.sh": "b1504265ab0131df0a1144292b0e3cbc3b6d9c9f6790c8d61ab4a1bab5a9cbc9",
+    "SOURCE_MANIFEST.json": "a65a36ef7abec2765c301d5508e74dd0d212bc3e3083e01a18abf577ee61149c"
+  },
+  "shared_lifecycle": {
+    "mla_microbench_control.py": "6356910a62c5abefe52fc035eb27e43d5b2cb73066d68ba9f8c089bca31de62b",
+    "placement_control.py": "87fdcb6115156bcb392b15f505dc4c1081201ace736999aa6f3e3554053a4e1c"
+  }
+}

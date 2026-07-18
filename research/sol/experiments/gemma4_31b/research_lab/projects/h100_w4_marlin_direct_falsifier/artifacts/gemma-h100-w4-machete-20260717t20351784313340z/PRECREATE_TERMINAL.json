@@ -1,0 +1,36 @@
+{
+  "checks": {
+    "budget": true,
+    "deadline": true,
+    "director_identity": true,
+    "durable_owner": true,
+    "files": true,
+    "inventory": true,
+    "keypair": true,
+    "name": true,
+    "packet": true,
+    "packet_hashes": true,
+    "terminal_binding": true,
+    "trigger_evaluator": true
+  },
+  "name": "gemma-h100-w4-machete-20260717t20351784313340z",
+  "pass": true,
+  "schema_version": 1,
+  "timestamp": "2026-07-17T20:35:41.002439+00:00",
+  "transitive_sha256": {
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_marlin_direct_falsifier/PROJECT.md": "f24e6848e57a1f0da6fb2aa05f511ab74a288407c7c3155c97ee5d31032d2887",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_marlin_direct_falsifier/artifacts/DIRECTOR_IDENTITY_RERUN.json": "2d87ad0fc3f89981246516ca84d40408990d8842aaf9e06ca599677a9d1c8c11",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_marlin_direct_falsifier/artifacts/MACHETE_DEVELOPMENT_PACKET.json": "ecf8cde5d5ffeefe7406fb612989a540ef3733f53ac0d4a60369f5929e06db01",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_marlin_direct_falsifier/assert_identity.py": "9453895c62ea1056e58a963f538fb5b45e66cf8540416fa8d7adc1dc302135dc",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_marlin_direct_falsifier/h100_w4_marlin_owner.py": "0e2d2a69f4970e97e96310c32d02da37b388954e66342a6c04636995e9ce1592",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_marlin_direct_falsifier/h100_w4_marlin_tp_single_rank.py": "dfeb5e552d55c50b367bb32354b5e58cff6f9b4fa1f5763dc9ebb2a3de62ef52",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_marlin_direct_falsifier/launch_owner.py": "6dc6ab5251dcfc99107c1c356f728f07f27f9440f9ffa866f28179afb9c7567d",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_marlin_direct_falsifier/remote_sentinel.sh": "70884038eba1e91e0a4ab5a6ff938c82cc30a3b098d0d649d897abb42038830f",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_marlin_direct_falsifier/remote_sweep_profile_head.sh": "f7f915b7d5a8f43a0754b3c600a03b680e6e48e2186540654981ea50bb8b667b",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_marlin_exact_shape_mechanism/h100_w4_contract.py": "7a2aafa6298f8a55be2a72ec90bff250fec68dd1a04279d5a0b3d7f9033c65f5",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_marlin_exact_shape_mechanism/h100_w4_marlin_falsifier.py": "9b44bb0b916fa7f3cd34f7b4df25c3b59959a29b23c1ab59e29ddde8cbc24bf8",
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py": "966df95d39f99ec7ae5c834e16b70efc7e4e7a1b7c2759ae6faca19c0cf62b5a",
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/placement_control.py": "87fdcb6115156bcb392b15f505dc4c1081201ace736999aa6f3e3554053a4e1c"
+  },
+  "type": "h100_w4_marlin_behavioral_precreate"
+}

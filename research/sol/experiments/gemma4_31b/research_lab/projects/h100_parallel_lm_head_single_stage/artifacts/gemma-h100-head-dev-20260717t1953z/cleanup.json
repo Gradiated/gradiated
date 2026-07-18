@@ -1,0 +1,12 @@
+{
+  "classification": "single_stage_pass",
+  "cleanup_elapsed_seconds": 52.58,
+  "cleanup_error_type": null,
+  "cleanup_pass": true,
+  "final_disk_count": 0,
+  "final_instance_count": 0,
+  "matching_disk_count": 0,
+  "matching_instance_count": 0,
+  "schema_version": 1,
+  "verified_at_utc": "2026-07-17T20:02:23.156900Z"
+}

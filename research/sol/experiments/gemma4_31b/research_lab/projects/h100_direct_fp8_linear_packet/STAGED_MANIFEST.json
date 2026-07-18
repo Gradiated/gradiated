@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "type": "h100_direct_fp8_staged_manifest",
+  "remote_files": {
+    "h100_contract.py": "4966dbbd51d46969e71ea20983fd8023267b3bc953bbbf6467a276280ed7bfbd",
+    "h100_direct_fp8_kernel.py": "5b949a02bbc5eed86637103ee9f07dcad1bda2feb784f92629ef30977172ca5c",
+    "remote_stage.sh": "81f0fd9c1077a97e03795be178b78cee4ca8ab46d9ce6dd20a1b6947b6bee41f",
+    "SOURCE_MANIFEST.json": "e6a1e2752c38dc53a1859d7945a7d7573fa276a3ccab7eb6b72889cdae5e29ea"
+  },
+  "shared_lifecycle": {
+    "mla_microbench_control.py": "6356910a62c5abefe52fc035eb27e43d5b2cb73066d68ba9f8c089bca31de62b",
+    "placement_control.py": "87fdcb6115156bcb392b15f505dc4c1081201ace736999aa6f3e3554053a4e1c"
+  },
+  "authoritative_inputs": {
+    "proven_l40s_packet": "14bed1b4e33bd2c9dde062dec800c9a04080986d7cafcb080a5831ea156a4366",
+    "valid_l40s_terminal": "8e157e5f0662b13867b25f7fd6a67ff0a479de0927a05274dae35fedd3df4798",
+    "h100_selection": "f94e40c4d63d67a939d0b6c8fa855a995cff06d66b254cbf8a41727ecaf2d326",
+    "paged_program_audit": "f16fe1afa9b1a95037f9bf2618a50e835e4e9aa9e5717c21967d97321348b6b6"
+  }
+}

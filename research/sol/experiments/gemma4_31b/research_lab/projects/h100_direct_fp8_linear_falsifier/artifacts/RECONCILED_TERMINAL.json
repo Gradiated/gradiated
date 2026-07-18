@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "type": "h100_direct_fp8_linear_reconciled_terminal",
+  "reconciled_at_utc": "2026-07-17T16:31:00Z",
+  "classification": "one_valid_h100_raw_fp8_m8_component_sentinel_telemetry_gate_false_no_sweep",
+  "scope": {
+    "model_geometry": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "accelerator": "NVIDIA H100 80GB HBM3",
+    "compute_capability": [9, 0],
+    "intervention": "checkpoint-free exact-shape raw CUTLASS FP8 sliding-QKV M8 component proxy",
+    "claim_boundary": "One actual raw H100 FP8 component row is valid. No conditional exact-shape sweep, c8/c16/c32 aggregate, H100 economic conclusion, endpoint result, model-quality result, fit result, reliability result, or FP8 admission is established."
+  },
+  "identity": {
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "vllm": "0.19.1.dev6+g6d4a8e6d2",
+    "torch": "2.10.0+cu129",
+    "cuda": "12.9",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "compute_capability": [9, 0],
+    "producer": "vllm._custom_ops.scaled_fp8_quant",
+    "candidate": "vllm._custom_ops.cutlass_scaled_mm",
+    "raw_path": "Fp8OnlineLinearMethod -> CutlassFP8ScaledMMLinearKernel.apply_scaled_mm -> vllm._custom_ops.cutlass_scaled_mm -> torch.ops._C.cutlass_scaled_mm",
+    "installed_source_sha256": {
+      "CutlassFP8ScaledMMLinearKernel": "57e51a4f4879ed5cec4fb2d5059693ec1f9f487fde76350b551625de12ed7ff7",
+      "vllm._custom_ops.cutlass_scaled_mm": "510359907f2bc614eeb14dc671f0a50d484fe0dbe0e9d4bcb943f538e189d5bd",
+      "vllm._custom_ops.scaled_fp8_quant": "530b9bdac543dc51b11622f6c673b7bacab0694406fc7f297cd0dad2004db643"
+    },
+    "packet_sha256": {
+      "START_PACKET.json": "f6f467fedd60e56cf1a3718d4bdd12941fe7a52afcc7866786f9f428e835c87c",
+      "BEHAVIORAL_AUDIT.json": "2c4de127d7596a323df4f38ce95843d245e2c3c6dcbc9232fe9958abd8d0f6a6",
+      "STAGED_MANIFEST.json": "8a35a2574c58a541ba650e28e253d5ad952f2c4eb69f8bd06678d782f3ce3151",
+      "SOURCE_MANIFEST.json": "e6a1e2752c38dc53a1859d7945a7d7573fa276a3ccab7eb6b72889cdae5e29ea",
+      "h100_direct_fp8_kernel.py": "5b949a02bbc5eed86637103ee9f07dcad1bda2feb784f92629ef30977172ca5c",
+      "h100_contract.py": "4966dbbd51d46969e71ea20983fd8023267b3bc953bbbf6467a276280ed7bfbd",
+      "remote_stage.sh": "81f0fd9c1077a97e03795be178b78cee4ca8ab46d9ce6dd20a1b6947b6bee41f"
+    },
+    "director_identity_assertion_sha256": "391855de1e4b59dc397e9d05b85d42cc9b0aabdb6e242b7c0d475082c864e0df",
+    "precreate_terminal_sha256": "f30b502ce436f17b790ca26c0a8fe2cd8bba6d04bca9307949b688fdd24a3379",
+    "independent_live_program_audit_sha256": "005753bbbb5427f282d9bc191ad4031d81e8ab181496aac328c82ab007767a42",
+    "independent_live_program_audit_verdict": "pass_interpret"
+  },
+  "primary_stage": {
+    "stage_record": "artifacts/gemma-h100-direct-fp8-20260717t16161784297816z/primary-stage.json",
+    "stage_record_sha256": "4a14235c41ac0bdc96d0273f629e5bb9e456524a2aea91426353da7ee8e47f4d",
+    "archive": "artifacts/gemma-h100-direct-fp8-20260717t16161784297816z/h100-direct-fp8-primary.tar.gz",
+    "archive_sha256_local_and_retrieval_record": "d4bdca8eec6807ef67456191e208cba81b911ea70e47604328c8fbfb5952d8ec",
+    "returncode": 1,
+    "terminal_pass": false,
+    "result_pass": true,
+    "all_rows_pass": true,
+    "sentinel_pass": true,
+    "decision_bearing_row_count": 1,
+    "row": {
+      "case": "sliding_qkv",
+      "m": 8,
+      "k": 5376,
+      "n": 16384,
+      "architecture_multiplicity": 50,
+      "layout": {
+        "a_shape": [8, 5376],
+        "b_shape": [5376, 16384],
+        "b_stride": [1, 5376]
+      },
+      "candidate_dtypes": {
+        "a": "torch.float8_e4m3fn",
+        "b": "torch.float8_e4m3fn",
+        "out": "torch.bfloat16",
+        "scale_a": "torch.float32",
+        "scale_b": "torch.float32"
+      },
+      "bf16_cuda_event_p50_ms": 0.07209599763154984,
+      "fp8_cuda_event_p50_ms": 0.04806400090456009,
+      "bf16_synchronized_wall_p50_ms": 0.07819900002914437,
+      "fp8_synchronized_wall_p50_ms": 0.05452099998137783,
+      "timing_acceptance": {
+        "bf16_positive_finite": true,
+        "bf16_cuda_event_p95_p50": 1.168664053272645,
+        "fp8_positive_finite": true,
+        "fp8_cuda_event_p95_p50": 1.511984034824767,
+        "iterations_each": 5,
+        "warmups_each": 2
+      },
+      "dual_oracle": {
+        "pass": true,
+        "kernel_correctness_actual_vs_dequantized_quantized_fp32": {
+          "pass": true,
+          "cosine_similarity": 0.9999972581863403,
+          "normalized_rmse": 0.0022971543328189673,
+          "maximum_absolute": 0.00035671889781951904
+        },
+        "representation_loss_dequantized_quantized_vs_original_bf16": {
+          "pass": true,
+          "cosine_similarity": 0.9993005394935608,
+          "normalized_rmse": 0.03745401253782895,
+          "maximum_absolute": 0.0021820776164531708
+        }
+      },
+      "allocator": {
+        "peak_allocated_bytes": 1003265024,
+        "peak_reserved_bytes": 1061158912
+      },
+      "pass": true
+    },
+    "telemetry_gate": {
+      "pass": false,
+      "sole_false_condition": "all one-second gpu_util_percent samples were 0.0",
+      "row_count": 11,
+      "gpu_util_percent": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+      "memory_used_mib_min_max": [0.0, 857.0],
+      "power_w_min_max": [72.21, 117.88],
+      "interpretation": "The one-second sampler was too coarse to overlap the sub-millisecond sentinel kernel. Memory and power rose during the captured interval. This falsifies the run's telemetry acceptance gate, not the directly timed kernel row."
+    }
+  },
+  "conditional_stage": {
+    "ran": false,
+    "expected_row_count": 24,
+    "actual_row_count": 0,
+    "reason": "The atomically retrieved primary terminal was false solely on its mandatory telemetry gate, so the sequential owner did not trigger the conditional sweep."
+  },
+  "resource_accounting": {
+    "controller_reported_allocation_seconds": 555.531,
+    "authenticated_create_event_to_cleanup_verification_seconds": 508.883118,
+    "controller_reported_gpu_hours": 0.15431416666666667,
+    "cost_usd_derived": 0.333275873,
+    "cost_basis": "Controller-wall exposure at authenticated Nebius preemptible VM and disk rates; invoice pending. The authenticated create-to-cleanup interval is reported separately because controller allocation time starts before the instance-created event.",
+    "recorded_timed_cuda_repetitions_seconds_lower_bound": 0.0006311040036380291,
+    "recorded_timed_synchronized_wall_repetitions_seconds_lower_bound": 0.0006942759999901682,
+    "useful_gpu_note": "One row is decision-bearing component science. Recorded timed repetitions are only a lower bound on useful GPU work; setup, quantization, oracle, allocator, and other scientific GPU work are not separately timed.",
+    "within_authorized_limits": true
+  },
+  "cleanup": {
+    "authenticated": true,
+    "pass": true,
+    "verified_at_utc": "2026-07-17T16:26:12.472743Z",
+    "cleanup_elapsed_seconds": 48.243,
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "matching_instance_count": 0,
+    "matching_disk_count": 0,
+    "cleanup_record_sha256": "3f6e9a1fa7d07c1603e0cd47405ad03f04de16c2a4df6432fc313a02ccd02e80"
+  },
+  "decision": {
+    "component_result": "The installed raw H100 CUTLASS FP8 path executed one exact sliding-QKV M8 row, passed the corrected kernel and representation oracles, and measured 0.0480640009 ms FP8 versus 0.0720959976 ms BF16 at CUDA-event p50.",
+    "portfolio_result": "Preserve this single row as valid component evidence only. It cannot be architecture-aggregated or compared with the 0.5479752315195353 s/request ceiling because the other five shapes and required M values did not run.",
+    "forbidden_inferences": [
+      "H100 c8/c16/c32 linear floor",
+      "H100 economic pass or falsification",
+      "endpoint throughput or latency",
+      "model quality",
+      "checkpoint or service fit",
+      "reliability",
+      "FP8 deployment admission"
+    ]
+  },
+  "source_evidence_sha256": {
+    "artifacts/SUMMARY.json": "36b9fd90f2287725c3a5a5af2fa39d237cd8e51f3b8902e5e9d9bbf9242ff4e1",
+    "run/summary.json": "2cb1ce03fc9592d9fc392319f0dd87efc8f430f90cc84f6da883886568951593",
+    "run/primary-stage.json": "4a14235c41ac0bdc96d0273f629e5bb9e456524a2aea91426353da7ee8e47f4d",
+    "run/events.jsonl": "3f5007abe37e837f870e671402c56fd4d0b87bfcea170ac70c0fda9c46c24d99",
+    "run/cleanup.json": "3f6e9a1fa7d07c1603e0cd47405ad03f04de16c2a4df6432fc313a02ccd02e80"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "checks": {
+    "bindings": true,
+    "budget": true,
+    "deadline": true,
+    "durable_owner": true,
+    "files": true,
+    "inventory": true,
+    "keypair": true,
+    "name": true
+  },
+  "files": {
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_background_concurrency_frontier/BINDINGS.json": "60c415444e9d7d3c33a6da5fc83e22535955ae109bfb5169ee9577ffc62a068f",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_background_concurrency_frontier/frontier_owner.py": "0960cf984da7f897c3708ace40648ee2593c2a1dc73505aeac98ae8c8cc03ecf",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_background_concurrency_frontier/head_frontier.py": "9d1bdcdb6cb76177d45475264cd60410a127209daea70ac0ff1f2ef65162df90",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_background_concurrency_frontier/launch_owner.py": "c8c376575dcf27eb71ec9ec46cb5dfc6ba59e0a68d5af7eb9358034bbcd2e213",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_background_concurrency_frontier/remote_frontier_stage.sh": "b5223167cbe941696317adf2ec6bd03bf576f7799138405fab3bd340e1d7b1ec",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_background_concurrency_frontier/w4_frontier.py": "f6db277266146ddcae07958ea5bfdc20b9e267169008aa47822dabbd92b04b07"
+  },
+  "pass": true,
+  "schema_version": 1,
+  "timestamp": "2026-07-17T22:12:17.636077+00:00",
+  "type": "h100_w4_frontier_precreate"
+}

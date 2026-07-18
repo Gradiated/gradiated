@@ -15,8 +15,8 @@ Make experiments useful to the next agent, including when they fail.
 4. Measure the baseline deeply enough to locate the critical path. Capture phase and concurrency, per-request distributions, queueing, batch composition, failures, CPU/GPU timelines, accelerator utilization, memory capacity and traffic, cache behavior, occupancy/resource limits, power, and network/collective behavior when relevant. Separate setup/load telemetry from steady state.
 5. Prefer an existing harness. Add a deterministic script or configuration when a command will be repeated.
 6. Use the cheapest fidelity that can falsify the mechanism: analytical bound, deterministic simulation, CPU/reference oracle, reduced model, exact-shape component harness, target-hardware microbenchmark, then matched serving holdout. A lower-fidelity pass promotes a measurement; it never approves transfer to a higher scope.
-7. Run a smoke test before expensive allocation. Capture stdout, stderr, environment identity, command, seed, and timestamps without secrets.
-8. Enforce the timeout and final teardown contract. For costly accelerator setup, retain the allocation across preregistered arms and in-place repairs when the next useful test can start within ten minutes; delete and verify absence when the session ends.
+7. Make the smoke test the smallest real invocation in the exact target environment. During discovery, retain the session, inspect the traceback, patch ordinary integration defects in place, and continue; do not use source-string checks as behavioral proof.
+8. Enforce an absolute watchdog and spend deadline, not teardown after every exception. Retain costly accelerator state across in-place repairs and adjacent arms while it remains the fastest safe route to evidence; delete and verify absence when the session genuinely ends.
 9. Validate correctness before performance, then validate performance before economics or product claims. Alternate or randomize matched control/candidate repetitions and report uncertainty when the decision margin is not obviously larger than run variance.
 10. Record measured, analytical, vendor-reported, derived, inferred, and synthetic results separately. Score every prospective prediction after measurement and update the bottleneck model.
 11. Update the task packet, report, ledger, opportunity register, residual bottleneck, and next-action decision before committing.
@@ -53,6 +53,8 @@ Use `scripts/research_efficiency.py` for daily Codex/provider throughput account
 ## Retained accelerator sessions
 
 Treat allocation, image/runtime setup, checkpoint transfer, model load, and scientific arms as separate costs. Queue likely arms before allocation and reuse the most expensive valid state.
+
+Use a mutable development session for first execution and a frozen batch session for canonical reproduction. In development mode the same researcher remains attached, may update harness bytes and rerun commands on the owned instance, and records each attempted program and result. Operational failures such as imports, paths, permissions, runtime context, signatures, telemetry, and benchmark bugs normally stay in the session and project. They become terminal only when repair is unsafe, requires different hardware or image, exceeds the budget or deadline, or is no longer the best research choice.
 
 - Keep one explicit session owner and an independent absolute-deadline cleanup watchdog.
 - Push content-addressed harness changes in place. Preregister each causal change before executing it.

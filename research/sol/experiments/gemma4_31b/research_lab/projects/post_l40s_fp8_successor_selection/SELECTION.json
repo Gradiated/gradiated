@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-07-17T15:28:00Z",
+  "classification": "selected_h100_actual_paged_fp8_kv_component",
+  "decision": "run_one_checkpoint_free_h100_actual_paged_fp8_kv_component_falsifier",
+  "decision_question": "After the valid L40S c12 raw-FP8 lower bound closed both economic envelopes, what single immediately runnable paid experiment has the best chance to create material whole-request margin?",
+  "controlling_l40s_closure": {
+    "linear_floor_seconds_per_request": 1.9266673329410453,
+    "attention_kv_residual_seconds_per_request": 0.1646315388888889,
+    "combined_lower_bound_seconds_per_request": 2.091298871829934,
+    "planning_ceiling_seconds_per_request": 1.3945806410831811,
+    "conservative_ceiling_seconds_per_request": 0.8632931049626701,
+    "disposition": "close L40S online-FP8 c12; do not transfer its throughput or admission to another GPU"
+  },
+  "ranked_candidates": [
+    {
+      "rank": 1,
+      "candidate": "H100 SXM actual paged BF16-KV versus FP8-E4M3-KV component",
+      "disposition": "selected",
+      "expected_whole_request_cost_margin": "The exact-shape analytical bound saves 58.44680214925373 ms/request after full-L2 credit, 10.665956924217314% of the 547.9752315195353 ms H100 planning service time and 2.133x the 27.398761575976767 ms 5% hurdle. This is a plausibility bound, not achieved performance.",
+      "information_value": "Directly distinguishes HBM-byte savings from launch/compute limitation with actual paged producer/consumer calls and counters.",
+      "runtime_support": "Pinned source traces unified_kv_cache_update and actual FlashAttention/Triton paged FP8 consumers on SM90; the exact immutable image is already available by digest.",
+      "checkpoint_setup": "checkpoint-free; image plus component program only",
+      "experimental_spend": "one preemptible H100, <=25 provider minutes, <=$1.30",
+      "time_to_valid_result": "one retrieved two-geometry sentinel followed by a bounded c8/c16/c32 sweep"
+    },
+    {
+      "rank": 2,
+      "candidate": "H200 BF16 c32 actual attention residual",
+      "disposition": "reject_already_closed_by_disjoint_lower_bounds",
+      "reason": "The measured prefill-linears plus decode-linears/head floor 0.4433561450894726 s/request plus the optimistic full-L2-credit BF16-KV bandwidth floor 0.05799790933333333 s/request is 0.5013540544228059, already above the 0.47751364375858635 lenient service ceiling before QK/AV arithmetic, cache writes, norms, scheduler, or service overhead. Another paid attention repair is unlikely to create margin."
+    },
+    {
+      "rank": 3,
+      "candidate": "H100 prefix-cache on/off endpoint",
+      "disposition": "reject_not_immediately_runnable",
+      "reason": "The exact trace has only 12.69976% block-cacheable prompt reuse and needs >=39.3755% measured exposed prefill time for a 5% endpoint effect. It requires checkpoint staging and an exact endpoint/cache telemetry consumer, while no valid H100 exact-trace lifecycle binding exists."
+    },
+    {
+      "rank": 4,
+      "candidate": "H100 native Gemma-4 MTP or async scheduling",
+      "disposition": "reject_not_immediately_runnable",
+      "reason": "The analytical acceptance surface can exceed 5%, but the next evidence requires the exact target and assistant checkpoints, raw output/acceptance instrumentation, and a valid H100 endpoint control. The historical H100 attempts produced no scientific output, so this would begin another readiness/setup chain."
+    }
+  ],
+  "selected_paid_arm": {
+    "name": "h100_actual_paged_fp8_kv_component_falsifier",
+    "type": "checkpoint_free_component",
+    "hardware": {
+      "accelerator": "one full NVIDIA H100 SXM",
+      "provider_shape": "gpu-h100-sxm / 1gpu-16vcpu-200gb",
+      "topology": "TP=1, one GPU",
+      "capacity_type": "preemptible"
+    },
+    "mechanical_identity": {
+      "model": "google/gemma-4-31B-it",
+      "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+      "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+      "observed_image_vllm": "0.19.1.dev6+g6d4a8e6d2",
+      "source_revision": "ab0a20d15129b322f911db578b50c6b35b3167e7",
+      "workload": "4214 prompt / 358 output; decode contexts 4214..4571",
+      "geometry": {
+        "layers": 60,
+        "local_layers": 50,
+        "global_layers": 10,
+        "pattern": "five sliding_attention then one full_attention",
+        "local": {
+          "query_heads": 32,
+          "kv_heads": 16,
+          "head_dim": 256,
+          "window_tokens": 1024
+        },
+        "global": {
+          "query_heads": 32,
+          "kv_heads": 4,
+          "head_dim": 512
+        },
+        "block_size": 16
+      }
+    },
+    "authoritative_local_inputs": [
+      {
+        "path": "../h100_hybrid_attention_kernel_mechanism/MECHANISM.json",
+        "sha256": "3960c453e88b1a12e01351d2062dbaa7f8a800e63fe6674e997ddbbcfeebdda1",
+        "role": "exact source trace, geometry, discriminator, producer/consumer and acceptance contract"
+      },
+      {
+        "path": "../exact_geometry_runtime_opportunities/GEOMETRY.json",
+        "sha256": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72",
+        "role": "model geometry"
+      },
+      {
+        "path": "../exact_bf16_mtp_h100_frontier/artifacts/preflight-20260717T000000Z/hf-config.json",
+        "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+        "role": "official exact-revision config metadata; no checkpoint transfer is authorized"
+      },
+      {
+        "path": "/root/workspace/research/factory/data/accelerator_inventory.json",
+        "sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8",
+        "role": "H100 physical prior"
+      },
+      {
+        "path": "/root/workspace/research/factory/data/gpu_prices.json",
+        "sha256": "3f403d67a92fc91be85bbd27dede85f5f91c3fd2df25ef8dcef2a344acbd1e01",
+        "role": "fresh planning and experimental-rate prior"
+      }
+    ],
+    "proven_lifecycle": {
+      "controller": {
+        "path": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py",
+        "sha256_at_selection": "6356910a62c5abefe52fc035eb27e43d5b2cb73066d68ba9f8c089bca31de62b"
+      },
+      "verified_owner": {
+        "path": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/placement_control.py",
+        "sha256_at_selection": "87fdcb6115156bcb392b15f505dc4c1081201ace736999aa6f3e3554053a4e1c"
+      },
+      "h100_create_evidence": {
+        "path": "../exact_bf16_mtp_h100_frontier/artifacts/gemma-bf16-h100-20260716t2215z-corrected/provider-create.json",
+        "sha256": "9cf3f5d9e304743badeef6e30b66b47a92f7ba06ea06b6031c7b2ab116d4dec6",
+        "result": "provider create returncode 0"
+      },
+      "h100_cleanup_evidence": {
+        "path": "../exact_bf16_mtp_h100_frontier/artifacts/gemma-bf16-h100-20260716t2215z-corrected/cleanup.json",
+        "sha256": "e352b10aeea2e9c6115aad82bcd61e9ac426ac1f6544122936607d378f377ca1",
+        "result": "cleanup_pass true; zero instances and disks"
+      },
+      "requirements": "One lowercase user-systemd durable owner and one sequential VerifiedRetainedOwner/watchdog own create, spend, atomic stage retrieval, and authenticated cleanup. One allocation; no repair or restart. Do not create another lifecycle or readiness project."
+    },
+    "scientific_contract": {
+      "matched_arms": [
+        "BF16 paged KV",
+        "FP8 E4M3 paged KV"
+      ],
+      "producer_consumer": "Invoke the pinned image's unified_kv_cache_update with deterministic varied-sign nonzero K/V, then the actual selected paged backend with block_table, slot_mapping and seqused_k. Dense-varlen or direct-kernel stand-ins fail.",
+      "first_atomically_retrieved_rows": [
+        {
+          "label": "local_c8_context1024",
+          "concurrency": 8,
+          "context_tokens": 1024,
+          "query_heads": 32,
+          "kv_heads": 16,
+          "head_dim": 256,
+          "arms": [
+            "BF16",
+            "FP8_E4M3"
+          ]
+        },
+        {
+          "label": "global_c8_context4214",
+          "concurrency": 8,
+          "context_tokens": 4214,
+          "query_heads": 32,
+          "kv_heads": 4,
+          "head_dim": 512,
+          "arms": [
+            "BF16",
+            "FP8_E4M3"
+          ]
+        }
+      ],
+      "continuation_sweep": {
+        "concurrency": [
+          8,
+          16,
+          32
+        ],
+        "local_context_tokens": [
+          1024
+        ],
+        "global_context_tokens": [
+          4214,
+          4393,
+          4571
+        ],
+        "timing": "20 warmups and 100 randomized paired repetitions per row; alternate arm order; CUDA events plus synchronized wall; setup/allocation excluded",
+        "counters": [
+          "dram__bytes_read.sum over the exact NVTX attention range",
+          "lts__t_bytes.sum over the same range",
+          "sm__cycles_elapsed.avg",
+          "achieved_active_warps",
+          "kernel launch count",
+          "interval-union elapsed time"
+        ]
+      },
+      "oracle": "Consume every timed output; FP8 versus the same nonzero BF16 paged output must have cosine similarity >=0.99 and normalized RMSE <=0.05 on every row.",
+      "acceptance": {
+        "component": "FP8 p50 interval-union attention time >=10% lower at every engine-valid selected point",
+        "mechanism": "FP8 DRAM read bytes <=60% of BF16 at every row, with unchanged launch count and context-scaled byte reduction",
+        "whole_request": "Architecture-weighted measured saving across 50 local and 10 global layers over 358 steps is >=0.027398761575976767 s/request"
+      },
+      "evidence_boundary": "A pass is a checkpoint-free semantics-changing cost-mechanism result only; it is not endpoint throughput, deployable quality, reliability, or economic acceptance."
+    },
+    "budgets": {
+      "wall_clock_minutes": 40,
+      "provider_exposure_minutes": 25,
+      "compute": "0.35 H100 GPU-hours plus 2 local CPU-hours",
+      "provider_storage": "one 100-GiB network disk",
+      "local_storage": "512 MiB retained plus 2 GiB temporary",
+      "spend_usd_max": 1.3,
+      "allocations": 1,
+      "repairs_or_restarts": 0
+    },
+    "stop_rule": "Stop and clean immediately on identity/image/source-symbol/backend mismatch, producer/consumer construction failure, oracle failure, missing atomic sentinel retrieval, invalid timing/counter range, any sentinel mechanism threshold failure, deadline reserve below seven provider minutes, or budget violation. After one valid sweep, evaluate once and clean regardless of outcome.",
+    "optional_adjacent_retained_session": {
+      "name": "h100_exact_shape_direct_fp8_linears",
+      "decision_trigger": "H100_FP8_KV_PRIMARY_PASS_AND_SETUP_DOMINATES",
+      "trigger": "Only when both atomically retrieved sentinel rows pass all identity/oracle/component/mechanism gates, measured bootstrap plus image setup exceeds scored primary GPU time, the H100 linears program is ready offline within ten minutes, and at least seven provider minutes remain.",
+      "arm": "On the same H100/image/session, fresh-match BF16 matmul versus actual cutlass_scaled_mm FP8 at the six exact Gemma fused-linear shapes for M=8/16/32 and M=3679, using the corrected dual oracle and no L40S timing/admission transfer.",
+      "acceptance": "Every row passes the dual oracle and stable timing; report the architecture-weighted H100 linear saving separately from the KV result.",
+      "false_trigger": "tear down immediately; do not retain for checkpoint staging, compilation, endpoint, MTP, prefix cache, W4, or another project"
+    }
+  },
+  "scope": {
+    "provider_mutation": false,
+    "gpu_used": false,
+    "image_pulled": false,
+    "checkpoint_accessed": false,
+    "compiled": false,
+    "spend_usd": 0.0,
+    "paid_project_activated": false
+  },
+  "terminal": true
+}

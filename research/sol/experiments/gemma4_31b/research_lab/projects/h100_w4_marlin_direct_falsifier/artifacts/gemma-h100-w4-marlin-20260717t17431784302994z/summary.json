@@ -1,0 +1,17 @@
+{
+  "allocation_seconds": 567.88,
+  "cleanup_pass": true,
+  "cost_basis": "measured exposure at authenticated Nebius preemptible VM and disk rates; invoice pending",
+  "cost_usd_derived": 0.340684185,
+  "ended_at_utc": "2026-07-17T17:52:43.532239Z",
+  "instance_id": "computeinstance-e00cgdda9w2c0r48w7",
+  "outcome": "FAIL",
+  "stage_records": [],
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-h100-w4-marlin-20260717t17431784302994z-watchdog.service",
+    "deadline_epoch": 1784311394.6522176,
+    "main_pid": 2111499,
+    "unit": "gemma-h100-w4-marlin-20260717t17431784302994z-watchdog.service",
+    "unit_manager": "user"
+  }
+}

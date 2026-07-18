@@ -1,0 +1,7 @@
+{
+  "completed_at_utc": "2026-07-18T08:03:17.339192Z",
+  "phase": "machete_assertion",
+  "returncode": 1,
+  "stderr_sha256": "e5784a47f2bdb76b5ec944ae052a931f79356c22189c6d899ae3c2c3abb85d88",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

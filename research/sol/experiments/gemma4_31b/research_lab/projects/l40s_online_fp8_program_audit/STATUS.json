@@ -1,0 +1,14 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "Live FP8/W4 program failed advisory audit; quarantine science despite real consumer calls.",
+  "next_action": "Director should treat eventual rows as diagnostic only after cleanup and require a fresh corrected run for any claim.",
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 15,
+  "compute_budget": "1 local CPU-hour; no GPU",
+  "storage_budget": "128 MiB retained plus 64 MiB temporary",
+  "active_session": null,
+  "last_result_classification": "fail_quarantine_science",
+  "terminal_artifact": "AUDIT.json"
+}

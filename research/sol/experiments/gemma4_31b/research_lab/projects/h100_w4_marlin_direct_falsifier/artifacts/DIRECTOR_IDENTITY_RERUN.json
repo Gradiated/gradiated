@@ -1,0 +1,85 @@
+{
+  "authoritative_hashes": {
+    "CAMPAIGN.md": "51cc46f386d8990ca775a790a2044997929038aabb3388001fa838dd5be8b232",
+    "CPU_CONTRACT.json": "f8ccbec8cabc4aaa4448b7862d87c7072aea2271650fbc48be9c7d72a8d38cf0",
+    "MECHANISM.json": "db28290a17865dae0dca487036abe96fe215fe971d868c6cafd54a43cb3eca94",
+    "PROJECT.md": "f24e6848e57a1f0da6fb2aa05f511ab74a288407c7c3155c97ee5d31032d2887",
+    "STATUS.json": "4120afea8c5d30dbc89ca7ef47f0398a4ea59cd4dace18e25a956b45cf7bc08d",
+    "h100_w4_marlin_falsifier.py": "9b44bb0b916fa7f3cd34f7b4df25c3b59959a29b23c1ab59e29ddde8cbc24bf8"
+  },
+  "checks": {
+    "adjacent_trigger": true,
+    "brief_identity": true,
+    "budgets": true,
+    "campaign_matches_mechanism": true,
+    "campaign_model_found": true,
+    "ceiling": true,
+    "cpu_contract": true,
+    "geometry": true,
+    "h100_identity": true,
+    "image_bound": true,
+    "mechanism_ready": true,
+    "mechanism_terminal_hash": true,
+    "one_allocation": true,
+    "program_hash": true,
+    "sentinel_then_sweep": true
+  },
+  "identity": {
+    "accelerator": "NVIDIA H100 80GB HBM3, compute capability 9.0, 132 SM H100 SXM placement",
+    "m_values": [
+      8,
+      16,
+      32,
+      3679
+    ],
+    "model_geometry": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "output_tokens": 358,
+    "planning_ceiling_seconds_per_request": 0.5479752315195353,
+    "representation": "AWQ uint4, asymmetric runtime zero point, group size 128, BF16 activation/output, TP=1",
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "seed": 20260717,
+    "shapes": [
+      {
+        "k": 5376,
+        "multiplicity": 50,
+        "n": 16384,
+        "name": "sliding_qkv"
+      },
+      {
+        "k": 5376,
+        "multiplicity": 10,
+        "n": 20480,
+        "name": "global_qkv"
+      },
+      {
+        "k": 8192,
+        "multiplicity": 50,
+        "n": 5376,
+        "name": "sliding_output"
+      },
+      {
+        "k": 16384,
+        "multiplicity": 10,
+        "n": 5376,
+        "name": "global_output"
+      },
+      {
+        "k": 5376,
+        "multiplicity": 60,
+        "n": 43008,
+        "name": "merged_gate_up"
+      },
+      {
+        "k": 21504,
+        "multiplicity": 60,
+        "n": 5376,
+        "name": "down"
+      }
+    ],
+    "vllm": "0.19.1.dev6+g6d4a8e6d2",
+    "vllm_commit": "6d4a8e6d204a9b2827544003b26321fff62923da"
+  },
+  "pass": true,
+  "schema_version": 1,
+  "type": "h100_w4_marlin_director_identity_assertion"
+}

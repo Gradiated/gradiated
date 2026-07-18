@@ -1,0 +1,26 @@
+{
+  "container_state": {
+    "Dead": false,
+    "Error": "",
+    "ExitCode": 1,
+    "FinishedAt": "2026-07-18T06:27:13.645157024Z",
+    "OOMKilled": false,
+    "Paused": false,
+    "Pid": 0,
+    "Restarting": false,
+    "Running": false,
+    "StartedAt": "2026-07-18T06:21:52.845936115Z",
+    "Status": "exited"
+  },
+  "exit_code": "1",
+  "files": [
+    "readiness_failure.container.log",
+    "readiness_failure.container-state.json",
+    "readiness_failure.container-exit-code.txt",
+    "readiness_failure.container-oom.txt",
+    "readiness_failure.gpu.csv"
+  ],
+  "label": "readiness_failure",
+  "oom_killed": false,
+  "pass": true
+}

@@ -61,8 +61,19 @@ class NebiusSessionStagingTests(unittest.TestCase):
                 f"{hashlib.sha256(payload).hexdigest()}  model\n"
             )
             rows = [{"path": "model", "bytes": len(payload), "sha256": hashlib.sha256(payload).hexdigest()}]
-            self.assertFalse(validate_local_files_cached(root, rows))
-            self.assertTrue(validate_local_files_cached(root, rows))
+            first = validate_local_files_cached(root, rows)
+            second = validate_local_files_cached(root, rows)
+            self.assertTrue(first["pass"])
+            self.assertFalse(first["marker_reused"])
+            self.assertTrue(second["pass"])
+            self.assertTrue(second["marker_reused"])
+            self.assertEqual(first["payload_files_total"], 1)
+            self.assertEqual(first["transfer_files_total"], 2)
+            self.assertEqual(
+                {row["path"] for row in first["transfer_files"]},
+                {"model", "model-files.sha256"},
+            )
+            json.dumps(first)
             self.assertNotIn(".campaign-local-integrity-v1.json", {row.path for row in checkpoint_files(root)})
             path.write_bytes(b"checkpoinu")
             with self.assertRaisesRegex(RuntimeError, "checksum mismatch"):

@@ -1,0 +1,107 @@
+{
+  "archive": "h100-paged-kv-sentinel.tar.gz",
+  "label": "primary",
+  "manifest_file_count": 6,
+  "returncode": 1,
+  "sha256": "e0e1509f9f45acd63f8ff78b87a338235f47118616a60fb02472ad82b05f12ab",
+  "terminal": {
+    "all_actual_consumers_pass": false,
+    "economic_both_envelopes_falsified": false,
+    "pass": false,
+    "result": {
+      "all_actual_consumers_pass": false,
+      "economic_both_envelopes_falsified": false,
+      "pass": false,
+      "runtime": {
+        "backend_signature": "(q, k, v, out, cu_seqlens_q, max_seqlen_q, seqused_k, max_seqlen_k, softmax_scale, causal, window_size, block_table, softcap, q_descale, k_descale, v_descale, seq_threshold_3D=None, num_par_softmax_segments=None, softmax_segm_output=None, softmax_segm_max=None, softmax_segm_expsum=None, alibi_slopes=None, output_scale=None, qq_bias=None, sinks=None, mm_prefix_range=None, use_alibi_sqrt=False)",
+        "backend_source_sha256": "405000dc44912777c6d7835d0009deaa8594d8b8db422419a151c5f307cdd297",
+        "capability": [
+          9,
+          0
+        ],
+        "gpu": "NVIDIA H100 80GB HBM3",
+        "producer_signature": "(key: torch.Tensor, value: torch.Tensor, layer_name: str) -> torch.Tensor",
+        "producer_source_sha256": "3be8b1b6913ee3ccab10466ee94d3048188cf2d761315c117509822195b95166",
+        "vllm": "0.19.1.dev6+g6d4a8e6d2"
+      },
+      "schema_version": 1,
+      "scientific_wall_seconds": 0.37125407100000984,
+      "sentinel": {
+        "backend": "unified_attention",
+        "error": "Forward context is not set. Please use `set_forward_context` to set the forward context.",
+        "error_type": "AssertionError",
+        "pass": false,
+        "producer": "unified_kv_cache_update",
+        "required_geometry": {
+          "global": [
+            8,
+            32,
+            4,
+            512,
+            4214
+          ],
+          "local": [
+            8,
+            32,
+            16,
+            256,
+            1024
+          ]
+        }
+      },
+      "stage": "primary",
+      "useful_gpu_seconds": 0.0
+    },
+    "schema_version": 1,
+    "sentinel": {
+      "backend": "unified_attention",
+      "error": "Forward context is not set. Please use `set_forward_context` to set the forward context.",
+      "error_type": "AssertionError",
+      "pass": false,
+      "producer": "unified_kv_cache_update",
+      "required_geometry": {
+        "global": [
+          8,
+          32,
+          4,
+          512,
+          4214
+        ],
+        "local": [
+          8,
+          32,
+          16,
+          256,
+          1024
+        ]
+      }
+    },
+    "stage": "primary",
+    "typed_failure": {
+      "class": "actual_image_producer_or_context_construction_failure",
+      "sentinel": {
+        "backend": "unified_attention",
+        "error": "Forward context is not set. Please use `set_forward_context` to set the forward context.",
+        "error_type": "AssertionError",
+        "pass": false,
+        "producer": "unified_kv_cache_update",
+        "required_geometry": {
+          "global": [
+            8,
+            32,
+            4,
+            512,
+            4214
+          ],
+          "local": [
+            8,
+            32,
+            16,
+            256,
+            1024
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "checks": {
+    "all_staged_files_present": true,
+    "architecture_formula_no_kv_double_count": true,
+    "cuda_wall_oracle_and_h200": true,
+    "exact_image_imports_concrete_consumers": true,
+    "global_actual_pinned_triton_symbol": true,
+    "k_equals_v_global": true,
+    "shared_durable_controller": false,
+    "sliding_actual_pinned_flash_symbol": true,
+    "typed_artifact_telemetry": true
+  },
+  "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+  "image_probe_returncode": 0,
+  "image_probe_stderr_tail": "",
+  "observed_runtime": {
+    "fa_file": "/usr/local/lib/python3.12/dist-packages/vllm/vllm_flash_attn/flash_attn_interface.py",
+    "fa_sha": "55c94708dc15472c2dbe71ce56494386405c9b57dd9c818bbd0973f21e05582b",
+    "fa_symbol": true,
+    "triton_file": "/usr/local/lib/python3.12/dist-packages/vllm/v1/attention/ops/triton_unified_attention.py",
+    "triton_sha": "5a8af26832bd0b23604fefa4a0876e12b39101b85431c368649fbb7f779e8921",
+    "triton_symbol": true,
+    "vllm": "0.19.1.dev6+g6d4a8e6d2"
+  },
+  "pass": false,
+  "schema_version": 1,
+  "staged_files": {
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h200_c32_actual_attention_residual_floor/attention_bench.py": "3144586b7bd82e61465a384adbbff701501544a522b23fb4659766008edaa244",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h200_c32_actual_attention_residual_floor/attention_owner.py": "ad424cbcba394507776a3ec5f6bfb0a8f0a8cc83f75b5642c7b9b4f630d1fa26",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h200_c32_actual_attention_residual_floor/remote_attention_stage.sh": "b09d002e68d6ea94af9ae136b4c7afb1895bd40733ca59f3cf732366cfd0c77b",
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py": "b29ab7bddf8022cf4ca0ec9ff9d6fbbb4b0dbed2311f7e8489571e37df594cad"
+  },
+  "type": "final_pinned_h200_c32_attention_program_audit"
+}

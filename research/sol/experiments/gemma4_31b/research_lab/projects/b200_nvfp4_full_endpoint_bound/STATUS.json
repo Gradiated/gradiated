@@ -1,0 +1,20 @@
+{
+  "status": "closed",
+  "priority": 0,
+  "summary": "The c128 impossible optimistic B200 full-stack bound is 43.691286 batch seconds versus a 38.134820 economic hurdle and 30.507856 reopen gate; source-supported NVFP4 is 49.727324 seconds, so close without venue spend.",
+  "next_action": null,
+  "researcher_profile": "deep",
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 50,
+  "compute_budget": "2 local CPU-hours; no GPU",
+  "storage_budget": "1 GiB project-local including at most 256 MiB source/image probes; no shared /tmp",
+  "active_session": null,
+  "reconciliation_pending": false,
+  "actual_gpu_seconds": 0,
+  "actual_spend_usd": 0.0,
+  "decision": "close_b200_fullstack",
+  "last_result_classification": "source_supported_b200_fullstack_closure",
+  "terminal_artifact": "FULLSTACK_BOUND.json",
+  "terminal_artifact_sha256": "7ff6571e8cdb365928db6e065d732454c3c3da5b6c7968713abc467dcb1a1565"
+}

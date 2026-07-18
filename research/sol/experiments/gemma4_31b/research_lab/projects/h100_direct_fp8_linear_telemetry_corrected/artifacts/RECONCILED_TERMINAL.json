@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "type": "h100_direct_fp8_telemetry_corrected_reconciled_terminal",
+  "classification": "closed_invalid_corrected_liveness_before_conditional_sweep",
+  "decision": "No H100 linear-floor, c8/c16/c32 aggregation, or economic conclusion is permitted from this run.",
+  "execution": {
+    "owner_terminal_sha256": "cae006443ae012e1a07819c9d1fc4d2e65fc046cb07fa72e18958fa2ae0e7432",
+    "controller_terminal_returncode": 1,
+    "outcome": "FAIL",
+    "allocation_seconds": 569.165,
+    "timed_cuda_seconds_descriptive_only": 0.0006427839994430542,
+    "qualified_scientific_useful_gpu_seconds": 0.0,
+    "derived_cost_usd": 0.341455359,
+    "cost_basis": "measured preemptible H100 plus disk exposure; invoice pending"
+  },
+  "primary": {
+    "archive": "gemma-h100-direct-fp8-corrected-20260717t16401784299225z/h100-direct-fp8-primary.tar.gz",
+    "archive_sha256": "3ede9708d2db52c3cb7476ad4d23a69c58271a8d8580a5a007e3839407fc2827",
+    "stage_record_sha256": "32640f6c3a6297a75a7f54bf5df9405b6e64929ca764f62d14ca309e11f4cd52",
+    "raw_result_pass": true,
+    "typed_stage_pass": false,
+    "candidate_cuda_p50_ms": 0.04966399818658829,
+    "bf16_cuda_p50_ms": 0.07347200065851212,
+    "kernel_and_representation_oracles_pass": true,
+    "telemetry_descriptive": {
+      "row_count": 74,
+      "terminal_predicate_pass": true
+    },
+    "failure": {
+      "type": "ModuleNotFoundError",
+      "message": "No module named 'h100_contract'",
+      "effect": "The separate raw-CUTLASS liveness process never executed or wrote liveness.json; its missing typed result forced primary failure."
+    }
+  },
+  "conditional": {
+    "ran": false,
+    "actual_row_count": 0,
+    "reason": "The shared controller atomically retrieved the failed primary terminal and correctly blocked its trigger."
+  },
+  "independent_interpretation_audit": {
+    "artifact": "../h100_corrected_fp8_live_program_audit/AUDIT.json",
+    "sha256": "494aad34195de6f074f680a56d7651560893787af00ecbdf714e4f77a4312c31",
+    "verdict": "fail_quarantine_science",
+    "material_findings": [
+      "sampling interval was asserted rather than timestamp-derived",
+      "telemetry was not scoped to the liveness interval",
+      "the remotely executing correction hash was not equality-gated"
+    ]
+  },
+  "cleanup": {
+    "cleanup_sha256": "7df96b7199728def42aab9a11197fb8a6c59f72a3d00620973fdc561cc48d63c",
+    "cleanup_pass": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "post_terminal_inventory": {
+      "instances": [],
+      "disks": []
+    }
+  },
+  "next_action": null
+}

@@ -1,0 +1,57 @@
+{
+  "algebra": {
+    "concurrency_double_division": false,
+    "fresh_prompt_tokens_per_request": "3678.822",
+    "macs_per_fresh_prompt_token": 29396828160,
+    "prefill_linear_floor_seconds_per_request": "0.21858655515963116725618999494694290045477513895907",
+    "prefill_linear_flops_per_request": "216291396330455.04",
+    "qk_av_sensitivity_flops_per_request": "11702921508945.92",
+    "qk_av_sensitivity_seconds_per_request": "0.011827106123239939363314805457301667508842849924204"
+  },
+  "claim_boundary": "Exact arithmetic under an impossible dense-BF16 peak denominator; not achieved throughput, endpoint, quality, or production evidence.",
+  "decision": "c32_preserved_with_attention_threshold",
+  "disjointness": {
+    "decode_kv_analytical_floor_added": false,
+    "measured_decode_linears_head_seconds_per_request": "0.22476958992984145",
+    "prefill_linears_are_fresh_prompt_phase_only": true,
+    "qk_av_is_sensitivity_not_primary_floor": true
+  },
+  "identities": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "source_hashes": {
+      "calculator": "43d1e112b88b681331b460454b8a260647bceac40df695445fffecf265822844",
+      "floor": "342b650c2bf61615928a5525daa773023d643af6741202f98c3384503905b68a",
+      "geometry": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72",
+      "inventory": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8",
+      "linears": "9f12b3ae4c8d82176f0ec9b09845c6e97ab1f278a458bd023adcbe433fd004fe",
+      "manifest": "2863a42520eaf4609e0a4c66686d54de001a2a80591e9ee00a6448ed355b9583"
+    }
+  },
+  "independent_reconciliation": "pass",
+  "peak_guard": {
+    "checkpoint_sparsity_assumed": false,
+    "h200_dense_bf16_tflops_used": 989.5,
+    "h200_dense_fp8_tflops_not_used": 1979,
+    "h200_two_to_four_sparse_bf16_tflops_not_used": 1979.0
+  },
+  "resources": {
+    "gpu_seconds": 0,
+    "provider_mutations": 0,
+    "provider_queries": 0,
+    "spend_usd": 0
+  },
+  "schema_version": 1,
+  "service_thresholds": {
+    "lenient": {
+      "primary_decode_attention_threshold_seconds_per_request": "0.03415749866911373274381000505305709954522486104093",
+      "threshold_after_qk_av_sensitivity_seconds_per_request": "0.022330392545873793380495199595755432036382011116726"
+    },
+    "strict": {
+      "primary_decode_attention_threshold_seconds_per_request": "0.02865567786266872274381000505305709954522486104093",
+      "threshold_after_qk_av_sensitivity_seconds_per_request": "0.016828571739428783380495199595755432036382011116726"
+    }
+  },
+  "status": "complete"
+}

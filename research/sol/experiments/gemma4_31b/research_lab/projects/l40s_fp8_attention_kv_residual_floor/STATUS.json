@@ -1,0 +1,19 @@
+{
+  "status": "complete",
+  "priority": 215,
+  "summary": "Typed residual_threshold_bound: 0.164631539 s/request prescribed attention/KV residual; strict planning/conservative component maxima are 1.229949102/0.698661566 s/request at both c12 and c14.",
+  "next_action": "Merge only with an identity-matched typed actual-consumer component result normalized to seconds/request and excluding attention.",
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 25,
+  "compute_budget": "1.5 local CPU-hours; no GPU",
+  "storage_budget": "384 MiB retained plus 128 MiB temporary",
+  "active_session": null,
+  "last_result_classification": "residual_threshold_bound",
+  "terminal_artifact": {
+    "path": "ATTENTION_KV_RESIDUAL_FLOOR.json",
+    "sha256": "f38704b6ae0e47e389643062c239a492d430079bf80754d8819f9a36b79aef08",
+    "source_manifest_path": "SOURCE_MANIFEST.json",
+    "source_manifest_sha256": "a4344e8d7acdc6ebe0c7636677dd4a1547de728fdbdbb6b513c36a79ea877e8d"
+  }
+}

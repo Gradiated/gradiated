@@ -1,0 +1,22 @@
+{
+  "status": "closed",
+  "priority": 0,
+  "researcher_profile": "execution",
+  "summary": "Exact 24-row checkpoint-free evaluator is staged and its offline shape/identity contract passes, but no authenticated full-B200 venue and actual rate are available; no GPU or kernel claim was made.",
+  "next_action": "Reopen this same scientific project when an authenticated full B200 SXM/SM100 venue with an actual metered rate is allocatable; use the staged evaluator in one retained development session.",
+  "provider_mutation": "forbidden_typed_b200_venue_unavailable",
+  "authorized_spend_usd": 3.5,
+  "wall_clock_budget_minutes": 45,
+  "provider_exposure_budget_minutes": 25,
+  "compute_budget": "0.42 B200 GPU-hours plus 2 local CPU-hours",
+  "storage_budget": "one 100-GiB disk; 2 GiB retained plus 1 GiB temporary",
+  "active_session": null,
+  "activated_at": "2026-07-17T19:49:11Z",
+  "actual_provider_exposure_seconds": 0,
+  "actual_spend_usd": 0.0,
+  "reconciliation_pending": false,
+  "terminal_artifact": "artifacts/PRECREATE_VENUE_IDENTITY.json",
+  "program_artifact": "b200_nvfp4_evaluator.py",
+  "offline_contract_artifact": "artifacts/OFFLINE_SHAPE_CONTRACT.json",
+  "last_result_classification": "authenticated_b200_venue_unavailable_not_kernel_evidence"
+}

@@ -1,0 +1,15 @@
+{
+  "status": "complete",
+  "priority": 215,
+  "researcher_profile": "execution",
+  "summary": "PASS_INTERPRET: immutable paid bytes preserve the raw consumer, atomic sentinel trigger, exact sweep, dual oracle, aggregation, telemetry, accounting, watchdog, and cleanup contract.",
+  "next_action": "Director may interpret only an eventual fully typed terminal under AUDIT.json; this audit does not inspect or authorize the live run.",
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 10,
+  "compute_budget": "1 local CPU-hour; no GPU",
+  "storage_budget": "192 MiB retained plus 64 MiB temporary",
+  "active_session": null,
+  "last_result_classification": "pass_interpret",
+  "terminal_artifact": "AUDIT.json"
+}

@@ -39,7 +39,7 @@ A source-backed review identifies what Wafer's full-stack and AMD work demonstra
 - status: done
 - verification: research-director skill validation, `python3 tools/devex/check.py`, and `git diff --check` pass.
 - changed paths: `research/sol/docs/WAFER_AI_FULL_STACK_DEEP_DIVE_2026-07-15.md`, `research/sol/docs/WAFER_AI_PRODUCT_AND_INFRASTRUCTURE_REPORT_2026-07-15.md`, `.agents/skills/research-director/SKILL.md`, `research/sol/experiments/glm47flash/research_lab/CAMPAIGN.md`
-- limitations or blocked paths: Wafer does not publish model-to-provider routing, supplier traffic shares, capacity contracts, or its private serving stack. GitButler currently requires workspace teardown because unrelated direct commits were detected, so this scoped work was not committed rather than mutating shared branch state.
+- limitations or blocked paths: Wafer does not publish model-to-provider routing, supplier traffic shares, capacity contracts, or its private serving stack. The historical local branch tooling conflicted with unrelated direct commits, so this scoped work was not committed rather than mutating shared branch state.
 - commit: uncommitted local worktree
 - next action: finish the GLM-4.7 measured result, then obtain matched production quotes from TensorWave, Vultr, DigitalOcean, Nebius, and other finalists using the report's due-diligence contract.
 - released: 2026-07-15T12:47:45+00:00

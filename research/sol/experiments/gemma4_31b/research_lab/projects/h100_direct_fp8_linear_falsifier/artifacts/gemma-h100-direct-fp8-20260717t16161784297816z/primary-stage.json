@@ -1,0 +1,356 @@
+{
+  "archive": "h100-direct-fp8-primary.tar.gz",
+  "label": "primary",
+  "manifest_file_count": 9,
+  "returncode": 1,
+  "sha256": "d4bdca8eec6807ef67456191e208cba81b911ea70e47604328c8fbfb5952d8ec",
+  "terminal": {
+    "pass": false,
+    "result": {
+      "all_rows_pass": true,
+      "identity": {
+        "capability": [
+          9,
+          0
+        ],
+        "cuda": "12.9",
+        "gpu": "NVIDIA H100 80GB HBM3",
+        "pass": true,
+        "producer": "vllm._custom_ops.scaled_fp8_quant",
+        "raw_path": "Fp8OnlineLinearMethod -> CutlassFP8ScaledMMLinearKernel.apply_scaled_mm -> vllm._custom_ops.cutlass_scaled_mm -> torch.ops._C.cutlass_scaled_mm",
+        "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+        "source_sha256": {
+          "CutlassFP8ScaledMMLinearKernel": "57e51a4f4879ed5cec4fb2d5059693ec1f9f487fde76350b551625de12ed7ff7",
+          "vllm._custom_ops.cutlass_scaled_mm": "510359907f2bc614eeb14dc671f0a50d484fe0dbe0e9d4bcb943f538e189d5bd",
+          "vllm._custom_ops.scaled_fp8_quant": "530b9bdac543dc51b11622f6c673b7bacab0694406fc7f297cd0dad2004db643"
+        },
+        "torch": "2.10.0+cu129",
+        "vllm": "0.19.1.dev6+g6d4a8e6d2"
+      },
+      "pass": true,
+      "rows": [
+        {
+          "allocator": {
+            "peak_allocated_bytes": 1003265024,
+            "peak_reserved_bytes": 1061158912
+          },
+          "architecture_multiplicity": 50,
+          "bf16_comparator_timing": {
+            "cuda_event": {
+              "p50_ms": 0.07209599763154984,
+              "p95_ms": 0.08425600081682205,
+              "p95_p50": 1.168664053272645,
+              "positive_finite": true,
+              "raw_ms": [
+                0.08425600081682205,
+                0.0729919970035553,
+                0.07209599763154984,
+                0.07075200229883194,
+                0.0719040036201477
+              ]
+            },
+            "iterations": 5,
+            "synchronized_wall": {
+              "p50_ms": 0.07819900002914437,
+              "p95_ms": 0.0904120000200237,
+              "p95_p50": 1.1561784675805011,
+              "positive_finite": true,
+              "raw_ms": [
+                0.0904120000200237,
+                0.07940199998301978,
+                0.07814100001724,
+                0.07708799995498339,
+                0.07819900002914437
+              ]
+            },
+            "warmups": 2
+          },
+          "candidate_dtypes": {
+            "a": "torch.float8_e4m3fn",
+            "b": "torch.float8_e4m3fn",
+            "out": "torch.bfloat16",
+            "scale_a": "torch.float32",
+            "scale_b": "torch.float32"
+          },
+          "candidate_symbol": "vllm._custom_ops.cutlass_scaled_mm",
+          "candidate_timing": {
+            "cuda_event": {
+              "p50_ms": 0.04806400090456009,
+              "p95_ms": 0.07267200201749802,
+              "p95_p50": 1.511984034824767,
+              "positive_finite": true,
+              "raw_ms": [
+                0.07267200201749802,
+                0.04806400090456009,
+                0.04886399954557419,
+                0.044544000178575516,
+                0.04495999962091446
+              ]
+            },
+            "iterations": 5,
+            "synchronized_wall": {
+              "p50_ms": 0.05452099998137783,
+              "p95_ms": 0.0792320000186919,
+              "p95_p50": 1.4532382026330104,
+              "positive_finite": true,
+              "raw_ms": [
+                0.0792320000186919,
+                0.05452099998137783,
+                0.05511399996294131,
+                0.05075300003909433,
+                0.05141399998365159
+              ]
+            },
+            "warmups": 2
+          },
+          "case": "sliding_qkv",
+          "k": 5376,
+          "layout": {
+            "a_shape": [
+              8,
+              5376
+            ],
+            "b_shape": [
+              5376,
+              16384
+            ],
+            "b_stride": [
+              1,
+              5376
+            ]
+          },
+          "m": 8,
+          "n": 16384,
+          "oracle_from_timed_outputs": {
+            "kernel_correctness_actual_vs_dequantized_quantized_fp32": {
+              "cosine_similarity": 0.9999972581863403,
+              "finite": true,
+              "maximum_absolute": 0.00035671889781951904,
+              "nontrivial": true,
+              "normalized_rmse": 0.0022971543328189673,
+              "pass": true,
+              "reference_rms": 0.013569408096373081,
+              "rmse": 3.11710246023722e-05,
+              "tolerance": {
+                "maximum_absolute": 0.02,
+                "minimum_cosine_similarity": 0.999,
+                "normalized_rmse": 0.02
+              }
+            },
+            "pass": true,
+            "representation_loss_dequantized_quantized_vs_original_bf16": {
+              "cosine_similarity": 0.9993005394935608,
+              "finite": true,
+              "maximum_absolute": 0.0021820776164531708,
+              "nontrivial": true,
+              "normalized_rmse": 0.03745401253782895,
+              "pass": true,
+              "reference_rms": 0.013607092201709747,
+              "rmse": 0.0005096402019262314,
+              "tolerance": {
+                "minimum_cosine_similarity": 0.99,
+                "normalized_rmse": 0.08
+              }
+            }
+          },
+          "pass": true
+        }
+      ],
+      "schema_version": 1,
+      "semantics": "checkpoint-free deterministic cost-mechanism proxy; no model quality or endpoint claim",
+      "sentinel": {
+        "pass": true,
+        "required_retrieval_before_sweep": true,
+        "row": {
+          "allocator": {
+            "peak_allocated_bytes": 1003265024,
+            "peak_reserved_bytes": 1061158912
+          },
+          "architecture_multiplicity": 50,
+          "bf16_comparator_timing": {
+            "cuda_event": {
+              "p50_ms": 0.07209599763154984,
+              "p95_ms": 0.08425600081682205,
+              "p95_p50": 1.168664053272645,
+              "positive_finite": true,
+              "raw_ms": [
+                0.08425600081682205,
+                0.0729919970035553,
+                0.07209599763154984,
+                0.07075200229883194,
+                0.0719040036201477
+              ]
+            },
+            "iterations": 5,
+            "synchronized_wall": {
+              "p50_ms": 0.07819900002914437,
+              "p95_ms": 0.0904120000200237,
+              "p95_p50": 1.1561784675805011,
+              "positive_finite": true,
+              "raw_ms": [
+                0.0904120000200237,
+                0.07940199998301978,
+                0.07814100001724,
+                0.07708799995498339,
+                0.07819900002914437
+              ]
+            },
+            "warmups": 2
+          },
+          "candidate_dtypes": {
+            "a": "torch.float8_e4m3fn",
+            "b": "torch.float8_e4m3fn",
+            "out": "torch.bfloat16",
+            "scale_a": "torch.float32",
+            "scale_b": "torch.float32"
+          },
+          "candidate_symbol": "vllm._custom_ops.cutlass_scaled_mm",
+          "candidate_timing": {
+            "cuda_event": {
+              "p50_ms": 0.04806400090456009,
+              "p95_ms": 0.07267200201749802,
+              "p95_p50": 1.511984034824767,
+              "positive_finite": true,
+              "raw_ms": [
+                0.07267200201749802,
+                0.04806400090456009,
+                0.04886399954557419,
+                0.044544000178575516,
+                0.04495999962091446
+              ]
+            },
+            "iterations": 5,
+            "synchronized_wall": {
+              "p50_ms": 0.05452099998137783,
+              "p95_ms": 0.0792320000186919,
+              "p95_p50": 1.4532382026330104,
+              "positive_finite": true,
+              "raw_ms": [
+                0.0792320000186919,
+                0.05452099998137783,
+                0.05511399996294131,
+                0.05075300003909433,
+                0.05141399998365159
+              ]
+            },
+            "warmups": 2
+          },
+          "case": "sliding_qkv",
+          "k": 5376,
+          "layout": {
+            "a_shape": [
+              8,
+              5376
+            ],
+            "b_shape": [
+              5376,
+              16384
+            ],
+            "b_stride": [
+              1,
+              5376
+            ]
+          },
+          "m": 8,
+          "n": 16384,
+          "oracle_from_timed_outputs": {
+            "kernel_correctness_actual_vs_dequantized_quantized_fp32": {
+              "cosine_similarity": 0.9999972581863403,
+              "finite": true,
+              "maximum_absolute": 0.00035671889781951904,
+              "nontrivial": true,
+              "normalized_rmse": 0.0022971543328189673,
+              "pass": true,
+              "reference_rms": 0.013569408096373081,
+              "rmse": 3.11710246023722e-05,
+              "tolerance": {
+                "maximum_absolute": 0.02,
+                "minimum_cosine_similarity": 0.999,
+                "normalized_rmse": 0.02
+              }
+            },
+            "pass": true,
+            "representation_loss_dequantized_quantized_vs_original_bf16": {
+              "cosine_similarity": 0.9993005394935608,
+              "finite": true,
+              "maximum_absolute": 0.0021820776164531708,
+              "nontrivial": true,
+              "normalized_rmse": 0.03745401253782895,
+              "pass": true,
+              "reference_rms": 0.013607092201709747,
+              "rmse": 0.0005096402019262314,
+              "tolerance": {
+                "minimum_cosine_similarity": 0.99,
+                "normalized_rmse": 0.08
+              }
+            }
+          },
+          "pass": true
+        }
+      },
+      "stage": "primary",
+      "type": "gemma4_h100_exact_shape_direct_cutlass_fp8"
+    },
+    "schema_version": 1,
+    "stage": "primary",
+    "telemetry": {
+      "gpu_names": [
+        "NVIDIA H100 80GB HBM3"
+      ],
+      "gpu_util_percent": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "memory_total_mib": [
+        81559.0,
+        81559.0,
+        81559.0,
+        81559.0,
+        81559.0,
+        81559.0,
+        81559.0,
+        81559.0,
+        81559.0,
+        81559.0,
+        81559.0
+      ],
+      "memory_used_mib": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        857.0
+      ],
+      "pass": false,
+      "power_w": [
+        72.25,
+        72.21,
+        72.21,
+        72.21,
+        72.25,
+        72.22,
+        72.25,
+        72.3,
+        72.26,
+        72.28,
+        117.88
+      ],
+      "row_count": 11
+    }
+  }
+}

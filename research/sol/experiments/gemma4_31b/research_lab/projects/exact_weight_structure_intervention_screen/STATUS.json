@@ -1,0 +1,27 @@
+{
+  "status": "complete",
+  "priority": 145,
+  "summary": "Typed none: exact sampled weights have no natural zeros/2:4 groups, magnitude 2:4 retains only 86.29-89.09% energy, and rank-256 sketch energy falls to 73.59%.",
+  "next_action": "Closed; do not admit a quality-aware H200 successor for 2:4 or low rank from this evidence.",
+  "provider_mutation": "forbidden_zero_cost_offline",
+  "authorized_spend_usd": 0,
+  "wall_clock_budget_minutes": 50,
+  "compute_budget": "4 local CPU-hours; no GPU",
+  "storage_budget": "4 GiB retained plus 2 GiB project-local temporary; no shared /tmp and no copied weight shards",
+  "active_session": null,
+  "last_result_classification": "complete_typed_none_structure_and_error_gates_failed",
+  "terminal_artifact": "WEIGHT_STRUCTURE_SCREEN.json",
+  "future_candidate": "none",
+  "measured_coverage": {
+    "inventory_tensors": 410,
+    "sampled_underlying_tensors": 30,
+    "sampled_class_layer_aggregates": 18,
+    "architectural_classes": 6
+  },
+  "resources_used": {
+    "wall_seconds": 79.1428071599803,
+    "cpu_seconds": 289.583867,
+    "provider_spend_usd": 0,
+    "cuda_used": false
+  }
+}

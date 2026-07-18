@@ -1,0 +1,2168 @@
+{
+  "archive": "l40s-single-rank.tar.gz",
+  "label": "primary",
+  "manifest_file_count": 12,
+  "returncode": 1,
+  "sha256": "741ac3f0e3f44d9f7470ffd1c654ab53baa632461d9cc2cd62760906c12cdfb3",
+  "terminal": {
+    "FP8_CONTEXT_ADMISSION": false,
+    "W4_DECISION": null,
+    "W4_RESIDUAL_TRIGGER": {
+      "at_least_ten_provider_minutes_remaining": true,
+      "component_at_or_above_planning_maximum_or_residual_below_0_35": true,
+      "fit": true,
+      "group_identity_pass": true,
+      "pass": false,
+      "start_ready_now": true,
+      "valid_fp8_science": false
+    },
+    "all_actual_consumers_pass": false,
+    "economic_both_envelopes_falsified": true,
+    "group_identity": {
+      "cuda_collective_probe": 17.0,
+      "groups": {
+        "dp": {
+          "cpu_backend": "gloo",
+          "device": "cuda:0",
+          "device_backend": "nccl",
+          "local_rank": 0,
+          "rank": 0,
+          "rank_in_group": 0,
+          "ranks": [
+            0
+          ],
+          "unique_name": "dp:0",
+          "world_size": 1
+        },
+        "pp": {
+          "cpu_backend": "gloo",
+          "device": "cuda:0",
+          "device_backend": "nccl",
+          "local_rank": 0,
+          "rank": 0,
+          "rank_in_group": 0,
+          "ranks": [
+            0
+          ],
+          "unique_name": "pp:0",
+          "world_size": 1
+        },
+        "tp": {
+          "cpu_backend": "gloo",
+          "device": "cuda:0",
+          "device_backend": "nccl",
+          "local_rank": 0,
+          "rank": 0,
+          "rank_in_group": 0,
+          "ranks": [
+            0
+          ],
+          "unique_name": "tp:0",
+          "world_size": 1
+        }
+      },
+      "pass": true,
+      "rank": 0,
+      "rendezvous_scheme": "tcp://127.0.0.1:<ephemeral>",
+      "torch_distributed_initialized": true,
+      "tp_pp_dp": [
+        1,
+        1,
+        1
+      ],
+      "world_backend": "nccl",
+      "world_size": 1
+    },
+    "group_teardown": {
+      "attempted": true,
+      "model_parallel_initialized_after": false,
+      "pass": true,
+      "torch_distributed_initialized_after": false
+    },
+    "pass": false,
+    "result": {
+      "FP8_CONTEXT_ADMISSION": false,
+      "W4_RESIDUAL_TRIGGER": {
+        "at_least_ten_provider_minutes_remaining": true,
+        "component_at_or_above_planning_maximum_or_residual_below_0_35": true,
+        "fit": true,
+        "group_identity_pass": true,
+        "pass": false,
+        "start_ready_now": true,
+        "valid_fp8_science": false
+      },
+      "actual_row_count": 17,
+      "all_actual_consumers_pass": false,
+      "allocator_envelope": {
+        "background_c12_queue_bound_pass": true,
+        "fit": true,
+        "limit_bytes": 48000554500,
+        "no_whole_endpoint_fit_claim": true,
+        "peak_reserved_bytes": 3630170112,
+        "transient_checkpoint_free_component_fit": true
+      },
+      "economic_both_envelopes_falsified": true,
+      "group_identity": {
+        "cuda_collective_probe": 17.0,
+        "groups": {
+          "dp": {
+            "cpu_backend": "gloo",
+            "device": "cuda:0",
+            "device_backend": "nccl",
+            "local_rank": 0,
+            "rank": 0,
+            "rank_in_group": 0,
+            "ranks": [
+              0
+            ],
+            "unique_name": "dp:0",
+            "world_size": 1
+          },
+          "pp": {
+            "cpu_backend": "gloo",
+            "device": "cuda:0",
+            "device_backend": "nccl",
+            "local_rank": 0,
+            "rank": 0,
+            "rank_in_group": 0,
+            "ranks": [
+              0
+            ],
+            "unique_name": "pp:0",
+            "world_size": 1
+          },
+          "tp": {
+            "cpu_backend": "gloo",
+            "device": "cuda:0",
+            "device_backend": "nccl",
+            "local_rank": 0,
+            "rank": 0,
+            "rank_in_group": 0,
+            "ranks": [
+              0
+            ],
+            "unique_name": "tp:0",
+            "world_size": 1
+          }
+        },
+        "pass": true,
+        "rank": 0,
+        "rendezvous_scheme": "tcp://127.0.0.1:<ephemeral>",
+        "torch_distributed_initialized": true,
+        "tp_pp_dp": [
+          1,
+          1,
+          1
+        ],
+        "world_backend": "nccl",
+        "world_size": 1
+      },
+      "group_teardown": {
+        "attempted": true,
+        "model_parallel_initialized_after": false,
+        "pass": true,
+        "torch_distributed_initialized_after": false
+      },
+      "identity": {
+        "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+        "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79"
+      },
+      "pass": false,
+      "required_row_count": 17,
+      "rows": {
+        "head": [
+          {
+            "allocator": {
+              "peak_allocated_bytes": 2877552640,
+              "peak_reserved_bytes": 2887778304
+            },
+            "consumer_class": "vllm.model_executor.layers.vocab_parallel_embedding.ParallelLMHead",
+            "k": 5376,
+            "kind": "parallel_lm_head",
+            "m": 12,
+            "method_class": "vllm.model_executor.layers.vocab_parallel_embedding.UnquantizedEmbeddingMethod",
+            "n": 262144,
+            "oracle_from_timed_output": {
+              "finite": true,
+              "maximum_absolute": 0.00390625,
+              "maximum_relative": 0.00390625,
+              "nontrivial": true,
+              "pass": true,
+              "tolerance": {
+                "absolute": 0.08,
+                "relative": 0.08
+              }
+            },
+            "pass": true,
+            "timing": {
+              "cuda_event": {
+                "maximum_ms": 3.970463991165161,
+                "minimum_ms": 3.9478399753570557,
+                "p50_ms": 3.9532480239868164,
+                "p95_ms": 3.970463991165161,
+                "raw_ms": [
+                  3.970463991165161,
+                  3.9562559127807617,
+                  3.9539520740509033,
+                  3.9532480239868164,
+                  3.9504001140594482,
+                  3.9478399753570557,
+                  3.9510080814361572
+                ]
+              },
+              "iterations": 7,
+              "synchronized_wall": {
+                "maximum_ms": 3.9776620000111507,
+                "minimum_ms": 3.954541999974026,
+                "p50_ms": 3.9602580000064336,
+                "p95_ms": 3.9776620000111507,
+                "raw_ms": [
+                  3.9776620000111507,
+                  3.96416599994609,
+                  3.9616419999219943,
+                  3.9602580000064336,
+                  3.9574320001065644,
+                  3.954541999974026,
+                  3.957537000019329
+                ]
+              },
+              "warmups": 3
+            }
+          }
+        ],
+        "kv_writer": [
+          {
+            "allocator": {
+              "peak_allocated_bytes": 3241666560,
+              "peak_reserved_bytes": 3267362816
+            },
+            "architecture_multiplicity": 50,
+            "cache_dtype": "torch.float8_e4m3fn",
+            "cache_shape": [
+              2,
+              264,
+              16,
+              16,
+              256
+            ],
+            "case": "local_prefill_primary",
+            "context": 4214,
+            "fp8_kv_method_source_sha256": "ab6b573c6b07e3f6f69a0dcba219d52f2deaf15f195e2420ccc52e6ddea95c60",
+            "head_dimension": 256,
+            "heads": 16,
+            "kind": "fp8_kv_writer",
+            "m": null,
+            "oracle_from_timed_cache_side_effect": {
+              "finite": true,
+              "kind": "cache side effect produced by timed actual writer",
+              "maximum_absolute": 0.0,
+              "nontrivial": true,
+              "pass": true,
+              "tolerance": {
+                "absolute": 0.02,
+                "relative": 0.02
+              }
+            },
+            "pass": true,
+            "source_dtype": "torch.bfloat16",
+            "timing": {
+              "cuda_event": {
+                "maximum_ms": 0.04492799937725067,
+                "minimum_ms": 0.04041599854826927,
+                "p50_ms": 0.04150399938225746,
+                "p95_ms": 0.04492799937725067,
+                "raw_ms": [
+                  0.04492799937725067,
+                  0.04041599854826927,
+                  0.04150399938225746
+                ]
+              },
+              "iterations": 3,
+              "synchronized_wall": {
+                "maximum_ms": 0.05107599997700163,
+                "minimum_ms": 0.04629800002931006,
+                "p50_ms": 0.047343000005639624,
+                "p95_ms": 0.05107599997700163,
+                "raw_ms": [
+                  0.05107599997700163,
+                  0.04629800002931006,
+                  0.047343000005639624
+                ]
+              },
+              "warmups": 2
+            },
+            "tokens_written": 3679,
+            "writer_source_sha256": "fb3f4959274323b00287745131cce5cc8065d589fe5c6052f54be7dc4115eabb",
+            "writer_symbol": "vllm._custom_ops.reshape_and_cache_flash"
+          },
+          {
+            "allocator": {
+              "peak_allocated_bytes": 214216704,
+              "peak_reserved_bytes": 243269632
+            },
+            "architecture_multiplicity": 10,
+            "cache_dtype": "torch.float8_e4m3fn",
+            "cache_shape": [
+              2,
+              264,
+              16,
+              4,
+              512
+            ],
+            "case": "global_prefill_primary",
+            "context": 4214,
+            "fp8_kv_method_source_sha256": "ab6b573c6b07e3f6f69a0dcba219d52f2deaf15f195e2420ccc52e6ddea95c60",
+            "head_dimension": 512,
+            "heads": 4,
+            "kind": "fp8_kv_writer",
+            "m": null,
+            "oracle_from_timed_cache_side_effect": {
+              "finite": true,
+              "kind": "cache side effect produced by timed actual writer",
+              "maximum_absolute": 0.0,
+              "nontrivial": true,
+              "pass": true,
+              "tolerance": {
+                "absolute": 0.02,
+                "relative": 0.02
+              }
+            },
+            "pass": true,
+            "source_dtype": "torch.bfloat16",
+            "timing": {
+              "cuda_event": {
+                "maximum_ms": 0.03872000053524971,
+                "minimum_ms": 0.034912001341581345,
+                "p50_ms": 0.03593600168824196,
+                "p95_ms": 0.03872000053524971,
+                "raw_ms": [
+                  0.03872000053524971,
+                  0.03593600168824196,
+                  0.034912001341581345
+                ]
+              },
+              "iterations": 3,
+              "synchronized_wall": {
+                "maximum_ms": 0.0449809999736317,
+                "minimum_ms": 0.04079100006038061,
+                "p50_ms": 0.042006000057881465,
+                "p95_ms": 0.0449809999736317,
+                "raw_ms": [
+                  0.0449809999736317,
+                  0.042006000057881465,
+                  0.04079100006038061
+                ]
+              },
+              "warmups": 2
+            },
+            "tokens_written": 3679,
+            "writer_source_sha256": "fb3f4959274323b00287745131cce5cc8065d589fe5c6052f54be7dc4115eabb",
+            "writer_symbol": "vllm._custom_ops.reshape_and_cache_flash"
+          },
+          {
+            "allocator": {
+              "peak_allocated_bytes": 110413312,
+              "peak_reserved_bytes": 123731968
+            },
+            "architecture_multiplicity": 50,
+            "cache_dtype": "torch.float8_e4m3fn",
+            "cache_shape": [
+              2,
+              768,
+              16,
+              16,
+              256
+            ],
+            "case": "local_decode_c12",
+            "context": 1024,
+            "fp8_kv_method_source_sha256": "ab6b573c6b07e3f6f69a0dcba219d52f2deaf15f195e2420ccc52e6ddea95c60",
+            "head_dimension": 256,
+            "heads": 16,
+            "kind": "fp8_kv_writer",
+            "m": 12,
+            "oracle_from_timed_cache_side_effect": {
+              "finite": true,
+              "kind": "cache side effect produced by timed actual writer",
+              "maximum_absolute": 0.0,
+              "nontrivial": true,
+              "pass": true,
+              "tolerance": {
+                "absolute": 0.02,
+                "relative": 0.02
+              }
+            },
+            "pass": true,
+            "source_dtype": "torch.bfloat16",
+            "timing": {
+              "cuda_event": {
+                "maximum_ms": 0.032575998455286026,
+                "minimum_ms": 0.02284800074994564,
+                "p50_ms": 0.023871999233961105,
+                "p95_ms": 0.032575998455286026,
+                "raw_ms": [
+                  0.032575998455286026,
+                  0.026464000344276428,
+                  0.025248000398278236,
+                  0.023744000121951103,
+                  0.023871999233961105,
+                  0.023104000836610794,
+                  0.02284800074994564
+                ]
+              },
+              "iterations": 7,
+              "synchronized_wall": {
+                "maximum_ms": 0.03878400002577109,
+                "minimum_ms": 0.028659999998126295,
+                "p50_ms": 0.029717999950662488,
+                "p95_ms": 0.03878400002577109,
+                "raw_ms": [
+                  0.03878400002577109,
+                  0.03246200003559352,
+                  0.03154500006985472,
+                  0.029568000059043698,
+                  0.029717999950662488,
+                  0.028659999998126295,
+                  0.02873500000077911
+                ]
+              },
+              "warmups": 3
+            },
+            "tokens_written": 12,
+            "writer_source_sha256": "fb3f4959274323b00287745131cce5cc8065d589fe5c6052f54be7dc4115eabb",
+            "writer_symbol": "vllm._custom_ops.reshape_and_cache_flash"
+          },
+          {
+            "allocator": {
+              "peak_allocated_bytes": 233858560,
+              "peak_reserved_bytes": 249561088
+            },
+            "architecture_multiplicity": 10,
+            "cache_dtype": "torch.float8_e4m3fn",
+            "cache_shape": [
+              2,
+              3429,
+              16,
+              4,
+              512
+            ],
+            "case": "global_decode_c12_peak",
+            "context": 4571,
+            "fp8_kv_method_source_sha256": "ab6b573c6b07e3f6f69a0dcba219d52f2deaf15f195e2420ccc52e6ddea95c60",
+            "head_dimension": 512,
+            "heads": 4,
+            "kind": "fp8_kv_writer",
+            "m": 12,
+            "oracle_from_timed_cache_side_effect": {
+              "finite": true,
+              "kind": "cache side effect produced by timed actual writer",
+              "maximum_absolute": 0.0,
+              "nontrivial": true,
+              "pass": true,
+              "tolerance": {
+                "absolute": 0.02,
+                "relative": 0.02
+              }
+            },
+            "pass": true,
+            "source_dtype": "torch.bfloat16",
+            "timing": {
+              "cuda_event": {
+                "maximum_ms": 0.03667199984192848,
+                "minimum_ms": 0.02236800082027912,
+                "p50_ms": 0.024639999493956566,
+                "p95_ms": 0.03667199984192848,
+                "raw_ms": [
+                  0.03017600066959858,
+                  0.03667199984192848,
+                  0.02521600015461445,
+                  0.024639999493956566,
+                  0.02319999970495701,
+                  0.022784000262618065,
+                  0.02236800082027912
+                ]
+              },
+              "iterations": 7,
+              "synchronized_wall": {
+                "maximum_ms": 0.042795000013029494,
+                "minimum_ms": 0.028466000003390945,
+                "p50_ms": 0.030568999932256702,
+                "p95_ms": 0.042795000013029494,
+                "raw_ms": [
+                  0.036466999972617486,
+                  0.042795000013029494,
+                  0.031137999940256122,
+                  0.030568999932256702,
+                  0.02920099996117642,
+                  0.028466000003390945,
+                  0.02848499991614517
+                ]
+              },
+              "warmups": 3
+            },
+            "tokens_written": 12,
+            "writer_source_sha256": "fb3f4959274323b00287745131cce5cc8065d589fe5c6052f54be7dc4115eabb",
+            "writer_symbol": "vllm._custom_ops.reshape_and_cache_flash"
+          }
+        ],
+        "linears": [
+          {
+            "allocator": {
+              "peak_allocated_bytes": 276036096,
+              "peak_reserved_bytes": 291504128
+            },
+            "architecture_multiplicity": 50,
+            "bf16": {
+              "method_class": "vllm.model_executor.layers.linear.UnquantizedLinearMethod",
+              "timing": {
+                "cuda_event": {
+                  "maximum_ms": 0.28832000494003296,
+                  "minimum_ms": 0.2744320034980774,
+                  "p50_ms": 0.2773120105266571,
+                  "p95_ms": 0.28832000494003296,
+                  "raw_ms": [
+                    0.28832000494003296,
+                    0.2840319871902466,
+                    0.2759360074996948,
+                    0.28035199642181396,
+                    0.2773120105266571,
+                    0.27590399980545044,
+                    0.2744320034980774
+                  ]
+                },
+                "iterations": 7,
+                "synchronized_wall": {
+                  "maximum_ms": 0.2969949999851451,
+                  "minimum_ms": 0.28062199999112636,
+                  "p50_ms": 0.28403399994658685,
+                  "p95_ms": 0.2969949999851451,
+                  "raw_ms": [
+                    0.2961899999718298,
+                    0.29092399995533924,
+                    0.2828819999649568,
+                    0.2969949999851451,
+                    0.28403399994658685,
+                    0.2822150000838519,
+                    0.28062199999112636
+                  ]
+                },
+                "warmups": 3
+              }
+            },
+            "case": "sliding_qkv",
+            "fp8": {
+              "cuda_event": {
+                "maximum_ms": 0.24771200120449066,
+                "minimum_ms": 0.19459199905395508,
+                "p50_ms": 0.21001599729061127,
+                "p95_ms": 0.24771200120449066,
+                "raw_ms": [
+                  0.2407039999961853,
+                  0.24771200120449066,
+                  0.22438399493694305,
+                  0.20307199656963348,
+                  0.20943999290466309,
+                  0.19459199905395508,
+                  0.21001599729061127
+                ]
+              },
+              "iterations": 7,
+              "synchronized_wall": {
+                "maximum_ms": 0.2573210000491599,
+                "minimum_ms": 0.20175399993149767,
+                "p50_ms": 0.21720400002323004,
+                "p95_ms": 0.2573210000491599,
+                "raw_ms": [
+                  0.2515850000008868,
+                  0.2573210000491599,
+                  0.23170300005403988,
+                  0.21029599997746118,
+                  0.21701399998619308,
+                  0.20175399993149767,
+                  0.21720400002323004
+                ]
+              },
+              "warmups": 3
+            },
+            "identity": {
+              "apply_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod.apply",
+              "kernel_class": "vllm.model_executor.kernels.linear.scaled_mm.cutlass.CutlassFP8ScaledMMLinearKernel",
+              "method_class": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+              "online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+              "parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+              "producer_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.process_weights_after_loading",
+              "required_parent_class": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod"
+            },
+            "k": 5376,
+            "kind": "linear",
+            "m": 12,
+            "n": 16384,
+            "oracle_from_timed_outputs": {
+              "finite": true,
+              "maximum_absolute": 0.01953125,
+              "maximum_relative": 0.019607843831181526,
+              "nontrivial": true,
+              "pass": true,
+              "tolerance": {
+                "absolute": 0.08,
+                "relative": 0.08
+              }
+            },
+            "pass": true,
+            "producer_to_timer_connected": true,
+            "source_weight": {
+              "deterministic_value": 0.013638618139749524,
+              "dtype": "torch.bfloat16",
+              "elements": 88080384
+            }
+          },
+          {
+            "allocator": {
+              "peak_allocated_bytes": 1277231616,
+              "peak_reserved_bytes": 1436549120
+            },
+            "architecture_multiplicity": 50,
+            "bf16": {
+              "method_class": "vllm.model_executor.layers.linear.UnquantizedLinearMethod",
+              "timing": {
+                "cuda_event": {
+                  "maximum_ms": 2.7317440509796143,
+                  "minimum_ms": 2.7121920585632324,
+                  "p50_ms": 2.7153921127319336,
+                  "p95_ms": 2.7317440509796143,
+                  "raw_ms": [
+                    2.7317440509796143,
+                    2.7121920585632324,
+                    2.7153921127319336
+                  ]
+                },
+                "iterations": 3,
+                "synchronized_wall": {
+                  "maximum_ms": 2.740113000072597,
+                  "minimum_ms": 2.720927000041229,
+                  "p50_ms": 2.7226959999779865,
+                  "p95_ms": 2.740113000072597,
+                  "raw_ms": [
+                    2.740113000072597,
+                    2.720927000041229,
+                    2.7226959999779865
+                  ]
+                },
+                "warmups": 2
+              }
+            },
+            "case": "sliding_qkv",
+            "fp8": {
+              "cuda_event": {
+                "maximum_ms": 1.8445440530776978,
+                "minimum_ms": 1.801535964012146,
+                "p50_ms": 1.806879997253418,
+                "p95_ms": 1.8445440530776978,
+                "raw_ms": [
+                  1.8445440530776978,
+                  1.801535964012146,
+                  1.806879997253418
+                ]
+              },
+              "iterations": 3,
+              "synchronized_wall": {
+                "maximum_ms": 1.855828999964615,
+                "minimum_ms": 1.8101790000173423,
+                "p50_ms": 1.8158810000841186,
+                "p95_ms": 1.855828999964615,
+                "raw_ms": [
+                  1.855828999964615,
+                  1.8101790000173423,
+                  1.8158810000841186
+                ]
+              },
+              "warmups": 2
+            },
+            "identity": {
+              "apply_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod.apply",
+              "kernel_class": "vllm.model_executor.kernels.linear.scaled_mm.cutlass.CutlassFP8ScaledMMLinearKernel",
+              "method_class": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+              "online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+              "parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+              "producer_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.process_weights_after_loading",
+              "required_parent_class": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod"
+            },
+            "k": 5376,
+            "kind": "linear",
+            "m": 3679,
+            "n": 16384,
+            "oracle_from_timed_outputs": {
+              "finite": true,
+              "maximum_absolute": 0.01953125,
+              "maximum_relative": 0.019607843831181526,
+              "nontrivial": true,
+              "pass": true,
+              "tolerance": {
+                "absolute": 0.08,
+                "relative": 0.08
+              }
+            },
+            "pass": true,
+            "producer_to_timer_connected": true,
+            "source_weight": {
+              "deterministic_value": 0.013638618139749524,
+              "dtype": "torch.bfloat16",
+              "elements": 88080384
+            }
+          },
+          {
+            "allocator": {
+              "peak_allocated_bytes": 343931392,
+              "peak_reserved_bytes": 358612992
+            },
+            "architecture_multiplicity": 10,
+            "bf16": {
+              "method_class": "vllm.model_executor.layers.linear.UnquantizedLinearMethod",
+              "timing": {
+                "cuda_event": {
+                  "maximum_ms": 0.34329599142074585,
+                  "minimum_ms": 0.3338240087032318,
+                  "p50_ms": 0.3364480137825012,
+                  "p95_ms": 0.34329599142074585,
+                  "raw_ms": [
+                    0.34329599142074585,
+                    0.33740800619125366,
+                    0.33423998951911926,
+                    0.3338240087032318,
+                    0.3364480137825012,
+                    0.3347199857234955,
+                    0.33715200424194336
+                  ]
+                },
+                "iterations": 7,
+                "synchronized_wall": {
+                  "maximum_ms": 0.35017400000469934,
+                  "minimum_ms": 0.34054100001412735,
+                  "p50_ms": 0.3436289999854125,
+                  "p95_ms": 0.35017400000469934,
+                  "raw_ms": [
+                    0.35017400000469934,
+                    0.34389499990084005,
+                    0.34054100001412735,
+                    0.34055099990837334,
+                    0.34308599992982636,
+                    0.3447860000278524,
+                    0.3436289999854125
+                  ]
+                },
+                "warmups": 3
+              }
+            },
+            "case": "global_qkv",
+            "fp8": {
+              "cuda_event": {
+                "maximum_ms": 0.3614720106124878,
+                "minimum_ms": 0.3319999873638153,
+                "p50_ms": 0.3399359881877899,
+                "p95_ms": 0.3614720106124878,
+                "raw_ms": [
+                  0.3606399893760681,
+                  0.3439359962940216,
+                  0.3614720106124878,
+                  0.3368319869041443,
+                  0.3319999873638153,
+                  0.3399359881877899,
+                  0.3332799971103668
+                ]
+              },
+              "iterations": 7,
+              "synchronized_wall": {
+                "maximum_ms": 0.36889299997255875,
+                "minimum_ms": 0.33998000003521156,
+                "p50_ms": 0.3470610000704255,
+                "p95_ms": 0.36889299997255875,
+                "raw_ms": [
+                  0.3678199999512799,
+                  0.3514219999942725,
+                  0.36889299997255875,
+                  0.3442480000330761,
+                  0.33998000003521156,
+                  0.3470610000704255,
+                  0.3405550000934454
+                ]
+              },
+              "warmups": 3
+            },
+            "identity": {
+              "apply_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod.apply",
+              "kernel_class": "vllm.model_executor.kernels.linear.scaled_mm.cutlass.CutlassFP8ScaledMMLinearKernel",
+              "method_class": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+              "online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+              "parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+              "producer_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.process_weights_after_loading",
+              "required_parent_class": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod"
+            },
+            "k": 5376,
+            "kind": "linear",
+            "m": 12,
+            "n": 20480,
+            "oracle_from_timed_outputs": {
+              "finite": true,
+              "maximum_absolute": 0.01953125,
+              "maximum_relative": 0.019607843831181526,
+              "nontrivial": true,
+              "pass": true,
+              "tolerance": {
+                "absolute": 0.08,
+                "relative": 0.08
+              }
+            },
+            "pass": true,
+            "producer_to_timer_connected": true,
+            "source_weight": {
+              "deterministic_value": 0.013638618139749524,
+              "dtype": "torch.bfloat16",
+              "elements": 110100480
+            }
+          },
+          {
+            "allocator": {
+              "peak_allocated_bytes": 1587675648,
+              "peak_reserved_bytes": 1774190592
+            },
+            "architecture_multiplicity": 10,
+            "bf16": {
+              "method_class": "vllm.model_executor.layers.linear.UnquantizedLinearMethod",
+              "timing": {
+                "cuda_event": {
+                  "maximum_ms": 3.360095977783203,
+                  "minimum_ms": 3.328000068664551,
+                  "p50_ms": 3.331295967102051,
+                  "p95_ms": 3.360095977783203,
+                  "raw_ms": [
+                    3.360095977783203,
+                    3.328000068664551,
+                    3.331295967102051
+                  ]
+                },
+                "iterations": 3,
+                "synchronized_wall": {
+                  "maximum_ms": 3.3695629999783705,
+                  "minimum_ms": 3.335857000024589,
+                  "p50_ms": 3.338625000083084,
+                  "p95_ms": 3.3695629999783705,
+                  "raw_ms": [
+                    3.3695629999783705,
+                    3.335857000024589,
+                    3.338625000083084
+                  ]
+                },
+                "warmups": 2
+              }
+            },
+            "case": "global_qkv",
+            "fp8": {
+              "cuda_event": {
+                "maximum_ms": 2.2073280811309814,
+                "minimum_ms": 2.181312084197998,
+                "p50_ms": 2.183135986328125,
+                "p95_ms": 2.2073280811309814,
+                "raw_ms": [
+                  2.2073280811309814,
+                  2.183135986328125,
+                  2.181312084197998
+                ]
+              },
+              "iterations": 3,
+              "synchronized_wall": {
+                "maximum_ms": 2.2159549999969386,
+                "minimum_ms": 2.189881999925092,
+                "p50_ms": 2.191584000001967,
+                "p95_ms": 2.2159549999969386,
+                "raw_ms": [
+                  2.2159549999969386,
+                  2.191584000001967,
+                  2.189881999925092
+                ]
+              },
+              "warmups": 2
+            },
+            "identity": {
+              "apply_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod.apply",
+              "kernel_class": "vllm.model_executor.kernels.linear.scaled_mm.cutlass.CutlassFP8ScaledMMLinearKernel",
+              "method_class": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+              "online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+              "parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+              "producer_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.process_weights_after_loading",
+              "required_parent_class": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod"
+            },
+            "k": 5376,
+            "kind": "linear",
+            "m": 3679,
+            "n": 20480,
+            "oracle_from_timed_outputs": {
+              "finite": true,
+              "maximum_absolute": 0.01953125,
+              "maximum_relative": 0.019607843831181526,
+              "nontrivial": true,
+              "pass": true,
+              "tolerance": {
+                "absolute": 0.08,
+                "relative": 0.08
+              }
+            },
+            "pass": true,
+            "producer_to_timer_connected": true,
+            "source_weight": {
+              "deterministic_value": 0.013638618139749524,
+              "dtype": "torch.bfloat16",
+              "elements": 110100480
+            }
+          },
+          {
+            "allocator": {
+              "peak_allocated_bytes": 141869568,
+              "peak_reserved_bytes": 155189248
+            },
+            "architecture_multiplicity": 50,
+            "bf16": {
+              "method_class": "vllm.model_executor.layers.linear.UnquantizedLinearMethod",
+              "timing": {
+                "cuda_event": {
+                  "maximum_ms": 0.07628799974918365,
+                  "minimum_ms": 0.06428799778223038,
+                  "p50_ms": 0.06630399823188782,
+                  "p95_ms": 0.07628799974918365,
+                  "raw_ms": [
+                    0.07628799974918365,
+                    0.07142399996519089,
+                    0.06630399823188782,
+                    0.06428799778223038,
+                    0.06511999666690826,
+                    0.0663679987192154,
+                    0.06540799885988235
+                  ]
+                },
+                "iterations": 7,
+                "synchronized_wall": {
+                  "maximum_ms": 0.0826740000547943,
+                  "minimum_ms": 0.07055300000047282,
+                  "p50_ms": 0.07240000002184388,
+                  "p95_ms": 0.0826740000547943,
+                  "raw_ms": [
+                    0.0826740000547943,
+                    0.07778899998811539,
+                    0.07240000002184388,
+                    0.07055300000047282,
+                    0.07163299994772387,
+                    0.07248199995046889,
+                    0.07164000010106975
+                  ]
+                },
+                "warmups": 3
+              }
+            },
+            "case": "sliding_output",
+            "fp8": {
+              "cuda_event": {
+                "maximum_ms": 0.21187199652194977,
+                "minimum_ms": 0.18294399976730347,
+                "p50_ms": 0.19276799261569977,
+                "p95_ms": 0.21187199652194977,
+                "raw_ms": [
+                  0.21187199652194977,
+                  0.19468800723552704,
+                  0.18569600582122803,
+                  0.18294399976730347,
+                  0.20367999374866486,
+                  0.19276799261569977,
+                  0.18467199802398682
+                ]
+              },
+              "iterations": 7,
+              "synchronized_wall": {
+                "maximum_ms": 0.2194159999362455,
+                "minimum_ms": 0.18989599993801676,
+                "p50_ms": 0.1999890000661253,
+                "p95_ms": 0.2194159999362455,
+                "raw_ms": [
+                  0.2194159999362455,
+                  0.20195399997646746,
+                  0.19322299999657844,
+                  0.18989599993801676,
+                  0.21123199996964104,
+                  0.1999890000661253,
+                  0.19162600005984132
+                ]
+              },
+              "warmups": 3
+            },
+            "identity": {
+              "apply_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod.apply",
+              "kernel_class": "vllm.model_executor.kernels.linear.scaled_mm.cutlass.CutlassFP8ScaledMMLinearKernel",
+              "method_class": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+              "online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+              "parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+              "producer_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.process_weights_after_loading",
+              "required_parent_class": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod"
+            },
+            "k": 8192,
+            "kind": "linear",
+            "m": 12,
+            "n": 5376,
+            "oracle_from_timed_outputs": {
+              "finite": true,
+              "maximum_absolute": 0.01953125,
+              "maximum_relative": 0.01953125,
+              "nontrivial": true,
+              "pass": true,
+              "tolerance": {
+                "absolute": 0.08,
+                "relative": 0.08
+              }
+            },
+            "pass": true,
+            "producer_to_timer_connected": true,
+            "source_weight": {
+              "deterministic_value": 0.011048543456039804,
+              "dtype": "torch.bfloat16",
+              "elements": 44040192
+            }
+          },
+          {
+            "allocator": {
+              "peak_allocated_bytes": 520225280,
+              "peak_reserved_bytes": 606076928
+            },
+            "architecture_multiplicity": 50,
+            "bf16": {
+              "method_class": "vllm.model_executor.layers.linear.UnquantizedLinearMethod",
+              "timing": {
+                "cuda_event": {
+                  "maximum_ms": 1.4570879936218262,
+                  "minimum_ms": 1.4324159622192383,
+                  "p50_ms": 1.4385919570922852,
+                  "p95_ms": 1.4570879936218262,
+                  "raw_ms": [
+                    1.4570879936218262,
+                    1.4324159622192383,
+                    1.4385919570922852
+                  ]
+                },
+                "iterations": 3,
+                "synchronized_wall": {
+                  "maximum_ms": 1.4645030000792758,
+                  "minimum_ms": 1.4394730000049094,
+                  "p50_ms": 1.4456109998945976,
+                  "p95_ms": 1.4645030000792758,
+                  "raw_ms": [
+                    1.4645030000792758,
+                    1.4394730000049094,
+                    1.4456109998945976
+                  ]
+                },
+                "warmups": 2
+              }
+            },
+            "case": "sliding_output",
+            "fp8": {
+              "cuda_event": {
+                "maximum_ms": 1.2505600452423096,
+                "minimum_ms": 1.2331839799880981,
+                "p50_ms": 1.248095989227295,
+                "p95_ms": 1.2505600452423096,
+                "raw_ms": [
+                  1.2505600452423096,
+                  1.248095989227295,
+                  1.2331839799880981
+                ]
+              },
+              "iterations": 3,
+              "synchronized_wall": {
+                "maximum_ms": 1.2586050000891191,
+                "minimum_ms": 1.2415600000394988,
+                "p50_ms": 1.2565029999223043,
+                "p95_ms": 1.2586050000891191,
+                "raw_ms": [
+                  1.2586050000891191,
+                  1.2565029999223043,
+                  1.2415600000394988
+                ]
+              },
+              "warmups": 2
+            },
+            "identity": {
+              "apply_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod.apply",
+              "kernel_class": "vllm.model_executor.kernels.linear.scaled_mm.cutlass.CutlassFP8ScaledMMLinearKernel",
+              "method_class": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+              "online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+              "parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+              "producer_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.process_weights_after_loading",
+              "required_parent_class": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod"
+            },
+            "k": 8192,
+            "kind": "linear",
+            "m": 3679,
+            "n": 5376,
+            "oracle_from_timed_outputs": {
+              "finite": true,
+              "maximum_absolute": 0.12890625,
+              "maximum_relative": 0.12890625,
+              "nontrivial": true,
+              "pass": false,
+              "tolerance": {
+                "absolute": 0.08,
+                "relative": 0.08
+              }
+            },
+            "pass": false,
+            "producer_to_timer_connected": true,
+            "source_weight": {
+              "deterministic_value": 0.011048543456039804,
+              "dtype": "torch.bfloat16",
+              "elements": 44040192
+            }
+          },
+          {
+            "allocator": {
+              "peak_allocated_bytes": 274186752,
+              "peak_reserved_bytes": 287309824
+            },
+            "architecture_multiplicity": 10,
+            "bf16": {
+              "method_class": "vllm.model_executor.layers.linear.UnquantizedLinearMethod",
+              "timing": {
+                "cuda_event": {
+                  "maximum_ms": 0.2852799892425537,
+                  "minimum_ms": 0.27456000447273254,
+                  "p50_ms": 0.2765760123729706,
+                  "p95_ms": 0.2852799892425537,
+                  "raw_ms": [
+                    0.2845439910888672,
+                    0.2765760123729706,
+                    0.27456000447273254,
+                    0.27772799134254456,
+                    0.27478399872779846,
+                    0.2852799892425537,
+                    0.2760320007801056
+                  ]
+                },
+                "iterations": 7,
+                "synchronized_wall": {
+                  "maximum_ms": 0.2917609999713022,
+                  "minimum_ms": 0.28124400000706373,
+                  "p50_ms": 0.2839100000073813,
+                  "p95_ms": 0.2917609999713022,
+                  "raw_ms": [
+                    0.291193999942152,
+                    0.28294899993852596,
+                    0.281341999993856,
+                    0.2839100000073813,
+                    0.28124400000706373,
+                    0.2917609999713022,
+                    0.28420199998890894
+                  ]
+                },
+                "warmups": 3
+              }
+            },
+            "case": "global_output",
+            "fp8": {
+              "cuda_event": {
+                "maximum_ms": 0.21622399985790253,
+                "minimum_ms": 0.18246400356292725,
+                "p50_ms": 0.1913280040025711,
+                "p95_ms": 0.21622399985790253,
+                "raw_ms": [
+                  0.21622399985790253,
+                  0.21561600267887115,
+                  0.1894720047712326,
+                  0.18624000251293182,
+                  0.18246400356292725,
+                  0.20073600113391876,
+                  0.1913280040025711
+                ]
+              },
+              "iterations": 7,
+              "synchronized_wall": {
+                "maximum_ms": 0.22421500000291417,
+                "minimum_ms": 0.1899799999591778,
+                "p50_ms": 0.1988630000369085,
+                "p95_ms": 0.22421500000291417,
+                "raw_ms": [
+                  0.22421500000291417,
+                  0.22311999998692045,
+                  0.1973939999970753,
+                  0.19344700001511228,
+                  0.1899799999591778,
+                  0.2080460000115636,
+                  0.1988630000369085
+                ]
+              },
+              "warmups": 3
+            },
+            "identity": {
+              "apply_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod.apply",
+              "kernel_class": "vllm.model_executor.kernels.linear.scaled_mm.cutlass.CutlassFP8ScaledMMLinearKernel",
+              "method_class": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+              "online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+              "parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+              "producer_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.process_weights_after_loading",
+              "required_parent_class": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod"
+            },
+            "k": 16384,
+            "kind": "linear",
+            "m": 12,
+            "n": 5376,
+            "oracle_from_timed_outputs": {
+              "finite": true,
+              "maximum_absolute": 0.12890625,
+              "maximum_relative": 0.12890625,
+              "nontrivial": true,
+              "pass": false,
+              "tolerance": {
+                "absolute": 0.08,
+                "relative": 0.08
+              }
+            },
+            "pass": false,
+            "producer_to_timer_connected": true,
+            "source_weight": {
+              "deterministic_value": 0.0078125,
+              "dtype": "torch.bfloat16",
+              "elements": 88080384
+            }
+          },
+          {
+            "allocator": {
+              "peak_allocated_bytes": 712081920,
+              "peak_reserved_bytes": 788529152
+            },
+            "architecture_multiplicity": 10,
+            "bf16": {
+              "method_class": "vllm.model_executor.layers.linear.UnquantizedLinearMethod",
+              "timing": {
+                "cuda_event": {
+                  "maximum_ms": 2.83571195602417,
+                  "minimum_ms": 2.8102400302886963,
+                  "p50_ms": 2.8198399543762207,
+                  "p95_ms": 2.83571195602417,
+                  "raw_ms": [
+                    2.83571195602417,
+                    2.8198399543762207,
+                    2.8102400302886963
+                  ]
+                },
+                "iterations": 3,
+                "synchronized_wall": {
+                  "maximum_ms": 2.842759000031947,
+                  "minimum_ms": 2.816958000039449,
+                  "p50_ms": 2.827013999990413,
+                  "p95_ms": 2.842759000031947,
+                  "raw_ms": [
+                    2.842759000031947,
+                    2.827013999990413,
+                    2.816958000039449
+                  ]
+                },
+                "warmups": 2
+              }
+            },
+            "case": "global_output",
+            "fp8": {
+              "cuda_event": {
+                "maximum_ms": 2.0369279384613037,
+                "minimum_ms": 1.9854400157928467,
+                "p50_ms": 1.9988160133361816,
+                "p95_ms": 2.0369279384613037,
+                "raw_ms": [
+                  2.0369279384613037,
+                  1.9988160133361816,
+                  1.9854400157928467
+                ]
+              },
+              "iterations": 3,
+              "synchronized_wall": {
+                "maximum_ms": 2.0448349999924176,
+                "minimum_ms": 1.9936999999572436,
+                "p50_ms": 2.006918000006408,
+                "p95_ms": 2.0448349999924176,
+                "raw_ms": [
+                  2.0448349999924176,
+                  2.006918000006408,
+                  1.9936999999572436
+                ]
+              },
+              "warmups": 2
+            },
+            "identity": {
+              "apply_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod.apply",
+              "kernel_class": "vllm.model_executor.kernels.linear.scaled_mm.cutlass.CutlassFP8ScaledMMLinearKernel",
+              "method_class": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+              "online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+              "parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+              "producer_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.process_weights_after_loading",
+              "required_parent_class": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod"
+            },
+            "k": 16384,
+            "kind": "linear",
+            "m": 3679,
+            "n": 5376,
+            "oracle_from_timed_outputs": {
+              "finite": true,
+              "maximum_absolute": 0.34765625,
+              "maximum_relative": 0.34765625,
+              "nontrivial": true,
+              "pass": false,
+              "tolerance": {
+                "absolute": 0.08,
+                "relative": 0.08
+              }
+            },
+            "pass": false,
+            "producer_to_timer_connected": true,
+            "source_weight": {
+              "deterministic_value": 0.0078125,
+              "dtype": "torch.bfloat16",
+              "elements": 88080384
+            }
+          },
+          {
+            "allocator": {
+              "peak_allocated_bytes": 711588352,
+              "peak_reserved_bytes": 723517440
+            },
+            "architecture_multiplicity": 60,
+            "bf16": {
+              "method_class": "vllm.model_executor.layers.linear.UnquantizedLinearMethod",
+              "timing": {
+                "cuda_event": {
+                  "maximum_ms": 0.6800959706306458,
+                  "minimum_ms": 0.6718400120735168,
+                  "p50_ms": 0.6735360026359558,
+                  "p95_ms": 0.6800959706306458,
+                  "raw_ms": [
+                    0.6800959706306458,
+                    0.6735039949417114,
+                    0.6735360026359558,
+                    0.6718400120735168,
+                    0.6735039949417114,
+                    0.6765120029449463,
+                    0.6754239797592163
+                  ]
+                },
+                "iterations": 7,
+                "synchronized_wall": {
+                  "maximum_ms": 0.6872110000131215,
+                  "minimum_ms": 0.6783960000120715,
+                  "p50_ms": 0.6803420000096594,
+                  "p95_ms": 0.6872110000131215,
+                  "raw_ms": [
+                    0.6872110000131215,
+                    0.6802589999779229,
+                    0.6801789999144603,
+                    0.6783960000120715,
+                    0.6803420000096594,
+                    0.6827629999861529,
+                    0.6822499999543652
+                  ]
+                },
+                "warmups": 3
+              }
+            },
+            "case": "merged_gate_up",
+            "fp8": {
+              "cuda_event": {
+                "maximum_ms": 0.5504000186920166,
+                "minimum_ms": 0.521344006061554,
+                "p50_ms": 0.5271999835968018,
+                "p95_ms": 0.5504000186920166,
+                "raw_ms": [
+                  0.5504000186920166,
+                  0.5363199710845947,
+                  0.5246400237083435,
+                  0.5271999835968018,
+                  0.5379840135574341,
+                  0.521344006061554,
+                  0.5229120254516602
+                ]
+              },
+              "iterations": 7,
+              "synchronized_wall": {
+                "maximum_ms": 0.5583330000717979,
+                "minimum_ms": 0.5287320000206819,
+                "p50_ms": 0.5346159999817246,
+                "p95_ms": 0.5583330000717979,
+                "raw_ms": [
+                  0.5583330000717979,
+                  0.5439120000119146,
+                  0.5324740000105521,
+                  0.5346159999817246,
+                  0.5458200000703073,
+                  0.5287320000206819,
+                  0.5303129998992517
+                ]
+              },
+              "warmups": 3
+            },
+            "identity": {
+              "apply_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod.apply",
+              "kernel_class": "vllm.model_executor.kernels.linear.scaled_mm.cutlass.CutlassFP8ScaledMMLinearKernel",
+              "method_class": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+              "online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+              "parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+              "producer_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.process_weights_after_loading",
+              "required_parent_class": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod"
+            },
+            "k": 5376,
+            "kind": "linear",
+            "m": 12,
+            "n": 43008,
+            "oracle_from_timed_outputs": {
+              "finite": true,
+              "maximum_absolute": 0.01953125,
+              "maximum_relative": 0.019607843831181526,
+              "nontrivial": true,
+              "pass": true,
+              "tolerance": {
+                "absolute": 0.08,
+                "relative": 0.08
+              }
+            },
+            "pass": true,
+            "producer_to_timer_connected": true,
+            "source_weight": {
+              "deterministic_value": 0.013638618139749524,
+              "dtype": "torch.bfloat16",
+              "elements": 231211008
+            }
+          },
+          {
+            "allocator": {
+              "peak_allocated_bytes": 3276407296,
+              "peak_reserved_bytes": 3630170112
+            },
+            "architecture_multiplicity": 60,
+            "bf16": {
+              "method_class": "vllm.model_executor.layers.linear.UnquantizedLinearMethod",
+              "timing": {
+                "cuda_event": {
+                  "maximum_ms": 6.230016231536865,
+                  "minimum_ms": 6.123839855194092,
+                  "p50_ms": 6.2144317626953125,
+                  "p95_ms": 6.230016231536865,
+                  "raw_ms": [
+                    6.230016231536865,
+                    6.2144317626953125,
+                    6.123839855194092
+                  ]
+                },
+                "iterations": 3,
+                "synchronized_wall": {
+                  "maximum_ms": 6.23753900003976,
+                  "minimum_ms": 6.131593999953111,
+                  "p50_ms": 6.222422000064398,
+                  "p95_ms": 6.23753900003976,
+                  "raw_ms": [
+                    6.23753900003976,
+                    6.222422000064398,
+                    6.131593999953111
+                  ]
+                },
+                "warmups": 2
+              }
+            },
+            "case": "merged_gate_up",
+            "fp8": {
+              "cuda_event": {
+                "maximum_ms": 4.275296211242676,
+                "minimum_ms": 4.259456157684326,
+                "p50_ms": 4.2751359939575195,
+                "p95_ms": 4.275296211242676,
+                "raw_ms": [
+                  4.275296211242676,
+                  4.2751359939575195,
+                  4.259456157684326
+                ]
+              },
+              "iterations": 3,
+              "synchronized_wall": {
+                "maximum_ms": 4.283373000021129,
+                "minimum_ms": 4.267255999934605,
+                "p50_ms": 4.283373000021129,
+                "p95_ms": 4.283373000021129,
+                "raw_ms": [
+                  4.283373000021129,
+                  4.283373000021129,
+                  4.267255999934605
+                ]
+              },
+              "warmups": 2
+            },
+            "identity": {
+              "apply_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod.apply",
+              "kernel_class": "vllm.model_executor.kernels.linear.scaled_mm.cutlass.CutlassFP8ScaledMMLinearKernel",
+              "method_class": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+              "online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+              "parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+              "producer_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.process_weights_after_loading",
+              "required_parent_class": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod"
+            },
+            "k": 5376,
+            "kind": "linear",
+            "m": 3679,
+            "n": 43008,
+            "oracle_from_timed_outputs": {
+              "finite": true,
+              "maximum_absolute": 0.01953125,
+              "maximum_relative": 0.019607843831181526,
+              "nontrivial": true,
+              "pass": true,
+              "tolerance": {
+                "absolute": 0.08,
+                "relative": 0.08
+              }
+            },
+            "pass": true,
+            "producer_to_timer_connected": true,
+            "source_weight": {
+              "deterministic_value": 0.013638618139749524,
+              "dtype": "torch.bfloat16",
+              "elements": 231211008
+            }
+          },
+          {
+            "allocator": {
+              "peak_allocated_bytes": 356884992,
+              "peak_reserved_bytes": 373293056
+            },
+            "architecture_multiplicity": 60,
+            "bf16": {
+              "method_class": "vllm.model_executor.layers.linear.UnquantizedLinearMethod",
+              "timing": {
+                "cuda_event": {
+                  "maximum_ms": 0.3972479999065399,
+                  "minimum_ms": 0.38684800267219543,
+                  "p50_ms": 0.3887360095977783,
+                  "p95_ms": 0.3972479999065399,
+                  "raw_ms": [
+                    0.3972479999065399,
+                    0.39241600036621094,
+                    0.387935996055603,
+                    0.38809600472450256,
+                    0.38684800267219543,
+                    0.3887360095977783,
+                    0.3904320001602173
+                  ]
+                },
+                "iterations": 7,
+                "synchronized_wall": {
+                  "maximum_ms": 0.40444299997943745,
+                  "minimum_ms": 0.3937109999014865,
+                  "p50_ms": 0.39555000000746077,
+                  "p95_ms": 0.40444299997943745,
+                  "raw_ms": [
+                    0.40444299997943745,
+                    0.3989379999893572,
+                    0.395001000015327,
+                    0.39465400004701223,
+                    0.3937109999014865,
+                    0.39555000000746077,
+                    0.39686600007371453
+                  ]
+                },
+                "warmups": 3
+              }
+            },
+            "case": "down",
+            "fp8": {
+              "cuda_event": {
+                "maximum_ms": 0.3895680010318756,
+                "minimum_ms": 0.3505919873714447,
+                "p50_ms": 0.35926398634910583,
+                "p95_ms": 0.3895680010318756,
+                "raw_ms": [
+                  0.3895680010318756,
+                  0.35926398634910583,
+                  0.3527680039405823,
+                  0.3583360016345978,
+                  0.36371201276779175,
+                  0.36851200461387634,
+                  0.3505919873714447
+                ]
+              },
+              "iterations": 7,
+              "synchronized_wall": {
+                "maximum_ms": 0.3978400000050897,
+                "minimum_ms": 0.3578649999553818,
+                "p50_ms": 0.36712100006752735,
+                "p95_ms": 0.3978400000050897,
+                "raw_ms": [
+                  0.3978400000050897,
+                  0.36712100006752735,
+                  0.3608160000112548,
+                  0.3657019999536715,
+                  0.3712330000098518,
+                  0.3759070000342035,
+                  0.3578649999553818
+                ]
+              },
+              "warmups": 3
+            },
+            "identity": {
+              "apply_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod.apply",
+              "kernel_class": "vllm.model_executor.kernels.linear.scaled_mm.cutlass.CutlassFP8ScaledMMLinearKernel",
+              "method_class": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+              "online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+              "parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+              "producer_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.process_weights_after_loading",
+              "required_parent_class": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod"
+            },
+            "k": 21504,
+            "kind": "linear",
+            "m": 12,
+            "n": 5376,
+            "oracle_from_timed_outputs": {
+              "finite": true,
+              "maximum_absolute": 0.1796875,
+              "maximum_relative": 0.18039216101169586,
+              "nontrivial": true,
+              "pass": false,
+              "tolerance": {
+                "absolute": 0.08,
+                "relative": 0.08
+              }
+            },
+            "pass": false,
+            "producer_to_timer_connected": true,
+            "source_weight": {
+              "deterministic_value": 0.006819309069874762,
+              "dtype": "torch.bfloat16",
+              "elements": 115605504
+            }
+          },
+          {
+            "allocator": {
+              "peak_allocated_bytes": 832330240,
+              "peak_reserved_bytes": 851443712
+            },
+            "architecture_multiplicity": 60,
+            "bf16": {
+              "method_class": "vllm.model_executor.layers.linear.UnquantizedLinearMethod",
+              "timing": {
+                "cuda_event": {
+                  "maximum_ms": 3.718751907348633,
+                  "minimum_ms": 3.669856071472168,
+                  "p50_ms": 3.682431936264038,
+                  "p95_ms": 3.718751907348633,
+                  "raw_ms": [
+                    3.718751907348633,
+                    3.669856071472168,
+                    3.682431936264038
+                  ]
+                },
+                "iterations": 3,
+                "synchronized_wall": {
+                  "maximum_ms": 3.725656000028721,
+                  "minimum_ms": 3.676420999909169,
+                  "p50_ms": 3.6897680000720356,
+                  "p95_ms": 3.725656000028721,
+                  "raw_ms": [
+                    3.725656000028721,
+                    3.676420999909169,
+                    3.6897680000720356
+                  ]
+                },
+                "warmups": 2
+              }
+            },
+            "case": "down",
+            "fp8": {
+              "cuda_event": {
+                "maximum_ms": 2.5271999835968018,
+                "minimum_ms": 2.4760000705718994,
+                "p50_ms": 2.5271360874176025,
+                "p95_ms": 2.5271999835968018,
+                "raw_ms": [
+                  2.5271360874176025,
+                  2.5271999835968018,
+                  2.4760000705718994
+                ]
+              },
+              "iterations": 3,
+              "synchronized_wall": {
+                "maximum_ms": 2.5405389999377803,
+                "minimum_ms": 2.484072000015658,
+                "p50_ms": 2.535473999955684,
+                "p95_ms": 2.5405389999377803,
+                "raw_ms": [
+                  2.5405389999377803,
+                  2.535473999955684,
+                  2.484072000015658
+                ]
+              },
+              "warmups": 2
+            },
+            "identity": {
+              "apply_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod.apply",
+              "kernel_class": "vllm.model_executor.kernels.linear.scaled_mm.cutlass.CutlassFP8ScaledMMLinearKernel",
+              "method_class": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+              "online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+              "parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+              "producer_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.process_weights_after_loading",
+              "required_parent_class": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod"
+            },
+            "k": 21504,
+            "kind": "linear",
+            "m": 3679,
+            "n": 5376,
+            "oracle_from_timed_outputs": {
+              "finite": true,
+              "maximum_absolute": 0.5,
+              "maximum_relative": 0.501960813999176,
+              "nontrivial": true,
+              "pass": false,
+              "tolerance": {
+                "absolute": 0.08,
+                "relative": 0.08
+              }
+            },
+            "pass": false,
+            "producer_to_timer_connected": true,
+            "source_weight": {
+              "deterministic_value": 0.006819309069874762,
+              "dtype": "torch.bfloat16",
+              "elements": 115605504
+            }
+          }
+        ]
+      },
+      "runtime": {
+        "capability": [
+          8,
+          9
+        ],
+        "cuda": "12.9",
+        "gpu": "NVIDIA L40S",
+        "torch": "2.10.0+cu129",
+        "vllm": "0.19.1.dev6+g6d4a8e6d2"
+      },
+      "schema_version": 1,
+      "scientific_wall_seconds": 4.293694942000002,
+      "sentinel": {
+        "group_identity": {
+          "cuda_collective_probe": 17.0,
+          "groups": {
+            "dp": {
+              "cpu_backend": "gloo",
+              "device": "cuda:0",
+              "device_backend": "nccl",
+              "local_rank": 0,
+              "rank": 0,
+              "rank_in_group": 0,
+              "ranks": [
+                0
+              ],
+              "unique_name": "dp:0",
+              "world_size": 1
+            },
+            "pp": {
+              "cpu_backend": "gloo",
+              "device": "cuda:0",
+              "device_backend": "nccl",
+              "local_rank": 0,
+              "rank": 0,
+              "rank_in_group": 0,
+              "ranks": [
+                0
+              ],
+              "unique_name": "pp:0",
+              "world_size": 1
+            },
+            "tp": {
+              "cpu_backend": "gloo",
+              "device": "cuda:0",
+              "device_backend": "nccl",
+              "local_rank": 0,
+              "rank": 0,
+              "rank_in_group": 0,
+              "ranks": [
+                0
+              ],
+              "unique_name": "tp:0",
+              "world_size": 1
+            }
+          },
+          "pass": true,
+          "rank": 0,
+          "rendezvous_scheme": "tcp://127.0.0.1:<ephemeral>",
+          "torch_distributed_initialized": true,
+          "tp_pp_dp": [
+            1,
+            1,
+            1
+          ],
+          "world_backend": "nccl",
+          "world_size": 1
+        },
+        "pass": true,
+        "row": {
+          "allocator": {
+            "peak_allocated_bytes": 276036096,
+            "peak_reserved_bytes": 291504128
+          },
+          "architecture_multiplicity": 50,
+          "bf16": {
+            "method_class": "vllm.model_executor.layers.linear.UnquantizedLinearMethod",
+            "timing": {
+              "cuda_event": {
+                "maximum_ms": 0.28832000494003296,
+                "minimum_ms": 0.2744320034980774,
+                "p50_ms": 0.2773120105266571,
+                "p95_ms": 0.28832000494003296,
+                "raw_ms": [
+                  0.28832000494003296,
+                  0.2840319871902466,
+                  0.2759360074996948,
+                  0.28035199642181396,
+                  0.2773120105266571,
+                  0.27590399980545044,
+                  0.2744320034980774
+                ]
+              },
+              "iterations": 7,
+              "synchronized_wall": {
+                "maximum_ms": 0.2969949999851451,
+                "minimum_ms": 0.28062199999112636,
+                "p50_ms": 0.28403399994658685,
+                "p95_ms": 0.2969949999851451,
+                "raw_ms": [
+                  0.2961899999718298,
+                  0.29092399995533924,
+                  0.2828819999649568,
+                  0.2969949999851451,
+                  0.28403399994658685,
+                  0.2822150000838519,
+                  0.28062199999112636
+                ]
+              },
+              "warmups": 3
+            }
+          },
+          "case": "sliding_qkv",
+          "fp8": {
+            "cuda_event": {
+              "maximum_ms": 0.24771200120449066,
+              "minimum_ms": 0.19459199905395508,
+              "p50_ms": 0.21001599729061127,
+              "p95_ms": 0.24771200120449066,
+              "raw_ms": [
+                0.2407039999961853,
+                0.24771200120449066,
+                0.22438399493694305,
+                0.20307199656963348,
+                0.20943999290466309,
+                0.19459199905395508,
+                0.21001599729061127
+              ]
+            },
+            "iterations": 7,
+            "synchronized_wall": {
+              "maximum_ms": 0.2573210000491599,
+              "minimum_ms": 0.20175399993149767,
+              "p50_ms": 0.21720400002323004,
+              "p95_ms": 0.2573210000491599,
+              "raw_ms": [
+                0.2515850000008868,
+                0.2573210000491599,
+                0.23170300005403988,
+                0.21029599997746118,
+                0.21701399998619308,
+                0.20175399993149767,
+                0.21720400002323004
+              ]
+            },
+            "warmups": 3
+          },
+          "identity": {
+            "apply_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod.apply",
+            "kernel_class": "vllm.model_executor.kernels.linear.scaled_mm.cutlass.CutlassFP8ScaledMMLinearKernel",
+            "method_class": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+            "online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+            "parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+            "producer_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.process_weights_after_loading",
+            "required_parent_class": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod"
+          },
+          "k": 5376,
+          "kind": "linear",
+          "m": 12,
+          "n": 16384,
+          "oracle_from_timed_outputs": {
+            "finite": true,
+            "maximum_absolute": 0.01953125,
+            "maximum_relative": 0.019607843831181526,
+            "nontrivial": true,
+            "pass": true,
+            "tolerance": {
+              "absolute": 0.08,
+              "relative": 0.08
+            }
+          },
+          "pass": true,
+          "producer_to_timer_connected": true,
+          "source_weight": {
+            "deterministic_value": 0.013638618139749524,
+            "dtype": "torch.bfloat16",
+            "elements": 88080384
+          }
+        },
+        "schema_version": 1,
+        "type": "fp8_context_sentinel"
+      },
+      "stage": "primary",
+      "surface_c12": {
+        "below_conservative_maximum": false,
+        "below_planning_maximum": false,
+        "component_seconds_per_request": 3.112121484428023,
+        "concurrency": 12,
+        "conservative_maximum_seconds_per_request": 0.698661566,
+        "conservative_residual_seconds_per_request": -2.413459918428023,
+        "decode_division": "358/12 exactly once after architecture weighting",
+        "decode_linear_seconds_per_request": 2.3460837154835463,
+        "head_seconds_per_request": 0.11793856604894001,
+        "kv_decode_write_seconds_per_request": 0.04295999870635569,
+        "kv_prefill_write_seconds_per_request": 0.0024345599859952926,
+        "planning_maximum_seconds_per_request": 1.229949102,
+        "planning_residual_seconds_per_request": -1.8821723824280232,
+        "prefill_division": "none",
+        "prefill_linear_seconds_per_request": 0.602704644203186
+      },
+      "useful_gpu_seconds": 0.15814659263007344
+    },
+    "runtime": {
+      "benchmark": "fp8_single_rank.py",
+      "benchmark_sha256": "c04950a15e09b8b7b462387503b3b48aa3dfd4a42d4973c5aab1cf731f26e10e",
+      "capability": [
+        8,
+        9
+      ],
+      "cuda": "12.9",
+      "gpu": "NVIDIA L40S",
+      "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+      "spec_sha256": "bb547ef98500a58dbfcc04edfe8980781c89ff0198ec15338cb0f4def664d119",
+      "torch": "2.10.0+cu129",
+      "vllm": "0.19.1.dev6+g6d4a8e6d2"
+    },
+    "schema_version": 1,
+    "sentinel": {
+      "group_identity": {
+        "cuda_collective_probe": 17.0,
+        "groups": {
+          "dp": {
+            "cpu_backend": "gloo",
+            "device": "cuda:0",
+            "device_backend": "nccl",
+            "local_rank": 0,
+            "rank": 0,
+            "rank_in_group": 0,
+            "ranks": [
+              0
+            ],
+            "unique_name": "dp:0",
+            "world_size": 1
+          },
+          "pp": {
+            "cpu_backend": "gloo",
+            "device": "cuda:0",
+            "device_backend": "nccl",
+            "local_rank": 0,
+            "rank": 0,
+            "rank_in_group": 0,
+            "ranks": [
+              0
+            ],
+            "unique_name": "pp:0",
+            "world_size": 1
+          },
+          "tp": {
+            "cpu_backend": "gloo",
+            "device": "cuda:0",
+            "device_backend": "nccl",
+            "local_rank": 0,
+            "rank": 0,
+            "rank_in_group": 0,
+            "ranks": [
+              0
+            ],
+            "unique_name": "tp:0",
+            "world_size": 1
+          }
+        },
+        "pass": true,
+        "rank": 0,
+        "rendezvous_scheme": "tcp://127.0.0.1:<ephemeral>",
+        "torch_distributed_initialized": true,
+        "tp_pp_dp": [
+          1,
+          1,
+          1
+        ],
+        "world_backend": "nccl",
+        "world_size": 1
+      },
+      "pass": true,
+      "row": {
+        "allocator": {
+          "peak_allocated_bytes": 276036096,
+          "peak_reserved_bytes": 291504128
+        },
+        "architecture_multiplicity": 50,
+        "bf16": {
+          "method_class": "vllm.model_executor.layers.linear.UnquantizedLinearMethod",
+          "timing": {
+            "cuda_event": {
+              "maximum_ms": 0.28832000494003296,
+              "minimum_ms": 0.2744320034980774,
+              "p50_ms": 0.2773120105266571,
+              "p95_ms": 0.28832000494003296,
+              "raw_ms": [
+                0.28832000494003296,
+                0.2840319871902466,
+                0.2759360074996948,
+                0.28035199642181396,
+                0.2773120105266571,
+                0.27590399980545044,
+                0.2744320034980774
+              ]
+            },
+            "iterations": 7,
+            "synchronized_wall": {
+              "maximum_ms": 0.2969949999851451,
+              "minimum_ms": 0.28062199999112636,
+              "p50_ms": 0.28403399994658685,
+              "p95_ms": 0.2969949999851451,
+              "raw_ms": [
+                0.2961899999718298,
+                0.29092399995533924,
+                0.2828819999649568,
+                0.2969949999851451,
+                0.28403399994658685,
+                0.2822150000838519,
+                0.28062199999112636
+              ]
+            },
+            "warmups": 3
+          }
+        },
+        "case": "sliding_qkv",
+        "fp8": {
+          "cuda_event": {
+            "maximum_ms": 0.24771200120449066,
+            "minimum_ms": 0.19459199905395508,
+            "p50_ms": 0.21001599729061127,
+            "p95_ms": 0.24771200120449066,
+            "raw_ms": [
+              0.2407039999961853,
+              0.24771200120449066,
+              0.22438399493694305,
+              0.20307199656963348,
+              0.20943999290466309,
+              0.19459199905395508,
+              0.21001599729061127
+            ]
+          },
+          "iterations": 7,
+          "synchronized_wall": {
+            "maximum_ms": 0.2573210000491599,
+            "minimum_ms": 0.20175399993149767,
+            "p50_ms": 0.21720400002323004,
+            "p95_ms": 0.2573210000491599,
+            "raw_ms": [
+              0.2515850000008868,
+              0.2573210000491599,
+              0.23170300005403988,
+              0.21029599997746118,
+              0.21701399998619308,
+              0.20175399993149767,
+              0.21720400002323004
+            ]
+          },
+          "warmups": 3
+        },
+        "identity": {
+          "apply_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod.apply",
+          "kernel_class": "vllm.model_executor.kernels.linear.scaled_mm.cutlass.CutlassFP8ScaledMMLinearKernel",
+          "method_class": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+          "online_source_sha256": "90f1cceaf31e7dff917459425f85a8ab757ea045ea739a7ee8e4458edb1dc4fe",
+          "parent_source_sha256": "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48",
+          "producer_symbol": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.process_weights_after_loading",
+          "required_parent_class": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod"
+        },
+        "k": 5376,
+        "kind": "linear",
+        "m": 12,
+        "n": 16384,
+        "oracle_from_timed_outputs": {
+          "finite": true,
+          "maximum_absolute": 0.01953125,
+          "maximum_relative": 0.019607843831181526,
+          "nontrivial": true,
+          "pass": true,
+          "tolerance": {
+            "absolute": 0.08,
+            "relative": 0.08
+          }
+        },
+        "pass": true,
+        "producer_to_timer_connected": true,
+        "source_weight": {
+          "deterministic_value": 0.013638618139749524,
+          "dtype": "torch.bfloat16",
+          "elements": 88080384
+        }
+      },
+      "schema_version": 1,
+      "type": "fp8_context_sentinel"
+    },
+    "stage": "primary",
+    "telemetry": {
+      "gpu_names": [
+        "NVIDIA L40S"
+      ],
+      "gpu_util_samples_percent": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        3.0,
+        0.0,
+        0.0,
+        0.0,
+        53.0
+      ],
+      "memory_total_mib": [
+        46068.0
+      ],
+      "pass": true,
+      "power_samples_w": [
+        37.42,
+        37.21,
+        37.15,
+        37.38,
+        37.51,
+        37.39,
+        37.27,
+        37.15,
+        37.27,
+        37.27,
+        51.16,
+        107.07,
+        106.73,
+        106.88,
+        161.17
+      ],
+      "row_count": 15
+    },
+    "useful_gpu_seconds": 0.15814659263007344
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "classification": "gemma4_assistant_materialized",
+  "elapsed_seconds": 11.651,
+  "files": [
+    {
+      "bytes": 2316,
+      "name": "config.json",
+      "sha256": "d09487c1083a334a97545f204dd41ab1a40b0438bdead19558f0e1357e26d66a"
+    },
+    {
+      "bytes": 307,
+      "name": "generation_config.json",
+      "sha256": "8e58004dc0e2407b63410b190bb8470efbdcfeb71533f1770e09c20abe193a6f"
+    },
+    {
+      "bytes": 939042560,
+      "name": "model.safetensors",
+      "sha256": "9f80df6099fa1fd7db71220ec9ee864d5ecff769878697dd5763e4285b15a1da"
+    },
+    {
+      "bytes": 32169440,
+      "name": "tokenizer.json",
+      "sha256": "75a6583c1a418e2bbd79c60d95d28e0f5bf549ad3f2990b5bdb5238c6c2bf70c"
+    },
+    {
+      "bytes": 822,
+      "name": "tokenizer_config.json",
+      "sha256": "089594a3924fcfd4cb1c596a7906fbf476193519e5198f780912eed02b177e42"
+    }
+  ],
+  "model": "google/gemma-4-31B-it-assistant",
+  "pass": true,
+  "revision": "627c5ec1458b9086b841a91e0512fd31fd2fbbf1",
+  "root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/assistant",
+  "total_bytes": 971215445
+}

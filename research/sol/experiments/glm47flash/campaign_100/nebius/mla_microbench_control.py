@@ -12,7 +12,9 @@ import subprocess
 import sys
 import tarfile
 import time
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Callable, TypeVar
 
 
 HERE = Path(__file__).resolve().parent
@@ -56,6 +58,10 @@ class MicrobenchControlError(RuntimeError):
     pass
 
 
+OperationResult = TypeVar("OperationResult")
+_REPAIR_WINDOW_CONSUMED = "_mla_repair_window_consumed"
+
+
 def validate_durable_owner(environment: dict[str, str] | None = None) -> None:
     environment = os.environ if environment is None else environment
     if not environment.get("INVOCATION_ID") or environment.get("SYSTEMD_EXEC_PID") != str(os.getpid()):
@@ -94,21 +100,102 @@ def conditional_trigger(primary: dict[str, object]) -> bool:
     )
 
 
-def hold_for_repair_decision(output_dir: Path, events: Path, deadline: float) -> None:
+def hold_for_repair_decision(
+    output_dir: Path,
+    events: Path,
+    deadline: float,
+    maximum_seconds: int = 0,
+) -> str:
+    """Retain the owner for repair, allowing an explicit lease up to its watchdog deadline."""
+    if maximum_seconds <= 0:
+        emit(events, "repair_window_skipped")
+        return "skipped"
     decision_path = output_dir / "repair-decision.json"
-    hold_deadline = min(deadline, time.time() + 600)
+    hold_deadline = min(deadline, time.time() + min(maximum_seconds, 600))
     emit(events, "repair_window_open", maximum_seconds=max(0, round(hold_deadline - time.time(), 3)))
     while time.time() < hold_deadline:
         if decision_path.exists():
             try:
-                action = json.loads(decision_path.read_text()).get("action")
+                decision = json.loads(decision_path.read_text())
+                action = decision.get("action")
             except Exception:
+                decision = {}
                 action = "invalid"
             emit(events, "repair_decision_received", action=action)
             if action == "teardown":
-                return
+                return "teardown"
+            if action == "retry":
+                decision_path.unlink(missing_ok=True)
+                return "retry"
+            if action == "retain":
+                decision_path.unlink(missing_ok=True)
+                requested_until = decision.get("until_epoch")
+                current_time = time.time()
+                if (
+                    isinstance(requested_until, (int, float))
+                    and not isinstance(requested_until, bool)
+                    and current_time < requested_until <= deadline
+                    and requested_until > hold_deadline
+                ):
+                    hold_deadline = float(requested_until)
+                    emit(
+                        events,
+                        "repair_retention_extended",
+                        retained_until_epoch=hold_deadline,
+                    )
         time.sleep(5)
     emit(events, "repair_window_expired")
+    return "expired"
+
+
+def run_repairable_operation(
+    operation: Callable[[int], OperationResult],
+    output_dir: Path,
+    events: Path,
+    deadline: float,
+    maximum_seconds: int = 0,
+) -> OperationResult:
+    """Retry one failed operation after an explicit in-owner repair decision."""
+    attempt_number = 1
+    while True:
+        try:
+            return operation(attempt_number)
+        except Exception as error:
+            action = hold_for_repair_decision(
+                output_dir, events, deadline, maximum_seconds
+            )
+            if action != "retry":
+                setattr(error, _REPAIR_WINDOW_CONSUMED, True)
+                raise
+            attempt_number += 1
+            emit(events, "repair_retry_started", attempt_number=attempt_number)
+
+
+@contextmanager
+def retained_development_window(
+    output_dir: Path,
+    events: Path,
+    deadline: float,
+    maximum_seconds: int = 0,
+):
+    try:
+        yield
+    except Exception as error:
+        if not getattr(error, _REPAIR_WINDOW_CONSUMED, False):
+            action = hold_for_repair_decision(
+                output_dir, events, deadline, maximum_seconds
+            )
+            if action == "retry":
+                emit(events, "repair_retry_unavailable")
+        raise
+
+
+def repairable_work_deadline(
+    absolute_deadline: float, repair_window_seconds: int
+) -> float:
+    if not 0 <= repair_window_seconds <= 600:
+        raise ValueError("repair window must be between zero and 600 seconds")
+    return absolute_deadline - repair_window_seconds
 
 
 def build_host_bootstrap(runtime_image: str = IMAGE) -> str:
@@ -158,8 +245,11 @@ def run(
     absolute_timeout_seconds: int = ABSOLUTE_TIMEOUT_SECONDS, runtime_image: str = IMAGE,
     conditional_remote_script: Path | None = None, conditional_benchmark_script: Path | None = None,
     conditional_input_files: tuple[Path, ...] = (), conditional_artifact_basename: str = "conditional-microbench",
+    trigger_evaluator=None, repair_window_seconds: int = 0,
 ) -> int:
     validate_durable_owner()
+    if not 0 <= repair_window_seconds <= 600:
+        raise MicrobenchControlError("repair window must be between zero and 600 seconds")
     output_dir.mkdir(parents=True, exist_ok=True)
     if (output_dir / "summary.json").exists():
         raise MicrobenchControlError("completed output directory already exists")
@@ -176,6 +266,7 @@ def run(
     events = output_dir / "events.jsonl"
     started = time.time()
     deadline = started + absolute_timeout_seconds
+    work_deadline = repairable_work_deadline(deadline, repair_window_seconds)
     instance_id = None
     disk_name = name + "-boot"
     outcome = "FAIL"
@@ -191,11 +282,14 @@ def run(
         "hourly_rate_usd_vendor_calculator": HOURLY_RATE_USD,
         "disk_hourly_rate_usd_vendor_calculator": DISK_HOURLY_RATE_USD,
         "absolute_timeout_seconds": absolute_timeout_seconds,
+        "repair_window_seconds": repair_window_seconds,
         "max_total_cost_usd": (HOURLY_RATE_USD + DISK_HOURLY_RATE_USD) * absolute_timeout_seconds / 3600,
         "experiment_spec_sha256": spec_hash,
     }, indent=2, sort_keys=True) + "\n")
     try:
-        with VerifiedRetainedOwner(name, output_dir / "cleanup.json") as retained:
+        with VerifiedRetainedOwner(name, output_dir / "cleanup.json") as retained, retained_development_window(
+            output_dir, events, deadline, repair_window_seconds
+        ):
             create = build_create_command(
             name=name,
             disk_name=disk_name,
@@ -222,7 +316,7 @@ def run(
                 watchdog=watchdog,
             )
             ip = None
-            while time.time() < min(deadline, started + 600):
+            while time.time() < min(work_deadline, started + 600):
                 payload = get_instance(instance_id)
                 if payload is None:
                     raise MicrobenchControlError("instance disappeared before readiness")
@@ -232,9 +326,18 @@ def run(
                 time.sleep(5)
             if not ip:
                 raise MicrobenchControlError("public IP readiness exceeded 600 seconds")
-            wait_ssh(ip, key, min(deadline, started + 600))
+            wait_ssh(ip, key, min(work_deadline, started + 600))
             emit(events, "ssh_ready", elapsed_seconds=round(time.time() - started, 3))
-            bootstrap = run_ssh(ip, key, "bash -s", timeout=1800, input_text=build_host_bootstrap(runtime_image))
+            bootstrap_remaining = int(work_deadline - time.time())
+            if bootstrap_remaining <= 0:
+                raise MicrobenchControlError("work deadline exhausted before host bootstrap")
+            bootstrap = run_ssh(
+                ip,
+                key,
+                "bash -s",
+                timeout=min(1800, bootstrap_remaining),
+                input_text=build_host_bootstrap(runtime_image),
+            )
             (output_dir / "host-bootstrap.stdout.log").write_text(bootstrap.stdout)
             (output_dir / "host-bootstrap.stderr.log").write_text(bootstrap.stderr)
             if bootstrap.returncode:
@@ -246,8 +349,32 @@ def run(
                 all_inputs.extend([conditional_remote_script, conditional_benchmark_script, *conditional_input_files])
             scp_to(ip, key, all_inputs, "/home/glmrunner/input/")
 
-            def execute_stage(label: str, stage_script: Path, stage_benchmark: Path, basename: str) -> dict[str, object]:
-                remote = run_ssh(ip, key, build_container_command(spec_hash, int(deadline), stage_script.name, stage_benchmark.name, runtime_image, label, basename), timeout=max(60, int(deadline - time.time()) + 180))
+            def execute_stage(
+                label: str,
+                stage_script: Path,
+                stage_benchmark: Path,
+                basename: str,
+                operation_deadline: float,
+            ) -> dict[str, object]:
+                stage_remaining = int(operation_deadline - time.time())
+                if stage_remaining <= 0:
+                    raise MicrobenchControlError(
+                        f"work deadline exhausted before {label} stage"
+                    )
+                remote = run_ssh(
+                    ip,
+                    key,
+                    build_container_command(
+                        spec_hash,
+                        int(operation_deadline),
+                        stage_script.name,
+                        stage_benchmark.name,
+                        runtime_image,
+                        label,
+                        basename,
+                    ),
+                    timeout=stage_remaining,
+                )
                 (output_dir / f"{label}.stdout.log").write_text(remote.stdout)
                 (output_dir / f"{label}.stderr.log").write_text(remote.stderr)
                 partial = output_dir / f".{basename}.tar.gz.partial"
@@ -264,15 +391,39 @@ def run(
                 emit(events, "stage_retrieved", label=label, sha256=digest, terminal=terminal)
                 return record
 
-            primary = execute_stage("primary", script, benchmark, artifact_basename)
+            primary = run_repairable_operation(
+                lambda attempt: execute_stage(
+                    "primary",
+                    script,
+                    benchmark,
+                    artifact_basename,
+                    work_deadline if attempt == 1 else deadline,
+                ),
+                output_dir,
+                events,
+                deadline,
+                repair_window_seconds,
+            )
             stage_records.append(primary)
             if primary["returncode"] != 0:
                 raise MicrobenchControlError("primary remote command failed after typed artifact retrieval")
             if conditional_remote_script and conditional_benchmark_script:
-                trigger = conditional_trigger(primary["terminal"])
+                trigger = (trigger_evaluator or conditional_trigger)(primary["terminal"])
                 atomic_json(output_dir / "conditional-trigger.json", {"primary_terminal": primary["terminal"], "trigger": trigger})
                 if trigger:
-                    conditional = execute_stage("conditional", conditional_remote_script, conditional_benchmark_script, conditional_artifact_basename)
+                    conditional = run_repairable_operation(
+                        lambda attempt: execute_stage(
+                            "conditional",
+                            conditional_remote_script,
+                            conditional_benchmark_script,
+                            conditional_artifact_basename,
+                            work_deadline if attempt == 1 else deadline,
+                        ),
+                        output_dir,
+                        events,
+                        deadline,
+                        repair_window_seconds,
+                    )
                     stage_records.append(conditional)
                     if conditional["returncode"] != 0 or conditional["terminal"].get("stage") != "conditional" or conditional["terminal"].get("pass") is not True:
                         raise MicrobenchControlError("conditional terminal failed")
@@ -324,6 +475,7 @@ def main() -> int:
     parser.add_argument("--conditional-benchmark-script", type=Path)
     parser.add_argument("--conditional-input-file", type=Path, action="append", default=[])
     parser.add_argument("--conditional-artifact-basename", default="conditional-microbench")
+    parser.add_argument("--repair-window-seconds", type=int, default=0)
     args = parser.parse_args()
     return run(
         args.output_dir, args.name, args.ssh_key, args.ssh_public_key, args.experiment_spec_sha256,
@@ -331,6 +483,7 @@ def main() -> int:
         args.absolute_timeout_seconds, args.runtime_image, args.conditional_remote_script,
         args.conditional_benchmark_script, tuple(args.conditional_input_file),
         args.conditional_artifact_basename,
+        repair_window_seconds=args.repair_window_seconds,
     )
 
 

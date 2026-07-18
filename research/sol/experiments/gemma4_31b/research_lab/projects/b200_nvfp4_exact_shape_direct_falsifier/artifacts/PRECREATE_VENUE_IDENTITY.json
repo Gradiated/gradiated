@@ -1,0 +1,41 @@
+{
+  "checks": {
+    "commit_identity": true,
+    "full_b200_venue_and_actual_rate": false,
+    "image_identity": true,
+    "mechanism_digest": true,
+    "upstream_digest_bound_by_mechanism": true
+  },
+  "classification": "authenticated_b200_venue_unavailable",
+  "mechanical_identities": {
+    "mechanism_sha256": "0ced5b18806b14f6fd0070f00c52640af5e9764886fed46752da43028f8b1119",
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "upstream_sha256": "667f935dceac3acba4bfd808b8c02ac7bcf5d525f2c044ee78cd291da5b1b80d",
+    "vllm_commit": "6d4a8e6d204a9b2827544003b26321fff62923da"
+  },
+  "pass": false,
+  "provider_create_performed": false,
+  "provider_spend_usd": 0.0,
+  "schema_version": 1,
+  "venues": {
+    "gcore_cached_inventory_has_b200": false,
+    "nebius": {
+      "b200_platforms": [],
+      "command_returncode": 0,
+      "project_platform_names": [
+        "cpu-d3",
+        "gpu-l40s-d",
+        "gpu-h200-sxm",
+        "cpu-e2",
+        "gpu-h100-sxm",
+        "gpu-l40s-a"
+      ]
+    },
+    "runpod": {
+      "configured": true,
+      "error_body_bytes": 17,
+      "error_body_sha256": "2938e9f1284180959e33ab1718d0793a72ff6e4cdb8108c34dcd14e69446de5c",
+      "http_status": 403
+    }
+  }
+}

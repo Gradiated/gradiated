@@ -1,0 +1,289 @@
+{
+  "decision": {
+    "batch_scaling_interpretation": "Raw KV bytes per request are identical at c16 and c32; batch-step traffic scales linearly. The fixed full-L2 credit amortizes less per request at c32, so the deliberately optimistic HBM floor is marginally higher per request there.",
+    "c16": "falsified_by_optimistic_kv_read_floor",
+    "c32": "preserved_not_proven",
+    "evidence_boundary": "A preserved point only survives this compulsory-read lower bound. Real attention compute, achieved bandwidth, KV writes, paging, competing weight traffic, prefill, scheduler, and service overhead can only add work relative to the primary bound.",
+    "k_eq_v_specialization": "closed_below_5_percent_market_service_time"
+  },
+  "evidence_type": "deterministic_exact_geometry_analytical_physical_lower_bound",
+  "formulas": {
+    "bandwidth_floor_seconds_per_request": "sum(hbm_bytes_per_step) / bandwidth_bytes_per_second / batch",
+    "batch_read_bytes_per_step": "batch * read_bytes_per_request_per_step",
+    "context_position": "prompt_tokens + decode_index, for decode_index in [0, output_tokens-1]",
+    "linears_head_average_batch_step_seconds": "measured_seconds_per_request * batch / 358",
+    "new_kv_write_bytes_per_request_per_step": "60 * 8192; excluded from primary read-only falsifier",
+    "optimistic_h200_hbm_bytes_per_step": "max(0, batch_read_bytes_per_step - 50 * 1024^2)",
+    "qkv_projection": "measured stock global-QKV p50 * 10 global layers * (20480-18432)/20480 * 358/batch",
+    "read_bytes_per_request_per_step": "8192 * (50 * min(context_position, 1024) + 10 * context_position)",
+    "residual_average_batch_step_seconds": "(whole_service_ceiling_seconds_per_request - measured_seconds_per_request) * batch / 358"
+  },
+  "generated_at_utc": "2026-07-17T12:23:26.015922+00:00",
+  "identities": {
+    "decode_context_positions_inclusive": [
+      4214,
+      4571
+    ],
+    "global_layers": 10,
+    "h100_bandwidth_gb_s_decimal_sensitivity": 3350,
+    "h200_bandwidth_gb_s_decimal": 4800,
+    "h200_l2_mib_binary_credit_per_batch_step": 50,
+    "kv_bytes_per_token_per_layer": 8192,
+    "local_layers": 50,
+    "local_window_tokens": 1024,
+    "model": "google/gemma-4-31b-it",
+    "output_tokens": 358,
+    "prompt_tokens": 4214,
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+  },
+  "identity_assertions": {
+    "component_terminal_complete": true,
+    "equal_exact_kv_bytes": true,
+    "exact_layer_pattern": true,
+    "exact_local_window": true,
+    "exact_model": true,
+    "exact_revision": true,
+    "exact_workload": true,
+    "h100_sensitivity_prior": true,
+    "h200_inventory_prior": true
+  },
+  "operating_points": [
+    {
+      "aggregate_reads": {
+        "full_l2_credit_bytes_over_request": 18769510400,
+        "optimistic_h200_hbm_read_bytes_over_batch_request": 4444854681600,
+        "total_batch_read_bytes": 4463624192000,
+        "total_read_bytes_per_request": 278976512000
+      },
+      "bandwidth_floors_seconds_per_request": {
+        "h100_3_35_tb_s_zero_l2_credit_sensitivity": 0.08327657074626865,
+        "h200_4_8_tb_s_full_50_mib_l2_credit_each_step": 0.057875712,
+        "h200_4_8_tb_s_zero_l2_credit": 0.058120106666666664
+      },
+      "batch_concurrency": 16,
+      "k_eq_v_specialized_qkv_screen": {
+        "classification": "closed_below_5_percent_market_service_time",
+        "evidence_type": "source_bound_optimistic_projection_from_measured_cuda_event_p50",
+        "fraction_of_strict_market_service_time": 0.0035222676825776194,
+        "global_layer_count": 10,
+        "measured_stock_global_qkv_cuda_event_p50_ms_per_layer": 0.07430399954319,
+        "optimistic_projection_rule": "credit removed width fraction against the entire measured stock global-QKV p50; no kernel efficiency penalty",
+        "projected_architecture_step_saving_ms": 0.07430399954319,
+        "projected_request_saving_seconds": 0.0016625519897788764,
+        "promotion_threshold_fraction": 0.05,
+        "reaches_promotion_threshold": false,
+        "specialized_global_qkv_rows": 18432,
+        "stock_executed_global_qkv_rows": 20480,
+        "width_removed_fraction": 0.1
+      },
+      "new_kv_writes_reported_separately": {
+        "bytes_per_batch_per_step": 7864320,
+        "bytes_per_request_over_358_steps": 175964160,
+        "bytes_per_request_per_step": 491520,
+        "included_in_primary_falsifier": false
+      },
+      "primary_classification": "falsified_by_optimistic_kv_read_floor",
+      "residual_comparison": {
+        "lenient": {
+          "combined_floor_exceeds_ceiling": true,
+          "combined_linears_head_plus_optimistic_kv_seconds_per_request": 0.5003379338152508,
+          "kv_floor_exceeds_positive_residual": true,
+          "measured_linears_plus_head_average_batch_step_seconds": 0.01977484790235758,
+          "measured_linears_plus_head_seconds_per_request": 0.44246222181525086,
+          "positive_residual_average_batch_step_seconds": 0.001566543997467508,
+          "positive_residual_seconds_per_request": 0.03505142194333549,
+          "whole_service_ceiling_average_batch_step_seconds": 0.021341391899825087,
+          "whole_service_ceiling_seconds_per_request": 0.47751364375858635
+        },
+        "strict": {
+          "combined_floor_exceeds_ceiling": true,
+          "combined_linears_head_plus_optimistic_kv_seconds_per_request": 0.5003379338152508,
+          "kv_floor_exceeds_positive_residual": true,
+          "measured_linears_plus_head_average_batch_step_seconds": 0.01977484790235758,
+          "measured_linears_plus_head_seconds_per_request": 0.44246222181525086,
+          "positive_residual_average_batch_step_seconds": 0.001320652564777228,
+          "positive_residual_seconds_per_request": 0.02954960113689048,
+          "whole_service_ceiling_average_batch_step_seconds": 0.02109550046713481,
+          "whole_service_ceiling_seconds_per_request": 0.47201182295214134
+        }
+      },
+      "selected_decode_steps": [
+        {
+          "batch_read_bytes": 12234260480,
+          "context_position_tokens": 4214,
+          "global_tokens_read_per_layer_per_request": 4214,
+          "h200_optimistic_step_seconds": 0.0025378816,
+          "h200_zero_l2_step_seconds": 0.0025488042666666666,
+          "label": "first",
+          "local_tokens_read_per_layer_per_request": 1024,
+          "optimistic_hbm_read_bytes_after_full_l2_credit": 12181831680,
+          "read_bytes_per_request": 764641280
+        },
+        {
+          "batch_read_bytes": 12467568640,
+          "context_position_tokens": 4392,
+          "global_tokens_read_per_layer_per_request": 4392,
+          "h200_optimistic_step_seconds": 0.002586487466666667,
+          "h200_zero_l2_step_seconds": 0.002597410133333333,
+          "label": "median_low",
+          "local_tokens_read_per_layer_per_request": 1024,
+          "optimistic_hbm_read_bytes_after_full_l2_credit": 12415139840,
+          "read_bytes_per_request": 779223040
+        },
+        {
+          "batch_read_bytes": 12468879360,
+          "context_position_tokens": 4393,
+          "global_tokens_read_per_layer_per_request": 4393,
+          "h200_optimistic_step_seconds": 0.0025867605333333332,
+          "h200_zero_l2_step_seconds": 0.0025976832,
+          "label": "median_high",
+          "local_tokens_read_per_layer_per_request": 1024,
+          "optimistic_hbm_read_bytes_after_full_l2_credit": 12416450560,
+          "read_bytes_per_request": 779304960
+        },
+        {
+          "batch_read_bytes": 12702187520,
+          "context_position_tokens": 4571,
+          "global_tokens_read_per_layer_per_request": 4571,
+          "h200_optimistic_step_seconds": 0.0026353664,
+          "h200_zero_l2_step_seconds": 0.0026462890666666666,
+          "label": "last",
+          "local_tokens_read_per_layer_per_request": 1024,
+          "optimistic_hbm_read_bytes_after_full_l2_credit": 12649758720,
+          "read_bytes_per_request": 793886720
+        }
+      ]
+    },
+    {
+      "aggregate_reads": {
+        "full_l2_credit_bytes_over_request": 18769510400,
+        "optimistic_h200_hbm_read_bytes_over_batch_request": 8908478873600,
+        "total_batch_read_bytes": 8927248384000,
+        "total_read_bytes_per_request": 278976512000
+      },
+      "bandwidth_floors_seconds_per_request": {
+        "h100_3_35_tb_s_zero_l2_credit_sensitivity": 0.08327657074626865,
+        "h200_4_8_tb_s_full_50_mib_l2_credit_each_step": 0.05799790933333333,
+        "h200_4_8_tb_s_zero_l2_credit": 0.058120106666666664
+      },
+      "batch_concurrency": 32,
+      "k_eq_v_specialized_qkv_screen": {
+        "classification": "closed_below_5_percent_market_service_time",
+        "evidence_type": "source_bound_optimistic_projection_from_measured_cuda_event_p50",
+        "fraction_of_strict_market_service_time": 0.001807399630653962,
+        "global_layer_count": 10,
+        "measured_stock_global_qkv_cuda_event_p50_ms_per_layer": 0.07625599950551987,
+        "optimistic_projection_rule": "credit removed width fraction against the entire measured stock global-QKV p50; no kernel efficiency penalty",
+        "projected_architecture_step_saving_ms": 0.07625599950551987,
+        "projected_request_saving_seconds": 0.0008531139944680035,
+        "promotion_threshold_fraction": 0.05,
+        "reaches_promotion_threshold": false,
+        "specialized_global_qkv_rows": 18432,
+        "stock_executed_global_qkv_rows": 20480,
+        "width_removed_fraction": 0.1
+      },
+      "new_kv_writes_reported_separately": {
+        "bytes_per_batch_per_step": 15728640,
+        "bytes_per_request_over_358_steps": 175964160,
+        "bytes_per_request_per_step": 491520,
+        "included_in_primary_falsifier": false
+      },
+      "primary_classification": "preserved_not_proven",
+      "residual_comparison": {
+        "lenient": {
+          "combined_floor_exceeds_ceiling": false,
+          "combined_linears_head_plus_optimistic_kv_seconds_per_request": 0.2827674992631748,
+          "kv_floor_exceeds_positive_residual": false,
+          "measured_linears_plus_head_average_batch_step_seconds": 0.020091136530041694,
+          "measured_linears_plus_head_seconds_per_request": 0.22476958992984145,
+          "positive_residual_average_batch_step_seconds": 0.02259164726960848,
+          "positive_residual_seconds_per_request": 0.2527440538287449,
+          "whole_service_ceiling_average_batch_step_seconds": 0.042682783799650174,
+          "whole_service_ceiling_seconds_per_request": 0.47751364375858635
+        },
+        "strict": {
+          "combined_floor_exceeds_ceiling": false,
+          "combined_linears_head_plus_optimistic_kv_seconds_per_request": 0.2827674992631748,
+          "kv_floor_exceeds_positive_residual": false,
+          "measured_linears_plus_head_average_batch_step_seconds": 0.020091136530041694,
+          "measured_linears_plus_head_seconds_per_request": 0.22476958992984145,
+          "positive_residual_average_batch_step_seconds": 0.022099864404227922,
+          "positive_residual_seconds_per_request": 0.2472422330222999,
+          "whole_service_ceiling_average_batch_step_seconds": 0.04219100093426962,
+          "whole_service_ceiling_seconds_per_request": 0.47201182295214134
+        }
+      },
+      "selected_decode_steps": [
+        {
+          "batch_read_bytes": 24468520960,
+          "context_position_tokens": 4214,
+          "global_tokens_read_per_layer_per_request": 4214,
+          "h200_optimistic_step_seconds": 0.005086685866666667,
+          "h200_zero_l2_step_seconds": 0.005097608533333333,
+          "label": "first",
+          "local_tokens_read_per_layer_per_request": 1024,
+          "optimistic_hbm_read_bytes_after_full_l2_credit": 24416092160,
+          "read_bytes_per_request": 764641280
+        },
+        {
+          "batch_read_bytes": 24935137280,
+          "context_position_tokens": 4392,
+          "global_tokens_read_per_layer_per_request": 4392,
+          "h200_optimistic_step_seconds": 0.0051838976,
+          "h200_zero_l2_step_seconds": 0.005194820266666666,
+          "label": "median_low",
+          "local_tokens_read_per_layer_per_request": 1024,
+          "optimistic_hbm_read_bytes_after_full_l2_credit": 24882708480,
+          "read_bytes_per_request": 779223040
+        },
+        {
+          "batch_read_bytes": 24937758720,
+          "context_position_tokens": 4393,
+          "global_tokens_read_per_layer_per_request": 4393,
+          "h200_optimistic_step_seconds": 0.005184443733333334,
+          "h200_zero_l2_step_seconds": 0.0051953664,
+          "label": "median_high",
+          "local_tokens_read_per_layer_per_request": 1024,
+          "optimistic_hbm_read_bytes_after_full_l2_credit": 24885329920,
+          "read_bytes_per_request": 779304960
+        },
+        {
+          "batch_read_bytes": 25404375040,
+          "context_position_tokens": 4571,
+          "global_tokens_read_per_layer_per_request": 4571,
+          "h200_optimistic_step_seconds": 0.005281655466666667,
+          "h200_zero_l2_step_seconds": 0.005292578133333333,
+          "label": "last",
+          "local_tokens_read_per_layer_per_request": 1024,
+          "optimistic_hbm_read_bytes_after_full_l2_credit": 25351946240,
+          "read_bytes_per_request": 793886720
+        }
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "scope": "BF16 KV-cache reads for exact 4214/358 decode geometry at c16/c32; not an endpoint, kernel-efficiency, latency, or quality measurement",
+  "source_artifacts": {
+    "accelerator_inventory": {
+      "path": "/root/workspace/research/factory/data/accelerator_inventory.json",
+      "sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8"
+    },
+    "economic_gate": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h200_campaign_economic_gate_reconciliation/H200_ECONOMIC_GATE.json",
+      "sha256": "3f4ce08c7e3a6649c18af99f14e0d48dcaf3979ac818462f7cf159cd9dab9afd"
+    },
+    "geometry": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_geometry_runtime_opportunities/GEOMETRY.json",
+      "sha256": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72"
+    },
+    "linears_head_terminal": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h200_bf16_exact_linear_floor/artifacts/RECONCILED_TERMINAL.json",
+      "sha256": "9f12b3ae4c8d82176f0ec9b09845c6e97ab1f278a458bd023adcbe433fd004fe"
+    },
+    "primary_stage_for_qkv_rows": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h200_bf16_exact_linear_floor/artifacts/gemma-h200-linear-20260717t115654z/primary-stage.json",
+      "sha256": "eadc0992f2c23584b6ca13dbeacfd75a70a60d364b5784a3396a06407f8ef0ac"
+    }
+  },
+  "status": "complete"
+}

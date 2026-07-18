@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "type": "h100_parallel_lm_head_render_precreate_blocker",
+  "pass": false,
+  "classification": "shared_retained_controller_cannot_preserve_required_three_stage_retrieval",
+  "decision": "Do not freeze a purported final owner and do not create a provider resource.",
+  "required_order": [
+    "retrieve M8 head sentinel",
+    "retrieve M8/M16/M32 actual ParallelLMHead primary",
+    "evaluate H100_HEAD_SURVIVES_AND_HISTORICAL_SETUP_DOMINATES_AND_LINEAR_READY and, only when true, retrieve 24 exact BF16 linear rows"
+  ],
+  "measured_controller_behavior": {
+    "path": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py",
+    "sha256": "6356910a62c5abefe52fc035eb27e43d5b2cb73066d68ba9f8c089bca31de62b",
+    "evidence_lines": "execute_stage is invoked once as primary (line 268) and at most once as conditional (line 276); the conditional trigger consumes only the retrieved primary terminal (lines 272-279).",
+    "maximum_atomically_retrieved_stages": 2
+  },
+  "why_no_two_stage_encoding_is_valid": {
+    "sentinel_plus_primary": "would start M8/M16/M32 work before the M8 sentinel is retrieved",
+    "primary_plus_linears": "would start the conditional 24-row sweep before the full actual-head result is retrieved and its trigger is evaluated",
+    "sentinel_plus_linears": "omits the required retrieved full actual-head primary before the linear trigger"
+  },
+  "verified_inputs": {
+    "director_identity_assertion_pass": true,
+    "python_compile_pass": true,
+    "project_files": {
+      "PROJECT.md": "edbc5292e61f40e86379aa4a3f076e390ef482a905eb49671dcb6e61cee397ea",
+      "assert_identity.py": "fbe11c854317e4d5a7dbe448709820c56a9f7ec0ddac3a772af0396576054d52",
+      "h100_head_contract.py": "f1ea587839c86d2df7f44659fdb4c40cd7999e62ff36bb1a5a082406c45334bd",
+      "h100_parallel_lm_head_bench.py": "df7f4712e2ae4a4e81f401b59398b402345212369b64b7dd9917c56dacc4828c",
+      "remote_head_stage.sh": "7fb01795c0f3d2785d3b8aa09878311401bb073a4e7c3649c3d98ce7a4c39626",
+      "remote_linear_stage.sh": "0f19c10259276de7600e468afa5203cb3da463b1e453891baaf7e9e90eb9f5ff"
+    },
+    "conditional_linear_program": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_bf16_exact_linear_head_floor/h100_bf16_linear_bench.py",
+    "conditional_linear_program_sha256": "7b6f733d40ad45eb6a47e9198f58a8eeaae2d7d77b0e43d47dbb186d8e12ff46"
+  },
+  "provider_mutation": false,
+  "provider_spend_usd": 0.0,
+  "gpu_used": false,
+  "next_safe_move": "Add and behaviorally exercise a sequential three-stage mode to the named shared retained controller, then render all owner bytes and send those immutable bytes to the mandatory independent final-program audit."
+}

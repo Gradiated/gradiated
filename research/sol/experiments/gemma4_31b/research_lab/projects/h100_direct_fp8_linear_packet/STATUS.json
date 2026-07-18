@@ -1,0 +1,15 @@
+{
+  "status": "complete",
+  "priority": 225,
+  "researcher_profile": "execution",
+  "summary": "Standalone H100 raw CUTLASS FP8 sentinel-first packet is start-ready; the paged-KV owner reconciled closed with no component science and does not trigger this packet.",
+  "next_action": null,
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 20,
+  "compute_budget": "2 local CPU-hours; no GPU",
+  "storage_budget": "768 MiB retained plus 384 MiB temporary",
+  "active_session": null,
+  "last_result_classification": "h100_direct_fp8_sentinel_first_start_packet",
+  "terminal_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_direct_fp8_linear_packet/START_PACKET.json"
+}

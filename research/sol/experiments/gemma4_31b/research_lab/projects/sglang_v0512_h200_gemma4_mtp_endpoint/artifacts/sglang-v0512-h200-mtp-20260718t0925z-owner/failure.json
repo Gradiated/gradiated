@@ -1,0 +1,14 @@
+{
+  "classification": "typed_retained_development_failure",
+  "instance_id": "computeinstance-e00v1y11h92cdp0y9b",
+  "message": "stock_readiness_timeout",
+  "timestamp": "2026-07-18T10:22:41.629426Z",
+  "type": "RuntimeError",
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/sglang-v0512-h200-mtp-20260718t0925z-owner-watchdog.service",
+    "deadline_epoch": 1784371871.0,
+    "main_pid": 2353010,
+    "unit": "sglang-v0512-h200-mtp-20260718t0925z-owner-watchdog.service",
+    "unit_manager": "user"
+  }
+}

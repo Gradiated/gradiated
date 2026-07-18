@@ -1,0 +1,14 @@
+{
+  "checks": {
+    "budget": true,
+    "checkpoint": true,
+    "deadline": true,
+    "inventory": true,
+    "keys": true,
+    "runner": true,
+    "terminal": true
+  },
+  "pass": true,
+  "runner_sha256": "d2608227cd5ac4cc1cb29ab2e291cd129cb8699ddcf62908a205a1778cb5e379",
+  "type": "h100_w4_full_endpoint_precreate"
+}

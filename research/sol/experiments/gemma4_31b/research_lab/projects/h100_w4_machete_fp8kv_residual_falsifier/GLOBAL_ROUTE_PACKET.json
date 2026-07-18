@@ -1,0 +1,170 @@
+{
+  "bound_prior_local_row": {
+    "archive_sha256": "06c835d894b4eacb253d50f87513355ce593e5f2fc766f0e3d31542aaa9c4133",
+    "fp8_event_ms_p50": 0.3208959996700287,
+    "oracle": {
+      "cosine": 0.9999106526374817,
+      "finite": true,
+      "nonzero": true,
+      "normalized_rmse": 0.013371854089200497,
+      "pass": true
+    }
+  },
+  "causal_chain": [
+    "The same actual producer and selected Triton implementation passed local c32 with nonzero output.",
+    "At c32, local kv_heads=16 yields threshold 8 and selects 2-D; global kv_heads=4 yields threshold 32 and selects 3-D segmented.",
+    "All three contexts on the 3-D branch returned finite exact zeros in both BF16 and FP8, isolating the staged route discontinuity from precision and context length.",
+    "The exact unified_attention source selects 2-D whenever segmented scratch metadata is absent; corrected metadata uses that supported guard.",
+    "The corrected program verifies page-table bounds, samples nonzero cache contents after the actual producer, then requires the actual global-4214 BF16 consumer output to be finite and nonzero before timing."
+  ],
+  "causal_status": "source_bound_dispatch_isolation_pending_M1_execution_equivalence",
+  "checks": {
+    "all_page_table_invariants": true,
+    "consumer_guard_accepts_missing_scratch": true,
+    "corrected_metadata_forces_2d": true,
+    "dispatch_constants": true,
+    "exact_vllm_revision": true,
+    "immutable_image_digest": true,
+    "installed_object_hashes": true,
+    "isolated_dispatch_discontinuity": true,
+    "prior_all_globals_finite_zero": true,
+    "prior_local_nonzero_pass": true,
+    "producer_population_is_observed_before_sentinel": true,
+    "remote_requires_route_and_atomic_sentinel": true,
+    "residual_is_absolute_and_c32_normalized": true
+  },
+  "corrected_program": {
+    "aggregation": "(50*bound_local_fp8_ms + 10*mean(valid_global_fp8_ms))*358/(1000*32)",
+    "benchmark": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_machete_fp8kv_residual_falsifier/paged_residual.py",
+    "benchmark_sha256": "5bd459ef148b16c0dc37a45398d9574634eae393727f60b88de6b2d9509d2c34",
+    "first_cuda_acceptance": "M1 global4214 BF16 actual producer, sampled populated cache, actual consumer, finite nonzero output",
+    "global_dispatch": "2d_no_segmented_scratch",
+    "remote_stage": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_machete_fp8kv_residual_falsifier/remote_stage.sh",
+    "remote_stage_sha256": "8d4824e9d2ad8645ebafa7546b4bee58d77f5a0bbe806961b8a8c9a4da6b987b"
+  },
+  "evidence_boundary": "This packet proves a content-bound route predicate, not CUDA semantics or performance. Only M1 and valid paired rows can reopen the residual decision.",
+  "expected_object_source_sha256": {
+    "TritonAttentionImpl": "2da9ca0cf28ab21cd384892d198f21898b0df359f06fa5094e3c36647d5ce0e1",
+    "TritonAttentionMetadataBuilder": "0643555d9458452f24290b956cfb45cc74bbf231b7edf4c421b1d57032241e92",
+    "unified_attention": "405000dc44912777c6d7835d0009deaa8594d8b8db422419a151c5f307cdd297",
+    "unified_attention_with_output": "ddf567b33296f861b304cc9f30c729dce0bcf701487a24c28536936135b5480f",
+    "unified_kv_cache_update": "3be8b1b6913ee3ccab10466ee94d3048188cf2d761315c117509822195b95166"
+  },
+  "hypothesis": "The semantic boundary is Triton's 3-D segmented global decode route, selected only for kv_heads=4 at c32; removing optional segmented scratch metadata selects the exact consumer's 2-D path, while M1 remains the CUDA falsifier.",
+  "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+  "installed_runtime": {
+    "MIN_LAUNCH_GRID_SIZE_2D": 128,
+    "NUM_PAR_SOFTMAX_SEGMENTS": 16,
+    "files": {
+      "/usr/local/lib/python3.12/dist-packages/vllm/model_executor/layers/attention/attention.py": {
+        "sha256": "2e45ac35100a1396bd03f9fe8d7f3e4dd41f3dc0a78b3bc7e5e118b536a0fe3c"
+      },
+      "/usr/local/lib/python3.12/dist-packages/vllm/model_executor/layers/attention/kv_transfer_utils.py": {
+        "sha256": "cf3333d07024cb4ede6d4e646619e5f0875b071869fbc9438a2045eb9074e3fe"
+      },
+      "/usr/local/lib/python3.12/dist-packages/vllm/v1/attention/backends/triton_attn.py": {
+        "sha256": "0881156d666e81642879a943dc14fda1186060bc24676280497428a8e3c079a3"
+      },
+      "/usr/local/lib/python3.12/dist-packages/vllm/v1/attention/ops/triton_unified_attention.py": {
+        "sha256": "5a8af26832bd0b23604fefa4a0876e12b39101b85431c368649fbb7f779e8921"
+      }
+    },
+    "guard_sha256": "405000dc44912777c6d7835d0009deaa8594d8b8db422419a151c5f307cdd297",
+    "objects": {
+      "TritonAttentionImpl": {
+        "file": "/usr/local/lib/python3.12/dist-packages/vllm/v1/attention/backends/triton_attn.py",
+        "source_sha256": "2da9ca0cf28ab21cd384892d198f21898b0df359f06fa5094e3c36647d5ce0e1"
+      },
+      "TritonAttentionMetadataBuilder": {
+        "file": "/usr/local/lib/python3.12/dist-packages/vllm/v1/attention/backends/triton_attn.py",
+        "source_sha256": "0643555d9458452f24290b956cfb45cc74bbf231b7edf4c421b1d57032241e92"
+      },
+      "unified_attention": {
+        "file": "/usr/local/lib/python3.12/dist-packages/vllm/v1/attention/ops/triton_unified_attention.py",
+        "source_sha256": "405000dc44912777c6d7835d0009deaa8594d8b8db422419a151c5f307cdd297"
+      },
+      "unified_attention_with_output": {
+        "file": "/usr/local/lib/python3.12/dist-packages/vllm/model_executor/layers/attention/kv_transfer_utils.py",
+        "source_sha256": "ddf567b33296f861b304cc9f30c729dce0bcf701487a24c28536936135b5480f"
+      },
+      "unified_kv_cache_update": {
+        "file": "/usr/local/lib/python3.12/dist-packages/vllm/model_executor/layers/attention/attention.py",
+        "source_sha256": "3be8b1b6913ee3ccab10466ee94d3048188cf2d761315c117509822195b95166"
+      }
+    },
+    "stderr_sha256": "e55522aac1d319f14b0b2f0223a3bc5b89902cfb94bc925ad42ffcdfbb5e3355",
+    "vllm": "0.19.1.dev6+g6d4a8e6d2"
+  },
+  "page_invariants": [
+    {
+      "checks": {
+        "block_table_shape": [
+          32,
+          264
+        ],
+        "decode_slots_in_cache": true,
+        "decode_slots_unique": true,
+        "last_logical_token_addressed": true,
+        "physical_blocks_unique": 8448,
+        "producer_slot_count": 135168,
+        "seq_lens_include_decode_token": true
+      },
+      "context": 4214,
+      "decode_offset": 5,
+      "pages_per_sequence": 264,
+      "pass": true
+    },
+    {
+      "checks": {
+        "block_table_shape": [
+          32,
+          275
+        ],
+        "decode_slots_in_cache": true,
+        "decode_slots_unique": true,
+        "last_logical_token_addressed": true,
+        "physical_blocks_unique": 8800,
+        "producer_slot_count": 140800,
+        "seq_lens_include_decode_token": true
+      },
+      "context": 4393,
+      "decode_offset": 8,
+      "pages_per_sequence": 275,
+      "pass": true
+    },
+    {
+      "checks": {
+        "block_table_shape": [
+          32,
+          286
+        ],
+        "decode_slots_in_cache": true,
+        "decode_slots_unique": true,
+        "last_logical_token_addressed": true,
+        "physical_blocks_unique": 9152,
+        "producer_slot_count": 146432,
+        "seq_lens_include_decode_token": true
+      },
+      "context": 4571,
+      "decode_offset": 10,
+      "pages_per_sequence": 286,
+      "pass": true
+    }
+  ],
+  "pass": true,
+  "prior_invalid_run": {
+    "archive": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_machete_fp8kv_residual_falsifier/artifacts/gemma-h100-w4-fp8kv-20260717t21031784315025z/h100-w4-fp8kv-repair5.tar.gz",
+    "archive_sha256": "06c835d894b4eacb253d50f87513355ce593e5f2fc766f0e3d31542aaa9c4133",
+    "dispatch": {
+      "global": "3d_segmented",
+      "local": "2d"
+    },
+    "result_sha256": "45adfe86b8fb54e6374f9695a6cadce98a666135c1076d1e390a81b1d86e15de",
+    "thresholds": {
+      "global_kv4": 32,
+      "local_kv16": 8
+    }
+  },
+  "schema_version": 1,
+  "type": "content_bound_global_attention_route_terminal"
+}

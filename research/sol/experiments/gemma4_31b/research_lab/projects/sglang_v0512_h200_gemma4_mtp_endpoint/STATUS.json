@@ -1,0 +1,17 @@
+{
+  "active_session": null,
+  "authorized_spend_usd": 3.75,
+  "compute_budget": "1.4167 H200-hours cumulative; one H200",
+  "last_result_classification": "sglang_v0512_h200_stock_market_pass_mtp_image_bound_invalid",
+  "next_action": "Complete: consume the stock market pass; do not infer an MTP performance result from the image-bound runtime failure.",
+  "priority": 370,
+  "provider_exposure_timeout_seconds": 5100,
+  "provider_mutation": "forbidden_after_terminal_cleanup",
+  "reconciliation_pending": false,
+  "researcher_profile": "execution",
+  "status": "complete",
+  "storage_budget": "one 250 GiB provider disk, 4 GiB project-local preparation, 10 GiB retrieved artifacts",
+  "summary": "Stock SGLang v0.5.12 H200 c32 market pass: 2.752522 req/s and 0.363303 s/request. Native NEXTN MTP is invalid under the bound image because its Transformers cannot parse gemma4_assistant; cleanup verified.",
+  "terminal_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/sglang-v0512-h200-mtp-20260718t0925z-owner/RECONCILED_TERMINAL.json",
+  "wall_clock_budget_minutes": 140
+}

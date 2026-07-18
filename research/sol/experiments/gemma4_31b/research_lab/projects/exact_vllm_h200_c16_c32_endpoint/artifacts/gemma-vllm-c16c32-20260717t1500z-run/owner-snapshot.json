@@ -1,0 +1,25 @@
+{
+  "cgroup": "0::/user.slice/user-0.slice/user@0.service/app.slice/gemma-vllm-c16c32-20260717t1500z.service",
+  "classification": "durable_owner_watchdog_snapshot",
+  "deadline_epoch": 1784298400.7225635,
+  "identity_checks": {
+    "checkpoint_index": true,
+    "checkpoint_source": true,
+    "checkpoint_terminal_pass": true,
+    "director_assertion": true,
+    "exact_image": true,
+    "exact_model": true,
+    "exact_revision": true,
+    "staging_hash": true,
+    "terminal_rows": true,
+    "trace_hash": true
+  },
+  "invocation_id_present": true,
+  "name": "gemma-vllm-c16c32-20260717t1500z",
+  "observed_epoch": 1784291200.7283864,
+  "pid": 2009215,
+  "pid_matches_systemd_exec_pid": true,
+  "schema_version": 1,
+  "stage": "local_view_construction",
+  "systemd_exec_pid": "2009215"
+}

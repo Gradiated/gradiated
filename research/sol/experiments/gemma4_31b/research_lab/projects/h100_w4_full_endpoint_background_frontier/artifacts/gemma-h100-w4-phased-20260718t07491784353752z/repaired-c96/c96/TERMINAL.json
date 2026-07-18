@@ -1,0 +1,1260 @@
+{
+  "complete_count": 96,
+  "completed_requests_per_second": 0.5304306134812964,
+  "concurrency": 96,
+  "failure_count": 0,
+  "nonempty_outputs": true,
+  "pass": true,
+  "rows": [
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 115966,
+      "text_bytes": 1100,
+      "ttft_ms": 58015.84635399991,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 131.79230702799987
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 119087,
+      "text_bytes": 502,
+      "ttft_ms": 18939.486794999993,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 126.68787526599999
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121466,
+      "text_bytes": 997,
+      "ttft_ms": 50314.45567499986,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 130.81772640300005
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 120638,
+      "text_bytes": 920,
+      "ttft_ms": 5993.916485,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 120.85212381700012
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121495,
+      "text_bytes": 1152,
+      "ttft_ms": 25454.146936000143,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 127.57546515500007
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121301,
+      "text_bytes": 1139,
+      "ttft_ms": 4733.485142000063,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 120.13014450500009
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121173,
+      "text_bytes": 906,
+      "ttft_ms": 49002.788581999994,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 130.64858963300003
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121060,
+      "text_bytes": 675,
+      "ttft_ms": 43772.73270700016,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 129.98283892900008
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 120866,
+      "text_bytes": 780,
+      "ttft_ms": 33276.68792700001,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 128.62192899700017
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 120840,
+      "text_bytes": 983,
+      "ttft_ms": 4709.570184000086,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 120.1053452839999
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 120782,
+      "text_bytes": 1019,
+      "ttft_ms": 21560.30742200005,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 127.05395143500004
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121097,
+      "text_bytes": 450,
+      "ttft_ms": 3436.1176130000786,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 119.82972738100011
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121159,
+      "text_bytes": 1109,
+      "ttft_ms": 16329.948288000196,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 126.30961917100012
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125030,
+      "text_bytes": 1002,
+      "ttft_ms": 5997.6872120000735,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 120.85359393099998
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125030,
+      "text_bytes": 906,
+      "ttft_ms": 16332.146906999924,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 126.31269044199985
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125238,
+      "text_bytes": 991,
+      "ttft_ms": 22856.160638000118,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 127.22290752999993
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125596,
+      "text_bytes": 1200,
+      "ttft_ms": 15036.326763000034,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 126.12766396799998
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125189,
+      "text_bytes": 672,
+      "ttft_ms": 120838.80504700005,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 180.167365452
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125386,
+      "text_bytes": 621,
+      "ttft_ms": 13735.98357700007,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 125.93421944400006
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125408,
+      "text_bytes": 1307,
+      "ttft_ms": 58797.889423000015,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 131.95426651699995
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125334,
+      "text_bytes": 392,
+      "ttft_ms": 25455.991478000215,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 127.57743691500013
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125322,
+      "text_bytes": 1262,
+      "ttft_ms": 38513.39414999984,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 129.302652137
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125409,
+      "text_bytes": 619,
+      "ttft_ms": 33277.17236700005,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 128.62162692900006
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125128,
+      "text_bytes": 761,
+      "ttft_ms": 26752.89140599989,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 127.75237933999983
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125985,
+      "text_bytes": 1088,
+      "ttft_ms": 17632.018143000096,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 126.49496550999993
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125431,
+      "text_bytes": 1213,
+      "ttft_ms": 7284.858955000118,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 121.66725053300001
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125064,
+      "text_bytes": 554,
+      "ttft_ms": 51628.11980600009,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 130.982318073
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125134,
+      "text_bytes": 960,
+      "ttft_ms": 43770.996654999864,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 129.98182987199993
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125009,
+      "text_bytes": 971,
+      "ttft_ms": 54256.683613999936,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 131.30945737699994
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125387,
+      "text_bytes": 688,
+      "ttft_ms": 125441.58132200004,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 180.77113931899999
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 124733,
+      "text_bytes": 726,
+      "ttft_ms": 39828.972744000115,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 129.474715758
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125436,
+      "text_bytes": 1265,
+      "ttft_ms": 2158.580762999918,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 119.63735722299998
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125063,
+      "text_bytes": 842,
+      "ttft_ms": 26753.966311000113,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 127.751681297
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 117100,
+      "text_bytes": 850,
+      "ttft_ms": 47690.3524459999,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 130.481672462
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 119168,
+      "text_bytes": 1686,
+      "ttft_ms": 47689.952937000045,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 130.48000273699995
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121519,
+      "text_bytes": 1065,
+      "ttft_ms": 34588.369647999796,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 128.7909580019998
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121170,
+      "text_bytes": 578,
+      "ttft_ms": 38512.60186800005,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 129.3027736859999
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121129,
+      "text_bytes": 847,
+      "ttft_ms": 28053.727307000147,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 127.92706399899998
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121007,
+      "text_bytes": 544,
+      "ttft_ms": 3445.572498999809,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 119.83719359299994
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121382,
+      "text_bytes": 1195,
+      "ttft_ms": 29361.772271000063,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 128.10941380300005
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121107,
+      "text_bytes": 1209,
+      "ttft_ms": 28054.23662699991,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 127.92805285700001
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 120730,
+      "text_bytes": 1065,
+      "ttft_ms": 11153.800901000068,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 125.46477291800011
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121516,
+      "text_bytes": 1075,
+      "ttft_ms": 45077.56142699986,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 130.1545155419999
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121474,
+      "text_bytes": 1406,
+      "ttft_ms": 17641.69059599999,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 126.50578406499994
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121396,
+      "text_bytes": 1252,
+      "ttft_ms": 56775.515982999874,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 131.63344544999995
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 120968,
+      "text_bytes": 896,
+      "ttft_ms": 12459.198107999782,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 125.76760772199987
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125187,
+      "text_bytes": 1175,
+      "ttft_ms": 18936.16676299985,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 126.6839647669999
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125112,
+      "text_bytes": 809,
+      "ttft_ms": 49001.219147000025,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 130.64599828200016
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125219,
+      "text_bytes": 457,
+      "ttft_ms": 20242.002956000077,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 126.87395994100007
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125216,
+      "text_bytes": 555,
+      "ttft_ms": 34589.04280699994,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 128.79146253
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125454,
+      "text_bytes": 1387,
+      "ttft_ms": 52948.64471200003,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 131.15351502299995
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125699,
+      "text_bytes": 1445,
+      "ttft_ms": 37203.93195099996,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 129.1374414249999
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 124983,
+      "text_bytes": 1041,
+      "ttft_ms": 20246.78288500013,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 126.87956827500011
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125493,
+      "text_bytes": 999,
+      "ttft_ms": 7280.82637999978,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 121.6678715359999
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125362,
+      "text_bytes": 629,
+      "ttft_ms": 13750.619264000079,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 125.94622621999997
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125158,
+      "text_bytes": 883,
+      "ttft_ms": 56773.32876200012,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 131.63002544699998
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125923,
+      "text_bytes": 1618,
+      "ttft_ms": 54256.553135000104,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 131.30961984700002
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125223,
+      "text_bytes": 831,
+      "ttft_ms": 21565.62625399988,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 127.06144460899986
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125534,
+      "text_bytes": 1076,
+      "ttft_ms": 8575.224424999988,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 122.97917933899998
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 126328,
+      "text_bytes": 1705,
+      "ttft_ms": 35895.068789000106,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 128.9620476900002
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125443,
+      "text_bytes": 772,
+      "ttft_ms": 11147.88959700013,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 125.45571641400011
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125425,
+      "text_bytes": 735,
+      "ttft_ms": 55558.52257300012,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 131.47050296399993
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 124947,
+      "text_bytes": 1072,
+      "ttft_ms": 125445.05675300001,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 180.77237062299992
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125082,
+      "text_bytes": 994,
+      "ttft_ms": 30659.58194199993,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 128.27527193399987
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125380,
+      "text_bytes": 661,
+      "ttft_ms": 31968.022910999935,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 128.44930891199988
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125888,
+      "text_bytes": 1458,
+      "ttft_ms": 15030.299713999966,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 126.11852946699992
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 118803,
+      "text_bytes": 1004,
+      "ttft_ms": 50314.135650000026,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 130.8144289669999
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 117298,
+      "text_bytes": 1075,
+      "ttft_ms": 58798.87487700012,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 131.95404374100008
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121024,
+      "text_bytes": 466,
+      "ttft_ms": 124267.43121699996,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 180.622020109
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121097,
+      "text_bytes": 1212,
+      "ttft_ms": 12439.352953000025,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 125.74518178400012
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 120794,
+      "text_bytes": 927,
+      "ttft_ms": 122954.97520000003,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 180.468865844
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 120901,
+      "text_bytes": 891,
+      "ttft_ms": 41153.89260799998,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 129.64393771899995
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121061,
+      "text_bytes": 541,
+      "ttft_ms": 45076.94572800006,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 130.1516910119999
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 120983,
+      "text_bytes": 503,
+      "ttft_ms": 31968.116120000104,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 128.45021500400003
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121248,
+      "text_bytes": 1200,
+      "ttft_ms": 46378.72393900011,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 130.31503890399995
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 120786,
+      "text_bytes": 1045,
+      "ttft_ms": 24163.132388999882,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 127.40612175899992
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121010,
+      "text_bytes": 407,
+      "ttft_ms": 9859.876415000144,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 124.28636368100001
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 120732,
+      "text_bytes": 1074,
+      "ttft_ms": 39829.060889999935,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 129.474413681
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 121666,
+      "text_bytes": 1493,
+      "ttft_ms": 41155.84790000002,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 129.64563831300006
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125011,
+      "text_bytes": 1129,
+      "ttft_ms": 37201.866182000005,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 129.1331400040001
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125477,
+      "text_bytes": 771,
+      "ttft_ms": 42469.16046499996,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 129.8172972509999
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125454,
+      "text_bytes": 743,
+      "ttft_ms": 35894.40255,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 128.96096862799982
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125303,
+      "text_bytes": 407,
+      "ttft_ms": 30658.9555999999,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 128.2750540899999
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 124941,
+      "text_bytes": 963,
+      "ttft_ms": 51626.34335500002,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 130.98051489699992
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125239,
+      "text_bytes": 521,
+      "ttft_ms": 9855.414181000015,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 124.28128125600006
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125233,
+      "text_bytes": 588,
+      "ttft_ms": 121649.73627100016,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 180.31816996400016
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125002,
+      "text_bytes": 884,
+      "ttft_ms": 24159.475235000173,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 127.40395178000017
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125224,
+      "text_bytes": 1104,
+      "ttft_ms": 124266.58056499991,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 180.62009894699986
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125117,
+      "text_bytes": 708,
+      "ttft_ms": 59449.60665100007,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 132.118335526
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125040,
+      "text_bytes": 1082,
+      "ttft_ms": 55560.90461299982,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 131.47407816700002
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 124956,
+      "text_bytes": 1079,
+      "ttft_ms": 8563.290110000025,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 122.96776390700006
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125033,
+      "text_bytes": 905,
+      "ttft_ms": 52940.49206,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 131.14587673799997
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125340,
+      "text_bytes": 446,
+      "ttft_ms": 29356.32491899992,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 128.10064721100002
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 124806,
+      "text_bytes": 828,
+      "ttft_ms": 46379.75316699999,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 130.31492262899997
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125493,
+      "text_bytes": 816,
+      "ttft_ms": 125733.33641499994,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 180.9203845259999
+    },
+    {
+      "output_tokens": 358,
+      "pass": true,
+      "raw_sse_bytes": 125662,
+      "text_bytes": 1432,
+      "ttft_ms": 885.9230999998999,
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      },
+      "wall_seconds": 119.443665281
+    }
+  ],
+  "service_seconds_per_request": 1.8852607194687512,
+  "wall_seconds": 180.98502906900012
+}

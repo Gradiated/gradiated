@@ -1,0 +1,16 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "researcher_profile": "execution",
+  "summary": "Measured H100 c48/c64/c96/c128 W4-Machete plus actual tied-head frontier: all component rows pass; c128 has the largest component-only residual (0.490874 s) but no attention or endpoint claim transfers.",
+  "next_action": null,
+  "provider_mutation": "forbidden_complete",
+  "authorized_spend_usd": 1.25,
+  "active_session": null,
+  "bindings": "BINDINGS.json",
+  "terminal_artifact": "artifacts/gemma-h100-w4-frontier-20260717t22121784319137z/RECONCILED_FRONTIER_TERMINAL.json",
+  "terminal_artifact_sha256": "63c3fa9dba6999926e663d229b96902b72d1e1d809a8664f37baedc332682c7e",
+  "measured_provider_seconds": 864.598,
+  "measured_spend_usd": 0.518692361,
+  "last_result_classification": "measured_h100_w4_background_component_frontier"
+}

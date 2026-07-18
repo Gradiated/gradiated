@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "type": "exact_shape_direct_fp8_final_staged_program_audit",
+  "verdict": "pass_start_ready_after_director_identity_assertion",
+  "pass": true,
+  "scope": {"provider_access": false, "gpu_execution": false, "image_invocation": false, "checkpoint_access": false, "compilation": false},
+  "checks": {
+    "exact_raw_installed_path": {"pass": true, "evidence": "The pinned installed revision maps CutlassFP8ScaledMMLinearKernel.apply_scaled_mm to vllm._custom_ops.cutlass_scaled_mm and then aligned CUDA torch.ops._C.cutlass_scaled_mm; the benchmark invokes that wrapper and fail-closes on three inspect-source hashes."},
+    "producer_dtype_scale_layout": {"pass": true, "evidence": "Both A and W are produced by installed scaled_fp8_quant; runtime rows record E4M3 dtypes, FP32 scales, B shape/stride and BF16 output."},
+    "sentinel_before_sweep": {"pass": true, "evidence": "Shared lifecycle primary stage runs only sliding_qkv M12. Its retrieved typed primary terminal is the sole conditional trigger; the conditional stage independently executes the complete sweep."},
+    "exact_geometry_and_aggregation": {"pass": true, "evidence": "Conditional stage contains the six exact K/N/multiplicity tuples at M12 and M3679; aggregation weights 50/10/60, multiplies decode by 358, divides by c12 once, and does not divide prefill."},
+    "dual_output_consuming_oracle": {"pass": true, "evidence": "Seeded signed varied-magnitude W/X replace the invalid constant prior. Actual CUTLASS output is compared with dequantized-quantized FP32 for kernel correctness, and that reference is separately compared with the timed original-BF16 output for representation loss."},
+    "timing_and_telemetry": {"pass": true, "evidence": "Candidate and BF16 comparator each require five positive finite CUDA and synchronized-wall samples with p95/p50 <=4. Remote acceptance requires >=2 telemetry rows, L40S identity, memory.used/total, nonzero utilization and power."},
+    "decision_boundary": {"pass": true, "evidence": "The exact c12 linear total is merged with the independent 0.1646315388888889 s/request attention/KV residual. Because head, KV writer, and service work remain omitted, only ceiling falsification is admissible; a below-ceiling result is explicitly not admission."},
+    "immutable_staging_cleanup": {"pass": true, "evidence": "Remote wrapper validates staged hashes before science. START_PACKET binds the proven sequential VerifiedRetainedOwner lifecycle, one allocation/no repair, authenticated cleanup, and the exact current lifecycle hashes."},
+    "w4_disposition": {"pass": true, "evidence": "W4 is omitted: no equally bound raw Marlin WNA16 pack-layout plus dual-oracle path was available within the offline packet budget, so no conditional W4 claim is made."}
+  },
+  "static_validation": {"python_ast": "pass", "bash_syntax": "pass"},
+  "staged_sha256": {
+    "direct_fp8_kernel.py": "4c285c94daf032a56c0de2136badffab845503fa710dbca12027e6a345b92667",
+    "remote_stage.sh": "b1504265ab0131df0a1144292b0e3cbc3b6d9c9f6790c8d61ab4a1bab5a9cbc9",
+    "SOURCE_MANIFEST.json": "a65a36ef7abec2765c301d5508e74dd0d212bc3e3083e01a18abf577ee61149c",
+    "STAGED_MANIFEST.json": "4b7fec791c1bd57686c3431e795e55a133adbfdd3a19381807dd769cd651f5e0"
+  },
+  "negative_prior": {"reconciled_terminal_sha256": "662a225318ebf86759a9ac1b59b09948421776b0d295ec840ea11055ea50d074", "mechanism_sha256": "f65eb0f1a50180cdd87b420e1377b1d28f9260da16515ba1b5620203183f436c", "imported_as_science": false}
+}

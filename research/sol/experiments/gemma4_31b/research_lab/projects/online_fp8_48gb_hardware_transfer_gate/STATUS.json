@@ -1,0 +1,27 @@
+{
+  "status": "complete",
+  "priority": 205,
+  "summary": "Conditional RTX 6000 Ada matched c12 arm; c12 logical headroom 0.827762 GiB, quote cap $0.77/h, strict gate 0.501943 rps, no throughput transferred.",
+  "next_action": "Activate only on valid independent L40S FP8_CONTEXT_ADMISSION plus a matching committed quote <=$0.77/h; otherwise expire without provider create.",
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 25,
+  "compute_budget": "1.5 local CPU-hours; no GPU",
+  "storage_budget": "384 MiB retained plus 128 MiB temporary",
+  "active_session": null,
+  "last_result_classification": "conditional_matched_hardware_arm",
+  "terminal_artifact": {
+    "path": "HARDWARE_GATE.json",
+    "sha256": "a24b1c2940dfc77715eefad73f01d6a2476dfd46413a567f373d1d14a0d14d9d",
+    "manifest_path": "SOURCE_MANIFEST.json",
+    "manifest_sha256": "c71b13b3b1ca0a0a5db1bbfcf110811d89ecc035a897fbd8ae23e11bde79aa21"
+  },
+  "actual_resources": {
+    "provider_mutation": false,
+    "gpu": false,
+    "image_or_checkpoint": false,
+    "spend_usd": 0.0,
+    "retained_new_artifact_bytes": 28487,
+    "budget_result": "within 25 wall minutes, 1.5 local CPU-hours, 384+128 MiB and $0 caps"
+  }
+}

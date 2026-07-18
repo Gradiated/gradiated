@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "type": "exact_shape_direct_fp8_start_packet",
+  "classification": "start_ready_after_one_director_identity_assertion",
+  "pass": true,
+  "scientific_question": "Does the exact installed SM89 CUTLASS FP8 raw path at Gemma's six fused linear shapes falsify the L40S c12 planning or conservative service ceiling after an independent attention/KV residual floor is merged?",
+  "semantics": "Checkpoint-free deterministic execution proxy only; no model quality, endpoint fit, throughput, reliability, or deployability claim.",
+  "identity": {
+    "model_geometry": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "vllm": "0.19.1.dev6+g6d4a8e6d2",
+    "gpu": "NVIDIA L40S",
+    "compute_capability": [8, 9],
+    "program_sha256": "4c285c94daf032a56c0de2136badffab845503fa710dbca12027e6a345b92667",
+    "wrapper_sha256": "b1504265ab0131df0a1144292b0e3cbc3b6d9c9f6790c8d61ab4a1bab5a9cbc9"
+  },
+  "mechanical_precreate_gate": "Director must recompute PROJECT.md, START_PACKET.json, FINAL_STAGED_PROGRAM_AUDIT.json, STAGED_MANIFEST.json, program/wrapper/source-manifest and shared lifecycle hashes; assert exact image/model/GPU and empty provider inventory. Any mismatch closes before create.",
+  "lifecycle": {
+    "controller": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py",
+    "controller_sha256": "6356910a62c5abefe52fc035eb27e43d5b2cb73066d68ba9f8c089bca31de62b",
+    "placement_control_sha256": "87fdcb6115156bcb392b15f505dc4c1081201ace736999aa6f3e3554053a4e1c",
+    "ownership": "one bounded durable local systemd owner wrapping one sequential placement_control.VerifiedRetainedOwner; one watchdog; no support successor",
+    "allocation": "one lowercase l40s preemptible instance plus one 100 GiB network SSD; one create; no repair/restart",
+    "primary": {"controller_stage": "primary", "program_stage": "primary", "arm": "sliding_qkv M12 sentinel", "remote_wrapper": "remote_stage.sh"},
+    "conditional": {"controller_stage": "conditional", "program_stage": "conditional", "arm": "all six M12 and M3679 exact-shape rows", "same_instance": true},
+    "trigger": "Only after the shared controller has atomically retrieved and parsed the primary stage-terminal: stage==primary, terminal.pass==true, result.type==gemma4_exact_shape_direct_cutlass_fp8, result.sentinel.pass==true, exact runtime/source identity pass, and >=12 provider minutes remain. Otherwise cleanup immediately.",
+    "cleanup": "VerifiedRetainedOwner context exit deletes the named instance/disk and requires authenticated final inventory zero before terminal acceptance."
+  },
+  "budgets": {
+    "wall_clock_minutes": 38,
+    "provider_exposure_minutes": 26,
+    "gpu_compute": "0.44 L40S GPU-hours maximum",
+    "local_compute": "2 CPU-hours maximum",
+    "provider_storage": "one 100 GiB network SSD",
+    "retained_artifacts": "1 GiB maximum",
+    "temporary_artifacts": "512 MiB maximum",
+    "spend_usd": 0.42,
+    "allocation_count": 1,
+    "repair_count": 0
+  },
+  "acceptance": {
+    "sentinel": "one row, dual oracle pass, positive/stable CUDA+wall distributions, exact identity, telemetry acceptance, retrieved before conditional starts",
+    "sweep": "exactly 12 rows; all dual oracles and distributions pass; exact aggregation emitted; telemetry accepted",
+    "decision": "If linear_plus_residual_floor exceeds a ceiling, that L40S c12 economic envelope is falsified. If it is below, record survival of this lower bound only and do not admit FP8 or an endpoint.",
+    "stop_rule": "Stop and clean on any identity/source/hash/oracle/timing/telemetry/shape failure; after one valid sweep terminal clean immediately regardless of outcome."
+  },
+  "adjacent_followup": {"prepared": true, "name": "full six-shape conditional sweep", "why": "It is staged before create and reuses only the retained image/runtime after the independently retrieved sentinel. No W4 arm is retained because its raw packing/oracle path is not equally bound."},
+  "w4": {"included": false, "reason": "No equally source-bound raw Marlin WNA16 packing and dual-oracle program was available within ten minutes; omission is fail-closed."},
+  "negative_prior": {"reconciled_terminal_sha256": "662a225318ebf86759a9ac1b59b09948421776b0d295ec840ea11055ea50d074", "five_old_oracle_failures": "quarantined", "mechanism_sha256": "f65eb0f1a50180cdd87b420e1377b1d28f9260da16515ba1b5620203183f436c", "old_timing_promoted": false}
+}

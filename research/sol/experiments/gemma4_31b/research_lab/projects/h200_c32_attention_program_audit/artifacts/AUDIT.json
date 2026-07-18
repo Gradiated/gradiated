@@ -1,0 +1,154 @@
+{
+  "schema_version": 2,
+  "type": "independent_behavioral_transitive_byte_audit",
+  "audited_project": "../h200_c32_actual_attention_residual_floor",
+  "observed_at_utc": "2026-07-17T13:13:07Z",
+  "terminal": "fail_closed_before_create",
+  "terminal_timing_note": "Advisory was completed after the durable owner had already created its sole H200. It does not mutate, stop, restart, poll, or authorize the session. Any resulting measurement is non-decision-bearing for the admitted experiment; the existing owner/watchdog remains solely responsible for typed terminal retrieval and cleanup.",
+  "provider_access": "forbidden_and_not_used",
+  "gpu_access": "forbidden_and_not_used",
+  "image_probe": {
+    "mode": "CPU-only, network-disabled inspection of the already-cached exact immutable image; no pull and no CUDA",
+    "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "local_image_id": "sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "vllm": "0.19.1.dev6+g6d4a8e6d2",
+    "flash_module_sha256": "55c94708dc15472c2dbe71ce56494386405c9b57dd9c818bbd0973f21e05582b",
+    "triton_unified_attention_module_sha256": "5a8af26832bd0b23604fefa4a0876e12b39101b85431c368649fbb7f779e8921",
+    "flash_signature": "(q, k, v, max_seqlen_q, cu_seqlens_q, max_seqlen_k, cu_seqlens_k=None, seqused_k=None, q_v=None, dropout_p=0.0, softmax_scale=None, causal=False, window_size=None, ..., block_table=None, ..., fa_version=2, ...)",
+    "unified_attention_signature": "(q, k, v, out, cu_seqlens_q, max_seqlen_q, seqused_k, max_seqlen_k, softmax_scale, causal, window_size, block_table, softcap, q_descale, k_descale, v_descale, ...)",
+    "decisive_source_observation": "The exact unified_attention source evaluates window_size[0] while selecting sliding_window_val before launching either Triton kernel. The staged caller passes integer -1, so the first global invocation raises TypeError ('int' object is not subscriptable) before any timed global kernel row can complete."
+  },
+  "superseded_not_ready_record": {
+    "sha256": "287d7d3ca5099284537128aac938433623bdd84c2a7191b69466fa001919cb76",
+    "observed_at_utc": "2026-07-17T13:01:33Z",
+    "wait_max_seconds": 60,
+    "terminal": "not_ready_no_provider_opinion",
+    "reason_superseded": "It used only 60 seconds of the allowed local wait and predated publication of the staged program. It is retained here as audit history and is not evidence about the now-present bytes."
+  },
+  "audited_current_bytes": {
+    "attention_bench.py": "3144586b7bd82e61465a384adbbff701501544a522b23fb4659766008edaa244",
+    "attention_owner.py": "e24766ecf66320c592857ff0c26fc49bcd7a6867c3dba2e7595048ee7c21c92b",
+    "audit_final_program.py": "75b72555cc53eaa1895e6a4fa8ef352a2baf26434373ec430a7cba9768655640",
+    "launch_owner.py": "1ff6fbd3185592a65355aee1ae258414f54321dc0f2c192629c618b5e1c8042c",
+    "remote_attention_stage.sh": "b09d002e68d6ea94af9ae136b4c7afb1895bd40733ca59f3cf732366cfd0c77b",
+    "PROJECT.md": "03170b32bd1c702f9f781c444cf2dd98af9748e9ba82140fc8d05dccb02e37fb",
+    "DIRECTOR_IDENTITY_ASSERTION.json": "9761124f5ffb89eb54f84b1fdbbceba5cb20ccad6bee9737d88eaea58f9d8ad4",
+    "final-staged-audit-20260717T130800Z.json": "1d6b4a01068a8f236367c7afb8a624f8ad0830169f955c7735e9502edeb92c5c",
+    "PRECREATE_TERMINAL.json": "46ccd5befc0f27d6dbd82c5d55cee100fa16507ac9713ac650f4cae17910c396",
+    "provider-request.json": "a9b11528f6331d73bf07f883883074003046c01aa4c7c4459291e309ace7c729",
+    "mla_microbench_control.py": "b29ab7bddf8022cf4ca0ec9ff9d6fbbb4b0dbed2311f7e8489571e37df594cad",
+    "placement_control.py": "87fdcb6115156bcb392b15f505dc4c1081201ace736999aa6f3e3554053a4e1c",
+    "stock_control.py": "4ece68ccbb48e901eb31472c3cf0cc79efc6ad51d24a40f933f2c393b7334591",
+    "vllm_smoke_control.py": "798029a41c0f77ffb75c7a34fbd1103adefa5e3f98b94e6fd8141852c11ae07c",
+    "awq_smoke_control.py": "1bc0f70ffe77ebe145fdb2028c861e715119232396809697f08288ca31341602"
+  },
+  "checks": {
+    "exact_identity_and_budget": {
+      "result": "pass",
+      "evidence": [
+        "../h200_c32_actual_attention_residual_floor/PROJECT.md lines 7-64",
+        "../h200_c32_actual_attention_residual_floor/artifacts/DIRECTOR_IDENTITY_ASSERTION.json",
+        "../h200_c32_actual_attention_residual_floor/artifacts/gemma-h200-c32-attn-20260717t13071784286428z/provider-request.json"
+      ],
+      "interpretation": "The project and request name the exact revision, immutable image, one H200 preset, c32 geometry, 100-GiB disk, 1,800-second provider timeout, and a derived $1.2298611 maximum below the $1.50 cap."
+    },
+    "all_358_global_contexts_reach_program": {
+      "result": "fail",
+      "evidence": [
+        "../h200_c32_actual_attention_residual_floor/attention_bench.py lines 36-49 and 95-96",
+        "exact-image unified_attention signature/source recorded above"
+      ],
+      "interpretation": "The range is syntactically exact (4214..4571), and Q/KV heads, dim, block table, lengths, and paged cache shapes are otherwise represented. But run() passes window_size=-1 at line 47. The exact consumer indexes window_size[0], so context 4214 fails before a global row and later contexts are never attempted."
+    },
+    "sliding_actual_paged_decode_consumer": {
+      "result": "fail_scope_mismatch",
+      "evidence": "../h200_c32_actual_attention_residual_floor/attention_bench.py lines 31-33 and 51-56",
+      "interpretation": "The sliding arm does call the pinned FA3 CUDA symbol with decode query length 1 and exact 32/16/256/1024 geometry, but it supplies dense contiguous K/V plus cu_seqlens_k and no block_table/seqused_k. It therefore does not exercise the admitted paged-KV vLLM decode representation."
+    },
+    "global_paged_decode_consumer": {
+      "result": "fail_nonexecuting_invocation",
+      "evidence": "../h200_c32_actual_attention_residual_floor/attention_bench.py lines 37-49; exact-image source observation above",
+      "interpretation": "The intended Triton paged cache/table is concrete, but the invalid scalar window argument prevents consumer execution. The benchmark also records only the FlashAttention module hash at lines 90-94, not the global Triton module hash used on GPU."
+    },
+    "global_k_equals_v": {
+      "result": "pass_representation_only",
+      "evidence": "../h200_c32_actual_attention_residual_floor/attention_bench.py lines 40-41",
+      "interpretation": "Global V aliases K exactly, but both contain only zeros."
+    },
+    "numerical_oracle": {
+      "result": "fail_missing",
+      "evidence": "../h200_c32_actual_attention_residual_floor/attention_bench.py lines 57-77 and full-file review",
+      "interpretation": "torch.isfinite and a summed checksum are not a numerical reference oracle. No explicit reference output, tolerance, error statistic, or tractable-context comparison exists. Zero K/V also makes finite zero output a trivial check."
+    },
+    "finite_consumption_and_timing": {
+      "result": "partial",
+      "evidence": "../h200_c32_actual_attention_residual_floor/attention_bench.py lines 57-77",
+      "interpretation": "CUDA events, synchronized wall timing, finite checks, checksums, and allocator peaks are present. Only 3 warmups and 8 repetitions are used; there is no stability criterion or repeat-level rejection, and the invalid global call precludes any complete timing distribution."
+    },
+    "architecture_weighting": {
+      "result": "fail_358x_global_overcount",
+      "evidence": "../h200_c32_actual_attention_residual_floor/attention_bench.py lines 97-103",
+      "observed_expression": "(50 * sliding + 10 * sum(global_p50_ms_over_358_contexts)) * 358 / 32 / 1000",
+      "required_expression": "(50 * sliding_p50_ms * 358 + 10 * sum(global_p50_ms_over_358_contexts)) / 32 / 1000",
+      "interpretation": "globals_ms already sums all 358 contexts, then line 99 multiplies that sum by 358 again. Any economic conclusion from attention_seconds_per_request or combined_seconds_per_request is invalid. The analytical KV floor is correctly not added."
+    },
+    "economic_and_trigger_typing": {
+      "result": "fail",
+      "evidence": [
+        "../h200_c32_actual_attention_residual_floor/attention_bench.py lines 82-105",
+        "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py lines 88-94"
+      ],
+      "interpretation": "economic_both_envelopes_falsified is initialized false and never updated, even when combined_exceeds_strict/lenient are true. Thus the shared trigger would treat every otherwise successful primary as not falsifying both envelopes."
+    },
+    "conditional_residual_program": {
+      "result": "fail_absent",
+      "evidence": [
+        "../h200_c32_actual_attention_residual_floor/attention_owner.py line 19",
+        "../h200_c32_actual_attention_residual_floor project file inventory",
+        "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py lines 154-173 and 267-285"
+      ],
+      "interpretation": "No residual benchmark or wrapper is staged. The owner passes no conditional_remote_script, conditional_benchmark_script, conditional inputs, or conditional basename to controller.run. Therefore no RESIDUAL_OPS_TRIGGER, ten-minute start-ready/deadline test, sequential residual measurement, false-trigger artifact, or residual result consumption can occur."
+    },
+    "telemetry_and_retrieval": {
+      "result": "pass_if_stage_reaches_trap",
+      "evidence": [
+        "../h200_c32_actual_attention_residual_floor/remote_attention_stage.sh lines 3-19",
+        "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py lines 249-265"
+      ],
+      "interpretation": "The wrapper captures initial/final nvidia-smi, one-second telemetry, a content manifest, typed stage terminal, archive sidecar, atomic local rename, and manifest verification. A Python exception should still produce a typed failed result and archive through the EXIT trap."
+    },
+    "durable_owner_watchdog_cleanup": {
+      "result": "pass_design_with_terminal_pending",
+      "evidence": [
+        "../h200_c32_actual_attention_residual_floor/attention_owner.py lines 13-20",
+        "../h200_c32_actual_attention_residual_floor/artifacts/gemma-h200-c32-attn-20260717t13071784286428z/PRECREATE_TERMINAL.json",
+        "../h200_c32_actual_attention_residual_floor/artifacts/gemma-h200-c32-attn-20260717t13071784286428z/events.jsonl",
+        "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py lines 197-223 and 286-307",
+        "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/placement_control.py lines 243-338"
+      ],
+      "interpretation": "The durable owner proof passed, one instance plus independent systemd watchdog is recorded, and VerifiedRetainedOwner owns named instance/disk cleanup. Final zero-resource evidence was not present at audit time because the owner was live; this audit did not query or mutate provider state."
+    },
+    "precreate_immutable_transitive_bytes": {
+      "result": "fail_toctou_and_incomplete_manifest",
+      "evidence": [
+        "../h200_c32_actual_attention_residual_floor/audit_final_program.py lines 7-28",
+        "../h200_c32_actual_attention_residual_floor/attention_owner.py lines 13-20",
+        "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py lines 154-173, 237-250"
+      ],
+      "interpretation": "The claimed audit hashes only benchmark, wrapper, owner, and top-level controller. It omits launch/audit/identity/project bytes and the live imported lifecycle dependencies placement_control.py, stock_control.py, vllm_smoke_control.py, and awq_smoke_control.py. PRECREATE_TERMINAL records booleans but no digests. The owner only checks audit.pass/identity.pass and later hands mutable project paths to controller.run; the controller reads/copies benchmark, wrapper, audit, and identity after provider creation. No pre-create content-addressed snapshot or equality check binds the bytes actually transferred/executed. Current benchmark/wrapper/owner/controller hashes happen to equal the claimed audit hashes, but that does not close the transitive TOCTOU gap."
+    },
+    "claimed_final_audit_quality": {
+      "result": "fail_static_false_pass",
+      "evidence": [
+        "../h200_c32_actual_attention_residual_floor/audit_final_program.py lines 18-28",
+        "../h200_c32_actual_attention_residual_floor/artifacts/final-staged-audit-20260717T130800Z.json"
+      ],
+      "interpretation": "The paid audit relies on source substrings and symbol callability. It does not validate function argument semantics, recompute the architecture formula, require a numerical oracle, require a residual program, or bind transitive bytes; it consequently reports pass despite the concrete defects above."
+    }
+  },
+  "advisory_decision": {
+    "classification": "fail_closed_before_create",
+    "decision_relevance": "The staged program cannot answer the admitted c32 actual-attention question. It is guaranteed to terminate before a global row, lacks the required oracle and residual arm, uses a non-paged sliding representation, and contains an economic aggregation error that would invalidate a hypothetical complete run.",
+    "live_owner_instruction": "Do not stop, restart, repair, or replace the existing owner from this audit. Allow its bounded typed failure retrieval and authenticated cleanup to complete. Interpret any stage as execution/lifecycle evidence only, not scientific or economic evidence for c32. No second allocation or paid repair is authorized by this project."
+  }
+}

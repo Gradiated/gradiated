@@ -1,0 +1,18 @@
+{
+  "checks": {
+    "budget": true,
+    "checkpoint": true,
+    "deadline": true,
+    "inventory": true,
+    "keys": true,
+    "runner": true,
+    "terminal": true,
+    "transfer_manifest": true
+  },
+  "pass": true,
+  "runner_sha256": "d2608227cd5ac4cc1cb29ab2e291cd129cb8699ddcf62908a205a1778cb5e379",
+  "transfer_bytes": 19220755443,
+  "transfer_files_total": 10,
+  "transfer_timeout_seconds": 1142,
+  "type": "h100_w4_full_endpoint_precreate"
+}

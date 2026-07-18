@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "type": "h100_w4_marlin_tp_development_packet",
+  "immutable": true,
+  "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+  "files": {
+    "h100_w4_marlin_tp_single_rank.py": "e96b66c32cfb88fa9c591183ae843a5bfc9c57df67cfae99dd4d91cf9fc2be5e",
+    "h100_w4_marlin_falsifier.py": "9b44bb0b916fa7f3cd34f7b4df25c3b59959a29b23c1ab59e29ddde8cbc24bf8",
+    "h100_w4_contract.py": "7a2aafa6298f8a55be2a72ec90bff250fec68dd1a04279d5a0b3d7f9033c65f5",
+    "remote_sentinel.sh": "70884038eba1e91e0a4ab5a6ff938c82cc30a3b098d0d649d897abb42038830f",
+    "remote_sweep_profile_head.sh": "f7f915b7d5a8f43a0754b3c600a03b680e6e48e2186540654981ea50bb8b667b"
+  },
+  "execution_contract": {
+    "entrypoint": "h100_w4_marlin_tp_single_rank.py",
+    "first_gpu_atom": "TP-initialized sliding-QKV M8 actual AWQ-Marlin sentinel",
+    "followup": "typed 24-row W4/BF16 sweep then M8/M3679 profiles only after sentinel pass",
+    "artifact_manifest": "both remote stages emit a content manifest required by the shared controller"
+  }
+}

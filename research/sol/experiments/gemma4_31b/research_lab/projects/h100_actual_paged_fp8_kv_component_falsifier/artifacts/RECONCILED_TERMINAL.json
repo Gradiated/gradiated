@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "type": "h100_actual_paged_fp8_kv_reconciled_terminal",
+  "generated_at_utc": "2026-07-17T15:58:40Z",
+  "classification": "paid_lifecycle_context_harness_failure_no_h100_paged_kv_science",
+  "decision": "Close this allocation without an FP8 paged-KV, attention-performance, counter, whole-request, or direct-linear inference. The only scientific-path observation is that the installed producer rejected a call made without registered vLLM forward context; this is a harness/context-construction failure, not a capability result.",
+  "identity": {
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "compute_capability": [
+      9,
+      0
+    ],
+    "vllm": "0.19.1.dev6+g6d4a8e6d2",
+    "source_bound_symbols_not_proof_of_execution": {
+      "producer": "unified_kv_cache_update",
+      "producer_signature": "(key: torch.Tensor, value: torch.Tensor, layer_name: str) -> torch.Tensor",
+      "producer_source_sha256": "3be8b1b6913ee3ccab10466ee94d3048188cf2d761315c117509822195b95166",
+      "imported_backend_symbol": "unified_attention",
+      "imported_backend_signature": "(q, k, v, out, cu_seqlens_q, max_seqlen_q, seqused_k, max_seqlen_k, softmax_scale, causal, window_size, block_table, softcap, q_descale, k_descale, v_descale, seq_threshold_3D=None, num_par_softmax_segments=None, softmax_segm_output=None, softmax_segm_max=None, softmax_segm_expsum=None, alibi_slopes=None, output_scale=None, qq_bias=None, sinks=None, mm_prefix_range=None, use_alibi_sqrt=False)",
+      "imported_backend_source_sha256": "405000dc44912777c6d7835d0009deaa8594d8b8db422419a151c5f307cdd297"
+    }
+  },
+  "typed_terminal": {
+    "stage": "primary",
+    "archive_sha256": "e0e1509f9f45acd63f8ff78b87a338235f47118616a60fb02472ad82b05f12ab",
+    "returncode": 1,
+    "failure_class_reported_by_owner": "actual_image_producer_or_context_construction_failure",
+    "reconciled_failure_class": "missing_forward_context_harness_failure",
+    "error_type": "AssertionError",
+    "error": "Forward context is not set. Please use `set_forward_context` to set the forward context.",
+    "producer_reached": true,
+    "actual_selected_paged_backend_called": false,
+    "useful_gpu_seconds": 0.0,
+    "decision_bearing_rows": 0
+  },
+  "quarantine_boundary": {
+    "controlling_audit_sha256": "f16fe1afa9b1a95037f9bf2618a50e835e4e9aa9e5717c21967d97321348b6b6",
+    "verdict": "fail_quarantine_science",
+    "not_executed_or_not_established": [
+      "selected paged-attention backend construction or call",
+      "FP8 KV cache arm",
+      "matched BF16 versus FP8 output oracle",
+      "attention timing",
+      "DRAM, L2, cycles, warps, or launch counters",
+      "conditional c8/c16/c32 sweep and architecture aggregation",
+      "retained-session direct-linear arm"
+    ],
+    "forbidden_inferences": [
+      "FP8 paged-KV support or rejection",
+      "BF16 versus FP8 correctness, time, traffic, or launch-count delta",
+      "context-scaled or whole-request saving",
+      "H100 direct-linear performance"
+    ]
+  },
+  "lifecycle_accounting": {
+    "instance_id": "computeinstance-e00kxdpgahgj4nz4rr",
+    "controller_reported_allocation_seconds": 579.072,
+    "authenticated_create_event_to_cleanup_verification_seconds": 521.208478,
+    "accounting_limit": "The controlling audit found that allocation_seconds starts before authenticated instance creation, so 579.072 seconds and its derived cost are conservative controller-wall accounting, not exact authenticated provider exposure.",
+    "cost_usd_derived": 0.347398793,
+    "cost_basis": "Controller-wall exposure at authenticated Nebius preemptible VM and disk rates; invoice pending.",
+    "useful_gpu_seconds": 0.0
+  },
+  "cleanup": {
+    "authenticated": true,
+    "pass": true,
+    "verified_at_utc": "2026-07-17T15:56:21.226439Z",
+    "cleanup_elapsed_seconds": 53.462,
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "matching_instance_count": 0,
+    "matching_disk_count": 0
+  },
+  "evidence_sha256": {
+    "controlling_audit": "f16fe1afa9b1a95037f9bf2618a50e835e4e9aa9e5717c21967d97321348b6b6",
+    "director_identity_assertion": "fb272795e7a06591b4f9585478e30ee1c4eaa49d4cbe6c4a647b847883bf235f",
+    "behavioral_precreate": "5564c0a48a0693637c44672f0c120a6c8a6ff8e79546d4c2673eba8ce020834c",
+    "precreate_terminal": "49cde880ec65c2ee5e2a849b808bf43c63d8478bb63b4b09d209c037723cf632",
+    "provider_request": "9f69198bd2e49a7e15589bea946534806356564fa9ea4334cd4c294dad37556e",
+    "provider_create_diagnostic": "2a29f6e0192a62e4334841c25eccc84c7b0790d1baf05ac609f096ecce834963",
+    "primary_stage": "5d185aa04ebf3bcb58dbbf78ef4a4c5ff4d18eb4d592f4d71347ada6564388be",
+    "controller_summary": "cb1ed834c38094100122f6ada807a5d133e932e12d74987efa422ea20d3fcadc",
+    "events": "5fdc91c58c140c493771e34cdd39c887eaed76f38e5760191ffc70d582fbb06f",
+    "cleanup": "290bf22cb7da30dad73d0bb4fd0f583b686db873b4ba606882a77cd1816e46b4",
+    "owner_summary": "bf61598f372b9310e4d145511a4d3d6d5340c78a5b550227a0485917c785e23d"
+  }
+}

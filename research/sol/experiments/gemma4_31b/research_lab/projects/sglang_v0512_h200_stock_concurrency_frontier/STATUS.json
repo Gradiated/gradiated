@@ -1,0 +1,9 @@
+{
+  "active_session": null,
+  "authorized_spend_usd": 0.85,
+  "next_action": "Do not claim or allocate a bench. Preserve the audited offline runner while the quality owner records the FP8-E5M2 deterministic-repeat divergence and validates its BF16 control with the direct reference. Resume only if the typed quality terminal does not confirm a candidate regression; otherwise close this FP8 concurrency line.",
+  "priority": 360,
+  "researcher_profile": "execution",
+  "status": "paused",
+  "summary": "Prepared FP8-E5M2 concurrency runner paused after a candidate-only deterministic repetition mismatch; no bench claim is admissible pending typed quality reconciliation."
+}

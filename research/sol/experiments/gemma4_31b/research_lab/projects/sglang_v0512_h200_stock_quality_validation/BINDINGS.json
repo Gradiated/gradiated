@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "candidate": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "weights": "bfloat16",
+    "kv_cache": "fp8_e5m2",
+    "runtime_release": "sglang v0.5.12",
+    "runtime_source_commit": "127b9e3283f7c2a43234b852ff5c9f1796d53624",
+    "image": "docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a",
+    "performance_terminal": "../sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/sglang-v0512-h200-mtp-20260718t0925z-owner/RECONCILED_TERMINAL.json",
+    "performance_terminal_sha256": "d69661f113c13abb9cf1702288ecb4496ee19fa69d808e15f8d83676f6801741",
+    "raw_performance_bundle": "../sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/sglang-v0512-h200-mtp-20260718t0925z-owner/stock-repaired.tar.gz",
+    "raw_performance_bundle_sha256": "760dba65d275716a997887dc970b5c67dbefa0ac2802ffb78dcfeddd8eca9f73",
+    "service_seconds_per_request": 0.3633031778124973,
+    "completed_requests_per_second": 2.7525220286295027
+  },
+  "control": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "weights": "bfloat16",
+    "kv_cache": "bfloat16",
+    "runtime": "same bound SGLang image and launch contract, differing only in KV-cache dtype",
+    "direct_reference": "Transformers greedy/logit sentinel in the same immutable image and checkpoint"
+  },
+  "checkpoint": {
+    "root": "../sglang_h200_matched_endpoint_falsifier/artifacts/checkpoint-owner-20260717T072831Z/checkpoint",
+    "terminal": "../sglang_h200_matched_endpoint_falsifier/artifacts/checkpoint-owner-20260717T072831Z/CHECKPOINT_TERMINAL.json",
+    "terminal_sha256": "5f0765fa37f308e21d665571a92c29ba1998b22b5ee67d1edbfac103dafec481",
+    "files": 8,
+    "total_bytes": 62578655208
+  },
+  "proven_owner": {
+    "source": "../sglang_v0512_h200_gemma4_mtp_endpoint/sglang_h200_mtp_owner.py",
+    "source_sha256": "80bd22f9792526e2cb315d1149fc6bf53c7ebb5c161d3ea32606d10b41c486f5",
+    "required_correction": "each patchable transfer, launch/readiness, capture, reference, and retrieval call must invoke run_repairable_operation; outer retention alone is not retry control flow"
+  },
+  "quality_interface_prior": {
+    "scope": "reuse capture/scorer mechanics only; GLM prompts, policy, thresholds, model identity, and frozen manifest are forbidden",
+    "runner_interface": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/quality/RUNNER_INTERFACE.md",
+    "runner_interface_sha256": "e8b87d3cf8eba425515a21470ff6208669bd492b8896377a36fb600672f72999",
+    "run_pair_sha256": "0eceb814eed0a6b6b5de65cb6e359e37222abf8b83c7cc06975eaf4935300c52",
+    "score_pair_sha256": "080e105e5a43640b3b8d9a91caf872e8491db6524cda1189950f29161e2c41af"
+  },
+  "placement": {
+    "platform": "gpu-h200-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "disk_gib": 250,
+    "tensor_parallel": 1
+  }
+}

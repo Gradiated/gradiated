@@ -1,0 +1,21 @@
+{
+  "status": "complete",
+  "priority": 200,
+  "summary": "Typed background_batching_credible_region: c12 is logically capacity-credible; c14 is allocator-sensitive, and both require explicit background residence or pooling delay at target traffic.",
+  "next_action": "Merge only with an identity-matched later endpoint using the exact telemetry contract in QUEUE_BOUND.json; do not infer endpoint behavior from the live component owner.",
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 25,
+  "compute_budget": "1.5 local CPU-hours; no GPU",
+  "storage_budget": "384 MiB retained plus 128 MiB temporary",
+  "active_session": null,
+  "last_result_classification": "background_batching_credible_region",
+  "terminal_artifact": {
+    "path": "QUEUE_BOUND.json",
+    "sha256": "14f9254098e14c95272863e8b4119fdaaf6d833f4c01a531b9fbd204b506d965",
+    "source_manifest_path": "SOURCE_MANIFEST.json",
+    "source_manifest_sha256": "a82e064d4fdb20eb0704727e7d8c0fa7981d53f2420a41bb5074d52c617a0463",
+    "calculator_path": "calculate_queue_bound.py",
+    "calculator_sha256": "918376f9929e7c6188507ceb0215a4c3bfc13f3571da9e38efc96f202232fed2"
+  }
+}

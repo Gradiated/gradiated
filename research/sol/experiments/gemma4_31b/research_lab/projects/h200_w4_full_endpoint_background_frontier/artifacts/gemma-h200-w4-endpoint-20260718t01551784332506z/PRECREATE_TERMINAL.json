@@ -1,0 +1,27 @@
+{
+  "checks": {
+    "bindings_declared_pass": true,
+    "bound_component_digest": true,
+    "bound_lifecycle_digest": true,
+    "bound_terminal_digest": true,
+    "bound_transfer_manifest_digest": true,
+    "checkpoint_exists": true,
+    "checkpoint_terminal_pass": true,
+    "deadline_and_spend_bound": true,
+    "empty_authenticated_inventory": true,
+    "flat_transfer_manifest_parses": true,
+    "h200_placement_bound": true,
+    "keypair_present": true,
+    "owner_observability_and_retention_regression_pass": true,
+    "runner_exists": true
+  },
+  "pass": true,
+  "prior_spend_usd_derived": 1.261915171,
+  "requested_provider_seconds": 3499.7475810050964,
+  "runner_sha256": "d4ee9d05075e03a1fe736ee08648de073fa4266c5621844ba00b4c80438eabe9",
+  "timestamp": "2026-07-18T01:55:07.003643Z",
+  "transfer_bytes": 19220755443,
+  "transfer_files_total": 10,
+  "transfer_timeout_seconds": 1142,
+  "type": "h200_w4_endpoint_precreate"
+}

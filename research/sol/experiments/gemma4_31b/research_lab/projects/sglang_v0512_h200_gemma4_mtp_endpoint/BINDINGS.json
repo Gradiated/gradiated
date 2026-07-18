@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "model": "google/gemma-4-31B-it",
+  "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "checkpoint": {
+    "root": "../sglang_h200_matched_endpoint_falsifier/artifacts/checkpoint-owner-20260717T072831Z/checkpoint",
+    "terminal": "../sglang_h200_matched_endpoint_falsifier/artifacts/checkpoint-owner-20260717T072831Z/CHECKPOINT_TERMINAL.json",
+    "terminal_sha256": "5f0765fa37f308e21d665571a92c29ba1998b22b5ee67d1edbfac103dafec481",
+    "files": 8,
+    "total_bytes": 62578655208,
+    "weight_bytes": 62546338248
+  },
+  "assistant": {
+    "model": "google/gemma-4-31B-it-assistant",
+    "revision": "627c5ec1458b9086b841a91e0512fd31fd2fbbf1",
+    "identity_source": "../gemma4_mtp_acceptance_economic_bound/MTP_BOUND.json",
+    "identity_source_sha256": "8f31a7071f2a4d0f7a31341211351327ce08264a4cf5b8644f0054a57636b795",
+    "materialization": "provider creation is gated on a project-local content-hashed assistant terminal"
+  },
+  "runtime": {
+    "project": "sgl-project/sglang",
+    "release": "v0.5.12",
+    "source_commit": "127b9e3283f7c2a43234b852ff5c9f1796d53624",
+    "image": "docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a",
+    "image_platform": "linux/amd64",
+    "release_evidence": "https://github.com/sgl-project/sglang/releases/tag/v0.5.12",
+    "intervention": "current Gemma 4 full-stack path plus native Gemma 4 MTP",
+    "weights": "bfloat16",
+    "kv_cache": "fp8_e5m2",
+    "tensor_parallel": 1
+  },
+  "workload": {
+    "trace": "../gemma_exact_cache_trace_contract/TRACE_PACKET.json",
+    "trace_sha256": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68",
+    "prompt_tokens": 4214,
+    "output_tokens": 358,
+    "cache_prompt_fraction": 0.127,
+    "primary_concurrency": 32
+  },
+  "economics": {
+    "gate": "../h200_campaign_economic_gate_reconciliation/H200_ECONOMIC_GATE.json",
+    "gate_sha256": "3f4ce08c7e3a6649c18af99f14e0d48dcaf3979ac818462f7cf159cd9dab9afd",
+    "planning_h200_usd_per_hour": 3.25,
+    "strict_required_completed_requests_per_second": 2.118591,
+    "strict_service_seconds_per_request": 0.47201182295214134
+  },
+  "placement_evidence": {
+    "linear_head_terminal": "../h200_bf16_exact_linear_floor/artifacts/RECONCILED_TERMINAL.json",
+    "linear_head_terminal_sha256": "9f12b3ae4c8d82176f0ec9b09845c6e97ab1f278a458bd023adcbe433fd004fe",
+    "kv_floor": "../h200_bf16_kv_attention_bandwidth_floor/KV_ATTENTION_FLOOR.json",
+    "kv_floor_sha256": "8d0d1ef6bc39adef386a072947bc0ae820e3193af4d6e8b28c19bc6f59fcb442",
+    "c32_linear_head_floor_seconds_per_request": 0.22476958992984145,
+    "c32_linear_head_plus_optimistic_kv_seconds_per_request": 0.2827674992631748
+  },
+  "placement": {
+    "platform": "gpu-h200-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "disk_gib": 250
+  }
+}

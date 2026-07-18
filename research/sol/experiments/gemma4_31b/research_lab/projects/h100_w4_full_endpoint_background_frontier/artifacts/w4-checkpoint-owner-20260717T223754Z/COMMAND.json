@@ -1,0 +1,23 @@
+[
+  "docker",
+  "run",
+  "--rm",
+  "--network=none",
+  "--ipc=host",
+  "-v",
+  "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_h200_matched_endpoint_falsifier/artifacts/checkpoint-owner-20260717T072831Z/checkpoint:/source:ro",
+  "-v",
+  "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_full_endpoint_background_frontier/artifacts/w4-checkpoint-owner-20260717T223754Z:/output",
+  "-v",
+  "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_full_endpoint_background_frontier/w4_quantize_in_container.py:/input/w4_quantize_in_container.py:ro",
+  "--entrypoint",
+  "python3",
+  "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+  "/input/w4_quantize_in_container.py",
+  "--source",
+  "/source",
+  "--output",
+  "/output/checkpoint-repair-2",
+  "--deadline-epoch",
+  "1784338374.0"
+]

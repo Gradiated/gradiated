@@ -1,0 +1,4 @@
+{
+  "action": "teardown",
+  "reason": "The in-session repaired c32 run reached actual producer and selected backend, but global BF16 and FP8 outputs were zero and failed the required output oracle; do not interpret timing rows."
+}

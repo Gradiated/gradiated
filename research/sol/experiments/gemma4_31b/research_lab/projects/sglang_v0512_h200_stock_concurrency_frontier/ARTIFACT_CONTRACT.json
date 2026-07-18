@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "kind": "sglang_h200_stock_concurrency_frontier_artifact_contract",
+  "identity": {
+    "bindings": "BINDINGS.json",
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.12",
+    "kv_cache": "fp8_e5m2",
+    "accelerator": "nvidia-h200-sxm",
+    "trace_sha256": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68"
+  },
+  "stages": [
+    {
+      "arm": "c64",
+      "required_requests": 64,
+      "source": "validated TRACE_PACKET.json primary_c16.scored repeated in order four times",
+      "terminal": "c64/TERMINAL.json",
+      "raw_request_dir": "c64/requests",
+      "raw_response_dir": "c64/responses",
+      "required_observations": ["complete requests", "nonempty output", "exact prompt/completion token accounting", "service time", "queue/TTFT/prefill/decode server metrics", "continuous GPU memory/utilization/power telemetry", "preemption and scheduler counters"]
+    },
+    {
+      "arm": "c96",
+      "admission": "run only when c64 is valid, improves service time >=5% versus 0.3633031778124973 s/request, memory telemetry is safe, and >=8 provider minutes remain",
+      "terminal": "c96/TERMINAL.json"
+    },
+    {
+      "arm": "c48",
+      "admission": "run once on the same bench only after typed c64 capacity/OOM failure and >=8 provider minutes remain",
+      "terminal": "c48/TERMINAL.json"
+    }
+  ],
+  "atomicity": "Each stage terminal and raw bundle must be persisted and retrievable before any conditional stage starts.",
+  "economic_gate": {
+    "ceiling_service_seconds_per_request": 0.47201182295214134,
+    "experimental_h200_usd_per_hour": 2.46,
+    "project_spend_ceiling_usd": 0.85
+  },
+  "provider_policy": "No provider create, disk create, or teardown. Claim only a released identity-compatible lab bench after typed paired-quality pass; release the claim after the experiment."
+}

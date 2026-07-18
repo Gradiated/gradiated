@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "type": "h100_exact_shape_direct_fp8_start_packet",
+  "classification": "start_ready_standalone_h100_direct_linear_component",
+  "pass": true,
+  "scientific_question": "Can actual H100 raw CUTLASS FP8 linears alone exceed the H100 planning service ceiling when measured at Gemma's exact fused-linear shapes?",
+  "semantics": "Checkpoint-free deterministic component proxy; no endpoint throughput, quality, fit, reliability, or FP8 admission claim.",
+  "identity": {
+    "model_geometry": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "vllm": "0.19.1.dev6+g6d4a8e6d2",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "compute_capability": [9, 0],
+    "program_sha256": "5b949a02bbc5eed86637103ee9f07dcad1bda2feb784f92629ef30977172ca5c",
+    "wrapper_sha256": "81f0fd9c1077a97e03795be178b78cee4ca8ab46d9ce6dd20a1b6947b6bee41f",
+    "staged_manifest_sha256": "8a35a2574c58a541ba650e28e253d5ad952f2c4eb69f8bd06678d782f3ce3151",
+    "behavioral_audit_sha256": "2c4de127d7596a323df4f38ce95843d245e2c3c6dcbc9232fe9958abd8d0f6a6"
+  },
+  "lifecycle": {
+    "controller": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py",
+    "controller_sha256": "6356910a62c5abefe52fc035eb27e43d5b2cb73066d68ba9f8c089bca31de62b",
+    "verified_owner": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/placement_control.py",
+    "verified_owner_sha256": "87fdcb6115156bcb392b15f505dc4c1081201ace736999aa6f3e3554053a4e1c",
+    "owner": "h100_direct_fp8_owner.py",
+    "launcher": "launch_owner.py",
+    "allocation": "one preemptible gpu-h100-sxm / 1gpu-16vcpu-200gb plus one 100-GiB network disk",
+    "primary": {"stage": "primary", "arm": "sliding_qkv M8 sentinel", "artifact_basename": "h100-direct-fp8-primary"},
+    "conditional": {"stage": "conditional", "arm": "six exact shapes at M8/M16/M32/M3679", "artifact_basename": "h100-direct-fp8-conditional"},
+    "trigger": "Only after atomic retrieval of primary stage==primary, terminal.pass, exact H100 identity, gemma4_h100_exact_shape_direct_cutlass_fp8 type, and sentinel.pass, with >=420 seconds remaining. False trigger completes cleanup immediately.",
+    "cleanup": "One shared VerifiedRetainedOwner/watchdog owns create, retrieval, and authenticated zero instance/disk cleanup. No repair or retained follow-up."
+  },
+  "budgets": {
+    "wall_clock_minutes": 20,
+    "provider_exposure_minutes": 20,
+    "spend_usd_max": 1.3,
+    "allocation_count": 1,
+    "repair_count": 0,
+    "local_cpu_hours": 2,
+    "retained_storage_mib": 768,
+    "temporary_storage_mib": 384
+  },
+  "acceptance": {
+    "sentinel": "One separately retrieved M8 sliding-QKV row must pass exact image/source/H100 identity, corrected dual output oracle, positive stable CUDA and synchronized-wall distributions, allocator evidence, and telemetry.",
+    "sweep": "Exactly 24 rows: six exact fused-linear shapes times M8/M16/M32/M3679, each matched to BF16 and recorded with the same dual oracle and timing acceptance.",
+    "aggregation": "For c8/c16/c32, apply layer multiplicity, multiply 358 decode steps, divide decode only by concurrency, and include shared M3679 prefill once.",
+    "decision": "Compare the linear component floor with 0.5479752315195353 s/request. Only a floor above that ceiling falsifies the H100 planning envelope; below ceiling cannot admit FP8 because head, attention/KV, cache writing, quantization, and service overhead are omitted."
+  },
+  "prior_boundary": "The H100 paged-KV owner terminal was a no-science context-construction failure with authenticated cleanup; it neither triggers this packet nor contributes performance evidence. L40S supplies source/oracle structure only, never timing or economics."
+}

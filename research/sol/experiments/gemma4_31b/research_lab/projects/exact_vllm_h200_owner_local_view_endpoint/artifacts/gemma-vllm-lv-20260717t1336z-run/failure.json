@@ -1,0 +1,10 @@
+{
+  "classification": "typed_precreate_failure",
+  "error_type": "RuntimeError",
+  "instance_id": null,
+  "message": "run_local_view_terminal_failed",
+  "observed_epoch": 1784288129.1469223,
+  "provider_mutations": 0,
+  "schema_version": 1,
+  "stage": "local_view_validation"
+}

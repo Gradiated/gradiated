@@ -1,0 +1,37 @@
+{
+  "checks": {
+    "deadline_and_budget": true,
+    "director_identity_pass": true,
+    "durable_owner": true,
+    "inventory_empty": true,
+    "keypair_present": true,
+    "packet_audit_pass": true,
+    "packet_manifest_hashes": true,
+    "rfc1123_name": true,
+    "shared_lifecycle_hashes": true,
+    "writable_artifact_root": true
+  },
+  "inventory": {
+    "disks": [],
+    "instances": []
+  },
+  "name": "gemma-l40s-direct-fp8-20260717t15001784293214z",
+  "pass": true,
+  "schema_version": 1,
+  "timestamp": "2026-07-17T15:00:14.998086Z",
+  "transitive_sha256": {
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_shape_fp8_w4_direct_kernel_packet/FINAL_STAGED_PROGRAM_AUDIT.json": "5bff874897d280a9a16318a854825ae47dbd936ef52c3341234d663065b77f15",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_shape_fp8_w4_direct_kernel_packet/SOURCE_MANIFEST.json": "a65a36ef7abec2765c301d5508e74dd0d212bc3e3083e01a18abf577ee61149c",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_shape_fp8_w4_direct_kernel_packet/STAGED_MANIFEST.json": "4b7fec791c1bd57686c3431e795e55a133adbfdd3a19381807dd769cd651f5e0",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_shape_fp8_w4_direct_kernel_packet/START_PACKET.json": "14bed1b4e33bd2c9dde062dec800c9a04080986d7cafcb080a5831ea156a4366",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_shape_fp8_w4_direct_kernel_packet/direct_fp8_kernel.py": "4c285c94daf032a56c0de2136badffab845503fa710dbca12027e6a345b92667",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_shape_fp8_w4_direct_kernel_packet/remote_stage.sh": "b1504265ab0131df0a1144292b0e3cbc3b6d9c9f6790c8d61ab4a1bab5a9cbc9",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/l40s_direct_cutlass_fp8_economic_falsifier/PROJECT.md": "1a7dd16e29ab5ce4f27308a57a57c7ec61db72316464d0eb4c906af2db2b1cd7",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/l40s_direct_cutlass_fp8_economic_falsifier/assert_identity.py": "504fbb179b27e9b5ee8b95b25800aed823130767e5866ecc02efec2d3c679d1d",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/l40s_direct_cutlass_fp8_economic_falsifier/direct_fp8_owner.py": "2e3c8510dad7df681b842f3f3d188ab268c0cf08a2f37e3257b1eae93fda1ae6",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/l40s_direct_cutlass_fp8_economic_falsifier/launch_owner.py": "c436ae0c9c75df446f9a452ac3cd38879fff062a6953df6c72f8c7333c64ba35",
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py": "6356910a62c5abefe52fc035eb27e43d5b2cb73066d68ba9f8c089bca31de62b",
+    "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/placement_control.py": "87fdcb6115156bcb392b15f505dc4c1081201ace736999aa6f3e3554053a4e1c"
+  },
+  "type": "l40s_direct_cutlass_fp8_final_transitive_precreate"
+}

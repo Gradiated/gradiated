@@ -1,0 +1,13 @@
+{
+  "classification": "h200_w4_endpoint_typed_failure",
+  "completed_at_utc": "2026-07-18T01:47:16.786794Z",
+  "controller_returncode": 1,
+  "instance_id": "computeinstance-e00r8ncgc1zyry8z6h",
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-h200-w4-endpoint-20260718t01151784330146z-watchdog.service",
+    "deadline_epoch": 1784342746.3003068,
+    "main_pid": 2254916,
+    "unit": "gemma-h200-w4-endpoint-20260718t01151784330146z-watchdog.service",
+    "unit_manager": "user"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "checks": {
+    "authenticated_inventory_empty": true,
+    "diagnostic_docker_nvidia_bootstrap": true,
+    "director_identity_pass": true,
+    "durable_owner": true,
+    "final_staged_program_audit_pass": true,
+    "h200_placement_and_rate_bound": true,
+    "lowercase_rfc1123_name": true,
+    "provider_deadline_within_budget": true,
+    "ssh_keypair_present": true,
+    "staged_bytes_match_audit": true
+  },
+  "disk_gib": 100,
+  "inventory": {
+    "disks": [],
+    "instances": []
+  },
+  "name": "gemma-h200-linear-20260717t115654z",
+  "pass": true,
+  "platform": "gpu-h200-sxm",
+  "preset": "1gpu-16vcpu-200gb",
+  "rate_usd_per_gpu_hour": 2.45,
+  "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+  "schema_version": 1,
+  "timestamp": "2026-07-17T11:56:55.465950Z",
+  "type": "h200_bf16_linear_typed_precreate_terminal"
+}

@@ -1,0 +1,21 @@
+{
+  "active_session": null,
+  "authorized_spend_usd": 0.0,
+  "cleanup_pass": true,
+  "controller_reported_allocation_seconds": 579.072,
+  "cost_usd_derived": 0.347398793,
+  "decision_bearing_rows": 0,
+  "final_disk_count": 0,
+  "final_instance_count": 0,
+  "last_result_classification": "paid_lifecycle_context_harness_failure_no_h100_paged_kv_science",
+  "next_action": null,
+  "priority": 0,
+  "provider_mutation": "forbidden_closed_cleanup_verified",
+  "reconciliation_pending": false,
+  "researcher_profile": "execution",
+  "status": "closed",
+  "summary": "The installed H100 producer rejected an unregistered layer name with a missing-forward-context AssertionError before any selected paged backend, FP8 arm, oracle, counters, conditional sweep, or direct-linear arm executed; useful GPU science is zero and authenticated cleanup verified zero instances/disks.",
+  "terminal_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_actual_paged_fp8_kv_component_falsifier/artifacts/RECONCILED_TERMINAL.json",
+  "terminal_artifact_sha256": "5bcbd80de3da6445097c7f7ca2ec0903fc0af34257e9910fce87f0d8b82975a4",
+  "useful_gpu_seconds": 0.0
+}

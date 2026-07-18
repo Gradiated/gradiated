@@ -1,0 +1,12 @@
+{
+  "instance_id": "computeinstance-e00xzv5h3g0znq5dpb",
+  "message": "Command '['ssh', '-i', '/root/.config/nebius/glm-campaign/ssh_ed25519', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'UserKnownHostsFile=/root/.config/nebius/glm-campaign/known_hosts', '-o', 'ConnectTimeout=10', 'glmrunner@89.169.112.235', 'bash -s']' timed out after 4081 seconds",
+  "type": "TimeoutExpired",
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-h100-w4-endpoint-20260717t23471784324846z-watchdog.service",
+    "deadline_epoch": 1784336546.5130224,
+    "main_pid": 2240381,
+    "unit": "gemma-h100-w4-endpoint-20260717t23471784324846z-watchdog.service",
+    "unit_manager": "user"
+  }
+}

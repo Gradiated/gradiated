@@ -47,6 +47,42 @@ runtime/
 
 Existing artifact, telemetry, admission, provider, and experiment scripts remain available as optional tools. Researchers use them when they improve a project; they are not orchestration prerequisites.
 
+## Shared GPU benches
+
+Provider GPUs belong to the lab rather than individual projects. Live state is one atomic inventory at `research_lab/runtime/gpus.json`; every change is also appended to `runtime/gpu_events.jsonl`.
+
+- The director creates the provider resource, gives it an absolute cleanup watchdog/deadline, registers it, and alone decides when to drain and tear it down.
+- A researcher claims one compatible bench, runs and repairs experiments in place, updates the concise description of what is resident, then releases it without teardown.
+- A stale claim remains fenced. The director inspects it and explicitly reclaims it to maintenance; another researcher never steals it automatically.
+- Independent benches can run concurrently. Compatible projects queue onto existing resident state.
+- The supervisor runs on its own periodic cadence even when the director is deferred. It compares the inventory with provider listings and lifecycle owners/watchdogs, fences objectively expired or ownerless registered benches by marking them draining, and wakes the director for provider cleanup. Healthy audits are not logged.
+
+The inventory is deliberately not a provider abstraction or scheduler. Provider tools still create and delete resources; this file only coordinates ownership and records hardware, provider identifiers, hourly cost, watchdog/deadline, and resident model/checkpoint/image/runtime/cache/server state.
+
+```bash
+# Everyone can inspect the live benches.
+PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool \
+  --lab /path/to/research_lab list
+
+# Director: register a resource after provider create and watchdog setup.
+PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool \
+  --lab /path/to/research_lab register --spec /path/to/bench.json
+
+# Researcher: claim, then release with an optional JSON contents update.
+PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool \
+  --lab /path/to/research_lab claim --project PROJECT --accelerator h200-sxm
+PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool \
+  --lab /path/to/research_lab release --project PROJECT --contents /path/to/contents.json
+
+# Director: stop new claims, perform provider cleanup, then retire the record.
+PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool \
+  --lab /path/to/research_lab drain --bench BENCH
+PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool \
+  --lab /path/to/research_lab retire --bench BENCH --cleanup-verified
+```
+
+The director can return an inspected maintenance bench to service with `ready --bench BENCH`. The registration JSON has only these top-level fields: `id`, `provider`, `accelerator`, `resource`, `contents`, `lifecycle`, and `hourly_cost_usd`. `lifecycle` contains `watchdog` and `deadline_utc`. Keep credentials out of it.
+
 ## Shared GPU profiling
 
 [`PROFILING.md`](PROFILING.md) documents the provider-neutral `research/factory/tools/grad-profile` command. It records profiler-off baselines, bounded NVIDIA Nsight or AMD ROCm captures, exact-shape/codegen artifacts, normalized timeline/counter summaries, energy, and $/token comparisons. Deep profiling is optional and question-driven; it must not delay credible experiments.
@@ -89,7 +125,9 @@ Create an external config containing the repository, lab directory, models, cade
   "repo_dir": "/root/workspace",
   "lab_dir": "/root/workspace/research/sol/experiments/glm47flash/research_lab",
   "cycle_interval_seconds": 60,
-  "max_parallel_researchers": 3,
+  "max_parallel_researchers": 5,
+  "spend_cap_usd": 100.0,
+  "spend_cap_starts_at": "2026-07-17T21:59:00Z",
   "supervisor_every_cycles": 6,
   "routes": {
     "director": {"model": "gpt-5.6-sol", "reasoning_effort": "high"},
@@ -110,6 +148,8 @@ Run one cycle or continuously:
 PYTHONPATH=research/factory/src python3 -m grad_research.lab_harness --config <config> --once
 PYTHONPATH=research/factory/src python3 -m grad_research.lab_harness --config <config>
 ```
+
+When `spend_cap_usd` and `spend_cap_starts_at` are configured, the harness creates `runtime/spend_cap.json` and reserves each paid project's full `authorized_spend_usd` before scheduling it. Reservations are conservative and durable: completion does not silently restore authority, and changing the cap or start timestamp requires an explicit new ledger rather than a config edit. Projects without a reservation are prompted and scheduled for zero-cost work only; projects that would overcommit the cap are deferred.
 
 The systemd unit is `systemd/gradiated-research-lab@.service`. See `SUPERVISOR.md` for installation and cutover.
 

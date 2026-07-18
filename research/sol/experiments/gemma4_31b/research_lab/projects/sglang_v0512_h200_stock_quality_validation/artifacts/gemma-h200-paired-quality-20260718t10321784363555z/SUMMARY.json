@@ -1,0 +1,13 @@
+{
+  "classification": "paired_quality_complete",
+  "completed_at_utc": "2026-07-18T11:41:29.892567Z",
+  "controller_returncode": 0,
+  "instance_id": "computeinstance-e00rttap31wr3bzk96",
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-h200-paired-quality-20260718t10321784363555z-watchdog.service",
+    "deadline_epoch": 1784374955.8630693,
+    "main_pid": 2367540,
+    "unit": "gemma-h200-paired-quality-20260718t10321784363555z-watchdog.service",
+    "unit_manager": "user"
+  }
+}

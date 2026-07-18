@@ -1,0 +1,176 @@
+{
+  "classification": "offline_exact_shape_contract",
+  "mechanism_sha256": "0ced5b18806b14f6fd0070f00c52640af5e9764886fed46752da43028f8b1119",
+  "pass": true,
+  "rows": [
+    {
+      "k": 5376,
+      "m": 8,
+      "multiplicity": 50,
+      "n": 16384,
+      "name": "sliding_qkv"
+    },
+    {
+      "k": 5376,
+      "m": 16,
+      "multiplicity": 50,
+      "n": 16384,
+      "name": "sliding_qkv"
+    },
+    {
+      "k": 5376,
+      "m": 32,
+      "multiplicity": 50,
+      "n": 16384,
+      "name": "sliding_qkv"
+    },
+    {
+      "k": 5376,
+      "m": 3679,
+      "multiplicity": 50,
+      "n": 16384,
+      "name": "sliding_qkv"
+    },
+    {
+      "k": 5376,
+      "m": 8,
+      "multiplicity": 10,
+      "n": 20480,
+      "name": "global_qkv"
+    },
+    {
+      "k": 5376,
+      "m": 16,
+      "multiplicity": 10,
+      "n": 20480,
+      "name": "global_qkv"
+    },
+    {
+      "k": 5376,
+      "m": 32,
+      "multiplicity": 10,
+      "n": 20480,
+      "name": "global_qkv"
+    },
+    {
+      "k": 5376,
+      "m": 3679,
+      "multiplicity": 10,
+      "n": 20480,
+      "name": "global_qkv"
+    },
+    {
+      "k": 8192,
+      "m": 8,
+      "multiplicity": 50,
+      "n": 5376,
+      "name": "sliding_output"
+    },
+    {
+      "k": 8192,
+      "m": 16,
+      "multiplicity": 50,
+      "n": 5376,
+      "name": "sliding_output"
+    },
+    {
+      "k": 8192,
+      "m": 32,
+      "multiplicity": 50,
+      "n": 5376,
+      "name": "sliding_output"
+    },
+    {
+      "k": 8192,
+      "m": 3679,
+      "multiplicity": 50,
+      "n": 5376,
+      "name": "sliding_output"
+    },
+    {
+      "k": 16384,
+      "m": 8,
+      "multiplicity": 10,
+      "n": 5376,
+      "name": "global_output"
+    },
+    {
+      "k": 16384,
+      "m": 16,
+      "multiplicity": 10,
+      "n": 5376,
+      "name": "global_output"
+    },
+    {
+      "k": 16384,
+      "m": 32,
+      "multiplicity": 10,
+      "n": 5376,
+      "name": "global_output"
+    },
+    {
+      "k": 16384,
+      "m": 3679,
+      "multiplicity": 10,
+      "n": 5376,
+      "name": "global_output"
+    },
+    {
+      "k": 5376,
+      "m": 8,
+      "multiplicity": 60,
+      "n": 43008,
+      "name": "merged_gate_up"
+    },
+    {
+      "k": 5376,
+      "m": 16,
+      "multiplicity": 60,
+      "n": 43008,
+      "name": "merged_gate_up"
+    },
+    {
+      "k": 5376,
+      "m": 32,
+      "multiplicity": 60,
+      "n": 43008,
+      "name": "merged_gate_up"
+    },
+    {
+      "k": 5376,
+      "m": 3679,
+      "multiplicity": 60,
+      "n": 43008,
+      "name": "merged_gate_up"
+    },
+    {
+      "k": 21504,
+      "m": 8,
+      "multiplicity": 60,
+      "n": 5376,
+      "name": "down"
+    },
+    {
+      "k": 21504,
+      "m": 16,
+      "multiplicity": 60,
+      "n": 5376,
+      "name": "down"
+    },
+    {
+      "k": 21504,
+      "m": 32,
+      "multiplicity": 60,
+      "n": 5376,
+      "name": "down"
+    },
+    {
+      "k": 21504,
+      "m": 3679,
+      "multiplicity": 60,
+      "n": 5376,
+      "name": "down"
+    }
+  ],
+  "upstream_sha256": "667f935dceac3acba4bfd808b8c02ac7bcf5d525f2c044ee78cd291da5b1b80d"
+}

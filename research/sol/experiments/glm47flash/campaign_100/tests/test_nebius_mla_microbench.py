@@ -5,6 +5,7 @@ import tarfile
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,7 +22,11 @@ from mla_microbench_control import (  # noqa: E402
     build_container_command,
     build_host_bootstrap,
     conditional_trigger,
+    hold_for_repair_decision,
     read_stage_terminal,
+    repairable_work_deadline,
+    retained_development_window,
+    run_repairable_operation,
     validate_durable_owner,
 )
 from vllm_mla_microbench import (  # noqa: E402
@@ -194,6 +199,119 @@ class NebiusMlaMicrobenchTests(unittest.TestCase):
         self.assertIn('with VerifiedRetainedOwner(name, output_dir / "cleanup.json")', source)
         self.assertIn('except Exception as error:', source)
         self.assertIn('"cleanup_pass": cleanup', source)
+
+    def test_development_error_holds_inside_owner_until_repair_decision(self):
+        emitted = []
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "repair-decision.json").write_text(
+                json.dumps({"action": "teardown"})
+            )
+            with patch(
+                "mla_microbench_control.emit",
+                side_effect=lambda _path, event, **fields: emitted.append(
+                    (event, fields)
+                ),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "recoverable"):
+                    with retained_development_window(
+                        root, root / "events.jsonl", 10**12, 600
+                    ):
+                        raise RuntimeError("recoverable")
+        self.assertEqual(
+            ["repair_window_open", "repair_decision_received"],
+            [event for event, _fields in emitted],
+        )
+
+    def test_development_work_deadline_reserves_the_repair_window(self):
+        self.assertEqual(400, repairable_work_deadline(1000, 600))
+        self.assertEqual(1000, repairable_work_deadline(1000, 0))
+        with self.assertRaisesRegex(ValueError, "between zero and 600"):
+            repairable_work_deadline(1000, 601)
+
+    def test_active_repair_can_extend_retention_within_absolute_deadline(self):
+        emitted = []
+        now = [100.0]
+
+        def advance(seconds):
+            now[0] += seconds
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            decision = root / "repair-decision.json"
+            decision.write_text(
+                json.dumps({"action": "retain", "until_epoch": 125.0})
+            )
+            with (
+                patch("mla_microbench_control.time.time", side_effect=lambda: now[0]),
+                patch("mla_microbench_control.time.sleep", side_effect=advance),
+                patch(
+                    "mla_microbench_control.emit",
+                    side_effect=lambda _path, event, **fields: emitted.append(
+                        (event, fields)
+                    ),
+                ),
+            ):
+                hold_for_repair_decision(
+                    root, root / "events.jsonl", deadline=140.0, maximum_seconds=10
+                )
+            self.assertFalse(decision.exists())
+
+        self.assertEqual(
+            [
+                "repair_window_open",
+                "repair_decision_received",
+                "repair_retention_extended",
+                "repair_window_expired",
+            ],
+            [event for event, _fields in emitted],
+        )
+        self.assertEqual(
+            125.0,
+            dict(emitted[2][1])["retained_until_epoch"],
+        )
+
+    def test_repair_retry_reenters_the_operation_on_the_same_owner(self):
+        emitted = []
+        attempts = []
+
+        def operation(attempt_number):
+            attempts.append(attempt_number)
+            if attempt_number == 1:
+                raise RuntimeError("recoverable integration error")
+            return "repaired-result"
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            decision = root / "repair-decision.json"
+            decision.write_text(json.dumps({"action": "retry"}))
+            with patch(
+                "mla_microbench_control.emit",
+                side_effect=lambda _path, event, **fields: emitted.append(
+                    (event, fields)
+                ),
+            ):
+                result = run_repairable_operation(
+                    operation,
+                    root,
+                    root / "events.jsonl",
+                    deadline=10**12,
+                    maximum_seconds=600,
+                )
+
+            self.assertFalse(decision.exists())
+
+        self.assertEqual("repaired-result", result)
+        self.assertEqual([1, 2], attempts)
+        self.assertEqual(
+            [
+                "repair_window_open",
+                "repair_decision_received",
+                "repair_retry_started",
+            ],
+            [event for event, _fields in emitted],
+        )
+        self.assertEqual(2, emitted[-1][1]["attempt_number"])
 
 
 if __name__ == "__main__":

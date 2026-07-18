@@ -1,0 +1,46 @@
+{
+  "checks": {
+    "conditional_real_context_and_evaluator": true,
+    "corrected_identity": true,
+    "exact_image_group_api": true,
+    "immutable_staged_files": true,
+    "primary_real_context_sentinel_full": true,
+    "programs_parse": true,
+    "stage_executes_typed_terminal_and_telemetry": true
+  },
+  "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+  "image_probe_returncode": 0,
+  "image_probe_stderr_tail": "W0717 14:26:19.312000 1 torch/utils/cpp_extension.py:118] No CUDA runtime is found, using CUDA_HOME='/usr/local/cuda'\n",
+  "observed_exact_image": {
+    "destroy_dist": "()",
+    "destroy_mp": "()",
+    "ensure": "(tensor_model_parallel_size: int, pipeline_model_parallel_size: int, prefill_context_model_parallel_size: int = 1, decode_context_model_parallel_size: int | None = 1, backend: str | None = None) -> None",
+    "fp8": "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod",
+    "init": "(world_size: int = -1, rank: int = -1, distributed_init_method: str = 'env://', local_rank: int = -1, backend: str = 'nccl', timeout: datetime.timedelta | None = None)",
+    "online": "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod",
+    "vllm": "0.19.1.dev6+g6d4a8e6d2",
+    "w4": "vllm.model_executor.layers.quantization.awq_marlin.AWQMarlinLinearMethod"
+  },
+  "pass": true,
+  "remote_files": {
+    "fp8_actual.py": "1fceb48a6afc3bd7db75b3368b22e83cfa3d031b6d1266c24086401d33315739",
+    "fp8_single_rank.py": "c04950a15e09b8b7b462387503b3b48aa3dfd4a42d4973c5aab1cf731f26e10e",
+    "w4_actual.py": "b75606c88e8470a94af3f1cd9fb69b9a9bd1cc94dfead1fc2177fad4a6d62273",
+    "w4_single_rank.py": "fa385c81e60bcc8f519a963f35066de8b63814e6421c7cc3e24231bc00a3e426"
+  },
+  "schema_version": 1,
+  "staged_files": {
+    "DIRECTOR_IDENTITY_ASSERTION.json": "489d59c30ad1fb4766cbb814efdb79de5b1040b6e922cc10686c9e62fec105e8",
+    "STAGED_MANIFEST.json": "cf06ea0cbe3235edbde8aba0211a7a6a89ee8c3de98e8821a9ea000beed56b62",
+    "assert_identity.py": "2715a3c8b455ba051a85ce8718effbd62d230becd1c51cdf9f4b41ea4554c672",
+    "fp8_actual.py": "1fceb48a6afc3bd7db75b3368b22e83cfa3d031b6d1266c24086401d33315739",
+    "fp8_single_rank.py": "c04950a15e09b8b7b462387503b3b48aa3dfd4a42d4973c5aab1cf731f26e10e",
+    "mla_microbench_control.py": "6356910a62c5abefe52fc035eb27e43d5b2cb73066d68ba9f8c089bca31de62b",
+    "owner.py": "8964cbfb8cc2b788a161ecd22705026abab9c80e8edc16883651349ac385922f",
+    "placement_control.py": "87fdcb6115156bcb392b15f505dc4c1081201ace736999aa6f3e3554053a4e1c",
+    "remote_stage.sh": "4ce08617a871e46262e41a72778cce40d2a053e919ca7932f2a0be4f3e267402",
+    "w4_actual.py": "b75606c88e8470a94af3f1cd9fb69b9a9bd1cc94dfead1fc2177fad4a6d62273",
+    "w4_single_rank.py": "fa385c81e60bcc8f519a963f35066de8b63814e6421c7cc3e24231bc00a3e426"
+  },
+  "type": "l40s_fp8_single_rank_final_behavioral_audit"
+}

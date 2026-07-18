@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "classification": "measured_actual_machete_w4_component_terminal",
+  "run_root": "gemma-h100-w4-machete-20260717t20351784313340z",
+  "runtime": {
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "consumer": "vllm.model_executor.kernels.linear.mixed_precision.machete.MacheteLinearKernel.apply_weights",
+    "consumer_source_sha256": "0b043743f0a5c29e47264d95db9964c365bdd02f62453da3479f6383a00a8404",
+    "tensor_parallel": "single-rank NCCL TP/PP/DP 1/1/1 with CUDA collective probe 17"
+  },
+  "artifacts": {
+    "primary_archive": "gemma-h100-w4-machete-20260717t20351784313340z/h100-w4-primary.tar.gz",
+    "primary_archive_sha256": "2027e26a40284df02d0d5a426d9e85ef8be14434a938ef0bf954cf7247579b2a",
+    "conditional_repair_archive": "gemma-h100-w4-machete-20260717t20351784313340z/h100-w4-conditional-repair.tar.gz",
+    "conditional_repair_archive_sha256": "9bfcb97eb73c01d90a0e1b4252482c807115036d62923b6b4cb99e5cddc6bea7",
+    "repair_script_sha256": "5b1bbb821934ee1320429249faf6f7b023aae2461ec6a7216b059aa8ba95b56b"
+  },
+  "result": {
+    "m8_sentinel_pass": true,
+    "all_24_paired_rows_pass": true,
+    "dual_oracles_pass": true,
+    "profiles": {
+      "m8_pass": true,
+      "m3679_pass": true,
+      "backend": "timed_stage",
+      "hardware_counters_available": false
+    },
+    "head": "not_authorized_and_not_run",
+    "component_aggregation": {
+      "planning_ceiling_seconds_per_request": 0.5479752315195353,
+      "concurrency_8": {"w4_floor_seconds_per_request": 0.9953453583456575, "bf16_floor_seconds_per_request": 1.4434803711622952, "w4_reduction_fraction": 0.3104545248895888, "w4_ceiling_falsified": true},
+      "concurrency_16": {"w4_floor_seconds_per_request": 0.6360494014807045, "bf16_floor_seconds_per_request": 0.8709309867070988, "w4_reduction_fraction": 0.2696902381604971, "w4_ceiling_falsified": true},
+      "concurrency_32": {"w4_floor_seconds_per_request": 0.463242803462781, "bf16_floor_seconds_per_request": 0.5743960067862645, "w4_reduction_fraction": 0.19351318952473862, "w4_ceiling_falsified": false}
+    },
+    "claim_boundary": "The c=32 W4 component floor is below the planning ceiling while the BF16 floor is above it; omitted request work means no whole-request, quality, or endpoint claim is permitted. Missing ncu counters prevents the one-CTA/latency-hiding mechanism interpretation but does not invalidate timed rows."
+  },
+  "controller_reconciliation": {
+    "initial_conditional_failure": "SESSION_STARTED_EPOCH was unset after a valid 24-row sweep, before profile and stage-terminal emission",
+    "owner_summary_outcome": "FAIL",
+    "owner_summary_reason": "the generic controller did not ingest the manually retrieved repair archive and therefore retains the initial malformed conditional archive failure",
+    "authenticated_cleanup_pass": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "allocation_seconds": 951.101,
+    "derived_cost_usd": 0.570587362
+  }
+}

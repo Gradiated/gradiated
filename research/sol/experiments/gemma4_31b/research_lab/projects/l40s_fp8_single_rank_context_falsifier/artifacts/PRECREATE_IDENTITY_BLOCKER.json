@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "type": "l40s_fp8_single_rank_context_identity_precreate_blocker",
+  "classification": "director_identity_assertion_schema_and_brief_binding_mismatch",
+  "pass": false,
+  "provider_queried_or_mutated": false,
+  "gpu_invoked": false,
+  "executed_command": "python3 assert_identity.py",
+  "exit_code": 1,
+  "observed_error": {
+    "type": "KeyError",
+    "message": "science"
+  },
+  "evidence": {
+    "checker_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/l40s_fp8_single_rank_context_falsifier/assert_identity.py",
+    "checker_sha256": "4355c20418e8e46c9efa2e97a7232d1d512d0b66928b416d0e240847339d82ff",
+    "predecessor_terminal_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/l40s_online_fp8_actual_consumer_floor/artifacts/RECONCILED_TERMINAL.json",
+    "predecessor_terminal_sha256": "c9348207441169f6b47cb37d6a4a626c0c44ca385bfdf1b0d6b6d148fe9c51cb",
+    "predecessor_classification": "paid_zero_row_current_vllm_tensor_parallel_context_failure",
+    "predecessor_has_science_object": false,
+    "predecessor_zero_rows_path": "terminal_failure.rows",
+    "predecessor_useful_gpu_seconds_path": "terminal_failure.useful_gpu_seconds",
+    "predecessor_zero_rows": true,
+    "predecessor_useful_gpu_seconds": 0.0,
+    "predecessor_cleanup_pass": true,
+    "additional_static_mismatch": [
+      "checker requires a classification suffix not present in the bound predecessor terminal",
+      "checker requires literal model/revision/image text in PROJECT.md, although PROJECT.md declares byte-for-byte inheritance from the director identity instead"
+    ]
+  },
+  "interpretation": "The mandatory director identity terminal cannot pass as authored. Repairing it would redefine the director admission binding, so this project cannot lawfully construct, audit, or create its L40S owner.",
+  "required_next_move": "Director must issue a corrected immutable identity assertion or an explicit replacement admission contract before any single-rank context experiment is launched."
+}

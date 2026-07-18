@@ -1,0 +1,14 @@
+{
+  "absolute_timeout_seconds": 2698,
+  "boot_disk_gib": 100,
+  "disk_hourly_rate_usd_vendor_calculator": 0.01215275,
+  "experiment_spec_sha256": "f1b8667fcba7ea7dd4ade07a6d39dbb251ccf2d4368a355ad202952c36b2cbb3",
+  "hourly_rate_usd_vendor_calculator": 2.15,
+  "max_total_cost_usd": 1.6204133665277776,
+  "name": "gemma-h100-w4-decode-c128-20260718t0834z",
+  "platform": "gpu-h100-sxm",
+  "preset": "1gpu-16vcpu-200gb",
+  "purchase_model": "preemptible_stop",
+  "repair_window_seconds": 600,
+  "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79"
+}

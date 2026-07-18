@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "type": "h100_head_two_stage_precreate_blocker",
+  "pass": false,
+  "classification": "no_immutable_execution_equivalent_two_stage_program",
+  "decision": "Do not construct a provider resource or durable owner.",
+  "evidence": {
+    "director_identity_assertion": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_head_two_stage_direct_floor/assert_identity.py",
+      "sha256": "41dd5880f899b32b5d6a80ff1971b8a0e9a033d987fd7f87bd82955ef38222c1",
+      "pass": true,
+      "scope": "mechanical model, image, geometry, budget, and historical identity only"
+    },
+    "project_files": [
+      "PROJECT.md",
+      "RESEARCH_LOG.md",
+      "STATUS.json",
+      "assert_identity.py"
+    ],
+    "missing_required_final_bytes": [
+      "actual ParallelLMHead sentinel renderer and launcher",
+      "M16/M32 head-stage renderer and typed archive consumer",
+      "same-session setup-duration trigger evaluator",
+      "exact 24-row linear renderer and result consumer",
+      "durable owner and watchdog integration",
+      "behavioral pre-create terminal exercising false-trigger and cleanup branches"
+    ],
+    "shared_controller": {
+      "path": "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py",
+      "sha256": "6356910a62c5abefe52fc035eb27e43d5b2cb73066d68ba9f8c089bca31de62b",
+      "observed_contract": "one retrieved primary terminal, followed by at most one retrieved conditional terminal; the trigger receives only the primary terminal",
+      "relevant_lines": [268, 272, 273, 276],
+      "incompatibility": "The admitted design needs an M8 retrieval, a persisted M16/M32 head result, and only then a setup-aware linear decision. The named controller neither exports bootstrap/image duration to the trigger nor preserves three ordered retrieval boundaries."
+    },
+    "named_dependency_checked": {
+      "project": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_bf16_exact_linear_head_floor",
+      "terminal": "artifacts/PRECREATE_BLOCKER.json",
+      "finding": "The preceding rendered-owner audit independently established the missing measured same-session bootstrap/image setup duration and closed with zero provider mutation."
+    }
+  },
+  "provider_mutation": false,
+  "provider_spend_usd": 0.0,
+  "gpu_used": false,
+  "next_safe_move": "A future director admission must supply immutable corrected program bytes and require a passing independent behavioral audit before any provider mutation."
+}

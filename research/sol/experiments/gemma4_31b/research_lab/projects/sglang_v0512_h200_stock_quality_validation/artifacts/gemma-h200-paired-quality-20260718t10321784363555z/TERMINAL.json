@@ -1,0 +1,63 @@
+{
+  "classification": "gemma_paired_quality_terminal",
+  "instance_id": "computeinstance-e00rttap31wr3bzk96",
+  "paired_score": {
+    "candidate_nll": 0.6548974996976843,
+    "cases": [
+      {
+        "candidate_pass": true,
+        "case_id": "tool_json",
+        "control_pass": true
+      },
+      {
+        "candidate_pass": false,
+        "case_id": "python",
+        "control_pass": false
+      },
+      {
+        "candidate_pass": true,
+        "case_id": "math",
+        "control_pass": true
+      },
+      {
+        "candidate_pass": true,
+        "case_id": "long_key",
+        "control_pass": true
+      },
+      {
+        "candidate_pass": true,
+        "case_id": "unicode_stop",
+        "control_pass": true
+      },
+      {
+        "candidate_pass": true,
+        "case_id": "chat_template",
+        "control_pass": true
+      },
+      {
+        "candidate_pass": true,
+        "case_id": "teacher_nll",
+        "control_pass": true
+      }
+    ],
+    "classification": "paired_quality_score",
+    "control_nll": 0.6548974996976843,
+    "nll_delta": 0.0,
+    "pass": false,
+    "suite_sha256": "67d3e0d24e15fca47f0bdf19d9ce3fa3fe5ce486fe81af8aef6c96d8a6696030"
+  },
+  "pass": false,
+  "raw_hashes": {
+    "candidate": "1cdb311642cbe4f07afb86379f6947a804854346d498ebb89a37f96c403a61d3",
+    "control": "800ca0cb97dd1162ac7b571f3b7f14c178627be8e25e5233555557d1de709038"
+  },
+  "reference_prompt_token_identity": true,
+  "reference_scored_tokens": 240,
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-h200-paired-quality-20260718t10321784363555z-watchdog.service",
+    "deadline_epoch": 1784374955.8630693,
+    "main_pid": 2367540,
+    "unit": "gemma-h200-paired-quality-20260718t10321784363555z-watchdog.service",
+    "unit_manager": "user"
+  }
+}

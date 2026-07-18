@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "pass": true,
+  "model": "google/gemma-4-31B-it",
+  "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+  "workload": {
+    "prompt_tokens": 4214,
+    "output_tokens": 358,
+    "prompt_cache_read_fraction": 0.127
+  },
+  "planning_ceiling_seconds_per_request": 0.5479752315195353,
+  "authoritative_artifacts": {
+    "w4_machete": {
+      "path": "../h100_w4_marlin_direct_falsifier/artifacts/RECONCILED_MACHETE_TERMINAL.json",
+      "sha256": "65f103eb84a94d8f985d7df072b24597cdb36532bd8f9b95b08860748f15beff"
+    },
+    "parallel_lm_head": {
+      "path": "../h100_parallel_lm_head_single_stage/artifacts/gemma-h100-head-dev-20260717t1953z/RECONCILED_TERMINAL.json",
+      "sha256": "02948d57a0ced4a1215a0de38c42f7fda1bebd23fe540320371efe4d67624c56"
+    },
+    "c32_closure": {
+      "path": "../h100_w4_machete_fp8kv_residual_falsifier/artifacts/C32_ECONOMIC_CLOSURE.json"
+    }
+  },
+  "concurrency": [48, 64, 96, 128],
+  "evidence_boundary": "Mechanically bound checkpoint-free component experiment; no c32 timing transfer and no endpoint or quality claim."
+}

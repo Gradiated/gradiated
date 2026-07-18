@@ -8,7 +8,7 @@
     "public_remote_configured": false,
     "remote": "gb-local:/Users/js/dev/inference-foundry",
     "prompt_credentials_checked_in": false,
-    "gitbutler_branch": "js-branch-1",
+    "branch": "main",
     "latest_private_local_checkpoint": "9106cad663dd086e1ea53c6b0a5af7a8eb8a92a6",
     "checkpoint_pushed": false
   },

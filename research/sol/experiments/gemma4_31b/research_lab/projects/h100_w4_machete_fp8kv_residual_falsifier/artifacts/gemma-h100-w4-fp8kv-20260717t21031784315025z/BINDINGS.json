@@ -1,0 +1,36 @@
+{
+  "checks": {
+    "artifact_binding": true,
+    "budget": true,
+    "deadline": true,
+    "durable_owner": true,
+    "empty_inventory": true,
+    "inputs": true,
+    "keypair": true,
+    "lowercase_name": true
+  },
+  "hashes": {
+    "head_terminal": {
+      "actual": "02948d57a0ced4a1215a0de38c42f7fda1bebd23fe540320371efe4d67624c56",
+      "expected": "02948d57a0ced4a1215a0de38c42f7fda1bebd23fe540320371efe4d67624c56",
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_parallel_lm_head_single_stage/artifacts/gemma-h100-head-dev-20260717t1953z/RECONCILED_TERMINAL.json"
+    },
+    "mechanism": {
+      "actual": "3960c453e88b1a12e01351d2062dbaa7f8a800e63fe6674e997ddbbcfeebdda1",
+      "expected": "3960c453e88b1a12e01351d2062dbaa7f8a800e63fe6674e997ddbbcfeebdda1",
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_hybrid_attention_kernel_mechanism/MECHANISM.json"
+    },
+    "w4_terminal": {
+      "actual": "65f103eb84a94d8f985d7df072b24597cdb36532bd8f9b95b08860748f15beff",
+      "expected": "65f103eb84a94d8f985d7df072b24597cdb36532bd8f9b95b08860748f15beff",
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_w4_marlin_direct_falsifier/artifacts/RECONCILED_MACHETE_TERMINAL.json"
+    }
+  },
+  "inventory": {
+    "disks": [],
+    "instances": []
+  },
+  "pass": true,
+  "schema_version": 1,
+  "type": "h100_w4_residual_identity_binding"
+}

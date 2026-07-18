@@ -1,0 +1,11 @@
+{
+  "attempts": 1,
+  "elapsed_seconds": 928.7341130740242,
+  "files_reused": 0,
+  "files_scheduled": 9,
+  "files_total": 9,
+  "marker_manifest_match": false,
+  "reusable_bytes": 0,
+  "scheduled_bytes": 62578655922,
+  "total_bytes": 62578655922
+}

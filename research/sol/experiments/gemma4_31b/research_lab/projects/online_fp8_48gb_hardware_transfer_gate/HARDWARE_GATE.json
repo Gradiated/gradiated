@@ -1,0 +1,240 @@
+{
+  "activation_trigger": {
+    "availability_quote_required": [
+      "current written quote for dedicated RTX 6000 Ada 48-GB ECC, non-vGPU, active-cooled server placement",
+      "CUDA compute capability 8.9 and driver compatibility with the exact pinned image are stated or execution-probed",
+      "12-24 month committed, non-preemptible terms at 8-64 GPU scale with region, topology and included services",
+      "comparable all-in GPU rate <=0.77 USD/GPU-hour",
+      "one self-service or provider-confirmed experimental allocation is obtainable within the prospective budget"
+    ],
+    "false_branch": "If either the L40S scientific terminal or availability/quote gate fails, expire this arm with no provider create.",
+    "l40s_required": [
+      "typed terminal from l40s_fp8_single_rank_context_falsifier",
+      "FP8_CONTEXT_ADMISSION=true",
+      "actual NCCL/CUDA TP=PP=DP=1 identity and teardown pass",
+      "sentinel plus all six c12 M=12 and M=3679 rows have finite positive CUDA/wall distributions and output-consuming BF16 oracles",
+      "actual peak reserve leaves >=0.25 GiB in the 44.704-GiB envelope",
+      "request-weighted component total is below 1.229949102 seconds/request"
+    ],
+    "name": "VALID_L40S_FP8_C12_TERMINAL_AND_MATCHED_QUOTE"
+  },
+  "candidate_set": {
+    "comparator": {
+      "architecture": "nvidia-sm89",
+      "id": "nvidia-l40s",
+      "l2_mb": 96,
+      "memory_bandwidth_gb_s": 864,
+      "memory_capacity_gb": 48,
+      "planning_rate_usd_per_gpu_hour": 1.1,
+      "power_w": 350,
+      "sm_count": 142,
+      "tensor_formats": [
+        "fp32",
+        "tf32",
+        "bf16",
+        "fp16",
+        "fp8",
+        "int8",
+        "int4"
+      ],
+      "topology": "single PCIe device; no NVLink"
+    },
+    "inventory_bound_48_gb_ids": [
+      "nvidia-a40",
+      "nvidia-l40s",
+      "nvidia-rtx-6000-ada"
+    ],
+    "nominee": {
+      "architecture": "nvidia-sm89",
+      "availability_class": {
+        "access_model": "workstation and specialist cloud market",
+        "class": "specialist_cloud",
+        "typical_node_gpus": [
+          1,
+          2,
+          4
+        ]
+      },
+      "compatibility": "same SM89 profile, 142 SMs, 96-MB L2, CUDA stack and native FP8 as L40S; this is source/architecture admission only and fresh exact-image execution remains mandatory",
+      "id": "nvidia-rtx-6000-ada",
+      "l2_mb": 96,
+      "memory_bandwidth_gb_s": 960,
+      "memory_capacity_gb": 48,
+      "power_w": 300,
+      "price_inventory_id": null,
+      "sm_count": 142,
+      "tensor_formats": [
+        "fp32",
+        "tf32",
+        "bf16",
+        "fp16",
+        "fp8",
+        "int8",
+        "int4"
+      ],
+      "topology": "single workstation PCIe device"
+    },
+    "rejected": [
+      {
+        "id": "nvidia-a40",
+        "reason": "shared inventory binds SM86 and no native FP8; it is not content-bound compatible with the exact SM89 online-FP8 consumer/kernel lane"
+      }
+    ]
+  },
+  "capacity_gate": {
+    "c12": {
+      "concurrency": 12,
+      "fit_interpretation": "logical_fit_requires_runtime_confirmation",
+      "input_headroom_gib": 0.9929212608337394,
+      "input_kv_gib_per_sequence": 0.363423228263855,
+      "input_total_gib": 43.71107873916626,
+      "logical_fit": true,
+      "non_kv_base_gib": 39.35,
+      "peak_headroom_gib": 0.827761558532714,
+      "peak_kv_gib_per_sequence": 0.37718653678894043,
+      "peak_total_gib": 43.87623844146729,
+      "usable_envelope_gib": 44.704
+    },
+    "c14_rejected": {
+      "concurrency": 14,
+      "fit_interpretation": "allocator_sensitive",
+      "input_headroom_gib": 0.2660748043060295,
+      "input_kv_gib_per_sequence": 0.363423228263855,
+      "input_total_gib": 44.43792519569397,
+      "logical_fit": true,
+      "non_kv_base_gib": 39.35,
+      "peak_headroom_gib": 0.07338848495483319,
+      "peak_kv_gib_per_sequence": 0.37718653678894043,
+      "peak_total_gib": 44.63061151504517,
+      "usable_envelope_gib": 44.704
+    },
+    "decision": "c12 passes the logical gate with 0.827762 GiB peak-context headroom; c14 fails the 0.25-GiB rule and is excluded",
+    "minimum_required_logical_headroom_gib": 0.25,
+    "runtime_rule": "candidate peak_reserved_gib plus 0.25 must be <=44.704; logical accounting cannot substitute for measured allocator telemetry",
+    "usable_envelope_gib": 44.704
+  },
+  "decision": "conditional_matched_hardware_arm",
+  "economics": {
+    "l40s": {
+      "committed_planning_rate_usd_per_gpu_hour": 1.1,
+      "strict_required_completed_rps": 0.7170614380702235,
+      "whole_service_ceiling_seconds_per_request": 1.3945806410831811
+    },
+    "planning_all_in_factor": 1.4415758823529419,
+    "rtx_6000_ada": {
+      "formula_required_rps_at_quote_q": "q * 1.4415758823529419 / (3600 * 0.000614287)",
+      "listing_source_id": "ultralytics_cloud_gpu_training_pricing_2026_07_17",
+      "production_planning_rate_status": "missing_from_fresh_shared_price_inventory",
+      "provisional_public_on_demand_listing_usd_per_gpu_hour": 0.77,
+      "quote_cap_usd_per_gpu_hour": 0.77,
+      "strict_required_completed_rps_at_quote_cap": 0.5019430066491564,
+      "whole_service_ceiling_seconds_per_request_at_quote_cap": 1.992258058690259
+    },
+    "strict_market_cost_usd_per_request": 0.000614287,
+    "versus_l40s_at_quote_cap": {
+      "equal_all_in_maximum_request_time_slowdown": 1.4285714285714286,
+      "equal_all_in_minimum_throughput_ratio": 0.7,
+      "ten_percent_better_maximum_request_time_slowdown": 1.2857142857142858,
+      "ten_percent_better_minimum_throughput_ratio": 0.7777777777777777,
+      "transfer_prohibited": "These ratios are decision thresholds only. No L40S component or endpoint throughput is assigned to RTX 6000 Ada."
+    }
+  },
+  "evidence_scope": "content-bound shared inventory/pricing plus derived arithmetic; no provider query, GPU, image, checkpoint, compilation, live-owner observation, or throughput transfer",
+  "freshness": {
+    "accelerator_inventory_age_days": 1.9396140990972224,
+    "accelerator_inventory_current": true,
+    "accelerator_inventory_reviewed_at_utc": "2026-07-15T15:45:00Z",
+    "gpu_prices_age_days": 2.043780765763889,
+    "gpu_prices_fresh": true,
+    "gpu_prices_refreshed_at_utc": "2026-07-15T13:15:00Z"
+  },
+  "generated_utc": "2026-07-17T14:18:02.658162Z",
+  "identities": {
+    "consumer": [
+      "vllm.model_executor.layers.quantization.fp8.Fp8LinearMethod",
+      "1d6ef3182fb5c72808414cdf14177131121f2b8fb6e94012696f0fdde4f74c48"
+    ],
+    "exact_linear_shapes": [
+      {
+        "k": 21504,
+        "n": 5376,
+        "name": "down"
+      },
+      {
+        "k": 16384,
+        "n": 5376,
+        "name": "global_output"
+      },
+      {
+        "k": 5376,
+        "n": 20480,
+        "name": "global_qkv"
+      },
+      {
+        "k": 5376,
+        "n": 43008,
+        "name": "merged_gate_up"
+      },
+      {
+        "k": 8192,
+        "n": 5376,
+        "name": "sliding_output"
+      },
+      {
+        "k": 5376,
+        "n": 16384,
+        "name": "sliding_qkv"
+      }
+    ],
+    "model": "google/gemma-4-31B-it",
+    "operating_concurrency": 12,
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "tp": 1,
+    "workload": {
+      "aa_input_tokens": 10000,
+      "mode": "text-only non-reasoning",
+      "primary_input_tokens": 4214,
+      "primary_output_tokens": 358
+    }
+  },
+  "matched_arm": {
+    "comparator": "fresh L40S rerun and RTX 6000 Ada candidate using identical pinned image, immutable staged bytes, single-rank NCCL context, warmup/repetition/order, and exact shapes; do not compare against historical timing rows alone",
+    "decision_rules": [
+      "Any kernel/runtime/oracle/allocator mismatch closes compatibility without a throughput inference.",
+      "Report candidate/comparator component-time ratios directly; at a 0.77 quote, >1.428571x is worse than L40S equal-cost parity and >1.285714x misses the 10%-better sensitivity.",
+      "A component pass cannot claim the strict 0.501943 completed-rps endpoint gate; it only admits one later complete-request test with hardware-specific residuals."
+    ],
+    "program": [
+      "sentinel actual Fp8OnlineLinearMethod process/apply for sliding QKV 5376->16384 at M=12",
+      "all six exact linears at decode M=12 and fresh-prompt M=3679 with matched actual BF16 output-consuming oracle",
+      "actual BF16 ParallelLMHead and actual FP8 KV writer under the same accounting used by the L40S terminal"
+    ],
+    "prospective_budget": {
+      "compute": "0.30 RTX 6000 Ada GPU-hours plus 1 local CPU-hour",
+      "lifecycle": "one allocation, one matched primary, no paid repair; authenticated zero-resource cleanup",
+      "provider_exposure_minutes": 20,
+      "spend_usd": 0.45,
+      "storage": "one 100-GiB boot disk; 512 MiB retained plus 2 GiB temporary artifacts",
+      "wall_clock_minutes": 35
+    },
+    "question": "Does the exact online-FP8 c12 component retain enough performance on RTX 6000 Ada to justify a later complete-request endpoint at its written committed rate?",
+    "required_measurements": [
+      "per-shape raw CUDA-event and wall distributions, medians, p95, CV and arm order",
+      "finite/nontrivial output oracle and exact selected kernel symbols/source hashes",
+      "kernel grid/block, registers/thread, static/dynamic shared memory and achieved occupancy",
+      "dram__bytes_read.sum, dram__bytes_write.sum, lts__t_bytes.sum",
+      "sm__throughput.avg.pct_of_peak_sustained_elapsed, smsp__inst_executed_pipe_tensor.sum",
+      "peak allocated/reserved, KV/workspace bytes and the >=0.25-GiB c12 reserve check",
+      "SM/memory clocks, power, temperature and thermal/power throttle reasons",
+      "provider meter, failures/reloads and authenticated cleanup inventory"
+    ]
+  },
+  "nominee": "nvidia-rtx-6000-ada",
+  "schema_version": 1,
+  "uncertainty": [
+    "The shared price inventory has no RTX 6000 Ada committed planning join; the 0.77 rate is a same-day public on-demand prior, not a production rate.",
+    "Same SM89 architecture strongly narrows compatibility risk but does not establish exact-image execution, sustained clocks, thermal behavior, or throughput.",
+    "Component ratios do not transfer to whole-request throughput; a matched endpoint is still required after a component pass."
+  ]
+}

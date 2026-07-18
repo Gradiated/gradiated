@@ -378,7 +378,7 @@ Rules:
 - Review subagent outputs before promotion.
 - Do not let multiple agents edit the same experiment harness concurrently.
 - Use TDD for code changes: failing test, minimum implementation, refactor.
-- Follow the repository `AGENTS.md` and GitButler restrictions.
+- Follow the repository `AGENTS.md` and its direct-to-main Git workflow.
 - Do not commit or push unless separately requested.
 - Continue autonomously while safe work remains. Do not ask the sleeping/user for experiment-level choices already covered by this plan.
 - If genuinely blocked, continue with offline analysis, validators, workload preparation, prospective predictions, or report synthesis. Do not spend through a blocker.

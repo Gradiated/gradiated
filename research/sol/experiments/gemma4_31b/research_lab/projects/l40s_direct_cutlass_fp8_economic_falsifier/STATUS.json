@@ -1,0 +1,11 @@
+{
+  "active_session": null,
+  "last_result_classification": "l40s_c12_raw_cutlass_fp8_lower_bound_falsifies_planning_and_conservative_economics",
+  "priority": 230,
+  "researcher_profile": "execution",
+  "status": "complete",
+  "summary": "Reconciled: the 2.091298871829934 s/request raw-CUTLASS-FP8 linear-plus-residual lower bound falsifies both L40S c12 service ceilings; no endpoint or quality claim.",
+  "reconciliation_pending": false,
+  "terminal_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/l40s_direct_cutlass_fp8_economic_falsifier/artifacts/RECONCILED_TERMINAL.json",
+  "terminal_artifact_sha256": "8e157e5f0662b13867b25f7fd6a67ff0a479de0927a05274dae35fedd3df4798"
+}

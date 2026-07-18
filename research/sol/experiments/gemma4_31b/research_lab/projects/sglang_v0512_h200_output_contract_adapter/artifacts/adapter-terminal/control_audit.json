@@ -1,0 +1,58 @@
+[
+  {
+    "adapted_output_sha256": "e1b6b3790286ed731b3be57f7ac5b72823e9b3cd4d000002f7789b20ee766722",
+    "case_id": "tool_json",
+    "original_output_sha256": "e1b6b3790286ed731b3be57f7ac5b72823e9b3cd4d000002f7789b20ee766722",
+    "reason": "request_not_explicit_code_only",
+    "request_sha256": "cfa2e89c49cbbace063e2690ee35af3077d27c08a3e4fb80039e4e6f180e8fce",
+    "transformed": false
+  },
+  {
+    "adapted_output_sha256": "42818e358db6f1e6f979dd10e2ca83262991c9a1c922c4fea9bf6bf74661eb15",
+    "case_id": "python",
+    "original_output_sha256": "42818e358db6f1e6f979dd10e2ca83262991c9a1c922c4fea9bf6bf74661eb15",
+    "reason": "unsafe_python",
+    "request_sha256": "82f26c398d3570f180c1375655ec360b1efa895b3f8bc2087a4d04fb48eddff4",
+    "transformed": false
+  },
+  {
+    "adapted_output_sha256": "3949ac1596ec77106a709a618bf5adcb19b77537ce8bcbdf54ff830169cdd084",
+    "case_id": "math",
+    "original_output_sha256": "3949ac1596ec77106a709a618bf5adcb19b77537ce8bcbdf54ff830169cdd084",
+    "reason": "request_not_explicit_code_only",
+    "request_sha256": "a7955109d8e26a2d02949f430f95bec575eaf24b916dda1bddeefbe8a0d0af45",
+    "transformed": false
+  },
+  {
+    "adapted_output_sha256": "321f1a1b1f9f5fbdc446ed4b79a182bfa665fa2fb5f6028046382f1b79947938",
+    "case_id": "long_key",
+    "original_output_sha256": "321f1a1b1f9f5fbdc446ed4b79a182bfa665fa2fb5f6028046382f1b79947938",
+    "reason": "request_not_explicit_code_only",
+    "request_sha256": "13bf212c7a0c956cdb39bca500074ec8466e9b66d24c547ff98460b2003ca851",
+    "transformed": false
+  },
+  {
+    "adapted_output_sha256": "340c4b4380f6d1839e31f87e432eaf3a5159e756588f1c2d34caa894e18aaa70",
+    "case_id": "unicode_stop",
+    "original_output_sha256": "340c4b4380f6d1839e31f87e432eaf3a5159e756588f1c2d34caa894e18aaa70",
+    "reason": "request_not_explicit_code_only",
+    "request_sha256": "59c0f94698e7ce9cf6de10e80405ce78b96f6d914fe54138e32904d3e3518952",
+    "transformed": false
+  },
+  {
+    "adapted_output_sha256": "97cfbe87531abe0c6bac7b21d616cb422faaa158a9f2ae7e8685c79eb85fc65e",
+    "case_id": "chat_template",
+    "original_output_sha256": "97cfbe87531abe0c6bac7b21d616cb422faaa158a9f2ae7e8685c79eb85fc65e",
+    "reason": "request_not_explicit_code_only",
+    "request_sha256": "226a2dae1425621847c0213f09cfcca009c92d203bab4b545c8c5341ed2844ea",
+    "transformed": false
+  },
+  {
+    "adapted_output_sha256": "060f24149acefeaa13b8f3956439f537d32b89a931e3245edd85c541235a276d",
+    "case_id": "teacher_nll",
+    "original_output_sha256": "060f24149acefeaa13b8f3956439f537d32b89a931e3245edd85c541235a276d",
+    "reason": "request_not_explicit_code_only",
+    "request_sha256": "a47f9308bea23d0114380ea6b0e033468557560aa1ca2651d2dc2b640c28d33f",
+    "transformed": false
+  }
+]

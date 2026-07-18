@@ -1,0 +1,30 @@
+{
+  "pass": true,
+  "rows": [
+    {
+      "adapter_safe": true,
+      "bound_safe": true,
+      "source_sha256": "45b055c60d6d05a8b1e6dfbd672efd14dac962623ffaea77a247a32f47e58c75"
+    },
+    {
+      "adapter_safe": false,
+      "bound_safe": false,
+      "source_sha256": "446d60c1c8f9943122e2ed15ec8b6a79b68bab71a4b70b927e3e5d6e3c347018"
+    },
+    {
+      "adapter_safe": false,
+      "bound_safe": false,
+      "source_sha256": "cb713aaa2a48d3fb92fa7782422bdf099888091f7727d01e8c8016d9ed236a07"
+    },
+    {
+      "adapter_safe": false,
+      "bound_safe": false,
+      "source_sha256": "f983f5bb7b1a9de8cd500d324cc81b3753e5a085213e66bf1c94181d06ec6253"
+    },
+    {
+      "adapter_safe": false,
+      "bound_safe": false,
+      "source_sha256": "38aed75b7642251caf9dc3af43deee235e3498ddb36079696521bf40cad69b10"
+    }
+  ]
+}

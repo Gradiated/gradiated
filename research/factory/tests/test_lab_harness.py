@@ -196,6 +196,10 @@ class SimpleLabHarnessTests(unittest.TestCase):
                 runner.calls[0]["prompt"],
             )
             self.assertIn(
+                "keep newly released reusable state through the next portfolio selection",
+                runner.calls[0]["prompt"],
+            )
+            self.assertIn(
                 "mutable retained development environment",
                 runner.calls[0]["prompt"],
             )

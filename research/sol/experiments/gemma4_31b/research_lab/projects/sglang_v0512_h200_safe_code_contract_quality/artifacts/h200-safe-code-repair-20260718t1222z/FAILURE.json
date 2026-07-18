@@ -1,0 +1,8 @@
+{
+  "classification": "safe_code_h200_quality_failure",
+  "instance_id": "computeinstance-e00b98a5fh80nwj2jj",
+  "ip": "89.169.122.202",
+  "message": "remote_score_failed_1",
+  "timestamp": "2026-07-18T12:51:35.549885Z",
+  "type": "RuntimeError"
+}

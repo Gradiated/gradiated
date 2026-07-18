@@ -11,3 +11,11 @@ Evidence: [`artifacts/precreate-terminal/TERMINAL.json`](artifacts/precreate-ter
 Interpretation: the typed local gate is complete. This is not a model-quality claim; the remaining decision-bearing work is the matched BF16/FP8 capture on a director-owned retained H200 bench.
 
 Next: director to provision and assign one `nvidia-h200-sxm` bench with a 250-GiB disk and the bound SGLang image. No researcher provider creation, GPU claim, or wait is authorized before that assignment.
+
+## 2026-07-18 — final H200 terminal closes the route
+
+Action: preserved the completed matched captures, persisted the strict scorer's return-code-1 payload as its typed negative result, retrieved both raw JSONL files, and ran the direct Transformers sentinel without rerunning either arm.
+
+Evidence: [`artifacts/h200-safe-code-final-20260718t1255z/TERMINAL.json`](artifacts/h200-safe-code-final-20260718t1255z/TERMINAL.json) is pass=false, SHA-256 `72b015851418e83dae04b064103cdad98738bbff9dea3ab67a11d4684bafb3f3`. BF16-KV and FP8-E5M2 both score 10/11: `heldout_ordering` fails in both; all other original and held-out cases pass. Control and candidate NLL are both `0.6548974996976843` (delta `0.0`). The bound direct Transformers sentinel has 240 scored tokens and prompt-token identity=true. The raw capture hashes are retained in the terminal.
+
+Interpretation: this is a model-quality negative, not an operational failure. The explicit safe-code contract did not recover the ordering task in either precision arm; the final SGLang quality route and prepared c64 successor close. Conservatively derived provider exposure is $1.76, within the $3.75 reservation.

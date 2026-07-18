@@ -1,0 +1,8 @@
+{
+  "caches": "Docker and model caches retained after matched BF16-KV/FP8-E5M2 quality capture.",
+  "checkpoint": "Exact bound 8-file Gemma checkpoint remains staged at /home/glmrunner/gemma-safe-code/checkpoint.",
+  "image": "Bound docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a is pulled.",
+  "runtime": "Docker and NVIDIA container runtime repaired and retained; SGLang server stopped only for the direct Transformers reference sentinel.",
+  "server_state": "No running SGLang server; final safe-code terminal is negative and director drain decision is requested.",
+  "terminal": "safe_code_h200_paired_quality_terminal pass=false: identical BF16/FP8 held-out ordering failure, NLL delta 0, direct reference identity passed."
+}

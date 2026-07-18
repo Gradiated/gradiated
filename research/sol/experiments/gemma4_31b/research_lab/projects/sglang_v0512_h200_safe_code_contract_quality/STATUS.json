@@ -1,14 +1,31 @@
 {
   "active_session": null,
   "authorized_spend_usd": 3.75,
-  "next_action": "Typed local pre-create gate passed. Director: provision a retained nvidia-h200-sxm bench with a 250-GiB disk and the bound SGLang image, then assign this project to run matched BF16-KV and FP8-E5M2 captures. Researchers must not create, claim, or wait for a GPU before that director-owned bench exists.",
+  "next_action": "Closed: the final safe-code quality route failed the same held-out ordering task in BF16-KV and FP8-E5M2. Do not schedule a successor or c64 measurement; director owns any bench drain decision.",
   "priority": 400,
   "researcher_profile": "execution",
-  "status": "active",
-  "summary": "Local typed gate passed for a deterministic content-bound safe-code request contract, unchanged bound adapter/scorer, original seven cases, and four held-out executable safe-Python tasks. Awaiting a director-owned H200 bench; provider spend remains $0.",
-  "terminal_artifact": "artifacts/precreate-terminal/TERMINAL.json",
-  "terminal_sha256": "4ea82eaafa23dde2996ebe5a43628dc7b4c28431d15cc98cd5e1d182a1f8f427",
-  "provider_spend_usd": 0.0,
+  "status": "complete",
+  "summary": "Final paired H200 terminal is negative: BF16-KV and FP8-E5M2 have identical NLL and the same held-out ordering failure; direct Transformers prompt-token identity passes, but the quality route and c64 successor are closed.",
+  "terminal_artifact": "artifacts/h200-safe-code-final-20260718t1255z/TERMINAL.json",
+  "terminal_sha256": "72b015851418e83dae04b064103cdad98738bbff9dea3ab67a11d4684bafb3f3",
+  "provider_spend_usd": 1.76,
+  "provider_spend_basis": "conservatively derived: 43 minutes of retained H200 exposure at $2.46/hour, below the $3.75 project ceiling",
+  "repair_handoff": {
+    "artifact_root": "artifacts/h200-safe-code-repair-20260718t1222z",
+    "bench_id": "h200-safe-code-e00b98a5fh80nwj2jj",
+    "failure_artifact": "artifacts/h200-safe-code-repair-20260718t1222z/FAILURE.json",
+    "required_completion": "persist existing negative paired score, retrieve preserved raw captures, run direct Transformers reference sentinel, and emit final quality terminal without capture reruns",
+    "score_stdout": "artifacts/h200-safe-code-repair-20260718t1222z/remote_score.stdout.log"
+  },
+  "director_provision": {
+    "artifact": "artifacts/director-bench/PROVIDER_CREATE_TERMINAL.json",
+    "bench_id": "h200-safe-code-e00b98a5fh80nwj2jj",
+    "deadline_utc": "2026-07-18T16:00:00Z",
+    "disk_id": "computedisk-e00hy5j34p0ktssb7v",
+    "instance_id": "computeinstance-e00b98a5fh80nwj2jj",
+    "state": "claimed_repair_active",
+    "watchdog_unit": "gemma-safe-code-h200-retained-20260718t1225z-watchdog.service"
+  },
   "director_request": {
     "accelerator": "nvidia-h200-sxm",
     "disk_gib": 250,

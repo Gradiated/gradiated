@@ -4,18 +4,21 @@ import hashlib
 import importlib.util
 import json
 import math
+import os
 import shutil
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 from safe_code_contract import CONTRACT, canonical_json, digest_bytes, transform_request
 
 
 PROJECT = Path(__file__).resolve().parent
-ADAPTER = PROJECT.parent / "sglang_v0512_h200_output_contract_adapter" / "adapter.py"
-STRICT_SCORER = Path("/root/workspace/research/sol/experiments/glm47flash/campaign_100/quality/score_pair.py")
-ORIGINAL_SUITE = PROJECT.parent / "sglang_v0512_h200_stock_quality_validation" / "suite"
+ADAPTER = Path(os.environ.get("BOUND_ADAPTER", PROJECT.parent / "sglang_v0512_h200_output_contract_adapter" / "adapter.py"))
+STRICT_SCORER = Path(os.environ.get("BOUND_STRICT_SCORER", "/root/workspace/research/sol/experiments/glm47flash/campaign_100/quality/score_pair.py"))
+ORIGINAL_SUITE = Path(os.environ.get("ORIGINAL_SUITE", PROJECT.parent / "sglang_v0512_h200_stock_quality_validation" / "suite"))
 
 
 def sha(path: Path) -> str:
@@ -154,6 +157,68 @@ def score_capture(cases: list[dict], captures: Path) -> dict:
     return {"pass": all(row["score"] == 1.0 for row in results), "cases": results}
 
 
+def post(base: str, suffix: str, body: object) -> tuple[object, dict]:
+    request_bytes = canonical_json(body)
+    request = urllib.request.Request(base.rstrip("/") + suffix, data=request_bytes.encode(), headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(request, timeout=240) as response:
+            response_bytes = response.read()
+    except urllib.error.HTTPError as error:
+        raise ValueError(f"HTTP {error.code}: {error.read().decode('utf-8', 'replace')[:1000]}") from error
+    return json.loads(response_bytes), {"request_sha256": digest_bytes(request_bytes), "response_sha256": hashlib.sha256(response_bytes).hexdigest(), "response_bytes": response_bytes.decode("utf-8", "replace")}
+
+
+def capture(base: str, destination: Path) -> dict:
+    policy, cases, manifest = load_suite()
+    adapter = load_adapter()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    rows = []
+    for case in cases:
+        kind = case["scorer"]["kind"]
+        original_request = payload(case, policy)
+        transformed = transform_request(original_request)
+        if kind == "nll":
+            response, raw = post(base, "/generate", {"text": case["prompt"], "sampling_params": {"temperature": 0.0, "max_new_tokens": 1}, "return_logprob": True, "logprob_start_len": 0, "top_logprobs_num": 0})
+            values = (response.get("meta_info") or {}).get("input_token_logprobs") or []
+            output = {"input_token_logprobs": [{"logprob": float(value[0] if isinstance(value, list) else value["logprob"]), "token_id": int(value[1] if isinstance(value, list) else value["token_id"])} for value in values if (value[0] if isinstance(value, list) else value.get("logprob")) is not None]}
+            raw_request = canonical_json({"text": case["prompt"], "sampling_params": {"temperature": 0.0, "max_new_tokens": 1}, "return_logprob": True, "logprob_start_len": 0, "top_logprobs_num": 0})
+            if len(output["input_token_logprobs"]) < policy["minimum_scored_tokens"]:
+                raise ValueError("runtime returned too few teacher-forced token logprobs")
+            rows.append({"case_id": case["case_id"], "request_bytes": raw_request, "raw_output": output, "adapted_output": output, "adapter_transformed": False, "raw": [raw]})
+            continue
+        replies, raw_records = [], []
+        for _ in range(policy["repetitions"]):
+            response, raw = post(base, "/v1/chat/completions", json.loads(transformed.request_bytes))
+            choice = response.get("choices", [{}])[0]
+            output = (choice.get("message") or {}).get("content")
+            usage = response.get("usage") or {}
+            if not isinstance(output, str) or choice.get("finish_reason") == "length" or not isinstance(usage.get("prompt_tokens"), int):
+                raise ValueError(f"invalid chat response for {case['case_id']}")
+            replies.append(output)
+            raw_records.append(raw | {"usage": usage})
+        if len(set(replies)) != 1:
+            raise ValueError(f"deterministic repetition mismatch for {case['case_id']}")
+        decision = adapter.adapt(transformed.request_bytes, replies[0])
+        rows.append({"case_id": case["case_id"], "request_bytes": transformed.request_bytes, "raw_output": replies[0], "adapted_output": decision.output, "adapter_transformed": decision.transformed, "adapter_reason": decision.reason, "transform": {"transformed": transformed.transformed, "reason": transformed.reason, "original_sha256": transformed.original_sha256, "transformed_sha256": transformed.transformed_sha256}, "raw": raw_records})
+    destination.write_text("".join(canonical_json(row) + "\n" for row in rows))
+    terminal = {"pass": True, "suite_sha256": manifest["suite_sha256"], "capture_sha256": sha(destination), "cases": len(rows)}
+    write(destination.with_suffix(".terminal.json"), terminal)
+    return terminal
+
+
+def paired_score(control: Path, candidate: Path, destination: Path) -> dict:
+    policy, cases, manifest = load_suite()
+    control_score, candidate_score = score_capture(cases, control), score_capture(cases, candidate)
+    def nll(path: Path) -> float:
+        row = next(json.loads(line) for line in path.read_text().splitlines() if json.loads(line)["case_id"] == "teacher_nll")
+        values = row["raw_output"]["input_token_logprobs"]
+        return -sum(value["logprob"] for value in values) / len(values)
+    control_nll, candidate_nll = nll(control), nll(candidate)
+    result = {"classification": "safe_code_paired_quality_score", "pass": bool(control_score["pass"] and candidate_score["pass"] and candidate_nll - control_nll <= policy["max_nll_delta"]), "suite_sha256": manifest["suite_sha256"], "control": control_score, "candidate": candidate_score, "control_nll": control_nll, "candidate_nll": candidate_nll, "nll_delta": candidate_nll - control_nll, "input_hashes": {"control": sha(control), "candidate": sha(candidate)}}
+    write(destination, result)
+    return result
+
+
 def synthetic_safe_output(case_id: str) -> str:
     outputs = {
         "python": "def median(xs):\n    values = list(xs)\n    for i in range(len(values)):\n        for j in range(len(values) - 1):\n            if values[j] > values[j + 1]:\n                temp = values[j]\n                values[j] = values[j + 1]\n                values[j + 1] = temp\n    return values[len(values) // 2]",
@@ -230,16 +295,31 @@ def precreate() -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["build", "validate", "precreate"])
+    parser.add_argument("mode", choices=["build", "validate", "precreate", "capture", "score"])
+    parser.add_argument("--base")
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--control", type=Path)
+    parser.add_argument("--candidate", type=Path)
     args = parser.parse_args()
     if args.mode == "build":
         print(build_suite()["suite_sha256"])
     elif args.mode == "validate":
         print(load_suite()[2]["suite_sha256"])
-    else:
+    elif args.mode == "precreate":
         terminal = precreate()
         print(json.dumps(terminal, sort_keys=True))
         if not terminal["pass"]:
+            raise SystemExit(1)
+    elif args.mode == "capture":
+        if not args.base or not args.output:
+            raise SystemExit("capture needs --base and --output")
+        print(json.dumps(capture(args.base, args.output), sort_keys=True))
+    else:
+        if not args.control or not args.candidate or not args.output:
+            raise SystemExit("score needs --control --candidate --output")
+        result = paired_score(args.control, args.candidate, args.output)
+        print(json.dumps(result, sort_keys=True))
+        if not result["pass"]:
             raise SystemExit(1)
 
 

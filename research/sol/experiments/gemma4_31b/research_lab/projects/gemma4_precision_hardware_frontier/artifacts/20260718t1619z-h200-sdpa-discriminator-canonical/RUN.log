@@ -1,0 +1,30 @@
+/home/glmrunner/.venvs/gemma-fp8/lib/python3.12/site-packages/torch/_subclasses/functional_tensor.py:368: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /__w/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:84.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-07-18 16:20:03 6446:6446 SyncActivityProfilerHandler.cpp:59] profiler_stop

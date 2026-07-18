@@ -35,3 +35,15 @@ Evidence: every row passed (`all_rows_pass: true`), including the persisted E4M3
 Interpretation: this is measured negative evidence for the supported representation, not a full-model throughput claim. H200 E4M3 compute with BF16 state is not a component-proxy nominee because it misses the required margin despite passing all numerical oracles.
 
 Next move: terminal for this retained allocation. A future candidate needs a separately admitted representation or geometry that reduces the attention-dominated component floor; do not replay this arm.
+
+## 2026-07-18 — exact-shape SDPA dispatch promotes the component proxy
+
+Question: can a supported, mathematically equivalent SDPA route reduce frozen weighted attention from 2.6481594640 to at most 2.2842315983 seconds/request and lift the mixed arm across 20%?
+
+Action: on the retained Torch 2.13.0+cu130 H200 bench, ran one canonical discriminator across default and forced Flash, Efficient, cuDNN, and Math SDPA for both native GQA and the explicit repeat-interleaved KV definition of GQA. The run captured actual `torch.nn.attention` source identity, profiler-selected operators, typed unsupported routes, seven event-timed samples, and output-consuming numerical oracles. No dependencies, linears, endpoint, allocation, or watchdog were changed.
+
+Evidence: 14/20 routes were supported and six returned typed `RuntimeError: No available kernel`. Local native GQA forced Flash selected `aten::_scaled_dot_product_flash_attention` at 0.067872 ms p50 (normalized RMSE 0.002326, cosine 0.9999973). Global native GQA default selected Math at 8.381120 ms, while equivalent repeated KV forced Efficient selected `aten::_scaled_dot_product_efficient_attention` at 0.895904 ms p50 (RMSE 0, cosine 1.0). The best rows reduce weighted attention to 0.5270459811 seconds/request, 80.0976% below the frozen attention charge. Combined with exact frozen non-attention components from result `02b833...624a`, the component floor is 1.0585710030 seconds/request and margin is 69.9244%. The aggregation was deterministically corrected after retrieval to use the exact frozen totals; no measured row changed. Corrected result SHA-256 is `92fa69d2...e01c`; corrected reproducible runner SHA-256 is `3210a9d7...2f77`.
+
+Interpretation: native global GQA at D512 silently falls back to the Math kernel; a pre-expanded KV layout makes Efficient attention legal in this isolated exact-shape proxy. This promotes the component proxy but does not establish full-model or endpoint throughput: repeat-interleave materialization was outside the timed attention call and its materialization/fusion boundary must be integrated and measured.
+
+Next move: terminal for this component line. Admit a separate endpoint integration only if it implements the exact selected local/global layouts and measures the materialization boundary; do not replay this microbenchmark.

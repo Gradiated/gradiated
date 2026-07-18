@@ -1,0 +1,239 @@
+{
+  "classification": "c32_occupancy_material_but_insufficient_for_strict_h200_economics",
+  "comparison": {
+    "c16_capacity_shortfall_vs_strict_target_fraction": 0.409633176213303,
+    "c32_capacity_shortfall_vs_strict_target_fraction": 0.18874659770524782,
+    "c32_vs_c16_saturation_cost_reduction_fraction": 0.27227815363639063,
+    "clears_project_5pct_intervention_gate": true,
+    "decision": "retain c32 occupancy as the stock scheduling point, but do not promote scheduling-only H200 economics; even the optimistic cache-corrected c32 proxy is unstable at the strict target and misses strict all-in price"
+  },
+  "economic_target": {
+    "derived_all_in_factor": 1.4415761460372924,
+    "production_h200_usd_per_hour": 3.25,
+    "strict_market_price_usd_per_request": 0.000614287,
+    "strict_required_requests_per_second": 2.118591
+  },
+  "endpoint_telemetry": {
+    "batch_seconds": 11.625701689999914,
+    "campaign_cache_read_fraction": 0.127,
+    "complete_requests": 32.0,
+    "completion_tokens_per_request": 358.0,
+    "failures": 0,
+    "mean_e2e_seconds": 11.582231301562516,
+    "mean_ttft_seconds": 1.7586184408437049,
+    "measured_cache_read_fraction": 0.9997626957759849,
+    "pauses_delta": 0,
+    "power_boundary": "source endpoint retained no decision-bearing nvidia-smi power samples",
+    "power_watts": null,
+    "prompt_tokens_per_request": 4214.0,
+    "retractions_delta": 0,
+    "service_seconds_per_request": 0.3633031778124973,
+    "startup_available_gpu_memory_gib": 20.69561767578125,
+    "uncached_prompt_tokens_per_request": 1.0
+  },
+  "evidence_type": "deterministic_cpu_discrete_event_simulation_calibrated_to_actual_sglang_endpoint_and_exact_geometry_floors",
+  "experiment_spend_usd": 0.0,
+  "matched_stable_queueing": {
+    "c16": {
+      "arrival_rate_requests_per_second": 1.125671255615774,
+      "batch_service_seconds": 12.792367157072686,
+      "batch_size": 16,
+      "capacity_requests_per_second": 1.2507458395730822,
+      "completion_seconds": {
+        "mean": 21.78783783316354,
+        "p50": 21.62556805522945,
+        "p95": 30.964547209106893,
+        "p99": 35.66416242826757
+      },
+      "finite_trace": {
+        "arrival_span_seconds": 89003.7423272041,
+        "arrival_throughput_requests_per_second": 1.1235370264811346,
+        "drain_span_seconds": 89016.68905927746,
+        "drained_throughput_requests_per_second": 1.1233848512766926,
+        "failures": 0,
+        "reloads": 0
+      },
+      "mean_batch_size": 16,
+      "queue_seconds": {
+        "drift_last_minus_first_tenth_mean": -0.3486787235353841,
+        "first_tenth_mean": 8.871769350047982,
+        "last_tenth_mean": 8.523090626512598,
+        "mean": 8.995470676089415,
+        "p50": 8.833200898156065,
+        "p95": 18.17218005203408,
+        "p99": 22.87179527119485
+      },
+      "requests": 100000,
+      "seed": 20260718,
+      "service_seconds_per_request": 0.7995229473170429,
+      "stable": true,
+      "traffic_intensity": 0.9
+    },
+    "c32": {
+      "arrival_rate_requests_per_second": 1.125671255615774,
+      "batch_service_seconds": 18.618570093812266,
+      "batch_size": 32,
+      "capacity_requests_per_second": 1.7187141568210411,
+      "completion_seconds": {
+        "mean": 32.430163739899676,
+        "p50": 31.97400616438972,
+        "p95": 47.45942343580554,
+        "p99": 52.74772390952585
+      },
+      "finite_trace": {
+        "arrival_span_seconds": 89003.7423272041,
+        "arrival_throughput_requests_per_second": 1.1235370264811346,
+        "drain_span_seconds": 89022.36089729791,
+        "drained_throughput_requests_per_second": 1.1233132776086068,
+        "failures": 0,
+        "reloads": 0
+      },
+      "mean_batch_size": 32,
+      "queue_seconds": {
+        "drift_last_minus_first_tenth_mean": -0.14526820901101267,
+        "first_tenth_mean": 13.778732388713339,
+        "last_tenth_mean": 13.633464179702326,
+        "mean": 13.81159364608775,
+        "p50": 13.355436070578435,
+        "p95": 28.840853341994432,
+        "p99": 34.129153815713664
+      },
+      "requests": 100000,
+      "seed": 20260718,
+      "service_seconds_per_request": 0.5818303154316333,
+      "stable": true,
+      "traffic_intensity": 0.6549496617272484
+    },
+    "purpose": "queueing/latency comparison at a shared load stable for both policies"
+  },
+  "provider_mutation": "none",
+  "ranking": [
+    {
+      "interaction": "background pooling to c32 instead of c16 occupancy",
+      "rank": 1,
+      "reason": "direct c32 endpoint plus exact c16/c32 component gap predicts material cost movement; tested here"
+    },
+    {
+      "interaction": "prefix reuse plus batch ordering",
+      "rank": 2,
+      "reason": "endpoint accidentally realized 99.976270% cache reads, while campaign is 12.7%; source bound requires 39.370814% exposed prefill share"
+    },
+    {
+      "interaction": "chunked prefill with decode-priority or async overlap",
+      "rank": 3,
+      "reason": "plausible under mixed arrivals but no matched endpoint phase telemetry; synchronized c32 capture cannot identify overlap benefit"
+    },
+    {
+      "interaction": "CUDA-graph capture geometry",
+      "rank": 4,
+      "reason": "production geometry retained graphs and passed c32, but no graph-off comparator exists and snapshot gauge was not decision-bearing"
+    },
+    {
+      "interaction": "hybrid local/global attention-aware scheduling",
+      "rank": 5,
+      "reason": "model-specific mechanism is plausible, but no supported scheduler arm or exact component result exists; cheapest falsifier follows only if c32 scheduling survives economics"
+    }
+  ],
+  "schema_version": 1,
+  "service_curve": {
+    "boundary": "optimistic cache-corrected proxy, not a measured exact-mix endpoint; overlap and non-linear prefill inefficiency can only weaken the economic conclusion",
+    "c16_seconds_per_request": 0.7995229473170429,
+    "c32_seconds_per_request": 0.5818303154316333,
+    "method": "actual cached c32 whole-request service + impossible-ideal missing-fresh-prefill floor; c16 adds the exact measured c16-minus-c32 decode-linear/head component gap",
+    "missing_fresh_prompt_tokens_per_request": 3677.822,
+    "missing_prefill_floor_seconds_per_request": 0.21852713761913597
+  },
+  "simulations": {
+    "c16": {
+      "arrival_rate_requests_per_second": 2.118591,
+      "batch_service_seconds": 12.792367157072686,
+      "batch_size": 16,
+      "capacity_requests_per_second": 1.2507458395730822,
+      "completion_seconds": {
+        "mean": 16325.020356580555,
+        "p50": 16266.063418795999,
+        "p95": 31072.93426649503,
+        "p99": 32336.413078886937
+      },
+      "cost_usd_per_complete_request_at_saturation": {
+        "experimental_gpu_only_if_remeasured": 0.000546340680666646,
+        "production_all_in_gate_factor": 0.0010405174804029055,
+        "production_gpu_only": 0.0007217915496612193
+      },
+      "finite_trace": {
+        "arrival_span_seconds": 47290.370996556245,
+        "arrival_throughput_requests_per_second": 2.1145742334582676,
+        "drain_span_seconds": 79959.8628181489,
+        "drained_throughput_requests_per_second": 1.2506274582715078,
+        "failures": 0,
+        "reloads": 0
+      },
+      "mean_batch_size": 16,
+      "queue_seconds": {
+        "drift_last_minus_first_tenth_mean": 29397.9611254449,
+        "first_tenth_mean": 1640.073081849201,
+        "last_tenth_mean": 31038.034207294102,
+        "mean": 16312.22798942348,
+        "p50": 16253.271051638923,
+        "p95": 31060.141899337956,
+        "p99": 32323.620711729858
+      },
+      "requests": 100000,
+      "seed": 20260718,
+      "service_seconds_per_request": 0.7995229473170429,
+      "stable": false,
+      "strict_market_price_pass_at_saturation": false,
+      "traffic_intensity": 1.6938621204793611
+    },
+    "c32": {
+      "arrival_rate_requests_per_second": 2.118591,
+      "batch_service_seconds": 18.618570093812266,
+      "batch_size": 32,
+      "capacity_requests_per_second": 1.7187141568210411,
+      "completion_seconds": {
+        "mean": 5449.766842149836,
+        "p50": 5388.114426948832,
+        "p95": 10400.044966914387,
+        "p99": 10796.167425802665
+      },
+      "cost_usd_per_complete_request_at_saturation": {
+        "experimental_gpu_only_if_remeasured": 0.00039758404887828275,
+        "production_all_in_gate_factor": 0.0007572073020124131,
+        "production_gpu_only": 0.0005252634792091134
+      },
+      "finite_trace": {
+        "arrival_span_seconds": 47290.370996556245,
+        "arrival_throughput_requests_per_second": 2.1145742334582676,
+        "drain_span_seconds": 58197.06460797571,
+        "drained_throughput_requests_per_second": 1.7182997230807984,
+        "failures": 0,
+        "reloads": 0
+      },
+      "mean_batch_size": 32,
+      "queue_seconds": {
+        "drift_last_minus_first_tenth_mean": 9805.60936089721,
+        "first_tenth_mean": 555.1692467547157,
+        "last_tenth_mean": 10360.778607651926,
+        "mean": 5431.1482720560225,
+        "p50": 5369.495856855021,
+        "p95": 10381.42639682057,
+        "p99": 10777.54885570885
+      },
+      "requests": 100000,
+      "seed": 20260718,
+      "service_seconds_per_request": 0.5818303154316333,
+      "stable": false,
+      "strict_market_price_pass_at_saturation": false,
+      "traffic_intensity": 1.2326604698006194
+    }
+  },
+  "source_manifest": {
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h200_bf16_exact_linear_floor/artifacts/RECONCILED_TERMINAL.json": "9f12b3ae4c8d82176f0ec9b09845c6e97ab1f278a458bd023adcbe433fd004fe",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h200_c32_prefill_peak_compute_floor/RECONCILIATION.json": "91e317e534294d7974b2692beeeebb49f35b0c571d63b1c7215302ce7f2fb6ff",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h200_campaign_economic_gate_reconciliation/H200_ECONOMIC_GATE.json": "3f4ce08c7e3a6649c18af99f14e0d48dcaf3979ac818462f7cf159cd9dab9afd",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/prefix_cache_primary_mix_bound/PREFIX_BOUND.json": "9caeb18f524d4e1678d55bf7d4c1c0d96c67a64edb796d652f5281599a8017ff",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/sglang-v0512-h200-mtp-20260718t0925z-owner/stock-repaired/TERMINAL.json": "c754e83b7588a3cfa27ea5a99ee83df47434bd2cb50873a68a26aa61fad51f0a",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/sglang-v0512-h200-mtp-20260718t0925z-owner/stock-repaired/metrics-after.prom": "60efc59fe71be25334173bd29f4f8772e9aa193768e400180f5ac05ba0ec32ed",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/sglang-v0512-h200-mtp-20260718t0925z-owner/stock-repaired/metrics-before.prom": "83527d63a70b91a2ee0f57d8772b4bd395f24b3eef170516ea1e1389b6588e6a"
+  }
+}

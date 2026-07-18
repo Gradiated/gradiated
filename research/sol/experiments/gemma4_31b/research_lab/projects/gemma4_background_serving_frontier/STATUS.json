@@ -1,0 +1,15 @@
+{
+  "status": "complete",
+  "priority": 470,
+  "researcher_profile": "deep",
+  "summary": "Exact endpoint-calibrated simulation ranks c32 pooling first and shows 27.23% lower saturation cost than c16, but cache-corrected c32 remains 18.87% below the strict H200 throughput target and misses strict all-in price.",
+  "next_action": "Closed: do not replay c16/c32. Reopen only with a new exact-12.7%-mix endpoint retaining phase/power telemetry; compare stock c32 with c32 chunked/async prefill first.",
+  "authorized_spend_usd": 1.5,
+  "provider_spend_usd": 0.0,
+  "active_session": null,
+  "last_result_classification": "c32_occupancy_material_but_insufficient_for_strict_h200_economics",
+  "terminal_artifact": "SCHEDULING_SIMULATION.json",
+  "terminal_artifact_sha256": "28f81c0ba2cac59bb5b2d1f71afc0be20172ef193a5493694798a21b9b366cd5",
+  "bench_state": "not_claimed_exact_simulation_selected",
+  "measured_spend_usd": 0.0
+}

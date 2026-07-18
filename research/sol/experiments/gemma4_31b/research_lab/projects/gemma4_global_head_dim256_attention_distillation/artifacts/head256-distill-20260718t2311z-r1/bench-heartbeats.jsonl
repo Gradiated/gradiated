@@ -1,0 +1,225 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-18T23:19:22.688422Z",
+    "heartbeat_at": "2026-07-18T23:22:06.564762Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-19T00:22:06.564762Z",
+    "project": "gemma4_global_head_dim256_attention_distillation",
+    "stale": false
+  },
+  "contents": {
+    "artifacts": "Retrieved under projects/gemma4_global_head_dim256_attention_distillation/artifacts/head256-distill-20260718t2311z/.",
+    "caches": "Triton compilation cache remains available in the pinned image; no teardown performed.",
+    "checkpoint": "Exact eight-file BF16 checkpoint remains unchanged and read-only at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
+    "export": "Content-addressed overlay retained remotely under /home/glmrunner/gemma-attention-endpoint/head256-distill-20260718t2311z/distillation/overlay.safetensors when training completed.",
+    "image": "Pinned SGLang v0.5.12 image and Triton cache remain resident.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_global_head_dim256_attention_distillation",
+    "runtime": "One frozen head-256 attention distillation candidate terminal: owner_failure",
+    "server_state": "Distilled candidate server retained if startup reached coherence; otherwise image, checkpoint, and caches retained."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-19T00:40:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-head256-distill-h200-202607182305z-watchdog.service",
+      "main_pid": "2650329",
+      "unit": "gemma-head256-distill-h200-202607182305z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-18T16:35:57.440790Z",
+  "resource": {
+    "disk_id": "computedisk-e00y9hv4e79xdh2g7b",
+    "disk_name": "gemma-attention-endpoint-h200-20260718163352-boot",
+    "instance_id": "computeinstance-e00vbbb709tzxscaan",
+    "instance_name": "gemma-attention-endpoint-h200-20260718163352"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-18T23:22:06.564762Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-18T23:19:22.688422Z",
+    "heartbeat_at": "2026-07-18T23:24:06.613927Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-19T00:24:06.613927Z",
+    "project": "gemma4_global_head_dim256_attention_distillation",
+    "stale": false
+  },
+  "contents": {
+    "artifacts": "Retrieved under projects/gemma4_global_head_dim256_attention_distillation/artifacts/head256-distill-20260718t2311z/.",
+    "caches": "Triton compilation cache remains available in the pinned image; no teardown performed.",
+    "checkpoint": "Exact eight-file BF16 checkpoint remains unchanged and read-only at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
+    "export": "Content-addressed overlay retained remotely under /home/glmrunner/gemma-attention-endpoint/head256-distill-20260718t2311z/distillation/overlay.safetensors when training completed.",
+    "image": "Pinned SGLang v0.5.12 image and Triton cache remain resident.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_global_head_dim256_attention_distillation",
+    "runtime": "One frozen head-256 attention distillation candidate terminal: owner_failure",
+    "server_state": "Distilled candidate server retained if startup reached coherence; otherwise image, checkpoint, and caches retained."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-19T00:40:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-head256-distill-h200-202607182305z-watchdog.service",
+      "main_pid": "2650329",
+      "unit": "gemma-head256-distill-h200-202607182305z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-18T16:35:57.440790Z",
+  "resource": {
+    "disk_id": "computedisk-e00y9hv4e79xdh2g7b",
+    "disk_name": "gemma-attention-endpoint-h200-20260718163352-boot",
+    "instance_id": "computeinstance-e00vbbb709tzxscaan",
+    "instance_name": "gemma-attention-endpoint-h200-20260718163352"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-18T23:24:06.613927Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-18T23:19:22.688422Z",
+    "heartbeat_at": "2026-07-18T23:26:06.659221Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-19T00:26:06.659221Z",
+    "project": "gemma4_global_head_dim256_attention_distillation",
+    "stale": false
+  },
+  "contents": {
+    "artifacts": "Retrieved under projects/gemma4_global_head_dim256_attention_distillation/artifacts/head256-distill-20260718t2311z/.",
+    "caches": "Triton compilation cache remains available in the pinned image; no teardown performed.",
+    "checkpoint": "Exact eight-file BF16 checkpoint remains unchanged and read-only at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
+    "export": "Content-addressed overlay retained remotely under /home/glmrunner/gemma-attention-endpoint/head256-distill-20260718t2311z/distillation/overlay.safetensors when training completed.",
+    "image": "Pinned SGLang v0.5.12 image and Triton cache remain resident.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_global_head_dim256_attention_distillation",
+    "runtime": "One frozen head-256 attention distillation candidate terminal: owner_failure",
+    "server_state": "Distilled candidate server retained if startup reached coherence; otherwise image, checkpoint, and caches retained."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-19T00:40:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-head256-distill-h200-202607182305z-watchdog.service",
+      "main_pid": "2650329",
+      "unit": "gemma-head256-distill-h200-202607182305z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-18T16:35:57.440790Z",
+  "resource": {
+    "disk_id": "computedisk-e00y9hv4e79xdh2g7b",
+    "disk_name": "gemma-attention-endpoint-h200-20260718163352-boot",
+    "instance_id": "computeinstance-e00vbbb709tzxscaan",
+    "instance_name": "gemma-attention-endpoint-h200-20260718163352"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-18T23:26:06.659221Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-18T23:19:22.688422Z",
+    "heartbeat_at": "2026-07-18T23:28:06.707822Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-19T00:28:06.707822Z",
+    "project": "gemma4_global_head_dim256_attention_distillation",
+    "stale": false
+  },
+  "contents": {
+    "artifacts": "Retrieved under projects/gemma4_global_head_dim256_attention_distillation/artifacts/head256-distill-20260718t2311z/.",
+    "caches": "Triton compilation cache remains available in the pinned image; no teardown performed.",
+    "checkpoint": "Exact eight-file BF16 checkpoint remains unchanged and read-only at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
+    "export": "Content-addressed overlay retained remotely under /home/glmrunner/gemma-attention-endpoint/head256-distill-20260718t2311z/distillation/overlay.safetensors when training completed.",
+    "image": "Pinned SGLang v0.5.12 image and Triton cache remain resident.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_global_head_dim256_attention_distillation",
+    "runtime": "One frozen head-256 attention distillation candidate terminal: owner_failure",
+    "server_state": "Distilled candidate server retained if startup reached coherence; otherwise image, checkpoint, and caches retained."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-19T00:40:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-head256-distill-h200-202607182305z-watchdog.service",
+      "main_pid": "2650329",
+      "unit": "gemma-head256-distill-h200-202607182305z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-18T16:35:57.440790Z",
+  "resource": {
+    "disk_id": "computedisk-e00y9hv4e79xdh2g7b",
+    "disk_name": "gemma-attention-endpoint-h200-20260718163352-boot",
+    "instance_id": "computeinstance-e00vbbb709tzxscaan",
+    "instance_name": "gemma-attention-endpoint-h200-20260718163352"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-18T23:28:06.707822Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-18T23:19:22.688422Z",
+    "heartbeat_at": "2026-07-18T23:30:06.754255Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-19T00:30:06.754255Z",
+    "project": "gemma4_global_head_dim256_attention_distillation",
+    "stale": false
+  },
+  "contents": {
+    "artifacts": "Retrieved under projects/gemma4_global_head_dim256_attention_distillation/artifacts/head256-distill-20260718t2311z/.",
+    "caches": "Triton compilation cache remains available in the pinned image; no teardown performed.",
+    "checkpoint": "Exact eight-file BF16 checkpoint remains unchanged and read-only at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
+    "export": "Content-addressed overlay retained remotely under /home/glmrunner/gemma-attention-endpoint/head256-distill-20260718t2311z/distillation/overlay.safetensors when training completed.",
+    "image": "Pinned SGLang v0.5.12 image and Triton cache remain resident.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_global_head_dim256_attention_distillation",
+    "runtime": "One frozen head-256 attention distillation candidate terminal: owner_failure",
+    "server_state": "Distilled candidate server retained if startup reached coherence; otherwise image, checkpoint, and caches retained."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-19T00:40:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-head256-distill-h200-202607182305z-watchdog.service",
+      "main_pid": "2650329",
+      "unit": "gemma-head256-distill-h200-202607182305z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-18T16:35:57.440790Z",
+  "resource": {
+    "disk_id": "computedisk-e00y9hv4e79xdh2g7b",
+    "disk_name": "gemma-attention-endpoint-h200-20260718163352-boot",
+    "instance_id": "computeinstance-e00vbbb709tzxscaan",
+    "instance_name": "gemma-attention-endpoint-h200-20260718163352"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-18T23:30:06.754255Z"
+}

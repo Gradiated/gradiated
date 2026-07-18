@@ -1,0 +1,162 @@
+1132-
+1133-        return cos.to(dtype=x.dtype), sin.to(dtype=x.dtype)
+1134-
+1135-
+1136-@use_kernelized_func(apply_rotary_pos_emb)
+1137:class Gemma4TextAttention(nn.Module):
+1138-    """Multi-headed attention from 'Attention Is All You Need' paper"""
+1139-
+1140-    def __init__(self, config: Gemma4TextConfig, layer_idx: int):
+1141-        super().__init__()
+1142-        self.layer_type = config.layer_types[layer_idx] if hasattr(config, "layer_types") else None
+1143-        self.config = config
+1144-        self.layer_idx = layer_idx
+1145-        self.is_sliding = self.layer_type == "sliding_attention"
+1146-        self.sliding_window = config.sliding_window if self.is_sliding else None
+1147-
+1148-        self.head_dim = config.global_head_dim if not self.is_sliding and config.global_head_dim else config.head_dim
+1149-        self.use_alternative_attention = config.attention_k_eq_v and not self.is_sliding
+1150-        num_key_value_heads = (
+1151-            config.num_global_key_value_heads if self.use_alternative_attention else config.num_key_value_heads
+1152-        )
+1153-        self.num_key_value_groups = config.num_attention_heads // num_key_value_heads
+1154-        self.scaling = 1.0
+1155-        self.attention_dropout = self.config.attention_dropout
+1156-        self.is_causal = config.use_bidirectional_attention != "all"
+1157-
+1158-        # Shared kv cache
+1159-        first_kv_shared_layer_idx = self.config.num_hidden_layers - getattr(self.config, "num_kv_shared_layers", 0)
+1160-        self.is_kv_shared_layer = layer_idx >= first_kv_shared_layer_idx > 0
+1161-        prev_layers = config.layer_types[:first_kv_shared_layer_idx]
+1162-        if self.is_kv_shared_layer:
+1163-            # For shared layers, find the last non-shared layer of the same type before sharing starts
+1164-            self.kv_shared_layer_index = len(prev_layers) - 1 - prev_layers[::-1].index(config.layer_types[layer_idx])
+1165-            self.store_full_length_kv = False
+1166-        else:
+1167-            self.kv_shared_layer_index = None
+1168-            # For non-shared layers, store full-length kv if this is the last non-shared layer of its type
+1169-            self.store_full_length_kv = layer_idx == len(prev_layers) - 1 - prev_layers[::-1].index(
+1170-                config.layer_types[layer_idx]
+1171-            )
+1172-
+1173-        self.q_proj = nn.Linear(
+1174-            config.hidden_size, config.num_attention_heads * self.head_dim, bias=config.attention_bias
+1175-        )
+1176-        self.q_norm = Gemma4RMSNorm(dim=self.head_dim, eps=config.rms_norm_eps)
+1177-
+1178-        # Layers sharing kv states don't need any weight matrices
+1179-        if not self.is_kv_shared_layer:
+1180-            self.k_norm = Gemma4RMSNorm(dim=self.head_dim, eps=config.rms_norm_eps)
+1181-            self.v_norm = Gemma4RMSNorm(self.head_dim, eps=config.rms_norm_eps, with_scale=False)
+1182-
+1183-            self.k_proj = nn.Linear(
+1184-                config.hidden_size, num_key_value_heads * self.head_dim, bias=config.attention_bias
+1185-            )
+1186-            self.v_proj = (
+1187-                nn.Linear(config.hidden_size, num_key_value_heads * self.head_dim, bias=config.attention_bias)
+1188-                if not self.use_alternative_attention
+1189-                else None
+1190-            )
+1191-
+1192-        self.o_proj = nn.Linear(
+1193-            config.num_attention_heads * self.head_dim, config.hidden_size, bias=config.attention_bias
+1194-        )
+1195-
+1196-    def forward(
+1197-        self,
+1198-        hidden_states: torch.Tensor,
+1199-        position_embeddings: torch.Tensor,
+1200-        attention_mask: torch.Tensor | None,
+1201-        shared_kv_states: dict[int, tuple[torch.Tensor, torch.Tensor]],
+1202-        past_key_values: Cache | None = None,
+1203-        **kwargs: Unpack[FlashAttentionKwargs],
+1204-    ) -> tuple[torch.Tensor, torch.Tensor | None]:
+1205-        input_shape = hidden_states.shape[:-1]
+1206-        hidden_shape = (*input_shape, -1, self.head_dim)
+1207-
+1041-    def forward(self, x):
+1042-        down_proj = self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
+1043-        return down_proj
+1044-
+1045-
+1046:class Gemma4TextRotaryEmbedding(nn.Module):
+1047-    inv_freq: torch.Tensor  # fix linting for `register_buffer`
+1048-
+1049-    def __init__(self, config: Gemma4TextConfig, device=None, layer_type=None):
+1050-        super().__init__()
+1051-        self.max_seq_len_cached = config.max_position_embeddings
+1052-        self.original_max_seq_len = config.max_position_embeddings
+1053-
+1054-        self.config = config
+1055-        self.layer_types = set(config.layer_types)
+1056-        self.rope_init_fns: dict[str, Callable[..., tuple[torch.Tensor, float]]] = {}
+1057-        self.rope_type: dict[str, str] = {}
+1058-
+1059-        for layer_type in self.layer_types:
+1060-            rope_params = self.config.rope_parameters[layer_type]
+1061-            if rope_params is None:
+1062-                continue
+1063-
+1064-            if (rope_type := rope_params["rope_type"]) != "default":
+1065-                rope_init_fn = ROPE_INIT_FUNCTIONS[rope_type]
+1066-            else:
+1067-                rope_init_fn = self.compute_default_rope_parameters
+1068-
+1069-            self.rope_init_fns[layer_type] = rope_init_fn
+1070-            self.rope_type[layer_type] = rope_type
+1071-
+1072-            rope_init_fn_kwargs = {"device": device, "layer_type": layer_type}
+1073-            if layer_type == "full_attention" and rope_type == "proportional":
+1074-                rope_init_fn_kwargs["head_dim_key"] = "global_head_dim"
+1075-
+1076-            curr_inv_freq, curr_attention_scaling = rope_init_fn(self.config, **rope_init_fn_kwargs)
+1077-            self.register_buffer(f"{layer_type}_inv_freq", curr_inv_freq, persistent=False)
+1078-            self.register_buffer(f"{layer_type}_original_inv_freq", curr_inv_freq.clone(), persistent=False)
+1079-            setattr(self, f"{layer_type}_attention_scaling", curr_attention_scaling)
+1080-
+1081-    @staticmethod
+1082-    def compute_default_rope_parameters(
+1083-        config: Gemma4TextConfig | None = None,
+1084-        device: Optional["torch.device"] = None,
+1085-        seq_len: int | None = None,
+1086-        layer_type: str | None = None,
+1087-    ) -> tuple["torch.Tensor", float]:
+1088-        """
+1089-        Computes the inverse frequencies according to the original RoPE implementation
+1090-        Args:
+1091-            config ([`~transformers.PreTrainedConfig`]):
+1092-                The model configuration.
+1093-            device (`torch.device`):
+1094-                The device to use for initialization of the inverse frequencies.
+1095-            seq_len (`int`, *optional*):
+1096-                The current sequence length. Unused for this type of RoPE.
+1097-            layer_type (`str`, *optional*):
+1098-                The current layer type if the model has different RoPE parameters per type.
+1099-                Should not be used unless `config.layer_types is not None`
+1100-
+1101-        Returns:
+1102-            Tuple of (`torch.Tensor`, `float`), containing the inverse frequencies for the RoPE embeddings and the
+1103-            post-processing scaling factor applied to the computed cos/sin (unused in this type of RoPE).
+1104-        """
+1105-        # For backward compatibility standardize the `rope_parameters_dict` if it uses old format
+1106-        base = config.rope_parameters[layer_type]["rope_theta"]
+1107-        dim = getattr(config, "head_dim", None) or config.hidden_size // config.num_attention_heads
+1108-
+1109-        attention_factor = 1.0  # Unused in this type of RoPE
+1110-
+1111-        # Compute the inverse frequencies
+1112-        inv_freq = 1.0 / (
+1113-            base ** (torch.arange(0, dim, 2, dtype=torch.int64).to(device=device, dtype=torch.float) / dim)
+1114-        )
+1115-        return inv_freq, attention_factor
+1116-
+1117-    @torch.no_grad()
+1118-    @dynamic_rope_update  # power user: used with advanced RoPE types (e.g. dynamic rope)
+1119-    def forward(self, x, position_ids, layer_type=None):
+1120-        inv_freq = getattr(self, f"{layer_type}_inv_freq")
+1121-        attention_scaling = getattr(self, f"{layer_type}_attention_scaling")
+1122-
+1123-        inv_freq_expanded = inv_freq[None, :, None].float().expand(position_ids.shape[0], -1, 1).to(x.device)
+1124-        position_ids_expanded = position_ids[:, None, :].float()
+1125-
+1126-        device_type = x.device.type if isinstance(x.device.type, str) and x.device.type != "mps" else "cpu"

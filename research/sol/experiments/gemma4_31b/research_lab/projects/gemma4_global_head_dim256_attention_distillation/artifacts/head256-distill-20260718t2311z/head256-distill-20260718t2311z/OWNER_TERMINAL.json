@@ -1,0 +1,8 @@
+{
+  "classification": "owner_failure",
+  "message": "exit=1 command=sudo docker run --rm --gpus all --ipc=host --network host -v \"$remote:/work\" -v \"$remote/checkpoint:/work/checkpoint:ro\" -v \"$bound:/bound:ro\" \"$image\" python3 /bound/distill.py --checkpoint /work/checkpoint --bodies /bound/inputs/request_bodies --contract /bound/TRAINING_CONTRACT.json --output \"/work/$run_id/distillation\" > \"$run/distill.stdout\" 2> \"$run/distill.stderr\"",
+  "pass": false,
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp": "2026-07-18T23:17:30.181286Z"
+}

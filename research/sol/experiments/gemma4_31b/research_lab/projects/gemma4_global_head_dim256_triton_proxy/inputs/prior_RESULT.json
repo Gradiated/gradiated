@@ -1,0 +1,464 @@
+{
+  "candidate_kernel": {
+    "dense_kv_repetition": false,
+    "failure_stage": "candidate_xqa_decode",
+    "kv_dtype": "torch.float8_e5m2",
+    "layout": "HND native GQA page-64",
+    "oracle_pass": false,
+    "oracle_status": "not_reached",
+    "outcome": {
+      "message": "CUDA error: an illegal memory access was encountered\nSearch for `cudaErrorIllegalAddress' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n",
+      "type": "AcceleratorError"
+    },
+    "requested_backend": "xqa",
+    "supported": false,
+    "symbol": "flashinfer.decode.trtllm_batch_decode_with_kv_cache"
+  },
+  "classification": "candidate_xqa_runtime_failure",
+  "decision": "close_architecture_backend_line",
+  "evidence_type": "measured exact-H200 non-quality-preserving architecture proxy",
+  "geometry": {
+    "cached_prompt_fraction": 0.127,
+    "candidate_global_head_dim": 256,
+    "concurrency": 32,
+    "current_global_head_dim": 512,
+    "global_layers": 10,
+    "hidden_size": 5376,
+    "kv_heads": 4,
+    "output_tokens_per_request": 358,
+    "page_size": 64,
+    "peak_global_context": 4571,
+    "prompt_tokens_per_request": 4214,
+    "query_heads": 32
+  },
+  "hard_gates": {
+    "candidate_kernel_avoids_dense_kv_repetition": true,
+    "candidate_kernel_supported": false,
+    "candidate_oracle_pass": false,
+    "savings_gate_pass": false
+  },
+  "identity": {
+    "capability": [
+      9,
+      0
+    ],
+    "container_image": "docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a",
+    "cuda": "13.0",
+    "flashinfer": "0.6.11.post1",
+    "gpu": "NVIDIA H200",
+    "nvidia_smi": "GPU 0: NVIDIA H200 (UUID: GPU-a0d644f9-7cee-a034-03a4-d612e48776fa)",
+    "symbols": [
+      {
+        "source_file": "/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/extend_attention.py",
+        "source_sha256": "f1145f2e6d4d3cea90014a64f72867f20c85b7efd70e54f7456526a45c78e2fc",
+        "symbol": "sglang.srt.layers.attention.triton_ops.extend_attention.extend_attention_fwd"
+      },
+      {
+        "source_file": "/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/decode_attention.py",
+        "source_sha256": "a660be6c7209f94c6fe2ecde0ced7c2b2d0d7fd4508c403cfc41b4063b69a31c",
+        "symbol": "sglang.srt.layers.attention.triton_ops.decode_attention.decode_attention_fwd"
+      },
+      {
+        "source_file": "/usr/local/lib/python3.12/dist-packages/flashinfer/api_logging.py",
+        "source_sha256": "4c0fe244face6d475552526d6ecdf66beba0ce22f4fbfbc91ac1fb89b7c5bc4f",
+        "symbol": "flashinfer.decode.trtllm_batch_decode_with_kv_cache"
+      }
+    ],
+    "torch": "2.11.0+cu130"
+  },
+  "measured_partial_subgraph": {
+    "candidate_seconds_per_request": 0.043547897059333915,
+    "components": [
+      {
+        "candidate_seconds_per_request": 0.005235423808757624,
+        "component": "qkv_prompt_chunk",
+        "current_seconds_per_request": 0.010392672054752475,
+        "weight": 17.962998046875
+      },
+      {
+        "candidate_seconds_per_request": 0.004577834187098779,
+        "component": "o_prompt_chunk",
+        "current_seconds_per_request": 0.008748123849464755,
+        "weight": 17.962998046875
+      },
+      {
+        "candidate_seconds_per_request": 0.004507220145314932,
+        "component": "qkv_decode_step",
+        "current_seconds_per_request": 0.007775760027579963,
+        "weight": 111.875
+      },
+      {
+        "candidate_seconds_per_request": 0.004034659881144762,
+        "component": "o_decode_step",
+        "current_seconds_per_request": 0.006254260111600161,
+        "weight": 111.875
+      },
+      {
+        "candidate_seconds_per_request": 0.02519275903701782,
+        "component": "prompt_attention_triton",
+        "current_seconds_per_request": 0.09207697868347169,
+        "weight": 0.3125
+      }
+    ],
+    "current_seconds_per_request": 0.12524779472686903,
+    "excludes": "decode attention and BF16-to-E5M2 KV writes because mandatory candidate XQA faulted first",
+    "includes": "BF16 QKV/O prompt and decode projections plus exact cached-prefix Triton prompt attention",
+    "minimum_required_savings_seconds_per_request": 0.04597286970625021,
+    "savings_gate_evaluable": false,
+    "savings_seconds_per_request": 0.08169989766753512
+  },
+  "pass": false,
+  "quality_claim": false,
+  "raw_result": {
+    "path": "global-head256-xqa-20260718t2130z/RESULT.json",
+    "sha256": "10ca791b233b6651844da1f484f25dd107c5633bfe02fb66cca7f971457fd2fb"
+  },
+  "rows": [
+    {
+      "component": "qkv_prompt_chunk",
+      "dtype": "bfloat16",
+      "head_dim": 512,
+      "input_shape": [
+        2048,
+        5376
+      ],
+      "output": {
+        "checksum": -6.655983924865723,
+        "finite": true,
+        "nonzero": true
+      },
+      "output_shape": [
+        2048,
+        20480
+      ],
+      "p50_ms": 0.5785599946975708,
+      "raw_ms": [
+        0.5884799957275391,
+        0.5785599946975708,
+        0.5797439813613892,
+        0.5768640041351318,
+        0.5782399773597717,
+        0.5789440274238586,
+        0.5752320289611816,
+        0.5785920023918152,
+        0.5750719904899597
+      ],
+      "weight_shape": [
+        5376,
+        20480
+      ]
+    },
+    {
+      "component": "o_prompt_chunk",
+      "dtype": "bfloat16",
+      "head_dim": 512,
+      "input_shape": [
+        2048,
+        16384
+      ],
+      "output": {
+        "checksum": -7.279506683349609,
+        "finite": true,
+        "nonzero": true
+      },
+      "output_shape": [
+        2048,
+        5376
+      ],
+      "p50_ms": 0.4870080053806305,
+      "raw_ms": [
+        0.49779200553894043,
+        0.4870080053806305,
+        0.48956799507141113,
+        0.4830400049686432,
+        0.4882560074329376,
+        0.4850879907608032,
+        0.4867840111255646,
+        0.4854719936847687,
+        0.48793599009513855
+      ],
+      "weight_shape": [
+        16384,
+        5376
+      ]
+    },
+    {
+      "component": "qkv_decode_step",
+      "dtype": "bfloat16",
+      "head_dim": 512,
+      "input_shape": [
+        32,
+        5376
+      ],
+      "output": {
+        "checksum": 15.433998107910156,
+        "finite": true,
+        "nonzero": true
+      },
+      "output_shape": [
+        32,
+        20480
+      ],
+      "p50_ms": 0.06950400024652481,
+      "raw_ms": [
+        0.07542400062084198,
+        0.07023999840021133,
+        0.07017599791288376,
+        0.06950400024652481,
+        0.06787200272083282,
+        0.06691200286149979,
+        0.0689919963479042,
+        0.07027199864387512,
+        0.06889600306749344
+      ],
+      "weight_shape": [
+        5376,
+        20480
+      ]
+    },
+    {
+      "component": "o_decode_step",
+      "dtype": "bfloat16",
+      "head_dim": 512,
+      "input_shape": [
+        32,
+        16384
+      ],
+      "output": {
+        "checksum": 0.09049654006958008,
+        "finite": true,
+        "nonzero": true
+      },
+      "output_shape": [
+        32,
+        5376
+      ],
+      "p50_ms": 0.055904000997543335,
+      "raw_ms": [
+        0.059007998555898666,
+        0.05756799876689911,
+        0.05564799904823303,
+        0.05552000179886818,
+        0.05596800148487091,
+        0.05446400120854378,
+        0.05523199960589409,
+        0.055904000997543335,
+        0.0594559982419014
+      ],
+      "weight_shape": [
+        16384,
+        5376
+      ]
+    },
+    {
+      "component": "qkv_prompt_chunk",
+      "dtype": "bfloat16",
+      "head_dim": 256,
+      "input_shape": [
+        2048,
+        5376
+      ],
+      "output": {
+        "checksum": -0.9111199378967285,
+        "finite": true,
+        "nonzero": true
+      },
+      "output_shape": [
+        2048,
+        10240
+      ],
+      "p50_ms": 0.291456013917923,
+      "raw_ms": [
+        0.2943679988384247,
+        0.2956480085849762,
+        0.291456013917923,
+        0.2900480031967163,
+        0.29465600848197937,
+        0.290912002325058,
+        0.2906560003757477,
+        0.2975679934024811,
+        0.29078400135040283
+      ],
+      "weight_shape": [
+        5376,
+        10240
+      ]
+    },
+    {
+      "component": "o_prompt_chunk",
+      "dtype": "bfloat16",
+      "head_dim": 256,
+      "input_shape": [
+        2048,
+        8192
+      ],
+      "output": {
+        "checksum": -9.961618423461914,
+        "finite": true,
+        "nonzero": true
+      },
+      "output_shape": [
+        2048,
+        5376
+      ],
+      "p50_ms": 0.25484800338745117,
+      "raw_ms": [
+        0.26204800605773926,
+        0.25484800338745117,
+        0.25385600328445435,
+        0.2576639950275421,
+        0.25273600220680237,
+        0.25488001108169556,
+        0.25763198733329773,
+        0.2526400089263916,
+        0.25360000133514404
+      ],
+      "weight_shape": [
+        8192,
+        5376
+      ]
+    },
+    {
+      "component": "qkv_decode_step",
+      "dtype": "bfloat16",
+      "head_dim": 256,
+      "input_shape": [
+        32,
+        5376
+      ],
+      "output": {
+        "checksum": 4.825740814208984,
+        "finite": true,
+        "nonzero": true
+      },
+      "output_shape": [
+        32,
+        10240
+      ],
+      "p50_ms": 0.04028800129890442,
+      "raw_ms": [
+        0.04335999861359596,
+        0.040511999279260635,
+        0.05593600124120712,
+        0.042047999799251556,
+        0.038784001022577286,
+        0.03862399980425835,
+        0.03791999816894531,
+        0.04028800129890442,
+        0.03932800143957138
+      ],
+      "weight_shape": [
+        5376,
+        10240
+      ]
+    },
+    {
+      "component": "o_decode_step",
+      "dtype": "bfloat16",
+      "head_dim": 256,
+      "input_shape": [
+        32,
+        8192
+      ],
+      "output": {
+        "checksum": -1.4607105255126953,
+        "finite": true,
+        "nonzero": true
+      },
+      "output_shape": [
+        32,
+        5376
+      ],
+      "p50_ms": 0.03606399893760681,
+      "raw_ms": [
+        0.038975998759269714,
+        0.036896001547575,
+        0.03680000081658363,
+        0.03606399893760681,
+        0.03657599911093712,
+        0.0344959981739521,
+        0.03561599925160408,
+        0.03526400029659271,
+        0.035999998450279236
+      ],
+      "weight_shape": [
+        8192,
+        5376
+      ]
+    },
+    {
+      "batch": 32,
+      "cached_prefix_tokens": 535,
+      "component": "prompt_attention_triton",
+      "context": 4214,
+      "fresh_extend_tokens": 3679,
+      "head_dim": 512,
+      "kv_repeated": false,
+      "kv_shape": [
+        117728,
+        4,
+        512
+      ],
+      "layout": "native_gqa_exact_cached_extend_with_e5m2_prefix",
+      "output": {
+        "checksum": -0.6144058108329773,
+        "finite": true,
+        "nonzero": true
+      },
+      "p50_ms": 294.6463317871094,
+      "prefix_kv_dtype": "torch.float8_e5m2",
+      "query_shape": [
+        117728,
+        32,
+        512
+      ],
+      "raw_ms": [
+        295.89520263671875,
+        294.5882568359375,
+        294.6463317871094,
+        294.5231018066406,
+        295.7821960449219,
+        294.6187744140625,
+        294.654052734375
+      ]
+    },
+    {
+      "batch": 32,
+      "cached_prefix_tokens": 535,
+      "component": "prompt_attention_triton",
+      "context": 4214,
+      "fresh_extend_tokens": 3679,
+      "head_dim": 256,
+      "kv_repeated": false,
+      "kv_shape": [
+        117728,
+        4,
+        256
+      ],
+      "layout": "native_gqa_exact_cached_extend_with_e5m2_prefix",
+      "output": {
+        "checksum": 0.9787890315055847,
+        "finite": true,
+        "nonzero": true
+      },
+      "p50_ms": 80.61682891845703,
+      "prefix_kv_dtype": "torch.float8_e5m2",
+      "query_shape": [
+        117728,
+        32,
+        256
+      ],
+      "raw_ms": [
+        80.75328063964844,
+        80.61682891845703,
+        80.548095703125,
+        80.34390258789062,
+        80.65897369384766,
+        80.6185302734375,
+        80.51849365234375
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "status": "terminal"
+}

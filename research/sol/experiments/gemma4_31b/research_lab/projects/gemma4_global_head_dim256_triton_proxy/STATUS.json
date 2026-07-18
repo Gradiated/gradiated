@@ -1,0 +1,65 @@
+{
+  "status": "terminal",
+  "priority": 615,
+  "researcher_profile": "execution",
+  "summary": "Measured supported native-GQA Triton completion nominates the non-quality-preserving head-256 architecture proxy: complete saving 104.250 ms/request (11.338% canonical); candidate oracle passed.",
+  "next_action": "Terminal: hand the nominated architecture-only proxy to a separately authorized weight-surgery/distillation decision; do not infer quality or deployment eligibility.",
+  "authorized_spend_usd": 1.25,
+  "provider_spend_usd": 0.13,
+  "active_session": null,
+  "bench_id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "claim_deadline_utc": "2026-07-18T22:15:00Z",
+  "lifecycle_deadline_utc": "2026-07-18T22:30:00Z",
+  "budgets": {
+    "wall_clock_minutes": 30,
+    "h200_compute_minutes": 22,
+    "temporary_storage_gib": 3,
+    "provider_spend_usd": 1.25,
+    "retrieval_release_reserve_minutes": 8
+  },
+  "decision_gate": {
+    "canonical_service_seconds_per_request": 0.9194573941250042,
+    "frozen_partial_savings_seconds_per_request": 0.08169989766753512,
+    "minimum_complete_savings_seconds_per_request": 0.04597286970625021,
+    "maximum_decode_kv_regression_seconds_per_request": 0.03572702796128491,
+    "candidate_backend": "triton",
+    "candidate_kernel_must_be_supported": true,
+    "candidate_kernel_must_avoid_dense_kv_repetition": true,
+    "candidate_oracle_must_pass": true,
+    "quality_claim_authorized": false
+  },
+  "candidate": {
+    "hidden_size": 5376,
+    "global_layers": 10,
+    "query_heads": 32,
+    "global_kv_heads": 4,
+    "current_global_head_dim": 512,
+    "candidate_global_head_dim": 256,
+    "concurrency": 32,
+    "peak_global_context": 4571,
+    "output_tokens_per_request": 358,
+    "kv_dtype": "fp8_e5m2",
+    "decode_backend": "triton",
+    "triton_kv_splits": 8,
+    "page_size": 1
+  },
+  "bound_identities": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "model_config": "../sglang_gemma4_exact_precreate_binding/probes/hf/config.json",
+    "model_config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "image": "sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a",
+    "checkpoint": "eight files, 62578655208 bytes, /home/glmrunner/gemma-attention-endpoint/checkpoint",
+    "prior_runner": "../gemma4_global_head_dim256_backend_unlock/global_head_dim256_discriminator.py",
+    "prior_runner_sha256": "4648fe19234f8c304a4387ebd512c34430bed5dc04cd9f35bfac3f97436eb62c",
+    "prior_result": "../gemma4_global_head_dim256_backend_unlock/artifacts/global-head256-xqa-20260718t2130z/RESULT.json",
+    "prior_result_sha256": "5926b98497dd86636aefe3d7385b1ec7ea50e61278c4e33c8eb563b1b828ed85",
+    "canonical_terminal": "../gemma4_h200_fused_qk_norm_rope_endpoint/artifacts/fused-qk-norm-rope-c32-canonical-20260718t1817z/TERMINAL.json",
+    "canonical_terminal_sha256": "1a7e778eff080bf2eec27da939ea85a894ea9884036bdebd562af371405e78c3"
+  },
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-global-head256-h200-202607182110z-watchdog.service",
+    "main_pid": "2626523",
+    "unit": "gemma-global-head256-h200-202607182110z-watchdog.service",
+    "deadline_utc": "2026-07-18T22:30:00Z"
+  }
+}

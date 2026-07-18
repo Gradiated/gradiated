@@ -1,0 +1,17 @@
+{
+  "artifact": "artifacts/global-head256-triton-completion-20260718t2142z/RESULT.json",
+  "artifact_sha256": "9ebc88c31731a2365a490b1fe1ca2d5a4870cb6d08547396d67fb65d722d8df5",
+  "classification": "nominate_architecture_proxy",
+  "complete_saving_seconds_per_request": 0.10425018715593391,
+  "evidence_type": "measured exact-H200 non-quality-preserving architecture proxy",
+  "frozen_partial_result_sha256": "5926b98497dd86636aefe3d7385b1ec7ea50e61278c4e33c8eb563b1b828ed85",
+  "hard_gates": {
+    "candidate_kernel_avoids_dense_kv_repetition": true,
+    "candidate_kernel_supported": true,
+    "candidate_oracle_pass": true
+  },
+  "pass": true,
+  "quality_claim": false,
+  "schema_version": 1,
+  "status": "terminal"
+}

@@ -1,14 +1,34 @@
 {
-  "status": "active",
+  "status": "completed",
   "priority": 480,
-  "researcher_profile": "deep",
-  "summary": "H200 BF16/FP8 exact-shape falsifier is ready, but the only authenticated bench was concurrently claimed through its lifecycle deadline; no measured frontier or endpoint nominee exists.",
-  "next_action": "Claim one authenticated SM90+ bench with at least 12 GiB free and ten safe lifecycle minutes, then run h200_fp8_exact_shape_falsifier.py once. Retrieve SENTINEL.json and RESULT.json; nominate H200 FP8 only if all numerical oracles pass and the weighted component-floor margin over BF16 is at least 20%. Do not create an allocation or replay setup.",
+  "researcher_profile": "execution",
+  "summary": "The one-shot H200 exact-shape falsifier reached the real FP8 tensor-core and BF16 attention paths, but the FP8 E5M2 KV-write arm failed because CUDA index_copy_ is not implemented for Float8_e5m2 in Torch 2.13.0+cu130; H200 FP8 is not nominated.",
+  "next_action": "Terminal for this allocated experiment: do not nominate H200 FP8 from this runner. Any future route must use a separately admitted supported FP8 KV-writer/consumer path and a fresh allocation decision; do not replay this one-shot allocation.",
   "authorized_spend_usd": 1.5,
-  "provider_spend_usd": 0.0,
+  "provider_spend_usd": 1.23,
   "active_session": null,
-  "latest_terminal": "artifacts/20260718t1532z-blocked/TERMINAL.json",
-  "frontier_artifact": "artifacts/20260718t1532z-blocked/FRONTIER.json",
+  "latest_terminal": "artifacts/20260718t1600z-h200-fp8/RESULT.json",
+  "frontier_artifact": null,
+  "result_artifacts": {
+    "root": "artifacts/20260718t1600z-h200-fp8",
+    "sentinel": "artifacts/20260718t1600z-h200-fp8/SENTINEL.json",
+    "result": "artifacts/20260718t1600z-h200-fp8/RESULT.json",
+    "runner_log": "artifacts/20260718t1600z-h200-fp8/RUN.log",
+    "result_sha256": "0944aa7f113db04f6e8f938d8078f306ee5d9ba55f10c788ad41864ff72cb3ba",
+    "sentinel_sha256": "eed7097e89a226a5196bfcb0dcc960b8f78979f487a273d4bf3ab33eeb6e32ec"
+  },
+  "terminal_decision": {
+    "endpoint_nominee": null,
+    "reason": "NotImplementedError: index_copy_cuda not implemented for Float8_e5m2; RESULT.json pass=false before aggregate frontier calculation.",
+    "provider_cost_basis": "conservative full registered 30-minute lifecycle at $2.46/hour",
+    "provider_cost_usd": 1.23
+  },
+  "provisioned_bench": {
+    "id": "h200-fp8-frontier-e00hjag28j32gvydxv",
+    "artifact": "artifacts/20260718t1556z-provisioned/BENCH_SPEC.json",
+    "deadline_utc": "2026-07-18T16:26:59Z",
+    "maximum_lifecycle_cost_usd": 1.23
+  },
   "bench_need": {
     "accelerator": "nvidia-h200-sxm or authenticated SM90+ CUDA",
     "minimum_free_device_memory_gib": 12,

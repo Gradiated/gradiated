@@ -1,0 +1,38 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": null,
+  "contents": {
+    "artifacts": "Retrieved under projects/gemma4_global_head_dim256_sliced_endpoint/artifacts/global-head256-sliced-c32-20260718t2210z/.",
+    "caches": "Triton compilation cache remains available in the pinned image; no teardown performed.",
+    "checkpoint": "Exact eight-file BF16 checkpoint remains unchanged and read-only at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
+    "export": "No validated content-addressed export recorded.",
+    "image": "Pinned SGLang v0.5.12 image and Triton cache remain resident.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_global_head_dim256_sliced_endpoint",
+    "runtime": "One global-head256 sliced Triton c32 endpoint terminal: owner_failure",
+    "server_state": "Global-head256 candidate container is retained if healthy; no teardown performed."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "idle_since": "2026-07-18T22:13:33.960762Z",
+  "lifecycle": {
+    "deadline_utc": "2026-07-18T23:30:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-global-head256-endpoint-h200-202607182150z-watchdog.service",
+      "main_pid": "2637130",
+      "unit": "gemma-global-head256-endpoint-h200-202607182150z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-18T16:35:57.440790Z",
+  "resource": {
+    "disk_id": "computedisk-e00y9hv4e79xdh2g7b",
+    "disk_name": "gemma-attention-endpoint-h200-20260718163352-boot",
+    "instance_id": "computeinstance-e00vbbb709tzxscaan",
+    "instance_name": "gemma-attention-endpoint-h200-20260718163352"
+  },
+  "status": "available",
+  "updated_at": "2026-07-18T22:13:33.960762Z"
+}

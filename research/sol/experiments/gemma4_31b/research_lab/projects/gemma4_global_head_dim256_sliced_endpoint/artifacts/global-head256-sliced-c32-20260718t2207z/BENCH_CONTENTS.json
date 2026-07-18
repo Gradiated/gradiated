@@ -1,0 +1,9 @@
+{
+  "artifacts": "Retrieved under projects/gemma4_global_head_dim256_sliced_endpoint/artifacts/global-head256-sliced-c32-20260718t2207z/.",
+  "checkpoint": "Exact eight-file BF16 checkpoint remains unchanged and read-only at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
+  "image": "Pinned SGLang v0.5.12 image and Triton cache remain resident.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_global_head_dim256_sliced_endpoint",
+  "runtime": "One global-head256 sliced Triton c32 endpoint terminal: owner_failure",
+  "server_state": "Global-head256 candidate container is retained if healthy; no teardown performed."
+}

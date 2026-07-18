@@ -1,0 +1,109 @@
+{
+  "adapter_binding_ok": true,
+  "cases": 11,
+  "classification": "sglang_safe_code_contract_precreate_terminal",
+  "contract_sha256": "45b5fa96f92fd129be420b9ce32546769b0a8e362e51c5dd01cf36af96bf13ca",
+  "deterministic": true,
+  "hashes": {
+    "adapter": "f7fde6c4a5bf90fb63fd8bea77ce9a73f58bab78adb88306ff066e802b54e6e5",
+    "bindings": "d44070dcded10d57f494c514c847092f1bf236a7d1e320fd66552d6ab8dd2618",
+    "original_suite_manifest": "036b5fc36e8f5f6df97447f291cf89ec4f2d1417c8874dee465b9c817569edf9",
+    "runner": "5e37310bc8d5e860320a20c4d1bec928958c3c06a5f80995b57534a1dd8ea0d8",
+    "strict_scorer": "080e105e5a43640b3b8d9a91caf872e8491db6524cda1189950f29161e2c41af",
+    "suite_manifest": "f1daaef0628fa73d397a126859524ac863d135963fa0d321d813ecb8a91633af",
+    "transformer": "55a71ed9acab0c15331fe7c86aae2ff1fbaff13288de57fabb73515499de931f"
+  },
+  "heldout_case_ids": [
+    "heldout_ordering",
+    "heldout_aggregation",
+    "heldout_indexing",
+    "heldout_branching"
+  ],
+  "local_capture_sha256": "e2eef94a2a4ab95f0a7a9e80967cdcc913360644cdc04fa9911dd9c1b12319a2",
+  "negative": {
+    "ambiguous_not_transformed": true,
+    "unsafe_import_rejected": true,
+    "unsafe_sorted_rejected": true
+  },
+  "pass": true,
+  "provider_create_authority": "director_only",
+  "provider_spend_usd": 0.0,
+  "required_bench": {
+    "accelerator": "nvidia-h200-sxm",
+    "disk_gib": 250,
+    "runtime": "docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a"
+  },
+  "score": {
+    "cases": [
+      {
+        "adapter_reason": "request_not_explicit_code_only",
+        "adapter_transformed": false,
+        "case_id": "tool_json",
+        "score": 1.0
+      },
+      {
+        "adapter_reason": "not_exactly_one_outer_fence",
+        "adapter_transformed": false,
+        "case_id": "python",
+        "score": 1.0
+      },
+      {
+        "adapter_reason": "request_not_explicit_code_only",
+        "adapter_transformed": false,
+        "case_id": "math",
+        "score": 1.0
+      },
+      {
+        "adapter_reason": "request_not_explicit_code_only",
+        "adapter_transformed": false,
+        "case_id": "long_key",
+        "score": 1.0
+      },
+      {
+        "adapter_reason": "request_not_explicit_code_only",
+        "adapter_transformed": false,
+        "case_id": "unicode_stop",
+        "score": 1.0
+      },
+      {
+        "adapter_reason": "request_not_explicit_code_only",
+        "adapter_transformed": false,
+        "case_id": "chat_template",
+        "score": 1.0
+      },
+      {
+        "adapter_reason": "request_not_explicit_code_only",
+        "adapter_transformed": false,
+        "case_id": "teacher_nll",
+        "score": 1.0
+      },
+      {
+        "adapter_reason": "not_exactly_one_outer_fence",
+        "adapter_transformed": false,
+        "case_id": "heldout_ordering",
+        "score": 1.0
+      },
+      {
+        "adapter_reason": "not_exactly_one_outer_fence",
+        "adapter_transformed": false,
+        "case_id": "heldout_aggregation",
+        "score": 1.0
+      },
+      {
+        "adapter_reason": "not_exactly_one_outer_fence",
+        "adapter_transformed": false,
+        "case_id": "heldout_indexing",
+        "score": 1.0
+      },
+      {
+        "adapter_reason": "not_exactly_one_outer_fence",
+        "adapter_transformed": false,
+        "case_id": "heldout_branching",
+        "score": 1.0
+      }
+    ],
+    "pass": true
+  },
+  "scorer_binding_ok": true,
+  "suite_sha256": "f5dad95132f372b3b986e7c86cf42476266b2a48098d82259bf6a7ab43adb56f"
+}

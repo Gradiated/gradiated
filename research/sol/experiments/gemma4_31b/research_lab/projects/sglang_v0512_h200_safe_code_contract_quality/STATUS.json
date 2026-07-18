@@ -1,0 +1,18 @@
+{
+  "active_session": null,
+  "authorized_spend_usd": 3.75,
+  "next_action": "Typed local pre-create gate passed. Director: provision a retained nvidia-h200-sxm bench with a 250-GiB disk and the bound SGLang image, then assign this project to run matched BF16-KV and FP8-E5M2 captures. Researchers must not create, claim, or wait for a GPU before that director-owned bench exists.",
+  "priority": 400,
+  "researcher_profile": "execution",
+  "status": "active",
+  "summary": "Local typed gate passed for a deterministic content-bound safe-code request contract, unchanged bound adapter/scorer, original seven cases, and four held-out executable safe-Python tasks. Awaiting a director-owned H200 bench; provider spend remains $0.",
+  "terminal_artifact": "artifacts/precreate-terminal/TERMINAL.json",
+  "terminal_sha256": "4ea82eaafa23dde2996ebe5a43628dc7b4c28431d15cc98cd5e1d182a1f8f427",
+  "provider_spend_usd": 0.0,
+  "director_request": {
+    "accelerator": "nvidia-h200-sxm",
+    "disk_gib": 250,
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a",
+    "required_work": "matched sequential BF16-KV and FP8-E5M2 raw captures for 11 frozen requests, post-capture bound-adapter application, strict executable scoring, NLL and reference sentinel"
+  }
+}

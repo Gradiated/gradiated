@@ -1,0 +1,17 @@
+# Research log
+
+## 2026-07-18 — exact c16/c32 critical path and discriminator
+
+Question: where does exact Gemma 4 31B request wall go on the retained H200 SGLang path, and what is the cheapest quality-preserving lever?
+
+Action: atomically claimed the retained H200, reused the hash-validated checkpoint and pinned SGLang v0.5.12 image, and made the one necessary relaunch from the dependent project's narrowed c1/BF16-KV server to the measured stock geometry: BF16 weights, FP8-E5M2 KV, context 5,000, max-running 32, CUDA graphs, metrics, and supported warmup skip. Ran cache-flushed exact c16 and c32 4,214/358 endpoint arms with request spans, framework histogram deltas, 5 Hz GPU telemetry, and nonempty/token-accounting checks. Rejected a cold c16/o1 arm contaminated by first-use compilation and ran one warmed cache-flushed c16/o1 discriminator. One decode-stage `/start_profile` attempt returned HTTP 400 and `/stop_profile` returned HTTP 500; under the one-repair rule, no second profiler repair was attempted. The profiler-off control still reproduced c16 at 18.97 s.
+
+Evidence (measured): all 64 canonical requests passed. Exact c16 was 19.1022 s/batch, 1.19389 s/request, and 299.86 output tok/s; mean request decomposition was 2.9825 s queue, 7.9904 s active prefill-to-first-token, and 8.0974 s post-first-token decode. Exact c32 was 24.8255 s/batch, 0.775796 s/request, and 461.46 output tok/s; decomposition was 5.7480 s queue, 9.2094 s active prefill, and 9.8214 s decode. C16-to-c32 improved output throughput 53.9% and service/request 35.0%. The warmed c16/o1 arm was 9.5933 s, assigning 9.5089 s, or 49.8% of full c16 batch wall, to incremental decode. Mean GPU utilization/power were 96.1%/583.9 W at c16 and 98.9%/578.5 W at c32.
+
+Comparator audit (measured): the cited `0.363303 s/request` c32 artifact processed only 32 uncached prompt tokens across 32 requests—one uncached token/request—so it is a fully cache-read lower bound, not the intended fresh/cache-mix primary workload. This run measured 10.3% cache at distinct c16 and 44.4% at repeated-body c32. The cache-flushed c32 result is 2.14x the old comparator.
+
+Interpretation (inferred from measured telemetry and bound config): decode is the largest component, but prefill is nearly tied. The exact text geometry is 60 dense layers, hidden 5,376, intermediate 21,504, 32 heads, 16 local KV heads, 4 global KV heads, five 1,024-window layers per global layer, and a tied 262,144-word head. At M=16/32, BF16 weights far exceed H200 L2; near-100% activity at sub-TDP power and the strong batching response are consistent with a low-arithmetic-intensity weight/KV stream rather than peak tensor-core compute. HBM counters were not captured, so this physical diagnosis remains inferred.
+
+Next move: reclassify the old c32 number as cache-read economics. The cheapest quality-preserving discriminator is an exact-distinct c48/c64 background arm to test further weight-stream amortization. If it saturates, benchmark native Hopper FP8 weight GEMMs on the decode linears before attention-specific kernel work. Full evidence and hashes are in `PROFILE_SUMMARY.json` and `artifacts/h200-critical-path-20260718t1536z/`.
+
+Economics and handoff: claimed 15:32:48.430301Z through release 15:42:44.356078Z, 595.925777 seconds at $2.46/GPU-hour = $0.407216. The healthy FP8-KV c32 server, exact checkpoint, pinned image, and remote run artifacts remain resident; the bench was released ready without teardown.

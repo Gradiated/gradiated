@@ -1,0 +1,12 @@
+{
+  "classification": "profiler_observability_failure",
+  "decision": "Do not infer a profiler capability or kernel result; use the already-complete framework profile and warmed output-scaling discriminator under the one-repair rule.",
+  "diagnostic": {
+    "benchmark_control": "Exact c16/o358 completed 16/16 requests in 18.973081362000812 seconds while the attempted profiler was not active.",
+    "response_body_retained": false,
+    "start_profile_http_status": 400,
+    "stop_profile_http_status": 500
+  },
+  "stage": "supported SGLang decode-stage /start_profile request",
+  "timestamp_utc_approximate": "2026-07-18T15:41:00Z"
+}

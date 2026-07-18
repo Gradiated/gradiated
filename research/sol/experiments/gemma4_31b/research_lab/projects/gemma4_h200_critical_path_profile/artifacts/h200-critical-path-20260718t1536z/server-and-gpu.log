@@ -1,0 +1,344 @@
+/usr/local/lib/python3.12/dist-packages/torchao/quantization/quant_api.py:1731: SyntaxWarning: invalid escape sequence '\.'
+  """Configuration class for applying different quantization configs to modules or parameters based on their fully qualified names (FQNs).
+/sgl-workspace/sglang/python/sglang/launch_server.py:54: UserWarning: 'python -m sglang.launch_server' is still supported, but 'sglang serve' is the recommended entrypoint.
+  Example: sglang serve --model-path <model> [options]
+  warnings.warn(
+[2026-07-18 15:35:07] Failed to load generation config for /work/checkpoint: /work/checkpoint does not appear to have a file named generation_config.json. Checkout 'https://huggingface.co//work/checkpoint/tree/main' for available files.. Proceeding without generation config.
+[2026-07-18 15:35:07] Hybrid swa model: self.hf_config.architectures=['Gemma4ForConditionalGeneration']
+[2026-07-18 15:35:07] Use triton as default attention backend for Gemma4
+[2026-07-18 15:35:10] server_args=ServerArgs(model_path='/work/checkpoint', tokenizer_path='/work/checkpoint', tokenizer_mode='auto', tokenizer_backend='huggingface', tokenizer_worker_num=1, detokenizer_worker_num=1, skip_tokenizer_init=False, load_format='auto', model_loader_extra_config='{}', trust_remote_code=False, context_length=5000, is_embedding=False, prefill_only_disable_kv_cache=False, enable_multimodal=None, revision=None, model_impl='auto', model_config_parser='auto', host='0.0.0.0', port=30000, fastapi_root_path='', grpc_mode=False, skip_server_warmup=True, warmups=None, nccl_port=None, checkpoint_engine_wait_weights_before_ready=False, ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_keyfile_password=None, enable_ssl_refresh=False, enable_http2=False, dtype='bfloat16', quantization=None, quantization_param_path=None, kv_cache_dtype='fp8_e5m2', enable_fp32_lm_head=False, modelopt_quant=None, modelopt_checkpoint_restore_path=None, modelopt_checkpoint_save_path=None, modelopt_export_path=None, quantize_and_serve=False, rl_quant_profile=None, mem_fraction_static=0.85, max_running_requests=32, max_queued_requests=None, max_total_tokens=None, chunked_prefill_size=8192, enable_dynamic_chunking=False, max_prefill_tokens=16384, prefill_max_requests=None, schedule_policy='fcfs', enable_priority_scheduling=False, disable_priority_preemption=False, default_priority_value=None, abort_on_priority_when_disabled=False, schedule_low_priority_values_first=False, priority_scheduling_preemption_threshold=10, schedule_conservativeness=1.0, page_size=1, swa_full_tokens_ratio=0.8, disable_hybrid_swa_memory=False, radix_eviction_policy='lru', enable_prefill_delayer=False, prefill_delayer_max_delay_passes=30, prefill_delayer_token_usage_low_watermark=None, prefill_delayer_forward_passes_buckets=None, prefill_delayer_wait_seconds_buckets=None, prefill_delayer_queue_min_ratio=None, prefill_delayer_max_delay_ms=None, device='cuda', tp_size=1, pp_size=1, pp_max_micro_batch_size=None, pp_async_batch_depth=0, stream_interval=1, batch_notify_size=16, stream_response_default_include_usage=False, incremental_streaming_output=False, enable_streaming_session=False, random_seed=936837344, constrained_json_whitespace_pattern=None, constrained_json_disable_any_whitespace=False, watchdog_timeout=300, soft_watchdog_timeout=None, dist_timeout=None, download_dir=None, model_checksum=None, base_gpu_id=0, gpu_id_step=1, sleep_on_idle=False, use_ray=False, custom_sigquit_handler=None, log_level='info', log_level_http=None, log_requests=False, log_requests_level=2, log_requests_format='text', log_requests_target=None, uvicorn_access_log_exclude_prefixes=[], crash_dump_folder=None, show_time_cost=False, enable_metrics=True, grpc_http_sidecar_port=None, enable_mfu_metrics=False, enable_metrics_for_all_schedulers=False, tokenizer_metrics_custom_labels_header='x-custom-labels', tokenizer_metrics_allowed_custom_labels=None, extra_metric_labels=None, bucket_time_to_first_token=None, bucket_inter_token_latency=None, bucket_e2e_request_latency=None, prompt_tokens_buckets=None, generation_tokens_buckets=None, gc_warning_threshold_secs=0.0, decode_log_interval=40, enable_request_time_stats_logging=True, kv_events_config=None, enable_forward_pass_metrics=False, forward_pass_metrics_worker_id='', forward_pass_metrics_ipc_name=None, enable_trace=False, otlp_traces_endpoint='localhost:4317', export_metrics_to_file=False, export_metrics_to_file_dir=None, api_key=None, admin_api_key=None, served_model_name='google/gemma-4-31B-it', weight_version='default', chat_template=None, hf_chat_template_name=None, completion_template=None, file_storage_path='sglang_storage', enable_cache_report=True, reasoning_parser=None, strip_thinking_cache=False, enable_strict_thinking=False, tool_call_parser=None, tool_server=None, sampling_defaults='model', dp_size=1, load_balance_method='round_robin', attn_cp_size=1, moe_dp_size=1, dist_init_addr=None, nnodes=1, node_rank=0, json_model_override_args='{}', preferred_sampling_params=None, enable_lora=None, enable_lora_overlap_loading=None, max_lora_rank=None, lora_target_modules=None, lora_paths=None, max_loaded_loras=None, max_loras_per_batch=8, lora_eviction_policy='lru', lora_backend='csgmv', max_lora_chunk_size=16, experts_shared_outer_loras=None, lora_use_virtual_experts=False, lora_strict_loading=False, lora_drain_wait_threshold=0.0, attention_backend='triton', decode_attention_backend=None, prefill_attention_backend=None, sampling_backend='flashinfer', grammar_backend='xgrammar', mm_attention_backend=None, fp8_gemm_runner_backend='auto', fp4_gemm_runner_backend='auto', nsa_prefill_backend=None, nsa_decode_backend=None, disable_flashinfer_autotune=False, mamba_backend='triton', speculative_algorithm=None, speculative_draft_model_path=None, speculative_draft_model_revision=None, speculative_draft_load_format=None, speculative_num_steps=None, speculative_eagle_topk=None, speculative_num_draft_tokens=None, speculative_dflash_block_size=None, speculative_accept_threshold_single=1.0, speculative_accept_threshold_acc=1.0, speculative_token_map=None, speculative_attention_mode='prefill', speculative_draft_attention_backend=None, speculative_draft_window_size=None, speculative_moe_runner_backend='auto', speculative_moe_a2a_backend=None, speculative_draft_model_quantization=None, speculative_adaptive=False, speculative_adaptive_config=None, speculative_skip_dp_mlp_sync=False, speculative_ngram_min_bfs_breadth=1, speculative_ngram_max_bfs_breadth=10, speculative_ngram_match_type='BFS', speculative_ngram_max_trie_depth=18, speculative_ngram_capacity=10000000, speculative_ngram_external_corpus_path=None, speculative_ngram_external_sam_budget=0, speculative_ngram_external_corpus_max_tokens=10000000, enable_multi_layer_eagle=False, ep_size=1, moe_a2a_backend='none', moe_runner_backend='auto', record_nolora_graph=True, flashinfer_mxfp4_moe_precision='default', enable_flashinfer_allreduce_fusion=False, enforce_disable_flashinfer_allreduce_fusion=False, enable_aiter_allreduce_fusion=False, deepep_mode='auto', ep_num_redundant_experts=0, ep_dispatch_algorithm=None, init_expert_location='trivial', enable_eplb=False, eplb_algorithm='auto', eplb_rebalance_num_iterations=1000, eplb_rebalance_layers_per_chunk=None, eplb_min_rebalancing_utilization_threshold=1.0, expert_distribution_recorder_mode=None, expert_distribution_recorder_buffer_size=1000, enable_expert_distribution_metrics=False, deepep_config=None, moe_dense_tp_size=None, elastic_ep_backend=None, enable_elastic_expert_backup=False, mooncake_ib_device=None, enable_deepep_waterfill=False, elastic_ep_rejoin=False, max_mamba_cache_size=None, mamba_ssm_dtype=None, mamba_full_memory_ratio=0.9, mamba_scheduler_strategy='no_buffer', mamba_track_interval=256, linear_attn_backend='triton', linear_attn_decode_backend=None, linear_attn_prefill_backend=None, enable_hierarchical_cache=False, hicache_ratio=2.0, hicache_size=0, hicache_write_policy='write_through', hicache_io_backend='kernel', hicache_mem_layout='layer_first', hicache_storage_backend=None, hicache_storage_prefetch_policy='timeout', hicache_storage_backend_extra_config=None, enable_hisparse=False, hisparse_config=None, enable_lmcache=False, kt_weight_path=None, kt_method='AMXINT4', kt_cpuinfer=None, kt_threadpool_count=2, kt_num_gpu_experts=None, kt_max_deferred_experts_per_token=None, dllm_algorithm=None, dllm_algorithm_config=None, cpu_offload_gb=0, offload_group_size=-1, offload_num_in_group=1, offload_prefetch_step=1, offload_mode='cpu', enable_mis=False, disable_radix_cache=False, cuda_graph_max_bs=256, cuda_graph_bs=[1, 2, 4, 8, 12, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256], disable_cuda_graph=False, disable_cuda_graph_padding=False, enable_breakable_cuda_graph=False, enable_profile_cuda_graph=False, enable_cudagraph_gc=False, debug_cuda_graph=False, enable_layerwise_nvtx_marker=False, enable_nccl_nvls=False, enable_symm_mem=False, disable_flashinfer_cutlass_moe_fp4_allgather=False, enable_tokenizer_batch_encode=False, disable_tokenizer_batch_decode=False, disable_outlines_disk_cache=False, disable_custom_all_reduce=False, enable_mscclpp=False, enable_torch_symm_mem=False, pre_warm_nccl=False, disable_overlap_schedule=False, enable_mixed_chunk=False, enable_dp_attention=False, enable_dp_attention_local_control_broadcast=False, enable_dp_lm_head=False, enable_two_batch_overlap=False, enable_single_batch_overlap=False, tbo_token_distribution_threshold=0.48, enable_torch_compile=False, disable_piecewise_cuda_graph=True, enforce_piecewise_cuda_graph=False, enable_torch_compile_debug_mode=False, torch_compile_max_bs=32, piecewise_cuda_graph_max_tokens=8192, piecewise_cuda_graph_tokens=[4, 8, 12, 16, 20, 24, 28, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240, 256, 288, 320, 352, 384, 416, 448, 480, 512, 576, 640, 704, 768, 832, 896, 960, 1024, 1280, 1536, 1792, 2048, 2304, 2560, 2816, 3072, 3328, 3584, 3840, 4096, 4608, 5120, 5632, 6144, 6656, 7168, 7680, 8192], piecewise_cuda_graph_compiler='eager', torchao_config='', enable_nan_detection=False, enable_p2p_check=False, triton_attention_reduce_in_fp32=False, triton_attention_num_kv_splits=8, triton_attention_split_tile_size=None, num_continuous_decode_steps=1, delete_ckpt_after_loading=False, enable_memory_saver=False, enable_weights_cpu_backup=False, enable_draft_weights_cpu_backup=False, allow_auto_truncate=False, enable_custom_logit_processor=False, flashinfer_mla_disable_ragged=False, disable_shared_experts_fusion=False, enforce_shared_experts_fusion=False, disable_chunked_prefix_cache=False, disable_fast_image_processor=False, keep_mm_feature_on_device=False, enable_return_hidden_states=False, enable_return_routed_experts=False, enable_return_indexer_topk=False, scheduler_recv_interval=1, numa_node=None, enable_deterministic_inference=False, rl_on_policy_target=None, enable_attn_tp_input_scattered=False, gc_threshold=None, enable_nsa_prefill_context_parallel=False, nsa_prefill_cp_mode='round-robin-split', enable_fused_qk_norm_rope=False, enable_precise_embedding_interpolation=False, enable_fused_moe_sum_all_reduce=False, enable_prefill_context_parallel=False, prefill_cp_mode='in-seq-split', enable_dynamic_batch_tokenizer=False, dynamic_batch_tokenizer_batch_size=32, dynamic_batch_tokenizer_batch_timeout=0.002, debug_tensor_dump_output_folder=None, debug_tensor_dump_layers=None, debug_tensor_dump_input_file=None, debug_tensor_dump_inject=False, disaggregation_mode='null', disaggregation_transfer_backend='mooncake', disaggregation_bootstrap_port=8998, disaggregation_ib_device=None, disaggregation_decode_enable_radix_cache=False, disaggregation_decode_enable_offload_kvcache=False, num_reserved_decode_tokens=512, disaggregation_decode_polling_interval=1, encoder_only=False, language_only=False, encoder_transfer_backend='zmq_to_scheduler', encoder_urls=[], enable_adaptive_dispatch_to_encoder=False, custom_weight_loader=[], weight_loader_disable_mmap=False, weight_loader_prefetch_checkpoints=False, weight_loader_prefetch_num_threads=4, weight_loader_drop_cache_after_load=False, remote_instance_weight_loader_seed_instance_ip=None, remote_instance_weight_loader_seed_instance_service_port=None, remote_instance_weight_loader_send_weights_group_ports=None, remote_instance_weight_loader_backend='nccl', remote_instance_weight_loader_start_seed_via_transfer_engine=False, engine_info_bootstrap_port=6789, modelexpress_config=None, enable_pdmux=False, pdmux_config_path=None, sm_group_num=8, enable_broadcast_mm_inputs_process=False, enable_prefix_mm_cache=False, mm_enable_dp_encoder=False, mm_process_config={}, limit_mm_data_per_request=None, enable_mm_global_cache=False, decrypted_config_file=None, decrypted_draft_config_file=None, forward_hooks=None, enable_quant_communications=False, msprobe_dump_config=None)
+[2026-07-18 15:35:10] Hybrid swa model: self.hf_config.architectures=['Gemma4ForConditionalGeneration']
+[transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+[2026-07-18 15:35:14] Using default HuggingFace chat template with detected content format: openai
+[2026-07-18 15:35:15] Detected reasoning parser 'gemma4' from template rule 'gemma4'.
+[2026-07-18 15:35:15] Detected tool-call parser 'gemma4' from template rule 'gemma4'.
+[2026-07-18 15:35:15] Auto-detected reasoning parser: gemma4
+[2026-07-18 15:35:15] Auto-detected tool-call parser: gemma4
+[2026-07-18 15:35:18] Failed to load generation config for /work/checkpoint: /work/checkpoint does not appear to have a file named generation_config.json. Checkout 'https://huggingface.co//work/checkpoint/tree/main' for available files.. Proceeding without generation config.
+[2026-07-18 15:35:18] Hybrid swa model: self.hf_config.architectures=['Gemma4ForConditionalGeneration']
+[transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+[2026-07-18 15:35:20] Hybrid swa model: self.hf_config.architectures=['Gemma4ForConditionalGeneration']
+[2026-07-18 15:35:20] Init torch distributed begin.
+[2026-07-18 15:35:20] Init torch distributed ends. elapsed=0.19 s, mem usage=0.09 GB
+[2026-07-18 15:35:20] Restoring add_bos_token=True for /work/checkpoint (was False after v5 loading)
+[2026-07-18 15:35:21] Load weight begin. avail mem=139.13 GB
+Multi-thread loading shards:   0% Completed | 0/2 [00:00<?, ?it/s]Multi-thread loading shards:  50% Completed | 1/2 [00:07<00:07,  7.01s/it]Multi-thread loading shards: 100% Completed | 2/2 [00:09<00:00,  4.25s/it]Multi-thread loading shards: 100% Completed | 2/2 [00:09<00:00,  4.66s/it]
+[2026-07-18 15:35:30] Persistent buffers not in checkpoint (using default init): ['vision_tower.encoder.layers.0.layer_scalar', 'vision_tower.encoder.layers.1.layer_scalar', 'vision_tower.encoder.layers.10.layer_scalar', 'vision_tower.encoder.layers.11.layer_scalar', 'vision_tower.encoder.layers.12.layer_scalar', 'vision_tower.encoder.layers.13.layer_scalar', 'vision_tower.encoder.layers.14.layer_scalar', 'vision_tower.encoder.layers.15.layer_scalar', 'vision_tower.encoder.layers.16.layer_scalar', 'vision_tower.encoder.layers.17.layer_scalar', 'vision_tower.encoder.layers.18.layer_scalar', 'vision_tower.encoder.layers.19.layer_scalar', 'vision_tower.encoder.layers.2.layer_scalar', 'vision_tower.encoder.layers.20.layer_scalar', 'vision_tower.encoder.layers.21.layer_scalar', 'vision_tower.encoder.layers.22.layer_scalar', 'vision_tower.encoder.layers.23.layer_scalar', 'vision_tower.encoder.layers.24.layer_scalar', 'vision_tower.encoder.layers.25.layer_scalar', 'vision_tower.encoder.layers.26.layer_scalar', 'vision_tower.encoder.layers.3.layer_scalar', 'vision_tower.encoder.layers.4.layer_scalar', 'vision_tower.encoder.layers.5.layer_scalar', 'vision_tower.encoder.layers.6.layer_scalar', 'vision_tower.encoder.layers.7.layer_scalar', 'vision_tower.encoder.layers.8.layer_scalar', 'vision_tower.encoder.layers.9.layer_scalar']
+[2026-07-18 15:35:30] Load weight end. elapsed=9.69 s, type=Gemma4ForConditionalGeneration, avail mem=79.52 GB, mem usage=59.61 GB.
+[2026-07-18 15:35:30] Using KV cache dtype: torch.float8_e5m2
+[2026-07-18 15:35:30] Use sliding window memory pool. full_layer_tokens=170792, swa_layer_tokens=136633
+[2026-07-18 15:35:30] KV Cache is allocated. #tokens: 136633, K size: 26.06 GB, V size: 26.06 GB
+[2026-07-18 15:35:30] KV Cache is allocated. #tokens: 170792, K size: 3.26 GB, V size: 3.26 GB
+[2026-07-18 15:35:30] SWAKVPool mem usage: 58.64 GB, swa size: 136633, full size: 170792
+[2026-07-18 15:35:30] Memory pool end. avail mem=20.84 GB
+[2026-07-18 15:35:30] Capture cuda graph begin. This can take up to several minutes. avail mem=20.78 GB
+[2026-07-18 15:35:30] Capture cuda graph bs [1, 2, 4, 8, 12, 16, 24, 32]
+  0%|          | 0/8 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=20.78 GB):   0%|          | 0/8 [00:00<?, ?it/s]2026-07-18 15:35:32,260 - CUTE_DSL - WARNING - [handle_import_error] - Unexpected error during package walk: cutlass.cute.experimental
+[2026-07-18 15:35:32] Unexpected error during package walk: cutlass.cute.experimental
+Capturing batches (bs=32 avail_mem=20.78 GB):  12%|█▎        | 1/8 [00:33<03:51, 33.01s/it]Capturing batches (bs=24 avail_mem=20.72 GB):  12%|█▎        | 1/8 [00:33<03:51, 33.01s/it]Capturing batches (bs=24 avail_mem=20.72 GB):  25%|██▌       | 2/8 [00:33<01:21, 13.66s/it]Capturing batches (bs=16 avail_mem=20.72 GB):  25%|██▌       | 2/8 [00:33<01:21, 13.66s/it]Capturing batches (bs=16 avail_mem=20.72 GB):  38%|███▊      | 3/8 [00:33<00:37,  7.48s/it]Capturing batches (bs=12 avail_mem=20.71 GB):  38%|███▊      | 3/8 [00:33<00:37,  7.48s/it]Capturing batches (bs=12 avail_mem=20.71 GB):  50%|█████     | 4/8 [00:33<00:18,  4.57s/it]Capturing batches (bs=8 avail_mem=20.71 GB):  50%|█████     | 4/8 [00:33<00:18,  4.57s/it] Capturing batches (bs=8 avail_mem=20.71 GB):  62%|██████▎   | 5/8 [00:33<00:08,  2.96s/it]Capturing batches (bs=4 avail_mem=20.71 GB):  62%|██████▎   | 5/8 [00:33<00:08,  2.96s/it]Capturing batches (bs=4 avail_mem=20.71 GB):  75%|███████▌  | 6/8 [00:33<00:03,  1.99s/it]Capturing batches (bs=2 avail_mem=20.70 GB):  75%|███████▌  | 6/8 [00:33<00:03,  1.99s/it]Capturing batches (bs=2 avail_mem=20.70 GB):  88%|████████▊ | 7/8 [00:33<00:01,  1.37s/it]Capturing batches (bs=1 avail_mem=20.70 GB):  88%|████████▊ | 7/8 [00:33<00:01,  1.37s/it]Capturing batches (bs=1 avail_mem=20.70 GB): 100%|██████████| 8/8 [00:33<00:00,  1.03it/s]Capturing batches (bs=1 avail_mem=20.70 GB): 100%|██████████| 8/8 [00:33<00:00,  4.22s/it]
+[2026-07-18 15:36:05] Capture cuda graph end. Time elapsed: 34.36 s. mem usage=0.08 GB. avail mem=20.70 GB.
+[2026-07-18 15:36:05] Disable piecewise CUDA graph because --disable-piecewise-cuda-graph is set
+[2026-07-18 15:36:07] max_total_num_tokens=170792, chunked_prefill_size=8192, max_prefill_tokens=16384, max_running_requests=32, context_len=5000, available_gpu_mem=20.70 GB
+[2026-07-18 15:36:08] INFO:     Started server process [1]
+[2026-07-18 15:36:08] INFO:     Waiting for application startup.
+[2026-07-18 15:36:08] The server is fired up and ready to roll!
+[2026-07-18 15:36:08] INFO:     Application startup complete.
+[2026-07-18 15:36:08] INFO:     Uvicorn running on http://0.0.0.0:30000 (Press CTRL+C to quit)
+/usr/local/lib/python3.12/dist-packages/fastapi/routing.py:120: FastAPIDeprecationWarning: ORJSONResponse is deprecated, FastAPI now serializes data directly to JSON bytes via Pydantic when a return type or response model is set, which is faster and doesn't need a custom response class. Read more in the FastAPI docs: https://fastapi.tiangolo.com/advanced/custom-response/#orjson-or-response-model and https://fastapi.tiangolo.com/tutorial/response-model/
+  response = await f(request)
+[2026-07-18 15:36:27] INFO:     127.0.0.1:39288 - "GET /v1/models HTTP/1.1" 200 OK
+[2026-07-18 15:36:36] INFO:     127.0.0.1:33832 - "GET /v1/models HTTP/1.1" 200 OK
+[2026-07-18 15:36:36] Cache flushed successfully!
+[2026-07-18 15:36:36] INFO:     127.0.0.1:33836 - "POST /flush_cache HTTP/1.1" 200 OK
+[2026-07-18 15:36:37] INFO:     127.0.0.1:33844 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-18 15:36:49] ReqTimeStats(rid=1cb87646420148d98702ab507abd9f0c, input_len=4214, cached_input_len=0, output_len=1, type=unified): queue_duration=0.85ms, forward_duration=12452.06ms, entry_time=1784388997.295
+[2026-07-18 15:36:49] Prefill batch, #new-seq: 1, #new-token: 4214, #cached-token: 0, full token usage: 0.05, swa token usage: 0.06, #running-req: 0, #queue-req: 13, #pending-token: 0, cuda graph: False, input throughput (token/s): 45.95
+[2026-07-18 15:36:49] INFO:     127.0.0.1:33886 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:36:50] ReqTimeStats(rid=7827b10c63d742c6ae7f6ae651f35d7e, input_len=4214, cached_input_len=0, output_len=1, type=unified): queue_duration=0.84ms, forward_duration=1556.87ms, entry_time=1784389009.434
+[2026-07-18 15:36:50] Prefill batch, #new-seq: 2, #new-token: 8192, #cached-token: 0, full token usage: 0.07, swa token usage: 0.09, #running-req: 1, #queue-req: 10, #pending-token: 55018, cuda graph: False, input throughput (token/s): 6589.30
+[2026-07-18 15:36:50] INFO:     127.0.0.1:33872 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:36:52] ReqTimeStats(rid=d925853b49674d55bfb6b1cb9bcaed07, input_len=4214, cached_input_len=0, output_len=1, type=unified): queue_duration=0.74ms, forward_duration=2913.16ms, entry_time=1784389009.434
+[2026-07-18 15:36:52] ReqTimeStats(rid=03b4ebb5400845c58553f5d28e344da7, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=1203.58ms, forward_duration=1710.48ms, entry_time=1784389009.434
+[2026-07-18 15:36:52] ReqTimeStats(rid=10da334f28644749ab1fe413a4877498, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=1203.54ms, forward_duration=1710.64ms, entry_time=1784389009.434
+[2026-07-18 15:36:52] Prefill batch, #new-seq: 4, #new-token: 8192, #cached-token: 1605, full token usage: 0.05, swa token usage: 0.07, #running-req: 2, #queue-req: 8, #pending-token: 45221, cuda graph: False, input throughput (token/s): 6039.96
+[2026-07-18 15:36:52] INFO:     127.0.0.1:33860 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:36:52] INFO:     127.0.0.1:33902 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:36:52] INFO:     127.0.0.1:33846 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:36:53] ReqTimeStats(rid=315280cc44e74ed1a8327a6a20627aa0, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=1203.51ms, forward_duration=3007.96ms, entry_time=1784389009.434
+[2026-07-18 15:36:53] ReqTimeStats(rid=517d09f84f3a44b0be6e1e4e66d5f367, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=1564.50ms, forward_duration=2647.13ms, entry_time=1784389009.434
+[2026-07-18 15:36:53] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.06, swa token usage: 0.07, #running-req: 5, #queue-req: 6, #pending-token: 35959, cuda graph: False, input throughput (token/s): 6313.91
+[2026-07-18 15:36:53] INFO:     127.0.0.1:33850 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:36:53] INFO:     127.0.0.1:33912 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:36:54] ReqTimeStats(rid=6745c62dfbc345f0975a1c317e04ed37, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=1564.48ms, forward_duration=3981.08ms, entry_time=1784389009.434
+[2026-07-18 15:36:54] ReqTimeStats(rid=be8ff2760c3b40d39621985bac6d0dcc, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=2920.56ms, forward_duration=2625.14ms, entry_time=1784389009.434
+[2026-07-18 15:36:54] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.06, swa token usage: 0.08, #running-req: 7, #queue-req: 4, #pending-token: 26697, cuda graph: False, input throughput (token/s): 6140.32
+[2026-07-18 15:36:54] INFO:     127.0.0.1:33924 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:36:54] INFO:     127.0.0.1:33938 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:36:56] ReqTimeStats(rid=019c3ac08aa04881b87c83a3f68e448b, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=2920.53ms, forward_duration=3984.16ms, entry_time=1784389009.434
+[2026-07-18 15:36:56] ReqTimeStats(rid=50e97b06926c4a3098b721f7a26cb365, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=4218.54ms, forward_duration=2686.30ms, entry_time=1784389009.434
+[2026-07-18 15:36:56] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.07, swa token usage: 0.09, #running-req: 9, #queue-req: 1, #pending-token: 17435, cuda graph: False, input throughput (token/s): 6027.19
+[2026-07-18 15:36:56] INFO:     127.0.0.1:33946 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:36:56] INFO:     127.0.0.1:33958 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:36:57] ReqTimeStats(rid=b0bc32668d0e4e1c98ee88898e5f7cac, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=4218.50ms, forward_duration=3970.97ms, entry_time=1784389009.434
+[2026-07-18 15:36:57] ReqTimeStats(rid=1be7f69cb42b4a0bb840788af6922816, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=5552.66ms, forward_duration=2636.98ms, entry_time=1784389009.434
+[2026-07-18 15:36:57] ReqTimeStats(rid=85bf64d42c614879a90b7d65bca803d2, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=5552.64ms, forward_duration=2637.13ms, entry_time=1784389009.434
+[2026-07-18 15:36:57] Prefill batch, #new-seq: 4, #new-token: 8192, #cached-token: 1605, full token usage: 0.05, swa token usage: 0.06, #running-req: 11, #queue-req: 0, #pending-token: 7638, cuda graph: False, input throughput (token/s): 6374.94
+[2026-07-18 15:36:57] INFO:     127.0.0.1:33962 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:36:57] INFO:     127.0.0.1:33966 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:36:57] INFO:     127.0.0.1:33982 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:03] ReqTimeStats(rid=22fd5462783141bfbe9a1ee100aea9cb, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=5552.62ms, forward_duration=8504.80ms, entry_time=1784389009.434
+[2026-07-18 15:37:03] ReqTimeStats(rid=67e2c4dd462a421cb6f2847d7c7e4a77, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=6911.43ms, forward_duration=7146.17ms, entry_time=1784389009.434
+[2026-07-18 15:37:03] Prefill batch, #new-seq: 2, #new-token: 7103, #cached-token: 535, full token usage: 0.00, swa token usage: 0.00, #running-req: 14, #queue-req: 0, #pending-token: 0, cuda graph: False, input throughput (token/s): 1210.50
+[2026-07-18 15:37:03] INFO:     127.0.0.1:33998 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:03] INFO:     127.0.0.1:34012 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:03] INFO:     127.0.0.1:36298 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-18 15:37:03] Cache flushed successfully!
+[2026-07-18 15:37:03] INFO:     127.0.0.1:36306 - "POST /flush_cache HTTP/1.1" 200 OK
+[2026-07-18 15:37:04] INFO:     127.0.0.1:36320 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-18 15:37:05] Prefill batch, #new-seq: 1, #new-token: 4214, #cached-token: 0, full token usage: 0.07, swa token usage: 0.09, #running-req: 0, #queue-req: 13, #pending-token: 0, cuda graph: False, input throughput (token/s): 2152.10
+[2026-07-18 15:37:06] Prefill batch, #new-seq: 2, #new-token: 8192, #cached-token: 0, full token usage: 0.11, swa token usage: 0.14, #running-req: 1, #queue-req: 10, #pending-token: 55018, cuda graph: False, input throughput (token/s): 6596.84
+[2026-07-18 15:37:08] Prefill batch, #new-seq: 4, #new-token: 8192, #cached-token: 1605, full token usage: 0.16, swa token usage: 0.20, #running-req: 2, #queue-req: 8, #pending-token: 45221, cuda graph: False, input throughput (token/s): 6039.52
+[2026-07-18 15:37:09] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.21, swa token usage: 0.26, #running-req: 5, #queue-req: 6, #pending-token: 35959, cuda graph: False, input throughput (token/s): 6250.67
+[2026-07-18 15:37:10] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.26, swa token usage: 0.31, #running-req: 7, #queue-req: 4, #pending-token: 26697, cuda graph: False, input throughput (token/s): 6161.99
+[2026-07-18 15:37:12] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.31, swa token usage: 0.35, #running-req: 9, #queue-req: 1, #pending-token: 17435, cuda graph: False, input throughput (token/s): 6044.88
+[2026-07-18 15:37:13] Prefill batch, #new-seq: 4, #new-token: 8192, #cached-token: 1605, full token usage: 0.35, swa token usage: 0.40, #running-req: 11, #queue-req: 0, #pending-token: 7638, cuda graph: False, input throughput (token/s): 6344.54
+[2026-07-18 15:37:14] Prefill batch, #new-seq: 2, #new-token: 7103, #cached-token: 535, full token usage: 0.35, swa token usage: 0.40, #running-req: 14, #queue-req: 0, #pending-token: 0, cuda graph: False, input throughput (token/s): 7958.66
+[2026-07-18 15:37:15] Decode batch, #running-req: 16, #full token: 60055, full token usage: 0.35, #swa token: 55504, swa token usage: 0.41, cuda graph: True, gen throughput (token/s): 5.46, #queue-req: 0
+[2026-07-18 15:37:16] Decode batch, #running-req: 16, #full token: 60695, full token usage: 0.36, #swa token: 56144, swa token usage: 0.41, cuda graph: True, gen throughput (token/s): 611.06, #queue-req: 0
+[2026-07-18 15:37:17] Decode batch, #running-req: 16, #full token: 61335, full token usage: 0.36, #swa token: 56784, swa token usage: 0.42, cuda graph: True, gen throughput (token/s): 610.47, #queue-req: 0
+[2026-07-18 15:37:18] Decode batch, #running-req: 16, #full token: 61975, full token usage: 0.36, #swa token: 57424, swa token usage: 0.42, cuda graph: True, gen throughput (token/s): 608.93, #queue-req: 0
+[2026-07-18 15:37:19] Decode batch, #running-req: 16, #full token: 62615, full token usage: 0.37, #swa token: 58064, swa token usage: 0.42, cuda graph: True, gen throughput (token/s): 608.31, #queue-req: 0
+[2026-07-18 15:37:20] Decode batch, #running-req: 16, #full token: 63255, full token usage: 0.37, #swa token: 58704, swa token usage: 0.43, cuda graph: True, gen throughput (token/s): 608.30, #queue-req: 0
+[2026-07-18 15:37:21] Decode batch, #running-req: 16, #full token: 63895, full token usage: 0.37, #swa token: 59344, swa token usage: 0.43, cuda graph: True, gen throughput (token/s): 608.24, #queue-req: 0
+[2026-07-18 15:37:22] Decode batch, #running-req: 16, #full token: 64535, full token usage: 0.38, #swa token: 59984, swa token usage: 0.44, cuda graph: True, gen throughput (token/s): 608.86, #queue-req: 0
+[2026-07-18 15:37:23] ReqTimeStats(rid=c02d4010761a49b284835f09cf78d9e7, input_len=4214, cached_input_len=0, output_len=358, type=unified): queue_duration=0.26ms, forward_duration=19068.55ms, entry_time=1784389024.533
+[2026-07-18 15:37:23] ReqTimeStats(rid=294a9f108cd242e7a36015f58d2736fe, input_len=4214, cached_input_len=0, output_len=358, type=unified): queue_duration=0.75ms, forward_duration=18907.37ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] ReqTimeStats(rid=44b7081078c44a4b84bd6e4d3d62d9fe, input_len=4214, cached_input_len=0, output_len=358, type=unified): queue_duration=0.68ms, forward_duration=18907.64ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] ReqTimeStats(rid=92996152e3ca41b989d19fce020be198, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=763.46ms, forward_duration=18145.10ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] ReqTimeStats(rid=8c22513caab548719422afdbe7356f5a, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=763.43ms, forward_duration=18145.36ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] ReqTimeStats(rid=a20ddcc2fac64b7489334f9029f986e9, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=763.40ms, forward_duration=18145.63ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] ReqTimeStats(rid=f5d75687997d47539e8301cfb1db6322, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=2004.16ms, forward_duration=16905.11ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] ReqTimeStats(rid=aba749e4e61b4b58b182d5261545004f, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=2004.13ms, forward_duration=16905.39ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] ReqTimeStats(rid=c9c75beb35594ff1a8a3d13737165e6d, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=3360.28ms, forward_duration=15549.49ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] ReqTimeStats(rid=172843dec7a349b7b3ec84e6fd3a4195, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=3360.26ms, forward_duration=15549.76ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] ReqTimeStats(rid=986e2ad42c434f79a2992ba2021bf206, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=4670.96ms, forward_duration=14239.30ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] ReqTimeStats(rid=23a1e701e02a4945bda905bbafa00862, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=4670.93ms, forward_duration=14239.57ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] ReqTimeStats(rid=f11afd748771478b9d5c154a139a0389, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=6000.63ms, forward_duration=12910.11ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] ReqTimeStats(rid=029ba793f61345c9915b1dd741ccab1f, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=6000.61ms, forward_duration=12910.36ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] ReqTimeStats(rid=4e90517f80d24bf280d597391986f3f8, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=6000.58ms, forward_duration=12910.67ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] ReqTimeStats(rid=ab7a9b5adb474ac89bdff9090082789e, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=7355.65ms, forward_duration=11555.83ms, entry_time=1784389024.694
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36336 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36360 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36330 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36382 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36346 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36366 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36398 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36410 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36426 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36430 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36446 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36466 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36460 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36474 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36478 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:36490 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] INFO:     127.0.0.1:45222 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-18 15:37:23] Cache flushed successfully!
+[2026-07-18 15:37:23] INFO:     127.0.0.1:45224 - "POST /flush_cache HTTP/1.1" 200 OK
+[2026-07-18 15:37:24] INFO:     127.0.0.1:45238 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-18 15:37:25] Prefill batch, #new-seq: 1, #new-token: 4214, #cached-token: 0, full token usage: 0.07, swa token usage: 0.09, #running-req: 0, #queue-req: 29, #pending-token: 0, cuda graph: False, input throughput (token/s): 371.04
+[2026-07-18 15:37:26] Prefill batch, #new-seq: 2, #new-token: 8192, #cached-token: 0, full token usage: 0.11, swa token usage: 0.14, #running-req: 1, #queue-req: 24, #pending-token: 122442, cuda graph: False, input throughput (token/s): 6339.96
+[2026-07-18 15:37:29] Prefill batch, #new-seq: 6, #new-token: 8192, #cached-token: 9796, full token usage: 0.16, swa token usage: 0.20, #running-req: 2, #queue-req: 22, #pending-token: 104454, cuda graph: False, input throughput (token/s): 3302.81
+[2026-07-18 15:37:29] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.21, swa token usage: 0.26, #running-req: 7, #queue-req: 20, #pending-token: 95192, cuda graph: False, input throughput (token/s): 23610.59
+[2026-07-18 15:37:31] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.24, swa token usage: 0.30, #running-req: 9, #queue-req: 17, #pending-token: 85930, cuda graph: False, input throughput (token/s): 6057.83
+[2026-07-18 15:37:32] Prefill batch, #new-seq: 4, #new-token: 8192, #cached-token: 2800, full token usage: 0.27, swa token usage: 0.31, #running-req: 11, #queue-req: 13, #pending-token: 74938, cuda graph: False, input throughput (token/s): 5730.26
+[2026-07-18 15:37:33] Prefill batch, #new-seq: 5, #new-token: 8192, #cached-token: 9496, full token usage: 0.32, swa token usage: 0.37, #running-req: 14, #queue-req: 11, #pending-token: 57250, cuda graph: False, input throughput (token/s): 5502.91
+[2026-07-18 15:37:35] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.35, swa token usage: 0.40, #running-req: 18, #queue-req: 7, #pending-token: 47988, cuda graph: False, input throughput (token/s): 5936.99
+[2026-07-18 15:37:36] Prefill batch, #new-seq: 5, #new-token: 8192, #cached-token: 9496, full token usage: 0.37, swa token usage: 0.41, #running-req: 20, #queue-req: 1, #pending-token: 30300, cuda graph: False, input throughput (token/s): 5241.76
+[2026-07-18 15:37:38] Prefill batch, #new-seq: 7, #new-token: 5287, #cached-token: 20799, full token usage: 0.35, swa token usage: 0.38, #running-req: 24, #queue-req: 0, #pending-token: 4214, cuda graph: False, input throughput (token/s): 4568.57
+[2026-07-18 15:37:38] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 4213, full token usage: 0.35, swa token usage: 0.38, #running-req: 31, #queue-req: 0, #pending-token: 0, cuda graph: False, input throughput (token/s): 166.04
+[2026-07-18 15:37:39] Decode batch, #running-req: 32, #full token: 60711, full token usage: 0.36, #swa token: 53491, swa token usage: 0.39, cuda graph: True, gen throughput (token/s): 76.57, #queue-req: 0
+[2026-07-18 15:37:40] Decode batch, #running-req: 32, #full token: 61991, full token usage: 0.36, #swa token: 54771, swa token usage: 0.40, cuda graph: True, gen throughput (token/s): 1013.98, #queue-req: 0
+[2026-07-18 15:37:41] Decode batch, #running-req: 32, #full token: 63271, full token usage: 0.37, #swa token: 56051, swa token usage: 0.41, cuda graph: True, gen throughput (token/s): 1010.81, #queue-req: 0
+[2026-07-18 15:37:43] Decode batch, #running-req: 32, #full token: 64551, full token usage: 0.38, #swa token: 57331, swa token usage: 0.42, cuda graph: True, gen throughput (token/s): 1007.68, #queue-req: 0
+[2026-07-18 15:37:44] Decode batch, #running-req: 32, #full token: 65831, full token usage: 0.39, #swa token: 58611, swa token usage: 0.43, cuda graph: True, gen throughput (token/s): 1005.07, #queue-req: 0
+[2026-07-18 15:37:45] Decode batch, #running-req: 32, #full token: 67111, full token usage: 0.39, #swa token: 59891, swa token usage: 0.44, cuda graph: True, gen throughput (token/s): 1002.04, #queue-req: 0
+[2026-07-18 15:37:46] Decode batch, #running-req: 32, #full token: 68391, full token usage: 0.40, #swa token: 61171, swa token usage: 0.45, cuda graph: True, gen throughput (token/s): 1000.76, #queue-req: 0
+[2026-07-18 15:37:48] Decode batch, #running-req: 32, #full token: 69671, full token usage: 0.41, #swa token: 62451, swa token usage: 0.46, cuda graph: True, gen throughput (token/s): 1000.93, #queue-req: 0
+[2026-07-18 15:37:49] ReqTimeStats(rid=c1a07c008a4e4fcdacb63147f11a78dd, input_len=4214, cached_input_len=0, output_len=358, type=unified): queue_duration=0.25ms, forward_duration=24776.96ms, entry_time=1784389044.662
+[2026-07-18 15:37:49] ReqTimeStats(rid=fad278917e434fa5b937ff089e00aefd, input_len=4214, cached_input_len=0, output_len=358, type=unified): queue_duration=2.30ms, forward_duration=24614.40ms, entry_time=1784389044.823
+[2026-07-18 15:37:49] ReqTimeStats(rid=2f17782baca048419b2b08814ec56576, input_len=4214, cached_input_len=0, output_len=358, type=unified): queue_duration=2.23ms, forward_duration=24614.68ms, entry_time=1784389044.823
+[2026-07-18 15:37:49] ReqTimeStats(rid=7a7d3a00998142bda9f7dd54351071f0, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=770.21ms, forward_duration=23846.94ms, entry_time=1784389044.823
+[2026-07-18 15:37:49] ReqTimeStats(rid=78b2e82f76214b699ea7a1a72b31c4ab, input_len=4214, cached_input_len=4213, output_len=358, type=unified): queue_duration=770.18ms, forward_duration=23847.21ms, entry_time=1784389044.823
+[2026-07-18 15:37:49] ReqTimeStats(rid=9b40555938da4d70bc8299c172b67327, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=770.16ms, forward_duration=23847.46ms, entry_time=1784389044.823
+[2026-07-18 15:37:49] ReqTimeStats(rid=03d1d3f4cb354859b7e2cc13fc4d994e, input_len=4214, cached_input_len=3978, output_len=358, type=unified): queue_duration=770.13ms, forward_duration=23847.73ms, entry_time=1784389044.823
+[2026-07-18 15:37:49] ReqTimeStats(rid=7008e2a918e2427eac03a2345bdea062, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=770.10ms, forward_duration=23848.01ms, entry_time=1784389044.823
+[2026-07-18 15:37:49] ReqTimeStats(rid=162630c902154268937210b8e4c0b8e8, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=2058.94ms, forward_duration=22558.26ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=4feb0d84b608426fa46cf2b3254e3a4a, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=2058.91ms, forward_duration=22558.51ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=3e54730e5bb74f76a228958bcf261a97, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=4534.93ms, forward_duration=20082.73ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=a80ccd29b93f44d7ab73eaf7e6911353, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=4534.91ms, forward_duration=20082.97ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=335508479cf046e0ae6c4a4ab902589e, input_len=4214, cached_input_len=1730, output_len=358, type=unified): queue_duration=4886.83ms, forward_duration=19731.29ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=582987ecc5194d348d991f44fb475e6a, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=4886.80ms, forward_duration=19731.56ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=b902edd8322149f8b0bdcb4c85a2abf8, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=4886.78ms, forward_duration=19731.82ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=9f99e8a605ef4368b098b61071b59785, input_len=4214, cached_input_len=4213, output_len=358, type=unified): queue_duration=6238.85ms, forward_duration=18380.00ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=ebbb2adc252b478d91b4d568364337fe, input_len=4214, cached_input_len=4213, output_len=358, type=unified): queue_duration=6238.82ms, forward_duration=18380.27ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=8f91d9e768b444efbdd0fc7d0c72df28, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=6238.79ms, forward_duration=18380.55ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=12c280cb84f4498a872d5c892412fb9f, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=6238.77ms, forward_duration=18380.85ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=e09f373be6634252a12e3b3fe8865a93, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=7666.20ms, forward_duration=16953.66ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=d596630afa124782a37d4666e348f3af, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=7666.17ms, forward_duration=16953.92ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=4286beb99b8d4643bd2b2a321aba603b, input_len=4214, cached_input_len=4213, output_len=358, type=unified): queue_duration=9155.92ms, forward_duration=15464.43ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=556b5a0d4c0348d18686572ee2611430, input_len=4214, cached_input_len=4213, output_len=358, type=unified): queue_duration=9155.90ms, forward_duration=15464.71ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=3df4299759324ccabfccddd9926889fd, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=9155.87ms, forward_duration=15464.95ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=a9ff440c44a340fabe0dd46f02ba20ae, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=9155.85ms, forward_duration=15465.19ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=39fe335a31584d948e9368721641e9ea, input_len=4214, cached_input_len=535, output_len=358, type=unified): queue_duration=10537.89ms, forward_duration=14083.38ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=62084a81bf044e45b92d20b7455fdc37, input_len=4214, cached_input_len=4213, output_len=358, type=unified): queue_duration=10537.84ms, forward_duration=14083.64ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=e9fcec87a3ac4091b5cc0f7e4cb19b3a, input_len=4214, cached_input_len=4213, output_len=358, type=unified): queue_duration=10537.81ms, forward_duration=14083.90ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=9d56650fef6845e1a103c2caced9f1ef, input_len=4214, cached_input_len=4213, output_len=358, type=unified): queue_duration=10537.79ms, forward_duration=14084.17ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=539f1063e43b4957934198605820eadc, input_len=4214, cached_input_len=4213, output_len=358, type=unified): queue_duration=10537.76ms, forward_duration=14084.44ms, entry_time=1784389044.824
+[2026-07-18 15:37:49] ReqTimeStats(rid=50d7303b832f4550b1539ea976476ce4, input_len=4214, cached_input_len=3412, output_len=358, type=unified): queue_duration=10537.74ms, forward_duration=14084.70ms, entry_time=1784389044.825
+[2026-07-18 15:37:49] ReqTimeStats(rid=bd76163a9c574fb3a95eec89829757ed, input_len=4214, cached_input_len=4213, output_len=358, type=unified): queue_duration=12094.27ms, forward_duration=12528.40ms, entry_time=1784389044.825
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45346 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45360 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45262 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45246 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45312 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45276 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45386 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45380 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45282 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45384 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45390 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45332 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45438 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45408 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45352 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45320 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45370 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45422 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45296 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45274 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45404 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45450 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45452 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45466 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45474 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45488 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45500 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45504 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45516 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45532 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45540 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:45548 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:37:49] INFO:     127.0.0.1:52194 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-18 15:38:28] Cache flushed successfully!
+[2026-07-18 15:38:28] INFO:     127.0.0.1:43976 - "POST /flush_cache HTTP/1.1" 200 OK
+[2026-07-18 15:38:29] INFO:     127.0.0.1:43986 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-18 15:38:30] ReqTimeStats(rid=62c45dad4df7447f9a9fe8266bf79d92, input_len=4214, cached_input_len=0, output_len=1, type=unified): queue_duration=0.25ms, forward_duration=918.77ms, entry_time=1784389109.794
+[2026-07-18 15:38:30] Prefill batch, #new-seq: 1, #new-token: 4214, #cached-token: 0, full token usage: 0.05, swa token usage: 0.06, #running-req: 0, #queue-req: 13, #pending-token: 0, cuda graph: False, input throughput (token/s): 80.06
+[2026-07-18 15:38:30] INFO:     127.0.0.1:44066 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:31] ReqTimeStats(rid=98e9c08db0bd4fddb5bb642c6b92fd99, input_len=4214, cached_input_len=0, output_len=1, type=unified): queue_duration=0.73ms, forward_duration=1991.96ms, entry_time=1784389109.958
+[2026-07-18 15:38:31] Prefill batch, #new-seq: 2, #new-token: 8192, #cached-token: 0, full token usage: 0.07, swa token usage: 0.09, #running-req: 1, #queue-req: 10, #pending-token: 55018, cuda graph: False, input throughput (token/s): 6621.44
+[2026-07-18 15:38:31] INFO:     127.0.0.1:44000 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:33] ReqTimeStats(rid=69a62d9361b24e78b465ffe92f23972d, input_len=4214, cached_input_len=0, output_len=1, type=unified): queue_duration=0.66ms, forward_duration=3345.60ms, entry_time=1784389109.958
+[2026-07-18 15:38:33] ReqTimeStats(rid=b6cb722b41ac4af2aece85400449a177, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=762.84ms, forward_duration=2583.54ms, entry_time=1784389109.958
+[2026-07-18 15:38:33] ReqTimeStats(rid=d7221f0655c7458783cd333102e2dd02, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=762.81ms, forward_duration=2583.73ms, entry_time=1784389109.958
+[2026-07-18 15:38:33] Prefill batch, #new-seq: 4, #new-token: 8192, #cached-token: 1605, full token usage: 0.05, swa token usage: 0.07, #running-req: 2, #queue-req: 8, #pending-token: 45221, cuda graph: False, input throughput (token/s): 6050.05
+[2026-07-18 15:38:33] INFO:     127.0.0.1:44002 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:33] INFO:     127.0.0.1:44018 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:33] INFO:     127.0.0.1:44030 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:34] ReqTimeStats(rid=4ea3f00e1b544529a2e1f17475193cb5, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=762.78ms, forward_duration=3892.67ms, entry_time=1784389109.958
+[2026-07-18 15:38:34] ReqTimeStats(rid=6fa1af34e6a547498876cb7ddad5257e, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=1999.24ms, forward_duration=2656.35ms, entry_time=1784389109.958
+[2026-07-18 15:38:34] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.06, swa token usage: 0.07, #running-req: 5, #queue-req: 6, #pending-token: 35959, cuda graph: False, input throughput (token/s): 6257.99
+[2026-07-18 15:38:34] INFO:     127.0.0.1:44042 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:34] INFO:     127.0.0.1:44062 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:35] ReqTimeStats(rid=96682f32531e4185a5abc0b874be37dd, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=1999.21ms, forward_duration=3987.42ms, entry_time=1784389109.958
+[2026-07-18 15:38:35] ReqTimeStats(rid=e65d96fa3b6d45bca2c22944d123eb36, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=3353.24ms, forward_duration=2633.53ms, entry_time=1784389109.958
+[2026-07-18 15:38:35] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.06, swa token usage: 0.08, #running-req: 7, #queue-req: 4, #pending-token: 26697, cuda graph: False, input throughput (token/s): 6153.70
+[2026-07-18 15:38:35] INFO:     127.0.0.1:44048 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:35] INFO:     127.0.0.1:44082 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:37] ReqTimeStats(rid=dd3ec5dc0bcc47cb8d85672f8b894b1a, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=3353.21ms, forward_duration=3984.22ms, entry_time=1784389109.958
+[2026-07-18 15:38:37] ReqTimeStats(rid=50d8f4eebbb1478a9b1f183efe1af47b, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=4662.00ms, forward_duration=2675.59ms, entry_time=1784389109.958
+[2026-07-18 15:38:37] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.07, swa token usage: 0.09, #running-req: 9, #queue-req: 1, #pending-token: 17435, cuda graph: False, input throughput (token/s): 6064.09
+[2026-07-18 15:38:37] INFO:     127.0.0.1:44092 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:37] INFO:     127.0.0.1:44058 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:38] ReqTimeStats(rid=e1572767fb6042638a35a79c1201f349, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=4661.97ms, forward_duration=3962.54ms, entry_time=1784389109.958
+[2026-07-18 15:38:38] ReqTimeStats(rid=93ac1289b35d4695b3dbe14485f13b3f, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=5993.83ms, forward_duration=2630.82ms, entry_time=1784389109.958
+[2026-07-18 15:38:38] ReqTimeStats(rid=fea60c01dd924a478955d4abf58c0870, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=5993.80ms, forward_duration=2630.96ms, entry_time=1784389109.958
+[2026-07-18 15:38:38] Prefill batch, #new-seq: 4, #new-token: 8192, #cached-token: 1605, full token usage: 0.05, swa token usage: 0.06, #running-req: 11, #queue-req: 0, #pending-token: 7638, cuda graph: False, input throughput (token/s): 6363.99
+[2026-07-18 15:38:38] INFO:     127.0.0.1:44016 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:38] INFO:     127.0.0.1:44100 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:38] INFO:     127.0.0.1:44104 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:39] ReqTimeStats(rid=1065360c894e4ef69305d4c9ce3db955, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=5993.78ms, forward_duration=3416.06ms, entry_time=1784389109.958
+[2026-07-18 15:38:39] ReqTimeStats(rid=23cebd1452e74a6e924e3cd336de3856, input_len=4214, cached_input_len=535, output_len=1, type=unified): queue_duration=7343.75ms, forward_duration=2066.24ms, entry_time=1784389109.958
+[2026-07-18 15:38:39] Prefill batch, #new-seq: 2, #new-token: 7103, #cached-token: 535, full token usage: 0.00, swa token usage: 0.00, #running-req: 14, #queue-req: 0, #pending-token: 0, cuda graph: False, input throughput (token/s): 9045.47
+[2026-07-18 15:38:39] INFO:     127.0.0.1:44112 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:39] INFO:     127.0.0.1:44116 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-18 15:38:39] INFO:     127.0.0.1:59932 - "GET /metrics HTTP/1.1" 200 OK
+INSTANCE
+
+==============NVSMI LOG==============
+
+Timestamp                                              : Sat Jul 18 15:39:23 2026
+Driver Version                                         : 580.159.04
+CUDA Version                                           : 13.0
+
+Attached GPUs                                          : 1
+GPU 00000000:8D:00.0
+    Performance State                                  : P0
+    Clocks Event Reasons
+        Idle                                           : Not Active
+        Applications Clocks Setting                    : Not Active
+        SW Power Cap                                   : Not Active
+        HW Slowdown                                    : Not Active
+            HW Thermal Slowdown                        : Not Active
+            HW Power Brake Slowdown                    : Not Active
+        Sync Boost                                     : Not Active
+        SW Thermal Slowdown                            : Not Active
+        Display Clock Setting                          : Not Active
+    Clocks Event Reasons Counters
+        SW Power Capping                               : 43837386 us
+        Sync Boost                                     : 0 us
+        SW Thermal Slowdown                            : 0 us
+        HW Thermal Slowdown                            : 0 us
+        HW Power Braking                               : 0 us
+    Sparse Operation Mode                              : Disabled
+    FB Memory Usage
+        Total                                          : 143771 MiB
+        Reserved                                       : 616 MiB
+        Used                                           : 123952 MiB
+        Free                                           : 19205 MiB
+    BAR1 Memory Usage
+        Total                                          : 262144 MiB
+        Used                                           : 123953 MiB
+        Free                                           : 138191 MiB
+    Conf Compute Protected Memory Usage
+        Total                                          : 0 MiB
+        Used                                           : 0 MiB
+        Free                                           : 0 MiB
+    GPU Power Readings
+        Average Power Draw                             : 114.96 W
+        Instantaneous Power Draw                       : 115.14 W
+        Current Power Limit                            : 700.00 W
+        Requested Power Limit                          : 700.00 W
+        Default Power Limit                            : 700.00 W
+        Min Power Limit                                : 200.00 W
+        Max Power Limit                                : 700.00 W
+    Power Samples
+        Duration                                       : 2.36 sec
+        Number of Samples                              : 119
+        Max                                            : 115.26 W
+        Min                                            : 114.62 W
+        Avg                                            : 114.97 W
+    GPU Memory Power Readings 
+        Average Power Draw                             : 41.38 W
+        Instantaneous Power Draw                       : N/A
+    Module Power Readings
+        Average Power Draw                             : N/A
+        Instantaneous Power Draw                       : N/A
+        Current Power Limit                            : N/A
+        Requested Power Limit                          : N/A
+        Default Power Limit                            : N/A
+        Min Power Limit                                : N/A
+        Max Power Limit                                : N/A
+

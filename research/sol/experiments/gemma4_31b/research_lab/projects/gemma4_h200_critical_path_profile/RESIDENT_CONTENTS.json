@@ -1,0 +1,10 @@
+{
+  "artifacts": "Remote /home/glmrunner/gemma-generation-equivalence/critical-path-run and critical-path-discriminator retained; retrieved project-local.",
+  "checkpoint": "Exact bound checkpoint remains at /home/glmrunner/gemma-generation-equivalence/checkpoint; no transfer replayed.",
+  "image": "Pinned immutable SGLang v0.5.12 image remains resident.",
+  "model": "google/gemma-4-31B-it",
+  "project": "gemma4_h200_critical_path_profile",
+  "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "runtime": "SGLang v0.5.12 BF16 weights / FP8-E5M2 KV, context 5000, max-running-requests 32, CUDA graphs through bs32, metrics enabled.",
+  "server_state": "Healthy and ready on port 30000; exact c16/c32 profile completed. Profiler endpoint rejected one decode-stage request (HTTP 400) but server remained healthy; no maintenance required."
+}

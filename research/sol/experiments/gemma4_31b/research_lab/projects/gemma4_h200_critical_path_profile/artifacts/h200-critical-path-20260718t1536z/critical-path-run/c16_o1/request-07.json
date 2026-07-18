@@ -1,0 +1,12 @@
+{
+  "completion_tokens": 1,
+  "ended_monotonic_s": 8408.040177955,
+  "error": null,
+  "index": 7,
+  "prompt_tokens": 4214,
+  "request_sha256": "201425e658c6788f6697a76c259c698879be40bf17850162c01c6ea085f9642f",
+  "response_sha256": "6d8e11c7ff588242c55a4de4e21b47ced08874212fde9144c48b6cc8ca4ad132",
+  "started_monotonic_s": 8390.349848578,
+  "text_nonempty": true,
+  "wall_seconds": 17.690329376999216
+}

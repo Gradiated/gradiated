@@ -1,0 +1,11 @@
+{
+  "active_session": null,
+  "authorized_spend_usd": 2.25,
+  "next_action": "Closed measured profile: reclassify the old 0.363303 s/request c32 artifact as a fully cache-read lower bound. If the director continues this line, run exact-distinct c48/c64 to test further decode weight-stream amortization, then admit FP8 weight-GEMM work only if batching saturates.",
+  "priority": 500,
+  "provider_spend_usd": 0.40721594761666674,
+  "researcher_profile": "deep",
+  "status": "complete",
+  "summary": "Exact cache-flushed c16/c32 profile passed: decode is largest but nearly tied with prefill; warmed output scaling assigns 49.8% of c16 batch wall to decode, and the prior economic comparator is a fully cache-read lower bound.",
+  "terminal_artifact": "PROFILE_SUMMARY.json"
+}

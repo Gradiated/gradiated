@@ -1,0 +1,38 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": null,
+  "contents": {
+    "artifacts": "Retrieved under projects/gemma4_h200_trtllm_decode_backend_endpoint/artifacts/trtllm-decode-c32-20260718t1937z/.",
+    "caches": "SGLang CUDA graphs through bs48 remain resident; the canonical capture passed 17,120 cached / 117,728 fresh accounting, but its post-run cache is hot and must be explicitly flushed before a new exact-mix consumer.",
+    "checkpoint": "Exact eight-file BF16 checkpoint remains at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
+    "export": "No validated content-addressed export recorded.",
+    "image": "Pinned SGLang v0.5.12 image remains resident.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_h200_trtllm_decode_backend_endpoint",
+    "runtime": "SGLang TRTLLM-MHA decode terminal owner_failure",
+    "server_state": "retain healthy candidate container for reuse"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "idle_since": "2026-07-18T19:45:04.997224Z",
+  "lifecycle": {
+    "deadline_utc": "2026-07-18T20:55:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-modelopt-export-h200-202607181843z-watchdog.service",
+      "main_pid": "2568539",
+      "unit": "gemma-modelopt-export-h200-202607181843z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-18T16:35:57.440790Z",
+  "resource": {
+    "disk_id": "computedisk-e00y9hv4e79xdh2g7b",
+    "disk_name": "gemma-attention-endpoint-h200-20260718163352-boot",
+    "instance_id": "computeinstance-e00vbbb709tzxscaan",
+    "instance_name": "gemma-attention-endpoint-h200-20260718163352"
+  },
+  "status": "available",
+  "updated_at": "2026-07-18T19:45:04.997224Z"
+}

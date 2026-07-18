@@ -1,0 +1,20 @@
+{
+  "cache_accounting": null,
+  "candidate": null,
+  "classification": "startup_failure",
+  "comparator_service_seconds_per_request": 0.9194573941250042,
+  "comparator_sha256": "1a7e778eff080bf2eec27da939ea85a894ea9884036bdebd562af371405e78c3",
+  "owner_terminal": {
+    "classification": "startup_failure",
+    "message": "server_not_ready; FlashInfer TRTLLM XQA rejects Gemma 4 head_dim 512 (supported range 16-256)",
+    "pass": false,
+    "timestamp": "2026-07-18T19:45:03.873635Z"
+  },
+  "pass": false,
+  "promotion_ceiling_seconds_per_request": 0.8734845244187539,
+  "remote_exit": 71,
+  "runner_sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+  "schema_version": 1,
+  "service_seconds_per_request_reduction": null,
+  "status": "terminal"
+}

@@ -1,0 +1,81 @@
+{
+  "status": "complete",
+  "priority": 610,
+  "researcher_profile": "deep",
+  "summary": "Closed: head-256 materially reduced measured QKV/O and cached-prefix Triton prompt work, but the mandatory exact page-64 FP8-E5M2 FlashInfer TRTLLM XQA call faulted with a CUDA illegal address before its numerical oracle, so the backend/model proxy is inadmissible.",
+  "next_action": "Return the typed negative to the director; do not extend this architecture/backend line on the pinned SGLang/FlashInfer stack.",
+  "authorized_spend_usd": 3.25,
+  "provider_spend_usd": 0.6144132360166665,
+  "active_session": null,
+  "bench_id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "claim_deadline_utc": "2026-07-18T22:20:00Z",
+  "lifecycle_deadline_utc": "2026-07-18T22:30:00Z",
+  "budgets": {
+    "wall_clock_minutes": 70,
+    "h200_compute_minutes": 70,
+    "temporary_storage_gib": 5,
+    "provider_spend_usd": 3.25,
+    "retrieval_release_reserve_minutes": 10
+  },
+  "decision_gate": {
+    "canonical_service_seconds_per_request": 0.9194573941250042,
+    "minimum_measured_savings_seconds_per_request": 0.04597286970625021,
+    "minimum_fractional_savings": 0.05,
+    "candidate_kernel_must_be_supported": true,
+    "candidate_kernel_must_avoid_dense_kv_repetition": true,
+    "candidate_oracle_must_pass": true,
+    "quality_claim_authorized": false
+  },
+  "geometry": {
+    "hidden_size": 5376,
+    "num_layers": 60,
+    "global_layers": 10,
+    "local_layers": 50,
+    "query_heads": 32,
+    "global_kv_heads": 4,
+    "local_kv_heads": 16,
+    "current_global_head_dim": 512,
+    "candidate_global_head_dim": 256,
+    "local_head_dim": 256,
+    "sliding_window": 1024,
+    "peak_global_context": 4571,
+    "concurrency": 32,
+    "prompt_tokens_per_request": 4214,
+    "output_tokens_per_request": 358,
+    "cached_prompt_fraction": 0.127
+  },
+  "bound_identities": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "model_config": "../sglang_gemma4_exact_precreate_binding/probes/hf/config.json",
+    "model_config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "image": "sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a",
+    "checkpoint": "eight files, 62578655208 bytes, /home/glmrunner/gemma-attention-endpoint/checkpoint",
+    "canonical_terminal": "../gemma4_h200_fused_qk_norm_rope_endpoint/artifacts/fused-qk-norm-rope-c32-canonical-20260718t1817z/TERMINAL.json",
+    "canonical_terminal_sha256": "1a7e778eff080bf2eec27da939ea85a894ea9884036bdebd562af371405e78c3",
+    "trtllm_terminal": "../gemma4_h200_trtllm_decode_backend_endpoint/artifacts/trtllm-decode-c32-20260718t1937z/TERMINAL.json",
+    "trtllm_terminal_sha256": "b6b16097bd57aec0fc816f081b521211186291b5803ca8923106798a86578dbf",
+    "sdpa_result": "../gemma4_precision_hardware_frontier/artifacts/20260718t1619z-h200-sdpa-discriminator-canonical/RESULT.json",
+    "sdpa_result_sha256": "92fa69d260407343a2d9defe742e61a89d33068644bc8896774fdffde059e01c",
+    "compute_result": "../gemma4_precision_hardware_frontier/artifacts/20260718t1611z-h200-e4m3-compute-bf16-kv/RESULT.json",
+    "compute_result_sha256": "02b833cdaa6878816b350ca7cae6982e203fb91a98bdabde2e604d91f66d624a"
+  },
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-global-head256-h200-202607182110z-watchdog.service",
+    "main_pid": "2626523",
+    "unit": "gemma-global-head256-h200-202607182110z-watchdog.service",
+    "deadline_utc": "2026-07-18T22:30:00Z"
+  },
+  "terminal": {
+    "classification": "candidate_xqa_runtime_failure",
+    "decision": "close_architecture_backend_line",
+    "result": "artifacts/global-head256-xqa-20260718t2130z/RESULT.json",
+    "candidate_kernel_supported": false,
+    "candidate_oracle_pass": false,
+    "measured_partial_savings_seconds_per_request": 0.08169989766753512,
+    "savings_gate_evaluable": false,
+    "claim_started_utc": "2026-07-18T21:15:31.978265Z",
+    "claim_released_utc": "2026-07-18T21:30:31.119586Z",
+    "claim_exposure_seconds": 899.141321,
+    "provider_spend_evidence": "derived from 899.141321 claimed seconds at the bench's measured $2.46/hour rate"
+  }
+}

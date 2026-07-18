@@ -1,0 +1,58 @@
+{
+  "status": "terminal",
+  "priority": 520,
+  "researcher_profile": "execution",
+  "summary": "Terminal producer failure: official ModelOpt 0.44 calibrated the exact Gemma 4 checkpoint successfully but could not serialize it into a deployable HF ModelOpt export, so no endpoint comparison exists.",
+  "next_action": "Closed for the bound runtime. Do not invent an exporter, tune the recipe/calibration, rerun the comparator, launch an endpoint without a valid export, or nominate L40S. Reopen only for a separately admitted producer/runtime with explicit Gemma 4 export support.",
+  "authorized_spend_usd": 5.5,
+  "provider_spend_usd": 0.764,
+  "active_session": null,
+  "terminal": {
+    "classification": "producer_failure",
+    "artifact": "artifacts/modelopt-fp8-export-c32-20260718t1900z/RESULT.json",
+    "official_quantization_completed": true,
+    "deployable_export_files": 0,
+    "consumer_started": false,
+    "exact_mix_invocations": 0,
+    "endpoint_comparison_valid": false,
+    "l40s_nomination_supported": false
+  },
+  "bench_id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "claim_deadline_utc": "2026-07-18T20:45:00Z",
+  "lifecycle_deadline_utc": "2026-07-18T20:55:00Z",
+  "budgets": {
+    "wall_clock_minutes": 122,
+    "h200_compute_minutes": 105,
+    "additional_temporary_storage_gib": 120,
+    "provider_spend_usd": 5.5,
+    "retrieval_release_reserve_minutes": 10
+  },
+  "comparator": {
+    "artifact": "../gemma4_h200_fused_qk_norm_rope_endpoint/artifacts/fused-qk-norm-rope-c32-canonical-20260718t1817z/TERMINAL.json",
+    "sha256": "1a7e778eff080bf2eec27da939ea85a894ea9884036bdebd562af371405e78c3",
+    "service_seconds_per_request": 0.9194573941250042,
+    "promotion_ceiling_seconds_per_request": 0.8734845244187539,
+    "cached_prompt_tokens": 17120,
+    "fresh_prompt_tokens": 117728
+  },
+  "candidate": {
+    "intervention": "supported offline ModelOpt E4M3 compute export consumed by pinned SGLang",
+    "base_configuration": "dynamic chunking 2048 plus fused QK normalization/RoPE, c32, FP8-E5M2 KV",
+    "concurrency": 32,
+    "prompt_tokens_per_request": 4214,
+    "output_tokens_per_request": 358,
+    "cache_read_fraction": 0.1269577598481253
+  },
+  "bound_identities": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a",
+    "checkpoint": "eight files, 62578655208 bytes, /home/glmrunner/gemma-attention-endpoint/checkpoint",
+    "runner_sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+    "e4m3_component_result_sha256": "02b833cdaa6878816b350ca7cae6982e203fb91a98bdabde2e604d91f66d624a",
+    "online_unsupported_terminal_sha256": "119d5954c784968bc0dbe9d08936f3600409872936faec1d81e1a3a26cbd8513"
+  },
+  "watchdog": {
+    "unit": "gemma-modelopt-export-h200-202607181843z-watchdog.service",
+    "deadline_utc": "2026-07-18T20:55:00Z"
+  }
+}

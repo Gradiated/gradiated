@@ -1,0 +1,942 @@
+        """A source for weights."""
+
+        model_or_path: str
+        """The model ID or path."""
+
+        revision: Optional[str]
+        """The optional model revision."""
+
+        prefix: str = ""
+        """A prefix to prepend to all weights."""
+
+        fall_back_to_pt: bool = True
+        """Whether .pt weights can be used."""
+
+        model_config: Optional["ModelConfig"] = None
+        """The model configuration (for checking architecture, etc)."""
+
+        @classmethod
+        def init_new(cls, model_config: ModelConfig, model):
+            model_weights = model_config.model_path
+            if hasattr(model_config, "model_weights"):
+                model_weights = model_config.model_weights
+            return cls(
+                model_weights,
+                model_config.revision,
+                prefix="",
+                fall_back_to_pt=getattr(model, "fall_back_to_pt_during_load", True),
+                model_config=model_config,
+            )
+
+    def __init__(self, load_config: LoadConfig):
+        super().__init__(load_config)
+        extra_config = load_config.model_loader_extra_config
+        allowed_keys = {"distributed", "concurrency", "memory_limit"}
+        unexpected_keys = set(extra_config.keys()) - allowed_keys
+
+        if unexpected_keys:
+            raise ValueError(
+                f"Unexpected extra config keys for load format "
+                f"{load_config.load_format}: "
+                f"{unexpected_keys}"
+            )
+
+        set_runai_streamer_env(load_config)
+
+        self._is_distributed = None
+        if load_config.model_loader_extra_config:
+            extra_config = load_config.model_loader_extra_config
+
+            if "distributed" in extra_config and isinstance(
+                extra_config.get("distributed"), bool
+            ):
+                self._is_distributed = extra_config.get("distributed")
+
+    def _prepare_weights(
+        self, model_name_or_path: str, revision: Optional[str]
+    ) -> Tuple[str, List[str]]:
+        """Prepare weights for the model.
+
+        If the model is not local, it will be downloaded."""
+        from sglang.srt.utils.runai_utils import is_runai_obj_uri, list_safetensors
+
+        is_object_storage_path = is_runai_obj_uri(model_name_or_path)
+        if self._is_distributed is None:
+            self._is_distributed = is_object_storage_path
+        is_local = os.path.isdir(model_name_or_path)
+        safetensors_pattern = "*.safetensors"
+        index_file = SAFE_WEIGHTS_INDEX_NAME
+
+        hf_folder = (
+            model_name_or_path
+            if (is_local or is_object_storage_path)
+            else download_weights_from_hf(
+                model_name_or_path,
+                self.load_config.download_dir,
+                [safetensors_pattern],
+                revision,
+                ignore_patterns=self.load_config.ignore_patterns,
+            )
+        )
+
+        server_args = get_global_server_args()
+        if server_args and server_args.model_checksum is not None:
+            from sglang.srt.utils.model_file_verifier import verify
+
+            checksums_source = server_args.model_checksum or model_name_or_path
+            verify(model_path=hf_folder, checksums_source=checksums_source)
+
+        hf_weights_files = list_safetensors(path=hf_folder)
+
+        # For models like Mistral-7B-Instruct-v0.3
+        # there are both sharded safetensors files and a consolidated
+        # safetensors file. Using both breaks.
+        # Here, we download the `model.safetensors.index.json` and filter
+        # any files not found in the index.
+        if not is_local and not is_object_storage_path:
+            download_safetensors_index_file_from_hf(
+                model_name_or_path,
+                index_file,
+                self.load_config.download_dir,
+                revision,
+            )
+        hf_weights_files = filter_duplicate_safetensors_files(
+            hf_weights_files, hf_folder, index_file
+        )
+
+        if len(hf_weights_files) == 0:
+            raise RuntimeError(
+                f"Cannot find any model weights with `{model_name_or_path}`"
+            )
+
+        return hf_folder, hf_weights_files
+
+    def _get_weights_iterator(
+        self, source: "Source"
+    ) -> Generator[Tuple[str, torch.Tensor], None, None]:
+        """Get an iterator for the model weights based on the load format."""
+        from sglang.srt.model_loader.weight_utils import (
+            runai_safetensors_weights_iterator,
+        )
+
+        hf_folder, hf_weights_files = self._prepare_weights(
+            source.model_or_path, source.revision
+        )
+
+        if source.model_config is not None:
+            hf_weights_files = maybe_add_mtp_safetensors(
+                hf_weights_files,
+                hf_folder,
+                "model.safetensors.index.json",
+                source.model_config.hf_config,
+            )
+
+        weights_iterator = runai_safetensors_weights_iterator(
+            hf_weights_files, self._is_distributed, self.target_device_str
+        )
+
+        if self.load_config.draft_model_idx is not None:
+            import re
+
+            def filter_weights(original_weights_iterator):
+                pattern = r"model.mtp.layers.(\d+)."
+                for name, tensor in original_weights_iterator:
+                    group = re.match(pattern, name)
+                    if group is not None:
+                        idx = int(group.group(1))
+                        if idx != self.load_config.draft_model_idx:
+                            continue
+                        new_name = name.replace(group.group(), "model.mtp.layers.0.")
+                    else:
+                        new_name = name
+                    yield (new_name, tensor)
+
+            weights_iterator = filter_weights(weights_iterator)
+
+        def apply_prefix(original_weights_iterator):
+            yield from (
+                (source.prefix + name, tensor)
+                for (name, tensor) in original_weights_iterator
+            )
+
+        return apply_prefix(weights_iterator)
+
+    def _get_all_weights(
+        self,
+        model_config: ModelConfig,
+        model: nn.Module,
+    ) -> Generator[Tuple[str, torch.Tensor], None, None]:
+
+        primary_weights = RunaiModelStreamerLoader.Source.init_new(model_config, model)
+        yield from self._get_weights_iterator(primary_weights)
+
+        secondary_weights = cast(
+            Iterable[RunaiModelStreamerLoader.Source],
+            getattr(model, "secondary_weights", ()),
+        )
+        for source in secondary_weights:
+            yield from self._get_weights_iterator(source)
+
+    def download_model(self, model_config: ModelConfig) -> None:
+        self._prepare_weights(model_config.model_path, model_config.revision)
+
+    def load_model(
+        self,
+        *,
+        model_config: ModelConfig,
+        device_config: DeviceConfig,
+    ) -> nn.Module:
+
+        if hasattr(model_config, "modelopt_quant") and model_config.modelopt_quant:
+            # Load base model using shared method
+            raise NotImplementedError(
+                "Runai Model Streamer Loader does not support ModelOpt quantization yet"
+            )
+
+        assert device_config.device_type in ("cuda", "cpu"), (
+            f"Runai Model Streamer only supports CUDA and CPU, "
+            f"got {device_config.device_type}"
+        )
+
+        if device_config.device_type == "cuda":
+            self.target_device_str = (
+                device_config.device_type + ":" + str(device_config.gpu_id)
+            )
+        else:
+            self.target_device_str = "cpu"
+
+        target_device = torch.device(device_config.device)
+        quant_config = _get_quantization_config(model_config, self.load_config)
+        with set_default_torch_dtype(model_config.dtype):
+            with target_device:
+                model = _initialize_model(
+                    model_config,
+                    self.load_config,
+                    quant_config,
+                )
+
+            DefaultModelLoader.load_weights_and_postprocess(
+                model, self._get_all_weights(model_config, model), target_device
+            )
+
+        return model.eval()
+
+
+def get_model_loader(
+    load_config: LoadConfig, model_config: Optional[ModelConfig] = None
+) -> BaseModelLoader:
+    """Get a model loader based on the load format."""
+
+    if load_config.load_format == LoadFormat.DUMMY:
+        return DummyModelLoader(load_config)
+
+    # ModelOptModelLoader's local-copy quantize-and-export workflow doesn't apply
+    # to RUNAI_STREAMER, which streams weights directly from object storage.
+    # RUNAI_STREAMER loads always fall through to the unconditional branch at
+    # the bottom of this function. This also avoids calling _is_already_quantized()
+    # on RunAI streamer cache paths, where huggingface_hub raises HFValidationError.
+    model_optloader_allowed = (
+        model_config and load_config.load_format != LoadFormat.RUNAI_STREAMER
+    )
+
+    if model_optloader_allowed and (
+        (hasattr(model_config, "modelopt_quant") and model_config.modelopt_quant)
+        or model_config.quantization
+        in ["modelopt_fp8", "modelopt_fp4", "modelopt_mixed", "modelopt"]
+    ):
+        logger.info("Using ModelOptModelLoader due to ModelOpt quantization config.")
+        return ModelOptModelLoader(load_config)
+
+    # Use ModelOptModelLoader for unified quantization flags
+    if (
+        model_optloader_allowed
+        and hasattr(model_config, "quantization")
+        and model_config.quantization
+        in ["modelopt_fp8", "modelopt_fp4", "modelopt_mixed"]
+    ):
+        if model_config._is_already_quantized():
+            logger.info(
+                f"Using ModelOptModelLoader for pre-quantized model: {model_config.quantization}"
+            )
+        else:
+            logger.info(
+                f"Using ModelOptModelLoader for quantization: {model_config.quantization}"
+            )
+        return ModelOptModelLoader(load_config)
+
+    if isinstance(load_config.load_format, type):
+        return load_config.load_format(load_config)
+
+    if load_config.load_format == LoadFormat.SHARDED_STATE:
+        return ShardedStateLoader(load_config)
+
+    if load_config.load_format == LoadFormat.BITSANDBYTES:
+        return BitsAndBytesModelLoader(load_config)
+
+    if load_config.load_format == LoadFormat.GGUF:
+        return GGUFModelLoader(load_config)
+
+    if load_config.load_format == LoadFormat.LAYERED:
+        return LayeredModelLoader(load_config)
+
+    # Check for FLASH_RL format early
+    # FP8 approach: BF16/FP16 model with native FP8 quantization
+    if load_config.load_format == LoadFormat.FLASH_RL:
+        logger.info(
+            "Using QuantizedRLModelLoader for RL training with native FP8 quantization."
+        )
+        logger.info(
+            "FP8 approach: Model loads with native SGLang FP8 quantization. "
+            "Same model path for both training and inference."
+        )
+
+        # Set quantization to FP8 for native SGLang support
+        if model_config and not model_config.quantization:
+            logger.info(
+                "QuantizedRL: Setting quantization to fp8 (native SGLang support). "
+                "Model will be loaded with FP8 infrastructure"
+            )
+            model_config.quantization = "fp8"
+
+        return QuantizedRLModelLoader(load_config)
+
+    if load_config.load_format == LoadFormat.REMOTE:
+        return RemoteModelLoader(load_config)
+
+    if load_config.load_format == LoadFormat.REMOTE_INSTANCE:
+        return RemoteInstanceModelLoader(load_config)
+
+    if load_config.load_format == LoadFormat.PRIVATE:
+        import importlib
+
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+# Adapted from https://github.com/vllm-project/vllm/blob/main/vllm/model_executor/layers/quantization/modelopt.py
+from __future__ import annotations
+
+import logging
+from enum import IntEnum
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+import regex as re
+import torch
+from torch.nn.parameter import Parameter
+
+from sglang.srt.distributed import get_tp_group
+from sglang.srt.distributed.device_communicators.pynccl_allocator import (
+    use_symmetric_memory,
+)
+from sglang.srt.environ import envs
+from sglang.srt.layers.dp_attention import is_allocation_symmetric
+from sglang.srt.layers.moe import (
+    MoeRunner,
+    MoeRunnerBackend,
+    MoeRunnerConfig,
+    get_moe_a2a_backend,
+    get_moe_runner_backend,
+)
+from sglang.srt.layers.moe.cutlass_moe_params import CutlassMoEParams, CutlassMoEType
+from sglang.srt.layers.moe.moe_runner.triton import TritonMoeQuantInfo
+from sglang.srt.layers.moe.utils import (
+    is_flashinfer_cutedsl_v1_path,
+    should_use_flashinfer_cutlass_moe_fp4_allgather,
+)
+from sglang.srt.layers.parameter import ModelWeightParameter, PerTensorScaleParameter
+from sglang.srt.layers.quantization.base_config import (
+    FusedMoEMethodBase,
+    LinearMethodBase,
+    QuantizationConfig,
+    QuantizeMethodBase,
+)
+from sglang.srt.layers.quantization.fp4_utils import (
+    fp4_quantize,
+    get_fp4_gemm_runner_backend,
+)
+from sglang.srt.layers.quantization.fp8_kernel import scaled_fp8_quant
+from sglang.srt.layers.quantization.fp8_utils import (
+    apply_fp8_linear,
+    cutlass_fp8_supported,
+    is_blackwell_supported,
+)
+from sglang.srt.layers.quantization.kv_cache import BaseKVCacheMethod
+from sglang.srt.layers.quantization.unquant import UnquantizedLinearMethod
+from sglang.srt.layers.quantization.utils import (
+    convert_to_channelwise,
+    is_layer_skipped,
+    per_tensor_dequantize,
+    requantize_with_max_scale,
+    swizzle_blockscale,
+)
+from sglang.srt.layers.radix_attention import RadixAttention
+from sglang.srt.layers.utils import alias_or_bind_derived_param, copy_or_rebind_param
+from sglang.srt.utils.common import (
+    is_cuda,
+    is_sm120_supported,
+    next_power_of_2,
+)
+from sglang.srt.utils.custom_op import register_custom_op
+from sglang.srt.utils.patch_torch import register_fake_if_exists
+
+if TYPE_CHECKING:
+    from sglang.srt.batch_overlap.single_batch_overlap import DownGemmOverlapArgs
+    from sglang.srt.layers.moe.fused_moe_triton.layer import FusedMoE
+    from sglang.srt.layers.moe.token_dispatcher import (
+        CombineInput,
+        StandardDispatchOutput,
+    )
+    from sglang.srt.models.utils import WeightsMapper
+
+try:
+    from flashinfer import mm_fp4 as flashinfer_fp4_gemm
+    from flashinfer import reorder_rows_for_gated_act_gemm, shuffle_matrix_sf_a
+
+    enable_flashinfer_fp4_gemm = True
+except ImportError:
+    enable_flashinfer_fp4_gemm = False
+    reorder_rows_for_gated_act_gemm = None
+    shuffle_matrix_a = None
+    shuffle_matrix_sf_a = None
+
+if is_cuda():
+    try:
+        from sglang.jit_kernel.nvfp4 import cutlass_scaled_fp4_mm as cutlass_fp4_gemm
+    except ImportError:
+        cutlass_fp4_gemm = None
+else:
+    cutlass_fp4_gemm = None
+
+try:
+    from flashinfer.fused_moe import cutlass_fused_moe as flashinfer_cutlass_fused_moe
+    from flashinfer.fused_moe.core import ActivationType
+except ImportError:
+    flashinfer_cutlass_fused_moe = None
+
+    # Define a minimal ActivationType enum if flashinfer is not available
+    class ActivationType(IntEnum):
+        Swiglu = 3
+        Relu2 = 6
+
+
+# Initialize logger for the module
+logger = logging.getLogger(__name__)
+
+
+def _sglang_fp4_gemm_fake(
+    input: torch.Tensor,
+    weight: torch.Tensor,
+    input_sf: torch.Tensor,
+    weight_sf: torch.Tensor,
+    alpha: torch.Tensor,
+    out_dtype: torch.dtype,
+    out_features: int,
+) -> torch.Tensor:
+    M = input.shape[-2]
+    N = int(out_features)
+    return input.new_empty((M, N), dtype=out_dtype)
+
+
+@register_custom_op(fake_impl=_sglang_fp4_gemm_fake)
+def fp4_gemm(
+    input: torch.Tensor,
+    weight: torch.Tensor,
+    input_sf: torch.Tensor,
+    weight_sf: torch.Tensor,
+    alpha: torch.Tensor,
+    out_dtype: torch.dtype,
+    out_features: int,
+) -> torch.Tensor:
+    fp4_backend = get_fp4_gemm_runner_backend()
+    if fp4_backend.is_cutlass() and cutlass_fp4_gemm is not None:
+        # flashinfer.fp4_quantize returns scale factors as uint8 (e4m3fn bits
+        # stored in uint8 memory). The JIT kernel requires float8_e4m3fn dtype.
+        if input_sf.dtype != torch.float8_e4m3fn:
+            input_sf = input_sf.view(torch.float8_e4m3fn)
+        if weight_sf.dtype != torch.float8_e4m3fn:
+            weight_sf = weight_sf.view(torch.float8_e4m3fn)
+        return cutlass_fp4_gemm(input, weight, input_sf, weight_sf, alpha, out_dtype)
+    elif enable_flashinfer_fp4_gemm:
+        # Use the remapping logic to convert SGLang backend names to FlashInfer API names
+        backend = fp4_backend.get_flashinfer_backend()
+        return flashinfer_fp4_gemm(
+            input, weight, input_sf, weight_sf, alpha, out_dtype, backend=backend
+        )
+    else:
+        return cutlass_fp4_gemm(input, weight, input_sf, weight_sf, alpha, out_dtype)
+
+
+if is_cuda() and (not is_sm120_supported()) and (fp4_quantize is not None):
+
+    @register_fake_if_exists("sgl_kernel::scaled_fp4_quant")
+    def _sgl_kernel_scaled_fp4_quant_fake(
+        output, input, output_scale, input_global_scale
+    ):
+        return
+
+
+# FP4 GEMM alignment constant - CUTLASS/FlashInfer kernels require dimensions divisible by 32
+FP4_GEMM_ALIGNMENT = 32
+
+
+def round_up_to_multiple(x: int, m: int) -> int:
+    """Round up x to the nearest multiple of m."""
+    return (x + m - 1) // m * m
+
+
+def pad_nvfp4_weight(
+    weight: torch.Tensor,
+    n_alignment: int = FP4_GEMM_ALIGNMENT,
+    k_alignment: int = FP4_GEMM_ALIGNMENT,
+) -> tuple[torch.Tensor, int]:
+    """
+    Pad packed NVFP4 weights to satisfy alignment constraints for FP4 GEMM kernels.
+
+    Different backends have different alignment requirements:
+    - CUTLASS/cuDNN: N % 32 == 0, K % 32 == 0
+    - TRTLLM: N % 128 == 0 (for shuffle_matrix_sf_a), K padding handled separately
+
+    Args:
+        weight: Packed FP4 weight tensor of shape [N, K//2] (2 FP4 values per byte)
+        n_alignment: Required alignment for N dimension (default 32, use 128 for TRTLLM)
+        k_alignment: Required alignment for K dimension (default 32, use 0 to skip)
+
+    Returns:
+        Tuple of (padded_weight, weights_padding_cols) where weights_padding_cols
+        is the number of columns added for K-dimension padding (in bytes).
+    """
+    weight_current_rows = weight.shape[0]  # N dimension
+    weight_current_col_bytes = weight.shape[1]  # K//2 (packed)
+
+    # Calculate padding for N dimension (rows)
+    pad_rows = 0
+    if n_alignment > 0 and weight_current_rows % n_alignment != 0:
+        total_rows = round_up_to_multiple(weight_current_rows, n_alignment)
+        pad_rows = total_rows - weight_current_rows
+
+    # Calculate padding for K dimension (columns)
+    # 2 FP4 items are packed per byte in the input dimension
+    weight_current_col_elements = weight_current_col_bytes * 2
+    pad_cols_bytes = 0
+    if k_alignment > 0 and weight_current_col_elements % k_alignment != 0:
+        total_cols = round_up_to_multiple(weight_current_col_elements, k_alignment)
+        pad_cols = total_cols - weight_current_col_elements
+        # pad_cols is in elements, but padding is in bytes (2 elements per byte)
+        pad_cols_bytes = pad_cols // 2
+
+    # Apply padding in a single operation if needed
+    # For 2D tensor, pad argument is (pad_left, pad_right, pad_top, pad_bottom)
+    if pad_rows > 0 or pad_cols_bytes > 0:
+        weight = torch.nn.functional.pad(
+            weight, (0, pad_cols_bytes, 0, pad_rows)
+        ).contiguous()
+
+    return weight, pad_cols_bytes
+
+
+def pad_nvfp4_activation_for_cutlass(
+    x_fp4: torch.Tensor,
+    weights_padding_cols: int,
+) -> torch.Tensor:
+    """
+    Pad packed FP4 activations to match the K-dimension padding applied to weights.
+
+    Args:
+        x_fp4: Packed FP4 activation tensor
+        weights_padding_cols: Number of padding columns (in bytes) from weight padding
+
+    Returns:
+        Padded activation tensor
+    """
+    if weights_padding_cols > 0:
+        return torch.nn.functional.pad(x_fp4, (0, weights_padding_cols)).contiguous()
+    return x_fp4
+
+
+def slice_nvfp4_output(
+    out: torch.Tensor,
+    output_size: int,
+) -> torch.Tensor:
+    """
+    Slice the output tensor to remove padding in N dimension if weight was padded.
+
+    Args:
+        out: Output tensor from FP4 GEMM
+        output_size: Original output size before padding
+
+    Returns:
+        Sliced output tensor with padding removed
+    """
+    if out.shape[-1] != output_size:
+        return out[..., :output_size].contiguous()
+    return out
+
+
+# TODO make it true by default when the DeepEP PR is merged
+MOE_NVFP4_DISPATCH = envs.SGLANG_MOE_NVFP4_DISPATCH.get()
+# Supported activation schemes for the current configuration
+ACTIVATION_SCHEMES = ["static"]
+
+ACT_STR_TO_TYPE_MAP = {
+    "silu": ActivationType.Swiglu,  # This is the default
+    "relu2": ActivationType.Relu2,
+}
+
+
+class ModelOptQuantConfig(QuantizationConfig):
+    def __init__(
+        self,
+        kv_cache_quant_algo: Optional[str],
+        exclude_modules: Optional[List[str]],
+        packed_modules_mapping: Optional[Dict[str, List[str]]],
+    ):
+        super().__init__()
+        self.packed_modules_mapping = packed_modules_mapping
+        self.exclude_modules = exclude_modules or []
+        self.kv_cache_quant_algo = kv_cache_quant_algo
+
+    def _get_quant_method(
+        self,
+        layer: torch.nn.Module,
+        prefix: str,
+        *,
+        Linear: type[LinearMethodBase],
+        Moe: type[FusedMoEMethodBase],
+    ) -> Optional[QuantizeMethodBase]:
+        from sglang.srt.layers.linear import LinearBase
+        from sglang.srt.layers.moe.fused_moe_triton import FusedMoE
+
+        if isinstance(layer, LinearBase):
+            if is_layer_skipped(
+                prefix, self.exclude_modules, self.packed_modules_mapping
+            ) or self.is_layer_excluded(prefix):
+                return UnquantizedLinearMethod()
+            return Linear(self)
+        elif self.kv_cache_quant_algo and isinstance(layer, RadixAttention):
+            return ModelOptFp8KVCacheMethod(self)
+        elif isinstance(layer, FusedMoE):
+            # Check if MoE layer should be excluded from quantization
+            # (e.g., MTP layers that have no quantization scales in checkpoint)
+            if self.is_layer_excluded(prefix):
+                # Falls back to default unquantized MoE
+                return None
+            return Moe(self)
+        return None
+
+    @classmethod
+    def get_config_filenames(cls) -> List[str]:
+        return ["hf_quant_config.json"]
+
+    def get_scaled_act_names(self) -> List[str]:
+        return []
+
+    def apply_weight_name_mapper(
+        self, hf_to_sglang_mapper: "WeightsMapper"
+    ):  # noqa: B027
+        # Map excluded module patterns from HF layout to sglang layout.
+        # Ref: HF hf_quant_config.json for nvidia/Kimi-K2.5-NVFP4
+        # https://huggingface.co/nvidia/Kimi-K2.5-NVFP4/blob/main/hf_quant_config.json
+        if self.exclude_modules:
+            mapped = hf_to_sglang_mapper.apply_list(self.exclude_modules)
+            expanded: List[str] = []
+            for name in mapped:
+                expanded.append(name)
+                if name.startswith("language_model."):
+                    expanded.append(name.removeprefix("language_model."))
+            # Preserve order, drop duplicates.
+            self.exclude_modules = list(dict.fromkeys(expanded))
+
+    def is_layer_excluded(self, prefix: str) -> bool:
+        """Check if a layer should be excluded from quantization.
+
+        Handles:
+        - Exact matches (e.g., "lm_head" matching prefix "lm_head")
+        - Glob-style wildcards (e.g., "mtp*" matching "mtp_layers")
+        - Part-by-part matching (split prefix on "." and check each part)
+        - language_model. prefix stripping for vision-language models
+        - Fused module patterns (e.g., "q_a_proj" in "fused_qkv_a_proj_with_mqa")
+        """
+        if not self.exclude_modules:
+            return False
+
+        # Build prefix variants: some models wrap layers under "language_model."
+        prefixes_to_check = [prefix]
+        if prefix.startswith("language_model."):
+            prefixes_to_check.append(prefix.removeprefix("language_model."))
+
+        # Fused module patterns: the exclude list may reference a sub-component
+        # (e.g., "q_a_proj") that is fused into a combined parameter name
+        # (e.g., "fused_qkv_a_proj_with_mqa"). We check if the last segment of
+        # the exclude pattern is a substring of the last segment of the prefix.
+        fused_patterns = {"q_a_proj", "q_b_proj", "kv_a_proj_with_mqa", "kv_b_proj"}
+
+        for pattern in self.exclude_modules:
+            # Convert glob-style wildcard to regex (e.g., "mtp*" -> "mtp.*")
+            regex_str = pattern.replace(".", r"\.").replace("*", r".*")
+
+            for pfx in prefixes_to_check:
+                if re.fullmatch(regex_str, pfx):
+                    return True
+                # Part-by-part check: handles wildcards like "mtp*" matching
+                pfx_parts = pfx.split(".")
+                for part in pfx_parts:
+                    if re.fullmatch(regex_str, part):
+                        return True
+
+            # Check fused patterns: if the last segment of the exclude pattern
+            # is a known fused component, check if it appears in the prefix's
+            # last segment (handles fused_qkv_a_proj_with_mqa containing q_a_proj)
+            pattern_tail = pattern.rsplit(".", maxsplit=1)[-1]
+            if pattern_tail in fused_patterns:
+                for pfx in prefixes_to_check:
+                    if pattern_tail in pfx.rsplit(".", maxsplit=1)[-1]:
+                        return True
+
+        return False
+
+
+class ModelOptFp8Config(ModelOptQuantConfig):
+    """Configuration for ModelOpt FP8 quantization, including serialization and compatibility checks."""
+
+    def __init__(
+        self,
+        is_checkpoint_fp8_serialized: bool = False,
+        kv_cache_quant_method: Optional[str] = None,
+        exclude_modules: Optional[List[str]] = None,
+        packed_modules_mapping: Optional[Dict[str, List[str]]] = None,
+    ) -> None:
+        """
+        Args:
+            is_checkpoint_fp8_serialized (bool): Indicates if the checkpoint uses serialized FP8 format.
+        """
+        super().__init__(kv_cache_quant_method, exclude_modules, packed_modules_mapping)
+        self.is_checkpoint_fp8_serialized = is_checkpoint_fp8_serialized
+        if is_checkpoint_fp8_serialized:
+            logger.warning(
+                "Detected ModelOpt FP8 checkpoint. The format is experimental and subject to change."
+            )
+
+    @classmethod
+    def override_quantization_method(cls, hf_quant_config, user_quant):
+        """Override quantization method based on the model's config."""
+        return cls._modelopt_override_quantization_method(hf_quant_config, user_quant)
+
+    @classmethod
+    def get_name(cls) -> str:
+        return "modelopt_fp8"
+
+    @classmethod
+    def get_supported_act_dtypes(cls) -> List[torch.dtype]:
+        return [torch.bfloat16, torch.half]
+
+    @classmethod
+    def get_min_capability(cls) -> int:
+        return 89  # Minimum hardware capability (e.g., Hopper GPUs).
+
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> ModelOptFp8Config:
+        # Handle two different config formats:
+        # 1. hf_quant_config.json format: {"quantization": {"quant_algo": "FP8", ...}}
+        # 2. config.json quantization_config format: {"quant_algo": "FP8", ...}
+        # In future modelopt will deprecate hf_quant_config.json, and only keep config.json.
+        # For legacy reasons, we keep hf_quant_config.json for now.
+
+        # Initialize variables
+        kv_cache_quant_method = None
+        exclude_modules = None
+
+        # Try flat format first (config.json quantization_config - preferred format)
+        quant_method = config.get("quant_algo")
+        if quant_method is not None:
+            # Flat format (config.json quantization_config)
+            # Derive kv_cache quant from kv_cache_scheme dict
+            kv_cache_scheme = config.get("kv_cache_scheme")
+            if isinstance(kv_cache_scheme, dict):
+                if (
+                    kv_cache_scheme.get("type") == "float"
+                    and kv_cache_scheme.get("num_bits") == 8
+                ):
+                    kv_cache_quant_method = "FP8"
+
+            # Map 'ignore' field to 'exclude_modules'
+            exclude_modules = config.get("ignore")
+        else:
+            # Fall back to nested format (hf_quant_config.json - will be deprecated)
+            try:
+                quantization_section = cls.get_from_keys(config, ["quantization"])
+                quant_method = quantization_section.get("quant_algo")
+                kv_cache_quant_method = quantization_section.get("kv_cache_quant_algo")
+                exclude_modules = quantization_section.get("exclude_modules")
+            except ValueError:
+                raise ValueError(
+                    "Cannot find 'quant_algo' in the model's quantization config. "
+                    "Expected either flat format (config.json) or nested format (hf_quant_config.json)."
+                )
+        if quant_method is None:
+            raise ValueError(
+                "Cannot find 'quant_algo' in the model's quantization config. "
+            )
+        if "FP8" not in quant_method:
+            raise ValueError(
+                "ModelOptFp8Config only supports static FP8 quantization in SGLang. "
+                "For FP4 quantization, use ModelOptFp4Config. "
+                "Check the quantization config for your model's configuration."
+            )
+
+        return cls(
+            is_checkpoint_fp8_serialized=True,
+            kv_cache_quant_method=kv_cache_quant_method,
+            exclude_modules=exclude_modules,
+            packed_modules_mapping=config.get("packed_modules_mapping"),
+        )
+
+    def get_quant_method(
+        self, layer: torch.nn.Module, prefix: str
+    ) -> Optional[QuantizeMethodBase]:
+        return self._get_quant_method(
+            layer, prefix, Linear=ModelOptFp8LinearMethod, Moe=ModelOptFp8MoEMethod
+        )
+
+
+class ModelOptFp8LinearMethod(LinearMethodBase):
+    """Linear method for ModelOpt static FP8 quantization.
+
+    Supports loading FP8 checkpoints with static weight and activation scales.
+    Future support may include dynamic scales.
+
+    **Limitations**:
+    1. Only supports per-tensor quantization due to `torch._scaled_mm` limitations.
+    2. Only supports the `float8_e4m3fn` data type.
+
+    Args:
+        quant_config (ModelOptFp8Config): The ModelOpt quantization configuration.
+    """
+
+    def __init__(self, quant_config: ModelOptFp8Config):
+        super().__init__()
+        self.quant_config = quant_config
+        self.cutlass_fp8_supported = cutlass_fp8_supported()
+
+    def create_weights(
+        self,
+        layer: torch.nn.Module,
+        input_size_per_partition: int,
+        output_partition_sizes: List[int],
+        input_size: Optional[int],
+        output_size: Optional[int],
+        params_dtype: torch.dtype,
+        **extra_weight_attrs,
+    ) -> None:
+        """Creates and registers weights, weight scales, and input scales for FP8 quantization."""
+        output_size_per_partition = sum(output_partition_sizes)
+        weight_loader = extra_weight_attrs.get("weight_loader")
+        weight_dtype = (
+                    self.model_path, "hf_quant_config.json"
+                )
+                with open(quant_config_file) as f:
+                    quant_config_dict = json.load(f)
+                quant_cfg = self._parse_modelopt_quant_config(quant_config_dict)
+        return quant_cfg
+
+    def _find_quant_modelslim_config(self):
+        if self.is_draft_model:
+            return None
+        quant_config_file = Path(self.model_path, "quant_model_description.json")
+        quant_cfg = None
+        if quant_config_file.is_file():
+            with open(quant_config_file) as f:
+                quant_cfg = json.load(f)
+            # This field is required for flagless model loading but is not present in
+            # modelslim model description, so we're adding it here manually.
+            quant_cfg["quant_method"] = "modelslim"
+
+        return quant_cfg
+
+    def _parse_modelopt_quant_config(self, quant_config_dict: dict) -> Optional[dict]:
+        """Parse ModelOpt quantization config and return the appropriate quant_method."""
+        json_quant_configs = quant_config_dict["quantization"]
+        quant_algo = json_quant_configs.get("quant_algo", None)
+
+        if quant_algo == "MIXED_PRECISION":
+            architectures = getattr(self.hf_config, "architectures", []) or []
+            if getattr(self.hf_config, "model_type", None) == "nemotron_h" or any(
+                arch.startswith("NemotronH") for arch in architectures
+            ):
+                return {"quant_method": "modelopt_mixed", "quant_algo": quant_algo}
+            return {"quant_method": "w4afp8", "quant_algo": quant_algo}
+        elif quant_algo and ("FP4" in quant_algo or "NVFP4" in quant_algo):
+            return {"quant_method": "modelopt_fp4", "quant_algo": quant_algo}
+        elif quant_algo and "FP8" in quant_algo:
+            return {"quant_method": "modelopt_fp8", "quant_algo": quant_algo}
+        else:
+            return None
+
+    def get_quantization_config_log_str(self) -> Optional[str]:
+        """
+        Get a concise string representation of the quantization config for logging.
+        Returns something like "quant=fp8, fmt=e4m3" or "quant=gptq, bits=4".
+        """
+        try:
+            quant_cfg = self._parse_quant_hf_config()
+            if not quant_cfg:
+                return None
+
+            quant_method = quant_cfg.get("quant_method", "quantized")
+            log_str = f"quant={quant_method}"
+
+            # Append interesting fields if they exist
+            for field in ["bits", "quant_algo", "fmt"]:
+                if field in quant_cfg:
+                    log_str += f", {field}={quant_cfg[field]}"
+
+            return log_str
+        except Exception:
+            return None
+
+    def _is_already_quantized(self) -> bool:
+        """Check if the model is already quantized based on config files."""
+        # Check for quantization in hf_config (config.json)
+        if getattr(self.hf_config, "quantization_config", None) or getattr(
+            self.hf_config, "compression_config", None
+        ):
+            return True
+
+        # Check for HuggingFace quantization config
+        from sglang.srt.utils import has_hf_quant_config
+
+        return has_hf_quant_config(self.model_path)
+
+    def _get_modelopt_quant_type(self) -> str:
+        """Extract ModelOpt quantization type from unified quantization flag."""
+        if self.quantization == "modelopt_fp8":
+            return "fp8"
+        elif self.quantization == "modelopt_fp4":
+            return "nvfp4"
+        elif self.quantization == "modelopt_mixed":
+            raise ValueError(
+                "modelopt_mixed is only supported for pre-quantized checkpoints."
+            )
+        elif self.quantization == "modelopt":
+            # Auto-detect from model config
+            quant_cfg = self._parse_quant_hf_config()
+            if quant_cfg:
+                quant_method = quant_cfg.get("quant_method", "").lower()
+                if "fp4" in quant_method:
+                    return "fp4"
+                elif "fp8" in quant_method:
+                    return "fp8"
+            # Default to fp8 if can't detect
+            return "fp8"
+        else:
+            return "fp8"  # Default fallback
+
+    def _get_sliding_window_size(self) -> Optional[int]:
+        for key in ("sliding_window_size", "sliding_window", "window_size"):
+            value = getattr(self.hf_text_config, key, None)
+            if value is not None:
+                return value
+        return None
+
+Unable to import `torchao` Tensor objects. This may affect loading checkpoints serialized with `torchao`
+MODEL_OPT 0.44.0
+FP8_DEFAULT_CFG {'quant_cfg': [{'quantizer_name': '*', 'enable': False}, {'quantizer_name': '*weight_quantizer', 'cfg': {'num_bits': (4, 3), 'axis': None}}, {'quantizer_name': '*input_quantizer', 'cfg': {'num_bits': (4, 3), 'axis': None}}, {'parent_class': 'nn.BatchNorm1d', 'quantizer_name': '*', 'enable': False}, {'parent_class': 'nn.BatchNorm2d', 'quantizer_name': '*', 'enable': False}, {'parent_class': 'nn.BatchNorm3d', 'quantizer_name': '*', 'enable': False}, {'parent_class': 'nn.LeakyReLU', 'quantizer_name': '*', 'enable': False}, {'quantizer_name': '*lm_head*', 'enable': False}, {'quantizer_name': '*proj_out.*', 'enable': False}, {'quantizer_name': '*block_sparse_moe.gate*', 'enable': False}, {'quantizer_name': '*router*', 'enable': False}, {'quantizer_name': '*mlp.gate.*', 'enable': False}, {'quantizer_name': '*mlp.shared_expert_gate.*', 'enable': False}, {'quantizer_name': '*linear_attn.conv1d*', 'enable': False}, {'quantizer_name': '*mixer.conv1d*', 'enable': False}, {'quantizer_name': '*output_layer*', 'enable': False}, {'quantizer_name': 'output.*', 'enable': False}], 'algorithm': 'max'}
+/usr/local/lib/python3.12/dist-packages/modelopt/torch/__init__.py:53: UserWarning: transformers>=5.0 support is experimental. Unified Hugging Face checkpoint export for quantized checkpoints may not work for some models yet.
+  _warnings.warn(

@@ -1,0 +1,38 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": null,
+  "contents": {
+    "artifacts": "Project artifacts and export manifest retrieved under projects/gemma4_modelopt_fp8_export_endpoint/artifacts/modelopt-fp8-export-c32-20260718t1900z/.",
+    "caches": "SGLang CUDA graphs through bs48 remain resident; the canonical capture passed 17,120 cached / 117,728 fresh accounting, but its post-run cache is hot and must be explicitly flushed before a new exact-mix consumer.",
+    "checkpoint": "Exact eight-file 62,578,655,208-byte BF16 checkpoint remains at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
+    "export": "No validated content-addressed export recorded.",
+    "image": "Pinned SGLang v0.5.12 sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a remains resident.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_modelopt_fp8_export_endpoint",
+    "runtime": "ModelOpt export workflow terminal producer_failure",
+    "server_state": "No healthy endpoint state proven; inspect project terminal before reuse."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "idle_since": "2026-07-18T19:04:35.830256Z",
+  "lifecycle": {
+    "deadline_utc": "2026-07-18T20:55:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-modelopt-export-h200-202607181843z-watchdog.service",
+      "main_pid": "2568539",
+      "unit": "gemma-modelopt-export-h200-202607181843z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-18T16:35:57.440790Z",
+  "resource": {
+    "disk_id": "computedisk-e00y9hv4e79xdh2g7b",
+    "disk_name": "gemma-attention-endpoint-h200-20260718163352-boot",
+    "instance_id": "computeinstance-e00vbbb709tzxscaan",
+    "instance_name": "gemma-attention-endpoint-h200-20260718163352"
+  },
+  "status": "available",
+  "updated_at": "2026-07-18T19:04:35.830256Z"
+}

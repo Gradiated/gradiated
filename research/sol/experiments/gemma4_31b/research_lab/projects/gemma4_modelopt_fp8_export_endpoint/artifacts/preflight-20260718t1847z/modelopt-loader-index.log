@@ -1,0 +1,82 @@
+2761:class ModelOptModelLoader(DefaultModelLoader):
+76:from sglang.srt.layers.modelopt_utils import QUANT_CFG_CHOICES
+88:    0.8  # Reserve 20% GPU memory headroom for ModelOpt calibration
+124:# ModelOpt: QUANT_CFG_CHOICES is imported from modelopt_utils.py
+193:def _get_quantization_config(
+316:    def load_model(
+621:    def _load_modelopt_base_model(self, model_config: ModelConfig) -> nn.Module:
+665:                f"We apply the following memory limit for calibration: \n{max_memory}\n"
+668:                "reduce the calibration `batch_size` manually."
+680:        # Handle both legacy modelopt_quant and unified quantization flags
+681:        if hasattr(model_config, "modelopt_quant") and model_config.modelopt_quant:
+683:            quant_choice_str = model_config.modelopt_quant
+687:            quant_choice_str = model_config._get_modelopt_quant_type()
+700:    def load_model(
+707:        if hasattr(model_config, "modelopt_quant") and model_config.modelopt_quant:
+709:            model = self._load_modelopt_base_model(model_config)
+715:        quant_config = _get_quantization_config(model_config, self.load_config)
+756:    def load_model(
+767:        quant_config = _get_quantization_config(model_config, self.load_config)
+1308:    def load_model(
+1320:        quant_config = _get_quantization_config(model_config, self.load_config)
+1427:    def load_model(
+1441:        quant_config = _get_quantization_config(model_config, self.load_config)
+1730:    def _quantized_8bit_generator(
+1754:    def _quantized_4bit_generator(
+1884:        quant_config = getattr(model_config.hf_config, "quantization_config", None)
+1989:    def load_model(
+1995:        quant_config = _get_quantization_config(model_config, self.load_config)
+2085:    def load_model(
+2101:        quant_config = _get_quantization_config(model_config, self.load_config)
+2132:    def load_model(
+2146:        quant_config = _get_quantization_config(model_config, self.load_config)
+2212:    def load_model_from_remote_instance_by_nccl(
+2262:    def load_model_from_remote_instance_by_transfer_engine(
+2318:    def load_model_from_modelexpress(
+2686:    def load_model(
+2705:        quant_config = _get_quantization_config(model_config, self.load_config)
+2727:def load_model_with_cpu_quantization(
+2734:    quant_config = _get_quantization_config(model_config, self.load_config)
+2770:    def _setup_modelopt_quantization(
+2795:            import modelopt.torch.opt as mto
+2796:            import modelopt.torch.quantization as mtq
+2797:            from modelopt.torch.quantization.utils import is_quantized
+2800:                "ModelOpt is not available. Please install modelopt."
+2815:                self._maybe_export_modelopt(model, export_path)
+2821:                rank0_log("Proceeding with calibration-based quantization...")
+2823:        # Set up calibration-based quantization
+2829:            from modelopt.torch.utils.dataset_utils import (
+2834:            # Create calibration dataloader
+2835:            calib_dataloader = get_dataset_dataloader(
+2844:            calibrate_loop = create_forward_loop(dataloader=calib_dataloader)
+2847:            mtq.quantize(model, quant_cfg, forward_loop=calibrate_loop)
+2853:                mtq.print_quant_summary(model)
+2866:            self._maybe_export_modelopt(model, export_path)
+2871:    def _maybe_export_modelopt(self, model, export_path: str | None) -> None:
+2877:                self._export_modelopt_checkpoint(
+2888:    def _export_modelopt_checkpoint(
+2909:            from modelopt.torch.export import export_hf_checkpoint
+2914:                "Please ensure you have the latest version of modelopt installed."
+2934:    def load_model(
+2964:        model = self._load_modelopt_base_model(model_config)
+2968:            import modelopt.torch.quantization as mtq
+2971:                "NVIDIA Model Optimizer (modelopt) library not found. "
+2976:        # Handle both old modelopt_quant and new unified quantization flags
+2977:        if hasattr(model_config, "modelopt_quant") and model_config.modelopt_quant:
+2978:            # Legacy modelopt_quant flag
+2979:            quant_choice_str = model_config.modelopt_quant
+2982:            quant_choice_str = model_config._get_modelopt_quant_type()
+2992:            # getattr will fetch the config object, e.g., mtq.FP8_DEFAULT_CFG
+2993:            quant_cfg = getattr(mtq, quant_cfg_name)
+3001:            f"Quantizing model with ModelOpt using config: mtq.{quant_cfg_name}"
+3005:        modelopt_config = self.load_config.modelopt_config
+3007:            modelopt_config.checkpoint_restore_path if modelopt_config else None
+3010:            modelopt_config.checkpoint_save_path if modelopt_config else None
+3012:        export_path = modelopt_config.export_path if modelopt_config else None
+3018:            self._setup_modelopt_quantization(
+3232:    def load_model(
+3239:        if hasattr(model_config, "modelopt_quant") and model_config.modelopt_quant:
+3258:        quant_config = _get_quantization_config(model_config, self.load_config)
+3292:        (hasattr(model_config, "modelopt_quant") and model_config.modelopt_quant)
+3294:        in ["modelopt_fp8", "modelopt_fp4", "modelopt_mixed", "modelopt"]
+3304:        in ["modelopt_fp8", "modelopt_fp4", "modelopt_mixed"]

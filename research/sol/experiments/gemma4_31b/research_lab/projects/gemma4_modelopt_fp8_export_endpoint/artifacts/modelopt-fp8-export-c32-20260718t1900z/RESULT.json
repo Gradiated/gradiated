@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "status": "terminal",
+  "classification": "producer_failure",
+  "pass": false,
+  "decision": "close_official_modelopt_fp8_export_for_bound_gemma4_runtime",
+  "producer": {
+    "workflow": "/sgl-workspace/sglang/examples/usage/modelopt_quantize_and_export.py",
+    "recipe": "modelopt.torch.quantization.FP8_DEFAULT_CFG",
+    "nvidia_modelopt": "0.44.0",
+    "sglang": "0.5.12",
+    "transformers": "5.6.0",
+    "torch": "2.11.0+cu130",
+    "accelerate": "1.1.0",
+    "checkpoint_tensors_loaded": 1188,
+    "tensor_quantizers_inserted": 2154,
+    "calibration_dataset": "abisee/cnn_dailymail",
+    "calibration_config": "3.0.0",
+    "calibration_revision": "96df5e686bee6baa90b8bee7c28b81fa3fa6223d",
+    "calibration_samples": 512,
+    "calibration_batch_size": 36,
+    "calibration_batches_completed": 15,
+    "quantization_completed": true,
+    "export_warning": "Cannot export model to the model_config. The modelopt-optimized model state_dict can be saved with torch.save for further inspection.",
+    "deployable_export_files": 0
+  },
+  "repairs": {
+    "local_checkpoint_adapter": "Bypassed only the Hugging Face repo-id cache lookup for an existing local checkpoint directory.",
+    "local_checkpoint_adapter_sha256": "d73def464ed1ce82d2d01b301b2c028d9277c17ce39d8a4143ff97752cfdc78f",
+    "declared_dependency": "The pinned source requires accelerate>=1.1.0; accelerate==1.1.0 was supplied in a mounted project-local layer with no dependency upgrades."
+  },
+  "measured_gpu": {
+    "capture_seconds": 93.04,
+    "useful_gpu_seconds_utilization_above_zero": 50.52172043010753,
+    "mean_utilization_percent": 42.8235294117647,
+    "peak_utilization_percent": 99.0,
+    "peak_memory_mib": 86237.0,
+    "mean_power_w": 350.4613368983957,
+    "peak_power_w": 705.57
+  },
+  "downstream": {
+    "content_addressed_export_created": false,
+    "numerical_export_sanity_run": false,
+    "pinned_sglang_consumer_started": false,
+    "exact_mix_invocations": 0,
+    "comparator_rerun": false,
+    "endpoint_comparison_valid": false,
+    "l40s_nomination_supported": false
+  },
+  "artifacts": {
+    "producer_log": "artifacts/producer.log",
+    "producer_log_sha256": "5e81752cfb010b56d0fda548848001a4c008f4701a38932ae1f8b59148ff4529",
+    "raw_terminal": "TERMINAL.json",
+    "raw_terminal_sha256": "8f404c23a15d361984fab5732faf0a4936f8474d34dd4ab08de26ae5e3f04bbf",
+    "calibration_cache_file_manifest": "calibration-cache-files.tsv",
+    "calibration_cache_file_manifest_sha256": "6c8ef8f16b703df3304a8230aa3249ad74fac3399e40a0a8b4a17dfbb539f13d",
+    "calibration_cache_hash_manifest": "calibration-cache.sha256",
+    "calibration_cache_hash_manifest_sha256": "d1cf31430f04ac9856b307156b29d7935d77c08106db43e040adcb6993b2f2af",
+    "empty_export_inventory": "partial-export-files.tsv",
+    "empty_export_inventory_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "provider_spend_usd_conservative": 0.764,
+  "bench_release": "available without teardown; exact checkpoint, pinned image, calibration cache, and watchdog remain resident"
+}

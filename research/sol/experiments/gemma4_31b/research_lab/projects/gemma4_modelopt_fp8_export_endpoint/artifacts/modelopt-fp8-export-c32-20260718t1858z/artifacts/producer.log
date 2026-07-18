@@ -1,0 +1,26 @@
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.0.1
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+/usr/local/lib/python3.12/dist-packages/torchao/quantization/quant_api.py:1731: SyntaxWarning: invalid escape sequence '\.'
+  """Configuration class for applying different quantization configs to modules or parameters based on their fully qualified names (FQNs).
+Failed to load generation config for /work/checkpoint: /work/checkpoint does not appear to have a file named generation_config.json. Checkout 'https://huggingface.co//work/checkpoint/tree/main' for available files.. Proceeding without generation config.
+🚀 Starting ModelOpt quantization and export workflow
+📥 Input model: /work/checkpoint
+📤 Export directory: /work/modelopt-export.partial
+⚙️  Quantization method: modelopt_fp8
+🔧 Initializing distributed environment...
+🔄 Loading and quantizing model...
+❌ Quantization failed: accelerate is required for ModelOpt quantization. Please install it with: pip install accelerate
+[rank0]:[W718 18:58:40.334429453 ProcessGroupNCCL.cpp:1575] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())

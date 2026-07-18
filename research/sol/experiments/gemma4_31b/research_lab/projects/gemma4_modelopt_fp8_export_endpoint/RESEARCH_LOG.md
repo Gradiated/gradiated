@@ -1,0 +1,11 @@
+## 2026-07-18 — official ModelOpt E4M3 export
+
+Question: can the exact resident Gemma 4 31B BF16 checkpoint be converted through pinned SGLang's official separate ModelOpt FP8 workflow into a deployable, content-addressed export and then earn the frozen H200 c32 endpoint gate?
+
+Action: claimed the warm H200, stopped only the fused server, and invoked the shipped `modelopt_quantize_and_export.py` with `FP8_DEFAULT_CFG` and its fixed 512-row `abisee/cnn_dailymail` calibration. Two ordinary producer-environment defects were repaired without changing quantization semantics: the local checkpoint path was prevented from entering Hugging Face's repo-id cache lookup, and the pinned source's declared `accelerate>=1.1.0` dependency was supplied as a mounted exact-version `accelerate==1.1.0` layer. No recipe/calibration sweep, online quantization, Torch compile, comparator run, endpoint workload, L40S allocation, provider creation, or watchdog change occurred.
+
+Evidence (measured): the final official invocation loaded 1,188 checkpoint tensors, completed all 15 calibration batches, inserted 2,154 E4M3 tensor quantizers with calibrated amax values, and reached ModelOpt's HF exporter. ModelOpt 0.44 then warned that it could not export the model to `model_config`; the export directory contained zero files. The bounded GPU capture lasted 93.04 s, with 50.522 s above 0% utilization, 86,237 MiB peak memory, and 705.57 W peak power. The raw producer log, GPU samples, cache identities, empty export inventory, and typed result are under `artifacts/modelopt-fp8-export-c32-20260718t1900z/`.
+
+Interpretation: exact-shape E4M3 compute remains numerically plausible, and official calibration succeeds, but the bound ModelOpt 0.44 / Transformers 5.6 producer cannot serialize Gemma 4 into the deployable HF ModelOpt representation consumed by pinned SGLang. This is `producer_failure`, not an endpoint performance result: no export existed, so the consumer, sanity gate, 32-row exact mix, and cache accounting were correctly not invoked.
+
+Next: close this representation for the bound runtime. Do not invent an exporter, sweep calibration/recipes, rerun the comparator, or nominate L40S from this result. Reopen only for a separately admitted runtime/producer version that explicitly supports Gemma 4 HF export and requires fresh scope-matched evidence.

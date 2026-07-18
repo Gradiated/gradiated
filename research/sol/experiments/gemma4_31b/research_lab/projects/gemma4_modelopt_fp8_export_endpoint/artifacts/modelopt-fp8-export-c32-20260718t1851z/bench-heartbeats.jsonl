@@ -1,0 +1,44 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-18T18:46:21.708537Z",
+    "heartbeat_at": "2026-07-18T18:54:17.893189Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-18T19:54:17.893189Z",
+    "project": "gemma4_modelopt_fp8_export_endpoint",
+    "stale": false
+  },
+  "contents": {
+    "artifacts": "Canonical fused-QK/RoPE c32 raw rows, SSE responses, metrics, GPU samples, path arguments, idle/flush boundary, and retain_incremental terminal retained locally at projects/gemma4_h200_fused_qk_norm_rope_endpoint/artifacts/fused-qk-norm-rope-c32-canonical-20260718t1817z/.",
+    "caches": "SGLang CUDA graphs through bs48 remain resident; the canonical capture passed 17,120 cached / 117,728 fresh accounting, but its post-run cache is hot and must be explicitly flushed before a new exact-mix consumer.",
+    "checkpoint": "Exact eight-file 62,578,655,208-byte checkpoint resident at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
+    "image": "Pinned SGLang v0.5.12 image sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a resident.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_h200_fused_qk_norm_rope_endpoint",
+    "runtime": "Verified --enable-fused-qk-norm-rope with BF16 weights, FP8-E5M2 KV, dynamic chunking 2048; a canonical c32 capture with HTTP-200 flush and exact cache accounting retained a 1.198% gain.",
+    "server_state": "Healthy fused c32 server remains loaded on port 30000; release intentionally does not tear it down."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-18T20:55:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-modelopt-export-h200-202607181843z-watchdog.service",
+      "main_pid": "2568539",
+      "unit": "gemma-modelopt-export-h200-202607181843z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-18T16:35:57.440790Z",
+  "resource": {
+    "disk_id": "computedisk-e00y9hv4e79xdh2g7b",
+    "disk_name": "gemma-attention-endpoint-h200-20260718163352-boot",
+    "instance_id": "computeinstance-e00vbbb709tzxscaan",
+    "instance_name": "gemma-attention-endpoint-h200-20260718163352"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-18T18:54:17.893189Z"
+}

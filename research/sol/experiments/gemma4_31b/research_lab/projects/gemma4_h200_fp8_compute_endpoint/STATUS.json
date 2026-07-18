@@ -1,0 +1,28 @@
+{
+  "status": "terminal",
+  "priority": 495,
+  "researcher_profile": "execution",
+  "summary": "Pinned SGLang rejects the only admitted online ModelOpt E4M3 producer before server readiness; this runtime path is terminally unsupported.",
+  "next_action": "Closed: do not retry online E4M3 compute on this pinned image. A separate quantize-then-deploy export is outside this project's scope.",
+  "authorized_spend_usd": 1.1,
+  "provider_spend_usd": 0.17,
+  "active_session": null,
+  "bench_id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "terminal": {
+    "classification": "unsupported",
+    "artifact": "artifacts/20260718t1755z-online-e4m3-c32/TERMINAL.json",
+    "reason": "The repaired --quantization modelopt_fp8 --modelopt-quant fp8 --quantize-and-serve path raises the pinned runtime's explicit compatibility-disabled NotImplementedError."
+  },
+  "comparator": {
+    "artifact": "../gemma4_background_serving_frontier/artifacts/exact-mix-c32-20260718t1729z/TERMINAL.json",
+    "sha256": "6508e309d09a1ab04daa50c33243062843836bb5259ce107f387603008f65d0f",
+    "service_seconds_per_request": 0.969888308813,
+    "promotion_ceiling_seconds_per_request": 0.921393893372
+  },
+  "bound_identities": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a",
+    "checkpoint": "eight files, 62578655208 bytes, /home/glmrunner/gemma-attention-endpoint/checkpoint",
+    "runner_sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+  }
+}

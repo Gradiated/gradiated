@@ -1,0 +1,43 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-18T17:54:41.609929Z",
+    "heartbeat_at": "2026-07-18T17:56:45.548831Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-18T18:48:52Z",
+    "project": "gemma4_h200_fp8_compute_endpoint",
+    "stale": false
+  },
+  "contents": {
+    "caches": "SGLang CUDA graphs through bs48; exact-mix c32/c48 raw artifacts retained under /home/glmrunner/gemma-attention-endpoint.",
+    "checkpoint": "Exact eight-file 62,578,655,208-byte checkpoint resident at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
+    "image": "Pinned SGLang v0.5.12 image sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a resident.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_h200_attention_endpoint_integration",
+    "runtime": "TP1 BF16 weights / FP8-E5M2 KV; c48 stock exact mix 1.098795 s/request with KV-pool retractions, negative versus c32 0.969888 s/request.",
+    "server_state": "Healthy unpatched stock-image c48 server on port 30000; dynamic chunking disabled."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-18T18:48:52Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-attention-endpoint-h200-20260718163352-watchdog.service",
+      "main_pid": "2530085",
+      "unit": "gemma-attention-endpoint-h200-20260718163352-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-18T16:35:57.440790Z",
+  "resource": {
+    "disk_id": "computedisk-e00y9hv4e79xdh2g7b",
+    "disk_name": "gemma-attention-endpoint-h200-20260718163352-boot",
+    "instance_id": "computeinstance-e00vbbb709tzxscaan",
+    "instance_name": "gemma-attention-endpoint-h200-20260718163352"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-18T17:56:45.548831Z"
+}

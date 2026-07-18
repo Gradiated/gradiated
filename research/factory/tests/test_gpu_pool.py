@@ -128,6 +128,48 @@ class GpuPoolTests(unittest.TestCase):
             current[0] = "2026-07-18T11:06:00Z"
             self.assertTrue(pool.snapshot()["benches"][0]["claim"]["stale"])
 
+    def test_director_can_replace_watchdog_with_a_later_deadline(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            current = ["2026-07-18T11:00:00Z"]
+            spec = bench_spec()
+            spec["lifecycle"]["deadline_utc"] = "2026-07-18T12:00:00Z"
+            pool = GpuPool(lab, now=lambda: current[0])
+            pool.register(spec)
+            pool.claim("mtp", bench_id="gemma-h200-1")
+
+            extended = pool.replace_watchdog(
+                "gemma-h200-1",
+                lifecycle={
+                    "watchdog": {
+                        "unit": "gemma-h200-1-retained-watchdog.service",
+                        "unit_manager": "user",
+                    },
+                    "deadline_utc": "2026-07-18T14:00:00Z",
+                },
+            )
+
+            self.assertEqual(
+                "2026-07-18T14:00:00Z", extended["lifecycle"]["deadline_utc"]
+            )
+            self.assertEqual(
+                "gemma-h200-1-retained-watchdog.service",
+                extended["lifecycle"]["watchdog"]["unit"],
+            )
+            event = json.loads(
+                (lab / "runtime" / "gpu_events.jsonl").read_text().splitlines()[-1]
+            )
+            self.assertEqual("bench_watchdog_replaced", event["event"])
+
+            with self.assertRaisesRegex(GpuPoolError, "later than the current"):
+                pool.replace_watchdog(
+                    "gemma-h200-1",
+                    lifecycle={
+                        "watchdog": {"unit": "shorter-watchdog.service"},
+                        "deadline_utc": "2026-07-18T13:00:00Z",
+                    },
+                )
+
     def test_draining_claim_finishes_without_becoming_available(self):
         with tempfile.TemporaryDirectory() as directory:
             lab = Path(directory)

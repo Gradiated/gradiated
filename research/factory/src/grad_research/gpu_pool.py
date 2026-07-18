@@ -102,6 +102,19 @@ class GpuPool:
         }
 
     @staticmethod
+    def _validated_lifecycle(lifecycle: Any) -> dict[str, Any]:
+        if not isinstance(lifecycle, dict):
+            raise GpuPoolError("lifecycle must name the director-owned watchdog and deadline")
+        watchdog = lifecycle.get("watchdog")
+        if not isinstance(watchdog, dict) or not watchdog.get("unit"):
+            raise GpuPoolError("lifecycle.watchdog.unit is required")
+        try:
+            parse_utc(lifecycle.get("deadline_utc"), "lifecycle.deadline_utc")
+        except ValueError as error:
+            raise GpuPoolError(str(error)) from error
+        return json.loads(json.dumps(lifecycle))
+
+    @staticmethod
     def _validated_spec(spec: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(spec, dict):
             raise GpuPoolError("bench specification must be an object")
@@ -122,16 +135,7 @@ class GpuPool:
         contents = spec.get("contents")
         if not isinstance(contents, dict):
             raise GpuPoolError("contents must describe what is resident on the bench")
-        lifecycle = spec.get("lifecycle")
-        if not isinstance(lifecycle, dict):
-            raise GpuPoolError("lifecycle must name the director-owned watchdog and deadline")
-        watchdog = lifecycle.get("watchdog")
-        if not isinstance(watchdog, dict) or not watchdog.get("unit"):
-            raise GpuPoolError("lifecycle.watchdog.unit is required")
-        try:
-            parse_utc(lifecycle.get("deadline_utc"), "lifecycle.deadline_utc")
-        except ValueError as error:
-            raise GpuPoolError(str(error)) from error
+        lifecycle = GpuPool._validated_lifecycle(spec.get("lifecycle"))
         return {
             "id": bench_id,
             "provider": provider,
@@ -141,6 +145,45 @@ class GpuPool:
             "lifecycle": lifecycle,
             "hourly_cost_usd": hourly_cost_usd,
         }
+
+    def replace_watchdog(
+        self, bench_id: str, *, lifecycle: dict[str, Any]
+    ) -> dict[str, Any]:
+        normalized = self._validated_lifecycle(lifecycle)
+        with self._locked():
+            value = self._read()
+            bench = self._bench(value, bench_id)
+            if bench.get("status") == "retired":
+                raise GpuPoolError("retired GPU bench cannot replace its watchdog")
+            previous_deadline = parse_utc(
+                bench["lifecycle"]["deadline_utc"], "current lifecycle.deadline_utc"
+            )
+            previous_deadline_utc = bench["lifecycle"]["deadline_utc"]
+            replacement_deadline = parse_utc(
+                normalized["deadline_utc"], "replacement lifecycle.deadline_utc"
+            )
+            if replacement_deadline <= previous_deadline:
+                raise GpuPoolError(
+                    "replacement lifecycle deadline must be later than the current deadline"
+                )
+            if replacement_deadline <= parse_utc(self.now(), "current time"):
+                raise GpuPoolError("replacement lifecycle deadline must be in the future")
+            previous_unit = bench["lifecycle"]["watchdog"]["unit"]
+            replacement_unit = normalized["watchdog"]["unit"]
+            if replacement_unit == previous_unit:
+                raise GpuPoolError("replacement watchdog must use a new unit")
+            bench["lifecycle"] = normalized
+            bench["updated_at"] = self.now()
+            self._write(value)
+            self._event(
+                "bench_watchdog_replaced",
+                bench_id=bench_id,
+                previous_deadline_utc=previous_deadline_utc,
+                replacement_deadline_utc=normalized["deadline_utc"],
+                previous_watchdog_unit=previous_unit,
+                replacement_watchdog_unit=replacement_unit,
+            )
+            return self._with_staleness(bench)
 
     def register(self, spec: dict[str, Any]) -> dict[str, Any]:
         normalized = self._validated_spec(spec)
@@ -424,6 +467,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     ready = commands.add_parser("ready")
     ready.add_argument("--bench", required=True)
     ready.add_argument("--contents", type=Path)
+    replace_watchdog = commands.add_parser("replace-watchdog")
+    replace_watchdog.add_argument("--bench", required=True)
+    replace_watchdog.add_argument("--lifecycle", type=Path, required=True)
     retire = commands.add_parser("retire")
     retire.add_argument("--bench", required=True)
     retire.add_argument("--cleanup-verified", action="store_true")
@@ -457,6 +503,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif args.command == "ready":
             contents = _load_object(args.contents) if args.contents else None
             result = pool.ready(args.bench, contents=contents)
+        elif args.command == "replace-watchdog":
+            result = pool.replace_watchdog(
+                args.bench, lifecycle=_load_object(args.lifecycle)
+            )
         else:
             result = pool.retire(args.bench, cleanup_verified=args.cleanup_verified)
     except GpuPoolError as error:

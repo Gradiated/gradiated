@@ -49,7 +49,7 @@ Use bounded experiment time and leave the claimed bench recoverable. Put sequent
 
 Prefer launchers that already produced valid model results. Check only mutable inputs, then run. Repair imports, paths, runtime APIs, benchmark code, and telemetry on the same claimed bench. Do not create project-specific provider controllers, restart cold for ordinary errors, or spend turns proving wrappers while the GPU is idle.
 
-When done, write the final resident state to the inventory and release the claim. Use `maintenance` if the bench may be unsafe or needs a different image/hardware; otherwise leave it `available`. Never retire it or invoke provider cleanup—the director decides whether the next project reuses it.
+When done, leave every compatible useful layer resident: keep the server loaded when healthy, otherwise preserve the image, checkpoint, compiled artifacts, and caches. Write that exact state to the inventory and release the claim promptly so another project can inherit it. Use `maintenance` only when the bench may be unsafe or requires director intervention; otherwise leave it `available`. Never stop a healthy server merely because the project reached a terminal, and never retire the bench or invoke provider cleanup—the director decides whether the next project reuses it.
 
 If the current route stalls, fails repeatedly, or becomes mostly repair work, change strategy within scope. A failed approach is evidence, not an obligation to keep fixing it. If no useful route remains, return a concise blocker so the director can reallocate the slot.
 

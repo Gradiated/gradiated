@@ -1,0 +1,1506 @@
+{
+  "all_rows_pass": true,
+  "decision": {
+    "component_proxy_nominee": null,
+    "endpoint_nominee": null,
+    "measured_component_margin_vs_all_bf16": 0.09660246540046047,
+    "target_margin": 0.2,
+    "target_met": false
+  },
+  "frontier": {
+    "h200_all_bf16": {
+      "claim_scope": "measured component proxy only; not full-model throughput or endpoint cost",
+      "component_floor_seconds_per_request": 3.5196957752316567,
+      "decode_linears_seconds_per_request": 0.5536971106628576,
+      "planning_rate_usd_per_gpu_hour": 3.25,
+      "planning_usd_per_million_requests": 3177.503130417468,
+      "prefill_linears_seconds_per_request": 0.273474885225296,
+      "shared_bf16_attention_seconds_per_request": 2.6481594640016555,
+      "shared_bf16_kv_writer_seconds_per_request": 0.024076693565584718,
+      "shared_kv_accounting": "identical measured BF16 KV-write cost is charged to control and candidate",
+      "tied_head_seconds_per_request": 0.02028762177626292
+    },
+    "h200_e4m3_compute_bf16_state": {
+      "claim_scope": "measured component proxy only; not full-model throughput or endpoint cost",
+      "component_floor_seconds_per_request": 3.1796844858846938,
+      "decode_linears_seconds_per_request": 0.3465630904895564,
+      "planning_rate_usd_per_gpu_hour": 3.25,
+      "planning_usd_per_million_requests": 2870.5484942014596,
+      "prefill_linears_seconds_per_request": 0.15013760089874267,
+      "shared_bf16_attention_seconds_per_request": 2.6481594640016555,
+      "shared_bf16_kv_writer_seconds_per_request": 0.024076693565584718,
+      "shared_kv_accounting": "identical measured BF16 KV-write cost is charged to control and candidate",
+      "tied_head_seconds_per_request": 0.010747636929154395
+    }
+  },
+  "hypothesis": "supported E4M3 compute with unchanged BF16 state is at least 20% below all-BF16 component floor",
+  "identity": {
+    "candidate_symbol": "torch._scaled_mm",
+    "capability": [
+      9,
+      0
+    ],
+    "cuda": "13.0",
+    "gpu": "NVIDIA H200",
+    "torch": "2.13.0+cu130"
+  },
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "pass": true,
+  "rows": {
+    "attention": [
+      {
+        "allocator": {
+          "peak_allocated_bytes": 1241907200,
+          "peak_reserved_bytes": 1488977920
+        },
+        "architecture_multiplicity": 50,
+        "case": "local_decode",
+        "consumer": "torch.nn.functional.scaled_dot_product_attention(enable_gqa=True)",
+        "context": 1024,
+        "head_dim": 256,
+        "kind": "attention_shared_bf16_residual",
+        "kv_heads": 16,
+        "m": 12,
+        "oracle": {
+          "cosine_similarity": 0.9999980926513672,
+          "finite": true,
+          "maximum_absolute": 2.1215062588453293e-05,
+          "nontrivial": true,
+          "normalized_rmse": 0.0020079101944639162,
+          "pass": true
+        },
+        "pass": true,
+        "query_heads": 32,
+        "timing": {
+          "cuda_event": {
+            "p50_ms": 0.09443199634552002,
+            "p95_ms": 0.10115200281143188,
+            "p95_p50": 1.071162389083927,
+            "positive_finite": true,
+            "raw_ms": [
+              0.10115200281143188,
+              0.09443199634552002,
+              0.09497600048780441,
+              0.09116800129413605,
+              0.08988799899816513
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.10103099998559628,
+            "p95_ms": 0.10752500008948118,
+            "p95_p50": 1.0642773020638292,
+            "positive_finite": true,
+            "raw_ms": [
+              0.10752500008948118,
+              0.10143400004380965,
+              0.10103099998559628,
+              0.09724999995341932,
+              0.09620499997708976
+            ]
+          },
+          "warmups": 2
+        }
+      },
+      {
+        "allocator": {
+          "peak_allocated_bytes": 12175319552,
+          "peak_reserved_bytes": 12555649024
+        },
+        "architecture_multiplicity": 10,
+        "case": "global_decode_peak",
+        "consumer": "torch.nn.functional.scaled_dot_product_attention(enable_gqa=True)",
+        "context": 4571,
+        "head_dim": 512,
+        "kind": "attention_shared_bf16_residual",
+        "kv_heads": 4,
+        "m": 12,
+        "oracle": {
+          "cosine_similarity": 0.9999986290931702,
+          "finite": true,
+          "maximum_absolute": 7.622409611940384e-06,
+          "nontrivial": true,
+          "normalized_rmse": 0.0016539841146911345,
+          "pass": true
+        },
+        "pass": true,
+        "query_heads": 32,
+        "timing": {
+          "cuda_event": {
+            "p50_ms": 8.404352188110352,
+            "p95_ms": 8.414815902709961,
+            "p95_p50": 1.0012450352347695,
+            "positive_finite": true,
+            "raw_ms": [
+              8.414815902709961,
+              8.409695625305176,
+              8.402527809143066,
+              8.404352188110352,
+              8.399616241455078
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 8.412081999949805,
+            "p95_ms": 8.42313699990882,
+            "p95_p50": 1.0013141811930841,
+            "positive_finite": true,
+            "raw_ms": [
+              8.42313699990882,
+              8.417287999918699,
+              8.410112999968078,
+              8.412081999949805,
+              8.4075220000841
+            ]
+          },
+          "warmups": 2
+        }
+      }
+    ],
+    "head": [
+      {
+        "allocator": {
+          "peak_allocated_bytes": 15548737536,
+          "peak_reserved_bytes": 17089691648
+        },
+        "architecture_multiplicity": 1,
+        "bf16_timing": {
+          "cuda_event": {
+            "p50_ms": 0.6800320148468018,
+            "p95_ms": 0.6930239796638489,
+            "p95_p50": 1.0191049311405933,
+            "positive_finite": true,
+            "raw_ms": [
+              0.6930239796638489,
+              0.6707519888877869,
+              0.6800320148468018,
+              0.6813120245933533,
+              0.6690559983253479
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.6870879999496537,
+            "p95_ms": 0.6996349999326412,
+            "p95_p50": 1.0182611251890687,
+            "positive_finite": true,
+            "raw_ms": [
+              0.6996349999326412,
+              0.6781280000041079,
+              0.6870879999496537,
+              0.6872330000078364,
+              0.6764989999510362
+            ]
+          },
+          "warmups": 2
+        },
+        "candidate_format": "E4M3FN per-tensor scaled inputs, BF16 output",
+        "candidate_symbol": "torch._scaled_mm",
+        "case": "tied_head",
+        "fp8_timing": {
+          "cuda_event": {
+            "p50_ms": 0.36025598645210266,
+            "p95_ms": 0.3667199909687042,
+            "p95_p50": 1.017942809445752,
+            "positive_finite": true,
+            "raw_ms": [
+              0.3667199909687042,
+              0.362527996301651,
+              0.35679998993873596,
+              0.36025598645210266,
+              0.3540799915790558
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.3686590000597789,
+            "p95_ms": 0.3730539999651228,
+            "p95_p50": 1.0119215858140753,
+            "positive_finite": true,
+            "raw_ms": [
+              0.3730539999651228,
+              0.3686590000597789,
+              0.36875399996461056,
+              0.3664539999590488,
+              0.3601199999820892
+            ]
+          },
+          "warmups": 2
+        },
+        "k": 5376,
+        "kind": "linear",
+        "m": 12,
+        "n": 262144,
+        "oracle": {
+          "kernel_actual_vs_dequantized_fp32": {
+            "cosine_similarity": 0.9999985694885254,
+            "finite": true,
+            "maximum_absolute": 0.00023956596851348877,
+            "nontrivial": true,
+            "normalized_rmse": 0.0016616321885945444,
+            "pass": true
+          },
+          "pass": true,
+          "representation_vs_original_bf16": {
+            "cosine_similarity": 0.9993007779121399,
+            "finite": true,
+            "maximum_absolute": 0.0029691047966480255,
+            "nontrivial": true,
+            "normalized_rmse": 0.03740009219618004,
+            "pass": true
+          }
+        },
+        "pass": true
+      }
+    ],
+    "kv_writer": [
+      {
+        "allocator": {
+          "peak_allocated_bytes": 53086720,
+          "peak_reserved_bytes": 180355072
+        },
+        "architecture_multiplicity": 50,
+        "case": "local_decode",
+        "context": 1024,
+        "head_dim": 256,
+        "heads": 16,
+        "kind": "kv_writer_bf16_shared",
+        "m": 12,
+        "oracle": {
+          "cosine_similarity": 1.0,
+          "finite": true,
+          "maximum_absolute": 0.0,
+          "nontrivial": true,
+          "normalized_rmse": 0.0,
+          "pass": true
+        },
+        "pass": true,
+        "timing": {
+          "cuda_event": {
+            "p50_ms": 0.013472000136971474,
+            "p95_ms": 0.02022399939596653,
+            "p95_p50": 1.5011875883570853,
+            "positive_finite": true,
+            "raw_ms": [
+              0.02022399939596653,
+              0.014112000353634357,
+              0.013472000136971474,
+              0.013567999936640263,
+              0.012160000391304493,
+              0.01235199999064207,
+              0.012543999589979649
+            ]
+          },
+          "iterations": 7,
+          "synchronized_wall": {
+            "p50_ms": 0.01913599999170401,
+            "p95_ms": 0.02593299996078713,
+            "p95_p50": 1.355194396531658,
+            "positive_finite": true,
+            "raw_ms": [
+              0.02593299996078713,
+              0.02007199998388387,
+              0.01913599999170401,
+              0.019185000041943567,
+              0.018015000023297034,
+              0.018098999930771242,
+              0.018108000062966312
+            ]
+          },
+          "warmups": 2
+        }
+      },
+      {
+        "allocator": {
+          "peak_allocated_bytes": 72378880,
+          "peak_reserved_bytes": 178257920
+        },
+        "architecture_multiplicity": 10,
+        "case": "global_decode_peak",
+        "context": 4571,
+        "head_dim": 512,
+        "heads": 4,
+        "kind": "kv_writer_bf16_shared",
+        "m": 12,
+        "oracle": {
+          "cosine_similarity": 1.0,
+          "finite": true,
+          "maximum_absolute": 0.0,
+          "nontrivial": true,
+          "normalized_rmse": 0.0,
+          "pass": true
+        },
+        "pass": true,
+        "timing": {
+          "cuda_event": {
+            "p50_ms": 0.013344000093638897,
+            "p95_ms": 0.01974399946630001,
+            "p95_p50": 1.4796162565760174,
+            "positive_finite": true,
+            "raw_ms": [
+              0.01974399946630001,
+              0.014879999682307243,
+              0.014240000396966934,
+              0.013344000093638897,
+              0.013151999562978745,
+              0.013151999562978745,
+              0.013311999849975109
+            ]
+          },
+          "iterations": 7,
+          "synchronized_wall": {
+            "p50_ms": 0.018952000004901493,
+            "p95_ms": 0.025643999947533302,
+            "p95_p50": 1.3531025718077818,
+            "positive_finite": true,
+            "raw_ms": [
+              0.025643999947533302,
+              0.020706999976027873,
+              0.020054999936292006,
+              0.018905000047197973,
+              0.018952000004901493,
+              0.018663999981072266,
+              0.018911999973170168
+            ]
+          },
+          "warmups": 2
+        }
+      }
+    ],
+    "linears": [
+      {
+        "allocator": {
+          "peak_allocated_bytes": 1003677696,
+          "peak_reserved_bytes": 1065353216
+        },
+        "architecture_multiplicity": 50,
+        "bf16_timing": {
+          "cuda_event": {
+            "p50_ms": 0.057792000472545624,
+            "p95_ms": 0.06672000139951706,
+            "p95_p50": 1.1544850646105032,
+            "positive_finite": true,
+            "raw_ms": [
+              0.06672000139951706,
+              0.057792000472545624,
+              0.055615998804569244,
+              0.05452800169587135,
+              0.058687999844551086
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.06513200003155362,
+            "p95_ms": 0.07514600008562411,
+            "p95_p50": 1.1537493098510585,
+            "positive_finite": true,
+            "raw_ms": [
+              0.07279600004039821,
+              0.06382699996265728,
+              0.06153999993330217,
+              0.07514600008562411,
+              0.06513200003155362
+            ]
+          },
+          "warmups": 2
+        },
+        "candidate_format": "E4M3FN per-tensor scaled inputs, BF16 output",
+        "candidate_symbol": "torch._scaled_mm",
+        "case": "sliding_qkv",
+        "fp8_timing": {
+          "cuda_event": {
+            "p50_ms": 0.03923200070858002,
+            "p95_ms": 0.05417599901556969,
+            "p95_p50": 1.380913489933778,
+            "positive_finite": true,
+            "raw_ms": [
+              0.05417599901556969,
+              0.041728001087903976,
+              0.03923200070858002,
+              0.03731200098991394,
+              0.03705599904060364
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.04544400007944205,
+            "p95_ms": 0.06070500000987522,
+            "p95_p50": 1.3358199081012885,
+            "positive_finite": true,
+            "raw_ms": [
+              0.06070500000987522,
+              0.048311999989891774,
+              0.04544400007944205,
+              0.04330499996285653,
+              0.043376000007810944
+            ]
+          },
+          "warmups": 2
+        },
+        "k": 5376,
+        "kind": "linear",
+        "m": 12,
+        "n": 16384,
+        "oracle": {
+          "kernel_actual_vs_dequantized_fp32": {
+            "cosine_similarity": 0.9999986290931702,
+            "finite": true,
+            "maximum_absolute": 0.0001262463629245758,
+            "nontrivial": true,
+            "normalized_rmse": 0.0016607197332158287,
+            "pass": true
+          },
+          "pass": true,
+          "representation_vs_original_bf16": {
+            "cosine_similarity": 0.9992921948432922,
+            "finite": true,
+            "maximum_absolute": 0.002558918669819832,
+            "nontrivial": true,
+            "normalized_rmse": 0.03762430637248244,
+            "pass": true
+          }
+        },
+        "pass": true
+      },
+      {
+        "allocator": {
+          "peak_allocated_bytes": 2045147648,
+          "peak_reserved_bytes": 2552233984
+        },
+        "architecture_multiplicity": 50,
+        "bf16_timing": {
+          "cuda_event": {
+            "p50_ms": 0.8245440125465393,
+            "p95_ms": 0.8345280289649963,
+            "p95_p50": 1.0121085306139355,
+            "positive_finite": true,
+            "raw_ms": [
+              0.8345280289649963,
+              0.8253440260887146,
+              0.8227840065956116,
+              0.8245440125465393,
+              0.8242239952087402
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.8315489999404235,
+            "p95_ms": 0.8419749999575288,
+            "p95_p50": 1.0125380464865597,
+            "positive_finite": true,
+            "raw_ms": [
+              0.8419749999575288,
+              0.8324339999035146,
+              0.8300929999904838,
+              0.8314460000065083,
+              0.8315489999404235
+            ]
+          },
+          "warmups": 2
+        },
+        "candidate_format": "E4M3FN per-tensor scaled inputs, BF16 output",
+        "candidate_symbol": "torch._scaled_mm",
+        "case": "sliding_qkv",
+        "fp8_timing": {
+          "cuda_event": {
+            "p50_ms": 0.4514879882335663,
+            "p95_ms": 0.4811199903488159,
+            "p95_p50": 1.0656318725802296,
+            "positive_finite": true,
+            "raw_ms": [
+              0.4811199903488159,
+              0.45417600870132446,
+              0.4490880072116852,
+              0.4514879882335663,
+              0.44655999541282654
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.45733699994343624,
+            "p95_ms": 0.4879730000766358,
+            "p95_p50": 1.066987801417748,
+            "positive_finite": true,
+            "raw_ms": [
+              0.4879730000766358,
+              0.4603799999358671,
+              0.45594800008075254,
+              0.45733699994343624,
+              0.45389699994302646
+            ]
+          },
+          "warmups": 2
+        },
+        "k": 5376,
+        "kind": "linear",
+        "m": 3679,
+        "n": 16384,
+        "oracle": {
+          "kernel_actual_vs_dequantized_fp32": {
+            "cosine_similarity": 0.9999987483024597,
+            "finite": true,
+            "maximum_absolute": 0.00024365633726119995,
+            "nontrivial": true,
+            "normalized_rmse": 0.0016620910882630747,
+            "pass": true
+          },
+          "pass": true,
+          "representation_vs_original_bf16": {
+            "cosine_similarity": 0.9992932677268982,
+            "finite": true,
+            "maximum_absolute": 0.0027361437678337097,
+            "nontrivial": true,
+            "normalized_rmse": 0.0376522002689424,
+            "pass": true
+          }
+        },
+        "pass": true
+      },
+      {
+        "allocator": {
+          "peak_allocated_bytes": 1246095360,
+          "peak_reserved_bytes": 1505755136
+        },
+        "architecture_multiplicity": 10,
+        "bf16_timing": {
+          "cuda_event": {
+            "p50_ms": 0.07123199850320816,
+            "p95_ms": 0.08115199953317642,
+            "p95_p50": 1.1392632698564744,
+            "positive_finite": true,
+            "raw_ms": [
+              0.08115199953317642,
+              0.07123199850320816,
+              0.07046400010585785,
+              0.06934399902820587,
+              0.07440000027418137
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.0773660000277232,
+            "p95_ms": 0.08741700003156438,
+            "p95_p50": 1.129914949722611,
+            "positive_finite": true,
+            "raw_ms": [
+              0.08741700003156438,
+              0.0773660000277232,
+              0.07628000003023772,
+              0.07625000000643922,
+              0.08030800006508798
+            ]
+          },
+          "warmups": 2
+        },
+        "candidate_format": "E4M3FN per-tensor scaled inputs, BF16 output",
+        "candidate_symbol": "torch._scaled_mm",
+        "case": "global_qkv",
+        "fp8_timing": {
+          "cuda_event": {
+            "p50_ms": 0.0461760014295578,
+            "p95_ms": 0.05990400165319443,
+            "p95_p50": 1.2972972929364381,
+            "positive_finite": true,
+            "raw_ms": [
+              0.05990400165319443,
+              0.047680001705884933,
+              0.0461760014295578,
+              0.0461760014295578,
+              0.044319998472929
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.05221600008553651,
+            "p95_ms": 0.06642199991802045,
+            "p95_p50": 1.2720621995023114,
+            "positive_finite": true,
+            "raw_ms": [
+              0.06642199991802045,
+              0.05370999997467152,
+              0.0518630000669873,
+              0.05221600008553651,
+              0.05039100005888031
+            ]
+          },
+          "warmups": 2
+        },
+        "k": 5376,
+        "kind": "linear",
+        "m": 12,
+        "n": 20480,
+        "oracle": {
+          "kernel_actual_vs_dequantized_fp32": {
+            "cosine_similarity": 0.9999985694885254,
+            "finite": true,
+            "maximum_absolute": 0.00012745335698127747,
+            "nontrivial": true,
+            "normalized_rmse": 0.0016653534930036304,
+            "pass": true
+          },
+          "pass": true,
+          "representation_vs_original_bf16": {
+            "cosine_similarity": 0.9992988109588623,
+            "finite": true,
+            "maximum_absolute": 0.0025269873440265656,
+            "nontrivial": true,
+            "normalized_rmse": 0.03746695565368163,
+            "pass": true
+          }
+        },
+        "pass": true
+      },
+      {
+        "allocator": {
+          "peak_allocated_bytes": 2535307776,
+          "peak_reserved_bytes": 3147825152
+        },
+        "architecture_multiplicity": 10,
+        "bf16_timing": {
+          "cuda_event": {
+            "p50_ms": 0.9991359710693359,
+            "p95_ms": 1.0113279819488525,
+            "p95_p50": 1.0122025542394075,
+            "positive_finite": true,
+            "raw_ms": [
+              1.0113279819488525,
+              0.9991359710693359,
+              0.9981439709663391,
+              1.0017600059509277,
+              0.9970880150794983
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 1.0061540000378955,
+            "p95_ms": 1.0182040000472625,
+            "p95_p50": 1.01197629787181,
+            "positive_finite": true,
+            "raw_ms": [
+              1.0182040000472625,
+              1.0061540000378955,
+              1.0053820000166525,
+              1.008740999964175,
+              1.0044729999663105
+            ]
+          },
+          "warmups": 2
+        },
+        "candidate_format": "E4M3FN per-tensor scaled inputs, BF16 output",
+        "candidate_symbol": "torch._scaled_mm",
+        "case": "global_qkv",
+        "fp8_timing": {
+          "cuda_event": {
+            "p50_ms": 0.5566719770431519,
+            "p95_ms": 0.5680000185966492,
+            "p95_p50": 1.0203495811189705,
+            "positive_finite": true,
+            "raw_ms": [
+              0.5680000185966492,
+              0.5566719770431519,
+              0.5548160076141357,
+              0.5572479963302612,
+              0.5544959902763367
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.5639979999614297,
+            "p95_ms": 0.5754950000209647,
+            "p95_p50": 1.0203848241666125,
+            "positive_finite": true,
+            "raw_ms": [
+              0.5754950000209647,
+              0.5639979999614297,
+              0.561746000016683,
+              0.5644189999429727,
+              0.5604739999398589
+            ]
+          },
+          "warmups": 2
+        },
+        "k": 5376,
+        "kind": "linear",
+        "m": 3679,
+        "n": 20480,
+        "oracle": {
+          "kernel_actual_vs_dequantized_fp32": {
+            "cosine_similarity": 0.9999985694885254,
+            "finite": true,
+            "maximum_absolute": 0.00024440139532089233,
+            "nontrivial": true,
+            "normalized_rmse": 0.0016621030318390397,
+            "pass": true
+          },
+          "pass": true,
+          "representation_vs_original_bf16": {
+            "cosine_similarity": 0.9992949962615967,
+            "finite": true,
+            "maximum_absolute": 0.002844647504389286,
+            "nontrivial": true,
+            "normalized_rmse": 0.03755638330654505,
+            "pass": true
+          }
+        },
+        "pass": true
+      },
+      {
+        "allocator": {
+          "peak_allocated_bytes": 518943744,
+          "peak_reserved_bytes": 620756992
+        },
+        "architecture_multiplicity": 50,
+        "bf16_timing": {
+          "cuda_event": {
+            "p50_ms": 0.039744000881910324,
+            "p95_ms": 0.04975999891757965,
+            "p95_p50": 1.2520128274309736,
+            "positive_finite": true,
+            "raw_ms": [
+              0.04841599985957146,
+              0.03807999938726425,
+              0.036607999354600906,
+              0.04975999891757965,
+              0.039744000881910324
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.045712999963143375,
+            "p95_ms": 0.05571400004100724,
+            "p95_p50": 1.2187780300117534,
+            "positive_finite": true,
+            "raw_ms": [
+              0.05452599998534424,
+              0.04410099995766359,
+              0.042351999923084804,
+              0.05571400004100724,
+              0.045712999963143375
+            ]
+          },
+          "warmups": 2
+        },
+        "candidate_format": "E4M3FN per-tensor scaled inputs, BF16 output",
+        "candidate_symbol": "torch._scaled_mm",
+        "case": "sliding_output",
+        "fp8_timing": {
+          "cuda_event": {
+            "p50_ms": 0.023520000278949738,
+            "p95_ms": 0.03884800150990486,
+            "p95_p50": 1.6517007248793953,
+            "positive_finite": true,
+            "raw_ms": [
+              0.03884800150990486,
+              0.024320000782608986,
+              0.0225600004196167,
+              0.023520000278949738,
+              0.02195199951529503
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.029335000022001623,
+            "p95_ms": 0.04434699997091229,
+            "p95_p50": 1.5117436488035274,
+            "positive_finite": true,
+            "raw_ms": [
+              0.04434699997091229,
+              0.030267999932220846,
+              0.02850400005627307,
+              0.029335000022001623,
+              0.027910999961022753
+            ]
+          },
+          "warmups": 2
+        },
+        "k": 8192,
+        "kind": "linear",
+        "m": 12,
+        "n": 5376,
+        "oracle": {
+          "kernel_actual_vs_dequantized_fp32": {
+            "cosine_similarity": 0.9999986290931702,
+            "finite": true,
+            "maximum_absolute": 0.0001230277121067047,
+            "nontrivial": true,
+            "normalized_rmse": 0.001666762713428635,
+            "pass": true
+          },
+          "pass": true,
+          "representation_vs_original_bf16": {
+            "cosine_similarity": 0.9992856383323669,
+            "finite": true,
+            "maximum_absolute": 0.0020663344766944647,
+            "nontrivial": true,
+            "normalized_rmse": 0.03780245033540886,
+            "pass": true
+          }
+        },
+        "pass": true
+      },
+      {
+        "allocator": {
+          "peak_allocated_bytes": 810429440,
+          "peak_reserved_bytes": 1098907648
+        },
+        "architecture_multiplicity": 50,
+        "bf16_timing": {
+          "cuda_event": {
+            "p50_ms": 0.4214079976081848,
+            "p95_ms": 0.4416320025920868,
+            "p95_p50": 1.0479915072772439,
+            "positive_finite": true,
+            "raw_ms": [
+              0.4416320025920868,
+              0.42287999391555786,
+              0.4175040125846863,
+              0.4214079976081848,
+              0.4208959937095642
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.4288999999744192,
+            "p95_ms": 0.4479550000269228,
+            "p95_p50": 1.0444276056275124,
+            "positive_finite": true,
+            "raw_ms": [
+              0.4479550000269228,
+              0.42937599994274933,
+              0.424751000082324,
+              0.4286829999955444,
+              0.4288999999744192
+            ]
+          },
+          "warmups": 2
+        },
+        "candidate_format": "E4M3FN per-tensor scaled inputs, BF16 output",
+        "candidate_symbol": "torch._scaled_mm",
+        "case": "sliding_output",
+        "fp8_timing": {
+          "cuda_event": {
+            "p50_ms": 0.2399359941482544,
+            "p95_ms": 0.2505919933319092,
+            "p95_p50": 1.0444118408389802,
+            "positive_finite": true,
+            "raw_ms": [
+              0.2505919933319092,
+              0.2399359941482544,
+              0.24208000302314758,
+              0.23638400435447693,
+              0.23580799996852875
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.24752599995281344,
+            "p95_ms": 0.25691799999094656,
+            "p95_p50": 1.037943488926107,
+            "positive_finite": true,
+            "raw_ms": [
+              0.25691799999094656,
+              0.24752599995281344,
+              0.248414000111552,
+              0.24232900000242807,
+              0.24205099998653168
+            ]
+          },
+          "warmups": 2
+        },
+        "k": 8192,
+        "kind": "linear",
+        "m": 3679,
+        "n": 5376,
+        "oracle": {
+          "kernel_actual_vs_dequantized_fp32": {
+            "cosine_similarity": 0.9999986290931702,
+            "finite": true,
+            "maximum_absolute": 0.0001268833875656128,
+            "nontrivial": true,
+            "normalized_rmse": 0.0016601470863634074,
+            "pass": true
+          },
+          "pass": true,
+          "representation_vs_original_bf16": {
+            "cosine_similarity": 0.9992964267730713,
+            "finite": true,
+            "maximum_absolute": 0.0022817105054855347,
+            "nontrivial": true,
+            "normalized_rmse": 0.03753116851217862,
+            "pass": true
+          }
+        },
+        "pass": true
+      },
+      {
+        "allocator": {
+          "peak_allocated_bytes": 1004073984,
+          "peak_reserved_bytes": 1237319680
+        },
+        "architecture_multiplicity": 10,
+        "bf16_timing": {
+          "cuda_event": {
+            "p50_ms": 0.05711999908089638,
+            "p95_ms": 0.06326399743556976,
+            "p95_p50": 1.1075629981361157,
+            "positive_finite": true,
+            "raw_ms": [
+              0.06326399743556976,
+              0.05753599852323532,
+              0.05686400085687637,
+              0.05711999908089638,
+              0.056543998420238495
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.06296699996255484,
+            "p95_ms": 0.06926899993686675,
+            "p95_p50": 1.100084170725294,
+            "positive_finite": true,
+            "raw_ms": [
+              0.06926899993686675,
+              0.0636219999705645,
+              0.0627620000841489,
+              0.06296699996255484,
+              0.06269900006827811
+            ]
+          },
+          "warmups": 2
+        },
+        "candidate_format": "E4M3FN per-tensor scaled inputs, BF16 output",
+        "candidate_symbol": "torch._scaled_mm",
+        "case": "global_output",
+        "fp8_timing": {
+          "cuda_event": {
+            "p50_ms": 0.037567999213933945,
+            "p95_ms": 0.046720001846551895,
+            "p95_p50": 1.2436116595004474,
+            "positive_finite": true,
+            "raw_ms": [
+              0.046720001846551895,
+              0.03923200070858002,
+              0.037567999213933945,
+              0.036320000886917114,
+              0.03711999952793121
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.043293000089761335,
+            "p95_ms": 0.05328899999312853,
+            "p95_p50": 1.2308918273772211,
+            "positive_finite": true,
+            "raw_ms": [
+              0.05328899999312853,
+              0.0449770000159333,
+              0.043293000089761335,
+              0.04207100005260145,
+              0.043099000095025986
+            ]
+          },
+          "warmups": 2
+        },
+        "k": 16384,
+        "kind": "linear",
+        "m": 12,
+        "n": 5376,
+        "oracle": {
+          "kernel_actual_vs_dequantized_fp32": {
+            "cosine_similarity": 0.9999986290931702,
+            "finite": true,
+            "maximum_absolute": 9.867548942565918e-05,
+            "nontrivial": true,
+            "normalized_rmse": 0.0016572701940275243,
+            "pass": true
+          },
+          "pass": true,
+          "representation_vs_original_bf16": {
+            "cosine_similarity": 0.9993027448654175,
+            "finite": true,
+            "maximum_absolute": 0.0013539548963308334,
+            "nontrivial": true,
+            "normalized_rmse": 0.0373584713627311,
+            "pass": true
+          }
+        },
+        "pass": true
+      },
+      {
+        "allocator": {
+          "peak_allocated_bytes": 1503555584,
+          "peak_reserved_bytes": 1960837120
+        },
+        "architecture_multiplicity": 10,
+        "bf16_timing": {
+          "cuda_event": {
+            "p50_ms": 0.8164479732513428,
+            "p95_ms": 0.8194239735603333,
+            "p95_p50": 1.003645058113304,
+            "positive_finite": true,
+            "raw_ms": [
+              0.8194239735603333,
+              0.8176320195198059,
+              0.8164479732513428,
+              0.8140159845352173,
+              0.8155519962310791
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.8229860000028566,
+            "p95_ms": 0.8267389999900843,
+            "p95_p50": 1.0045602233661504,
+            "positive_finite": true,
+            "raw_ms": [
+              0.8267389999900843,
+              0.8247829999845635,
+              0.8223060000318583,
+              0.8212449999973614,
+              0.8229860000028566
+            ]
+          },
+          "warmups": 2
+        },
+        "candidate_format": "E4M3FN per-tensor scaled inputs, BF16 output",
+        "candidate_symbol": "torch._scaled_mm",
+        "case": "global_output",
+        "fp8_timing": {
+          "cuda_event": {
+            "p50_ms": 0.453792005777359,
+            "p95_ms": 0.4625920057296753,
+            "p95_p50": 1.019392144066623,
+            "positive_finite": true,
+            "raw_ms": [
+              0.4625920057296753,
+              0.4521600008010864,
+              0.4560000002384186,
+              0.44966399669647217,
+              0.453792005777359
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.46109200002319994,
+            "p95_ms": 0.46914799997921364,
+            "p95_p50": 1.0174715674000163,
+            "positive_finite": true,
+            "raw_ms": [
+              0.46914799997921364,
+              0.4597519999833821,
+              0.4619940000338829,
+              0.45697799998833943,
+              0.46109200002319994
+            ]
+          },
+          "warmups": 2
+        },
+        "k": 16384,
+        "kind": "linear",
+        "m": 3679,
+        "n": 5376,
+        "oracle": {
+          "kernel_actual_vs_dequantized_fp32": {
+            "cosine_similarity": 0.9999986886978149,
+            "finite": true,
+            "maximum_absolute": 0.000123634934425354,
+            "nontrivial": true,
+            "normalized_rmse": 0.0016660933713126547,
+            "pass": true
+          },
+          "pass": true,
+          "representation_vs_original_bf16": {
+            "cosine_similarity": 0.9992947578430176,
+            "finite": true,
+            "maximum_absolute": 0.0015783682465553284,
+            "nontrivial": true,
+            "normalized_rmse": 0.0375494016820485,
+            "pass": true
+          }
+        },
+        "pass": true
+      },
+      {
+        "allocator": {
+          "peak_allocated_bytes": 2580441088,
+          "peak_reserved_bytes": 2956984320
+        },
+        "architecture_multiplicity": 60,
+        "bf16_timing": {
+          "cuda_event": {
+            "p50_ms": 0.13062399625778198,
+            "p95_ms": 0.14070400595664978,
+            "p95_p50": 1.077168131336108,
+            "positive_finite": true,
+            "raw_ms": [
+              0.14070400595664978,
+              0.13171200454235077,
+              0.13062399625778198,
+              0.13007999956607819,
+              0.13052800297737122
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.1376799999661671,
+            "p95_ms": 0.14700600002015562,
+            "p95_p50": 1.067736781350089,
+            "positive_finite": true,
+            "raw_ms": [
+              0.14700600002015562,
+              0.1376799999661671,
+              0.13645800004269404,
+              0.1358420000769911,
+              0.1377879999608922
+            ]
+          },
+          "warmups": 2
+        },
+        "candidate_format": "E4M3FN per-tensor scaled inputs, BF16 output",
+        "candidate_symbol": "torch._scaled_mm",
+        "case": "merged_gate_up",
+        "fp8_timing": {
+          "cuda_event": {
+            "p50_ms": 0.07791999727487564,
+            "p95_ms": 0.09324800223112106,
+            "p95_p50": 1.19671464954206,
+            "positive_finite": true,
+            "raw_ms": [
+              0.09324800223112106,
+              0.07791999727487564,
+              0.0751039981842041,
+              0.07603199779987335,
+              0.0804160013794899
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.08395899999413814,
+            "p95_ms": 0.09945700003299862,
+            "p95_p50": 1.184590098023351,
+            "positive_finite": true,
+            "raw_ms": [
+              0.09945700003299862,
+              0.08395899999413814,
+              0.0812640000731335,
+              0.08200600007057801,
+              0.08595000008426723
+            ]
+          },
+          "warmups": 2
+        },
+        "k": 5376,
+        "kind": "linear",
+        "m": 12,
+        "n": 43008,
+        "oracle": {
+          "kernel_actual_vs_dequantized_fp32": {
+            "cosine_similarity": 0.9999986886978149,
+            "finite": true,
+            "maximum_absolute": 0.0002224445343017578,
+            "nontrivial": true,
+            "normalized_rmse": 0.0016620381224709715,
+            "pass": true
+          },
+          "pass": true,
+          "representation_vs_original_bf16": {
+            "cosine_similarity": 0.9992938041687012,
+            "finite": true,
+            "maximum_absolute": 0.0025070523843169212,
+            "nontrivial": true,
+            "normalized_rmse": 0.037697960256166986,
+            "pass": true
+          }
+        },
+        "pass": true
+      },
+      {
+        "allocator": {
+          "peak_allocated_bytes": 5219656704,
+          "peak_reserved_bytes": 6413090816
+        },
+        "architecture_multiplicity": 60,
+        "bf16_timing": {
+          "cuda_event": {
+            "p50_ms": 2.1520960330963135,
+            "p95_ms": 2.187551975250244,
+            "p95_p50": 1.0164750743501527,
+            "positive_finite": true,
+            "raw_ms": [
+              2.1269760131835938,
+              2.130496025085449,
+              2.1520960330963135,
+              2.180095911026001,
+              2.187551975250244
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 2.15920499999811,
+            "p95_ms": 2.1950779999997394,
+            "p95_p50": 1.016613985240707,
+            "positive_finite": true,
+            "raw_ms": [
+              2.1341780000057042,
+              2.1378120000008494,
+              2.15920499999811,
+              2.187589000072876,
+              2.1950779999997394
+            ]
+          },
+          "warmups": 2
+        },
+        "candidate_format": "E4M3FN per-tensor scaled inputs, BF16 output",
+        "candidate_symbol": "torch._scaled_mm",
+        "case": "merged_gate_up",
+        "fp8_timing": {
+          "cuda_event": {
+            "p50_ms": 1.1625280380249023,
+            "p95_ms": 1.1707199811935425,
+            "p95_p50": 1.0070466628766717,
+            "positive_finite": true,
+            "raw_ms": [
+              1.1707199811935425,
+              1.16428804397583,
+              1.1608320474624634,
+              1.1617599725723267,
+              1.1625280380249023
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 1.1697489999278332,
+            "p95_ms": 1.1781740000742502,
+            "p95_p50": 1.0072023999566888,
+            "positive_finite": true,
+            "raw_ms": [
+              1.1781740000742502,
+              1.1715140000205793,
+              1.1679870000307346,
+              1.168900000038775,
+              1.1697489999278332
+            ]
+          },
+          "warmups": 2
+        },
+        "k": 5376,
+        "kind": "linear",
+        "m": 3679,
+        "n": 43008,
+        "oracle": {
+          "kernel_actual_vs_dequantized_fp32": {
+            "cosine_similarity": 0.9999986886978149,
+            "finite": true,
+            "maximum_absolute": 0.00024590641260147095,
+            "nontrivial": true,
+            "normalized_rmse": 0.001662406444364386,
+            "pass": true
+          },
+          "pass": true,
+          "representation_vs_original_bf16": {
+            "cosine_similarity": 0.9992930889129639,
+            "finite": true,
+            "maximum_absolute": 0.0031156037002801895,
+            "nontrivial": true,
+            "normalized_rmse": 0.03765608982476246,
+            "pass": true
+          }
+        },
+        "pass": true
+      },
+      {
+        "allocator": {
+          "peak_allocated_bytes": 1309377536,
+          "peak_reserved_bytes": 1572864000
+        },
+        "architecture_multiplicity": 60,
+        "bf16_timing": {
+          "cuda_event": {
+            "p50_ms": 0.07603199779987335,
+            "p95_ms": 0.07919999957084656,
+            "p95_p50": 1.0416666911648411,
+            "positive_finite": true,
+            "raw_ms": [
+              0.07919999957084656,
+              0.07667200267314911,
+              0.07603199779987335,
+              0.07491199672222137,
+              0.07449600100517273
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.08198000000447792,
+            "p95_ms": 0.08563200003663951,
+            "p95_p50": 1.0445474509875838,
+            "positive_finite": true,
+            "raw_ms": [
+              0.08563200003663951,
+              0.08275699997284391,
+              0.08198000000447792,
+              0.08103599998321442,
+              0.08064899998316832
+            ]
+          },
+          "warmups": 2
+        },
+        "candidate_format": "E4M3FN per-tensor scaled inputs, BF16 output",
+        "candidate_symbol": "torch._scaled_mm",
+        "case": "down",
+        "fp8_timing": {
+          "cuda_event": {
+            "p50_ms": 0.04944000020623207,
+            "p95_ms": 0.05955199897289276,
+            "p95_p50": 1.2045307185372147,
+            "positive_finite": true,
+            "raw_ms": [
+              0.05955199897289276,
+              0.05011200159788132,
+              0.04944000020623207,
+              0.04841599985957146,
+              0.04758400097489357
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.055788999929973215,
+            "p95_ms": 0.06606400006603508,
+            "p95_p50": 1.1841760947312037,
+            "positive_finite": true,
+            "raw_ms": [
+              0.06606400006603508,
+              0.05626899996968859,
+              0.055788999929973215,
+              0.05458500004351663,
+              0.05386300006193778
+            ]
+          },
+          "warmups": 2
+        },
+        "k": 21504,
+        "kind": "linear",
+        "m": 12,
+        "n": 5376,
+        "oracle": {
+          "kernel_actual_vs_dequantized_fp32": {
+            "cosine_similarity": 0.9999985694885254,
+            "finite": true,
+            "maximum_absolute": 0.00012064725160598755,
+            "nontrivial": true,
+            "normalized_rmse": 0.0016619762564776606,
+            "pass": true
+          },
+          "pass": true,
+          "representation_vs_original_bf16": {
+            "cosine_similarity": 0.9992889165878296,
+            "finite": true,
+            "maximum_absolute": 0.0010963266249746084,
+            "nontrivial": true,
+            "normalized_rmse": 0.037719066017390765,
+            "pass": true
+          }
+        },
+        "pass": true
+      },
+      {
+        "allocator": {
+          "peak_allocated_bytes": 1940435968,
+          "peak_reserved_bytes": 2522873856
+        },
+        "architecture_multiplicity": 60,
+        "bf16_timing": {
+          "cuda_event": {
+            "p50_ms": 1.0649280548095703,
+            "p95_ms": 1.0682239532470703,
+            "p95_p50": 1.0030949493936372,
+            "positive_finite": true,
+            "raw_ms": [
+              1.0664639472961426,
+              1.0682239532470703,
+              1.0633599758148193,
+              1.0649280548095703,
+              1.0598080158233643
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 1.071837000040432,
+            "p95_ms": 1.0752849999562386,
+            "p95_p50": 1.0032169069696946,
+            "positive_finite": true,
+            "raw_ms": [
+              1.0733650000247508,
+              1.0752849999562386,
+              1.0703010000270297,
+              1.071837000040432,
+              1.0669320000715743
+            ]
+          },
+          "warmups": 2
+        },
+        "candidate_format": "E4M3FN per-tensor scaled inputs, BF16 output",
+        "candidate_symbol": "torch._scaled_mm",
+        "case": "down",
+        "fp8_timing": {
+          "cuda_event": {
+            "p50_ms": 0.5951679944992065,
+            "p95_ms": 0.6047040224075317,
+            "p95_p50": 1.0160224138335079,
+            "positive_finite": true,
+            "raw_ms": [
+              0.6047040224075317,
+              0.5945600271224976,
+              0.5995839834213257,
+              0.5951679944992065,
+              0.5942400097846985
+            ]
+          },
+          "iterations": 5,
+          "synchronized_wall": {
+            "p50_ms": 0.6023449999474906,
+            "p95_ms": 0.6110290000833629,
+            "p95_p50": 1.014416987169528,
+            "positive_finite": true,
+            "raw_ms": [
+              0.6110290000833629,
+              0.6018709999580096,
+              0.6057059999875491,
+              0.6023449999474906,
+              0.6017800000108764
+            ]
+          },
+          "warmups": 2
+        },
+        "k": 21504,
+        "kind": "linear",
+        "m": 3679,
+        "n": 5376,
+        "oracle": {
+          "kernel_actual_vs_dequantized_fp32": {
+            "cosine_similarity": 0.9999986290931702,
+            "finite": true,
+            "maximum_absolute": 0.00012358278036117554,
+            "nontrivial": true,
+            "normalized_rmse": 0.0016624460797009654,
+            "pass": true
+          },
+          "pass": true,
+          "representation_vs_original_bf16": {
+            "cosine_similarity": 0.9992924928665161,
+            "finite": true,
+            "maximum_absolute": 0.0013892818242311478,
+            "nontrivial": true,
+            "normalized_rmse": 0.037612736466927504,
+            "pass": true
+          }
+        },
+        "pass": true
+      }
+    ]
+  },
+  "schema_version": 1,
+  "scientific_wall_seconds": 1.1526556170000504,
+  "semantics": "checkpoint-free exact-shape component proxy; E4M3 only for linears/head and BF16 attention/KV shared in both arms",
+  "type": "gemma4_h200_e4m3_compute_bf16_kv_exact_shape_falsifier",
+  "useful_gpu_seconds": 0.10035334370564669
+}

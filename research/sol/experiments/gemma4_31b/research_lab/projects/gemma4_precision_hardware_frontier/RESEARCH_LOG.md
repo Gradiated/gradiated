@@ -23,3 +23,15 @@ Evidence: the first real E4M3 `_scaled_mm` sentinel passed both numerical oracle
 Interpretation: measured runtime support falsifies this H200 FP8 route before the numerical and 20% weighted component-floor admission gate can be evaluated. H200 FP8 is not an endpoint nominee. The recorded project cost is the conservative full 30-minute lifecycle maximum, $1.23, within the $1.50 reservation.
 
 Next move: terminal for this allocation. A future candidate requires a separately admitted, actually supported FP8 KV writer and consumer path; do not replay this one-shot runner or allocation.
+
+## 2026-07-18 — supported E4M3-compute/BF16-state proxy misses admission floor
+
+Question: after retaining BF16 attention and identical BF16 KV-write cost in both arms, does supported H200 E4M3 compute clear the 20% exact-shape component-floor margin over all-BF16?
+
+Action: claimed the warm `h200-fp8-frontier-e00hjag28j32gvydxv` bench, reused `/home/glmrunner/.venvs/gemma-fp8` without dependency setup, and ran the new `h200_fp8_compute_bf16_kv_falsifier.py` exactly once. The runner retains the original E4M3 `_scaled_mm` linear/head and BF16 attention paths, calls only BF16 `index_copy_` for KV, and charges that same measured KV component to both aggregates.
+
+Evidence: every row passed (`all_rows_pass: true`), including the persisted E4M3 sentinel and BF16 KV serialization oracle. The measured all-BF16 component floor was 3.519696 s/request and the E4M3-compute/BF16-state proxy was 3.179684 s/request, a 9.6602% reduction. Shared BF16 attention alone remained 2.648159 s/request, so linear/head acceleration cannot reach the 20% aggregate gate in this component geometry. `RESULT.json` SHA-256 is `02b833cdaa6878816b350ca7cae6982e203fb91a98bdabde2e604d91f66d624a`; runner SHA-256 is `f7e5bb889cd051d820cb556918d98456e49c63c18dc6008bdd859ea0448e8a61`.
+
+Interpretation: this is measured negative evidence for the supported representation, not a full-model throughput claim. H200 E4M3 compute with BF16 state is not a component-proxy nominee because it misses the required margin despite passing all numerical oracles.
+
+Next move: terminal for this retained allocation. A future candidate needs a separately admitted representation or geometry that reduces the attention-dominated component floor; do not replay this arm.

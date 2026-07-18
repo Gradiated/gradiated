@@ -2,13 +2,13 @@
   "status": "completed",
   "priority": 480,
   "researcher_profile": "execution",
-  "summary": "The one-shot H200 exact-shape falsifier reached the real FP8 tensor-core and BF16 attention paths, but the FP8 E5M2 KV-write arm failed because CUDA index_copy_ is not implemented for Float8_e5m2 in Torch 2.13.0+cu130; H200 FP8 is not nominated.",
-  "next_action": "Terminal for this allocated experiment: do not nominate H200 FP8 from this runner. Any future route must use a separately admitted supported FP8 KV-writer/consumer path and a fresh allocation decision; do not replay this one-shot allocation.",
+  "summary": "The supported H200 E4M3-compute/BF16-state exact-shape proxy passed every numerical oracle, but its 9.66% component-floor reduction versus all-BF16 misses the 20% admission margin; no component proxy is nominated.",
+  "next_action": "Terminal for the retained allocation: do not nominate this E4M3-compute/BF16-state component proxy. A future route requires a separately admitted representation or geometry that can reduce the attention-dominated floor; do not replay this warm-bench run.",
   "authorized_spend_usd": 1.5,
   "provider_spend_usd": 1.23,
   "active_session": null,
-  "latest_terminal": "artifacts/20260718t1600z-h200-fp8/RESULT.json",
-  "frontier_artifact": null,
+  "latest_terminal": "artifacts/20260718t1611z-h200-e4m3-compute-bf16-kv/RESULT.json",
+  "frontier_artifact": "artifacts/20260718t1611z-h200-e4m3-compute-bf16-kv/RESULT.json",
   "result_artifacts": {
     "root": "artifacts/20260718t1600z-h200-fp8",
     "sentinel": "artifacts/20260718t1600z-h200-fp8/SENTINEL.json",
@@ -19,9 +19,25 @@
   },
   "terminal_decision": {
     "endpoint_nominee": null,
-    "reason": "NotImplementedError: index_copy_cuda not implemented for Float8_e5m2; RESULT.json pass=false before aggregate frontier calculation.",
+    "reason": "All E4M3 linear/head, BF16 attention, and BF16 KV numerical oracles passed, but the measured supported mixed-arm margin was 9.6602%, below the 20% component-proxy admission gate.",
     "provider_cost_basis": "conservative full registered 30-minute lifecycle at $2.46/hour",
     "provider_cost_usd": 1.23
+  },
+  "current_arm": {
+    "candidate": "H200 E4M3 linears and tied head with BF16 attention and KV writes",
+    "comparator": "H200 all-BF16 exact-shape component floor",
+    "admission_margin": 0.2,
+    "reason": "The first run directly passed E4M3 numerical and timing checks; replacing the unsupported E5M2 KV mutation with unchanged BF16 KV state is a distinct supported representation, not a replay."
+  },
+  "mixed_arm_artifacts": {
+    "runner": "h200_fp8_compute_bf16_kv_falsifier.py",
+    "runner_sha256": "f7e5bb889cd051d820cb556918d98456e49c63c18dc6008bdd859ea0448e8a61",
+    "root": "artifacts/20260718t1611z-h200-e4m3-compute-bf16-kv",
+    "sentinel": "artifacts/20260718t1611z-h200-e4m3-compute-bf16-kv/SENTINEL.json",
+    "result": "artifacts/20260718t1611z-h200-e4m3-compute-bf16-kv/RESULT.json",
+    "result_sha256": "02b833cdaa6878816b350ca7cae6982e203fb91a98bdabde2e604d91f66d624a",
+    "measured_component_margin_vs_all_bf16": 0.09660246540046047,
+    "component_proxy_nominee": null
   },
   "provisioned_bench": {
     "id": "h200-fp8-frontier-e00hjag28j32gvydxv",

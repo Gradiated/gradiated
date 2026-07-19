@@ -1,0 +1,11 @@
+{
+  "project": "gemma4_h200_local_kv_head8_discriminator",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 exact local-attention 16-to-8 KV conversion",
+  "checkpoint": "Exact eight-file 62,578,655,208-byte checkpoint is local and queued for staging; not yet present on this bench.",
+  "image": "Pinned SGLang v0.5.12 image is resident; digest sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a.",
+  "runtime": "Passing paired 16-versus-8 discriminator and Triton/CUDA compilation caches retained; bounded GQA conversion is queued.",
+  "caches": "Pinned image and passing discriminator compilation caches retained.",
+  "server_state": "No server; checkpoint conversion and conditional endpoint have not started.",
+  "artifacts": "Passing typed terminal, raw paired rows, source snapshot, profiler summary, and GPU telemetry are retrieved project-locally.",
+  "export": "No conversion overlay exists yet."
+}

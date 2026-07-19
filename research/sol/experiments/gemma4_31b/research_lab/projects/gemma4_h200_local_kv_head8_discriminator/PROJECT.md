@@ -46,3 +46,23 @@ On pass, stop after preserving the discriminator terminal and release the bench 
 - No checkpoint transfer, model load, training, distillation, endpoint run, broad quality evaluation, second architecture candidate, tile/split sweep, second allocation, or researcher-owned provider lifecycle mutation.
 
 Retrieve a typed terminal, exact program/source hashes, paired raw rows, numerical/allocation oracles, and telemetry. Release without teardown for director disposition.
+
+## Director extension — bounded GQA conversion and conditional endpoint
+
+The checkpoint-free discriminator passed with `0.03213170265625002` seconds/request of conservative saving, 1.77× the preregistered gate. Extend this same scientific project; do not create a conversion, repair, readiness, or quality successor.
+
+Stage the exact eight-file, `62,578,655,208`-byte checkpoint from the local path content-bound in `../gemma4_h200_attention_endpoint_integration/IDENTITIES.json` (SHA-256 `79958515caad9b6e30db161a137a24291be31fb28b68ad982652261913f89516`). Bind the passing discriminator terminal (`1a3e4d5d1693d4673a99dd94a20fc777a1c2477418c57da52fab8a8e9d89f99b`) and result (`33895eee6e8af43f97719a3dda3f86b799377f5c1e0ed20204a29ca40d273a76`) before mutation.
+
+Implement the exact 16→8 local-KV-head representation in the pinned SGLang consumer while leaving all global layers, query heads, head dimensions, MLPs, residual width, tokenizer, template, and non-local-KV checkpoint tensors unchanged. Initialize each new local K/V head by the preregistered adjacent-pair mean, then run one bounded teacher/student schedule over only the local K/V projection tensors. The schedule must add an end-to-end teacher target (logits or final hidden state) to held-out local-attention/block fidelity so it does not repeat the prior head-dimension project's block-only failure. Freeze the schedule, optimizer, request split, and trainable tensor manifest before the first update; no second schedule, head-count alternative, optimizer sweep, or loss-weight sweep is allowed.
+
+Use the immutable 24/8 split of the 32 canonical request bodies where practical, with bounded token sampling or streaming capture to fit the resident bench. Require the pair-mean baseline and trained candidate on the same eight held-out requests. The candidate must improve aggregate held-out normalized RMSE and cosine over initialization, avoid a material end-to-end teacher-target regression, and preserve checkpoint metadata outside the declared local K/V overlay.
+
+Only after those fidelity gates pass, load the patched exact consumer and require:
+
+- 3/3 finite, nonempty, nonrepetitive coherence prompts;
+- a small deterministic 10K-context retrieval set with all exact answers recovered;
+- no fallback, dense/repeated KV materialization, illegal access, or model/runtime identity drift.
+
+Only after all cheap quality gates pass, invoke the frozen canonical c32 exact-mix runner once: 32/32 finite nonempty responses, exactly 4,214 prompt and 358 completion tokens each, 17,120 cached and 117,728 fresh prompt tokens, idle preflight, and HTTP-200 cache flush. Retain any valid improvement below `0.9194573941250042` seconds/request; promote to broad GPQA-Diamond and TauBench only at or below `0.8734845244187539`. A fidelity, coherence, retrieval, integration, or performance miss closes this conversion schedule without another training run.
+
+Extended aggregate limits: `$18.00` reserved, at most 220 H200 claimed minutes, 270 wall minutes ending by `2026-07-19T16:45:00Z`, 20 GiB retained plus 12 GiB temporary artifacts beyond the staged checkpoint/image, and absolute director watchdog `2026-07-19T17:15:00Z`. Keep the same bench, image, caches, and one mutable owner across checkpoint transfer, integration, training, cheap gates, and any conditional endpoint. Release ready; researchers do not tear down provider resources.

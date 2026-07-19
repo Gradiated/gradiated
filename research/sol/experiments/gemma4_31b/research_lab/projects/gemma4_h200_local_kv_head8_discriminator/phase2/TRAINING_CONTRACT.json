@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "seed": 20260719,
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "teacher": {
+    "checkpoint": "/work/checkpoint",
+    "dtype": "bfloat16",
+    "attention_implementation": "sdpa",
+    "targets": [
+      "last-token output from every local self-attention module",
+      "last-token final hidden state"
+    ]
+  },
+  "split": {
+    "train_request_indices": [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 16, 17, 18, 20, 21, 22, 24, 25, 26, 28, 29, 30],
+    "holdout_request_indices": [3, 7, 11, 15, 19, 23, 27, 31]
+  },
+  "token_sampling": {
+    "source_prompt_tokens": 4214,
+    "selected_tokens": 1024,
+    "selection": "deterministic final 1024 token IDs from each frozen canonical request body",
+    "supervised_position": 1023
+  },
+  "local_layer_ids": [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40, 42, 43, 44, 45, 46, 48, 49, 50, 51, 52, 54, 55, 56, 57, 58],
+  "trainable_suffixes": ["k_proj.weight", "v_proj.weight"],
+  "required_trainable_tensor_count": 100,
+  "student": {
+    "initialization": "mean each adjacent pair of the original 16 local K/V heads",
+    "local_kv_heads": 8,
+    "global_kv_heads": 4,
+    "query_heads": 32,
+    "local_head_dim": 256,
+    "global_head_dim": 512,
+    "hidden_size": 5376,
+    "sliding_window": 1024,
+    "all_non_local_kv_parameters_frozen": true
+  },
+  "optimizer": {
+    "name": "AdamW",
+    "learning_rate": 0.00001,
+    "betas": [0.9, 0.95],
+    "eps": 1e-8,
+    "weight_decay": 0.0,
+    "gradient_clip_norm": 1.0
+  },
+  "schedule": {
+    "epochs": 1,
+    "prompt_batch_size": 1,
+    "optimizer_updates": 24,
+    "candidate_runs": 1
+  },
+  "loss": {
+    "aggregate_local_attention_normalized_mse_weight": 1.0,
+    "aggregate_local_attention_cosine_weight": 0.05,
+    "end_to_end_final_hidden_normalized_mse_weight": 1.0,
+    "end_to_end_final_hidden_cosine_weight": 0.05
+  },
+  "gates": {
+    "heldout_local_attention_nrmse_strictly_decreases": true,
+    "heldout_local_attention_cosine_strictly_increases": true,
+    "heldout_final_hidden_nrmse_strictly_decreases": true,
+    "heldout_final_hidden_cosine_strictly_increases": true,
+    "coherence_pass_count": 3,
+    "retrieval_10k_all_exact_answers": true,
+    "conditional_exact_c32_invocations": 1
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "candidate_invocations": 1,
+  "conditional_endpoint_invoked": false,
+  "conservative_saving_seconds_per_request": -0.003998862109147012,
+  "decision": "close_on_component_scientific_miss",
+  "numerical_allocation_pass": true,
+  "pass": false,
+  "required_saving_seconds_per_request": 0.04597286970625021,
+  "schema_version": 1,
+  "scientific_terminal": true,
+  "stage": "component"
+}

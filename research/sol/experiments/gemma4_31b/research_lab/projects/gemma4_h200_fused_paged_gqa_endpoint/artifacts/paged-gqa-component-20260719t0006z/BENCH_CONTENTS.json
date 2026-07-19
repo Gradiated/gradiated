@@ -1,0 +1,10 @@
+{
+  "artifacts": "Component terminal and raw timing/oracle/telemetry retrieved under projects/gemma4_h200_fused_paged_gqa_endpoint/artifacts/paged-gqa-component-20260719t0006z/.",
+  "caches": "Pinned image plus Triton compilation cache retained on the boot disk.",
+  "checkpoint": "Project-local immutable checkpoint snapshot was not staged because the component did not promote.",
+  "image": "Pinned SGLang v0.5.12 image sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a pulled and retained.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 exact attention shapes",
+  "project": "gemma4_h200_fused_paged_gqa_endpoint",
+  "runtime": "Checkpoint-free exact-shape stock versus direct grouped paged native-GQA component discriminator completed with a scientific miss.",
+  "server_state": "No server; conditional endpoint not started."
+}

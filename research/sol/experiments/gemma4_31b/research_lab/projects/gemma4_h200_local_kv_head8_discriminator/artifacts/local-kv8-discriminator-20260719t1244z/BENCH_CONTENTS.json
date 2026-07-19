@@ -1,0 +1,11 @@
+{
+  "artifacts": "Typed terminal, raw paired rows, kernel trace, source snapshot, and GPU telemetry retrieved project-locally.",
+  "caches": "Pinned image and Triton/CUDA compilation caches retained.",
+  "checkpoint": "Not staged; the checkpoint-free local-KV-head discriminator does not consume model weights.",
+  "export": "No export.",
+  "image": "Pinned SGLang v0.5.12 image retained on disk after the discriminator.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 exact local-attention shapes",
+  "project": "gemma4_h200_local_kv_head8_discriminator",
+  "runtime": "Paired exact-shape 16-versus-8 local-KV-head discriminator completed.",
+  "server_state": "No server; checkpoint-free component only."
+}

@@ -1,0 +1,308 @@
+{
+  "baseline": {
+    "attention_ms": {
+      "mean": 0.19617919959127902,
+      "median": 0.19391999393701553,
+      "p05": 0.19064160585403442,
+      "p95": 0.20770079419016838
+    },
+    "event_total_ms": {
+      "mean": 0.2710231993347406,
+      "median": 0.26793600618839264,
+      "p05": 0.26402720659971235,
+      "p95": 0.2886688143014908
+    },
+    "kv_write_ms": {
+      "mean": 0.017032000003382564,
+      "median": 0.01649599988013506,
+      "p05": 0.0161920003592968,
+      "p95": 0.018687999807298177
+    },
+    "qkv_ms": {
+      "mean": 0.057812000159174204,
+      "median": 0.05729600042104721,
+      "p05": 0.05605759862810373,
+      "p95": 0.0603712011128664
+    },
+    "synchronized_wall_ms": {
+      "mean": 0.28316318749999997,
+      "median": 0.280038,
+      "p05": 0.27613390000000004,
+      "p95": 0.3006747
+    }
+  },
+  "candidate": {
+    "attention_ms": {
+      "mean": 0.12891679983586074,
+      "median": 0.12814399600028992,
+      "p05": 0.12474399656057357,
+      "p95": 0.13438080251216888
+    },
+    "event_total_ms": {
+      "mean": 0.19753760006278753,
+      "median": 0.19470400363206863,
+      "p05": 0.19141599759459496,
+      "p95": 0.20803680419921874
+    },
+    "kv_write_ms": {
+      "mean": 0.01760159987024963,
+      "median": 0.01624000072479248,
+      "p05": 0.015936000272631645,
+      "p95": 0.023201599717140198
+    },
+    "qkv_ms": {
+      "mean": 0.05101919984444976,
+      "median": 0.050703998655080795,
+      "p05": 0.04902240075170994,
+      "p95": 0.053548801504075524
+    },
+    "synchronized_wall_ms": {
+      "mean": 0.20986457500000003,
+      "median": 0.2068225,
+      "p05": 0.2026655,
+      "p95": 0.22115569999999998
+    }
+  },
+  "candidate_invocations": 1,
+  "causal_telemetry": {
+    "baseline_effective_read_gbps": 1384.2587891539786,
+    "baseline_fp8_kv_read_bytes_per_layer_step": 268435456,
+    "baseline_qkv_blocks_n_tile128_prior": 128,
+    "baseline_qkv_wave_slot_utilization_prior": 0.9696969696969697,
+    "candidate_effective_read_gbps": 1047.3977103047134,
+    "candidate_fp8_kv_read_bytes_per_layer_step": 134217728,
+    "candidate_qkv_blocks_n_tile128_prior": 96,
+    "candidate_qkv_wave_slot_utilization_prior": 0.7272727272727273,
+    "counter_limit": "No hardware DRAM/L2/warp counter is required for timing validity; the raw paired kernel trace and one-second nvidia-smi telemetry are retained.",
+    "h200_sms": 132,
+    "profiler": {
+      "available": true,
+      "events": [
+        {
+          "count": 2,
+          "input_shapes": "",
+          "key": "_fwd_grouped_kernel_stage1",
+          "self_device_time_us": 248.89599999999973
+        },
+        {
+          "count": 1,
+          "input_shapes": "",
+          "key": "local_kv16.paged_attention",
+          "self_device_time_us": 168.76800000000003
+        },
+        {
+          "count": 1,
+          "input_shapes": "",
+          "key": "local_kv8.paged_attention",
+          "self_device_time_us": 95.42299999999977
+        },
+        {
+          "count": 2,
+          "input_shapes": "",
+          "key": "aten::mm",
+          "self_device_time_us": 83.61599999999999
+        },
+        {
+          "count": 1,
+          "input_shapes": "",
+          "key": "local_kv16.paged_kv_write",
+          "self_device_time_us": 78.84799999999996
+        },
+        {
+          "count": 1,
+          "input_shapes": "",
+          "key": "local_kv8.paged_kv_write",
+          "self_device_time_us": 65.3119999999999
+        },
+        {
+          "count": 1,
+          "input_shapes": "",
+          "key": "nvjet_sm90_tst_128x32_64x10_2x1_v_bz_NNT",
+          "self_device_time_us": 45.503999999999905
+        },
+        {
+          "count": 1,
+          "input_shapes": "",
+          "key": "local_kv16.fused_qkv",
+          "self_device_time_us": 45.503999999999905
+        },
+        {
+          "count": 1,
+          "input_shapes": "",
+          "key": "nvjet_sm90_tst_128x32_64x10_4x1_v_bz_NNT",
+          "self_device_time_us": 38.11200000000008
+        },
+        {
+          "count": 1,
+          "input_shapes": "",
+          "key": "local_kv8.fused_qkv",
+          "self_device_time_us": 38.11200000000008
+        },
+        {
+          "count": 4,
+          "input_shapes": "",
+          "key": "aten::_index_put_impl_",
+          "self_device_time_us": 13.12100000000055
+        },
+        {
+          "count": 4,
+          "input_shapes": "",
+          "key": "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_put_kernel_impl<at::native::OpaqueType<1> >(at::TensorIterator&, c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1}>(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>, at::native::index_put_kernel_impl<at::native::OpaqueType<1> >(at::TensorIterator&, c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1} const&, bool)::{lambda(int)#1}>(long, at::native::gpu_index_kernel<at::native::index_put_kernel_impl<at::native::OpaqueType<1> >(at::TensorIterator&, c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1}>(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>, at::native::index_put_kernel_impl<at::native::OpaqueType<1> >(at::TensorIterator&, c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1} const&, bool)::{lambda(int)#1})",
+          "self_device_time_us": 13.12100000000055
+        },
+        {
+          "count": 2,
+          "input_shapes": "",
+          "key": "_fwd_kernel_stage2",
+          "self_device_time_us": 12.032000000000153
+        },
+        {
+          "count": 4,
+          "input_shapes": "",
+          "key": "aten::copy_",
+          "self_device_time_us": 10.047999999999774
+        },
+        {
+          "count": 4,
+          "input_shapes": "",
+          "key": "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::float8_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(c10::BFloat16)#2}>(at::TensorIteratorBase&, at::native::float8_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(c10::BFloat16)#2} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::float8_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(c10::BFloat16)#2}>(at::TensorIteratorBase&, at::native::float8_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(c10::BFloat16)#2} const&)::{lambda(int)#1})",
+          "self_device_time_us": 10.047999999999774
+        },
+        {
+          "count": 1,
+          "input_shapes": "",
+          "key": "local_kv16.fused_qkv",
+          "self_device_time_us": 0.0
+        },
+        {
+          "count": 1,
+          "input_shapes": "",
+          "key": "local_kv16.paged_kv_write",
+          "self_device_time_us": 0.0
+        },
+        {
+          "count": 1,
+          "input_shapes": "",
+          "key": "local_kv16.paged_attention",
+          "self_device_time_us": 0.0
+        },
+        {
+          "count": 1,
+          "input_shapes": "",
+          "key": "local_kv8.fused_qkv",
+          "self_device_time_us": 0.0
+        },
+        {
+          "count": 1,
+          "input_shapes": "",
+          "key": "local_kv8.paged_kv_write",
+          "self_device_time_us": 0.0
+        },
+        {
+          "count": 1,
+          "input_shapes": "",
+          "key": "local_kv8.paged_attention",
+          "self_device_time_us": 0.0
+        }
+      ],
+      "trace": "paired-kernel-trace.json",
+      "trace_sha256": "98b770318d5c5853cec4fe7dac1a5c56a63cb191f7d8992eea87bbfba5febeee"
+    }
+  },
+  "cold": {
+    "local_kv16": {
+      "attention_ms": 0.2595199942588806,
+      "event_total_ms": 0.5403519868850708,
+      "kv_write_ms": 0.1364479959011078,
+      "qkv_ms": 0.1443839967250824,
+      "synchronized_wall_ms": 0.563451
+    },
+    "local_kv8": {
+      "attention_ms": 0.14377599954605103,
+      "event_total_ms": 0.2319359928369522,
+      "kv_write_ms": 0.02566399984061718,
+      "qkv_ms": 0.06249599903821945,
+      "synchronized_wall_ms": 0.248584
+    }
+  },
+  "decision": {
+    "batch": 32,
+    "component_promoted": true,
+    "conservative_event_saving_ms_per_batched_layer_step": 0.061110395938158035,
+    "conservative_saving_ms_per_batched_layer_step": 0.05744215000000003,
+    "conservative_saving_seconds_per_request": 0.03213170265625002,
+    "conservative_wall_saving_ms_per_batched_layer_step": 0.05744215000000003,
+    "fraction_of_exact_mix_reference": 0.034946374744017315,
+    "fraction_of_measured_endpoint_anchor": 0.08844321937870127,
+    "local_layers": 50,
+    "next": "open_bounded_checkpoint_conversion_and_quality",
+    "output_tokens": 358,
+    "required_saving_seconds_per_request": 0.0181651588906249
+  },
+  "kind": "gemma4_h200_local_kv_head16_vs_head8_exact_shape_discriminator",
+  "oracles": {
+    "baseline": {
+      "finite_output": true,
+      "finite_qkv": true,
+      "live_allocation_delta_bytes": 0,
+      "native_fp8_kv_cache_bytes": 268435456,
+      "no_dense_repeated_kv": true,
+      "output_abs_checksum": 6725.162109375,
+      "pass": true,
+      "peak_allocation_delta_bytes": 0,
+      "qkv_abs_checksum": 5703.6484375,
+      "repeated_fp8_kv_cache_bytes": 536870912
+    },
+    "candidate": {
+      "finite_output": true,
+      "finite_qkv": true,
+      "live_allocation_delta_bytes": 0,
+      "native_fp8_kv_cache_bytes": 134217728,
+      "no_dense_repeated_kv": true,
+      "output_abs_checksum": 6690.7255859375,
+      "pass": true,
+      "peak_allocation_delta_bytes": 0,
+      "qkv_abs_checksum": 4258.7333984375,
+      "repeated_fp8_kv_cache_bytes": 536870912
+    },
+    "no_dense_or_repeated_kv": true,
+    "no_fallback": true,
+    "no_illegal_access": true,
+    "pass": true
+  },
+  "paired_saving": {
+    "attention_ms": {
+      "mean": 0.0672623997554183,
+      "median": 0.06593599170446396,
+      "p05": 0.05916799604892731,
+      "p95": 0.07895199805498124
+    },
+    "event_total_ms": {
+      "mean": 0.07348559927195311,
+      "median": 0.07332798838615417,
+      "p05": 0.061110395938158035,
+      "p95": 0.09167520478367805
+    },
+    "kv_write_ms": {
+      "mean": -0.0005695998668670654,
+      "median": 0.0002400008961558342,
+      "p05": -0.006819199770689011,
+      "p95": 0.0024351999163627625
+    },
+    "qkv_ms": {
+      "mean": 0.006792800314724445,
+      "median": 0.0067200008779764175,
+      "p05": 0.003059200942516327,
+      "p95": 0.010107202269136905
+    },
+    "synchronized_wall_ms": {
+      "mean": 0.0732986125,
+      "median": 0.073538,
+      "p05": 0.05744215000000003,
+      "p95": 0.09170429999999999
+    }
+  },
+  "pass": true,
+  "schema_version": 1,
+  "scientific_terminal": true
+}

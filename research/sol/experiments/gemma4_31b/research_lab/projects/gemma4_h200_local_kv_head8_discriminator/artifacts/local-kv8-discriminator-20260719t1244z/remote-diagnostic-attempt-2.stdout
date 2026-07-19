@@ -1,0 +1,45 @@
+/usr/local/lib/python3.12/dist-packages/torchao/quantization/quant_api.py:1731: SyntaxWarning: invalid escape sequence '\.'
+  """Configuration class for applying different quantization configs to modules or parameters based on their fully qualified names (FQNs).
+Traceback (most recent call last):
+  File "/input/local_kv_head_discriminator.py", line 366, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/input/local_kv_head_discriminator.py", line 266, in main
+    baseline.pipeline()
+  File "/input/local_kv_head_discriminator.py", line 137, in pipeline
+    self.kv_write()
+  File "/input/local_kv_head_discriminator.py", line 107, in kv_write
+    self.k_cache.index_copy_(0, self.write_indices, self.k_update)
+NotImplementedError: "index_copy_cuda" not implemented for 'Float8_e5m2'
+Jul 19 12:21:34 gemma-local-kv8-h200-202607191220 systemd[1]: Starting docker.service - Docker Application Container Engine...
+Jul 19 12:21:36 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:36.184929684Z" level=info msg="Starting up"
+Jul 19 12:21:36 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:36.186900945Z" level=info msg="OTEL tracing is not configured, using no-op tracer provider"
+Jul 19 12:21:36 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:36.194944514Z" level=info msg="CDI directory does not exist, skipping" dir=/etc/cdi
+Jul 19 12:21:36 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:36.196065219Z" level=info msg="detected 127.0.0.53 nameserver, assuming systemd-resolved, so using resolv.conf: /run/systemd/resolve/resolv.conf"
+Jul 19 12:21:36 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:36.541002251Z" level=info msg="Creating a containerd client" address=/run/containerd/containerd.sock timeout=1m0s
+Jul 19 12:21:36 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:36.588816188Z" level=info msg="Loading containers: start."
+Jul 19 12:21:36 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:36.596637002Z" level=info msg="NRI is disabled"
+Jul 19 12:21:36 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:36.596647821Z" level=info msg="[graphdriver] trying configured driver: overlay2"
+Jul 19 12:21:36 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:36.725199997Z" level=info msg="Restoring containers: start."
+Jul 19 12:21:36 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:36.782748157Z" level=info msg="Deleting nftables IPv4 rules" error="exit status 1" output="Error: Could not process rule: No such file or directory\ndelete table ip docker-bridges"
+Jul 19 12:21:36 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:36.797408834Z" level=info msg="Deleting nftables IPv6 rules" error="exit status 1" output="Error: Could not process rule: No such file or directory\ndelete table ip6 docker-bridges"
+Jul 19 12:21:37 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:37.117769349Z" level=info msg="Loading containers: done."
+Jul 19 12:21:37 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:37.138851450Z" level=info msg="Docker daemon" commit=285b471 containerd-snapshotter=false storage-driver=overlay2 version=29.5.3
+Jul 19 12:21:37 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:37.139535828Z" level=info msg="Initializing buildkit"
+Jul 19 12:21:37 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:37.172161667Z" level=info msg="Completed buildkit initialization"
+Jul 19 12:21:37 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:37.175770180Z" level=info msg="Daemon has completed initialization"
+Jul 19 12:21:37 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:21:37.175801234Z" level=info msg="API listen on /run/docker.sock"
+Jul 19 12:21:37 gemma-local-kv8-h200-202607191220 systemd[1]: Started docker.service - Docker Application Container Engine.
+Jul 19 12:31:02 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:31:02.845989468Z" level=warning msg="reference for unknown type: " digest="sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a" remote="docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a"
+Jul 19 12:41:36 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:41:36.206699980Z" level=info msg="sbJoin: gwep4 ''->'d69159429251', gwep6 ''->''" eid=d69159429251 ep=nifty_haslett net=bridge nid=fbe6cab80b9b
+Jul 19 12:41:49 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:41:49.620321789Z" level=info msg="received task-delete event from containerd" container=d24add65cecb1678d1c410fe759800580f4df426c1f212f357f08dd5100b1e6c module=libcontainerd namespace=moby topic=/tasks/delete type="*events.TaskDelete"
+Jul 19 12:41:54 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:41:54.329883803Z" level=info msg="sbJoin: gwep4 ''->'5bef6cabfa7d', gwep6 ''->''" eid=5bef6cabfa7d ep=vibrant_murdock net=bridge nid=fbe6cab80b9b
+Jul 19 12:42:07 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:42:07.554549395Z" level=info msg="received task-delete event from containerd" container=17ec9eefc682794a758b912fe5c68d0f54167986063574599103b34f4039715d module=libcontainerd namespace=moby topic=/tasks/delete type="*events.TaskDelete"
+Jul 19 12:42:11 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:42:11.503678394Z" level=info msg="sbJoin: gwep4 ''->'6e2ea13d7436', gwep6 ''->''" eid=6e2ea13d7436 ep=focused_lewin net=bridge nid=fbe6cab80b9b
+Jul 19 12:42:24 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:42:24.838420032Z" level=info msg="received task-delete event from containerd" container=d04edb67bc0e677a386ee064c1dac600e0fb83a3be756861467e9f2dea2f7a0f module=libcontainerd namespace=moby topic=/tasks/delete type="*events.TaskDelete"
+Jul 19 12:44:20 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:44:20.296337500Z" level=info msg="sbJoin: gwep4 ''->'b12c661108d9', gwep6 ''->''" eid=b12c661108d9 ep=serene_murdock net=bridge nid=fbe6cab80b9b
+Jul 19 12:44:33 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:44:33.677502744Z" level=info msg="received task-delete event from containerd" container=8f90d373f1f98576662d7b290d963aa62ceb1faabf008462aa1230b82901b18a module=libcontainerd namespace=moby topic=/tasks/delete type="*events.TaskDelete"
+Jul 19 12:45:24 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:45:24.047701864Z" level=info msg="sbJoin: gwep4 ''->'1d9befd73f6d', gwep6 ''->''" eid=1d9befd73f6d ep=upbeat_moore net=bridge nid=fbe6cab80b9b
+Jul 19 12:45:28 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:45:28.641169264Z" level=info msg="sbJoin: gwep4 ''->'324c8956eb3c', gwep6 ''->''" eid=324c8956eb3c ep=awesome_bouman net=bridge nid=fbe6cab80b9b
+Jul 19 12:45:31 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:45:31.546498848Z" level=info msg="received task-delete event from containerd" container=e44e1abc8f257f6fda7ea3347ef12122f3d3a7950b0a52950cb5fe13d3dc7b1a module=libcontainerd namespace=moby topic=/tasks/delete type="*events.TaskDelete"
+Jul 19 12:45:37 gemma-local-kv8-h200-202607191220 dockerd[1569]: time="2026-07-19T12:45:37.357906931Z" level=info msg="received task-delete event from containerd" container=c1c4f10c46be23e91714790a8eae46b135981d133ab7f321e2b3103001e240fa module=libcontainerd namespace=moby topic=/tasks/delete type="*events.TaskDelete"

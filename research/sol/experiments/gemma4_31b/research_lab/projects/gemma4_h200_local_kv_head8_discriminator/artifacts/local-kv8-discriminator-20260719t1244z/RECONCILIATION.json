@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "kind": "non_decision_changing_identity_label_correction",
+  "raw_identity_sha256": "8443bc8f443dc9b5e0efb0f8dd5a9c25a6bed26d782a9cb39c5fdaeb98c5ceca",
+  "executed_benchmark_sha256": "24dd835109880e8f4da1f5f8d0a248d6bd8ab340d2344b3f53459790e49be3ef",
+  "incorrect_raw_label": "aten::index_copy_ into native FP8 page-1 cache",
+  "executed_operator": "aten::copy_ BF16-to-FP8 into preallocated update buffers plus aten::_index_put_impl_ into native FP8 page-1 cache",
+  "behavioral_evidence": {
+    "profiler_summary_sha256": "cabb4099e2462da0807b2e9c12655fdf6e130cc9b847925c1f877249b92bb828",
+    "profiled_copy_count": 4,
+    "profiled_index_put_count": 4
+  },
+  "decision_impact": "none; timing, allocation oracles, raw rows, terminal, selected attention path, shapes, and promotion gate are unchanged"
+}

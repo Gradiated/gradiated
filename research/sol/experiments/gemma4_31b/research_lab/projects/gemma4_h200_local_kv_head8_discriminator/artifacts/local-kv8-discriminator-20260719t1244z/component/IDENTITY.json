@@ -1,0 +1,36 @@
+{
+  "attention_selected_route": "decode_attention_fwd_grouped for both kv_group_num=2 and kv_group_num=4",
+  "attention_symbol": "decode_attention_fwd",
+  "baseline_kv_heads": 16,
+  "baseline_shape": [
+    32,
+    5376,
+    16384
+  ],
+  "candidate_kv_heads": 8,
+  "candidate_shape": [
+    32,
+    5376,
+    12288
+  ],
+  "compute_capability": [
+    9,
+    0
+  ],
+  "context": 1024,
+  "decode_attention_sha256": "1040f43a9ea579b944aa037b585997f8d7b585d85f459a1b1f420002b4bd092a",
+  "decode_attention_source": "/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/decode_attention.py",
+  "gpu": "NVIDIA H200",
+  "head_dim": 256,
+  "kv_dtype": "fp8_e5m2",
+  "kv_write_symbol": "aten::index_copy_ into native FP8 page-1 cache",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "multiprocessor_count": 132,
+  "page_size": 1,
+  "qkv_symbol": "aten::mm.out BF16 fused QKV projection",
+  "query_heads": 32,
+  "runtime_image": "docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a",
+  "source_commit": "127b9e3283f7c2a43234b852ff5c9f1796d53624",
+  "torch": "2.11.0+cu130",
+  "triton": "3.6.0"
+}

@@ -1,0 +1,32 @@
+{
+  "status": "active",
+  "priority": 900,
+  "researcher_profile": "execution",
+  "summary": "Measure the exact v0.5.13 dynamic-FP8 plus QKV c32 endpoint on H100. At the committed $2.80/hour rate it can be modestly slower than H200 and still meet the $0.14/M target at 90% utilization if service time is <=0.741 seconds/request.",
+  "next_action": "Typed external dependency: director must register one available nvidia-h100-sxm bench after harness reservation. Then launch h100_endpoint_owner.py with an absolute deadline; it claims atomically, stages the project-local bound QKV snapshot and checkpoint manifest, pulls the pinned v0.5.13 image, and consumes exactly one c32 FP8+QKV arm.",
+  "authorized_spend_usd": 6.5,
+  "wall_clock_budget_minutes": 150,
+  "provider_exposure_budget_minutes": 100,
+  "compute_budget": "1.67 H100 GPU-hours plus 4 local CPU-hours",
+  "storage_budget": "one 250-GiB boot disk; 4 GiB retained project artifacts",
+  "allocation_limit": 1,
+  "active_session": null,
+  "provider_mutation": "director_only_after_durable_reservation",
+  "bindings": "BINDINGS.json",
+  "prepared_owner": {
+    "path": "h100_endpoint_owner.py",
+    "remote_worker": "remote_h100_qkv_endpoint.sh",
+    "checkpoint_stager": "stage_checkpoint.py",
+    "project_local_inputs": "inputs/",
+    "binding_verification": "pass: authoritative terminal plus six source bytes sha256-matched on 2026-07-20",
+    "owner_checks": "python py_compile and bash -n passed",
+    "owner_contract": "one H100 claim, 45-second heartbeat, 100-minute exposure bounded by supplied absolute deadline, compact terminal/raw stdout/stderr/invocation-marker retrieval before release"
+  },
+  "bench_requirement": {
+    "accelerator": "nvidia-h100-sxm",
+    "status": "unavailable",
+    "claim_attempt": "2026-07-20",
+    "result": "no available GPU bench matches this project"
+  },
+  "last_result_classification": "typed_external_blocker_no_registered_h100_bench"
+}

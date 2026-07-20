@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "runtime": {
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "sglang_image_linux_amd64": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "transformers": "5.8.1"
+  },
+  "checkpoint_files": [
+    {"path": "config.json", "bytes": 4621, "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"},
+    {"path": "tokenizer.json", "bytes": 32169626, "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"},
+    {"path": "tokenizer_config.json", "bytes": 2095, "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"},
+    {"path": "chat_template.jinja", "bytes": 18683, "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"},
+    {"path": "processor_config.json", "bytes": 1689, "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"},
+    {"path": "model.safetensors.index.json", "bytes": 120246, "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"},
+    {"path": "model-00001-of-00002.safetensors", "bytes": 49784788364, "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"},
+    {"path": "model-00002-of-00002.safetensors", "bytes": 12761549884, "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"}
+  ],
+  "assistant": {
+    "terminal_sha256": "f0d0f616f20d465a2a568b6f37dbceeabfb71921160994d63db935ba8701e932",
+    "revision": "627c5ec1458b9086b841a91e0512fd31fd2fbbf1",
+    "files": {
+      "config.json": "d09487c1083a334a97545f204dd41ab1a40b0438bdead19558f0e1357e26d66a",
+      "generation_config.json": "8e58004dc0e2407b63410b190bb8470efbdcfeb71533f1770e09c20abe193a6f",
+      "model.safetensors": "9f80df6099fa1fd7db71220ec9ee864d5ecff769878697dd5763e4285b15a1da",
+      "tokenizer.json": "75a6583c1a418e2bbd79c60d95d28e0f5bf549ad3f2990b5bdb5238c6c2bf70c",
+      "tokenizer_config.json": "089594a3924fcfd4cb1c596a7906fbf476193519e5198f780912eed02b177e42"
+    }
+  },
+  "gpu_programs": {
+    "current_runtime_support.py": "b6a0990508f19fe88eb57fb95f0746fa90d6353e251a575139fc3252bfd84f85",
+    "endpoint_entrypoint_v0513.py": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc",
+    "paired_endpoint_runner.py": "df65b1e49c941c27a975ecb1f2d34041a0e63695c2e3515cf950406204f614f3",
+    "remote_fp8_mtp.sh": "2b37a3c598714bbe4d7baa01a5fa31c5d4660392fcf94d3e43fcdabb9736a435"
+  },
+  "workload": {
+    "seed": "gemma4-background-exact-mix-c32-20260718",
+    "request_count": 32,
+    "prompt_tokens_per_request": 4214,
+    "completion_tokens_per_request": 358,
+    "first_request_sha256": "f8558dbfd3cca6d46239961b85967f18960a19c1bace8cb9302cdcbb2edd3c95",
+    "last_request_sha256": "dacbc499ee142b171b05573e842acf6df6873a047423b63db7c64d0259318b58",
+    "matches_proven_fp8_workload": true
+  },
+  "proposal_contract": {
+    "speculative_algorithm": "NEXTN auto-promoted to FROZEN_KV_MTP",
+    "speculative_num_steps": 1,
+    "speculative_eagle_topk": 1,
+    "speculative_num_draft_tokens": 2,
+    "proposed_tokens_per_verify": 1
+  }
+}
+

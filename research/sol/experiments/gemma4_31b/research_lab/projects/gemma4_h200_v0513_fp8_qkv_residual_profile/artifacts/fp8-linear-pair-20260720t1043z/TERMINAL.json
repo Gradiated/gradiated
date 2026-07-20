@@ -1,0 +1,27 @@
+{
+  "classification": "typed_external_or_owner_boundary",
+  "error": {
+    "message": "typed_pair_boundary:candidate.runner_failed",
+    "type": "RuntimeError"
+  },
+  "invocation_state": {
+    "candidate_cuda_started": true,
+    "candidate_science_started": true,
+    "control_cuda_started": true,
+    "control_science_started": true,
+    "profile_cuda_started": false,
+    "profile_science_started": false
+  },
+  "pass": false,
+  "provider_exposure_seconds": 345.5907652378082,
+  "provider_spend_usd": 0.2361536902308464,
+  "schema_version": 1,
+  "status": "terminal",
+  "worker_terminal": {
+    "classification": "integration_failure",
+    "message": "candidate.runner_failed",
+    "schema_version": 1,
+    "status": "terminal",
+    "timestamp_utc": "2026-07-20T10:50:31.932697Z"
+  }
+}

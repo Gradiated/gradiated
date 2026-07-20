@@ -25,7 +25,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bench", required=True)
     parser.add_argument("--attention-pair", action="store_true")
+    parser.add_argument("--fp8-linear-pair", action="store_true")
     args = parser.parse_args()
+    if args.attention_pair and args.fp8_linear_pair:
+        raise RuntimeError("only one pair mode may be selected")
     inventory = json.loads((LAB / "runtime/gpus.json").read_text())
     benches = inventory["benches"]
     bench = benches[args.bench] if isinstance(benches, dict) else next(row for row in benches if row["id"] == args.bench)
@@ -33,10 +36,20 @@ def main() -> int:
         raise RuntimeError("typed_pool_boundary:requested_h200_not_available")
     now = datetime.datetime.now(datetime.timezone.utc)
     stamp = now.strftime("%Y%m%dt%H%Mz")
-    artifact_root = PROJECT / "artifacts" / (f"attention-pair-{stamp}" if args.attention_pair else f"residual-profile-{stamp}")
-    deadline_epoch = int(time.time()) + (75 if args.attention_pair else 150) * 60
+    if args.fp8_linear_pair:
+        artifact_prefix = "fp8-linear-pair"
+    elif args.attention_pair:
+        artifact_prefix = "attention-pair"
+    else:
+        artifact_prefix = "residual-profile"
+    artifact_root = PROJECT / "artifacts" / f"{artifact_prefix}-{stamp}"
+    pair_minutes = 130 if args.fp8_linear_pair else 75
+    deadline_epoch = int(time.time()) + (pair_minutes if (args.attention_pair or args.fp8_linear_pair) else 150) * 60
     if args.attention_pair:
         release_deadline = datetime.datetime(2026, 7, 20, 11, 10, tzinfo=datetime.timezone.utc)
+        deadline_epoch = min(deadline_epoch, int(release_deadline.timestamp()))
+    elif args.fp8_linear_pair:
+        release_deadline = datetime.datetime(2026, 7, 20, 12, 45, tzinfo=datetime.timezone.utc)
         deadline_epoch = min(deadline_epoch, int(release_deadline.timestamp()))
     deadline = datetime.datetime.fromtimestamp(deadline_epoch, datetime.timezone.utc).isoformat().replace("+00:00", "Z")
     unit = f"gemma4-h200-v0513-fp8-qkv-residual-{stamp}.service"
@@ -64,6 +77,14 @@ def main() -> int:
                 str(PROJECT / "ATTENTION_INTERVENTION_REQUEST.json"),
             ]
         )
+    elif args.fp8_linear_pair:
+        command.extend(
+            [
+                "--pair-only",
+                "--intervention-request",
+                str(PROJECT / "FP8_LINEAR_INTERVENTION_REQUEST.json"),
+            ]
+        )
     launched = subprocess.run(command, capture_output=True, text=True, check=False)
     if launched.returncode:
         raise RuntimeError(f"durable_owner_launch_failed:{launched.stderr[-1000:]}")
@@ -85,7 +106,7 @@ def main() -> int:
         "deadline_utc": deadline,
         "artifact_root": str(artifact_root),
         "expected_terminal": str(artifact_root / "TERMINAL.json"),
-        "phase": "attention_pair_claim_and_reconcile" if args.attention_pair else "claim_and_cold_stage",
+        "phase": "fp8_linear_pair_claim_and_reconcile" if args.fp8_linear_pair else "attention_pair_claim_and_reconcile" if args.attention_pair else "claim_and_cold_stage",
     }
     atomic(status_path, status)
     print(json.dumps(status["active_session"], indent=2, sort_keys=True))

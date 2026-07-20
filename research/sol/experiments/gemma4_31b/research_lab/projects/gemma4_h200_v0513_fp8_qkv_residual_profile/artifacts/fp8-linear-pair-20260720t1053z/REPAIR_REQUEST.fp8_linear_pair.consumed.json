@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "remote_profile_pair.sh",
+      "remote_name": "remote_profile_pair.sh",
+      "sha256": "7f546c4af7bac557755d609e4a81e62a94f992fce0bb8a1f590f4eb104c9e2ff"
+    }
+  ],
+  "mode": "fp8_linear_pair",
+  "retry": true,
+  "schema_version": 1
+}

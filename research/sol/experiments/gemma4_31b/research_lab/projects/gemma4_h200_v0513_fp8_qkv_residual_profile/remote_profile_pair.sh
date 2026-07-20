@@ -23,6 +23,24 @@ PY
     mv "$input/RESET_INVALID_ATTENTION_CONTROL.json" "$artifacts/RESET_INVALID_ATTENTION_CONTROL.consumed.json"
   fi
   mode=pair
+elif [[ "$mode" == fp8_linear_pair ]]; then
+  artifacts="$root/fp8-linear-artifacts"
+  container_artifacts=/work/fp8-linear-artifacts
+  sudo docker rm -f residual-profile residual-control residual-candidate gemma-fp8-control-v0513 gemma-fp8-mtp-v0513 sglang-endpoint >/dev/null 2>&1 || true
+  if [[ -f "$input/RESET_INVALID_FP8_CANDIDATE.json" && -f "$artifacts/control/TERMINAL.json" && ! -f "$artifacts/candidate/TERMINAL.json" ]]; then
+    mkdir -p "$artifacts/invalid-candidate-pre-invocation-compile"
+    for path in candidate-audit candidate.container-id candidate.models.json candidate.models.stderr candidate.runner.stdout candidate.runner.stderr candidate.server-start.log candidate.smoke.json residual-candidate.final.log residual-candidate.inspect.json; do
+      [[ -e "$artifacts/$path" ]] && mv "$artifacts/$path" "$artifacts/invalid-candidate-pre-invocation-compile/"
+    done
+    python3 - "$artifacts/INVOCATION_STATE.json" <<'PY'
+import json,pathlib,sys
+p=pathlib.Path(sys.argv[1]); x=json.loads(p.read_text())
+x['candidate_cuda_started']=False; x['candidate_science_started']=False
+p.write_text(json.dumps(x,indent=2,sort_keys=True)+'\n')
+PY
+    mv "$input/RESET_INVALID_FP8_CANDIDATE.json" "$artifacts/RESET_INVALID_FP8_CANDIDATE.consumed.json"
+  fi
+  mode=pair
 fi
 image=docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6
 mkdir -p "$artifacts"
@@ -145,6 +163,23 @@ assert qkv and all(x.get('candidate_symbol')=='_qkv_norm_rope_inplace_kernel' an
 PY
 }
 
+validate_attention_proof() {
+  local arm=$1
+  python3 - "$artifacts/$arm-audit/residual.jsonl" <<'PY'
+import json,pathlib,sys
+rows=[json.loads(x) for x in pathlib.Path(sys.argv[1]).read_text().splitlines() if x]
+assert any(
+    row.get('candidate_path')=='TritonAttnBackend.forward_extend.local_fp8_deferred_cache_commit'
+    and row.get('phase')=='runtime_invocation'
+    and row.get('qk_head_dim')==256
+    and row.get('v_head_dim')==256
+    and row.get('sliding_window_size')==1024
+    and row.get('removed_operations')==['k.clone','v.clone']
+    for row in rows
+)
+PY
+}
+
 if [[ "$mode" == profile ]]; then
   rm -rf "$artifacts/profile" "$artifacts/profile-audit"
   start_server profile residual-profile yes
@@ -168,7 +203,8 @@ if [[ "$mode" == profile ]]; then
   atomic_terminal profile_complete exact_profile_control_persisted
 elif [[ "$mode" == pair ]]; then
   test -s "$input/residual_intervention.py" || fail residual_intervention_missing
-  if [[ "$requested_mode" == attention_pair ]]; then
+  test -s "$input/attention_intervention.py" || fail attention_intervention_missing
+  if [[ "$requested_mode" == attention_pair || "$requested_mode" == fp8_linear_pair ]]; then
     sudo docker rm -f residual-profile residual-control residual-candidate gemma-fp8-control-v0513 gemma-fp8-mtp-v0513 sglang-endpoint >/dev/null 2>&1 || true
   fi
   if ! python3 - "$artifacts/control/TERMINAL.json" 2>/dev/null <<'PY'
@@ -185,6 +221,7 @@ PY
     start_server control residual-control no
     run_exact control residual-control fp8_qkv_contemporaneous_control
     validate_baseline_proofs control
+    validate_attention_proof control
   fi
   sudo docker rm -f residual-control >/dev/null 2>&1 || true
   if ! python3 - "$artifacts/candidate/TERMINAL.json" 2>/dev/null <<'PY'
@@ -197,24 +234,30 @@ import json,pathlib,sys
 p=pathlib.Path(sys.argv[1]); x=json.loads(p.read_text()) if p.exists() else {}
 assert not x.get('candidate_science_started')
 PY
-    rm -rf "$artifacts/candidate" "$artifacts/candidate-audit"
+    sudo rm -rf "$artifacts/candidate" "$artifacts/candidate-audit"
     start_server candidate residual-candidate no
     run_exact candidate residual-candidate fp8_qkv_residual_candidate
     validate_baseline_proofs candidate
+    validate_attention_proof candidate
   fi
   test -s "$artifacts/candidate-audit/residual.jsonl" || fail candidate_path_proof_missing
-  python3 - "$artifacts/control/TERMINAL.json" "$artifacts/candidate/TERMINAL.json" "$artifacts/PAIRED_TERMINAL.json" "$artifacts/candidate-audit/residual.jsonl" "$requested_mode" <<'PY'
+  python3 - "$artifacts/control/TERMINAL.json" "$artifacts/candidate/TERMINAL.json" "$artifacts/PAIRED_TERMINAL.json" "$artifacts/control-audit/residual.jsonl" "$artifacts/candidate-audit/residual.jsonl" "$requested_mode" <<'PY'
 import json,os,pathlib,sys
-c=json.load(open(sys.argv[1])); q=json.load(open(sys.argv[2])); out=pathlib.Path(sys.argv[3]); proof=[json.loads(x) for x in pathlib.Path(sys.argv[4]).read_text().splitlines() if x]
+c=json.load(open(sys.argv[1])); q=json.load(open(sys.argv[2])); out=pathlib.Path(sys.argv[3]); control_proof=[json.loads(x) for x in pathlib.Path(sys.argv[4]).read_text().splitlines() if x]; proof=[json.loads(x) for x in pathlib.Path(sys.argv[5]).read_text().splitlines() if x]
 control=float(c['service_seconds_per_request']); candidate=float(q['service_seconds_per_request']); gain=1-candidate/control
 smoke=[json.load(open(out.parent/f'{arm}.smoke.json')) for arm in ('control','candidate')]
-attention_mode=sys.argv[5]=='attention_pair'
+attention_mode=sys.argv[6]=='attention_pair'
+fp8_linear_mode=sys.argv[6]=='fp8_linear_pair'
 path_ok=bool(proof)
 if attention_mode:
-    path_ok=any(x.get('phase')=='runtime_invocation' and x.get('qk_head_dim')==288 and x.get('v_head_dim')==256 and x.get('sliding_window_size')==1024 and x.get('removed_operations')==['k.clone','v.clone'] for x in proof)
+    path_ok=any(x.get('phase')=='runtime_invocation' and x.get('qk_head_dim')==256 and x.get('v_head_dim')==256 and x.get('sliding_window_size')==1024 and x.get('removed_operations')==['k.clone','v.clone'] for x in proof)
+if fp8_linear_mode:
+    attention=lambda rows:any(x.get('candidate_path')=='TritonAttnBackend.forward_extend.local_fp8_deferred_cache_commit' and x.get('phase')=='runtime_invocation' and x.get('qk_head_dim')==256 and x.get('v_head_dim')==256 and x.get('sliding_window_size')==1024 for x in rows)
+    fp8_path=any(x.get('candidate_path')=='fp8_gate_up_exact_shape_64x256x128' and x.get('phase')=='runtime_invocation' and x.get('m',0)>128 and x.get('n')==43008 and x.get('k')==5376 and x.get('tile')==[64,256,128] for x in proof)
+    path_ok=attention(control_proof) and attention(proof) and fp8_path
 valid=all(x.get('pass') for x in smoke) and path_ok
-classification='promote_ceiling' if valid and candidate<=0.6381105230769232 else ('promote_gain' if valid and gain>=.05 else 'retain_simple_positive' if valid and attention_mode and gain>0 else 'close_attention_attempt' if valid and attention_mode else 'close_boundary' if valid else 'invalid')
-v={'schema_version':1,'status':'terminal','classification':classification,'pass':valid,'control':c,'candidate':q,'control_service_seconds_per_request':control,'candidate_service_seconds_per_request':candidate,'reduction_fraction':gain,'economic_ceiling_seconds_per_request':0.6381105230769232,'ceiling_pass':valid and candidate<=0.6381105230769232,'retain_pass':valid and gain>=.05,'semantic_proof':smoke,'accounting_proof':{'control':c['cache'],'candidate':q['cache']},'fp8_proof':True,'qkv_proof':True,'candidate_path_proof':proof}
+classification='promote_ceiling' if valid and candidate<=0.6381105230769232 else ('promote_gain' if valid and gain>=.05 else 'retain_simple_positive' if valid and (attention_mode or fp8_linear_mode) and gain>0 else 'close_attention_attempt' if valid and attention_mode else 'close_fp8_linear_attempt' if valid and fp8_linear_mode else 'close_boundary' if valid else 'invalid')
+v={'schema_version':1,'status':'terminal','classification':classification,'pass':valid,'control':c,'candidate':q,'control_service_seconds_per_request':control,'candidate_service_seconds_per_request':candidate,'reduction_fraction':gain,'economic_ceiling_seconds_per_request':0.6381105230769232,'ceiling_pass':valid and candidate<=0.6381105230769232,'retain_pass':valid and gain>=.05,'semantic_proof':smoke,'accounting_proof':{'control':c['cache'],'candidate':q['cache']},'fp8_proof':True,'qkv_proof':True,'attention_proof':{'control':control_proof,'candidate':proof},'candidate_path_proof':proof}
 tmp=out.with_suffix('.part'); tmp.write_text(json.dumps(v,indent=2,sort_keys=True)+'\n'); os.replace(tmp,out)
 PY
   atomic_terminal pair_complete paired_scientific_terminal_persisted

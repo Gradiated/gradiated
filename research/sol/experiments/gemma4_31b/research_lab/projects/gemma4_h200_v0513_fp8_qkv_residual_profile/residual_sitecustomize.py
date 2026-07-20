@@ -45,6 +45,14 @@ def install_profile_signals() -> None:
     signal.signal(signal.SIGUSR2, lambda *_: toggle("Stop"))
 
 
+def install_stacked_attention() -> None:
+    target = pathlib.Path("/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py")
+    if target.is_file() and "deferred_local_fp8_kv" in target.read_text():
+        return
+    module = importlib.import_module("attention_intervention")
+    module.install()
+
+
 def install_residual_candidate() -> None:
     if os.environ.get("RESIDUAL_ARM") != "candidate":
         return
@@ -54,4 +62,5 @@ def install_residual_candidate() -> None:
 
 install_qkv_baseline()
 install_profile_signals()
+install_stacked_attention()
 install_residual_candidate()

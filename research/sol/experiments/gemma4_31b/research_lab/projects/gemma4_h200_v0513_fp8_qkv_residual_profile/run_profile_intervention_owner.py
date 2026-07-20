@@ -121,6 +121,18 @@ def main() -> int:
     args = parser.parse_args()
     args.artifact_root.mkdir(parents=True, exist_ok=False)
     events = args.artifact_root / "outer-events.jsonl"
+    pair_intervention: dict[str, object] | None = None
+    pair_boundary: str | None = None
+    if args.pair_only:
+        if args.intervention_request is None:
+            raise RuntimeError("pair_intervention_request_missing")
+        request_path = args.intervention_request.resolve()
+        if PROJECT not in request_path.parents:
+            raise RuntimeError("pair_intervention_request_outside_project")
+        pair_intervention = json.loads(request_path.read_text())
+        pair_boundary = str(pair_intervention.get("boundary"))
+        if pair_boundary not in {"attention_kv", "fp8_linear"}:
+            raise RuntimeError("pair_intervention_boundary_invalid")
 
     def emit(event: str, **fields: object) -> None:
         with events.open("a") as handle:
@@ -167,7 +179,12 @@ def main() -> int:
     ip: str | None = None
     worker_terminal: dict[str, object] = {}
     invocation_state: dict[str, object] = {}
-    remote_artifacts = f"{REMOTE}/attention-artifacts-v2" if args.pair_only else f"{REMOTE}/artifacts"
+    if pair_boundary == "attention_kv":
+        remote_artifacts = f"{REMOTE}/attention-artifacts-v2"
+    elif pair_boundary == "fp8_linear":
+        remote_artifacts = f"{REMOTE}/fp8-linear-artifacts"
+    else:
+        remote_artifacts = f"{REMOTE}/artifacts"
 
     try:
         lease = max(600, claim_deadline - int(time.time()))
@@ -226,6 +243,14 @@ def main() -> int:
             stage(PROJECT / bound[label]["path"], remote_name, f"{REMOTE}/input")
         stage(PROJECT / "residual_sitecustomize.py", "sitecustomize.py", f"{REMOTE}/input")
         stage(PROJECT / "remote_profile_pair.sh", "remote_profile_pair.sh", f"{REMOTE}/input")
+        reset_fp8_candidate = PROJECT / "RESET_INVALID_FP8_CANDIDATE.json"
+        if pair_boundary == "fp8_linear" and reset_fp8_candidate.is_file():
+            stage(reset_fp8_candidate, reset_fp8_candidate.name, f"{REMOTE}/input")
+        if args.pair_only:
+            attention = PROJECT / "intervention/attention_deferred_local_kv.py"
+            if sha256(attention) != "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8":
+                raise RuntimeError("retained_attention_intervention_identity_mismatch")
+            stage(attention, "attention_intervention.py", f"{REMOTE}/input")
         emit("immutable_staging_complete", checkpoint_bytes=manifest["checkpoint_bytes"])
 
         def retrieve_state() -> tuple[dict[str, object], dict[str, object]]:
@@ -318,29 +343,26 @@ def main() -> int:
             return True
 
         if args.pair_only:
-            if args.intervention_request is None:
-                raise RuntimeError("attention_intervention_request_missing")
-            request_path = args.intervention_request.resolve()
-            if PROJECT not in request_path.parents:
-                raise RuntimeError("attention_intervention_request_outside_project")
-            intervention = json.loads(request_path.read_text())
-            if intervention.get("boundary") != "attention_kv" or not intervention.get("source_justification"):
-                raise RuntimeError("attention_intervention_request_invalid")
+            assert pair_intervention is not None and pair_boundary is not None
+            intervention = pair_intervention
+            if not intervention.get("source_justification"):
+                raise RuntimeError("pair_intervention_request_invalid")
             files = intervention.get("files", [])
             if not files or sum(row.get("remote_name") == "residual_intervention.py" for row in files) != 1:
-                raise RuntimeError("attention_intervention_module_missing_or_ambiguous")
+                raise RuntimeError("pair_intervention_module_missing_or_ambiguous")
             for row in files:
                 source = (PROJECT / row["path"]).resolve()
                 if PROJECT not in source.parents or sha256(source) != row["sha256"]:
                     raise RuntimeError("attention_intervention_file_invalid")
                 stage(source, row["remote_name"], f"{REMOTE}/input")
             atomic(args.artifact_root / "INTERVENTION_ADMITTED.json", intervention)
-            pair_rc = run_worker("attention_pair")
-            if pair_rc and repairable("attention_pair") and wait_for_repair("attention_pair"):
-                pair_rc = run_worker("attention_pair")
-            pair_terminal_path = args.artifact_root / "attention_pair/PAIRED_TERMINAL.json"
+            pair_mode = "attention_pair" if pair_boundary == "attention_kv" else "fp8_linear_pair"
+            pair_rc = run_worker(pair_mode)
+            if pair_rc and repairable(pair_mode) and wait_for_repair(pair_mode):
+                pair_rc = run_worker(pair_mode)
+            pair_terminal_path = args.artifact_root / pair_mode / "PAIRED_TERMINAL.json"
             if pair_rc or not pair_terminal_path.is_file():
-                raise RuntimeError(f"typed_attention_pair_boundary:{worker_terminal.get('message', 'worker_failed')}")
+                raise RuntimeError(f"typed_pair_boundary:{worker_terminal.get('message', 'worker_failed')}")
             paired = json.loads(pair_terminal_path.read_text())
             run_spend = (time.time() - started) * rate / 3600
             terminal = {
@@ -348,10 +370,14 @@ def main() -> int:
                 "attribution": json.loads((PROJECT / "artifacts/residual-profile-20260720t0821z/ATTRIBUTION.json").read_text()),
                 "attention_subtype_map": json.loads((PROJECT / "ATTENTION_SUBTYPE_MAP.json").read_text()),
                 "intervention": intervention,
+                "retained_attention_intervention_sha256": sha256(PROJECT / "intervention/attention_deferred_local_kv.py"),
                 "provider_exposure_seconds": time.time() - started,
                 "provider_spend_usd": run_spend,
                 "cumulative_provider_spend_usd": prior_spend + run_spend,
             }
+            fp8_map = PROJECT / "FP8_LINEAR_SHAPE_MAP.json"
+            if fp8_map.is_file():
+                terminal["fp8_linear_shape_map"] = json.loads(fp8_map.read_text())
             if terminal["cumulative_provider_spend_usd"] > AUTHORIZED_USD:
                 terminal["classification"] = "budget_violation"
                 terminal["pass"] = False
@@ -491,7 +517,7 @@ def main() -> int:
                 "checkpoint": f"Exact immutable project snapshot retained at {REMOTE}/checkpoint.",
                 "image": "Pinned SGLang v0.5.13 linux/amd64 digest 6113665a retained if pull completed.",
                 "runtime": f"Exact FP8+QKV residual profile owner terminal: {(terminal or {}).get('classification', 'owner_boundary')}.",
-                "caches": "SGLang FP8, QKV, Nsight, Triton, and CUDA graph caches retained.",
+                "caches": "SGLang FP8, QKV, Nsight, Triton, CUTLASS, and CUDA graph caches retained.",
                 "server_state": "Final candidate server retained when healthy; otherwise immutable image/checkpoint/caches retained.",
                 "artifacts": f"Compact terminals and profile SQLite retrieved under {args.artifact_root} when available.",
             }

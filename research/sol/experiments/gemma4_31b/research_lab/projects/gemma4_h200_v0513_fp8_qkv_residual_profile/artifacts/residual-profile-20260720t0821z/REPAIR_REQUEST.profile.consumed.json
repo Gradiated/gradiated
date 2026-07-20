@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "remote_profile_pair.sh",
+      "remote_name": "remote_profile_pair.sh",
+      "sha256": "3ef54bbf1ca5c64cf4d4eb1953d9967996f86ab239a42f48ba4d06584631cb1f"
+    }
+  ],
+  "mode": "profile",
+  "retry": true,
+  "schema_version": 1
+}

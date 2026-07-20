@@ -1,0 +1,14 @@
+{
+  "boundary": "synchronization",
+  "boundary_wall_fraction": 0.3657870066569545,
+  "files": [
+    {
+      "path": "intervention/residual_intervention.py",
+      "remote_name": "residual_intervention.py",
+      "sha256": "0078b091417d9c029bfd1f43ed3d947612aa7c64ead342d152bda9bf08ff0138"
+    }
+  ],
+  "intervention_id": "current_fp8_stream_interval_32",
+  "schema_version": 1,
+  "source_justification": "The fresh exact FP8+QKV profile assigns 8.427220698 s (36.5787007%) to synchronization, 8.375068794 s of it in decode. The bound workload streams all 358 output tokens for each of 32 requests. Pinned v0.5.13 OutputStreamer lines 326-342 gates scheduler-to-tokenizer publication on stream_interval; changing only the current runtime's default 1 to 32 batches host notification and serialization work between dependent decode launches without changing model, FP8, QKV, token geometry, or cache accounting. Latency smoothness is secondary for the campaign's background-agent workload."
+}

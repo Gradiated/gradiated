@@ -1,0 +1,30 @@
+data: {"id":"ab7a697465e74baca4c615840e3e013f","object":"text_completion","created":1784538821,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" felt","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"ab7a697465e74baca4c615840e3e013f","object":"text_completion","created":1784538821,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" la l la l la l la l l l l l l l l l l l l l l l l l l l l l l l l l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"ab7a697465e74baca4c615840e3e013f","object":"text_completion","created":1784538821,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"ab7a697465e74baca4c615840e3e013f","object":"text_completion","created":1784538821,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"ab7a697465e74baca4c615840e3e013f","object":"text_completion","created":1784538821,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"ab7a697465e74baca4c615840e3e013f","object":"text_completion","created":1784538821,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"ab7a697465e74baca4c615840e3e013f","object":"text_completion","created":1784538821,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"ab7a697465e74baca4c615840e3e013f","object":"text_completion","created":1784538821,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"ab7a697465e74baca4c615840e3e013f","object":"text_completion","created":1784538821,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"ab7a697465e74baca4c615840e3e013f","object":"text_completion","created":1784538821,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"ab7a697465e74baca4c615840e3e013f","object":"text_completion","created":1784538821,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"ab7a697465e74baca4c615840e3e013f","object":"text_completion","created":1784538821,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"ab7a697465e74baca4c615840e3e013f","object":"text_completion","created":1784538821,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l l l l l","logprobs":null,"finish_reason":"length","matched_stop":null}],"usage":null}
+
+data: {"id":"ab7a697465e74baca4c615840e3e013f","object":"text_completion","created":1784538821,"model":"google/gemma-4-31B-it","choices":[],"usage":{"prompt_tokens":4214,"total_tokens":4572,"completion_tokens":358,"reasoning_tokens":0}}
+
+data: [DONE]
+

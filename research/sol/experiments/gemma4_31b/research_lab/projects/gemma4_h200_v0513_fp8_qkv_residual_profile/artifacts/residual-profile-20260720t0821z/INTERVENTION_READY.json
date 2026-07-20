@@ -1,0 +1,12 @@
+{
+  "attribution_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/ATTRIBUTION.json",
+  "deadline_epoch": 1784540126,
+  "hottest_eligible_boundary": {
+    "boundary": "synchronization",
+    "seconds": 8.427220698,
+    "wall_fraction": 0.3657870066569545
+  },
+  "request_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/INTERVENTION_REQUEST.json",
+  "required_module": "residual_intervention.py with install() and RESIDUAL_CANDIDATE_AUDIT proof",
+  "schema_version": 1
+}

@@ -1,0 +1,1 @@
+{"candidate_path": "ServerArgs.stream_interval -> OutputStreamer interval-gated publication", "entrypoint": "/work/input/proven_v0513_endpoint_entrypoint.py", "intervention": "stream_interval_32", "new_stream_interval": 32, "old_stream_interval": 1, "pid": 1, "source": "sglang/srt/managers/scheduler_components/output_streamer.py:326-342"}

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import heapq
 import json
 import pathlib
 import sqlite3
@@ -10,9 +11,9 @@ import statistics
 
 KERNEL_PATTERNS = (
     ("qkv_norm_rope", ("qkv_norm_rope", "rotary", "rope")),
-    ("attention_kv", ("attention", "paged", "flash", "extend", "decode", "kv_cache", "kvcache")),
-    ("fp8_linear", ("gemm", "cutlass", "scaled_mm", "matmul", "cublas")),
-    ("normalization_activation", ("norm", "silu", "gelu", "activation")),
+    ("attention_kv", ("_fwd_kernel", "attention", "paged", "flash", "extend", "decode", "kv_cache", "kvcache")),
+    ("fp8_linear", ("device_kernel", "per_token_quant_fp8", "gemm", "cutlass", "scaled_mm", "matmul", "cublas")),
+    ("normalization_activation", ("norm", "silu", "gelu", "activation", "act_and_mul")),
     ("cache_conversion_write", ("cache", "cast", "convert", "copy")),
 )
 
@@ -79,32 +80,83 @@ def attribution(
 ) -> tuple[dict[str, int], int]:
     kernels = clip(kernels, start, end)
     runtime = clip(runtime, start, end)
-    boundaries = {start, end}
-    for a, b, _ in kernels + runtime:
-        boundaries.add(a)
-        boundaries.add(b)
-    ordered = sorted(boundaries)
+    # Sweep interval endpoints once.  The former implementation rescanned every
+    # kernel and runtime row at every boundary, which is quadratic and cannot
+    # consume a real endpoint trace containing hundreds of thousands of rows.
+    # Ranking kernels up front preserves the original deterministic selection:
+    # longest active duration first, then lexicographically greatest name.
+    kernel_rank = {
+        row_id: rank
+        for rank, row_id in enumerate(
+            sorted(
+                range(len(kernels)),
+                key=lambda index: (kernels[index][1] - kernels[index][0], kernels[index][2]),
+                reverse=True,
+            )
+        )
+    }
+    events: dict[int, list[tuple[str, int]]] = {start: [], end: []}
+    for row_id, (a, b, _) in enumerate(kernels):
+        events.setdefault(a, []).append(("kernel_add", row_id))
+        events.setdefault(b, []).append(("kernel_remove", row_id))
+    runtime_kind: list[str] = []
+    for row_id, (a, b, name) in enumerate(runtime):
+        lowered = name.lower()
+        kind = (
+            "synchronization"
+            if "synchron" in lowered or "streamwait" in lowered or "eventquery" in lowered
+            else "launch"
+            if "launch" in lowered
+            else "other"
+        )
+        runtime_kind.append(kind)
+        events.setdefault(a, []).append(("runtime_add", row_id))
+        events.setdefault(b, []).append(("runtime_remove", row_id))
+
     totals: dict[str, int] = {}
     overlap_ns = 0
-    for left, right in zip(ordered, ordered[1:]):
-        if right <= left:
-            continue
-        active_kernels = [(a, b, name) for a, b, name in kernels if a < right and b > left]
-        if active_kernels:
-            families = {kernel_family(name) for _, _, name in active_kernels}
-            if len(families) > 1:
-                overlap_ns += right - left
-            selected = max(active_kernels, key=lambda row: (row[1] - row[0], row[2]))
-            family = kernel_family(selected[2])
-        else:
-            active_runtime = [name.lower() for a, b, name in runtime if a < right and b > left]
-            if any("synchron" in name or "streamwait" in name or "eventquery" in name for name in active_runtime):
+    active_kernels: set[int] = set()
+    active_heap: list[tuple[int, int]] = []
+    active_family_counts: dict[str, int] = {}
+    active_runtime_counts = {"synchronization": 0, "launch": 0, "other": 0}
+    previous = start
+    for boundary in sorted(events):
+        if boundary > previous:
+            width = boundary - previous
+            while active_heap and active_heap[0][1] not in active_kernels:
+                heapq.heappop(active_heap)
+            if active_heap:
+                if len(active_family_counts) > 1:
+                    overlap_ns += width
+                family = kernel_family(kernels[active_heap[0][1]][2])
+            elif active_runtime_counts["synchronization"]:
                 family = "synchronization"
-            elif any("launch" in name for name in active_runtime):
+            elif active_runtime_counts["launch"]:
                 family = "launch"
             else:
                 family = "scheduler_gap"
-        totals[family] = totals.get(family, 0) + right - left
+            totals[family] = totals.get(family, 0) + width
+        # Ends precede starts at the same timestamp, matching half-open [a,b)
+        # overlap semantics in the original implementation.
+        ordered_events = sorted(events[boundary], key=lambda item: item[0].endswith("add"))
+        for action, row_id in ordered_events:
+            if action == "kernel_remove":
+                if row_id in active_kernels:
+                    active_kernels.remove(row_id)
+                    family = kernel_family(kernels[row_id][2])
+                    active_family_counts[family] -= 1
+                    if active_family_counts[family] == 0:
+                        del active_family_counts[family]
+            elif action == "kernel_add":
+                active_kernels.add(row_id)
+                heapq.heappush(active_heap, (kernel_rank[row_id], row_id))
+                family = kernel_family(kernels[row_id][2])
+                active_family_counts[family] = active_family_counts.get(family, 0) + 1
+            elif action == "runtime_remove":
+                active_runtime_counts[runtime_kind[row_id]] -= 1
+            else:
+                active_runtime_counts[runtime_kind[row_id]] += 1
+        previous = boundary
     return totals, overlap_ns
 
 

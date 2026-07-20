@@ -129,10 +129,10 @@ PY
 if [[ "$mode" == profile ]]; then
   rm -rf "$artifacts/profile" "$artifacts/profile-audit"
   start_server profile residual-profile yes
-  sudo docker exec residual-profile sh -lc 'kill -USR1 $(pgrep -f proven_v0513_endpoint_entrypoint.py)' || fail profiler_start_signal_failed
+  sudo docker exec residual-profile sh -lc 'pid=$(pgrep -f "^/usr/bin/python3 /work/input/proven_v0513_endpoint_entrypoint.py" | head -n 1); test -n "$pid"; kill -USR1 "$pid"' || fail profiler_start_signal_failed
   sleep 1
   run_exact profile residual-profile fp8_qkv_profile_control
-  sudo docker exec residual-profile sh -lc 'kill -USR2 $(pgrep -f proven_v0513_endpoint_entrypoint.py)' || fail profiler_stop_signal_failed
+  sudo docker exec residual-profile sh -lc 'pid=$(pgrep -f "^/usr/bin/python3 /work/input/proven_v0513_endpoint_entrypoint.py" | head -n 1); test -n "$pid"; kill -USR2 "$pid"' || fail profiler_stop_signal_failed
   for _ in $(seq 1 120); do
     sudo docker inspect -f '{{.State.Running}}' residual-profile 2>/dev/null | grep -q false && break
     sleep 1

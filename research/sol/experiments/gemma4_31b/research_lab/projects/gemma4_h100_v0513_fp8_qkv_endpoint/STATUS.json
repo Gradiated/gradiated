@@ -3,14 +3,25 @@
   "priority": 900,
   "researcher_profile": "execution",
   "summary": "Measure the exact v0.5.13 dynamic-FP8 plus QKV c32 endpoint on H100. At the committed $2.80/hour rate it can be modestly slower than H200 and still meet the $0.14/M target at 90% utilization if service time is <=0.741 seconds/request.",
-  "next_action": "Typed external boundary: director must inspect and return h100-v0513-fp8qkv-e00r2qev2c3z3n2y08 from maintenance to available before the retained single arm can be claimed. Do not create another provider resource or consume another arm.",
+  "next_action": "Claim the inspected available bench h100-v0513-fp8qkv-e00r2qev2c3z3n2y08 with the patched durable owner. Repeat only checkpoint staging with captured stdout/stderr, keep the claim and heartbeat through any pre-invocation repair handshake, then consume the retained single exact v0.5.13 FP8+QKV c32 arm. Require 32/32 rows, exact token/cache accounting, FP8 and QKV consumer proof, and classify against <=0.741 seconds/request. Do not create another provider resource or consume a second arm.",
   "authorized_spend_usd": 6.5,
   "wall_clock_budget_minutes": 150,
   "provider_exposure_budget_minutes": 100,
   "compute_budget": "1.67 H100 GPU-hours plus 4 local CPU-hours",
   "storage_budget": "one 250-GiB boot disk; 4 GiB retained project artifacts",
   "allocation_limit": 1,
-  "active_session": null,
+  "active_session": {
+    "mode": "execution",
+    "unit": "gemma4-h100-v0513-fp8-qkv-owner.service",
+    "unit_manager": "user",
+    "artifact_root": "artifacts/h100-c32-fp8-qkv-20260720t0932z",
+    "absolute_deadline_utc": "2026-07-20T10:55:00Z",
+    "expected_terminal": "endpoint_useful | endpoint_negative | typed_external_boundary",
+    "bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08",
+    "registered_hourly_cost_usd": 2.15,
+    "pid": 3054625,
+    "forward_progress": "claim retained and heartbeating; six small checkpoint files hash-verified, model-00001-of-00002.safetensors is downloading to checkpoint.staging before atomic finalize; no CUDA/scientific marker"
+  },
   "provider_mutation": "forbidden_registered_bench_only",
   "bindings": "BINDINGS.json",
   "prepared_owner": {
@@ -25,12 +36,12 @@
   "bench_requirement": {
     "accelerator": "nvidia-h100-sxm",
     "bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08",
-    "status": "maintenance",
+    "status": "available",
     "watchdog_deadline_utc": "2026-07-20T11:10:00Z",
     "actual_hourly_cost_usd": 2.15
   },
   "measured_provider_exposure_usd": 0.014133063809739218,
   "measured_provider_exposure_seconds": 23.66466498374939,
   "candidate_scientific_invocation_started": false,
-  "last_result_classification": "typed_external_boundary_h100_bench_maintenance_after_preinvocation_owner_defect"
+  "last_result_classification": "preinvocation_staging_defect_repaired_owner_bench_inspected_and_returned_available"
 }

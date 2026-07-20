@@ -1,0 +1,18 @@
+{"bench": {"accelerator": "nvidia-h100-sxm", "claim": {"claimed_at": "2026-07-20T09:32:00.113555Z", "heartbeat_at": "2026-07-20T09:32:00.113555Z", "lease_seconds": 4979, "lease_until_utc": "2026-07-20T10:54:59.113555Z", "project": "gemma4_h100_v0513_fp8_qkv_endpoint", "stale": false}, "contents": {"artifacts": "Pre-invocation owner terminal, remote identity, staging diagnostics, and repair handshake retained project-locally.", "caches": "No model or CUDA graph cache assumed after the pre-invocation staging failure.", "checkpoint": "Remote checkpoint root exists but contains no staged files; the exact immutable checkpoint remains bound project-locally.", "image": "Pinned SGLang v0.5.13 image pull is not yet proven complete.", "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4", "project": "gemma4_h100_v0513_fp8_qkv_endpoint", "runtime": "Pre-invocation checkpoint-staging repair pending; no scientific invocation or arm consumption.", "server_state": "No scientific server was started."}, "drain_after_release": false, "hourly_cost_usd": 2.15, "id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08", "idle_since": null, "lifecycle": {"deadline_utc": "2026-07-20T11:10:00Z", "watchdog": {"control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-v0513-fp8qkv-h100-202607200815-watchdog.service", "main_pid": 3031444, "unit": "gemma4-v0513-fp8qkv-h100-202607200815-watchdog.service", "unit_manager": "user"}}, "provider": "nebius", "registered_at": "2026-07-20T08:19:17.461758Z", "resource": {"disk_id": "computedisk-e00feh1fke1p86t48a", "disk_name": "gemma4-v0513-fp8qkv-h100-202607200815-boot", "instance_id": "computeinstance-e00r2qev2c3z3n2y08", "instance_name": "gemma4-v0513-fp8qkv-h100-202607200815"}, "status": "claimed", "updated_at": "2026-07-20T09:32:00.113555Z"}, "event": "claimed", "time": 1784539920.1219249}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784539965.1924322}
+{"bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08", "event": "resumed_retained_claim", "time": 1784539998.4068131}
+{"bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08", "event": "resumed_retained_claim", "time": 1784540008.0249882}
+{"bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08", "event": "resumed_retained_claim", "time": 1784540015.9274023}
+{"bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08", "event": "resumed_retained_claim", "time": 1784540023.2477555}
+{"bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08", "event": "resumed_retained_claim", "time": 1784540031.2232528}
+{"bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08", "event": "resumed_retained_claim", "time": 1784540038.9506423}
+{"bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08", "event": "resumed_retained_claim", "time": 1784540072.3405864}
+{"bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08", "event": "resumed_retained_claim", "time": 1784540088.33374}
+{"bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08", "event": "resumed_retained_claim", "time": 1784540099.5566008}
+{"bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08", "event": "resumed_retained_claim", "time": 1784540110.7222428}
+{"bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08", "event": "resumed_retained_claim", "time": 1784540121.878714}
+{"bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08", "event": "resumed_retained_claim", "time": 1784540133.772592}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784540178.8226526}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784540223.874548}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784540268.9209068}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784540313.9660604}

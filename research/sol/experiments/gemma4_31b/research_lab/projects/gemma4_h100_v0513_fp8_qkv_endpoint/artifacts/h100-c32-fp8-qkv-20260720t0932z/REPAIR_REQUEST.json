@@ -1,0 +1,4 @@
+{
+  "retry": true,
+  "scope": "Use the manifest-bound curl downloader and per-file hash/size checks; transfer only missing or mismatched checkpoint files into staging paths."
+}

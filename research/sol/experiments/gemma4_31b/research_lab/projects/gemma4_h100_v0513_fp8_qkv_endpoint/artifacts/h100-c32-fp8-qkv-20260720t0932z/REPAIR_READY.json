@@ -1,0 +1,8 @@
+{
+  "error": {
+    "message": "typed_staging_boundary:checkpoint_hash_failed",
+    "type": "RuntimeError"
+  },
+  "invocation_state": {},
+  "repair_deadline_epoch": 1784544600
+}

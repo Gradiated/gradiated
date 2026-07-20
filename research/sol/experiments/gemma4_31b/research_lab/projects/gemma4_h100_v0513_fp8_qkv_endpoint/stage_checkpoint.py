@@ -23,10 +23,20 @@ def main() -> int:
     if all(matches(args.checkpoint,row) for row in rows): return 0
     temporary=args.checkpoint.with_name(args.checkpoint.name+".staging")
     temporary.mkdir(exist_ok=True)
-    result=subprocess.run(["huggingface-cli","download","google/gemma-4-31B-it","--revision",args.revision,"--local-dir",str(temporary),"--local-dir-use-symlinks","False"],text=True,capture_output=True)
-    if result.returncode:
-        sys.stderr.write(result.stderr[-4000:])
-        return result.returncode
+    for row in rows:
+        destination=temporary/row["path"]
+        if matches(temporary,row) or matches(args.checkpoint,row):
+            continue
+        destination.parent.mkdir(parents=True,exist_ok=True)
+        partial=destination.with_suffix(destination.suffix+".part")
+        url=f"https://huggingface.co/google/gemma-4-31B-it/resolve/{args.revision}/{row['path']}"
+        result=subprocess.run(["curl","--fail","--location","--retry","3","--retry-delay","3","--output",str(partial),url],text=True,capture_output=True)
+        if result.returncode:
+            sys.stderr.write(result.stderr[-4000:])
+            return result.returncode
+        if partial.stat().st_size!=row["bytes"] or sha256(partial)!=row["sha256"]:
+            raise RuntimeError(f"downloaded checkpoint hash mismatch: {row['path']}")
+        partial.replace(destination)
     if not all(matches(temporary,row) or matches(args.checkpoint,row) for row in rows):
         raise RuntimeError("downloaded checkpoint does not match immutable manifest")
     args.checkpoint.mkdir(exist_ok=True)

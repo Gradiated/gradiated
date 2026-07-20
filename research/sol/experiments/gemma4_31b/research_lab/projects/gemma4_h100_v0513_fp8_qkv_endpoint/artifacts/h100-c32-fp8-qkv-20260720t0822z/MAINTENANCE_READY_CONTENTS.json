@@ -1,0 +1,10 @@
+{
+  "artifacts": "Pre-invocation owner terminal, remote identity, staging diagnostics, and repair handshake retained project-locally.",
+  "caches": "No model or CUDA graph cache assumed after the pre-invocation staging failure.",
+  "checkpoint": "Remote checkpoint root exists but contains no staged files; the exact immutable checkpoint remains bound project-locally.",
+  "image": "Pinned SGLang v0.5.13 image pull is not yet proven complete.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_h100_v0513_fp8_qkv_endpoint",
+  "runtime": "Pre-invocation checkpoint-staging repair pending; no scientific invocation or arm consumption.",
+  "server_state": "No scientific server was started."
+}

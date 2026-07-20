@@ -21,3 +21,11 @@ Action: the durable owner atomically claimed the director-registered H100 and co
 Evidence: the retained artifact root contains the owner terminal, outer event stream, and remote identity stdout/stderr. Exposure was measured at 23.6647 seconds and $0.0141331 at the registered $2.15/hour rate. The old owner release path marked the bench maintenance; the pool now rejects a new claim because of that director-visible state.
 
 Interpretation: this is an ordinary pre-invocation owner/staging defect, not a result and not arm consumption. The project-local owner now derives the actual registered rate, preserves a claimed bench through a repair handshake, and captures checkpoint-stage stdout/stderr. The bench requires director return to available; no new allocation is authorized.
+
+## 2026-07-20 — retained H100 staging repair active
+
+The restored H100 was claimed by the patched durable owner. Captured staging diagnostics established that the cold guest lacks both huggingface-cli and pip; the stager was repaired to use direct manifest-bound curl transfers with per-file size/SHA-256 verification. Six small files finalized under checkpoint.staging and the first 49.8-GB shard is downloading (2,432,524,288 bytes observed). The claim heartbeat is healthy and no CUDA, server, or scientific arm marker exists.
+
+## 2026-07-20 — director maintenance inspection passed
+
+The exact provider instance is RUNNING, its disk is READY and attached, the recorded watchdog is active, SSH succeeds, and the guest reports one H100 80GB with MIG disabled. The remote checkpoint root exists but is empty, confirming the failure occurred during staging rather than after a hidden model or scientific invocation. Inventory contents were corrected and the same bench was returned to available. Resume only with the patched durable owner; the sole c32 arm remains unconsumed.

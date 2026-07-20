@@ -1,0 +1,2 @@
+Error in sitecustomize; set PYTHONVERBOSE for traceback:
+RuntimeError: pinned Triton extend-attention source mismatch:982946925d07e81a6e3f3c4c3a2888f67a2b7c1f7b2ee4aedbc9bac4b14d46eb

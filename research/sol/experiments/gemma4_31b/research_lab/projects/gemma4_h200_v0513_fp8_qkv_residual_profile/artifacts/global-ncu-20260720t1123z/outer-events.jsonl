@@ -1,0 +1,18 @@
+{"claim": {"accelerator": "nvidia-h200-sxm", "claim": {"claimed_at": "2026-07-20T11:23:00.427631Z", "heartbeat_at": "2026-07-20T11:23:00.427631Z", "lease_seconds": 2520, "lease_until_utc": "2026-07-20T12:05:00.427631Z", "project": "gemma4_h200_v0513_fp8_qkv_residual_profile", "stale": false}, "contents": {"artifacts": "Compact terminals and profile SQLite retrieved under /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/fp8-linear-pair-20260720t1053z when available.", "caches": "SGLang FP8, QKV, Nsight, Triton, CUTLASS, and CUDA graph caches retained.", "checkpoint": "Exact immutable project snapshot retained at /home/glmrunner/gemma4-h200-v0513-fp8-qkv-residual-profile/checkpoint.", "image": "Pinned SGLang v0.5.13 linux/amd64 digest 6113665a retained if pull completed.", "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4", "project": "gemma4_h200_v0513_fp8_qkv_residual_profile", "runtime": "Exact FP8+QKV residual profile owner terminal: close_fp8_linear_attempt.", "server_state": "Final candidate server retained when healthy; otherwise immutable image/checkpoint/caches retained."}, "drain_after_release": false, "hourly_cost_usd": 2.46, "id": "h200-v0513-fp8qkv-e00t4pa49nhc2g7jwe", "idle_since": null, "lifecycle": {"deadline_utc": "2026-07-20T13:00:00Z", "watchdog": {"control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-v0513-fp8qkv-h200-202607201027-watchdog-v2.service", "main_pid": 3074130, "unit": "gemma4-v0513-fp8qkv-h200-202607201027-watchdog-v2.service", "unit_manager": "user"}}, "provider": "nebius", "registered_at": "2026-07-20T08:19:17.462948Z", "resource": {"disk_id": "computedisk-e00w6w9960z5gvak5t", "disk_name": "gemma4-v0513-fp8qkv-h200-202607200815-boot", "instance_id": "computeinstance-e00t4pa49nhc2g7jwe", "instance_name": "gemma4-v0513-fp8qkv-h200-202607200815"}, "status": "claimed", "updated_at": "2026-07-20T11:23:00.427631Z"}, "epoch": 1784546580.4362636, "event": "claimed"}
+{"epoch": 1784546583.4724932, "event": "staged", "name": "remote_global_ncu.sh", "sha256": "80bbede5c68f0f7e5dfd187467c0b843e0d404fcdbae407a64d3dc43aeea29e6"}
+{"epoch": 1784546584.8943534, "event": "staged", "name": "ncu_exact_request.py", "sha256": "7c887eac8fad30f1e923d179d54d41c45e5dc336a939c0b298db20d561ef99ae"}
+{"epoch": 1784546586.289667, "event": "staged", "name": "sitecustomize.py", "sha256": "76c26c124c1b1af52da0f46a991c4a3e54732db67b4968e1f16f39eb5b432065"}
+{"epoch": 1784546587.6371536, "event": "staged", "name": "attention_intervention.py", "sha256": "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8"}
+{"epoch": 1784546625.5004795, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784546670.563458, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784546715.6139443, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784546760.6624749, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784546805.7072225, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784546850.7635255, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784546895.8093998, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784546940.8549914, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784546985.9089277, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784547030.2414658, "event": "worker_returned", "returncode": 1}
+{"epoch": 1784547030.9574347, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"classification": "integration_failure", "epoch": 1784547032.764559, "event": "terminal"}
+{"epoch": 1784547032.8092291, "event": "released", "returncode": 0, "stderr": ""}

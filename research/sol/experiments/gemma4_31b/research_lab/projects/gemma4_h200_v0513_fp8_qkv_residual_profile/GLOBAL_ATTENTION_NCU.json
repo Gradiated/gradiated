@@ -1,0 +1,108 @@
+{
+  "causal_interpretation": {
+    "falsifier": "Reject the specialization if the sole stacked pair is not faster or lacks exact candidate-path, semantic, accounting, FP8, QKV, or retained-local-attention proof.",
+    "inference": "The causal limiter is live register state, not HBM bandwidth, shared-memory capacity, or grid supply. The pinned source already uses BLOCK_M=16 for head-dim 512 on Blackwell specifically to avoid register exhaustion; applying that one live-state reduction only to the exact Hopper global head-dim-512 subtype is the admitted intervention.",
+    "measured": "The exact 2048-CTA global kernel has 15.52 waves per 132-SM H200, so grid realization is not underfilled. It is limited to one CTA/SM by 255 registers/thread while shared memory permits two CTAs/SM. Achieved warp occupancy is 12.496527%, tensor activity 10.100424%, DRAM 2.214164%, and L2 36.955752%."
+  },
+  "consumer": {
+    "csv": "artifacts/global-ncu-20260720t1136z/global_ncu/ncu-export.csv",
+    "sha256": "14dffa9b2a503330cabad7f450cba62d0962f83dd1bbff0059605bb561703765"
+  },
+  "evidence_type": "measured_exact_kernel_ncu",
+  "metrics": {
+    "Block Size": {
+      "unit": null,
+      "value": "(256, 1, 1)"
+    },
+    "Grid Size": {
+      "unit": null,
+      "value": "(1, 32, 64)"
+    },
+    "Kernel Name": {
+      "unit": null,
+      "value": "_fwd_kernel"
+    },
+    "dram__throughput.avg.pct_of_peak_sustained_elapsed": {
+      "unit": "%",
+      "value": 2.214164
+    },
+    "gpu__time_duration.sum": {
+      "unit": "ms",
+      "value": 3.061664
+    },
+    "launch__occupancy_limit_registers": {
+      "unit": "block",
+      "value": 1.0
+    },
+    "launch__occupancy_limit_shared_mem": {
+      "unit": "block",
+      "value": 2.0
+    },
+    "launch__registers_per_thread": {
+      "unit": "register/thread",
+      "value": 255.0
+    },
+    "launch__registers_per_thread_allocated": {
+      "unit": "register/thread",
+      "value": 256.0
+    },
+    "launch__shared_mem_per_block": {
+      "unit": "Kbyte/block",
+      "value": 103.424
+    },
+    "launch__shared_mem_per_block_dynamic": {
+      "unit": "Kbyte/block",
+      "value": 102.4
+    },
+    "launch__sm_count": {
+      "unit": "SM",
+      "value": 132.0
+    },
+    "launch__waves_per_multiprocessor": {
+      "unit": null,
+      "value": 15.52
+    },
+    "lts__throughput.avg.pct_of_peak_sustained_elapsed": {
+      "unit": "%",
+      "value": 36.955752
+    },
+    "profiler__replayer_passes": {
+      "unit": "pass",
+      "value": 5.0
+    },
+    "sm__maximum_warps_avg_per_active_cycle": {
+      "unit": "warp",
+      "value": 8.0
+    },
+    "sm__maximum_warps_per_active_cycle_pct": {
+      "unit": "%",
+      "value": 12.5
+    },
+    "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active": {
+      "unit": "%",
+      "value": 10.100424
+    },
+    "sm__warps_active.avg.pct_of_peak_sustained_active": {
+      "unit": "%",
+      "value": 12.496527
+    }
+  },
+  "pass": true,
+  "producer": {
+    "report": "artifacts/global-ncu-20260720t1136z/global_ncu/global-fwd.ncu-rep",
+    "sha256": "b54d17a158477ff58d5b9cb62b007f533678153eb7841e36585393a87db1f203"
+  },
+  "schema_version": 1,
+  "scope": {
+    "control_block_m": 32,
+    "control_block_n": 64,
+    "kernel": "_fwd_kernel",
+    "kv_heads": 4,
+    "launch_count": 1,
+    "launch_skip": 5,
+    "mapped_subtype": "global_extend",
+    "q_heads": 32,
+    "qk_head_dim": 512,
+    "v_head_dim": 512
+  }
+}

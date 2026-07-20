@@ -1,0 +1,7 @@
+{
+  "classification": "integration_failure",
+  "message": "sudo docker run --rm -v \"$root:/work\" \"$image\" /usr/local/cuda/bin/ncu --import /work/global-ncu-artifacts/global-fwd.ncu-rep --csv --page raw > \"$artifacts/ncu.csv\" 2> \"$artifacts/ncu-export.stderr\"",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-20T11:39:28.885127Z"
+}

@@ -1,0 +1,16 @@
+{
+  "classification": "ncu_counter_unavailable",
+  "cumulative_provider_spend_usd": 3.6553757180968924,
+  "pass": false,
+  "provider_exposure_seconds": 188.95813250541687,
+  "provider_spend_usd": 0.1291213905453682,
+  "schema_version": 1,
+  "status": "terminal",
+  "worker_terminal": {
+    "classification": "ncu_counter_unavailable",
+    "message": "exact_kernel_missing",
+    "schema_version": 1,
+    "status": "terminal",
+    "timestamp_utc": "2026-07-20T11:34:58.155741Z"
+  }
+}

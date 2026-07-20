@@ -131,7 +131,7 @@ def main() -> int:
             raise RuntimeError("pair_intervention_request_outside_project")
         pair_intervention = json.loads(request_path.read_text())
         pair_boundary = str(pair_intervention.get("boundary"))
-        if pair_boundary not in {"attention_kv", "fp8_linear"}:
+        if pair_boundary not in {"attention_kv", "fp8_linear", "global_attention"}:
             raise RuntimeError("pair_intervention_boundary_invalid")
 
     def emit(event: str, **fields: object) -> None:
@@ -183,6 +183,8 @@ def main() -> int:
         remote_artifacts = f"{REMOTE}/attention-artifacts-v2"
     elif pair_boundary == "fp8_linear":
         remote_artifacts = f"{REMOTE}/fp8-linear-artifacts"
+    elif pair_boundary == "global_attention":
+        remote_artifacts = f"{REMOTE}/global-attention-artifacts"
     else:
         remote_artifacts = f"{REMOTE}/artifacts"
 
@@ -356,7 +358,11 @@ def main() -> int:
                     raise RuntimeError("attention_intervention_file_invalid")
                 stage(source, row["remote_name"], f"{REMOTE}/input")
             atomic(args.artifact_root / "INTERVENTION_ADMITTED.json", intervention)
-            pair_mode = "attention_pair" if pair_boundary == "attention_kv" else "fp8_linear_pair"
+            pair_mode = {
+                "attention_kv": "attention_pair",
+                "fp8_linear": "fp8_linear_pair",
+                "global_attention": "global_attention_pair",
+            }[pair_boundary]
             pair_rc = run_worker(pair_mode)
             if pair_rc and repairable(pair_mode) and wait_for_repair(pair_mode):
                 pair_rc = run_worker(pair_mode)
@@ -378,6 +384,9 @@ def main() -> int:
             fp8_map = PROJECT / "FP8_LINEAR_SHAPE_MAP.json"
             if fp8_map.is_file():
                 terminal["fp8_linear_shape_map"] = json.loads(fp8_map.read_text())
+            global_ncu = PROJECT / "GLOBAL_ATTENTION_NCU.json"
+            if global_ncu.is_file():
+                terminal["global_attention_ncu"] = json.loads(global_ncu.read_text())
             if terminal["cumulative_provider_spend_usd"] > AUTHORIZED_USD:
                 terminal["classification"] = "budget_violation"
                 terminal["pass"] = False

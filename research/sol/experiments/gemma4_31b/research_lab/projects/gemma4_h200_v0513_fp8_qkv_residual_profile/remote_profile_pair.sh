@@ -41,6 +41,11 @@ PY
     mv "$input/RESET_INVALID_FP8_CANDIDATE.json" "$artifacts/RESET_INVALID_FP8_CANDIDATE.consumed.json"
   fi
   mode=pair
+elif [[ "$mode" == global_attention_pair ]]; then
+  artifacts="$root/global-attention-artifacts"
+  container_artifacts=/work/global-attention-artifacts
+  sudo docker rm -f residual-profile residual-control residual-candidate gemma-fp8-control-v0513 gemma-fp8-mtp-v0513 sglang-endpoint >/dev/null 2>&1 || true
+  mode=pair
 fi
 image=docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6
 mkdir -p "$artifacts"
@@ -204,7 +209,7 @@ if [[ "$mode" == profile ]]; then
 elif [[ "$mode" == pair ]]; then
   test -s "$input/residual_intervention.py" || fail residual_intervention_missing
   test -s "$input/attention_intervention.py" || fail attention_intervention_missing
-  if [[ "$requested_mode" == attention_pair || "$requested_mode" == fp8_linear_pair ]]; then
+  if [[ "$requested_mode" == attention_pair || "$requested_mode" == fp8_linear_pair || "$requested_mode" == global_attention_pair ]]; then
     sudo docker rm -f residual-profile residual-control residual-candidate gemma-fp8-control-v0513 gemma-fp8-mtp-v0513 sglang-endpoint >/dev/null 2>&1 || true
   fi
   if ! python3 - "$artifacts/control/TERMINAL.json" 2>/dev/null <<'PY'
@@ -248,6 +253,7 @@ control=float(c['service_seconds_per_request']); candidate=float(q['service_seco
 smoke=[json.load(open(out.parent/f'{arm}.smoke.json')) for arm in ('control','candidate')]
 attention_mode=sys.argv[6]=='attention_pair'
 fp8_linear_mode=sys.argv[6]=='fp8_linear_pair'
+global_attention_mode=sys.argv[6]=='global_attention_pair'
 path_ok=bool(proof)
 if attention_mode:
     path_ok=any(x.get('phase')=='runtime_invocation' and x.get('qk_head_dim')==256 and x.get('v_head_dim')==256 and x.get('sliding_window_size')==1024 and x.get('removed_operations')==['k.clone','v.clone'] for x in proof)
@@ -255,8 +261,12 @@ if fp8_linear_mode:
     attention=lambda rows:any(x.get('candidate_path')=='TritonAttnBackend.forward_extend.local_fp8_deferred_cache_commit' and x.get('phase')=='runtime_invocation' and x.get('qk_head_dim')==256 and x.get('v_head_dim')==256 and x.get('sliding_window_size')==1024 for x in rows)
     fp8_path=any(x.get('candidate_path')=='fp8_gate_up_exact_shape_64x256x128' and x.get('phase')=='runtime_invocation' and x.get('m',0)>128 and x.get('n')==43008 and x.get('k')==5376 and x.get('tile')==[64,256,128] for x in proof)
     path_ok=attention(control_proof) and attention(proof) and fp8_path
+if global_attention_mode:
+    attention=lambda rows:any(x.get('candidate_path')=='TritonAttnBackend.forward_extend.local_fp8_deferred_cache_commit' and x.get('phase')=='runtime_invocation' and x.get('qk_head_dim')==256 and x.get('v_head_dim')==256 and x.get('sliding_window_size')==1024 for x in rows)
+    global_path=any(x.get('candidate_path')=='extend_attention_fwd.global_head512_block_m16' and x.get('phase')=='runtime_invocation' and x.get('qk_head_dim')==512 and x.get('v_head_dim')==512 and x.get('q_heads')==32 and x.get('kv_heads')==4 and x.get('sliding_window_size',0)<=-1 and x.get('control_tile')==[32,64] and x.get('candidate_tile')==[16,64] for x in proof)
+    path_ok=attention(control_proof) and attention(proof) and global_path
 valid=all(x.get('pass') for x in smoke) and path_ok
-classification='promote_ceiling' if valid and candidate<=0.6381105230769232 else ('promote_gain' if valid and gain>=.05 else 'retain_simple_positive' if valid and (attention_mode or fp8_linear_mode) and gain>0 else 'close_attention_attempt' if valid and attention_mode else 'close_fp8_linear_attempt' if valid and fp8_linear_mode else 'close_boundary' if valid else 'invalid')
+classification='promote_ceiling' if valid and candidate<=0.6381105230769232 else ('promote_gain' if valid and gain>=.05 else 'retain_simple_positive' if valid and (attention_mode or fp8_linear_mode or global_attention_mode) and gain>0 else 'close_attention_attempt' if valid and attention_mode else 'close_fp8_linear_attempt' if valid and fp8_linear_mode else 'close_global_attention_attempt' if valid and global_attention_mode else 'close_boundary' if valid else 'invalid')
 v={'schema_version':1,'status':'terminal','classification':classification,'pass':valid,'control':c,'candidate':q,'control_service_seconds_per_request':control,'candidate_service_seconds_per_request':candidate,'reduction_fraction':gain,'economic_ceiling_seconds_per_request':0.6381105230769232,'ceiling_pass':valid and candidate<=0.6381105230769232,'retain_pass':valid and gain>=.05,'semantic_proof':smoke,'accounting_proof':{'control':c['cache'],'candidate':q['cache']},'fp8_proof':True,'qkv_proof':True,'attention_proof':{'control':control_proof,'candidate':proof},'candidate_path_proof':proof}
 tmp=out.with_suffix('.part'); tmp.write_text(json.dumps(v,indent=2,sort_keys=True)+'\n'); os.replace(tmp,out)
 PY

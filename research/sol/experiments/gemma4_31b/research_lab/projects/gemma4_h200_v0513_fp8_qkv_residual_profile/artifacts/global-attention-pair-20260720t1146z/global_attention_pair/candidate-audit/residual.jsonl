@@ -1,0 +1,2 @@
+{"candidate_path": "TritonAttnBackend.forward_extend.local_fp8_deferred_cache_commit", "layer_id": 0, "phase": "runtime_invocation", "qk_head_dim": 256, "removed_operations": ["k.clone", "v.clone"], "sliding_window_size": 1024, "v_head_dim": 256}
+{"candidate_path": "extend_attention_fwd.global_head512_block_m16", "candidate_tile": [16, 64], "causal_limiter": "register_live_state", "control_tile": [32, 64], "kv_heads": 4, "max_len_extend": 18, "phase": "runtime_invocation", "q_heads": 32, "qk_head_dim": 512, "sliding_window_size": -1, "v_head_dim": 512}

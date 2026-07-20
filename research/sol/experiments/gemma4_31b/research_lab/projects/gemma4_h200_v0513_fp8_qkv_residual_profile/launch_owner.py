@@ -26,8 +26,9 @@ def main() -> int:
     parser.add_argument("--bench", required=True)
     parser.add_argument("--attention-pair", action="store_true")
     parser.add_argument("--fp8-linear-pair", action="store_true")
+    parser.add_argument("--global-attention-pair", action="store_true")
     args = parser.parse_args()
-    if args.attention_pair and args.fp8_linear_pair:
+    if sum((args.attention_pair, args.fp8_linear_pair, args.global_attention_pair)) > 1:
         raise RuntimeError("only one pair mode may be selected")
     inventory = json.loads((LAB / "runtime/gpus.json").read_text())
     benches = inventory["benches"]
@@ -38,17 +39,20 @@ def main() -> int:
     stamp = now.strftime("%Y%m%dt%H%Mz")
     if args.fp8_linear_pair:
         artifact_prefix = "fp8-linear-pair"
+    elif args.global_attention_pair:
+        artifact_prefix = "global-attention-pair"
     elif args.attention_pair:
         artifact_prefix = "attention-pair"
     else:
         artifact_prefix = "residual-profile"
     artifact_root = PROJECT / "artifacts" / f"{artifact_prefix}-{stamp}"
     pair_minutes = 130 if args.fp8_linear_pair else 75
-    deadline_epoch = int(time.time()) + (pair_minutes if (args.attention_pair or args.fp8_linear_pair) else 150) * 60
+    pair_requested = args.attention_pair or args.fp8_linear_pair or args.global_attention_pair
+    deadline_epoch = int(time.time()) + (pair_minutes if pair_requested else 150) * 60
     if args.attention_pair:
         release_deadline = datetime.datetime(2026, 7, 20, 11, 10, tzinfo=datetime.timezone.utc)
         deadline_epoch = min(deadline_epoch, int(release_deadline.timestamp()))
-    elif args.fp8_linear_pair:
+    elif args.fp8_linear_pair or args.global_attention_pair:
         release_deadline = datetime.datetime(2026, 7, 20, 12, 45, tzinfo=datetime.timezone.utc)
         deadline_epoch = min(deadline_epoch, int(release_deadline.timestamp()))
     deadline = datetime.datetime.fromtimestamp(deadline_epoch, datetime.timezone.utc).isoformat().replace("+00:00", "Z")
@@ -85,6 +89,14 @@ def main() -> int:
                 str(PROJECT / "FP8_LINEAR_INTERVENTION_REQUEST.json"),
             ]
         )
+    elif args.global_attention_pair:
+        command.extend(
+            [
+                "--pair-only",
+                "--intervention-request",
+                str(PROJECT / "GLOBAL_ATTENTION_INTERVENTION_REQUEST.json"),
+            ]
+        )
     launched = subprocess.run(command, capture_output=True, text=True, check=False)
     if launched.returncode:
         raise RuntimeError(f"durable_owner_launch_failed:{launched.stderr[-1000:]}")
@@ -106,7 +118,7 @@ def main() -> int:
         "deadline_utc": deadline,
         "artifact_root": str(artifact_root),
         "expected_terminal": str(artifact_root / "TERMINAL.json"),
-        "phase": "fp8_linear_pair_claim_and_reconcile" if args.fp8_linear_pair else "attention_pair_claim_and_reconcile" if args.attention_pair else "claim_and_cold_stage",
+        "phase": "global_attention_pair_claim_and_reconcile" if args.global_attention_pair else "fp8_linear_pair_claim_and_reconcile" if args.fp8_linear_pair else "attention_pair_claim_and_reconcile" if args.attention_pair else "claim_and_cold_stage",
     }
     atomic(status_path, status)
     print(json.dumps(status["active_session"], indent=2, sort_keys=True))

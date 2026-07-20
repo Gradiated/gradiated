@@ -1,0 +1,29 @@
+{
+  "boundary": "global_attention",
+  "boundary_wall_fraction": 0.13878896393813644,
+  "causal_falsifier": "Close the global-attention attempt after the sole stacked pair if the exact candidate does not improve its contemporaneous control or fails semantic, accounting, FP8, QKV, retained-local-attention, or exact global path proof.",
+  "counter_diagnostic": {
+    "csv_sha256": "14dffa9b2a503330cabad7f450cba62d0962f83dd1bbff0059605bb561703765",
+    "path": "GLOBAL_ATTENTION_NCU.json",
+    "report_sha256": "b54d17a158477ff58d5b9cb62b007f533678153eb7841e36585393a87db1f203",
+    "sha256": "400782a91d87a0c9334c8a9499356c073c43c92a3b76e6e8d3e6018838de83f5"
+  },
+  "files": [
+    {
+      "path": "intervention/global_attention_block_m16.py",
+      "remote_name": "residual_intervention.py",
+      "sha256": "3c209a88f680be6a5fa1598ceff34d7f3e2112aa77e2196436acd4826f9edcad"
+    }
+  ],
+  "intervention_id": "gemma4_global_head512_block_m16",
+  "retained_attention_intervention": {
+    "path": "intervention/attention_deferred_local_kv.py",
+    "required_in_arms": [
+      "control",
+      "candidate"
+    ],
+    "sha256": "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8"
+  },
+  "schema_version": 1,
+  "source_justification": "The exact global _fwd_kernel is measured at grid (1,32,64), 2048 CTAs, and 15.52 waves per each of 132 H200 SMs, excluding grid underfill. Its 255 registers/thread limit occupancy to one CTA/SM even though 102.4 KiB dynamic shared memory permits two; achieved warp occupancy is 12.496527% and tensor activity 10.100424%, while DRAM is 2.214164% and L2 is 36.955752%. The pinned source already selects BLOCK_M=16 for head-dim 512 on Blackwell to prevent register exhaustion. The candidate applies that single live-state reduction only to Hopper global Lq=Lv=512 while keeping BLOCK_N=64, eight warps, all local attention, and every other shape unchanged."
+}

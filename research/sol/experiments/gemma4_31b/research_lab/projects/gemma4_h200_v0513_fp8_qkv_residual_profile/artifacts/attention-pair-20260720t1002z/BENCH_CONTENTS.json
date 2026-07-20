@@ -1,0 +1,10 @@
+{
+  "artifacts": "Compact terminals and profile SQLite retrieved under /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/attention-pair-20260720t1002z when available.",
+  "caches": "SGLang FP8, QKV, Nsight, Triton, and CUDA graph caches retained.",
+  "checkpoint": "Exact immutable project snapshot retained at /home/glmrunner/gemma4-h200-v0513-fp8-qkv-residual-profile/checkpoint.",
+  "image": "Pinned SGLang v0.5.13 linux/amd64 digest 6113665a retained if pull completed.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_h200_v0513_fp8_qkv_residual_profile",
+  "runtime": "Exact FP8+QKV residual profile owner terminal: typed_external_or_owner_boundary.",
+  "server_state": "Final candidate server retained when healthy; otherwise immutable image/checkpoint/caches retained."
+}

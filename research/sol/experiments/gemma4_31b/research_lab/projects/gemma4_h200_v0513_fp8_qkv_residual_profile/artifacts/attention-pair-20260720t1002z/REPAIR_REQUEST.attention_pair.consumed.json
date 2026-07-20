@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "retry": true,
+  "mode": "attention_pair",
+  "diagnostic": "The exact runner exited before requests because the attention-pair shell still passed the old /work/artifacts/control output path. Candidate did not begin; patch only the artifact mount path and resume the unchanged control/candidate pair.",
+  "files": [
+    {
+      "path": "remote_profile_pair.sh",
+      "remote_name": "remote_profile_pair.sh",
+      "sha256": "93a71fa5da15bf798645bac35c81f7f14cd58f5118f68534ef934c380505ccb3"
+    }
+  ]
+}

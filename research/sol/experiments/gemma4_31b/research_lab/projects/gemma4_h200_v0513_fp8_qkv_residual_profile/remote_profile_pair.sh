@@ -2,9 +2,28 @@
 set -Eeuo pipefail
 
 mode=${1:?mode required}
+requested_mode=$mode
 root=/home/glmrunner/gemma4-h200-v0513-fp8-qkv-residual-profile
 input="$root/input"
 artifacts="$root/artifacts"
+container_artifacts=/work/artifacts
+if [[ "$mode" == attention_pair ]]; then
+  artifacts="$root/attention-artifacts-v2"
+  container_artifacts=/work/attention-artifacts-v2
+  if [[ -f "$input/RESET_INVALID_ATTENTION_CONTROL.json" && -f "$artifacts/control/TERMINAL.json" && ! -f "$artifacts/candidate/TERMINAL.json" ]]; then
+    rm -rf "$artifacts/invalid-control-stale-server"
+    mv "$artifacts/control" "$artifacts/invalid-control-stale-server"
+    rm -rf "$artifacts/control-audit"
+    python3 - "$artifacts/INVOCATION_STATE.json" <<'PY'
+import json,pathlib,sys
+p=pathlib.Path(sys.argv[1]); x=json.loads(p.read_text())
+x['control_cuda_started']=False; x['control_science_started']=False
+p.write_text(json.dumps(x,indent=2,sort_keys=True)+'\n')
+PY
+    mv "$input/RESET_INVALID_ATTENTION_CONTROL.json" "$artifacts/RESET_INVALID_ATTENTION_CONTROL.consumed.json"
+  fi
+  mode=pair
+fi
 image=docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6
 mkdir -p "$artifacts"
 
@@ -71,12 +90,12 @@ start_server() {
   fi
   sudo docker run -d --name "$container" --gpus all --ipc=host --network host \
     -v "$root:/work" -e PYTHONPATH=/work/input:/sgl-workspace/sglang/python \
-    -e QKV_EPILOGUE_AUDIT="/work/artifacts/$arm-audit/qkv.jsonl" \
-    -e FP8_MODULE_AUDIT="/work/artifacts/$arm-audit/modules.jsonl" \
-    -e FP8_CONSUMER_AUDIT="/work/artifacts/$arm-audit/consumers.jsonl" \
-    -e FP8_RUNTIME_AUDIT="/work/artifacts/$arm-audit/runtime.json" \
+    -e QKV_EPILOGUE_AUDIT="$container_artifacts/$arm-audit/qkv.jsonl" \
+    -e FP8_MODULE_AUDIT="$container_artifacts/$arm-audit/modules.jsonl" \
+    -e FP8_CONSUMER_AUDIT="$container_artifacts/$arm-audit/consumers.jsonl" \
+    -e FP8_RUNTIME_AUDIT="$container_artifacts/$arm-audit/runtime.json" \
     -e SGLANG_FP8_IGNORED_LAYERS=model.vision_tower,model.embed_vision \
-    -e RESIDUAL_ARM="$arm" -e RESIDUAL_CANDIDATE_AUDIT="/work/artifacts/$arm-audit/residual.jsonl" \
+    -e RESIDUAL_ARM="$arm" -e RESIDUAL_CANDIDATE_AUDIT="$container_artifacts/$arm-audit/residual.jsonl" \
     "${profile_env[@]}" "$image" "${command[@]}" >"$artifacts/$arm.container-id"
   local ready=0
   for _ in $(seq 1 180); do
@@ -103,7 +122,7 @@ run_exact() {
   local arm=$1 container=$2 label=$3
   state "${arm}_science_started"
   sudo docker exec "$container" python3 /work/input/fp8_qkv_paired_runner.py \
-    --output "/work/artifacts/$arm" --arm "$label" --concurrency 32 \
+    --output "$container_artifacts/$arm" --arm "$label" --concurrency 32 \
     >"$artifacts/$arm.runner.stdout" 2>"$artifacts/$arm.runner.stderr" || fail "$arm.runner_failed"
   python3 - "$artifacts/$arm/TERMINAL.json" <<'PY' || fail "$arm.terminal_invalid"
 import json,sys
@@ -149,6 +168,9 @@ if [[ "$mode" == profile ]]; then
   atomic_terminal profile_complete exact_profile_control_persisted
 elif [[ "$mode" == pair ]]; then
   test -s "$input/residual_intervention.py" || fail residual_intervention_missing
+  if [[ "$requested_mode" == attention_pair ]]; then
+    sudo docker rm -f residual-profile residual-control residual-candidate gemma-fp8-control-v0513 gemma-fp8-mtp-v0513 sglang-endpoint >/dev/null 2>&1 || true
+  fi
   if ! python3 - "$artifacts/control/TERMINAL.json" 2>/dev/null <<'PY'
 import json,sys
 x=json.load(open(sys.argv[1])); assert x.get('pass') is True and x.get('complete_requests') == 32
@@ -181,13 +203,17 @@ PY
     validate_baseline_proofs candidate
   fi
   test -s "$artifacts/candidate-audit/residual.jsonl" || fail candidate_path_proof_missing
-  python3 - "$artifacts/control/TERMINAL.json" "$artifacts/candidate/TERMINAL.json" "$artifacts/PAIRED_TERMINAL.json" "$artifacts/candidate-audit/residual.jsonl" <<'PY'
+  python3 - "$artifacts/control/TERMINAL.json" "$artifacts/candidate/TERMINAL.json" "$artifacts/PAIRED_TERMINAL.json" "$artifacts/candidate-audit/residual.jsonl" "$requested_mode" <<'PY'
 import json,os,pathlib,sys
 c=json.load(open(sys.argv[1])); q=json.load(open(sys.argv[2])); out=pathlib.Path(sys.argv[3]); proof=[json.loads(x) for x in pathlib.Path(sys.argv[4]).read_text().splitlines() if x]
 control=float(c['service_seconds_per_request']); candidate=float(q['service_seconds_per_request']); gain=1-candidate/control
 smoke=[json.load(open(out.parent/f'{arm}.smoke.json')) for arm in ('control','candidate')]
-valid=all(x.get('pass') for x in smoke) and bool(proof)
-classification='promote_ceiling' if valid and candidate<=0.6381105230769232 else ('retain_stable_gain' if valid and gain>=.05 else 'close_boundary' if valid else 'invalid')
+attention_mode=sys.argv[5]=='attention_pair'
+path_ok=bool(proof)
+if attention_mode:
+    path_ok=any(x.get('phase')=='runtime_invocation' and x.get('qk_head_dim')==288 and x.get('v_head_dim')==256 and x.get('sliding_window_size')==1024 and x.get('removed_operations')==['k.clone','v.clone'] for x in proof)
+valid=all(x.get('pass') for x in smoke) and path_ok
+classification='promote_ceiling' if valid and candidate<=0.6381105230769232 else ('promote_gain' if valid and gain>=.05 else 'retain_simple_positive' if valid and attention_mode and gain>0 else 'close_attention_attempt' if valid and attention_mode else 'close_boundary' if valid else 'invalid')
 v={'schema_version':1,'status':'terminal','classification':classification,'pass':valid,'control':c,'candidate':q,'control_service_seconds_per_request':control,'candidate_service_seconds_per_request':candidate,'reduction_fraction':gain,'economic_ceiling_seconds_per_request':0.6381105230769232,'ceiling_pass':valid and candidate<=0.6381105230769232,'retain_pass':valid and gain>=.05,'semantic_proof':smoke,'accounting_proof':{'control':c['cache'],'candidate':q['cache']},'fp8_proof':True,'qkv_proof':True,'candidate_path_proof':proof}
 tmp=out.with_suffix('.part'); tmp.write_text(json.dumps(v,indent=2,sort_keys=True)+'\n'); os.replace(tmp,out)
 PY

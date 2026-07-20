@@ -1,0 +1,27 @@
+{
+  "classification": "typed_external_or_owner_boundary",
+  "error": {
+    "message": "typed_attention_pair_boundary:consumed_control_missing_terminal",
+    "type": "RuntimeError"
+  },
+  "invocation_state": {
+    "candidate_cuda_started": false,
+    "candidate_science_started": false,
+    "control_cuda_started": true,
+    "control_science_started": true,
+    "profile_cuda_started": false,
+    "profile_science_started": false
+  },
+  "pass": false,
+  "provider_exposure_seconds": 248.82294464111328,
+  "provider_spend_usd": 0.1700290131489436,
+  "schema_version": 1,
+  "status": "terminal",
+  "worker_terminal": {
+    "classification": "integration_failure",
+    "message": "consumed_control_missing_terminal",
+    "schema_version": 1,
+    "status": "terminal",
+    "timestamp_utc": "2026-07-20T10:07:12.482719Z"
+  }
+}

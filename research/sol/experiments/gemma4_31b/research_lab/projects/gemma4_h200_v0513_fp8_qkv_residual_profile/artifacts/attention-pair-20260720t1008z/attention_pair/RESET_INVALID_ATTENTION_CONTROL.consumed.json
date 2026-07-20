@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "reason": "The first attention-v2 control runner reached a stale retained residual-candidate server before the new residual-control scheduler loaded. The missing new-server FP8/QKV audit files and preserved container inspection prove endpoint identity mismatch; candidate did not start.",
+  "authorized_repair": "Preserve the invalid control artifact, clear only its coarse invocation marker, fence stale endpoint containers, and run the unchanged admitted control once."
+}

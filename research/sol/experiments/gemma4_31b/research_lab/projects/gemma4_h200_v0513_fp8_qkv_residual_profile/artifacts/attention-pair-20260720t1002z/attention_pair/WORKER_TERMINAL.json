@@ -1,0 +1,7 @@
+{
+  "classification": "integration_failure",
+  "message": "consumed_control_missing_terminal",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-20T10:07:12.482719Z"
+}

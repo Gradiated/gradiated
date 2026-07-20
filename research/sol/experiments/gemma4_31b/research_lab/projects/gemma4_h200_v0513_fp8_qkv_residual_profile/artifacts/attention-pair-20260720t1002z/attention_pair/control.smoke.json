@@ -1,0 +1,20 @@
+{
+  "rows": [
+    {
+      "want": "READY",
+      "text": "READY",
+      "pass": true
+    },
+    {
+      "want": "4",
+      "text": "4",
+      "pass": true
+    },
+    {
+      "want": "json",
+      "text": "```json\n{\n  \"status\": \"ok\"\n}\n```",
+      "pass": true
+    }
+  ],
+  "pass": true
+}

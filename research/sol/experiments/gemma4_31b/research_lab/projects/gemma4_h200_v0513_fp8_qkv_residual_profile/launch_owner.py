@@ -24,6 +24,7 @@ def atomic(path: pathlib.Path, value: object) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bench", required=True)
+    parser.add_argument("--attention-pair", action="store_true")
     args = parser.parse_args()
     inventory = json.loads((LAB / "runtime/gpus.json").read_text())
     benches = inventory["benches"]
@@ -32,8 +33,11 @@ def main() -> int:
         raise RuntimeError("typed_pool_boundary:requested_h200_not_available")
     now = datetime.datetime.now(datetime.timezone.utc)
     stamp = now.strftime("%Y%m%dt%H%Mz")
-    artifact_root = PROJECT / "artifacts" / f"residual-profile-{stamp}"
-    deadline_epoch = int(time.time()) + 150 * 60
+    artifact_root = PROJECT / "artifacts" / (f"attention-pair-{stamp}" if args.attention_pair else f"residual-profile-{stamp}")
+    deadline_epoch = int(time.time()) + (75 if args.attention_pair else 150) * 60
+    if args.attention_pair:
+        release_deadline = datetime.datetime(2026, 7, 20, 11, 10, tzinfo=datetime.timezone.utc)
+        deadline_epoch = min(deadline_epoch, int(release_deadline.timestamp()))
     deadline = datetime.datetime.fromtimestamp(deadline_epoch, datetime.timezone.utc).isoformat().replace("+00:00", "Z")
     unit = f"gemma4-h200-v0513-fp8-qkv-residual-{stamp}.service"
     command = [
@@ -52,6 +56,14 @@ def main() -> int:
         "--absolute-deadline-epoch",
         str(deadline_epoch),
     ]
+    if args.attention_pair:
+        command.extend(
+            [
+                "--pair-only",
+                "--intervention-request",
+                str(PROJECT / "ATTENTION_INTERVENTION_REQUEST.json"),
+            ]
+        )
     launched = subprocess.run(command, capture_output=True, text=True, check=False)
     if launched.returncode:
         raise RuntimeError(f"durable_owner_launch_failed:{launched.stderr[-1000:]}")
@@ -73,7 +85,7 @@ def main() -> int:
         "deadline_utc": deadline,
         "artifact_root": str(artifact_root),
         "expected_terminal": str(artifact_root / "TERMINAL.json"),
-        "phase": "claim_and_cold_stage",
+        "phase": "attention_pair_claim_and_reconcile" if args.attention_pair else "claim_and_cold_stage",
     }
     atomic(status_path, status)
     print(json.dumps(status["active_session"], indent=2, sort_keys=True))

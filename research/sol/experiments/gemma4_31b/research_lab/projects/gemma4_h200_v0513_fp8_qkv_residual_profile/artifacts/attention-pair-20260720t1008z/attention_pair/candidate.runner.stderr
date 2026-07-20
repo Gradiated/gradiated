@@ -1,0 +1,2 @@
+Error in sitecustomize; set PYTHONVERBOSE for traceback:
+RuntimeError: pinned Triton backend source mismatch:429dbb4c3617331ac495b67cfdb6f1f38c6eceec2755a3df84f8f89b1b8fa80d

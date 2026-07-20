@@ -116,6 +116,8 @@ def main() -> int:
     parser.add_argument("--bench", required=True)
     parser.add_argument("--artifact-root", type=pathlib.Path, required=True)
     parser.add_argument("--absolute-deadline-epoch", type=int, required=True)
+    parser.add_argument("--pair-only", action="store_true")
+    parser.add_argument("--intervention-request", type=pathlib.Path)
     args = parser.parse_args()
     args.artifact_root.mkdir(parents=True, exist_ok=False)
     events = args.artifact_root / "outer-events.jsonl"
@@ -143,7 +145,9 @@ def main() -> int:
     if bench["accelerator"] != "nvidia-h200-sxm":
         raise RuntimeError("typed_pool_boundary:bench_not_h200_sxm")
     rate = float(bench["hourly_cost_usd"])
-    budget_seconds = int(AUTHORIZED_USD * 3600 / rate)
+    prior_spend = float(json.loads((PROJECT / "STATUS.json").read_text()).get("measured_project_spend_usd", 0.0))
+    remaining_spend = AUTHORIZED_USD - prior_spend
+    budget_seconds = int(remaining_spend * 3600 / rate)
     claim_deadline = min(args.absolute_deadline_epoch, int(time.time()) + MAX_CLAIM_SECONDS, int(time.time()) + budget_seconds)
     if claim_deadline <= time.time() + RETRIEVAL_RESERVE_SECONDS + 600:
         raise RuntimeError("typed_budget_boundary:insufficient_claim_window")
@@ -163,6 +167,7 @@ def main() -> int:
     ip: str | None = None
     worker_terminal: dict[str, object] = {}
     invocation_state: dict[str, object] = {}
+    remote_artifacts = f"{REMOTE}/attention-artifacts-v2" if args.pair_only else f"{REMOTE}/artifacts"
 
     try:
         lease = max(600, claim_deadline - int(time.time()))
@@ -188,7 +193,7 @@ def main() -> int:
         (args.artifact_root / "remote-identity.stderr").write_text(identity.stderr)
         if identity.returncode:
             raise RuntimeError("typed_remote_boundary:ssh_identity_failed")
-        prepare = run_ssh(ip, KEY, f"mkdir -p {REMOTE}/input {REMOTE}/checkpoint {REMOTE}/artifacts", timeout=60)
+        prepare = run_ssh(ip, KEY, f"mkdir -p {REMOTE}/input {REMOTE}/checkpoint {remote_artifacts}", timeout=60)
         if prepare.returncode:
             raise RuntimeError("typed_remote_boundary:prepare_failed")
 
@@ -226,8 +231,8 @@ def main() -> int:
         def retrieve_state() -> tuple[dict[str, object], dict[str, object]]:
             diagnostics = []
             for attempt in range(1, 4):
-                state_result = run_ssh(ip, KEY, f"cat {REMOTE}/artifacts/INVOCATION_STATE.json", timeout=30)
-                terminal_result = run_ssh(ip, KEY, f"cat {REMOTE}/artifacts/WORKER_TERMINAL.json", timeout=30)
+                state_result = run_ssh(ip, KEY, f"cat {remote_artifacts}/INVOCATION_STATE.json", timeout=30)
+                terminal_result = run_ssh(ip, KEY, f"cat {remote_artifacts}/WORKER_TERMINAL.json", timeout=30)
                 diagnostics.append(
                     {
                         "attempt": attempt,
@@ -311,6 +316,48 @@ def main() -> int:
                 stage(source, row["remote_name"], f"{REMOTE}/input")
             request.rename(args.artifact_root / f"REPAIR_REQUEST.{mode}.consumed.json")
             return True
+
+        if args.pair_only:
+            if args.intervention_request is None:
+                raise RuntimeError("attention_intervention_request_missing")
+            request_path = args.intervention_request.resolve()
+            if PROJECT not in request_path.parents:
+                raise RuntimeError("attention_intervention_request_outside_project")
+            intervention = json.loads(request_path.read_text())
+            if intervention.get("boundary") != "attention_kv" or not intervention.get("source_justification"):
+                raise RuntimeError("attention_intervention_request_invalid")
+            files = intervention.get("files", [])
+            if not files or sum(row.get("remote_name") == "residual_intervention.py" for row in files) != 1:
+                raise RuntimeError("attention_intervention_module_missing_or_ambiguous")
+            for row in files:
+                source = (PROJECT / row["path"]).resolve()
+                if PROJECT not in source.parents or sha256(source) != row["sha256"]:
+                    raise RuntimeError("attention_intervention_file_invalid")
+                stage(source, row["remote_name"], f"{REMOTE}/input")
+            atomic(args.artifact_root / "INTERVENTION_ADMITTED.json", intervention)
+            pair_rc = run_worker("attention_pair")
+            if pair_rc and repairable("attention_pair") and wait_for_repair("attention_pair"):
+                pair_rc = run_worker("attention_pair")
+            pair_terminal_path = args.artifact_root / "attention_pair/PAIRED_TERMINAL.json"
+            if pair_rc or not pair_terminal_path.is_file():
+                raise RuntimeError(f"typed_attention_pair_boundary:{worker_terminal.get('message', 'worker_failed')}")
+            paired = json.loads(pair_terminal_path.read_text())
+            run_spend = (time.time() - started) * rate / 3600
+            terminal = {
+                **paired,
+                "attribution": json.loads((PROJECT / "artifacts/residual-profile-20260720t0821z/ATTRIBUTION.json").read_text()),
+                "attention_subtype_map": json.loads((PROJECT / "ATTENTION_SUBTYPE_MAP.json").read_text()),
+                "intervention": intervention,
+                "provider_exposure_seconds": time.time() - started,
+                "provider_spend_usd": run_spend,
+                "cumulative_provider_spend_usd": prior_spend + run_spend,
+            }
+            if terminal["cumulative_provider_spend_usd"] > AUTHORIZED_USD:
+                terminal["classification"] = "budget_violation"
+                terminal["pass"] = False
+            atomic(args.artifact_root / "TERMINAL.json", terminal)
+            emit("scientific_terminal", classification=terminal.get("classification"))
+            return 0 if terminal.get("pass") else 1
 
         profile_rc = run_worker("profile")
         if profile_rc and repairable("profile") and wait_for_repair("profile"):
@@ -396,7 +443,8 @@ def main() -> int:
             "provider_exposure_seconds": time.time() - started,
             "provider_spend_usd": (time.time() - started) * rate / 3600,
         }
-        if terminal["provider_spend_usd"] > AUTHORIZED_USD:
+        terminal["cumulative_provider_spend_usd"] = prior_spend + terminal["provider_spend_usd"]
+        if terminal["cumulative_provider_spend_usd"] > AUTHORIZED_USD:
             terminal["classification"] = "budget_violation"
             terminal["pass"] = False
         atomic(args.artifact_root / "TERMINAL.json", terminal)

@@ -1,0 +1,9 @@
+{
+  "diagnostic": "Runtime audit reported the configured local qk_head_dim=256; the rejected 288 expectation was an offline shape-inference error. Pinned source maps Lq=256 to BLOCK_M=64, matching grid-Z 32 for 2048-token chunks.",
+  "original_terminal": "TERMINAL.pre_consumer_repair.json",
+  "pass": true,
+  "repair_class": "post_producer_numeric_guard",
+  "repaired_terminal": "TERMINAL.json",
+  "schema_version": 1,
+  "scientific_arms_replayed": 0
+}

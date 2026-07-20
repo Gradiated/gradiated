@@ -3,7 +3,7 @@
   "priority": 900,
   "researcher_profile": "execution",
   "summary": "Measure the exact v0.5.13 dynamic-FP8 plus QKV c32 endpoint on H100. At the committed $2.80/hour rate it can be modestly slower than H200 and still meet the $0.14/M target at 90% utilization if service time is <=0.741 seconds/request.",
-  "next_action": "Typed external dependency: director must register one available nvidia-h100-sxm bench after harness reservation. Then launch h100_endpoint_owner.py with an absolute deadline; it claims atomically, stages the project-local bound QKV snapshot and checkpoint manifest, pulls the pinned v0.5.13 image, and consumes exactly one c32 FP8+QKV arm.",
+  "next_action": "Typed external boundary: director must inspect and return h100-v0513-fp8qkv-e00r2qev2c3z3n2y08 from maintenance to available before the retained single arm can be claimed. Do not create another provider resource or consume another arm.",
   "authorized_spend_usd": 6.5,
   "wall_clock_budget_minutes": 150,
   "provider_exposure_budget_minutes": 100,
@@ -11,7 +11,7 @@
   "storage_budget": "one 250-GiB boot disk; 4 GiB retained project artifacts",
   "allocation_limit": 1,
   "active_session": null,
-  "provider_mutation": "director_only_after_durable_reservation",
+  "provider_mutation": "forbidden_registered_bench_only",
   "bindings": "BINDINGS.json",
   "prepared_owner": {
     "path": "h100_endpoint_owner.py",
@@ -24,9 +24,13 @@
   },
   "bench_requirement": {
     "accelerator": "nvidia-h100-sxm",
-    "status": "unavailable",
-    "claim_attempt": "2026-07-20",
-    "result": "no available GPU bench matches this project"
+    "bench_id": "h100-v0513-fp8qkv-e00r2qev2c3z3n2y08",
+    "status": "maintenance",
+    "watchdog_deadline_utc": "2026-07-20T11:10:00Z",
+    "actual_hourly_cost_usd": 2.15
   },
-  "last_result_classification": "typed_external_blocker_no_registered_h100_bench"
+  "measured_provider_exposure_usd": 0.014133063809739218,
+  "measured_provider_exposure_seconds": 23.66466498374939,
+  "candidate_scientific_invocation_started": false,
+  "last_result_classification": "typed_external_boundary_h100_bench_maintenance_after_preinvocation_owner_defect"
 }

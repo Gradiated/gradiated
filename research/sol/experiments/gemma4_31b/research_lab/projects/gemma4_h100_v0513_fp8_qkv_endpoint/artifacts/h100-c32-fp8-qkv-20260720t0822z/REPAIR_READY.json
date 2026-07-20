@@ -1,0 +1,6 @@
+{
+  "classification": "preinvocation_staging_repair",
+  "diagnostic": "The initial owner reached typed_staging_boundary:checkpoint_hash_failed before it created INVOCATION_STATE.json or began candidate CUDA/scientific execution. Its prior owner_failure terminal is invalidated as an operational record.",
+  "repair_deadline_epoch": 1784544600,
+  "repair_scope": "Capture checkpoint staging stdout/stderr and repair only the checkpoint stager/owner integration on the retained H100 claim."
+}

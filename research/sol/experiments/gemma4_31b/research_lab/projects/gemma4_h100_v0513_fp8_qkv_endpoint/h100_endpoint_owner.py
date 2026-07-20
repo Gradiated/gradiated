@@ -11,7 +11,6 @@ TOOLS=pathlib.Path("/root/workspace/research/sol/experiments/glm47flash/campaign
 KEY=pathlib.Path("/root/.config/nebius/glm-campaign/ssh_ed25519")
 KNOWN=pathlib.Path("/root/.config/nebius/glm-campaign/known_hosts")
 REMOTE="/home/glmrunner/gemma4-h100-fp8-qkv"
-RATE=2.80
 
 def run(x, **kw): return subprocess.run(x,text=True,**kw)
 def pool(*x,check=True): return run([sys.executable,"-m","grad_research.gpu_pool","--lab",str(LAB),*x],env={**os.environ,"PYTHONPATH":str(FACTORY)},capture_output=True,check=check)
@@ -30,21 +29,29 @@ def retrieve(ip,src,dst,timeout):
  if r.returncode: raise RuntimeError(f"typed_retrieval_boundary:scp_failed:{r.stderr[-1000:]}")
 
 def main():
- a=argparse.ArgumentParser(); a.add_argument("--artifact-root",type=pathlib.Path,required=True); a.add_argument("--absolute-deadline-epoch",type=int,required=True); ns=a.parse_args()
+ a=argparse.ArgumentParser(); a.add_argument("--artifact-root",type=pathlib.Path,required=True); a.add_argument("--absolute-deadline-epoch",type=int,required=True); a.add_argument("--resume-preinvocation-repair",action="store_true"); ns=a.parse_args()
  if ns.absolute_deadline_epoch-time.time()<900: raise RuntimeError("typed_budget_boundary:deadline_too_short")
  b=json.loads((PROJECT/"BINDINGS.json").read_text())
  sources=[PROJECT/"inputs"/x for x in ("proven_v0513_endpoint_entrypoint.py","proven_v0513_paired_endpoint_runner.py","fp8_qkv_paired_runner.py","stack_sitecustomize.py","install_endpoint_patch.py","qkv_epilogue_discriminator.py")]
  if any(digest(p)!=b["source_bytes"][k]["sha256"] for p,k in zip(sources,("endpoint_entrypoint","paired_runner","qkv_runner","qkv_sitecustomize","qkv_installer","qkv_discriminator"))): raise RuntimeError("typed_binding_boundary:project_local_input_hash_mismatch")
- ns.artifact_root.mkdir(parents=True,exist_ok=False); events=ns.artifact_root/"outer-events.jsonl"; started=time.time(); claimed=False; terminal=None; stop=threading.Event()
+ ns.artifact_root.mkdir(parents=True,exist_ok=ns.resume_preinvocation_repair); events=ns.artifact_root/"outer-events.jsonl"; started=time.time(); claimed=False; terminal=None; stop=threading.Event(); rate=0.0
  def emit(event,**v):
   with events.open("a") as f:f.write(json.dumps({"time":time.time(),"event":event,**v},sort_keys=True)+"\n")
  def beat():
   while not stop.wait(45):
    r=pool("heartbeat","--project",PROJECT_NAME,check=False); emit("heartbeat",returncode=r.returncode,stderr=r.stderr[-1000:])
  try:
-  claim=pool("claim","--project",PROJECT_NAME,"--accelerator","nvidia-h100-sxm","--lease-seconds",str(max(600,int(ns.absolute_deadline_epoch-time.time()))))
-  claimed=True; bench=json.loads(claim.stdout); emit("claimed",bench=bench); threading.Thread(target=beat,daemon=True).start()
-  inventory=json.loads((LAB/"runtime/gpus.json").read_text())["benches"]; bench=inventory[bench["id"]] if isinstance(inventory,dict) else next(x for x in inventory if x["id"]==bench["id"])
+  inventory=json.loads((LAB/"runtime/gpus.json").read_text())["benches"]
+  rows=inventory.values() if isinstance(inventory,dict) else inventory
+  retained=next((x for x in rows if (x.get("claim") or {}).get("project")==PROJECT_NAME),None)
+  if ns.resume_preinvocation_repair and retained is not None:
+   claimed=True; bench=retained; emit("resumed_retained_claim",bench_id=bench["id"])
+  else:
+   claim=pool("claim","--project",PROJECT_NAME,"--accelerator","nvidia-h100-sxm","--lease-seconds",str(max(600,int(ns.absolute_deadline_epoch-time.time()))))
+   claimed=True; bench=json.loads(claim.stdout); emit("claimed",bench=bench)
+   bench=inventory[bench["id"]] if isinstance(inventory,dict) else next(x for x in inventory if x["id"]==bench["id"])
+  threading.Thread(target=beat,daemon=True).start()
+  rate=float(bench["hourly_cost_usd"])
   sys.path.insert(0,str(TOOLS)); from placement_control import extract_public_ipv4,get_instance; from stock_control import run_ssh
   ip=extract_public_ipv4(get_instance(bench["resource"]["instance_id"]))
   if not ip: raise RuntimeError("typed_provider_boundary:no_public_ip")
@@ -59,7 +66,7 @@ def main():
     part=f"{REMOTE}/input/.{p.name}.{want}.part"; scp(ip,p,part,300); r=run_ssh(ip,KEY,f"test \"$(sha256sum {shlex.quote(part)}|awk '{{print $1}}')\" = {want} && mv -f {shlex.quote(part)} {shlex.quote(final)}",timeout=120)
     if r.returncode: raise RuntimeError(f"typed_transfer_boundary:finalize_failed:{p.name}")
   stage=f"cd {REMOTE}; python3 input/stage_checkpoint.py --manifest input/CHECKPOINT_MANIFEST.json --checkpoint checkpoint --revision {b['model']['revision']}"
-  r=run_ssh(ip,KEY,stage,timeout=3600)
+  r=run_ssh(ip,KEY,stage,timeout=3600); (ns.artifact_root/"checkpoint-stage.stdout").write_text(r.stdout); (ns.artifact_root/"checkpoint-stage.stderr").write_text(r.stderr)
   if r.returncode: raise RuntimeError("typed_staging_boundary:checkpoint_hash_failed")
   worker_timeout=max(60,int(ns.absolute_deadline_epoch-time.time()-300)); r=run_ssh(ip,KEY,f"timeout --signal=TERM {worker_timeout} bash {REMOTE}/input/remote_h100_qkv_endpoint.sh",timeout=worker_timeout+30); (ns.artifact_root/"remote-worker.stdout").write_text(r.stdout); (ns.artifact_root/"remote-worker.stderr").write_text(r.stderr)
   for remote,local in (("artifacts/INVOCATION_STATE.json","INVOCATION_STATE.json"),("artifacts/WORKER_TERMINAL.json","REMOTE_WORKER_TERMINAL.json"),("compact.tar.gz.sha256","compact.tar.gz.sha256")):
@@ -88,10 +95,19 @@ def main():
   exact=json.loads((extracted/"exact-c32/TERMINAL.json").read_text())
   service=exact.get("service_seconds_per_request")
   valid=term.get("classification")=="completed" and isinstance(service,(int,float)) and service<=b["economics"]["maximum_seconds_per_request"]
-  terminal={"schema_version":1,"status":"terminal","classification":"endpoint_useful" if valid else "endpoint_negative","pass":valid,"service_seconds_per_request":service,"economic_ceiling_seconds_per_request":b["economics"]["maximum_seconds_per_request"],"invocation_state":state,"provider_exposure_seconds":time.time()-started,"provider_spend_usd":(time.time()-started)*RATE/3600}
+  terminal={"schema_version":1,"status":"terminal","classification":"endpoint_useful" if valid else "endpoint_negative","pass":valid,"service_seconds_per_request":service,"economic_ceiling_seconds_per_request":b["economics"]["maximum_seconds_per_request"],"invocation_state":state,"provider_exposure_seconds":time.time()-started,"provider_spend_usd":(time.time()-started)*rate/3600}
   atomic(ns.artifact_root/"TERMINAL.json",terminal); return 0 if terminal["pass"] else 1
  except Exception as e:
-  terminal={"schema_version":1,"status":"terminal","classification":"owner_failure","pass":False,"error":{"type":type(e).__name__,"message":str(e)},"provider_exposure_seconds":time.time()-started if claimed else 0}; terminal["provider_spend_usd"]=terminal["provider_exposure_seconds"]*RATE/3600; atomic(ns.artifact_root/"TERMINAL.json",terminal); emit("outer_error",error=terminal["error"]); return 1
+  state_path=ns.artifact_root/"INVOCATION_STATE.json"
+  state=json.loads(state_path.read_text()) if state_path.is_file() else {}
+  if claimed and not state.get("candidate_science_started",False):
+   repair_deadline=ns.absolute_deadline_epoch-300
+   atomic(ns.artifact_root/"REPAIR_READY.json",{"error":{"type":type(e).__name__,"message":str(e)},"invocation_state":state,"repair_deadline_epoch":repair_deadline})
+   request=ns.artifact_root/"REPAIR_REQUEST.json"
+   while time.time()<repair_deadline and not request.is_file(): time.sleep(5)
+   if request.is_file() and json.loads(request.read_text()).get("retry") is True:
+    os.execv(sys.executable,[sys.executable,str(pathlib.Path(__file__).resolve()),"--resume-preinvocation-repair","--artifact-root",str(ns.artifact_root),"--absolute-deadline-epoch",str(ns.absolute_deadline_epoch)])
+  terminal={"schema_version":1,"status":"terminal","classification":"owner_failure","pass":False,"error":{"type":type(e).__name__,"message":str(e)},"provider_exposure_seconds":time.time()-started if claimed else 0}; terminal["provider_spend_usd"]=terminal["provider_exposure_seconds"]*rate/3600; atomic(ns.artifact_root/"TERMINAL.json",terminal); emit("outer_error",error=terminal["error"]); return 1
  finally:
   stop.set()
   if claimed:

@@ -13,3 +13,11 @@ Action and measured evidence: SHA-256 verification passed for the authoritative 
 Interpretation: these are readiness checks, not endpoint evidence. The atomic pool claim for `nvidia-h100-sxm` returned `no available GPU bench matches this project`; inventory has no available H100. No provider resource, checkpoint transfer, image pull, GPU invocation, or project spend occurred.
 
 Next move: after the director registers an H100 and the reservation is durable, run the sole arm through `h100_endpoint_owner.py` with an absolute deadline.
+
+## 2026-07-20 — pre-invocation checkpoint staging boundary
+
+Action: the durable owner atomically claimed the director-registered H100 and completed remote identity/host diagnostics. Checkpoint staging returned typed_staging_boundary:checkpoint_hash_failed before it wrote INVOCATION_STATE.json, candidate CUDA, or candidate scientific markers.
+
+Evidence: the retained artifact root contains the owner terminal, outer event stream, and remote identity stdout/stderr. Exposure was measured at 23.6647 seconds and $0.0141331 at the registered $2.15/hour rate. The old owner release path marked the bench maintenance; the pool now rejects a new claim because of that director-visible state.
+
+Interpretation: this is an ordinary pre-invocation owner/staging defect, not a result and not arm consumption. The project-local owner now derives the actual registered rate, preserves a claimed bench through a repair handshake, and captures checkpoint-stage stdout/stderr. The bench requires director return to available; no new allocation is authorized.

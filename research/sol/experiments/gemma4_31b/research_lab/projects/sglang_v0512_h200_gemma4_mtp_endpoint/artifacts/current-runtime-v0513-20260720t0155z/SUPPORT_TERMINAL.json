@@ -1,0 +1,100 @@
+{
+  "assistant_weights": {
+    "pass": true,
+    "tensor_count": 48,
+    "tensor_keys_sha256": "9b7b539f7f3c9efa97206983fff3a4c1ab6e5a3bd1adeeffa02403500226e121"
+  },
+  "claim_authorized_by_support": true,
+  "classification": "current_runtime_support_pass",
+  "config_consumer": {
+    "pass": true,
+    "rows": [
+      {
+        "architectures": [
+          "Gemma4ForConditionalGeneration"
+        ],
+        "class": "Gemma4Config",
+        "label": "target",
+        "model_type": "gemma4"
+      },
+      {
+        "architectures": [
+          "Gemma4AssistantForCausalLM"
+        ],
+        "class": "Gemma4AssistantConfig",
+        "label": "assistant",
+        "model_type": "gemma4_assistant"
+      }
+    ],
+    "transformers_version": "5.8.1"
+  },
+  "geometry": {
+    "assistant_hidden_size": 1024,
+    "assistant_kv_shared_layers": 4,
+    "assistant_layers": 4,
+    "pass": true,
+    "target_hidden_size": 5376,
+    "target_layers": 60
+  },
+  "identities": {
+    "assistant_files": {
+      "config.json": {
+        "bytes": 2316,
+        "sha256": "d09487c1083a334a97545f204dd41ab1a40b0438bdead19558f0e1357e26d66a"
+      },
+      "generation_config.json": {
+        "bytes": 307,
+        "sha256": "8e58004dc0e2407b63410b190bb8470efbdcfeb71533f1770e09c20abe193a6f"
+      },
+      "model.safetensors": {
+        "bytes": 939042560,
+        "sha256": "9f80df6099fa1fd7db71220ec9ee864d5ecff769878697dd5763e4285b15a1da"
+      },
+      "tokenizer.json": {
+        "bytes": 32169440,
+        "sha256": "75a6583c1a418e2bbd79c60d95d28e0f5bf549ad3f2990b5bdb5238c6c2bf70c"
+      },
+      "tokenizer_config.json": {
+        "bytes": 822,
+        "sha256": "089594a3924fcfd4cb1c596a7906fbf476193519e5198f780912eed02b177e42"
+      }
+    },
+    "assistant_revision": "627c5ec1458b9086b841a91e0512fd31fd2fbbf1",
+    "target_config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+  },
+  "mechanism": {
+    "algorithm": "FROZEN_KV_MTP",
+    "draft_quantization": "inherits target fp8 unless explicitly overridden",
+    "gpu_execution_equivalent_gate_remaining": "load exact target and assistant together, prove target-prefixed fp8_scaled_mm consumption, then run paired endpoint arms",
+    "kv_contract": "assistant reads target-owned frozen KV and suppresses assistant KV writes",
+    "pass": true,
+    "proposal_contract": {
+      "proposed_tokens_per_verify": 1,
+      "speculative_eagle_topk": 1,
+      "speculative_num_draft_tokens": 2,
+      "speculative_num_steps": 1
+    },
+    "target_quantization": "dynamic in-memory FP8 via Fp8Config(is_checkpoint_fp8_serialized=False)"
+  },
+  "pass": true,
+  "runtime": {
+    "image_linux_amd64": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "sglang_tag": "v0.5.13",
+    "sglang_tag_object": "cba18f4d8090d23e9273e663db2a0b3b2e39f117",
+    "source_sha256": {
+      "python/pyproject.toml": "6b40552b99409cf95cc5f2341786e2732c9d6b7db2d220ecd57fd95441b412ac",
+      "python/sglang/srt/arg_groups/speculative_hook.py": "fb955e8d18a3ed88e198c982ad658dc53ece0570c098bee6d9fe2ed574361a30",
+      "python/sglang/srt/layers/quantization/fp8.py": "c7368db317513e5823283eb5567d15fdb742c3b01a98bfc483cb500291b4285a",
+      "python/sglang/srt/layers/quantization/fp8_utils.py": "a3a130f40974047084e3daff2bd0efbbfe69e197d4c9a5ba3fbc5304dd4e43d9",
+      "python/sglang/srt/models/gemma4_mtp.py": "3c2025089f6c62738770a45bbf64df5bc615c2f378cdb1753f4febc055aff138",
+      "python/sglang/srt/server_args.py": "cc4f440c0987d7a6ee6868f3e41271809c5c1d3015ddcfbd6f79dc19367d5c8d",
+      "python/sglang/srt/speculative/frozen_kv_mtp_utils.py": "34359274dcb0fa76051db82aeb0ae9c5400ce407ba1ef6af66fb25df90377da1",
+      "python/sglang/srt/speculative/frozen_kv_mtp_worker.py": "ffd537efe8c28cecdbef1f5984f5f90f81f655ec3c1a65dca68f25d2b9a24d99"
+    },
+    "transformers": "5.8.1"
+  },
+  "schema_version": 1,
+  "status": "terminal"
+}

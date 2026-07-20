@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "status": "terminal",
+  "classification": "fp8_control_frontier_pass_mtp_current_runtime_shape_failure",
+  "pass": false,
+  "runtime": {
+    "sglang_tag": "v0.5.13",
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image_linux_amd64": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "transformers": "5.8.1",
+    "support_terminal": "../current-runtime-v0513-20260720t0155z/SUPPORT_TERMINAL.json",
+    "support_terminal_sha256": "4b5bec08f6f7ca4c57fe42bcb4d79089cf49ae8171d7fb1b36a99b94eb769d46"
+  },
+  "control": {
+    "pass": true,
+    "classification": "frontier_pass",
+    "complete_requests": 32,
+    "valid_rows": 32,
+    "batch_seconds": 22.333581951999804,
+    "service_seconds_per_request": 0.6979244359999939,
+    "complete_requests_per_second": 1.4328198704881123,
+    "frontier_ceiling_seconds_per_request": 0.7145910375209391,
+    "frontier_margin_seconds_per_request": 0.0166666015209452,
+    "reduction_from_proven_v0512_fp8_fraction": 0.0676358466726934,
+    "cache": {
+      "prompt_tokens_delta": 134848.0,
+      "uncached_prompt_tokens_delta": 117728.0,
+      "cached_prompt_tokens_delta": 17120.0,
+      "cached_fraction": 0.1269577598481253
+    },
+    "request_identity": {
+      "first_sha256": "f8558dbfd3cca6d46239961b85967f18960a19c1bace8cb9302cdcbb2edd3c95",
+      "last_sha256": "dacbc499ee142b171b05573e842acf6df6873a047423b63db7c64d0259318b58",
+      "matches_proven_fp8_workload": true
+    },
+    "fp8_provenance": {
+      "module_rows": 240,
+      "consumer_rows": 240,
+      "target_prefix": "model.language_model",
+      "consumer": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm",
+      "input_dtype": "torch.float8_e4m3fn",
+      "weight_dtype": "torch.float8_e4m3fn",
+      "output_dtype": "torch.bfloat16",
+      "runtime_audit_pass": true
+    },
+    "raw_terminal": "retrieved/control/TERMINAL.json",
+    "raw_terminal_sha256": "ab69b55f328180716e637e0b1a3edfcbbf6f20b2a906f15445695663aca0296f"
+  },
+  "mtp": {
+    "performance_claim": false,
+    "proposal_contract": {
+      "algorithm": "NEXTN auto-promoted to FROZEN_KV_MTP",
+      "speculative_num_steps": 1,
+      "speculative_eagle_topk": 1,
+      "speculative_num_draft_tokens": 2,
+      "proposed_tokens_per_verify": 1
+    },
+    "support": {
+      "target_loaded": true,
+      "assistant_loaded": true,
+      "assistant_loaded_memory_gib": 0.5,
+      "target_fp8_module_rows": 240,
+      "assistant_fp8_module_rows": 16,
+      "target_fp8_consumer_proven": true,
+      "assistant_fp8_consumer_proven": false
+    },
+    "classification": "current_runtime_eager_buffer_shape_failure_after_candidate_start",
+    "failure": {
+      "request_stage": "first deterministic diagnostic prompt after server readiness",
+      "exception": "RuntimeError: output with shape [1] doesn't match the broadcast shape [18]",
+      "path": "FrozenKVMTPWorker.draft_forward -> ModelRunner.forward_decode -> ModelRunner._eager_fb_view -> CudaGraphBufferRegistry.fill_from -> torch._foreach_copy_",
+      "accepted_draft_telemetry": false,
+      "verify_call_telemetry": false,
+      "scientific_invocation_started": true,
+      "retry_performed": false,
+      "retry_reason": "The current SGLANG_EAGER_INPUT_NO_COPY workaround was identified, but another candidate invocation was forbidden after mtp_science_started became true."
+    },
+    "server_log": "retrieved/gemma-fp8-mtp-v0513.final.log",
+    "server_log_sha256": "258216cb3b2791f3254d9c242c72aa95b5bb1dcfe6a3ec4aefa0ce9d287511d2",
+    "runner_stderr": "retrieved/mtp.runner.stderr",
+    "runner_stderr_sha256": "c2db41c207ebaa9bc95c6db4fc3ff18aec2b2c1ea0b035d7e70dc0e6a086704b"
+  },
+  "invocation_state": {
+    "control_cuda_started": true,
+    "control_science_started": true,
+    "mtp_cuda_started": true,
+    "mtp_science_started": true
+  },
+  "provider": {
+    "bench": "h200-kernel-frontier-e00pfvrckjvwn7bhet",
+    "hourly_rate_usd": 2.46,
+    "exposure_seconds": 654.5772428512573,
+    "this_run_spend_usd": 0.44729444993337,
+    "prior_project_spend_usd": 2.31,
+    "project_cumulative_spend_usd": 2.75729444993337,
+    "authorized_project_ceiling_usd": 3.75,
+    "bench_released_available": true
+  },
+  "archive": {
+    "path": "compact.tar.gz",
+    "sha256": "0017c2b6284ca07a8a3506fe6e167426e555aab5d69dba4270660a52ac80b7e8"
+  }
+}

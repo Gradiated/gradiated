@@ -1,0 +1,28 @@
+{"event": "claimed", "result": {"accelerator": "nvidia-h200-sxm", "claim": {"claimed_at": "2026-07-20T02:12:45.573756Z", "heartbeat_at": "2026-07-20T02:12:45.573756Z", "lease_seconds": 2050, "lease_until_utc": "2026-07-20T02:46:55.573756Z", "project": "sglang_v0512_h200_gemma4_mtp_endpoint", "stale": false}, "contents": {"artifacts": "FP8 stack archive local", "caches": "FP8/CUDA graph retained", "checkpoint": "retained", "image": "pinned retained", "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4", "project": "gemma4_h200_qkv_epilogue_fusion", "runtime": "FP8+QKV stack worker completed; artifacts retrieved locally.", "server_state": "no server guarantee"}, "drain_after_release": false, "hourly_cost_usd": 2.46, "id": "h200-kernel-frontier-e00pfvrckjvwn7bhet", "idle_since": null, "lifecycle": {"deadline_utc": "2026-07-20T03:30:00Z", "watchdog": {"control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-kernel-frontier-202607192225-watchdog-v2.service", "main_pid": 2849518, "unit": "gemma4-kernel-frontier-202607192225-watchdog-v2.service", "unit_manager": "user"}}, "provider": "nebius", "registered_at": "2026-07-19T22:24:41.686177Z", "resource": {"disk_id": "computedisk-e00hnms4mwjf6crmcb", "disk_name": "gemma4-kernel-frontier-202607192225-boot", "instance_id": "computeinstance-e00pfvrckjvwn7bhet", "instance_name": "gemma4-kernel-frontier-202607192225"}, "status": "claimed", "updated_at": "2026-07-20T02:12:45.573756Z"}, "time": 1784513565.5804126}
+{"event": "known_host_refreshed", "returncode": 0, "time": 1784513565.9214802}
+{"bytes": 62578655208, "event": "checkpoint_storage_identity_reused", "files": 8, "time": 1784513568.2788992}
+{"bytes": 12417, "event": "input_staged", "name": "paired_endpoint_runner.py", "sha256": "df65b1e49c941c27a975ecb1f2d34041a0e63695c2e3515cf950406204f614f3", "time": 1784513570.0945618}
+{"bytes": 6062, "event": "input_staged", "name": "endpoint_entrypoint_v0513.py", "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc", "time": 1784513572.0184422}
+{"bytes": 7459, "event": "input_staged", "name": "remote_fp8_mtp.sh", "sha256": "2b37a3c598714bbe4d7baa01a5fa31c5d4660392fcf94d3e43fcdabb9736a435", "time": 1784513573.9544911}
+{"bytes": 3132, "event": "input_staged", "name": "GPU_INPUT_MANIFEST.json", "sha256": "d999420ebd05dacd0e15cf08aad34f6a68b657367bf6dc28c4738df0d0663586", "time": 1784513575.7947383}
+{"bytes": 2316, "event": "input_staged", "name": "config.json", "sha256": "d09487c1083a334a97545f204dd41ab1a40b0438bdead19558f0e1357e26d66a", "time": 1784513577.8682141}
+{"bytes": 307, "event": "input_staged", "name": "generation_config.json", "sha256": "8e58004dc0e2407b63410b190bb8470efbdcfeb71533f1770e09c20abe193a6f", "time": 1784513579.8551857}
+{"bytes": 939042560, "event": "input_staged", "name": "model.safetensors", "sha256": "9f80df6099fa1fd7db71220ec9ee864d5ecff769878697dd5763e4285b15a1da", "time": 1784513597.44606}
+{"bytes": 32169440, "event": "input_staged", "name": "tokenizer.json", "sha256": "75a6583c1a418e2bbd79c60d95d28e0f5bf549ad3f2990b5bdb5238c6c2bf70c", "time": 1784513600.0287127}
+{"bytes": 822, "event": "input_staged", "name": "tokenizer_config.json", "sha256": "089594a3924fcfd4cb1c596a7906fbf476193519e5198f780912eed02b177e42", "time": 1784513601.9310756}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784513610.644234}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784513655.6918182}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784513700.7377052}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784513745.781344}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784513790.8257165}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784513835.8679702}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784513880.913458}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784513925.974818}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784513971.0285356}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784514016.0732908}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784514061.1212835}
+{"event": "worker_returned", "returncode": 1, "time": 1784514091.8795469}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784514106.166917}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784514151.2109895}
+{"event": "heartbeat", "returncode": 0, "stderr": "", "time": 1784514196.2568684}
+{"event": "released", "returncode": 0, "stderr": "", "time": 1784514220.1585937}

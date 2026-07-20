@@ -1,0 +1,6 @@
+{
+  "retry": false,
+  "decision": "Do not replay the MTP candidate because mtp_science_started=true before the current-runtime eager-buffer shape failure.",
+  "diagnostic": "torch._foreach_copy_ failed: output shape [1] does not match broadcast shape [18] in ModelRunner._eager_fb_view during FrozenKVMTPWorker.draft_forward.",
+  "workaround_not_invoked": "SGLANG_EAGER_INPUT_NO_COPY would bypass the faulty registry copy, but applying it now would require a second scientific candidate invocation forbidden by this run contract."
+}

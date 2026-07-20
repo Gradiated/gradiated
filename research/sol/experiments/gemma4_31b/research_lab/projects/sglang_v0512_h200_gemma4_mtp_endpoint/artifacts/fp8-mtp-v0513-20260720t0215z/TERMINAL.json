@@ -1,0 +1,22 @@
+{
+  "classification": "integration_failure",
+  "invocation_state": {
+    "control_cuda_started": true,
+    "control_science_started": true,
+    "mtp_cuda_started": true,
+    "mtp_science_started": true
+  },
+  "pass": false,
+  "project_cumulative_spend_usd": 2.75729444993337,
+  "provider_exposure_seconds": 654.5772428512573,
+  "provider_spend_usd": 0.44729444993337,
+  "schema_version": 1,
+  "status": "terminal",
+  "worker_terminal": {
+    "classification": "integration_failure",
+    "message": "mtp.runner_failed",
+    "schema_version": 1,
+    "status": "terminal",
+    "timestamp_utc": "2026-07-20T02:21:31.763651Z"
+  }
+}

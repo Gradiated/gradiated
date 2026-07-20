@@ -60,14 +60,14 @@ def main():
   if r.returncode or "H100" not in r.stdout: raise RuntimeError("typed_hardware_boundary:h100_identity_failed")
   r=run_ssh(ip,KEY,f"mkdir -p {REMOTE}/input {REMOTE}/checkpoint {REMOTE}/artifacts",timeout=60)
   if r.returncode: raise RuntimeError("typed_remote_boundary:prepare_failed")
-  for p in [*sources,PROJECT/"remote_h100_qkv_endpoint.sh",PROJECT/"stage_checkpoint.py",PROJECT/"CHECKPOINT_MANIFEST.json",PROJECT/"BINDINGS.json"]:
+  for p in [*sources,PROJECT/"remote_h100_qkv_endpoint.sh",PROJECT/"checkpoint_transfer_controller.py",PROJECT/"CHECKPOINT_MANIFEST.json",PROJECT/"CHECKPOINT_SOURCE_BINDING.json",PROJECT/"BINDINGS.json"]:
    want=digest(p); final=f"{REMOTE}/input/{p.name}"; check=run_ssh(ip,KEY,f"test -f {shlex.quote(final)} && test \"$(sha256sum {shlex.quote(final)}|awk '{{print $1}}')\" = {want}",timeout=60)
    if check.returncode:
     part=f"{REMOTE}/input/.{p.name}.{want}.part"; scp(ip,p,part,300); r=run_ssh(ip,KEY,f"test \"$(sha256sum {shlex.quote(part)}|awk '{{print $1}}')\" = {want} && mv -f {shlex.quote(part)} {shlex.quote(final)}",timeout=120)
     if r.returncode: raise RuntimeError(f"typed_transfer_boundary:finalize_failed:{p.name}")
-  stage=f"cd {REMOTE}; python3 input/stage_checkpoint.py --manifest input/CHECKPOINT_MANIFEST.json --checkpoint checkpoint --revision {b['model']['revision']}"
-  r=run_ssh(ip,KEY,stage,timeout=3600); (ns.artifact_root/"checkpoint-stage.stdout").write_text(r.stdout); (ns.artifact_root/"checkpoint-stage.stderr").write_text(r.stderr)
-  if r.returncode: raise RuntimeError("typed_staging_boundary:checkpoint_hash_failed")
+  stage=[sys.executable,str(PROJECT/"checkpoint_transfer_controller.py"),"--ip",ip,"--remote-root",REMOTE,"--artifact-root",str(ns.artifact_root/"checkpoint-transfer")]
+  r=run(stage,capture_output=True,timeout=max(900,int(ns.absolute_deadline_epoch-time.time()-300))); (ns.artifact_root/"checkpoint-stage.stdout").write_text(r.stdout); (ns.artifact_root/"checkpoint-stage.stderr").write_text(r.stderr)
+  if r.returncode: raise RuntimeError("typed_staging_boundary:checkpoint_transfer_failed")
   worker_timeout=max(60,int(ns.absolute_deadline_epoch-time.time()-300)); r=run_ssh(ip,KEY,f"timeout --signal=TERM {worker_timeout} bash {REMOTE}/input/remote_h100_qkv_endpoint.sh",timeout=worker_timeout+30); (ns.artifact_root/"remote-worker.stdout").write_text(r.stdout); (ns.artifact_root/"remote-worker.stderr").write_text(r.stderr)
   for remote,local in (("artifacts/INVOCATION_STATE.json","INVOCATION_STATE.json"),("artifacts/WORKER_TERMINAL.json","REMOTE_WORKER_TERMINAL.json"),("compact.tar.gz.sha256","compact.tar.gz.sha256")):
    q=run_ssh(ip,KEY,f"cat {REMOTE}/{remote}",timeout=60); (ns.artifact_root/local).write_text(q.stdout)

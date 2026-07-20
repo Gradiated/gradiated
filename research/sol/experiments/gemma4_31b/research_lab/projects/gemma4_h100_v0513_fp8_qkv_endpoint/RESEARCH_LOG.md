@@ -29,3 +29,17 @@ The restored H100 was claimed by the patched durable owner. Captured staging dia
 ## 2026-07-20 — director maintenance inspection passed
 
 The exact provider instance is RUNNING, its disk is READY and attached, the recorded watchdog is active, SSH succeeds, and the guest reports one H100 80GB with MIG disabled. The remote checkpoint root exists but is empty, confirming the failure occurred during staging rather than after a hidden model or scientific invocation. Inventory contents were corrected and the same bench was returned to available. Resume only with the patched durable owner; the sole c32 arm remains unconsumed.
+
+## 2026-07-20 — owner deadline reached; provider absent; replacement staging required
+
+The restored owner remained heartbeating through its absolute deadline, but sequential direct checkpoint transfer exhausted the window. Retrieved `INVOCATION_STATE.json` records `candidate_cuda_started=true` and `candidate_science_started=false`; the empty remote terminal and repair record show the process was terminated at the bounded repair deadline before any c32 arm. After the lease became stale, the director inspected the failed owner, reclaimed the bench to maintenance, and made one authenticated provider listing. Exact instance `computeinstance-e00r2qev2c3z3n2y08` and disk `computedisk-e00feh1fke1p86t48a` were both absent after the successful watchdog exit, so inventory was retired with cleanup verified and no deletion call.
+
+The H100 economic question remains unconsumed. Increase cumulative authority to `$11.50` and require one offline controller repair: reuse the exact local checkpoint snapshot and the H200 owner's resumable content-addressed transfer rather than sequential guest-side HTTP. A typed staging-ready terminal gates one replacement director allocation; no provider creation or scientific inference is authorized in this preparation turn.
+
+## 2026-07-20 — offline staging controller ready
+
+Question: can the replacement H100 avoid the previous sequential guest HTTP staging boundary without duplicating the local checkpoint?
+
+Action/evidence: bound and SHA-256 verified all eight files in the existing read-only H200 residual snapshot (62,578,655,208 bytes). STAGING_READY.json records the full manifest, source identity, and a compiled transfer controller. The future owner now uses two parallel resumable SFTP append streams for the two safetensor shards, retains named partials across restarts, records each transfer's elapsed time/throughput/hash, then verifies remotely before atomic read-only finalization.
+
+Interpretation: this is an offline transfer-contract terminal, not CUDA or endpoint evidence. It passes the director allocation gate; the sole H100 c32 arm remains unconsumed.

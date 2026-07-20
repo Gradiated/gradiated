@@ -36,3 +36,10 @@ After the harness durably reserves this project and the director registers one H
 - Authorized spend: `$6.50`, including actual provider exposure; one allocation only.
 - Provider creation is forbidden until the reservation is durable and a director-registered bench exists.
 
+## Director continuation — replacement staging after watchdog cleanup
+
+The first registered H100 attempt is operationally terminal but scientifically unconsumed. Its repaired owner verified six small checkpoint files and began the first 49.8-GB shard, then reached candidate CUDA setup without starting the c32 scientific arm before the absolute repair deadline. The owner exited, its lease expired, the watchdog cleaned both provider resources, and the director verified the exact instance and disk absent before retiring inventory. Do not infer H100 performance from this attempt.
+
+Before another allocation, replace sequential guest-side HTTP download with the proven content-addressed transfer used by the H200 residual owner. Bind the existing read-only `62,578,655,208`-byte snapshot at `../gemma4_h200_v0513_fp8_qkv_residual_profile/inputs/checkpoint`; do not duplicate it. Transfer the two weight shards concurrently or through equivalent bounded resumable controller-to-guest streams, preserve partial files across owner restarts, verify every size and SHA-256 before atomic finalization, and record a size-derived deadline plus measured throughput. Emit one typed `STAGING_READY.json` and compiled durable owner. This is the only pre-create gate.
+
+After the increased reservation is durable and that terminal passes, the director may create one replacement H100 with a watchdog sized for cold staging, model load, the sole exact c32 arm, retrieval, and cleanup. The scientific contract and `<=0.741 s/request` gate are unchanged. Cumulative authority is `$11.50`, at most 240 H100 exposure minutes across both allocations, one replacement resource, and one still-unconsumed arm.

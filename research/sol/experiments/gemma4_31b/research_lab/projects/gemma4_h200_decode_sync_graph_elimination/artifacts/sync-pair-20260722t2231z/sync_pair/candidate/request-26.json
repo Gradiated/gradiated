@@ -1,0 +1,18 @@
+{
+  "completion_tokens": 358,
+  "decode_seconds": 15.016699938000329,
+  "ended_monotonic_s": 2196.504713874,
+  "error": null,
+  "first_token_monotonic_s": 2181.488013936,
+  "index": 26,
+  "prompt_tokens": 4214,
+  "queue_seconds_proxy": null,
+  "request_sha256": "7576a7e7f4bf1ef75f604ec2ff6893c72ed89a9828f828a189ad49013aab4e90",
+  "response_sha256": "3326ac915ccd19640e8c3d9a9998c0a37d3b9496ceb786ca200af1598cdfb383",
+  "returned_token_ids": 0,
+  "started_monotonic_s": 2174.556698072,
+  "text_finite": true,
+  "text_nonempty": true,
+  "ttft_seconds": 6.931315863999771,
+  "wall_seconds": 21.9480158020001
+}

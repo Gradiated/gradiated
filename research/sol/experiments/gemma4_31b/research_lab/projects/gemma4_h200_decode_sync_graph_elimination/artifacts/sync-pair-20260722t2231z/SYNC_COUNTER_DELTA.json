@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "classification": "synchronization_predecessor_shift_without_boundary_elimination",
+  "evidence_class": {
+    "endpoint_pair": "measured_contemporaneous_profiler_off",
+    "runtime_and_memcpy_counters": "measured_separate_control_and_candidate_nsight_runs",
+    "causal_interpretation": "inferred"
+  },
+  "endpoint": {
+    "control_service_seconds_per_request": 0.689743011531263,
+    "candidate_service_seconds_per_request": 0.6870190130937459,
+    "reduction_fraction": 0.003949294725683061,
+    "economic_ceiling_seconds_per_request": 0.6381105231,
+    "ceiling_pass": false,
+    "five_percent_retain_pass": false,
+    "classification": "retain_simple_positive"
+  },
+  "decode_long_cuda_stream_synchronize": {
+    "threshold_ms": 10,
+    "control_count": 387,
+    "candidate_count": 387,
+    "control_seconds": 12.790374694,
+    "candidate_seconds": 13.050994144
+  },
+  "penalty_token_h2d": {
+    "bytes": 256,
+    "control_count": 358,
+    "candidate_count": 358,
+    "control_source_memory_kind": 0,
+    "candidate_source_memory_kind": 1,
+    "control_long_sync_immediate_predecessor_count": 358,
+    "candidate_long_sync_immediate_predecessor_count": 0
+  },
+  "replacement_long_sync_immediate_predecessor": {
+    "bytes": 4,
+    "copy_kind": 2,
+    "candidate_count": 358
+  },
+  "attributed_synchronization": {
+    "control_decode_seconds": 8.375068794,
+    "control_decode_fraction": 0.5251963544668495,
+    "candidate_decode_seconds": 8.249714634,
+    "candidate_decode_fraction": 0.5216634599262894,
+    "comparison_note": "Control and candidate attribution came from separate Nsight runs and is diagnostic, not the endpoint timing gate."
+  },
+  "interpretation": "Pinned nonblocking H2D changed the 358 penalty-token copies from source kind 0 to source kind 1 and removed them as immediate predecessors of long stream synchronization, exactly satisfying that narrow counter prediction. It did not remove the 387 long decode synchronizations: 358 now immediately follow a 4-byte device-to-host copy. The patch therefore moved the host wait to the next scalar readback rather than eliminating the dominant synchronization boundary, consistent with the small 0.3949% profiler-off endpoint gain."
+}

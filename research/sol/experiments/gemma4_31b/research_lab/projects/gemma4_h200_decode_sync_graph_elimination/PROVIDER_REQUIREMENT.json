@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "classification": "director_owned_h200_bench_required",
+  "accelerator": "nvidia-h200-sxm",
+  "count": 1,
+  "preferred_resident_state": {
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "checkpoint": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "free_guest_storage_bytes_if_checkpoint_not_resident": 100000000000
+  },
+  "claim_budget": {
+    "maximum_claimed_gpu_hours": 4,
+    "maximum_wall_hours_from_first_claim": 5,
+    "cumulative_authorized_usd": 20.0,
+    "cumulative_actual_usd_before_claim": 0.0
+  },
+  "scientific_contract": "Exactly one profiler-off control/candidate c32 pair on the retained FP8+QKV+deferred-local-KV stack, followed only by the minimum diagnostic trace needed to test the frozen synchronization counter prediction; no flags or patch variants.",
+  "project_local_input_manifest": "INPUT_MANIFEST.json",
+  "project_local_input_manifest_sha256": "e945ee245642cf84cc730bd877f731660a772778b24770b8387d7f92fa0cb432",
+  "owner": "run_pair_owner.py",
+  "intervention": "SYNC_INTERVENTION_REQUEST.json"
+}

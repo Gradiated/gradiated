@@ -1,0 +1,7 @@
+{
+  "classification": "remote_terminal_retrieved",
+  "message": "remote worker terminal retrieved",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-22T13:48:30.997150+00:00"
+}

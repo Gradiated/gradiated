@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 project=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_current_runtime_frontier
-artifacts="$project/artifacts/current-vllm-h200-20260722t1231z"
+artifacts="$project/artifacts/current-vllm-e4m3-h200-20260722t1345z"
 remote=/home/glmrunner/gemma4-current-vllm
 ip=195.242.29.186
 key=/root/.config/gradiated/providers/gcore/id_ed25519
@@ -51,10 +51,10 @@ finish() {
   rc=$?
   trap - EXIT
   retrieve || true
-  worker_terminal="$artifacts/remote-retrieved/current-vllm-h200/WORKER_TERMINAL.json"
+  worker_terminal="$artifacts/remote-retrieved/current-vllm-e4m3-h200/WORKER_TERMINAL.json"
   if test -f "$worker_terminal"; then
     cp "$worker_terminal" "$artifacts/WORKER_TERMINAL.json"
-    invocation_state="$artifacts/remote-retrieved/current-vllm-h200/INVOCATION_STATE.json"
+    invocation_state="$artifacts/remote-retrieved/current-vllm-e4m3-h200/INVOCATION_STATE.json"
     if python3 - "$worker_terminal" "$invocation_state" <<'PY'
 import json,pathlib,sys
 terminal=json.load(open(sys.argv[1]))

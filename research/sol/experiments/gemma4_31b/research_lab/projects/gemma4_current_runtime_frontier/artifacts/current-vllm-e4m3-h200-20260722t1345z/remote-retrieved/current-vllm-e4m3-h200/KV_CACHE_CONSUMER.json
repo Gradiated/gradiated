@@ -1,0 +1,35 @@
+{
+  "consumer_log": "kv-cache-consumer.log",
+  "kv_cache_dtype": "fp8_e4m3",
+  "schema_version": 1,
+  "served_models": {
+    "data": [
+      {
+        "created": 1784728110,
+        "id": "google/gemma-4-31B-it",
+        "max_model_len": 5000,
+        "object": "model",
+        "owned_by": "vllm",
+        "parent": null,
+        "permission": [
+          {
+            "allow_create_engine": false,
+            "allow_fine_tuning": false,
+            "allow_logprobs": true,
+            "allow_sampling": true,
+            "allow_search_indices": false,
+            "allow_view": true,
+            "created": 1784728110,
+            "group": null,
+            "id": "modelperm-90792822e1e7a3d7",
+            "is_blocking": false,
+            "object": "model_permission",
+            "organization": "*"
+          }
+        ],
+        "root": "/work/checkpoint"
+      }
+    ],
+    "object": "list"
+  }
+}

@@ -1,13 +1,13 @@
 {
   "status": "completed",
-  "priority": 990,
+  "priority": 980,
   "researcher_profile": "execution",
   "authorized_spend_usd": 12.0,
-  "estimated_allocation_cost_usd": 2.94,
+  "estimated_allocation_cost_usd": 3.18,
   "allocation_limit": 1,
   "active_session": null,
-  "summary": "Current vLLM v0.25.1 reached the first real Gemma 4 GPU profile on the retained H200 but rejected the required FP8-E5M2 KV cache in its attention implementation. The single exact FP8-E5M2 c32 arm is terminally incompatible for this runtime/image; no endpoint request ran.",
-  "terminal": {
+  "summary": "The one admitted current-vLLM FP8-E4M3 c32 endpoint completed 32/32 exact-token requests with explicit runtime E4M3 consumption, but delivered 0.939163366 s/request and fails the absolute 0.6381105231 s/request H200 ceiling. vLLM exposed the exact total prompt-token delta but not uncached/cached deltas, so cache-split accounting is unavailable rather than inferred.",
+  "prior_terminal": {
     "classification": "source_cuda_incompatibility",
     "candidate": "vllm/vllm-openai@sha256:f0b9a0dc75a9fca3b6811e3279367b2d6a448055a000bfd13859587d74cef268 (vLLM 0.25.1)",
     "source_commit": "1a659a0c370942bae3c8567902e38bddbbae95f3",
@@ -19,10 +19,38 @@
     "worker_terminal": "artifacts/current-vllm-h200-20260722t1231z/WORKER_TERMINAL.json",
     "raw_remote_log": "artifacts/current-vllm-h200-20260722t1231z/remote-retrieved/current-vllm-h200/server.log"
   },
-  "next_action": "Do not replay this FP8-E5M2 arm. A director must admit a materially distinct current runtime/representation candidate; vLLM FP8-E4M3 or fp8 is a representation change, not a substitute result.",
+  "terminal": {
+    "classification": "measured_endpoint_reject",
+    "candidate": "current_vllm_fp8e4m3_c32",
+    "representation": "BF16 checkpoint weights with FP8-E4M3 KV cache",
+    "server_identity": "google/gemma-4-31B-it on vLLM 0.25.1 image digest sha256:f0b9a0dc75a9fca3b6811e3279367b2d6a448055a000bfd13859587d74cef268",
+    "consumer_proof": "artifacts/current-vllm-e4m3-consumer-20260722t1350z/remote-retrieved/current-vllm-e4m3-h200/KV_CACHE_CONSUMER.json",
+    "complete_requests": 32,
+    "service_seconds_per_request": 0.939163365968767,
+    "absolute_ceiling_seconds_per_request": 0.6381105231,
+    "ceiling_pass": false,
+    "prompt_tokens_delta": 134848,
+    "cache_split_accounting": "unavailable: vLLM metrics exposed no uncached prompt counter; no cache-split claim is made",
+    "output_sanity": "32 rows have exact 4214 prompt tokens, 358 completion tokens, nonempty finite text, and returned token IDs",
+    "useful_service_cost_usd": 0.020536372269183707,
+    "outer_terminal": "artifacts/current-vllm-e4m3-consumer-20260722t1350z/OUTER_TERMINAL.json",
+    "worker_terminal": "artifacts/current-vllm-e4m3-consumer-20260722t1350z/CONSUMER_TERMINAL.json",
+    "endpoint_terminal": "artifacts/current-vllm-e4m3-consumer-20260722t1350z/remote-retrieved/current-vllm-e4m3-h200/exact-c32-r1/TERMINAL.json"
+  },
+  "next_action": "No replay: the sole admitted E4M3 c32 arm is measured and rejected on the absolute H200 ceiling. The current-runtime project has no further admitted representation or runtime candidate.",
+  "admitted_candidate": {
+    "candidate": "current_vllm_fp8e4m3_c32",
+    "representation_change": "KV cache FP8-E4M3 instead of the closed FP8-E5M2 arm",
+    "comparison_scope": "absolute current-runtime endpoint candidate; no direct delta claim to the failed E5M2 arm",
+    "source_support": "Measured Gemma4 attention assertion admits fp8_e4m3 in vLLM 0.25.1",
+    "bench_id": "h200-current-runtime-e00s5ggxfqbn6ctb02",
+    "release_deadline_utc": "2026-07-22T16:20:00Z",
+    "max_additional_claim_minutes": 120,
+    "max_additional_spend_usd": 4.92
+  },
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
-  "compute_budget": "The retained H200 was released available after the typed terminal; conservative observed allocation exposure is approximately $2.94, within the $12.00 project reservation.",
+  "compute_budget": "Approximate cumulative H200 allocation exposure is $3.18 ($2.94 prior plus about $0.24 for the E4M3 continuation), below the $12.00 reservation. The bench was released available at 2026-07-22T13:51:18Z.",
   "economic_ceiling_seconds_per_request": 0.6381105231,
   "current_frontier_seconds_per_request": 0.6892200126,
-  "candidate_binding": "CANDIDATE_BINDING.json"
+  "candidate_binding": "E4M3_CANDIDATE_BINDING.json"
 }

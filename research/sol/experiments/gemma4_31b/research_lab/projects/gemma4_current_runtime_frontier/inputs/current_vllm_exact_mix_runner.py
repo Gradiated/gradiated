@@ -140,6 +140,8 @@ def main() -> int:
     parser.add_argument("--output", type=pathlib.Path, required=True)
     parser.add_argument("--arm", required=True)
     parser.add_argument("--concurrency", type=int, default=32)
+    parser.add_argument("--provider-hourly-usd", type=float, required=True)
+    parser.add_argument("--invocation-state-file", type=pathlib.Path)
     args = parser.parse_args()
     concurrency = args.concurrency
     root = args.output
@@ -158,20 +160,24 @@ def main() -> int:
         (root / "flush_cache.error").write_text(repr(exc) + "\n")
     warmup_suffix = tokens("warmup-suffix", PROMPT_TOKENS - COMMON_TOKENS)
     warmup_suffix[0] = 199999
-    warmup = dict(bodies[0]); warmup.update({"prompt": prefix + warmup_suffix, "max_tokens": 1, "min_tokens": 1, "stream": False})
+    warmup = dict(bodies[0]); warmup.update({"prompt": prefix + warmup_suffix, "max_tokens": 1, "min_tokens": 1, "stream": False}); warmup.pop("stream_options")
     with post(warmup) as response:
         (root / "warmup.json").write_bytes(response.read())
+    if args.invocation_state_file:
+        atomic(args.invocation_state_file, {"candidate_science_started": True, "stage": "concurrent_c32"})
     before = get("/metrics"); (root / "metrics-before.prom").write_bytes(before)
     ready = threading.Barrier(concurrency + 1)
     release = threading.Barrier(concurrency + 1)
     stop = threading.Event(); sampler = threading.Thread(target=gpu_sample, args=(root / "gpu.csv", stop), daemon=True); sampler.start()
     started = time.monotonic()
+    started_utc = time.time()
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
         futures = [pool.submit(one, i, body, root, ready, release) for i, body in enumerate(bodies)]
         ready.wait(timeout=120)
         release.wait(timeout=120)
         rows = [future.result() for future in futures]
     batch_seconds = time.monotonic() - started
+    ended_utc = time.time()
     stop.set(); sampler.join(timeout=3)
     after = get("/metrics"); (root / "metrics-after.prom").write_bytes(after)
     prompt_before = metric_sum(before, ("vllm:prompt_tokens_total", "sglang:prompt_tokens_histogram_sum"))
@@ -183,7 +189,7 @@ def main() -> int:
     cached_delta = None if prompt_delta is None or uncached_delta is None else prompt_delta - uncached_delta
     valid = all(row["error"] is None and row["prompt_tokens"] == PROMPT_TOKENS and row["completion_tokens"] == OUTPUT_TOKENS and row["text_nonempty"] and row["text_finite"] for row in rows)
     cache_valid = prompt_delta == concurrency * PROMPT_TOKENS and cached_delta is not None and 0 <= cached_delta <= concurrency * COMMON_TOKENS
-    terminal = {"schema_version": 1, "kind": "gemma4_current_vllm_exact_mix", "arm": args.arm, "pass": valid and cache_valid, "concurrency": concurrency, "complete_requests": sum(row["error"] is None for row in rows), "batch_seconds": batch_seconds, "service_seconds_per_request": batch_seconds / concurrency, "complete_request_throughput": concurrency / batch_seconds, "output_tokens_per_second": concurrency * OUTPUT_TOKENS / batch_seconds, "cache": {"valid": cache_valid, "prompt_tokens_delta": prompt_delta, "uncached_prompt_tokens_delta": uncached_delta, "cached_prompt_tokens_delta": cached_delta, "cached_fraction": None if cached_delta is None or not prompt_delta else cached_delta / prompt_delta, "fresh_tokens_per_request": None if uncached_delta is None else uncached_delta / concurrency}, "phases": {"ttft": finite_summary([row["ttft_seconds"] for row in rows]), "decode": finite_summary([row["decode_seconds"] for row in rows]), "end_to_end": finite_summary([row["wall_seconds"] for row in rows])}, "rows": rows}
+    terminal = {"schema_version": 1, "kind": "gemma4_current_vllm_exact_mix", "arm": args.arm, "pass": valid and cache_valid, "concurrency": concurrency, "complete_requests": sum(row["error"] is None for row in rows), "batch_seconds": batch_seconds, "service_started_unix_s": started_utc, "service_ended_unix_s": ended_utc, "service_seconds_per_request": batch_seconds / concurrency, "complete_request_throughput": concurrency / batch_seconds, "output_tokens_per_second": concurrency * OUTPUT_TOKENS / batch_seconds, "cost": {"provider_hourly_usd": args.provider_hourly_usd, "useful_service_cost_usd": batch_seconds * args.provider_hourly_usd / 3600, "useful_service_cost_per_request_usd": batch_seconds * args.provider_hourly_usd / (3600 * concurrency)}, "cache": {"valid": cache_valid, "prompt_tokens_delta": prompt_delta, "uncached_prompt_tokens_delta": uncached_delta, "cached_prompt_tokens_delta": cached_delta, "cached_fraction": None if cached_delta is None or not prompt_delta else cached_delta / prompt_delta, "fresh_tokens_per_request": None if uncached_delta is None else uncached_delta / concurrency}, "phases": {"ttft": finite_summary([row["ttft_seconds"] for row in rows]), "decode": finite_summary([row["decode_seconds"] for row in rows]), "end_to_end": finite_summary([row["wall_seconds"] for row in rows])}, "rows": rows}
     atomic(root / "TERMINAL.json", terminal)
     return 0 if valid else 72
 

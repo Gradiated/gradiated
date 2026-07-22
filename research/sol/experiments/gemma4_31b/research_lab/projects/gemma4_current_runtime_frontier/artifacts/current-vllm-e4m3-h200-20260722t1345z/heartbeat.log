@@ -1,0 +1,172 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T13:45:39.991128Z",
+    "heartbeat_at": "2026-07-22T13:45:51.280562Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T14:45:51.280562Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, image, compilation, and CUDA graph caches for bounded in-place repair.",
+    "checkpoint": "Cold 250-GiB bench; the 59-GiB immutable project-local snapshot is materialized but no checkpoint byte has reached the guest.",
+    "image": "Current vLLM digest sha256:f0b9a0dc75a9fca3b6811e3279367b2d6a448055a000bfd13859587d74cef268 is bound but not pulled.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_current_runtime_frontier",
+    "runtime": "Independent current-vLLM H200 environment; provider instance RUNNING, disk READY, and glmrunner cloud-init identity verified with authorized fingerprint SHA256:g5df+MD3rnTnW0lmqaEvI+esJ+H14qj/g7NeeJgDBXg.",
+    "server_state": "No server, CUDA call, or endpoint request has started; only the project launcher's local SSH key path remains to be corrected."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-current-runtime-e00s5ggxfqbn6ctb02",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T16:39:52Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-current-runtime-h200-20260722t1224-watchdog.service",
+      "main_pid": 3281627,
+      "unit": "gemma4-current-runtime-h200-20260722t1224-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T12:27:05.357599Z",
+  "resource": {
+    "disk_id": "computedisk-e00pm4484qpn6nykmn",
+    "disk_name": "gemma4-current-runtime-h200-20260722t1224-boot",
+    "instance_id": "computeinstance-e00s5ggxfqbn6ctb02",
+    "instance_name": "gemma4-current-runtime-h200-20260722t1224"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T13:45:51.280562Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T13:45:39.991128Z",
+    "heartbeat_at": "2026-07-22T13:46:36.332232Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T14:46:36.332232Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, image, compilation, and CUDA graph caches for bounded in-place repair.",
+    "checkpoint": "Cold 250-GiB bench; the 59-GiB immutable project-local snapshot is materialized but no checkpoint byte has reached the guest.",
+    "image": "Current vLLM digest sha256:f0b9a0dc75a9fca3b6811e3279367b2d6a448055a000bfd13859587d74cef268 is bound but not pulled.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_current_runtime_frontier",
+    "runtime": "Independent current-vLLM H200 environment; provider instance RUNNING, disk READY, and glmrunner cloud-init identity verified with authorized fingerprint SHA256:g5df+MD3rnTnW0lmqaEvI+esJ+H14qj/g7NeeJgDBXg.",
+    "server_state": "No server, CUDA call, or endpoint request has started; only the project launcher's local SSH key path remains to be corrected."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-current-runtime-e00s5ggxfqbn6ctb02",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T16:39:52Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-current-runtime-h200-20260722t1224-watchdog.service",
+      "main_pid": 3281627,
+      "unit": "gemma4-current-runtime-h200-20260722t1224-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T12:27:05.357599Z",
+  "resource": {
+    "disk_id": "computedisk-e00pm4484qpn6nykmn",
+    "disk_name": "gemma4-current-runtime-h200-20260722t1224-boot",
+    "instance_id": "computeinstance-e00s5ggxfqbn6ctb02",
+    "instance_name": "gemma4-current-runtime-h200-20260722t1224"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T13:46:36.332232Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T13:45:39.991128Z",
+    "heartbeat_at": "2026-07-22T13:47:21.383207Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T14:47:21.383207Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, image, compilation, and CUDA graph caches for bounded in-place repair.",
+    "checkpoint": "Cold 250-GiB bench; the 59-GiB immutable project-local snapshot is materialized but no checkpoint byte has reached the guest.",
+    "image": "Current vLLM digest sha256:f0b9a0dc75a9fca3b6811e3279367b2d6a448055a000bfd13859587d74cef268 is bound but not pulled.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_current_runtime_frontier",
+    "runtime": "Independent current-vLLM H200 environment; provider instance RUNNING, disk READY, and glmrunner cloud-init identity verified with authorized fingerprint SHA256:g5df+MD3rnTnW0lmqaEvI+esJ+H14qj/g7NeeJgDBXg.",
+    "server_state": "No server, CUDA call, or endpoint request has started; only the project launcher's local SSH key path remains to be corrected."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-current-runtime-e00s5ggxfqbn6ctb02",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T16:39:52Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-current-runtime-h200-20260722t1224-watchdog.service",
+      "main_pid": 3281627,
+      "unit": "gemma4-current-runtime-h200-20260722t1224-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T12:27:05.357599Z",
+  "resource": {
+    "disk_id": "computedisk-e00pm4484qpn6nykmn",
+    "disk_name": "gemma4-current-runtime-h200-20260722t1224-boot",
+    "instance_id": "computeinstance-e00s5ggxfqbn6ctb02",
+    "instance_name": "gemma4-current-runtime-h200-20260722t1224"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T13:47:21.383207Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T13:45:39.991128Z",
+    "heartbeat_at": "2026-07-22T13:48:06.442271Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T14:48:06.442271Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, image, compilation, and CUDA graph caches for bounded in-place repair.",
+    "checkpoint": "Cold 250-GiB bench; the 59-GiB immutable project-local snapshot is materialized but no checkpoint byte has reached the guest.",
+    "image": "Current vLLM digest sha256:f0b9a0dc75a9fca3b6811e3279367b2d6a448055a000bfd13859587d74cef268 is bound but not pulled.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_current_runtime_frontier",
+    "runtime": "Independent current-vLLM H200 environment; provider instance RUNNING, disk READY, and glmrunner cloud-init identity verified with authorized fingerprint SHA256:g5df+MD3rnTnW0lmqaEvI+esJ+H14qj/g7NeeJgDBXg.",
+    "server_state": "No server, CUDA call, or endpoint request has started; only the project launcher's local SSH key path remains to be corrected."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-current-runtime-e00s5ggxfqbn6ctb02",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T16:39:52Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-current-runtime-h200-20260722t1224-watchdog.service",
+      "main_pid": 3281627,
+      "unit": "gemma4-current-runtime-h200-20260722t1224-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T12:27:05.357599Z",
+  "resource": {
+    "disk_id": "computedisk-e00pm4484qpn6nykmn",
+    "disk_name": "gemma4-current-runtime-h200-20260722t1224-boot",
+    "instance_id": "computeinstance-e00s5ggxfqbn6ctb02",
+    "instance_name": "gemma4-current-runtime-h200-20260722t1224"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T13:48:06.442271Z"
+}

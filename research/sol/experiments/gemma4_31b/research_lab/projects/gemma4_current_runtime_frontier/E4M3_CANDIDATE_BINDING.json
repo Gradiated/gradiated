@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "arm": "current_vllm_fp8e4m3_c32",
+  "runtime": {
+    "image": "vllm/vllm-openai@sha256:f0b9a0dc75a9fca3b6811e3279367b2d6a448055a000bfd13859587d74cef268",
+    "source_commit": "1a659a0c370942bae3c8567902e38bddbbae95f3",
+    "kv_cache_dtype": "fp8_e4m3",
+    "weights": "BF16 checkpoint"
+  },
+  "checkpoint": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+  },
+  "workload": {
+    "concurrency": 32,
+    "prompt_tokens": 4214,
+    "completion_tokens": 358,
+    "shared_prefix_tokens": 535
+  },
+  "acceptance": {
+    "absolute_service_seconds_per_request_max": 0.6381105231,
+    "required_complete_requests": 32,
+    "required_kv_consumer_proof": "fp8_e4m3"
+  }
+}

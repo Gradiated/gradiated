@@ -1,0 +1,215 @@
+{
+  "checkpoint": [
+    {
+      "bytes": 4621,
+      "materialization": "existing_verified_project_local",
+      "path": "inputs/checkpoint/config.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/inputs/checkpoint/config.json"
+    },
+    {
+      "bytes": 32169626,
+      "materialization": "existing_verified_project_local",
+      "path": "inputs/checkpoint/tokenizer.json",
+      "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f",
+      "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/inputs/checkpoint/tokenizer.json"
+    },
+    {
+      "bytes": 2095,
+      "materialization": "existing_verified_project_local",
+      "path": "inputs/checkpoint/tokenizer_config.json",
+      "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df",
+      "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/inputs/checkpoint/tokenizer_config.json"
+    },
+    {
+      "bytes": 18683,
+      "materialization": "existing_verified_project_local",
+      "path": "inputs/checkpoint/chat_template.jinja",
+      "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+      "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/inputs/checkpoint/chat_template.jinja"
+    },
+    {
+      "bytes": 1689,
+      "materialization": "existing_verified_project_local",
+      "path": "inputs/checkpoint/processor_config.json",
+      "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c",
+      "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/inputs/checkpoint/processor_config.json"
+    },
+    {
+      "bytes": 120246,
+      "materialization": "existing_verified_project_local",
+      "path": "inputs/checkpoint/model.safetensors.index.json",
+      "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+      "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/inputs/checkpoint/model.safetensors.index.json"
+    },
+    {
+      "bytes": 49784788364,
+      "materialization": "existing_verified_project_local",
+      "path": "inputs/checkpoint/model-00001-of-00002.safetensors",
+      "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+      "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/inputs/checkpoint/model-00001-of-00002.safetensors"
+    },
+    {
+      "bytes": 12761549884,
+      "materialization": "existing_verified_project_local",
+      "path": "inputs/checkpoint/model-00002-of-00002.safetensors",
+      "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10",
+      "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/inputs/checkpoint/model-00002-of-00002.safetensors"
+    }
+  ],
+  "economics": {
+    "committed_h200_usd_per_gpu_hour": 3.25,
+    "maximum_seconds_per_request": 0.6381105230769232,
+    "required_gain_from_authoritative_candidate_fraction": 0.0789958506618843,
+    "target_usd_per_million_total_tokens": 0.14,
+    "utilization": 0.9
+  },
+  "exact_source": [
+    {
+      "bytes": 34529,
+      "path": "inputs/source/gemma3_causal.py",
+      "sha256": "a9827bde583c5b8b0abfeaced097c4e9d060fb99ec2961b4f9c66173d3027282",
+      "source_provenance": "/root/workspace/.agents/runtime/sglang-v0.5.13-source/python/sglang/srt/models/gemma3_causal.py"
+    },
+    {
+      "bytes": 56461,
+      "path": "inputs/source/gemma4_causal.py",
+      "sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+      "source_provenance": "/root/workspace/.agents/runtime/sglang-v0.5.13-source/python/sglang/srt/models/gemma4_causal.py"
+    },
+    {
+      "bytes": 89745,
+      "path": "inputs/source/fp8.py",
+      "sha256": "c7368db317513e5823283eb5567d15fdb742c3b01a98bfc483cb500291b4285a",
+      "source_provenance": "/root/workspace/.agents/runtime/sglang-v0.5.13-source/python/sglang/srt/layers/quantization/fp8.py"
+    },
+    {
+      "bytes": 62279,
+      "path": "inputs/source/fp8_utils.py",
+      "sha256": "a3a130f40974047084e3daff2bd0efbbfe69e197d4c9a5ba3fbc5304dd4e43d9",
+      "source_provenance": "/root/workspace/.agents/runtime/sglang-v0.5.13-source/python/sglang/srt/layers/quantization/fp8_utils.py"
+    },
+    {
+      "bytes": 66653,
+      "path": "inputs/source/fp8_kernel.py",
+      "sha256": "95882e4fed8ac449240ffc8e62b13176bb5057db6c77a06cdfcfffa5f5d89a06",
+      "source_provenance": "/root/workspace/.agents/runtime/sglang-v0.5.13-source/python/sglang/srt/layers/quantization/fp8_kernel.py"
+    },
+    {
+      "bytes": 11772,
+      "path": "inputs/source/per_token_quant_fp8.cu",
+      "sha256": "c8a3e755dc165cecfa09232bed58e8b36010061f050acf2f82722b75c3c1edb8",
+      "source_provenance": "/root/workspace/.agents/runtime/sglang-v0.5.13-source/sgl-kernel/csrc/gemm/per_token_quant_fp8.cu"
+    },
+    {
+      "bytes": 5702,
+      "path": "inputs/source/activation.cu",
+      "sha256": "dffb5a9cbbb4d26a75e7e8aea0c0acfa2e68c64158466854fd6d54262103a7d6",
+      "source_provenance": "/root/workspace/.agents/runtime/sglang-v0.5.13-source/sgl-kernel/csrc/elementwise/activation.cu"
+    }
+  ],
+  "immutable_transfer_contract": "stage only these project-local bytes; reconcile size and sha256 before atomic remote finalize",
+  "model": {
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+  },
+  "pass": true,
+  "programs": [
+    {
+      "bytes": 9378,
+      "path": "component_benchmark.py",
+      "sha256": "a129325b1047145aa070a8e257de8703869fcd6bdba86694f82a3a2c67d32e46"
+    },
+    {
+      "bytes": 4017,
+      "path": "fused_gelu_quant.cu",
+      "sha256": "e475ffcf86b3d29f7779352d9a5967f62e31ec56a8997e08f8ea6fabc10b71b2"
+    },
+    {
+      "bytes": 1122,
+      "path": "fused_gelu_quant.py",
+      "sha256": "073cc4b84eaf19299dd13951585811762c4d76e61844a1f36038e6a0756f3aab"
+    },
+    {
+      "bytes": 3535,
+      "path": "fusion_patch.py",
+      "sha256": "e6f49dca6b768e4bb65c5d11837c045ff74158305d6be26dfde6ed5559bee27b"
+    },
+    {
+      "bytes": 311,
+      "path": "sitecustomize.py",
+      "sha256": "a84880cb603f2eab96cfdd085dbd94d2a5ef10f201622f2971355479c2c15c98"
+    },
+    {
+      "bytes": 9896,
+      "path": "remote_fusion_stack.sh",
+      "sha256": "dd4bf44b7b2f867859236383b10eb3d7e3c7a63cf4d37d67f461add85d082adf"
+    },
+    {
+      "bytes": 17238,
+      "path": "run_bench_owner.py",
+      "sha256": "cee2190b1bbf0d79c417f707bdf22b5fdb66ede2e5952182818dde6bcc2ae774"
+    }
+  ],
+  "representation": {
+    "chunked_prefill_size": 2048,
+    "dynamic_chunking": true,
+    "kv_cache": "fp8_e5m2",
+    "mtp": false,
+    "tensor_parallel": 1,
+    "weights": "dynamic in-memory fp8_e4m3fn linears from exact BF16 checkpoint"
+  },
+  "runtime": {
+    "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image_linux_amd64": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "release": "sglang v0.5.13"
+  },
+  "schema_version": 1,
+  "stack": [
+    {
+      "bytes": 6062,
+      "path": "inputs/stack/proven_v0513_endpoint_entrypoint.py",
+      "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc",
+      "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_epilogue_fusion/proven_v0513_endpoint_entrypoint.py"
+    },
+    {
+      "bytes": 9494,
+      "path": "inputs/stack/fp8_qkv_paired_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+      "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_epilogue_fusion/fp8_qkv_paired_runner.py"
+    },
+    {
+      "bytes": 6370,
+      "path": "inputs/stack/install_endpoint_patch.py",
+      "sha256": "71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588",
+      "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_epilogue_fusion/install_endpoint_patch.py"
+    },
+    {
+      "bytes": 26612,
+      "path": "inputs/stack/qkv_epilogue_discriminator.py",
+      "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d",
+      "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_epilogue_fusion/qkv_epilogue_discriminator.py"
+    },
+    {
+      "bytes": 2084,
+      "path": "inputs/stack/residual_sitecustomize.py",
+      "sha256": "76c26c124c1b1af52da0f46a991c4a3e54732db67b4968e1f16f39eb5b432065",
+      "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/residual_sitecustomize.py"
+    },
+    {
+      "bytes": 4606,
+      "path": "inputs/stack/attention_intervention.py",
+      "sha256": "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8",
+      "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/intervention/attention_deferred_local_kv.py"
+    }
+  ],
+  "workload": {
+    "cached_prompt_tokens_total": 17120,
+    "completion_tokens_per_request": 358,
+    "concurrency": 32,
+    "fresh_prompt_tokens_total": 117728,
+    "prompt_tokens_per_request": 4214,
+    "requests": 32
+  }
+}

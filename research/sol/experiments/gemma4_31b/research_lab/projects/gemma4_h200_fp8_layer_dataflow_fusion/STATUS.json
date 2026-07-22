@@ -1,0 +1,38 @@
+{
+  "status": "active",
+  "priority": 970,
+  "researcher_profile": "execution",
+  "authorized_spend_usd": 9.0,
+  "reserved_at": "2026-07-22T11:55:55.503445Z",
+  "measured_project_spend_usd": 0.0,
+  "remaining_authorized_spend_usd": 9.0,
+  "allocation_limit": 1,
+  "active_session": null,
+  "summary": "Exact source and trace evidence select GELU(tanh)-and-mul to down-projection dynamic FP8 as the coherent fusion. The project-local CUDA candidate keeps each 21,504-element BF16 activated row in H200 shared memory, emits the stock per-token E4M3 scale/bytes directly, and feeds the unchanged CUTLASS down GEMM. The immutable component plus conditional stacked endpoint owner is runnable; no H200 exists in the shared inventory, so no scientific invocation or spend occurred.",
+  "decision_evidence": {
+    "adjacency": "ADJACENCY.json",
+    "adjacency_sha256": "9678bd659729601ec5cde81b3380d81aa23d0941174889fd64d86f3f0a1a561e",
+    "gpu_input_manifest": "GPU_INPUT_MANIFEST.json",
+    "gpu_input_manifest_sha256": "1c77db08cc44ce466178d2296755f7c0964638f46a7616cbb1e010d21e1e0a60",
+    "selected_candidate": "fused_gelu_tanh_mul_quant_kernel",
+    "measured_activation_seconds": 0.214656804,
+    "measured_down_quant_seconds": 0.185469039,
+    "down_fraction_of_dynamic_quant": 0.5735037217482941,
+    "profile_launches_removed": 3660,
+    "derived_bfloat16_hbm_bytes_removed": 944006676480,
+    "evidence_type": "source-backed adjacency plus measured profile geometry; byte reduction derived; target timing pending"
+  },
+  "pool_boundary": {
+    "path": "POOL_CLAIM_DIAGNOSTIC.json",
+    "requested_accelerator": "nvidia-h200-sxm",
+    "message": "no available GPU bench matches this project",
+    "candidate_cuda_invocation_started": false,
+    "candidate_scientific_invocation_started": false
+  },
+  "exact_bench_need": "One director-registered available nvidia-h200-sxm bench with the pinned SGLang v0.5.13 image digest 6113665 and enough storage for the 62,578,655,208-byte immutable project-local checkpoint. Reuse the shared v0.5.13 kernel bench; because partitioned global attention and this project are both runnable before allocation, honor the director's simultaneous-readiness tie in favor of partitioned attention, then claim immediately on release.",
+  "next_action": "When the shared v0.5.13 H200 kernel bench is available after the simultaneous-tie winner, atomically claim it and launch run_bench_owner.py. Its first tiny real CUDA path compiles and runs the exact M=32/M=2048 fused component with numerical, invocation, byte, launch, and timing proof; on component_positive it proceeds in the same retained claim directly to one contemporaneous c32 FP8+QKV+deferred-local-KV control/fusion endpoint pair and a stacked decision.",
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "compute_budget": "At most 150 H200 claim minutes and $9.00 cumulative project spend; prior measured spend is $0.00.",
+  "economic_ceiling_seconds_per_request": 0.6381105231,
+  "current_frontier_seconds_per_request": 0.6892200126
+}

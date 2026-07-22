@@ -1,9 +1,11 @@
 {
   "candidate_cuda_invocation_started": true,
-  "ncu_candidate_capture_completed": true,
-  "ncu_candidate_capture_started": true,
+  "discovery_cuda_invocation_completed": true,
+  "discovery_cuda_invocation_started": true,
+  "ncu_sliced_v_capture_completed": true,
+  "ncu_sliced_v_capture_started": true,
   "scientific_invocation_started": true,
   "scientific_terminal_recorded": true,
   "source_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
-  "updated_unix_s": 1784724920.650698
+  "updated_unix_s": 1784734867.4934087
 }

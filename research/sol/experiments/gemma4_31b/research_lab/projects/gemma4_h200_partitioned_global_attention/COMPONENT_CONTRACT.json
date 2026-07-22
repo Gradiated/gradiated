@@ -1,20 +1,19 @@
 {
   "schema_version": 1,
-  "decision": "Promote the forced-residency global-attention specialization directly to one paired exact endpoint only when the exact H200 component mechanism passes.",
-  "hypothesis": "Capping the unchanged 32x64 global head-512 kernel at 128 registers/thread admits two CTAs per H200 SM; added local-memory/L2 spill traffic is cheaper than the latency hidden by the measured one-CTA residency because DRAM and tensor activity are low and L2 has headroom.",
+  "decision": "Promote the genuine multi-stage global-attention dataflow directly to one paired exact endpoint only when the exact H200 component mechanism passes.",
+  "hypothesis": "Materializing causal QK/softmax probabilities, then computing four independent 128-wide V GEMMs, ends the monolithic 512-wide accumulator live range at a kernel boundary. Efficient dense GEMMs and four-way V parallelism can outweigh roughly 1 GiB of temporary score/probability traffic.",
   "scope": {
     "accelerator": "nvidia-h200-sxm",
     "cuda_capability": [9, 0],
     "source_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
-    "candidate_sha256": "525e0b200e1f9cb09b53e3ed226f7da59f9e5df2b1196b45ae4898bdeaa3968c",
+    "candidate_path": "multistage.grouped_qk_softmax.sliced_v_4x128",
     "query_tokens": 2048,
     "q_heads": 32,
     "kv_heads": 4,
     "qk_head_dim": 512,
     "v_head_dim": 512,
-    "block_m": 32,
-    "block_n": 64,
-    "maxnreg": 128,
+    "value_slices": 4,
+    "value_slice_width": 128,
     "seed": 20260722
   },
   "quality_gate": {
@@ -27,14 +26,13 @@
   },
   "performance_gate": {
     "minimum_median_latency_reduction_fraction": 0.05,
-    "maximum_registers_per_thread": 128,
-    "minimum_register_limited_ctas_per_sm": 2,
-    "minimum_shared_memory_limited_ctas_per_sm": 2
+    "maximum_profiled_sliced_v_registers_per_thread_exclusive": 255,
+    "minimum_profiled_sliced_v_achieved_warp_occupancy_percent_exclusive": 12.496527
   },
-  "falsifier": "Reject without endpoint promotion if any numerical gate fails, the exact candidate is less than 5% faster, or NCU does not prove at most 128 registers/thread and at least two CTAs/SM by both register and shared-memory limits.",
+  "falsifier": "Reject without endpoint promotion if any numerical gate fails, the full multi-stage candidate is less than 5% faster, or NCU does not show the profiled sliced-V GEMM below the monolithic 255-register allocation and above its 12.496527% achieved warp occupancy.",
   "budget": {
     "authorized_cumulative_usd": 10.0,
-    "prior_measured_usd": 0.0,
+    "prior_measured_usd": 0.23385168297688166,
     "maximum_claim_minutes": 180,
     "experimental_reference_rate_usd_per_hour": 2.46,
     "maximum_claim_cost_at_reference_rate_usd": 7.38
@@ -46,7 +44,7 @@
   "artifact_contract": {
     "invocation_marker": "artifacts/<run>/component/INVOCATION_STATE.json",
     "component_terminal": "artifacts/<run>/component/COMPONENT_TERMINAL.json",
-    "ncu_report": "artifacts/<run>/candidate-global.ncu-rep",
+    "ncu_report": "artifacts/<run>/candidate-sliced-v.ncu-rep",
     "ncu_csv": "artifacts/<run>/ncu-export.csv",
     "decision_terminal": "artifacts/<run>/COMPONENT_RESULT.json",
     "raw_stdout": "artifacts/<run>/component.stdout",

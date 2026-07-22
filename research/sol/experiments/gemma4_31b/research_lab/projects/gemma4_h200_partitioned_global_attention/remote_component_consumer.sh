@@ -33,13 +33,13 @@ trap 'terminal component_consumer_failure "$BASH_COMMAND"' ERR
 test -f "$artifacts/component/COMPONENT_TERMINAL.json"
 test -f "$artifacts/component/INVOCATION_STATE.json"
 test -f "$artifacts/ncu-export.csv"
-test -f "$artifacts/candidate-global.ncu-rep"
+test -f "$artifacts/candidate-sliced-v.ncu-rep"
 
 set +e
-python3 "$root/input/analyze_component.py" \
+python3 "$root/input/analyze_multistage.py" \
   --component-terminal "$artifacts/component/COMPONENT_TERMINAL.json" \
   --ncu-csv "$artifacts/ncu-export.csv" \
-  --ncu-report "$artifacts/candidate-global.ncu-rep" \
+  --ncu-report "$artifacts/candidate-sliced-v.ncu-rep" \
   --output "$artifacts/COMPONENT_RESULT.json" \
   >"$artifacts/analyze.stdout" 2>"$artifacts/analyze.stderr"
 rc=$?

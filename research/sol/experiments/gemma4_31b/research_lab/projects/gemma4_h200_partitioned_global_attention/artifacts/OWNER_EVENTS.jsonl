@@ -43,3 +43,145 @@
 {"candidate_started": true, "event": "component_worker_returned", "returncode": 2, "terminal": "component_complete", "timestamp_utc": "2026-07-22T12:55:29.014135Z"}
 {"classification": "component_reject", "event": "scientific_terminal", "timestamp_utc": "2026-07-22T12:55:29.014941Z"}
 {"condition": "ready", "elapsed_seconds": 342.2229423522949, "event": "bench_released", "timestamp_utc": "2026-07-22T12:55:29.016781Z"}
+{"checkpoint_bytes": 62578655208, "event": "inputs_validated", "timestamp_utc": "2026-07-22T14:58:13.914232Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T14:58:13.915158Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T14:58:33.915924Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T14:58:53.916984Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T14:59:13.917994Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T14:59:33.919082Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T14:59:53.920126Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:00:13.921195Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:00:33.922194Z"}
+{"checkpoint_bytes": 62578655208, "event": "inputs_validated", "timestamp_utc": "2026-07-22T15:00:46.120306Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:00:46.121310Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:01:06.122243Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:01:26.123347Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:01:46.124455Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:02:06.125553Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:02:26.126847Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:02:46.128093Z"}
+{"checkpoint_bytes": 62578655208, "event": "inputs_validated", "timestamp_utc": "2026-07-22T15:02:51.751398Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:02:51.752471Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:03:11.753301Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:03:31.754842Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:03:51.756066Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:04:11.757373Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:04:31.758631Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:04:51.759685Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:05:11.760749Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:05:31.761813Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:05:51.763019Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:06:11.764077Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:06:31.765277Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:06:51.767290Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:07:11.768544Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:07:31.769718Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:07:51.770969Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:08:11.772214Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:08:31.773510Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:08:51.774742Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:09:11.775823Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:09:31.777009Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:09:51.778078Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:10:11.779289Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:10:31.780509Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:10:51.781508Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:11:11.782691Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:11:31.783906Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:11:51.784967Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:12:11.786145Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:12:31.787448Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:12:51.788587Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:13:11.789591Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:13:31.790700Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:13:51.791772Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:14:11.792917Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:14:31.793905Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:14:51.794803Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:15:11.795710Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:15:31.796812Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:15:51.797726Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:16:11.798723Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:16:31.799849Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:16:51.801083Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:17:11.802198Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:17:31.803149Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:17:51.804110Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:18:11.805098Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:18:31.806078Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:18:51.807030Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:19:11.808075Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:19:31.809338Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:19:51.810496Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:20:11.811580Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:20:31.812746Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:20:51.813751Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:21:11.814714Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:21:31.815741Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:21:51.816775Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:22:11.817888Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:22:31.818966Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:22:51.820148Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:23:11.821328Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:23:31.822444Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:23:51.823538Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:24:11.824585Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:24:31.825738Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:24:51.826812Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:25:11.827730Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:25:31.828720Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:25:51.829745Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:26:11.830774Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:26:31.831761Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:26:51.832719Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:27:11.833741Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:27:31.834872Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:27:51.835957Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:28:11.836925Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:28:31.837862Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:28:51.838809Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:29:11.839759Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:29:31.840830Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:29:51.841819Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:30:11.842833Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:30:31.844638Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:30:51.845701Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:31:11.846776Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:31:31.847769Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:31:51.848807Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:32:11.849996Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:32:31.851092Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:32:51.852026Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:33:11.853226Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:33:31.854329Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:33:51.855419Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:34:11.856438Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:34:31.857378Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:34:51.858544Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T15:35:11.859642Z"}
+{"absolute_deadline_epoch": 1784743920.0, "bench": "h200-continuity-e00hzj9a8khp0fevy5", "event": "bench_claimed", "timestamp_utc": "2026-07-22T15:35:31.861291Z"}
+{"event": "guest_reached", "telemetry": "NVIDIA H200\n/dev/vda1           242G  112G      130G  47% /", "timestamp_utc": "2026-07-22T15:35:32.681410Z"}
+{"containers": "d71954307194 gemma-current-sglang lmsysorg/sglang:dev-gemma4", "event": "resident_containers_stopping_for_component", "timestamp_utc": "2026-07-22T15:35:33.204279Z"}
+{"bytes": 4002, "event": "input_transfer_started", "path": "remote_multistage.sh", "timestamp_utc": "2026-07-22T15:35:36.692267Z"}
+{"bytes": 4002, "event": "input_finalized", "path": "remote_multistage.sh", "timestamp_utc": "2026-07-22T15:35:38.017440Z"}
+{"bytes": 1989, "event": "input_transfer_started", "path": "remote_component_consumer.sh", "timestamp_utc": "2026-07-22T15:35:38.529339Z"}
+{"bytes": 1989, "event": "input_finalized", "path": "remote_component_consumer.sh", "timestamp_utc": "2026-07-22T15:35:39.804444Z"}
+{"bytes": 8650, "event": "input_transfer_started", "path": "multistage_component_benchmark.py", "timestamp_utc": "2026-07-22T15:35:40.635825Z"}
+{"bytes": 8650, "event": "input_finalized", "path": "multistage_component_benchmark.py", "timestamp_utc": "2026-07-22T15:35:41.905395Z"}
+{"bytes": 4900, "event": "input_transfer_started", "path": "multistage_attention.py", "timestamp_utc": "2026-07-22T15:35:42.748714Z"}
+{"bytes": 4900, "event": "input_finalized", "path": "multistage_attention.py", "timestamp_utc": "2026-07-22T15:35:44.193982Z"}
+{"bytes": 3341, "event": "input_transfer_started", "path": "analyze_multistage.py", "timestamp_utc": "2026-07-22T15:35:45.027179Z"}
+{"bytes": 3341, "event": "input_finalized", "path": "analyze_multistage.py", "timestamp_utc": "2026-07-22T15:35:46.298329Z"}
+{"bytes": 33963, "event": "input_transfer_started", "path": "inputs/extend_attention.v0.5.13.py", "timestamp_utc": "2026-07-22T15:35:46.818330Z"}
+{"bytes": 33963, "event": "input_finalized", "path": "inputs/extend_attention.v0.5.13.py", "timestamp_utc": "2026-07-22T15:35:48.176659Z"}
+{"event": "component_worker_started", "timestamp_utc": "2026-07-22T15:35:48.177860Z"}
+{"event": "retrieval", "phase": "component", "source": "/home/glmrunner/gemma4-partitioned-attention/artifacts/REMOTE_TERMINAL.json", "success": true, "timestamp_utc": "2026-07-22T15:41:11.028735Z"}
+{"event": "retrieval", "phase": "component", "source": "/home/glmrunner/gemma4-partitioned-attention/artifacts/component/INVOCATION_STATE.json", "success": true, "timestamp_utc": "2026-07-22T15:41:11.834655Z"}
+{"event": "retrieval", "phase": "component", "source": "/home/glmrunner/gemma4-partitioned-attention/artifacts/COMPONENT_RESULT.json", "success": true, "timestamp_utc": "2026-07-22T15:41:12.734177Z"}
+{"event": "retrieval", "phase": "component", "source": "/home/glmrunner/gemma4-partitioned-attention/artifacts/component.stdout", "success": true, "timestamp_utc": "2026-07-22T15:41:13.561005Z"}
+{"event": "retrieval", "phase": "component", "source": "/home/glmrunner/gemma4-partitioned-attention/artifacts/component.stderr", "success": true, "timestamp_utc": "2026-07-22T15:41:14.388845Z"}
+{"event": "retrieval", "phase": "component", "source": "/home/glmrunner/gemma4-partitioned-attention/component-compact.tar.gz", "success": true, "timestamp_utc": "2026-07-22T15:41:15.407753Z"}
+{"event": "retrieval", "phase": "component", "source": "/home/glmrunner/gemma4-partitioned-attention/component-compact.tar.gz.sha256", "success": true, "timestamp_utc": "2026-07-22T15:41:16.216761Z"}
+{"candidate_started": true, "event": "component_worker_returned", "returncode": 2, "terminal": "component_complete", "timestamp_utc": "2026-07-22T15:41:16.217491Z"}
+{"classification": "component_reject", "event": "scientific_terminal", "timestamp_utc": "2026-07-22T15:41:16.218036Z"}
+{"condition": "ready", "elapsed_seconds": 344.35708689689636, "event": "bench_released", "timestamp_utc": "2026-07-22T15:41:16.219057Z"}

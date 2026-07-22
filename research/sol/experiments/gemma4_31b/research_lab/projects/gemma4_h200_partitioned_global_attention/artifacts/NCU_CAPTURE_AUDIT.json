@@ -1,0 +1,14 @@
+{
+  "capture_is_sliced_v_matmul": false,
+  "counter_gate_is_admissible": false,
+  "decision_impact": "none: the exact-shape latency gate independently rejects; the admitted bytes also fail the oracle",
+  "expected": "one sliced-V matrix-multiply kernel",
+  "observed_gpu_time": {
+    "unit": "us",
+    "value": 30.08
+  },
+  "observed_kernel_name": "void elementwise_kernel<128, 2, void gpu_kernel_impl_nocast<direct_copy_kernel_cuda(TensorIteratorBase &)::[lambda() (instance 3)]::operator ()() lambda() (instance 7)]::operator ()() lambda(float) (instance 1)]>(TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)",
+  "schema_version": 1,
+  "scientific_replay_authorized": false,
+  "status": "invalid_ncu_capture"
+}

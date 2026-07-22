@@ -36,7 +36,7 @@ KEY = Path("/root/.config/gradiated/providers/gcore/id_ed25519")
 REMOTE = "/home/glmrunner/gemma4-partitioned-attention"
 RATE = 2.46
 CAP = 10.0
-PRIOR_SPEND = 0.0
+PRIOR_SPEND = 0.23385168297688166
 LEASE_SECONDS = 9000
 RETRIEVAL_RESERVE_SECONDS = 300
 
@@ -67,9 +67,9 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def validate_manifest() -> dict[str, Any]:
-    manifest = json.loads((HERE / "GPU_INPUT_MANIFEST.json").read_text())
-    for group in ("component", "endpoint_programs", "stack", "checkpoint"):
+def validate_manifest(groups: tuple[str, ...] = ("component",)) -> dict[str, Any]:
+    manifest = json.loads((HERE / "MULTISTAGE_GPU_INPUT_MANIFEST.json").read_text())
+    for group in groups:
         for row in manifest[group]:
             path = HERE / row["path"]
             if path.stat().st_size != row["bytes"] or sha256(path) != row["sha256"]:
@@ -227,9 +227,17 @@ def main() -> int:
         probe = remote(ip, "nvidia-smi --query-gpu=name --format=csv,noheader && df -BG /home/glmrunner | tail -1", 60)
         if probe.returncode: raise RuntimeError(f"claimed guest unreachable: {probe.stderr[-1000:]}")
         emit("guest_reached", telemetry=probe.stdout.strip())
+        resident = remote(ip, "sudo docker ps --format '{{.ID}} {{.Names}} {{.Image}}'", 60)
+        if resident.returncode:
+            raise RuntimeError(f"resident container inventory failed: {resident.stderr[-1000:]}")
+        if resident.stdout.strip():
+            emit("resident_containers_stopping_for_component", containers=resident.stdout.strip())
+            stopped = remote(ip, "ids=$(sudo docker ps -q); test -z \"$ids\" || sudo docker stop $ids", 300)
+            if stopped.returncode:
+                raise RuntimeError(f"resident container stop failed: {stopped.stderr[-1000:]}")
         reconcile(ip, manifest["component"], REMOTE + "/input")
         pool.update(PROJECT, {"project": PROJECT, "runtime": "SGLang v0.5.13 exact attention component active", "checkpoint": "project-local immutable snapshot bound; not staged until component pass"})
-        command = f"PARTITIONED_ATTENTION_REMOTE_ROOT={shlex.quote(REMOTE)} bash {shlex.quote(REMOTE + '/input/remote_component.sh')}"
+        command = f"PARTITIONED_ATTENTION_REMOTE_ROOT={shlex.quote(REMOTE)} bash {shlex.quote(REMOTE + '/input/remote_multistage.sh')}"
         emit("component_worker_started")
         worker = remote(ip, command, max(60, int(absolute_deadline - time.time() - RETRIEVAL_RESERVE_SECONDS)))
         root = retrieve(ip, "component")
@@ -240,7 +248,7 @@ def main() -> int:
         while terminal.get("classification") in {"integration_failure", "component_consumer_failure"}:
             if invocation.get("scientific_invocation_started"):
                 wait_repair("component_consumer_failure", absolute_deadline - RETRIEVAL_RESERVE_SECONDS)
-                reconcile(ip, [row for row in manifest["component"] if row["remote_name"] == "analyze_component.py"], REMOTE + "/input")
+                reconcile(ip, [row for row in manifest["component"] if row["remote_name"] == "analyze_multistage.py"], REMOTE + "/input")
                 reconcile(ip, [next(row for row in manifest["component"] if row["remote_name"] == "remote_component_consumer.sh")], REMOTE + "/input")
                 worker = remote(ip, f"PARTITIONED_ATTENTION_REMOTE_ROOT={shlex.quote(REMOTE)} bash {shlex.quote(REMOTE + '/input/remote_component_consumer.sh')}", 900)
             else:
@@ -255,6 +263,7 @@ def main() -> int:
             final = {"classification": "component_reject", "component_result": result, "endpoint_executed": False}
         else:
             emit("component_pass_endpoint_staging")
+            validate_manifest(("endpoint_programs", "stack", "checkpoint"))
             reconcile(ip, manifest["endpoint_programs"] + manifest["stack"], REMOTE + "/input")
             reconcile(ip, manifest["checkpoint"], REMOTE + "/checkpoint")
             pool.update(PROJECT, {"runtime": "exact FP8+QKV+deferred-local-KV paired endpoint active", "checkpoint": "exact project-local immutable snapshot staged and verified"})

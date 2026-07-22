@@ -128,7 +128,7 @@ control_attention = [json.loads(x) for x in pathlib.Path(sys.argv[6]).read_text(
 candidate_attention = [json.loads(x) for x in pathlib.Path(sys.argv[7]).read_text().splitlines() if x]
 residency = [json.loads(x) for x in pathlib.Path(sys.argv[8]).read_text().splitlines() if x]
 deferred = lambda rows: any(x.get('candidate_path') == 'TritonAttnBackend.forward_extend.local_fp8_deferred_cache_commit' and x.get('qk_head_dim') == 256 and x.get('v_head_dim') == 256 and x.get('sliding_window_size') == 1024 for x in rows)
-path_ok = deferred(control_attention) and deferred(candidate_attention) and any(x.get('candidate_path') == 'extend_attention_fwd.global_head512_maxnreg128' and x.get('qk_head_dim') == 512 and x.get('v_head_dim') == 512 and x.get('q_heads') == 32 and x.get('kv_heads') == 4 and x.get('maxnreg') == 128 for x in residency)
+path_ok = deferred(control_attention) and deferred(candidate_attention) and any(x.get('candidate_path') == 'multistage.grouped_qk_softmax.sliced_v_4x128' and x.get('qk_head_dim') == 512 and x.get('v_head_dim') == 512 and x.get('q_heads') == 32 and x.get('kv_heads') == 4 and x.get('value_slices') == 4 and x.get('value_slice_width') == 128 and x.get('kernel_boundary_ends_value_accumulator_live_range') is True for x in residency)
 accounting = all(x.get('cache', {}).get('cached_prompt_tokens_delta') == 17120 and x.get('cache', {}).get('uncached_prompt_tokens_delta') == 117728 for x in (control, candidate))
 valid = path_ok and accounting and all(x.get('pass') for x in smoke)
 c = float(control['service_seconds_per_request']); q = float(candidate['service_seconds_per_request']); gain = 1 - q / c

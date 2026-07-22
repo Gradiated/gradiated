@@ -40,43 +40,51 @@
     }
   },
   "candidate": {
-    "id": "global_head512_maxnreg128",
-    "path": "artifacts/candidate_forced_residency_attention.py",
-    "sha256": "525e0b200e1f9cb09b53e3ed226f7da59f9e5df2b1196b45ae4898bdeaa3968c",
-    "query_tile": 32,
-    "key_tile": 64,
-    "value_splits": 1,
-    "maxnreg": 128,
-    "trade": "local-memory/L2 spill traffic for two-CTA register residency"
+    "id": "multistage.grouped_qk_softmax.sliced_v_4x128",
+    "path": "multistage_attention.py",
+    "sha256": "b9cde3115a4666108dd0378ea2bb7640f14bcae28591f549944e92474b8223e5",
+    "value_splits": 4,
+    "value_slice_width": 128,
+    "kernel_boundary_ends_value_accumulator_live_range": true,
+    "materialized_intermediate_bytes": 1375731712,
+    "trade": "terminate the monolithic value-accumulator live range at explicit QK/softmax and sliced-V kernel boundaries"
   },
   "runner": {
     "component_benchmark": {
-      "path": "component_benchmark.py",
-      "sha256": "d1167b32aaa45a8770747f122ed45892442cd0dbdeaf5b3d4695f441e219abfb"
+      "path": "multistage_component_benchmark.py",
+      "sha256": "2a661e4fa696f275874a29fff931d056ae49efe16f4ef6587e49df04b77eb6e6"
     },
     "remote_component": {
-      "path": "remote_component.sh",
-      "sha256": "87832721cb6c2ae0ee4ddb13aa3a5bccae032d1f2da7941b3c7bb523d10e0abc"
+      "path": "remote_multistage.sh",
+      "sha256": "4abb0c1272b3c36d78cd658be585c2b344ba79f06812fdbd7c6fd57c5684ca2c"
     },
     "remote_component_consumer": {
       "path": "remote_component_consumer.sh",
-      "sha256": "6089729ef925ed4613919e66e5a4cb0d63565df1b8283466af6992d4699476eb"
+      "sha256": "28687c6aba136ccafc092a7fb81e436504654477f09f772099d94084a2dd66fa"
     },
     "ncu_consumer": {
-      "path": "analyze_component.py",
-      "sha256": "77e80269e4d05b2f44da5548b0753e31ff77ff57e77b8856b0596857fec8a5ac"
+      "path": "analyze_multistage.py",
+      "sha256": "ec437e34249e5beb8d01b120429c7d5d74d4da745200ac78c2262708c4d55114"
     },
     "retained_owner": {
       "path": "run_component_owner.py",
-      "sha256": "7e1bbea04f5d57968423e3f572d5dd699bd48cd5238be95b3a1531302cdee3cd"
+      "sha256": "98dd1141a55196b80f8e10463f8316547f54027e7211e578b619930efb19b695"
     },
     "conditional_endpoint": {
       "path": "remote_endpoint_pair.sh",
-      "sha256": "acea00a779d6815d9f9cdc336f49da1ebaf24048461839f67fb310cdbfad6017"
+      "sha256": "278bfb07938139f1c996026fb6132e7040197bdb455ceec294d590210c20c0f3"
+    },
+    "conditional_endpoint_adapter": {
+      "path": "endpoint_sitecustomize.py",
+      "sha256": "d7fcd36edc64af8ef4c1af427dd9801876463ad56de53ba623de16a0458c7d34"
     },
     "input_manifest": {
-      "path": "GPU_INPUT_MANIFEST.json",
-      "sha256": "c27f5c40407c616ed4e74eb02197c1e48082b550a6656752969bb06c7ca6f25e"
+      "path": "MULTISTAGE_GPU_INPUT_MANIFEST.json",
+      "sha256": "1f651eaf1a91634e7798b8fc018e6e74108f1345837afb4f13db182e3f56ad3b"
+    },
+    "posthoc_ncu_capture_audit": {
+      "path": "audit_ncu_capture.py",
+      "sha256": "1f1c7725dc928375286c8be619aaa0145aec63bb9cba122267d7652be5c97a69"
     }
   },
   "offline_compile": {
@@ -86,10 +94,29 @@
   },
   "measured_component": {
     "path": "artifacts/FINAL_TERMINAL.json",
-    "sha256": "c3d99adf8318eeb815f924e35edb59f8a3c7783a6fe4e2709401b08930e72d12",
+    "sha256": "016e9ae82389d2af5d714eb7e2688aec8929410975c875283ba407c6f77de516",
     "raw_bundle_path": "artifacts/remote-component/component-compact.tar.gz",
-    "raw_bundle_sha256": "c4f1939076a5bcac8e05167cb2478005289f3588711a9e00106966ca47933bed",
+    "raw_bundle_sha256": "816d76adce98a6c9fe963b2be86cd4f6af275cf6a480bd4cc69056152b13cd39",
     "classification": "component_reject",
-    "evidence_type": "measured_exact_h200_cuda_and_ncu"
+    "control_median_ms": 2.437983989715576,
+    "candidate_median_ms": 2.5622079372406006,
+    "latency_reduction_fraction": -0.050953553447870226,
+    "oracle_max_abs_error": 0.171875,
+    "endpoint_executed": false,
+    "evidence_type": "measured_exact_h200_cuda_timing_and_oracle"
+  },
+  "ncu_capture_audit": {
+    "path": "artifacts/NCU_CAPTURE_AUDIT.json",
+    "sha256": "edc9cca9c752809812027a8b7c148a8ecd1b9fee25f55bb287dc222cc1ed7ae7",
+    "status": "invalid_ncu_capture",
+    "observed_kernel_type": "elementwise direct_copy",
+    "decision_impact": "none; exact-shape latency independently rejects and the admitted bytes also fail the oracle"
+  },
+  "oracle_root_cause_audit": {
+    "path": "artifacts/ORACLE_ROOT_CAUSE_AUDIT.json",
+    "sha256": "50e203fa9436a92dd21aa03cd55b6125eadf5b55a58345ed97bec72603845def",
+    "status": "scientific_implementation_defect",
+    "classification": "component_softmax_scale_omitted",
+    "decision_impact": "reject remains; the invalid measured path was already slower and no replay is authorized"
   }
 }

@@ -1,61 +1,65 @@
 {
   "component_terminal": {
     "candidate": {
-      "maximum_ms": 4.408991813659668,
-      "median_ms": 4.300479888916016,
-      "minimum_ms": 4.253568172454834,
+      "maximum_ms": 2.5767359733581543,
+      "median_ms": 2.5622079372406006,
+      "minimum_ms": 2.543776035308838,
       "samples_ms": [
-        4.315552234649658,
-        4.304671764373779,
-        4.321280002593994,
-        4.289279937744141,
-        4.288896083831787,
-        4.360767841339111,
-        4.3421759605407715,
-        4.293856143951416,
-        4.326015949249268,
-        4.258944034576416,
-        4.283872127532959,
-        4.253568172454834,
-        4.300479888916016,
-        4.298943996429443,
-        4.30620813369751,
-        4.25651216506958,
-        4.3427839279174805,
-        4.310688018798828,
-        4.408991813659668,
-        4.278240203857422,
-        4.270624160766602
+        2.5755839347839355,
+        2.5622079372406006,
+        2.5703039169311523,
+        2.5496959686279297,
+        2.5767359733581543,
+        2.5497279167175293,
+        2.558432102203369,
+        2.5504961013793945,
+        2.5639679431915283,
+        2.5520639419555664,
+        2.5569920539855957,
+        2.5646400451660156,
+        2.5626559257507324,
+        2.543776035308838,
+        2.5733439922332764
       ]
     },
-    "candidate_path": "extend_attention_fwd.global_head512_maxnreg128",
+    "candidate_path": "multistage.grouped_qk_softmax.sliced_v_4x128",
     "control": {
-      "maximum_ms": 2.59987211227417,
-      "median_ms": 2.4254400730133057,
-      "minimum_ms": 2.413408041000366,
+      "maximum_ms": 2.4589760303497314,
+      "median_ms": 2.437983989715576,
+      "minimum_ms": 2.4075520038604736,
       "samples_ms": [
-        2.59987211227417,
-        2.430783987045288,
-        2.4254400730133057,
-        2.4230079650878906,
-        2.439903974533081,
-        2.4211840629577637,
-        2.413408041000366,
-        2.419584035873413,
-        2.4372799396514893,
-        2.4199039936065674,
-        2.4245760440826416,
-        2.4270401000976562,
-        2.4389119148254395,
-        2.4401919841766357,
-        2.4184000492095947,
-        2.413408041000366,
-        2.4242238998413086,
-        2.431999921798706,
-        2.430720090866089,
-        2.4359359741210938,
-        2.41865611076355
+        2.4589760303497314,
+        2.4543039798736572,
+        2.417664051055908,
+        2.4554240703582764,
+        2.411936044692993,
+        2.443903923034668,
+        2.407968044281006,
+        2.4507200717926025,
+        2.409343957901001,
+        2.4530880451202393,
+        2.4180800914764404,
+        2.437983989715576,
+        2.4218239784240723,
+        2.4482879638671875,
+        2.4075520038604736
       ]
+    },
+    "dataflow": {
+      "kernel_boundary_ends_value_accumulator_live_range": true,
+      "stages": [
+        "grouped_fp32_qk_gemm",
+        "causal_fp32_softmax",
+        "four_independent_fp32_v_gemms_width128",
+        "concatenate_and_bf16_store"
+      ],
+      "temporary_memory": {
+        "grouped_input_bytes_fp32": 167772160,
+        "materialized_bytes_sum": 1375731712,
+        "probability_bytes_fp32": 536870912,
+        "score_bytes_fp32": 536870912,
+        "sliced_output_bytes_fp32": 134217728
+      }
     },
     "device": {
       "capability": [
@@ -67,98 +71,92 @@
       "total_memory_bytes": 150109880320
     },
     "identity": {
-      "baseline_source": "/work/input/inputs/extend_attention.v0.5.13.py",
       "baseline_source_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
-      "candidate_source_sha256": "525e0b200e1f9cb09b53e3ed226f7da59f9e5df2b1196b45ae4898bdeaa3968c",
+      "candidate_module_sha256": "b9cde3115a4666108dd0378ea2bb7640f14bcae28591f549944e92474b8223e5",
       "seed": 20260722,
-      "torch": "2.11.0+cu130",
-      "triton": "3.6.0"
+      "torch": "2.11.0+cu130"
     },
-    "latency_reduction_fraction": -0.7730720032069098,
+    "latency_reduction_fraction": -0.050953553447870226,
     "mechanism_pass": false,
-    "ncu_candidate_capture_requested": true,
+    "ncu_sliced_v_capture_requested": true,
     "oracle": {
       "all_finite": true,
-      "allclose_atol_0_005_rtol_0_005": true,
-      "max_abs_error": 0.0,
-      "max_relative_error": 0.0,
-      "mean_abs_error": 0.0,
-      "output_l1": 1166936.25
+      "allclose_atol_0_005_rtol_0_005": false,
+      "max_abs_error": 0.171875,
+      "max_relative_error": 38330.078125,
+      "mean_abs_error": 0.001428715419024229,
+      "output_l1": 1168010.0
     },
     "promotion_threshold_fraction": 0.05,
     "schema_version": 1,
     "shape": {
-      "candidate_maxnreg": 128,
-      "candidate_value_slice": 512,
-      "candidate_value_splits": 1,
       "causal": true,
-      "control_query_tile": 32,
-      "key_tile": 64,
       "kv_cache_dtype": "fp8_e5m2",
       "kv_heads": 4,
       "prefix_tokens": 0,
       "q_heads": 32,
       "qk_head_dim": 512,
       "query_tokens": 2048,
-      "v_head_dim": 512
+      "v_head_dim": 512,
+      "value_slice_width": 128,
+      "value_slices": 4
     },
     "status": "component_reject"
   },
   "consumer": {
     "ncu_csv": "/home/glmrunner/gemma4-partitioned-attention/artifacts/ncu-export.csv",
-    "ncu_csv_sha256": "cfb0e5ee3be9d7c434de4c4f35021628ca5ddc7d42f7d1da96f63c838812d4e4"
+    "ncu_csv_sha256": "4befcfdd08c4492d4fcc8660ab25104ba5ccc2fc9d7214900a6723e0378ceba5"
   },
   "counter_gate": {
+    "achieved_warp_occupancy_above_monolithic_12_496527_percent": true,
     "pass": true,
-    "register_ctas_at_least": 2,
-    "registers_per_thread_at_most": 128,
-    "shared_memory_ctas_at_least": 2
+    "registers_per_thread_below_monolithic_255": true
   },
   "mechanism_pass": false,
   "metrics": {
     "Block Size": {
       "unit": null,
-      "value": "(256, 1, 1)"
+      "value": "(128, 1, 1)"
     },
     "Grid Size": {
       "unit": null,
-      "value": "(1, 32, 64)"
+      "value": "(32768, 1, 1)"
     },
     "Kernel Name": {
       "unit": null,
-      "value": "_fwd_kernel"
+      "value": "void elementwise_kernel<128, 2, void gpu_kernel_impl_nocast<direct_copy_kernel_cuda(TensorIteratorBase &)::[lambda() (instance 3)]::operator ()() lambda() (instance 7)]::operator ()() lambda(float) (instance 1)]>(TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)"
     },
     "dram__throughput.avg.pct_of_peak_sustained_elapsed": {
       "unit": "%",
-      "value": 54.155986
+      "value": 8.194618
     },
     "gpu__time_duration.sum": {
-      "unit": "ms",
-      "value": 4.554272
+      "unit": "us",
+      "value": 30.08
     },
     "launch__occupancy_limit_registers": {
       "unit": "block",
-      "value": 2.0
+      "value": 21.0
     },
     "launch__occupancy_limit_shared_mem": {
       "unit": "block",
-      "value": 2.0
+      "value": 32.0
     },
     "launch__registers_per_thread": {
       "unit": "register/thread",
-      "value": 128.0
+      "value": 18.0
     },
     "launch__registers_per_thread_allocated": {
       "unit": "register/thread",
-      "value": 128.0
+      "value": 24.0
     },
     "launch__shared_mem_per_block": {
       "unit": "Kbyte/block",
-      "value": 103.424
+      "value": 1.024
     },
     "launch__shared_mem_per_block_dynamic": {
-      "unit": "Kbyte/block",
-      "value": 102.4
+      "unit": "byte/block",
+      "value": 0.0
     },
     "launch__sm_count": {
       "unit": "SM",
@@ -166,11 +164,11 @@
     },
     "launch__waves_per_multiprocessor": {
       "unit": null,
-      "value": 7.76
+      "value": 15.52
     },
     "lts__throughput.avg.pct_of_peak_sustained_elapsed": {
       "unit": "%",
-      "value": 69.384687
+      "value": 31.600983
     },
     "profiler__replayer_passes": {
       "unit": "pass",
@@ -178,24 +176,24 @@
     },
     "sm__maximum_warps_avg_per_active_cycle": {
       "unit": "warp",
-      "value": 16.0
+      "value": 64.0
     },
     "sm__maximum_warps_per_active_cycle_pct": {
       "unit": "%",
-      "value": 25.0
+      "value": 100.0
     },
     "sm__pipe_tensor_cycles_active.avg.pct_of_peak_sustained_active": {
       "unit": "%",
-      "value": 6.72807
+      "value": 4.791248
     },
     "sm__warps_active.avg.pct_of_peak_sustained_active": {
       "unit": "%",
-      "value": 24.171867
+      "value": 85.237988
     }
   },
   "producer": {
-    "ncu_report": "/home/glmrunner/gemma4-partitioned-attention/artifacts/candidate-global.ncu-rep",
-    "ncu_report_sha256": "209ddc3db62aa3e0d597f4b563b8f82e01c11b8a6f56e290f85e045068f4a6f6"
+    "ncu_report": "/home/glmrunner/gemma4-partitioned-attention/artifacts/candidate-sliced-v.ncu-rep",
+    "ncu_report_sha256": "51581edc4b1cb2c5c46f7edf8e408fdbc7500ab97a5e404afaaba76a2e059236"
   },
   "promotion": "reject_without_endpoint",
   "schema_version": 1,

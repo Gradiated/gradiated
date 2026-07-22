@@ -16,6 +16,12 @@ First compile and measure the exact global shape on H200 with a numerical oracle
 
 Record component latency, registers/thread, achieved occupancy, tensor/L2/DRAM activity, candidate-path proof, full endpoint service seconds/request, exact token/cache accounting, output sanity, useful GPU time, and spend. A stable simple improvement is retainable even if it does not alone close the `0.6381105231 s/request` ceiling.
 
+## Continuation after the forced-register result
+
+The measured `maxnreg=128` result proves that spilling one unchanged monolithic kernel is the wrong trade: it doubled theoretical CTA residency but raised L2/DRAM traffic and regressed latency 77.31%. Continue with a genuinely partitioned algorithm that ends the live range between kernels or CTAs—such as QK/softmax followed by sliced V accumulation with compact intermediate state—rather than another register cap or tile sweep. The next result must measure one exact multi-stage implementation and its temporary-memory/recomputation cost on H200. The project remains open until that distinct dataflow is measured.
+
+That required continuation is now measured and rejected. The exact-shape grouped-QK/causal-softmax plus four-way width-128 sliced-V candidate was 5.10% slower than control, failed the numerical oracle because its component path omitted the baseline softmax scale, and materialized 1.376 GB. Its endpoint gate therefore remained closed. This project is complete; no replay, profiler-only retry, register cap, or tile sweep is admitted.
+
 ## Resources
 
 - Reuse a director-registered H200 bench; researchers must not create or destroy it.

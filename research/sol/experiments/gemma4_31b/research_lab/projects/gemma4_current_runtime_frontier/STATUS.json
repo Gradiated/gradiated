@@ -1,0 +1,28 @@
+{
+  "status": "active",
+  "priority": 960,
+  "researcher_profile": "execution",
+  "authorized_spend_usd": 12.0,
+  "allocation_limit": 1,
+  "active_session": null,
+  "summary": "Current vLLM is source-bound and its exact c32 H200 endpoint launcher is ready; no shared bench exists yet, so no GPU arm has started.",
+  "next_action": "After the harness records the reservation and an independent nvidia-h200-sxm bench is available, atomically claim it and execute remote_current_vllm_h200.sh with the project-local inputs snapshot and an immutable checkpoint snapshot. Run the current-vLLM FP8-E5M2 KV c32 endpoint once; capture the typed endpoint terminal or source/CUDA incompatibility without replaying the July image.",
+  "external_dependency": {
+    "type": "shared_bench_unavailable",
+    "required_accelerator": "nvidia-h200-sxm",
+    "required_count": 1,
+    "reason": "Independent current-runtime endpoint candidate; no compatible bench is registered in runtime/gpus.json.",
+    "reservation_required": true
+  },
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "compute_budget": "At most 180 H200 claim minutes for one current full-stack endpoint candidate and matched control.",
+  "economic_ceiling_seconds_per_request": 0.6381105231,
+  "current_frontier_seconds_per_request": 0.6892200126,
+  "candidate_binding": "CANDIDATE_BINDING.json",
+  "launch": {
+    "remote_script": "remote_current_vllm_h200.sh",
+    "image": "vllm/vllm-openai@sha256:f0b9a0dc75a9fca3b6811e3279367b2d6a448055a000bfd13859587d74cef268",
+    "source_commit": "1a659a0c370942bae3c8567902e38bddbbae95f3",
+    "input_runner_sha256": "ae3d22f95a1df672ccb8924f83d3e2b21b893556151cee1f0708c8e08fc8f7a1"
+  }
+}

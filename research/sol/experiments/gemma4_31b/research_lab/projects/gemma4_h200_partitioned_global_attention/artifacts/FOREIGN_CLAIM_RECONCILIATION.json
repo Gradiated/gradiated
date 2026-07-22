@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "status": "terminal",
+  "classification": "foreign_pre_invocation_orphan_reconciled",
+  "bench_id": "h200-residual-kernel-e00fpjxk4ww2g49apd",
+  "foreign_project": "gemma4_h200_fp8_layer_dataflow_fusion",
+  "director_priority": "gemma4_h200_partitioned_global_attention",
+  "foreign_claimed_at_utc": "2026-07-22T12:27:50.928603Z",
+  "foreign_last_heartbeat_utc": "2026-07-22T12:35:06.981319Z",
+  "foreign_owner_state": "inactive_failed",
+  "foreign_local_failures": [
+    "typed_remote_boundary:ssh_identity_failed",
+    "project_local_snapshot_invalid:run_bench_owner.py"
+  ],
+  "foreign_candidate_cuda_invocation_started": false,
+  "foreign_scientific_invocation_started": false,
+  "guest_probe": {
+    "reachable": true,
+    "accelerator": "NVIDIA H200",
+    "expected_foreign_remote_root": "/home/glmrunner/gemma4-fp8-layer-fusion",
+    "foreign_remote_root_present": false
+  },
+  "decision": "Release the empty orphaned foreign claim ready, then let the director-priority project atomically claim through the pool. No foreign scientific arm is consumed or replayed."
+}

@@ -15,3 +15,13 @@ Evidence: `artifacts/OFFLINE_COMPILE.json` is derived proxy evidence from Triton
 Interpretation: direct two-way V partitioning does not reduce allocated registers in the proxy compiler and is not worth the first GPU arm. A forced register cap is the smallest exact realization of the measured causal trade; its extra spills make H200 component timing and L2/DRAM counters decisive.
 
 Next: claim the first shared v0.5.13 H200, run `remote_component.sh` from the immutable project-local snapshot, and promote directly to the paired retained-stack endpoint only when the exact oracle, >=5% median latency reduction, <=128 registers/thread, and >=2 CTA residency gates all pass.
+
+## 2026-07-22 — exact H200 component rejects forced residency
+
+Question: does forcing the unchanged exact 32x64 global head-512 kernel to 128 registers trade spills for enough two-CTA residency to clear the preregistered 5% component gate?
+
+Action: materialized the exact checkpoint and retained-stack bytes inside this project before the claim, then ran one retained owner on `h200-residual-kernel-e00fpjxk4ww2g49apd`. A lower-priority orphaned claim was corrected only after its two local failures proved pre-invocation and a direct healthy-guest probe proved `/home/glmrunner/gemma4-fp8-layer-fusion` absent. This project claimed at `12:49:46.784502Z`, hash-staged only the component inputs, pulled the pinned v0.5.13 image, ran the exact alternating timing/oracle plus one NCU capture, retrieved the compact/raw terminal set, and released ready at `12:55:29.015942Z`. Claim exposure was 342.222 seconds / `$0.233852`.
+
+Evidence: the control median is `2.425440 ms`; `maxnreg=128` is `4.300480 ms`, a `-0.773072` reduction (77.31% slower). The oracle is exact (`max_abs_error=0`, all finite, allclose passes). NCU confirms the intended mechanism inputs—128 registers/thread and two CTA limits from both registers and shared memory—but shows `69.384687%` L2 throughput, `54.155986%` DRAM throughput, only `6.728070%` tensor activity, and a `4.554272 ms` captured kernel. The spill/L2 cost dominates the residency benefit. Durable evidence is `artifacts/FINAL_TERMINAL.json`; the verified raw bundle is `artifacts/remote-component/component-compact.tar.gz` at SHA-256 `c4f1939076a5bcac8e05167cb2478005289f3588711a9e00106966ca47933bed`.
+
+Decision: reject `extend_attention_fwd.global_head512_maxnreg128`. The component gate failed, so the exact paired FP8+QKV+deferred-local-KV endpoint and checkpoint staging were not executed. No retry or successor in this project is admitted; the warm image/caches are released to FP8 layer-dataflow fusion.

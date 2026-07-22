@@ -1,0 +1,11 @@
+{
+  "project": "shared: next gemma4_h200_fp8_layer_dataflow_fusion",
+  "runtime": "Warm pinned SGLang v0.5.13 kernel environment; attention component finished and rejected.",
+  "image": "Pinned SGLang v0.5.13 digest sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6 is resident.",
+  "checkpoint": "Not staged by partitioned attention because the component gate rejected; sibling project may reconcile its own immutable snapshot.",
+  "caches": "Docker image and component Triton/CUDA caches retained warm.",
+  "server_state": "No server or container retained.",
+  "owner_unit": null,
+  "attention_result": "component_reject",
+  "attention_claim_cost_usd": 0.233852
+}

@@ -1,0 +1,45 @@
+{"checkpoint_bytes": 62578655208, "event": "inputs_validated", "timestamp_utc": "2026-07-22T12:42:57.508217Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:42:57.509104Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:43:17.510105Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:43:37.511225Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:43:57.512347Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:44:17.513470Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:44:37.514519Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:44:57.515528Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:45:17.516584Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:45:37.517672Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:45:57.518695Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:46:17.519703Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:46:37.520660Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:46:57.521612Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:47:17.522577Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:47:37.523568Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:47:57.524777Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:48:17.525926Z"}
+{"error": "no available GPU bench matches this project", "event": "bench_wait", "timestamp_utc": "2026-07-22T12:48:37.526913Z"}
+{"checkpoint_bytes": 62578655208, "event": "inputs_validated", "timestamp_utc": "2026-07-22T12:49:46.783384Z"}
+{"absolute_deadline_epoch": 1784735386.7925327, "bench": "h200-residual-kernel-e00fpjxk4ww2g49apd", "event": "bench_claimed", "timestamp_utc": "2026-07-22T12:49:46.792559Z"}
+{"event": "guest_reached", "telemetry": "NVIDIA H200\n/dev/vda1           242G   17G      225G   7% /", "timestamp_utc": "2026-07-22T12:49:48.004866Z"}
+{"bytes": 4214, "event": "input_transfer_started", "path": "remote_component.sh", "timestamp_utc": "2026-07-22T12:49:49.092703Z"}
+{"bytes": 4214, "event": "input_finalized", "path": "remote_component.sh", "timestamp_utc": "2026-07-22T12:49:50.355223Z"}
+{"bytes": 1984, "event": "input_transfer_started", "path": "remote_component_consumer.sh", "timestamp_utc": "2026-07-22T12:49:50.882044Z"}
+{"bytes": 1984, "event": "input_finalized", "path": "remote_component_consumer.sh", "timestamp_utc": "2026-07-22T12:49:52.237999Z"}
+{"bytes": 9791, "event": "input_transfer_started", "path": "component_benchmark.py", "timestamp_utc": "2026-07-22T12:49:52.750003Z"}
+{"bytes": 9791, "event": "input_finalized", "path": "component_benchmark.py", "timestamp_utc": "2026-07-22T12:49:54.135377Z"}
+{"bytes": 3598, "event": "input_transfer_started", "path": "forced_residency_attention.py", "timestamp_utc": "2026-07-22T12:49:54.615502Z"}
+{"bytes": 3598, "event": "input_finalized", "path": "forced_residency_attention.py", "timestamp_utc": "2026-07-22T12:49:55.821632Z"}
+{"bytes": 3707, "event": "input_transfer_started", "path": "analyze_component.py", "timestamp_utc": "2026-07-22T12:49:56.369791Z"}
+{"bytes": 3707, "event": "input_finalized", "path": "analyze_component.py", "timestamp_utc": "2026-07-22T12:49:57.769656Z"}
+{"bytes": 33963, "event": "input_transfer_started", "path": "inputs/extend_attention.v0.5.13.py", "timestamp_utc": "2026-07-22T12:49:58.242344Z"}
+{"bytes": 33963, "event": "input_finalized", "path": "inputs/extend_attention.v0.5.13.py", "timestamp_utc": "2026-07-22T12:49:59.545332Z"}
+{"event": "component_worker_started", "timestamp_utc": "2026-07-22T12:49:59.546659Z"}
+{"event": "retrieval", "phase": "component", "source": "/home/glmrunner/gemma4-partitioned-attention/artifacts/REMOTE_TERMINAL.json", "success": true, "timestamp_utc": "2026-07-22T12:55:23.702067Z"}
+{"event": "retrieval", "phase": "component", "source": "/home/glmrunner/gemma4-partitioned-attention/artifacts/component/INVOCATION_STATE.json", "success": true, "timestamp_utc": "2026-07-22T12:55:24.529592Z"}
+{"event": "retrieval", "phase": "component", "source": "/home/glmrunner/gemma4-partitioned-attention/artifacts/COMPONENT_RESULT.json", "success": true, "timestamp_utc": "2026-07-22T12:55:25.421783Z"}
+{"event": "retrieval", "phase": "component", "source": "/home/glmrunner/gemma4-partitioned-attention/artifacts/component.stdout", "success": true, "timestamp_utc": "2026-07-22T12:55:26.179478Z"}
+{"event": "retrieval", "phase": "component", "source": "/home/glmrunner/gemma4-partitioned-attention/artifacts/component.stderr", "success": true, "timestamp_utc": "2026-07-22T12:55:27.137555Z"}
+{"event": "retrieval", "phase": "component", "source": "/home/glmrunner/gemma4-partitioned-attention/component-compact.tar.gz", "success": true, "timestamp_utc": "2026-07-22T12:55:28.163065Z"}
+{"event": "retrieval", "phase": "component", "source": "/home/glmrunner/gemma4-partitioned-attention/component-compact.tar.gz.sha256", "success": true, "timestamp_utc": "2026-07-22T12:55:29.012811Z"}
+{"candidate_started": true, "event": "component_worker_returned", "returncode": 2, "terminal": "component_complete", "timestamp_utc": "2026-07-22T12:55:29.014135Z"}
+{"classification": "component_reject", "event": "scientific_terminal", "timestamp_utc": "2026-07-22T12:55:29.014941Z"}
+{"condition": "ready", "elapsed_seconds": 342.2229423522949, "event": "bench_released", "timestamp_utc": "2026-07-22T12:55:29.016781Z"}

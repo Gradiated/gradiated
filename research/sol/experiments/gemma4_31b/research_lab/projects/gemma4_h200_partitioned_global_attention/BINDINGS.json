@@ -56,16 +56,40 @@
     },
     "remote_component": {
       "path": "remote_component.sh",
-      "sha256": "f5fdc16b99676c7e86f7bf765beca2774d406835e0284795480ec189fd52443e"
+      "sha256": "87832721cb6c2ae0ee4ddb13aa3a5bccae032d1f2da7941b3c7bb523d10e0abc"
+    },
+    "remote_component_consumer": {
+      "path": "remote_component_consumer.sh",
+      "sha256": "6089729ef925ed4613919e66e5a4cb0d63565df1b8283466af6992d4699476eb"
     },
     "ncu_consumer": {
       "path": "analyze_component.py",
       "sha256": "77e80269e4d05b2f44da5548b0753e31ff77ff57e77b8856b0596857fec8a5ac"
+    },
+    "retained_owner": {
+      "path": "run_component_owner.py",
+      "sha256": "7e1bbea04f5d57968423e3f572d5dd699bd48cd5238be95b3a1531302cdee3cd"
+    },
+    "conditional_endpoint": {
+      "path": "remote_endpoint_pair.sh",
+      "sha256": "acea00a779d6815d9f9cdc336f49da1ebaf24048461839f67fb310cdbfad6017"
+    },
+    "input_manifest": {
+      "path": "GPU_INPUT_MANIFEST.json",
+      "sha256": "c27f5c40407c616ed4e74eb02197c1e48082b550a6656752969bb06c7ca6f25e"
     }
   },
   "offline_compile": {
     "path": "artifacts/OFFLINE_COMPILE.json",
     "sha256": "deff1fa3ff98b038d78a8d6b03ed2caf8033129cb87b6df758e7aadb9756aa91",
     "evidence_type": "derived_offline_triton_3_7_1_sm90_compile_proxy"
+  },
+  "measured_component": {
+    "path": "artifacts/FINAL_TERMINAL.json",
+    "sha256": "c3d99adf8318eeb815f924e35edb59f8a3c7783a6fe4e2709401b08930e72d12",
+    "raw_bundle_path": "artifacts/remote-component/component-compact.tar.gz",
+    "raw_bundle_sha256": "c4f1939076a5bcac8e05167cb2478005289f3588711a9e00106966ca47933bed",
+    "classification": "component_reject",
+    "evidence_type": "measured_exact_h200_cuda_and_ncu"
   }
 }

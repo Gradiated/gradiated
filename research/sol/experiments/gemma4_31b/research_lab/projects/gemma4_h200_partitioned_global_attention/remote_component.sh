@@ -8,6 +8,41 @@ image=docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a
 mkdir -p "$artifacts"
 rm -f "$artifacts/COMPONENT_RESULT.json" "$artifacts/candidate-global.ncu-rep" "$artifacts/ncu-export.csv"
 
+terminal() {
+  python3 - "$artifacts/REMOTE_TERMINAL.json" "$1" "$2" <<'PY'
+import datetime, json, os, pathlib, sys
+path = pathlib.Path(sys.argv[1])
+invocation = path.parent / "component/INVOCATION_STATE.json"
+state = json.loads(invocation.read_text()) if invocation.is_file() else {}
+value = {
+    "schema_version": 1,
+    "status": "terminal",
+    "classification": sys.argv[2],
+    "message": sys.argv[3],
+    "candidate_cuda_invocation_started": state.get("candidate_cuda_invocation_started", False),
+    "scientific_invocation_started": state.get("scientific_invocation_started", False),
+    "timestamp_utc": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
+}
+temporary = path.with_suffix(".part")
+temporary.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
+os.replace(temporary, path)
+PY
+}
+
+compact() {
+  set +e
+  tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner \
+    -czf "$root/component-compact.tar.gz" -C "$artifacts" .
+  sha256sum "$root/component-compact.tar.gz" >"$root/component-compact.tar.gz.sha256"
+}
+trap compact EXIT
+trap 'test -f "$artifacts/REMOTE_TERMINAL.json" || terminal integration_failure "$BASH_COMMAND"' ERR
+rm -f "$artifacts/REMOTE_TERMINAL.json"
+
+sudo docker image inspect "$image" >/dev/null 2>&1 || \
+  sudo docker pull "$image" >"$artifacts/image-pull.stdout" 2>"$artifacts/image-pull.stderr"
+sudo docker image inspect "$image" >"$artifacts/image-inspect.json"
+
 ncu_path=$(sudo docker run --rm "$image" sh -lc 'command -v ncu || find /opt/nvidia -type f -name ncu 2>/dev/null | head -n1' | tail -n1)
 test -n "$ncu_path"
 
@@ -44,21 +79,10 @@ python3 "$input/analyze_component.py" \
 analyze_rc=$?
 set -e
 
-python3 - "$artifacts/REMOTE_TERMINAL.json" "$benchmark_rc" "$analyze_rc" <<'PY'
-import datetime, json, os, pathlib, sys
-path = pathlib.Path(sys.argv[1])
-value = {
-    "schema_version": 1,
-    "status": "terminal",
-    "classification": "component_complete" if int(sys.argv[3]) in (0, 2) else "component_consumer_failure",
-    "benchmark_returncode": int(sys.argv[2]),
-    "analyzer_returncode": int(sys.argv[3]),
-    "candidate_cuda_invocation_started": json.loads((path.parent / "component/INVOCATION_STATE.json").read_text()).get("candidate_cuda_invocation_started", False),
-    "timestamp_utc": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
-}
-temporary = path.with_suffix(".part")
-temporary.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
-os.replace(temporary, path)
-PY
+if [[ "$analyze_rc" -eq 0 || "$analyze_rc" -eq 2 ]]; then
+  terminal component_complete "benchmark_rc=$benchmark_rc analyzer_rc=$analyze_rc"
+else
+  terminal component_consumer_failure "benchmark_rc=$benchmark_rc analyzer_rc=$analyze_rc"
+fi
 
 exit "$analyze_rc"

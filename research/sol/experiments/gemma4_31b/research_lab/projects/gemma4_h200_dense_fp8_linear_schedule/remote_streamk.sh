@@ -135,11 +135,16 @@ run_exact component streamk-component
 sudo docker stop -t 30 streamk-component >/dev/null 2>&1 || true
 cat "$artifacts/build.stdout" "$artifacts/build.stderr" >"$artifacts/build.combined.log"
 set +e
+sync_args=()
+if [[ -f "$program/inputs/sync/TERMINAL.json" && -f "$program/inputs/sync/BINDING.json" ]]; then
+  sync_args=(--sync-terminal "$program/inputs/sync/TERMINAL.json" --sync-binding "$program/inputs/sync/BINDING.json")
+fi
 python3 "$program/consume_component.py" \
   --audit "$artifacts/component-audit/down_streamk.jsonl" \
   --runner-terminal "$artifacts/component/TERMINAL.json" \
   --build-log "$artifacts/build.combined.log" \
-  --output "$artifacts/COMPONENT_TERMINAL.json"
+  --output "$artifacts/COMPONENT_TERMINAL.json" \
+  "${sync_args[@]}"
 component_rc=$?
 set -e
 if [[ "$component_rc" -ne 0 ]]; then

@@ -87,6 +87,7 @@ def main() -> int:
     parser.add_argument("--bench", required=True)
     parser.add_argument("--artifact-root", type=pathlib.Path, required=True)
     parser.add_argument("--absolute-deadline-epoch", type=int, required=True)
+    parser.add_argument("--input-manifest", type=pathlib.Path, default=PROJECT / "GPU_INPUT_MANIFEST.json")
     args = parser.parse_args()
     args.artifact_root.mkdir(parents=True, exist_ok=False)
     events = args.artifact_root / "outer-events.jsonl"
@@ -96,7 +97,10 @@ def main() -> int:
             handle.write(json.dumps({"epoch": time.time(), "event": event, **fields}, sort_keys=True) + "\n")
             handle.flush()
 
-    manifest = json.loads((PROJECT / "GPU_INPUT_MANIFEST.json").read_text())
+    input_manifest = args.input_manifest.resolve()
+    if PROJECT not in input_manifest.parents:
+        raise RuntimeError("project_local_input_manifest_outside_project")
+    manifest = json.loads(input_manifest.read_text())
     if manifest.get("pass") is not True:
         raise RuntimeError("project_local_input_manifest_invalid")
     for section in ("checkpoint", "programs"):
@@ -195,7 +199,7 @@ def main() -> int:
         if prepared.returncode:
             raise RuntimeError("typed_remote_boundary:prepare_failed")
 
-        def stage(source: pathlib.Path, destination: str) -> None:
+        def stage(source: pathlib.Path, destination: str, reusable_remote: str | None = None) -> None:
             expected = sha256(source)
             partial = f"{destination}.{expected}.part"
             matched = run_ssh(
@@ -205,6 +209,20 @@ def main() -> int:
                 timeout=max(60, min(1800, claim_deadline - int(time.time()))),
             )
             if matched.returncode:
+                if reusable_remote is not None:
+                    mode = "0555" if source.suffix == ".sh" else "0444"
+                    reused = run_ssh(
+                        ip,
+                        KEY,
+                        f"test -f {shlex.quote(reusable_remote)} && "
+                        f"test \"$(sha256sum {shlex.quote(reusable_remote)} | awk '{{print $1}}')\" = {expected} && "
+                        f"rm -f {shlex.quote(partial)} && ln {shlex.quote(reusable_remote)} {shlex.quote(partial)} && "
+                        f"chmod {mode} {shlex.quote(partial)} && mv -f {shlex.quote(partial)} {shlex.quote(destination)}",
+                        timeout=max(60, min(1800, claim_deadline - int(time.time()))),
+                    )
+                    if reused.returncode == 0:
+                        emit("resident_input_reused", name=source.name, sha256=expected, source=reusable_remote)
+                        return
                 transferred = scp(
                     ip,
                     str(source),
@@ -225,10 +243,15 @@ def main() -> int:
             emit("input_staged", name=source.name, bytes=source.stat().st_size, sha256=expected)
 
         for row in manifest["checkpoint"]:
-            stage(PROJECT / row["path"], f"{REMOTE}/checkpoint/{pathlib.Path(row['path']).name}")
+            name = pathlib.Path(row["path"]).name
+            stage(
+                PROJECT / row["path"],
+                f"{REMOTE}/checkpoint/{name}",
+                f"/home/glmrunner/gemma4-h200-decode-sync-graph-elimination/checkpoint/{name}",
+            )
         for row in manifest["programs"]:
             stage(PROJECT / row["path"], f"{REMOTE}/{pathlib.Path(row['path']).name}")
-        stage(PROJECT / "GPU_INPUT_MANIFEST.json", f"{REMOTE}/GPU_INPUT_MANIFEST.json")
+        stage(input_manifest, f"{REMOTE}/GPU_INPUT_MANIFEST.json")
         extracted = run_ssh(
             ip,
             KEY,

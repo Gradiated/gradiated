@@ -4,9 +4,20 @@
   "researcher_profile": "deep",
   "authorized_spend_usd": 20.0,
   "allocation_limit": 1,
-  "active_session": null,
-  "summary": "Frozen exact v0.5.13 down-projection deterministic Stream-K candidate is fully materialized and wired for real-consumer decode/prefill measurement; target H200 execution is blocked only by the empty director-owned pool.",
-  "next_action": "Director: register one nvidia-h200-sxm bench with at least 141 GB HBM, preferably retaining the pinned SGLang v0.5.13 image/checkpoint/build caches. Researcher: atomically claim it and run run_bench_owner.py once. The owner performs a tiny real-request discovery, exact M=32 decode fallback proof, real-consumer M=1409/1631/2048 prefill correctness/timing, and only then a conditional c32 pair if the measured whole-request bound reaches 5% or a compatible synchronization winner makes the stack cross 0.6381105231 s/request.",
+  "active_session": {
+    "unit": "gemma4-h200-dense-streamk-20260722t2236z.service",
+    "unit_manager": "user",
+    "main_pid": 3425143,
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h200-dense-streamk-20260722t2236z.service",
+    "started_at_utc": "2026-07-22T22:36:00Z",
+    "absolute_deadline_utc": "2026-07-23T08:00:00Z",
+    "absolute_deadline_epoch": 1784793600,
+    "artifact_root": "artifacts/dense-streamk-20260722t2236z",
+    "expected_terminal": "artifacts/dense-streamk-20260722t2236z/owner/TERMINAL.json",
+    "forward_progress": "Durable follow-on is waiting for the active priority-1150 synchronization owner. Before claiming, it materializes and hashes that terminal under this project, derives the frozen promotion gate, and then invokes run_bench_owner.py exactly once."
+  },
+  "summary": "The frozen dense-FP8 Stream-K program is durably queued behind the active synchronization owner on the retained H200; its bounded follow-on will materialize the synchronization terminal locally before one atomic claim and measurement.",
+  "next_action": "Monitor gemma4-h200-dense-streamk-20260722t2236z.service through synchronization release, project-local terminal binding, one run_bench_owner.py invocation, repair-only handshakes, and the measured component or conditional endpoint terminal.",
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
   "compute_budget": "One shared H200, at most four claimed GPU-hours, $20 total, and five wall-clock hours from first claim.",
   "economic_ceiling_seconds_per_request": 0.6381105231,
@@ -20,7 +31,7 @@
     "checkpoint_bytes": 62578655208,
     "checkpoint_hashes_verified": true,
     "cuda_compiled": false,
-    "reason_cuda_uncompiled": "no compatible shared H200 bench"
+    "reason_cuda_uncompiled": "priority synchronization owner currently holds the retained shared H200"
   },
   "pool_boundary": {
     "diagnostic": "POOL_CLAIM_DIAGNOSTIC.json",

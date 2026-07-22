@@ -5,7 +5,7 @@ project=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/project
 artifacts="$project/artifacts/current-vllm-h200-20260722t1231z"
 remote=/home/glmrunner/gemma4-current-vllm
 ip=195.242.29.186
-key=/root/.config/nebius/glm-campaign/ssh_ed25519
+key=/root/.config/gradiated/providers/gcore/id_ed25519
 ssh_opts=(-i "$key" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30)
 mkdir -p "$artifacts"
 
@@ -18,7 +18,8 @@ PY
 }
 
 retrieve() {
-  rsync -az --partial -e "ssh -i $key -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30" "glmrunner@$ip:$remote/artifacts/" "$artifacts/remote-retrieved/" >"$artifacts/retrieve.stdout.log" 2>"$artifacts/retrieve.stderr.log" || return 1
+  mkdir -p "$artifacts/remote-retrieved"
+  ssh "${ssh_opts[@]}" "glmrunner@$ip" "test -d $remote/artifacts && tar -C $remote/artifacts -cf - ." | tar -C "$artifacts/remote-retrieved" -xf - >"$artifacts/retrieve.stdout.log" 2>"$artifacts/retrieve.stderr.log" || return 1
 }
 
 finish() {
@@ -42,7 +43,7 @@ PY
 trap finish EXIT
 
 ssh "${ssh_opts[@]}" "glmrunner@$ip" "mkdir -p $remote/input $remote/artifacts $remote/checkpoint"
-rsync -az --partial -e "ssh -i $key -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30" "$project/inputs/" "glmrunner@$ip:$remote/input/" >"$artifacts/input-transfer.stdout.log" 2>"$artifacts/input-transfer.stderr.log"
-rsync -az --partial --ignore-existing -e "ssh -i $key -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30" "$project/inputs/checkpoint/" "glmrunner@$ip:$remote/checkpoint/" >"$artifacts/checkpoint-transfer.stdout.log" 2>"$artifacts/checkpoint-transfer.stderr.log"
-rsync -az -e "ssh -i $key -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30" "$project/remote_current_vllm_h200.sh" "glmrunner@$ip:$remote/remote_current_vllm_h200.sh"
+tar -C "$project/inputs" --exclude='./checkpoint' -cf - . | ssh "${ssh_opts[@]}" "glmrunner@$ip" "tar -C $remote/input -xf -" >"$artifacts/input-transfer.stdout.log" 2>"$artifacts/input-transfer.stderr.log"
+tar -C "$project/inputs/checkpoint" -cf - . | ssh "${ssh_opts[@]}" "glmrunner@$ip" "tar -C $remote/checkpoint -xf -" >"$artifacts/checkpoint-transfer.stdout.log" 2>"$artifacts/checkpoint-transfer.stderr.log"
+cat "$project/remote_current_vllm_h200.sh" | ssh "${ssh_opts[@]}" "glmrunner@$ip" "cat > $remote/remote_current_vllm_h200.sh && chmod 700 $remote/remote_current_vllm_h200.sh"
 ssh "${ssh_opts[@]}" "glmrunner@$ip" "cd $remote/checkpoint && sha256sum model.safetensors.index.json config.json tokenizer.json > $remote/artifacts/checkpoint-identity.sha256 && bash $remote/remote_current_vllm_h200.sh" >"$artifacts/remote.stdout.log" 2>"$artifacts/remote.stderr.log"

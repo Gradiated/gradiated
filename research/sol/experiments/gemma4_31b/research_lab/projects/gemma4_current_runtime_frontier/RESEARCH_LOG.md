@@ -13,3 +13,11 @@ Action: inspected the live empty GPU pool once, current official vLLM source, it
 Evidence: current source has `Gemma4Attention` and current cache configuration lists `fp8_e5m2`, documented as CUDA-supported; the image digest is resolved for linux/amd64. The prior pinned vLLM terminal used a July image and stopped at its E5M2 admission assertion, so it is not a replay of this current source/image.
 
 Interpretation and next move: vLLM is the strongest direct independent candidate, with BF16 checkpoint weights plus FP8-E5M2 KV explicitly labeled as a representation difference from the dynamic-FP8 SGLang frontier. The only present blocker is typed external capacity: the shared pool reports zero benches and the reservation is not durable. On reservation, claim one independent H200 and run the prepared endpoint exactly once; do not add another readiness stage.
+
+## 2026-07-22 — pre-invocation SSH access blocker
+
+Action: materialized the bound 59-GiB immutable checkpoint under `inputs/checkpoint`, verified its index/config/tokenizer hashes, atomically claimed `h200-current-runtime-e00s5ggxfqbn6ctb02`, and launched the bounded outer owner.
+
+Evidence: the provider returned `195.242.29.186` and accepted the SSH host handshake, then rejected `/root/.config/nebius/glm-campaign/ssh_ed25519` for `glmrunner` with `Permission denied (publickey)`. `artifacts/current-vllm-h200-20260722t1231z/OUTER_TERMINAL.json` and the systemd journal record the failure; remote retrieval consequently had no worker terminal. No checkpoint transfer, Docker pull, CUDA call, model load, server start, or scored endpoint request began.
+
+Interpretation: this is a typed remote-access integration blocker, not a candidate outcome or an invocation of the current-vLLM arm. The bench is maintenance-marked for director SSH-key/access repair. The outer owner is patched so a future ordinary pre-invocation access/retrieval fault writes `REPAIR_READY.json` and preserves a claim rather than releasing it.

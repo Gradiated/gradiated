@@ -5,14 +5,15 @@
   "authorized_spend_usd": 12.0,
   "allocation_limit": 1,
   "active_session": null,
-  "summary": "Current vLLM is source-bound and its exact c32 H200 endpoint launcher is ready; no shared bench exists yet, so no GPU arm has started.",
-  "next_action": "After the harness records the reservation and an independent nvidia-h200-sxm bench is available, atomically claim it and execute remote_current_vllm_h200.sh with the project-local inputs snapshot and an immutable checkpoint snapshot. Run the current-vLLM FP8-E5M2 KV c32 endpoint once; capture the typed endpoint terminal or source/CUDA incompatibility without replaying the July image.",
+  "summary": "Pre-invocation remote-access blocker: the director-registered current-vLLM H200 accepted TCP/SSH host identity but rejected the registered glmrunner SSH key; no checkpoint byte, image, CUDA call, server start, or endpoint request began.",
+  "next_action": "Director: inspect and re-admit h200-current-runtime-e00s5ggxfqbn6ctb02 from maintenance with the correct authorized glmrunner SSH key or access binding. Then claim the same bench and resume run_current_vllm_outer.sh, which will transfer the already materialized project-local 59-GiB immutable snapshot and execute the one unconsumed current-vLLM FP8-E5M2 c32 arm.",
   "external_dependency": {
-    "type": "shared_bench_unavailable",
+    "type": "typed_remote_ssh_access_blocker",
+    "bench_id": "h200-current-runtime-e00s5ggxfqbn6ctb02",
     "required_accelerator": "nvidia-h200-sxm",
     "required_count": 1,
-    "reason": "Independent current-runtime endpoint candidate; no compatible bench is registered in runtime/gpus.json.",
-    "reservation_required": true
+    "reason": "SSH key authentication for glmrunner@195.242.29.186 failed before remote staging; bench was conservatively released to maintenance.",
+    "reservation_required": false
   },
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
   "compute_budget": "At most 180 H200 claim minutes for one current full-stack endpoint candidate and matched control.",

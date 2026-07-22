@@ -1,0 +1,7 @@
+{
+  "classification": "retrieval_failure",
+  "message": "remote worker terminal unavailable after exit 255",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-22T12:31:02.174388+00:00"
+}

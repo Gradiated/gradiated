@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "authoritative_qkv_terminal": {
+    "path": "../gemma4_h200_qkv_epilogue_fusion/artifacts/fp8-qkv-stack-v0513-20260720t0309z/reconciliation/RECONCILED_TERMINAL.json",
+    "sha256": "1b563ea1dd933d097a337b33fb17dc13601ded1689597071c8f6fd9e74f17912",
+    "classification": "frontier_stack_pass",
+    "candidate_seconds_per_request": 0.6928421804999516,
+    "control_seconds_per_request": 0.7004446705000191
+  },
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+  },
+  "runtime": {
+    "release": "sglang v0.5.13",
+    "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image_linux_amd64": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+  },
+  "representation": {
+    "weights": "dynamic in-memory fp8_e4m3fn linears from exact BF16 checkpoint",
+    "kv_cache": "fp8_e5m2",
+    "tensor_parallel": 1,
+    "dynamic_chunking": true,
+    "chunked_prefill_size": 2048,
+    "mtp": false
+  },
+  "source_bytes": {
+    "endpoint_entrypoint": {
+      "path": "../gemma4_h200_qkv_epilogue_fusion/proven_v0513_endpoint_entrypoint.py",
+      "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc"
+    },
+    "paired_runner": {
+      "path": "../gemma4_h200_qkv_epilogue_fusion/proven_v0513_paired_endpoint_runner.py",
+      "sha256": "df65b1e49c941c27a975ecb1f2d34041a0e63695c2e3515cf950406204f614f3"
+    },
+    "qkv_runner": {
+      "path": "../gemma4_h200_qkv_epilogue_fusion/fp8_qkv_paired_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    "qkv_sitecustomize": {
+      "path": "../gemma4_h200_qkv_epilogue_fusion/stack_sitecustomize.py",
+      "sha256": "5791f6718b90b1ac555f7cb53179b18fd523ffb9f469d02582482431623d39fa"
+    },
+    "qkv_installer": {
+      "path": "../gemma4_h200_qkv_epilogue_fusion/install_endpoint_patch.py",
+      "sha256": "71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588"
+    },
+    "qkv_kernel": {
+      "path": "../gemma4_h200_qkv_epilogue_fusion/qkv_epilogue_discriminator.py",
+      "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"
+    },
+    "qkv_launcher": {
+      "path": "../gemma4_h200_qkv_epilogue_fusion/remote_fp8_stack.sh",
+      "sha256": "f6c80216e29b426811badea59e6e148629d0f5b951efa0e314b04ae19c5b5ffc"
+    },
+    "qkv_input_manifest": {
+      "path": "../gemma4_h200_qkv_epilogue_fusion/FP8_QKV_INPUT_MANIFEST.json",
+      "sha256": "d999420ebd05dacd0e15cf08aad34f6a68b657367bf6dc28c4738df0d0663586"
+    }
+  },
+  "workload": {
+    "concurrency": 32,
+    "requests": 32,
+    "prompt_tokens_per_request": 4214,
+    "completion_tokens_per_request": 358,
+    "cached_prompt_tokens_total": 17120,
+    "fresh_prompt_tokens_total": 117728
+  },
+  "economics": {
+    "committed_h200_usd_per_gpu_hour": 3.25,
+    "utilization": 0.9,
+    "target_usd_per_million_total_tokens": 0.14,
+    "maximum_seconds_per_request": 0.6381105230769232,
+    "required_gain_from_authoritative_candidate_fraction": 0.0789958506618843
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "status": "active",
+  "priority": 1100,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 20.0,
+  "allocation_limit": 1,
+  "active_session": null,
+  "summary": "Frozen exact v0.5.13 down-projection deterministic Stream-K candidate is fully materialized and wired for real-consumer decode/prefill measurement; target H200 execution is blocked only by the empty director-owned pool.",
+  "next_action": "Director: register one nvidia-h200-sxm bench with at least 141 GB HBM, preferably retaining the pinned SGLang v0.5.13 image/checkpoint/build caches. Researcher: atomically claim it and run run_bench_owner.py once. The owner performs a tiny real-request discovery, exact M=32 decode fallback proof, real-consumer M=1409/1631/2048 prefill correctness/timing, and only then a conditional c32 pair if the measured whole-request bound reaches 5% or a compatible synchronization winner makes the stack cross 0.6381105231 s/request.",
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "compute_budget": "One shared H200, at most four claimed GPU-hours, $20 total, and five wall-clock hours from first claim.",
+  "economic_ceiling_seconds_per_request": 0.6381105231,
+  "current_frontier_seconds_per_request": 0.689220013,
+  "actual_spend_usd": 0.0,
+  "offline_candidate": {
+    "hypothesis": "HYPOTHESIS.json",
+    "candidate_symbol": "gemma4_fp8_down_streamk.fp8_down_streamk",
+    "gpu_input_manifest": "GPU_INPUT_MANIFEST.json",
+    "program_archive_sha256": "1050ed8f7ef39f8fef518a78131dc282d5266ddbf8dcae82ec6be1f3524f6437",
+    "checkpoint_bytes": 62578655208,
+    "checkpoint_hashes_verified": true,
+    "cuda_compiled": false,
+    "reason_cuda_uncompiled": "no compatible shared H200 bench"
+  },
+  "pool_boundary": {
+    "diagnostic": "POOL_CLAIM_DIAGNOSTIC.json",
+    "classification": "typed_pool_boundary_no_compatible_bench",
+    "candidate_cuda_started": false,
+    "candidate_science_started": false,
+    "provider_mutation_attempted": false
+  },
+  "immutable_binding_sha256": "cebc435c4eb1e5716c4aa9bd854785a3e7cac4b0665c96ea6a44040b3e96fb62",
+  "attribution_sha256": "f841db590dbe6f2e6b4fb91048e8132c3807f0321310e1e0b70a3957ac99ab48"
+}

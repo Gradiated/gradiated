@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "status": "frozen_offline_pending_h200_execution",
+  "evidence_classes": {
+    "profile_times_and_shapes": "measured",
+    "runtime_and_cutlass_support": "source_backed",
+    "roofline_and_tail_model": "analytical",
+    "candidate_performance": "unmeasured"
+  },
+  "binding": {
+    "sglang_release": "v0.5.13",
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "fp8_utils_sha256": "a3a130f40974047084e3daff2bd0efbbfe69e197d4c9a5ba3fbc5304dd4e43d9",
+    "stock_dispatch_sha256": "549d3c1c5c13d67e7309cf50610a51c9485eb181b3a17423247287abd1a0b038",
+    "binding_sha256": "cebc435c4eb1e5716c4aa9bd854785a3e7cac4b0665c96ea6a44040b3e96fb62",
+    "attribution_sha256": "f841db590dbe6f2e6b4fb91048e8132c3807f0321310e1e0b70a3957ac99ab48"
+  },
+  "producer_consumer": {
+    "producer": "sglang.srt.layers.quantization.fp8_utils.apply_fp8_linear dynamic per-token E4M3FN quantization",
+    "consumer": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm returned through Gemma4 MLP down_proj to the unchanged residual path",
+    "projection": "model.language_model.layers.{0..59}.mlp.down_proj",
+    "activation_dtype_layout": "E4M3FN row-major [M,21504], per-row FP32 scales [M,1]",
+    "weight_dtype_layout": "E4M3FN column-major [21504,5376], per-column FP32 scales [1,5376]",
+    "output_dtype_layout": "BF16 row-major [M,5376]",
+    "decode_shape_mnk": [32, 5376, 21504],
+    "prefill_shapes_mnk": [[1409, 5376, 21504], [1631, 5376, 21504], [2048, 5376, 21504]],
+    "decode_behavior": "unchanged stock CUTLASS fallback",
+    "measured_family_seconds": 1.251315209,
+    "measured_family_wall_fraction": 0.054313855194638376
+  },
+  "stock_realization": {
+    "tile_mnk": [128, 128, 128],
+    "cluster_mnk": [2, 1, 1],
+    "mainloop": "KernelTmaWarpSpecializedPingpongFP8FastAccum",
+    "epilogue": "TmaWarpSpecialized ScaledEpilogue BF16",
+    "scheduler": "PersistentScheduler",
+    "grid_ctas": 132,
+    "threads_per_cta": 384,
+    "registers_per_thread": 168,
+    "dynamic_shared_memory_bytes": 214016
+  },
+  "analytical_shapes": [
+    {"m": 1409, "useful_flops": 325776310272, "compulsory_bytes": 161081348, "arithmetic_intensity_flop_per_byte": 2022.4334742468134, "persistent_waves": 3.8181818181818183, "tail_imbalance_upper_fraction": 0.04761904761904767, "cluster_padding_fraction": 0.0},
+    {"m": 1631, "useful_flops": 377105154048, "compulsory_bytes": 168243068, "arithmetic_intensity_flop_per_byte": 2241.430559552088, "persistent_waves": 4.454545454545454, "tail_imbalance_upper_fraction": 0.12244897959183687, "cluster_padding_fraction": 0.07142857142857142},
+    {"m": 2048, "useful_flops": 473520144384, "compulsory_bytes": 181695488, "arithmetic_intensity_flop_per_byte": 2606.11944521154, "persistent_waves": 5.090909090909091, "tail_imbalance_upper_fraction": 0.1785714285714286, "cluster_padding_fraction": 0.0}
+  ],
+  "physical_hypothesis": {
+    "cause": "The deep-K/narrow-N down projection leaves 4.8-17.9% last-wave imbalance under the 132-CTA persistent schedule, with additional M-cluster padding at M=1631.",
+    "change": "Use CUTLASS deterministic Stream-K with the proven cooperative Hopper FP8 mainloop for only M>128,K=21504,N=5376; preserve the 128x128x128 tile, 2x1x1 cluster, FP32 accumulation, per-row/per-column scales, BF16 output, and every decode/nonmatching path.",
+    "prediction": "Median prefill down-projection latency falls and the long-tail shape improves most; candidate output remains within relative-L2 0.005 and cosine 0.9999 of stock with no nonfinite values.",
+    "falsifier": "Any correctness failure or non-positive warm median gain across the exact real-consumer prefill shapes closes Stream-K for this boundary without a c32 pair.",
+    "endpoint_gate": "A conditional c32 pair requires at least 0.05 predicted whole-request gain. Because down_proj is 5.4314% of measured wall time, this requires 92.0575% component speedup unless the synchronization project first records a compatible measured winner."
+  },
+  "implementation": {
+    "candidate_symbol": "gemma4_fp8_down_streamk.fp8_down_streamk",
+    "candidate_dispatch_sha256": "4fcb4321942f326761ba5b0a968086acbd458fb57c5429d2706653a94b199620",
+    "candidate_extension_sha256": "9266e07f1e86ef4e6c8504ab3cad54ba05e3f03153900a08474c0c92e9aca16f",
+    "real_consumer_probe_sha256": "e16cdc01cb0eccfd59ffcd198b5241728d30a517bbcf092a97d0c9c5a39af851",
+    "cutlass_commit": "57e3cfb47a2d9e0d46eb6335c3dc411498efa198",
+    "cutlass_archive_sha256": "09237099a70f80bff1dc8bb80c843a674bb4fdcb46e43cc6993e711c5ca89bb5",
+    "cutlass_support_proof": "SM90 cooperative FP8 Stream-K unit coverage plus pinned SGLang blockwise K>3N Stream-K dispatch; ping-pong is explicitly rejected by CUTLASS for Stream-K."
+  }
+}

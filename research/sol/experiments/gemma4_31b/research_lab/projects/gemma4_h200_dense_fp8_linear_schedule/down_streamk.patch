@@ -1,0 +1,41 @@
+--- a/sgl-kernel/csrc/cutlass_extensions/gemm/fp8_gemm_sm90_dispatch.cuh
++++ b/sgl-kernel/csrc/cutlass_extensions/gemm/fp8_gemm_sm90_dispatch.cuh
+@@ -8,0 +9 @@
++#include "cutlass/gemm/kernel/tile_scheduler_params.h"
+@@ -20 +21,2 @@
+-    bool swap_ab_ = false>
++    bool swap_ab_ = false,
++    typename TileScheduler = cutlass::gemm::PersistentScheduler>
+@@ -117 +119 @@
+-      cutlass::gemm::PersistentScheduler>>;
++      TileScheduler>>;
+@@ -182 +184,8 @@
+-  cutlass_gemm_caller<GemmKernel>(a.device(), prob_shape, mainloop_args, epilogue_args);
++  typename GemmKernel::TileSchedulerArguments scheduler;
++  if constexpr (cute::is_same_v<typename GemmKernel::TileSchedulerTag, cutlass::gemm::StreamKScheduler>) {
++    using SchedulerParams = cutlass::gemm::kernel::detail::PersistentTileSchedulerSm90StreamKParams;
++    scheduler.decomposition_mode = SchedulerParams::DecompositionMode::StreamK;
++    scheduler.reduction_mode = SchedulerParams::ReductionMode::Deterministic;
++  }
++
++  cutlass_gemm_caller<GemmKernel>(a.device(), prob_shape, mainloop_args, epilogue_args, scheduler);
+@@ -183,0 +193,19 @@
++
++template <typename InType, typename OutType>
++struct sm90_fp8_config_down_streamk {
++  static_assert(std::is_same<InType, cutlass::float_e4m3_t>());
++  using KernelSchedule = cutlass::gemm::KernelTmaWarpSpecializedCooperativeFP8FastAccum;
++  using EpilogueSchedule = typename cutlass::epilogue::TmaWarpSpecializedCooperative;
++  using TileShape = Shape<_128, _128, _128>;
++  using ClusterShape = Shape<_2, _1, _1>;
++  using Cutlass3xGemm = cutlass_3x_gemm_sm90_fp8<
++      InType,
++      OutType,
++      c3x::ScaledEpilogue,
++      TileShape,
++      ClusterShape,
++      KernelSchedule,
++      EpilogueSchedule,
++      false,
++      cutlass::gemm::StreamKScheduler>;
++};

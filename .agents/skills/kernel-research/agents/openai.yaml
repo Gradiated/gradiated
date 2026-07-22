@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kernel Research"
+  short_description: "Optimize and validate production GPU kernels"
+  default_prompt: "Use $kernel-research to design and measure an exact-shape GPU kernel optimization."

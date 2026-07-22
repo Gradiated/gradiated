@@ -1,0 +1,42 @@
+---
+name: kernel-research
+description: "Design, debug, integrate, optimize, and measure production GPU kernels for CUDA, Triton, ROCm/HIP, quantized inference, and serving runtimes. Use for exact-shape kernel work, attention/KV-cache operations, FP8/INT8 paths, fusion, launch/tile tuning, correctness failures, vLLM custom ops, TensorRT plugins, or kernel-level accelerator analysis."
+---
+
+# Kernel research
+
+Produce a correct, exact-consumer GPU result and improve the campaign endpoint—not merely an attractive standalone kernel. Use the target model geometry, production workload, runtime source, and accelerator as the optimization scope.
+
+Read [references/tensormux-kernel-playbook.md](references/tensormux-kernel-playbook.md) for the relevant task before designing the candidate. It distills the TensorMux kernel-skills library and records its source pin and license.
+
+## Bind the real problem
+
+Establish the exact operation, prefill/decode phase, shapes, strides/layouts, dtypes and scale conventions, target GPU, current producer and consumer symbols, baseline implementation, and whole-request relevance. Trace the output into its actual downstream consumer. A synthetic tensor with a convenient layout is not representative when the production consumer expects another layout or quantization contract.
+
+Check whether current cuBLAS/cuBLASLt, CUTLASS, FlashAttention, FlashInfer, vLLM, SGLang, TensorRT-LLM, Triton, or ROCm already supports the operation. Prefer adapting a proven implementation. Write a custom kernel only when the exact shape or semantics are unsupported, or telemetry shows a credible material gap.
+
+## Form a physical hypothesis
+
+Calculate useful FLOPs, compulsory bytes, arithmetic intensity, grid waves, tail waste, and the likely roofline regime. Combine these with measured registers/thread, spills, shared memory, occupancy, tensor activity, L2/DRAM traffic, and stall reasons. Distinguish prefill from decode; they commonly require different decompositions.
+
+Name one causal change and the counter movement it predicts. Occupancy is not an objective by itself: never cap registers, shrink tiles, add stages, or increase warps merely to improve an occupancy number. Extra spills, recomputation, synchronization, or memory traffic may cost more than the residency gain.
+
+## Establish correctness through execution
+
+Use the actual producer and consumer in a fresh process. Compare against a high-precision or known-good reference, consume every candidate output, and characterize error rather than relying only on a pass boolean. Cover the production shape plus a few discriminating boundary, odd, empty/padded, and extreme-value cases. For quantized paths, verify scale granularity, zero handling, saturation, accumulation precision, layout, and dequantized error.
+
+Make the first tiny target-GPU call the discovery smoke test. Repair ordinary compile, API, layout, or integration defects in the retained session and continue. Do not construct a long readiness ladder before CUDA execution, and do not time a candidate whose output has not reached the real consumer.
+
+## Implement and measure
+
+Choose tile, warp, stage, launch, memory, and work-partition candidates from the physical model. Constrain tuning to architecturally legal configurations and representative production shapes. Treat prefill and decode as separate keys when their geometry differs.
+
+Benchmark profiler-off with warm caches and enough repetitions to report a distribution and margin over noise. Exclude compilation and autotuning from steady-state latency. Then collect only the counters needed to test the causal hypothesis. Preserve compiler metadata such as registers, shared memory, spills, and generated-code identity.
+
+Promote a component winner immediately into the actual runtime and workload. Verify CUDA-graph behavior, dynamic shapes, paged KV and GQA/MQA indexing, streams and synchronization, tensor parallelism, output layout, and runtime serialization as applicable. Judge success by endpoint time, throughput, energy, and price-normalized cost; component speedups do not transfer automatically.
+
+## Iterate without ceremony
+
+Revise the causal model after each result. A negative candidate closes that mechanism, not kernel research. Change decomposition or abstraction level when evidence warrants it. Keep the handoff to the hypothesis, implementation, exact evidence, interpretation, and next experiment; avoid a checklist report.
+
+Record at minimum the exact source/runtime/hardware identity, production geometry, baseline and candidate warm timings, numerical result, candidate-path proof, relevant compiler/counter changes, endpoint effect when promoted, and artifact paths.

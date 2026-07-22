@@ -76,7 +76,7 @@ def prepare(args: argparse.Namespace) -> pathlib.Path:
         shutil.copy2(PROJECT / "consume_component.py", tree / "consume_component.py")
         shutil.copy2(PROJECT / "remote_streamk.sh", tree / "remote_streamk.sh")
         sync_root = tree / "inputs" / "sync"
-        sync_root.mkdir(parents=True)
+        sync_root.mkdir(parents=True, exist_ok=True)
         shutil.copy2(terminal_path, sync_root / "TERMINAL.json")
         shutil.copy2(prepared / "SYNC_BINDING.json", sync_root / "BINDING.json")
         archive_part = prepared / "PROGRAM.tar.gz.part"

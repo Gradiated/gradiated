@@ -21,7 +21,7 @@ def main() -> int:
     build_root.mkdir(parents=True, exist_ok=True)
     source = project / "down_streamk_extension.cu"
     sgl_kernel = project / "inputs" / "sgl-kernel-v0513"
-    cutlass = project / "inputs" / "cutlass"
+    cutlass = project / "inputs" / "cutlass-v0513-exact"
     module = load(
         name="gemma4_fp8_down_streamk",
         sources=[str(source)],
@@ -30,6 +30,7 @@ def main() -> int:
             str(sgl_kernel / "include"),
             str(sgl_kernel / "csrc"),
             str(cutlass / "include"),
+            str(cutlass / "tools" / "util" / "include"),
         ],
         extra_cflags=["-O3"],
         extra_cuda_cflags=[

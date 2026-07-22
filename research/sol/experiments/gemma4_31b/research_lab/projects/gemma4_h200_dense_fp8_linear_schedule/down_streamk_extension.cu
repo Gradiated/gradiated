@@ -1,5 +1,6 @@
 #include <torch/extension.h>
 
+#include "cutlass/epilogue/fusion/sm90_callbacks_tma_warpspecialized.hpp"
 #include "cutlass_extensions/gemm/fp8_gemm_sm90_dispatch.cuh"
 
 torch::Tensor fp8_down_streamk(

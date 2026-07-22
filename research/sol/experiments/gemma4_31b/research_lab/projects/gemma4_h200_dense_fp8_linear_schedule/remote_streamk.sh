@@ -58,6 +58,14 @@ base_args=(
 )
 
 state compile_started
+cutlass_archive="$program/inputs/cutlass-57e3cfb47a2d9e0d46eb6335c3dc411498efa198.tar.gz"
+cutlass_exact="$program/inputs/cutlass-v0513-exact"
+if [[ ! -d "$cutlass_exact" ]]; then
+  rm -rf "$cutlass_exact.part"
+  mkdir -p "$cutlass_exact.part"
+  tar -xzf "$cutlass_archive" --strip-components=1 -C "$cutlass_exact.part"
+  mv "$cutlass_exact.part" "$cutlass_exact"
+fi
 rm -rf "$root/build"
 mkdir -p "$root/build"
 sudo docker run --rm --gpus all --ipc=host \

@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+  },
+  "runtime": {
+    "release": "sglang v0.5.13",
+    "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image_linux_amd64": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+  },
+  "exact_shape": {
+    "query_tokens": 2048,
+    "q_heads": 32,
+    "kv_heads": 4,
+    "qk_head_dim": 512,
+    "v_head_dim": 512,
+    "block_m": 32,
+    "block_n": 64,
+    "causal": true,
+    "sliding_window": -1,
+    "kv_cache_dtype": "fp8_e5m2"
+  },
+  "measured_control": {
+    "path": "../gemma4_h200_v0513_fp8_qkv_residual_profile/GLOBAL_ATTENTION_NCU.json",
+    "sha256": "400782a91d87a0c9334c8a9499356c073c43c92a3b76e6e8d3e6018838de83f5",
+    "registers_per_thread": 255,
+    "register_limited_ctas_per_sm": 1,
+    "shared_memory_limited_ctas_per_sm": 2,
+    "achieved_warp_occupancy_percent": 12.496527,
+    "tensor_activity_percent": 10.100424,
+    "dram_activity_percent": 2.214164,
+    "l2_activity_percent": 36.955752
+  },
+  "immutable_project_inputs": {
+    "extend_attention_source": {
+      "path": "inputs/extend_attention.v0.5.13.py",
+      "sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1"
+    }
+  },
+  "candidate": {
+    "id": "global_head512_maxnreg128",
+    "path": "artifacts/candidate_forced_residency_attention.py",
+    "sha256": "525e0b200e1f9cb09b53e3ed226f7da59f9e5df2b1196b45ae4898bdeaa3968c",
+    "query_tile": 32,
+    "key_tile": 64,
+    "value_splits": 1,
+    "maxnreg": 128,
+    "trade": "local-memory/L2 spill traffic for two-CTA register residency"
+  },
+  "runner": {
+    "component_benchmark": {
+      "path": "component_benchmark.py",
+      "sha256": "d1167b32aaa45a8770747f122ed45892442cd0dbdeaf5b3d4695f441e219abfb"
+    },
+    "remote_component": {
+      "path": "remote_component.sh",
+      "sha256": "f5fdc16b99676c7e86f7bf765beca2774d406835e0284795480ec189fd52443e"
+    },
+    "ncu_consumer": {
+      "path": "analyze_component.py",
+      "sha256": "77e80269e4d05b2f44da5548b0753e31ff77ff57e77b8856b0596857fec8a5ac"
+    }
+  },
+  "offline_compile": {
+    "path": "artifacts/OFFLINE_COMPILE.json",
+    "sha256": "deff1fa3ff98b038d78a8d6b03ed2caf8033129cb87b6df758e7aadb9756aa91",
+    "evidence_type": "derived_offline_triton_3_7_1_sm90_compile_proxy"
+  }
+}

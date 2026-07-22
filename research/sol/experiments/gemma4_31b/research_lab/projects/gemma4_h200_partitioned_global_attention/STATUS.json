@@ -1,0 +1,34 @@
+{
+  "status": "active",
+  "priority": 980,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 10.0,
+  "reserved_at": "2026-07-22T11:55:55.503005Z",
+  "measured_project_spend_usd": 0.0,
+  "remaining_authorized_spend_usd": 10.0,
+  "allocation_limit": 1,
+  "active_session": null,
+  "summary": "The exact project-local H200 component now tests the unchanged 32x64 global head-512 kernel with maxnreg=128. An offline Triton 3.7.1 sm90 proxy falsified natural 2-8-way V partitions (180-255 registers/thread) and predicts that the forced cap trades spill/L2 traffic for two-CTA register residency without duplicated QK work.",
+  "decision_evidence": {
+    "offline_compile": "artifacts/OFFLINE_COMPILE.json",
+    "selected_candidate": "extend_attention_fwd.global_head512_maxnreg128",
+    "control_registers_per_thread": 255,
+    "selected_proxy_registers_per_thread": 128,
+    "selected_proxy_shared_memory_bytes": 102400,
+    "selected_proxy_spill_store_bytes": 4250,
+    "selected_proxy_spill_load_bytes": 4100,
+    "evidence_type": "derived_offline_compile_proxy_not_target_runtime"
+  },
+  "pool_boundary": {
+    "path": "artifacts/POOL_CLAIM_DIAGNOSTIC.json",
+    "requested_accelerator": "nvidia-h200-sxm",
+    "message": "no available GPU bench matches this project",
+    "candidate_cuda_invocation_started": false
+  },
+  "exact_bench_need": "One director-registered available nvidia-h200-sxm bench with the pinned SGLang v0.5.13 image; checkpoint is not needed for the first exact-shape component. Prefer the shared v0.5.13 kernel bench and claim this project first on a simultaneous readiness tie with FP8 layer-dataflow fusion.",
+  "next_action": "Atomically claim the first compatible shared H200, stage only this project's immutable input and bound runner bytes, and run remote_component.sh under one retained claim to obtain the CUDA timing/oracle plus NCU component result. Promote immediately to the one paired exact FP8+QKV+deferred-local-KV endpoint only if COMPONENT_RESULT.json is component_pass; otherwise reject without endpoint execution.",
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "compute_budget": "At most 180 H200 claim minutes for the exact component and conditional paired endpoint; cumulative project spend must remain at or below $10.00.",
+  "economic_ceiling_seconds_per_request": 0.6381105231,
+  "current_frontier_seconds_per_request": 0.6892200126
+}

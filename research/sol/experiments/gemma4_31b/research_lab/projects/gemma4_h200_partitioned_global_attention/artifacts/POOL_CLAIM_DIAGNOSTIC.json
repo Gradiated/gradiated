@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "timestamp_utc": "2026-07-22T12:12:41Z",
+  "project": "gemma4_h200_partitioned_global_attention",
+  "requested_accelerator": "nvidia-h200-sxm",
+  "returncode": 2,
+  "classification": "typed_pool_boundary",
+  "message": "no available GPU bench matches this project",
+  "candidate_cuda_invocation_started": false,
+  "scientific_invocation_started": false,
+  "provider_spend_usd": 0.0
+}

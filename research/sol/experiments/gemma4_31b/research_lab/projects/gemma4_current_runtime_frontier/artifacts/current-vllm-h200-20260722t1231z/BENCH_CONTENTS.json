@@ -1,0 +1,7 @@
+{
+  "caches": "Current vLLM image and model-startup compilation/cache layers resident after source incompatibility; no healthy server.",
+  "checkpoint": "Resident immutable eight-file Gemma 4 checkpoint verified on guest; retain for director-approved compatible work.",
+  "image": "vLLM 0.25.1 image digest sha256:f0b9a0dc75a9fca3b6811e3279367b2d6a448055a000bfd13859587d74cef268 resident.",
+  "runtime": "Current vLLM rejected Gemma 4 --kv-cache-dtype fp8_e5m2 in attention profile; FP8-E5M2 arm terminal.",
+  "server_state": "Stopped after typed source/CUDA incompatibility; raw terminal/logs retained in gemma4_current_runtime_frontier."
+}

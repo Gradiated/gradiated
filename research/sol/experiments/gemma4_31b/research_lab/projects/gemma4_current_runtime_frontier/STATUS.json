@@ -1,39 +1,28 @@
 {
-  "status": "active",
-  "priority": 960,
+  "status": "completed",
+  "priority": 990,
   "researcher_profile": "execution",
   "authorized_spend_usd": 12.0,
+  "estimated_allocation_cost_usd": 2.94,
   "allocation_limit": 1,
-  "active_session": {
-    "artifact_root": "artifacts/current-vllm-h200-20260722t1231z",
-    "bench_id": "h200-current-runtime-e00s5ggxfqbn6ctb02",
-    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-current-vllm-h200-20260722t1307z.service",
-    "deadline_utc": "2026-07-22T16:39:52Z",
-    "expected_typed_terminal": "artifacts/current-vllm-h200-20260722t1231z/OUTER_TERMINAL.json",
-    "owner_pid": 3298634,
-    "stage": "immutable_checkpoint_transfer_then_current_vllm_fp8e5m2_c32",
-    "unit": "gemma4-current-vllm-h200-20260722t1307z.service",
-    "unit_manager": "user"
+  "active_session": null,
+  "summary": "Current vLLM v0.25.1 reached the first real Gemma 4 GPU profile on the retained H200 but rejected the required FP8-E5M2 KV cache in its attention implementation. The single exact FP8-E5M2 c32 arm is terminally incompatible for this runtime/image; no endpoint request ran.",
+  "terminal": {
+    "classification": "source_cuda_incompatibility",
+    "candidate": "vllm/vllm-openai@sha256:f0b9a0dc75a9fca3b6811e3279367b2d6a448055a000bfd13859587d74cef268 (vLLM 0.25.1)",
+    "source_commit": "1a659a0c370942bae3c8567902e38bddbbae95f3",
+    "requested_arm": "current_vllm_fp8e5m2_c32",
+    "evidence": "vllm/model_executor/layers/attention/attention.py:517 asserts kv_cache_dtype in {fp8, fp8_e4m3, nvfp4}; the exact --kv-cache-dtype fp8_e5m2 launch failed in the first GPU profile run.",
+    "candidate_cuda_started": true,
+    "candidate_science_started": false,
+    "outer_terminal": "artifacts/current-vllm-h200-20260722t1231z/OUTER_TERMINAL.json",
+    "worker_terminal": "artifacts/current-vllm-h200-20260722t1231z/WORKER_TERMINAL.json",
+    "raw_remote_log": "artifacts/current-vllm-h200-20260722t1231z/remote-retrieved/current-vllm-h200/server.log"
   },
-  "summary": "The remote-access blocker is resolved at the lifecycle boundary: the exact instance is RUNNING, its disk is READY, its watchdog is active, and glmrunner accepts the cloud-init-bound private key matching fingerprint SHA256:g5df+MD3rnTnW0lmqaEvI+esJ+H14qj/g7NeeJgDBXg. The prior launcher used the unrelated Nebius campaign key; no checkpoint byte, image, CUDA call, server start, or endpoint request began.",
-  "next_action": "In this same execution project, change only run_current_vllm_outer.sh's key binding from /root/.config/nebius/glm-campaign/ssh_ed25519 to /root/.config/gradiated/providers/gcore/id_ed25519, whose derived public fingerprint exactly matches the guest cloud-init authorization. Then atomically claim h200-current-runtime-e00s5ggxfqbn6ctb02, transfer the already materialized immutable snapshot, and execute the sole unconsumed current-vLLM FP8-E5M2 c32 arm. Do not allocate, restage locally, or repeat the failed key.",
-  "external_dependency": {
-    "type": "satisfied_director_ssh_identity",
-    "bench_id": "h200-current-runtime-e00s5ggxfqbn6ctb02",
-    "required_accelerator": "nvidia-h200-sxm",
-    "required_count": 1,
-    "reason": "The same bench is provider-reconciled, SSH-verified with the cloud-init-bound identity, and re-admitted under its active cleanup watchdog; the project must correct only its local key-path binding.",
-    "reservation_required": false
-  },
+  "next_action": "Do not replay this FP8-E5M2 arm. A director must admit a materially distinct current runtime/representation candidate; vLLM FP8-E4M3 or fp8 is a representation change, not a substitute result.",
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
-  "compute_budget": "At most 180 H200 claim minutes for one current full-stack endpoint candidate and matched control.",
+  "compute_budget": "The retained H200 was released available after the typed terminal; conservative observed allocation exposure is approximately $2.94, within the $12.00 project reservation.",
   "economic_ceiling_seconds_per_request": 0.6381105231,
   "current_frontier_seconds_per_request": 0.6892200126,
-  "candidate_binding": "CANDIDATE_BINDING.json",
-  "launch": {
-    "remote_script": "remote_current_vllm_h200.sh",
-    "image": "vllm/vllm-openai@sha256:f0b9a0dc75a9fca3b6811e3279367b2d6a448055a000bfd13859587d74cef268",
-    "source_commit": "1a659a0c370942bae3c8567902e38bddbbae95f3",
-    "input_runner_sha256": "ae3d22f95a1df672ccb8924f83d3e2b21b893556151cee1f0708c8e08fc8f7a1"
-  }
+  "candidate_binding": "CANDIDATE_BINDING.json"
 }

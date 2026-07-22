@@ -31,13 +31,13 @@ finish() {
 }
 trap finish EXIT
 
-sha256sum -c "$input/INPUTS.sha256"
+(cd "$input" && sha256sum -c INPUTS.sha256)
 sudo docker image inspect "$image" >/dev/null 2>&1 || sudo docker pull "$image" >"$out/image-pull.log" 2>&1
 sudo docker image inspect "$image" >"$out/image-inspect.json"
 sudo docker rm -f gemma4-current-vllm >/dev/null 2>&1 || true
 state candidate_cuda_started
 sudo docker run -d --name gemma4-current-vllm --gpus all --ipc=host --network host -v "$root:/work" "$image" \
-  vllm serve /work/checkpoint --served-model-name google/gemma-4-31B-it --dtype bfloat16 \
+  /work/checkpoint --served-model-name google/gemma-4-31B-it --dtype bfloat16 \
   --kv-cache-dtype fp8_e5m2 --tensor-parallel-size 1 --max-model-len 5000 --max-num-seqs 32 \
   --max-num-batched-tokens 134848 --gpu-memory-utilization 0.92 --enable-prefix-caching \
   --limit-mm-per-prompt '{"image":0,"video":0,"audio":0}' --host 0.0.0.0 --port 30000 >"$out/container-id"

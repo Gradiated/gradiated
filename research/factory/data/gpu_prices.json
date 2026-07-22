@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "refreshed_at_utc": "2026-07-15T13:15:00Z",
+  "refreshed_at_utc": "2026-07-22T21:42:00Z",
   "refresh_interval_days": 7,
   "production_pricing_policy": {
     "capacity_type": "committed_non_preemptible",
@@ -12,33 +12,33 @@
     "sensitivity_rule": "Use the evidence range for downside/upside sensitivity and the planning rate for headline production economics."
   },
   "sources": {
-    "nebius_public_2026_07_15": {
+    "nebius_public_2026_07_22": {
       "title": "Nebius AI Cloud pricing",
       "url": "https://nebius.com/prices",
-      "retrieved_at_utc": "2026-07-15T13:00:00Z",
+      "retrieved_at_utc": "2026-07-22T21:42:00Z",
       "evidence_type": "vendor_reported",
-      "notes": "Lists preemptible and on-demand GPU rates and advertises up to 35% off on-demand for large multi-month commitments."
+      "notes": "Current page lists L40S (AMD CPU) $0.74 preemptible/$1.55 on-demand, H100 $2.15/$3.85, H200 $2.45/$4.50, and B200 $3.95/$7.15 per GPU-hour; it advertises up to 35% off on-demand for large multi-month commitments."
     },
-    "tensorwave_mi355x_market_2026_07_15": {
+    "tensorwave_mi355x_market_2026_07_22": {
       "title": "TensorWave MI355X current market listing",
       "url": "https://gpus.io/en/gpus/mi355x",
-      "retrieved_at_utc": "2026-07-15T13:00:00Z",
+      "retrieved_at_utc": "2026-07-22T21:42:00Z",
       "evidence_type": "independent_market_listing",
-      "notes": "Lists current TensorWave MI355X on-demand at $2.95/GPU-hour."
+      "notes": "Current one-provider listing reports TensorWave MI355X at $2.95/GPU-hour on demand; it is not a committed-capacity quote."
     },
-    "tensorwave_access_2026_07_15": {
+    "tensorwave_access_2026_07_22": {
       "title": "TensorWave MI355X access request",
       "url": "https://go.tensorwave.com/",
-      "retrieved_at_utc": "2026-07-15T13:00:00Z",
+      "retrieved_at_utc": "2026-07-22T21:42:00Z",
       "evidence_type": "vendor_reported",
-      "notes": "Confirms capacity is sold through a request flow where quantity and use case are supplied; no public committed quote."
+      "notes": "Current vendor page advertises MI355X access and white-glove onboarding but publishes no committed-capacity price; a matching written quote remains required to supersede the planning rate."
     },
     "mi355x_reserved_context_2026_07_15": {
       "title": "Third-party MI355X cloud cost context",
       "url": "https://infohub.delltechnologies.com/en-sg/t/third-party-analysis-8/",
       "retrieved_at_utc": "2026-07-15T13:00:00Z",
       "evidence_type": "third_party_directional",
-      "notes": "Reports a $2.29/GPU-hour long-term reserved floor and $2.95 lowest listed on-demand; the floor is excluded from the base planning rate."
+      "notes": "Stale directional context retained unchanged: prior review reported a $2.29/GPU-hour long-term reserved floor and $2.95 lowest listed on-demand. The current Dell landing page no longer exposes that specific analysis, so this source is not refreshed and the floor remains excluded from the base planning rate."
     },
     "glm47_l40s_measured_2026_07_15": {
       "title": "GLM-4.7-Flash current AWQ c16 measured session",
@@ -60,10 +60,10 @@
       "planning_basis": "Moderate 12-24 month commitment between Nebius's maximum advertised committed discount and a smaller ordinary commitment discount.",
       "experimental_reference_rates": [
         {"usd_per_gpu_hour": 0.8581222, "capacity_type": "measured_preemptible_vm_plus_disk", "source_id": "glm47_l40s_measured_2026_07_15"},
-        {"usd_per_gpu_hour": 0.74, "capacity_type": "public_preemptible_from", "source_id": "nebius_public_2026_07_15"},
-        {"usd_per_gpu_hour": 1.55, "capacity_type": "public_on_demand_from", "source_id": "nebius_public_2026_07_15"}
+        {"usd_per_gpu_hour": 0.74, "capacity_type": "public_preemptible_from", "source_id": "nebius_public_2026_07_22"},
+        {"usd_per_gpu_hour": 1.55, "capacity_type": "public_on_demand_from", "source_id": "nebius_public_2026_07_22"}
       ],
-      "source_ids": ["nebius_public_2026_07_15", "glm47_l40s_measured_2026_07_15"]
+      "source_ids": ["nebius_public_2026_07_22", "glm47_l40s_measured_2026_07_15"]
     },
     {
       "id": "nvidia-h100-sxm",
@@ -75,10 +75,10 @@
       "planning_evidence_type": "derived",
       "planning_basis": "Moderate 12-24 month commitment around 27% below Nebius on-demand, inside its advertised commitment envelope and above preemptible.",
       "experimental_reference_rates": [
-        {"usd_per_gpu_hour": 2.15, "capacity_type": "public_preemptible", "source_id": "nebius_public_2026_07_15"},
-        {"usd_per_gpu_hour": 3.85, "capacity_type": "public_on_demand", "source_id": "nebius_public_2026_07_15"}
+        {"usd_per_gpu_hour": 2.15, "capacity_type": "public_preemptible", "source_id": "nebius_public_2026_07_22"},
+        {"usd_per_gpu_hour": 3.85, "capacity_type": "public_on_demand", "source_id": "nebius_public_2026_07_22"}
       ],
-      "source_ids": ["nebius_public_2026_07_15"]
+      "source_ids": ["nebius_public_2026_07_22"]
     },
     {
       "id": "nvidia-h200-sxm",
@@ -90,10 +90,10 @@
       "planning_evidence_type": "derived",
       "planning_basis": "Moderate 12-24 month commitment around 28% below Nebius on-demand, above the maximum advertised-discount floor and public preemptible.",
       "experimental_reference_rates": [
-        {"usd_per_gpu_hour": 2.45, "capacity_type": "public_preemptible", "source_id": "nebius_public_2026_07_15"},
-        {"usd_per_gpu_hour": 4.5, "capacity_type": "public_on_demand", "source_id": "nebius_public_2026_07_15"}
+        {"usd_per_gpu_hour": 2.45, "capacity_type": "public_preemptible", "source_id": "nebius_public_2026_07_22"},
+        {"usd_per_gpu_hour": 4.5, "capacity_type": "public_on_demand", "source_id": "nebius_public_2026_07_22"}
       ],
-      "source_ids": ["nebius_public_2026_07_15"]
+      "source_ids": ["nebius_public_2026_07_22"]
     },
     {
       "id": "nvidia-b200-sxm",
@@ -105,10 +105,10 @@
       "planning_evidence_type": "derived",
       "planning_basis": "Moderate 12-24 month commitment around 28% below Nebius on-demand, above the maximum advertised-discount floor and public preemptible.",
       "experimental_reference_rates": [
-        {"usd_per_gpu_hour": 3.95, "capacity_type": "public_preemptible", "source_id": "nebius_public_2026_07_15"},
-        {"usd_per_gpu_hour": 7.15, "capacity_type": "public_on_demand", "source_id": "nebius_public_2026_07_15"}
+        {"usd_per_gpu_hour": 3.95, "capacity_type": "public_preemptible", "source_id": "nebius_public_2026_07_22"},
+        {"usd_per_gpu_hour": 7.15, "capacity_type": "public_on_demand", "source_id": "nebius_public_2026_07_22"}
       ],
-      "source_ids": ["nebius_public_2026_07_15"]
+      "source_ids": ["nebius_public_2026_07_22"]
     },
     {
       "id": "amd-mi355x",
@@ -120,10 +120,10 @@
       "planning_evidence_type": "derived",
       "planning_basis": "Mid-market 12-24 month planning rate below current $2.95 on-demand but deliberately above the directional $2.29 long-term reserved floor.",
       "experimental_reference_rates": [
-        {"usd_per_gpu_hour": 2.95, "capacity_type": "current_on_demand_listing", "source_id": "tensorwave_mi355x_market_2026_07_15"},
+        {"usd_per_gpu_hour": 2.95, "capacity_type": "current_on_demand_listing", "source_id": "tensorwave_mi355x_market_2026_07_22"},
         {"usd_per_gpu_hour": 2.29, "capacity_type": "directional_long_term_reserved_floor", "source_id": "mi355x_reserved_context_2026_07_15"}
       ],
-      "source_ids": ["tensorwave_mi355x_market_2026_07_15", "tensorwave_access_2026_07_15", "mi355x_reserved_context_2026_07_15"]
+      "source_ids": ["tensorwave_mi355x_market_2026_07_22", "tensorwave_access_2026_07_22", "mi355x_reserved_context_2026_07_15"]
     }
   ]
 }

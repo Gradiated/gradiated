@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from grad_research.gpu_prices import PriceInventoryError, load_gpu_price_inventory
@@ -13,10 +13,14 @@ INVENTORY = Path(__file__).parents[1] / "data" / "gpu_prices.json"
 
 
 class GpuPriceInventoryTests(unittest.TestCase):
+    def inventory_refreshed_at(self) -> datetime:
+        value = json.loads(INVENTORY.read_text())
+        return datetime.fromisoformat(value["refreshed_at_utc"].replace("Z", "+00:00"))
+
     def test_shared_inventory_is_fresh_and_uses_committed_production_rates(self) -> None:
         report = load_gpu_price_inventory(
             INVENTORY,
-            now=datetime(2026, 7, 20, tzinfo=timezone.utc),
+            now=self.inventory_refreshed_at() + timedelta(days=6),
         )
 
         self.assertTrue(report["fresh"])
@@ -29,7 +33,7 @@ class GpuPriceInventoryTests(unittest.TestCase):
     def test_inventory_becomes_stale_after_weekly_window(self) -> None:
         report = load_gpu_price_inventory(
             INVENTORY,
-            now=datetime(2026, 7, 23, tzinfo=timezone.utc),
+            now=self.inventory_refreshed_at() + timedelta(days=8),
         )
 
         self.assertFalse(report["fresh"])

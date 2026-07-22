@@ -1,0 +1,19 @@
+{
+  "status": "complete",
+  "priority": 900,
+  "researcher_profile": "execution",
+  "authorized_spend_usd": 0.0,
+  "allocation_limit": 0,
+  "active_session": null,
+  "summary": "Completed the zero-cost weekly refresh: current Nebius and MI355X public evidence leaves every existing experimental reference and derived 12-24 month planning rate unchanged; the unavailable MI355X reserved-floor context is explicitly retained as stale directional evidence.",
+  "next_action": "None; schedule the next refresh within seven days or earlier if a matching written committed-capacity quote arrives.",
+  "provider_mutation": "forbidden",
+  "compute_budget": "$0, no GPU, 45 wall-clock minutes.",
+  "actual_spend_usd": 0.0,
+  "terminal": {
+    "kind": "completed_price_refresh",
+    "completed_at_utc": "2026-07-22T21:42:00Z",
+    "evidence_note": "research/sol/experiments/gemma4_31b/research_lab/evidence/GPU_PRICE_INVENTORY_REFRESH_2026-07-22.md",
+    "validation_command": "PYTHONPATH=research/factory/src python3 -m grad_research gpu-prices --require-fresh"
+  }
+}

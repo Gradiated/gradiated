@@ -1,0 +1,15 @@
+{
+  "classification": "superseded_by_scientific_terminal",
+  "invocation": {
+    "candidate_cuda_invocation_started": true,
+    "schema_version": 1,
+    "scientific_invocation_started": true,
+    "updated_unix_s": 1784811079.246052
+  },
+  "repair_authorized": false,
+  "repair_deadline_utc": "2026-07-23T13:01:26.598441Z",
+  "schema_version": 1,
+  "superseded_by": "component/COMPONENT_TERMINAL.json",
+  "terminal_reason": "The retrieved invocation marker proves the direct E5M2 FA3 CUDA call began and the pinned operator rejected the dtype; the preregistered unsupported-consumer stop applies.",
+  "worker_exit_code": 1
+}

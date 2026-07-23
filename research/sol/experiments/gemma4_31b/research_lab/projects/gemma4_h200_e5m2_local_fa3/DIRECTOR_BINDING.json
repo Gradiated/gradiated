@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "stack_binding": {
+    "path": "../gemma4_h200_v0513_fp8_qkv_residual_profile/BINDINGS.json",
+    "sha256": "cebc435c4eb1e5716c4aa9bd854785a3e7cac4b0665c96ea6a44040b3e96fb62"
+  },
+  "control": {
+    "path": "../sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/mtp-candidate-repair-20260723t0658z/retrieved/control/TERMINAL.json",
+    "sha256": "a6e69ac9534ae433fc45d3b5d3ea241fe63321d33423cdd52d17128d8072d278",
+    "service_seconds_per_request": 0.6743258590313417
+  },
+  "source_binding": {
+    "path": "../gemma4_h200_e4m3_local_fa3_hybrid/SOURCE_BINDING.json",
+    "sha256": "58b9b48a85bdb32f1a30f11cb22fbe857e7d36a9d26836a5e5d1790f99811473"
+  },
+  "prior_actual_paged_component": {
+    "path": "../gemma4_h200_e4m3_local_fa3_hybrid/artifacts/mixed-kv-local-fa3-hybrid-20260723/FINAL_TERMINAL.json",
+    "sha256": "4021fce4a8bd9e49a37b3772bef18dabc937c699ab52df9d5abe19f9758afb0c",
+    "producer_consumer_reduction_fraction": 0.2407769526946808,
+    "consumer_reduction_fraction": 0.2654216046551372
+  },
+  "candidate_change": {
+    "local_layer_count": 50,
+    "local_backend": "FlashAttentionBackend.forward_decode/sgl_kernel.flash_attn_with_kvcache(ver=3)",
+    "local_kv_dtype": "torch.float8_e5m2",
+    "local_page_size": 1,
+    "local_window_tokens": 1024,
+    "direct_consumer": true,
+    "intermediate_e4m3_conversion": false,
+    "global_layer_ids": [5, 11, 17, 23, 29, 35, 41, 47, 53, 59],
+    "global_backend": "TritonAttnBackend",
+    "global_kv_dtype": "torch.float8_e5m2",
+    "all_other_stack_and_workload_fields": "immutable"
+  },
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g"
+}

@@ -1,0 +1,61 @@
+{
+  "bench": {
+    "accelerator": "nvidia-h200-sxm",
+    "id": "h200-sync-linear-e00vhh6h29fj68x91g"
+  },
+  "candidate": {
+    "block_geometry": [
+      7,
+      8,
+      6
+    ],
+    "completion_tokens_per_request": 358,
+    "concurrency": 32,
+    "sampling": "temperature_zero_greedy_argmax"
+  },
+  "closed_arms": {
+    "direct_replay": {
+      "classification": "component_numerical_semantic_or_bound_reject",
+      "path": "artifacts/static-c32-resume1-20260723t1952z/retrieved/COMPONENT_RESULT.json",
+      "sha256": "01b3f79d28788ebdf617774aa7b72a85e0370834e087567d8a5a2f8ba8a8954c"
+    },
+    "nested_capture": {
+      "classification": "component_topology_reject_nested_cuda_graph_replay_unsupported",
+      "path": "artifacts/static-c32-supergraph-resume-20260723t2134z/COMPONENT_TOPOLOGY_TERMINAL.json",
+      "sha256": "ed3f594b808991538064b1aa3ec6a63cfe3e0182866a220ce0df2e998775e0d1"
+    }
+  },
+  "comparator": {
+    "cached_prompt_tokens": 17120,
+    "fresh_prompt_tokens": 117728,
+    "path": "inputs/bound/QUALIFIED_RING_COMPARATOR.json",
+    "service_seconds_per_request": 0.6556567115001144,
+    "sha256": "74bdb22c4bc217299d920bd53a49557403e3a838ba3c98df903ac119e4c4c64c"
+  },
+  "intervention": {
+    "allowed_change": "Replace only the failed parent-CUDAGraph wrapper with a stream-ordered host enqueue of the already-bound per-step dependency body.",
+    "forbidden": [
+      "parent CUDA stream capture around child CUDAGraph replay",
+      "raw repeated child replay without per-step attention metadata",
+      "block-length or concurrency sweep",
+      "tied-head stacking",
+      "model, checkpoint, dtype, ring, cache, sampler, workload, or comparator change"
+    ],
+    "ordered_step": [
+      "copy the prior finite greedy token into the stable c32 input buffer",
+      "copy the bound position, sequence length, and pre-reserved KV locations",
+      "initialize the exact attention backend replay metadata for that step",
+      "replay runner.graphs[32] on the same CUDA stream",
+      "compute finite greedy argmax into the next stable device token buffer"
+    ],
+    "source_template_path": "static_c32_supergraph_sitecustomize.py",
+    "source_template_sha256": "502470c2fb63472082143abd92f74de8c971c8ed3cd05361bbd2e8f027b3a101",
+    "topology": "No parent capture and no inter-step host synchronization; enqueue the full 7/8/6 dependency chain on one stream and synchronize only at the three block-result boundaries."
+  },
+  "measurement_gate": {
+    "component": "Require 704/704 exact token IDs, finite selected logits at every transition, 32/32 exact rows, byte-exact KV writes, exact positions and request ownership, and exactly 3 rather than 21 host result boundaries.",
+    "endpoint": "Run exactly one c32 endpoint only after the complete component passes and its measured conservative bound is positive; require 32/32 finite rows, 358 tokens per row, and exact 17120 cached plus 117728 fresh prompt-token accounting.",
+    "timing": "Report device events, enqueue wall time, host synchronizations, graph replay count, and conservative whole-request service-time bound."
+  },
+  "schema_version": 1
+}

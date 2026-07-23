@@ -73,3 +73,63 @@ endpoint only if this complete component is semantically exact and credibly
 positive. Preserve the bound checkpoint, image, E5M2 ring, workload, comparator,
 block geometry, and accounting; allow no block sweep, speculative tokens, model
 change, tied-head stack, or closed continuous-step/conditional-body replay.
+
+## Director reactivation — enqueue dependencies without nested capture
+
+The dependency-supergraph arm is consumed and closes only the attempted nested
+capture topology. Its first seven-forward construction reached active parent
+stream capture and failed exactly at `runner.graphs[32].replay()` because
+PyTorch forbids preparing an existing child `CUDAGraph` for replay during
+capture. No transition output or endpoint was produced.
+
+Use `$kernel-research` for one final materially distinct topology bound by
+`STREAM_ORDERED_CHAIN_BINDING.json`. Reuse the supergraph's explicit dependency
+body, but remove the parent graph entirely. On one CUDA stream, enqueue each
+step's stable input-token copy, position/sequence/KV-location copies, exact
+attention replay-metadata initialization, existing c32 child-graph replay, and
+finite greedy argmax into the next device token buffer. Do not synchronize
+between steps; expose the result only at the existing 7/8/6 block boundaries.
+This is not the consumed raw replay arm, which omitted the complete per-step
+metadata discipline and produced nonfinite outputs.
+
+Run one real-state 32x22 component against a fresh untimed stock token oracle.
+Require 704/704 exact finite transitions, byte-exact KV writes, exact positions
+and request ownership, and 3 rather than 21 host result boundaries. Measure
+device time, host enqueue time, graph replays, and synchronizations. Only a
+complete exact component with a credibly positive conservative bound admits one
+unchanged c32 endpoint against `0.6556567115001144 s/request`. No parent capture,
+raw-graph surgery, block/concurrency sweep, tied-head stack, or consumed arm
+replay is authorized.
+
+## Director reactivation — capture the raw model body, not a child graph
+
+The stream-ordered child-graph arm is consumed and closes the entire
+pre-instantiated-child reuse lineage. It kept all 21 c32 child replays finite and
+reduced host result boundaries from 21 to 3, but achieved only 171/704 token
+matches, zero exact rows, and non-exact position, request-map, and KV
+transitions. Together with the nonfinite direct replay and unsupported nested
+capture, no further `runner.graphs[32].replay()` mechanism is admissible.
+
+Use `$kernel-research` for the materially different source-bound mechanism in
+`DIRECT_MODEL_SUPERGRAPH_BINDING.json`. The pinned runtime's own
+`capture_one_batch_size` builds stable registry slices and a `ForwardBatch`,
+runs `init_forward_metadata_out_graph(..., in_capture=True)`, captures
+`init_forward_metadata_in_graph(...)` plus raw `model.forward`, executes the
+stock warmup cleanup, and shares the runtime graph pool. Repeat that raw capture
+body seven, eight, and six times inside three direct parent graphs, with each
+finite greedy result feeding the next step's stable token, position,
+sequence-length, request-map, attention-metadata, and KV-location state. Never
+invoke an existing child `CUDAGraph`.
+
+Run one real-state 32x22 component against a fresh untimed stock oracle. Require
+704/704 exact finite token IDs, 32/32 exact rows, byte-exact KV writes, exact
+positions and request ownership, and 3 rather than 21 host result boundaries.
+Record graph-pool and free-memory bytes before and after warmup and graph
+instantiation. If the exact c32 7/8/6 graph set does not fit, emit the typed
+topology blocker; do not change batch size, block geometry, model state, or
+runtime. Only a complete exact component with a credibly positive bound admits
+one unchanged c32 endpoint against `0.6556567115001144 s/request`.
+
+This is the last admitted static-c32 mechanism. No child replay, consumed-arm
+repair, block/concurrency sweep, tied-head stack, checkpoint/model/dtype change,
+or host synchronization between the forwards is authorized.

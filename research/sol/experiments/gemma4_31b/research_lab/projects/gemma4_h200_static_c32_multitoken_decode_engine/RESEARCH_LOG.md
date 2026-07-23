@@ -92,3 +92,99 @@ Next: terminal for this admitted topology. Do not retry the consumed candidate.
 A new arm would require director admission of a materially different mechanism
 that does not nest an existing `torch.cuda.CUDAGraph.replay()` inside parent
 capture.
+
+## 2026-07-23 — final stream-ordered chain prepared; bench unavailable
+
+Question: Can the admitted no-parent-capture topology retain the supergraph's
+per-step token, position, sequence-length, KV-location, Triton metadata, child
+graph replay, and finite argmax dependencies while synchronizing only at the
+7/8/6 result boundaries?
+
+Action: Preserved the hash-bound supergraph source and added a separate
+stream-ordered wrapper. It uses stable device ping-pong token buffers and, on
+the current CUDA stream, enqueues each complete bound step without
+`torch.cuda.graph()` or an inter-step synchronization. The existing bounded
+outer owner now stages the old source as an immutable template and the wrapper
+as `sitecustomize.py`; it rehashes both `DIRECTOR_BINDING.json` and
+`STREAM_ORDERED_CHAIN_BINDING.json` before claim. Python compilation, shell
+syntax, and both rehashes passed.
+
+Evidence: The one atomic claim attempt at 21:55:12Z did not obtain the H200.
+The pool reports it was claimed at 21:53:34Z by
+`gemma4_h200_fp8_tied_head_fused_greedy_top1` with a 22:53:34Z lease. No remote
+worker, CUDA invocation, candidate audit, or provider exposure started; the
+cumulative project exposure remains `$1.7390222509364175`.
+
+Next: After the current claim releases, atomically claim the same empty H200
+and run exactly one frozen 32x22 stream-ordered component. Its gate remains
+704/704 finite exact token transitions, byte-exact KV, exact positions/request
+ownership, and 3 versus 21 host boundaries; do not run the conditional endpoint
+unless that component passes with a positive bound.
+
+## 2026-07-23 — stream-ordered component reject
+
+Question: Does the final no-parent-capture chain preserve the exact 32x22
+decode transition while reducing host result boundaries from 21 to 3?
+
+Action: The first two owner attempts were mechanically candidate-absent: a
+root-owned stale `component-supergraph.runner` directory raised before the
+workload submitted any request, then cleanup without `sudo` proved insufficient.
+Both raw traces and archives were retrieved. The scoped stream launcher then
+removed only those stale stage-local paths with `sudo`, and the unchanged
+component executed once on the claimed H200.
+
+Measured evidence: The fresh candidate executed 21 existing c32 child-graph
+replays on one stream, produced finite outputs, and reached exactly three host
+result synchronizations/boundaries versus the control's 21. The measured device
+time was `454.451752 ms`; the scheduler-gap-only conservative bound was
+`0.6286271699 s/request`. However, it matched only `171/704` greedy token IDs,
+with `0/32` exact rows. Every `[7,8,6]` transition had unique locations and
+finite outputs but failed token, position, request-map, and byte-exact KV
+equality. The compact archive hash is
+`b42fdcb277ea4420479d7541cee6444a53e48c6587623c63a0fc33b9755afda7`.
+
+Interpretation: Removing the parent capture resolves PyTorch's topology error
+and retains the boundary opportunity, but the stream-enqueued replay metadata
+still is not semantically equivalent to host-stepped decode. The exact gate
+failed; the conditional endpoint was not started. Total project exposure is
+`$1.9820952597558386`. This admitted topology is consumed and terminal.
+
+## 2026-07-23 — direct raw-forward parent-supergraph reject
+
+Question: Can step-specific stable `ForwardBatch` and Triton metadata state make
+one exact c32 `[7,8,6]` parent graph semantically equivalent to the fresh stock
+oracle while retaining only three host result boundaries?
+
+Action: Rehashed `DIRECT_MODEL_SUPERGRAPH_BINDING.json`, atomically retained the
+assigned H200, and materialized all invocation bytes under this project before
+staging. The candidate allocated one Triton attention backend per unrolled step,
+ran the pinned out-of-graph and in-graph metadata initialization sequence, and
+captured 21 direct `model.forward` calls with dependent finite greedy argmax.
+Two pre-capture wiring defects—the missing official CUDA-graph padding default
+and one stale attempt-local runner directory—were repaired under the same owner;
+neither reached parent capture or a raw candidate forward.
+
+Measured evidence: All exact 7-, 8-, and 6-forward graphs instantiated without a
+memory topology failure. Minimum post-instantiation free H200 memory was
+`20,510,474,240` bytes. The complete component was finite, used 21 raw forwards,
+and produced 3 host result synchronizations/boundaries versus 21. Candidate
+device time was `455.893845 ms`, and the inherited boundary-only conservative
+bound was `0.6286271699 s/request`. Semantics failed: `144/704` token IDs
+matched, `0/32` rows were exact, and every block failed byte-exact KV, position,
+and request-map equality despite unique KV locations.
+
+Interpretation: Replacing instantiated child graphs with the official raw
+capture body resolves both nested-capture support and graph-memory concerns, but
+does not make the host-owned multi-token state transition equivalent. The exact
+component gate rejects this final static-c32 mechanism; the endpoint did not
+start. The hash-verified archive is
+`artifacts/static-c32-direct-model-20260723t2242z` with SHA-256
+`66b9f37da04dc3f46287321b0ed2cfe439fe5f6ce1e6e3caeb9ccefb58183667`.
+The scientific claim cost `$0.4638849714`. A 21.606-second corrective claim then
+verified the healthy retained server (`gemma-static-c32-supergraph`, port 30001,
+123,620 MiB HBM) and changed the mistaken available release to maintenance
+without stopping it; that added `$0.0147639768`. Cumulative project exposure is
+`$2.4607442080`.
+
+Next: Terminal. Do not retry any consumed static-c32 arm or run the conditional
+endpoint without a new director-admitted topology.

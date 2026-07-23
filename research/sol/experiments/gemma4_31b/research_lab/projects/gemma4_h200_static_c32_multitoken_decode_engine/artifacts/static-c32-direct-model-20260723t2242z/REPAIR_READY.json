@@ -1,0 +1,15 @@
+{
+  "attempt": 2,
+  "candidate_component_cuda_started": false,
+  "candidate_endpoint_started": false,
+  "classification": "integration_failure",
+  "diagnostic": {
+    "classification": "integration_failure",
+    "message": "component_candidate_runner",
+    "schema_version": 2,
+    "status": "terminal",
+    "unix_s": 1784846967.6195815
+  },
+  "repair_deadline_epoch": 1784847868.8426425,
+  "schema_version": 1
+}

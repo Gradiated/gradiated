@@ -25,7 +25,7 @@ NEBIUS = pathlib.Path(
     "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius"
 )
 KEY = pathlib.Path("/root/.config/nebius/glm-campaign/ssh_ed25519")
-REMOTE = "/home/glmrunner/gemma4-static-c32-supergraph"
+REMOTE = "/home/glmrunner/gemma4-static-c32-direct-model"
 CHECKPOINT_CANDIDATES = (
     "/home/glmrunner/gemma4-async-result-pipeline/checkpoint",
     "/home/glmrunner/gemma4-fp8-layer-fusion/checkpoint",
@@ -77,7 +77,15 @@ def input_rows() -> list[dict[str, object]]:
         + [
             PROJECT / "DIRECTOR_BINDING.json",
             PROJECT / "verify_director_binding.py",
+            PROJECT / "STREAM_ORDERED_CHAIN_BINDING.json",
+            PROJECT / "verify_stream_ordered_binding.py",
+            PROJECT / "DIRECT_MODEL_SUPERGRAPH_BINDING.json",
+            PROJECT / "verify_direct_model_binding.py",
             PROJECT / "static_c32_supergraph_sitecustomize.py",
+            PROJECT / "static_c32_stream_ordered_sitecustomize.py",
+            PROJECT / "static_c32_direct_model_sitecustomize.py",
+            PROJECT / "remote_static_c32_stream_ordered.sh",
+            PROJECT / "remote_static_c32_direct_model.sh",
             PROJECT / "run_exact_workload.py",
             PROJECT / "analyze_static_c32.py",
             PROJECT / "remote_static_c32_supergraph.sh",
@@ -97,6 +105,8 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifact-root", type=pathlib.Path, required=True)
     parser.add_argument("--absolute-deadline-epoch", type=int, required=True)
+    parser.add_argument("--stream-ordered", action="store_true")
+    parser.add_argument("--direct-model", action="store_true")
     args = parser.parse_args()
     args.artifact_root.mkdir(parents=True, exist_ok=False)
     events = args.artifact_root / "outer-events.jsonl"
@@ -120,6 +130,28 @@ def main() -> int:
     (args.artifact_root / "binding.stderr").write_text(verifier.stderr)
     if verifier.returncode:
         raise RuntimeError("director binding rehash failed")
+    if args.stream_ordered:
+        stream_verifier = run(
+            [sys.executable, str(PROJECT / "verify_stream_ordered_binding.py")],
+            capture_output=True,
+        )
+        (args.artifact_root / "stream-binding.stdout").write_text(stream_verifier.stdout)
+        (args.artifact_root / "stream-binding.stderr").write_text(stream_verifier.stderr)
+        if stream_verifier.returncode:
+            raise RuntimeError("stream binding rehash failed")
+    if args.direct_model:
+        direct_verifier = run(
+            [sys.executable, str(PROJECT / "verify_direct_model_binding.py")],
+            capture_output=True,
+        )
+        (args.artifact_root / "direct-binding.stdout").write_text(
+            direct_verifier.stdout
+        )
+        (args.artifact_root / "direct-binding.stderr").write_text(
+            direct_verifier.stderr
+        )
+        if direct_verifier.returncode:
+            raise RuntimeError("direct-model binding rehash failed")
 
     frozen = input_rows()
     atomic_json(args.artifact_root / "CLAIM_INPUT_MANIFEST.json", frozen)
@@ -247,7 +279,20 @@ def main() -> int:
                         / "input"
                         / pathlib.PurePosixPath(*relative.parts[1:])
                     )
-                elif relative.name == "static_c32_supergraph_sitecustomize.py":
+                elif (
+                    relative.name == "static_c32_supergraph_sitecustomize.py"
+                    and (args.stream_ordered or args.direct_model)
+                ):
+                    destination = pathlib.PurePosixPath(REMOTE) / "input/supergraph_template.py"
+                elif (
+                    relative.name == "static_c32_stream_ordered_sitecustomize.py"
+                    and args.stream_ordered
+                ):
+                    destination = pathlib.PurePosixPath(REMOTE) / "input/sitecustomize.py"
+                elif (
+                    relative.name == "static_c32_direct_model_sitecustomize.py"
+                    and args.direct_model
+                ):
                     destination = pathlib.PurePosixPath(REMOTE) / "input/sitecustomize.py"
                 else:
                     destination = pathlib.PurePosixPath(REMOTE) / "input" / relative.name
@@ -306,11 +351,18 @@ def main() -> int:
             worker_timeout = max(
                 60, deadline - int(time.time()) - RETRIEVAL_RESERVE_SECONDS
             )
+            remote_worker = (
+                "remote_static_c32_direct_model.sh"
+                if args.direct_model
+                else "remote_static_c32_stream_ordered.sh"
+                if args.stream_ordered
+                else "remote_static_c32_supergraph.sh"
+            )
             worker = run_ssh(
                 ip,
                 KEY,
                 f"STATIC_C32_REMOTE_ROOT={REMOTE} timeout --signal=TERM {worker_timeout} "
-                f"bash {REMOTE}/input/remote_static_c32_supergraph.sh",
+                f"bash {REMOTE}/input/{remote_worker}",
                 timeout=worker_timeout + 60,
             )
             (args.artifact_root / f"remote-worker-attempt-{attempt}.stdout").write_text(

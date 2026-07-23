@@ -1,0 +1,40 @@
+{
+  "files": [
+    {
+      "bytes": 8072,
+      "name": "remote_e4m3_candidate.sh",
+      "sha256": "28dc750ed9b5f3cf04f49603fff99a5636c9f2f1e59f54e54eb5436185c2516e"
+    },
+    {
+      "bytes": 1618,
+      "name": "CHECKPOINT_SHA256SUMS.txt",
+      "sha256": "7ed5b04ef9c115a2cbba771df463ca0cacbfb87cfa298773e8b037d12bcea735"
+    },
+    {
+      "bytes": 9494,
+      "name": "fp8_qkv_paired_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    {
+      "bytes": 6370,
+      "name": "install_endpoint_patch.py",
+      "sha256": "71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588"
+    },
+    {
+      "bytes": 6062,
+      "name": "proven_v0513_endpoint_entrypoint.py",
+      "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc"
+    },
+    {
+      "bytes": 26612,
+      "name": "qkv_epilogue_discriminator.py",
+      "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"
+    },
+    {
+      "bytes": 2192,
+      "name": "stack_sitecustomize.py",
+      "sha256": "5791f6718b90b1ac555f7cb53179b18fd523ffb9f469d02582482431623d39fa"
+    }
+  ],
+  "schema_version": 1
+}

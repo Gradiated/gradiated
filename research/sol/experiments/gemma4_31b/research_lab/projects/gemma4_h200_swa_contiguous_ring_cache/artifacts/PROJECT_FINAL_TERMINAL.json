@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "status": "terminal",
+  "classification": "candidate_semantic_reject",
+  "decision": "close_exact_e5m2_request_owned_ring",
+  "component": {
+    "classification": "component_positive_numeric_guard_repaired",
+    "candidate_vs_control_relative_l2": 0.0,
+    "conservative_local_reduction_fraction": 0.2483464807482788,
+    "projected_whole_request_reduction_fraction": 0.03802689267995656,
+    "replayed": false
+  },
+  "endpoint": {
+    "control_service_seconds_per_request": 0.6766461551248995,
+    "control_complete_requests": 32,
+    "control_cached_prompt_tokens": 17120,
+    "control_uncached_prompt_tokens": 117728,
+    "candidate_service_seconds_per_request": null,
+    "candidate_science_started": false,
+    "candidate_path_local_layers": 50,
+    "semantic_discriminator_pass": false,
+    "semantic_failure_reproduced": true
+  },
+  "actual_spend_usd": 0.9311590839544932,
+  "authorized_spend_usd": 14.0,
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "bench_released": true,
+  "bench_release_condition": "ready",
+  "artifacts": {
+    "component_reevaluation": "artifacts/COMPONENT_REEVALUATION.json",
+    "control_terminal": "artifacts/endpoint-evidence/control/TERMINAL.json",
+    "candidate_smoke": "artifacts/endpoint-evidence/CANDIDATE_SMOKE_OBSERVATIONS.json",
+    "candidate_path_audit": "artifacts/endpoint-evidence/candidate-audit/ring.jsonl",
+    "endpoint_owner_terminal": "artifacts/ENDPOINT_FINAL_TERMINAL.json",
+    "compact_sha256": "abefc9024748dd29dc2ce62384f1e618f9503fb03a255d3ed12c3689d6ae7134"
+  }
+}

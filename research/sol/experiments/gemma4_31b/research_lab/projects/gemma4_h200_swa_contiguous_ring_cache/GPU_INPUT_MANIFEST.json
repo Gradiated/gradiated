@@ -1,0 +1,54 @@
+{
+  "component": [
+    {
+      "bytes": 12033,
+      "path": "ring_kv.py",
+      "remote_name": "ring_kv.py",
+      "sha256": "02b94170e260c08d7d1b6c51eb437f23dbb16c1bf0665c2026c2056ef645210b"
+    },
+    {
+      "bytes": 27321,
+      "path": "ring_component.py",
+      "remote_name": "ring_component.py",
+      "sha256": "2714f8a246366dc9096fc28bfbf8682cfef0924494d66741eff97a6880762ae7"
+    },
+    {
+      "bytes": 2712,
+      "path": "remote_component.sh",
+      "remote_name": "remote_component.sh",
+      "sha256": "ba810a99b9314c0c71811d693df0b9d5ac0f874286571ba1bca4abef4dc187a8"
+    },
+    {
+      "bytes": 21569,
+      "path": "inputs/source/decode_attention.v0.5.13.py",
+      "remote_name": "inputs__source__decode_attention.v0.5.13.py",
+      "sha256": "1040f43a9ea579b944aa037b585997f8d7b585d85f459a1b1f420002b4bd092a"
+    },
+    {
+      "bytes": 95820,
+      "path": "inputs/source/memory_pool.v0.5.13.py",
+      "remote_name": "inputs__source__memory_pool.v0.5.13.py",
+      "sha256": "37f9915a2945c7bb389212eed65eb770cb9e3fa6976d0778b6831d2ac29d7bdd"
+    },
+    {
+      "bytes": 10559,
+      "path": "inputs/source/swa_memory_pool.v0.5.13.py",
+      "remote_name": "inputs__source__swa_memory_pool.v0.5.13.py",
+      "sha256": "36830cdb84cc344ffb7bac9ff30ba9a41b488d67893a5015ecbba584e95a9858"
+    },
+    {
+      "bytes": 64753,
+      "path": "inputs/source/triton_backend.v0.5.13.py",
+      "remote_name": "inputs__source__triton_backend.v0.5.13.py",
+      "sha256": "7bc3ae9ef1be59ec07734df442c077a07fb54c28007747f53a552bb81e8e8e2d"
+    },
+    {
+      "bytes": 4621,
+      "path": "inputs/production_config.json",
+      "remote_name": "inputs__production_config.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    }
+  ],
+  "project": "gemma4_h200_swa_contiguous_ring_cache",
+  "schema_version": 1
+}

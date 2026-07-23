@@ -1,0 +1,36 @@
+{
+  "candidate_vs_control": {
+    "all_finite": true,
+    "cosine": 0.9999999403953552,
+    "max_abs_error": 0.0,
+    "mean_abs_error": 0.0,
+    "relative_l2": 0.0
+  },
+  "candidate_vs_reference": {
+    "all_finite": true,
+    "cosine": 0.9999879598617554,
+    "max_abs_error": 0.001953125,
+    "mean_abs_error": 0.0002536364772822708,
+    "relative_l2": 0.010483701713383198
+  },
+  "classification": "component_positive_numeric_guard_repaired",
+  "component_replay": false,
+  "conditional_endpoint_admitted": true,
+  "conservative_local_reduction_fraction": 0.2483464807482788,
+  "control_vs_reference": {
+    "all_finite": true,
+    "cosine": 0.9999879598617554,
+    "max_abs_error": 0.001953125,
+    "mean_abs_error": 0.0002536364772822708,
+    "relative_l2": 0.010483701713383198
+  },
+  "guard_defect": "absolute candidate-vs-FP32 relative_l2 threshold rejected production-equivalent output",
+  "numerical_pass": true,
+  "original_component_positive": false,
+  "projected_whole_request_reduction_fraction": 0.03802689267995656,
+  "projected_whole_request_seconds": 0.6486833419586374,
+  "schema_version": 1,
+  "semantic_pass": true,
+  "source_terminal": "artifacts/remote-component/artifacts__component__COMPONENT_TERMINAL.json",
+  "status": "terminal"
+}

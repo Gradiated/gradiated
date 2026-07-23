@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "kind": "measured_endpoint_semantic_discriminator",
+  "candidate_science_started": false,
+  "attempts_after_graph_capture": 2,
+  "rows": [
+    {
+      "prompt": "Reply with exactly: READY",
+      "expected": "READY",
+      "observed": "READY",
+      "pass": true
+    },
+    {
+      "prompt": "What is 2+2? Reply with only the number.",
+      "expected": "4",
+      "observed": "4",
+      "pass": true
+    },
+    {
+      "prompt": "Return only a JSON object with key status and string value ok.",
+      "expected": "{\"status\":\"ok\"}",
+      "observed": "``` deL ownKS나NovelKBりん$-- own$+ い족 ownୋ queBCL나 ownsameLucكله 싶 que하BB",
+      "pass": false
+    }
+  ],
+  "pass": false,
+  "interpretation": "The one-token answers are produced by prefill; the first discriminator requiring multi-token decode becomes incoherent, localizing the failure to the ring decode path.",
+  "stop_rule_applied": "Close on prefix/cache semantic failure or numerical failure."
+}

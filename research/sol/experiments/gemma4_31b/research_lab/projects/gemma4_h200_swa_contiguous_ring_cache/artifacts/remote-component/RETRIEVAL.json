@@ -1,0 +1,30 @@
+{
+  "/home/glmrunner/gemma4-swa-ring-cache/artifacts/component/COMPONENT_TERMINAL.json": {
+    "diagnostic": "",
+    "success": true
+  },
+  "/home/glmrunner/gemma4-swa-ring-cache/artifacts/component/INVOCATION_STATE.json": {
+    "diagnostic": "",
+    "success": true
+  },
+  "/home/glmrunner/gemma4-swa-ring-cache/artifacts/component/REMOTE_TERMINAL.json": {
+    "diagnostic": "",
+    "success": true
+  },
+  "/home/glmrunner/gemma4-swa-ring-cache/artifacts/component/worker.stderr": {
+    "diagnostic": "",
+    "success": true
+  },
+  "/home/glmrunner/gemma4-swa-ring-cache/artifacts/component/worker.stdout": {
+    "diagnostic": "",
+    "success": true
+  },
+  "/home/glmrunner/gemma4-swa-ring-cache/component-compact.tar.gz": {
+    "diagnostic": "",
+    "success": true
+  },
+  "/home/glmrunner/gemma4-swa-ring-cache/component-compact.tar.gz.sha256": {
+    "diagnostic": "",
+    "success": true
+  }
+}

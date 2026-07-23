@@ -1,6 +1,6 @@
 {
   "active_session": null,
-  "actual_spend_usd": 0.0,
+  "actual_spend_usd": 0.2498002818,
   "allocation_limit": 1,
   "authorized_spend_usd": 12.0,
   "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
@@ -11,14 +11,15 @@
   "economic_ceiling_seconds_per_request": 0.6381105231,
   "immutable_binding": "DIRECTOR_BINDING.json",
   "immutable_binding_verifier": "verify_director_binding.py",
-  "next_action": "Wait for the director-assigned H200 h200-sync-linear-e00vhh6h29fj68x91g to be released by its current gemma4_h200_fp8_tied_head_endpoint claim, then launch the already-staged late-30 owner. The admitted project-local factor/selection/runner/comparator snapshot is hash-verified; do not resolve shared paths after the claim. Run the four-row coherence discriminator once, then only on semantic pass the single exact c32 candidate with 32/32 rows and 17,120 cached plus 117,728 fresh prompt tokens.",
+  "next_action": "Director should close this fixed late-layer placement.",
   "priority": 4000,
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
   "quality_claim_authorized": false,
   "researcher_profile": "execution",
   "reservation_gate": "Do not claim until the $12 reservation is durable and DIRECTOR_BINDING.json verifies.",
-  "status": "active",
+  "status": "completed",
   "storage_budget": "At most 8 GiB; no checkpoint or factor duplication beyond bounded extraction.",
-  "summary": "Fixed late-layer placement is staged locally and pre-claim validated. No H200 work started: at 2026-07-23T18:44:38Z the atomic claim was rejected because the sole assigned bench was claimed by gemma4_h200_fp8_tied_head_endpoint. Provider spend remains $0.00.",
+  "summary": "reconstruction_or_coherence_reject",
+  "terminal_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_late30_width16384_recovery/artifacts/FINAL_TERMINAL.json",
   "wall_deadline_utc": "2026-07-23T22:30:00Z"
 }

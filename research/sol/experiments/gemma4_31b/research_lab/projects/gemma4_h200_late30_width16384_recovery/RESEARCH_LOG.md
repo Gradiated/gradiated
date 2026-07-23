@@ -13,3 +13,13 @@ Action: verified `DIRECTOR_BINDING.json` (`30` finite late-layer rank-256 rows),
 Evidence: the project-local factor archive SHA-256 is `6c9760dfc4d05186336f0bc2618218a1d6a83ac02611f1c28e2b03a9dcf92021`. The first owner exited before claim with `GpuPoolError: no available GPU bench matches this project`; pool evidence shows `h200-sync-linear-e00vhh6h29fj68x91g` is atomically claimed by `gemma4_h200_fp8_tied_head_endpoint`. No remote invocation, CUDA work, or provider spend occurred.
 
 Interpretation: this is a typed in-scope capacity boundary, not a result for the placement; retain the staged immutable snapshot and run unchanged when the director-assigned H200 returns.
+
+## 2026-07-23 — fixed late-30 placement closes on coherence
+
+Question: can exact early layers plus the fixed late 16,384-wide rank-256 merged recovery restore basic served coherence?
+
+Action: after the binding and 19-file local GPU manifest reverified, the retained H200 loaded the project-local archive without refitting. A stale terminal tied-head server initially held `122250 MiB`; its pre-invocation OOM was repaired in the retained claim after that terminal server was quiesced. The unchanged second attempt loaded and executed the single four-row coherence discriminator.
+
+Measured evidence: path audit passed exactly: `180` MLP projection rows, `30` original-width layers, `30` recovered-width layers, `30` merged rank-256 `down_proj` corrections, no runtime adapter/extra GEMM, and inherited 50-local/10-global E5M2 ring construction. All four coherence transports succeeded but all four semantic rows failed (`json`, `READY`, `4`, then post-prefix `json`) with repetitive gibberish. The coherence invocation marker is true; c32 remains unstarted. Conservative project exposure is `$0.2498002818`.
+
+Interpretation: preserving the early half does not repair the semantic failure of this fixed recovered late-half representation. The coherence gate closes the placement; no c32 endpoint was consumed. Terminal: `artifacts/FINAL_TERMINAL.json`.

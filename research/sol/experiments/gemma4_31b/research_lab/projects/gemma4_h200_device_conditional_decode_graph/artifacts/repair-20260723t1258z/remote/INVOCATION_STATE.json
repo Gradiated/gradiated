@@ -1,0 +1,7 @@
+{
+  "candidate_full_body_started": false,
+  "full_body_science_started": true,
+  "full_body_server_started": true,
+  "support_cuda_started": true,
+  "support_science_started": true
+}

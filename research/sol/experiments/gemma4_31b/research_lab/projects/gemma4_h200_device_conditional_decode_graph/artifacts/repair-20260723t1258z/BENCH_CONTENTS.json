@@ -1,0 +1,12 @@
+{
+  "project": "gemma4_h200_device_conditional_decode_graph",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "image": "Pinned SGLang v0.5.13 digest 6113665 retained",
+  "checkpoint": "Exact immutable checkpoint retained and linked at /home/glmrunner/gemma4-device-conditional-graph/checkpoint",
+  "runtime": "Fixed-repeat-four discriminator rejected: full_body_host_intervention_required",
+  "artifacts": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_device_conditional_decode_graph/artifacts/repair-20260723t1258z",
+  "caches": "CUDA graph, conditional-node extension, FP8, QKV, and retained-stack caches retained",
+  "device_graph_result": "full_body_host_intervention_required",
+  "device_graph_terminal_sha256": "d85376684547ed5ea1dd4ebb25b86f38905f665ce3eb357660e078f7ff49aa58",
+  "server_state": "Healthy discriminator server retained with baseline num_continuous_decode_steps=1 and overlap scheduler unchanged"
+}

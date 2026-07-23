@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "classification": "candidate_path_mechanically_absent_repair",
+  "reason": "The first mixed-length workload completed, but only the tokenizer process installed the audit. Exact already-patched retained-stack bytes caused scheduler worker sitecustomize to exit before installing process-local wrappers. path-audit.jsonl therefore contained only one installation event and no candidate or host-boundary events.",
+  "candidate_full_body_started_before_repair": false,
+  "scientific_candidate_arm_consumed_before_repair": false,
+  "intervention_changed": false,
+  "workload_changed": false,
+  "decision_gates_changed": false,
+  "repair": {
+    "path": "device_graph_sitecustomize.py",
+    "sha256": "a2905806f62341caf1578e82c6b58e9a76d4206ae79546ae879d42b0f1c681ff",
+    "scope": "Accept only the two exact already-installed retained source hashes in child processes, then install unchanged process-local audit wrappers."
+  },
+  "repair_attempts": [
+    {
+      "classification": "ordinary_numeric_guard_defect_before_candidate_path",
+      "detail": "The first repair guard compared the schedule_batch file to the hash of the replacement fragment rather than the hash of the complete patched source. The live complete source was independently reconstructed from the frozen upstream bytes and frozen OLD/NEW transformation and matched b6480f792867d7aba3dc39ef66048408c6c92ddad3ed81b23934493a351be459 exactly."
+    }
+  ],
+  "invalidated_operation_to_repeat": "one fixed mixed completion-length 1,2,3,4 actual full-body path discriminator"
+}

@@ -1,0 +1,59 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": null,
+  "contents": {
+    "artifacts": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_device_conditional_decode_graph/artifacts/dependency-blocker-20260723t1255z",
+    "attention_claim_cost_usd": 0.185853,
+    "attention_cumulative_cost_usd": 0.341364,
+    "attention_iteration2_claim_cost_usd": 0.13164,
+    "attention_result": "component_reject",
+    "block_paged_cache_claim_cost_usd": 0.031551,
+    "block_paged_cache_result": "component_numerical_or_semantic_reject",
+    "caches": "CUDA graph and conditional-node extension caches retained",
+    "checkpoint": "Exact immutable checkpoint retained and linked at /home/glmrunner/gemma4-device-conditional-graph/checkpoint",
+    "e5m2_local_fa3_actual_spend_usd": 0.04290740814999999,
+    "e5m2_local_fa3_result": "typed_external_or_integration_boundary",
+    "image": "Pinned SGLang v0.5.13 digest 6113665 retained",
+    "local_window512_actual_spend_usd": 0.06585124834852758,
+    "local_window512_result": "numerical_negative",
+    "mixed_kv_claim_cost_usd": 0.8680106262166666,
+    "mixed_kv_local_fa3_hybrid_actual_spend_usd": 0.15854709703333333,
+    "mixed_kv_local_fa3_hybrid_result": "component_insufficient_bound",
+    "mlp_width16384_claim_cost_usd": 0.03185732119878133,
+    "mlp_width16384_cumulative_cost_usd": 0.1137651591817538,
+    "mlp_width16384_result": "bound_below_3pct",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "mtp_claim_cost_usd": 0.13434757324457167,
+    "mtp_cumulative_project_cost_usd": 3.847567199209622,
+    "mtp_result": "current_stacked_assistant_path_incompatible",
+    "project": "gemma4_h200_device_conditional_decode_graph",
+    "ring_cache_claim_cost_usd": 0.893705,
+    "ring_cache_cumulative_cost_usd": 0.9311590839544932,
+    "ring_cache_result": "candidate_semantic_reject",
+    "runtime": "Device-conditional full-body discriminator terminal retrieved",
+    "server_state": "Discriminator server retained when healthy"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-23T16:30:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-sync-linear-h200-20260723t1045-watchdog-v3.service",
+      "main_pid": 3631135,
+      "unit": "gemma4-sync-linear-h200-20260723t1045-watchdog-v3.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T22:28:20.458522Z",
+  "resource": {
+    "disk_id": "computedisk-e00x25hxd1pnnxjn8b",
+    "disk_name": "gemma4-sync-linear-h200-20260722t2226z-boot",
+    "instance_id": "computeinstance-e00vhh6h29fj68x91g",
+    "instance_name": "gemma4-sync-linear-h200-20260722t2226z"
+  },
+  "status": "maintenance",
+  "updated_at": "2026-07-23T12:57:23.326055Z"
+}

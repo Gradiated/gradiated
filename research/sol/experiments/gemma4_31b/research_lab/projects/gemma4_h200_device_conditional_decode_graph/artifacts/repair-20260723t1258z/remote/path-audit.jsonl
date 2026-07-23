@@ -1,0 +1,50 @@
+{"event": "device_graph_audit_installed", "monotonic_s": 53443.563028509, "phase": "installation", "pid": 1}
+{"event": "device_graph_audit_installed", "monotonic_s": 53451.749720428, "phase": "installation", "pid": 117}
+{"event": "device_graph_audit_installed", "monotonic_s": 53451.751609931, "phase": "installation", "pid": 116}
+{"event": "device_graph_audit_installed", "monotonic_s": 53451.756546262, "phase": "installation", "pid": 115}
+{"event": "device_graph_audit_installed", "monotonic_s": 53506.633967831, "phase": "installation", "pid": 445}
+{"batch_size": 1, "event": "Scheduler.run_batch", "monotonic_s": 53506.869679658, "phase": "host_entry", "pid": 116}
+{"batch_size": 1, "event": "TpModelWorker.forward_batch_generation", "monotonic_s": 53506.870412169, "phase": "host_entry", "pid": 116}
+{"batch_size": 1, "event": "ModelRunner.sample", "monotonic_s": 53509.617254358, "phase": "host_entry", "pid": 116}
+{"batch_size": 3, "event": "Scheduler.run_batch", "monotonic_s": 53509.715312172, "phase": "host_entry", "pid": 116}
+{"batch_size": 3, "event": "TpModelWorker.forward_batch_generation", "monotonic_s": 53509.715765259, "phase": "host_entry", "pid": 116}
+{"batch_size": 3, "event": "ModelRunner.sample", "monotonic_s": 53509.755567073, "phase": "host_entry", "pid": 116}
+{"batch_size": 1, "event": "Scheduler.process_batch_result", "monotonic_s": 53509.755993455, "phase": "host_entry", "pid": 116}
+{"batch_size": 4, "event": "Scheduler.update_running_batch", "monotonic_s": 53509.758798139, "phase": "host_entry", "pid": 116}
+{"batch_size": null, "event": "ScheduleBatch.prepare_for_decode", "monotonic_s": 53509.758909779, "phase": "host_entry", "pid": 116}
+{"batch_size": 4, "event": "Scheduler.run_batch", "monotonic_s": 53509.759458469, "phase": "host_entry", "pid": 116}
+{"batch_size": 4, "event": "TpModelWorker.forward_batch_generation", "monotonic_s": 53509.759732324, "phase": "host_entry", "pid": 116}
+{"batch_size": 4, "event": "CudaGraphRunner.replay", "monotonic_s": 53514.433592943, "phase": "cuda_graph_replay", "pid": 116}
+{"captured_batch_size": 4, "event": "CudaGraphRunner.replay_complete", "monotonic_s": 53514.436407677, "phase": "cuda_graph_replay", "pid": 116, "raw_batch_size": 4}
+{"batch_size": 4, "event": "ModelRunner.sample", "monotonic_s": 53514.436556392, "phase": "host_entry", "pid": 116}
+{"batch_size": 3, "event": "Scheduler.process_batch_result", "monotonic_s": 53514.437052185, "phase": "host_entry", "pid": 116}
+{"batch_size": 4, "event": "Scheduler.update_running_batch", "monotonic_s": 53514.45033141, "phase": "host_entry", "pid": 116}
+{"batch_size": null, "event": "ScheduleBatch.prepare_for_decode", "monotonic_s": 53514.450852209, "phase": "host_entry", "pid": 116}
+{"batch_size": 3, "event": "Scheduler.run_batch", "monotonic_s": 53514.451245614, "phase": "host_entry", "pid": 116}
+{"batch_size": 3, "event": "TpModelWorker.forward_batch_generation", "monotonic_s": 53514.451677198, "phase": "host_entry", "pid": 116}
+{"batch_size": 3, "event": "CudaGraphRunner.replay", "monotonic_s": 53514.451888665, "phase": "cuda_graph_replay", "pid": 116}
+{"captured_batch_size": 4, "event": "CudaGraphRunner.replay_complete", "monotonic_s": 53514.452640131, "phase": "cuda_graph_replay", "pid": 116, "raw_batch_size": 3}
+{"batch_size": 3, "event": "ModelRunner.sample", "monotonic_s": 53514.452735728, "phase": "host_entry", "pid": 116}
+{"batch_size": 4, "event": "Scheduler.process_batch_result", "monotonic_s": 53514.453023811, "phase": "host_entry", "pid": 116}
+{"batch_size": 4, "event": "SchedulerBatchResultProcessor.process_batch_result_decode", "monotonic_s": 53514.453089937, "phase": "host_entry", "pid": 116}
+{"batch_size": 3, "event": "Scheduler.update_running_batch", "monotonic_s": 53514.453812054, "phase": "host_entry", "pid": 116}
+{"batch_size": null, "event": "ScheduleBatch.prepare_for_decode", "monotonic_s": 53514.454193267, "phase": "host_entry", "pid": 116}
+{"batch_size": 2, "event": "Scheduler.run_batch", "monotonic_s": 53514.454557604, "phase": "host_entry", "pid": 116}
+{"batch_size": 2, "event": "TpModelWorker.forward_batch_generation", "monotonic_s": 53514.454809035, "phase": "host_entry", "pid": 116}
+{"batch_size": 2, "event": "CudaGraphRunner.replay", "monotonic_s": 53514.455013315, "phase": "cuda_graph_replay", "pid": 116}
+{"captured_batch_size": 2, "event": "CudaGraphRunner.replay_complete", "monotonic_s": 53514.457011344, "phase": "cuda_graph_replay", "pid": 116, "raw_batch_size": 2}
+{"batch_size": 2, "event": "ModelRunner.sample", "monotonic_s": 53514.457125021, "phase": "host_entry", "pid": 116}
+{"batch_size": 3, "event": "Scheduler.process_batch_result", "monotonic_s": 53514.457468196, "phase": "host_entry", "pid": 116}
+{"batch_size": 3, "event": "SchedulerBatchResultProcessor.process_batch_result_decode", "monotonic_s": 53514.45752259, "phase": "host_entry", "pid": 116}
+{"batch_size": 2, "event": "Scheduler.update_running_batch", "monotonic_s": 53514.464898919, "phase": "host_entry", "pid": 116}
+{"batch_size": null, "event": "ScheduleBatch.prepare_for_decode", "monotonic_s": 53514.465263052, "phase": "host_entry", "pid": 116}
+{"batch_size": 1, "event": "Scheduler.run_batch", "monotonic_s": 53514.465583583, "phase": "host_entry", "pid": 116}
+{"batch_size": 1, "event": "TpModelWorker.forward_batch_generation", "monotonic_s": 53514.465799322, "phase": "host_entry", "pid": 116}
+{"batch_size": 1, "event": "CudaGraphRunner.replay", "monotonic_s": 53514.465957927, "phase": "cuda_graph_replay", "pid": 116}
+{"captured_batch_size": 1, "event": "CudaGraphRunner.replay_complete", "monotonic_s": 53514.467875291, "phase": "cuda_graph_replay", "pid": 116, "raw_batch_size": 1}
+{"batch_size": 1, "event": "ModelRunner.sample", "monotonic_s": 53514.467987287, "phase": "host_entry", "pid": 116}
+{"batch_size": 2, "event": "Scheduler.process_batch_result", "monotonic_s": 53514.468346012, "phase": "host_entry", "pid": 116}
+{"batch_size": 2, "event": "SchedulerBatchResultProcessor.process_batch_result_decode", "monotonic_s": 53514.468402853, "phase": "host_entry", "pid": 116}
+{"batch_size": 1, "event": "Scheduler.update_running_batch", "monotonic_s": 53514.47663484, "phase": "host_entry", "pid": 116}
+{"batch_size": 1, "event": "Scheduler.process_batch_result", "monotonic_s": 53514.47671582, "phase": "host_entry", "pid": 116}
+{"batch_size": 1, "event": "SchedulerBatchResultProcessor.process_batch_result_decode", "monotonic_s": 53514.476756442, "phase": "host_entry", "pid": 116}

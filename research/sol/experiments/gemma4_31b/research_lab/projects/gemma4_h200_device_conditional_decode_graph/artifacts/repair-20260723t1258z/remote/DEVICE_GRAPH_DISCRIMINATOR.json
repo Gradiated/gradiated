@@ -1,0 +1,205 @@
+{
+  "candidate_scientific_invocation_began": false,
+  "captured_graph_batch_sizes": [
+    1,
+    2,
+    4
+  ],
+  "classification": "full_body_host_intervention_required",
+  "endpoint_gate_pass": false,
+  "event_counts": {
+    "CudaGraphRunner.replay": 4,
+    "CudaGraphRunner.replay_complete": 4,
+    "ModelRunner.sample": 6,
+    "ScheduleBatch.prepare_for_decode": 4,
+    "Scheduler.process_batch_result": 6,
+    "Scheduler.run_batch": 6,
+    "Scheduler.update_running_batch": 5,
+    "SchedulerBatchResultProcessor.process_batch_result_decode": 4,
+    "TpModelWorker.forward_batch_generation": 6
+  },
+  "fewer_graph_launches_pass": false,
+  "fewer_host_round_trips_pass": false,
+  "full_body_state_equivalence_pass": false,
+  "host_boundaries": {
+    "decode_result_processing": 4,
+    "next_decode_preparation": 4,
+    "next_running_batch_update": 5,
+    "sample": 6,
+    "scheduler_result_processing": 6
+  },
+  "host_intervention_proven": true,
+  "padded_graph_proven": true,
+  "pass": false,
+  "raw_graph_batch_sizes": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "repeat_tokens": 4,
+  "schema_version": 1,
+  "status": "terminal",
+  "support_discriminator": {
+    "candidate": "fixed_repeat_four_device_conditional_full_decode_graph",
+    "classification": "full_body_device_continuation_not_composable_in_pinned_stack",
+    "conditional_node_smoke": {
+      "counter": 4,
+      "meaning": "CUDA conditional WHILE executes four device-selected iterations; this does not establish SGLang full-body composability.",
+      "pass": true,
+      "scientific_invocation_began": true
+    },
+    "full_body_support": {
+      "captured_graph_composition_handle_ready": true,
+      "cuda_conditional_node_ready": true,
+      "pass": false,
+      "source_body_ready": false
+    },
+    "live_sources": {
+      "batch_result_processor": {
+        "bytes": 38394,
+        "module": "sglang.srt.managers.scheduler_components.batch_result_processor",
+        "path": "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler_components/batch_result_processor.py",
+        "sha256": "9c764afffb106e966fde110851de73bb6a3d0f2415343a574a255e91f86851de"
+      },
+      "cuda_graph_runner": {
+        "bytes": 53078,
+        "module": "sglang.srt.model_executor.cuda_graph_runner",
+        "path": "/sgl-workspace/sglang/python/sglang/srt/model_executor/cuda_graph_runner.py",
+        "sha256": "7d1898247e80ff6a446eb42e4968d2eea0df30b109ee2d089a9ad78791bc079e"
+      },
+      "model_runner": {
+        "bytes": 156397,
+        "module": "sglang.srt.model_executor.model_runner",
+        "path": "/sgl-workspace/sglang/python/sglang/srt/model_executor/model_runner.py",
+        "sha256": "f4dad073eb9f89afd4cda0439b97dee63f8de131d0ed10078b817dba1f978f59"
+      },
+      "penalizer_orchestrator": {
+        "bytes": 9565,
+        "module": "sglang.srt.sampling.penaltylib.orchestrator",
+        "path": "/sgl-workspace/sglang/python/sglang/srt/sampling/penaltylib/orchestrator.py",
+        "sha256": "88d9a4c04866a8b2dad0efe6f010f28f7e7dfa0e65708920f7845d760e833192"
+      },
+      "sampler": {
+        "bytes": 32466,
+        "module": "sglang.srt.layers.sampler",
+        "path": "/sgl-workspace/sglang/python/sglang/srt/layers/sampler.py",
+        "sha256": "85541951e1cf50d10c54978178e403ff9d4aa6f223e629ea91965735ba882a8f"
+      },
+      "sampling_batch_info": {
+        "bytes": 17103,
+        "module": "sglang.srt.sampling.sampling_batch_info",
+        "path": "/sgl-workspace/sglang/python/sglang/srt/sampling/sampling_batch_info.py",
+        "sha256": "e7903417a4cab05294975d069555987e2720557dd9fd0b8d79a6f934f3fbb0db"
+      },
+      "schedule_batch": {
+        "bytes": 117509,
+        "module": "sglang.srt.managers.schedule_batch",
+        "path": "/sgl-workspace/sglang/python/sglang/srt/managers/schedule_batch.py",
+        "sha256": "eea77dac02f593da24e953f0a0ea03237f2874d0ef27522044e8fd6397fcb874"
+      },
+      "scheduler": {
+        "bytes": 173876,
+        "module": "sglang.srt.managers.scheduler",
+        "path": "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler.py",
+        "sha256": "3a26deea85f43d61c27b94013288ad95d6ee75111fe40134893541777c9c8cd4"
+      },
+      "tp_worker": {
+        "bytes": 22003,
+        "module": "sglang.srt.managers.tp_worker",
+        "path": "/sgl-workspace/sglang/python/sglang/srt/managers/tp_worker.py",
+        "sha256": "f2e00ea7d53b7250231d44b9d52415c6f6b5f936b0e7c6af4a13f5aff6c1e509"
+      }
+    },
+    "pass": false,
+    "runtime": {
+      "capability": [
+        9,
+        0
+      ],
+      "compiled_cuda_version": 13000,
+      "device": "NVIDIA H200",
+      "python": "3.12.3",
+      "torch": "2.11.0+cu130",
+      "torch_cuda": "13.0"
+    },
+    "schema_version": 1,
+    "scientific_invocation_began": true,
+    "source_contract": {
+      "checks": {
+        "finish_state_is_python_request_state": true,
+        "graph_capture_calls_model_forward": true,
+        "graph_capture_contains_sampler": false,
+        "next_kv_slot_allocated_outside_graph": true,
+        "output_ids_are_python_request_state": true,
+        "result_tokens_cross_to_host_list": true,
+        "scheduler_prepares_next_decode_on_host": true,
+        "scheduler_processes_each_batch_on_host": true,
+        "worker_samples_after_forward": true
+      },
+      "full_body_already_graph_capturable": false
+    },
+    "status": "terminal",
+    "torch_graph_api": {
+      "attributes": [
+        "capture_begin",
+        "capture_end",
+        "raw_cuda_graph",
+        "raw_cuda_graph_exec"
+      ],
+      "raw_graph_handle_exposed": true
+    }
+  },
+  "support_scientific_invocation_began": true,
+  "window": {
+    "ended_monotonic_s": 53514.477840673,
+    "event_count": 45,
+    "started_monotonic_s": 53506.635217766
+  },
+  "workload": {
+    "ended_monotonic_s": 53514.477840673,
+    "mixed_completion_lengths": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "pass": true,
+    "rows": [
+      {
+        "completion_tokens": 1,
+        "elapsed_seconds": 7.818306599001517,
+        "finish_reason": "length",
+        "prompt_tokens": 25,
+        "requested_completion_tokens": 1,
+        "response_nonempty": true
+      },
+      {
+        "completion_tokens": 2,
+        "elapsed_seconds": 7.818794978004007,
+        "finish_reason": "length",
+        "prompt_tokens": 25,
+        "requested_completion_tokens": 2,
+        "response_nonempty": true
+      },
+      {
+        "completion_tokens": 3,
+        "elapsed_seconds": 7.829103889998805,
+        "finish_reason": "length",
+        "prompt_tokens": 25,
+        "requested_completion_tokens": 3,
+        "response_nonempty": true
+      },
+      {
+        "completion_tokens": 4,
+        "elapsed_seconds": 7.840381970003364,
+        "finish_reason": "length",
+        "prompt_tokens": 25,
+        "requested_completion_tokens": 4,
+        "response_nonempty": true
+      }
+    ],
+    "schema_version": 1,
+    "started_monotonic_s": 53506.635217766
+  }
+}

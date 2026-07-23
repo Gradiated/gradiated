@@ -1,0 +1,52 @@
+{
+  "active_session": null,
+  "allocation_limit": 1,
+  "actual_spend_usd": 1.0576217248194737,
+  "authorized_spend_usd": 14.0,
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "bench_release_condition": "ready",
+  "candidate": "fixed_four_token_device_conditional_full_decode_graph",
+  "compute_budget": "One retained H200; at most 100 claimed GPU-minutes and 190 wall minutes from first claim.",
+  "current_frontier_seconds_per_request": 0.6743258590313417,
+  "economic_ceiling_seconds_per_request": 0.6381105231,
+  "experiment_contract": {
+    "artifact_contract": "LIVE_SOURCE_BINDING.json, DEVICE_GRAPH_DISCRIMINATOR.json, invocation markers and compact stdout/stderr; conditional endpoint terminal only after the support/state/bound gate passes.",
+    "budget": "At most 100 claimed H200 minutes, $14 cumulative provider exposure, and 8 GiB new artifacts.",
+    "decision": "Promote to exactly one c32 pair only when the installed runtime executes the full one-token serving body four times under device-resident continuation with exact state, fewer host round trips/launches, and a conservative bound of at least 3%.",
+    "hypothesis": "A device-conditional four-token graph removes host scheduler and launch round trips that neither the negative host continuous-step flag nor the negative schedule-stream snapshot removed.",
+    "quality_gate": "Four ordinary steps and one conditional graph are output/state equivalent across mixed completion, padding, sampling/penalty, KV and cache metadata; endpoint requires 32/32 sane rows and exact accounting.",
+    "scope": "One fixed repeat-four device-conditional/equivalent graph; no host continuous-decode flag, scheduler-snapshot replay, repeat sweep, workload change, or synchronization credit.",
+    "slo": "At least 3% conservative scope-matched bound before endpoint; endpoint must improve the qualified 0.6743258590313417 s/request control.",
+    "timeout": "190 wall minutes from first claim and no later than the bench watchdog deadline."
+  },
+  "immutable_binding": "DIRECTOR_BINDING.json",
+  "immutable_binding_verifier": "verify_director_binding.py",
+  "next_action": "Closed pre-endpoint. Do not run the c32 pair or replay this candidate: the exact fixed-repeat-four mixed-length discriminator proved per-step host sampling, result processing, next-decode preparation, and running-batch mutation remain outside the pinned CUDA graph.",
+  "priority": 3000,
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "researcher_profile": "deep",
+  "reservation_gate": "Offline source binding may proceed immediately; do not claim until this project's $14 reservation is durable and the higher-priority bench owner has released.",
+  "result": {
+    "classification": "full_body_host_intervention_required",
+    "conditional_cuda_while_iterations": 4,
+    "cuda_graph_replays": 4,
+    "endpoint_gate_pass": false,
+    "full_body_state_equivalence_pass": false,
+    "host_decode_preparations": 4,
+    "host_intervention_proven": true,
+    "host_result_processing_calls": 6,
+    "host_sample_calls": 6,
+    "in_window_path_events": 45,
+    "mixed_completion_lengths": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "padded_graph_observed": true,
+    "terminal": "artifacts/repair-20260723t1258z/TERMINAL.json"
+  },
+  "status": "complete",
+  "storage_budget": "At most 8 GiB new artifacts/build outputs; no checkpoint duplication.",
+  "summary": "Negative measured result: CUDA conditional WHILE support exists and executed exactly four device-selected iterations, but the pinned SGLang graph contains only model.forward. The actual mixed 1/2/3/4-token serving discriminator recorded 45 path events with per-step host sampling, result processing, decode preparation, and batch mutation. The full-body gate failed, so no c32 pair ran."
+}

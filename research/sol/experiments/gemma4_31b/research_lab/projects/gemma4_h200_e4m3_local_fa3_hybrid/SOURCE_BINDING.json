@@ -1,0 +1,269 @@
+{
+  "candidate_files": [
+    {
+      "bytes": 7965,
+      "path": "gemma4_layer_hybrid_backend.py",
+      "sha256": "0780ec77ffea723b9f676b61ef8aafd8aad8148b6e3f9894ae93ea20180dd433"
+    },
+    {
+      "bytes": 2553,
+      "path": "install_hybrid_backend.py",
+      "sha256": "177e4da24f75792835bf3140b26d7d4c119dcf1157f6c32069d6353682fd2ae8"
+    },
+    {
+      "bytes": 293,
+      "path": "sitecustomize.py",
+      "sha256": "30d7b3a051efeb82aa6ce776fcbe384235944b63f8d5022e7686e3ec19af9cfc"
+    },
+    {
+      "bytes": 15642,
+      "path": "e4m3_fa3_component.py",
+      "sha256": "75f4827353b520f83eb640f3840d6c7d6c7959f2221f8baeaafadf1a56ee96b3"
+    },
+    {
+      "bytes": 1718,
+      "path": "remote_component.sh",
+      "sha256": "15a07d4f36220ad184c80c5a730742cfcf8a1d4ca2c06efecb667b3203b1cc99"
+    },
+    {
+      "bytes": 8235,
+      "path": "remote_hybrid_candidate.sh",
+      "sha256": "0f54a55567b039f071919b6dd53fc31429256a7c55eacb63f14bf39eac6fb772"
+    },
+    {
+      "bytes": 25822,
+      "path": "run_hybrid_owner.py",
+      "sha256": "9d7656a664b139b88e6f6f51da0c9962b5142d5f721d81cab13a539e6772a20a"
+    }
+  ],
+  "comparator_stack_snapshots": [
+    {
+      "bytes": 9494,
+      "path": "inputs/stack/fp8_qkv_paired_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    {
+      "bytes": 6370,
+      "path": "inputs/stack/install_endpoint_patch.py",
+      "sha256": "71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588"
+    },
+    {
+      "bytes": 6062,
+      "path": "inputs/stack/proven_v0513_endpoint_entrypoint.py",
+      "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc"
+    },
+    {
+      "bytes": 26612,
+      "path": "inputs/stack/qkv_epilogue_discriminator.py",
+      "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"
+    },
+    {
+      "bytes": 2192,
+      "path": "inputs/stack/stack_sitecustomize.py",
+      "sha256": "5791f6718b90b1ac555f7cb53179b18fd523ffb9f469d02582482431623d39fa"
+    }
+  ],
+  "geometry": {
+    "global": {
+      "backend": "TritonAttnBackend/triton",
+      "head_dim": 512,
+      "kv_heads": 4,
+      "layer_ids": [
+        5,
+        11,
+        17,
+        23,
+        29,
+        35,
+        41,
+        47,
+        53,
+        59
+      ],
+      "q_heads": 32
+    },
+    "kv_dtype": "fp8_e4m3",
+    "local": {
+      "backend": "FlashAttentionBackend/fa3",
+      "head_dim": 256,
+      "kv_heads": 16,
+      "layer_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10,
+        12,
+        13,
+        14,
+        15,
+        16,
+        18,
+        19,
+        20,
+        21,
+        22,
+        24,
+        25,
+        26,
+        27,
+        28,
+        30,
+        31,
+        32,
+        33,
+        34,
+        36,
+        37,
+        38,
+        39,
+        40,
+        42,
+        43,
+        44,
+        45,
+        46,
+        48,
+        49,
+        50,
+        51,
+        52,
+        54,
+        55,
+        56,
+        57,
+        58
+      ],
+      "q_heads": 32,
+      "window_tokens": 1024
+    },
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "page_size": 1,
+    "phase": [
+      "prefill",
+      "decode"
+    ],
+    "scale_convention": "RadixAttention k_scale/v_scale; unit scale when absent"
+  },
+  "offline_tests": {
+    "cuda_execution_equivalent": false,
+    "installer": "ephemeral pinned-image source patch parsed successfully",
+    "reason": "The prerequisite E4M3-Triton endpoint closed without the required retained QKV audit and is inadmissible as comparator; therefore this project did not claim the H200.",
+    "router": "dual metadata/graph lifecycle and local/global dispatch passed with 50/10 audit"
+  },
+  "physical_hypothesis": {
+    "change": "Replace the residency-limited local Triton consumer with stock Hopper FA3 while preserving E4M3 production, page geometry, window, global Triton path, and model workload.",
+    "falsifier": "Numerical failure, component regression, conservative reduction below the gate, missing local/global path proof, or c32 regression.",
+    "measured_local_wall_fraction": 0.1531203203096733,
+    "prediction": "At least 35.0743696579% conservative reduction of the local attention boundary."
+  },
+  "producer_consumer_trace": [
+    "Gemma4Attention.forward produces normalized and rotated BF16 K/V.",
+    "SWAKVPool.set_kv_buffer selects the layer pool and MHATokenToKVPool.set_kv_buffer converts/stores E4M3 paged K/V.",
+    "RadixAttention.forward reads the process ForwardContext backend.",
+    "Gemma4LayerHybridAttnBackend dispatches local layer ids to FlashAttentionBackend and global layer ids to TritonAttnBackend.",
+    "Both backends consume the same paged pool, per-layer scale fields, page/slot mapping, and ForwardBatch metadata."
+  ],
+  "runtime": {
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "release": "SGLang v0.5.13",
+    "source_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2"
+  },
+  "schema_version": 1,
+  "source_snapshots": [
+    {
+      "bytes": 156397,
+      "path": "inputs/source/model_runner.v0.5.13.py",
+      "required_symbols": [
+        "ModelRunner"
+      ],
+      "sha256": "f4dad073eb9f89afd4cda0439b97dee63f8de131d0ed10078b817dba1f978f59"
+    },
+    {
+      "bytes": 2927,
+      "path": "inputs/source/forward_context.v0.5.13.py",
+      "required_symbols": [
+        "ForwardContext",
+        "forward_context",
+        "get_attn_backend"
+      ],
+      "sha256": "b2d4fc16576f2a392f7d5ed09f2c8d11cbea3b3060ba28f009720ef3336e562f"
+    },
+    {
+      "bytes": 11715,
+      "path": "inputs/source/attention_registry.v0.5.13.py",
+      "required_symbols": [
+        "create_flashattention_v3_backend",
+        "create_triton_backend"
+      ],
+      "sha256": "143f8fb30bc9ec765267a5084975a2f20b96c390e24281c1175a9c0211bc34d3"
+    },
+    {
+      "bytes": 138460,
+      "path": "inputs/source/flashattention_backend.v0.5.13.py",
+      "required_symbols": [
+        "FlashAttentionBackend",
+        "FlashAttentionMetadata"
+      ],
+      "sha256": "5f0b17d2b4313f83d918f956ec4529e72c985c5824fd7f5bec7623496f4b740a"
+    },
+    {
+      "bytes": 64753,
+      "path": "inputs/source/triton_backend.v0.5.13.py",
+      "required_symbols": [
+        "ForwardMetadata",
+        "TritonAttnBackend"
+      ],
+      "sha256": "7bc3ae9ef1be59ec07734df442c077a07fb54c28007747f53a552bb81e8e8e2d"
+    },
+    {
+      "bytes": 9270,
+      "path": "inputs/source/radix_attention.v0.5.13.py",
+      "required_symbols": [
+        "RadixAttention",
+        "unified_attention_with_output"
+      ],
+      "sha256": "9b1ef7de85b9f0fe9720954edbf94c2b4abd7a57fef7e4dac2500ff3dcdf7be9"
+    },
+    {
+      "bytes": 95820,
+      "path": "inputs/source/memory_pool.v0.5.13.py",
+      "required_symbols": [
+        "MHATokenToKVPool",
+        "_set_kv_buffer_impl"
+      ],
+      "sha256": "37f9915a2945c7bb389212eed65eb770cb9e3fa6976d0778b6831d2ac29d7bdd"
+    },
+    {
+      "bytes": 10559,
+      "path": "inputs/source/swa_memory_pool.v0.5.13.py",
+      "required_symbols": [
+        "SWAKVPool"
+      ],
+      "sha256": "36830cdb84cc344ffb7bac9ff30ba9a41b488d67893a5015ecbba584e95a9858"
+    },
+    {
+      "bytes": 56461,
+      "path": "inputs/source/gemma4_causal.v0.5.13.py",
+      "required_symbols": [
+        "Gemma4Attention",
+        "Gemma4DecoderLayer"
+      ],
+      "sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989"
+    },
+    {
+      "bytes": 9605,
+      "path": "inputs/source/hf_config.v0.5.13.py",
+      "required_symbols": [
+        "get_config"
+      ],
+      "sha256": "44610b292144f8a90a25c2bddfb52b92b3e705f74ec8d69f99f576f46b297e82"
+    }
+  ],
+  "status": "offline_binding_pass"
+}

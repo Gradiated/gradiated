@@ -1,0 +1,9 @@
+# Research log
+
+## 2026-07-23 — exact hybrid binding completed; comparator invalidated
+
+- Question: can the exact current SGLang v0.5.13 paged E4M3 path route Gemma 4's 50 local head-dimension-256 layers to FA3 while retaining all ten head-dimension-512 global layers on Triton, then support a causally valid c32 comparison?
+- Action: traced and content-bound the real Gemma 4 producer through `SWAKVPool`/`MHATokenToKVPool`, the process `ForwardContext` consumer selection, stock FA3 and Triton backends, and the normalized 50/10 geometry. Implemented one layer router, an exact paged component consumer, a candidate-only c32 launcher, and a bounded shared-bench owner. The installer parsed in the pinned image and the offline dual-backend router audit passed 50 local / 10 global dispatch.
+- Measured dependency evidence: the direct E4M3-Triton endpoint completed at `0.7022842785938792 s/request` versus the persisted E5M2 control `0.6743258590313417 s/request` (`-4.1461289%` relative improvement). Response and accounting gates passed, but the retained candidate path proof has 240 generic FP8 consumer events and zero required QKV audit events. Its owner classified the scientifically consumed arm `close` and explicitly prohibited its use as this project's comparator.
+- Analytical evidence: perfect removal of the E5M2-attributed local wall fraction from the measured E4M3 endpoint would yield about `0.5990 s/request`, below the economic ceiling. This cross-representation calculation is only an analytical upper bound; it cannot repair the comparator's missing path identity.
+- Decision: `dependency_comparator_invalid_no_claim`. The comparator-validity prerequisite failed before this project's bench claim or scientific invocation. Claiming the H200, replaying the direct endpoint, or substituting another backend would violate the preregistered causal contract. Project provider exposure is `$0.00`.

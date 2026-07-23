@@ -1,0 +1,43 @@
+{
+  "analytical_bound": {
+    "e4m3_candidate_seconds_per_request": 0.7022842785938792,
+    "e5m2_control_local_wall_fraction": 0.1531203203096733,
+    "economic_ceiling_seconds_per_request": 0.6381105231,
+    "evidence_label": "analytical_cross-representation_upper_bound_only",
+    "perfect_local_removal_seconds_per_request": 0.5990312870659046,
+    "performance_bound_survives": true
+  },
+  "bench_claimed": false,
+  "candidate_cuda_invocation_started": false,
+  "classification": "dependency_comparator_invalid_no_claim",
+  "decision": "Do not claim the H200 or invoke the component/c32 hybrid. The required exact E4M3-Triton comparator was scientifically consumed with zero retained QKV audit events and is explicitly closed as inadmissible by its owner. Replaying that endpoint or substituting another backend is outside this project's contract.",
+  "dependency": {
+    "accounting_pass": true,
+    "candidate_service_seconds_per_request": 0.7022842785938792,
+    "classification": "close",
+    "comparator_admissible": false,
+    "fp8_consumer_event_count": 240,
+    "pass": false,
+    "persisted_e5m2_control_seconds_per_request": 0.6743258590313417,
+    "project": "gemma4_h200_e4m3_kv_direct_endpoint",
+    "qkv_event_count": 0,
+    "relative_to_control_fraction": -0.04146128935749149,
+    "response_pass": true,
+    "status_sha256": "8250961489187c0ded8728d02c61bd7ed7cb9a104de4283202230e80168f8ab4",
+    "terminal_sha256": "800d1afeeb33bdbd7a0bd3a3e8a25d51e6a187eddfc8ef0d49cd668d837dee44"
+  },
+  "dependency_manifest": "inputs/dependency/MANIFEST.json",
+  "offline_binding": {
+    "source_binding": "SOURCE_BINDING.json",
+    "source_binding_sha256": "58b9b48a85bdb32f1a30f11cb22fbe857e7d36a9d26836a5e5d1790f99811473",
+    "terminal": "artifacts/offline-binding-20260723/OFFLINE_BINDING_TERMINAL.json",
+    "terminal_sha256": "0b83c70872cfff34d1961dbef4c74d6dc5d0a5e731cb6f009edb1206787de7fb"
+  },
+  "pass": false,
+  "project_cumulative_spend_usd": 0.0,
+  "provider_spend_usd": 0.0,
+  "schema_version": 1,
+  "scientific_candidate_admitted": false,
+  "scientific_invocation_started": false,
+  "status": "terminal"
+}

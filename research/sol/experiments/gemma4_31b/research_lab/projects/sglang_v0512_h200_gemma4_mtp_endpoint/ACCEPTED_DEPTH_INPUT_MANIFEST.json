@@ -1,0 +1,146 @@
+{
+  "assistant": [
+    {
+      "bytes": 2316,
+      "path": "artifacts/assistant/config.json",
+      "sha256": "d09487c1083a334a97545f204dd41ab1a40b0438bdead19558f0e1357e26d66a"
+    },
+    {
+      "bytes": 307,
+      "path": "artifacts/assistant/generation_config.json",
+      "sha256": "8e58004dc0e2407b63410b190bb8470efbdcfeb71533f1770e09c20abe193a6f"
+    },
+    {
+      "bytes": 939042560,
+      "path": "artifacts/assistant/model.safetensors",
+      "sha256": "9f80df6099fa1fd7db71220ec9ee864d5ecff769878697dd5763e4285b15a1da"
+    },
+    {
+      "bytes": 32169440,
+      "path": "artifacts/assistant/tokenizer.json",
+      "sha256": "75a6583c1a418e2bbd79c60d95d28e0f5bf549ad3f2990b5bdb5238c6c2bf70c"
+    },
+    {
+      "bytes": 822,
+      "path": "artifacts/assistant/tokenizer_config.json",
+      "sha256": "089594a3924fcfd4cb1c596a7906fbf476193519e5198f780912eed02b177e42"
+    }
+  ],
+  "assistant_bytes": 971215445,
+  "checkpoint": [
+    {
+      "bytes": 18683,
+      "path": "inputs/accepted_depth/checkpoint/chat_template.jinja",
+      "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"
+    },
+    {
+      "bytes": 4621,
+      "path": "inputs/accepted_depth/checkpoint/config.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    {
+      "bytes": 49784788364,
+      "path": "inputs/accepted_depth/checkpoint/model-00001-of-00002.safetensors",
+      "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+    },
+    {
+      "bytes": 12761549884,
+      "path": "inputs/accepted_depth/checkpoint/model-00002-of-00002.safetensors",
+      "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"
+    },
+    {
+      "bytes": 120246,
+      "path": "inputs/accepted_depth/checkpoint/model.safetensors.index.json",
+      "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+    },
+    {
+      "bytes": 1689,
+      "path": "inputs/accepted_depth/checkpoint/processor_config.json",
+      "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"
+    },
+    {
+      "bytes": 32169626,
+      "path": "inputs/accepted_depth/checkpoint/tokenizer.json",
+      "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+    },
+    {
+      "bytes": 2095,
+      "path": "inputs/accepted_depth/checkpoint/tokenizer_config.json",
+      "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"
+    }
+  ],
+  "checkpoint_bytes": 62578655208,
+  "pass": true,
+  "programs": [
+    {
+      "bytes": 4425,
+      "path": "accepted_depth_discriminator.py",
+      "sha256": "8a857974bd2f61e8e9703ba8e834252ff6feda475df46c79dad18e78ea02ac85"
+    },
+    {
+      "bytes": 1645,
+      "path": "accepted_depth_sitecustomize.py",
+      "sha256": "d583f35bbbc3390a0b440a7cff61a34fbb20219fe5a79ce43b0784dce68da878"
+    },
+    {
+      "bytes": 503,
+      "path": "accepted_depth_entrypoint.py",
+      "sha256": "f60bb1a41f1300247f598c33fb5254065dd25ee38927abe027330c802f1e5b71"
+    },
+    {
+      "bytes": 5470,
+      "path": "accepted_depth_diagnostic.py",
+      "sha256": "36cbe46f651b31e1ac304e176787059e796cca0b8c2d35da3d7b97b220e486c9"
+    },
+    {
+      "bytes": 12741,
+      "path": "remote_accepted_depth.sh",
+      "sha256": "30f23fbe4f60126c1a6ae394d9ec418e188ee2d2aef9f46211e0a8d1bde4763b"
+    }
+  ],
+  "schema_version": 1,
+  "source_binding": "ACCEPTED_DEPTH_SOURCE_BINDING.json",
+  "source_binding_sha256": "4b8e5edeb276b02317a85dd71a136a4002535467f08134edd3d77ce6de1300ce",
+  "stack": [
+    {
+      "bytes": 4606,
+      "path": "inputs/accepted_depth/stack/attention_deferred_local_kv.py",
+      "sha256": "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8"
+    },
+    {
+      "bytes": 9494,
+      "path": "inputs/accepted_depth/stack/fp8_qkv_paired_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    {
+      "bytes": 6024,
+      "path": "inputs/accepted_depth/stack/host_min_new_tokens_gate.py",
+      "sha256": "2779aae2c51c63ef3119edff9b57e39f09576975ec6e15fb66928e6069405c2a"
+    },
+    {
+      "bytes": 6370,
+      "path": "inputs/accepted_depth/stack/install_endpoint_patch.py",
+      "sha256": "71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588"
+    },
+    {
+      "bytes": 2929,
+      "path": "inputs/accepted_depth/stack/pinned_async_penalty_tokens.py",
+      "sha256": "58f4c65846af62ad21aeb765d7764686c364335d29fff45eac65da86ab296197"
+    },
+    {
+      "bytes": 4653,
+      "path": "inputs/accepted_depth/stack/producer_fused_swa_translation.py",
+      "sha256": "9b5a51284ac313014988f426c35b818ae2590cb7d4a72ec604a6ad80a63336b3"
+    },
+    {
+      "bytes": 6062,
+      "path": "inputs/accepted_depth/stack/proven_v0513_endpoint_entrypoint.py",
+      "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc"
+    },
+    {
+      "bytes": 26612,
+      "path": "inputs/accepted_depth/stack/qkv_epilogue_discriminator.py",
+      "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"
+    }
+  ]
+}

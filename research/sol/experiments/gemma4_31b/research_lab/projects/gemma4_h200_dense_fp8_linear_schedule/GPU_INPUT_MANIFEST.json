@@ -16,8 +16,8 @@
     {"path": "inputs/checkpoint/model-00002-of-00002.safetensors", "bytes": 12761549884, "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"}
   ],
   "programs": [
-    {"path": "PROGRAM.tar.gz", "bytes": 33695707, "sha256": "29fb47f65046accbff2a90e3844bb3e1c4fbc5c792316adb281cb7ecea6171f2"},
-    {"path": "run_bench_owner.py", "bytes": 19945, "sha256": "79fb3f12b9146fb7d33908f842f379ffc8e69a089bfb82d0f3858b6ff843e9b6"}
+    {"path": "PROGRAM.tar.gz", "bytes": 33699896, "sha256": "90c4480e801699a7067dac87a32aa55e6550173474d298814bcb0432db297aa4"},
+    {"path": "run_bench_owner.py", "bytes": 21012, "sha256": "fed902c77e1692a874dc1bdf405c17f560360c7f22561fdc6159dd327c1de02a"}
   ],
   "hypothesis": {"path": "HYPOTHESIS.json", "bytes": 4389, "sha256": "d459028bf0954cfd490ef8eb28da76279df1fea64952dcc30147b653de2d2d37"},
   "conditional_endpoint_gate": {

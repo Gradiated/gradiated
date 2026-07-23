@@ -2,7 +2,8 @@
 set -Eeuo pipefail
 
 root=/home/glmrunner/gemma4-h200-dense-fp8-streamk
-program="$root/program"
+program=$(cd "$(dirname "$0")" && pwd)
+container_program="/work/$(basename "$program")"
 artifacts="$root/artifacts"
 image=docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6
 mkdir -p "$artifacts"
@@ -43,8 +44,23 @@ compact() {
 
 trap compact EXIT
 trap 'test -f "$artifacts/WORKER_TERMINAL.json" || atomic_terminal integration_failure "$BASH_COMMAND"' ERR
-rm -f "$artifacts/WORKER_TERMINAL.json"
-sudo docker rm -f gate-up-component gate-up-control gate-up-candidate >/dev/null 2>&1 || true
+sudo chown -R glmrunner:glmrunner "$artifacts"
+chmod -R u+rwX "$artifacts"
+rm -f "$artifacts/WORKER_TERMINAL.json" "$artifacts/INVOCATION_STATE.json"
+mkdir -p "$root/build-gate-up"
+module=$(find "$root/build-gate-up" -maxdepth 1 -type f -name 'gemma4_fp8_gate_up_multicast*.so' -print -quit)
+if [[ -n "$module" && -f "$artifacts/BUILD.json" ]]; then
+  cp "$artifacts/BUILD.json" "$root/build-gate-up/BUILD.json"
+  cp "$artifacts/build.stdout" "$root/build-gate-up/build.stdout"
+  cp "$artifacts/build.stderr" "$root/build-gate-up/build.stderr"
+fi
+rm -rf "$artifacts/component" "$artifacts/component-audit" "$artifacts/control" \
+  "$artifacts/control-audit" "$artifacts/candidate" "$artifacts/candidate-audit"
+rm -f "$artifacts/DISCOVERY.json" "$artifacts/COMPONENT_TERMINAL.json" "$artifacts/PAIRED_TERMINAL.json"
+sudo docker rm -f \
+  gate-up-component gate-up-control gate-up-candidate \
+  mtp-depth-diagnostic mtp-depth-control mtp-depth-candidate \
+  streamk-component streamk-control streamk-candidate >/dev/null 2>&1 || true
 
 base_args=(
   --model-path /work/checkpoint --tokenizer-path /work/checkpoint
@@ -66,13 +82,21 @@ if [[ ! -d "$cutlass_exact" ]]; then
   tar -xzf "$cutlass_archive" --strip-components=1 -C "$cutlass_exact.part"
   mv "$cutlass_exact.part" "$cutlass_exact"
 fi
-mkdir -p "$root/build-gate-up"
-sudo docker run --rm --gpus all --ipc=host \
-  -v "$root:/work" "$image" \
-  python3 /work/program/build_gate_up_candidate.py --project-root /work/program \
-    --build-root /work/build-gate-up --output /work/artifacts/BUILD.json \
-    >"$artifacts/build.stdout" 2>"$artifacts/build.stderr" || fail candidate_compile_failed
-module=$(find "$root/build-gate-up" -maxdepth 1 -type f -name 'gemma4_fp8_gate_up_multicast*.so' -print -quit)
+if [[ -z "$module" || ! -f "$root/build-gate-up/BUILD.json" ]]; then
+  sudo docker run --rm --gpus all --ipc=host \
+    -v "$root:/work" "$image" \
+    python3 "$container_program/build_gate_up_candidate.py" --project-root "$container_program" \
+      --build-root /work/build-gate-up --output /work/artifacts/BUILD.json \
+      >"$artifacts/build.stdout" 2>"$artifacts/build.stderr" || fail candidate_compile_failed
+  module=$(find "$root/build-gate-up" -maxdepth 1 -type f -name 'gemma4_fp8_gate_up_multicast*.so' -print -quit)
+  cp "$artifacts/BUILD.json" "$root/build-gate-up/BUILD.json"
+  cp "$artifacts/build.stdout" "$root/build-gate-up/build.stdout"
+  cp "$artifacts/build.stderr" "$root/build-gate-up/build.stderr"
+else
+  cp "$root/build-gate-up/BUILD.json" "$artifacts/BUILD.json"
+  cp "$root/build-gate-up/build.stdout" "$artifacts/build.stdout"
+  cp "$root/build-gate-up/build.stderr" "$artifacts/build.stderr"
+fi
 test -n "$module" || fail candidate_module_missing
 module_in_container="/work/build-gate-up/$(basename "$module")"
 
@@ -92,14 +116,14 @@ start_server() {
   sudo docker rm -f "$container" >/dev/null 2>&1 || true
   sudo docker run -d --name "$container" --gpus all --ipc=host --network host \
     -v "$root:/work" \
-    -e PYTHONPATH=/work/program:/work/program/inputs/runtime:/sgl-workspace/sglang/python \
+    -e PYTHONPATH="$container_program:$container_program/inputs/runtime:/sgl-workspace/sglang/python" \
     -e QKV_EPILOGUE_AUDIT="/work/artifacts/$arm-audit/qkv.jsonl" \
     -e FP8_MODULE_AUDIT="/work/artifacts/$arm-audit/modules.jsonl" \
     -e FP8_CONSUMER_AUDIT="/work/artifacts/$arm-audit/consumers.jsonl" \
     -e FP8_RUNTIME_AUDIT="/work/artifacts/$arm-audit/runtime.json" \
     -e SGLANG_FP8_IGNORED_LAYERS=model.vision_tower,model.embed_vision \
     "${candidate_env[@]}" "$image" \
-    python3 /work/program/inputs/runtime/proven_v0513_endpoint_entrypoint.py "${base_args[@]}" \
+    python3 "$container_program/inputs/runtime/proven_v0513_endpoint_entrypoint.py" "${base_args[@]}" \
     >"$artifacts/$arm.container-id"
   local ready=0
   for _ in $(seq 1 180); do
@@ -115,8 +139,7 @@ start_server() {
 
 run_exact() {
   local arm=$1 container=$2
-  mkdir -p "$artifacts/$arm"
-  sudo docker exec "$container" python3 /work/program/inputs/runtime/fp8_qkv_paired_runner.py \
+  sudo docker exec "$container" python3 "$container_program/inputs/runtime/fp8_qkv_paired_runner.py" \
     --output "/work/artifacts/$arm" --arm "$arm" --concurrency 32 \
     >"$artifacts/$arm.runner.stdout" 2>"$artifacts/$arm.runner.stderr" || fail "$arm.runner_failed"
 }
@@ -134,9 +157,9 @@ assert value['pass']
 PY
 }
 
+start_server component gate-up-component component
 state candidate_cuda_started
 state candidate_science_started
-start_server component gate-up-component component
 run_discovery
 run_exact component gate-up-component
 sudo docker stop -t 30 gate-up-component >/dev/null 2>&1 || true

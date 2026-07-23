@@ -88,6 +88,7 @@ def main() -> int:
     parser.add_argument("--artifact-root", type=pathlib.Path, required=True)
     parser.add_argument("--absolute-deadline-epoch", type=int, required=True)
     parser.add_argument("--input-manifest", type=pathlib.Path, default=PROJECT / "GPU_INPUT_MANIFEST.json")
+    parser.add_argument("--resume-staged", action="store_true")
     args = parser.parse_args()
     args.artifact_root.mkdir(parents=True, exist_ok=False)
     events = args.artifact_root / "outer-events.jsonl"
@@ -106,7 +107,12 @@ def main() -> int:
     for section in ("checkpoint", "programs"):
         for row in manifest[section]:
             path = PROJECT / row["path"]
-            if not path.is_file() or path.stat().st_size != row["bytes"] or sha256(path) != row["sha256"]:
+            identity_matches = (
+                path.is_file()
+                and path.stat().st_size == row["bytes"]
+                and (args.resume_staged and section == "checkpoint" or sha256(path) == row["sha256"])
+            )
+            if not identity_matches:
                 raise RuntimeError(f"project_local_snapshot_invalid:{row['path']}")
     hypothesis = manifest["hypothesis"]
     hypothesis_path = PROJECT / hypothesis["path"]
@@ -245,24 +251,36 @@ def main() -> int:
                     raise RuntimeError(f"typed_transfer_boundary:hash_or_finalize_failed:{source.name}")
             emit("input_staged", name=source.name, bytes=source.stat().st_size, sha256=expected)
 
-        for row in manifest["checkpoint"]:
-            name = pathlib.Path(row["path"]).name
-            stage(
-                PROJECT / row["path"],
-                f"{REMOTE}/checkpoint/{name}",
-                f"/home/glmrunner/gemma4-h200-decode-sync-graph-elimination/checkpoint/{name}",
-            )
+        if args.resume_staged:
+            emit("checkpoint_staging_reused_from_preinvocation_attempt")
+        else:
+            for row in manifest["checkpoint"]:
+                name = pathlib.Path(row["path"]).name
+                stage(
+                    PROJECT / row["path"],
+                    f"{REMOTE}/checkpoint/{name}",
+                    f"/home/glmrunner/gemma4-h200-decode-sync-graph-elimination/checkpoint/{name}",
+                )
         for row in manifest["programs"]:
             stage(PROJECT / row["path"], f"{REMOTE}/{pathlib.Path(row['path']).name}")
         stage(input_manifest, f"{REMOTE}/GPU_INPUT_MANIFEST.json")
+        program_row = next(row for row in manifest["programs"] if row["path"] == "PROGRAM.tar.gz")
+        program_identity = str(program_row["sha256"])
+        remote_program = f"{REMOTE}/program-{program_identity[:16]}"
         extracted = run_ssh(
             ip,
             KEY,
-            f"rm -rf {REMOTE}/program.part && mkdir -p {REMOTE}/program.part && "
-            f"tar -xzf {REMOTE}/PROGRAM.tar.gz -C {REMOTE}/program.part && "
-            f"rm -rf {REMOTE}/program && mv {REMOTE}/program.part {REMOTE}/program",
+            f"if test -f {remote_program}/.PROGRAM_SHA256 && "
+            f"test \"$(cat {remote_program}/.PROGRAM_SHA256)\" = {program_identity}; then true; else "
+            f"rm -rf {remote_program}.part && mkdir -p {remote_program}.part && "
+            f"tar -xzf {REMOTE}/PROGRAM.tar.gz -C {remote_program}.part && "
+            f"printf %s {program_identity} > {remote_program}.part/.PROGRAM_SHA256 && "
+            f"chmod 0444 {remote_program}.part/.PROGRAM_SHA256 && "
+            f"mv {remote_program}.part {remote_program}; fi",
             timeout=max(120, min(1800, claim_deadline - int(time.time()))),
         )
+        (args.artifact_root / "program-extract.stdout").write_text(extracted.stdout)
+        (args.artifact_root / "program-extract.stderr").write_text(extracted.stderr)
         if extracted.returncode:
             raise RuntimeError("typed_transfer_boundary:program_extract_failed")
         emit("immutable_staging_complete", checkpoint_bytes=sum(row["bytes"] for row in manifest["checkpoint"]))
@@ -303,7 +321,7 @@ def main() -> int:
             worker = run_ssh(
                 ip,
                 KEY,
-                f"timeout --signal=TERM {timeout} bash {REMOTE}/program/remote_streamk.sh",
+                f"timeout --signal=TERM {timeout} bash {remote_program}/remote_streamk.sh",
                 timeout=timeout + 60,
             )
             (args.artifact_root / "worker.stdout").write_text(worker.stdout)

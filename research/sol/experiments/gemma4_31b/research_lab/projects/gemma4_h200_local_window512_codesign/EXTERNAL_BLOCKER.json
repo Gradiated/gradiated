@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "status": "terminal",
+  "classification": "typed_external_bench_storage_and_maintenance_boundary",
+  "dependency_project": "gemma4_h200_ngram_speculative_endpoint",
+  "dependency_evidence": {
+    "status": "blocked",
+    "actual_spend_usd": 0.091,
+    "candidate_cuda_invocation_started": false,
+    "scientific_invocation_started": false,
+    "remote_failure": "No space left on device while staging a separate 62.58-GB project-local immutable checkpoint snapshot"
+  },
+  "bench": {
+    "id": "h200-sync-linear-e00vhh6h29fj68x91g",
+    "status": "maintenance",
+    "claim": null,
+    "watchdog_deadline_utc": "2026-07-23T08:27:53Z"
+  },
+  "this_project": {
+    "reservation_usd": 14.0,
+    "actual_spend_usd": 0.0,
+    "candidate_cuda_invocation_started": false,
+    "scientific_invocation_started": false,
+    "checkpoint_snapshot_materialized_locally": true,
+    "checkpoint_snapshot_bytes": 62578655208,
+    "remote_checkpoint_snapshot_staged": false,
+    "candidate_arm_consumed": false
+  },
+  "exact_need": "A compatible lab-owned H200 bench returned ready with at least 62.58 GB free for this project's immutable checkpoint snapshot and at least 25 minutes of lifecycle after staging; no provider creation or shared-checkpoint bypass is authorized.",
+  "timestamp_utc": "2026-07-23T07:48:00Z"
+}

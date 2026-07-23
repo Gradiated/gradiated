@@ -1,0 +1,159 @@
+{
+  "files": [
+    {
+      "bytes": 14788,
+      "name": "window_component.py",
+      "path": "window_component.py",
+      "remote": "input/window_component.py",
+      "sha256": "5320389fcf0e53775f276bb6fe329ad3abab495e62ad86e944f2c72503a80bdc"
+    },
+    {
+      "bytes": 2299,
+      "name": "window512_patch.py",
+      "path": "window512_patch.py",
+      "remote": "input/window512_patch.py",
+      "sha256": "eeeac97c11aa9394ab42486430cac541bffa0ffb9c67162bb09334518ebd3055"
+    },
+    {
+      "bytes": 1783,
+      "name": "sitecustomize.py",
+      "path": "sitecustomize.py",
+      "remote": "input/sitecustomize.py",
+      "sha256": "a07f5bef3a236f6476c11e943e77b8286e41dd6d58683b58cab25dd7ddd6f8bb"
+    },
+    {
+      "bytes": 1751,
+      "name": "remote_component.sh",
+      "path": "remote_component.sh",
+      "remote": "input/remote_component.sh",
+      "sha256": "592605cdcc2df7fa1cabe5344c43ca01d8c0b16cddad3ad22569b4d96f6d2932"
+    },
+    {
+      "bytes": 8062,
+      "name": "remote_endpoint_pair.sh",
+      "path": "remote_endpoint_pair.sh",
+      "remote": "input/remote_endpoint_pair.sh",
+      "sha256": "0f4a61127839b7526f3e2848512cbff84c95b049e8e6ad19d008cc3b028489e1"
+    },
+    {
+      "bytes": 4606,
+      "name": "attention_deferred_local_kv.py",
+      "path": "inputs/stack/attention_deferred_local_kv.py",
+      "remote": "input/attention_deferred_local_kv.py",
+      "sha256": "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8"
+    },
+    {
+      "bytes": 9494,
+      "name": "fp8_qkv_paired_runner.py",
+      "path": "inputs/stack/fp8_qkv_paired_runner.py",
+      "remote": "input/fp8_qkv_paired_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    {
+      "bytes": 6024,
+      "name": "host_min_new_tokens_gate.py",
+      "path": "inputs/stack/host_min_new_tokens_gate.py",
+      "remote": "input/host_min_new_tokens_gate.py",
+      "sha256": "2779aae2c51c63ef3119edff9b57e39f09576975ec6e15fb66928e6069405c2a"
+    },
+    {
+      "bytes": 7860,
+      "name": "install_endpoint_patch.py",
+      "path": "inputs/stack/install_endpoint_patch.py",
+      "remote": "input/install_endpoint_patch.py",
+      "sha256": "b020fbb114d390e8bc10ce0c3c6145d7535b70f7a07d8dcd3ece2a208727d117"
+    },
+    {
+      "bytes": 2929,
+      "name": "pinned_async_penalty_tokens.py",
+      "path": "inputs/stack/pinned_async_penalty_tokens.py",
+      "remote": "input/pinned_async_penalty_tokens.py",
+      "sha256": "58f4c65846af62ad21aeb765d7764686c364335d29fff45eac65da86ab296197"
+    },
+    {
+      "bytes": 4653,
+      "name": "producer_fused_swa_translation.py",
+      "path": "inputs/stack/producer_fused_swa_translation.py",
+      "remote": "input/producer_fused_swa_translation.py",
+      "sha256": "9b5a51284ac313014988f426c35b818ae2590cb7d4a72ec604a6ad80a63336b3"
+    },
+    {
+      "bytes": 6062,
+      "name": "proven_v0513_endpoint_entrypoint.py",
+      "path": "inputs/stack/proven_v0513_endpoint_entrypoint.py",
+      "remote": "input/proven_v0513_endpoint_entrypoint.py",
+      "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc"
+    },
+    {
+      "bytes": 26612,
+      "name": "qkv_epilogue_discriminator.py",
+      "path": "inputs/stack/qkv_epilogue_discriminator.py",
+      "remote": "input/qkv_epilogue_discriminator.py",
+      "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"
+    },
+    {
+      "bytes": 14,
+      "name": ".gitignore",
+      "path": "inputs/checkpoint/.gitignore",
+      "remote": "checkpoint/.gitignore",
+      "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d"
+    },
+    {
+      "bytes": 18683,
+      "name": "chat_template.jinja",
+      "path": "inputs/checkpoint/chat_template.jinja",
+      "remote": "checkpoint/chat_template.jinja",
+      "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"
+    },
+    {
+      "bytes": 4621,
+      "name": "config.json",
+      "path": "inputs/checkpoint/config.json",
+      "remote": "checkpoint/config.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    {
+      "bytes": 49784788364,
+      "name": "model-00001-of-00002.safetensors",
+      "path": "inputs/checkpoint/model-00001-of-00002.safetensors",
+      "remote": "checkpoint/model-00001-of-00002.safetensors",
+      "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+    },
+    {
+      "bytes": 12761549884,
+      "name": "model-00002-of-00002.safetensors",
+      "path": "inputs/checkpoint/model-00002-of-00002.safetensors",
+      "remote": "checkpoint/model-00002-of-00002.safetensors",
+      "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"
+    },
+    {
+      "bytes": 120246,
+      "name": "model.safetensors.index.json",
+      "path": "inputs/checkpoint/model.safetensors.index.json",
+      "remote": "checkpoint/model.safetensors.index.json",
+      "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+    },
+    {
+      "bytes": 1689,
+      "name": "processor_config.json",
+      "path": "inputs/checkpoint/processor_config.json",
+      "remote": "checkpoint/processor_config.json",
+      "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"
+    },
+    {
+      "bytes": 32169626,
+      "name": "tokenizer.json",
+      "path": "inputs/checkpoint/tokenizer.json",
+      "remote": "checkpoint/tokenizer.json",
+      "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+    },
+    {
+      "bytes": 2095,
+      "name": "tokenizer_config.json",
+      "path": "inputs/checkpoint/tokenizer_config.json",
+      "remote": "checkpoint/tokenizer_config.json",
+      "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"
+    }
+  ],
+  "schema_version": 1
+}

@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "classification": "offline_config_runtime_kernel_binding",
+  "model_config": {
+    "path": "inputs/checkpoint/config.json",
+    "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "hidden_layers": 60,
+    "local_layers": 50,
+    "global_layers": 10,
+    "pattern": "five_sliding_then_one_full",
+    "control_sliding_window_tokens": 1024,
+    "query_heads": 32,
+    "kv_heads": 16,
+    "qk_head_dim": 256,
+    "v_head_dim": 256
+  },
+  "runtime_model": {
+    "path": "inputs/source/gemma4_causal.v0.5.13.py",
+    "sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+    "producer": "Gemma4Attention.__init__",
+    "control_assignment": "config.sliding_window if layer_type == sliding_attention else None",
+    "candidate_assignment": "512 if layer_type == sliding_attention else None",
+    "consumer": "RadixAttention(sliding_window_size=self.sliding_window)",
+    "candidate_patch": "window512_patch.py",
+    "global_layer_value": null,
+    "unchanged_top_level_cache_window": "Gemma4ForCausalLM.get_attention_sliding_window_size continues to return config.sliding_window - 1; the candidate changes only each local RadixAttention consumer."
+  },
+  "attention_backend": {
+    "producer": "TritonAttnBackend.forward_extend",
+    "source_binding_sha256": "7bc3ae9ef1be59ec07734df442c077a07fb54c28007747f53a552bb81e8e8e2d",
+    "binding_evidence": "inputs/stack/attention_deferred_local_kv.py",
+    "call": "extend_attention_fwd(..., sliding_window_size=layer.sliding_window_size)",
+    "kv_dtype": "fp8_e5m2",
+    "paged_kv_layout": "unchanged",
+    "deferred_local_kv_commit": "unchanged"
+  },
+  "kernel": {
+    "path": "inputs/source/extend_attention.v0.5.13.py",
+    "sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
+    "symbol": "_fwd_kernel",
+    "compile_time_parameter": "SLIDING_WINDOW_SIZE",
+    "prefix_mask": "prefix_len + query_index <= prefix_key_index + SLIDING_WINDOW_SIZE",
+    "extend_mask": "query_index <= extend_key_index + SLIDING_WINDOW_SIZE",
+    "tile_elision": "SKIP_TILE suppresses QK, V, and paged-KV loads when the complete 64x64 tile is outside the window",
+    "block_m": 64,
+    "block_n": 64,
+    "registers_per_thread": 255,
+    "dynamic_shared_memory_bytes": 81920
+  },
+  "candidate_scope": {
+    "candidate_window_tokens": 512,
+    "changed_fields": [
+      "Gemma4Attention.sliding_window for the 50 sliding_attention layers"
+    ],
+    "preserved": [
+      "checkpoint weights",
+      "60-layer count",
+      "32 query heads",
+      "16 local KV heads",
+      "256-dimensional local Q/K/V",
+      "10 global-attention layers and their null local-window value",
+      "RoPE positions and parameters",
+      "FP8 E5M2 paged-KV dtype and layout",
+      "dynamic FP8",
+      "fused QKV",
+      "deferred local KV commit",
+      "producer-fused SWA metadata",
+      "host penalizer additions",
+      "workload and sampling identities"
+    ],
+    "runtime_audit": "WINDOW512_LAYER_AUDIT must contain exactly 50 unique local layer IDs at 512 and 10 unique global layer IDs at null before endpoint acceptance."
+  },
+  "pass": true
+}

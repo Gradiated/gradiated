@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "stack_binding": {
+    "path": "../gemma4_h200_v0513_fp8_qkv_residual_profile/BINDINGS.json",
+    "sha256": "cebc435c4eb1e5716c4aa9bd854785a3e7cac4b0665c96ea6a44040b3e96fb62"
+  },
+  "profile_attribution": {
+    "path": "../gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/ATTRIBUTION.json",
+    "sha256": "f841db590dbe6f2e6b4fb91048e8132c3807f0321310e1e0b70a3957ac99ab48"
+  },
+  "control": {
+    "path": "../sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/mtp-candidate-repair-20260723t0658z/retrieved/control/TERMINAL.json",
+    "sha256": "a6e69ac9534ae433fc45d3b5d3ea241fe63321d33423cdd52d17128d8072d278",
+    "service_seconds_per_request": 0.6743258590313417
+  },
+  "swa_source_binding": {
+    "path": "../gemma4_h200_e4m3_local_fa3_hybrid/SOURCE_BINDING.json",
+    "sha256": "58b9b48a85bdb32f1a30f11cb22fbe857e7d36a9d26836a5e5d1790f99811473"
+  },
+  "ring_component_evidence": {
+    "path": "../gemma4_h200_swa_contiguous_ring_cache/artifacts/COMPONENT_REEVALUATION.json",
+    "sha256": "db5ab2a9fdc8414a9545dd7ef48bd343da6aea035ba2b0fcd1e16399bdb4aed1",
+    "conservative_local_reduction_fraction": 0.2483464807482788
+  },
+  "candidate_change": {
+    "local_layer_count": 50,
+    "local_kv_dtype": "fp8_e5m2",
+    "local_window_tokens": 1024,
+    "local_physical_page_tokens": 16,
+    "logical_mapping": "canonical_radix_token_indices_with_block_and_in_page_offsets",
+    "circular_request_state": false,
+    "global_layer_ids": [5, 11, 17, 23, 29, 35, 41, 47, 53, 59],
+    "global_physical_page_tokens": 1,
+    "global_layout": "unchanged_paged_radix",
+    "all_other_stack_and_workload_fields": "immutable"
+  },
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g"
+}

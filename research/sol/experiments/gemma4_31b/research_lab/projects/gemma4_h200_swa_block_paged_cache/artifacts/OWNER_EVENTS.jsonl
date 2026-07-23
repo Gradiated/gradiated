@@ -1,0 +1,17 @@
+{"event": "inputs_validated", "files": 3, "timestamp_utc": "2026-07-23T12:13:37.920137Z"}
+{"absolute_deadline_epoch": 1784816017.9213617, "bench": "h200-sync-linear-e00vhh6h29fj68x91g", "event": "bench_claimed", "timestamp_utc": "2026-07-23T12:13:37.921373Z"}
+{"event": "guest_reached", "telemetry": "NVIDIA H200, 0 MiB, 143771 MiB", "timestamp_utc": "2026-07-23T12:13:39.471205Z"}
+{"bytes": 6983, "event": "input_finalized", "path": "block_paged_kv.py", "timestamp_utc": "2026-07-23T12:13:41.897820Z"}
+{"bytes": 26736, "event": "input_finalized", "path": "block_paged_component.py", "timestamp_utc": "2026-07-23T12:13:43.912638Z"}
+{"bytes": 2732, "event": "input_finalized", "path": "remote_component.sh", "timestamp_utc": "2026-07-23T12:13:45.429117Z"}
+{"event": "component_worker_started", "timestamp_utc": "2026-07-23T12:13:45.430922Z"}
+{"event": "retrieval", "source": "/home/glmrunner/gemma4-swa-block-paged-cache/artifacts/component/REMOTE_TERMINAL.json", "success": true, "timestamp_utc": "2026-07-23T12:14:18.432315Z"}
+{"event": "retrieval", "source": "/home/glmrunner/gemma4-swa-block-paged-cache/artifacts/component/INVOCATION_STATE.json", "success": true, "timestamp_utc": "2026-07-23T12:14:19.449269Z"}
+{"event": "retrieval", "source": "/home/glmrunner/gemma4-swa-block-paged-cache/artifacts/component/COMPONENT_TERMINAL.json", "success": true, "timestamp_utc": "2026-07-23T12:14:20.428766Z"}
+{"event": "retrieval", "source": "/home/glmrunner/gemma4-swa-block-paged-cache/artifacts/component/worker.stdout", "success": true, "timestamp_utc": "2026-07-23T12:14:21.336444Z"}
+{"event": "retrieval", "source": "/home/glmrunner/gemma4-swa-block-paged-cache/artifacts/component/worker.stderr", "success": true, "timestamp_utc": "2026-07-23T12:14:22.276263Z"}
+{"event": "retrieval", "source": "/home/glmrunner/gemma4-swa-block-paged-cache/component-compact.tar.gz", "success": true, "timestamp_utc": "2026-07-23T12:14:23.114813Z"}
+{"event": "retrieval", "source": "/home/glmrunner/gemma4-swa-block-paged-cache/component-compact.tar.gz.sha256", "success": true, "timestamp_utc": "2026-07-23T12:14:24.091756Z"}
+{"candidate_started": true, "classification": "component_complete", "event": "component_worker_returned", "returncode": 0, "timestamp_utc": "2026-07-23T12:14:24.092746Z"}
+{"classification": "component_numerical_or_semantic_reject", "event": "scientific_terminal", "timestamp_utc": "2026-07-23T12:14:24.093300Z"}
+{"condition": "ready", "elapsed_seconds": 46.17226433753967, "event": "bench_released", "timestamp_utc": "2026-07-23T12:14:24.094325Z"}

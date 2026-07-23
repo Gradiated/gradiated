@@ -1,0 +1,30 @@
+{
+  "component": [
+    {
+      "bytes": 6983,
+      "path": "block_paged_kv.py",
+      "remote_name": "block_paged_kv.py",
+      "sha256": "361723da6d35adc829393c4638dfdea740fcb3ca815b6b7eacb643f6a60a66a9"
+    },
+    {
+      "bytes": 26736,
+      "path": "block_paged_component.py",
+      "remote_name": "block_paged_component.py",
+      "sha256": "f0dea9c6aaac72315ead3c2e0477750398dc06a12ae4835000b06b7859c82fb9"
+    },
+    {
+      "bytes": 2732,
+      "path": "remote_component.sh",
+      "remote_name": "remote_component.sh",
+      "sha256": "3e3db2bb5ee0224135369afac4331e85671dc2c28cd769abbd36f84fdc7b804f"
+    }
+  ],
+  "frozen_candidate": {
+    "global_page_tokens": 1,
+    "local_page_tokens": 16,
+    "local_window_tokens": 1024,
+    "precision": "fp8_e5m2"
+  },
+  "project": "gemma4_h200_swa_block_paged_cache",
+  "schema_version": 1
+}

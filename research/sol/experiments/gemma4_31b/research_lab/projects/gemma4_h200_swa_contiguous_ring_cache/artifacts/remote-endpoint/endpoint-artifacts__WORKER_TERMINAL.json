@@ -1,7 +1,7 @@
 {
   "classification": "endpoint_complete",
-  "message": "candidate_semantic_stop_rule",
+  "message": "semantic_discriminator_reject",
   "schema_version": 1,
   "status": "terminal",
-  "timestamp_utc": "2026-07-23T11:51:22.403859Z"
+  "timestamp_utc": "2026-07-23T14:41:00.028449Z"
 }

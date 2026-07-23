@@ -1,16 +1,22 @@
 {
   "files": [
     {
-      "bytes": 932,
-      "path": "CANDIDATE_SEMANTIC_REJECT.json",
-      "remote_name": "CANDIDATE_SEMANTIC_REJECT.json",
-      "sha256": "2855486118e86dfba43ca6f209c132cb58d729d6d9e07f268135279e688932b7"
+      "bytes": 253,
+      "path": "artifacts/endpoint-evidence/PADDED_NOOP_PROOF.json",
+      "remote_name": "persisted-padded-noop-proof.json",
+      "sha256": "9396bdedcd3b84c772c165385857fec6848b766c366c124b237e164dc8f3f563"
     },
     {
-      "bytes": 8885,
+      "bytes": 22939,
+      "path": "artifacts/endpoint-evidence/control/TERMINAL.json",
+      "remote_name": "persisted-control-terminal.json",
+      "sha256": "1e4e9fe1a3172a20d77de527a9c7844d337442d41f4d9e80ea7b630c85037336"
+    },
+    {
+      "bytes": 18751,
       "path": "endpoint_ring_patch.py",
       "remote_name": "endpoint_ring_patch.py",
-      "sha256": "ceef872ede3ede7d37fec1ab63ce2e20b97f6dd587186f8e93e42d76c171f39a"
+      "sha256": "41d5405c4ef07cd21fd44554137e6c1c232b8eeda46ccef07814d554cb1a3f85"
     },
     {
       "bytes": 4606,
@@ -67,16 +73,28 @@
       "sha256": "9b5a51284ac313014988f426c35b818ae2590cb7d4a72ec604a6ad80a63336b3"
     },
     {
-      "bytes": 9242,
-      "path": "remote_endpoint_pair.sh",
-      "remote_name": "remote_endpoint_pair.sh",
-      "sha256": "36031c7078f085024752274d398fc8a6708187534e6c9b57331516e57e268874"
+      "bytes": 2974,
+      "path": "padded_noop_probe.py",
+      "remote_name": "padded_noop_probe.py",
+      "sha256": "e94220ac70185104e53df2a18511925a52ad7995dc6b5ec1eb6f3d10a678b248"
     },
     {
-      "bytes": 12033,
+      "bytes": 15116,
+      "path": "remote_endpoint_pair.sh",
+      "remote_name": "remote_endpoint_pair.sh",
+      "sha256": "456ab60393a01ad4a50cc020c16793cd4d045d2c5028a24d0f1a4fb86266948a"
+    },
+    {
+      "bytes": 13281,
       "path": "ring_kv.py",
       "remote_name": "ring_kv.py",
-      "sha256": "02b94170e260c08d7d1b6c51eb437f23dbb16c1bf0665c2026c2056ef645210b"
+      "sha256": "73e95f8ae5ef22f13dfb689c498b9e2610a2eefe987379aa47fc2b7803ce7224"
+    },
+    {
+      "bytes": 1096,
+      "path": "ring_ownership.py",
+      "remote_name": "ring_ownership.py",
+      "sha256": "0ee0d372795dd0f7555a3906f2247730b44d2a1640f4bc661f6a6ed66a86342e"
     },
     {
       "bytes": 1788,

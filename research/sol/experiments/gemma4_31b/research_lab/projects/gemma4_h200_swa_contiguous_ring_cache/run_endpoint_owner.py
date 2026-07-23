@@ -21,8 +21,9 @@ PROJECT = base.PROJECT
 BENCH = base.BENCH
 REMOTE = base.REMOTE
 RATE = base.RATE
-PRIOR_SPEND = 0.03745400110085805
+PRIOR_SPEND = 1.2200746308406194
 CAP = 14.0
+FINAL_PATH = HERE / "artifacts/RING_OWNERSHIP_REPAIR2_FINAL_TERMINAL.json"
 
 
 def validate_manifest():
@@ -47,7 +48,9 @@ def retrieve(ip):
     )
     report = {}
     for name in names:
-        ok, error = base.scp_from(ip, f"{REMOTE}/{name}", root / name.replace("/", "__"), 900)
+        destination = root / name.replace("/", "__")
+        destination.unlink(missing_ok=True)
+        ok, error = base.scp_from(ip, f"{REMOTE}/{name}", destination, 900)
         report[name] = {"success": ok, "diagnostic": error}
         base.emit("endpoint_retrieval", path=name, success=ok)
     base.atomic_json(root / "RETRIEVAL.json", report)
@@ -59,7 +62,7 @@ def checkpoint_validate(ip):
     for line in (HERE / "inputs" / "CHECKPOINT_SHA256SUMS.txt").read_text().splitlines():
         digest, path = line.split(maxsplit=1)
         rows.append((digest, Path(path).name))
-    resident = "/home/glmrunner/gemma4-h200-flashinfer-metadata-scalar-elimination/checkpoint"
+    resident = "/home/glmrunner/gemma4-async-result-pipeline/checkpoint"
     checks = " ".join(f"{d}:{shlex.quote(n)}" for d, n in rows)
     command = (
         f"set -e; resident={shlex.quote(resident)}; test -d \"$resident\"; "
@@ -84,7 +87,39 @@ def main():
     args = parser.parse_args()
     manifest = validate_manifest()
     pool = base.GpuPool(LAB)
-    bench = pool.claim(PROJECT, bench_id=BENCH, lease_seconds=9000)
+    claim_deadline = args.deadline_epoch - 1800
+    wait_recorded = False
+    while True:
+        try:
+            bench = pool.claim(PROJECT, bench_id=BENCH, lease_seconds=9000)
+            break
+        except base.GpuPoolError as error:
+            if time.time() >= claim_deadline:
+                final = {
+                    "schema_version": 1,
+                    "status": "terminal",
+                    "classification": "bench_unavailable_before_runway",
+                    "reason": str(error),
+                    "candidate_cuda_started": False,
+                    "candidate_science_started": False,
+                    "current_claim_cost_usd": 0.0,
+                    "provider_cost_usd": PRIOR_SPEND,
+                    "timestamp_utc": base.utc_now(),
+                }
+                base.atomic_json(FINAL_PATH, final)
+                return 4
+            if not wait_recorded:
+                base.emit(
+                    "bench_wait",
+                    bench=BENCH,
+                    claim_deadline_utc=dt.datetime.fromtimestamp(
+                        claim_deadline, dt.timezone.utc
+                    )
+                    .isoformat()
+                    .replace("+00:00", "Z"),
+                )
+                wait_recorded = True
+            time.sleep(15)
     claimed = time.time()
     lifecycle = dt.datetime.fromisoformat(
         bench["lifecycle"]["deadline_utc"].replace("Z", "+00:00")
@@ -134,8 +169,9 @@ def main():
             report = retrieve(ip)
             terminal_ok = report["endpoint-artifacts/WORKER_TERMINAL.json"]["success"]
             state_ok = report["endpoint-artifacts/INVOCATION_STATE.json"]["success"]
+            result_ok = report["endpoint-artifacts/ENDPOINT_RESULT.json"]["success"]
             result = read_remote_result()
-            if terminal_ok and state_ok and result:
+            if terminal_ok and state_ok and result_ok and result:
                 final = {
                     "classification": result.get("classification", "endpoint_terminal"),
                     "endpoint_result": result,
@@ -179,7 +215,7 @@ def main():
                 "timestamp_utc": base.utc_now(),
             }
         )
-        base.atomic_json(HERE / "artifacts/ENDPOINT_FINAL_TERMINAL.json", final)
+        base.atomic_json(FINAL_PATH, final)
     except Exception as error:
         elapsed = time.time() - claimed
         final = {
@@ -192,7 +228,7 @@ def main():
             "provider_cost_usd": PRIOR_SPEND + elapsed / 3600 * RATE,
             "timestamp_utc": base.utc_now(),
         }
-        base.atomic_json(HERE / "artifacts/ENDPOINT_FINAL_TERMINAL.json", final)
+        base.atomic_json(FINAL_PATH, final)
         returncode = 3
     finally:
         heartbeat.close()

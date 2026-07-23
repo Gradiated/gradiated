@@ -16,6 +16,8 @@ def _store_ring_kv_kernel(
     V_RING,
     REQUEST_IDS,
     ABSOLUTE_POSITIONS,
+    K_SCALE: tl.constexpr,
+    V_SCALE: tl.constexpr,
     n_elements: tl.constexpr,
     row_elements: tl.constexpr,
     ring_tokens: tl.constexpr,
@@ -34,8 +36,8 @@ def _store_ring_kv_kernel(
     destination_offsets = (
         (request_ids * ring_tokens + ring_positions) * row_elements + within_row
     )
-    k = tl.load(K + offsets, mask=valid, other=0.0)
-    v = tl.load(V + offsets, mask=valid, other=0.0)
+    k = tl.load(K + offsets, mask=valid, other=0.0) / K_SCALE
+    v = tl.load(V + offsets, mask=valid, other=0.0) / V_SCALE
     tl.store(K_RING + destination_offsets, k, mask=valid)
     tl.store(V_RING + destination_offsets, v, mask=valid)
 
@@ -47,6 +49,8 @@ def store_ring_kv(
     v_ring,
     request_ids,
     absolute_positions,
+    k_scale=1.0,
+    v_scale=1.0,
 ):
     if k.shape != v.shape:
         raise ValueError(f"K/V shape mismatch: {k.shape} != {v.shape}")
@@ -68,6 +72,8 @@ def store_ring_kv(
         v_ring,
         request_ids,
         absolute_positions,
+        k_scale,
+        v_scale,
         n_elements=n_elements,
         row_elements=row_elements,
         ring_tokens=k_ring.shape[1],
@@ -98,13 +104,15 @@ def _restore_ring_prefix_kernel(
     token_block = tl.program_id(1)
     element_block = tl.program_id(2)
     request_id = tl.load(REQUEST_IDS + batch)
+    valid_request = request_id >= 0
+    safe_request_id = tl.maximum(request_id, 0)
     seq_len = tl.load(SEQ_LENS + batch)
-    previous = tl.load(LAST_POSITIONS + request_id)
+    previous = tl.load(LAST_POSITIONS + safe_request_id)
     reset = (previous != seq_len - 2) | FORCE
     start = tl.load(KV_INDPTR + batch)
     end = tl.load(KV_INDPTR + batch + 1)
     token = token_block
-    valid_token = reset & (start + token < end - EXCLUDE_LAST)
+    valid_token = valid_request & reset & (start + token < end - EXCLUDE_LAST)
     paged_slot = tl.load(KV_INDICES + start + token, mask=valid_token, other=0)
     absolute_position = seq_len - (end - start) + token
     ring_position = absolute_position & (ring_tokens - 1)
@@ -112,7 +120,7 @@ def _restore_ring_prefix_kernel(
     valid = valid_token & (elements < row_elements)
     source = paged_slot * row_elements + elements
     destination = (
-        (request_id * ring_tokens + ring_position) * row_elements + elements
+        (safe_request_id * ring_tokens + ring_position) * row_elements + elements
     )
     tl.store(
         K_RING + destination,
@@ -130,7 +138,9 @@ def _restore_ring_prefix_kernel(
 def _mark_ring_positions_kernel(REQUEST_IDS, SEQ_LENS, LAST_POSITIONS, n: tl.constexpr):
     offset = tl.program_id(0) * 32 + tl.arange(0, 32)
     valid = offset < n
-    request_id = tl.load(REQUEST_IDS + offset, mask=valid, other=0)
+    request_id = tl.load(REQUEST_IDS + offset, mask=valid, other=-1)
+    valid = valid & (request_id >= 0)
+    request_id = tl.maximum(request_id, 0)
     seq_len = tl.load(SEQ_LENS + offset, mask=valid, other=0)
     tl.store(LAST_POSITIONS + request_id, seq_len - 1, mask=valid)
 
@@ -193,6 +203,21 @@ def _tanh(x):
 
 
 @triton.jit
+def _zero_padded_output_kernel(
+    OUTPUT,
+    REQUEST_IDS,
+    n_elements: tl.constexpr,
+    row_elements: tl.constexpr,
+    BLOCK: tl.constexpr,
+):
+    offsets = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
+    valid = offsets < n_elements
+    rows = offsets // row_elements
+    request_ids = tl.load(REQUEST_IDS + rows, mask=valid, other=-1)
+    tl.store(OUTPUT + offsets, 0.0, mask=valid & (request_ids < 0))
+
+
+@triton.jit
 def _ring_grouped_stage1(
     Q,
     K_RING,
@@ -248,6 +273,9 @@ def _ring_grouped_stage1(
     cur_batch_seq_len = tl.load(seq_lens + cur_batch)
     cur_ring_start = tl.load(ring_starts + cur_batch)
     cur_ring_row = tl.load(REQUEST_IDS + cur_batch)
+    valid_request = cur_ring_row >= 0
+    cur_ring_row = tl.maximum(cur_ring_row, 0)
+    cur_batch_seq_len = tl.where(valid_request, cur_batch_seq_len, 0)
     kv_splits = tl.load(num_kv_splits + cur_batch)
     offs_q = cur_batch * stride_qbs + cur_head[:, None] * stride_qh + offs_d[None, :]
 
@@ -408,5 +436,15 @@ def ring_decode_attention(
         kv_indptr,
         num_kv_splits,
         max_kv_splits,
+    )
+    output_elements = output.numel()
+    output_row_elements = output_elements // output.shape[0]
+    _zero_padded_output_kernel[(triton.cdiv(output_elements, 256),)](
+        output,
+        request_ids,
+        n_elements=output_elements,
+        row_elements=output_row_elements,
+        BLOCK=256,
+        num_warps=4,
     )
     return compiled

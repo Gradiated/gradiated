@@ -1,27 +1,163 @@
 {
-  "schema_version": 1,
-  "status": "terminal",
-  "classification": "candidate_semantic_reject",
-  "pass": false,
-  "stop_rule": "Close on prefix/cache semantic failure or numerical failure.",
-  "control_service_seconds_per_request": 0.6766461551248995,
-  "candidate_service_seconds_per_request": null,
-  "candidate_science_started": false,
   "candidate_latency_measured": false,
-  "candidate_path_mechanically_present": true,
+  "classification": "semantic_discriminator_first_extend_to_decode_transition",
+  "comparison_pass": false,
+  "component_and_control_replayed": false,
+  "decode_transition_count": 8,
+  "extend_transition_count": 4,
+  "first_two_decode_transitions": [
+    {
+      "absolute_positions": [
+        29
+      ],
+      "context_lens": [
+        30
+      ],
+      "current_k": {
+        "all_finite": true,
+        "exact_bytes": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      },
+      "current_v": {
+        "all_finite": true,
+        "exact_bytes": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      },
+      "event": "ring_transition_decode",
+      "layer_id": 0,
+      "request_pool_indices": [
+        1
+      ],
+      "ring_rows": [
+        0
+      ],
+      "ring_vs_stock_output": {
+        "all_finite": true,
+        "exact_bytes": false,
+        "max_abs": 17.75,
+        "relative_l2": 1.3317378759384155
+      },
+      "scales": {
+        "k_scale": 1.0,
+        "producer_semantics": "divide_by_scale_before_fp8_cast",
+        "v_scale": 1.0
+      },
+      "seq_lens": [
+        30
+      ],
+      "transition_for_request": 1,
+      "valid_rows": [
+        true
+      ]
+    },
+    {
+      "absolute_positions": [
+        30
+      ],
+      "context_lens": [
+        31
+      ],
+      "current_k": {
+        "all_finite": true,
+        "exact_bytes": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      },
+      "current_v": {
+        "all_finite": true,
+        "exact_bytes": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      },
+      "event": "ring_transition_decode",
+      "layer_id": 0,
+      "request_pool_indices": [
+        1
+      ],
+      "ring_rows": [
+        0
+      ],
+      "ring_vs_stock_output": {
+        "all_finite": true,
+        "exact_bytes": false,
+        "max_abs": 16.25,
+        "relative_l2": 1.2449451684951782
+      },
+      "scales": {
+        "k_scale": 1.0,
+        "producer_semantics": "divide_by_scale_before_fp8_cast",
+        "v_scale": 1.0
+      },
+      "seq_lens": [
+        31
+      ],
+      "transition_for_request": 2,
+      "valid_rows": [
+        true
+      ]
+    }
+  ],
+  "ownership_pass": true,
+  "padded_noop_proof": {
+    "classification": "padded_row_noop_pass",
+    "consumer_negative_row_zero": true,
+    "pass": true,
+    "producer_negative_row_noop": true,
+    "request_rows": [
+      0,
+      -1
+    ],
+    "schema_version": 1,
+    "status": "terminal",
+    "valid_row_finite": true
+  },
+  "padded_slot_maps_to_negative_row": true,
+  "pass": false,
+  "request_slots_observed": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "ring_rows_observed": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "schema_version": 1,
   "semantic_discriminator": {
-    "attempts": 2,
-    "one_token_ready": "READY",
-    "one_token_arithmetic": "4",
-    "multi_token_json": "incoherent after the prefill-produced opening token",
-    "reproducible": true
+    "localization": "first_extend_to_decode_transition",
+    "pass": false,
+    "radix_cache_disabled": false,
+    "rows": [
+      {
+        "label": "json_first",
+        "pass": false,
+        "text": "```PK\u0909\u0938\u0915\u0947\u3059\u3054 deC ownLL same_\ub098P\u4e1c\u897fPly que deL la\ub098CC a\u17a1\u17be\u1784\u5fc3\u810f aMyApp la MyAppP",
+        "want": "json"
+      },
+      {
+        "label": "ready",
+        "pass": false,
+        "text": "READY owne\ub098eC l single\u064a\u0629 own\u6700\u65e9 own \u092e\u093e\u0928\u094d\u092f\u0924\u093e la own\u0e01\u0e27\u0e48\u0e32 la l everL same \u304bC \u043b\u044e\u0431\u0443\u044e la single la\u0915\u093f\u092f\u093e\u09b6\u09bf\u09b0\u09cb\u09a8\u09be\u09ae a small l",
+        "want": "READY"
+      },
+      {
+        "label": "arithmetic",
+        "pass": false,
+        "text": "4 brotherpineappleHCerBes queenPB laPL de laL quee pois\u3067\u304d\u308b\u3088\u3046L same la-K\u719f\u6089 ownCP ever",
+        "want": "4"
+      },
+      {
+        "label": "json_after_prefix_population",
+        "pass": true,
+        "text": "```json\n{\n  \"status\": \"ok\"\n}\n```",
+        "want": "json"
+      }
+    ]
   },
-  "cache_accounting": {
-    "control_cached_prompt_tokens": 17120,
-    "control_uncached_prompt_tokens": 117728,
-    "control_complete_requests": 32
-  },
-  "global_paged_e5m2_unchanged_by_construction": true,
-  "component_replay": false,
-  "control_replay_after_terminal": false
+  "status": "terminal"
 }

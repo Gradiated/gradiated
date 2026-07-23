@@ -1,6 +1,6 @@
 {
   "active_session": null,
-  "actual_spend_usd": 0.9311590839544932,
+  "actual_spend_usd": 1.4780371621171633,
   "allocation_limit": 1,
   "authorized_spend_usd": 14.0,
   "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
@@ -12,13 +12,16 @@
   "immutable_binding": "DIRECTOR_BINDING.json",
   "immutable_binding_verifier": "verify_director_binding.py",
   "measured_local_attention_wall_fraction": 0.1531203203096733,
-  "next_action": "Closed by the preregistered prefix/cache semantic-failure stop rule. Do not tune or replay this ring arm; return the available H200 to the director.",
-  "priority": 2650,
+  "next_action": "Terminal for this repair iteration: preserve the settled component, control, padded-row proof, and transition trace without replay; do not start c32. A distinct director-authorized follow-up would have to bind the ring producer to the actual fused fresh multi-token extend bytes before changing the consumer.",
+  "priority": 3230,
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
   "required_local_boundary_reduction_fraction_at_current_control": 0.3507436965788028,
   "researcher_profile": "deep",
-  "reservation_gate": "Do not claim until this project's reservation is present and the priority-2700 project has released the bench.",
-  "status": "closed",
+  "reservation_gate": "Settled within the renewed $14 reservation; no further paid invocation is authorized by this terminal.",
+  "result": "semantic_discriminator_first_extend_to_decode_transition",
+  "status": "completed",
   "storage_budget": "At most 10 GiB new artifacts/build outputs; no checkpoint duplication.",
-  "summary": "Closed: the exact component was candidate/control bit-identical and locally positive (+24.834648% conservative), but the integrated request-owned ring passed one-token smoke and reproducibly became incoherent on the first multi-token decode. The c32 control completed at 0.6766461551 s/request with exact accounting; candidate latency was not measured because the semantic gate failed before candidate science."
+  "summary": "Ownership and padding are repaired: slot zero maps to -1, live slots map bijectively, negative-row producer/consumer no-ops pass, prefixes restore byte-exactly, and decode current-token K/V match stock. The endpoint still fails because fresh multi-token extend K/V written to the ring differ sharply from the actual paged producer; the first two stock-versus-ring decode outputs diverge and the multi-token discriminator is incoherent. Candidate c32 remained unstarted.",
+  "terminal_artifact": "artifacts/RING_OWNERSHIP_REPAIR2_FINAL_TERMINAL.json",
+  "terminal_sha256": "0c1fb2a927f97ae1bdb459b0a0f362d41e0e3e92060a70bc4d44f0cae9d8929d"
 }

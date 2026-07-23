@@ -1,0 +1,6 @@
+{
+  "classification": "typed_transfer_boundary",
+  "message": "typed_transfer_boundary:scp_failed:model-00001-of-00002.safetensors:scp: write remote \"/home/glmrunner/gemma4-fp8-layer-fusion/checkpoint/model-00001-of-00002.safetensors.eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa.part\": Failure\nscp: failed to upload file /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_layer_dataflow_fusion/inputs/checkpoint/model-00001-of-00002.safetensors to /home/glmrunner/gemma4-fp8-layer-fusion/checkpoint/model-00001-of-00002.safetensors.eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa.part\n",
+  "provider_exposure_seconds": 144.4587254524231,
+  "schema_version": 1
+}

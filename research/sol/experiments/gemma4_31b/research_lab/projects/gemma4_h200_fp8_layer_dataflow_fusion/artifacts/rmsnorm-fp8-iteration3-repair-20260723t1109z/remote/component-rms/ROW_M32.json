@@ -1,0 +1,77 @@
+{
+  "candidate_symbols": [
+    "rmsnorm_quant_kernel<false>",
+    "rmsnorm_quant_kernel<true>"
+  ],
+  "complete_outputs_consumed": true,
+  "consumer_symbol": "fp8_scaled_mm",
+  "gate_up_component_candidate": {
+    "maximum_ms": 0.09824000298976898,
+    "median_ms": 0.09283199906349182,
+    "minimum_ms": 0.09148799628019333,
+    "p90_ms": 0.09520000219345093
+  },
+  "gate_up_component_control": {
+    "maximum_ms": 0.12281599640846252,
+    "median_ms": 0.1067040003836155,
+    "minimum_ms": 0.10329599678516388,
+    "p90_ms": 0.11715199798345566
+  },
+  "numerical_pass": false,
+  "plain_numerical": {
+    "consumer_cosine_similarity": 0.9999995231628418,
+    "consumer_relative_l2_error": 0.000925471365917474,
+    "dequantized_relative_l2_error": 0.0007008855463936925,
+    "nonfinite_count": 0,
+    "quantized_byte_match_fraction": 0.9998314380645752,
+    "saturation_fraction": 0.00019763765158131719,
+    "scale_max_abs_error": 1.1920928955078125e-07
+  },
+  "plain_producer_candidate": {
+    "maximum_ms": 0.01958400011062622,
+    "median_ms": 0.017376000061631203,
+    "minimum_ms": 0.016543999314308167,
+    "p90_ms": 0.018239999189972878
+  },
+  "plain_producer_control": {
+    "maximum_ms": 0.05113599821925163,
+    "median_ms": 0.03009600006043911,
+    "minimum_ms": 0.02800000086426735,
+    "p90_ms": 0.04233599826693535
+  },
+  "qkv_component_candidate": {
+    "maximum_ms": 0.05206400156021118,
+    "median_ms": 0.050143999978899956,
+    "minimum_ms": 0.04831999912858009,
+    "p90_ms": 0.05110400170087814
+  },
+  "qkv_component_control": {
+    "maximum_ms": 0.07039999961853027,
+    "median_ms": 0.05822400003671646,
+    "minimum_ms": 0.055743999779224396,
+    "p90_ms": 0.0639680027961731
+  },
+  "residual_numerical": {
+    "consumer_cosine_similarity": 0.9998795390129089,
+    "consumer_relative_l2_error": 0.015523082576692104,
+    "dequantized_relative_l2_error": 0.015339948236942291,
+    "nonfinite_count": 0,
+    "quantized_byte_match_fraction": 0.9719645380973816,
+    "saturation_fraction": 0.0002092633949359879,
+    "scale_max_abs_error": 0.0011160820722579956
+  },
+  "residual_producer_candidate": {
+    "maximum_ms": 0.0306560005992651,
+    "median_ms": 0.02521600015461445,
+    "minimum_ms": 0.0244159996509552,
+    "p90_ms": 0.026079999282956123
+  },
+  "residual_producer_control": {
+    "maximum_ms": 0.06230400130152702,
+    "median_ms": 0.043984001502394676,
+    "minimum_ms": 0.03948799893260002,
+    "p90_ms": 0.053727999329566956
+  },
+  "residual_state_bitwise_equal": true,
+  "tokens": 32
+}

@@ -33,7 +33,7 @@ fail() {
 
 compact() {
   set +e
-  for container in gemma-fusion-control-v0513 gemma-fusion-candidate-v0513; do
+  for container in gemma-rms-fp8-control-v0513 gemma-rms-fp8-candidate-v0513; do
     sudo docker logs "$container" >"$artifacts/$container.final.log" 2>&1 || true
     sudo docker inspect "$container" >"$artifacts/$container.inspect.json" 2>&1 || true
   done
@@ -51,15 +51,16 @@ test -s "$input/GPU_INPUT_MANIFEST.json" || fail input_manifest_missing
 test -s "$checkpoint/model.safetensors.index.json" || fail checkpoint_missing
 sudo docker image inspect "$image" >"$artifacts/image-inspect.json" 2>&1 || fail pinned_image_missing
 
-if [[ ! -s "$artifacts/component/TERMINAL.json" ]]; then
-  rm -rf "$artifacts/component"
+if [[ ! -s "$artifacts/component-rms/TERMINAL.json" ]]; then
+  rm -rf "$artifacts/component-rms"
   state component_cuda_started
   sudo docker run --rm --gpus all --ipc=host \
     -v "$root:/work" -e PYTHONPATH=/work/input:/sgl-workspace/sglang/python \
     -e TORCH_EXTENSIONS_DIR=/work/torch-extensions "$image" \
-    python3 /work/input/component_benchmark.py --output /work/artifacts/component \
+    python3 /work/input/rmsnorm_real_consumer_component.py \
+      --output /work/artifacts/component-rms --checkpoint /work/checkpoint \
     >"$artifacts/component.stdout" 2>"$artifacts/component.stderr" || {
-      if [[ -s "$artifacts/component/TERMINAL.json" ]]; then
+      if [[ -s "$artifacts/component-rms/TERMINAL.json" ]]; then
         atomic_terminal component_negative exact_component_terminal_is_negative
         exit 20
       fi
@@ -68,13 +69,31 @@ if [[ ! -s "$artifacts/component/TERMINAL.json" ]]; then
   state component_science_started
 fi
 
-python3 - "$artifacts/component/TERMINAL.json" <<'PY' || {
+python3 - "$artifacts/component-rms/TERMINAL.json" <<'PY' || {
 import json,sys
-x=json.load(open(sys.argv[1])); assert x.get('pass') is True and x.get('candidate_invocations',0)>0
+x=json.load(open(sys.argv[1]))
+assert x.get('pass') is True
+assert x.get('classification') == 'component_positive'
+assert x['bound']['predicted_candidate_standalone_quant_calls'] == 7320
+assert x['bound']['positive'] is True
+assert x['path_proof']['bf16_residual_preserved'] is True
+assert {row['tokens'] for row in x['rows']} == {32,118,1409,1631,2048}
 PY
   atomic_terminal component_negative exact_component_did_not_promote
   exit 20
 }
+
+if [[ ! -s "$checkpoint/model-00001-of-00002.safetensors" || ! -s "$checkpoint/model-00002-of-00002.safetensors" ]]; then
+  python3 - "$artifacts/ENDPOINT_BLOCKER.json" <<'PY'
+import json,os,pathlib,shutil,sys
+p=pathlib.Path(sys.argv[1]); q=p.with_suffix('.part')
+usage=shutil.disk_usage('/home/glmrunner')
+v={'schema_version':1,'status':'blocked','classification':'immutable_full_checkpoint_storage_unavailable','required_checkpoint_bytes':62578655208,'disk_free_bytes':usage.free,'constraint':'No provider mutation, deletion of retained lab state, or post-claim resolution of another project checkpoint is authorized.','component_terminal':'component-rms/TERMINAL.json'}
+q.write_text(json.dumps(v,indent=2,sort_keys=True)+'\n'); os.replace(q,p)
+PY
+  atomic_terminal endpoint_external_blocker immutable_full_checkpoint_storage_unavailable
+  exit 21
+fi
 
 base_args=(
   --model-path /work/checkpoint --tokenizer-path /work/checkpoint
@@ -100,8 +119,8 @@ start_server() {
     -e STACK_BASELINE_SITECUSTOMIZE=/work/input/stack/residual_sitecustomize.py \
     -e RESIDUAL_ARM=control \
     -e RESIDUAL_CANDIDATE_AUDIT="/work/artifacts/$arm-audit/attention.jsonl" \
-    -e FUSION_ARM="$arm" \
-    -e FUSION_AUDIT="/work/artifacts/$arm-audit/fusion.jsonl" \
+    -e RMS_FP8_ARM="$arm" \
+    -e RMS_FP8_AUDIT="/work/artifacts/$arm-audit/rms-fp8.jsonl" \
     -e QKV_EPILOGUE_AUDIT="/work/artifacts/$arm-audit/qkv.jsonl" \
     -e FP8_MODULE_AUDIT="/work/artifacts/$arm-audit/modules.jsonl" \
     -e FP8_CONSUMER_AUDIT="/work/artifacts/$arm-audit/consumers.jsonl" \
@@ -136,13 +155,14 @@ run_arm() {
   local arm=$1 container=$2
   state "${arm}_science_started"
   sudo docker exec "$container" python3 /work/input/stack/fp8_qkv_paired_runner.py \
-    --output "/work/artifacts/$arm" --arm "fp8_qkv_${arm}" --concurrency 32 \
+    --output "/work/artifacts/$arm" --arm "fp8_qkv_rms_${arm}" --concurrency 32 \
     >"$artifacts/$arm.runner.stdout" 2>"$artifacts/$arm.runner.stderr" || fail "$arm.runner_failed"
   python3 - "$artifacts/$arm/TERMINAL.json" <<'PY' || fail "$arm.terminal_invalid"
 import json,sys
-x=json.load(open(sys.argv[1])); assert x.get('pass') is True and x.get('complete_requests')==32 and len(x.get('rows',[]))==32
-assert x.get('cache',{}).get('cached_prompt_tokens_delta')==17120
-assert x.get('cache',{}).get('uncached_prompt_tokens_delta')==117728
+x=json.load(open(sys.argv[1]))
+assert x.get('pass') is True and x.get('complete_requests') == 32 and len(x.get('rows',[])) == 32
+assert x.get('cache',{}).get('cached_prompt_tokens_delta') == 17120
+assert x.get('cache',{}).get('uncached_prompt_tokens_delta') == 117728
 PY
 }
 
@@ -155,38 +175,41 @@ modules=[json.loads(x) for x in (p/'modules.jsonl').read_text().splitlines() if 
 consumers=[json.loads(x) for x in (p/'consumers.jsonl').read_text().splitlines() if x]
 qkv=[json.loads(x) for x in (p/'qkv.jsonl').read_text().splitlines() if x]
 attention=[json.loads(x) for x in (p/'attention.jsonl').read_text().splitlines() if x]
-assert len(modules)==240 and consumers
-assert qkv and all(x.get('candidate_symbol')=='_qkv_norm_rope_inplace_kernel' for x in qkv)
-assert any(x.get('candidate_path')=='TritonAttnBackend.forward_extend.local_fp8_deferred_cache_commit' for x in attention)
-fusion=[] if arm=='control' else [json.loads(x) for x in (p/'fusion.jsonl').read_text().splitlines() if x]
-if arm=='candidate':
-    assert len({x.get('prefix') for x in fusion})==60
-    assert all(x.get('candidate_symbol')=='fused_gelu_tanh_mul_quant_kernel' and x.get('quantized_shape',[-1])[-1]==21504 for x in fusion)
+assert len(modules) == 240 and consumers
+assert qkv and all(x.get('candidate_symbol') == '_qkv_norm_rope_inplace_kernel' for x in qkv)
+assert any(x.get('candidate_path') == 'TritonAttnBackend.forward_extend.local_fp8_deferred_cache_commit' for x in attention)
+rms=[] if arm == 'control' else [json.loads(x) for x in (p/'rms-fp8.jsonl').read_text().splitlines() if x]
+if arm == 'candidate':
+    prefixes={x['prefix'] for x in rms}
+    qkv_prefixes={x for x in prefixes if x.endswith('.self_attn.qkv_proj')}
+    gate_prefixes={x for x in prefixes if x.endswith('.mlp.gate_up_proj')}
+    assert len(prefixes) == 120 and len(qkv_prefixes) == 60 and len(gate_prefixes) == 60
+    assert all(x['quantized_dtype'] == 'torch.float8_e4m3fn' and x['scale_dtype'] == 'torch.float32' for x in rms)
 PY
 }
 
 if [[ ! -s "$artifacts/control/TERMINAL.json" ]]; then
-  sudo docker rm -f gemma-fusion-candidate-v0513 >/dev/null 2>&1 || true
-  start_server control gemma-fusion-control-v0513
-  run_arm control gemma-fusion-control-v0513
+  sudo docker rm -f gemma-rms-fp8-candidate-v0513 >/dev/null 2>&1 || true
+  start_server control gemma-rms-fp8-control-v0513
+  run_arm control gemma-rms-fp8-control-v0513
   validate_stack control
 fi
 
-sudo docker rm -f gemma-fusion-control-v0513 >/dev/null 2>&1 || true
+sudo docker rm -f gemma-rms-fp8-control-v0513 >/dev/null 2>&1 || true
 if [[ ! -s "$artifacts/candidate/TERMINAL.json" ]]; then
-  start_server candidate gemma-fusion-candidate-v0513
-  run_arm candidate gemma-fusion-candidate-v0513
+  start_server candidate gemma-rms-fp8-candidate-v0513
+  run_arm candidate gemma-rms-fp8-candidate-v0513
   validate_stack candidate
 fi
 
-python3 - "$artifacts/component/TERMINAL.json" "$artifacts/control/TERMINAL.json" "$artifacts/candidate/TERMINAL.json" "$artifacts/PAIRED_TERMINAL.json" <<'PY'
+python3 - "$artifacts/component-rms/TERMINAL.json" "$artifacts/control/TERMINAL.json" "$artifacts/candidate/TERMINAL.json" "$artifacts/PAIRED_TERMINAL.json" <<'PY'
 import json,os,pathlib,sys
 component=json.load(open(sys.argv[1])); control=json.load(open(sys.argv[2])); candidate=json.load(open(sys.argv[3]))
 out=pathlib.Path(sys.argv[4]); tmp=out.with_suffix('.part')
 c=float(control['service_seconds_per_request']); q=float(candidate['service_seconds_per_request']); gain=1-q/c
-valid=all(x.get('pass') and x.get('complete_requests')==32 and len(x.get('rows',[]))==32 for x in (control,candidate)) and component.get('pass') is True
-classification='frontier_pass' if valid and q<=0.6381105231 else ('stable_positive' if valid and gain>0 else 'stack_negative')
-value={'schema_version':1,'status':'terminal','classification':classification,'pass':valid and gain>0,'component':component,'control':control,'candidate':candidate,'control_service_seconds_per_request':c,'candidate_service_seconds_per_request':q,'reduction_fraction':gain,'economic_ceiling_seconds_per_request':0.6381105231,'economic_ceiling_pass':valid and q<=0.6381105231,'rows_and_cache_valid':valid,'candidate_server_retained':'gemma-fusion-candidate-v0513'}
+valid=all(x.get('pass') and x.get('complete_requests') == 32 and len(x.get('rows',[])) == 32 for x in (control,candidate)) and component.get('pass') is True
+classification='frontier_pass' if valid and q <= 0.6381105231 else ('stable_positive' if valid and gain > 0 else 'stack_negative')
+value={'schema_version':1,'status':'terminal','classification':classification,'pass':valid and gain > 0,'component':component,'control':control,'candidate':candidate,'control_service_seconds_per_request':c,'candidate_service_seconds_per_request':q,'reduction_fraction':gain,'economic_ceiling_seconds_per_request':0.6381105231,'economic_ceiling_pass':valid and q <= 0.6381105231,'rows_and_cache_valid':valid,'candidate_server_retained':'gemma-rms-fp8-candidate-v0513','predicted_standalone_quant_calls':{'control':14640,'candidate':7320}}
 tmp.write_text(json.dumps(value,indent=2,sort_keys=True)+'\n'); os.replace(tmp,out)
 PY
-atomic_terminal completed stacked_component_and_endpoint_terminal_persisted
+atomic_terminal completed rmsnorm_component_and_endpoint_terminal_persisted

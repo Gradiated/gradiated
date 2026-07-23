@@ -22,8 +22,8 @@ NEBIUS = pathlib.Path("/root/workspace/research/sol/experiments/glm47flash/campa
 KEY = pathlib.Path("/root/.config/nebius/glm-campaign/ssh_ed25519")
 KNOWN_HOSTS = pathlib.Path("/root/.config/nebius/glm-campaign/known_hosts")
 REMOTE = "/home/glmrunner/gemma4-fp8-layer-fusion"
-AUTHORIZED_USD = 9.0
-MAX_CLAIM_SECONDS = 150 * 60
+AUTHORIZED_USD = 10.0
+MAX_CLAIM_SECONDS = 100 * 60
 RETRIEVAL_RESERVE_SECONDS = 15 * 60
 
 
@@ -107,7 +107,10 @@ def main() -> int:
         raise RuntimeError("typed_pool_boundary:bench_not_h200_sxm")
     rate = float(bench["hourly_cost_usd"])
     status = json.loads((PROJECT / "STATUS.json").read_text())
-    prior_spend = float(status.get("measured_project_spend_usd", 0.0))
+    prior_spend = max(
+        float(status.get("actual_spend_usd", 0.0)),
+        float(status.get("historical_project_spend_usd", 0.0)),
+    )
     remaining_spend = AUTHORIZED_USD - prior_spend
     claim_deadline = min(
         args.absolute_deadline_epoch,
@@ -253,7 +256,7 @@ def main() -> int:
             emit("worker_returned", returncode=worker.returncode)
             invocation = retrieve_json(f"{REMOTE}/artifacts/INVOCATION_STATE.json", "INVOCATION_STATE.json")
             component = retrieve_json(
-                f"{REMOTE}/artifacts/component/INVOCATION_STATE.json",
+                f"{REMOTE}/artifacts/component-rms/INVOCATION_STATE.json",
                 "COMPONENT_INVOCATION_STATE.json",
                 required=False,
             )
@@ -299,7 +302,7 @@ def main() -> int:
             returncode, invocation, component_invocation, worker_terminal = invoke()
 
         paired_path = args.artifact_root / "remote/PAIRED_TERMINAL.json"
-        component_path = args.artifact_root / "remote/component/TERMINAL.json"
+        component_path = args.artifact_root / "remote/component-rms/TERMINAL.json"
         decision = None
         if paired_path.is_file():
             decision = json.loads(paired_path.read_text())
@@ -307,6 +310,14 @@ def main() -> int:
             decision = json.loads(component_path.read_text())
         if decision is None:
             raise RuntimeError(f"typed_scientific_boundary:{worker_terminal.get('message', 'decision_terminal_missing')}")
+        if (
+            component_path.is_file()
+            and worker_terminal.get("classification") == "endpoint_external_blocker"
+        ):
+            decision["component_classification"] = decision.get("classification")
+            decision["classification"] = "component_positive_endpoint_blocked_storage"
+            decision["pass"] = False
+            decision["endpoint_blocker"] = worker_terminal
         exposure = time.time() - started
         spend = exposure * rate / 3600
         decision["provider_exposure_seconds"] = exposure
@@ -321,10 +332,10 @@ def main() -> int:
             "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
             "checkpoint": f"Exact immutable checkpoint retained at {REMOTE}/checkpoint",
             "image": "SGLang v0.5.13 digest 6113665 retained",
-            "runtime": f"FP8+QKV+deferred-local-KV fusion decision: {decision.get('classification')}",
+            "runtime": f"E5M2 FP8+QKV stack with RMSNorm-to-FP8 decision: {decision.get('classification')}",
             "caches": f"CUDA extension and graph caches retained at {REMOTE}/torch-extensions",
             "server_state": (
-                "Candidate server gemma-fusion-candidate-v0513 retained"
+                "Candidate server gemma-rms-fp8-candidate-v0513 retained"
                 if paired_path.is_file()
                 else "No endpoint server launched because the component did not promote"
             ),
@@ -358,6 +369,8 @@ def main() -> int:
                 "image": "Pinned SGLang v0.5.13 image retained when staged",
                 "artifacts": str(args.artifact_root),
             }
+            contents_path = args.artifact_root / "BENCH_CONTENTS.json"
+            atomic(contents_path, contents)
             pool(
                 "release",
                 "--project",
@@ -365,7 +378,7 @@ def main() -> int:
                 "--condition",
                 release_condition,
                 "--contents",
-                json.dumps(contents, sort_keys=True),
+                str(contents_path),
                 check=False,
             )
 

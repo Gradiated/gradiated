@@ -22,3 +22,19 @@ Capture bytes/launches removed, component timing, numerical error, endpoint serv
 - Up to 150 H200 claim minutes and `$9.00` total authorized spend.
 - Release the loaded/cached bench ready for the next project.
 - Exclude the rejected `64x256x128` gate/up tile and any broad CUTLASS schedule sweep.
+
+## Director continuation — persisted real-consumer arm
+
+The first component invocation is closed as inconclusive, not negative: the custom producer reached CUDA, but the synthetic benchmark created its down-projection `mat_b` row-major and the pinned CUTLASS consumer rejected it before any numerical or timing row persisted. Do not replay that synthetic-weight arm.
+
+Use the retained H200 and resident checkpoint for one materially distinct component contract. Load one exact Gemma down-projection weight through the pinned runtime so its dtype, shape, strides, storage orientation, and per-channel scales match the endpoint consumer. Invoke the candidate producer once for each admitted M=32/M=2048 shape, persist the quantized tensor, scale tensor, metadata, and hashes before GEMM, and make any downstream consumer repair operate only on those persisted outputs. Preserve the existing numerical and timing gates. Promote to the existing one paired c32 endpoint only on `component_positive`; otherwise release with a typed terminal. This continuation may claim at most 120 minutes and `$4.92`, must release by `2026-07-22T17:45:00Z`, and must not transfer the checkpoint or pull the pinned image again.
+
+## Director iteration 3 — RMSNorm-to-FP8 producers
+
+The consumed gated-activation/down-projection candidate remains closed. This iteration tests a different producer chain. The qualified E5M2 profile records 14,640 `per_token_quant_fp8_small_batch_kernel` calls taking `0.3233964 s` in the exact batch. Gemma's 60 layers over 61 observed forward batches invoke four dynamic-FP8 projections per layer; the QKV and gate/up projections account for the 7,320 inputs immediately produced by pre-attention and pre-MLP RMSNorm. Their normalized BF16 intermediates have no non-linear consumer before `fp8_scaled_mm`.
+
+Use `$kernel-research` to source-bind both live RMSNorm variants, residual ownership, FP8 scale convention, graph shapes, and downstream QKV/gate-up consumers. Implement one shared RMSNorm-to-FP8 producer family that preserves the BF16 residual state while emitting the exact E4M3 activation and per-token scale expected by the unchanged CUTLASS consumers. The prediction is 14,640→7,320 standalone quantization calls plus elimination of the normalized BF16 write/read for those two projection families; this is an incremental dataflow gain, not a GEMM schedule or tile experiment.
+
+After the new `$10` reservation is durable, claim `h200-sync-linear-e00vhh6h29fj68x91g`, stop any incompatible mixed-KV server only after the claim, and restore the qualified E5M2 stack from the manifest-verified checkpoint and pinned image. Run one exact real-consumer component pair covering decode `M=32` and observed prefill shapes, with high-precision RMSNorm and unchanged FP8 consumer oracles, complete output consumption, scale/saturation evidence, graph/path proof, and warm timing. Promote immediately to one profiler-off c32 control/candidate pair only if the component is correct and removes the predicted calls with a conservative positive whole-request bound. Keep any valid simple endpoint gain; do not require 5%.
+
+Do not replay the activation/down candidate, alter CUTLASS schedules, fuse o/down projections, change precision, sweep RMSNorm variants, or add a second candidate. At most 100 H200 claim minutes, 150 wall minutes from first claim, `$10` newly authorized spend, and 8 GiB new artifacts; no checkpoint duplication or provider mutation.

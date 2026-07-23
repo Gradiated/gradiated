@@ -8,8 +8,8 @@
   "allocation_limit": 1,
   "provider_mutation": "director_owned_independent_bench_required",
   "active_session": null,
-  "summary": "Run the public Gemma 4 31B-specific DFlash draft on an independent H200: one four-request acceptance/verification diagnostic followed by one matched c32 AR/DFlash pair when real drafting is present.",
-  "next_action": "Prepare the single shortest supported SGLang or vLLM DFlash path offline, resolve exact draft/runtime commits, and request the director-owned independent H200. On the retained bench, repair ordinary integration defects in place and continue through the diagnostic and conditional c32 pair.",
+  "summary": "Offline binding is complete: use merged SGLang DFlash PR #23000 at 588d1f7bc9424201f89957e145f9d5af633a3eb8 with draft z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1. Project-local runner, reconciler, and pinned build launcher are verified locally.",
+  "next_action": "Director: reserve/register one independent nvidia-h200-sxm bench (not h200-sync-linear-e00vhh6h29fj68x91g) at an actual metered rate that cannot exceed the remaining $28 cumulative authority, then the researcher will claim it and run the four-request AR/DFlash diagnostic followed by the conditional matched c32 pair.",
   "quality_claim_authorized": false,
   "terminal_artifact": null,
   "wall_deadline_utc": "2026-07-24T10:00:00Z"

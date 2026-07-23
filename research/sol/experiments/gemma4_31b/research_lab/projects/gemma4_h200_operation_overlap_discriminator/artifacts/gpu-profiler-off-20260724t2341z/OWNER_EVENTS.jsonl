@@ -1,0 +1,5 @@
+{"bytes": 495390720, "event": "snapshot_transferred_once", "sha256": "ca99a41726abbf3b9f387989d6867919d7791907b29dae7e6ec6bd13f9723ff6", "timestamp_utc": "2026-07-23T23:43:04.106038Z"}
+{"command_hash": "62c0112b7ff70ef77d0023e7104dac462b057c5be9e01f2b0bc7c46372b0575c", "event": "scientific_invocation_started", "timestamp_utc": "2026-07-23T23:43:04.744152Z"}
+{"event": "heartbeat", "timestamp_utc": "2026-07-23T23:43:25.481065Z"}
+{"classification": "component_close_pair_destructive_interference", "event": "scientific_terminal", "returncode": 0, "timestamp_utc": "2026-07-23T23:43:29.358474Z"}
+{"actual_spend_usd": 0.10018080766666668, "claimed_seconds": 146.60606, "condition": "ready", "event": "bench_released", "timestamp_utc": "2026-07-23T23:43:29.360075Z"}

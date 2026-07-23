@@ -1,0 +1,7 @@
+{
+  "binding_sha256": "d290788616fb30b0a222177e71a711cdd8f0df22a3bd76e6a07cd0642f784879",
+  "classification": "offline_binding_and_harness_validation_pass",
+  "gpu_science_started": false,
+  "pass": true,
+  "schema_version": 1
+}

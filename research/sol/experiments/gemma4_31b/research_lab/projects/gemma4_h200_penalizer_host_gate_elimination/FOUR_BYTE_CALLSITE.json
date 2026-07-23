@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "classification": "source_corrected_same_admitted_penalizer_boundary",
+  "evidence_class": {
+    "runtime_and_memcpy_rows": "measured_retained_nsight_trace",
+    "producer_kernel": "measured_retained_nsight_trace",
+    "python_callsite": "source_backed_inference"
+  },
+  "retained_trace_sha256": "cdc9b2033c7bbf3b56918f1358f99991d4d0bc9ccd6d27717f77dcda47ca0830",
+  "decode_window": {
+    "start_ns": 7940924209,
+    "end_ns": 23755170879
+  },
+  "measured": {
+    "four_byte_d2h_long_sync_predecessors": 358,
+    "unique_immediate_producer_kernel_count": 1,
+    "immediate_producer_kernel_family": "CUB DeviceReduceSingleTileKernel<int>"
+  },
+  "source_callsite": {
+    "path": "sglang/srt/sampling/penaltylib/min_new_tokens.py",
+    "source_sha256": "bd63f0aab997da6e5a90ad27c4daaa6aadbac69d325bc9ae0510297103c0d276",
+    "symbol": "BatchedMinNewTokensPenalizer._apply",
+    "operation": "logits[mask] += stop_token_penalties[mask]",
+    "mechanism": "CUDA boolean advanced indexing performs a data-dependent nonzero/reduction, copies the 32-bit selected-count scalar to host, and synchronizes before allocating the indexed result"
+  },
+  "correction": "BatchedPenalizerOrchestrator.is_required is already a Python bool derived from request sampling parameters. The measured scalar read is the min-new-tokens per-row application gate inside the same admitted penalizer boundary."
+}

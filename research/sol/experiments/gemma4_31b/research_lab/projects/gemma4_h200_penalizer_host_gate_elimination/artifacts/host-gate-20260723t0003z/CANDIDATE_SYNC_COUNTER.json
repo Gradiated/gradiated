@@ -1,0 +1,53 @@
+{
+  "bound_source": {
+    "intervention_sha256": "2779aae2c51c63ef3119edff9b57e39f09576975ec6e15fb66928e6069405c2a",
+    "schedule_batch_sha256": "eea77dac02f593da24e953f0a0ea03237f2874d0ef27522044e8fd6397fcb874"
+  },
+  "evidence_class": "measured_candidate_nsight_trace",
+  "measured": {
+    "all_d2h_long_sync_predecessors": 358,
+    "four_byte_d2h_long_sync_predecessors": 358,
+    "long_sync_count": 387,
+    "long_sync_seconds": 12.897130083000004,
+    "predecessor_groups": [
+      {
+        "bytes": 4,
+        "copy_kind": 2,
+        "count": 358,
+        "runtime_api": "cudaMemcpyAsync_v3020"
+      },
+      {
+        "bytes": 16,
+        "copy_kind": 1,
+        "count": 14,
+        "runtime_api": "cudaMemcpyAsync_v3020"
+      },
+      {
+        "bytes": 8,
+        "copy_kind": 1,
+        "count": 14,
+        "runtime_api": "cudaMemcpyAsync_v3020"
+      },
+      {
+        "bytes": null,
+        "copy_kind": null,
+        "count": 1,
+        "runtime_api": "missing"
+      }
+    ]
+  },
+  "pass": false,
+  "prediction": {
+    "four_byte_d2h_long_sync_predecessors": {
+      "candidate": 0,
+      "retained_control": 358
+    },
+    "replacement_d2h_scalar_predecessors": 0
+  },
+  "schema_version": 1,
+  "trace": {
+    "decode_end_ns": 23363918096,
+    "decode_start_ns": 7946969117,
+    "sha256": "c42cebd67dff6147843c678a6b7524e75c8477b79bbb5515256b1e619d63a698"
+  }
+}

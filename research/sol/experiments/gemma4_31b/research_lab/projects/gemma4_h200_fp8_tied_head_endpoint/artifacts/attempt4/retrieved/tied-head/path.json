@@ -1,0 +1,20 @@
+{
+  "candidate_output": {
+    "contiguous": true,
+    "device": "cuda:0",
+    "dtype": "torch.bfloat16",
+    "shape": [
+      32,
+      262144
+    ],
+    "stride": [
+      262144,
+      1
+    ]
+  },
+  "candidate_symbol": "sglang.srt.layers.quantization.fp8_utils.apply_fp8_linear",
+  "candidate_weight_dtype": "torch.float8_e4m3fn",
+  "consumer": "LogitsProcessor._compute_lm_head",
+  "embedding_dtype": "torch.bfloat16",
+  "graph_capture_seen": false
+}

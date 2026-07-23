@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "status": "terminal",
+  "classification": "pinned_runtime_graph_boundary_incompatible",
+  "decision": "Do not start the c32 endpoint because the required post-graph logits-head boundary does not exist in the pinned runtime.",
+  "measured_evidence": {
+    "model_forward_capture_batch_sizes": [
+      1,
+      2,
+      4,
+      8,
+      12,
+      16,
+      24,
+      32
+    ],
+    "model_forward_replay_count_lower_bound": 1,
+    "replay_output_type": "LogitsProcessorOutput",
+    "candidate_head_count_at_first_replay_return": 25,
+    "first_candidate_head_sequence_by_m": {
+      "1": 22,
+      "2": 19,
+      "4": 16,
+      "8": 13,
+      "12": 10,
+      "16": 7,
+      "24": 4,
+      "32": 1
+    },
+    "candidate_head_stream_capture_flags": [
+      false
+    ],
+    "observed_head_m": [
+      1,
+      2,
+      4,
+      8,
+      12,
+      16,
+      24,
+      32
+    ],
+    "bf16_head_fallback_count": 0,
+    "semantic_smoke_pass": true,
+    "settled_representation_exact_match": true,
+    "component_replayed": false,
+    "endpoint_science_started": false,
+    "endpoint_request_accepted": false
+  },
+  "source_binding": {
+    "cuda_graph_runner_sha256": "7d1898247e80ff6a446eb42e4968d2eea0df30b109ee2d089a9ad78791bc079e",
+    "model_runner_sha256": "f4dad073eb9f89afd4cda0439b97dee63f8de131d0ed10078b817dba1f978f59",
+    "sampler_sha256": "85541951e1cf50d10c54978178e403ff9d4aa6f223e629ea91965735ba882a8f",
+    "logits_processor_sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14",
+    "runtime_gemma4_causal_sha256": "d95c5224737c9b15a0c7b546828bc1d1f918c9863b53c6c55d79bc02c3343fdc",
+    "base_gemma4_causal_sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+    "endpoint_patch_sha256": "b020fbb114d390e8bc10ce0c3c6145d7535b70f7a07d8dcd3ece2a208727d117",
+    "runtime_source_reconstruction_sha256": "d95c5224737c9b15a0c7b546828bc1d1f918c9863b53c6c55d79bc02c3343fdc",
+    "source_fact": "Gemma4ForCausalLM.forward calls self.logits_processor before returning, and CudaGraphRunner captures that model.forward and replays a LogitsProcessorOutput."
+  },
+  "interpretation": "The proposed replacement gate assumed that LogitsProcessor._compute_lm_head consumes hidden states after CudaGraphRunner.replay returns. The pinned source and runtime trace falsify that assumption: the logits processor is inside Gemma4ForCausalLM.forward, the graph output is already a LogitsProcessorOutput, and all first observed E4M3 head shapes occur in the capture sequence before the first replay. Therefore a post-replay E4M3 Python head event cannot be produced without changing decode topology, which was outside this project's authorized intervention.",
+  "artifact_evidence": {
+    "graph_boundary_decision": "attempt1/retrieved/GRAPH_BOUNDARY_DECISION.json",
+    "graph_state": "attempt1/retrieved/graph-boundary/STATE.json",
+    "capture_trace": "attempt1/retrieved/graph-boundary/capture.jsonl",
+    "replay_trace": "attempt1/retrieved/graph-boundary/replay.jsonl",
+    "head_trace": "attempt1/retrieved/graph-boundary/head.jsonl",
+    "source_binding": "attempt1/retrieved/graph-boundary/SOURCE_BINDING.json",
+    "semantic_smoke": "attempt1/retrieved/SEMANTIC_SMOKE.json",
+    "representation_admission": "attempt1/retrieved/REPRESENTATION_ADMISSION.json"
+  }
+}

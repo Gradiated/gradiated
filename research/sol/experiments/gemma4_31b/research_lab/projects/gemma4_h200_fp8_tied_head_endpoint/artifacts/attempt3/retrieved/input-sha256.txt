@@ -1,0 +1,16 @@
+4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8  /dev/shm/gemma4-fp8-tied-head/input/stack/attention_deferred_local_kv.py
+cf18b28ee3b79fe371fd6183774430aa0cc3d71001a262a006732df4b6f8ba25  /dev/shm/gemma4-fp8-tied-head/input/stack/endpoint_ring_patch.py
+143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7  /dev/shm/gemma4-fp8-tied-head/input/stack/fp8_qkv_paired_runner.py
+52fc617c5ee9eb15a8fc56d50af77291c2ffe474205ef7cf4768581811fd6dc6  /dev/shm/gemma4-fp8-tied-head/input/stack/fp8_tied_head_patch.py
+2779aae2c51c63ef3119edff9b57e39f09576975ec6e15fb66928e6069405c2a  /dev/shm/gemma4-fp8-tied-head/input/stack/host_min_new_tokens_gate.py
+b020fbb114d390e8bc10ce0c3c6145d7535b70f7a07d8dcd3ece2a208727d117  /dev/shm/gemma4-fp8-tied-head/input/stack/install_endpoint_patch.py
+58f4c65846af62ad21aeb765d7764686c364335d29fff45eac65da86ab296197  /dev/shm/gemma4-fp8-tied-head/input/stack/pinned_async_penalty_tokens.py
+9b5a51284ac313014988f426c35b818ae2590cb7d4a72ec604a6ad80a63336b3  /dev/shm/gemma4-fp8-tied-head/input/stack/producer_fused_swa_translation.py
+b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc  /dev/shm/gemma4-fp8-tied-head/input/stack/proven_v0513_endpoint_entrypoint.py
+0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d  /dev/shm/gemma4-fp8-tied-head/input/stack/qkv_epilogue_discriminator.py
+9b5a51284ac313014988f426c35b818ae2590cb7d4a72ec604a6ad80a63336b3  /dev/shm/gemma4-fp8-tied-head/input/stack/residual_intervention.py
+8682c985de86eeefefa91f50874902a635a2d30c8c533d786445b35645f17188  /dev/shm/gemma4-fp8-tied-head/input/stack/ring_kv.py
+0ee0d372795dd0f7555a3906f2247730b44d2a1640f4bc661f6a6ed66a86342e  /dev/shm/gemma4-fp8-tied-head/input/stack/ring_ownership.py
+e847bfd32ded7095555af60a1436ac693aed9b469d15952b4359cf70150b285e  /dev/shm/gemma4-fp8-tied-head/input/stack/sitecustomize.py
+ab5b9c2ce9c63d64481dfae9217c3dc3358ebdff3e933f32734f691977959d83  /dev/shm/gemma4-fp8-tied-head/input/binding/fp8_qkv_paired_runner.py
+74bdb22c4bc217299d920bd53a49557403e3a838ba3c98df903ac119e4c4c64c  /dev/shm/gemma4-fp8-tied-head/input/binding/qualified-ring-ENDPOINT_RESULT.json

@@ -1,0 +1,41 @@
+{
+  "expected_source": {
+    "sglang.srt.layers.sampler": "85541951e1cf50d10c54978178e403ff9d4aa6f223e629ea91965735ba882a8f",
+    "sglang.srt.model_executor.cuda_graph_runner": "7d1898247e80ff6a446eb42e4968d2eea0df30b109ee2d089a9ad78791bc079e",
+    "sglang.srt.model_executor.model_runner": "f4dad073eb9f89afd4cda0439b97dee63f8de131d0ed10078b817dba1f978f59"
+  },
+  "pinned_contract": "CudaGraphRunner captures model.forward; replay returns its buffers; the unchanged model path invokes LogitsProcessor after graph output becomes available.",
+  "runtime_source": {
+    "sglang.srt.layers.logits_processor": {
+      "path": "/sgl-workspace/sglang/python/sglang/srt/layers/logits_processor.py",
+      "sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14"
+    },
+    "sglang.srt.layers.sampler": {
+      "path": "/sgl-workspace/sglang/python/sglang/srt/layers/sampler.py",
+      "sha256": "85541951e1cf50d10c54978178e403ff9d4aa6f223e629ea91965735ba882a8f"
+    },
+    "sglang.srt.model_executor.cuda_graph_runner": {
+      "path": "/sgl-workspace/sglang/python/sglang/srt/model_executor/cuda_graph_runner.py",
+      "sha256": "7d1898247e80ff6a446eb42e4968d2eea0df30b109ee2d089a9ad78791bc079e"
+    },
+    "sglang.srt.model_executor.model_runner": {
+      "path": "/sgl-workspace/sglang/python/sglang/srt/model_executor/model_runner.py",
+      "sha256": "f4dad073eb9f89afd4cda0439b97dee63f8de131d0ed10078b817dba1f978f59"
+    },
+    "sglang.srt.models.gemma4_causal": {
+      "path": "/sgl-workspace/sglang/python/sglang/srt/models/gemma4_causal.py",
+      "sha256": "d95c5224737c9b15a0c7b546828bc1d1f918c9863b53c6c55d79bc02c3343fdc"
+    },
+    "sglang.srt.models.gemma4_mm": {
+      "path": "/sgl-workspace/sglang/python/sglang/srt/models/gemma4_mm.py",
+      "sha256": "a34a27e2f5722cc1c7d0ef418a73fc77ad701ead20a99c6471d26f1fb8700a80"
+    }
+  },
+  "schema_version": 1,
+  "source_anchors": {
+    "capture_calls_forward": true,
+    "capture_forward_is_model_forward": true,
+    "model_runner_selects_graph_replay": true,
+    "replay_calls_cuda_graph": true
+  }
+}

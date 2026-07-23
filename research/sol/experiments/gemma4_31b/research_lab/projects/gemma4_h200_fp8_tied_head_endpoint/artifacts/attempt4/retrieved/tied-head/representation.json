@@ -1,0 +1,40 @@
+{
+  "candidate": "per_tensor_e4m3_tied_output_weight",
+  "embedding": {
+    "contiguous": true,
+    "device": "cuda:0",
+    "dtype": "torch.bfloat16",
+    "shape": [
+      262144,
+      5376
+    ],
+    "stride": [
+      5376,
+      1
+    ]
+  },
+  "embedding_data_ptr": 128764696592384,
+  "embedding_preserved": true,
+  "materialized_dequantized_weight": false,
+  "output_weight": {
+    "contiguous": false,
+    "device": "cuda:0",
+    "dtype": "torch.float8_e4m3fn",
+    "shape": [
+      5376,
+      262144
+    ],
+    "stride": [
+      1,
+      5376
+    ]
+  },
+  "output_weight_data_ptr": 128697386401792,
+  "schema_version": 1,
+  "separate_storage": true,
+  "weight_nonfinite_count": 0,
+  "weight_saturation_count": 1,
+  "weight_saturation_fraction": 7.09579104468936e-10,
+  "weight_scale": 0.002162388525903225,
+  "weight_scale_granularity": "per_tensor"
+}

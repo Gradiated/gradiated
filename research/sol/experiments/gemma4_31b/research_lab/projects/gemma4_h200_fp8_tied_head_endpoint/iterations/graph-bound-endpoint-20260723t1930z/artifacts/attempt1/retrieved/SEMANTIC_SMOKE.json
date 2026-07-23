@@ -1,0 +1,45 @@
+{
+  "pass": true,
+  "rows": [
+    {
+      "expected": "json",
+      "finite": true,
+      "pass": true,
+      "text": "```json\n{\n  \"status\": \"ok\"\n}\n```",
+      "usage": {
+        "completion_tokens": 17,
+        "prompt_tokens": 29,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 46
+      }
+    },
+    {
+      "expected": "READY",
+      "finite": true,
+      "pass": true,
+      "text": "READY",
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 18,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 20
+      }
+    },
+    {
+      "expected": "4",
+      "finite": true,
+      "pass": true,
+      "text": "4",
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 26,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 28
+      }
+    }
+  ],
+  "schema_version": 1
+}

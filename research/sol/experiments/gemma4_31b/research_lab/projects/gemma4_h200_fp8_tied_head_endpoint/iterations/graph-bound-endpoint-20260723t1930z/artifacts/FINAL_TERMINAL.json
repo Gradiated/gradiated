@@ -1,0 +1,28 @@
+{
+  "actual_spend_usd": 1.0574816349999998,
+  "classification": "pinned_runtime_graph_boundary_incompatible",
+  "component_replayed": false,
+  "endpoint": null,
+  "incremental_iteration_spend_usd": 0.07140385066666667,
+  "invocation_state": {
+    "candidate_cuda_started": true,
+    "endpoint_request_accepted": false,
+    "endpoint_science_started": false,
+    "smoke_science_started": true,
+    "updated_unix_s": 1784835818.6011136
+  },
+  "prior_artifact_tree_sha256": "6fe3854d0a9117bf6d75db753582533b38875f273256303f5b514738d35b4fe7",
+  "prior_final_terminal_sha256": "1cc0eedd960d0434845953a82a1bed2a7742260d93e9ac8142791cfdb68f604e",
+  "prior_spend_usd": 0.9860778082499999,
+  "topology_decision": "PINNED_TOPOLOGY_DECISION.json",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-23T19:43:56.532091Z",
+  "worker_terminal": {
+    "classification": "graph_boundary_reject",
+    "message": "required_post_graph_e4m3_path_not_proven",
+    "schema_version": 1,
+    "status": "terminal",
+    "timestamp_utc": "2026-07-23T19:43:52.346032Z"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "candidate_cuda_invocation_started": true,
+  "candidate_scientific_invocation_started": true,
+  "producer_compiler": {
+    "asm_sha256": "e1e5c9cebfb4bb194cdcc852849985e2029da97524cdc546dc37df5572bbb371",
+    "n_regs": 26,
+    "n_spills": 0,
+    "name": "_pack_group64_signed_int4",
+    "num_stages": 1,
+    "num_warps": 1,
+    "shared": 0
+  },
+  "producer_completed": true,
+  "scientific_terminal_recorded": true,
+  "updated_unix_s": 1784814545.5844176
+}

@@ -1,0 +1,11 @@
+{
+  "analysis_exit_code": 1,
+  "candidate_cuda_invocation_started": true,
+  "candidate_scientific_invocation_started": true,
+  "classification": "integration_failure",
+  "producer_completed": true,
+  "schema_version": 1,
+  "scientific_terminal_recorded": false,
+  "timestamp_utc": "2026-07-23T13:49:07.747566Z",
+  "worker_exit_code": 0
+}

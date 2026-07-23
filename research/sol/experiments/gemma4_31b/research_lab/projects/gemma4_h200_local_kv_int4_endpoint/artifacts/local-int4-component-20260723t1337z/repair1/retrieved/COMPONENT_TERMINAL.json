@@ -1,0 +1,17 @@
+{
+  "actual_paged_triton_consumer_executed": true,
+  "candidate_invocations": 1,
+  "component_pass": false,
+  "conditional_endpoint_invoked": false,
+  "conservative_whole_request_bound_fraction": -1.1375842460946037,
+  "decision": "close_on_component_gate",
+  "local_kv_dram_sector_reduction_fraction": 0.4689769420277241,
+  "numerical_pass": false,
+  "physical_pass": true,
+  "producer_invocations": 1,
+  "schema_version": 1,
+  "scientific_terminal": true,
+  "semantic_and_routing_pass": true,
+  "stage": "component",
+  "whole_request_bound_pass": false
+}

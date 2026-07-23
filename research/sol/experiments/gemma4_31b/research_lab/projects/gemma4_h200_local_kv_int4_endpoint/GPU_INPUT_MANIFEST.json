@@ -1,0 +1,42 @@
+{
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "inputs": [
+    {
+      "bytes": 9610,
+      "relative": "int4_kv_kernels.py",
+      "sha256": "5fbbe860ad386b8a24f476eec12195fe533800b246c3d9a6ea636472cfbba55f"
+    },
+    {
+      "bytes": 13496,
+      "relative": "int4_component.py",
+      "sha256": "325fb4c7e6b51de4d7d836bd844d651880ae5bc73c3ab5c624f43e27b6f48745"
+    },
+    {
+      "bytes": 4575,
+      "relative": "analyze_component.py",
+      "sha256": "cb3c7fc533b8d4c7d6e383e73f39c218a58e2856c94aae94d9b8a02a37bc689b"
+    },
+    {
+      "bytes": 3752,
+      "relative": "remote_component.sh",
+      "sha256": "1a7d00c87b1ecbec351a29521fbc59f63ded55eb3505dff2d48eccbd912cd63d"
+    },
+    {
+      "bytes": 21569,
+      "relative": "inputs/source/decode_attention.v0.5.13.py",
+      "sha256": "1040f43a9ea579b944aa037b585997f8d7b585d85f459a1b1f420002b4bd092a"
+    },
+    {
+      "bytes": 95820,
+      "relative": "inputs/source/memory_pool.v0.5.13.py",
+      "sha256": "37f9915a2945c7bb389212eed65eb770cb9e3fa6976d0778b6831d2ac29d7bdd"
+    },
+    {
+      "bytes": 64753,
+      "relative": "inputs/source/triton_backend.v0.5.13.py",
+      "sha256": "7bc3ae9ef1be59ec07734df442c077a07fb54c28007747f53a552bb81e8e8e2d"
+    }
+  ],
+  "remote_root": "/home/glmrunner/gemma4-local-kv-int4-20260723t1337z",
+  "schema_version": 1
+}

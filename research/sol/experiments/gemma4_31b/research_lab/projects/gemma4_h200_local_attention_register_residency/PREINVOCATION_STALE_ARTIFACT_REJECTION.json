@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "status": "invalidated_preinvocation_wiring_attempt",
+  "candidate_arm_consumed": false,
+  "reason": "The reused remote component-output directory was root-owned. The iteration-2 worker aborted before its cleanup trap and retrieval returned the iteration-1 value-split2 terminal.",
+  "proof": {
+    "expected_candidate_path": "extend_attention_fwd.local_head256_two_stage_blockprob_vslice2",
+    "expected_candidate_sha256": "d34b0d2bca3d7cabdf706b5af3da1687fc10073a3d187a8b029d4214d528f99a",
+    "retrieved_candidate_path": "extend_attention_fwd.local_head256_value_split2",
+    "retrieved_candidate_sha256": "9c32a590d68d156c36991625d3fcd04d7dac0e6e3e1a1df059fef951915ab158",
+    "retrieved_worker_terminal_timestamp_utc": "2026-07-23T00:38:21.927856Z",
+    "iteration2_claimed_at_utc": "2026-07-23T01:57:33.579310Z",
+    "worker_elapsed_before_retrieval_seconds": 1.5,
+    "stale_final_terminal_sha256": "def21cc88f883332e45915948910d78b7c1f7cff184127683307646dd2818d26",
+    "stale_remote_terminal_sha256": "c5886aa6eb6955417fb831f746379b9ab43c11ec16477d01aadb27800c1a7032",
+    "stale_invocation_state_sha256": "ae5edb2014e6b447e5ccefe13c35e998424f51a7c4407996589a86380c0cf01d"
+  },
+  "provider_exposure_usd": 0.02387079281012216,
+  "repair": "Use sudo to clear only the remote component-output namespace before traps, preserve checkpoint/input/cache state, verify the exact candidate identity after retrieval, and repeat the first scientific invocation.",
+  "intervention_unchanged": true,
+  "workload_unchanged": true,
+  "decision_gates_unchanged": true
+}

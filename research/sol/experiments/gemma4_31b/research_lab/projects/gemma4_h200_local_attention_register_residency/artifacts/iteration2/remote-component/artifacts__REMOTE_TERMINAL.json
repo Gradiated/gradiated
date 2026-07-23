@@ -1,0 +1,10 @@
+{
+  "candidate_cuda_invocation_started": true,
+  "classification": "component_complete",
+  "message": "preserved producer; analyzer_rc=2",
+  "schema_version": 2,
+  "scientific_invocation_started": true,
+  "scientific_terminal_recorded": true,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-23T02:04:59.383631Z"
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Retained shared-bench owner for the local-attention component and gated endpoint."""
+"""Retained shared-bench owner for iteration-2 component and gated endpoint."""
 
 from __future__ import annotations
 
@@ -37,10 +37,13 @@ KEY_CANDIDATES = (
 KEY = KEY_CANDIDATES[0]
 REMOTE = "/home/glmrunner/gemma4-local-attention-residency"
 RATE = 2.46
-CAP = 16.0
-PRIOR_SPEND = 0.0
+CAP = 20.0
+# Includes iteration 1 plus the 34.932868-second iteration-2 pre-invocation
+# stale-artifact wiring exposure.  The frozen two-stage CUDA arm did not begin.
+PRIOR_SPEND = 0.20972379281012216
 LEASE_SECONDS = 14400
 RETRIEVAL_RESERVE_SECONDS = 300
+LOCAL_ARTIFACTS = HERE / "artifacts" / "iteration2"
 
 
 def utc_now() -> str:
@@ -56,9 +59,10 @@ def atomic_json(path: Path, value: Any) -> None:
 
 def emit(event: str, **fields: Any) -> None:
     row = {"timestamp_utc": utc_now(), "event": event, **fields}
-    with (HERE / "artifacts/OWNER_EVENTS.jsonl").open("a") as handle:
+    LOCAL_ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    with (LOCAL_ARTIFACTS / "OWNER_EVENTS.jsonl").open("a") as handle:
         handle.write(json.dumps(row, sort_keys=True) + "\n")
-    atomic_json(HERE / "artifacts/OWNER_STATE.json", row)
+    atomic_json(LOCAL_ARTIFACTS / "OWNER_STATE.json", row)
 
 
 def sha256(path: Path) -> str:
@@ -70,7 +74,7 @@ def sha256(path: Path) -> str:
 
 
 def validate_manifest(groups: tuple[str, ...] = ("component",)) -> dict[str, Any]:
-    manifest = json.loads((HERE / "GPU_INPUT_MANIFEST.json").read_text())
+    manifest = json.loads((HERE / "ITERATION2_GPU_INPUT_MANIFEST.json").read_text())
     for group in groups:
         for row in manifest[group]:
             path = HERE / row["path"]
@@ -148,7 +152,7 @@ print(json.dumps(out))
 
 
 def retrieve(ip: str, phase: str) -> Path:
-    root = HERE / "artifacts" / f"remote-{phase}"
+    root = LOCAL_ARTIFACTS / f"remote-{phase}"
     root.mkdir(parents=True, exist_ok=True)
     paths = {
         "component": [
@@ -188,15 +192,72 @@ class Heartbeat(threading.Thread):
 
 
 def wait_repair(classification: str, deadline_epoch: float) -> None:
-    repair = HERE / "REPAIR_REQUEST.json"
+    repair = HERE / "ITERATION2_REPAIR_REQUEST.json"
     ready = {"schema_version": 1, "status": "repair_ready", "classification": classification, "absolute_deadline_utc": dt.datetime.fromtimestamp(deadline_epoch, dt.timezone.utc).isoformat().replace('+00:00','Z'), "intervention_unchanged": True}
-    atomic_json(HERE / "REPAIR_READY.json", ready)
+    atomic_json(HERE / "ITERATION2_REPAIR_READY.json", ready)
     emit("repair_ready", classification=classification)
     while time.time() < deadline_epoch:
         if repair.is_file():
-            repair.unlink(); (HERE / "REPAIR_READY.json").unlink(missing_ok=True); return
+            repair.unlink(); (HERE / "ITERATION2_REPAIR_READY.json").unlink(missing_ok=True); return
         time.sleep(10)
     raise TimeoutError("repair handshake deadline reached")
+
+
+def wait_and_bind_dependency(
+    project_path: Path, terminal_path: Path, deadline_epoch: float
+) -> None:
+    while time.time() < deadline_epoch:
+        status_path = project_path / "STATUS.json"
+        status = json_if(status_path)
+        terminal = json_if(terminal_path)
+        pool = json_if(LAB / "runtime" / "gpus.json")
+        bench = pool.get("benches", {}).get(BENCH, {})
+        dependency_status_settled = (
+            status.get("status") != "active" and status.get("active_session") is None
+        )
+        dependency_bench_released = (
+            bench.get("status") == "available" and bench.get("claim") is None
+        )
+        dependency_complete = (
+            terminal.get("status") == "terminal"
+            and (dependency_status_settled or dependency_bench_released)
+        )
+        if dependency_complete:
+            bind = subprocess.run(
+                [
+                    sys.executable,
+                    str(HERE / "bind_iteration2_dependency.py"),
+                    "--dependency-project",
+                    str(project_path),
+                    "--terminal",
+                    str(terminal_path),
+                    "--pool-inventory",
+                    str(LAB / "runtime" / "gpus.json"),
+                    "--bench",
+                    BENCH,
+                ],
+                text=True,
+                capture_output=True,
+                timeout=120,
+            )
+            if bind.returncode:
+                raise RuntimeError(f"dependency binding failed: {bind.stderr[-1000:]}")
+            build = subprocess.run(
+                [sys.executable, str(HERE / "build_iteration2_manifest.py")],
+                text=True,
+                capture_output=True,
+                timeout=3600,
+            )
+            if build.returncode:
+                raise RuntimeError(f"iteration2 manifest failed: {build.stderr[-1000:]}")
+            emit(
+                "dependency_bound",
+                dependency_project=project_path.name,
+                dependency_terminal_sha256=sha256(terminal_path),
+            )
+            return
+        time.sleep(20)
+    raise TimeoutError("dependency_terminal_not_durable_before_wait_deadline")
 
 
 def main() -> int:
@@ -204,8 +265,28 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bench", default=BENCH)
     parser.add_argument("--wait-deadline-epoch", type=float, required=True)
+    parser.add_argument("--dependency-project", type=Path, required=True)
+    parser.add_argument("--dependency-terminal", type=Path, required=True)
     args = parser.parse_args()
-    manifest = validate_manifest()
+    try:
+        wait_and_bind_dependency(
+            args.dependency_project.resolve(),
+            args.dependency_terminal.resolve(),
+            args.wait_deadline_epoch,
+        )
+        manifest = validate_manifest()
+    except Exception as error:
+        atomic_json(
+            LOCAL_ARTIFACTS / "FINAL_TERMINAL.json",
+            {
+                "status": "terminal",
+                "classification": "typed_external_blocker",
+                "reason": str(error),
+                "timestamp_utc": utc_now(),
+            },
+        )
+        emit("preclaim_boundary", error=repr(error))
+        return 3
     emit("inputs_validated", checkpoint_bytes=manifest["checkpoint_total_bytes"])
     pool = GpuPool(LAB)
     bench = None
@@ -216,7 +297,7 @@ def main() -> int:
         except GpuPoolError as error:
             emit("bench_wait", error=str(error)); time.sleep(20)
     if bench is None:
-        atomic_json(HERE / "artifacts/FINAL_TERMINAL.json", {"status": "terminal", "classification": "typed_external_blocker", "reason": "shared_bench_not_released_before_wait_deadline", "timestamp_utc": utc_now()})
+        atomic_json(LOCAL_ARTIFACTS / "FINAL_TERMINAL.json", {"status": "terminal", "classification": "typed_external_blocker", "reason": "shared_bench_not_released_before_wait_deadline", "timestamp_utc": utc_now()})
         return 3
     claimed_epoch = time.time()
     lifecycle = dt.datetime.fromisoformat(bench["lifecycle"]["deadline_utc"].replace("Z", "+00:00")).timestamp()
@@ -224,7 +305,7 @@ def main() -> int:
     absolute_deadline = min(lifecycle, spend_deadline, claimed_epoch + 4 * 3600)
     if absolute_deadline - claimed_epoch < 900:
         pool.release(PROJECT, contents={"attention_project": "insufficient_lifecycle_after_claim"}, condition="ready")
-        atomic_json(HERE / "artifacts/FINAL_TERMINAL.json", {"status": "terminal", "classification": "typed_external_blocker", "reason": "less_than_15_minutes_lifecycle_remained", "timestamp_utc": utc_now()})
+        atomic_json(LOCAL_ARTIFACTS / "FINAL_TERMINAL.json", {"status": "terminal", "classification": "typed_external_blocker", "reason": "less_than_15_minutes_lifecycle_remained", "timestamp_utc": utc_now()})
         return 3
     emit("bench_claimed", bench=args.bench, absolute_deadline_epoch=absolute_deadline)
     heartbeat = Heartbeat(pool); heartbeat.start()
@@ -256,22 +337,43 @@ def main() -> int:
                 raise RuntimeError(f"resident container stop failed: {stopped.stderr[-1000:]}")
         reconcile(ip, manifest["component"], REMOTE + "/input")
         pool.update(PROJECT, {"project": PROJECT, "runtime": "SGLang v0.5.13 exact attention component active", "checkpoint": "project-local immutable snapshot bound; not staged until component pass"})
-        command = f"LOCAL_ATTENTION_REMOTE_ROOT={shlex.quote(REMOTE)} bash {shlex.quote(REMOTE + '/input/remote_component.sh')}"
+        command = f"LOCAL_ATTENTION_REMOTE_ROOT={shlex.quote(REMOTE)} bash {shlex.quote(REMOTE + '/input/remote_iteration2.sh')}"
         emit("component_worker_started")
         worker = remote(ip, command, max(60, int(absolute_deadline - time.time() - RETRIEVAL_RESERVE_SECONDS)))
+        (LOCAL_ARTIFACTS / "component-worker.stdout").write_text(worker.stdout)
+        (LOCAL_ARTIFACTS / "component-worker.stderr").write_text(worker.stderr)
         root = retrieve(ip, "component")
         terminal = json_if(root / "artifacts__REMOTE_TERMINAL.json")
         invocation = json_if(root / "artifacts__component__INVOCATION_STATE.json")
         result = json_if(root / "artifacts__COMPONENT_RESULT.json")
+        identity = result.get("component_terminal", {}).get("identity", {})
+        result_path = result.get("component_terminal", {}).get("candidate_path")
+        stale_result = bool(result) and (
+            identity.get("candidate_source_sha256") != manifest["candidate_sha256"]
+            or result_path != manifest["design"]
+        )
+        if stale_result:
+            emit(
+                "stale_remote_component_rejected",
+                observed_candidate_path=result_path,
+                observed_candidate_sha256=identity.get("candidate_source_sha256"),
+                expected_candidate_path=manifest["design"],
+                expected_candidate_sha256=manifest["candidate_sha256"],
+            )
+            terminal = {"classification": "integration_failure"}
+            invocation = {}
+            result = {}
         emit("component_worker_returned", returncode=worker.returncode, terminal=terminal.get("classification"), candidate_started=invocation.get("candidate_cuda_invocation_started"))
         while terminal.get("classification") in {"integration_failure", "component_consumer_failure"}:
             if invocation.get("scientific_invocation_started"):
                 wait_repair("component_consumer_failure", absolute_deadline - RETRIEVAL_RESERVE_SECONDS)
-                reconcile(ip, [row for row in manifest["component"] if row["remote_name"] == "analyze_component.py"], REMOTE + "/input")
-                reconcile(ip, [next(row for row in manifest["component"] if row["remote_name"] == "remote_component_consumer.sh")], REMOTE + "/input")
-                worker = remote(ip, f"LOCAL_ATTENTION_REMOTE_ROOT={shlex.quote(REMOTE)} bash {shlex.quote(REMOTE + '/input/remote_component_consumer.sh')}", 900)
+                manifest = validate_manifest()
+                reconcile(ip, [row for row in manifest["component"] if row["remote_name"] == "analyze_iteration2.py"], REMOTE + "/input")
+                reconcile(ip, [next(row for row in manifest["component"] if row["remote_name"] == "remote_iteration2_consumer.sh")], REMOTE + "/input")
+                worker = remote(ip, f"LOCAL_ATTENTION_REMOTE_ROOT={shlex.quote(REMOTE)} bash {shlex.quote(REMOTE + '/input/remote_iteration2_consumer.sh')}", 900)
             else:
                 wait_repair("component_pre_invocation_integration_failure", absolute_deadline - RETRIEVAL_RESERVE_SECONDS)
+                manifest = validate_manifest()
                 reconcile(ip, manifest["component"], REMOTE + "/input")
                 worker = remote(ip, command, max(60, int(absolute_deadline - time.time() - RETRIEVAL_RESERVE_SECONDS)))
             root = retrieve(ip, "component"); terminal = json_if(root / "artifacts__REMOTE_TERMINAL.json"); invocation = json_if(root / "artifacts__component__INVOCATION_STATE.json"); result = json_if(root / "artifacts__COMPONENT_RESULT.json")
@@ -286,7 +388,7 @@ def main() -> int:
             reconcile(ip, manifest["endpoint_programs"] + manifest["stack"], REMOTE + "/input")
             reconcile(ip, manifest["checkpoint"], REMOTE + "/checkpoint")
             pool.update(PROJECT, {"runtime": "exact FP8+QKV+deferred-local-KV paired endpoint active", "checkpoint": "exact project-local immutable snapshot staged and verified"})
-            endpoint_command = f"LOCAL_ATTENTION_REMOTE_ROOT={shlex.quote(REMOTE)} bash {shlex.quote(REMOTE + '/input/remote_endpoint_pair.sh')}"
+            endpoint_command = f"LOCAL_ATTENTION_REMOTE_ROOT={shlex.quote(REMOTE)} ATTENTION_RESIDENCY_EXPECTED_PATH=extend_attention_fwd.local_head256_two_stage_blockprob_vslice2 bash {shlex.quote(REMOTE + '/input/remote_endpoint_pair.sh')}"
             endpoint_worker = remote(ip, endpoint_command, max(60, int(absolute_deadline - time.time() - RETRIEVAL_RESERVE_SECONDS)))
             endpoint_root = retrieve(ip, "endpoint")
             endpoint_terminal = json_if(endpoint_root / "endpoint-artifacts__WORKER_TERMINAL.json")
@@ -300,21 +402,21 @@ def main() -> int:
             final = {"classification": endpoint_result.get("classification"), "component_result": result, "endpoint_result": endpoint_result, "endpoint_executed": True}
         elapsed = time.time() - claimed_epoch
         final.update({"schema_version": 1, "status": "terminal", "bench": args.bench, "claimed_seconds": elapsed, "provider_cost_usd": PRIOR_SPEND + elapsed / 3600 * RATE, "timestamp_utc": utc_now()})
-        atomic_json(HERE / "artifacts/FINAL_TERMINAL.json", final)
+        atomic_json(LOCAL_ARTIFACTS / "FINAL_TERMINAL.json", final)
         emit("scientific_terminal", classification=final["classification"])
     except Exception as error:
         emit("owner_failure", error=repr(error))
         # The claimed guest is only marked maintenance if it is unreachable/unsafe.
         condition = "maintenance" if "unreachable" in str(error) or "no public IPv4" in str(error) else "ready"
         final = {"schema_version": 1, "status": "terminal", "classification": "typed_external_blocker" if condition == "maintenance" else "owner_deadline_or_unrepaired_failure", "reason": str(error), "timestamp_utc": utc_now()}
-        atomic_json(HERE / "artifacts/FINAL_TERMINAL.json", final)
+        atomic_json(LOCAL_ARTIFACTS / "FINAL_TERMINAL.json", final)
         returncode = 3
     else:
         returncode = 0
     finally:
         heartbeat.close()
         elapsed = time.time() - claimed_epoch
-        contents = {"project": PROJECT, "artifacts": str(HERE / "artifacts"), "runtime": "Local attention value-split component and conditional endpoint complete", "attention_result": final.get("classification", "incomplete"), "attention_claim_cost_usd": round(elapsed / 3600 * RATE, 6), "checkpoint": f"Exact immutable checkpoint retained at {REMOTE}/checkpoint when staged", "image": "Pinned SGLang v0.5.13 digest 6113665 retained", "caches": f"Triton/CUDA caches retained under {REMOTE}", "server_state": "Candidate server retained only when endpoint-positive; otherwise image/checkpoint/caches retained."}
+        contents = {"project": PROJECT, "artifacts": str(LOCAL_ARTIFACTS), "runtime": "Local attention two-stage component and conditional endpoint complete", "attention_result": final.get("classification", "incomplete"), "attention_iteration2_claim_cost_usd": round(elapsed / 3600 * RATE, 6), "attention_cumulative_cost_usd": round(PRIOR_SPEND + elapsed / 3600 * RATE, 6), "checkpoint": f"Exact immutable checkpoint retained at {REMOTE}/checkpoint when staged", "image": "Pinned SGLang v0.5.13 digest 6113665 retained", "caches": f"Triton/CUDA caches retained under {REMOTE}", "server_state": "Candidate server retained only when endpoint-positive; otherwise image/checkpoint/caches retained."}
         try: pool.release(PROJECT, contents=contents, condition=condition)
         except Exception as error: emit("release_failure", error=repr(error))
         emit("bench_released", condition=condition, elapsed_seconds=elapsed)

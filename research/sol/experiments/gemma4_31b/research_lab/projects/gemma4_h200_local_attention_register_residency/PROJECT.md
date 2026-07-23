@@ -38,3 +38,11 @@ Inspect the pinned consumer and current library coverage, then freeze one local-
 ## Portfolio-changing result
 
 A correct component with a ≥3% whole-request bound advances to the single c32 pair and stacks with the retained simple synchronization gain. Incorrectness, failure to reduce the physical limiter, or no positive exact-family movement closes this local-attention realization while preserving the original model.
+
+## Iteration 2 — true two-stage local attention
+
+The exact value-split2 iteration is closed: it duplicated QK/online-softmax work, retained 255 registers/thread and one CTA/SM, raised local-load sectors 17.94%, and regressed the representative family 51.65%. Do not replay it or conditionally dispatch it.
+
+Continue the same scientific question with one materially different design: stage 1 computes QK plus online-softmax state once into a bounded local-window intermediate; stage 2 applies V and writes the unchanged BF16 result. Use `$kernel-research` to decide whether a proven current FlashAttention/FlashInfer/CUTLASS implementation can supply this decomposition before writing custom Triton. The physical prediction is that neither stage allocates more than 128 registers/thread, the QK work is not duplicated, and any probability/LSE traffic costs less than the removed spills/register serialization on the representative grid-z32 family. Preserve all original heads, FP8 cache scales/layout, 1,024-token window, masking, paging, and downstream consumption.
+
+Run one exact real-consumer component over the existing grid-z2/grid-z32 and page-boundary cases, with a paired minimum NCU capture. Advance to one c32 pair only if correctness passes and the conservative whole-request bound is at least 3%, or the measured stack reaches the campaign ceiling. No tile sweep, value split, KV-head reduction, precision change, or global-attention replay is admitted.

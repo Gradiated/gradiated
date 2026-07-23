@@ -1,0 +1,72 @@
+{
+  "schema_version": 2,
+  "decision": "Run one exact local-attention component and paired minimum counter capture. Run one c32 control/candidate pair only if correctness and both physical stages pass and the conservative whole-request bound is at least 3%, or the measured retained stack reaches 0.6381105231 seconds/request.",
+  "hypothesis": "A block-local QK/softmax producer writes each score-derived probability once, then a separate two-slice V consumer ends the QK live range before the value accumulator. Neither stage should exceed 128 registers/thread or one register-limited CTA/SM, and 289 MiB of bounded representative workspace traffic should cost less than the fused kernel's measured register serialization and spills without duplicating QK math.",
+  "scope": {
+    "accelerator": "nvidia-h200-sxm",
+    "runtime": "sglang_v0.5.13_commit_28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "source_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
+    "candidate_path": "extend_attention_fwd.local_head256_two_stage_blockprob_vslice2",
+    "q_heads": 32,
+    "kv_heads": 16,
+    "qk_head_dim": 256,
+    "v_head_dim": 256,
+    "sliding_window_size": 1024,
+    "kv_cache_dtype": "fp8_e5m2",
+    "block_m": 64,
+    "block_n": 64,
+    "key_tiles": 17,
+    "value_slices": 2,
+    "value_slice": 128,
+    "probability_dtype": "bfloat16",
+    "representative_workspace_bytes": 303038464,
+    "qk_recomputation": false
+  },
+  "library_coverage": {
+    "decision": "custom_triton_required_for_admitted_boundary",
+    "reason": "Current FlashAttention and FlashInfer expose fused attention outputs for supported paged/sliding inputs; neither exposes the required persisted block-local probability/statistics producer followed by the separately profiled sliced-V consumer while preserving this pinned page-1 FP8 E5M2 contract.",
+    "sources": [
+      "https://github.com/Dao-AILab/flash-attention",
+      "https://github.com/flashinfer-ai/flashinfer"
+    ]
+  },
+  "quality_gate": {
+    "all_finite": true,
+    "maximum_relative_l2": 0.005,
+    "minimum_cosine": 0.9999,
+    "unchanged_downstream_consumer": "residual_add_then_rms_norm",
+    "cases": [
+      "batch2_prefix1023_1025_extend65_127_boundary",
+      "batch1_prefix1024_extend128_grid_z2",
+      "batch2_prefix1024_1025_extend2048_128_grid_z32"
+    ]
+  },
+  "physical_gate": {
+    "profiled_kernels": [
+      "_fwd_kernel",
+      "_qk_softmax_stage",
+      "_value_stage"
+    ],
+    "each_candidate_stage_registers_per_thread_at_most_or_register_limited_ctas_at_least": [
+      128,
+      2
+    ],
+    "each_candidate_stage_shared_memory_limited_ctas_at_least": 2,
+    "summed_candidate_local_load_store_sectors": "not_greater_than_matched_control",
+    "each_candidate_stage_stack_size": "not_greater_than_matched_control"
+  },
+  "performance_gate": {
+    "minimum_conservative_whole_request_reduction_fraction": 0.03,
+    "measured_local_kernel_wall_fraction": 0.1531203203096733,
+    "retained_frontier_seconds_per_request": 0.6762324541249995,
+    "economic_ceiling_seconds_per_request": 0.6381105231
+  },
+  "budget": {
+    "authorized_cumulative_usd": 20.0,
+    "reserved_at": "2026-07-23T00:50:29.685693Z",
+    "prior_spend_usd": 0.185853,
+    "maximum_additional_claim_hours": 4,
+    "experimental_rate_usd_per_hour": 2.46
+  },
+  "arm_policy": "One candidate only. The process contains a discovery call, alternating exact-family timing, and one three-kernel NCU capture. Do not replay value-split2, alter tiles, change KV heads or precision, or run the endpoint unless the frozen gate passes."
+}

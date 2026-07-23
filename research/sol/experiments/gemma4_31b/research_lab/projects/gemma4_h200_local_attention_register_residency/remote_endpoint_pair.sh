@@ -4,6 +4,7 @@ set -Eeuo pipefail
 root=${LOCAL_ATTENTION_REMOTE_ROOT:?}
 input="$root/input"
 artifacts="$root/endpoint-artifacts"
+export ATTENTION_RESIDENCY_EXPECTED_PATH=${ATTENTION_RESIDENCY_EXPECTED_PATH:-extend_attention_fwd.local_head256_value_split2}
 image=docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6
 mkdir -p "$artifacts"
 
@@ -128,7 +129,8 @@ control_attention = [json.loads(x) for x in pathlib.Path(sys.argv[6]).read_text(
 candidate_attention = [json.loads(x) for x in pathlib.Path(sys.argv[7]).read_text().splitlines() if x]
 residency = [json.loads(x) for x in pathlib.Path(sys.argv[8]).read_text().splitlines() if x]
 deferred = lambda rows: any(x.get('candidate_path') == 'TritonAttnBackend.forward_extend.local_fp8_deferred_cache_commit' and x.get('qk_head_dim') == 256 and x.get('v_head_dim') == 256 and x.get('sliding_window_size') == 1024 for x in rows)
-path_ok = deferred(control_attention) and deferred(candidate_attention) and any(x.get('candidate_path') == 'extend_attention_fwd.local_head256_value_split2' and x.get('qk_head_dim') == 256 and x.get('v_head_dim') == 256 and x.get('q_heads') == 32 and x.get('kv_heads') == 16 and x.get('sliding_window_size') == 1024 and x.get('value_splits') == 2 and x.get('value_slice') == 128 for x in residency)
+expected_path = os.environ['ATTENTION_RESIDENCY_EXPECTED_PATH']
+path_ok = deferred(control_attention) and deferred(candidate_attention) and any(x.get('candidate_path') == expected_path and x.get('qk_head_dim') == 256 and x.get('v_head_dim') == 256 and x.get('q_heads') == 32 and x.get('kv_heads') == 16 and x.get('sliding_window_size') == 1024 and x.get('value_splits') == 2 and x.get('value_slice') == 128 for x in residency)
 accounting = all(x.get('cache', {}).get('cached_prompt_tokens_delta') == 17120 and x.get('cache', {}).get('uncached_prompt_tokens_delta') == 117728 for x in (control, candidate))
 valid = path_ok and accounting and all(x.get('pass') for x in smoke)
 c = float(control['service_seconds_per_request']); q = float(candidate['service_seconds_per_request']); gain = 1 - q / c

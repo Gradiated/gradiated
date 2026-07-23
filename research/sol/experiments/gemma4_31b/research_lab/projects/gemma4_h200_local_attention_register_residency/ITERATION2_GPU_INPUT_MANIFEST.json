@@ -1,0 +1,213 @@
+{
+  "authorized_cumulative_usd": 20.0,
+  "candidate_sha256": "d34b0d2bca3d7cabdf706b5af3da1687fc10073a3d187a8b029d4214d528f99a",
+  "checkpoint": [
+    {
+      "bytes": 4621,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/config.json",
+      "remote_name": "config.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    {
+      "bytes": 32169626,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/tokenizer.json",
+      "remote_name": "tokenizer.json",
+      "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+    },
+    {
+      "bytes": 2095,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/tokenizer_config.json",
+      "remote_name": "tokenizer_config.json",
+      "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"
+    },
+    {
+      "bytes": 18683,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/chat_template.jinja",
+      "remote_name": "chat_template.jinja",
+      "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"
+    },
+    {
+      "bytes": 1689,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/processor_config.json",
+      "remote_name": "processor_config.json",
+      "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"
+    },
+    {
+      "bytes": 120246,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/model.safetensors.index.json",
+      "remote_name": "model.safetensors.index.json",
+      "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+    },
+    {
+      "bytes": 49784788364,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/model-00001-of-00002.safetensors",
+      "remote_name": "model-00001-of-00002.safetensors",
+      "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+    },
+    {
+      "bytes": 12761549884,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/model-00002-of-00002.safetensors",
+      "remote_name": "model-00002-of-00002.safetensors",
+      "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"
+    }
+  ],
+  "checkpoint_total_bytes": 62578655208,
+  "component": [
+    {
+      "bytes": 5657,
+      "path": "remote_iteration2.sh",
+      "remote_name": "remote_iteration2.sh",
+      "sha256": "e53da319afb17dd8de2bff71534b7a86087ed642b17b68f16e685c3fe3ed44b6"
+    },
+    {
+      "bytes": 2653,
+      "path": "remote_iteration2_consumer.sh",
+      "remote_name": "remote_iteration2_consumer.sh",
+      "sha256": "0eac2bdaf4a3f5624b225d166aab0db9a1eda0f96657379b37b0db846a011914"
+    },
+    {
+      "bytes": 13503,
+      "path": "iteration2_benchmark.py",
+      "remote_name": "iteration2_benchmark.py",
+      "sha256": "92f9979403db73f7b7447a9aa88a4f6102e3e0c74b751766b327e07c56de5f1e"
+    },
+    {
+      "bytes": 15800,
+      "path": "two_stage_local_attention.py",
+      "remote_name": "two_stage_local_attention.py",
+      "sha256": "d34b0d2bca3d7cabdf706b5af3da1687fc10073a3d187a8b029d4214d528f99a"
+    },
+    {
+      "bytes": 7308,
+      "path": "analyze_iteration2.py",
+      "remote_name": "analyze_iteration2.py",
+      "sha256": "4015ff3c2d19fd187112fbdaa707fe82f1b4a5218c9ba6fb222a5463c4c4b671"
+    },
+    {
+      "bytes": 3856,
+      "path": "ITERATION2_BINDING.json",
+      "remote_name": "inputs/evidence/ITERATION2_BINDING.json",
+      "sha256": "5a3db3a3b507034cd8c40265d164d0f990462ea40ded051dac5d6bb410385bd5"
+    },
+    {
+      "bytes": 3593,
+      "path": "ITERATION2_CONTRACT.json",
+      "remote_name": "inputs/evidence/ITERATION2_CONTRACT.json",
+      "sha256": "cde82ab852bde27ed0ef3b64f100566aa32f114688a8293c61f9bfcb77b16107"
+    },
+    {
+      "bytes": 1455,
+      "path": "ITERATION2_PHYSICAL_MODEL.json",
+      "remote_name": "inputs/evidence/ITERATION2_PHYSICAL_MODEL.json",
+      "sha256": "70844bd2e58c09460f8306da9239af0718630d73417fc972a4f6b0ae37564c1d"
+    },
+    {
+      "bytes": 1015,
+      "path": "ITERATION2_DEPENDENCY_BINDING.json",
+      "remote_name": "inputs/evidence/ITERATION2_DEPENDENCY_BINDING.json",
+      "sha256": "71ff530f643fdcb1a20b50a59d9c98bc1842e545995dd44fecc82acc1acbe312"
+    },
+    {
+      "bytes": 110340,
+      "path": "inputs/evidence/flashinfer_metadata_scalar_terminal.json",
+      "remote_name": "inputs/evidence/flashinfer_metadata_scalar_terminal.json",
+      "sha256": "c5f36c0d79d62f7d8823b143e25f09d6805d9cde8a628611d7349fa81f31d4e8"
+    },
+    {
+      "bytes": 33963,
+      "path": "inputs/source/extend_attention.v0.5.13.py",
+      "remote_name": "inputs/source/extend_attention.v0.5.13.py",
+      "sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1"
+    },
+    {
+      "bytes": 2022,
+      "path": "EVIDENCE_BINDING.json",
+      "remote_name": "inputs/evidence/EVIDENCE_BINDING.json",
+      "sha256": "1be757749b801ff936e1354c551ac0a6627d3468365f86e2f61e90005375de1c"
+    },
+    {
+      "bytes": 14088,
+      "path": "artifacts/FINAL_TERMINAL.json",
+      "remote_name": "inputs/evidence/iteration1_FINAL_TERMINAL.json",
+      "sha256": "fabb2110d20ad92eb972955543d1cb69f18896c5f0d12d6e6743d83b16dff0ce"
+    },
+    {
+      "bytes": 12866,
+      "path": "artifacts/remote-component/artifacts__COMPONENT_RESULT.json",
+      "remote_name": "inputs/evidence/iteration1_COMPONENT_RESULT.json",
+      "sha256": "5452c4544318d1343fbe3c8ff7a5ff9880cd480f08d869b789660de61487a33a"
+    }
+  ],
+  "design": "extend_attention_fwd.local_head256_two_stage_blockprob_vslice2",
+  "endpoint_programs": [
+    {
+      "bytes": 638,
+      "path": "iteration2_sitecustomize.py",
+      "remote_name": "sitecustomize.py",
+      "sha256": "efbd8d76154655fac554db0ad0c16fd4189d39eb316f8cbb62c5fe52067f4f97"
+    },
+    {
+      "bytes": 15800,
+      "path": "two_stage_local_attention.py",
+      "remote_name": "two_stage_local_attention.py",
+      "sha256": "d34b0d2bca3d7cabdf706b5af3da1687fc10073a3d187a8b029d4214d528f99a"
+    },
+    {
+      "bytes": 9196,
+      "path": "remote_endpoint_pair.sh",
+      "remote_name": "remote_endpoint_pair.sh",
+      "sha256": "5c5e1ab7dabd43da188f4c7ef23c97a328de197344b8091904df648da5b7c948"
+    }
+  ],
+  "pass": true,
+  "prior_spend_usd": 0.185853,
+  "project": "gemma4_h200_local_attention_register_residency",
+  "schema_version": 2,
+  "source_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
+  "stack": [
+    {
+      "bytes": 6062,
+      "path": "inputs/stack/proven_v0513_endpoint_entrypoint.py",
+      "remote_name": "proven_v0513_endpoint_entrypoint.py",
+      "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc"
+    },
+    {
+      "bytes": 9494,
+      "path": "inputs/stack/fp8_qkv_paired_runner.py",
+      "remote_name": "fp8_qkv_paired_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    {
+      "bytes": 6370,
+      "path": "inputs/stack/install_endpoint_patch.py",
+      "remote_name": "install_endpoint_patch.py",
+      "sha256": "71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588"
+    },
+    {
+      "bytes": 26612,
+      "path": "inputs/stack/qkv_epilogue_discriminator.py",
+      "remote_name": "qkv_epilogue_discriminator.py",
+      "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"
+    },
+    {
+      "bytes": 2084,
+      "path": "inputs/stack/residual_sitecustomize.py",
+      "remote_name": "residual_sitecustomize.py",
+      "sha256": "76c26c124c1b1af52da0f46a991c4a3e54732db67b4968e1f16f39eb5b432065"
+    },
+    {
+      "bytes": 4606,
+      "path": "inputs/stack/attention_intervention.py",
+      "remote_name": "attention_intervention.py",
+      "sha256": "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8"
+    }
+  ]
+}

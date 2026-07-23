@@ -1,5 +1,5 @@
 {
-  "status": "active",
+  "status": "complete",
   "priority": 5800,
   "researcher_profile": "execution",
   "authorized_spend_usd": 0.0,
@@ -7,8 +7,21 @@
   "provider_mutation": "forbidden",
   "active_session": null,
   "summary": "Replay TauBench-style cumulative tool sessions and quantify exact content-addressed KV reuse, capacity, eviction and calibrated cost opportunity without a GPU.",
-  "next_action": "Build and run the exact-token multi-turn replay, then return a calibrated 20% cost plausibility decision or close the route.",
+  "next_action": "Hand off the separately authorized same-runtime persistent-KV on/off endpoint arm; this zero-budget replay is complete.",
   "quality_claim_authorized": false,
-  "terminal_artifact": null,
+  "terminal_artifact": "artifacts/CALIBRATED_DECISION.json",
+  "terminal_sha256": "815c25776e45ff37552e6c73e9850f79c4c4328015b52c118862785fbdf64e66",
+  "decision": "plausible_at_16GiB_affinity_only; nominate_next_cycle_endpoint_arm",
+  "measured": {
+    "sessions": 165,
+    "turns": 905,
+    "request_tokens": 600735,
+    "ideal_repeated_prefix_tokens": 481820,
+    "ideal_repeated_prefix_fraction": 0.8020508210775134,
+    "affinity_16GiB_hit_fraction": 0.8020508210775134,
+    "arbitrary_16GiB_hit_fraction": 0.1999633781950444,
+    "affinity_1GiB_hit_fraction": 0.19419544391453802
+  },
+  "limitations": ["synthetic deterministic tool-result payloads; no GPU endpoint timing", "calibration uses campaign prefill-share anchor and explicit sensitivity range"],
   "wall_deadline_utc": "2026-07-24T09:00:00Z"
 }

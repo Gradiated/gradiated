@@ -1,0 +1,128 @@
+{
+  "calibration": {
+    "anchor_evidence": "campaign trigger from measured endpoint packet; upper share and efficiency are sensitivity assumptions",
+    "formula": "exact_hit_fraction * exposed_prefill_wall_share * net_recovery_efficiency",
+    "net_prefill_recovery_efficiency_range": [
+      0.8,
+      1.0
+    ],
+    "prefill_share_low_anchor": 0.39375523262767614,
+    "prefill_share_upper_sensitivity": 0.6
+  },
+  "capacity_and_transfer": {
+    "affinity_0.5GiB_reloaded_bytes_fp8_gib": 38.73775899410248,
+    "affinity_1GiB_reloaded_bytes_fp8_gib": 31.55958652496338,
+    "bf16_sensitivity_bytes_per_token": 491520,
+    "ideal_hit_kv_bytes_fp8_gib": 41.64212942123413,
+    "kv_bytes_per_token_fp8_derived": 92800
+  },
+  "classification": "measured exact-token replay plus derived calibration; synthetic tool results, no endpoint timing",
+  "decision_gate": {
+    "avoidable_prefill_threshold": 0.25,
+    "endpoint_cost_threshold": 0.2,
+    "next_action": "nominate one small same-runtime cache-affinity endpoint experiment next paid cycle; no paid work authorized in this project",
+    "result": "plausible_at_16GiB_or_more_with_affinity; not plausible under arbitrary routing or <=1GiB capacity"
+  },
+  "limitations": [
+    "tool-result payloads are deterministic synthetic safe placeholders, not real tool execution traces",
+    "no GPU endpoint timing or live cache counters; calibration transfers the campaign prefill-share anchor only",
+    "tenant-isolated fingerprints prevent cross-tenant reuse; no cross-tenant hits were admitted"
+  ],
+  "measured_token_totals": {
+    "ideal_repeated_prefix_fraction": 0.8020508210775134,
+    "ideal_repeated_prefix_tokens": 481820,
+    "request_tokens": 600735
+  },
+  "policies": {
+    "affinity_0.5GiB": {
+      "avoidable_prefill_fraction_of_total_endpoint_compute_range": [
+        0.017621273396693126,
+        0.03356388424180379
+      ],
+      "derived_endpoint_cost_reduction_range": [
+        0.017621273396693126,
+        0.03356388424180379
+      ],
+      "evictions": 893,
+      "fresh_tokens": 567130,
+      "hit_fraction": 0.055939807069672984,
+      "reloaded_tokens": 448215,
+      "resident_hit_tokens": 33605
+    },
+    "affinity_16GiB": {
+      "avoidable_prefill_fraction_of_total_endpoint_compute_range": [
+        0.25264936610607597,
+        0.48123049264650797
+      ],
+      "derived_endpoint_cost_reduction_range": [
+        0.25264936610607597,
+        0.48123049264650797
+      ],
+      "evictions": 0,
+      "fresh_tokens": 118915,
+      "hit_fraction": 0.8020508210775134,
+      "reloaded_tokens": 0,
+      "resident_hit_tokens": 481820
+    },
+    "affinity_1GiB": {
+      "avoidable_prefill_fraction_of_total_endpoint_compute_range": [
+        0.06117237775504301,
+        0.11651726634872281
+      ],
+      "derived_endpoint_cost_reduction_range": [
+        0.06117237775504301,
+        0.11651726634872281
+      ],
+      "evictions": 879,
+      "fresh_tokens": 484075,
+      "hit_fraction": 0.19419544391453802,
+      "reloaded_tokens": 365160,
+      "resident_hit_tokens": 116660
+    },
+    "arbitrary_16GiB": {
+      "avoidable_prefill_fraction_of_total_endpoint_compute_range": [
+        0.06298930119856455,
+        0.11997802691702664
+      ],
+      "derived_endpoint_cost_reduction_range": [
+        0.06298930119856455,
+        0.11997802691702664
+      ],
+      "evictions": 0,
+      "fresh_tokens": 480610,
+      "hit_fraction": 0.1999633781950444,
+      "reloaded_tokens": 361695,
+      "resident_hit_tokens": 120125
+    },
+    "ideal_unlimited": {
+      "avoidable_prefill_fraction_of_total_endpoint_compute_range": [
+        0.25264936610607597,
+        0.48123049264650797
+      ],
+      "derived_endpoint_cost_reduction_range": [
+        0.25264936610607597,
+        0.48123049264650797
+      ],
+      "evictions": 0,
+      "fresh_tokens": 118915,
+      "hit_fraction": 0.8020508210775134,
+      "reloaded_tokens": 0,
+      "resident_hit_tokens": 481820
+    }
+  },
+  "question": "Can tenant-isolated content-addressed persistent KV plausibly reduce endpoint cost by 20% on multi-turn tool traffic?",
+  "schema_version": 1,
+  "source": {
+    "cases": 165,
+    "chat_template_sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "requests_sha256": "7f3e61e28c18dfd1c95b8516be29072eb9a09bdb736ffbb5312c24c57ef49cfc",
+    "sessions": 165,
+    "synthetic_tool_results": true,
+    "tokenization": "tokenizers.Tokenizer.from_file + copied Gemma chat_template.jinja",
+    "tokenizer_config_sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df",
+    "tokenizer_json_sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f",
+    "turns": 905
+  },
+  "workload_order": "interleaved turn rounds across 165 sessions; 905 cumulative model requests"
+}

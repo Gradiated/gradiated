@@ -1,0 +1,12 @@
+{
+  "budget_authority": "separate director-approved paid cycle; current project remains $0 and performs no provider mutation",
+  "control": "same requests, arbitrary routing, in-process prefix cache",
+  "evidence_basis": "CALIBRATED_DECISION.json",
+  "experiment": "same-runtime persistent KV on/off with exact cumulative replay",
+  "intervention": "tenant-isolated content-addressed prefix keys plus replica affinity and LRU admission",
+  "primary_gate": "raw hit/miss/eviction/reload counters plus non-overlapping prefill/decode/endpoint timing",
+  "required_quality": "identical deterministic output/tool-call behavior",
+  "schema_version": 1,
+  "status": "nominate_next_paid_cycle",
+  "trigger": "run only with measured exposed prefill share >= 0.393755 and enough capacity for >=16 GiB persistent KV budget"
+}

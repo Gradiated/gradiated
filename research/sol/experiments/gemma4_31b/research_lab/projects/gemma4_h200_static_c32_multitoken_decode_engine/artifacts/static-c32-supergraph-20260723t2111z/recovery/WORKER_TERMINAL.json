@@ -1,0 +1,7 @@
+{
+  "classification": "integration_failure",
+  "message": "incompatible_retained_server_owns_gpu",
+  "schema_version": 2,
+  "status": "terminal",
+  "unix_s": 1784841285.110751
+}

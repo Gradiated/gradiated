@@ -1,0 +1,12 @@
+{
+  "classification": "owner_failure",
+  "error": {
+    "message": "typed retrieval boundary: /home/glmrunner/gemma4-static-c32-supergraph/artifacts/INVOCATION_STATE.json",
+    "type": "RuntimeError"
+  },
+  "pass": false,
+  "provider_exposure_seconds": 249.35968232154846,
+  "provider_spend_usd": 0.1703957850376765,
+  "schema_version": 1,
+  "status": "terminal"
+}

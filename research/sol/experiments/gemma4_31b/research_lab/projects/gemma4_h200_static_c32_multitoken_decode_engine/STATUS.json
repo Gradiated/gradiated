@@ -1,6 +1,6 @@
 {
   "active_session": null,
-  "actual_spend_usd": 1.3453812589764595,
+  "actual_spend_usd": 1.6283636378308027,
   "allocation_limit": 1,
   "authorized_spend_usd": 16.0,
   "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
@@ -21,7 +21,7 @@
   },
   "immutable_binding": "DIRECTOR_BINDING.json",
   "immutable_binding_verifier": "verify_director_binding.py",
-  "next_action": "Director maintenance disposition is required before scientific execution: remove only the terminal same-project gemma-static-c32 container that priority-4500 observed holding 122636 MiB, verify zero compute processes, and mark h200-sync-linear-e00vhh6h29fj68x91g ready. Then rehash DIRECTOR_BINDING.json, atomically claim it, and run the prepared dependency-supergraph component exactly once. Do not start or replay the consumed repeated-single-step candidate during cleanup.",
+  "next_action": "Director disposition is required for the healthy retained priority-4500 container gemma-fp8-tied-head-topology-settled, which still owns 122176 MiB and port 30001 despite that project releasing the bench available. Either assign an explicitly compatible inheritor or remove only that terminal container, verify the H200 empty, and return the bench ready. Then rehash and run the still-unconsumed dependency-supergraph component exactly once; do not stack the tied head or replay the consumed direct candidate.",
   "priority": 4450,
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
   "quality_claim_authorized": false,
@@ -50,15 +50,24 @@
     "token_id_equality": false
   },
   "scientific_blocker": {
-    "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
-    "classification": "typed_external_bench_maintenance_old_same_project_server",
-    "evidence": "priority-4500 released the bench to maintenance after observing gemma-static-c32 holding 122636 MiB and port 30001; its status says no tied-head candidate workload was accepted",
-    "observed_at": "2026-07-23T20:46:52.725803Z",
-    "required_disposition": "Director-authorized maintenance cleanup of the terminal gemma-static-c32 container, zero-process verification, and gpu_pool ready transition. Researcher cannot touch a maintenance guest without a claim.",
-    "scientific_candidate_started": false
+    "artifact_root": "artifacts/static-c32-supergraph-20260723t2111z",
+    "candidate_cuda_started": false,
+    "candidate_invocation_started": false,
+    "classification": "typed_external_retained_tied_head_server_owns_hbm",
+    "evidence_archive_sha256": "3e193c80d218fb9417cb1e5efea399ef9317a6bbae1e725467351ab41840c949",
+    "owner_retrieval_defect": "The first owner did not retain its claim when INVOCATION_STATE.json was absent. The project immediately reclaimed the same bench, retrieved the remote terminal, logs, container inspect and GPU process evidence, proved candidate absence, and released to maintenance.",
+    "retained_container": "gemma-fp8-tied-head-topology-settled",
+    "retained_gpu_memory_mib": 122176,
+    "scientific_arm_consumed": false
+  },
+  "maintenance_resolution": {
+    "artifact": "../../artifacts/DIRECTOR_MAINTENANCE_20260723T2104Z.json",
+    "compute_processes": 0,
+    "gpu_memory_used_mib": 0,
+    "resolved_at_utc": "2026-07-23T21:04:08Z"
   },
   "status": "blocked",
   "storage_budget": "At most 12 GiB; no checkpoint duplication.",
-  "summary": "The consumed direct replay remains bound and untouched. Offline implementation now captures token, position, sequence-length, KV-location, Triton attention-metadata refresh, child model replay, greedy argmax, and finite guards in each fixed supergraph; its internal stock oracle snapshots and byte-compares the same reserved KV slots. Scientific execution has not started because priority-4500 moved the only H200 to maintenance after finding this project's old terminal container still occupying HBM.",
+  "summary": "The prepared dependency-supergraph remains scientifically unstarted. Its worker stopped before creating any invocation state or candidate audit because priority-4500's healthy tied-head container still occupied 122176 MiB. Recovery retrieved and hash-bound the remote terminal, logs, inspect, and GPU evidence; the bench is in maintenance for director reuse/removal disposition.",
   "wall_deadline_utc": "2026-07-24T01:15:00Z"
 }

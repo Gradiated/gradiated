@@ -40,3 +40,25 @@ disposition. Pool policy makes maintenance benches unclaimable. Required next
 step is director-authorized removal of only that terminal container, zero-GPU-
 process verification, and a `gpu_pool ready` transition; the prepared arm can
 then be rehashed, claimed, and invoked exactly once.
+
+## 2026-07-23 — successor server conflict; candidate absent
+
+After priority-4500 completed and released the bench `available`, this project
+rehash-verified its binding, atomically claimed the H200, and staged immutable
+inputs. The worker stopped before `INVOCATION_STATE.json`, any candidate audit,
+or CUDA capture existed: its remote terminal was
+`incompatible_retained_server_owns_gpu`. Recovery immediately reclaimed the
+same bench after the first owner mishandled that missing marker, then retrieved
+the terminal, raw logs, container inspect, GPU process row, and hash-verified
+archive before final release.
+
+Measured external state: the healthy priority-4500 container
+`gemma-fp8-tied-head-topology-settled` remained running on port 30001 with
+`sglang::scheduler` PID 453000 using 122,176 MiB. Static-c32 may neither inherit
+that tied-head representation nor stop another project's healthy server. The
+supergraph component and endpoint therefore remain unstarted and unconsumed.
+Total new claim exposure was 414.121 seconds / `$0.2829823789`, raising
+cumulative project exposure to `$1.6283636378`. The bench was released to
+maintenance with the exact retained process for director reuse/removal
+disposition. The owner is patched so a future absent pre-invocation marker is
+preserved under the live claim instead of causing release-before-retrieval.

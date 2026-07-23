@@ -333,14 +333,34 @@ def main() -> int:
                     time.sleep(5 * (retry + 1))
                 raise RuntimeError(f"typed retrieval boundary: {remote_path}")
 
-            final_invocation = retrieve_json(
-                f"{REMOTE}/artifacts/INVOCATION_STATE.json",
-                "INVOCATION_STATE.json",
-            )
             final_worker_terminal = retrieve_json(
                 f"{REMOTE}/artifacts/WORKER_TERMINAL.json",
                 "REMOTE_WORKER_TERMINAL.json",
             )
+            try:
+                final_invocation = retrieve_json(
+                    f"{REMOTE}/artifacts/INVOCATION_STATE.json",
+                    "INVOCATION_STATE.json",
+                )
+            except RuntimeError:
+                # A worker may terminate before the first state() call (for
+                # example, because a predecessor's retained server still owns
+                # HBM). Preserve that mechanical candidate-absence evidence
+                # under the live claim instead of converting retrieval absence
+                # into an owner terminal and releasing first.
+                final_invocation = {
+                    "schema_version": 2,
+                    "invocation_state_absent": True,
+                    "candidate_component_started": False,
+                    "candidate_component_cuda_started": False,
+                    "stock_control_capture_started": False,
+                    "candidate_endpoint_started": False,
+                }
+                atomic_json(
+                    args.artifact_root / "INVOCATION_STATE_ABSENT.json",
+                    final_invocation,
+                )
+                emit("invocation_state_absent", attempt=attempt)
             classification = str(final_worker_terminal.get("classification"))
             endpoint_started = bool(
                 final_invocation.get("candidate_endpoint_started")

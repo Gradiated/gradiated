@@ -1,0 +1,27 @@
+{
+  "artifact_archive_sha256": "3e193c80d218fb9417cb1e5efea399ef9317a6bbae1e725467351ab41840c949",
+  "bench": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "candidate_cuda_started": false,
+  "candidate_invocation_started": false,
+  "classification": "typed_external_retained_tied_head_server_owns_hbm",
+  "cumulative_provider_spend_usd": 1.6283636378308027,
+  "diagnostic": {
+    "container": "gemma-fp8-tied-head-topology-settled",
+    "gpu_memory_used_mib": 122176,
+    "gpu_process": "sglang::scheduler",
+    "pid": 453000,
+    "port": 30001,
+    "worker_message": "incompatible_retained_server_owns_gpu"
+  },
+  "first_claim_exposure_seconds": 249.35968232154846,
+  "first_claim_provider_spend_usd": 0.1703957850376765,
+  "invocation_state_absent": true,
+  "pass": false,
+  "recovery_claim_exposure_seconds": 164.760869,
+  "recovery_claim_provider_spend_usd": 0.11258659381666666,
+  "schema_version": 2,
+  "scientific_arm_consumed": false,
+  "status": "terminal",
+  "total_provider_exposure_seconds": 414.1205513215485,
+  "total_provider_spend_usd": 0.2829823788543432
+}

@@ -10,6 +10,11 @@ container_artifacts=/work/artifacts
 if [[ "$mode" == sync_pair ]]; then
   sudo docker rm -f streamk-component residual-profile residual-control residual-candidate gemma-fp8-control-v0513 gemma-fp8-mtp-v0513 sglang-endpoint >/dev/null 2>&1 || true
   mode=pair
+elif [[ "$mode" == iteration2_pair ]]; then
+  artifacts="$root/iteration2-artifacts"
+  container_artifacts=/work/iteration2-artifacts
+  sudo docker rm -f residual-profile residual-control residual-candidate gemma-fp8-control-v0513 gemma-fp8-mtp-v0513 sglang-endpoint >/dev/null 2>&1 || true
+  mode=pair
 elif [[ "$mode" == attention_pair ]]; then
   artifacts="$root/attention-artifacts-v2"
   container_artifacts=/work/attention-artifacts-v2
@@ -108,6 +113,35 @@ assert {row['name'] for row in x.get('cases',[])} == {
     'empty', 'odd_lengths', 'cache_hit_reorder', 'page_boundary',
     'filter_merge', 'maximum_exact_workload',
     'cuda_graph_replay_dynamic_lengths'
+}
+PY
+fi
+
+if [[ "$requested_mode" == iteration2_pair ]]; then
+  if ! python3 - "$artifacts/COMPONENT_TERMINAL.json" 2>/dev/null <<'PY'
+import json,sys
+x=json.load(open(sys.argv[1])); assert x.get('pass') is True and x.get('candidate_cuda_started') is True
+PY
+  then
+    state component_cuda_started
+    state component_science_started
+    sudo docker run --rm --gpus all -v "$root:/work" \
+      -e PYTHONPATH=/work/input:/sgl-workspace/sglang/python \
+      -e RESIDUAL_ARM=control \
+      "$image" python3 /work/input/producer_fused_component.py \
+      --output /work/iteration2-artifacts/COMPONENT_TERMINAL.json \
+      >"$artifacts/component.stdout" 2>"$artifacts/component.stderr" \
+      || fail producer_fused_component_failed
+  fi
+  python3 - "$artifacts/COMPONENT_TERMINAL.json" <<'PY' \
+    || fail producer_fused_component_terminal_invalid
+import json,sys
+x=json.load(open(sys.argv[1])); assert x.get('pass') is True
+assert x.get('geometry',{}).get('batch_size') == 32
+assert x.get('geometry',{}).get('valid_indices') == 32768
+assert x.get('complete_output_consumed') is True
+assert {row['name'] for row in x.get('cases',[])} == {
+    'odd_filter_merge', 'exact_c32', 'cuda_graph_dynamic_lengths'
 }
 PY
 fi
@@ -252,6 +286,25 @@ assert any(
 PY
 }
 
+validate_producer_fused_proof() {
+  local arm=$1
+  python3 - "$artifacts/$arm-audit/residual.jsonl" <<'PY'
+import json,pathlib,sys
+rows=[json.loads(x) for x in pathlib.Path(sys.argv[1]).read_text().splitlines() if x]
+assert any(
+    row.get('candidate_path')=='create_flashinfer_kv_indices_triton.producer_fused_swa_mapping'
+    and row.get('phase')=='runtime_invocation'
+    and row.get('batch_size')==32
+    and row.get('block_size')==512
+    and row.get('graph_safe') is True
+    and row.get('device_count_proportional') is True
+    and row.get('no_capacity_wide_second_pass') is True
+    and row.get('no_device_scalar_read') is True
+    for row in rows
+)
+PY
+}
+
 if [[ "$mode" == sync_trace ]]; then
   sudo docker rm -f residual-profile residual-control residual-candidate residual-sync-trace >/dev/null 2>&1 || true
   rm -rf "$artifacts/trace" "$artifacts/trace-audit"
@@ -299,7 +352,7 @@ elif [[ "$mode" == profile ]]; then
 elif [[ "$mode" == pair ]]; then
   test -s "$input/residual_intervention.py" || fail residual_intervention_missing
   test -s "$input/attention_intervention.py" || fail attention_intervention_missing
-  if [[ "$requested_mode" == sync_pair ]]; then
+  if [[ "$requested_mode" == sync_pair || "$requested_mode" == iteration2_pair ]]; then
     sudo docker rm -f residual-profile residual-control residual-candidate gemma-fp8-control-v0513 gemma-fp8-mtp-v0513 sglang-endpoint >/dev/null 2>&1 || true
   fi
   if ! python3 - "$artifacts/control/TERMINAL.json" 2>/dev/null <<'PY'
@@ -336,7 +389,11 @@ PY
     validate_baseline_proofs candidate
     validate_attention_proof candidate
     validate_retained_sync_proof candidate
-    validate_metadata_proof candidate
+    if [[ "$requested_mode" == iteration2_pair ]]; then
+      validate_producer_fused_proof candidate
+    else
+      validate_metadata_proof candidate
+    fi
   fi
   test -s "$artifacts/candidate-audit/residual.jsonl" || fail candidate_path_proof_missing
   python3 - "$artifacts/control/TERMINAL.json" "$artifacts/candidate/TERMINAL.json" "$artifacts/PAIRED_TERMINAL.json" "$artifacts/control-audit/residual.jsonl" "$artifacts/candidate-audit/residual.jsonl" "$requested_mode" <<'PY'
@@ -344,17 +401,22 @@ import json,os,pathlib,sys
 c=json.load(open(sys.argv[1])); q=json.load(open(sys.argv[2])); out=pathlib.Path(sys.argv[3]); control_proof=[json.loads(x) for x in pathlib.Path(sys.argv[4]).read_text().splitlines() if x]; proof=[json.loads(x) for x in pathlib.Path(sys.argv[5]).read_text().splitlines() if x]
 control=float(c['service_seconds_per_request']); candidate=float(q['service_seconds_per_request']); gain=1-candidate/control
 smoke=[json.load(open(out.parent/f'{arm}.smoke.json')) for arm in ('control','candidate')]
-sync_mode=sys.argv[6]=='sync_pair'
+sync_mode=sys.argv[6] in {'sync_pair','iteration2_pair'}
+producer_fused=sys.argv[6]=='iteration2_pair'
 path_ok=bool(proof)
 if sync_mode:
     attention=lambda rows:any(x.get('candidate_path')=='TritonAttnBackend.forward_extend.local_fp8_deferred_cache_commit' and x.get('phase')=='runtime_invocation' and x.get('qk_head_dim')==256 and x.get('v_head_dim')==256 and x.get('sliding_window_size')==1024 for x in rows)
     pinned=lambda rows:any(x.get('candidate_path')=='ScheduleBatch.prepare_for_decode.pinned_async_penalty_tokens' and x.get('phase')=='runtime_invocation' and x.get('batch_size')==32 and x.get('dtype')=='torch.int64' and x.get('pin_memory') is True and x.get('non_blocking') is True for x in rows)
     dense=lambda rows:any(x.get('candidate_path')=='BatchedMinNewTokensPenalizer.host_required_dense_add' and x.get('phase')=='runtime_invocation' and x.get('host_counter') is True and x.get('no_device_scalar_read') is True for x in rows)
-    metadata=any(x.get('candidate_path')=='update_sliding_window_buffer.device_count_masked_swa_gather' and x.get('phase')=='runtime_invocation' and x.get('batch_size')==32 and x.get('graph_safe') is True and x.get('no_device_scalar_read') is True for x in proof)
+    if producer_fused:
+        metadata=any(x.get('candidate_path')=='create_flashinfer_kv_indices_triton.producer_fused_swa_mapping' and x.get('phase')=='runtime_invocation' and x.get('batch_size')==32 and x.get('graph_safe') is True and x.get('device_count_proportional') is True and x.get('no_capacity_wide_second_pass') is True and x.get('no_device_scalar_read') is True for x in proof)
+    else:
+        metadata=any(x.get('candidate_path')=='update_sliding_window_buffer.device_count_masked_swa_gather' and x.get('phase')=='runtime_invocation' and x.get('batch_size')==32 and x.get('graph_safe') is True and x.get('no_device_scalar_read') is True for x in proof)
     path_ok=attention(control_proof) and attention(proof) and pinned(control_proof) and pinned(proof) and dense(control_proof) and dense(proof) and metadata
 valid=all(x.get('pass') for x in smoke) and path_ok
-classification='promote_ceiling' if valid and candidate<=0.6381105230769232 else ('retain_simple_positive' if valid and gain>0 else 'close_metadata_attempt' if valid and sync_mode else 'invalid')
-v={'schema_version':1,'status':'terminal','classification':classification,'pass':valid,'control':c,'candidate':q,'control_service_seconds_per_request':control,'candidate_service_seconds_per_request':candidate,'reduction_fraction':gain,'economic_ceiling_seconds_per_request':0.6381105230769232,'ceiling_pass':valid and candidate<=0.6381105230769232,'retain_pass':valid and gain>0,'semantic_proof':smoke,'accounting_proof':{'control':c['cache'],'candidate':q['cache']},'fp8_proof':True,'qkv_proof':True,'attention_proof':{'control':control_proof,'candidate':proof},'candidate_path_proof':proof,'metadata_equivalence':json.load(open(out.parent/'METADATA_EQUIVALENCE_TEST.json'))}
+classification='promote_ceiling' if valid and candidate<=0.6381105230769232 else ('retain_simple_positive' if valid and gain>0 else 'close_producer_fused_translation' if valid and producer_fused else 'close_metadata_attempt' if valid and sync_mode else 'invalid')
+component_name='COMPONENT_TERMINAL.json' if producer_fused else 'METADATA_EQUIVALENCE_TEST.json'
+v={'schema_version':1,'status':'terminal','classification':classification,'pass':valid,'control':c,'candidate':q,'control_service_seconds_per_request':control,'candidate_service_seconds_per_request':candidate,'reduction_fraction':gain,'economic_ceiling_seconds_per_request':0.6381105230769232,'ceiling_pass':valid and candidate<=0.6381105230769232,'retain_pass':valid and gain>0,'semantic_proof':smoke,'accounting_proof':{'control':c['cache'],'candidate':q['cache']},'fp8_proof':True,'qkv_proof':True,'attention_proof':{'control':control_proof,'candidate':proof},'candidate_path_proof':proof,'metadata_equivalence':json.load(open(out.parent/component_name))}
 tmp=out.with_suffix('.part'); tmp.write_text(json.dumps(v,indent=2,sort_keys=True)+'\n'); os.replace(tmp,out)
 PY
   atomic_terminal pair_complete paired_scientific_terminal_persisted

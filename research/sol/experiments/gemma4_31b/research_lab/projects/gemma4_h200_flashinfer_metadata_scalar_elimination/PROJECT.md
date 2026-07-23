@@ -31,3 +31,11 @@ Run exactly one profiler-off control/candidate c32 pair and the minimum candidat
 ## Decision rule
 
 Require 32/32 sane outputs, exact token/cache accounting, candidate-path proof, metadata equality, and no replacement host/device scalar read. The causal prediction is 358→0 four-byte D2H predecessors with a material reduction in long synchronization. Retain any reproducible endpoint gain without material downside; promote only at or below `0.6381105231 s/request`. Close this exact metadata mechanism on semantic failure, unchanged counters, or no positive endpoint movement.
+
+## Iteration 2 — producer-fused SWA translation
+
+Iteration 1 proved the scalar boundary causal: it removed all 358 four-byte D2H predecessors and reduced long syncs from 387 to 29. It was nevertheless endpoint-negative because its second Triton pass scanned a fixed 32,736-element capacity every decode step, regressing `0.6772850433→0.6855998213 s/request`. Do not replay that mechanism.
+
+Use `$kernel-research` for one materially different producer/consumer dataflow. Bind `create_flashinfer_kv_indices_triton` and the immediate `SWAKVPool.full_to_swa_index_mapping` consumer, then emit already-translated valid SWA indices in the producer or an equivalent device-count-proportional fused path. Preserve the exact int32 indptr, int64 index, page-size-1, 1,024-token window, request ordering, filter/merge, CUDA-graph, and downstream attention contracts. The physical prediction is zero scalar D2H reads without a fixed-capacity second pass; require exact metadata and full downstream consumption before timing.
+
+Run one exact component and one profiler-off c32 pair. Retain any reproducible endpoint gain; promote only at `0.6381105231 s/request` or better. No capacity-masked replay, strategy sweep, attention-kernel change, KV representation change, or second endpoint arm is admitted. Release the warm bench for `gemma4_h200_scheduler_gap_pipeline_overlap`.

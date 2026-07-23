@@ -24,8 +24,8 @@ NEBIUS = pathlib.Path("/root/workspace/research/sol/experiments/glm47flash/campa
 KEY = pathlib.Path("/root/.config/nebius/glm-campaign/ssh_ed25519")
 KNOWN_HOSTS = pathlib.Path("/root/.config/nebius/glm-campaign/known_hosts")
 REMOTE = "/home/glmrunner/gemma4-h200-flashinfer-metadata-scalar-elimination"
-AUTHORIZED_USD = 18.0
-MAX_CLAIM_SECONDS = 3 * 60 * 60
+AUTHORIZED_USD = 16.0
+MAX_CLAIM_SECONDS = 2 * 60 * 60
 RETRIEVAL_RESERVE_SECONDS = 15 * 60
 
 REMOTE_NAMES = {
@@ -133,7 +133,7 @@ def main() -> int:
             raise RuntimeError("pair_intervention_request_outside_project")
         pair_intervention = json.loads(request_path.read_text())
         pair_boundary = str(pair_intervention.get("boundary"))
-        if pair_boundary not in {"metadata_scalar"}:
+        if pair_boundary not in {"metadata_scalar", "metadata_producer_fused"}:
             raise RuntimeError("pair_intervention_boundary_invalid")
 
     def emit(event: str, **fields: object) -> None:
@@ -158,6 +158,7 @@ def main() -> int:
         PROJECT / "analyze_profile.py",
         PROJECT / "analyze_metadata_trace.py",
         PROJECT / "metadata_equivalence_test.py",
+        PROJECT / "producer_fused_component.py",
         PROJECT / "snapshot/intervention/pinned_async_penalty_tokens.py",
     )
     for path in local_programs:
@@ -207,7 +208,9 @@ def main() -> int:
     ip: str | None = None
     worker_terminal: dict[str, object] = {}
     invocation_state: dict[str, object] = {}
-    if pair_boundary == "attention_kv":
+    if pair_boundary == "metadata_producer_fused":
+        remote_artifacts = f"{REMOTE}/iteration2-artifacts"
+    elif pair_boundary == "attention_kv":
         remote_artifacts = f"{REMOTE}/attention-artifacts-v2"
     elif pair_boundary == "fp8_linear":
         remote_artifacts = f"{REMOTE}/fp8-linear-artifacts"
@@ -281,6 +284,11 @@ def main() -> int:
         stage(
             PROJECT / "metadata_equivalence_test.py",
             "metadata_equivalence_test.py",
+            f"{REMOTE}/input",
+        )
+        stage(
+            PROJECT / "producer_fused_component.py",
+            "producer_fused_component.py",
             f"{REMOTE}/input",
         )
         stage(
@@ -403,7 +411,10 @@ def main() -> int:
                     raise RuntimeError("metadata_intervention_file_invalid")
                 stage(source, row["remote_name"], f"{REMOTE}/input")
             atomic(args.artifact_root / "INTERVENTION_ADMITTED.json", intervention)
-            pair_mode = {"metadata_scalar": "sync_pair"}[pair_boundary]
+            pair_mode = {
+                "metadata_scalar": "sync_pair",
+                "metadata_producer_fused": "iteration2_pair",
+            }[pair_boundary]
             pair_rc = run_worker(pair_mode)
             if pair_rc and repairable(pair_mode) and wait_for_repair(pair_mode):
                 pair_rc = run_worker(pair_mode)
@@ -415,6 +426,31 @@ def main() -> int:
             # Persist it before the trace-only consumer so an ordinary trace defect can
             # be repaired without replaying either scientific timing arm.
             atomic(args.artifact_root / "PERSISTED_PAIR.json", paired)
+            if pair_boundary == "metadata_producer_fused":
+                component_path = args.artifact_root / pair_mode / "COMPONENT_TERMINAL.json"
+                if not component_path.is_file():
+                    raise RuntimeError("typed_component_boundary:component_terminal_missing")
+                run_spend = (time.time() - started) * rate / 3600
+                terminal = {
+                    **paired,
+                    "exact_scalar_consumer": json.loads(
+                        (PROJECT / "EXACT_SCALAR_CONSUMER.json").read_text()
+                    ),
+                    "intervention": intervention,
+                    "component": json.loads(component_path.read_text()),
+                    "retained_attention_intervention_sha256": sha256(
+                        SNAPSHOT / "inputs/retained/attention_deferred_local_kv.py"
+                    ),
+                    "provider_exposure_seconds": time.time() - started,
+                    "provider_spend_usd": run_spend,
+                    "cumulative_provider_spend_usd": prior_spend + run_spend,
+                }
+                if terminal["cumulative_provider_spend_usd"] > AUTHORIZED_USD:
+                    terminal["classification"] = "budget_violation"
+                    terminal["pass"] = False
+                atomic(args.artifact_root / "TERMINAL.json", terminal)
+                emit("scientific_terminal", classification=terminal.get("classification"))
+                return 0 if terminal.get("pass") else 1
             trace_rc = run_worker("sync_trace")
             if trace_rc and repairable("sync_trace") and wait_for_repair("sync_trace"):
                 trace_rc = run_worker("sync_trace")
@@ -640,9 +676,9 @@ def main() -> int:
                 "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
                 "checkpoint": f"Exact immutable project snapshot retained at {REMOTE}/checkpoint.",
                 "image": "Pinned SGLang v0.5.13 linux/amd64 digest 6113665a retained if pull completed.",
-                "runtime": f"Exact FP8+QKV+deferred-local-KV+dense-add metadata-scalar pair terminal: {(terminal or {}).get('classification', 'owner_boundary')}.",
+                "runtime": f"Exact FP8+QKV+deferred-local-KV+dense-add producer-fused metadata pair terminal: {(terminal or {}).get('classification', 'owner_boundary')}.",
                 "caches": "SGLang FP8, QKV, Nsight, Triton, CUTLASS, and CUDA graph caches retained.",
-                "server_state": "No server required; immutable image/checkpoint and compiled caches retained warm for gemma4_h200_local_attention_register_residency.",
+                "server_state": "Healthy candidate server retained when endpoint completed; immutable image/checkpoint and compiled caches retained warm for gemma4_h200_scheduler_gap_pipeline_overlap.",
                 "artifacts": f"Compact terminals and profile SQLite retrieved under {args.artifact_root} when available.",
             }
             contents_path = args.artifact_root / "BENCH_CONTENTS.json"

@@ -1,0 +1,78 @@
+{
+  "candidate_cuda_started": true,
+  "cases": [
+    {
+      "consumer_checksum": 76061608,
+      "fused_exact": true,
+      "name": "odd_filter_merge",
+      "stock_exact": true,
+      "valid_count": 3092
+    },
+    {
+      "consumer_checksum": 8778694656,
+      "fused_exact": true,
+      "name": "exact_c32",
+      "stock_exact": true,
+      "valid_count": 32768
+    },
+    {
+      "consumer_checksum": 7395221077,
+      "fused_exact": true,
+      "name": "cuda_graph_dynamic_lengths",
+      "valid_count": 30219
+    }
+  ],
+  "complete_output_consumed": true,
+  "device": "NVIDIA H200",
+  "geometry": {
+    "batch_size": 32,
+    "index_dtype": "int64",
+    "indptr_dtype": "int32",
+    "page_size": 1,
+    "valid_indices": 32768,
+    "window_tokens": 1024
+  },
+  "operation": "create_flashinfer_kv_indices_triton plus immediate SWAKVPool mapping consumer",
+  "pass": true,
+  "producer_fused": {
+    "median": 13.739030000000001,
+    "p10": 13.59123,
+    "p90": 13.82435,
+    "samples": [
+      14.51107,
+      13.617270000000001,
+      13.7391,
+      13.76335,
+      13.57972,
+      13.629430000000001,
+      13.82435,
+      13.79012,
+      13.738290000000001,
+      13.59123,
+      13.739030000000001
+    ],
+    "unit": "microseconds_per_producer_consumer_call"
+  },
+  "reduction_fraction": 0.7465355101332996,
+  "schema_version": 1,
+  "status": "terminal",
+  "stock": {
+    "median": 54.20495,
+    "p10": 49.51628,
+    "p90": 56.54269,
+    "samples": [
+      57.205349999999996,
+      56.54269,
+      55.28268,
+      55.27084,
+      54.20495,
+      53.82873,
+      54.34591,
+      51.00708,
+      49.51628,
+      49.257349999999995,
+      49.958330000000004
+    ],
+    "unit": "microseconds_per_producer_consumer_call"
+  }
+}

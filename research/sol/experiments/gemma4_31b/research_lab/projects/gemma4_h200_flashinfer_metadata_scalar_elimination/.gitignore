@@ -5,3 +5,6 @@ __pycache__/
 /artifacts/*/*-compact.tar.gz
 /artifacts/*/sync_pair/
 /artifacts/*/sync_trace/
+/artifacts/*/iteration2_pair/*
+!/artifacts/*/iteration2_pair/COMPONENT_TERMINAL.json
+!/artifacts/*/iteration2_pair/PAIRED_TERMINAL.json

@@ -16,3 +16,17 @@ Measured evidence:
 Decision: do not retain, promote, replay, or sweep this intervention. Preserve the dense-add frontier and move to the already scheduled true two-stage local-attention work. Authoritative evidence is `artifacts/metadata-scalar-20260723t0107z/TERMINAL.json`; the persisted profiler-off producer is `PERSISTED_PAIR.json`, and the trace counter is `CANDIDATE_SYNC_COUNTER.json` in the same directory.
 
 Spend and handoff: cumulative claimed exposure was `3533.409724 s` at `$2.46/hour`, conservatively settled as `$2.414496442223`. Retrieved artifacts total 46 MiB. The bench was released ready with the exact project checkpoint, pinned image, and SGLang/Triton/CUDA-graph caches retained warm for `gemma4_h200_local_attention_register_residency` iteration 2.
+
+## 2026-07-23 — producer-fused SWA translation retained
+
+Question: can the exact FlashInfer KV-index producer emit already-translated SWA indices and preserve the scalar-removal benefit without iteration 1's fixed-capacity second pass?
+
+Action: bound the pinned one-CTA-per-request `create_flashinfer_kv_indices_triton` producer to the immediate `SWAKVPool.full_to_swa_index_mapping` consumer. Froze one Triton producer whose mapping load occurs between the existing `req_to_token` load and output store. It performs work only for each request's actual window length, changes no attention or KV representation, and never launches the closed capacity-wide gather.
+
+Measured evidence:
+
+- The exact H200 component passed odd/filter-merge, full c32, complete-output consumption, and dynamic CUDA-graph replay bit exactly. Stock producer plus gather/copy measured `54.20495 us` median; producer-fused measured `13.73903 us`, a `74.6536%` reduction.
+- The sole profiler-off c32 pair passed 32/32 outputs, semantic smoke, retained-stack path proofs, and identical cache/token accounting. Control was `0.6772445949999906 s/request`; candidate was `0.6746877474374742 s/request`, a `0.377537%` gain. It also improves the prior `0.6762324541249995` frontier by `0.228428%`, so the candidate becomes the new simple frontier but does not reach the `0.6381105231` promotion ceiling.
+- Runtime audit proves batch-32 producer fusion, block size 512, device-count-proportional work, no capacity-wide second pass, graph safety, and no device scalar read. The endpoint pair was profiler-off; no unrequested trace or metadata variant was run.
+
+Decision: retain `producer_fused_swa_translation_v1` and stack it into the scheduler-gap successor. Authoritative evidence is `artifacts/metadata-fused-20260723t0223z/TERMINAL.json` (`f50e5abb9e36b31aed9f04baea4a2525d0b55cf69e7eba44a7990b8ffbb5cad7`). Incremental claim exposure was `355.393648 s`, costing `$0.242852220174`; cumulative project exposure is `$2.657348662396`. Retrieved artifacts total 7 MiB. The H200 was released available with its healthy candidate server, checkpoint, image, and caches retained warm for `gemma4_h200_scheduler_gap_pipeline_overlap`.

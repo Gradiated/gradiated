@@ -1,0 +1,14 @@
+{
+  "boundary": "metadata_producer_fused",
+  "files": [
+    {
+      "path": "intervention/producer_fused_swa_translation.py",
+      "remote_name": "residual_intervention.py",
+      "sha256": "9b5a51284ac313014988f426c35b818ae2590cb7d4a72ec604a6ad80a63336b3"
+    }
+  ],
+  "intervention_id": "producer_fused_swa_translation_v1",
+  "predicted_counter_change": "One producer kernel replaces producer plus mapping gather/copy; no device scalar is read and work remains proportional to the sum of valid per-request window lengths.",
+  "schema_version": 1,
+  "source_justification": "The pinned producer already visits exactly each valid per-request window index. Performing the SWA mapping load before its existing store removes the host scalar, advanced-index temporary, copy-back, and extra launch without scanning unused workspace capacity."
+}

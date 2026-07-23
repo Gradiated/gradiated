@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "status": "frozen_before_claim",
+  "intervention_id": "producer_fused_swa_translation_v1",
+  "binding": "ITERATION2_BINDING.json",
+  "binding_sha256": "6c80bc06c58a25fd717b4417bfdd5c26a26632097653ab98305324903ce31950",
+  "physical_model": "ITERATION2_PHYSICAL_MODEL.json",
+  "mechanism": "Fuse the full-to-SWA mapping lookup into the existing one-CTA-per-request FlashInfer KV-index producer and remove the host-sliced advanced-index gather/copy.",
+  "intervention": {
+    "path": "intervention/producer_fused_swa_translation.py",
+    "sha256": "9b5a51284ac313014988f426c35b818ae2590cb7d4a72ec604a6ad80a63336b3"
+  },
+  "component": {
+    "path": "producer_fused_component.py",
+    "sha256": "5d8d3df52cdf05bd1210815132213fb74524c0fd54aa128868fe8d6837b0d5d3"
+  },
+  "runtime": {
+    "sitecustomize_sha256": "206c2cf0f4bde083c47f4fdfa9de3d391f18f7c4d7d7804444b774d6d099eaf8",
+    "remote_pair_sha256": "9285ca5ffb0a216fc5fc7443ed9f33382be3638c922d5d428c5830333e9e682d",
+    "owner_sha256": "fdff95679b29508e790b84feb7a68e50986cfe2d7f7793f7c9d46f8968d19664"
+  },
+  "forbidden": [
+    "capacity-wide masked gather replay",
+    "second metadata strategy",
+    "attention-kernel change",
+    "KV representation or layout change",
+    "workload or concurrency change",
+    "second endpoint arm"
+  ]
+}

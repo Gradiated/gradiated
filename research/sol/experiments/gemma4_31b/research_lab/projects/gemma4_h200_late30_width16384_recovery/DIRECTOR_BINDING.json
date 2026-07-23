@@ -1,0 +1,59 @@
+{
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "candidate": {
+    "full_width_layers": [0, 29],
+    "full_width": 21504,
+    "recovered_width_layers": [30, 59],
+    "recovered_width": 16384,
+    "correction_rank": 256,
+    "runtime_adapter": false,
+    "cutoff_sweep": "forbidden"
+  },
+  "checkpoint": {
+    "identity": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "manifest_path": "../gemma4_h200_width16384_lowrank_recovery/inputs/CHECKPOINT_SHA256SUMS.txt",
+    "manifest_sha256": "7ed5b04ef9c115a2cbba771df463ca0cacbfb87cfa298773e8b037d12bcea735",
+    "resident_path": "/home/glmrunner/gemma4-async-result-pipeline/checkpoint"
+  },
+  "factor_archive": {
+    "path": "../gemma4_h200_width16384_lowrank_recovery/artifacts/recovery-factors.tar",
+    "sha256": "6c9760dfc4d05186336f0bc2618218a1d6a83ac02611f1c28e2b03a9dcf92021"
+  },
+  "factor_manifest": {
+    "path": "../gemma4_h200_width16384_lowrank_recovery/artifacts/FACTOR_MANIFEST.json",
+    "sha256": "7b6d35d71aedfb7872e1c1440d1ce5e4f8a22e90d5b754d9223c6aa4d12baaab"
+  },
+  "full_recovery_terminal": {
+    "classification": "reconstruction_or_coherence_reject",
+    "path": "../gemma4_h200_width16384_lowrank_recovery/artifacts/FINAL_TERMINAL.json",
+    "sha256": "3424e1be55de4e47dc908a45572abe57c31eee90ee1bd6192dcf757bed7b5ad6"
+  },
+  "layer_results": {
+    "path": "../gemma4_h200_width16384_lowrank_recovery/artifacts/LAYER_RESULTS.json",
+    "sha256": "2a220047d39b0db06a6911a53d2c01aa221bbbe1b419e4f84a33c6ec58dae491"
+  },
+  "projection": {
+    "evidence_class": "analytical_from_measured_endpoint_delta",
+    "full_width_plus_ring_seconds_per_request": 0.6125846611248562,
+    "late30_projected_seconds_per_request": 0.6341206863124853,
+    "qualified_ring_seconds_per_request": 0.6556567115001144
+  },
+  "qualified_ring_comparator": {
+    "cached_prompt_tokens": 17120,
+    "fresh_prompt_tokens": 117728,
+    "path": "../gemma4_h200_swa_contiguous_ring_cache/artifacts/remote-endpoint/endpoint-artifacts__ENDPOINT_RESULT.json",
+    "sha256": "74bdb22c4bc217299d920bd53a49557403e3a838ba3c98df903ac119e4c4c64c"
+  },
+  "runtime": {
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+  },
+  "schema_version": 1,
+  "selection": {
+    "path": "../gemma4_h200_width16384_lowrank_recovery/inputs/JOINT_NORM_SELECTION.json",
+    "sha256": "185dbc56e46ea942667f9be820cc617a50a1262c3bf71a976c9506474b9b3df3"
+  },
+  "workload_runner": {
+    "path": "../gemma4_h200_width16384_lowrank_recovery/inputs/stack/fp8_qkv_paired_runner.py",
+    "sha256": "ab5b9c2ce9c63d64481dfae9217c3dc3358ebdff3e933f32734f691977959d83"
+  }
+}

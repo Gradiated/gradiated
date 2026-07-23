@@ -24,6 +24,15 @@ elif [[ "$mode" == scheduler_trace_v2 ]]; then
   artifacts="$root/scheduler-rebind-artifacts"
   container_artifacts=/work/scheduler-rebind-artifacts
   mode=scheduler_trace
+elif [[ "$mode" == scheduler_candidate_repair ]]; then
+  artifacts="$root/scheduler-repair-artifacts"
+  container_artifacts=/work/scheduler-repair-artifacts
+  sudo docker rm -f residual-profile residual-control residual-candidate residual-sync-trace gemma-fp8-control-v0513 gemma-fp8-mtp-v0513 sglang-endpoint >/dev/null 2>&1 || true
+  mode=scheduler_candidate
+elif [[ "$mode" == scheduler_trace_repair ]]; then
+  artifacts="$root/scheduler-repair-artifacts"
+  container_artifacts=/work/scheduler-repair-artifacts
+  mode=scheduler_trace
 elif [[ "$mode" == attention_pair ]]; then
   artifacts="$root/attention-artifacts-v2"
   container_artifacts=/work/attention-artifacts-v2
@@ -176,7 +185,7 @@ start_server() {
   local command=(python3 /work/input/proven_v0513_endpoint_entrypoint.py "${base_args[@]}")
   local profile_env=()
   local scheduler_env=()
-  if [[ "$requested_mode" == scheduler_pair_v2 || "$requested_mode" == scheduler_trace_v2 ]]; then
+  if [[ "$requested_mode" == scheduler_pair_v2 || "$requested_mode" == scheduler_trace_v2 || "$requested_mode" == scheduler_candidate_repair || "$requested_mode" == scheduler_trace_repair ]]; then
     scheduler_env=(-e SCHEDULER_REBIND_STACKED=1)
   fi
   if [[ "$profiled" == yes ]]; then
@@ -200,6 +209,19 @@ start_server() {
   done
   sudo docker logs "$container" >"$artifacts/$arm.server-start.log" 2>&1 || true
   [[ "$ready" -eq 1 ]] || fail "$arm.server_not_ready"
+  if [[ "$requested_mode" == scheduler_candidate_repair || "$requested_mode" == scheduler_trace_repair ]]; then
+    python3 - "$audit/residual.jsonl" <<'PY' || fail "$arm.scheduler_installation_proof_missing"
+import json,pathlib,sys
+rows=[json.loads(x) for x in pathlib.Path(sys.argv[1]).read_text().splitlines() if x]
+assert any(
+    row.get('candidate_path') == 'Scheduler.run_batch.observed_source_schedule_stream_forward_penalty_snapshot'
+    and row.get('phase') == 'installation_complete'
+    and row.get('implementation_sha256') == '3b5aa497985a400c16189db8359a458d981adff66d8465c26a92ed54394414e6'
+    and row.get('predecessor') == 'pinned_async_penalty_tokens'
+    for row in rows
+)
+PY
+  fi
   python3 - "$artifacts/$arm.smoke.json" <<'PY' || fail "$arm.smoke_failed"
 import json,sys,urllib.request
 rows=[]
@@ -361,7 +383,7 @@ if [[ "$mode" == sync_trace || "$mode" == scheduler_trace ]]; then
   validate_baseline_proofs trace
   validate_attention_proof trace
   validate_retained_sync_proof trace
-  if [[ "$requested_mode" == scheduler_trace_v2 ]]; then
+  if [[ "$requested_mode" == scheduler_trace_v2 || "$requested_mode" == scheduler_trace_repair ]]; then
     validate_producer_fused_proof trace
     validate_scheduler_proof trace
   else
@@ -389,6 +411,38 @@ elif [[ "$mode" == profile ]]; then
     >"$artifacts/nsys-stats.csv" 2>"$artifacts/nsys-stats.stderr" || fail profiler_stats_failed
   validate_baseline_proofs profile
   atomic_terminal profile_complete exact_profile_control_persisted
+elif [[ "$mode" == scheduler_candidate ]]; then
+  test -s "$input/residual_intervention.py" || fail residual_intervention_missing
+  test -s "$input/attention_intervention.py" || fail attention_intervention_missing
+  test -s "$input/scheduler_intervention.py" || fail scheduler_intervention_missing
+  test -s "$input/retained_control_terminal.json" || fail retained_control_terminal_missing
+  python3 - "$input/retained_control_terminal.json" <<'PY' || fail retained_control_terminal_invalid
+import json,sys
+x=json.load(open(sys.argv[1])); assert x.get('pass') is True and x.get('complete_requests') == 32
+assert float(x['service_seconds_per_request']) == 0.6745249759062517
+assert x['cache']['cached_prompt_tokens_delta'] == 17120 and x['cache']['uncached_prompt_tokens_delta'] == 117728
+PY
+  rm -rf "$artifacts/candidate" "$artifacts/candidate-audit"
+  start_server candidate residual-candidate no
+  run_exact candidate residual-candidate fp8_qkv_residual_candidate
+  validate_baseline_proofs candidate
+  validate_attention_proof candidate
+  validate_retained_sync_proof candidate
+  validate_producer_fused_proof candidate
+  validate_scheduler_proof candidate
+  python3 - "$input/retained_control_terminal.json" "$artifacts/candidate/TERMINAL.json" "$artifacts/PAIRED_TERMINAL.json" "$artifacts/candidate-audit/residual.jsonl" <<'PY'
+import json,os,pathlib,sys
+c=json.load(open(sys.argv[1])); q=json.load(open(sys.argv[2])); out=pathlib.Path(sys.argv[3]); proof=[json.loads(x) for x in pathlib.Path(sys.argv[4]).read_text().splitlines() if x]
+control=float(c['service_seconds_per_request']); candidate=float(q['service_seconds_per_request']); gain=1-candidate/control
+scheduler=any(x.get('candidate_path')=='Scheduler.run_batch.observed_source_schedule_stream_forward_penalty_snapshot' and x.get('phase')=='runtime_invocation' and x.get('ordering_edge')=='forward_stream.wait_stream(schedule_stream)' and x.get('lifetime')=='record_batch_in_overlap_two_iteration_ring' for x in proof)
+installation=any(x.get('candidate_path')=='Scheduler.run_batch.observed_source_schedule_stream_forward_penalty_snapshot' and x.get('phase')=='installation_complete' and x.get('implementation_sha256')=='3b5aa497985a400c16189db8359a458d981adff66d8465c26a92ed54394414e6' and x.get('predecessor')=='pinned_async_penalty_tokens' for x in proof)
+smoke=json.load(open(out.parent/'candidate.smoke.json'))
+valid=bool(smoke.get('pass')) and scheduler and installation
+classification='promote_ceiling' if valid and candidate<=0.6381105230769232 else ('retain_simple_positive' if valid and gain>0 else 'close_scheduler_overlap' if valid else 'invalid')
+v={'schema_version':1,'status':'terminal','classification':classification,'pass':valid,'control':c,'candidate':q,'control_service_seconds_per_request':control,'candidate_service_seconds_per_request':candidate,'reduction_fraction':gain,'economic_ceiling_seconds_per_request':0.6381105230769232,'ceiling_pass':valid and candidate<=0.6381105230769232,'retain_pass':valid and gain>0,'semantic_proof':smoke,'accounting_proof':{'control':c['cache'],'candidate':q['cache']},'candidate_path_proof':proof,'installation_proof':installation,'control_replayed':False}
+tmp=out.with_suffix('.part'); tmp.write_text(json.dumps(v,indent=2,sort_keys=True)+'\n'); os.replace(tmp,out)
+PY
+  atomic_terminal pair_complete repaired_candidate_scientific_terminal_persisted
 elif [[ "$mode" == pair ]]; then
   test -s "$input/residual_intervention.py" || fail residual_intervention_missing
   test -s "$input/attention_intervention.py" || fail attention_intervention_missing

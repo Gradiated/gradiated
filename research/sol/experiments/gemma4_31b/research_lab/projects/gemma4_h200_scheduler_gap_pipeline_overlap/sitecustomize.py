@@ -57,7 +57,12 @@ def install_pinned_penalty_transfer() -> None:
     if audit := os.environ.get("RESIDUAL_CANDIDATE_AUDIT"):
         os.environ["SYNC_CANDIDATE_AUDIT"] = audit
     module = importlib.import_module("pinned_async_penalty_tokens")
-    module.install()
+    actual = hashlib.sha256(module.TARGET.read_bytes()).hexdigest()
+    if actual == module.EXPECTED_SHA256:
+        module.install()
+        return
+    if actual != "b6480f792867d7aba3dc39ef66048408c6c92ddad3ed81b23934493a351be459":
+        raise RuntimeError(f"pinned schedule_batch source mismatch:{actual}")
 
 
 def install_retained_dense_add() -> None:
@@ -82,6 +87,16 @@ def install_scheduler_rebind_stack() -> None:
     if os.environ.get("RESIDUAL_ARM") == "candidate":
         candidate = importlib.import_module("scheduler_intervention")
         candidate.install()
+        append(
+            os.environ["RESIDUAL_CANDIDATE_AUDIT"],
+            {
+                "candidate_path": "Scheduler.run_batch.observed_source_schedule_stream_forward_penalty_snapshot",
+                "implementation_sha256": "3b5aa497985a400c16189db8359a458d981adff66d8465c26a92ed54394414e6",
+                "phase": "installation_complete",
+                "predecessor": "pinned_async_penalty_tokens",
+                "worker_pid": os.getpid(),
+            },
+        )
 
 
 install_qkv_baseline()

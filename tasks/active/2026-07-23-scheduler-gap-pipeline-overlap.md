@@ -12,7 +12,7 @@ Rebind the measured 358-gap scheduler mechanism to the observed retained source,
 - Codex thread:
 - created: 2026-07-23T02:40:37+00:00
 - started: 2026-07-23T02:40:37+00:00
-- last updated: 2026-07-23T03:09:00+00:00
+- last updated: 2026-07-23T03:31:37+00:00
 - scope: research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_scheduler_gap_pipeline_overlap
 - excluded paths:
 - dependencies:
@@ -25,7 +25,7 @@ Rebind the measured 358-gap scheduler mechanism to the observed retained source,
 - SLO or budget: cumulative project reservation $12; one retained H200; no candidate replay.
 - timeout: two claimed GPU-hours / three wall-clock hours from iteration-2 claim.
 - artifact locations: `research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_scheduler_gap_pipeline_overlap/artifacts/scheduler-gap-observed-v2-20260723t0305z`
-- resume command: none; project is terminal.
+- resume command: none; scientific terminal reached.
 - rollback or cleanup: bench released ready; no provider resource created or destroyed.
 
 ## Plan
@@ -37,9 +37,9 @@ Rebind the measured 358-gap scheduler mechanism to the observed retained source,
 ## Result
 
 - status: complete
-- verification: DevEx check, JSON parsing, Python compilation, shell syntax, exact source and artifact hashes.
+- verification: candidate-only H200 endpoint passed 32/32 exact accounting and runtime path proof; minimum trace workload completed with the same proof.
 - changed paths: project directory and this task packet.
-- limitations or blocked paths: worker-local scheduler installation was absent after non-idempotent multiprocess `sitecustomize`; the candidate-labeled workload ran, so no retry or trace is allowed.
+- limitations or blocked paths: Nsight report was absent after the completed trace capture; the trace cannot be replayed.
 - commit: this handoff commit
-- next action: do not replay or relabel; a worker-local idempotent redesign requires a new admitted project.
+- next action: do not replay; this scheduler overlap is a measured negative.
 - released: 2026-07-23T03:08:59+00:00

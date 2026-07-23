@@ -24,7 +24,7 @@ NEBIUS = pathlib.Path("/root/workspace/research/sol/experiments/glm47flash/campa
 KEY = pathlib.Path("/root/.config/nebius/glm-campaign/ssh_ed25519")
 KNOWN_HOSTS = pathlib.Path("/root/.config/nebius/glm-campaign/known_hosts")
 REMOTE = "/home/glmrunner/gemma4-h200-flashinfer-metadata-scalar-elimination"
-AUTHORIZED_USD = 12.0
+AUTHORIZED_USD = 6.0
 MAX_CLAIM_SECONDS = 2 * 60 * 60
 RETRIEVAL_RESERVE_SECONDS = 15 * 60
 
@@ -119,12 +119,15 @@ def main() -> int:
     parser.add_argument("--artifact-root", type=pathlib.Path, required=True)
     parser.add_argument("--absolute-deadline-epoch", type=int, required=True)
     parser.add_argument("--pair-only", action="store_true")
+    parser.add_argument("--scheduler-candidate-repair", action="store_true")
     parser.add_argument("--intervention-request", type=pathlib.Path)
     args = parser.parse_args()
     args.artifact_root.mkdir(parents=True, exist_ok=False)
     events = args.artifact_root / "outer-events.jsonl"
     pair_intervention: dict[str, object] | None = None
     pair_boundary: str | None = None
+    if args.scheduler_candidate_repair and not args.pair_only:
+        raise RuntimeError("scheduler_candidate_repair_requires_pair_only")
     if args.pair_only:
         if args.intervention_request is None:
             raise RuntimeError("pair_intervention_request_missing")
@@ -212,7 +215,9 @@ def main() -> int:
     ip: str | None = None
     worker_terminal: dict[str, object] = {}
     invocation_state: dict[str, object] = {}
-    if pair_boundary == "metadata_producer_fused":
+    if args.scheduler_candidate_repair:
+        remote_artifacts = f"{REMOTE}/scheduler-repair-artifacts"
+    elif pair_boundary == "metadata_producer_fused":
         remote_artifacts = f"{REMOTE}/iteration2-artifacts"
     elif pair_boundary == "scheduler_observed_overlap":
         remote_artifacts = f"{REMOTE}/scheduler-rebind-artifacts"
@@ -300,6 +305,11 @@ def main() -> int:
             "host_min_new_tokens_gate.py",
             f"{REMOTE}/input",
         )
+        if args.scheduler_candidate_repair:
+            retained_control = PROJECT / "artifacts/scheduler-gap-observed-v2-20260723t0305z/scheduler_pair_v2/control/TERMINAL.json"
+            if sha256(retained_control) != "9a485501fb050a38d6efa923a11ce3bb855c0511b8144d7d15c67a9482f9d55e":
+                raise RuntimeError("retained_control_terminal_identity_mismatch")
+            stage(retained_control, "retained_control_terminal.json", f"{REMOTE}/input")
         reset_fp8_candidate = PROJECT / "RESET_INVALID_FP8_CANDIDATE.json"
         if pair_boundary == "fp8_linear" and reset_fp8_candidate.is_file():
             stage(reset_fp8_candidate, reset_fp8_candidate.name, f"{REMOTE}/input")
@@ -427,6 +437,10 @@ def main() -> int:
                 "metadata_producer_fused": "iteration2_pair",
                 "scheduler_observed_overlap": "scheduler_pair_v2",
             }[pair_boundary]
+            if args.scheduler_candidate_repair:
+                if pair_boundary != "scheduler_observed_overlap":
+                    raise RuntimeError("scheduler_candidate_repair_boundary_invalid")
+                pair_mode = "scheduler_candidate_repair"
             pair_rc = run_worker(pair_mode)
             if pair_rc and repairable(pair_mode) and wait_for_repair(pair_mode):
                 pair_rc = run_worker(pair_mode)
@@ -464,7 +478,9 @@ def main() -> int:
                 emit("scientific_terminal", classification=terminal.get("classification"))
                 return 0 if terminal.get("pass") else 1
             trace_mode = (
-                "scheduler_trace_v2"
+                "scheduler_trace_repair"
+                if args.scheduler_candidate_repair
+                else "scheduler_trace_v2"
                 if pair_boundary == "scheduler_observed_overlap"
                 else "sync_trace"
             )

@@ -1,0 +1,54 @@
+{"arm": "candidate", "event": "static_c32_installed", "monotonic_s": 78723.378586298, "pid": 1}
+{"arm": "candidate", "event": "static_c32_installed", "monotonic_s": 78731.879059706, "pid": 115}
+{"arm": "candidate", "event": "static_c32_installed", "monotonic_s": 78731.885470599, "pid": 117}
+{"arm": "candidate", "event": "static_c32_installed", "monotonic_s": 78731.890686145, "pid": 116}
+{"arm": "candidate", "event": "static_c32_installed", "monotonic_s": 78783.383452084, "pid": 449}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78805.520547868, "output_lengths": [1], "pid": 116}
+{"block_len": 7, "event": "candidate_decode_block", "finite": false, "kv_allocated_lengths": [4221], "kv_committed_lengths": [4221], "location_rows": 7, "location_width": 32, "locations_unique": true, "monotonic_s": 78810.409190554, "output_lengths": [8], "pid": 116, "seq_lens": [4221]}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78810.409833887, "output_lengths": [8], "pid": 116}
+{"block_len": 8, "event": "candidate_decode_block", "finite": false, "kv_allocated_lengths": [4229], "kv_committed_lengths": [4229], "location_rows": 8, "location_width": 32, "locations_unique": true, "monotonic_s": 78810.584419652, "output_lengths": [16], "pid": 116, "seq_lens": [4229]}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78810.584834317, "output_lengths": [16], "pid": 116}
+{"block_len": 6, "event": "candidate_decode_block", "finite": false, "kv_allocated_lengths": [4235], "kv_committed_lengths": [4235], "location_rows": 6, "location_width": 32, "locations_unique": true, "monotonic_s": 78810.71637589, "output_lengths": [22], "pid": 116, "seq_lens": [4235]}
+{"event": "summary_written", "monotonic_s": 78810.717031096, "pass_value": false, "pid": 116, "rows": 32}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78810.7174665, "output_lengths": [22], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78810.850032347, "output_lengths": [23], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78810.981047825, "output_lengths": [24], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78811.112629287, "output_lengths": [25], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78811.244170263, "output_lengths": [26], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78811.377414046, "output_lengths": [27], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78811.509216278, "output_lengths": [28], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78811.641410103, "output_lengths": [29], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78811.772832945, "output_lengths": [30], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78811.905920894, "output_lengths": [31], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78812.03761318, "output_lengths": [32], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78812.169732792, "output_lengths": [33], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78812.300883133, "output_lengths": [34], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78812.433535636, "output_lengths": [35], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78812.564574647, "output_lengths": [36], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78812.696155184, "output_lengths": [37], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78812.827129616, "output_lengths": [38], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78812.959645271, "output_lengths": [39], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78813.090568891, "output_lengths": [40], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78813.222469927, "output_lengths": [41], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78813.353816665, "output_lengths": [42], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78813.486903522, "output_lengths": [43], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78813.617875103, "output_lengths": [44], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78813.749573084, "output_lengths": [45], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78813.880414223, "output_lengths": [46], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78814.012762368, "output_lengths": [47], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78814.143696674, "output_lengths": [48], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78814.275186597, "output_lengths": [49], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78814.405827213, "output_lengths": [50], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78814.537940282, "output_lengths": [51], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78814.668160985, "output_lengths": [52], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78814.798802021, "output_lengths": [53], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78814.928818778, "output_lengths": [54], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78815.060516707, "output_lengths": [55], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78815.190600135, "output_lengths": [56], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78815.321314301, "output_lengths": [57], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78815.451637498, "output_lengths": [58], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78815.584306187, "output_lengths": [59], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78815.715257053, "output_lengths": [60], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78815.846933543, "output_lengths": [61], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78815.978023244, "output_lengths": [62], "pid": 116}
+{"batch_size": 32, "event": "workload_decode_batch", "first_index": 0, "last_index": 31, "monotonic_s": 78816.110572248, "output_lengths": [63], "pid": 116}

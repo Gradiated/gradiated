@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "status": "frozen_before_scientific_invocation",
+  "id": "schedule_stream_forward_penalty_snapshot",
+  "source_binding": "GAP_SOURCE_BINDING.json",
+  "causal_change": "Build SamplingBatchInfo.copy_for_forward on the schedule stream before entering forward_stream_ctx, and make _forward_isolation substitute that already-built snapshot instead of producing it on the forward stream.",
+  "stream_contract": {
+    "producer": "schedule_stream",
+    "consumer": "forward_stream",
+    "ordering_edge": "forward_stream.wait_stream(schedule_stream) after snapshot production and before resolve_forward_inputs/model forward",
+    "lifetime": "The existing record_batch_in_overlap two-iteration ring pins the substituted SamplingBatchInfo and its acc_additive_penalties/acc_scaling_penalties tensors.",
+    "fallback": "The stock in-context copy_for_forward path remains the control; candidate installation must fail closed on a pinned-source mismatch."
+  },
+  "semantic_invariants": [
+    "request admission and completion order unchanged",
+    "current batch host penalizer state is snapshotted exactly once",
+    "no KV slot, prefix-cache, CUDA-graph padding, sampling, or workload geometry change",
+    "no synchronization is removed without the existing cross-stream wait edge"
+  ],
+  "prediction": {
+    "matched_gap_count": 358,
+    "control_matched_gap_total_ns": 643528382,
+    "candidate_matched_gap_total_ns": "strictly_lower",
+    "new_synchronization_predecessor_count": 0,
+    "endpoint_direction": "candidate service seconds per request lower than matched control"
+  },
+  "measurement": "Exactly one profiler-off c32 control/candidate pair, then one candidate trace sufficient to rerun analyze_scheduler_gap.py and verify the candidate path and ordering edge.",
+  "forbidden": [
+    "continuous-decode-step replay",
+    "flag sweep",
+    "workload or concurrency change",
+    "penalizer semantics change",
+    "unproven synchronization removal",
+    "second scientific candidate invocation"
+  ]
+}

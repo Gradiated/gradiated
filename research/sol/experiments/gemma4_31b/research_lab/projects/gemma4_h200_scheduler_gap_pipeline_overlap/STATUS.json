@@ -1,0 +1,37 @@
+{
+  "status": "active",
+  "priority": 1200,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 16.0,
+  "actual_spend_usd": 0.23210725386666667,
+  "allocation_limit": 1,
+  "active_session": null,
+  "summary": "Offline binding is complete: 358 same-stream index-to-dense-add gaps total 0.643528382 seconds (56.326% of scheduler-gap time), and the pinned chain is Scheduler.run_batch through SamplingBatchInfo.copy_for_forward/update_penalties to the retained dense min-new-tokens add. One schedule-stream penalty-snapshot intervention is frozen. GPU measurement is waiting on the priority-1300 metadata iteration-2 terminal and resident-state handoff.",
+  "next_action": "After gemma4_h200_flashinfer_metadata_scalar_elimination iteration 2 records its terminal and releases h200-sync-linear-e00vhh6h29fj68x91g, materialize all admitted shared bytes under this project, claim the bench, install only FROZEN_INTERVENTION.json, and run exactly one profiler-off c32 control/candidate pair plus one minimum candidate trace. Do not replay continuous-decode steps, sweep flags, or change workload geometry.",
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "compute_budget": "One retained H200, at most two claimed GPU-hours and three wall-clock hours from first claim.",
+  "storage_budget": "At most 5 GiB retrieved artifacts.",
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "economic_ceiling_seconds_per_request": 0.6381105231,
+  "current_frontier_seconds_per_request": 0.6762324541249995,
+  "immutable_binding": "EVIDENCE_BINDING.json",
+  "source_binding": "GAP_SOURCE_BINDING.json",
+  "frozen_intervention": "FROZEN_INTERVENTION.json",
+  "blocked_on": {
+    "type": "cross_project_dependency",
+    "project": "gemma4_h200_flashinfer_metadata_scalar_elimination",
+    "required_terminal": "iteration_2_scientific_terminal_and_warm_bench_release",
+    "observed": "STATUS.json remains active with iteration-2 execution as next_action; ITERATION2_BINDING.json exists but no iteration-2 terminal or resident-state handoff is present.",
+    "checked_at_utc": "2026-07-23T02:16:00Z"
+  },
+  "pre_science_claim": {
+    "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+    "claimed_at_utc": "2026-07-23T02:16:23.693913Z",
+    "released_at_utc": "2026-07-23T02:22:03.363065Z",
+    "exposure_seconds": 339.669152,
+    "hourly_cost_usd": 2.46,
+    "cost_usd": 0.23210725386666667,
+    "scientific_invocation_started": false,
+    "release_condition": "ready"
+  }
+}

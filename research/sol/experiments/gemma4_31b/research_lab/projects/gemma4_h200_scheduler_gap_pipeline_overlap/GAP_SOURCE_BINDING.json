@@ -1,0 +1,78 @@
+{
+  "evidence_classes": {
+    "gap_geometry": "measured",
+    "intervention": "frozen_causal_prediction",
+    "python_stack_mapping": "inferred_from_exact_count_and_kernel_geometry",
+    "source_chain": "source_backed"
+  },
+  "frozen_intervention": {
+    "causal_change": "Build the forward-only sampling penalty snapshot on the schedule stream before entering forward_stream_ctx, then substitute the already-built copy inside _forward_isolation.",
+    "id": "schedule_stream_forward_penalty_snapshot",
+    "lifetime": "record_batch_in_overlap pins the substituted sampling copy and its tensors in the existing two-iteration batch ring.",
+    "ordering": "The existing forward_stream.wait_stream(schedule_stream) remains after production and before resolve/forward consumption.",
+    "prediction": "The 358 index-to-dense-add gaps move under prior forward-stream CUDA work; matched interval-union time decreases without a new synchronization predecessor."
+  },
+  "identities": {
+    "host_gate": "2779aae2c51c63ef3119edff9b57e39f09576975ec6e15fb66928e6069405c2a",
+    "schedule_batch": "eea77dac02f593da24e953f0a0ea03237f2874d0ef27522044e8fd6397fcb874",
+    "sqlite": "c42cebd67dff6147843c678a6b7524e75c8477b79bbb5515256b1e619d63a698"
+  },
+  "largest_repeated_gap_class": {
+    "consumer": {
+      "block": [
+        128,
+        1,
+        1
+      ],
+      "geometry": "32 requests by Gemma vocabulary, once per decode step",
+      "grid": [
+        8192,
+        1,
+        1
+      ],
+      "operation": "float32 logits.add_(stop_token_penalties)",
+      "short_name": "vectorized_elementwise_kernel"
+    },
+    "count": 358,
+    "fraction_of_scheduler_gap": 0.5632606725822336,
+    "maximum_us": 5038.378,
+    "median_us": 1778.0405,
+    "predecessor": {
+      "block": [
+        128,
+        1,
+        1
+      ],
+      "grid": [
+        1,
+        1,
+        1
+      ],
+      "short_name": "index_elementwise_kernel"
+    },
+    "stream_id": 13,
+    "total_ns": 643528382
+  },
+  "pass": true,
+  "pinned_source_call_stack": [
+    "Scheduler.run_batch",
+    "Scheduler._forward_isolation",
+    "SamplingBatchInfo.copy_for_forward",
+    "SamplingBatchInfo.update_penalties",
+    "BatchedPenalizerOrchestrator.accumulate_additive_penalties",
+    "BatchedMinNewTokensPenalizer._apply",
+    "Tensor.add_"
+  ],
+  "schema_version": 1,
+  "source_paths": {
+    "orchestrator": "/sgl-workspace/sglang/python/sglang/srt/sampling/penaltylib/orchestrator.py",
+    "retained_min_new_tokens": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_penalizer_host_gate_elimination/intervention/host_min_new_tokens_gate.py",
+    "sampling_info": "/sgl-workspace/sglang/python/sglang/srt/sampling/sampling_batch_info.py",
+    "scheduler": "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler.py"
+  },
+  "window": {
+    "end_ns": 23363918096,
+    "scheduler_gap_ns": 1142505439,
+    "start_ns": 899525316
+  }
+}

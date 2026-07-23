@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "checkpoint_bytes": 62578655208
+  },
+  "runtime": {
+    "release": "sglang v0.5.13",
+    "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+  },
+  "workload": {
+    "requests": 32,
+    "concurrency": 32,
+    "prompt_tokens_per_request": 4214,
+    "completion_tokens_per_request": 358,
+    "fresh_prompt_tokens_total": 117728,
+    "cached_prompt_tokens_total": 17120
+  },
+  "local_attention_geometry": {
+    "phase": "decode",
+    "layers": 50,
+    "sliding_window_tokens": 1024,
+    "query_heads": 32,
+    "kv_heads": 16,
+    "qk_head_dim": 256,
+    "v_head_dim": 256,
+    "kv_dtype": "fp8_e5m2",
+    "baseline_kernel": "_fwd_kernel",
+    "calls": 3050,
+    "seconds": 3.366290283,
+    "registers_per_thread": 255,
+    "threads_per_cta": 256,
+    "dynamic_shared_memory_bytes": 81920,
+    "grid_x_values": [1, 2],
+    "grid_y": 32
+  },
+  "authoritative_artifacts": {
+    "input_manifest": "../gemma4_h200_decode_sync_graph_elimination/INPUT_MANIFEST.json",
+    "input_manifest_sha256": "e945ee245642cf84cc730bd877f731660a772778b24770b8387d7f92fa0cb432",
+    "residual_attribution": "../gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/ATTRIBUTION.json",
+    "residual_attribution_sha256": "f841db590dbe6f2e6b4fb91048e8132c3807f0321310e1e0b70a3957ac99ab48",
+    "retained_control_terminal": "../gemma4_h200_decode_sync_graph_elimination/artifacts/sync-pair-20260722t2231z/TERMINAL.json",
+    "retained_control_terminal_sha256": "dfe2a227c3053cd2703a08035cbaa1c95838ab3e4300a0e60461c1c970c43b72"
+  },
+  "current_frontier_seconds_per_request": 0.6870190130937459,
+  "economic_ceiling_seconds_per_request": 0.6381105231,
+  "pass": true
+}

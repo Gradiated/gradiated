@@ -1,0 +1,217 @@
+{
+  "candidate_sha256": "9c32a590d68d156c36991625d3fcd04d7dac0e6e3e1a1df059fef951915ab158",
+  "checkpoint": [
+    {
+      "bytes": 4621,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/config.json",
+      "remote_name": "config.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    {
+      "bytes": 32169626,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/tokenizer.json",
+      "remote_name": "tokenizer.json",
+      "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+    },
+    {
+      "bytes": 2095,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/tokenizer_config.json",
+      "remote_name": "tokenizer_config.json",
+      "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"
+    },
+    {
+      "bytes": 18683,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/chat_template.jinja",
+      "remote_name": "chat_template.jinja",
+      "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"
+    },
+    {
+      "bytes": 1689,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/processor_config.json",
+      "remote_name": "processor_config.json",
+      "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"
+    },
+    {
+      "bytes": 120246,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/model.safetensors.index.json",
+      "remote_name": "model.safetensors.index.json",
+      "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+    },
+    {
+      "bytes": 49784788364,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/model-00001-of-00002.safetensors",
+      "remote_name": "model-00001-of-00002.safetensors",
+      "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+    },
+    {
+      "bytes": 12761549884,
+      "identity_basis": "immutable_project_local_hardlink_to_preverified_storage_identity",
+      "path": "inputs/checkpoint/model-00002-of-00002.safetensors",
+      "remote_name": "model-00002-of-00002.safetensors",
+      "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"
+    }
+  ],
+  "checkpoint_total_bytes": 62578655208,
+  "component": [
+    {
+      "bytes": 4390,
+      "path": "remote_component.sh",
+      "remote_name": "remote_component.sh",
+      "sha256": "17946f79300ccb3bc8e2620dbc7943d9dba5a3c8187eb7479431183d080c6024"
+    },
+    {
+      "bytes": 1992,
+      "path": "remote_component_consumer.sh",
+      "remote_name": "remote_component_consumer.sh",
+      "sha256": "3d3e2d3c833ce219984ec8f42a5c692440140900b355977cd8cbc4130dd20391"
+    },
+    {
+      "bytes": 12348,
+      "path": "component_benchmark.py",
+      "remote_name": "component_benchmark.py",
+      "sha256": "3c50e85727e39333d03f145679cec6f03bcb38fe22c797179df900e9ee960512"
+    },
+    {
+      "bytes": 4884,
+      "path": "local_value_split.py",
+      "remote_name": "local_value_split.py",
+      "sha256": "a27d0bc8ee6208f63cd3642950f3dfbe841302fe82cbd532ab536af0ff3a0504"
+    },
+    {
+      "bytes": 5703,
+      "path": "analyze_component.py",
+      "remote_name": "analyze_component.py",
+      "sha256": "207d8efe70bed0aa486754e9f8c6e127362505273a3cd96cd9df0de08b1591c7"
+    },
+    {
+      "bytes": 33963,
+      "path": "inputs/source/extend_attention.v0.5.13.py",
+      "remote_name": "inputs/source/extend_attention.v0.5.13.py",
+      "sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1"
+    },
+    {
+      "bytes": 2022,
+      "path": "EVIDENCE_BINDING.json",
+      "remote_name": "inputs/evidence/EVIDENCE_BINDING.json",
+      "sha256": "1be757749b801ff936e1354c551ac0a6627d3468365f86e2f61e90005375de1c"
+    },
+    {
+      "bytes": 10443,
+      "path": "inputs/evidence/authoritative_input_manifest.json",
+      "remote_name": "inputs/evidence/authoritative_input_manifest.json",
+      "sha256": "e945ee245642cf84cc730bd877f731660a772778b24770b8387d7f92fa0cb432"
+    },
+    {
+      "bytes": 4728,
+      "path": "inputs/evidence/residual_attribution.json",
+      "remote_name": "inputs/evidence/residual_attribution.json",
+      "sha256": "f841db590dbe6f2e6b4fb91048e8132c3807f0321310e1e0b70a3957ac99ab48"
+    },
+    {
+      "bytes": 65516,
+      "path": "inputs/evidence/retained_control_terminal.json",
+      "remote_name": "inputs/evidence/retained_control_terminal.json",
+      "sha256": "dfe2a227c3053cd2703a08035cbaa1c95838ab3e4300a0e60461c1c970c43b72"
+    },
+    {
+      "bytes": 3095,
+      "path": "inputs/evidence/attention_subtype_map.json",
+      "remote_name": "inputs/evidence/attention_subtype_map.json",
+      "sha256": "554dd2c277762b07f4ae9e38057779ecf2ea810bbd5e78205eb6735567f51d2c"
+    },
+    {
+      "bytes": 83083,
+      "path": "inputs/evidence/host_gate_persisted_pair.json",
+      "remote_name": "inputs/evidence/host_gate_persisted_pair.json",
+      "sha256": "cc54ce1f768e0c5fc2aa07042f6330d82109707a03313949aee62783e08d0295"
+    },
+    {
+      "bytes": 1293,
+      "path": "inputs/evidence/host_gate_frozen_intervention.json",
+      "remote_name": "inputs/evidence/host_gate_frozen_intervention.json",
+      "sha256": "495f48c5f0a5c7a488494e1921e2d3cf84da01b021514784bfa271865d19d56a"
+    },
+    {
+      "bytes": 906,
+      "path": "inputs/evidence/host_gate_final_terminal.json",
+      "remote_name": "inputs/evidence/host_gate_final_terminal.json",
+      "sha256": "e232522966069dbb4bc69142d66f0b10c3dab6386390d1d5d77d8ec3d6e361de"
+    },
+    {
+      "bytes": 1383,
+      "path": "inputs/evidence/host_gate_sync_counter.json",
+      "remote_name": "inputs/evidence/host_gate_sync_counter.json",
+      "sha256": "ae491695c64a97a7c3b6cb064aaf07358b076b5cde2b632812e87f7950122bdc"
+    }
+  ],
+  "design": "extend_attention_fwd.local_head256_value_split2",
+  "endpoint_programs": [
+    {
+      "bytes": 2059,
+      "path": "endpoint_sitecustomize.py",
+      "remote_name": "sitecustomize.py",
+      "sha256": "b219f35f91d224e2bfe4ccf09ef3284812ca3faa562cf4efac272ec65b969255"
+    },
+    {
+      "bytes": 36024,
+      "path": "candidate_local_value_split.py",
+      "remote_name": "candidate_local_value_split.py",
+      "sha256": "9c32a590d68d156c36991625d3fcd04d7dac0e6e3e1a1df059fef951915ab158"
+    },
+    {
+      "bytes": 9041,
+      "path": "remote_endpoint_pair.sh",
+      "remote_name": "remote_endpoint_pair.sh",
+      "sha256": "22f5a991929d0ed34f06a6f9f65a45d74b7f62499702a86b7bb0123cb9a18d71"
+    }
+  ],
+  "pass": true,
+  "project": "gemma4_h200_local_attention_register_residency",
+  "schema_version": 1,
+  "source_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
+  "stack": [
+    {
+      "bytes": 6062,
+      "path": "inputs/stack/proven_v0513_endpoint_entrypoint.py",
+      "remote_name": "proven_v0513_endpoint_entrypoint.py",
+      "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc"
+    },
+    {
+      "bytes": 9494,
+      "path": "inputs/stack/fp8_qkv_paired_runner.py",
+      "remote_name": "fp8_qkv_paired_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    {
+      "bytes": 6370,
+      "path": "inputs/stack/install_endpoint_patch.py",
+      "remote_name": "install_endpoint_patch.py",
+      "sha256": "71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588"
+    },
+    {
+      "bytes": 26612,
+      "path": "inputs/stack/qkv_epilogue_discriminator.py",
+      "remote_name": "qkv_epilogue_discriminator.py",
+      "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"
+    },
+    {
+      "bytes": 2084,
+      "path": "inputs/stack/residual_sitecustomize.py",
+      "remote_name": "residual_sitecustomize.py",
+      "sha256": "76c26c124c1b1af52da0f46a991c4a3e54732db67b4968e1f16f39eb5b432065"
+    },
+    {
+      "bytes": 4606,
+      "path": "inputs/stack/attention_intervention.py",
+      "remote_name": "attention_intervention.py",
+      "sha256": "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8"
+    }
+  ]
+}

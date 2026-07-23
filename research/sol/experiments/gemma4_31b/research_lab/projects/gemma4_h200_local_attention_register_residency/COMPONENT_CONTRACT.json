@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "decision": "Promote one exact c32 control/candidate pair only if the real-consumer component is numerically valid, meets the residency and no-spill gates, and predicts at least 3% whole-request gain or reaches the campaign ceiling when stacked with the measured host-gate result.",
+  "hypothesis": "Recomputing the identical QK scores and online-softmax normalizer for two disjoint 128-wide V slices halves the FP32 value-accumulator live range, changes the observed local grid from 32/64 to 64/128 CTAs, and admits two CTAs per H200 SM without spills. Higher residency and fuller grid waves can outweigh duplicated QK work.",
+  "scope": {
+    "accelerator": "nvidia-h200-sxm",
+    "runtime": "sglang_v0.5.13_commit_28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "source_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
+    "candidate_sha256": "9c32a590d68d156c36991625d3fcd04d7dac0e6e3e1a1df059fef951915ab158",
+    "candidate_path": "extend_attention_fwd.local_head256_value_split2",
+    "q_heads": 32,
+    "kv_heads": 16,
+    "qk_head_dim": 256,
+    "v_head_dim": 256,
+    "sliding_window_size": 1024,
+    "kv_cache_dtype": "fp8_e5m2",
+    "block_m": 64,
+    "block_n": 64,
+    "value_splits": 2,
+    "value_slice": 128,
+    "observed_batch_sizes": [1, 2],
+    "observed_grid_z": [2, 32]
+  },
+  "quality_gate": {
+    "all_finite": true,
+    "maximum_relative_l2": 0.005,
+    "minimum_cosine": 0.9999,
+    "cases": [
+      "batch2_prefix1023_1025_extend65_127_boundary",
+      "batch1_prefix1024_extend128_grid_z2",
+      "batch2_prefix1024_1025_extend2048_128_grid_z32"
+    ]
+  },
+  "physical_gate": {
+    "registers_per_thread_at_most_or_register_limited_ctas_at_least": [128, 2],
+    "shared_memory_limited_ctas_at_least": 2,
+    "local_load_store_sectors_and_stack_size": "candidate_not_greater_than_matched_control"
+  },
+  "performance_gate": {
+    "minimum_conservative_whole_request_reduction_fraction": 0.03,
+    "alternative": "closed_by_host_gate_counter_falsification",
+    "host_gate_trace_result": "358_of_358_four_byte_d2h_predecessors_remained_and_all_387_long_syncs_remained"
+  },
+  "budget": {
+    "authorized_cumulative_usd": 16.0,
+    "prior_spend_usd": 0.0,
+    "maximum_claim_hours": 4,
+    "experimental_rate_usd_per_hour": 2.46
+  },
+  "timeout": {
+    "maximum_wall_hours_from_claim": 5,
+    "owner_claim_hours": 4,
+    "retrieval_reserve_minutes": 5
+  },
+  "artifact_contract": {
+    "component_terminal": "artifacts/remote-component/artifacts__COMPONENT_RESULT.json",
+    "raw_bundle": "artifacts/remote-component/component-compact.tar.gz",
+    "invocation_marker": "artifacts/remote-component/artifacts__component__INVOCATION_STATE.json",
+    "final_terminal": "artifacts/FINAL_TERMINAL.json"
+  },
+  "arm_policy": "One component process contains the discovery call, exact family timings, and one matched control/candidate counter capture. Ordinary pre-invocation and consumer defects are repaired under the same retained claim. The endpoint is a single c32 pair and is conditional on the preregistered gate."
+}

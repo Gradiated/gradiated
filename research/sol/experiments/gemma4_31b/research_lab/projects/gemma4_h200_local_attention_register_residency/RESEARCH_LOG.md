@@ -1,0 +1,21 @@
+# Research log
+
+## 2026-07-23 — exact local value-split frozen while the priority dependency runs
+
+Question: can the measured 255-register local sliding-attention boundary trade duplicated QK work for a two-way 128-wide V accumulator and improve exact H200 residency enough to matter end to end?
+
+Action: bound the pinned v0.5.13 `_fwd_kernel`, the observed batch/grid family, FP8 E5M2 paged-cache contract, 32/16 head geometry, and unchanged residual consumer. Frozen candidate `extend_attention_fwd.local_head256_value_split2` packs a value-split ID into the existing third launch dimension, recomputes identical QK/online-softmax state twice, and writes disjoint BF16 output slices. It does not change tiles, heads, precision, cache layout, masking, or model semantics. The exact checkpoint, source, retained endpoint stack, and authoritative evidence were materialized project-locally before a claim. The higher-priority host-gate project currently owns the named bench, so no local-attention CUDA or provider spend has occurred yet.
+
+Evidence: `COMPONENT_CONTRACT.json` preregisters the boundary/oracle, matched observed grid-z 2/32 timings, paired counter capture, no-spill comparison, whole-request gate, and conditional c32 pair. `GPU_INPUT_MANIFEST.json` binds the source/candidate and the 62,578,655,208-byte immutable checkpoint snapshot. Python compilation, source transformation, manifest identity checks, and shell syntax checks pass. The offline compiler proxy was unavailable on the coordinator because Triton is not installed; this is not a scientific blocker because the first retained H200 call is the execution-equivalent compile and discovery test.
+
+Next: after `gemma4_h200_penalizer_host_gate_elimination` persists its terminal and releases `h200-sync-linear-e00vhh6h29fj68x91g`, snapshot that measured host-gate terminal locally, atomically claim, and run the component plus minimum counters. Run the one c32 pair only if the frozen promotion gate passes.
+
+## 2026-07-23 — value-split2 is exact but residency-negative; close without endpoint
+
+Measured: after the priority dependency released the warm bench, the retained owner claimed `h200-sync-linear-e00vhh6h29fj68x91g` for 271.979 seconds ($0.185853 conservatively charged). The dependency's apparent pair gain was excluded from stacking because its decision-bearing trace left all 358 four-byte D2H predecessors and all 387 long syncs intact. The local intervention then ran exactly once against the bound source/candidate and completed all component cases plus one matched control/candidate NCU capture.
+
+Result: outputs were bit-identical in the recorded oracle fields (all finite, zero relative L2 and max absolute error, cosine approximately one, and exact downstream RMS consumer). The short observed grid-z2 family improved from 0.245376 to 0.194368 ms (20.79%), but the representative grid-z32 family regressed from 1.392288 to 2.111360 ms (51.65%). With the measured 15.312% local-kernel wall fraction, the conservative whole-request bound is -7.908%, below the +3% promotion gate.
+
+Counters explain the failure. Both control and candidate compiled to 255 registers/thread (256 allocated), remained register-limited to one CTA/SM, and retained the same two-CTA shared-memory limit. Candidate local-load sectors increased from 36,765,696 to 43,360,256 (+17.94%); local-store sectors fell from 6,916,096 to 5,111,808, but the preregistered no-spill-regression gate still fails. NCU duration rose from 1.671200 to 2.605568 ms while the split doubled the recorded z grid from 32 to 64. Duplicating QK/online-softmax work therefore bought neither lower compiler register allocation nor higher residency for the long family.
+
+Repair note: the producer persisted before the original analyzer rejected Nsight Compute 2026's wide CSV layout. The owner retained and heartbeated the claim; `adapt_ncu_wide_csv.py` repeated only the already-recorded header/units blocks, with the original CSV saved and hashes recorded in `REPAIR_BINDING.json`. No candidate CUDA or scientific producer invocation was replayed. The repaired consumer finalized `component_reject`, the c32 endpoint was skipped by contract, and the bench was released ready.

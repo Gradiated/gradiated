@@ -1,0 +1,16 @@
+{
+  "adapted_sha256": "74d98059de4790b18f3368f976f1c5f7660ba4c3011d84a955cb7ad2c5bb339e",
+  "backup_sha256": "038dca25a097cddbd11150e131b4b201ec43588e72223cdcb94411b86a8c2c78",
+  "candidate_cuda_invocation_replayed": false,
+  "classification": "ordinary_consumer_format_adapter",
+  "kernel_names": [
+    "_fwd_kernel",
+    "_fwd_kernel"
+  ],
+  "kernel_rows": 2,
+  "metric_columns": 297,
+  "schema_version": 1,
+  "scientific_producer_replayed": false,
+  "source_sha256": "038dca25a097cddbd11150e131b4b201ec43588e72223cdcb94411b86a8c2c78",
+  "timestamp_utc": "2026-07-23T00:38:01.996426+00:00"
+}

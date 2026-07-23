@@ -106,6 +106,118 @@ def component(args: argparse.Namespace) -> int:
     return 0 if passed else 20
 
 
+def supergraph_component(args: argparse.Namespace) -> int:
+    candidate = load(args.candidate)
+    runner = load(args.candidate_runner)
+    rows = sorted(candidate.get("rows", []), key=lambda row: row["index"])
+    oracle_rows = sorted(
+        candidate.get("oracle_rows", []), key=lambda row: row["index"]
+    )
+    token_matches = sum(
+        int(left == right)
+        for candidate_row, oracle_row in zip(rows, oracle_rows)
+        for left, right in zip(
+            candidate_row.get("token_ids", []), oracle_row.get("token_ids", [])
+        )
+    )
+    token_total = sum(len(row.get("token_ids", [])) for row in rows)
+    rows_exact = sum(
+        candidate_row.get("token_ids") == oracle_row.get("token_ids")
+        for candidate_row, oracle_row in zip(rows, oracle_rows)
+    )
+    transitions = candidate.get("transitions", [])
+    expected_blocks = [7, 8, 6]
+    transition_pass = (
+        len(transitions) == 3
+        and [row.get("block_len") for row in transitions] == expected_blocks
+        and [row.get("output_lengths") for row in transitions]
+        == [[8], [16], [22]]
+        and all(
+            row.get("token_exact")
+            and row.get("position_exact")
+            and row.get("request_map_exact")
+            and row.get("kv_byte_exact")
+            and row.get("finite")
+            and row.get("locations_unique")
+            and int(row.get("kv_bytes_compared", 0)) > 0
+            for row in transitions
+        )
+    )
+    candidate_ms = float(candidate.get("candidate_device_ms") or math.inf)
+    candidate_replay_measured = math.isfinite(candidate_ms) and candidate_ms > 0
+    boundary_ratio = 3 / 21
+    conservative_reduction = SCHEDULER_GAP_SHARE * (1 - boundary_ratio)
+    predicted = COMPARATOR * (1 - conservative_reduction)
+    passed = all(
+        [
+            candidate.get("pass") is True,
+            runner.get("pass") is True,
+            token_matches == 704,
+            token_total == 704,
+            rows_exact == 32,
+            len(rows) == 32,
+            len(oracle_rows) == 32,
+            candidate.get("token_id_equality") is True,
+            candidate.get("position_transition_equality") is True,
+            candidate.get("kv_byte_exact") is True,
+            candidate.get("request_map_byte_exact") is True,
+            candidate.get("finite_outputs") is True,
+            candidate.get("block_lengths") == expected_blocks,
+            candidate.get("control_host_boundaries") == 21,
+            candidate.get("decode_boundaries") == 3,
+            candidate.get("host_result_syncs") == 3,
+            candidate.get("model_graph_replays") == 21,
+            transition_pass,
+            candidate.get("oracle_timed") is False,
+            candidate_replay_measured,
+            conservative_reduction > 0,
+        ]
+    )
+    output = {
+        "schema_version": 2,
+        "stage": "component",
+        "pass": passed,
+        "classification": (
+            "component_pass_positive_bound"
+            if passed
+            else "component_numerical_semantic_or_bound_reject"
+        ),
+        "token_id_equality": token_matches == 704,
+        "token_matches": token_matches,
+        "token_total": token_total,
+        "rows_token_exact": rows_exact,
+        "finite_outputs": candidate.get("finite_outputs"),
+        "position_transition_equality": candidate.get(
+            "position_transition_equality"
+        ),
+        "kv_byte_exact": candidate.get("kv_byte_exact"),
+        "request_map_byte_exact": candidate.get("request_map_byte_exact"),
+        "transition_pass": transition_pass,
+        "logical_blocks": [8, 8, 6],
+        "candidate_decode_forward_blocks": expected_blocks,
+        "control_host_boundaries": candidate.get("control_host_boundaries"),
+        "candidate_host_boundaries": candidate.get("host_result_syncs"),
+        "model_graph_replays": candidate.get("model_graph_replays"),
+        "oracle_timed": candidate.get("oracle_timed"),
+        "candidate_device_ms": candidate_ms,
+        "candidate_replay_measured": candidate_replay_measured,
+        "positive_bound_basis": (
+            "The semantic oracle is deliberately untimed. The conservative "
+            "bound applies the persisted scope-matched scheduler-gap share "
+            "only to the measured 21-to-3 host-boundary reduction; candidate "
+            "replay time is recorded as a finite implementation guard."
+        ),
+        "host_boundaries_reduction_fraction": 1 - boundary_ratio,
+        "scheduler_gap_share_input": SCHEDULER_GAP_SHARE,
+        "conservative_whole_request_reduction_fraction": conservative_reduction,
+        "conservative_candidate_seconds_per_request_bound": predicted,
+        "qualified_comparator_seconds_per_request": COMPARATOR,
+        "endpoint_gate": passed,
+    }
+    args.output.write_text(json.dumps(output, indent=2, sort_keys=True) + "\n")
+    return 0 if passed else 20
+
+
 def stream_token_texts(path: pathlib.Path, limit: int) -> list[str]:
     values: list[str] = []
     for line in path.read_text().splitlines():
@@ -295,6 +407,16 @@ def main() -> int:
         "--candidate-runner", type=pathlib.Path, required=True
     )
     component_parser.add_argument("--output", type=pathlib.Path, required=True)
+    supergraph_parser = subparsers.add_parser("supergraph-component")
+    supergraph_parser.add_argument(
+        "--candidate", type=pathlib.Path, required=True
+    )
+    supergraph_parser.add_argument(
+        "--candidate-runner", type=pathlib.Path, required=True
+    )
+    supergraph_parser.add_argument(
+        "--output", type=pathlib.Path, required=True
+    )
     recovered_parser = subparsers.add_parser("component-recovered")
     recovered_parser.add_argument(
         "--control-runner-dir", type=pathlib.Path, required=True
@@ -317,6 +439,8 @@ def main() -> int:
     args = parser.parse_args()
     if args.command == "component":
         return component(args)
+    if args.command == "supergraph-component":
+        return supergraph_component(args)
     if args.command == "component-recovered":
         return component_recovered(args)
     return endpoint(args)

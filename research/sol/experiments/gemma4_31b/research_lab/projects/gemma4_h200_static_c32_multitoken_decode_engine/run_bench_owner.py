@@ -25,7 +25,7 @@ NEBIUS = pathlib.Path(
     "/root/workspace/research/sol/experiments/glm47flash/campaign_100/nebius"
 )
 KEY = pathlib.Path("/root/.config/nebius/glm-campaign/ssh_ed25519")
-REMOTE = "/home/glmrunner/gemma4-static-c32"
+REMOTE = "/home/glmrunner/gemma4-static-c32-supergraph"
 CHECKPOINT_CANDIDATES = (
     "/home/glmrunner/gemma4-async-result-pipeline/checkpoint",
     "/home/glmrunner/gemma4-fp8-layer-fusion/checkpoint",
@@ -77,10 +77,10 @@ def input_rows() -> list[dict[str, object]]:
         + [
             PROJECT / "DIRECTOR_BINDING.json",
             PROJECT / "verify_director_binding.py",
-            PROJECT / "static_c32_sitecustomize.py",
+            PROJECT / "static_c32_supergraph_sitecustomize.py",
             PROJECT / "run_exact_workload.py",
             PROJECT / "analyze_static_c32.py",
-            PROJECT / "remote_static_c32.sh",
+            PROJECT / "remote_static_c32_supergraph.sh",
         ]
     )
     return [
@@ -247,7 +247,7 @@ def main() -> int:
                         / "input"
                         / pathlib.PurePosixPath(*relative.parts[1:])
                     )
-                elif relative.name == "static_c32_sitecustomize.py":
+                elif relative.name == "static_c32_supergraph_sitecustomize.py":
                     destination = pathlib.PurePosixPath(REMOTE) / "input/sitecustomize.py"
                 else:
                     destination = pathlib.PurePosixPath(REMOTE) / "input" / relative.name
@@ -310,7 +310,7 @@ def main() -> int:
                 ip,
                 KEY,
                 f"STATIC_C32_REMOTE_ROOT={REMOTE} timeout --signal=TERM {worker_timeout} "
-                f"bash {REMOTE}/input/remote_static_c32.sh",
+                f"bash {REMOTE}/input/remote_static_c32_supergraph.sh",
                 timeout=worker_timeout + 60,
             )
             (args.artifact_root / f"remote-worker-attempt-{attempt}.stdout").write_text(
@@ -345,7 +345,14 @@ def main() -> int:
             endpoint_started = bool(
                 final_invocation.get("candidate_endpoint_started")
             )
-            if classification != "integration_failure" or endpoint_started:
+            component_cuda_started = bool(
+                final_invocation.get("candidate_component_cuda_started")
+            )
+            if (
+                classification != "integration_failure"
+                or endpoint_started
+                or component_cuda_started
+            ):
                 break
             repair_deadline = min(deadline - RETRIEVAL_RESERVE_SECONDS, time.time() + 900)
             ready = {
@@ -354,6 +361,7 @@ def main() -> int:
                 "diagnostic": final_worker_terminal,
                 "attempt": attempt,
                 "candidate_endpoint_started": endpoint_started,
+                "candidate_component_cuda_started": component_cuda_started,
                 "repair_deadline_epoch": repair_deadline,
             }
             atomic_json(args.artifact_root / "REPAIR_READY.json", ready)
@@ -374,11 +382,16 @@ def main() -> int:
         if final_worker_terminal is None or final_invocation is None:
             raise RuntimeError("typed retrieval boundary: no worker terminal")
 
-        archive = args.artifact_root / "static-c32-compact.tar.gz.part"
-        sidecar = args.artifact_root / "static-c32-compact.tar.gz.sha256"
+        archive = args.artifact_root / "static-c32-supergraph-compact.tar.gz.part"
+        sidecar = (
+            args.artifact_root / "static-c32-supergraph-compact.tar.gz.sha256"
+        )
         for remote_path, local_path in (
-            (f"{REMOTE}/static-c32-compact.tar.gz", archive),
-            (f"{REMOTE}/static-c32-compact.tar.gz.sha256", sidecar),
+            (f"{REMOTE}/static-c32-supergraph-compact.tar.gz", archive),
+            (
+                f"{REMOTE}/static-c32-supergraph-compact.tar.gz.sha256",
+                sidecar,
+            ),
         ):
             copied = run(
                 [
@@ -396,7 +409,7 @@ def main() -> int:
                 )
         if sha256(archive) != sidecar.read_text().split()[0]:
             raise RuntimeError("typed retrieval boundary: archive hash mismatch")
-        final_archive = args.artifact_root / "static-c32-compact.tar.gz"
+        final_archive = args.artifact_root / "static-c32-supergraph-compact.tar.gz"
         os.replace(archive, final_archive)
         retrieved = args.artifact_root / "retrieved"
         retrieved.mkdir()
@@ -462,7 +475,7 @@ def main() -> int:
                 "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
                 "image": "Pinned SGLang v0.5.13 digest 6113665 retained",
                 "checkpoint": f"Exact immutable checkpoint retained at {checkpoint if 'checkpoint' in locals() else 'resident path'}",
-                "runtime": "Static c32 multi-token terminal retrieved",
+                "runtime": "Static c32 dependency-supergraph terminal retrieved",
                 "artifacts": str(args.artifact_root),
                 "caches": "Pinned image, checkpoint, CUDA graphs, Triton ring, and dynamic-FP8 caches retained",
                 "server_state": "Last healthy control/candidate server retained when available",

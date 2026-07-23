@@ -23,6 +23,25 @@
     "path": "inputs/bound/CLOSED_DEVICE_GRAPH_TERMINAL.json",
     "sha256": "388f25b700b8897ecaf0b425f263f914b0c37a2ea050189289a3e458c37c019a"
   },
+  "consumed_direct_replay_component": {
+    "candidate_decode_boundaries": 3,
+    "classification": "component_numerical_semantic_or_bound_reject",
+    "control_decode_boundaries": 21,
+    "path": "artifacts/static-c32-resume1-20260723t1952z/retrieved/COMPONENT_RESULT.json",
+    "sha256": "01b3f79d28788ebdf617774aa7b72a85e0370834e087567d8a5a2f8ba8a8954c"
+  },
+  "dependency_supergraph_intervention": {
+    "analyzer_path": "analyze_static_c32.py",
+    "analyzer_sha256": "8828d7d0421a18e006a0d396683eeb92f0f556f7979d275545bd07c233aa1f33",
+    "cuda_graph_runner_source_path": "inputs/upstream/model_executor/cuda_graph_runner.py",
+    "cuda_graph_runner_source_sha256": "7d1898247e80ff6a446eb42e4968d2eea0df30b109ee2d089a9ad78791bc079e",
+    "remote_worker_path": "remote_static_c32_supergraph.sh",
+    "remote_worker_sha256": "63b4d17c34610cc8ceb28fadcea92f4fc277976cd4941095cddff48ccb094162",
+    "sitecustomize_path": "static_c32_supergraph_sitecustomize.py",
+    "sitecustomize_sha256": "502470c2fb63472082143abd92f74de8c971c8ed3cd05361bbd2e8f027b3a101",
+    "triton_backend_source_path": "inputs/upstream/layers/attention/triton_backend.py",
+    "triton_backend_source_sha256": "7bc3ae9ef1be59ec07734df442c077a07fb54c28007747f53a552bb81e8e8e2d"
+  },
   "comparator": {
     "cached_prompt_tokens": 17120,
     "fresh_prompt_tokens": 117728,

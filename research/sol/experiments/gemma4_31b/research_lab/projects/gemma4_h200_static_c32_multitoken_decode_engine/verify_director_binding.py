@@ -21,8 +21,40 @@ binding = json.loads((HERE / "DIRECTOR_BINDING.json").read_text())
 checks = (
     (binding["checkpoint"]["manifest_path"], binding["checkpoint"]["manifest_sha256"]),
     (binding["closed_predecessor"]["path"], binding["closed_predecessor"]["sha256"]),
+    (
+        binding["consumed_direct_replay_component"]["path"],
+        binding["consumed_direct_replay_component"]["sha256"],
+    ),
     (binding["comparator"]["path"], binding["comparator"]["sha256"]),
     (binding["workload"]["runner_path"], binding["workload"]["runner_sha256"]),
+    (
+        binding["dependency_supergraph_intervention"]["sitecustomize_path"],
+        binding["dependency_supergraph_intervention"]["sitecustomize_sha256"],
+    ),
+    (
+        binding["dependency_supergraph_intervention"]["remote_worker_path"],
+        binding["dependency_supergraph_intervention"]["remote_worker_sha256"],
+    ),
+    (
+        binding["dependency_supergraph_intervention"]["analyzer_path"],
+        binding["dependency_supergraph_intervention"]["analyzer_sha256"],
+    ),
+    (
+        binding["dependency_supergraph_intervention"][
+            "cuda_graph_runner_source_path"
+        ],
+        binding["dependency_supergraph_intervention"][
+            "cuda_graph_runner_source_sha256"
+        ],
+    ),
+    (
+        binding["dependency_supergraph_intervention"][
+            "triton_backend_source_path"
+        ],
+        binding["dependency_supergraph_intervention"][
+            "triton_backend_source_sha256"
+        ],
+    ),
 )
 for relative_path, expected in checks:
     path = (HERE / relative_path).resolve()

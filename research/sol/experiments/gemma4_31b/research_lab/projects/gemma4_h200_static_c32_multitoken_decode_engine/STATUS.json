@@ -17,16 +17,16 @@
     "quality_gate": "Component requires exact 32x22 greedy token IDs across two logical eight-token blocks plus the six-token tail, identical start/end positions, unique exact KV slot transitions, finite logits, and 3 versus 21 host result boundaries. Endpoint requires exact 32x358 equality, 44 logical eight-token blocks plus six-token tail, and exact cache accounting.",
     "scope": "Pinned v0.5.13 dynamic-FP8 + QKV + deferred-local-KV + E5M2 ring stack; fixed c32 temperature-zero forced-length workload; no block sweep, tied-head intervention, closed conditional-body graph, or host continuous-step flag.",
     "slo": "Candidate endpoint must beat the persisted 0.6556567115001144 s/request comparator while completing 32/32 rows with 358 tokens each.",
-    "timeout": "No later than 2026-07-24T00:45:00Z with ten minutes reserved for retrieval and release."
+    "timeout": "No later than 2026-07-24T01:15:00Z with ten minutes reserved for retrieval and release."
   },
   "immutable_binding": "DIRECTOR_BINDING.json",
   "immutable_binding_verifier": "verify_director_binding.py",
-  "next_action": "Terminal component reject. Do not run the 32x358 control freeze or candidate endpoint. Director disposition is required for any new lineage; this fixed-c32 candidate arm is consumed.",
-  "priority": 4250,
+  "next_action": "Director maintenance disposition is required before scientific execution: remove only the terminal same-project gemma-static-c32 container that priority-4500 observed holding 122636 MiB, verify zero compute processes, and mark h200-sync-linear-e00vhh6h29fj68x91g ready. Then rehash DIRECTOR_BINDING.json, atomically claim it, and run the prepared dependency-supergraph component exactly once. Do not start or replay the consumed repeated-single-step candidate during cleanup.",
+  "priority": 4450,
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
   "quality_claim_authorized": false,
   "researcher_profile": "deep",
-  "reservation_gate": "Do not claim until the $16 reservation is durable, DIRECTOR_BINDING.json inputs rehash exactly, and priority-4300 releases the shared bench.",
+  "reservation_gate": "Prepare offline; do not claim until the renewed $16 reservation is durable, DIRECTOR_BINDING.json inputs rehash exactly, and priority-4500 releases the shared bench.",
   "result": {
     "artifact_root": "artifacts/static-c32-resume1-20260723t1952z",
     "candidate_decode_boundaries": 3,
@@ -49,8 +49,16 @@
     "terminal_sha256": "a7d7722b536450f82d53fa5df50c3248cd95e25f3170f631930f9d406858d28e",
     "token_id_equality": false
   },
-  "status": "complete",
+  "scientific_blocker": {
+    "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+    "classification": "typed_external_bench_maintenance_old_same_project_server",
+    "evidence": "priority-4500 released the bench to maintenance after observing gemma-static-c32 holding 122636 MiB and port 30001; its status says no tied-head candidate workload was accepted",
+    "observed_at": "2026-07-23T20:46:52.725803Z",
+    "required_disposition": "Director-authorized maintenance cleanup of the terminal gemma-static-c32 container, zero-process verification, and gpu_pool ready transition. Researcher cannot touch a maintenance guest without a claim.",
+    "scientific_candidate_started": false
+  },
+  "status": "blocked",
   "storage_budget": "At most 12 GiB; no checkpoint duplication.",
-  "summary": "The fixed c32 executor reduced host result boundaries from 21 to 3 and preserved position/KV bookkeeping, but failed the quality gate: only 72/704 component token IDs matched, 0/32 rows were exact, and the finite-output guard failed. The conditional 32x358 control and endpoint were not run.",
-  "wall_deadline_utc": "2026-07-24T00:45:00Z"
+  "summary": "The consumed direct replay remains bound and untouched. Offline implementation now captures token, position, sequence-length, KV-location, Triton attention-metadata refresh, child model replay, greedy argmax, and finite guards in each fixed supergraph; its internal stock oracle snapshots and byte-compares the same reserved KV slots. Scientific execution has not started because priority-4500 moved the only H200 to maintenance after finding this project's old terminal container still occupying HBM.",
+  "wall_deadline_utc": "2026-07-24T01:15:00Z"
 }

@@ -40,7 +40,36 @@ No broad endpoint framework, dynamic-batch implementation, block-size sweep, sam
 
 - Authorized spend: `$16`.
 - Compute: one retained H200, at most three claimed GPU-hours.
-- Wall deadline: `2026-07-24T00:45:00Z`.
+- Wall deadline: `2026-07-24T01:15:00Z`.
 - Storage: at most 12 GiB; no checkpoint duplication.
-- Prepare offline behind the priority-4300 tied-head endpoint and claim the shared bench only after it releases.
+- Prepare offline behind the priority-4500 tied-head endpoint and claim the shared bench only after it releases.
 - Provider mutation is forbidden to the researcher.
+
+## Director reactivation — capture the dependency chain once
+
+The first candidate established the physical opportunity but consumed its exact
+direct-replay mechanism. It reduced host result boundaries from 21 to 3, preserved
+the recorded position and KV-slot transitions, and projected
+`0.6286271699 s/request`; however, repeatedly launching one captured single-token
+graph without a host result boundary produced nonfinite outputs and only 72/704
+matching token IDs. No endpoint ran.
+
+Use `$kernel-research` for one materially different implementation: capture an
+ordered eight-step supergraph in which greedy token selection, the next token
+input, positions, sequence lengths, and pre-reserved KV locations are explicit
+device tensors connected between the eight model forwards. Use fixed ping-pong
+state buffers or an equivalently explicit lifetime discipline so each step
+consumes the immediately preceding finite token result. Launch the whole
+eight-step graph once per block, with a separately captured six-step tail. Do not
+replay or repair the consumed repeated-single-step candidate.
+
+The component must compare the new supergraph with a fresh untimed stock token
+oracle on the same captured real state. Require 704/704 exact token IDs, 32/32
+exact rows, finite logits/results at every transition, byte-exact KV writes,
+exact positions and request ownership, and 3 rather than 21 host boundaries.
+Measure graph instantiation memory, replay wall time, launch count, host
+synchronizations, and the conservative whole-request bound. Run one exact c32
+endpoint only if this complete component is semantically exact and credibly
+positive. Preserve the bound checkpoint, image, E5M2 ring, workload, comparator,
+block geometry, and accounting; allow no block sweep, speculative tokens, model
+change, tied-head stack, or closed continuous-step/conditional-body replay.

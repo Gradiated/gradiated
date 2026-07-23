@@ -1,0 +1,8 @@
+{
+  "arm": "control",
+  "classification": "counter_probe_complete",
+  "finite": true,
+  "m": 32,
+  "nontrivial": true,
+  "schema_version": 1
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "status": "terminal",
+  "classification": "component_reject",
+  "decision": "Do not promote group-128 AWQ W4 for the admitted c32 decode MLP consumer and do not run the conditional coherence or endpoint pair.",
+  "identity": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "gpu": "NVIDIA H200",
+    "component_snapshot_sha256": "871a79d70b4fe23a5b036a765a129556ff2b4a2affc86606e843dbae215e04f8",
+    "representation": "AWQ W4A16, group_size=128, zero_point=true",
+    "candidate_symbol": "sglang.srt.hardware_backend.gpu.quantization.awq_kernels.AWQMarlinLinearKernel.apply",
+    "control_symbol": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm"
+  },
+  "component": {
+    "correctness_pass": true,
+    "tested_m": [1, 2, 4, 8, 12, 16, 24, 32],
+    "maximum_relative_l2_vs_dequantized_w4": 0.0008861980750225484,
+    "minimum_cosine_similarity_vs_dequantized_w4": 0.9999996423721313,
+    "nonfinite_count": 0,
+    "m32_control_cuda_event_p50_ms": 0.12019199877977371,
+    "m32_candidate_cuda_event_p50_ms": 0.13041599839925766,
+    "m32_speedup": 0.9216047130338716,
+    "saved_seconds_per_request": -0.006843689745292068,
+    "whole_request_reduction_fraction": -0.010143491965409226,
+    "promotion_threshold": 0.03,
+    "promotion_pass": false
+  },
+  "causal_counters": {
+    "classification": "causal_counters_complete",
+    "control_kernel_launches": 5,
+    "candidate_kernel_launches": 3,
+    "control_duration_weighted_dram_throughput_pct": 66.12719808126411,
+    "candidate_duration_weighted_dram_throughput_pct": 29.72197633959638,
+    "control_duration_weighted_sm_throughput_pct": 14.622237584650113,
+    "candidate_duration_weighted_sm_throughput_pct": 38.798682440269076,
+    "candidate_marlin_registers_per_thread": 200,
+    "candidate_marlin_shared_memory_bytes_per_block": 233472,
+    "candidate_marlin_grid_size": 132,
+    "candidate_marlin_waves_per_sm": 1.0,
+    "derived_weight_byte_reduction_fraction": 0.48046875,
+    "interpretation": "W4 reduced stored weight bytes and launch count, but the resource-heavy dequantizing Marlin kernels shifted away from the H200's high-bandwidth FP8 path and were slower at the admitted M32 geometry."
+  },
+  "quality_and_endpoint": {
+    "cheap_coherence_prompts_invoked": 0,
+    "control_endpoint_requests_invoked": 0,
+    "candidate_endpoint_requests_invoked": 0,
+    "reason": "The preregistered 3% component gate failed, so coherence and the sole c32 endpoint pair were forbidden."
+  },
+  "spend": {
+    "authorized_usd": 12.0,
+    "first_continuous_claim_seconds": 831.0967440605164,
+    "first_continuous_claim_usd": 0.5679161084413529,
+    "counter_repair_claim_usd": 0.1888532894293467,
+    "actual_spend_usd": 0.7567693978706995
+  },
+  "artifacts": {
+    "immutable_input_manifest": "GPU_INPUT_MANIFEST.json",
+    "component_terminal": "artifacts/gemma4-w4hybrid-repair-20260723t062229z/result/component/TERMINAL.json",
+    "component_invocation_state": "artifacts/gemma4-w4hybrid-repair-20260723t062229z/result/INVOCATION_STATE.json",
+    "counter_summary": "CAUSAL_COUNTERS.json",
+    "counter_owner_terminal": "artifacts/gemma4-w4hybrid-counters-20260723t063600z/OWNER_TERMINAL.json",
+    "counter_raw_root": "artifacts/gemma4-w4hybrid-counters-20260723t063600z/result"
+  }
+}

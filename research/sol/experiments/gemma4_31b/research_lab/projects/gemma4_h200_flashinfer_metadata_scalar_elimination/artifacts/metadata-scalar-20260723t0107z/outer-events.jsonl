@@ -1,0 +1,93 @@
+{"claim": {"accelerator": "nvidia-h200-sxm", "claim": {"claimed_at": "2026-07-23T00:56:10.692643Z", "heartbeat_at": "2026-07-23T01:07:12.006409Z", "lease_seconds": 10800, "lease_until_utc": "2026-07-23T04:07:12.006409Z", "project": "gemma4_h200_flashinfer_metadata_scalar_elimination", "stale": false}, "contents": {"artifacts": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_local_attention_register_residency/artifacts", "attention_claim_cost_usd": 0.185853, "attention_result": "component_reject", "caches": "Triton/CUDA caches retained under /home/glmrunner/gemma4-local-attention-residency", "checkpoint": "Exact immutable checkpoint retained at /home/glmrunner/gemma4-local-attention-residency/checkpoint when staged", "image": "Pinned SGLang v0.5.13 digest 6113665 retained", "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4", "project": "gemma4_h200_local_attention_register_residency", "runtime": "Local attention value-split component and conditional endpoint complete", "server_state": "Candidate server retained only when endpoint-positive; otherwise image/checkpoint/caches retained."}, "drain_after_release": false, "hourly_cost_usd": 2.46, "id": "h200-sync-linear-e00vhh6h29fj68x91g", "idle_since": null, "lifecycle": {"deadline_utc": "2026-07-23T08:27:53Z", "watchdog": {"control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-sync-linear-h200-20260722t2226z-watchdog.service", "main_pid": 3421402, "unit": "gemma4-sync-linear-h200-20260722t2226z-watchdog.service", "unit_manager": "user"}}, "provider": "nebius", "registered_at": "2026-07-22T22:28:20.458522Z", "resource": {"disk_id": "computedisk-e00x25hxd1pnnxjn8b", "disk_name": "gemma4-sync-linear-h200-20260722t2226z-boot", "instance_id": "computeinstance-e00vhh6h29fj68x91g", "instance_name": "gemma4-sync-linear-h200-20260722t2226z"}, "status": "claimed", "updated_at": "2026-07-23T01:07:12.006409Z"}, "epoch": 1784768912.563935, "event": "claimed"}
+{"bytes": 4621, "epoch": 1784768916.271512, "event": "input_staged", "name": "config.json", "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"}
+{"bytes": 32169626, "epoch": 1784768918.8732774, "event": "input_staged", "name": "tokenizer.json", "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"}
+{"bytes": 2095, "epoch": 1784768920.9764326, "event": "input_staged", "name": "tokenizer_config.json", "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"}
+{"bytes": 18683, "epoch": 1784768922.972504, "event": "input_staged", "name": "chat_template.jinja", "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"}
+{"bytes": 1689, "epoch": 1784768925.0543182, "event": "input_staged", "name": "processor_config.json", "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"}
+{"bytes": 120246, "epoch": 1784768927.1641388, "event": "input_staged", "name": "model.safetensors.index.json", "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"}
+{"epoch": 1784768957.6135807, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769002.6645324, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769047.7092996, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769092.7553554, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769137.8011067, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769182.8537562, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769227.9023201, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769272.9481936, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769317.9930582, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769363.0494673, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769408.094954, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769453.1489303, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769498.1914506, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769543.2355366, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769588.2892349, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769633.3366754, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769678.3861122, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769723.4350994, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769768.4797366, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769813.522705, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769858.5717688, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769903.63093, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784769948.6825516, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"bytes": 49784788364, "epoch": 1784769970.3193247, "event": "input_staged", "name": "model-00001-of-00002.safetensors", "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"}
+{"epoch": 1784769993.72725, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770038.7853296, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770083.8301122, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770128.8735673, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770173.9169898, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"bytes": 12761549884, "epoch": 1784770199.8069446, "event": "input_staged", "name": "model-00002-of-00002.safetensors", "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"}
+{"bytes": 51033, "epoch": 1784770201.6329665, "event": "input_staged", "name": "AUTHORITATIVE_QKV_TERMINAL.json", "sha256": "1b563ea1dd933d097a337b33fb17dc13601ded1689597071c8f6fd9e74f17912"}
+{"bytes": 6062, "epoch": 1784770203.4883113, "event": "input_staged", "name": "proven_v0513_endpoint_entrypoint.py", "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc"}
+{"bytes": 12417, "epoch": 1784770205.5060866, "event": "input_staged", "name": "proven_v0513_paired_endpoint_runner.py", "sha256": "df65b1e49c941c27a975ecb1f2d34041a0e63695c2e3515cf950406204f614f3"}
+{"bytes": 9494, "epoch": 1784770207.4461236, "event": "input_staged", "name": "fp8_qkv_paired_runner.py", "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"}
+{"bytes": 2192, "epoch": 1784770209.2736566, "event": "input_staged", "name": "bound_stack_sitecustomize.py", "sha256": "5791f6718b90b1ac555f7cb53179b18fd523ffb9f469d02582482431623d39fa"}
+{"bytes": 6370, "epoch": 1784770211.2574558, "event": "input_staged", "name": "install_endpoint_patch.py", "sha256": "71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588"}
+{"bytes": 26612, "epoch": 1784770213.2052956, "event": "input_staged", "name": "qkv_epilogue_discriminator.py", "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"}
+{"bytes": 8672, "epoch": 1784770215.1038418, "event": "input_staged", "name": "bound_remote_fp8_stack.sh", "sha256": "f6c80216e29b426811badea59e6e148629d0f5b951efa0e314b04ae19c5b5ffc"}
+{"bytes": 3132, "epoch": 1784770217.0723104, "event": "input_staged", "name": "FP8_QKV_INPUT_MANIFEST.json", "sha256": "d999420ebd05dacd0e15cf08aad34f6a68b657367bf6dc28c4738df0d0663586"}
+{"epoch": 1784770218.9642692, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"bytes": 2637, "epoch": 1784770219.3292751, "event": "input_staged", "name": "sitecustomize.py", "sha256": "206c2cf0f4bde083c47f4fdfa9de3d391f18f7c4d7d7804444b774d6d099eaf8"}
+{"bytes": 20951, "epoch": 1784770221.4203804, "event": "input_staged", "name": "remote_metadata_pair.sh", "sha256": "8ed3809dd77c953dd7a172df9d0e1ab4bb2a36d6c4a600170a5215f46ac57ba1"}
+{"bytes": 2929, "epoch": 1784770223.4675162, "event": "input_staged", "name": "pinned_async_penalty_tokens.py", "sha256": "58f4c65846af62ad21aeb765d7764686c364335d29fff45eac65da86ab296197"}
+{"bytes": 4826, "epoch": 1784770225.4211879, "event": "input_staged", "name": "metadata_equivalence_test.py", "sha256": "814643c45307e8ac2ebcb08c3d608cda265a543f7c7e7424881804800675c24e"}
+{"bytes": 6024, "epoch": 1784770227.4577982, "event": "input_staged", "name": "host_min_new_tokens_gate.py", "sha256": "2779aae2c51c63ef3119edff9b57e39f09576975ec6e15fb66928e6069405c2a"}
+{"bytes": 4606, "epoch": 1784770228.0034807, "event": "input_staged", "name": "attention_intervention.py", "sha256": "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8"}
+{"checkpoint_bytes": 62578655208, "epoch": 1784770228.003559, "event": "immutable_staging_complete"}
+{"bytes": 3402, "epoch": 1784770229.976194, "event": "input_staged", "name": "residual_intervention.py", "sha256": "243008895739195487e758b4c347381c725ddaee09aac3f435b8e4388d4a6fe4"}
+{"epoch": 1784770264.0103457, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770309.0592585, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770354.105385, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770399.1647873, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770444.2147577, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770489.2600374, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770534.3066363, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770579.355017, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770624.404595, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770669.4497192, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770714.4938753, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770759.5387883, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770804.5858552, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770849.636478, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770894.687713, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770939.7309473, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784770984.7782304, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771029.8234801, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771074.8694158, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771119.9151454, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771164.963655, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771210.0102994, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771255.0650434, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771300.106731, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771335.6642573, "event": "worker_returned", "mode": "sync_pair", "returncode": 1}
+{"epoch": 1784771345.1543477, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771390.201004, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"bytes": 3388, "epoch": 1784771395.7004077, "event": "input_staged", "name": "residual_intervention.py", "sha256": "39a4038f397b7aab08ae7a6011b2690025c14545bb19eb9493460f47346d2bc8"}
+{"epoch": 1784771435.246304, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771480.2897928, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771519.2082944, "event": "worker_returned", "mode": "sync_pair", "returncode": 0}
+{"epoch": 1784771525.3366833, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771570.3801072, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771615.4291728, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771660.4762828, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784771692.0019433, "event": "worker_returned", "mode": "sync_trace", "returncode": 0}
+{"classification": "close_metadata_attempt", "epoch": 1784771704.1036422, "event": "scientific_terminal"}
+{"epoch": 1784771704.1498961, "event": "released", "returncode": 0, "stderr": ""}

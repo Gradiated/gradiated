@@ -1,0 +1,292 @@
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.0.1
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+WARNING: The NVIDIA Driver was not detected.  GPU functionality will not be available.
+   Use the NVIDIA Container Toolkit to start this container with GPU support; see
+   https://docs.nvidia.com/datacenter/cloud-native/ .
+
+TRITON_CALLS
+1-from __future__ import annotations
+2-
+3-from dataclasses import dataclass
+4-from typing import TYPE_CHECKING, List, Optional
+5-
+6-import torch
+7-import triton
+8-
+9-from sglang.srt.configs.model_config import AttentionArch
+10-from sglang.srt.layers.attention.base_attn_backend import AttentionBackend
+11-from sglang.srt.layers.attention.triton_ops.kv_indices import (
+12:    create_flashinfer_kv_indices_triton,
+13-)
+14-from sglang.srt.layers.attention.triton_ops.metadata import get_num_kv_splits_triton
+15-from sglang.srt.layers.dp_attention import get_attention_tp_size
+16-from sglang.srt.layers.radix_attention import AttentionType
+17-from sglang.srt.mem_cache.swa_memory_pool import SWAKVPool
+18-from sglang.srt.model_executor.forward_batch_info import ForwardBatch, ForwardMode
+19-from sglang.srt.speculative.spec_utils import (
+20-    draft_kv_indices_buffer_width,
+21-    draft_kv_indices_used_len,
+22-    generate_draft_decode_kv_indices,
+23-)
+24-from sglang.srt.utils import (
+25-    get_bool_env_var,
+26-    get_device_core_count,
+27-    get_int_env_var,
+28-    is_cuda,
+29-    is_gfx942_supported,
+30-    next_power_of_2,
+31-)
+32-
+33-_is_cuda = is_cuda()
+34-_is_gfx942 = is_gfx942_supported()
+35-
+36-if _is_cuda:
+37-    from sgl_kernel.utils import is_arch_support_pdl
+38-
+39-if TYPE_CHECKING:
+40-    from sglang.srt.layers.radix_attention import RadixAttention
+41-    from sglang.srt.model_executor.model_runner import ModelRunner
+42-    from sglang.srt.speculative.spec_info import SpecInput
+43-
+44-
+45-_MLA_DECODE_MIN_BLOCK_KV = 32
+46-
+47-
+--
+284-                expanded_seq_lens = seq_lens.repeat_interleave(num_group)
+285-            else:
+286-                expanded_seq_lens = seq_lens
+287-
+288-            num_kv_splits[:] = (
+289-                expanded_seq_lens + self.split_tile_size - 1
+290-            ) // self.split_tile_size
+291-            return
+292-
+293-        if num_seq < 256:
+294-            SCHEDULE_SEQ = 256
+295-        else:
+296-            SCHEDULE_SEQ = triton.next_power_of_2(num_seq)
+297-
+298-        get_num_kv_splits_triton[(1,)](
+299-            num_kv_splits,
+300-            seq_lens,
+301-            num_seq,
+302-            num_group,
+303-            self.num_head,
+304-            self.num_kv_head,
+305-            self.max_kv_splits,
+306-            self.device_core_count,
+307-            MAX_NUM_SEQ=SCHEDULE_SEQ,
+308-        )
+309-
+310-    def _fill_kv_indptr_and_indices(
+311-        self,
+312-        bs: int,
+313-        seq_lens: torch.Tensor,
+314-        req_pool_indices: torch.Tensor,
+315-        kv_indices: torch.Tensor,
+316-    ) -> torch.Tensor:
+317-        kv_indptr = self.kv_indptr[: bs + 1]
+318-        kv_indptr[1:] = torch.cumsum(seq_lens, dim=0)
+319:        create_flashinfer_kv_indices_triton[(bs,)](
+320-            self.req_to_token,
+321-            req_pool_indices,
+322-            seq_lens,
+323-            kv_indptr,
+324-            None,
+325-            kv_indices,
+326-            self.req_to_token.stride(0),
+327-        )
+328-        return kv_indptr
+329-
+330-    def _update_decode_kv_buffers(
+331-        self,
+332-        bs: int,
+333-        seq_lens: torch.Tensor,
+334-        req_pool_indices: torch.Tensor,
+335-    ):
+336-        """Fill KV (and SWA) cuda-graph buffers for decode/idle mode.
+337-
+338-        Returns ``(kv_indptr, window_kv_indptr, window_kv_lens)`` where
+339-        ``window_kv_lens`` is ``None`` when sliding-window is disabled.
+340-        """
+341-        seq_lens = seq_lens[:bs]
+342-        req_pool_indices = req_pool_indices[:bs]
+343-        kv_indptr = self._fill_kv_indptr_and_indices(
+344-            bs, seq_lens, req_pool_indices, self.cuda_graph_kv_indices
+345-        )
+346-        window_kv_indptr = self.window_kv_indptr
+347-        window_kv_lens = None
+348-        if self.sliding_window_size is not None and self.sliding_window_size > 0:
+349-            window_kv_indptr, _, window_kv_lens, _ = update_sliding_window_buffer(
+350-                self.window_kv_indptr,
+351-                self.req_to_token,
+352-                self.sliding_window_size,
+353-                seq_lens,
+354-                req_pool_indices,
+--
+1574-            )
+1575-
+1576-    def init_forward_metadata_in_graph(self, forward_batch: ForwardBatch) -> None:
+1577-        for attn_backend in self.attn_backends:
+1578-            attn_backend.init_forward_metadata_in_graph(forward_batch)
+1579-
+1580-
+1581-def update_sliding_window_buffer(
+1582-    window_kv_indptr,
+1583-    req_to_token,
+1584-    sliding_window_size,
+1585-    seq_lens,
+1586-    req_pool_indices,
+1587-    bs,
+1588-    device=None,
+1589-    token_to_kv_pool=None,
+1590-    window_kv_indices=None,
+1591-):
+1592-    """Fill window KV buffers for sliding-window attention.
+1593-
+1594-    Pass ``window_kv_indices`` to write into a pre-allocated buffer (CUDA-graph
+1595-    path); omit it (or pass ``None``) to allocate a fresh tensor (eager path,
+1596-    requires ``device``).
+1597-    """
+1598-    window_kv_lens = torch.minimum(
+1599-        seq_lens,
+1600-        torch.tensor(sliding_window_size),
+1601-    )
+1602-    window_kv_indptr[1 : bs + 1] = torch.cumsum(window_kv_lens, dim=0)
+1603-    window_kv_indptr = window_kv_indptr[: bs + 1]
+1604-    if window_kv_indices is None:
+1605-        window_kv_indices = torch.empty(
+1606-            window_kv_indptr[-1], dtype=torch.int64, device=device
+1607-        )
+1608-    window_kv_start_idx = seq_lens - window_kv_lens
+1609:    create_flashinfer_kv_indices_triton[(bs,)](
+1610-        req_to_token,
+1611-        req_pool_indices,
+1612-        window_kv_lens,
+1613-        window_kv_indptr,
+1614-        window_kv_start_idx,
+1615-        window_kv_indices,
+1616-        req_to_token.stride(0),
+1617-    )
+1618-    if hasattr(token_to_kv_pool, "translate_loc_from_full_to_swa"):
+1619-        kv_last_index = window_kv_indptr[-1]
+1620-        window_kv_indices[:kv_last_index] = (
+1621-            token_to_kv_pool.translate_loc_from_full_to_swa(
+1622-                window_kv_indices[:kv_last_index]
+1623-            )
+1624-        )
+1625-    return window_kv_indptr, window_kv_indices, window_kv_lens, window_kv_start_idx
+TRITON_SCALARS
+140:        # _fwd_kernel_stage1/stage2), so attn_logits.shape[-1] must exactly
+696:            # letting torch.empty inside generate_attn_arg_prefill .item() on a
+701:                else int(forward_batch.seq_lens.sum())
+716:            max_extend_len = torch.max(spec_info.num_accept_tokens).item()
+768:                max_extend_len = int(forward_batch.extend_seq_lens.max())
+1374:        # The triton kernel's // Lv stride trick requires attn_logits.shape[-1]
+1464:            # over-estimate is safe. Use a static UB to skip the per-iter .sum().item() D2H.
+1571:            self.attn_backends[-1].get_num_kv_splits(
+1572:                self.attn_backends[-1].cuda_graph_num_kv_splits[:num_token],
+1606:            window_kv_indptr[-1], dtype=torch.int64, device=device
+1619:        kv_last_index = window_kv_indptr[-1]
+FLASHINFER_SCALARS
+412:            first_delim = delimiter_indices_cpu[0].item()  # CPU .item(), no GPU sync
+1084:                    paged_kernel_lens_sum_tmp = seq_lens_cpu_tmp.sum().item()
+1086:                    paged_kernel_lens_sum_tmp = paged_kernel_lens_tmp.sum().item()
+1136:                seq_lens_sum = encoder_lens.sum().item()
+1193:            kv_last_index = kv_indptr[-1]
+1325:            paged_kernel_lens_sum = paged_kernel_lens.sum().item()
+1373:                    paged_kernel_lens_sum = paged_kernel_lens.sum().item()
+1384:                    paged_kernel_lens_sum = paged_kernel_lens.sum().item()
+1429:        prefix_lens_cpu = prefix_lens.detach().cpu().tolist()
+1430:        extend_lens_cpu = (seq_lens - prefix_lens).detach().cpu().tolist()
+1431:        kv_start_cpu = kv_start_idx.detach().cpu().tolist()
+1441:            paged_len = int(prefix_len - kv_start)  # = min(prefix_len, window)
+1480:                paged_kernel_lens_sum = paged_kernel_lens.sum().item()
+1568:            kv_last_index = kv_indptr[-1]
+ALL_PLAN_CALLS
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py:725:            wrapper.plan(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py:740:            wrapper.plan(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py:873:            wrapper_paged.plan(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py:1077:        self._cached_module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/data/cutlass/python/cutlass_cppgen/backend/reduction_operation.py:387:        launch_config = self.rt_module.plan(arguments)
+/usr/local/lib/python3.12/dist-packages/flashinfer/data/cutlass/python/cutlass_cppgen/backend/conv2d_operation.py:158:        self.launch_config = self.operation.rt_module.plan(self)
+/usr/local/lib/python3.12/dist-packages/flashinfer/data/cutlass/python/cutlass_cppgen/backend/gemm_operation.py:329:        launch_config = self.operation.rt_module.plan(self)
+/usr/local/lib/python3.12/dist-packages/flashinfer/data/cutlass/python/cutlass_cppgen/backend/gemm_operation.py:825:        launch_config = self.operation.rt_module.plan(self)
+/usr/local/lib/python3.12/dist-packages/flashinfer/prefill.py:1451:    >>> prefill_wrapper.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/prefill.py:1485:    >>> prefill_wrapper.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/prefill.py:2100:            self._plan_info = self._cached_module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/prefill.py:2582:    >>> prefill_wrapper.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/prefill.py:2614:    >>> prefill_wrapper.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/prefill.py:3092:            self._cute_dsl_wrapper.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/prefill.py:3173:            self._plan_info = self._cached_module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/prefill.py:3579:    module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/attention/_core.py:125:        self._plan_info = self.module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/attention/cute_dsl/fmha.py:432:        max_s_k = int((kv_indptr.cpu()[1:] - kv_indptr.cpu()[:-1]).max().item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/sparse.py:92:    >>> bsr_wrapper.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/sparse.py:377:            self._plan_info = self._cached_module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/sparse.py:456:            self._plan_info = self._cached_module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/sparse.py:677:    >>> wrapper.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/sparse.py:939:        assert kv_indptr_host[-1].item() == kv_indices_host.shape[0], (
+/usr/local/lib/python3.12/dist-packages/flashinfer/sparse.py:940:            f"{kv_indptr_host[-1].item()} != {kv_indices_host.shape[0]}"
+/usr/local/lib/python3.12/dist-packages/flashinfer/sparse.py:1004:        self._plan_info = self._cached_module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/cute_dsl/attention/wrappers/batch_prefill.py:254:        s_k_all = int(kv_indptr[-1].item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/cute_dsl/attention/wrappers/batch_mla.py:366:        wrapper.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/cute_dsl/attention/wrappers/batch_mla.py:831:    # what BatchMLADecodeCuteDSLWrapper.plan() does.  Variants inherit a
+/usr/local/lib/python3.12/dist-packages/flashinfer/cute_dsl/attention/fusion/variant.py:484:        wrapper.plan(..., variant=AttentionWithSink(sink_tensor))
+/usr/local/lib/python3.12/dist-packages/flashinfer/cute_dsl/attention/fusion/variant.py:543:        wrapper.plan(..., sm_scale=1.0, variant=SigmoidAttention(scale=1.0))
+/usr/local/lib/python3.12/dist-packages/flashinfer/cute_dsl/attention/fusion/variant.py:587:        wrapper.plan(..., sm_scale=1.0, variant=SigmoidTanhAttention(scale=1.0))
+/usr/local/lib/python3.12/dist-packages/flashinfer/cute_dsl/attention/fusion/variant.py:633:        wrapper.plan(..., variant=ALiBiAttention(slopes))
+/usr/local/lib/python3.12/dist-packages/flashinfer/cute_dsl/attention/fusion/variant.py:693:        wrapper.plan(..., variant=RPEAttention(rpe_table, max_rel_dist=64))
+/usr/local/lib/python3.12/dist-packages/flashinfer/cute_dsl/attention/fusion/variant.py:734:        wrapper.plan(..., variant=SoftCappingAttention(cap=50.0))
+/usr/local/lib/python3.12/dist-packages/flashinfer/decode.py:643:    >>> decode_wrapper.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/decode.py:1058:            self._plan_info = self._cached_module.plan()  # None
+/usr/local/lib/python3.12/dist-packages/flashinfer/decode.py:1115:            self._plan_info = self._cached_module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/decode.py:1133:            self._plan_info = self._cached_module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/decode.py:1898:        self._plan_info = self._cached_module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/decode.py:3033:                self._plan_info = self._cached_module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/decode.py:3041:                self._plan_info = self._cached_module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/cascade.py:275:    >>> wrapper.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/cascade.py:498:            wrapper.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/pod.py:97:    >>> decode_wrapper.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/pod.py:410:        self._plan_info = self._cached_module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/pod.py:683:    >>> wrapper.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/pod.py:965:        self._plan_info_d = self._cached_module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/pod.py:991:        self._plan_info_p = self._cached_module.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/template.py:366:        ``wrapper.plan(**inputs["plan"])`` then ``wrapper.run(**inputs["run"])``.
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:67:        page_start = int(kv_indptr[b].item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:68:        page_end = int(kv_indptr[b + 1].item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:207:        "num_kv_indices == kv_indptr[-1].item()",
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:240:        kv_start = int(kv_indptr[b].item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:241:        kv_end = int(kv_indptr[b + 1].item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:399:        "num_kv_indices == kv_indptr[-1].item()",
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:430:        kv_start = int(kv_indptr[b].item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:431:        kv_end = int(kv_indptr[b + 1].item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:564:        "total_kv == kv_indptr[-1].item()",
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:598:        page_beg = int(kv_indptr[b].item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:599:        page_end = int(kv_indptr[b + 1].item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:760:        "num_kv_indices == kv_indptr[-1].item()",
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:797:        kv_start = int(kv_indptr[b].item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:798:        kv_end = int(kv_indptr[b + 1].item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/attention.py:986:        "num_kv_indices == kv_indptr[-1].item()",
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/rope.py:1036:            idx_base = int(kv_indptr[b].item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/page.py:59:        idx_base = int(kv_indptr[b].item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/page.py:155:    assert int(append_indptr[-1].item()) == nnz_kv, (
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/page.py:246:        idx_base = int(kv_indptr[b].item())
+/usr/local/lib/python3.12/dist-packages/flashinfer/trace/templates/page.py:323:    assert int(append_indptr[-1].item()) == nnz_kv, (
+/usr/local/lib/python3.12/dist-packages/flashinfer/mla/_core.py:689:    >>> mla_wrapper.plan(
+/usr/local/lib/python3.12/dist-packages/flashinfer/mla/_core.py:858:        self._plan_info = self._cached_module.plan(
+

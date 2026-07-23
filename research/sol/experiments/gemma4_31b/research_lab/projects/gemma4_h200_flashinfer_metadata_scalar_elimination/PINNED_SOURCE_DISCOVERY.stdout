@@ -1,0 +1,1022 @@
+gemma4-sync-linear-h200-20260722t2226z
+NVIDIA H200, GPU-30fdf81d-cb7e-79b7-f876-043a0128c6c5
+sha256:9cde24f76f7df6aec63e18ae9cd360f728e8227d0ec6ca11e9af5f0eaf5b81c0
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.0.1
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+WARNING: The NVIDIA Driver was not detected.  GPU functionality will not be available.
+   Use the NVIDIA Container Toolkit to start this container with GPU support; see
+   https://docs.nvidia.com/datacenter/cloud-native/ .
+
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-1-# Mixin class for metadata management of Deepseek MHA forward (chunked prefix cache)
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-2-# More details can be found in python/sglang/srt/models/deepseek_common/attention_forward_methods/forward_mha.py
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-3-
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-4-from typing import List, Optional
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-5-
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-6-import torch
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-7-import triton
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-8-import triton.language as tl
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-9-
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-10-from sglang.srt.environ import envs
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py:11:from sglang.srt.layers.attention.utils import create_flashinfer_kv_indices_triton
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-12-from sglang.srt.model_executor.forward_context import (
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-13-    get_req_to_token_pool,
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-14-    get_token_to_kv_pool,
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-15-)
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-16-
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-17-
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-18-class ForwardBatchDeepSeekMHAMixin:
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-19-    # For MLA chunked prefix cache used in chunked prefill
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-20-    # Tell attention backend whether the kv cache needs to be attended in current pass
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-21-    attn_attend_prefix_cache: Optional[bool] = None
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-22-    # Number of prefix cache chunks
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-23-    num_prefix_chunks: Optional[int] = None
+--
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-193-        kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-194-            paged_kernel_lens_sum,
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-195-            dtype=torch.int32,
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-196-            device=self.req_pool_indices.device,
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-197-        )
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-198-        kv_indptr = torch.zeros(
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-199-            batch_size + 1,
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-200-            dtype=torch.int32,
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-201-            device=self.req_pool_indices.device,
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-202-        )
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-203-        kv_indptr[1:] = torch.cumsum(self.seq_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-204-        req_to_token = get_req_to_token_pool().req_to_token
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py:205:        create_flashinfer_kv_indices_triton[(self.batch_size,)](
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-206-            req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-207-            self.req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-208-            self.seq_lens,
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-209-            kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-210-            None,
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-211-            kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-212-            req_to_token.shape[1],
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-213-        )
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-214-        self.mha_one_shot_kv_indices = kv_indices
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-215-        return kv_indices
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-216-
+/sgl-workspace/sglang/python/sglang/srt/model_executor/forward_batch_deepseek_mha_mixin.py-217-
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-7-    concat_and_cast_mha_k_kernel as concat_and_cast_mha_k_kernel,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-8-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-9-from sglang.srt.layers.attention.triton_ops.cache_ops import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-10-    concat_and_cast_mha_k_triton as concat_and_cast_mha_k_triton,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-11-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-12-from sglang.srt.layers.attention.triton_ops.cache_ops import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-13-    launch_reshape_and_cache_flash as launch_reshape_and_cache_flash,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-14-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-15-from sglang.srt.layers.attention.triton_ops.cache_ops import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-16-    reshape_and_cache_flash as reshape_and_cache_flash,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-17-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-18-from sglang.srt.layers.attention.triton_ops.kv_indices import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py:19:    create_flashinfer_kv_indices_triton as create_flashinfer_kv_indices_triton,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-20-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-21-from sglang.srt.layers.attention.triton_ops.kv_indices import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-22-    create_flashmla_kv_indices_triton as create_flashmla_kv_indices_triton,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-23-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-24-from sglang.srt.layers.attention.triton_ops.kv_indices import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-25-    get_num_kv_index_blocks_flashmla as get_num_kv_index_blocks_flashmla,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-26-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-27-from sglang.srt.layers.attention.triton_ops.kv_indices import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-28-    get_num_page_per_block_flashmla as get_num_page_per_block_flashmla,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-29-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-30-from sglang.srt.layers.attention.triton_ops.pad import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/utils.py-31-    pad_sequence_with_mask as pad_sequence_with_mask,
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-1-import triton
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-2-import triton.language as tl
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-3-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-4-_FLASHMLA_CREATE_KV_BLOCK_SIZE = 4096
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-5-FLASHMLA_CREATE_KV_BLOCK_SIZE_TRITON = tl.constexpr(_FLASHMLA_CREATE_KV_BLOCK_SIZE)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-6-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-7-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-8-@triton.jit
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py:9:def create_flashinfer_kv_indices_triton(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-10-    req_to_token_ptr,  # [max_batch, max_context_len]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-11-    req_pool_indices_ptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-12-    page_kernel_lens_ptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-13-    kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-14-    kv_start_idx,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-15-    kv_indices_ptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-16-    req_to_token_ptr_stride: tl.constexpr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-17-):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-18-    BLOCK_SIZE: tl.constexpr = 512
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-19-    pid = tl.program_id(axis=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-20-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/kv_indices.py-21-    # find the req pool idx, this is for batch to token
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-14-from functools import partial
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-15-from typing import TYPE_CHECKING, Callable, List, Optional, Union
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-16-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-17-import torch
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-18-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-19-from sglang.kernel_api_logging import debug_kernel_api
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-20-from sglang.srt.compilation.piecewise_context_manager import is_in_piecewise_cuda_graph
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-21-from sglang.srt.dllm.config import DllmConfig
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-22-from sglang.srt.environ import envs
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-23-from sglang.srt.layers.attention.base_attn_backend import AttentionBackend
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-24-from sglang.srt.layers.attention.utils import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-25-    assert_buffer_fits,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py:26:    create_flashinfer_kv_indices_triton,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-27-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-28-from sglang.srt.layers.dp_attention import get_attention_tp_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-29-from sglang.srt.layers.radix_attention import AttentionType
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-30-from sglang.srt.mem_cache.allocator.swa import SWATokenToKVPoolAllocator
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-31-from sglang.srt.mem_cache.swa_memory_pool import SWAKVPool
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-32-from sglang.srt.model_executor.forward_batch_info import ForwardBatch, ForwardMode
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-33-from sglang.srt.speculative.spec_info import SpecInput
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-34-from sglang.srt.speculative.spec_utils import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-35-    draft_kv_indices_buffer_width,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-36-    draft_kv_indices_used_len,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-37-    generate_draft_decode_kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-38-)
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1167-            bs = len(req_pool_indices)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1168-            kv_indptr[1 : bs + 1] = torch.cumsum(paged_kernel_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1169-            kv_indptr = kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1170-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1171-            if wrapper.is_cuda_graph_enabled:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1172-                # Directly write to the cuda graph input buffer
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1173-                kv_indices = wrapper._paged_kv_indices_buf
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1174-            else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1175-                kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1176-                    paged_kernel_lens_sum, dtype=torch.int32, device="cuda"
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1177-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1178-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py:1179:            create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1180-                self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1181-                req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1182-                paged_kernel_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1183-                kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1184-                kv_start_idx,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1185-                kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1186-                self.req_to_token.shape[1],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1187-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1188-        else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1189-            kv_indptr, kv_indices = spec_info.kv_indptr, spec_info.kv_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1190-            bs = kv_indptr.shape[0] - 1
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1191-
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1520-    ):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1521-        bs = len(seq_lens)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1522-        if spec_info is None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1523-            assert len(seq_lens) == len(req_pool_indices)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1524-            # Normal extend
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1525-            kv_indptr[1 : bs + 1] = torch.cumsum(paged_kernel_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1526-            kv_indptr = kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1527-            kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1528-                paged_kernel_lens_sum + 256,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1529-                dtype=torch.int32,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1530-                device=req_pool_indices.device,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1531-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py:1532:            create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1533-                self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1534-                req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1535-                paged_kernel_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1536-                kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1537-                kv_start_idx,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1538-                kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1539-                self.req_to_token.shape[1],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1540-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1541-            qo_indptr[1 : bs + 1] = torch.cumsum(seq_lens - prefix_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1542-            qo_indptr = qo_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1543-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1544-            custom_mask = cross_attention_custom_mask
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1-from __future__ import annotations
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-2-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-3-from dataclasses import dataclass
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-4-from typing import TYPE_CHECKING, List, Optional
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-5-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-6-import torch
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-7-import triton
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-8-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-9-from sglang.srt.configs.model_config import AttentionArch
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-10-from sglang.srt.layers.attention.base_attn_backend import AttentionBackend
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-11-from sglang.srt.layers.attention.triton_ops.kv_indices import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py:12:    create_flashinfer_kv_indices_triton,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-13-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-14-from sglang.srt.layers.attention.triton_ops.metadata import get_num_kv_splits_triton
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-15-from sglang.srt.layers.dp_attention import get_attention_tp_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-16-from sglang.srt.layers.radix_attention import AttentionType
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-17-from sglang.srt.mem_cache.swa_memory_pool import SWAKVPool
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-18-from sglang.srt.model_executor.forward_batch_info import ForwardBatch, ForwardMode
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-19-from sglang.srt.speculative.spec_utils import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-20-    draft_kv_indices_buffer_width,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-21-    draft_kv_indices_used_len,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-22-    generate_draft_decode_kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-23-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-24-from sglang.srt.utils import (
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-307-            MAX_NUM_SEQ=SCHEDULE_SEQ,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-308-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-309-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-310-    def _fill_kv_indptr_and_indices(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-311-        self,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-312-        bs: int,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-313-        seq_lens: torch.Tensor,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-314-        req_pool_indices: torch.Tensor,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-315-        kv_indices: torch.Tensor,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-316-    ) -> torch.Tensor:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-317-        kv_indptr = self.kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-318-        kv_indptr[1:] = torch.cumsum(seq_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py:319:        create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-320-            self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-321-            req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-322-            seq_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-323-            kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-324-            None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-325-            kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-326-            self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-327-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-328-        return kv_indptr
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-329-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-330-    def _update_decode_kv_buffers(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-331-        self,
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1597-    """
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1598-    window_kv_lens = torch.minimum(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1599-        seq_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1600-        torch.tensor(sliding_window_size),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1601-    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1602-    window_kv_indptr[1 : bs + 1] = torch.cumsum(window_kv_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1603-    window_kv_indptr = window_kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1604-    if window_kv_indices is None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1605-        window_kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1606-            window_kv_indptr[-1], dtype=torch.int64, device=device
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1607-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1608-    window_kv_start_idx = seq_lens - window_kv_lens
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py:1609:    create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1610-        req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1611-        req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1612-        window_kv_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1613-        window_kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1614-        window_kv_start_idx,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1615-        window_kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1616-        req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1617-    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1618-    if hasattr(token_to_kv_pool, "translate_loc_from_full_to_swa"):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1619-        kv_last_index = window_kv_indptr[-1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1620-        window_kv_indices[:kv_last_index] = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1621-            token_to_kv_pool.translate_loc_from_full_to_swa(
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-10-from typing import TYPE_CHECKING, Optional
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-11-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-12-import torch
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-13-import triton
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-14-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-15-from sglang.srt.layers.attention.base_attn_backend import AttentionBackend
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-16-from sglang.srt.layers.attention.triton_ops.aiter_unified_attention import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-17-    scatter_ragged_to_page_table_kernel,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-18-    scatter_req_to_token_to_page_table_kernel,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-19-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-20-from sglang.srt.layers.attention.utils import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-21-    assert_buffer_fits,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:22:    create_flashinfer_kv_indices_triton,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-23-    create_flashmla_kv_indices_triton,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-24-    get_num_kv_index_blocks_flashmla,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-25-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-26-from sglang.srt.layers.dp_attention import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-27-    get_attention_tp_size,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-28-    is_dp_attention_enabled,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-29-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-30-from sglang.srt.model_executor.forward_batch_info import ForwardBatch, ForwardMode
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-31-from sglang.srt.speculative.spec_utils import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-32-    draft_kv_indices_buffer_width,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-33-    draft_kv_indices_used_len,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-34-    generate_draft_decode_kv_indices,
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-908-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-909-        max_kv_len = forward_batch.seq_lens_cpu.max().item()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-910-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-911-        if forward_batch.forward_mode.is_decode_or_idle():
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-912-            if spec_info is None or forward_batch.forward_mode.is_idle():
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-913-                kv_indptr[1 : bs + 1] = torch.cumsum(forward_batch.seq_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-914-                kv_indptr = kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-915-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-916-                if not self.use_triton_unified_attention:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-917-                    kv_indices = self._get_kv_indices_scratch(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-918-                        forward_batch.seq_lens_sum, forward_batch.seq_lens.device
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-919-                    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:920:                    create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-921-                        self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-922-                        forward_batch.req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-923-                        forward_batch.seq_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-924-                        kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-925-                        None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-926-                        kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-927-                        self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-928-                    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-929-                else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-930-                    max_q_len = 1
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-931-                    page_size = self.page_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-932-                    max_num_blocks_per_seq = (max_kv_len + page_size - 1) // page_size
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1035-            if self.use_mla:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1036-                device = forward_batch.seq_lens.device
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1037-                num_draft_tokens = self._resolve_v2_num_draft_tokens()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1038-                qo_indptr = self._set_uniform_qo_indptr(bs, num_draft_tokens, device)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1039-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1040-                kv_indptr = self.kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1041-                kv_indptr[1 : bs + 1] = torch.cumsum(forward_batch.seq_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1042-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1043-                kv_indices = self._get_kv_indices_scratch(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1044-                    forward_batch.seq_lens_sum, device
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1045-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1046-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:1047:                create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1048-                    self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1049-                    forward_batch.req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1050-                    forward_batch.seq_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1051-                    kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1052-                    None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1053-                    kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1054-                    self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1055-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1056-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1057-                if _use_mla_ps_kernel:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1058-                    max_seqlen_qo = num_draft_tokens
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1059-                    (
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1210-                    0,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1211-                    (1 + bs) * draft_num,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1212-                    step=draft_num,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1213-                    dtype=torch.int32,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1214-                    device=device,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1215-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1216-                kv_indptr = self.kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1217-                kv_indptr[1 : bs + 1] = torch.cumsum(kv_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1218-                kv_indices = self._get_kv_indices_scratch(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1219-                    kv_lens_sum,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1220-                    device,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1221-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:1222:                create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1223-                    self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1224-                    forward_batch.req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1225-                    kv_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1226-                    kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1227-                    None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1228-                    kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1229-                    self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1230-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1231-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1232-                # if self.kv_cache_dtype == fp8_dtype:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1233-                if _use_mla_ps_kernel:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1234-                    max_seqlen_qo = draft_num
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1307-                        (1 + bs) * draft_num,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1308-                        step=draft_num,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1309-                        dtype=torch.int32,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1310-                        device=self.device,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1311-                    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1312-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1313-                    kv_indptr[1 : bs + 1] = torch.cumsum(forward_batch.seq_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1314-                    kv_indptr = kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1315-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1316-                    kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1317-                        kv_indptr[-1], dtype=torch.int64, device=self.device
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1318-                    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:1319:                    create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1320-                        self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1321-                        forward_batch.req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1322-                        forward_batch.seq_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1323-                        kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1324-                        None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1325-                        kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1326-                        self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1327-                    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1328-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1329-                    custom_mask = spec_info.custom_mask
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1330-                    seq_mask_len = draft_num * (forward_batch.seq_lens + draft_num)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1331-                    mask_indptr = self.mask_indptr
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1474-                self.qo_indptr_ = torch.zeros(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1475-                    (max_bs + 1,), dtype=torch.int32, device=self.device
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1476-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1477-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1478-        self.cuda_graph_kv_last_page_len = torch.ones(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1479-            max_bs, dtype=torch.int32, device=self.device
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1480-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1481-        if kv_indices_buf is None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1482-            max_num_blocks_per_seq = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1483-                self.max_context_len + self.page_size - 1
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1484-            ) // self.page_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1485-            # Non-unified AITER CUDA graph paths fill this buffer with flat
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:1486:            # token-level kv_indices via create_flashinfer_kv_indices_triton
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1487-            # (kv_indptr = cumsum(seq_lens)).  Even when the allocator is
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1488-            # page-based, these writes are per-token, so page-sized allocation
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1489-            # would under-allocate by page_size when page_size > 1.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1490-            # TODO(aiter, page_size>1): root fix is to make page_size>1
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1491-            # actually engage the attention kernel (`forward_decode` still
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1492-            # calls paged_attention_ragged with view(-1, 1, ...) and
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1493-            # block_size=1). That requires a per-page indices kernel + all
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1494-            # metadata sites + paged_attention_ragged call site + FP8 KV
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1495-            # coordination, after which this allocation can revert to
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1496-            # per-page (gated on use_mla).
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1497-            # Reserve draft slack: MLA target_verify writes seq_len +
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1498-            # num_draft_tokens per row; without it a near-full sequence
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1609-            if spec_info is None or (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1610-                self.use_triton_unified_attention and not self.use_mla
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1611-            ):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1612-                max_num_blocks_per_seq = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1613-                    self.max_context_len + self.page_size - 1
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1614-                ) // self.page_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1615-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1616-                if not self.use_triton_unified_attention:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1617-                    kv_indptr = self.kv_indptr
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1618-                    kv_indptr[1 : bs + 1] = torch.cumsum(seq_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1619-                    kv_indptr = kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1620-                    kv_indices = self.cuda_graph_kv_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:1621:                    create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1622-                        self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1623-                        req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1624-                        seq_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1625-                        kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1626-                        None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1627-                        kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1628-                        self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1629-                    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1630-                else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1631-                    max_q_len = 1
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1632-                    kv_indices = self.cuda_graph_page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1633-
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1751-            # seq_lens_sum is None at capture (dummy seq_lens); only check on replay.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1752-            if seq_lens_sum is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1753-                kv_indices_used = seq_lens_sum + (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1754-                    self.num_draft_tokens * bs if self.use_mla else 0
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1755-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1756-                assert_buffer_fits(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1757-                    kv_indices_used,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1758-                    kv_indices.numel(),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1759-                    "aiter target_verify kv_indices",
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1760-                    bs=bs,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1761-                    seq_lens_sum=seq_lens_sum,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1762-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:1763:            create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1764-                self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1765-                req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1766-                kv_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1767-                kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1768-                None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1769-                kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1770-                self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1771-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1772-            kv_last_page_len = self.cuda_graph_kv_last_page_len[:bs]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1773-            max_q_len = self.num_draft_tokens
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1774-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1775-            if self.use_mla:
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1876-            self._ensure_spec_v2_topk_supported()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1877-            seq_lens = seq_lens[:bs]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1878-            num_tokens_per_bs = self._resolve_v2_num_draft_tokens()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1879-            extend_lens = torch.full(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1880-                (bs,), num_tokens_per_bs, dtype=torch.int32, device=seq_lens.device
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1881-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1882-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1883-            qo_indptr = self.qo_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1884-            qo_indptr[1 : bs + 1] = torch.cumsum(extend_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1885-            kv_indptr = self.kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1886-            kv_indptr[1 : bs + 1] = torch.cumsum(seq_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1887-            kv_indices = self.cuda_graph_kv_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:1888:            create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1889-                self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1890-                req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1891-                seq_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1892-                kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1893-                None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1894-                kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1895-                self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1896-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1897-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1898-            kv_last_page_len = self.cuda_graph_kv_last_page_len[:bs]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1899-            max_q_len = num_tokens_per_bs
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1900-
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1941-                num_kv_splits=num_kv_splits,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1942-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1943-        elif forward_mode.is_draft_extend():
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1944-            # EAGLE V1: Uses spec_info.num_accept_tokens
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1945-            num_tokens_per_bs = self.speculative_num_steps + 1
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1946-            seq_lens = seq_lens[:bs]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1947-            extend_lens = spec_info.num_accept_tokens[:bs]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1948-            qo_indptr = self.qo_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1949-            qo_indptr[1 : bs + 1] = torch.cumsum(extend_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1950-            kv_indptr = self.kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1951-            kv_indptr[1 : bs + 1] = torch.cumsum(seq_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1952-            kv_indices = self.cuda_graph_kv_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:1953:            create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1954-                self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1955-                req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1956-                seq_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1957-                kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1958-                None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1959-                kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1960-                self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1961-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1962-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1963-            kv_last_page_len = self.cuda_graph_kv_last_page_len[:bs]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1964-            max_q_len = num_tokens_per_bs
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1965-
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2794-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2795-            # (TODO: Kk) WA - CI test_moe_eval_accuracy_large.py
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2796-            # mha_batch_prefill reads 128 data to do computatoin
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2797-            # if real data is not long enough then original padding value 0 is used
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2798-            # but the 0 location will be made nan (noqa) in cuda graph capture mode
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2799-            # this will cause the output tensor value becomes nan
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2800-            # WA is to assure that last index of pool not changed
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2801-            kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2802-                paged_kernel_lens_sum + 256,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2803-                dtype=torch.int32,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2804-                device=req_pool_indices.device,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2805-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:2806:            create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2807-                self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2808-                req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2809-                paged_kernel_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2810-                kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2811-                kv_start_idx,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2812-                kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2813-                self.req_to_token.shape[1],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2814-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2815-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2816-            token_num = kv_indptr[-1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2817-            kv_indices[token_num:] = kv_indices[0]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2818-
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2877-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2878-        kv_indptr = self.attn_backend.kv_indptr
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2879-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2880-        if spec_info is None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2881-            # Normal extend
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2882-            kv_indptr[1 : bs + 1] = torch.cumsum(kv_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2883-            kv_indptr = kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2884-            kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2885-                kv_lens_sum,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2886-                dtype=torch.int32,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2887-                device=req_pool_indices.device,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2888-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:2889:            create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2890-                self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2891-                req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2892-                kv_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2893-                kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2894-                None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2895-                kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2896-                self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2897-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2898-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2899-            qo_indptr = self.attn_backend.qo_indptr
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2900-            qo_indptr[1 : bs + 1] = torch.cumsum(extend_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-2901-            qo_indptr = qo_indptr[: bs + 1]
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-10-"""
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-11-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-12-from dataclasses import dataclass
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-13-from functools import partial
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-14-from typing import TYPE_CHECKING, Callable, Optional, Union
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-15-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-16-import torch
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-17-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-18-from sglang.srt.compilation.piecewise_context_manager import is_in_piecewise_cuda_graph
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-19-from sglang.srt.environ import envs
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-20-from sglang.srt.layers.attention.base_attn_backend import AttentionBackend
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-21-from sglang.srt.layers.attention.flashinfer_backend import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py:22:    create_flashinfer_kv_indices_triton,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-23-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-24-from sglang.srt.layers.attention.utils import assert_buffer_fits
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-25-from sglang.srt.layers.dp_attention import get_attention_tp_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-26-from sglang.srt.model_executor.forward_batch_info import ForwardBatch, ForwardMode
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-27-from sglang.srt.server_args import get_global_server_args
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-28-from sglang.srt.speculative.spec_info import SpecInput
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-29-from sglang.srt.speculative.spec_utils import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-30-    draft_kv_indices_buffer_width,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-31-    draft_kv_indices_used_len,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-32-    generate_draft_decode_kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-33-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-34-from sglang.srt.utils import (
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-700-        bs = len(req_pool_indices)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-701-        q_indptr = q_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-702-        kv_lens = paged_kernel_lens.to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-703-        sm_scale = self.scaling
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-704-        if spec_info is None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-705-            kv_indptr[1 : bs + 1] = torch.cumsum(paged_kernel_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-706-            kv_indptr = kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-707-            kv_indices = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-708-                torch.empty(paged_kernel_lens_sum, dtype=torch.int32, device="cuda")
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-709-                if not init_metadata_replay
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-710-                else fast_decode_kwargs["kv_indices"]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-711-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py:712:            create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-713-                self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-714-                req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-715-                paged_kernel_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-716-                kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-717-                None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-718-                kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-719-                self.req_to_token.shape[1],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-720-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-721-        else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-722-            kv_indptr, kv_indices = spec_info.kv_indptr, spec_info.kv_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-723-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-724-        if not init_metadata_replay:
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-822-        bs = len(seq_lens)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-823-        sm_scale = self.scaling
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-824-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-825-        if spec_info is None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-826-            assert len(seq_lens) == len(req_pool_indices)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-827-            kv_indptr[1 : bs + 1] = torch.cumsum(paged_kernel_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-828-            kv_indptr = kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-829-            kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-830-                paged_kernel_lens_sum,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-831-                dtype=torch.int32,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-832-                device=req_pool_indices.device,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-833-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py:834:            create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-835-                self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-836-                req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-837-                paged_kernel_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-838-                kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-839-                None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-840-                kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-841-                self.req_to_token.shape[1],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-842-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-843-            qo_indptr[1 : bs + 1] = torch.cumsum(seq_lens - prefix_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-844-            qo_indptr = qo_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-845-            custom_mask = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_mla_backend.py-846-        else:
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-110-            return_attn_probs=False,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-111-            window_size=window_size,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-112-            sink_ptr=sinks,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-113-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-114-        if o.dtype != backend.input_dtype:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-115-            o = o.to(backend.input_dtype)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-116-        return o.view(-1, layer.tp_q_head_num * layer.v_head_dim)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-117-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-118-    # Path 2: gather-and-linearize.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-119-    # SWA layers gather from the SWA sub-pool via swa_page_table;
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-120-    # full-attn layers gather from the full sub-pool via kv_indices.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-121-    # Both are per-TOKEN slot id lists populated by
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py:122:    # ``create_flashinfer_kv_indices_triton`` from ``req_to_token`` (one
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-123-    # slot id per logical token), so the first ``seq_lens_sum`` entries
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-124-    # of either tensor are exactly the per-token absolute pool slot ids
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-125-    # in request-major order — no per-token gather metadata to build on
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-126-    # host.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-127-    is_swa_layer = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-128-        layer.sliding_window_size is not None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-129-        and layer.sliding_window_size > -1
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-130-        and backend.forward_metadata.swa_page_table is not None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-131-    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-132-    total_kv = int(forward_batch.seq_lens_sum)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-133-    if is_swa_layer:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_utils.py-134-        slot_ids = backend.forward_metadata.swa_page_table[:total_kv]
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-1-from __future__ import annotations
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-2-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-3-import logging
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-4-from dataclasses import dataclass
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-5-from typing import TYPE_CHECKING, Optional
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-6-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-7-import torch
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-8-import triton
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-9-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-10-from sglang.srt.layers.attention.base_attn_backend import AttentionBackend
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-11-from sglang.srt.layers.attention.triton_ops.kv_indices import (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py:12:    create_flashinfer_kv_indices_triton,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-13-)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-14-from sglang.srt.layers.attention.triton_ops.metadata import get_num_kv_splits_triton
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-15-from sglang.srt.layers.dp_attention import get_attention_tp_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-16-from sglang.srt.model_executor.forward_batch_info import ForwardBatch, ForwardMode
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-17-from sglang.srt.utils import get_bool_env_var, get_device_core_count
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-18-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-19-if TYPE_CHECKING:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-20-    from sglang.srt.layers.radix_attention import RadixAttention
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-21-    from sglang.srt.model_executor.model_runner import ModelRunner
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-22-    from sglang.srt.speculative.spec_info import SpecInput
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-23-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-24-logger = logging.getLogger(__name__)
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-199-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-200-        bs = forward_batch.batch_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-201-        kv_indptr = self.kv_indptr
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-202-        spec_info = forward_batch.spec_info
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-203-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-204-        if forward_batch.forward_mode.is_decode_or_idle():
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-205-            if spec_info is None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-206-                kv_indptr[1 : bs + 1] = torch.cumsum(forward_batch.seq_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-207-                kv_indptr = kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-208-                kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-209-                    forward_batch.seq_lens_sum, dtype=torch.int32, device=self.device
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-210-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py:211:                create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-212-                    self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-213-                    forward_batch.req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-214-                    forward_batch.seq_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-215-                    kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-216-                    None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-217-                    kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-218-                    self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-219-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-220-            else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-221-                kv_indptr, kv_indices = spec_info.kv_indptr, spec_info.kv_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-222-                bs = kv_indptr.shape[0] - 1
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-223-
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-254-                0,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-255-                (1 + bs) * self.num_draft_tokens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-256-                step=self.num_draft_tokens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-257-                dtype=torch.int32,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-258-                device=self.device,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-259-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-260-            # Different with flashinfer kv_indptr and kv_indices construction
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-261-            kv_indptr[1 : bs + 1] = torch.cumsum(forward_batch.seq_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-262-            kv_indptr = kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-263-            kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-264-                kv_indptr[-1], dtype=torch.int32, device=self.device
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-265-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py:266:            create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-267-                self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-268-                forward_batch.req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-269-                forward_batch.seq_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-270-                kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-271-                None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-272-                kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-273-                self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-274-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-275-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-276-            custom_mask = spec_info.custom_mask
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-277-            seq_mask_len = self.num_draft_tokens * (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-278-                forward_batch.seq_lens + self.num_draft_tokens
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-302-            attn_logits = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-303-            attn_lse = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-304-        else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-305-            kv_indptr[1 : bs + 1] = torch.cumsum(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-306-                forward_batch.extend_prefix_lens, dim=0
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-307-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-308-            kv_indptr = kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-309-            kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-310-                forward_batch.extend_prefix_lens.sum().item(),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-311-                dtype=torch.int32,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-312-                device=self.device,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-313-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py:314:            create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-315-                self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-316-                forward_batch.req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-317-                forward_batch.extend_prefix_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-318-                kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-319-                None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-320-                kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-321-                self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-322-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-323-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-324-            qo_indptr = self.qo_indptr
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-325-            qo_indptr[1 : bs + 1] = torch.cumsum(forward_batch.extend_seq_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-326-            qo_indptr = qo_indptr[: bs + 1]
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-430-    ):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-431-        """Shared capture+replay body for the cuda-graph init path.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-432-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-433-        Public entry: :py:meth:`init_forward_metadata_out_graph`.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-434-        """
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-435-        if forward_mode.is_decode_or_idle():
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-436-            kv_indptr = self.kv_indptr
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-437-            kv_indices = self.cuda_graph_kv_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-438-            num_kv_splits = self.cuda_graph_num_kv_splits
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-439-            if spec_info is None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-440-                kv_indptr[1 : bs + 1] = torch.cumsum(seq_lens[:bs], dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-441-                kv_indptr = kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py:442:                create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-443-                    self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-444-                    req_pool_indices[:bs],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-445-                    seq_lens[:bs],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-446-                    kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-447-                    None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-448-                    kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-449-                    self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-450-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-451-                num_token = bs
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-452-            else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-453-                kv_indptr[: spec_info.kv_indptr.shape[0]] = spec_info.kv_indptr
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-454-                kv_indices[: spec_info.kv_indices.shape[0]] = spec_info.kv_indices
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-458-            bs = len(req_pool_indices)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-459-            qo_indptr = self.qo_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-460-            qo_indptr[: bs + 1] = torch.arange(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-461-                0,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-462-                (1 + bs) * self.num_draft_tokens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-463-                step=self.num_draft_tokens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-464-                dtype=torch.int32,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-465-                device=self.device,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-466-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-467-            kv_indptr = self.kv_indptr[: bs + 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-468-            kv_indptr[1 : bs + 1] = torch.cumsum(seq_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-469-            kv_indices = self.cuda_graph_kv_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py:470:            create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-471-                self.req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-472-                req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-473-                seq_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-474-                kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-475-                None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-476-                kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-477-                self.req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-478-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-479-            custom_mask = self.cuda_graph_custom_mask
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-480-            custom_mask[: spec_info.custom_mask.shape[0]] = spec_info.custom_mask
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-481-            seq_mask_len = self.num_draft_tokens * (seq_lens + self.num_draft_tokens)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/wave_backend.py-482-            mask_indptr = self.mask_indptr[: bs + 1]
+--
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-8-import triton
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-9-
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-10-from sglang.srt.constrained.base_grammar_backend import BaseGrammarObject
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-11-from sglang.srt.server_args import get_global_server_args
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-12-
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-13-logger = logging.getLogger(__name__)
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-14-
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-15-from dataclasses import dataclass
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-16-
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-17-import torch.nn.functional as F
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-18-
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-19-from sglang.srt.environ import envs
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py:20:from sglang.srt.layers.attention.utils import create_flashinfer_kv_indices_triton
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-21-from sglang.srt.layers.logits_processor import LogitsProcessorOutput
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-22-from sglang.srt.layers.sampler import apply_custom_logit_processor
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-23-from sglang.srt.managers.schedule_batch import ScheduleBatch
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-24-from sglang.srt.mem_cache.common import (
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-25-    alloc_paged_token_slots_extend,
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-26-    alloc_token_slots,
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-27-    get_last_loc,
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-28-)
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-29-from sglang.srt.sampling.sampling_batch_info import SamplingBatchInfo
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-30-from sglang.srt.speculative.spec_info import SpecInput, SpecInputType
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-31-from sglang.srt.speculative.spec_utils import (
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-32-    TREE_SPEC_KERNEL_AVAILABLE,
+--
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-132-        paged_kernel_lens = paged_kernel_lens + self.draft_token_num
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-133-        cum_kv_seq_len[1:] = torch.cumsum(paged_kernel_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-134-
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-135-        self.qo_indptr = (
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-136-            torch.arange(0, bs + 1, dtype=torch.int32, device=self.device)
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-137-            * self.draft_token_num
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-138-        )
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-139-
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-140-        kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-141-            cum_kv_seq_len[-1], dtype=torch.int32, device=self.device
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-142-        )
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-143-
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py:144:        create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-145-            req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-146-            req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-147-            paged_kernel_lens,
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-148-            cum_kv_seq_len,
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-149-            None,
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-150-            kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-151-            req_to_token.size(1),
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-152-        )
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-153-        return kv_indices, cum_kv_seq_len, self.qo_indptr, self.custom_mask
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-154-
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-155-    def _fill_requests(
+/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_info.py-156-        self,
+--
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-1-from __future__ import annotations
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-2-
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-3-from dataclasses import dataclass
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-4-from typing import List, Tuple
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-5-
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-6-import torch
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-7-
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py:8:from sglang.srt.layers.attention.utils import create_flashinfer_kv_indices_triton
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-9-from sglang.srt.layers.logits_processor import LogitsProcessorOutput
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-10-from sglang.srt.layers.sampler import apply_custom_logit_processor
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-11-from sglang.srt.managers.schedule_batch import ScheduleBatch
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-12-from sglang.srt.mem_cache.common import (
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-13-    alloc_paged_token_slots_extend,
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-14-    alloc_token_slots,
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-15-    get_last_loc,
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-16-)
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-17-from sglang.srt.model_executor.forward_batch_info import CaptureHiddenMode
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-18-from sglang.srt.speculative.dflash_utils import (
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-19-    compute_dflash_correct_drafts_and_bonus,
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-20-    compute_dflash_sampling_correct_drafts_and_bonus,
+--
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-269-            device=device,
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-270-        )
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-271-
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-272-        cum_kv_seq_len = torch.zeros((bs + 1,), dtype=torch.int32, device=device)
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-273-        paged_kernel_lens = paged_kernel_lens + self.draft_token_num
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-274-        cum_kv_seq_len[1:] = torch.cumsum(paged_kernel_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-275-
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-276-        kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-277-            paged_kernel_lens_sum + self.draft_token_num * bs,
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-278-            dtype=torch.int32,
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-279-            device=device,
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-280-        )
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py:281:        create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-282-            req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-283-            req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-284-            paged_kernel_lens,
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-285-            cum_kv_seq_len,
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-286-            None,
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-287-            kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-288-            req_to_token.size(1),
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-289-        )
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-290-        mask = self.custom_mask
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-291-        if mask is not None:
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-292-            mask_numel = (
+/sgl-workspace/sglang/python/sglang/srt/speculative/dflash_info.py-293-                paged_kernel_lens_sum * self.draft_token_num
+--
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-1-import copy
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-2-import logging
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-3-from dataclasses import dataclass
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-4-from typing import List, Optional, Tuple
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-5-
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-6-import torch
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-7-import torch.nn.functional as F
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-8-
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-9-from sglang.srt.constrained.base_grammar_backend import BaseGrammarObject
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-10-from sglang.srt.distributed import get_tp_group
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-11-from sglang.srt.environ import envs
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py:12:from sglang.srt.layers.attention.utils import create_flashinfer_kv_indices_triton
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-13-from sglang.srt.layers.dp_attention import (
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-14-    get_attention_tp_group,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-15-    is_dp_attention_enabled,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-16-)
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-17-from sglang.srt.layers.logits_processor import LogitsProcessorOutput
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-18-from sglang.srt.layers.sampler import apply_custom_logit_processor
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-19-from sglang.srt.managers.schedule_batch import ScheduleBatch
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-20-from sglang.srt.mem_cache.allocator import BaseTokenToKVPoolAllocator
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-21-from sglang.srt.mem_cache.common import (
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-22-    alloc_paged_token_slots_extend,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-23-    alloc_token_slots,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-24-    get_last_loc,
+--
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-200-        cum_kv_seq_len = torch.zeros(
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-201-            (batch_size + 1,), dtype=torch.int32, device=device
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-202-        )
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-203-
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-204-        paged_kernel_lens = paged_kernel_lens + self.draft_token_num
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-205-        cum_kv_seq_len[1:] = torch.cumsum(paged_kernel_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-206-
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-207-        kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-208-            paged_kernel_lens_sum + self.draft_token_num * batch_size,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-209-            dtype=torch.int32,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-210-            device=device,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-211-        )
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py:212:        create_flashinfer_kv_indices_triton[(batch_size,)](
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-213-            req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-214-            req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-215-            paged_kernel_lens,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-216-            cum_kv_seq_len,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-217-            None,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-218-            kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-219-            req_to_token.size(1),
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-220-        )
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-221-        mask_numel = (
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-222-            paged_kernel_lens_sum * self.draft_token_num
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-223-            + (self.draft_token_num**2) * batch_size
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-224-        )
+--
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-988-        qo_indptr = torch.zeros((bs + 1,), dtype=torch.int32, device=device)
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-989-        qo_indptr[1:] = torch.cumsum(self.num_accept_tokens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-990-        cum_kv_seq_len = torch.zeros((bs + 1,), dtype=torch.int32, device=device)
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-991-        cum_kv_seq_len[1:] = torch.cumsum(paged_kernel_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-992-
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-993-        if paged_kernel_lens_sum is None:
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-994-            paged_kernel_lens_sum = cum_kv_seq_len[-1]
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-995-
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-996-        kv_indices = torch.empty(
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-997-            paged_kernel_lens_sum, dtype=torch.int32, device=device
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-998-        )
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-999-
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py:1000:        create_flashinfer_kv_indices_triton[(bs,)](
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-1001-            req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-1002-            req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-1003-            paged_kernel_lens,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-1004-            cum_kv_seq_len,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-1005-            None,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-1006-            kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-1007-            req_to_token.size(1),
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-1008-        )
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-1009-        return kv_indices, cum_kv_seq_len, qo_indptr, None
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-1010-
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-1011-
+/sgl-workspace/sglang/python/sglang/srt/speculative/eagle_info.py-1012-@dataclass
+

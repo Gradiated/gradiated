@@ -1,0 +1,87 @@
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.0.1
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+{
+  "candidate_cuda_started": true,
+  "cases": [
+    {
+      "batch_size": 0,
+      "capacity": 1,
+      "consumer_exact": true,
+      "exact": true,
+      "name": "empty",
+      "pass": true,
+      "valid_count": 0
+    },
+    {
+      "batch_size": 3,
+      "capacity": 21,
+      "consumer_exact": true,
+      "exact": true,
+      "name": "odd_lengths",
+      "pass": true,
+      "valid_count": 21
+    },
+    {
+      "batch_size": 4,
+      "capacity": 1543,
+      "consumer_exact": true,
+      "exact": true,
+      "name": "cache_hit_reorder",
+      "pass": true,
+      "valid_count": 1543
+    },
+    {
+      "batch_size": 3,
+      "capacity": 3072,
+      "consumer_exact": true,
+      "exact": true,
+      "name": "page_boundary",
+      "pass": true,
+      "valid_count": 3072
+    },
+    {
+      "batch_size": 5,
+      "capacity": 1579,
+      "consumer_exact": true,
+      "exact": true,
+      "name": "filter_merge",
+      "pass": true,
+      "valid_count": 1579
+    },
+    {
+      "batch_size": 32,
+      "capacity": 32768,
+      "consumer_exact": true,
+      "exact": true,
+      "name": "maximum_exact_workload",
+      "pass": true,
+      "valid_count": 32768
+    },
+    {
+      "exact": true,
+      "name": "cuda_graph_replay_dynamic_lengths",
+      "pass": true,
+      "valid_count": 1547
+    }
+  ],
+  "device": "NVIDIA H200",
+  "pass": true,
+  "schema_version": 1
+}
+
+/usr/local/lib/python3.12/dist-packages/torchao/quantization/quant_api.py:1731: SyntaxWarning: invalid escape sequence '\.'
+  """Configuration class for applying different quantization configs to modules or parameters based on their fully qualified names (FQNs).
+

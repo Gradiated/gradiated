@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "evidence_class": "source_bound_and_trace_correlated",
+  "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "post_retained_attention_source_sha256": "429dbb4c3617331ac495b67cfdb6f1f38c6eceec2755a3df84f8f89b1b8fa80d",
+  "source": "/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py",
+  "function": "update_sliding_window_buffer",
+  "producer": "create_flashinfer_kv_indices_triton",
+  "consumer_expression": "window_kv_indices[:window_kv_indptr[-1]]",
+  "host_scalar": "window_kv_indptr[-1] converted by Python slice indexing",
+  "downstream_consumer": "SWAKVPool.full_to_swa_index_mapping advanced-index gather, assigned in place to the valid window_kv_indices prefix",
+  "production_geometry": {
+    "phase": "decode",
+    "batch_size": 32,
+    "sliding_window_tokens": 1024,
+    "workspace_capacity_elements": 32768,
+    "index_dtype": "int64",
+    "indptr_dtype": "int32",
+    "page_size": 1
+  },
+  "trace_correlation": {
+    "decode_steps": 358,
+    "four_byte_d2h_predecessors": 358,
+    "nearest_gpu_kernel": "create_flashinfer_kv_indices_triton"
+  },
+  "pass": true
+}

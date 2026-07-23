@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "mode": "sync_pair",
+  "retry": true,
+  "classification": "ordinary_pre_science_runtime_api_wiring_repair",
+  "diagnostic": "SWAKVPool exposes full_to_swa_index_mapping directly; candidate_science_started=false and the persisted control must not be replayed.",
+  "constraints": {
+    "intervention": "device_count_masked_swa_gather_v1",
+    "workload_unchanged": true,
+    "bindings_unchanged": true,
+    "decision_gates_unchanged": true,
+    "preserve_control_terminal": true
+  },
+  "files": [
+    {
+      "path": "intervention/metadata_scalar_elimination.py",
+      "remote_name": "residual_intervention.py",
+      "sha256": "39a4038f397b7aab08ae7a6011b2690025c14545bb19eb9493460f47346d2bc8"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "boundary": "metadata_scalar",
+  "intervention_id": "device_count_masked_swa_gather_v1",
+  "source_justification": "The pinned post-retained-attention triton_backend.update_sliding_window_buffer uses window_kv_indptr[-1] as a Python slice bound immediately after create_flashinfer_kv_indices_triton. Replace only that SWA mapping consumer with one capacity-bounded Triton gather whose mask reads window_kv_indptr[batch_size] on device.",
+  "physical_hypothesis": "Removing the 4-byte D2H slice-bound conversion eliminates 358 decode-step host waits; a 32x1024 fixed-workspace gather adds no intermediate allocation and replaces the existing gather-plus-copy path with one device-only in-place kernel.",
+  "files": [
+    {
+      "path": "intervention/metadata_scalar_elimination.py",
+      "remote_name": "residual_intervention.py",
+      "sha256": "39a4038f397b7aab08ae7a6011b2690025c14545bb19eb9493460f47346d2bc8"
+    }
+  ],
+  "frozen_intervention_sha256": "454c25e08a709725dad781f4ae1ead5f16226f63523eb34e670f1d43ff59724b",
+  "no_variant_sweep": true
+}

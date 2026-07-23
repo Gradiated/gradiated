@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+/snapshot/inputs/checkpoint/
+/artifacts/*/candidate-sync-trace.sqlite
+/artifacts/*/*-compact.tar.gz
+/artifacts/*/sync_pair/
+/artifacts/*/sync_trace/

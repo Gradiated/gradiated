@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "status": "terminal",
+  "pass": false,
+  "classification": "close_host_gate_elimination_retain_dense_add_gain",
+  "decision": {
+    "host_gate_elimination": "closed",
+    "simple_endpoint_gain": "retain",
+    "promote_to_campaign_frontier": false,
+    "replay_or_sweep": false,
+    "reason": "The sole frozen pair was semantically valid and endpoint-positive, but the preregistered 358-to-0 four-byte D2H causal prediction failed exactly."
+  },
+  "binding": {
+    "evidence_binding_sha256": "278ac089904b2668e2ddb9d83a2474412260650d912e4ff54663af700e7bea67",
+    "snapshot_input_manifest_sha256": "e945ee245642cf84cc730bd877f731660a772778b24770b8387d7f92fa0cb432",
+    "intervention_sha256": "2779aae2c51c63ef3119edff9b57e39f09576975ec6e15fb66928e6069405c2a"
+  },
+  "source_result": {
+    "original_read": "BatchedMinNewTokensPenalizer._apply boolean advanced indexing at logits[mask] += stop_token_penalties[mask]",
+    "original_read_evidence": "source_backed_inference_consistent_with_measured_cub_reduction",
+    "candidate_shift": "The original CUB reduction disappeared from the synchronization-specific sequence; all 358 waits instead followed a later scalar read after create_flashinfer_kv_indices_triton.",
+    "replacement_python_callsite": "unresolved_trace_has_no_python_stack"
+  },
+  "mutation_gate": {
+    "pass": true,
+    "device": "NVIDIA H200",
+    "cases": [
+      "mixed_required_not_required",
+      "host_counter_transitions",
+      "filter_reorder",
+      "merge_different_progress",
+      "all_inactive_skip"
+    ],
+    "artifact_sha256": "7d9c7b1d9e6266c89e1e4261e0eb4a848b5891f5f4c94df77487a27e3701cb26"
+  },
+  "profiler_off_pair": {
+    "pass": true,
+    "complete_requests_control": 32,
+    "complete_requests_candidate": 32,
+    "semantic_and_accounting_pass": true,
+    "feature_parity_pass": true,
+    "control_service_seconds_per_request": 0.6864722996874946,
+    "candidate_service_seconds_per_request": 0.6762324541249995,
+    "paired_reduction_fraction": 0.014916618729053699,
+    "reduction_from_prior_frontier_fraction": 0.015700524677145333,
+    "economic_ceiling_seconds_per_request": 0.6381105231,
+    "ceiling_pass": false,
+    "persisted_pair_sha256": "cc54ce1f768e0c5fc2aa07042f6330d82109707a03313949aee62783e08d0295"
+  },
+  "candidate_trace": {
+    "pass": false,
+    "long_sync_count": 387,
+    "long_sync_seconds": 12.897130083000004,
+    "four_byte_d2h_long_sync_predecessors": 358,
+    "all_d2h_long_sync_predecessors": 358,
+    "prediction_four_byte_d2h_predecessors": 0,
+    "sqlite_sha256": "c42cebd67dff6147843c678a6b7524e75c8477b79bbb5515256b1e619d63a698",
+    "counter_sha256": "ae491695c64a97a7c3b6cb064aaf07358b076b5cde2b632812e87f7950122bdc"
+  },
+  "invocation_accounting": {
+    "profiler_off_control_invocations": 1,
+    "profiler_off_candidate_invocations": 1,
+    "candidate_trace_invocations": 1,
+    "candidate_scientific_arm_consumed": true,
+    "producer_replayed": false
+  },
+  "provider": {
+    "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+    "claim_started_at_utc": "2026-07-22T23:48:53.161156Z",
+    "released_at_utc": "2026-07-23T00:31:31.763197Z",
+    "settled_exposure_seconds": 2558.602041,
+    "hourly_cost_usd": 2.46,
+    "settled_spend_usd": 1.7483780613500002,
+    "authorized_spend_usd": 16.0,
+    "release_condition": "ready",
+    "warm_successor": "gemma4_h200_local_attention_register_residency"
+  },
+  "owner_terminal": {
+    "sha256": "e232522966069dbb4bc69142d66f0b10c3dab6386390d1d5d77d8ec3d6e361de",
+    "note": "The generic owner terminal records the expected trace-counter assertion boundary. The endpoint pair had already been persisted and remains valid; this terminal reconciles that pair with the decision-bearing negative trace."
+  }
+}

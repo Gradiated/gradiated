@@ -1,0 +1,1919 @@
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.0.1
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+WARNING: The NVIDIA Driver was not detected.  GPU functionality will not be available.
+   Use the NVIDIA Container Toolkit to start this container with GPU support; see
+   https://docs.nvidia.com/datacenter/cloud-native/ .
+
+DEFINITIONS
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-106-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-107-    def full_available_size(self):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-108-        return self.full_attn_allocator.available_size()
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-109-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-110-    def swa_available_size(self):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-111-        return self.swa_attn_allocator.available_size()
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-112-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-113-    @property
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-114-    def size(self):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-115-        return min(self._size_full, self._size_swa)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-116-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-117-    @property
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-118-    def size_swa(self):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-119-        return self._size_swa
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-120-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-121-    @property
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-122-    def size_full(self):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-123-        return self._size_full
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-124-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-125-    def debug_print(self) -> str:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-126-        msg = ""
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-127-        msg += f"#swa-available-size: {self.swa_attn_allocator.available_size()}, "
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-128-        msg += (
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-129-            f"#full-attn-available-size: {self.full_attn_allocator.available_size()}, "
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-130-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-131-        return msg
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-132-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-133-    def get_kvcache(self):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-134-        return self._kvcache
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-135-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py:136:    def translate_loc_from_full_to_swa(self, kv_indices: torch.Tensor):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-137-        assert self._kvcache.full_to_swa_index_mapping is not None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-138-        return self._kvcache.translate_loc_from_full_to_swa(kv_indices)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-139-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-140-    def alloc(self, need_size: int):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-141-        assert self.page_size == 1
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-142-        if need_size > self.full_attn_allocator.available_size():
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-143-            return None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-144-        if need_size > self.swa_attn_allocator.available_size():
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-145-            return None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-146-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-147-        alloc_full_indices = self.full_attn_allocator.alloc(need_size)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-148-        alloc_swa_indices = self.swa_attn_allocator.alloc(need_size)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-149-        assert alloc_full_indices is not None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-150-        assert alloc_swa_indices is not None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-151-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-152-        if _is_npu:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-153-            self.full_to_swa_index_mapping[alloc_full_indices.to(torch.int64)] = (
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-154-                alloc_swa_indices.to(torch.int64)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-155-            )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-156-        else:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-157-            self.full_to_swa_index_mapping[alloc_full_indices] = alloc_swa_indices
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-158-        return alloc_full_indices
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-159-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-160-    def alloc_extend(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-161-        self,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-162-        prefix_lens: torch.Tensor,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-163-        prefix_lens_cpu: torch.Tensor,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-164-        seq_lens: torch.Tensor,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-165-        seq_lens_cpu: torch.Tensor,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-166-        last_loc: torch.Tensor,  # last_loc for full layers
+--
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-1-import abc
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-2-from typing import List, Tuple
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-3-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-4-import torch
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-5-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-6-from sglang.srt.mem_cache.memory_pool import KVCache
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-7-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-8-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-9-class BaseSWAKVPool(KVCache):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-10-    """ABC for SWA-like KV pools.
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-11-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-12-    Subclasses expose a `swa_kv_pool` sub-pool plus a full -> swa index
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-13-    mapping. Used by `SWATokenToKVPoolAllocator` and the disagg paths to
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-14-    handle SWA state separately from the full KV state.
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-15-    """
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-16-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-17-    swa_kv_pool: KVCache
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-18-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-19-    @abc.abstractmethod
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-20-    def register_mapping(self, full_to_swa_index_mapping: torch.Tensor) -> None:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-21-        raise NotImplementedError()
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-22-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-23-    @abc.abstractmethod
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py:24:    def translate_loc_from_full_to_swa(self, kv_indices: torch.Tensor) -> torch.Tensor:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-25-        raise NotImplementedError()
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-26-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-27-    @abc.abstractmethod
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-28-    def get_state_buf_infos(self) -> Tuple[List[int], List[int], List[int]]:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-29-        raise NotImplementedError()
+--
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-438-            weakref.proxy(self.full_to_hisparse_device_index_mapping)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-439-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-440-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-441-    @property
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-442-    def size_full(self) -> int:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-443-        return self._size_full
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-444-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-445-    @property
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-446-    def size(self) -> int:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-447-        return self.logical_attn_allocator.size
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-448-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-449-    @property
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-450-    def size_swa(self) -> int:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-451-        return self.logical_attn_allocator.size_swa
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-452-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-453-    @property
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-454-    def full_to_swa_index_mapping(self):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-455-        return self.logical_attn_allocator.full_to_swa_index_mapping
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-456-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-457-    def debug_print(self) -> str:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-458-        msg = self.logical_attn_allocator.debug_print()
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-459-        msg += (
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-460-            f"#hisparse-available-size: "
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-461-            f"{self.hisparse_attn_allocator.available_size()}, "
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-462-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-463-        return msg
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-464-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-465-    def get_kvcache(self):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-466-        return self._kvcache
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-467-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py:468:    def translate_loc_from_full_to_swa(self, kv_indices: torch.Tensor):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-469-        return self.logical_attn_allocator.translate_loc_from_full_to_swa(kv_indices)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-470-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-471-    def full_available_size(self):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-472-        return min(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-473-            self.logical_attn_allocator.full_available_size(),
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-474-            self.hisparse_attn_allocator.available_size() * self.compress_ratio,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-475-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-476-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-477-    def swa_available_size(self):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-478-        return self.logical_attn_allocator.swa_available_size()
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-479-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-480-    def free_swa(self, free_indices: torch.Tensor):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-481-        self.logical_attn_allocator.free_swa(free_indices)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-482-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-483-    def available_size(self) -> int:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-484-        return min(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-485-            self.logical_attn_allocator.available_size(),
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-486-            self.hisparse_attn_allocator.available_size() * self.compress_ratio,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-487-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-488-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-489-    def alloc(self, need_size: int):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-490-        raise NotImplementedError(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-491-            "DeepSeek V4 HiSparse allocator does not support direct token allocation; "
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-492-            "use alloc_extend or alloc_decode instead."
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-493-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-494-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-495-    def alloc_logical_only(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-496-        self,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-497-        prefix_lens: torch.Tensor,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-498-        prefix_lens_cpu: torch.Tensor,
+--
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-494-        indexer_size = (
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-495-            self.c4_logical_size
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-496-            if (not _is_hip or envs.SGLANG_OPT_USE_COMPRESSOR_V2.get())
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-497-            else c4_size
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-498-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-499-        self.c4_indexer_kv_pool = DeepSeekV4IndexerPool(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-500-            indexer_size,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-501-            c4_page_size,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-502-            dtype,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-503-            indexer_head_dim,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-504-            c4_layer_num,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-505-            device,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-506-            enable_memory_saver,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-507-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-508-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-509-        self._init_compressed_layer_mapping()
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-510-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-511-        if _is_hip:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-512-            self._init_paged_compress_states(False)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-513-        else:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-514-            self._init_paged_compress_states(enable_memory_saver)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-515-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-516-    def register_mapping(self, full_to_swa_index_mapping: torch.Tensor):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-517-        self.full_to_swa_index_mapping = full_to_swa_index_mapping
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-518-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-519-    def get_ring_size(self, compress_ratio: int) -> int:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-520-        server_args = get_global_server_args()
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-521-        is_speculative = server_args.speculative_algorithm is not None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-522-        return get_compress_state_ring_size(compress_ratio, is_speculative)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-523-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py:524:    def translate_loc_from_full_to_swa(self, kv_indices: torch.Tensor):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-525-        assert self.full_to_swa_index_mapping is not None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-526-        return self.full_to_swa_index_mapping[kv_indices]
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-527-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-528-    def get_contiguous_buf_infos(self) -> Tuple[List[int], List[int], List[int]]:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-529-        data_ptrs: List[int] = []
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-530-        data_lens: List[int] = []
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-531-        item_lens: List[int] = []
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-532-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-533-        for bufs in [
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-534-            self.c4_kv_pool.kv_buffer,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-535-            self.c4_indexer_kv_pool.index_k_with_scale_buffer,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-536-            self.c128_kv_pool.kv_buffer,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-537-        ]:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-538-            for buf in bufs:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-539-                assert buf.ndim == 2, f"expected 2D buffer, got {buf.ndim}D"
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-540-                data_ptrs.append(buf.data_ptr())
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-541-                data_lens.append(buf.nbytes)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-542-                item_lens.append(buf[0].nbytes)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-543-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-544-        return data_ptrs, data_lens, item_lens
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-545-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-546-    def get_state_buf_infos(self) -> Tuple[List[int], List[int], List[int]]:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-547-        data_ptrs: List[int] = []
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-548-        data_lens: List[int] = []
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-549-        item_lens: List[int] = []
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-550-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-551-        for buf in self.swa_kv_pool.kv_buffer:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-552-            assert buf.ndim == 2, f"expected 2D buffer, got {buf.ndim}D"
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-553-            data_ptrs.append(buf.data_ptr())
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-554-            data_lens.append(buf.nbytes)
+--
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-117-        swa_kv_data_ptrs, swa_kv_data_lens, swa_kv_item_lens = (
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-118-            self.swa_kv_pool.get_contiguous_buf_infos()
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-119-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-120-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-121-        return swa_kv_data_ptrs, swa_kv_data_lens, swa_kv_item_lens
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-122-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-123-    def get_key_buffer(self, layer_id: int):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-124-        self._wait_for_layer(layer_id)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-125-        layer_id_pool, is_swa_layer = self.layers_mapping[layer_id]
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-126-        if is_swa_layer:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-127-            return self.swa_kv_pool.get_key_buffer(layer_id_pool)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-128-        else:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-129-            return self.full_kv_pool.get_key_buffer(layer_id_pool)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-130-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-131-    def get_value_buffer(self, layer_id: int):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-132-        self._wait_for_layer(layer_id)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-133-        layer_id_pool, is_swa_layer = self.layers_mapping[layer_id]
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-134-        if is_swa_layer:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-135-            return self.swa_kv_pool.get_value_buffer(layer_id_pool)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-136-        else:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-137-            return self.full_kv_pool.get_value_buffer(layer_id_pool)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-138-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-139-    def get_kv_buffer(self, layer_id: int):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-140-        self._wait_for_layer(layer_id)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-141-        layer_id_pool, is_swa_layer = self.layers_mapping[layer_id]
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-142-        if is_swa_layer:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-143-            return self.swa_kv_pool.get_kv_buffer(layer_id_pool)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-144-        else:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-145-            return self.full_kv_pool.get_kv_buffer(layer_id_pool)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-146-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py:147:    def translate_loc_from_full_to_swa(self, kv_indices: torch.Tensor) -> torch.Tensor:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-148-        assert self.full_to_swa_index_mapping is not None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-149-        # -1 in kv_indices maps to -1 via the sentinel appended to the mapping.
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-150-        return self.full_to_swa_index_mapping[kv_indices]
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-151-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-152-    def set_kv_buffer(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-153-        self,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-154-        layer: RadixAttention,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-155-        loc: torch.Tensor,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-156-        cache_k: torch.Tensor,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-157-        cache_v: torch.Tensor,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-158-        k_scale: float = 1.0,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-159-        v_scale: float = 1.0,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-160-        swa_loc: Optional[torch.Tensor] = None,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-161-    ):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-162-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-163-        layer_id = layer.layer_id
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-164-        layer_id_pool, is_swa_layer = self.layers_mapping[layer_id]
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-165-        if is_swa_layer:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-166-            # swa_loc is the full->SWA translation, computed once per forward by
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-167-            # the attention backend; set_kv_buffer never translates internally.
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-168-            assert swa_loc is not None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-169-            self.swa_kv_pool.set_kv_buffer(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-170-                None,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-171-                swa_loc,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-172-                cache_k,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-173-                cache_v,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-174-                k_scale,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-175-                v_scale,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-176-                layer_id_override=layer_id_pool,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-177-            )
+CALLERS
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-818-                # steps; mirror the eager init's per-step slice.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-819-                out_cache_loc = per_step_draft_out_cache_loc(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-820-                    out_cache_loc,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-821-                    forward_batch.batch_size,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-822-                    self.topk,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-823-                    self.speculative_num_steps,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-824-                )[self.speculative_step_id]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-825-            metadata.core_attn_metadata.swa_out_cache_loc = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py:826:                self.token_to_kv_pool.translate_loc_from_full_to_swa(out_cache_loc).to(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-827-                    torch.int32
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-828-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-829-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-830-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-831-    def init_forward_metadata_out_graph(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-832-        self,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-833-        forward_batch: ForwardBatch,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-834-        in_capture: bool = False,
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1134-        core = getattr(self.forward_metadata, "core_attn_metadata", None)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1135-        cached = core.swa_out_cache_loc if core is not None else None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1136-        if (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1137-            cached is not None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1138-            and not forward_batch.forward_mode.is_idle()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1139-            and cached.shape[0] == out_cache_loc.shape[0]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1140-        ):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1141-            return cached
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py:1142:        return self.token_to_kv_pool.translate_loc_from_full_to_swa(out_cache_loc).to(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1143-            torch.int32
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1144-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1145-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1146-    def store_cache(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1147-        self, layer_id: int, swa_k: torch.Tensor, forward_batch: ForwardBatch
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1148-    ) -> None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1149-        swa_loc = self.get_swa_out_cache_loc(forward_batch)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1150-        if envs.SGLANG_OPT_USE_FUSED_STORE_CACHE.get():
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1585-        offsets = pos_causal.unsqueeze(1) - torch.arange(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1586-            SWA_WINDOW, **self.cuda_int32_kwargs
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1587-        ).unsqueeze(0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1588-        invalid_offset_mask = offsets < 0
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1589-        offsets.masked_fill_(invalid_offset_mask, 0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1590-        raw_indices = self.req_to_token[req_pool_indices_repeated[:, None], offsets]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1591-        assert raw_indices.shape == (num_qo_tokens, SWA_WINDOW)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1592-        raw_indices.masked_fill_(invalid_offset_mask, -1)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py:1593:        swa_indices = self.token_to_kv_pool.translate_loc_from_full_to_swa(raw_indices)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1594-        # flash_mla attention requires int32 page indices.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1595-        return swa_indices.to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1596-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1597-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1598-class DeepseekV4MultiStepBackend(DeepseekV4AttnBackend):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1599-    def __init__(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1600-        self, model_runner: ModelRunner, topk: int, speculative_num_steps: int
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend.py-1601-    ):
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-538-                w.begin_forward = partial(fast_decode_plan, w)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-539-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-540-        # Refill the SWA write-target buffer from the live out_cache_loc before
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-541-        # replay (bound onto the metadata at capture below).
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-542-        if self.use_sliding_window_kv_pool and forward_batch.out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-543-            n = forward_batch.out_cache_loc.shape[0]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-544-            self.cuda_graph_swa_out_cache_loc[n:].zero_()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-545-            self.cuda_graph_swa_out_cache_loc[:n].copy_(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py:546:                self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-547-                    forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-548-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-549-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-550-            if in_capture:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-551-                self.forward_metadata.swa_out_cache_loc = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-552-                    self.cuda_graph_swa_out_cache_loc[:n]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-553-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-554-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-555-    def init_forward_metadata(self, forward_batch: ForwardBatch):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-556-        swa_out_cache_loc = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-557-        if self.use_sliding_window_kv_pool and forward_batch.out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py:558:            swa_out_cache_loc = self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-559-                forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-560-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-561-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-562-        if forward_batch.forward_mode.is_decode_or_idle():
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-563-            self.indices_updater_decode.update(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-564-                forward_batch.req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-565-                forward_batch.seq_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-566-                forward_batch.seq_lens_cpu,
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1187-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1188-        else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1189-            kv_indptr, kv_indices = spec_info.kv_indptr, spec_info.kv_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1190-            bs = kv_indptr.shape[0] - 1
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1191-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1192-        if use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1193-            kv_last_index = kv_indptr[-1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1194-            kv_indices[:kv_last_index] = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py:1195:                self.token_to_kv_pool_allocator.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1196-                    kv_indices[:kv_last_index]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1197-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1198-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1199-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1200-        global global_override_indptr_cpu
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1201-        locally_override = False
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1202-        if seq_lens_cpu is not None and global_override_indptr_cpu is None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1203-            locally_override = True
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1562-                self.num_kv_heads,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1563-                self.head_dim,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1564-                q_data_type=self.q_data_type,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1565-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1566-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1567-        if use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1568-            kv_last_index = kv_indptr[-1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1569-            kv_indices[:kv_last_index] = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py:1570:                self.token_to_kv_pool_allocator.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1571-                    kv_indices[:kv_last_index]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1572-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1573-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1574-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1575-        # cached part
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1576-        # Conditionally set multi-item parameters
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1577-        if multi_item_params is not None and multi_item_params.is_enabled():
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashinfer_backend.py-1578-            # Multi-item scoring is active - use specialized parameters and disable generic custom_mask
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-550-        if (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-551-            out_cache_loc is None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-552-            or out_cache_loc.shape[0] > self.cuda_graph_swa_out_cache_loc.shape[0]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-553-        ):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-554-            return None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-555-        n = out_cache_loc.shape[0]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-556-        self.cuda_graph_swa_out_cache_loc[n:].zero_()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-557-        self.cuda_graph_swa_out_cache_loc[:n].copy_(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py:558:            self.token_to_kv_pool.translate_loc_from_full_to_swa(out_cache_loc)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-559-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-560-        return self.cuda_graph_swa_out_cache_loc[:n]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-561-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-562-    def init_forward_metadata(self, forward_batch: ForwardBatch):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-563-        """Init auxiliary variables for triton attention backend."""
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-564-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-565-        bs = forward_batch.batch_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-566-        window_kv_indptr = self.window_kv_indptr
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-765-            if forward_batch.extend_seq_lens_cpu is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-766-                max_extend_len = max(forward_batch.extend_seq_lens_cpu)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-767-            else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-768-                max_extend_len = int(forward_batch.extend_seq_lens.max())
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-769-            num_kv_splits = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-770-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-771-        swa_out_cache_loc = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-772-        if self.use_sliding_window_kv_pool and forward_batch.out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py:773:            swa_out_cache_loc = self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-774-                forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-775-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-776-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-777-        self.forward_metadata = ForwardMetadata(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-778-            attn_logits,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-779-            attn_lse,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-780-            max_extend_len,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-781-            num_kv_splits,
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1038-            o = q.new_empty((q.shape[0], layer.tp_q_head_num * layer.v_head_dim))
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1039-        else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1040-            o = torch.empty_like(q)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1041-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1042-        if k is None and v is None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1043-            pool = self.token_to_kv_pool
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1044-            cache_loc = forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1045-            if isinstance(pool, SWAKVPool) and pool.layers_mapping[layer.layer_id][1]:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py:1046:                cache_loc = pool.translate_loc_from_full_to_swa(cache_loc)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1047-            k_buffer, v_buffer = pool.get_kv_buffer(layer.layer_id)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1048-            k = k_buffer[cache_loc]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1049-            v = v_buffer[cache_loc]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1050-        elif k is None or v is None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1051-            raise ValueError("Both k and v should be None or not None")
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1052-        else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1053-            # Save KV cache first (must do this before unified kernel)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1054-            if save_kv_cache:
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1216-        extend_kv_indices = forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1217-        pool = self.token_to_kv_pool
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1218-        if (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1219-            layer.sliding_window_size is not None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1220-            and layer.sliding_window_size > -1
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1221-            and isinstance(pool, SWAKVPool)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1222-            and pool.layers_mapping[layer.layer_id][1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1223-        ):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py:1224:            extend_kv_indices = pool.translate_loc_from_full_to_swa(extend_kv_indices)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1225-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1226-        # Handle cases where extend_seq_lens or extend_start_loc might not be set
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1227-        # In speculative decoding, we can infer these from spec_info or compute them
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1228-        if forward_batch.extend_seq_lens is None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1229-            # TARGET_VERIFY mode: infer extend_seq_lens from spec_info
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1230-            if forward_batch.spec_info is not None and hasattr(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1231-                forward_batch.spec_info, "draft_token_num"
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1232-            ):
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1610-        req_to_token,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1611-        req_pool_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1612-        window_kv_lens,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1613-        window_kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1614-        window_kv_start_idx,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1615-        window_kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1616-        req_to_token.stride(0),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1617-    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py:1618:    if hasattr(token_to_kv_pool, "translate_loc_from_full_to_swa"):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1619-        kv_last_index = window_kv_indptr[-1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1620-        window_kv_indices[:kv_last_index] = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py:1621:            token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1622-                window_kv_indices[:kv_last_index]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1623-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1624-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_backend.py-1625-    return window_kv_indptr, window_kv_indices, window_kv_lens, window_kv_start_idx
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-210-            pre_state_indices = self.compute_state_len_indices(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-211-                seq_len=prefix_lens[i], ratio=self.ratio
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-212-            ).to(device)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-213-            raw_loc = torch.where(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-214-                pre_state_indices < 0,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-215-                -1,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-216-                req_to_token[req_pool_indices[i], pre_state_indices],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-217-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py:218:            swa_loc = token_to_kv_pool.translate_loc_from_full_to_swa(raw_loc)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-219-            state_loc = state_pool.translate_from_swa_loc_to_state_loc(swa_loc)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-220-            pre_kv_state = state_pool.get_state_by_state_loc(state_loc)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-221-            kv_and_score_buffer = KVAndScore.cat([pre_kv_state, kv_and_score], dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-222-            valid_kv_len = kv_and_score_buffer.kv.size(0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-223-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-224-            post_state_indices = self.compute_state_len_indices(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-225-                seq_len=prefix_lens[i] + extend_lens[i], ratio=self.ratio
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-226-            ).to(device)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-227-            post_state_len = post_state_indices.size(0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-228-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-229-            assert post_state_len <= valid_kv_len
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-230-            post_raw_loc = torch.where(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-231-                post_state_indices < 0,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-232-                -1,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-233-                req_to_token[req_pool_indices[i], post_state_indices],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-234-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py:235:            post_swa_loc = token_to_kv_pool.translate_loc_from_full_to_swa(post_raw_loc)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-236-            post_state_loc = state_pool.translate_from_swa_loc_to_state_loc(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-237-                post_swa_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-238-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-239-            post_state_to_set = kv_and_score_buffer[valid_kv_len - post_state_len :]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-240-            state_pool.set_state_by_state_loc(post_state_loc, post_state_to_set)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-241-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-242-            compress_len = valid_kv_len // self.ratio * self.ratio
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-243-            if compress_len == 0:
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-334-            draft_tokens = attn_backend.speculative_num_draft_tokens
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-335-            offsets = torch.arange(1, draft_tokens + 1, device=seq_lens.device)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-336-            seq_lens_2d = seq_lens[:, None] + offsets[None, :]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-337-            seq_lens = seq_lens_2d.view(-1)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-338-            req_pool_indices = req_pool_indices.repeat_interleave(draft_tokens)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-339-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-340-        raw_locs = req_to_token[req_pool_indices, seq_lens - 1]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-341-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py:342:        swa_locs = token_to_kv_pool.translate_loc_from_full_to_swa(raw_locs)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-343-        state_locs = state_pool.translate_from_swa_loc_to_state_loc(swa_locs)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-344-        state_pool.set_state_by_state_loc(state_locs, kv_and_scores)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-345-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-346-        compress_bulk_len = self.ratio * self.coff
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-347-        compress_indices = seq_lens[:, None] + torch.arange(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-348-            -compress_bulk_len, 0, device=seq_lens.device
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-349-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-350-        compress_indices.clamp_(min=-1)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-351-        compress_indices_raw = torch.where(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-352-            compress_indices < 0,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-353-            -1,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-354-            req_to_token[req_pool_indices[:, None], compress_indices],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-355-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py:356:        compress_indices_swa = token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-357-            compress_indices_raw
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-358-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-359-        compress_indices_state = state_pool.translate_from_swa_loc_to_state_loc(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-360-            compress_indices_swa
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-361-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-362-        kv_and_score_to_compress = state_pool.get_state_by_state_loc(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-363-            compress_indices_state.view(-1)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compress_hip.py-364-        ).view(-1, self.ratio, self.coff * self.head_dim)
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-279-    # assert ring_size % compress_ratio == 0
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-280-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-281-    def clip_down(positions: torch.Tensor) -> torch.Tensor:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-282-        return positions // compress_ratio * compress_ratio
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-283-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-284-    def get_raw_loc(positions: torch.Tensor) -> torch.Tensor:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-285-        positions = positions.masked_fill(positions < 0, 0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-286-        loc = req_to_token[req_pool_indices, positions]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py:287:        swa_loc = token_to_kv_pool.translate_loc_from_full_to_swa(loc)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-288-        swa_pages = swa_loc // swa_page_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-289-        state_loc = swa_pages * ring_size + swa_loc % ring_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-290-        return (state_loc // compress_ratio).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-291-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-292-    is_overlap = is_overlap_compress(compress_ratio)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-293-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-294-    if is_prefill:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/dsv4/compressor.py-295-        assert extend_lens is not None
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-381-                ),
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-382-            ]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-383-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-384-        # Translate full-pool indices to SWA-pool indices for hybrid models
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-385-        if self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-386-            # flash_attn_with_kvcache requires int32 page tables; the SWA index
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-387-            # mapping is int64, so cast (matches flashattention_backend.py).
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-388-            metadata.swa_page_table = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py:389:                self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-390-                    metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-391-                ).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-392-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-393-            if forward_batch.out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-394-                metadata.swa_out_cache_loc = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py:395:                    self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-396-                        forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-397-                    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-398-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-399-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-400-        if self.use_mla:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-401-            workspace_size = flash_mla_get_workspace_size(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-402-                max_seq_len=self.max_context_len,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-403-                num_batches=batch_size,
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-413-                    workspace_size, device=self.device, dtype=torch.uint8
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-414-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-415-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-416-        # Translate full-pool indices to SWA-pool indices for hybrid models
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-417-        if self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-418-            # flash_attn_with_kvcache requires int32 page tables; the SWA index
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-419-            # mapping is int64, so cast (matches flashattention_backend.py).
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-420-            metadata.swa_page_table = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py:421:                self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-422-                    metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-423-                ).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-424-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-425-            if forward_batch.out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-426-                metadata.swa_out_cache_loc = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py:427:                    self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-428-                        forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-429-                    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-430-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-431-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-432-        # Convert the page table to a strided format which is needed by FA3 API
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-433-        if self.page_size > 1:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-434-            self.strided_indices = torch.arange(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-435-                0, metadata.page_table.shape[1], self.page_size, device=self.device
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-561-            max_seqlen_q = swa_spec_metadata.max_seq_len_q
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-562-            cu_seqlens_k = swa_spec_metadata.cu_seqlens_k
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-563-        else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-564-            page_table = metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-565-            if is_hybrid_swa and self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-566-                if metadata.swa_page_table is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-567-                    page_table = metadata.swa_page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-568-                else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py:569:                    page_table = self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-570-                        metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-571-                    ).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-572-            cu_seqlens_q = metadata.cu_seqlens_q
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-573-            cache_seqlens = metadata.cache_seqlens_int32
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-574-            max_seqlen_q = metadata.max_seq_len_q
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-575-            cu_seqlens_k = metadata.cu_seqlens_k
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-576-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-577-        # Use Flash Attention for prefill
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-912-                page_table = metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-913-                # For SWA layers on hybrid models, use the translated
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-914-                # SWA-pool page table so KV reads hit the correct pool.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-915-                if is_swa_layer and self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-916-                    if metadata.swa_page_table is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-917-                        page_table = metadata.swa_page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-918-                    else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-919-                        page_table = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py:920:                            self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-921-                                metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-922-                            ).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-923-                        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-924-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-925-                cache_seqlens = metadata.cache_seqlens_int32
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-926-                cu_seqlens_k = metadata.cu_seqlens_k
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-927-                max_seqlen_q = metadata.max_seq_len_q
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/xpu_backend.py-928-                q_reshaped = q.contiguous().view(
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-169-        self, token_indices: torch.Tensor
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-170-    ) -> Optional[torch.Tensor]:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-171-        """Translate full-pool token indices to SWA-pool indices, or return None."""
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-172-        if self._swa_kv_pool is None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-173-            return None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-174-        shape = token_indices.shape
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-175-        # trtllm-gen SWA attention kernels require int32 page indices.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-176-        return (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py:177:            self._swa_kv_pool.translate_loc_from_full_to_swa(token_indices.reshape(-1))
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-178-            .reshape(shape)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-179-            .to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-180-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-181-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-182-    def _alloc_swa_page_table(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-183-        self, max_bs: int, max_num_pages: int
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-184-    ) -> Optional[torch.Tensor]:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-185-        """Allocate a SWA page_table buffer, or return None for non-SWA models."""
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-203-        self,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-204-        layer: RadixAttention,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-205-        forward_batch: ForwardBatch,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-206-    ) -> torch.Tensor:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-207-        """Return cache locations in the correct index space for the given layer."""
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-208-        if self._swa_kv_pool is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-209-            _, is_swa = self._swa_kv_pool.layers_mapping[layer.layer_id]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-210-            if is_swa:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py:211:                return self._swa_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-212-                    forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-213-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-214-        return forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-215-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-216-    def _bind_swa_page_table(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-217-        self, metadata: TRTLLMMHAMetadata, source: dict, key: str, bs: int
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-218-    ):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-219-        """Bind a pre-allocated SWA page_table slice to metadata for CUDA graph."""
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-636-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-637-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-638-        # Refill the SWA write-target buffer from the live out_cache_loc before
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-639-        # replay (the per-bs metadata holds a view bound in _build).
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-640-        if self.use_sliding_window_kv_pool and forward_batch.out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-641-            n = forward_batch.out_cache_loc.shape[0]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-642-            self.cuda_graph_swa_out_cache_loc[n:].zero_()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-643-            self.cuda_graph_swa_out_cache_loc[:n].copy_(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py:644:                self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-645-                    forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-646-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-647-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-648-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-649-    def init_forward_metadata(self, forward_batch: ForwardBatch):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-650-        """Initialize the metadata for a forward pass."""
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-651-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-652-        metadata = TRTLLMMHAMetadata()
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-742-                metadata.cu_seqlens_q = metadata.cu_seqlens_k
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-743-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-744-        # Compute SWA page table (None for non-SWA models)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-745-        metadata.swa_page_table = self._maybe_translate_swa(metadata.page_table)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-746-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-747-        # int64 scatter index (unlike the int32 read page table above).
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-748-        if self.use_sliding_window_kv_pool and forward_batch.out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-749-            metadata.swa_out_cache_loc = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py:750:                self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-751-                    forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-752-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-753-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-754-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-755-        # Convert the page tables to a strided format
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-756-        if self.page_size > 1:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-757-            self.strided_indices = torch.arange(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/trtllm_mha_backend.py-758-                0, metadata.page_table.shape[1], self.page_size, device=self.device
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-868-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-869-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-870-        # Refill the SWA write-target buffer from the live out_cache_loc and
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-871-        # bind it onto the metadata before replay (_apply rebuilds it each call).
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-872-        if self.use_sliding_window_kv_pool and forward_batch.out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-873-            n = forward_batch.out_cache_loc.shape[0]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-874-            self.cuda_graph_swa_out_cache_loc[n:].zero_()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-875-            self.cuda_graph_swa_out_cache_loc[:n].copy_(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:876:                self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-877-                    forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-878-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-879-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-880-            self.forward_metadata.swa_out_cache_loc = self.cuda_graph_swa_out_cache_loc[
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-881-                :n
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-882-            ]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-883-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-884-    def init_forward_metadata(self, forward_batch: ForwardBatch):
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-898-        reduce_indptr = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-899-        reduce_final_map = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-900-        reduce_partial_map = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-901-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-902-        num_kv_splits = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-903-        swa_page_table = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-904-        swa_out_cache_loc = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-905-        if self.use_sliding_window_kv_pool and forward_batch.out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:906:            swa_out_cache_loc = self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-907-                forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-908-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-909-        max_kv_len = forward_batch.seq_lens_cpu.max().item()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-910-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-911-        if forward_batch.forward_mode.is_decode_or_idle():
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-912-            if spec_info is None or forward_batch.forward_mode.is_idle():
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-913-                kv_indptr[1 : bs + 1] = torch.cumsum(forward_batch.seq_lens, dim=0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-914-                kv_indptr = kv_indptr[: bs + 1]
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-946-                        max_kv_len,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-947-                        1,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-948-                    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-949-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-950-                    if self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-951-                        # AITER attention kernels require int32 page indices;
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-952-                        # full_to_swa_index_mapping is stored as int64.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-953-                        swa_page_table = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:954:                            self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-955-                                kv_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-956-                            ).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-957-                        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-958-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-959-                        kv_indices = self._transform_table_1_to_real(kv_indices)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-960-                        swa_page_table = self._transform_table_1_to_real(swa_page_table)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-961-                    elif self.page_size > 1:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-962-                        kv_indices = self._transform_table_1_to_real(kv_indices)
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1430-                    spec_info=None,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1431-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1432-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1433-                if self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1434-                    # AITER attention kernels (e.g. mha_batch_prefill_func)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1435-                    # require int32 page indices; full_to_swa_index_mapping is
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1436-                    # stored as int64.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1437-                    swa_page_table = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:1438:                        self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1439-                            self.indices_updater_prefill.kv_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1440-                        ).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1441-                    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1442-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1443-                self.forward_metadata = ForwardMetadata(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1444-                    self.indices_updater_prefill.kv_indptr,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1445-                    self.indices_updater_prefill.kv_indices,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1446-                    None,
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1645-                        page_indices = self.req_to_token[
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1646-                            req_pool_indices[:bs], :max_kv_len
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1647-                        ]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1648-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1649-                        if self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1650-                            # AITER attention kernels require int32 page indices;
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1651-                            # full_to_swa_index_mapping is stored as int64.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1652-                            swa_page_indices = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py:1653:                                self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1654-                                    page_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1655-                                ).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1656-                            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1657-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1658-                            page_indices = self._transform_table_1_to_real(page_indices)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1659-                            swa_page_indices = self._transform_table_1_to_real(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1660-                                swa_page_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/aiter_backend.py-1661-                            )
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-45-        ).unsqueeze(1)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-46-        k_pos = torch.arange(kv_len, device=device).unsqueeze(0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-47-        return (k_pos <= q_pos) & (k_pos >= q_pos - sliding_window_size)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-48-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-49-    def init_forward_metadata(self, forward_batch: ForwardBatch):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-50-        """Init the metadata for a forward pass."""
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-51-        if self.use_sliding_window_kv_pool and forward_batch.out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-52-            self.swa_out_cache_loc = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py:53:                self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-54-                    forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-55-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-56-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-57-        else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-58-            self.swa_out_cache_loc = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-59-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-60-    def _run_sdpa_forward_extend(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/torch_native_backend.py-61-        self,
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-701-                # steps; mirror the eager init's per-step slice.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-702-                out_cache_loc = per_step_draft_out_cache_loc(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-703-                    out_cache_loc,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-704-                    forward_batch.batch_size,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-705-                    self.topk,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-706-                    self.speculative_num_steps,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-707-                )[self.speculative_step_id]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-708-            metadata.core_attn_metadata.swa_out_cache_loc = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py:709:                self.token_to_kv_pool.translate_loc_from_full_to_swa(out_cache_loc).to(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-710-                    torch.int32
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-711-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-712-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-713-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-714-    def init_forward_metadata_out_graph(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-715-        self,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-716-        forward_batch: ForwardBatch,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-717-        in_capture: bool = False,
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-971-        core = getattr(self.forward_metadata, "core_attn_metadata", None)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-972-        cached = core.swa_out_cache_loc if core is not None else None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-973-        if (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-974-            cached is not None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-975-            and not forward_batch.forward_mode.is_idle()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-976-            and cached.shape[0] == out_cache_loc.shape[0]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-977-        ):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-978-            return cached
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py:979:        return self.token_to_kv_pool.translate_loc_from_full_to_swa(out_cache_loc).to(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-980-            torch.int32
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-981-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-982-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-983-    def store_cache(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-984-        self, layer_id: int, swa_k: torch.Tensor, forward_batch: ForwardBatch
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-985-    ) -> None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-986-        swa_loc = self.get_swa_out_cache_loc(forward_batch)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-987-        if envs.SGLANG_OPT_USE_FUSED_STORE_CACHE.get():
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1234-        offsets = pos_causal.unsqueeze(1) - torch.arange(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1235-            SWA_WINDOW, **self.cuda_int32_kwargs
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1236-        ).unsqueeze(0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1237-        invalid_offset_mask = offsets < 0
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1238-        offsets.masked_fill_(invalid_offset_mask, 0)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1239-        raw_indices = self.req_to_token[req_pool_indices_repeated[:, None], offsets]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1240-        assert raw_indices.shape == (num_qo_tokens, SWA_WINDOW)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1241-        raw_indices.masked_fill_(invalid_offset_mask, -1)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py:1242:        swa_indices = self.token_to_kv_pool.translate_loc_from_full_to_swa(raw_indices)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1243-        # flash_mla attention requires int32 page indices.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1244-        return swa_indices.to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1245-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1246-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1247-class DeepseekV4MultiStepBackend(DeepseekV4HipRadixBackend):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1248-    def __init__(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1249-        self, model_runner: ModelRunner, topk: int, speculative_num_steps: int
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/deepseek_v4_backend_hip_radix.py-1250-    ):
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-67-        if forward_batch.forward_mode.is_decode_or_idle():
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-68-            max_extend_len = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-69-        else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-70-            max_extend_len = torch.max(forward_batch.extend_seq_lens).item()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-71-        self.forward_metadata = (attn_logits, max_extend_len)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-72-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-73-        if self.use_sliding_window_kv_pool and forward_batch.out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-74-            self.swa_out_cache_loc = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py:75:                self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-76-                    forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-77-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-78-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-79-        else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-80-            self.swa_out_cache_loc = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-81-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-82-    def get_cpu_graph_seq_len_fill_value(self):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/intel_amx_backend.py-83-        return 1
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-693-            text_row = forward_batch.req_pool_indices.unsqueeze(1).expand(-1, text_max)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-694-            metadata.page_table = self.req_to_token_pool.req_to_token[
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-695-                text_row, text_col
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-696-            ]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-697-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-698-        if self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-699-            # FA3 requires an int32 page_table.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-700-            metadata.swa_page_table = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py:701:                self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-702-                    metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-703-                ).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-704-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-705-            if forward_batch.out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-706-                metadata.swa_out_cache_loc = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py:707:                    self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-708-                        forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-709-                    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-710-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-711-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-712-        # Convert the page table to a strided format which is needed by FA3 API
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-713-        if self.page_size > 1:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-714-            self.strided_indices = torch.arange(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-715-                0, metadata.page_table.shape[1], self.page_size, device=self.device
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-908-            max_seqlen_q = swa_spec_metadata.max_seq_len_q
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-909-            cu_seqlens_k = swa_spec_metadata.cu_seqlens_k
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-910-        else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-911-            page_table = metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-912-            if is_swa_layer and self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-913-                if metadata.swa_page_table is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-914-                    page_table = metadata.swa_page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-915-                else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py:916:                    page_table = self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-917-                        metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-918-                    ).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-919-            cu_seqlens_q = metadata.cu_seqlens_q
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-920-            cache_seqlens = metadata.cache_seqlens_int32
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-921-            max_seqlen_q = metadata.max_seq_len_q
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-922-            cu_seqlens_k = metadata.cu_seqlens_k
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-923-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-924-        # Use Flash Attention for prefill
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1397-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1398-            else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1399-                page_table = metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1400-                if is_swa_layer and self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1401-                    if metadata.swa_page_table is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1402-                        page_table = metadata.swa_page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1403-                    else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1404-                        page_table = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py:1405:                            self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1406-                                metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1407-                            ).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1408-                        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1409-                cache_seqlens = metadata.cache_seqlens_int32
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1410-                max_seqlen_q = metadata.max_seq_len_q
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1411-                q_reshaped = q.contiguous().view(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1412-                    -1, layer.tp_q_head_num, layer.head_dim
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-1413-                )
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2094-        metadata_expand = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2095-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2096-        # Refill the SWA write-target buffer (bound as a metadata view in
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2097-        # _bind_metadata_buffers) from the live out_cache_loc before replay.
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2098-        if self.use_sliding_window_kv_pool and out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2099-            n = out_cache_loc.shape[0]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2100-            self.swa_out_cache_loc_buf[n:].zero_()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2101-            self.swa_out_cache_loc_buf[:n].copy_(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py:2102:                self.token_to_kv_pool.translate_loc_from_full_to_swa(out_cache_loc)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2103-            )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2104-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2105-        if forward_mode.is_decode_or_idle():
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2106-            if spec_info is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2107-                # Draft Decode
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2108-                if self.topk <= 1:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2109-                    # When topk = 1, we use the normal decode metadata
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2110-                    metadata = self.decode_cuda_graph_metadata[bs]
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2264-                    req_pool_indices[:, None],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2265-                    self.decode_cuda_graph_metadata["strided_indices"][:max_seq_pages],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2266-                ]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2267-                if (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2268-                    self.use_sliding_window_kv_pool
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2269-                    and metadata.swa_page_table is not None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2270-                ):
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2271-                    swa_page_indices = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py:2272:                        self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2273-                            page_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2274-                        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2275-                    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2276-                    metadata.swa_page_table[:, :max_seq_pages].copy_(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2277-                        swa_page_indices // self.page_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2278-                    )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2279-                page_indices //= self.page_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2280-                metadata.page_table[:, :max_seq_pages].copy_(page_indices)
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2387-            max_seq_pages = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2388-                metadata.max_seq_len_k + self.page_size - 1
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2389-            ) // self.page_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2390-            page_indices = self.req_to_token[
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2391-                req_pool_indices[:, None],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2392-                self.draft_extend_metadata["strided_indices"][:max_seq_pages],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2393-            ]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2394-            if self.use_sliding_window_kv_pool and metadata.swa_page_table is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py:2395:                swa_page_indices = self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2396-                    page_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2397-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2398-                metadata.swa_page_table[:, :max_seq_pages].copy_(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2399-                    swa_page_indices // self.page_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2400-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2401-            metadata.page_table[:, :max_seq_pages].copy_(page_indices // self.page_size)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2402-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2403-        elif forward_mode.is_draft_extend_v2():
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2442-            max_seq_pages = (
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2443-                metadata.max_seq_len_k + self.page_size - 1
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2444-            ) // self.page_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2445-            page_indices = self.req_to_token[
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2446-                req_pool_indices[:, None],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2447-                self.draft_extend_metadata["strided_indices"][:max_seq_pages],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2448-            ]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2449-            if self.use_sliding_window_kv_pool and metadata.swa_page_table is not None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py:2450:                swa_page_indices = self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2451-                    page_indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2452-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2453-                metadata.swa_page_table[:, :max_seq_pages].copy_(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2454-                    swa_page_indices // self.page_size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2455-                )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2456-            metadata.page_table[:, :max_seq_pages].copy_(page_indices // self.page_size)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2457-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2458-        else:
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2502-        """Centralized utility to initialize local_attn_metadata if chunked attention is enabled."""
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2503-        if not self.has_local_attention:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2504-            metadata.local_attn_metadata = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2505-            return
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2506-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2507-        cu_seqlens_q = metadata.cu_seqlens_q
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2508-        cache_seqlens_int32 = metadata.cache_seqlens_int32
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2509-        if self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py:2510:            page_table = self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2511-                metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2512-            ).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2513-        else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2514-            page_table = metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2515-        if cu_seqlens_q is None or cache_seqlens_int32 is None or page_table is None:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2516-            metadata.local_attn_metadata = None
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2517-            return
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2518-
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2629-        # 1. Ensures we only process the actual batch size (bs) and not the maximum batch size
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2630-        # 2. Limits the sequence length to prevent processing padding tokens or garbage values
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2631-        # 3. Prevents zeros in the block table which can cause garbage output during replay
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2632-        #
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2633-        # Without this slicing, the pre-allocated page_table may contain zeros or invalid indices
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2634-        # beyond the actual sequence length, leading to incorrect attention calculations
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2635-        max_seq_len = int(seqlens.max().item())
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2636-        if self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py:2637:            sliced_page_table = self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2638-                metadata.page_table[:bs, :max_seq_len]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2639-            ).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2640-        else:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2641-            sliced_page_table = metadata.page_table[:bs, :max_seq_len]
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2642-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2643-        cu_seqlens_q_np = cu_seqlens_q.cpu().numpy()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2644-        seqlens_np = seqlens.cpu().numpy()
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2645-        (
+--
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2711-            metadata.max_seq_len_k + metadata_expand.page_table.shape[1],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2712-            page_table.shape[1],
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2713-            "FA3 swa-spec page_table",
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2714-        )
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2715-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2716-        page_table_a = metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2717-        page_table_b = metadata_expand.page_table
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2718-        if self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py:2719:            page_table_a = self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2720-                page_table_a
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2721-            ).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py:2722:            page_table_b = self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2723-                page_table_b
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2724-            ).to(torch.int32)
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2725-
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2726-        prepare_swa_spec_page_table_triton(
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2727-            page_table,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2728-            page_table_a,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2729-            page_table_b,
+/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py-2730-            metadata.cache_seqlens_int32,
+--
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-128-        msg += (
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-129-            f"#full-attn-available-size: {self.full_attn_allocator.available_size()}, "
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-130-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-131-        return msg
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-132-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-133-    def get_kvcache(self):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-134-        return self._kvcache
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-135-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py:136:    def translate_loc_from_full_to_swa(self, kv_indices: torch.Tensor):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-137-        assert self._kvcache.full_to_swa_index_mapping is not None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py:138:        return self._kvcache.translate_loc_from_full_to_swa(kv_indices)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-139-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-140-    def alloc(self, need_size: int):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-141-        assert self.page_size == 1
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-142-        if need_size > self.full_attn_allocator.available_size():
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-143-            return None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-144-        if need_size > self.swa_attn_allocator.available_size():
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-145-            return None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-146-
+--
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-171-        num_new_pages = get_num_new_pages(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-172-            seq_lens=seq_lens_cpu, page_size=self.page_size, prefix_lens=prefix_lens_cpu
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-173-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-174-        if num_new_pages > self.full_attn_allocator.available_size() // self.page_size:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-175-            return None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-176-        if num_new_pages > self.swa_attn_allocator.available_size() // self.page_size:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-177-            return None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-178-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py:179:        swa_last_loc = self.translate_loc_from_full_to_swa(last_loc)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-180-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-181-        alloc_full_indices = self.full_attn_allocator.alloc_extend(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-182-            prefix_lens,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-183-            prefix_lens_cpu,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-184-            seq_lens,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-185-            seq_lens_cpu,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-186-            last_loc,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-187-            extend_num_tokens,
+--
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-277-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-278-    def alloc_decode(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-279-        self,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-280-        seq_lens: torch.Tensor,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-281-        seq_lens_cpu: torch.Tensor,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-282-        last_loc: torch.Tensor,  # last_loc for full layers
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-283-    ):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-284-        assert self.page_size > 1
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py:285:        swa_last_loc = self.translate_loc_from_full_to_swa(last_loc)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-286-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-287-        alloc_full_indices = self.full_attn_allocator.alloc_decode(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-288-            seq_lens, seq_lens_cpu, last_loc
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-289-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-290-        alloc_swa_indices = self.swa_attn_allocator.alloc_decode(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-291-            seq_lens, seq_lens_cpu, swa_last_loc
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-292-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/allocator/swa.py-293-
+--
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-16-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-17-    swa_kv_pool: KVCache
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-18-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-19-    @abc.abstractmethod
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-20-    def register_mapping(self, full_to_swa_index_mapping: torch.Tensor) -> None:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-21-        raise NotImplementedError()
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-22-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-23-    @abc.abstractmethod
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py:24:    def translate_loc_from_full_to_swa(self, kv_indices: torch.Tensor) -> torch.Tensor:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-25-        raise NotImplementedError()
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-26-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-27-    @abc.abstractmethod
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-28-    def get_state_buf_infos(self) -> Tuple[List[int], List[int], List[int]]:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/base_swa_memory_pool.py-29-        raise NotImplementedError()
+--
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-460-            f"#hisparse-available-size: "
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-461-            f"{self.hisparse_attn_allocator.available_size()}, "
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-462-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-463-        return msg
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-464-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-465-    def get_kvcache(self):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-466-        return self._kvcache
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-467-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py:468:    def translate_loc_from_full_to_swa(self, kv_indices: torch.Tensor):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py:469:        return self.logical_attn_allocator.translate_loc_from_full_to_swa(kv_indices)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-470-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-471-    def full_available_size(self):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-472-        return min(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-473-            self.logical_attn_allocator.full_available_size(),
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-474-            self.hisparse_attn_allocator.available_size() * self.compress_ratio,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-475-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-476-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/hisparse_memory_pool.py-477-    def swa_available_size(self):
+--
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-57-        super().__init__(cache, params)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-58-        self.sliding_window_size = params.sliding_window_size
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-59-        # HiCache state: set to host SWA pool when HiCache enabled
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-60-        self._swa_kv_pool_host = None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-61-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-62-    component_type = ComponentType.SWA
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-63-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-64-    def _translate_full_to_swa(self, full_indices: torch.Tensor) -> torch.Tensor:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py:65:        return self.cache.token_to_kv_pool_allocator.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-66-            full_indices
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-67-        )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-68-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-69-    def refresh_lru(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-70-        self,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-71-        phase: LRURefreshPhase,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-72-        node: UnifiedTreeNode,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/unified_cache_components/swa_component.py-73-        root_node: UnifiedTreeNode,
+--
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-516-    def register_mapping(self, full_to_swa_index_mapping: torch.Tensor):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-517-        self.full_to_swa_index_mapping = full_to_swa_index_mapping
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-518-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-519-    def get_ring_size(self, compress_ratio: int) -> int:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-520-        server_args = get_global_server_args()
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-521-        is_speculative = server_args.speculative_algorithm is not None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-522-        return get_compress_state_ring_size(compress_ratio, is_speculative)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-523-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py:524:    def translate_loc_from_full_to_swa(self, kv_indices: torch.Tensor):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-525-        assert self.full_to_swa_index_mapping is not None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-526-        return self.full_to_swa_index_mapping[kv_indices]
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-527-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-528-    def get_contiguous_buf_infos(self) -> Tuple[List[int], List[int], List[int]]:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-529-        data_ptrs: List[int] = []
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-530-        data_lens: List[int] = []
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-531-        item_lens: List[int] = []
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/deepseek_v4_memory_pool.py-532-
+--
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-139-    def get_kv_buffer(self, layer_id: int):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-140-        self._wait_for_layer(layer_id)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-141-        layer_id_pool, is_swa_layer = self.layers_mapping[layer_id]
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-142-        if is_swa_layer:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-143-            return self.swa_kv_pool.get_kv_buffer(layer_id_pool)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-144-        else:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-145-            return self.full_kv_pool.get_kv_buffer(layer_id_pool)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-146-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py:147:    def translate_loc_from_full_to_swa(self, kv_indices: torch.Tensor) -> torch.Tensor:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-148-        assert self.full_to_swa_index_mapping is not None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-149-        # -1 in kv_indices maps to -1 via the sentinel appended to the mapping.
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-150-        return self.full_to_swa_index_mapping[kv_indices]
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-151-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-152-    def set_kv_buffer(
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-153-        self,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-154-        layer: RadixAttention,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-155-        loc: torch.Tensor,
+--
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-183-                cache_v,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-184-                k_scale,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-185-                v_scale,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-186-                layer_id_override=layer_id_pool,
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-187-            )
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-188-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-189-    def move_kv_cache(self, tgt_loc: torch.Tensor, src_loc: torch.Tensor):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-190-        self.full_kv_pool.move_kv_cache(tgt_loc, src_loc)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py:191:        tgt_loc_swa = self.translate_loc_from_full_to_swa(tgt_loc)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py:192:        src_loc_swa = self.translate_loc_from_full_to_swa(src_loc)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-193-        self.swa_kv_pool.move_kv_cache(tgt_loc_swa, src_loc_swa)
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-194-
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-195-    def _filter_swa_cpu_copy(self, swa_kv_cpu, row_mask: torch.Tensor):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-196-        if swa_kv_cpu is None:
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-197-            return None
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-198-        if row_mask is None or bool(torch.all(row_mask).item()):
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-199-            return swa_kv_cpu
+/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_memory_pool.py-200-
+--
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-963-            def _swa_payload():
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-964-                window_size = self.sliding_window_size
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-965-                window_start = max(0, seq_len - window_size)
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-966-                window_start = (window_start // page_size) * page_size
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-967-                window_kv_indices_full = self.req_to_token_pool.req_to_token[
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-968-                    req.req_pool_idx, window_start:seq_len
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-969-                ]
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-970-                window_kv_indices_swa = (
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py:971:                    self.token_to_kv_pool_allocator.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-972-                        window_kv_indices_full
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-973-                    )
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-974-                )
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-975-                return kv_to_page_indices(
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-976-                    window_kv_indices_swa.cpu().numpy(), page_size
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-977-                )
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-978-
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/prefill.py-979-            def _dsa_payload():
+--
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-988-            def _swa_payload():
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-989-                window_size = self.scheduler.sliding_window_size
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-990-                window_start = max(0, seq_len - window_size)
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-991-                window_start = page_align_floor(window_start, page_size)
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-992-                window_kv_indices_full = self.req_to_token_pool.req_to_token[
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-993-                    decode_req.req.req_pool_idx, window_start:seq_len
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-994-                ]
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-995-                window_kv_indices_swa = (
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py:996:                    self.token_to_kv_pool_allocator.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-997-                        window_kv_indices_full
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-998-                    )
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-999-                )
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-1000-                return kv_to_page_indices(
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-1001-                    window_kv_indices_swa.cpu().numpy(), page_size
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-1002-                )
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-1003-
+/sgl-workspace/sglang/python/sglang/srt/disaggregation/decode.py-1004-            def _dsa_payload():
+--
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-493-                    (
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-494-                        self.forward_metadata.flatten_prefix_block_tables,
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-495-                        torch.flatten(req_prefix_block_tables),
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-496-                    )
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-497-                )
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-498-
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-499-        if self.use_sliding_window_kv_pool and forward_batch.out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-500-            self.forward_metadata.swa_out_cache_loc = (
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py:501:                self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-502-                    forward_batch.out_cache_loc
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-503-                )
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-504-            )
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-505-
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-506-        self.graph_mode = False
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-507-
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-508-    def init_cuda_graph_state(self, max_bs: int, max_num_tokens: int):
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-509-        total_context_len = self.max_context_len + self.page_size - 1
+--
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-619-        """
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-620-        metadata = self.graph_metadata[bs]
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-621-
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-622-        # refill the captured SWA write-target buffer in place from the live loc
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-623-        if self.use_sliding_window_kv_pool and out_cache_loc is not None:
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-624-            n = out_cache_loc.shape[0]
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-625-            self.swa_out_cache_loc_buf[n:].zero_()
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-626-            self.swa_out_cache_loc_buf[:n].copy_(
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py:627:                self.token_to_kv_pool.translate_loc_from_full_to_swa(out_cache_loc)
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-628-            )
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-629-        max_len = seq_lens_cpu[:bs].max().item()
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-630-        if forward_mode.is_target_verify():
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-631-            max_len += self.speculative_num_draft_tokens
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-632-        elif forward_mode.is_decode_or_idle() and spec_info is not None:
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-633-            max_len += self.speculative_step_id + 1
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-634-        max_seq_pages = (max_len + self.page_size - 1) // self.page_size
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/npu/attention/ascend_backend.py-635-
+--
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-354-            cu_seqlens_k = swa_spec_metadata.cu_seqlens_k
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-355-            max_seqlen_k = swa_spec_metadata.max_seq_len_k
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-356-        else:
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-357-            page_table = metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-358-            if is_swa_layer and self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-359-                if metadata.swa_page_table is not None:
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-360-                    page_table = metadata.swa_page_table
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-361-                else:
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py:362:                    page_table = self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-363-                        metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-364-                    )
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-365-            cu_seqlens_q = metadata.cu_seqlens_q
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-366-            cache_seqlens = metadata.cache_seqlens_int32
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-367-            max_seqlen_q = metadata.max_seq_len_q
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-368-            cu_seqlens_k = metadata.cu_seqlens_k
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-369-            max_seqlen_k = metadata.max_seq_len_k
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-370-
+--
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-785-                )
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-786-            else:
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-787-                page_table = metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-788-                if is_swa_layer and self.use_sliding_window_kv_pool:
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-789-                    if metadata.swa_page_table is not None:
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-790-                        page_table = metadata.swa_page_table
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-791-                    else:
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-792-                        page_table = (
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py:793:                            self.token_to_kv_pool.translate_loc_from_full_to_swa(
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-794-                                metadata.page_table
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-795-                            )
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-796-                        )
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-797-                cache_seqlens = metadata.cache_seqlens_int32
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-798-                cu_seqlens_k = metadata.cu_seqlens_k
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-799-                max_seqlen_q = metadata.max_seq_len_q
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-800-                q_reshaped = q.contiguous().view(
+/sgl-workspace/sglang/python/sglang/srt/hardware_backend/musa/attention/flashattention_backend.py-801-                    -1, layer.tp_q_head_num, layer.head_dim
+TRITON_UPDATE_CONTEXT
+            seq_lens,
+            num_seq,
+            num_group,
+            self.num_head,
+            self.num_kv_head,
+            self.max_kv_splits,
+            self.device_core_count,
+            MAX_NUM_SEQ=SCHEDULE_SEQ,
+        )
+
+    def _fill_kv_indptr_and_indices(
+        self,
+        bs: int,
+        seq_lens: torch.Tensor,
+        req_pool_indices: torch.Tensor,
+        kv_indices: torch.Tensor,
+    ) -> torch.Tensor:
+        kv_indptr = self.kv_indptr[: bs + 1]
+        kv_indptr[1:] = torch.cumsum(seq_lens, dim=0)
+        create_flashinfer_kv_indices_triton[(bs,)](
+            self.req_to_token,
+            req_pool_indices,
+            seq_lens,
+            kv_indptr,
+            None,
+            kv_indices,
+            self.req_to_token.stride(0),
+        )
+        return kv_indptr
+
+    def _update_decode_kv_buffers(
+        self,
+        bs: int,
+        seq_lens: torch.Tensor,
+        req_pool_indices: torch.Tensor,
+    ):
+        """Fill KV (and SWA) cuda-graph buffers for decode/idle mode.
+
+        Returns ``(kv_indptr, window_kv_indptr, window_kv_lens)`` where
+        ``window_kv_lens`` is ``None`` when sliding-window is disabled.
+        """
+        seq_lens = seq_lens[:bs]
+        req_pool_indices = req_pool_indices[:bs]
+        kv_indptr = self._fill_kv_indptr_and_indices(
+            bs, seq_lens, req_pool_indices, self.cuda_graph_kv_indices
+        )
+        window_kv_indptr = self.window_kv_indptr
+        window_kv_lens = None
+        if self.sliding_window_size is not None and self.sliding_window_size > 0:
+            window_kv_indptr, _, window_kv_lens, _ = update_sliding_window_buffer(
+                self.window_kv_indptr,
+                self.req_to_token,
+                self.sliding_window_size,
+                seq_lens,
+                req_pool_indices,
+                bs,
+                token_to_kv_pool=self.token_to_kv_pool,
+                window_kv_indices=self.cuda_graph_window_kv_indices,
+            )
+        return kv_indptr, window_kv_indptr, window_kv_lens
+
+    def _update_target_verify_buffers(
+        self,
+        bs: int,
+        seq_lens: torch.Tensor,
+        req_pool_indices: torch.Tensor,
+        spec_info,
+    ):
+        """Fill all cuda-graph buffers for target_verify mode.
+
+        Returns the ForwardMetadata components:
+        ``(qo_indptr, kv_indptr, custom_mask, mask_indptr,
+          window_kv_indptr, window_kv_indices, window_num_kv_splits, window_kv_offsets)``
+        """
+        qo_indptr = self.qo_indptr[: bs + 1]
+        qo_indptr[: bs + 1] = torch.arange(
+            0,
+            (1 + bs) * self.num_draft_tokens,
+            step=self.num_draft_tokens,
+            dtype=torch.int32,
+            device=self.device,
+        )
+        kv_indptr = self._fill_kv_indptr_and_indices(
+            bs, seq_lens, req_pool_indices, self.cuda_graph_kv_indices
+        )
+        window_kv_indptr = self.window_kv_indptr
+        window_kv_indices = None
+        window_num_kv_splits = None
+        window_kv_offsets = None
+        if self.sliding_window_size is not None and self.sliding_window_size > 0:
+            window_kv_indices = self.cuda_graph_window_kv_indices
+            window_num_kv_splits = self.cuda_graph_window_num_kv_splits
+            window_kv_offsets = self.cuda_graph_window_kv_offsets
+            window_kv_indptr, window_kv_indices, _, window_kv_offsets[:bs] = (
+                update_sliding_window_buffer(
+                    self.window_kv_indptr,
+                    self.req_to_token,
+                    self.sliding_window_size,
+                    seq_lens[:bs],
+                    req_pool_indices,
+                    bs,
+                    token_to_kv_pool=self.token_to_kv_pool,
+                    window_kv_indices=window_kv_indices,
+                )
+            )
+        custom_mask = self.cuda_graph_custom_mask
+        if (
+            spec_info is not None
+            and getattr(spec_info, "custom_mask", None) is not None
+        ):
+            custom_mask[: spec_info.custom_mask.shape[0]] = spec_info.custom_mask
+        else:
+            custom_mask = None
+        seq_mask_len = self.num_draft_tokens * (seq_lens + self.num_draft_tokens)
+        mask_indptr = self.mask_indptr[: bs + 1]
+        mask_indptr[1 : bs + 1] = torch.cumsum(seq_mask_len, dim=0)
+        return (
+            qo_indptr,
+            kv_indptr,
+            custom_mask,
+            mask_indptr,
+            window_kv_indptr,
+            window_kv_indices,
+            window_num_kv_splits,
+            window_kv_offsets,
+        )
+
+    def _update_draft_extend_buffers(
+        self,
+        bs: int,
+        seq_lens: torch.Tensor,
+TRITON_GRAPH_INIT
+                            forward_batch.seq_lens,
+                            forward_batch.req_pool_indices,
+                            bs,
+                            self.device,
+                            self.token_to_kv_pool,
+                        )
+                    )
+                    window_num_kv_splits = torch.empty(
+                        (bs,), dtype=torch.int32, device=self.device
+                    )
+                    self.get_num_kv_splits(window_num_kv_splits, window_kv_lens)
+            else:
+                kv_indptr, kv_indices = spec_info.kv_indptr, spec_info.kv_indices
+                bs = kv_indptr.shape[0] - 1
+
+            attn_logits = torch.empty(
+                (bs, self.num_head, self.max_kv_splits, self.v_head_dim),
+                dtype=torch.float32,
+                device=self.device,
+            )
+            if self.swa_v_head_dim is not None:
+                swa_attn_logits = torch.empty(
+                    (bs, self.num_head, self.max_kv_splits, self.swa_v_head_dim),
+                    dtype=torch.float32,
+                    device=self.device,
+                )
+            else:
+                swa_attn_logits = None
+            attn_lse = torch.empty(
+                (bs, self.num_head, self.max_kv_splits),
+                dtype=torch.float32,
+                device=self.device,
+            )
+            num_kv_splits = torch.empty((bs,), dtype=torch.int32, device=self.device)
+            self.get_num_kv_splits(num_kv_splits, forward_batch.seq_lens)
+
+            qo_indptr = None
+            custom_mask = None
+            mask_indptr = None
+            max_extend_len = None
+        elif forward_batch.forward_mode.is_target_verify():
+            bs = len(forward_batch.req_pool_indices)
+            qo_indptr = torch.arange(
+                0,
+                (1 + bs) * self.num_draft_tokens,
+                step=self.num_draft_tokens,
+                dtype=torch.int32,
+                device=self.device,
+            )
+            # Different with flashinfer kv_indptr and kv_indices construction.
+            # gpu_only: seq_lens_sum may be None; ub-allocate is safe (ragged write).
+            seq_lens_sum = forward_batch.seq_lens_sum
+            if seq_lens_sum is None:
+                seq_lens_sum = bs * self.max_context_len
+            kv_indices = torch.empty(
+                seq_lens_sum, dtype=torch.int64, device=self.device
+            )
+            kv_indptr = self._fill_kv_indptr_and_indices(
+                bs,
+                forward_batch.seq_lens,
+                forward_batch.req_pool_indices,
+                kv_indices,
+            )
+
+            if self.sliding_window_size is not None and self.sliding_window_size > 0:
+                # window_kv_offsets is used to calculate the start position in custom mask
+                (
+                    window_kv_indptr,
+                    window_kv_indices,
+                    window_kv_lens,
+                    window_kv_offsets,
+                ) = update_sliding_window_buffer(
+                    self.window_kv_indptr,
+                    self.req_to_token,
+                    self.sliding_window_size,
+                    forward_batch.seq_lens,
+                    forward_batch.req_pool_indices,
+                    bs,
+                    self.device,
+                    self.token_to_kv_pool,
+                )
+
+            custom_mask = spec_info.custom_mask
+            seq_mask_len = self.num_draft_tokens * (
+                forward_batch.seq_lens + self.num_draft_tokens
+            )
+            mask_indptr = self.mask_indptr
+            mask_indptr[1 : bs + 1] = torch.cumsum(seq_mask_len[:bs], dim=0)
+            mask_indptr = mask_indptr[: bs + 1]
+            max_extend_len = self.num_draft_tokens
+            num_kv_splits = None
+            attn_logits = None
+            attn_lse = None
+
+        elif forward_batch.forward_mode.is_draft_extend():
+            # Eager only (CG replay bypasses init); explicit D2H here instead of
+            # letting torch.empty inside generate_attn_arg_prefill .item() on a
+            # GPU cumsum tensor.
+            seq_lens_sum = (
+                forward_batch.seq_lens_sum
+                if forward_batch.seq_lens_sum is not None
+                else int(forward_batch.seq_lens.sum())
+            )
+            kv_indices, kv_indptr, qo_indptr, custom_mask = (
+                spec_info.generate_attn_arg_prefill(
+                    forward_batch.req_pool_indices,
+                    forward_batch.seq_lens,
+                    seq_lens_sum,
+                    self.req_to_token,
+                )
+            )
+            kv_indices = kv_indices.to(torch.int64)
+            mask_indptr = None
+            # TODO(FIXME): This will trigger an invalid Eagle tree when using
+            # `max(spec_info.num_accept_tokens_cpu)`.
+            # It might have been forgotten to update somewhere.
+            max_extend_len = torch.max(spec_info.num_accept_tokens).item()
+            num_kv_splits = None
+            attn_logits = None
+            attn_lse = None
+        else:
+            # gpu_only leaves _cpu unset; ub-allocate is safe (ragged write
+            # from GPU tensor, extra tail unused).
+            if forward_batch.extend_prefix_lens_cpu is not None:
+                kv_indices_len = sum(forward_batch.extend_prefix_lens_cpu)
+            else:
+                kv_indices_len = bs * self.max_context_len
+            kv_indices = torch.empty(
+                kv_indices_len,
+                dtype=torch.int64,
+                device=self.device,
+            )
+            kv_indptr = self._fill_kv_indptr_and_indices(
+                bs,
+                forward_batch.extend_prefix_lens,
+                forward_batch.req_pool_indices,
+                kv_indices,
+            )
+            # Sliding window
+            if self.sliding_window_size is not None and self.sliding_window_size > 0:
+                (
+                    window_kv_indptr,
+                    window_kv_indices,
+                    window_kv_lens,
+                    window_kv_offsets,
+                ) = update_sliding_window_buffer(
+                    self.window_kv_indptr,
+                    self.req_to_token,
+                    self.sliding_window_size,
+                    forward_batch.extend_prefix_lens,
+                    forward_batch.req_pool_indices,
+                    bs,
+                    self.device,
+                    self.token_to_kv_pool,
+                )
+
+            qo_indptr = self.qo_indptr
+            qo_indptr[1 : bs + 1] = torch.cumsum(forward_batch.extend_seq_lens, dim=0)
+            qo_indptr = qo_indptr[: bs + 1]
+            custom_mask = None
+            mask_indptr = None
+            attn_logits = None
+            attn_lse = None
+            # Caller usually supplies extend_seq_lens_cpu (eagle_info gpu_only
+            # sets host-constant mirror); defensive GPU-max fallback if not.
+            if forward_batch.extend_seq_lens_cpu is not None:
+                max_extend_len = max(forward_batch.extend_seq_lens_cpu)
+            else:
+                max_extend_len = int(forward_batch.extend_seq_lens.max())
+            num_kv_splits = None
+
+        swa_out_cache_loc = None
+        if self.use_sliding_window_kv_pool and forward_batch.out_cache_loc is not None:
+            swa_out_cache_loc = self.token_to_kv_pool.translate_loc_from_full_to_swa(
+                forward_batch.out_cache_loc
+            )
+
+        self.forward_metadata = ForwardMetadata(
+            attn_logits,
+            attn_lse,
+            max_extend_len,
+            num_kv_splits,
+            kv_indptr,
+            kv_indices,
+            qo_indptr,
+            custom_mask,
+            mask_indptr,
+            window_kv_indptr,
+            window_kv_indices,
+            window_num_kv_splits,
+            window_kv_offsets,
+TRITON_EAGER_INIT
+        self.topk = topk
+        self.speculative_num_steps = speculative_num_steps
+        max_bs = model_runner.req_to_token_pool.size * self.topk
+        self.kv_indptr = torch.zeros(
+            (
+                self.speculative_num_steps,
+                max_bs + 1,
+            ),
+            dtype=torch.int32,
+            device=model_runner.device,
+        )
+        self.attn_backends: List[TritonAttnBackend] = []
+        for i in range(self.speculative_num_steps - 1):
+            self.attn_backends.append(
+                TritonAttnBackend(
+                    model_runner,
+                    skip_prefill=True,
+                    kv_indptr_buf=self.kv_indptr[i],
+                )
+            )
+        self.max_context_len = self.attn_backends[0].max_context_len
+        self.num_head = (
+            model_runner.model_config.num_attention_heads // get_attention_tp_size()
+        )
+        self.device = model_runner.device
+        # Cached variables for generate_draft_decode_kv_indices
+        self.req_to_token_pool = model_runner.req_to_token_pool
+        self.pool_len = model_runner.req_to_token_pool.req_to_token.shape[1]
+        self.page_size = model_runner.server_args.page_size
+
+    def common_template(
+        self,
+        forward_batch: ForwardBatch,
+        kv_indices_buffer: Optional[torch.Tensor],
+        call_fn: int,
+    ):
+        if kv_indices_buffer is None:
+            kv_indices_buffer = self.cuda_graph_kv_indices
+
+        num_seqs = forward_batch.batch_size
+        bs = self.topk * num_seqs
+        seq_lens_sum = forward_batch.seq_lens_sum
+        if seq_lens_sum is None:
+            # seq_lens_sum here only slice-clamps a preallocated kv_indices buffer;
+            # over-estimate is safe. Use a static UB to skip the per-iter .sum().item() D2H.
+            seq_lens_sum = num_seqs * self.max_context_len
+
+        generate_draft_decode_kv_indices[
+            (self.speculative_num_steps, num_seqs, self.topk)
+        ](
+            forward_batch.req_pool_indices,
+            self.req_to_token_pool.req_to_token,
+            forward_batch.seq_lens,
+            kv_indices_buffer,
+            self.kv_indptr,
+            forward_batch.positions,
+            self.pool_len,
+            kv_indices_buffer.shape[1],
+            self.kv_indptr.shape[1],
+            next_power_of_2(num_seqs),
+            next_power_of_2(self.speculative_num_steps),
+            next_power_of_2(bs),
+            self.page_size,
+        )
+
+        if call_fn is None:
+            return
+
+        for i in range(self.speculative_num_steps - 1):
+            forward_batch.spec_info.kv_indptr = self.kv_indptr[i, : bs + 1]
+            forward_batch.spec_info.kv_indices = kv_indices_buffer[i][
+                : draft_kv_indices_used_len(seq_lens_sum, self.topk, bs, i + 1)
+            ]
+            call_fn(i, forward_batch)
+
+    def init_forward_metadata(self, forward_batch: ForwardBatch):
+        kv_indices_width = draft_kv_indices_buffer_width(
+            forward_batch.batch_size, self.topk, self.max_context_len
+        )
+        kv_indices = torch.empty(
+            (self.speculative_num_steps, kv_indices_width),
+            dtype=torch.int64,
+            device=self.device,
+        )
+
+        def call_fn(i, forward_batch):
+            forward_batch.spec_info.kv_indptr = (
+                forward_batch.spec_info.kv_indptr.clone()
+            )
+            forward_batch.spec_info.kv_indices = (
+                forward_batch.spec_info.kv_indices.clone()
+            )
+            self.attn_backends[i].init_forward_metadata(forward_batch)
+
+        self.common_template(forward_batch, kv_indices, call_fn)
+
+    def init_cuda_graph_state(self, max_bs: int, max_num_tokens: int):
+        kv_indices_width = draft_kv_indices_buffer_width(
+            max_bs, self.topk, self.max_context_len
+        )
+        self.cuda_graph_kv_indices = torch.zeros(
+            (self.speculative_num_steps, kv_indices_width),
+            dtype=torch.int64,
+            device=self.device,
+        )
+        self.cuda_graph_num_kv_splits = torch.full(
+            (max_num_tokens,),
+            self.attn_backends[0].max_kv_splits,
+            dtype=torch.int32,
+            device=self.device,
+        )
+
+        for i in range(self.speculative_num_steps - 1):
+            self.attn_backends[i].init_cuda_graph_state(
+                max_bs,
+                max_num_tokens,
+                kv_indices_buf=self.cuda_graph_kv_indices[i],
+                cuda_graph_num_kv_splits_buf=self.cuda_graph_num_kv_splits,
+            )
+
+    def init_forward_metadata_out_graph(
+        self,
+        forward_batch: ForwardBatch,
+        in_capture: bool = False,
+    ):
+        from sglang.srt.model_executor.forward_batch_info import build_inner_fb_view
+
+        if in_capture:
+            inner_fb = build_inner_fb_view(
+                forward_batch,
+                bs=forward_batch.batch_size,
+                forward_mode=ForwardMode.DECODE,
+            )
+
+            def call_fn(i, _forward_batch):
+                self.attn_backends[i].init_forward_metadata_out_graph(
+                    inner_fb, in_capture=True
+                )
+
+            self.common_template(forward_batch, None, call_fn)
+        else:
+            bs = forward_batch.batch_size
+            self.common_template(forward_batch, None, None)
+
+            # NOTE: Multi-step's attention backends use the slice of
+            # - kv_indptr buffer (cuda graph and non-cuda graph)
+            # - kv_indices buffer (cuda graph only)
+            # So we don't need to assign the KV indices inside the attention backend.
+
+            # Compute num_kv_splits only once
+            num_token = bs * self.topk
+            self.attn_backends[-1].get_num_kv_splits(
+                self.attn_backends[-1].cuda_graph_num_kv_splits[:num_token],
+                forward_batch.seq_lens[:bs],
+            )
+
+    def init_forward_metadata_in_graph(self, forward_batch: ForwardBatch) -> None:
+        for attn_backend in self.attn_backends:
+            attn_backend.init_forward_metadata_in_graph(forward_batch)
+
+
+def update_sliding_window_buffer(
+    window_kv_indptr,
+    req_to_token,
+    sliding_window_size,
+    seq_lens,
+    req_pool_indices,
+    bs,
+    device=None,
+    token_to_kv_pool=None,
+    window_kv_indices=None,
+):
+    """Fill window KV buffers for sliding-window attention.
+
+    Pass ``window_kv_indices`` to write into a pre-allocated buffer (CUDA-graph
+    path); omit it (or pass ``None``) to allocate a fresh tensor (eager path,
+    requires ``device``).
+    """
+    window_kv_lens = torch.minimum(
+        seq_lens,
+        torch.tensor(sliding_window_size),
+    )
+    window_kv_indptr[1 : bs + 1] = torch.cumsum(window_kv_lens, dim=0)
+    window_kv_indptr = window_kv_indptr[: bs + 1]
+    if window_kv_indices is None:
+        window_kv_indices = torch.empty(
+            window_kv_indptr[-1], dtype=torch.int64, device=device
+        )
+    window_kv_start_idx = seq_lens - window_kv_lens
+    create_flashinfer_kv_indices_triton[(bs,)](
+        req_to_token,
+        req_pool_indices,
+        window_kv_lens,
+        window_kv_indptr,
+        window_kv_start_idx,
+        window_kv_indices,
+        req_to_token.stride(0),
+    )
+    if hasattr(token_to_kv_pool, "translate_loc_from_full_to_swa"):
+        kv_last_index = window_kv_indptr[-1]
+        window_kv_indices[:kv_last_index] = (
+            token_to_kv_pool.translate_loc_from_full_to_swa(
+                window_kv_indices[:kv_last_index]
+            )
+        )
+    return window_kv_indptr, window_kv_indices, window_kv_lens, window_kv_start_idx
+

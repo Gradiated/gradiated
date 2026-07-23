@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-root=/work/dflash
+root=/home/glmrunner/gemma4-dflash/work
 source_dir="$root/sglang"
 models="$root/models"
 image=gemma4-dflash-sglang:588d1f7bc942
@@ -9,6 +9,8 @@ commit=588d1f7bc9424201f89957e145f9d5af633a3eb8
 target_revision=b9ea41a2887d8607f594846523f94c6cc75ac8a4
 draft_revision=eabd648301ce28583cc14757912e5e0f84e152e1
 project=/work/project
+
+docker() { sudo docker "$@"; }
 
 mkdir -p "$root" "$models" "$root/results"
 if [[ ! -d "$source_dir/.git" ]]; then git clone https://github.com/sgl-project/sglang.git "$source_dir"; fi
@@ -39,10 +41,18 @@ start_server() {
 }
 
 stage_models
-for arm in ar dflash; do
-  start_server "$arm"
-  docker exec gemma4-dflash python3 /project/dflash_endpoint_runner.py --arm "$arm-diagnostic" --concurrency 4 --output "/work/dflash/results/$arm-diagnostic"
-  docker exec gemma4-dflash python3 /project/dflash_endpoint_runner.py --arm "$arm-c32" --concurrency 32 --output "/work/dflash/results/$arm-c32"
-  docker logs gemma4-dflash > "$root/${arm}-server.log" 2>&1
-done
+start_server ar
+docker exec gemma4-dflash python3 /project/dflash_endpoint_runner.py --arm ar-diagnostic --concurrency 4 --output /work/dflash/results/ar-diagnostic
+docker logs gemma4-dflash > "$root/ar-server.log" 2>&1
+start_server dflash
+docker exec gemma4-dflash python3 /project/dflash_endpoint_runner.py --arm dflash-diagnostic --concurrency 4 --output /work/dflash/results/dflash-diagnostic
+docker logs gemma4-dflash > "$root/dflash-server.log" 2>&1
+grep -q 'Initialized DFLASH draft runner' "$root/dflash-server.log"
+grep -q 'DFLASH verify completed' "$root/dflash-server.log"
+start_server ar
+docker exec gemma4-dflash python3 /project/dflash_endpoint_runner.py --arm ar-c32 --concurrency 32 --output /work/dflash/results/ar-c32
+docker logs gemma4-dflash > "$root/ar-c32-server.log" 2>&1
+start_server dflash
+docker exec gemma4-dflash python3 /project/dflash_endpoint_runner.py --arm dflash-c32 --concurrency 32 --output /work/dflash/results/dflash-c32
+docker logs gemma4-dflash > "$root/dflash-c32-server.log" 2>&1
 python3 "$project/reconcile_dflash.py" --results "$root/results" --output "$root/FINAL_TERMINAL.json"

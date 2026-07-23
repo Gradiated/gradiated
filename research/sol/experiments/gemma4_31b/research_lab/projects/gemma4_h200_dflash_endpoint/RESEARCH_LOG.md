@@ -17,3 +17,14 @@ a GPU performance or quality result.
 Next: director registration of one independent H200 within the $28 authority;
 the exact request is `DIRECTOR_REQUEST.json`. The shared NGRAM bench was not
 claimed.
+
+## 2026-07-23 — independent H200 execution started
+
+Claimed `h200-dflash-e00q45wf04571cb67n`; H200 identity, driver 580.159.04,
+Docker 29.5.3, and 225 GiB free disk were measured. The first remote owner
+failed before source build because `/work` is not writable; the second reached
+the pinned source checkout but lacked Docker-socket access. Both are
+pre-invocation wiring defects with no model server, CUDA candidate, or workload
+request. The claim remains active. Repair 2 uses a writable remote work root
+and `sudo docker`; it is building the immutable SGLang image and retains source
+and downloaded layers. Artifacts: `artifacts/dflash-h200-20260723t2343z`.

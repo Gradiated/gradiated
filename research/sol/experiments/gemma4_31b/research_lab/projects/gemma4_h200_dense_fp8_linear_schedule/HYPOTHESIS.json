@@ -1,36 +1,44 @@
 {
-  "schema_version": 1,
-  "status": "frozen_offline_pending_h200_execution",
+  "schema_version": 2,
+  "status": "frozen_offline_pending_priority_1650_release",
   "evidence_classes": {
-    "profile_times_and_shapes": "measured",
-    "runtime_and_cutlass_support": "source_backed",
-    "roofline_and_tail_model": "analytical",
+    "current_profile": "measured",
+    "producer_consumer_and_dispatch": "source_backed_plus_prior_behavioral_audit",
+    "stock_two_gemm_recharacterization": "mechanically_proven_absent",
     "candidate_performance": "unmeasured"
   },
   "binding": {
     "sglang_release": "v0.5.13",
     "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
     "fp8_utils_sha256": "a3a130f40974047084e3daff2bd0efbbfe69e197d4c9a5ba3fbc5304dd4e43d9",
-    "stock_dispatch_sha256": "549d3c1c5c13d67e7309cf50610a51c9485eb181b3a17423247287abd1a0b038",
-    "binding_sha256": "cebc435c4eb1e5716c4aa9bd854785a3e7cac4b0665c96ea6a44040b3e96fb62",
-    "attribution_sha256": "f841db590dbe6f2e6b4fb91048e8132c3807f0321310e1e0b70a3957ac99ab48"
+    "stock_dispatch_sha256": "4fcb4321942f326761ba5b0a968086acbd458fb57c5429d2706653a94b199620",
+    "current_trace_attribution_sha256": "5679e8d635c759e9d37fdccfece02a9ac23d4ad8c565c9fb3558ab9e005801be",
+    "gemma3_mlp_source_sha256": "a9827bde583c5b8b0abfeaced097c4e9d060fb99ec2961b4f9c66173d3027282"
   },
   "producer_consumer": {
-    "producer": "sglang.srt.layers.quantization.fp8_utils.apply_fp8_linear dynamic per-token E4M3FN quantization",
-    "consumer": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm returned through Gemma4 MLP down_proj to the unchanged residual path",
-    "projection": "model.language_model.layers.{0..59}.mlp.down_proj",
-    "activation_dtype_layout": "E4M3FN row-major [M,21504], per-row FP32 scales [M,1]",
-    "weight_dtype_layout": "E4M3FN column-major [21504,5376], per-column FP32 scales [1,5376]",
-    "output_dtype_layout": "BF16 row-major [M,5376]",
-    "decode_shape_mnk": [32, 5376, 21504],
-    "prefill_shapes_mnk": [[1409, 5376, 21504], [1631, 5376, 21504], [2048, 5376, 21504]],
-    "decode_behavior": "unchanged stock CUTLASS fallback",
-    "measured_family_seconds": 1.251315209,
-    "measured_family_wall_fraction": 0.054313855194638376
+    "checkpoint_weights": "separate model.language_model.layers.{0..59}.mlp.{gate_proj,up_proj}.weight tensors",
+    "runtime_weight": "MergedColumnParallelLinear packs both checkpoint tensors into gate_up_proj",
+    "producer": "one dynamic per-token E4M3FN activation quantization shared by both logical projections",
+    "stock_consumer": "one fp8_scaled_mm over [M,5376] x [5376,43008], then unchanged GeluAndMul",
+    "stock_launches_per_layer": 1,
+    "stock_two_gemm_hypothesis": "absent in the pinned current runtime",
+    "activation_dtype_layout": "E4M3FN row-major [M,5376], per-row FP32 scales [M,1]",
+    "weight_dtype_layout": "E4M3FN column-major [5376,43008], per-column FP32 scales [1,43008]",
+    "output_dtype_layout": "BF16 row-major [M,43008]",
+    "decode_shape_mnk": [32,43008,5376],
+    "prefill_shapes_mnk": [[1409,43008,5376],[1631,43008,5376],[2048,43008,5376]],
+    "decode_behavior": "unchanged stock CUTLASS fallback"
+  },
+  "current_attribution": {
+    "fp8_linear_seconds": 5.375939818,
+    "fp8_linear_wall_fraction": 0.24058942625425167,
+    "historical_gate_up_fraction_of_fp8": 0.4479598989974649,
+    "bound_gate_up_wall_fraction": 0.10777441508471261,
+    "required_component_speedup_for_three_percent_whole_request": 0.2783592003391479
   },
   "stock_realization": {
-    "tile_mnk": [128, 128, 128],
-    "cluster_mnk": [2, 1, 1],
+    "tile_mnk": [128,128,128],
+    "cluster_mnk": [2,1,1],
     "mainloop": "KernelTmaWarpSpecializedPingpongFP8FastAccum",
     "epilogue": "TmaWarpSpecialized ScaledEpilogue BF16",
     "scheduler": "PersistentScheduler",
@@ -39,25 +47,26 @@
     "registers_per_thread": 168,
     "dynamic_shared_memory_bytes": 214016
   },
-  "analytical_shapes": [
-    {"m": 1409, "useful_flops": 325776310272, "compulsory_bytes": 161081348, "arithmetic_intensity_flop_per_byte": 2022.4334742468134, "persistent_waves": 3.8181818181818183, "tail_imbalance_upper_fraction": 0.04761904761904767, "cluster_padding_fraction": 0.0},
-    {"m": 1631, "useful_flops": 377105154048, "compulsory_bytes": 168243068, "arithmetic_intensity_flop_per_byte": 2241.430559552088, "persistent_waves": 4.454545454545454, "tail_imbalance_upper_fraction": 0.12244897959183687, "cluster_padding_fraction": 0.07142857142857142},
-    {"m": 2048, "useful_flops": 473520144384, "compulsory_bytes": 181695488, "arithmetic_intensity_flop_per_byte": 2606.11944521154, "persistent_waves": 5.090909090909091, "tail_imbalance_upper_fraction": 0.1785714285714286, "cluster_padding_fraction": 0.0}
-  ],
   "physical_hypothesis": {
-    "cause": "The deep-K/narrow-N down projection leaves 4.8-17.9% last-wave imbalance under the 132-CTA persistent schedule, with additional M-cluster padding at M=1631.",
-    "change": "Use CUTLASS deterministic Stream-K with the proven cooperative Hopper FP8 mainloop for only M>128,K=21504,N=5376; preserve the 128x128x128 tile, 2x1x1 cluster, FP32 accumulation, per-row/per-column scales, BF16 output, and every decode/nonmatching path.",
-    "prediction": "Median prefill down-projection latency falls and the long-tail shape improves most; candidate output remains within relative-L2 0.005 and cosine 0.9999 of stock with no nonfinite values.",
-    "falsifier": "Any correctness failure or non-positive warm median gain across the exact real-consumer prefill shapes closes Stream-K for this boundary without a c32 pair.",
-    "endpoint_gate": "A conditional c32 pair requires at least 0.05 predicted whole-request gain. Because down_proj is 5.4314% of measured wall time, this requires 92.0575% component speedup unless the synchronization project first records a compatible measured winner."
+    "cause": "The packed gate/up GEMM already eliminates a second launch and a second activation quantization, but its 2x1x1 CTA cluster multicasts only along M. Adjacent N tiles for the logical gate/up output independently fetch the same activation tile.",
+    "single_change": "Use a 2x2x1 Hopper cluster for only M>128,K=5376,N=43008 while preserving the exact 128x128x128 tile, ping-pong FP8 mainloop, persistent scheduler, scales, accumulation, BF16 layout, and downstream GeluAndMul/down projection.",
+    "prediction": "TMA multicast across the added N cluster axis reduces activation traffic without adding a launch. Numerical output passes relative-L2 0.005, cosine 0.9999, and nonfinite gates; compiled spills remain zero.",
+    "falsifier": "Any correctness failure or less than 27.8362% call-weighted component speedup closes this paired-read mechanism without an endpoint pair.",
+    "endpoint_gate": "At most one c32 pair, only after correctness and at least 3% predicted whole-request gain."
   },
   "implementation": {
-    "candidate_symbol": "gemma4_fp8_down_streamk.fp8_down_streamk",
-    "candidate_dispatch_sha256": "4fcb4321942f326761ba5b0a968086acbd458fb57c5429d2706653a94b199620",
-    "candidate_extension_sha256": "9266e07f1e86ef4e6c8504ab3cad54ba05e3f03153900a08474c0c92e9aca16f",
-    "real_consumer_probe_sha256": "e16cdc01cb0eccfd59ffcd198b5241728d30a517bbcf092a97d0c9c5a39af851",
+    "candidate_symbol": "gemma4_fp8_gate_up_multicast.fp8_gate_up_multicast",
+    "candidate_extension_sha256": "151c46a9a40d46cd0b7ea0baf73bf0b8cb6feb98f6f16f06db6c5a6c1a3ea06d",
+    "build_driver_sha256": "410ddf7ff7148064309956c6b9aa9ae3923ce9205bf5cd43e52b0c5b196f6eb4",
+    "real_consumer_probe_sha256": "7c641e73263ac33d26378c80c0704e1776204a8a5a39f42fbd46286021e9bd59",
+    "component_consumer_sha256": "f35baccd19d081d02574f0417a0d8b95e3bf0bb9c66f19489b4dc8f5e77fafa1",
     "cutlass_commit": "57e3cfb47a2d9e0d46eb6335c3dc411498efa198",
     "cutlass_archive_sha256": "09237099a70f80bff1dc8bb80c843a674bb4fdcb46e43cc6993e711c5ca89bb5",
-    "cutlass_support_proof": "SM90 cooperative FP8 Stream-K unit coverage plus pinned SGLang blockwise K>3N Stream-K dispatch; ping-pong is explicitly rejected by CUTLASS for Stream-K."
+    "forbidden": [
+      "Stream-K change",
+      "tile change or sweep",
+      "activation-to-down fusion",
+      "second candidate"
+    ]
   }
 }

@@ -23,3 +23,8 @@ Promote immediately to one exact c32 control/candidate endpoint pair if correctn
 ## Budget
 
 `$20.00` total, one shared H200, at most four claimed GPU-hours and five wall-clock hours from first claim. Provider lifecycle remains director-only.
+## 2026-07-23 — paired gate/up exact consumer
+
+The fresh producer-fused trace still assigns `5.375939818 s` (`24.0589%`) of non-overlapping wall time to FP8 linears, with `14,640` dominant `device_kernel` calls totaling `4.982781 s`. The prior cooperative Stream-K down projection and activation-to-down fusion are closed physical mechanisms; they do not test the independent gate/up adjacency where two exact projections share one input.
+
+Use `$kernel-research` to freeze one paired gate/up consumer that reuses activation quantization/read while consuming both exact real E4M3 weight matrices and preserving scales, BF16 activation/multiply semantics, output layout, and the stock downstream down projection. Measure the exact current decode and observed prefill shapes. Promote to at most one c32 pair only if correctness passes and the component evidence predicts at least 3% whole-request gain. Do not sweep schedules or revisit any closed Stream-K, tile, static-FP8, sparsity, or activation-to-down candidate. The full contract is `GATE_UP_PAIRED_REOPENING.json`.

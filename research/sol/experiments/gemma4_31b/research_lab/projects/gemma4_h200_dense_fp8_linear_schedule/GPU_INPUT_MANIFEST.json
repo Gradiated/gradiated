@@ -16,18 +16,18 @@
     {"path": "inputs/checkpoint/model-00002-of-00002.safetensors", "bytes": 12761549884, "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"}
   ],
   "programs": [
-    {"path": "PROGRAM.tar.gz", "bytes": 67206258, "sha256": "add3ab4ce6e54363f01915be9aea19a314bc63103618d600e287d18b7bb0e2a3"},
-    {"path": "run_bench_owner.py", "bytes": 19842, "sha256": "69d4c8291cbec3cff0391a4bd6b23a6c68cfe5afafb05387183420217a81bb21"}
+    {"path": "PROGRAM.tar.gz", "bytes": 33695707, "sha256": "29fb47f65046accbff2a90e3844bb3e1c4fbc5c792316adb281cb7ecea6171f2"},
+    {"path": "run_bench_owner.py", "bytes": 19945, "sha256": "79fb3f12b9146fb7d33908f842f379ffc8e69a089bfb82d0f3858b6ff843e9b6"}
   ],
-  "hypothesis": {"path": "HYPOTHESIS.json", "bytes": 4763, "sha256": "798d58fc28d70c209bde9a23c4d9d27ffe07ff4a21552bdb8257aaec2481a22b"},
+  "hypothesis": {"path": "HYPOTHESIS.json", "bytes": 4389, "sha256": "d459028bf0954cfd490ef8eb28da76279df1fea64952dcc30147b653de2d2d37"},
   "conditional_endpoint_gate": {
-    "minimum_predicted_whole_request_gain_fraction": 0.05,
-    "down_projection_wall_fraction": 0.054313855194638376,
-    "minimum_component_speedup_fraction": 0.9205754189390662
+    "minimum_predicted_whole_request_gain_fraction": 0.03,
+    "gate_up_wall_fraction": 0.10777441508471261,
+    "minimum_component_speedup_fraction": 0.2783592003391479
   },
-  "measured_synchronization_result": {
-    "terminal_sha256": "dfe2a227c3053cd2703a08035cbaa1c95838ab3e4300a0e60461c1c970c43b72",
-    "classification": "retain_simple_positive",
-    "candidate_service_seconds_per_request": 0.6870190130937459
+  "priority_dependency": {
+    "project": "sglang_v0512_h200_gemma4_mtp_endpoint",
+    "priority": 1650,
+    "rule": "claim only after its diagnostic releases the retained bench"
   }
 }

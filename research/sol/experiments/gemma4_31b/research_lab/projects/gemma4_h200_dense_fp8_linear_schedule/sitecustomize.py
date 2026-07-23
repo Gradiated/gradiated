@@ -34,6 +34,13 @@ def install_streamk() -> None:
     importlib.import_module("down_streamk_probe").install()
 
 
+def install_gate_up() -> None:
+    if os.environ.get("GATE_UP_ARM") not in {"component", "candidate"}:
+        return
+    importlib.import_module("gate_up_probe").install()
+
+
 install_qkv_baseline()
 install_stacked_attention()
 install_streamk()
+install_gate_up()

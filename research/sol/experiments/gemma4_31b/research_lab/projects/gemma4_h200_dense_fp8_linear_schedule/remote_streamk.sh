@@ -32,7 +32,7 @@ fail() {
 
 compact() {
   set +e
-  for container in streamk-component streamk-control streamk-candidate; do
+  for container in gate-up-component gate-up-control gate-up-candidate; do
     sudo docker logs "$container" >"$artifacts/$container.final.log" 2>&1 || true
     sudo docker inspect "$container" >"$artifacts/$container.inspect.json" 2>&1 || true
   done
@@ -44,7 +44,7 @@ compact() {
 trap compact EXIT
 trap 'test -f "$artifacts/WORKER_TERMINAL.json" || atomic_terminal integration_failure "$BASH_COMMAND"' ERR
 rm -f "$artifacts/WORKER_TERMINAL.json"
-sudo docker rm -f streamk-component streamk-control streamk-candidate >/dev/null 2>&1 || true
+sudo docker rm -f gate-up-component gate-up-control gate-up-candidate >/dev/null 2>&1 || true
 
 base_args=(
   --model-path /work/checkpoint --tokenizer-path /work/checkpoint
@@ -66,16 +66,15 @@ if [[ ! -d "$cutlass_exact" ]]; then
   tar -xzf "$cutlass_archive" --strip-components=1 -C "$cutlass_exact.part"
   mv "$cutlass_exact.part" "$cutlass_exact"
 fi
-rm -rf "$root/build"
-mkdir -p "$root/build"
+mkdir -p "$root/build-gate-up"
 sudo docker run --rm --gpus all --ipc=host \
   -v "$root:/work" "$image" \
-  python3 /work/program/build_candidate.py --project-root /work/program \
-    --build-root /work/build --output /work/artifacts/BUILD.json \
+  python3 /work/program/build_gate_up_candidate.py --project-root /work/program \
+    --build-root /work/build-gate-up --output /work/artifacts/BUILD.json \
     >"$artifacts/build.stdout" 2>"$artifacts/build.stderr" || fail candidate_compile_failed
-module=$(find "$root/build" -maxdepth 1 -type f -name 'gemma4_fp8_down_streamk*.so' -print -quit)
+module=$(find "$root/build-gate-up" -maxdepth 1 -type f -name 'gemma4_fp8_gate_up_multicast*.so' -print -quit)
 test -n "$module" || fail candidate_module_missing
-module_in_container="/work/build/$(basename "$module")"
+module_in_container="/work/build-gate-up/$(basename "$module")"
 
 start_server() {
   local arm=$1 container=$2 mode=$3
@@ -84,10 +83,10 @@ start_server() {
   local candidate_env=()
   if [[ "$mode" != control ]]; then
     candidate_env=(
-      -e DOWN_STREAMK_ARM="$arm"
-      -e DOWN_STREAMK_MODE="$mode"
-      -e DOWN_STREAMK_MODULE="$module_in_container"
-      -e DOWN_STREAMK_AUDIT="/work/artifacts/$arm-audit/down_streamk.jsonl"
+      -e GATE_UP_ARM="$arm"
+      -e GATE_UP_MODE="$mode"
+      -e GATE_UP_MODULE="$module_in_container"
+      -e GATE_UP_AUDIT="/work/artifacts/$arm-audit/gate_up.jsonl"
     )
   fi
   sudo docker rm -f "$container" >/dev/null 2>&1 || true
@@ -125,7 +124,7 @@ run_exact() {
 run_discovery() {
   python3 - "$artifacts/DISCOVERY.json" <<'PY'
 import json,sys,urllib.request
-prompt=' '.join(['stream-k discovery']*96)
+prompt=' '.join(['paired gate up discovery']*96)
 body=json.dumps({'model':'google/gemma-4-31B-it','messages':[{'role':'user','content':prompt}],'temperature':0,'max_tokens':1}).encode()
 request=urllib.request.Request('http://127.0.0.1:30000/v1/chat/completions',body,{'Content-Type':'application/json'})
 response=json.load(urllib.request.urlopen(request,timeout=180))
@@ -137,22 +136,17 @@ PY
 
 state candidate_cuda_started
 state candidate_science_started
-start_server component streamk-component component
+start_server component gate-up-component component
 run_discovery
-run_exact component streamk-component
-sudo docker stop -t 30 streamk-component >/dev/null 2>&1 || true
+run_exact component gate-up-component
+sudo docker stop -t 30 gate-up-component >/dev/null 2>&1 || true
 cat "$artifacts/build.stdout" "$artifacts/build.stderr" >"$artifacts/build.combined.log"
 set +e
-sync_args=()
-if [[ -f "$program/inputs/sync/TERMINAL.json" && -f "$program/inputs/sync/BINDING.json" ]]; then
-  sync_args=(--sync-terminal "$program/inputs/sync/TERMINAL.json" --sync-binding "$program/inputs/sync/BINDING.json")
-fi
-python3 "$program/consume_component.py" \
-  --audit "$artifacts/component-audit/down_streamk.jsonl" \
+python3 "$program/consume_gate_up_component.py" \
+  --audit "$artifacts/component-audit/gate_up.jsonl" \
   --runner-terminal "$artifacts/component/TERMINAL.json" \
   --build-log "$artifacts/build.combined.log" \
-  --output "$artifacts/COMPONENT_TERMINAL.json" \
-  "${sync_args[@]}"
+  --output "$artifacts/COMPONENT_TERMINAL.json"
 component_rc=$?
 set -e
 if [[ "$component_rc" -ne 0 ]]; then
@@ -161,17 +155,17 @@ if [[ "$component_rc" -ne 0 ]]; then
 fi
 promote=$(python3 -c 'import json,sys; print("yes" if json.load(open(sys.argv[1]))["promote_endpoint"] else "no")' "$artifacts/COMPONENT_TERMINAL.json")
 if [[ "$promote" != yes ]]; then
-  atomic_terminal component_no_endpoint_promotion measured_bound_below_five_percent
+  atomic_terminal component_no_endpoint_promotion measured_bound_below_three_percent
   exit 0
 fi
 
 state endpoint_pair_started
-start_server control streamk-control control
-run_exact control streamk-control
-sudo docker stop -t 30 streamk-control >/dev/null 2>&1 || true
-start_server candidate streamk-candidate endpoint
-run_exact candidate streamk-candidate
-sudo docker stop -t 30 streamk-candidate >/dev/null 2>&1 || true
+start_server control gate-up-control control
+run_exact control gate-up-control
+sudo docker stop -t 30 gate-up-control >/dev/null 2>&1 || true
+start_server candidate gate-up-candidate endpoint
+run_exact candidate gate-up-candidate
+sudo docker stop -t 30 gate-up-candidate >/dev/null 2>&1 || true
 python3 - "$artifacts/control/TERMINAL.json" "$artifacts/candidate/TERMINAL.json" "$artifacts/PAIRED_TERMINAL.json" <<'PY'
 import json,os,pathlib,sys
 control=json.load(open(sys.argv[1])); candidate=json.load(open(sys.argv[2])); out=pathlib.Path(sys.argv[3])

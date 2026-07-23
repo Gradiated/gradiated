@@ -26,8 +26,8 @@ KEY_CANDIDATES = (
 KEY = KEY_CANDIDATES[0]
 KNOWN_HOSTS = pathlib.Path("/root/.config/nebius/glm-campaign/known_hosts")
 REMOTE = "/home/glmrunner/gemma4-h200-dense-fp8-streamk"
-AUTHORIZED_USD = 20.0
-MAX_CLAIM_SECONDS = 4 * 60 * 60
+AUTHORIZED_USD = 14.0
+MAX_CLAIM_SECONDS = 150 * 60
 RETRIEVAL_RESERVE_SECONDS = 15 * 60
 
 
@@ -124,7 +124,10 @@ def main() -> int:
         raise RuntimeError("typed_pool_boundary:bench_not_h200_sxm")
     rate = float(bench["hourly_cost_usd"])
     status = json.loads((PROJECT / "STATUS.json").read_text())
-    prior_spend = float(status.get("actual_spend_usd", 0.0))
+    prior_spend = max(
+        float(status.get("actual_spend_usd", 0.0)),
+        float(status.get("historical_settled_spend_usd", 0.0)),
+    )
     remaining_spend = AUTHORIZED_USD - prior_spend
     claim_deadline = min(
         args.absolute_deadline_epoch,
@@ -280,15 +283,15 @@ def main() -> int:
             return {}
 
         def retrieve_compact() -> None:
-            archive_part = args.artifact_root / ".streamk-compact.tar.gz.part"
-            sidecar = args.artifact_root / "streamk-compact.tar.gz.sha256"
+            archive_part = args.artifact_root / ".gate-up-compact.tar.gz.part"
+            sidecar = args.artifact_root / "gate-up-compact.tar.gz.sha256"
             first = scp(ip, f"{REMOTE}/streamk-compact.tar.gz", str(archive_part), 300, from_remote=True)
             second = scp(ip, f"{REMOTE}/streamk-compact.tar.gz.sha256", str(sidecar), 60, from_remote=True)
             if first.returncode or second.returncode:
                 raise RuntimeError("typed_retrieval_boundary:compact_transfer_failed")
             if sha256(archive_part) != sidecar.read_text().split()[0]:
                 raise RuntimeError("typed_retrieval_boundary:compact_hash_mismatch")
-            archive = args.artifact_root / "streamk-compact.tar.gz"
+            archive = args.artifact_root / "gate-up-compact.tar.gz"
             os.replace(archive_part, archive)
             extracted = args.artifact_root / "remote"
             extracted.mkdir(exist_ok=True)
@@ -372,8 +375,8 @@ def main() -> int:
             "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
             "checkpoint": f"Exact immutable checkpoint retained at {REMOTE}/checkpoint",
             "image": "SGLang v0.5.13 digest 6113665 retained",
-            "runtime": f"FP8+QKV+deferred-local-KV Stream-K decision: {decision.get('classification')}",
-            "caches": f"CUDA extension and graph caches retained at {REMOTE}/build",
+            "runtime": f"FP8+producer-fused frontier paired gate/up decision: {decision.get('classification')}",
+            "caches": f"CUDA extension and graph caches retained at {REMOTE}/build-gate-up",
             "server_state": (
                 "Candidate server stopped after the conditional pair; immutable build and caches retained"
                 if paired_path.is_file()
@@ -404,7 +407,7 @@ def main() -> int:
             thread.join(timeout=5)
             contents = final_contents or {
                 "project": NAME,
-                "runtime": "Dense-FP8 Stream-K owner ended at a typed boundary; inspect retrieved diagnostics",
+                "runtime": "Dense-FP8 paired gate/up owner ended at a typed boundary; inspect retrieved diagnostics",
                 "checkpoint": f"Project-local snapshot may be retained at {REMOTE}/checkpoint",
                 "image": "Pinned SGLang v0.5.13 image retained when staged",
                 "artifacts": str(args.artifact_root),

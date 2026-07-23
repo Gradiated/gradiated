@@ -1,64 +1,21 @@
 {
-  "status": "complete",
-  "priority": 1100,
+  "status": "active",
+  "priority": 1600,
   "researcher_profile": "deep",
-  "authorized_spend_usd": 20.0,
+  "authorized_spend_usd": 14.0,
+  "actual_spend_usd": 0.0,
+  "historical_settled_spend_usd": 0.765833235267798,
   "allocation_limit": 1,
   "active_session": null,
-  "summary": "Closed the deterministic cooperative Stream-K hypothesis on exact H200 real-consumer evidence: M=1409/1631/2048 were numerically invalid and roughly 232x-287x slower than stock, while M=32 correctly fell back. No conditional endpoint pair ran.",
-  "next_action": "Director: do not promote or replay this Stream-K candidate. Preserve the synchronization lane's separate 0.395% positive result and select a distinct exact dense-FP8 mechanism only if the remaining campaign value warrants it.",
+  "summary": "Frozen one exact paired-read FP8 candidate: preserve the stock packed gate_up_proj GEMM, 128x128x128 tile, ping-pong schedule, scales, BF16 layout, and GeluAndMul, changing only its Hopper CTA cluster from 2x1x1 to 2x2x1 for prefill.",
+  "next_action": "Await the active priority-1650 MTP owner. After it releases h200-sync-linear-e00vhh6h29fj68x91g, run the hash-bound owner once. The component must prove exact decode fallback and M=1409/1631/2048 real-consumer correctness/timing; only a call-weighted component speedup of at least 27.83592% may trigger the sole c32 pair.",
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
-  "compute_budget": "One shared H200, at most four claimed GPU-hours, $20 total, and five wall-clock hours from first claim.",
+  "compute_budget": "One retained H200, at most 150 claimed GPU-minutes.",
+  "wall_clock_budget": "At most four hours from first researcher start and no work beyond the bench watchdog deadline.",
+  "storage_budget": "At most 10 GiB retrieved artifacts.",
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
   "economic_ceiling_seconds_per_request": 0.6381105231,
-  "current_frontier_seconds_per_request": 0.689220013,
-  "actual_spend_usd": 0.765833235267798,
-  "offline_candidate": {
-    "hypothesis": "HYPOTHESIS.json",
-    "candidate_symbol": "gemma4_fp8_down_streamk.fp8_down_streamk",
-    "gpu_input_manifest": "GPU_INPUT_MANIFEST.json",
-    "program_archive_sha256": "add3ab4ce6e54363f01915be9aea19a314bc63103618d600e287d18b7bb0e2a3",
-    "checkpoint_bytes": 62578655208,
-    "checkpoint_hashes_verified": true,
-    "cuda_compiled": true,
-    "compiled_module_sha256": "fbffd062bd32aa29f2b0f0cef0d8f1faef6138e31bb25a4e36da60d2f92844d1",
-    "compiled_module_bytes": 1139696,
-    "compiler_resources": "24 registers, 0 spill stores, 0 spill loads, 0 barriers"
-  },
-  "pool_boundary": {
-    "diagnostic": "POOL_CLAIM_DIAGNOSTIC.json",
-    "classification": "typed_pool_boundary_no_compatible_bench",
-    "candidate_cuda_started": false,
-    "candidate_science_started": false,
-    "provider_mutation_attempted": false
-  },
-  "measured_result": {
-    "classification": "close_streamk_candidate",
-    "terminal": "artifacts/dense-streamk-20260722t2236z/consumer-repair/TERMINAL.json",
-    "synchronization_terminal_sha256": "dfe2a227c3053cd2703a08035cbaa1c95838ab3e4300a0e60461c1c970c43b72",
-    "exact_shapes_observed": true,
-    "decode_m32_stock_fallback_observed": true,
-    "endpoint_semantics_32_of_32": true,
-    "correctness_pass": false,
-    "prefill_relative_l2_by_m": {
-      "1409": 7.429238319396973,
-      "1631": 6.449736595153809,
-      "2048": 1.3401710987091064
-    },
-    "stock_median_us_by_m": {
-      "1409": 301.4560043811798,
-      "1631": 337.45598793029785,
-      "2048": 361.08799278736115
-    },
-    "candidate_median_us_by_m": {
-      "1409": 86757.88879394531,
-      "1631": 88956.60781860352,
-      "2048": 83894.44732666016
-    },
-    "promote_endpoint": false,
-    "conditional_endpoint_pair_started": false,
-    "consumer_only_repair": true,
-    "producer_replayed": false
-  },
-  "immutable_binding_sha256": "cebc435c4eb1e5716c4aa9bd854785a3e7cac4b0665c96ea6a44040b3e96fb62",
-  "attribution_sha256": "f841db590dbe6f2e6b4fb91048e8132c3807f0321310e1e0b70a3957ac99ab48"
+  "current_frontier_seconds_per_request": 0.6746877474374742,
+  "iteration_contract": "GATE_UP_PAIRED_REOPENING.json",
+  "reservation_gate": "Do not claim the bench until this iteration's reservation is present in the campaign spend ledger."
 }

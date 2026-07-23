@@ -41,9 +41,7 @@ trap finalize EXIT
 trap 'test -f "$artifacts/WORKER_TERMINAL.json" || atomic "$artifacts/WORKER_TERMINAL.json" integration_failure "$BASH_COMMAND"' ERR
 rm -f "$artifacts/WORKER_TERMINAL.json"
   rm -f \
-  "$artifacts/ENDPOINT_RESULT.json" \
-  "$artifacts/SEMANTIC_DISCRIMINATOR.json" \
-  "$artifacts/TRANSITION_PROOF.json"
+  "$artifacts/ENDPOINT_RESULT.json"
 python3 - "$artifacts/INVOCATION_STATE.json" <<'PY'
 import json,os,pathlib,sys,time
 p=pathlib.Path(sys.argv[1]); q=p.with_suffix('.part')
@@ -181,6 +179,10 @@ assert x.get('cache',{}).get('uncached_prompt_tokens_delta')==117728
 PY
 }
 
+# The immediately preceding, completed higher-priority endpoint intentionally
+# retained its server. Its compact terminal is already durable; remove only
+# that exact terminal container before loading this unchanged candidate.
+sudo docker rm -f gemma-width16384-candidate >/dev/null 2>&1 || true
 sudo docker rm -f gemma-ring-control gemma-ring-candidate >/dev/null 2>&1 || true
 mkdir -p "$artifacts/control"
 control_terminal_tmp="$artifacts/control/TERMINAL.json.part.$$"
@@ -207,10 +209,26 @@ assert value.get('consumer_negative_row_zero') is True
 PY
 
 sudo docker stop gemma4-async-result-pipeline >/dev/null 2>&1 || true
-rm -rf "$artifacts/candidate-audit"
-start_server candidate candidate 1
-cp "$artifacts/candidate.smoke.json" "$artifacts/SEMANTIC_DISCRIMINATOR.json"
-if python3 - "$artifacts/SEMANTIC_DISCRIMINATOR.json" "$artifacts/candidate-audit/ring.jsonl" "$artifacts/PADDED_NOOP_PROOF.json" "$artifacts/TRANSITION_PROOF.json" "$artifacts/ENDPOINT_RESULT.json" <<'PY'
+if python3 - "$artifacts/TRANSITION_PROOF.json" <<'PY'
+import json,sys
+value=json.load(open(sys.argv[1]))
+assert value.get('pass') is True
+assert value.get('comparison_pass') is True
+assert value.get('extend_token_pass') is True
+assert value.get('component_and_control_replayed') is False
+assert len(value.get('first_two_decode_transitions',[])) >= 2
+assert all(
+ row.get('ring_vs_stock_output',{}).get('exact_bytes') is True
+ for row in value['first_two_decode_transitions'][:2]
+)
+PY
+then
+  transition_status=0
+else
+  rm -rf "$artifacts/candidate-audit"
+  start_server candidate candidate 1
+  cp "$artifacts/candidate.smoke.json" "$artifacts/SEMANTIC_DISCRIMINATOR.json"
+  if python3 - "$artifacts/SEMANTIC_DISCRIMINATOR.json" "$artifacts/candidate-audit/ring.jsonl" "$artifacts/PADDED_NOOP_PROOF.json" "$artifacts/TRANSITION_PROOF.json" "$artifacts/ENDPOINT_RESULT.json" <<'PY'
 import json,os,pathlib,sys
 smoke=json.load(open(sys.argv[1]))
 audit_path=pathlib.Path(sys.argv[2])
@@ -224,8 +242,13 @@ for row in extends:
 for row in decodes[:2]:
  comparisons.extend(row.get(name) for name in ('current_k','current_v','ring_vs_stock_output') if row.get(name) is not None)
 comparison_pass=bool(comparisons) and all(
- value.get('all_finite') and value.get('relative_l2',float('inf')) <= 1e-5
+ value.get('all_finite') and value.get('exact_bytes') is True
  for value in comparisons
+)
+extend_token_pass=bool(extends) and all(
+ row.get(name,{}).get('all_tokens_exact') is True
+ and row.get(name,{}).get('token_count')==len(row.get('absolute_positions',[]))
+ for row in extends for name in ('current_k_tokens','current_v_tokens')
 )
 slots=[slot for row in extends+decodes for slot in row.get('request_pool_indices',[])]
 rows=[ring_row for row in extends+decodes for ring_row in row.get('ring_rows',[])]
@@ -235,13 +258,14 @@ value={
  'schema_version':1,
  'status':'terminal',
  'classification':'transition_and_semantic_pass',
- 'pass':smoke.get('pass') is True and padded.get('pass') is True and bool(extends) and len(decodes)>=2 and comparison_pass and ownership_pass,
+ 'pass':smoke.get('pass') is True and padded.get('pass') is True and bool(extends) and len(decodes)>=2 and comparison_pass and extend_token_pass and ownership_pass,
  'semantic_discriminator':smoke,
  'padded_noop_proof':padded,
  'extend_transition_count':len(extends),
  'decode_transition_count':len(decodes),
  'first_two_decode_transitions':decodes[:2],
  'comparison_pass':comparison_pass,
+ 'extend_token_pass':extend_token_pass,
  'ownership_pass':ownership_pass,
  'request_slots_observed':sorted(set(slots)),
  'ring_rows_observed':sorted(set(rows)),
@@ -258,10 +282,11 @@ if not value['pass']:
  temporary.write_text(json.dumps(value,indent=2,sort_keys=True)+'\n'); os.replace(temporary,out)
  raise SystemExit(2)
 PY
-then
-  transition_status=0
-else
-  transition_status=$?
+  then
+    transition_status=0
+  else
+    transition_status=$?
+  fi
 fi
 if [[ "$transition_status" -ne 0 ]]; then
   atomic "$artifacts/WORKER_TERMINAL.json" endpoint_complete semantic_discriminator_reject
@@ -270,7 +295,7 @@ fi
 
 sudo docker rm -f gemma-ring-candidate >/dev/null 2>&1 || true
 rm -rf "$artifacts/candidate-audit"
-rm -rf "$artifacts/candidate"
+sudo rm -rf "$artifacts/candidate"
 start_server candidate candidate 0
 run_arm candidate
 

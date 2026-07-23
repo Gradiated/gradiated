@@ -1,0 +1,7 @@
+{
+  "classification": "integration_failure",
+  "message": "candidate.runner_failed",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-23T15:26:58.232835Z"
+}

@@ -1,0 +1,7 @@
+{
+  "classification": "integration_failure",
+  "message": "candidate.smoke_failed",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-23T15:12:45.728285Z"
+}

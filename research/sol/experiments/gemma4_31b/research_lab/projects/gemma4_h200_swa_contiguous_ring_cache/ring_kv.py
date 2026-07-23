@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import torch
 import triton
 import triton.language as tl
 
@@ -74,6 +75,78 @@ def store_ring_kv(
         absolute_positions,
         k_scale,
         v_scale,
+        n_elements=n_elements,
+        row_elements=row_elements,
+        ring_tokens=k_ring.shape[1],
+        BLOCK=block,
+        num_warps=8,
+        num_stages=2,
+    )
+
+
+@triton.jit
+def _store_ring_bytes_kernel(
+    K_BYTES,
+    V_BYTES,
+    K_RING_BYTES,
+    V_RING_BYTES,
+    REQUEST_IDS,
+    ABSOLUTE_POSITIONS,
+    n_elements: tl.constexpr,
+    row_elements: tl.constexpr,
+    ring_tokens: tl.constexpr,
+    BLOCK: tl.constexpr,
+):
+    offsets = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
+    source_mask = offsets < n_elements
+    token_offsets = offsets // row_elements
+    within_row = offsets - token_offsets * row_elements
+    request_ids = tl.load(REQUEST_IDS + token_offsets, mask=source_mask, other=-1)
+    absolute_positions = tl.load(
+        ABSOLUTE_POSITIONS + token_offsets, mask=source_mask, other=0
+    )
+    valid = source_mask & (request_ids >= 0)
+    ring_positions = absolute_positions & (ring_tokens - 1)
+    destination_offsets = (
+        (request_ids * ring_tokens + ring_positions) * row_elements + within_row
+    )
+    k_byte = tl.load(K_BYTES + offsets, mask=valid, other=0)
+    v_byte = tl.load(V_BYTES + offsets, mask=valid, other=0)
+    tl.store(K_RING_BYTES + destination_offsets, k_byte, mask=valid)
+    tl.store(V_RING_BYTES + destination_offsets, v_byte, mask=valid)
+
+
+def store_ring_kv_bytes(
+    k,
+    v,
+    k_ring,
+    v_ring,
+    request_ids,
+    absolute_positions,
+):
+    """Copy one-byte E5M2 values without asking Triton to type an FP8 pointer."""
+    if k.shape != v.shape or k.ndim != 3:
+        raise ValueError("byte store requires matching [tokens, heads, dim] K/V")
+    if k.element_size() != 1 or v.element_size() != 1:
+        raise ValueError("byte store requires one-byte source elements")
+    if k_ring.shape != v_ring.shape or k_ring.ndim != 4:
+        raise ValueError("byte store requires matching ring buffers")
+    if k_ring.element_size() != 1 or v_ring.element_size() != 1:
+        raise ValueError("byte store requires one-byte ring elements")
+    if request_ids.numel() != k.shape[0]:
+        raise ValueError("request-id count must equal token count")
+    if absolute_positions.numel() != k.shape[0]:
+        raise ValueError("position count must equal token count")
+    row_elements = k.shape[1] * k.shape[2]
+    n_elements = k.numel()
+    block = 1024
+    return _store_ring_bytes_kernel[(triton.cdiv(n_elements, block),)](
+        k.contiguous().view(torch.uint8),
+        v.contiguous().view(torch.uint8),
+        k_ring.view(torch.uint8),
+        v_ring.view(torch.uint8),
+        request_ids,
+        absolute_positions,
         n_elements=n_elements,
         row_elements=row_elements,
         ring_tokens=k_ring.shape[1],

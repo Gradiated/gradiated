@@ -1,6 +1,6 @@
 {
   "active_session": null,
-  "actual_spend_usd": 1.4780371621171633,
+  "actual_spend_usd": 2.472377097026507,
   "allocation_limit": 1,
   "authorized_spend_usd": 14.0,
   "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
@@ -12,16 +12,17 @@
   "immutable_binding": "DIRECTOR_BINDING.json",
   "immutable_binding_verifier": "verify_director_binding.py",
   "measured_local_attention_wall_fraction": 0.1531203203096733,
-  "next_action": "Terminal for this repair iteration: preserve the settled component, control, padded-row proof, and transition trace without replay; do not start c32. A distinct director-authorized follow-up would have to bind the ring producer to the actual fused fresh multi-token extend bytes before changing the consumer.",
-  "priority": 3230,
+  "next_action": "Terminal for this project: retain the exact contiguous E5M2 local ring as a simple positive stack candidate. Preserve the settled component, completed control, byte-exact transition proof, and measured c32 terminal without replay; broad quality remains unauthorized.",
+  "priority": 3350,
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
   "required_local_boundary_reduction_fraction_at_current_control": 0.3507436965788028,
   "researcher_profile": "deep",
-  "reservation_gate": "Settled within the renewed $14 reservation; no further paid invocation is authorized by this terminal.",
-  "result": "semantic_discriminator_first_extend_to_decode_transition",
+  "reservation_gate": "Settled at $2.472377097026507 cumulative conservative provider exposure including final release cleanup, below the $14 authorization.",
+  "result": "retain_ring",
   "status": "completed",
   "storage_budget": "At most 10 GiB new artifacts/build outputs; no checkpoint duplication.",
-  "summary": "Ownership and padding are repaired: slot zero maps to -1, live slots map bijectively, negative-row producer/consumer no-ops pass, prefixes restore byte-exactly, and decode current-token K/V match stock. The endpoint still fails because fresh multi-token extend K/V written to the ring differ sharply from the actual paged producer; the first two stock-versus-ring decode outputs diverge and the multi-token discriminator is incoherent. Candidate c32 remained unstarted.",
-  "terminal_artifact": "artifacts/RING_OWNERSHIP_REPAIR2_FINAL_TERMINAL.json",
-  "terminal_sha256": "0c1fb2a927f97ae1bdb459b0a0f362d41e0e3e92060a70bc4d44f0cae9d8929d"
+  "summary": "Binding the ring from stock's canonical swa_out_cache_loc E5M2 bytes made all fresh-extend tokens and the first two decode outputs byte-exact. The smallest semantic discriminator passed. The one previously unstarted c32 candidate completed 32/32 at 0.6556567115 s/request versus the retained 0.6766461551 control, a 3.10198225% reduction with exact cache accounting; retain for stacking, though it does not independently reach the 0.6381105231 ceiling.",
+  "iteration_budget": "At most 60 claimed H200 minutes and 90 wall minutes; absolute deadline 2026-07-23T16:25:00Z. Cumulative provider spend remains capped by the $14 authorization.",
+  "terminal_artifact": "artifacts/RING_PRODUCER_BINDING_FINAL_TERMINAL.json",
+  "terminal_sha256": "c5d6e7093dd717239471133cfa7280afd4c7bb56bc26911a7c282d7b5287b8d6"
 }

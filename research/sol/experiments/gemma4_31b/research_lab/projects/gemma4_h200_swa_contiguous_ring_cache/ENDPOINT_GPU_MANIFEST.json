@@ -13,10 +13,10 @@
       "sha256": "1e4e9fe1a3172a20d77de527a9c7844d337442d41f4d9e80ea7b630c85037336"
     },
     {
-      "bytes": 18751,
+      "bytes": 20757,
       "path": "endpoint_ring_patch.py",
       "remote_name": "endpoint_ring_patch.py",
-      "sha256": "41d5405c4ef07cd21fd44554137e6c1c232b8eeda46ccef07814d554cb1a3f85"
+      "sha256": "cf18b28ee3b79fe371fd6183774430aa0cc3d71001a262a006732df4b6f8ba25"
     },
     {
       "bytes": 4606,
@@ -79,16 +79,16 @@
       "sha256": "e94220ac70185104e53df2a18511925a52ad7995dc6b5ec1eb6f3d10a678b248"
     },
     {
-      "bytes": 15116,
+      "bytes": 16165,
       "path": "remote_endpoint_pair.sh",
       "remote_name": "remote_endpoint_pair.sh",
-      "sha256": "456ab60393a01ad4a50cc020c16793cd4d045d2c5028a24d0f1a4fb86266948a"
+      "sha256": "af1520005b5e8dbd3fdd04782b4763c2cb098c3b49f17558ec44ac12bbca0dd0"
     },
     {
-      "bytes": 13281,
+      "bytes": 15899,
       "path": "ring_kv.py",
       "remote_name": "ring_kv.py",
-      "sha256": "73e95f8ae5ef22f13dfb689c498b9e2610a2eefe987379aa47fc2b7803ce7224"
+      "sha256": "8682c985de86eeefefa91f50874902a635a2d30c8c533d786445b35645f17188"
     },
     {
       "bytes": 1096,
@@ -105,5 +105,5 @@
   ],
   "project": "gemma4_h200_swa_contiguous_ring_cache",
   "schema_version": 1,
-  "stage": "conditional_exact_c32_pair"
+  "stage": "canonical_e5m2_producer_binding_and_conditional_exact_c32"
 }

@@ -11,6 +11,7 @@ from ring_kv import (
     restore_ring_prefix_if_needed,
     ring_decode_attention,
     store_ring_kv,
+    store_ring_kv_bytes,
 )
 
 
@@ -60,6 +61,29 @@ def _comparison(candidate, control):
     }
 
 
+def _token_comparison(candidate, control):
+    if candidate.shape != control.shape or candidate.ndim == 0:
+        return {
+            "all_tokens_exact": False,
+            "candidate_shape": list(candidate.shape),
+            "control_shape": list(control.shape),
+        }
+    candidate_bytes = candidate.contiguous().view(candidate.shape[0], -1).view(
+        torch.uint8
+    )
+    control_bytes = control.contiguous().view(control.shape[0], -1).view(torch.uint8)
+    exact = torch.all(candidate_bytes == control_bytes, dim=1)
+    mismatches = torch.nonzero(~exact, as_tuple=False).flatten()
+    return {
+        "token_count": candidate.shape[0],
+        "exact_token_count": int(exact.sum().item()),
+        "first_mismatch_token": (
+            int(mismatches[0].item()) if mismatches.numel() else None
+        ),
+        "all_tokens_exact": bool(exact.all().item()),
+    }
+
+
 def install():
     global _INSTALLED, _RESERVED_RING_SLOTS
     if _INSTALLED:
@@ -68,12 +92,14 @@ def install():
     from sglang.srt.managers.scheduler_components.invariant_checker import (
         SchedulerInvariantChecker,
     )
+    from sglang.srt.mem_cache.allocator.token import TokenToKVPoolAllocator
     from sglang.srt.mem_cache.swa_memory_pool import SWAKVPool
 
     original_init = TritonAttnBackend.__init__
     original_extend = TritonAttnBackend.forward_extend
     original_decode = TritonAttnBackend.forward_decode
     original_check_swa_pool = SchedulerInvariantChecker._check_swa_pool
+    original_token_clear = TokenToKVPoolAllocator.clear
 
     def patched_init(self, model_runner, *args, **kwargs):
         original_init(self, model_runner, *args, **kwargs)
@@ -85,6 +111,7 @@ def install():
             tokens_per_row=RING_TOKENS,
         )
         allocator = self.token_to_kv_pool_allocator.swa_attn_allocator
+        allocator._ring_reserved_slots = ownership.reserved_slots
         if pool.size_swa < ownership.reserved_slots + 1:
             raise RuntimeError(
                 "ring capacity unavailable:"
@@ -206,16 +233,21 @@ def install():
         row = {
             "event": "ring_transition_extend",
             "layer_id": layer.layer_id,
+            "producer_binding": "canonical_paged_e5m2_swa_out_cache_loc",
             "request_pool_indices": request_slots,
             "ring_rows": _tensor_values(request_ids),
             "prefix_lens": _tensor_values(prefix_lens),
             "extend_lens": _tensor_values(forward_batch.extend_seq_lens),
             "scales": scale_audit(layer),
-            "first_absolute_positions": _tensor_values(
-                positions[: min(8, positions.numel())]
-            ),
+            "absolute_positions": _tensor_values(positions),
             "current_k": _comparison(current_k, k_paged[swa_locs[valid]]),
             "current_v": _comparison(current_v, v_paged[swa_locs[valid]]),
+            "current_k_tokens": _token_comparison(
+                current_k, k_paged[swa_locs[valid]]
+            ),
+            "current_v_tokens": _token_comparison(
+                current_v, v_paged[swa_locs[valid]]
+            ),
         }
         indptr = backend.forward_metadata.window_kv_indptr
         prefix_counts = indptr[1:] - indptr[:-1]
@@ -319,16 +351,20 @@ def install():
             - repeated_starts
             + repeated_prefix
         )
-        k_scale, v_scale = store_scales(layer, k, v, k_ring, v_ring)
-        store_ring_kv(
-            k,
-            v,
+        # The deferred production path has already committed the fused
+        # RMSNorm+RoPE output to the canonical E5M2 SWA locations. Source the
+        # ring from those exact bytes so its slice, layout, rotary convention,
+        # and scale are identical to stock. Both sides are E5M2, hence scale 1.
+        swa_locs = self.forward_metadata.swa_out_cache_loc[: k.shape[0]]
+        produced_k = k_paged[swa_locs]
+        produced_v = v_paged[swa_locs]
+        store_ring_kv_bytes(
+            produced_k,
+            produced_v,
             k_ring,
             v_ring,
             repeated_ids,
             positions,
-            k_scale,
-            v_scale,
         )
         trace_extend(
             self,
@@ -515,6 +551,14 @@ def install():
     TritonAttnBackend.__init__ = patched_init
     TritonAttnBackend.forward_extend = patched_extend
     TritonAttnBackend.forward_decode = patched_decode
+
+    def patched_token_clear(self):
+        original_token_clear(self)
+        reserved = getattr(self, "_ring_reserved_slots", 0)
+        if reserved:
+            self.free_pages = self.free_pages[self.free_pages > reserved]
+
+    TokenToKVPoolAllocator.clear = patched_token_clear
 
     def patched_check_swa_pool(self, ps, uncached=0):
         # The ring reservation is intentional capacity, not a leak. Preserve

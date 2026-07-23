@@ -1,0 +1,31 @@
+{
+  "rows": [
+    {
+      "label": "json_first",
+      "want": "json",
+      "text": "```json\n{\n  \"status\": \"ok\"\n}\n```",
+      "pass": true
+    },
+    {
+      "label": "ready",
+      "want": "READY",
+      "text": "READY",
+      "pass": true
+    },
+    {
+      "label": "arithmetic",
+      "want": "4",
+      "text": "4",
+      "pass": true
+    },
+    {
+      "label": "json_after_prefix_population",
+      "want": "json",
+      "text": "```json\n{\n  \"status\": \"ok\"\n}\n```",
+      "pass": true
+    }
+  ],
+  "pass": true,
+  "localization": "cuda_graph_padding_or_concurrency",
+  "radix_cache_disabled": false
+}

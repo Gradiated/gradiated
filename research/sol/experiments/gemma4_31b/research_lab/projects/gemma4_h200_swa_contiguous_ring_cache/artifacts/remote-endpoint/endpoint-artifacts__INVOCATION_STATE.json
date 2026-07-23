@@ -1,8 +1,8 @@
 {
   "candidate_cuda_started": true,
-  "candidate_science_started": false,
+  "candidate_science_started": true,
   "control_cuda_started": false,
   "control_replayed": false,
   "control_science_started": false,
-  "updated_unix_s": 1784817571.8077269
+  "updated_unix_s": 1784820613.7586348
 }

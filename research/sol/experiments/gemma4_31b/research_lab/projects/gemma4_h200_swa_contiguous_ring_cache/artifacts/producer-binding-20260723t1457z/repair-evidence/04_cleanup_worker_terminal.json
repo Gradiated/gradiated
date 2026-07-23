@@ -1,0 +1,7 @@
+{
+  "classification": "integration_failure",
+  "message": "rm -rf \"$artifacts/candidate\"",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-23T15:23:41.115277Z"
+}

@@ -310,3 +310,136 @@
 {"event": "endpoint_retrieval", "path": "endpoint-artifacts/ENDPOINT_RESULT.json", "success": true, "timestamp_utc": "2026-07-23T14:41:02.638044Z"}
 {"event": "endpoint_retrieval", "path": "endpoint-compact.tar.gz", "success": true, "timestamp_utc": "2026-07-23T14:41:03.628435Z"}
 {"event": "endpoint_retrieval", "path": "endpoint-compact.tar.gz.sha256", "success": true, "timestamp_utc": "2026-07-23T14:41:04.495005Z"}
+{"claim_deadline_utc": "2026-07-23T15:55:00Z", "dependency": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_mlp_width16384_codesign/STATUS.json", "event": "priority_wait", "timestamp_utc": "2026-07-23T14:56:47.450902Z"}
+{"event": "input_matched", "path": "artifacts/endpoint-evidence/PADDED_NOOP_PROOF.json", "timestamp_utc": "2026-07-23T15:07:20.450358Z"}
+{"event": "input_matched", "path": "artifacts/endpoint-evidence/control/TERMINAL.json", "timestamp_utc": "2026-07-23T15:07:20.450874Z"}
+{"bytes": 20280, "event": "input_finalized", "path": "endpoint_ring_patch.py", "timestamp_utc": "2026-07-23T15:07:22.224230Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/attention_deferred_local_kv.py", "timestamp_utc": "2026-07-23T15:07:22.225887Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/fp8_qkv_paired_runner.py", "timestamp_utc": "2026-07-23T15:07:22.226171Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/host_min_new_tokens_gate.py", "timestamp_utc": "2026-07-23T15:07:22.226430Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/install_endpoint_patch.py", "timestamp_utc": "2026-07-23T15:07:22.226683Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/pinned_async_penalty_tokens.py", "timestamp_utc": "2026-07-23T15:07:22.226933Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/producer_fused_swa_translation.py", "timestamp_utc": "2026-07-23T15:07:22.227181Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/proven_v0513_endpoint_entrypoint.py", "timestamp_utc": "2026-07-23T15:07:22.227415Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/qkv_epilogue_discriminator.py", "timestamp_utc": "2026-07-23T15:07:22.227707Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/residual_intervention.py", "timestamp_utc": "2026-07-23T15:07:22.227906Z"}
+{"event": "input_matched", "path": "padded_noop_probe.py", "timestamp_utc": "2026-07-23T15:07:22.228142Z"}
+{"bytes": 15410, "event": "input_finalized", "path": "remote_endpoint_pair.sh", "timestamp_utc": "2026-07-23T15:07:23.567481Z"}
+{"event": "input_matched", "path": "ring_kv.py", "timestamp_utc": "2026-07-23T15:07:23.568082Z"}
+{"event": "input_matched", "path": "ring_ownership.py", "timestamp_utc": "2026-07-23T15:07:23.568602Z"}
+{"event": "input_matched", "path": "sitecustomize.py", "timestamp_utc": "2026-07-23T15:07:23.568906Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/WORKER_TERMINAL.json", "success": true, "timestamp_utc": "2026-07-23T15:08:01.993403Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/INVOCATION_STATE.json", "success": true, "timestamp_utc": "2026-07-23T15:08:02.866094Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/ENDPOINT_RESULT.json", "success": false, "timestamp_utc": "2026-07-23T15:08:03.626657Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-compact.tar.gz", "success": true, "timestamp_utc": "2026-07-23T15:08:04.487392Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-compact.tar.gz.sha256", "success": true, "timestamp_utc": "2026-07-23T15:08:05.351286Z"}
+{"event": "input_matched", "path": "artifacts/endpoint-evidence/PADDED_NOOP_PROOF.json", "timestamp_utc": "2026-07-23T15:11:36.126141Z"}
+{"event": "input_matched", "path": "artifacts/endpoint-evidence/control/TERMINAL.json", "timestamp_utc": "2026-07-23T15:11:36.126659Z"}
+{"event": "input_matched", "path": "endpoint_ring_patch.py", "timestamp_utc": "2026-07-23T15:11:36.127305Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/attention_deferred_local_kv.py", "timestamp_utc": "2026-07-23T15:11:36.127540Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/fp8_qkv_paired_runner.py", "timestamp_utc": "2026-07-23T15:11:36.127987Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/host_min_new_tokens_gate.py", "timestamp_utc": "2026-07-23T15:11:36.128316Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/install_endpoint_patch.py", "timestamp_utc": "2026-07-23T15:11:36.128600Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/pinned_async_penalty_tokens.py", "timestamp_utc": "2026-07-23T15:11:36.128801Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/producer_fused_swa_translation.py", "timestamp_utc": "2026-07-23T15:11:36.129044Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/proven_v0513_endpoint_entrypoint.py", "timestamp_utc": "2026-07-23T15:11:36.129246Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/qkv_epilogue_discriminator.py", "timestamp_utc": "2026-07-23T15:11:36.129480Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/residual_intervention.py", "timestamp_utc": "2026-07-23T15:11:36.129727Z"}
+{"event": "input_matched", "path": "padded_noop_probe.py", "timestamp_utc": "2026-07-23T15:11:36.129967Z"}
+{"bytes": 15706, "event": "input_finalized", "path": "remote_endpoint_pair.sh", "timestamp_utc": "2026-07-23T15:11:37.754092Z"}
+{"event": "input_matched", "path": "ring_kv.py", "timestamp_utc": "2026-07-23T15:11:37.754749Z"}
+{"event": "input_matched", "path": "ring_ownership.py", "timestamp_utc": "2026-07-23T15:11:37.755212Z"}
+{"event": "input_matched", "path": "sitecustomize.py", "timestamp_utc": "2026-07-23T15:11:37.755538Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/WORKER_TERMINAL.json", "success": true, "timestamp_utc": "2026-07-23T15:12:46.868576Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/INVOCATION_STATE.json", "success": true, "timestamp_utc": "2026-07-23T15:12:47.724752Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/ENDPOINT_RESULT.json", "success": false, "timestamp_utc": "2026-07-23T15:12:48.484007Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-compact.tar.gz", "success": true, "timestamp_utc": "2026-07-23T15:12:49.451919Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-compact.tar.gz.sha256", "success": true, "timestamp_utc": "2026-07-23T15:12:50.404267Z"}
+{"event": "input_matched", "path": "artifacts/endpoint-evidence/PADDED_NOOP_PROOF.json", "timestamp_utc": "2026-07-23T15:14:41.166881Z"}
+{"event": "input_matched", "path": "artifacts/endpoint-evidence/control/TERMINAL.json", "timestamp_utc": "2026-07-23T15:14:41.167340Z"}
+{"bytes": 20277, "event": "input_finalized", "path": "endpoint_ring_patch.py", "timestamp_utc": "2026-07-23T15:14:42.713204Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/attention_deferred_local_kv.py", "timestamp_utc": "2026-07-23T15:14:42.713817Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/fp8_qkv_paired_runner.py", "timestamp_utc": "2026-07-23T15:14:42.714279Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/host_min_new_tokens_gate.py", "timestamp_utc": "2026-07-23T15:14:42.714516Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/install_endpoint_patch.py", "timestamp_utc": "2026-07-23T15:14:42.714774Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/pinned_async_penalty_tokens.py", "timestamp_utc": "2026-07-23T15:14:42.715028Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/producer_fused_swa_translation.py", "timestamp_utc": "2026-07-23T15:14:42.715269Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/proven_v0513_endpoint_entrypoint.py", "timestamp_utc": "2026-07-23T15:14:42.715510Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/qkv_epilogue_discriminator.py", "timestamp_utc": "2026-07-23T15:14:42.715798Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/residual_intervention.py", "timestamp_utc": "2026-07-23T15:14:42.716043Z"}
+{"event": "input_matched", "path": "padded_noop_probe.py", "timestamp_utc": "2026-07-23T15:14:42.716313Z"}
+{"event": "input_matched", "path": "remote_endpoint_pair.sh", "timestamp_utc": "2026-07-23T15:14:42.716795Z"}
+{"bytes": 15899, "event": "input_finalized", "path": "ring_kv.py", "timestamp_utc": "2026-07-23T15:14:44.281581Z"}
+{"event": "input_matched", "path": "ring_ownership.py", "timestamp_utc": "2026-07-23T15:14:44.283252Z"}
+{"event": "input_matched", "path": "sitecustomize.py", "timestamp_utc": "2026-07-23T15:14:44.284757Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/WORKER_TERMINAL.json", "success": true, "timestamp_utc": "2026-07-23T15:17:52.232059Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/INVOCATION_STATE.json", "success": true, "timestamp_utc": "2026-07-23T15:17:52.996999Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/ENDPOINT_RESULT.json", "success": false, "timestamp_utc": "2026-07-23T15:17:53.881821Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-compact.tar.gz", "success": true, "timestamp_utc": "2026-07-23T15:17:54.931368Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-compact.tar.gz.sha256", "success": true, "timestamp_utc": "2026-07-23T15:17:55.722151Z"}
+{"event": "input_matched", "path": "artifacts/endpoint-evidence/PADDED_NOOP_PROOF.json", "timestamp_utc": "2026-07-23T15:23:36.524842Z"}
+{"event": "input_matched", "path": "artifacts/endpoint-evidence/control/TERMINAL.json", "timestamp_utc": "2026-07-23T15:23:36.525332Z"}
+{"bytes": 20781, "event": "input_finalized", "path": "endpoint_ring_patch.py", "timestamp_utc": "2026-07-23T15:23:38.584353Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/attention_deferred_local_kv.py", "timestamp_utc": "2026-07-23T15:23:38.585001Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/fp8_qkv_paired_runner.py", "timestamp_utc": "2026-07-23T15:23:38.585526Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/host_min_new_tokens_gate.py", "timestamp_utc": "2026-07-23T15:23:38.585820Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/install_endpoint_patch.py", "timestamp_utc": "2026-07-23T15:23:38.586120Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/pinned_async_penalty_tokens.py", "timestamp_utc": "2026-07-23T15:23:38.586448Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/producer_fused_swa_translation.py", "timestamp_utc": "2026-07-23T15:23:38.586749Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/proven_v0513_endpoint_entrypoint.py", "timestamp_utc": "2026-07-23T15:23:38.587029Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/qkv_epilogue_discriminator.py", "timestamp_utc": "2026-07-23T15:23:38.587318Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/residual_intervention.py", "timestamp_utc": "2026-07-23T15:23:38.587634Z"}
+{"event": "input_matched", "path": "padded_noop_probe.py", "timestamp_utc": "2026-07-23T15:23:38.587919Z"}
+{"bytes": 16160, "event": "input_finalized", "path": "remote_endpoint_pair.sh", "timestamp_utc": "2026-07-23T15:23:39.910770Z"}
+{"event": "input_matched", "path": "ring_kv.py", "timestamp_utc": "2026-07-23T15:23:39.911279Z"}
+{"event": "input_matched", "path": "ring_ownership.py", "timestamp_utc": "2026-07-23T15:23:39.911779Z"}
+{"event": "input_matched", "path": "sitecustomize.py", "timestamp_utc": "2026-07-23T15:23:39.911986Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/WORKER_TERMINAL.json", "success": true, "timestamp_utc": "2026-07-23T15:23:42.098114Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/INVOCATION_STATE.json", "success": true, "timestamp_utc": "2026-07-23T15:23:43.055332Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/ENDPOINT_RESULT.json", "success": false, "timestamp_utc": "2026-07-23T15:23:43.734920Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-compact.tar.gz", "success": true, "timestamp_utc": "2026-07-23T15:23:44.668912Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-compact.tar.gz.sha256", "success": true, "timestamp_utc": "2026-07-23T15:23:45.542093Z"}
+{"event": "input_matched", "path": "artifacts/endpoint-evidence/PADDED_NOOP_PROOF.json", "timestamp_utc": "2026-07-23T15:25:16.304491Z"}
+{"event": "input_matched", "path": "artifacts/endpoint-evidence/control/TERMINAL.json", "timestamp_utc": "2026-07-23T15:25:16.304966Z"}
+{"event": "input_matched", "path": "endpoint_ring_patch.py", "timestamp_utc": "2026-07-23T15:25:16.305424Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/attention_deferred_local_kv.py", "timestamp_utc": "2026-07-23T15:25:16.305677Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/fp8_qkv_paired_runner.py", "timestamp_utc": "2026-07-23T15:25:16.305933Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/host_min_new_tokens_gate.py", "timestamp_utc": "2026-07-23T15:25:16.306145Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/install_endpoint_patch.py", "timestamp_utc": "2026-07-23T15:25:16.306389Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/pinned_async_penalty_tokens.py", "timestamp_utc": "2026-07-23T15:25:16.306607Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/producer_fused_swa_translation.py", "timestamp_utc": "2026-07-23T15:25:16.306834Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/proven_v0513_endpoint_entrypoint.py", "timestamp_utc": "2026-07-23T15:25:16.307090Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/qkv_epilogue_discriminator.py", "timestamp_utc": "2026-07-23T15:25:16.307338Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/residual_intervention.py", "timestamp_utc": "2026-07-23T15:25:16.307538Z"}
+{"event": "input_matched", "path": "padded_noop_probe.py", "timestamp_utc": "2026-07-23T15:25:16.307766Z"}
+{"bytes": 16165, "event": "input_finalized", "path": "remote_endpoint_pair.sh", "timestamp_utc": "2026-07-23T15:25:17.765481Z"}
+{"event": "input_matched", "path": "ring_kv.py", "timestamp_utc": "2026-07-23T15:25:17.765987Z"}
+{"event": "input_matched", "path": "ring_ownership.py", "timestamp_utc": "2026-07-23T15:25:17.766543Z"}
+{"event": "input_matched", "path": "sitecustomize.py", "timestamp_utc": "2026-07-23T15:25:17.766750Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/WORKER_TERMINAL.json", "success": true, "timestamp_utc": "2026-07-23T15:27:00.132037Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/INVOCATION_STATE.json", "success": true, "timestamp_utc": "2026-07-23T15:27:00.916537Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/ENDPOINT_RESULT.json", "success": false, "timestamp_utc": "2026-07-23T15:27:01.763271Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-compact.tar.gz", "success": true, "timestamp_utc": "2026-07-23T15:27:02.659114Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-compact.tar.gz.sha256", "success": true, "timestamp_utc": "2026-07-23T15:27:03.544932Z"}
+{"event": "input_matched", "path": "artifacts/endpoint-evidence/PADDED_NOOP_PROOF.json", "timestamp_utc": "2026-07-23T15:28:44.368887Z"}
+{"event": "input_matched", "path": "artifacts/endpoint-evidence/control/TERMINAL.json", "timestamp_utc": "2026-07-23T15:28:44.369378Z"}
+{"bytes": 20757, "event": "input_finalized", "path": "endpoint_ring_patch.py", "timestamp_utc": "2026-07-23T15:28:46.282309Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/attention_deferred_local_kv.py", "timestamp_utc": "2026-07-23T15:28:46.282754Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/fp8_qkv_paired_runner.py", "timestamp_utc": "2026-07-23T15:28:46.283259Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/host_min_new_tokens_gate.py", "timestamp_utc": "2026-07-23T15:28:46.283470Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/install_endpoint_patch.py", "timestamp_utc": "2026-07-23T15:28:46.283722Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/pinned_async_penalty_tokens.py", "timestamp_utc": "2026-07-23T15:28:46.284002Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/producer_fused_swa_translation.py", "timestamp_utc": "2026-07-23T15:28:46.284321Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/proven_v0513_endpoint_entrypoint.py", "timestamp_utc": "2026-07-23T15:28:46.284626Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/qkv_epilogue_discriminator.py", "timestamp_utc": "2026-07-23T15:28:46.284954Z"}
+{"event": "input_matched", "path": "inputs/endpoint_stack/residual_intervention.py", "timestamp_utc": "2026-07-23T15:28:46.285273Z"}
+{"event": "input_matched", "path": "padded_noop_probe.py", "timestamp_utc": "2026-07-23T15:28:46.285542Z"}
+{"event": "input_matched", "path": "remote_endpoint_pair.sh", "timestamp_utc": "2026-07-23T15:28:46.285743Z"}
+{"event": "input_matched", "path": "ring_kv.py", "timestamp_utc": "2026-07-23T15:28:46.285935Z"}
+{"event": "input_matched", "path": "ring_ownership.py", "timestamp_utc": "2026-07-23T15:28:46.286131Z"}
+{"event": "input_matched", "path": "sitecustomize.py", "timestamp_utc": "2026-07-23T15:28:46.286375Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/WORKER_TERMINAL.json", "success": true, "timestamp_utc": "2026-07-23T15:30:44.223691Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/INVOCATION_STATE.json", "success": true, "timestamp_utc": "2026-07-23T15:30:45.094029Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-artifacts/ENDPOINT_RESULT.json", "success": true, "timestamp_utc": "2026-07-23T15:30:45.930745Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-compact.tar.gz", "success": true, "timestamp_utc": "2026-07-23T15:30:46.811501Z"}
+{"event": "endpoint_retrieval", "path": "endpoint-compact.tar.gz.sha256", "success": true, "timestamp_utc": "2026-07-23T15:30:47.597515Z"}

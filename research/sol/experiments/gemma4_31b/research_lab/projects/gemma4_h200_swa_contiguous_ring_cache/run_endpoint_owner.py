@@ -21,9 +21,26 @@ PROJECT = base.PROJECT
 BENCH = base.BENCH
 REMOTE = base.REMOTE
 RATE = base.RATE
-PRIOR_SPEND = 1.2200746308406194
+PRIOR_SPEND = 1.4780371621171633
 CAP = 14.0
-FINAL_PATH = HERE / "artifacts/RING_OWNERSHIP_REPAIR2_FINAL_TERMINAL.json"
+FINAL_PATH = HERE / "artifacts/RING_PRODUCER_BINDING_FINAL_TERMINAL.json"
+HIGHER_PRIORITY_STATUS = (
+    HERE.parent / "gemma4_h200_mlp_width16384_codesign" / "STATUS.json"
+)
+
+
+def higher_priority_complete():
+    try:
+        value = json.loads(HIGHER_PRIORITY_STATUS.read_text())
+    except (OSError, json.JSONDecodeError):
+        return False
+    return value.get("status") in {
+        "completed",
+        "terminal",
+        "closed",
+        "failed",
+        "blocked",
+    }
 
 
 def validate_manifest():
@@ -88,6 +105,34 @@ def main():
     manifest = validate_manifest()
     pool = base.GpuPool(LAB)
     claim_deadline = args.deadline_epoch - 1800
+    wait_recorded = False
+    while not higher_priority_complete():
+        if time.time() >= claim_deadline:
+            final = {
+                "schema_version": 1,
+                "status": "terminal",
+                "classification": "higher_priority_dependency_before_runway",
+                "dependency": str(HIGHER_PRIORITY_STATUS),
+                "candidate_cuda_started": False,
+                "candidate_science_started": False,
+                "current_claim_cost_usd": 0.0,
+                "provider_cost_usd": PRIOR_SPEND,
+                "timestamp_utc": base.utc_now(),
+            }
+            base.atomic_json(FINAL_PATH, final)
+            return 4
+        if not wait_recorded:
+            base.emit(
+                "priority_wait",
+                dependency=str(HIGHER_PRIORITY_STATUS),
+                claim_deadline_utc=dt.datetime.fromtimestamp(
+                    claim_deadline, dt.timezone.utc
+                )
+                .isoformat()
+                .replace("+00:00", "Z"),
+            )
+            wait_recorded = True
+        time.sleep(15)
     wait_recorded = False
     while True:
         try:
@@ -155,7 +200,7 @@ def main():
             PROJECT,
             {
                 "project": PROJECT,
-                "runtime": "Exact c32 E5M2 control/ring pair active",
+                "runtime": "Fresh-extend byte proof and conditional exact c32 ring candidate active",
                 "checkpoint": "Exact resident checkpoint verified read-only by project-local manifest",
                 "server_state": "Paired endpoint worker active",
             },
@@ -240,7 +285,7 @@ def main():
                 "ring_cache_result": final.get("classification", "incomplete"),
                 "ring_cache_claim_cost_usd": round(elapsed / 3600 * RATE, 6),
                 "ring_cache_cumulative_cost_usd": PRIOR_SPEND + elapsed / 3600 * RATE,
-                "runtime": "Pinned SGLang v0.5.13 endpoint caches retained",
+                "runtime": "Fresh-extend source-binding terminal; endpoint caches retained",
                 "checkpoint": "Exact resident checkpoint unchanged",
                 "server_state": "Final paired endpoint server retained if healthy",
                 "artifacts": str(HERE / "artifacts"),

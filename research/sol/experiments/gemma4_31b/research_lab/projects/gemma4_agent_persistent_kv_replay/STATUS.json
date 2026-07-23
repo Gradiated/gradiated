@@ -1,0 +1,14 @@
+{
+  "status": "active",
+  "priority": 5800,
+  "researcher_profile": "execution",
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.0,
+  "provider_mutation": "forbidden",
+  "active_session": null,
+  "summary": "Replay TauBench-style cumulative tool sessions and quantify exact content-addressed KV reuse, capacity, eviction and calibrated cost opportunity without a GPU.",
+  "next_action": "Build and run the exact-token multi-turn replay, then return a calibrated 20% cost plausibility decision or close the route.",
+  "quality_claim_authorized": false,
+  "terminal_artifact": null,
+  "wall_deadline_utc": "2026-07-24T09:00:00Z"
+}

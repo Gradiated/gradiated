@@ -1,0 +1,16 @@
+{
+  "status": "active",
+  "priority": 6000,
+  "researcher_profile": "execution",
+  "authorized_spend_usd": 28.0,
+  "actual_spend_usd": 0.0,
+  "accelerator_requirement": "nvidia-h200-sxm",
+  "allocation_limit": 1,
+  "provider_mutation": "director_owned_independent_bench_required",
+  "active_session": null,
+  "summary": "Run the public Gemma 4 31B-specific DFlash draft on an independent H200: one four-request acceptance/verification diagnostic followed by one matched c32 AR/DFlash pair when real drafting is present.",
+  "next_action": "Prepare the single shortest supported SGLang or vLLM DFlash path offline, resolve exact draft/runtime commits, and request the director-owned independent H200. On the retained bench, repair ordinary integration defects in place and continue through the diagnostic and conditional c32 pair.",
+  "quality_claim_authorized": false,
+  "terminal_artifact": null,
+  "wall_deadline_utc": "2026-07-24T10:00:00Z"
+}

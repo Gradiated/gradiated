@@ -9,7 +9,7 @@ Make experiments useful to the next agent, including when they fail.
 
 ## Workflow
 
-1. Create or claim a task packet before running work.
+1. Create or claim a task packet before running work. For a research-lab harness project, its existing `projects/<id>/` brief, status, and log are the task packet: do not create, claim, assign, or update GitHub issues or `tasks/` files.
 2. State the causal hypothesis, stock control, exact inputs and revisions, workload geometry, quality gate, SLO, maximum spend, timeout, and artifact contract.
 3. Build a typed observation-to-opportunity register before choosing an intervention. Record the evidence scope, phase, resource signature, uncertainty, competing explanations, modifiable fraction, upper bound, falsifier, next measurement, and expected information per dollar. Encourage intuition and first-principles leaps, but anchor them to observed data or an explicit unknown and choose a cheap discriminating measurement.
 4. Measure the baseline deeply enough to locate the critical path. Capture phase and concurrency, per-request distributions, queueing, batch composition, failures, CPU/GPU timelines, accelerator utilization, memory capacity and traffic, cache behavior, occupancy/resource limits, power, and network/collective behavior when relevant. Separate setup/load telemetry from steady state.

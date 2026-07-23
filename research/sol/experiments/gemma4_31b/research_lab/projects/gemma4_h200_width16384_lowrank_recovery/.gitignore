@@ -1,0 +1,3 @@
+# The closed negative lineage keeps the retrieved bulk factor archive in the
+# durable lab workspace. Its SHA-256 and complete per-file manifest are tracked.
+/artifacts/recovery-factors.tar

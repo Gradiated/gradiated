@@ -1,0 +1,5 @@
+{
+  "artifacts": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_width16384_lowrank_recovery/artifacts",
+  "project": "gemma4_h200_width16384_lowrank_recovery",
+  "recovery": "Post-terminal retrieval-only repair; guest safe and reachable; scientific arms consumed; factors retained in tmpfs."
+}

@@ -1,0 +1,127 @@
+{
+  "binding_valid": true,
+  "files": [
+    {
+      "bytes": 2360,
+      "path": "DIRECTOR_BINDING.json",
+      "remote_name": "DIRECTOR_BINDING.json",
+      "sha256": "13e930a2ae89dcf9c8e3420d64ae6bbcb2fe1f62dbbfba7c63e6b2bd505171ad"
+    },
+    {
+      "bytes": 2544,
+      "path": "EXPERIMENT_CONTRACT.json",
+      "remote_name": "EXPERIMENT_CONTRACT.json",
+      "sha256": "9c27b46fa06f431ea05e7d56ae1bd10f894c304a5ec69cfca7bfdfedb8007ac1"
+    },
+    {
+      "bytes": 13561,
+      "path": "remote_recovery.py",
+      "remote_name": "remote_recovery.py",
+      "sha256": "b45a2588b41eca7a31c71cd1243cc6a05140f01b3540bb2ee5668a94b53640cb"
+    },
+    {
+      "bytes": 13589,
+      "path": "remote_endpoint.sh",
+      "remote_name": "remote_endpoint.sh",
+      "sha256": "aaa2dd3a8cd740ee24d491e8f2367c8faee07a61bddee35a1572c459a390f6b6"
+    },
+    {
+      "bytes": 14267689,
+      "path": "inputs/JOINT_NORM_SELECTION.json",
+      "remote_name": "JOINT_NORM_SELECTION.json",
+      "sha256": "185dbc56e46ea942667f9be820cc617a50a1262c3bf71a976c9506474b9b3df3"
+    },
+    {
+      "bytes": 4606,
+      "path": "inputs/stack/attention_deferred_local_kv.py",
+      "remote_name": "attention_deferred_local_kv.py",
+      "sha256": "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8"
+    },
+    {
+      "bytes": 20757,
+      "path": "inputs/stack/endpoint_ring_patch.py",
+      "remote_name": "endpoint_ring_patch.py",
+      "sha256": "cf18b28ee3b79fe371fd6183774430aa0cc3d71001a262a006732df4b6f8ba25"
+    },
+    {
+      "bytes": 9494,
+      "path": "inputs/stack/fp8_qkv_paired_runner.py",
+      "remote_name": "fp8_qkv_paired_runner.py",
+      "sha256": "ab5b9c2ce9c63d64481dfae9217c3dc3358ebdff3e933f32734f691977959d83"
+    },
+    {
+      "bytes": 6024,
+      "path": "inputs/stack/host_min_new_tokens_gate.py",
+      "remote_name": "host_min_new_tokens_gate.py",
+      "sha256": "2779aae2c51c63ef3119edff9b57e39f09576975ec6e15fb66928e6069405c2a"
+    },
+    {
+      "bytes": 7860,
+      "path": "inputs/stack/install_endpoint_patch.py",
+      "remote_name": "install_endpoint_patch.py",
+      "sha256": "b020fbb114d390e8bc10ce0c3c6145d7535b70f7a07d8dcd3ece2a208727d117"
+    },
+    {
+      "bytes": 2974,
+      "path": "inputs/stack/padded_noop_probe.py",
+      "remote_name": "padded_noop_probe.py",
+      "sha256": "e94220ac70185104e53df2a18511925a52ad7995dc6b5ec1eb6f3d10a678b248"
+    },
+    {
+      "bytes": 2929,
+      "path": "inputs/stack/pinned_async_penalty_tokens.py",
+      "remote_name": "pinned_async_penalty_tokens.py",
+      "sha256": "58f4c65846af62ad21aeb765d7764686c364335d29fff45eac65da86ab296197"
+    },
+    {
+      "bytes": 4653,
+      "path": "inputs/stack/producer_fused_swa_translation.py",
+      "remote_name": "producer_fused_swa_translation.py",
+      "sha256": "9b5a51284ac313014988f426c35b818ae2590cb7d4a72ec604a6ad80a63336b3"
+    },
+    {
+      "bytes": 6062,
+      "path": "inputs/stack/proven_v0513_endpoint_entrypoint.py",
+      "remote_name": "proven_v0513_endpoint_entrypoint.py",
+      "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc"
+    },
+    {
+      "bytes": 26612,
+      "path": "inputs/stack/qkv_epilogue_discriminator.py",
+      "remote_name": "qkv_epilogue_discriminator.py",
+      "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"
+    },
+    {
+      "bytes": 4653,
+      "path": "inputs/stack/residual_intervention.py",
+      "remote_name": "residual_intervention.py",
+      "sha256": "9b5a51284ac313014988f426c35b818ae2590cb7d4a72ec604a6ad80a63336b3"
+    },
+    {
+      "bytes": 15899,
+      "path": "inputs/stack/ring_kv.py",
+      "remote_name": "ring_kv.py",
+      "sha256": "8682c985de86eeefefa91f50874902a635a2d30c8c533d786445b35645f17188"
+    },
+    {
+      "bytes": 1096,
+      "path": "inputs/stack/ring_ownership.py",
+      "remote_name": "ring_ownership.py",
+      "sha256": "0ee0d372795dd0f7555a3906f2247730b44d2a1640f4bc661f6a6ed66a86342e"
+    },
+    {
+      "bytes": 10074,
+      "path": "inputs/stack/sitecustomize.py",
+      "remote_name": "sitecustomize.py",
+      "sha256": "1ad2eddfa6de1f5e7e8ea0acacf6b328140a242956ab13830ddd5c558f16f3e7"
+    },
+    {
+      "bytes": 9953,
+      "path": "inputs/stack/sitecustomize_width_base.py",
+      "remote_name": "sitecustomize_width_base.py",
+      "sha256": "0a1c428e12d9367b56605096a0bb0a2bcc998c5ae32593880980157f90071f3b"
+    }
+  ],
+  "generated_utc": "2026-07-23T18:17:33.008764Z",
+  "schema_version": 1
+}

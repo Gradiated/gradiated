@@ -1,0 +1,63 @@
+{
+  "campaign_seed": "gemma4-background-exact-mix-c32-20260718",
+  "rows": [
+    {
+      "request_id": 0,
+      "split": "calibration",
+      "start": 535,
+      "token_sha256": "11e0499fde13ff19fb9d1c39e70f6227eda947f9272c92c8314489ebf8b394c3",
+      "tokens": 128
+    },
+    {
+      "request_id": 1,
+      "split": "calibration",
+      "start": 1063,
+      "token_sha256": "cda70315f12c61674459d3f3092b0fcda1420820547387e30116672ecd7a38b0",
+      "tokens": 128
+    },
+    {
+      "request_id": 2,
+      "split": "calibration",
+      "start": 1591,
+      "token_sha256": "5e6d180c12118502eb35cf608ea9b1d179b393cfd10ba694899d13f2f26ce087",
+      "tokens": 128
+    },
+    {
+      "request_id": 3,
+      "split": "calibration",
+      "start": 2119,
+      "token_sha256": "2730b95549ec35d342ef135ea756783c9e6352477965f40b99908274b907fe60",
+      "tokens": 128
+    },
+    {
+      "request_id": 4,
+      "split": "calibration",
+      "start": 2647,
+      "token_sha256": "6051c85c88221319da1301c356a4aedbc283305708dc1e0c035b9611efadf8bd",
+      "tokens": 128
+    },
+    {
+      "request_id": 5,
+      "split": "calibration",
+      "start": 3175,
+      "token_sha256": "1b9c4b1b173e453214b3fc6bf84d611c303eae7e341f50a3d359d1239e0e7e3e",
+      "tokens": 128
+    },
+    {
+      "request_id": 30,
+      "split": "holdout",
+      "start": 3394,
+      "token_sha256": "a167416f136adac1f3135d14be8633657b722774551c6190b5da8e31e58722a2",
+      "tokens": 128
+    },
+    {
+      "request_id": 31,
+      "split": "holdout",
+      "start": 3922,
+      "token_sha256": "0d4ffefe9cfb778f368e5537a28987446b784e434056ae55bfcc360a005faa22",
+      "tokens": 128
+    }
+  ],
+  "sampling_seed": 20260723,
+  "tensor_sha256": "1526052963aaad3e0a99848c19dd73e29a2e6c17610855009d753c96874ff266"
+}

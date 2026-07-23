@@ -1,0 +1,180 @@
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 0, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 0, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 0, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 1, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 1, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 1, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 10, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 10, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 12, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 12, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 12, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 13, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 13, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 13, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 14, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 14, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 14, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 15, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 15, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 15, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 16, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 16, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 18, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 18, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 18, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 19, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 19, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 19, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 2, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 2, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 2, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 20, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 20, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 20, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 21, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 21, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 21, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 22, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 22, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 24, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 24, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 24, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 25, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 25, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 25, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 26, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 26, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 26, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 27, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 27, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 27, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 28, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 28, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 3, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 3, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 3, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 30, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 30, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 30, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 31, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 31, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 31, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 32, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 32, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 32, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 33, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 33, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 33, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 34, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 34, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 36, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 36, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 36, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 37, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 37, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 37, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 38, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 38, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 38, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 39, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 39, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 39, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 4, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 4, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 4, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 40, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 40, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 42, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 42, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 42, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 43, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 43, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 43, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 44, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 44, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 44, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 45, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 45, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 45, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 46, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 46, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 48, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 48, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 48, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 49, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 49, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 49, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 50, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 50, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 50, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 51, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 51, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 51, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 52, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 52, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 54, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 54, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 54, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 55, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 55, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 55, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 56, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 56, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 56, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 57, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 57, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 57, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 58, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 58, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 6, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 6, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 6, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 7, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 7, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 7, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 8, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 8, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 8, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 9, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 9, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 9, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 10, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 11, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 11, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 11, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 16, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 17, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 17, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 17, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 22, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 23, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 23, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 23, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 28, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 29, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 29, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 29, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 34, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 35, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 35, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 35, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 40, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 41, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 41, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 41, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 46, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 47, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 47, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 47, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 5, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 5, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 5, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 52, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 53, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 53, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 53, "projection": "up_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 58, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [5376, 16384], "indices_count": 16384, "layer": 59, "left_shape": [5376, 256], "projection": "down_proj", "recovery_merged": true, "recovery_rank": 256, "right_shape": [256, 16384], "runtime_adapter": false, "source_shape": [5376, 21504]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 59, "projection": "gate_proj", "source_shape": [21504, 5376]}
+{"candidate_shape": [16384, 5376], "indices_count": 16384, "layer": 59, "projection": "up_proj", "source_shape": [21504, 5376]}

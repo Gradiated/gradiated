@@ -1,0 +1,53 @@
+{
+  "artifact_contract": {
+    "endpoint": "ENDPOINT_RESULT.json plus compact raw runner, path-audit, coherence, transition, and telemetry evidence",
+    "producer": "PRODUCER_TERMINAL.json, FACTOR_MANIFEST.json, per-layer reconstruction rows, and 60 content-addressed rank-factor files"
+  },
+  "budget": {
+    "absolute_deadline_utc": "2026-07-24T01:15:00Z",
+    "authorized_usd": 20.0,
+    "maximum_claimed_gpu_hours": 6.0,
+    "storage_gib": 24
+  },
+  "candidate": {
+    "layer_count": 60,
+    "merge_semantics": "left_q_by_256 times right_256_by_16384 is added once to the selected BF16 down_proj before the unchanged dynamic-FP8 consumer processes the weight",
+    "rank": 256,
+    "runtime_adapter_or_extra_gemm": false,
+    "selection": "immutable project-local JOINT_NORM_SELECTION.json",
+    "width": 16384
+  },
+  "decision": "Test whether one fixed activation-aware rank-256 merged residual per layer restores held-out MLP reconstruction and basic coherence without changing the measured width-plus-ring inference geometry.",
+  "evidence_labels": {
+    "endpoint_and_reconstruction": "measured",
+    "mechanism": "analytical",
+    "quality_beyond_basic_coherence": "not_claimed"
+  },
+  "heldout_gate": {
+    "all_layers_finite_and_exact_rank": true,
+    "global_recovered_relative_l2_max": 0.2,
+    "minimum_global_residual_energy_recovered_fraction": 0.5,
+    "minimum_improved_layers": 57
+  },
+  "hypothesis": "Discarded-channel MLP output has a low-dimensional activation-conditioned component predictable from retained SwiGLU channels; merging its rank-256 reduced-rank regression into down_proj should remove enough proxy error to restore basic coherence while preserving the 16,384-wide GEMM.",
+  "quality_gate": {
+    "arithmetic_exact_normalized": "4",
+    "json_status_ok": true,
+    "ready_exact_normalized": "READY",
+    "required_passes": 4
+  },
+  "scope": {
+    "calibration_requests": [0, 1, 2, 3, 4, 5],
+    "calibration_tokens": 768,
+    "holdout_requests": [30, 31],
+    "holdout_tokens": 256,
+    "sampling_seed": 20260723,
+    "source": "deterministic windows from the exact content-bound c32 request generator"
+  },
+  "slo": "If the held-out gate and four-row coherence discriminator pass, run exactly one unchanged c32 candidate and require 32/32 finite rows, exact cache accounting, 60 merged-width paths, 50 ring-local paths, and ten unchanged global paths.",
+  "timeout": {
+    "owner": "bounded through the absolute deadline",
+    "producer_seconds": 10800,
+    "single_remote_operation_seconds": 10800
+  }
+}

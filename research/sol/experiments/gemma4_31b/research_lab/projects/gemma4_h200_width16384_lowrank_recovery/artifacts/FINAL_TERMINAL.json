@@ -1,0 +1,142 @@
+{
+  "actual_spend_usd": 0.8,
+  "classification": "reconstruction_or_coherence_reject",
+  "endpoint": {
+    "basic_coherence_gate": {
+      "pass": false,
+      "quality_unsafe": true,
+      "rows": [
+        {
+          "expected": "json",
+          "label": "json_first",
+          "semantic_pass": false,
+          "text": "C/KCKKKKKKKKKKKKKKKKKKKKKKKKKKKK",
+          "transport_pass": true
+        },
+        {
+          "expected": "READY",
+          "label": "ready",
+          "semantic_pass": false,
+          "text": "//S//S//S//S//S//S//S//S//S//S//S//S//S//S//S//S",
+          "transport_pass": true
+        },
+        {
+          "expected": "4",
+          "label": "arithmetic",
+          "semantic_pass": false,
+          "text": "//////////////////////////////\u0e0d//\u0e0d//\u0e0d//\u0e0d//\u0e0d//\u0e0d//\u0e0d//\u0e0d//\u0e0d",
+          "transport_pass": true
+        },
+        {
+          "expected": "json",
+          "label": "json_after_prefix_population",
+          "semantic_pass": false,
+          "text": "L/CCCCLCLCLCLCLCCLCLC1LDCCLJC_C_C_",
+          "transport_pass": true
+        }
+      ],
+      "semantic_correctness_pass": false
+    },
+    "classification": "reconstruction_or_coherence_reject",
+    "pass": false
+  },
+  "producer": {
+    "capture_identity": {
+      "campaign_seed": "gemma4-background-exact-mix-c32-20260718",
+      "rows": [
+        {
+          "request_id": 0,
+          "split": "calibration",
+          "start": 535,
+          "token_sha256": "11e0499fde13ff19fb9d1c39e70f6227eda947f9272c92c8314489ebf8b394c3",
+          "tokens": 128
+        },
+        {
+          "request_id": 1,
+          "split": "calibration",
+          "start": 1063,
+          "token_sha256": "cda70315f12c61674459d3f3092b0fcda1420820547387e30116672ecd7a38b0",
+          "tokens": 128
+        },
+        {
+          "request_id": 2,
+          "split": "calibration",
+          "start": 1591,
+          "token_sha256": "5e6d180c12118502eb35cf608ea9b1d179b393cfd10ba694899d13f2f26ce087",
+          "tokens": 128
+        },
+        {
+          "request_id": 3,
+          "split": "calibration",
+          "start": 2119,
+          "token_sha256": "2730b95549ec35d342ef135ea756783c9e6352477965f40b99908274b907fe60",
+          "tokens": 128
+        },
+        {
+          "request_id": 4,
+          "split": "calibration",
+          "start": 2647,
+          "token_sha256": "6051c85c88221319da1301c356a4aedbc283305708dc1e0c035b9611efadf8bd",
+          "tokens": 128
+        },
+        {
+          "request_id": 5,
+          "split": "calibration",
+          "start": 3175,
+          "token_sha256": "1b9c4b1b173e453214b3fc6bf84d611c303eae7e341f50a3d359d1239e0e7e3e",
+          "tokens": 128
+        },
+        {
+          "request_id": 30,
+          "split": "holdout",
+          "start": 3394,
+          "token_sha256": "a167416f136adac1f3135d14be8633657b722774551c6190b5da8e31e58722a2",
+          "tokens": 128
+        },
+        {
+          "request_id": 31,
+          "split": "holdout",
+          "start": 3922,
+          "token_sha256": "0d4ffefe9cfb778f368e5537a28987446b784e434056ae55bfcc360a005faa22",
+          "tokens": 128
+        }
+      ],
+      "sampling_seed": 20260723,
+      "tensor_sha256": "1526052963aaad3e0a99848c19dd73e29a2e6c17610855009d753c96874ff266"
+    },
+    "checkpoint": "/checkpoint",
+    "classification": "heldout_reconstruction_pass",
+    "elapsed_seconds": 117.841339022998,
+    "factor_manifest_sha256": "7b6d35d71aedfb7872e1c1440d1ce5e4f8a22e90d5b754d9223c6aa4d12baaab",
+    "gate": {
+      "all_layers_finite_and_exact_rank": true,
+      "global_baseline_relative_l2": 0.499643867142454,
+      "global_recovered_relative_l2": 0.17086530672276265,
+      "global_residual_energy_recovered_fraction": 0.8830536534172997,
+      "improved_layers": 58,
+      "pass": true
+    },
+    "schema_version": 1,
+    "selection_sha256": "185dbc56e46ea942667f9be820cc617a50a1262c3bf71a976c9506474b9b3df3",
+    "status": "terminal",
+    "timestamp_utc": "2026-07-23T18:17:23.424760Z"
+  },
+  "retrieval_reconciliation": {
+    "c32_candidate_started": false,
+    "classification_before_repair": "typed_external_blocker",
+    "defect": "guest tar could not read root-owned factor files after the scientific terminal",
+    "reconciled_utc": "2026-07-23T18:24:10.681584Z",
+    "repair": "retrieval-only re-claim; sudo archive; local archive, manifest, size, and per-file hash verification",
+    "scientific_stage_replayed": false
+  },
+  "retrieved_factors": {
+    "all_60_manifest_rows_verified": true,
+    "bytes": 668538880,
+    "manifest_sha256": "7b6d35d71aedfb7872e1c1440d1ce5e4f8a22e90d5b754d9223c6aa4d12baaab",
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_width16384_lowrank_recovery/artifacts/recovery-factors.tar",
+    "sha256": "6c9760dfc4d05186336f0bc2618218a1d6a83ac02611f1c28e2b03a9dcf92021"
+  },
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-23T18:19:47.195610Z"
+}

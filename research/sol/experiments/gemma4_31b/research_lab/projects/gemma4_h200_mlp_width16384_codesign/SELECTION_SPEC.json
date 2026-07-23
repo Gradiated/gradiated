@@ -1,0 +1,11 @@
+{
+  "candidate_intermediate_size": 16384,
+  "control_intermediate_size": 21504,
+  "layer_count": 60,
+  "ranking": "descending_joint_squared_l2_then_ascending_channel_index",
+  "score": "sum(float64(gate_row^2)) + sum(float64(up_row^2)) + sum(float64(down_column^2))",
+  "seed": 20260723,
+  "stochastic": false,
+  "stored_order": "ascending_channel_index",
+  "tie_rule": "lower_original_channel_index_first"
+}

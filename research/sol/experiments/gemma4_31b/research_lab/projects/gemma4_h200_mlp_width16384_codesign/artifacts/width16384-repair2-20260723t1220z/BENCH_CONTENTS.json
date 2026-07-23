@@ -1,0 +1,13 @@
+{
+  "artifacts": "Remote immutable selection and compact terminal retained at /home/glmrunner/gemma4-width16384",
+  "caches": "FP8, QKV, deferred-local-KV, and CUDA graph caches retained",
+  "checkpoint": "Exact immutable checkpoint unchanged; resolved owner-local symlink retained at /home/glmrunner/gemma4-width16384/checkpoint",
+  "image": "Pinned SGLang v0.5.13 digest 6113665 retained",
+  "mlp_width16384_claim_cost_usd": 0.05875209809144338,
+  "mlp_width16384_cumulative_cost_usd": 0.06224596002499263,
+  "mlp_width16384_result": "owner_failure",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_h200_mlp_width16384_codesign",
+  "runtime": "Width-16384 quality-unsafe proxy terminal: owner_failure",
+  "server_state": "Final width-16384 candidate server retained when healthy; otherwise checkpoint/image/caches retained"
+}

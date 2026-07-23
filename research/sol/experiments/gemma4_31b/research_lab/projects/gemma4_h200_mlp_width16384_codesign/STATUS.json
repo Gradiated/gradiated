@@ -1,0 +1,31 @@
+{
+  "active_session": null,
+  "allocation_limit": 1,
+  "actual_spend_usd": 0.1137651591817538,
+  "authorized_spend_usd": 12.0,
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "candidate": "all_60_layers_swiglu_intermediate_21504_to_16384_joint_norm_selected_proxy",
+  "compute_budget": "One retained H200; at most 120 claimed GPU-minutes and 240 wall minutes from first claim.",
+  "current_frontier_seconds_per_request": 0.6743258590313417,
+  "economic_ceiling_seconds_per_request": 0.6381105231,
+  "immutable_binding": "DIRECTOR_BINDING.json",
+  "immutable_binding_verifier": "verify_director_binding.py",
+  "bench_release_condition": "ready",
+  "component_artifact": "artifacts/width16384-component-repair2-20260723t1224z/retrieved/component/TERMINAL.json",
+  "component_m32_reduction_fraction": 0.16868546244981653,
+  "component_observed_prefill_reduction_range": [
+    0.20210728586469184,
+    0.25800758274825086
+  ],
+  "conservative_whole_request_reduction_fraction": 0.026481396921388567,
+  "next_action": "Return the measured component-insufficient terminal to the director. The frozen width-16,384 proxy improved every exact consumer shape but its conservative current-trace bound was 2.6481%, below the preregistered 3% c32 gate; do not run the endpoint, sweep width/selection, or open recovery training from this result.",
+  "priority": 2800,
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "quality_claim_authorized": false,
+  "researcher_profile": "deep",
+  "reservation_gate": "Do not claim until this project's $12 reservation is durable and priority-2850 has released the bench.",
+  "status": "completed",
+  "storage_budget": "At most 24 GiB temporary overlay/build artifacts; no checkpoint duplication.",
+  "summary": "Component-insufficient: the frozen 21,504-to-16,384 joint-norm proxy improved the exact H200 MLP consumer by 16.87% at M=32 and 20.21-25.80% at observed prefill M, but the conservative current-trace whole-request bound was only 2.6481%. The conditional c32 quality-unsafe proxy was correctly skipped.",
+  "terminal_artifact": "artifacts/width16384-component-repair2-20260723t1224z/TERMINAL.json"
+}

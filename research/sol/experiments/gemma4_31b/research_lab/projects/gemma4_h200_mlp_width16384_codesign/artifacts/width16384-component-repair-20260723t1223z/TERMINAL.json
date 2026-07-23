@@ -1,0 +1,13 @@
+{
+  "classification": "owner_failure",
+  "cumulative_provider_spend_usd": 0.08190783798297246,
+  "error": {
+    "message": "typed scientific boundary:rm -rf \"$artifacts/component\"",
+    "type": "RuntimeError"
+  },
+  "pass": false,
+  "provider_exposure_seconds": 28.77347993850708,
+  "provider_spend_usd": 0.01966187795797984,
+  "schema_version": 1,
+  "status": "terminal"
+}

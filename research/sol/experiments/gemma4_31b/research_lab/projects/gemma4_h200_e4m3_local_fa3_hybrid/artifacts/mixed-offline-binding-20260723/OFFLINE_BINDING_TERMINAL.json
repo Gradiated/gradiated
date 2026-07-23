@@ -1,0 +1,11 @@
+{
+  "candidate_cuda_invocation_started": false,
+  "classification": "mixed_exact_source_binding_complete",
+  "pass": true,
+  "provider_spend_usd": 0.0,
+  "schema_version": 1,
+  "scientific_invocation_started": false,
+  "source_binding": "MIXED_SOURCE_BINDING.json",
+  "source_binding_sha256": "b75320ec33249a4cbc3e702bad3f8d8abf5cd36d1a395a139cd3e57f4b94e5ce",
+  "status": "terminal"
+}

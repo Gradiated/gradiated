@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "classification": "preinvocation_component_api_defect",
+  "scientific_invocation_started": false,
+  "candidate_cuda_invocation_started": false,
+  "bench_claimed": true,
+  "diagnostic": {
+    "exception": "AttributeError: 'FlashAttentionBackend' object has no attribute 'page_size'",
+    "stderr_sha256": "749eb15fb261f4686248e21213fac2730546b4a21e9425f18487e5de92cb6b52",
+    "remote_terminal_sha256": "18dee06d11724e7426c182175ddbe83ef17fa57a4f685bfc82672c67490b84d3"
+  },
+  "repair": "bind FlashAttentionBackend.page_size=1 in the exact component fixture; no intervention, workload, comparator, or decision-gate change",
+  "repair_deadline_utc": "2026-07-23T10:35:00Z",
+  "timestamp_utc": "2026-07-23T10:23:30Z"
+}

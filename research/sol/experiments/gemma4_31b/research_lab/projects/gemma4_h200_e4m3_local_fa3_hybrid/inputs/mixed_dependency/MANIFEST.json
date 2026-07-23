@@ -1,0 +1,52 @@
+{
+  "dependency_project": "gemma4_h200_layerwise_mixed_kv_endpoint",
+  "files": [
+    {
+      "bytes": 27971,
+      "name": "FINAL_TERMINAL.json",
+      "sha256": "e20c8aa5c5c0227a0824027262a87bfdfc1017a7f04ea67e9f309b43409979c6"
+    },
+    {
+      "bytes": 1589,
+      "name": "STATUS.json",
+      "sha256": "4efbad933b58873817258b04ad4b54e3d41ccb33ce333aadd14e8b26d654ba7e"
+    },
+    {
+      "bytes": 9494,
+      "name": "fp8_qkv_paired_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    {
+      "bytes": 6370,
+      "name": "install_endpoint_patch.py",
+      "sha256": "71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588"
+    },
+    {
+      "bytes": 6134,
+      "name": "mixed_endpoint_entrypoint.py",
+      "sha256": "124eb627568bb96ae78091a36423589eb10e0f53363ab6636e458100ddff03b9"
+    },
+    {
+      "bytes": 14356,
+      "name": "mixed_kv_patch.py",
+      "sha256": "ab7092322f97904355fa032d4dda7458baf5a0919ca0e1de2e499ad7d6cef973"
+    },
+    {
+      "bytes": 8142,
+      "name": "dependency_component_path_check.py",
+      "sha256": "f7b4415b2681ada76b7009ecc28a3964ed2f40a5774e23f56c2fdd983168856d"
+    },
+    {
+      "bytes": 26612,
+      "name": "qkv_epilogue_discriminator.py",
+      "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"
+    },
+    {
+      "bytes": 2192,
+      "name": "dependency_stack_sitecustomize.py",
+      "sha256": "5791f6718b90b1ac555f7cb53179b18fd523ffb9f469d02582482431623d39fa"
+    }
+  ],
+  "materialized_at_utc": "2026-07-23T10:26:33.006117Z",
+  "schema_version": 1
+}

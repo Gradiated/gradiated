@@ -1,0 +1,13 @@
+/usr/local/lib/python3.12/dist-packages/torchao/quantization/quant_api.py:1731: SyntaxWarning: invalid escape sequence '\.'
+  """Configuration class for applying different quantization configs to modules or parameters based on their fully qualified names (FQNs).
+Traceback (most recent call last):
+  File "/work/hybrid/input/e4m3_fa3_component.py", line 605, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/work/hybrid/input/e4m3_fa3_component.py", line 403, in main
+    fa3_output = FlashAttentionBackend.forward_decode(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/layers/attention/flashattention_backend.py", line 1350, in forward_decode
+    -1, self.page_size, layer.tp_k_head_num, layer.head_dim
+        ^^^^^^^^^^^^^^
+AttributeError: 'FlashAttentionBackend' object has no attribute 'page_size'

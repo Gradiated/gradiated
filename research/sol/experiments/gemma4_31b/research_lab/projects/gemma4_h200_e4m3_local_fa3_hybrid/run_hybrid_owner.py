@@ -28,9 +28,9 @@ from placement_control import SSH_USER, extract_public_ipv4, get_instance, ssh_b
 
 
 PROJECT = "gemma4_h200_e4m3_local_fa3_hybrid"
-DEPENDENCY = "gemma4_h200_e4m3_kv_direct_endpoint"
+DEPENDENCY = "gemma4_h200_layerwise_mixed_kv_endpoint"
 BENCH = "h200-sync-linear-e00vhh6h29fj68x91g"
-REMOTE = "/home/glmrunner/gemma4-e4m3-local-fa3-hybrid"
+REMOTE = "/home/glmrunner/gemma4-mixed-kv-local-fa3-hybrid"
 KEY = Path("/root/.config/nebius/glm-campaign/ssh_ed25519")
 RATE_USD_PER_HOUR = 2.46
 SPEND_CAP_USD = 12.0
@@ -39,8 +39,8 @@ WAIT_DEADLINE = dt.datetime(2026, 7, 23, 12, 0, tzinfo=dt.timezone.utc)
 RELEASE_RESERVE_SECONDS = 180
 MINIMUM_RUN_SECONDS = 1500
 UNIT = "gemma4-e4m3-local-fa3-hybrid-20260723.service"
-ARTIFACTS = HERE / "artifacts" / "e4m3-local-fa3-hybrid-20260723"
-DEPENDENCY_SNAPSHOT = HERE / "inputs" / "dependency"
+ARTIFACTS = HERE / "artifacts" / "mixed-kv-local-fa3-hybrid-20260723"
+DEPENDENCY_SNAPSHOT = HERE / "inputs" / "mixed_dependency"
 CURRENT_FRONTIER = 0.6743258590313417
 ECONOMIC_CEILING = 0.6381105231
 LOCAL_WALL_FRACTION = 0.1531203203096733
@@ -140,53 +140,79 @@ def copy_from(ip: str, source: str, target: Path, timeout: int = 300) -> None:
         raise RuntimeError(f"scp_from_failed:{source}:{result.stderr[-1000:]}")
 
 
+def dependency_terminal_path(project: Path) -> Path | None:
+    candidates = sorted((project / "artifacts").glob("**/FINAL_TERMINAL.json"))
+    return candidates[-1] if candidates else None
+
+
 def dependency_state() -> tuple[bool, dict[str, Any], dict[str, Any]]:
     project = LAB / "projects" / DEPENDENCY
     status = read_json(project / "STATUS.json")
-    terminal = read_json(
-        project / "artifacts/e4m3-kv-direct-20260723/FINAL_TERMINAL.json"
-    )
+    terminal_path = dependency_terminal_path(project)
+    terminal = read_json(terminal_path) if terminal_path else {}
     inventory = read_json(LAB / "runtime/gpus.json")
-    bench = inventory.get("benches", {}).get(BENCH, {})
+    benches = inventory.get("benches", {})
+    if isinstance(benches, dict):
+        benches = benches.values()
+    bench = next(
+        (
+            row
+            for row in benches
+            if row.get("id") == BENCH
+        ),
+        {},
+    )
     ready = bool(
         status.get("active_session") is None
-        and terminal.get("pass") is True
-        and terminal.get("classification") in {"retain_direct", "hybrid_comparator"}
-        and bench.get("status") == "available"
-        and bench.get("claim") is None
+        and terminal.get("status") == "terminal"
+        and (
+            (
+                bench.get("status") == "available"
+                and bench.get("claim") is None
+            )
+            or (
+                bench.get("status") == "claimed"
+                and (bench.get("claim") or {}).get("project") == PROJECT
+            )
+        )
     )
     return ready, terminal, bench
 
 
 def materialize_dependency(terminal: dict[str, Any]) -> dict[str, Any]:
-    source_root = (
-        LAB
-        / "projects"
-        / DEPENDENCY
-        / "artifacts/e4m3-kv-direct-20260723"
-    )
     dependency_project = LAB / "projects" / DEPENDENCY
+    terminal_path = dependency_terminal_path(dependency_project)
+    if terminal_path is None:
+        raise RuntimeError("dependency_terminal_missing")
     sources = [
-        (source_root / "FINAL_TERMINAL.json", "FINAL_TERMINAL.json"),
-        (source_root / "retrieved/ENDPOINT_RESULT.json", "ENDPOINT_RESULT.json"),
+        (terminal_path, "FINAL_TERMINAL.json"),
+        (dependency_project / "STATUS.json", "STATUS.json"),
         (
             dependency_project / "inputs/fp8_qkv_paired_runner.py",
             "fp8_qkv_paired_runner.py",
         ),
         (
-            dependency_project / "inputs/install_endpoint_patch.py",
+            dependency_project / "inputs/base/install_endpoint_patch.py",
             "install_endpoint_patch.py",
         ),
         (
-            dependency_project / "inputs/proven_v0513_endpoint_entrypoint.py",
-            "proven_v0513_endpoint_entrypoint.py",
+            dependency_project / "inputs/mixed_endpoint_entrypoint.py",
+            "mixed_endpoint_entrypoint.py",
         ),
         (
-            dependency_project / "inputs/qkv_epilogue_discriminator.py",
+            dependency_project / "inputs/mixed_kv_patch.py",
+            "mixed_kv_patch.py",
+        ),
+        (
+            dependency_project / "inputs/component_path_check.py",
+            "dependency_component_path_check.py",
+        ),
+        (
+            dependency_project / "inputs/base/qkv_epilogue_discriminator.py",
             "qkv_epilogue_discriminator.py",
         ),
         (
-            dependency_project / "inputs/stack_sitecustomize.py",
+            dependency_project / "inputs/base/stack_sitecustomize.py",
             "dependency_stack_sitecustomize.py",
         ),
     ]
@@ -194,8 +220,6 @@ def materialize_dependency(terminal: dict[str, Any]) -> dict[str, Any]:
     rows = []
     for source, target_name in sources:
         if not source.is_file():
-            if source.name == "ENDPOINT_RESULT.json":
-                continue
             raise RuntimeError(f"dependency_artifact_missing:{source}")
         target = DEPENDENCY_SNAPSHOT / target_name
         temporary = target.with_suffix(target.suffix + ".part")
@@ -252,7 +276,8 @@ def admitted_files() -> list[Path]:
         for name in (
             "fp8_qkv_paired_runner.py",
             "install_endpoint_patch.py",
-            "proven_v0513_endpoint_entrypoint.py",
+            "mixed_endpoint_entrypoint.py",
+            "mixed_kv_patch.py",
             "qkv_epilogue_discriminator.py",
             "dependency_stack_sitecustomize.py",
         )
@@ -261,6 +286,7 @@ def admitted_files() -> list[Path]:
         [
             DEPENDENCY_SNAPSHOT / "FINAL_TERMINAL.json",
             DEPENDENCY_SNAPSHOT / "MANIFEST.json",
+            HERE / "MIXED_SOURCE_BINDING.json",
         ]
     )
     return result
@@ -307,9 +333,9 @@ def retrieve_component(ip: str) -> dict[str, Any]:
     for name in (
         "REMOTE_TERMINAL.json",
         "INVOCATION_STATE.json",
-        "COMPONENT_TERMINAL.json",
         "component.stdout",
         "component.stderr",
+        "COMPONENT_TERMINAL.json",
     ):
         copy_from(ip, f"{REMOTE}/component-artifacts/{name}", destination / name)
     return read_json(destination / "COMPONENT_TERMINAL.json")
@@ -381,6 +407,9 @@ def wait_for_dependency() -> dict[str, Any]:
 
 def main() -> int:
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    prior_project_spend = float(
+        read_json(HERE / "STATUS.json").get("actual_spend_usd", 0.0)
+    )
     subprocess.run(
         [sys.executable, str(HERE / "verify_director_binding.py")], check=True
     )
@@ -397,12 +426,12 @@ def main() -> int:
         "expected_terminal": "component_negative|insufficient_bound|hybrid_endpoint|typed_external_boundary",
         "unit": UNIT,
         "unit_manager": "user",
-        "forward_progress": "waiting_for_e4m3_triton_dependency",
+        "forward_progress": "waiting_for_mixed_kv_triton_dependency",
     }
     update_status(
-        "The content-bound v0.5.13 producer/router/FA3/Triton package is ready; its durable owner is waiting behind the claimed E4M3-Triton dependency.",
+        "The mixed-format v0.5.13 local-FA3/global-Triton package is ready; its durable owner is waiting behind the claimed mixed-KV Triton dependency.",
         "The owner will materialize the dependency terminal before claim, run the exact component once, and invoke c32 only if the conservative bound survives.",
-        0.0,
+        prior_project_spend,
         session,
     )
     try:
@@ -410,13 +439,37 @@ def main() -> int:
     except RuntimeError as error:
         if str(error) == "typed_external_dependency_watchdog_boundary":
             update_status(
-                "Offline binding is complete, but the E4M3-Triton dependency did not release with a valid comparator before the retained bench watchdog boundary.",
-                "Director must provide a compatible retained H200 and the persisted valid E4M3-Triton terminal; do not replay the dependency.",
+                "Offline binding is complete, but the mixed-KV Triton dependency did not release with a terminal before the retained bench watchdog boundary.",
+                "Director must provide a compatible retained H200 and the persisted mixed-KV terminal; do not replay the dependency.",
                 0.0,
                 None,
             )
             return 3
         raise
+    subprocess.run(
+        [sys.executable, str(HERE / "build_mixed_offline_binding.py")],
+        check=True,
+    )
+    if dependency_terminal.get("pass") is not True:
+        terminal = {
+            "schema_version": 1,
+            "status": "terminal",
+            "classification": "dependency_mixed_kv_invalid_no_claim",
+            "dependency_terminal": dependency_terminal,
+            "candidate_cuda_invocation_started": False,
+            "scientific_invocation_started": False,
+            "actual_spend_usd": 0.0,
+            "timestamp_utc": utc_now(),
+        }
+        atomic(ARTIFACTS / "FINAL_TERMINAL.json", terminal)
+        update_status(
+            "The persisted mixed-KV dependency closed without a valid comparator; no H200 claim or hybrid invocation was made.",
+            "Close this exact hybrid dependency branch without replay or backend substitution.",
+            0.0,
+            None,
+            status="complete",
+        )
+        return 0
     comparator = comparator_seconds(dependency_terminal)
     perfect_removal_bound = comparator - CURRENT_FRONTIER * LOCAL_WALL_FRACTION
     if perfect_removal_bound >= CURRENT_FRONTIER:
@@ -434,7 +487,7 @@ def main() -> int:
         }
         atomic(ARTIFACTS / "FINAL_TERMINAL.json", terminal)
         update_status(
-            "The persisted E4M3 comparator failed even the perfect-removal local-attention bound; no H200 claim was made.",
+            "The persisted mixed-KV comparator failed even the perfect-removal local-attention bound; no H200 claim was made.",
             "Close this hybrid candidate without replay or backend sweep.",
             0.0,
             None,
@@ -459,7 +512,8 @@ def main() -> int:
     }
     atomic(HERE / "GPU_INPUT_MANIFEST.json", input_manifest)
     pool = GpuPool(LAB)
-    claim_started = time.monotonic()
+    prior_spend = prior_project_spend
+    claim_started_utc = dt.datetime.now(dt.timezone.utc)
     claimed = False
     heartbeat: Heartbeat | None = None
     ip: str | None = None
@@ -472,6 +526,9 @@ def main() -> int:
             lease_seconds=max(600, remaining - RELEASE_RESERVE_SECONDS),
         )
         claimed = True
+        claim_started_utc = dt.datetime.fromisoformat(
+            bench["claim"]["claimed_at"].replace("Z", "+00:00")
+        )
         event("bench_claimed", claim=bench["claim"])
         heartbeat = Heartbeat(pool)
         heartbeat.start()
@@ -491,6 +548,7 @@ def main() -> int:
         component_worker = remote(
             ip,
             f"HYBRID_REMOTE_ROOT={shlex.quote(REMOTE)} "
+            f"DEPENDENCY_COMPARATOR_SECONDS={comparator!r} "
             f"timeout --signal=TERM 900 bash {shlex.quote(REMOTE + '/input/remote_component.sh')}",
             930,
         )
@@ -604,9 +662,14 @@ def main() -> int:
         if heartbeat:
             heartbeat.close()
         spend = (
-            (time.monotonic() - claim_started) * RATE_USD_PER_HOUR / 3600
+            prior_spend
+            + (
+                dt.datetime.now(dt.timezone.utc) - claim_started_utc
+            ).total_seconds()
+            * RATE_USD_PER_HOUR
+            / 3600
             if claimed
-            else 0.0
+            else prior_spend
         )
         if spend > SPEND_CAP_USD:
             terminal["spend_violation"] = True
@@ -618,7 +681,7 @@ def main() -> int:
         if classification == "hybrid_endpoint_positive":
             endpoint = terminal.get("endpoint", {})
             update_status(
-                f"The sole exact c32 hybrid measured {endpoint.get('candidate_service_seconds_per_request')} s/request against the persisted E4M3-Triton comparator {comparator} s/request.",
+                f"The sole exact c32 hybrid measured {endpoint.get('candidate_service_seconds_per_request')} s/request against the persisted mixed-KV Triton comparator {comparator} s/request.",
                 "Retain only as a representation-changing performance survivor pending separate quality and feature validation; do not sweep backends.",
                 spend,
                 None,
@@ -646,14 +709,14 @@ def main() -> int:
         if claimed:
             contents = {
                 "project": PROJECT,
-                "e4m3_local_fa3_hybrid_result": classification,
-                "e4m3_local_fa3_hybrid_actual_spend_usd": spend,
+                "mixed_kv_local_fa3_hybrid_result": classification,
+                "mixed_kv_local_fa3_hybrid_actual_spend_usd": spend,
                 "artifacts": str(ARTIFACTS),
                 "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
                 "image": "Pinned SGLang v0.5.13 digest 6113665a retained.",
                 "checkpoint": "Exact lab-owned resident checkpoint retained read-only; no project copy staged.",
-                "caches": "E4M3 Triton/FA3/CUDA graph caches retained.",
-                "server_state": "Healthy E4M3 local-FA3/global-Triton candidate retained if endpoint startup completed.",
+                "caches": "Mixed E4M3-local/E5M2-global Triton/FA3/CUDA graph caches retained.",
+                "server_state": "Healthy mixed-KV local-FA3/global-Triton candidate retained if endpoint startup completed.",
             }
             atomic(ARTIFACTS / "BENCH_CONTENTS.json", contents)
             try:

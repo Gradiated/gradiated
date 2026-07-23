@@ -1,0 +1,29 @@
+{
+  "actual_spend_usd": 0.15854709703333333,
+  "hourly_rate_usd": 2.46,
+  "method": "sum of all project claim intervals through recorded release events",
+  "claims": [
+    {
+      "claimed_at": "2026-07-23T10:19:27.979274Z",
+      "released_at": "2026-07-23T10:20:39.387217Z",
+      "seconds": 71.407943,
+      "spend_usd": 0.048795427716666666,
+      "classification": "pre_science_component_api_repair"
+    },
+    {
+      "claimed_at": "2026-07-23T10:22:25.346658Z",
+      "released_at": "2026-07-23T10:24:15.255173Z",
+      "seconds": 109.908515,
+      "spend_usd": 0.07510415191666667,
+      "classification": "pre_science_component_artifact_permission_repair"
+    },
+    {
+      "claimed_at": "2026-07-23T10:26:32.866976Z",
+      "released_at": "2026-07-23T10:27:23.570660Z",
+      "seconds": 50.703684,
+      "spend_usd": 0.0346475174,
+      "classification": "scientific_component_terminal"
+    }
+  ],
+  "schema_version": 1
+}

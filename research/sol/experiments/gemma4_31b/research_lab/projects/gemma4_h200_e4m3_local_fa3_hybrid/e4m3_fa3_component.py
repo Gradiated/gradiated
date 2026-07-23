@@ -23,7 +23,8 @@ SOURCE_HASHES = {
     "swa_memory_pool.py": "36830cdb84cc344ffb7bac9ff30ba9a41b488d67893a5015ecbba584e95a9858",
 }
 LOCAL_WALL_FRACTION = 0.1531203203096733
-REQUIRED_REDUCTION = 0.3507436965788028
+CURRENT_FRONTIER = 0.6743258590313417
+ECONOMIC_CEILING = 0.6381105231
 
 
 def atomic(path: Path, value: Any) -> None:
@@ -85,20 +86,30 @@ def make_pool(context: int, batch_size: int):
         size=slots,
         size_swa=slots,
         page_size=1,
-        dtype=torch.float8_e4m3fn,
+        dtype=torch.float8_e5m2,
         head_num=4,
         head_dim=512,
         v_head_dim=512,
         swa_head_num=16,
         swa_head_dim=256,
         swa_v_head_dim=256,
-        swa_attention_layer_ids=[0],
-        full_attention_layer_ids=[5],
+        swa_attention_layer_ids=[
+            index for index in range(60) if (index + 1) % 6
+        ],
+        full_attention_layer_ids=list(range(5, 60, 6)),
         enable_kvcache_transpose=False,
         enable_alt_stream=False,
         device="cuda",
     )
     pool.register_mapping(torch.arange(slots + 1, dtype=torch.int64, device="cuda"))
+    if pool.swa_kv_pool.dtype != torch.float8_e4m3fn:
+        raise RuntimeError(
+            f"mixed_local_pool_dtype_mismatch:{pool.swa_kv_pool.dtype}"
+        )
+    if pool.full_kv_pool.dtype != torch.float8_e5m2:
+        raise RuntimeError(
+            f"mixed_global_pool_dtype_mismatch:{pool.full_kv_pool.dtype}"
+        )
     return pool, slots
 
 
@@ -113,6 +124,20 @@ def make_layer():
         layer_id=0,
         v_head_dim=256,
         sliding_window_size=1023,
+    ).cuda()
+
+
+def make_global_layer():
+    from sglang.srt.layers.radix_attention import RadixAttention
+
+    return RadixAttention(
+        num_heads=32,
+        head_dim=512,
+        scaling=1 / math.sqrt(512),
+        num_kv_heads=4,
+        layer_id=5,
+        v_head_dim=512,
+        sliding_window_size=-1,
     ).cuda()
 
 
@@ -139,6 +164,7 @@ def make_backends(pool, metadata):
     fa3 = object.__new__(FlashAttentionBackend)
     fa3.token_to_kv_pool = pool
     fa3.forward_metadata = metadata["fa3"]
+    fa3.page_size = 1
     fa3.use_mla = False
     fa3.use_sliding_window_kv_pool = True
     fa3.kv_cache_dtype_str = "fp8_e4m3"
@@ -221,6 +247,7 @@ def main() -> int:
     parser.add_argument("--warmups", type=int, default=5)
     parser.add_argument("--iterations", type=int, default=21)
     parser.add_argument("--seed", type=int, default=20260723)
+    parser.add_argument("--dependency-comparator", type=float, required=True)
     args = parser.parse_args()
     args.artifact_root.mkdir(parents=True, exist_ok=True)
     invocation = args.artifact_root / "INVOCATION_STATE.json"
@@ -236,10 +263,14 @@ def main() -> int:
     if not torch.cuda.is_available() or torch.cuda.get_device_capability() != (9, 0):
         raise RuntimeError("exact_hopper_cuda_unavailable")
     sources = source_identity()
+    from mixed_kv_patch import install_mixed_kv
+
+    install_mixed_kv()
     torch.manual_seed(args.seed)
     random.seed(args.seed)
     pool, _ = make_pool(args.context, args.batch_size)
     layer = make_layer()
+    global_layer = make_global_layer()
     req_to_slots = (
         torch.arange(
             1,
@@ -255,6 +286,60 @@ def main() -> int:
         args.batch_size, args.context, req_to_slots, current_slots
     )
     triton, fa3 = make_backends(pool, metadata)
+    router_audit = args.artifact_root / "router-audit.jsonl"
+    if router_audit.exists():
+        router_audit.unlink()
+    os.environ["E4M3_FA3_HYBRID_AUDIT"] = str(router_audit)
+    from gemma4_layer_hybrid_backend import Gemma4LayerHybridAttnBackend
+
+    layer_types = [
+        "full_attention" if (index + 1) % 6 == 0 else "sliding_attention"
+        for index in range(60)
+    ]
+    router = Gemma4LayerHybridAttnBackend(
+        SimpleNamespace(
+            token_to_kv_pool=pool,
+            req_to_token_pool=object(),
+            model_config=SimpleNamespace(
+                hf_text_config=SimpleNamespace(layer_types=layer_types)
+            ),
+        ),
+        local_backend=fa3,
+        global_backend=triton,
+    )
+    for layer_id in range(60):
+        is_global = (layer_id + 1) % 6 == 0
+        selected = router._select_backend(
+            SimpleNamespace(
+                layer_id=layer_id,
+                tp_q_head_num=32,
+                tp_k_head_num=4 if is_global else 16,
+                qk_head_dim=512 if is_global else 256,
+                v_head_dim=512 if is_global else 256,
+                sliding_window_size=-1 if is_global else 1023,
+            )
+        )
+        if selected is not (triton if is_global else fa3):
+            raise RuntimeError(f"mixed_router_selection_mismatch:{layer_id}")
+    router_rows = [
+        json.loads(line)
+        for line in router_audit.read_text().splitlines()
+        if line.strip()
+    ]
+    routed_local = sorted(
+        row["layer_id"]
+        for row in router_rows
+        if row.get("route") == "local_fa3"
+    )
+    routed_global = sorted(
+        row["layer_id"]
+        for row in router_rows
+        if row.get("route") == "global_triton"
+    )
+    if len(routed_local) != 50 or len(routed_global) != 10:
+        raise RuntimeError(
+            f"mixed_router_audit_incomplete:{len(routed_local)}:{len(routed_global)}"
+        )
     q = (
         torch.randn(
             (args.batch_size, 32, 256), dtype=torch.bfloat16, device="cuda"
@@ -279,6 +364,26 @@ def main() -> int:
         layer.v_scale,
         swa_loc=req_to_slots.flatten(),
     )
+    global_k_current = torch.randn(
+        (args.batch_size, 4, 512), dtype=torch.bfloat16, device="cuda"
+    ).contiguous()
+    global_v_current = torch.randn_like(global_k_current).contiguous()
+    pool.set_kv_buffer(
+        global_layer,
+        current_slots,
+        global_k_current,
+        global_v_current,
+        global_layer.k_scale,
+        global_layer.v_scale,
+    )
+    local_key_buffer = pool.get_key_buffer(0)
+    global_key_buffer = pool.get_key_buffer(5)
+    if local_key_buffer.dtype != torch.float8_e4m3fn:
+        raise RuntimeError(f"local_buffer_dtype_mismatch:{local_key_buffer.dtype}")
+    if global_key_buffer.dtype != torch.float8_e5m2:
+        raise RuntimeError(f"global_buffer_dtype_mismatch:{global_key_buffer.dtype}")
+    if not bool(torch.count_nonzero(global_key_buffer).item()):
+        raise RuntimeError("global_e5m2_producer_output_zero")
     k_current = k_cache.view(args.batch_size, args.context, 16, 256)[:, -1]
     v_current = v_cache.view(args.batch_size, args.context, 16, 256)[:, -1]
     forward_batch = SimpleNamespace(
@@ -295,7 +400,7 @@ def main() -> int:
         layer,
         forward_batch,
         save_kv_cache=False,
-    )
+    ).clone()
     fa3_output = FlashAttentionBackend.forward_decode(
         fa3,
         q,
@@ -304,7 +409,7 @@ def main() -> int:
         layer,
         forward_batch,
         save_kv_cache=False,
-    )
+    ).clone()
     torch.cuda.synchronize()
     atomic(
         invocation,
@@ -399,7 +504,16 @@ def main() -> int:
     boundary_reduction = 1 - boundary["fa3"]["median_ms"] / boundary["triton"]["median_ms"]
     conservative_reduction = min(consumer_reduction, boundary_reduction)
     component_pass = numerical_pass and conservative_reduction > 0
-    bound_pass = component_pass and conservative_reduction >= REQUIRED_REDUCTION
+    required_recovery_reduction = max(
+        0.0,
+        (args.dependency_comparator - CURRENT_FRONTIER)
+        / (CURRENT_FRONTIER * LOCAL_WALL_FRACTION),
+    )
+    projected_hybrid = (
+        args.dependency_comparator
+        - CURRENT_FRONTIER * LOCAL_WALL_FRACTION * conservative_reduction
+    )
+    bound_pass = component_pass and projected_hybrid < CURRENT_FRONTIER
     terminal = {
         "schema_version": 1,
         "status": (
@@ -421,12 +535,18 @@ def main() -> int:
             "head_dim": 256,
             "window_tokens": 1024,
             "kv_dtype": "torch.float8_e4m3fn",
+            "global_kv_dtype": "torch.float8_e5m2",
             "query_dtype": "torch.bfloat16",
         },
         "producer": {
-            "symbol": "SWAKVPool.set_kv_buffer -> MHATokenToKVPool.set_kv_buffer",
-            "scale_convention": "unit scale; BF16 K/V converted to E4M3 at store",
+            "symbol": "mixed SWAKVPool.set_kv_buffer -> per-pool MHATokenToKVPool.set_kv_buffer",
+            "scale_convention": "unit scale; BF16 K/V converted to layer-indexed E4M3 local / E5M2 global storage",
             "nonzero_input": True,
+            "local_pool_dtype": str(pool.swa_kv_pool.dtype),
+            "global_pool_dtype": str(pool.full_kv_pool.dtype),
+            "local_buffer_dtype": str(local_key_buffer.dtype),
+            "global_buffer_dtype": str(global_key_buffer.dtype),
+            "global_producer_output_nonzero": True,
             "swa_mapping": "identity project-local exact paged component fixture",
         },
         "consumers": {
@@ -439,13 +559,22 @@ def main() -> int:
         "consumer_reduction_fraction": consumer_reduction,
         "producer_consumer_reduction_fraction": boundary_reduction,
         "conservative_reduction_fraction": conservative_reduction,
-        "required_reduction_fraction": REQUIRED_REDUCTION,
+        "dependency_comparator_seconds_per_request": args.dependency_comparator,
+        "current_frontier_seconds_per_request": CURRENT_FRONTIER,
+        "economic_ceiling_seconds_per_request": ECONOMIC_CEILING,
+        "required_recovery_reduction_fraction": required_recovery_reduction,
+        "projected_hybrid_seconds_per_request": projected_hybrid,
         "estimated_whole_request_reduction_fraction": (
             conservative_reduction * LOCAL_WALL_FRACTION
         ),
         "path_proof": {
             "local_backend": "FlashAttentionBackend",
             "global_backend": "TritonAttnBackend",
+            "local_kv_cache_dtype": str(pool.swa_kv_pool.dtype),
+            "global_kv_cache_dtype": str(pool.full_kv_pool.dtype),
+            "local_layer_ids": routed_local,
+            "global_layer_ids": routed_global,
+            "router_events": router_rows,
             "fallback_count": 0,
             "source": sources,
         },

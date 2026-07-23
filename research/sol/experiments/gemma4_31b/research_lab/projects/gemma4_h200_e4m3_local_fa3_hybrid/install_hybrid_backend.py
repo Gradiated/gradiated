@@ -23,14 +23,26 @@ NEW = """        else:
                     Gemma4LayerHybridAttnBackend,
                 )
 
+                import torch
+
+                original_kv_dtype = self.kv_cache_dtype
+                original_kv_dtype_str = self.server_args.kv_cache_dtype
+                try:
+                    self.kv_cache_dtype = torch.float8_e4m3fn
+                    self.server_args.kv_cache_dtype = "fp8_e4m3"
+                    local_backend = self._get_attention_backend_from_str(
+                        "fa3", init_new_workspace=init_new_workspace
+                    )
+                finally:
+                    self.kv_cache_dtype = original_kv_dtype
+                    self.server_args.kv_cache_dtype = original_kv_dtype_str
+                global_backend = self._get_attention_backend_from_str(
+                    "triton", init_new_workspace=init_new_workspace
+                )
                 attn_backend = Gemma4LayerHybridAttnBackend(
                     self,
-                    local_backend=self._get_attention_backend_from_str(
-                        "fa3", init_new_workspace=init_new_workspace
-                    ),
-                    global_backend=self._get_attention_backend_from_str(
-                        "triton", init_new_workspace=init_new_workspace
-                    ),
+                    local_backend=local_backend,
+                    global_backend=global_backend,
                 )
             else:
                 attn_backend = self._get_attention_backend_from_str(

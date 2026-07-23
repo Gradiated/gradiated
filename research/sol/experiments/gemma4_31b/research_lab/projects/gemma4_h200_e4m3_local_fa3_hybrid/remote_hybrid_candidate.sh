@@ -6,7 +6,7 @@ input="$root/input"
 artifacts="$root/endpoint-artifacts"
 checkpoint=/home/glmrunner/gemma4-h200-flashinfer-metadata-scalar-elimination/checkpoint
 image=docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6
-container=gemma-e4m3-local-fa3-hybrid-candidate
+container=gemma-mixed-kv-local-fa3-hybrid-candidate
 mkdir -p "$artifacts/candidate-audit"
 
 atomic() {
@@ -43,18 +43,20 @@ test -d "$checkpoint" || fail checkpoint_missing
 sudo docker image inspect "$image" >"$artifacts/image-inspect.json" 2>&1 || fail pinned_image_not_resident
 printf '%q ' \
   --model-path /work/checkpoint --tokenizer-path /work/checkpoint --served-model-name google/gemma-4-31B-it \
-  --dtype bfloat16 --quantization fp8 --tp-size 1 --kv-cache-dtype fp8_e4m3 \
+  --dtype bfloat16 --quantization fp8 --tp-size 1 --kv-cache-dtype fp8_e5m2 \
   --context-length 5000 --max-running-requests 32 --mem-fraction-static 0.85 --enable-metrics --skip-server-warmup \
   --enable-dynamic-chunking --chunked-prefill-size 2048 --enable-fused-qk-norm-rope --cuda-graph-max-bs 32 \
   --prefill-attention-backend triton --decode-attention-backend triton --page-size 1 --num-continuous-decode-steps 1 \
   --triton-attention-num-kv-splits 8 >"$artifacts/candidate.server-args.txt"
 
-sudo docker rm -f gemma-e4m3-kv-direct-candidate "$container" >/dev/null 2>&1 || true
+sudo docker rm -f gemma-layerwise-mixed-kv-candidate "$container" >/dev/null 2>&1 || true
 state candidate_cuda_started
 sudo docker run -d --name "$container" --gpus all --ipc=host --network host \
   -v "$checkpoint:/work/checkpoint:ro" -v "$root:/work/hybrid" \
   -e PYTHONPATH=/work/hybrid/input:/sgl-workspace/sglang/python \
-  -e QKV_STACK_ARM=candidate -e E4M3_FA3_LAYER_HYBRID=1 \
+  -e MIXED_KV_STACK_ARM=candidate -e QKV_STACK_ARM=candidate -e E4M3_FA3_LAYER_HYBRID=1 \
+  -e MIXED_KV_AUDIT_ROOT=/work/hybrid/endpoint-artifacts/candidate-audit/mixed \
+  -e MIXED_KV_AUDIT_GATE=/work/hybrid/endpoint-artifacts/MIXED_ENDPOINT_ARMED \
   -e E4M3_FA3_HYBRID_AUDIT=/work/hybrid/endpoint-artifacts/candidate-audit/hybrid.jsonl \
   -e QKV_EPILOGUE_AUDIT=/work/hybrid/endpoint-artifacts/candidate-audit/qkv.jsonl \
   -e FP8_MODULE_AUDIT=/work/hybrid/endpoint-artifacts/candidate-audit/modules.jsonl \
@@ -63,9 +65,9 @@ sudo docker run -d --name "$container" --gpus all --ipc=host --network host \
   -e FP8_STACK_MODULE_AUDIT=/work/hybrid/endpoint-artifacts/candidate-audit/stack-modules.jsonl \
   -e FP8_STACK_CONSUMER_AUDIT=/work/hybrid/endpoint-artifacts/candidate-audit/stack-consumers.jsonl \
   -e SGLANG_FP8_IGNORED_LAYERS=model.vision_tower,model.embed_vision \
-  "$image" python3 /work/hybrid/input/proven_v0513_endpoint_entrypoint.py \
+  "$image" python3 /work/hybrid/input/mixed_endpoint_entrypoint.py \
   --model-path /work/checkpoint --tokenizer-path /work/checkpoint --served-model-name google/gemma-4-31B-it \
-  --dtype bfloat16 --quantization fp8 --tp-size 1 --kv-cache-dtype fp8_e4m3 --host 0.0.0.0 --port 30000 \
+  --dtype bfloat16 --quantization fp8 --tp-size 1 --kv-cache-dtype fp8_e5m2 --host 0.0.0.0 --port 30000 \
   --context-length 5000 --max-running-requests 32 --mem-fraction-static 0.85 --enable-metrics --skip-server-warmup \
   --enable-dynamic-chunking --chunked-prefill-size 2048 --enable-fused-qk-norm-rope --cuda-graph-max-bs 32 \
   --prefill-attention-backend triton --decode-attention-backend triton --page-size 1 --num-continuous-decode-steps 1 \
@@ -78,6 +80,7 @@ for _ in $(seq 1 150); do
 done
 sudo docker logs "$container" >"$artifacts/candidate.server-start.log" 2>&1 || true
 [[ "$ready" -eq 1 ]] || fail candidate_server_not_ready
+touch "$artifacts/MIXED_ENDPOINT_ARMED"
 
 python3 - "$artifacts/HYBRID_COHERENCE.json" <<'PY' || fail candidate_coherence_failed
 import json,sys,urllib.request
@@ -105,14 +108,30 @@ def rows(name):
  p=audit/name
  return [json.loads(line) for line in p.read_text().splitlines() if line.strip()] if p.exists() else []
 events=rows('hybrid.jsonl'); binding=[r for r in events if r.get('event')=='router_bound']; dispatch=[r for r in events if r.get('event')=='layer_dispatched']
+mixed=audit/'mixed'
+mixed_init=json.loads((mixed/'init.json').read_text()) if (mixed/'init.json').exists() else {}
+mixed_producer=[json.loads(line) for line in (mixed/'producer.jsonl').read_text().splitlines() if line.strip()] if (mixed/'producer.jsonl').exists() else []
+mixed_consumer=[json.loads(line) for line in (mixed/'consumer.jsonl').read_text().splitlines() if line.strip()] if (mixed/'consumer.jsonl').exists() else []
+qkv_events=rows('qkv.jsonl')
 local=sorted({r['layer_id'] for r in dispatch if r.get('route')=='local_fa3'})
 global_ids=sorted({r['layer_id'] for r in dispatch if r.get('route')=='global_triton'})
+mixed_layers={r['layer_id']:r for r in mixed_init.get('layers',[])}
+mixed_ok=(
+ mixed_init.get('pass') is True and mixed_init.get('alias_free') is True
+ and len(mixed_layers)==60 and len(mixed_producer)>=120 and len(mixed_consumer)>=120
+ and all(mixed_layers[i]['key']['dtype']=='torch.float8_e4m3fn' for i in local)
+ and all(mixed_layers[i]['key']['dtype']=='torch.float8_e5m2' for i in global_ids)
+)
 path_ok=(
  len(binding)==1 and len(local)==50 and len(global_ids)==10
  and binding[0].get('local_backend')=='FlashAttentionBackend'
  and binding[0].get('global_backend')=='TritonAttnBackend'
- and binding[0].get('kv_cache_dtype')=='torch.float8_e4m3fn'
- and 'fp8_e4m3' in args
+ and binding[0].get('local_kv_cache_dtype')=='torch.float8_e4m3fn'
+ and binding[0].get('global_kv_cache_dtype')=='torch.float8_e5m2'
+ and all(r.get('kv_cache_dtype')=='torch.float8_e4m3fn' for r in dispatch if r.get('route')=='local_fa3')
+ and all(r.get('kv_cache_dtype')=='torch.float8_e5m2' for r in dispatch if r.get('route')=='global_triton')
+ and 'fp8_e5m2' in args
+ and mixed_ok and len(qkv_events)>0
 )
 accounting=x.get('cache',{}).get('cached_prompt_tokens_delta')==17120 and x.get('cache',{}).get('uncached_prompt_tokens_delta')==117728
 responses=all(r.get('text_nonempty') and r.get('text_finite') and r.get('error') is None for r in x.get('rows',[]))
@@ -121,7 +140,12 @@ value={
  'schema_version':1,'status':'terminal','classification':'hybrid_endpoint_complete' if valid else 'hybrid_endpoint_invalid',
  'pass':valid,'candidate_service_seconds_per_request':float(x['service_seconds_per_request']),
  'candidate':x,'accounting_pass':accounting,'response_pass':responses,
- 'candidate_path_proof':{'local_layer_ids':local,'global_layer_ids':global_ids,'events':events,'pass':path_ok},
+ 'candidate_path_proof':{
+   'local_layer_ids':local,'global_layer_ids':global_ids,'events':events,'pass':path_ok,
+   'local_kv_cache_dtype':'torch.float8_e4m3fn','global_kv_cache_dtype':'torch.float8_e5m2',
+   'mixed_pool_init':mixed_init,'mixed_producer_event_count':len(mixed_producer),
+   'mixed_consumer_event_count':len(mixed_consumer),'qkv_event_count':len(qkv_events),
+ },
 }
 tmp=out.with_suffix('.part'); tmp.write_text(json.dumps(value,indent=2,sort_keys=True)+'\n'); os.replace(tmp,out)
 assert valid

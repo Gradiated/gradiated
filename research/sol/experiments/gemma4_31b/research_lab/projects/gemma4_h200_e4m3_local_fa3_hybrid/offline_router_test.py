@@ -70,8 +70,11 @@ def main() -> int:
         for index in range(60)
     ]
     runner = SimpleNamespace(
-        kv_cache_dtype="torch.float8_e4m3fn",
-        token_to_kv_pool=object(),
+        kv_cache_dtype="torch.float8_e5m2",
+        token_to_kv_pool=SimpleNamespace(
+            swa_kv_pool=SimpleNamespace(dtype="torch.float8_e4m3fn"),
+            full_kv_pool=SimpleNamespace(dtype="torch.float8_e5m2"),
+        ),
         req_to_token_pool=object(),
         model_config=SimpleNamespace(
             hf_text_config=SimpleNamespace(layer_types=layer_types)

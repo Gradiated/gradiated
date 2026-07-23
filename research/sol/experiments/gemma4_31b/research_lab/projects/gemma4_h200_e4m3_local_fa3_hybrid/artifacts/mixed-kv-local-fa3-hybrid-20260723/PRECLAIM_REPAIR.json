@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "classification": "ordinary_preclaim_inventory_parser_defect",
+  "failed_stage": "dependency_wait_inventory_read",
+  "scientific_invocation_started": false,
+  "candidate_cuda_invocation_started": false,
+  "bench_claimed_by_this_project": false,
+  "diagnostic": "runtime/gpus.json stores benches as an ID-keyed object; the initial owner iterated its string keys as rows",
+  "repair": "accept both ID-keyed object values and list rows without changing the intervention, workload, bound, or decision gates",
+  "original_unit_invocation_id": "d1998216be324422b4bb23612e62c4b6",
+  "timestamp_utc": "2026-07-23T10:07:44Z"
+}

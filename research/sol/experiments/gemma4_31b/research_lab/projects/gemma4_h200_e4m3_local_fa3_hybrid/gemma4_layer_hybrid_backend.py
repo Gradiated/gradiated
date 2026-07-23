@@ -25,9 +25,18 @@ class Gemma4LayerHybridAttnBackend(AttentionBackend):
         self.model_runner = model_runner
         self.local_backend = local_backend
         self.global_backend = global_backend
-        self.data_type = model_runner.kv_cache_dtype
         self.token_to_kv_pool = model_runner.token_to_kv_pool
         self.req_to_token_pool = model_runner.req_to_token_pool
+        self.local_kv_dtype = self.token_to_kv_pool.swa_kv_pool.dtype
+        self.global_kv_dtype = self.token_to_kv_pool.full_kv_pool.dtype
+        if str(self.local_kv_dtype) != "torch.float8_e4m3fn":
+            raise RuntimeError(
+                f"local_pool_dtype_mismatch:{self.local_kv_dtype}"
+            )
+        if str(self.global_kv_dtype) != "torch.float8_e5m2":
+            raise RuntimeError(
+                f"global_pool_dtype_mismatch:{self.global_kv_dtype}"
+            )
         config = model_runner.model_config.hf_text_config
         self.local_layer_ids = frozenset(
             index
@@ -71,7 +80,8 @@ class Gemma4LayerHybridAttnBackend(AttentionBackend):
                 "global_backend": type(self.global_backend).__name__,
                 "local_layer_ids": sorted(self.local_layer_ids),
                 "global_layer_ids": sorted(self.global_layer_ids),
-                "kv_cache_dtype": str(self.data_type),
+                "local_kv_cache_dtype": str(self.local_kv_dtype),
+                "global_kv_cache_dtype": str(self.global_kv_dtype),
             }
         )
 
@@ -116,6 +126,11 @@ class Gemma4LayerHybridAttnBackend(AttentionBackend):
                     "qk_head_dim": observed[2],
                     "v_head_dim": observed[3],
                     "sliding_window_size": layer.sliding_window_size,
+                    "kv_cache_dtype": (
+                        str(self.local_kv_dtype)
+                        if route == "local_fa3"
+                        else str(self.global_kv_dtype)
+                    ),
                 }
             )
             self._audited_layer_ids.add(layer_id)

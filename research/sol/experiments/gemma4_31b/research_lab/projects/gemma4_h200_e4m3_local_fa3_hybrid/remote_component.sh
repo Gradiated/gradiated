@@ -5,6 +5,9 @@ root=${HYBRID_REMOTE_ROOT:?}
 artifacts="$root/component-artifacts"
 image=docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6
 mkdir -p "$artifacts"
+sudo chown -R "$(id -u):$(id -g)" "$artifacts"
+chmod -R u+rwX "$artifacts"
+sudo docker stop gemma-layerwise-mixed-kv-candidate >/dev/null 2>&1 || true
 
 python3 - "$artifacts/INVOCATION_STATE.json" <<'PY'
 import json,pathlib,time
@@ -15,9 +18,12 @@ PY
 set +e
 sudo docker run --rm --gpus all --ipc=host \
   -v "$root:/work/hybrid" \
-  -e PYTHONPATH=/sgl-workspace/sglang/python \
+  -e PYTHONPATH=/work/hybrid/input:/sgl-workspace/sglang/python \
+  -e MIXED_KV_AUDIT_ROOT=/work/hybrid/component-artifacts/mixed-audit \
+  -e MIXED_KV_AUDIT_GATE=/work/hybrid/component-artifacts/MIXED_COMPONENT_ARMED \
   "$image" python3 /work/hybrid/input/e4m3_fa3_component.py \
     --artifact-root /work/hybrid/component-artifacts \
+    --dependency-comparator "${DEPENDENCY_COMPARATOR_SECONDS:?}" \
     >"$artifacts/component.stdout" 2>"$artifacts/component.stderr"
 code=$?
 set -e

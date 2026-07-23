@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "classification": "ordinary_preclaim_dependency_status_gate_defect",
+  "scientific_invocation_started": false,
+  "candidate_cuda_invocation_started": false,
+  "bench_claimed_by_this_project": false,
+  "dependency_terminal_sha256": "e46e7fa9f0af421b3a8c3c7491501485202f494d56be350b3211b989ec5b2ec0",
+  "dependency_terminal_classification": "retain_mixed",
+  "dependency_terminal_pass": true,
+  "dependency_active_session": null,
+  "bench_status": "available",
+  "diagnostic": "dependency persisted and released its valid terminal but its owner helper did not change STATUS.status from active",
+  "repair": "admit from the required terminal, null active session, and released bench; remove only the redundant STATUS.status == complete predicate",
+  "timestamp_utc": "2026-07-23T10:18:10Z"
+}

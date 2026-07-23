@@ -1,44 +1,40 @@
-# E4M3 local-FA3 / global-Triton hybrid attention on H200
+# Local E4M3-FA3 / global E5M2-Triton hybrid on H200
 
 ## Question
 
-Can one exact source-routed attention backend use Hopper FlashAttention-3 for Gemma 4's 50 local head-dimension-256 layers while retaining Triton for the ten global head-dimension-512 layers, reducing the measured local-attention boundary enough to improve the exact current c32 endpoint?
+After the layerwise mixed-KV project establishes a scope-matched comparator, can Hopper FA3 replace Triton only on Gemma 4's 50 local head-dim-256 layers while all ten global head-dim-512 layers remain E5M2 Triton?
 
-## Causal hypothesis
+## Evidence and changed scope
 
-The current profile assigns 15.312032% of whole-request wall time to the local attention kernel. Its exact local path has 32 query heads, 16 KV heads, head dimension 256, a 1,024-token window, FP8-E5M2 KV, 255 registers/thread, and one residency-limited CTA/SM. Pinned SGLang source explicitly falls back from FA3 only when KV is E5M2 and says FA3 supports FP8-E4M3. Separate source evidence says Hopper FA3 covers head dimension at most 256, while the model's global dimension 512 must remain outside that backend.
+Iteration 1 completed the pinned-source router, producer/consumer trace, and bounded runners, but correctly spent no GPU arm because its required uniform-E4M3 comparator closed at `0.7022842786 s/request`, 4.146% slower than the E5M2 control and without retained QKV audit events. Uniform E4M3 and that dependency contract remain closed.
 
-The intervention is therefore one backend/dataflow change, not another Triton tile or register experiment: use the direct project's E4M3 KV representation, route only actual paged local prefill/decode attention to FA3, and keep actual paged global attention on the unchanged Triton consumer. The prediction is at least a 35.1% reduction of the scope-matched local-attention interval union, enough in the E5M2 control scope to bridge `0.6743258590313417` to `0.6381105231 s/request`; a smaller operationally simple endpoint gain remains retainable.
+This iteration is materially different: local layers alone use E4M3 so FA3 can consume them; global layers remain on the production E5M2 representation and Triton backend. The direct dependency `gemma4_h200_layerwise_mixed_kv_endpoint` measures that exact mixed-format stack first. The prior source binding already identifies `SWAKVPool`, the paged pool, scales, layer geometry, and a 50/10 backend router; reuse it as historical implementation evidence, then rebind the live mixed-pool producer and consumers.
 
-## Immutable identity and evidence
+The measured local-attention wall fraction is `0.1531203203`. Against the persisted E5M2 frontier, a 35.0744% reduction of that boundary bridges `0.6743258590` to the `0.6381105231 s/request` ceiling. The mixed comparator's measured penalty, if any, must be included before promotion.
 
-- Model/checkpoint/runtime/workload are identical to `../gemma4_h200_e4m3_kv_direct_endpoint/DIRECTOR_BINDING.json`.
-- Exact runtime image: `docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6`.
-- Profile attribution: `../gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/ATTRIBUTION.json`, SHA-256 `f841db590dbe6f2e6b4fb91048e8132c3807f0321310e1e0b70a3957ac99ab48`.
-- Backend/geometry support evidence: `../h100_hybrid_attention_kernel_mechanism/MECHANISM.json`, SHA-256 `3960c453e88b1a12e01351d2062dbaa7f8a800e63fe6674e997ddbbcfeebdda1`; only its pinned-source FA3/E4M3/head-dimension facts transfer, not H100 timing or economics.
-- Local source/geometry evidence: `../gemma4_h200_local_window512_codesign/EVIDENCE_BINDING.json`; retain the original 1,024-token window. The consumed 512-window proxy and the earlier value-split, two-stage, Stream-K, register-cap, and tile candidates remain closed.
-- Comparator dependency: consume the typed E4M3-Triton terminal from `gemma4_h200_e4m3_kv_direct_endpoint`; do not replay its endpoint.
+## Immutable scope
 
-`DIRECTOR_BINDING.json` and `verify_director_binding.py` mechanically bind the authoritative static inputs. The researcher must add a content-addressed live source binding for the actual v0.5.13 FA3, Triton, hybrid-router, and KV producer/consumer symbols before mutation.
+- Exact model, checkpoint, image, runtime commit, and c32 workload are mechanically bound in `DIRECTOR_BINDING.json`.
+- Local: 50 layers, 32 query heads, 16 KV heads, head dimension 256, 1,024-token window, page size one, E4M3 KV, FA3 candidate.
+- Global: layers `[5,11,17,23,29,35,41,47,53,59]`, 32 query heads, four KV heads, head dimension 512, page size one, unchanged E5M2 KV and Triton.
+- All weights, scales, QKV epilogue, scheduler, chunking, cache capacity, workload, and non-attention interventions remain unchanged.
 
 ## Immediate experiment
 
-Use `$kernel-research`. Prepare offline immediately while the direct E4M3 project uses the shared bench. Inspect the pinned image/source and bind the actual paged producer, local FA3 consumer, global Triton consumer, backend-selection/router, FP8 scales/layout, prefill/decode shapes, and fallback guards. Implement exactly one source-routed hybrid. If the stock router cannot select per layer, the minimal router implementation itself is within scope; a backend or flag sweep is not.
+Use `$kernel-research`. Prepare offline while the priority-2500 mixed-KV project owns the bench. Adapt the existing router and component runner only for two layer-indexed pool dtypes. Bind the exact live producer, scale convention, slot mapping, graph metadata lifecycle, local FA3 consumer, and global Triton consumer.
 
-After the direct E4M3 project emits its terminal and releases `h200-sync-linear-e00vhh6h29fj68x91g`, consume that terminal. Close without claiming only if E4M3 is incoherent/unsupported or even perfect removal of its measured local boundary cannot beat the E5M2 frontier. Otherwise claim the same warm bench and reuse its E4M3 server/checkpoint/image/caches.
+After the dependency terminal and release, close without claiming only if mixed pools are numerically invalid or even perfect removal of their measured local boundary cannot recover the mixed penalty and beat `0.6743258590 s/request`. Otherwise claim `h200-sync-linear-e00vhh6h29fj68x91g` under a durable `$12` reservation.
 
-First run one correctness-bearing exact-consumer component pair: E4M3 Triton local attention versus E4M3 FA3 local attention on the actual paged layouts and the scope-matched prefill/decode geometries. Require real KV producer/scale consumption, nonzero inputs, finite consumed outputs, an explicit numerical oracle against the Triton E4M3 result, stable randomized timing, and path proof that local layers use FA3 while global layers remain Triton. Record local interval-union latency, launch count, fallback count, and only the minimum counter evidence needed to distinguish backend execution and the predicted reduction.
-
-Promote immediately to one profiler-off exact c32 hybrid candidate only if the component plus direct E4M3 endpoint yields a conservative whole-request path below `0.6743258590313417 s/request`; crossing `0.6381105231` is the main goal. Reuse the direct project's persisted E4M3 terminal as control. Require 32/32 exact 4,214/358 usage, exact 17,120/117,728 cache accounting, sane outputs, no fallback/reload, and layer-specific backend proof. Collect a minimum candidate trace only after a positive endpoint when needed to verify the predicted boundary change.
+Run one exact-consumer component pair on actual paged local layouts: mixed-stack local Triton versus local FA3. Require nonzero producer output, layer-correct E4M3 scales/slots, an explicit numerical oracle, stable randomized timing, no fallback, 50 local FA3 and ten global E5M2-Triton path proof, and the minimum counters needed to distinguish the predicted backend reduction. Promote to one profiler-off exact c32 candidate only if the measured component plus the dependency endpoint conservatively beats `0.6743258590 s/request`; crossing `0.6381105231` is the primary goal. Reuse the dependency terminal as control and do not replay it.
 
 ## Stop rules
 
-Close after the sole candidate on unsupported actual paged E4M3 FA3 semantics, numerical failure, component regression, insufficient conservative bound, invalid endpoint accounting, or endpoint regression. Do not try global FA3, E5M2 conversion, window changes, head-dimension changes, FA3 parameters, Triton tiles, alternate backends, or a second candidate. A performance survivor is still representation-changing and cannot become production-eligible without later quality/feature validation.
+Close on unsupported mixed-pool FA3 semantics, numerical failure, component regression, insufficient scope-matched bound, invalid endpoint accounting, or endpoint regression. Do not run global FA3, convert global E5M2, change the window or heads, tune FA3/Triton parameters, try another backend, or add a second candidate. A survivor is still representation-changing and requires later quality/feature validation.
 
 ## Resources
 
-- Researcher profile: `deep` until the exact router/producer/geometry mechanism and component result are established; switch to `execution` only if routine endpoint dispatch remains.
-- One retained H200, sequentially after the direct E4M3 project; at most 120 claimed GPU-minutes and three wall hours from first claim.
-- Provider exposure charged to the existing bench; project authorization `$12.00`.
-- At most 8 GiB new artifacts/build outputs; reuse the read-only checkpoint and retained image/caches.
+- Researcher profile: `deep`.
+- One retained H200 sequentially after the mixed-KV endpoint; at most 120 claimed GPU-minutes and three wall hours from first claim.
+- Project authorization: `$12.00`.
+- At most 8 GiB new artifacts/build outputs; no checkpoint duplication.
 - Researchers may claim/release the registered bench but may not create, drain, resize, or destroy provider resources.

@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "status": "director_authorized",
+  "authorized_at_utc": "2026-07-23T02:54:39Z",
+  "scientific_question": "Can one source-bound overlap or equivalent serialization removal on the measured 358 scheduler gaps reduce the exact stacked c32 endpoint while preserving semantics?",
+  "same_project_reason": "The scientific question and measured gap class are unchanged. The prior attempt failed its source-identity gate before proving that the scheduler intervention was installed.",
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "live_source_capture": {
+    "remote_path": "/sgl-workspace/sglang/python/sglang/srt/managers/schedule_batch.py",
+    "required_pre_mutation_sha256": "b6480f792867d7aba3dc39ef66048408c6c92ddad3ed81b23934493a351be459",
+    "persist_before_diff_or_mutation": true
+  },
+  "prior_source": {
+    "expected_sha256": "eea77dac02f593da24e953f0a0ea03237f2874d0ef27522044e8fd6397fcb874",
+    "source_binding": "GAP_SOURCE_BINDING.json",
+    "frozen_intervention": "FROZEN_INTERVENTION.json",
+    "frozen_intervention_sha256": "375980ae9b55d68e15a2e938c055d50006ba7813ded8c737e2cefad7f4b51aba"
+  },
+  "causal_target": {
+    "matched_gap_count": 358,
+    "matched_gap_total_ns": 643528382,
+    "target": "same-stream index-to-dense-add scheduler gaps",
+    "required_rebind": "Diff the observed live source against the frozen source, prove the corresponding current call chain, and freeze exactly one observed-source intervention before any endpoint invocation."
+  },
+  "measurement_contract": {
+    "artifact_namespace": "fresh iteration-2 directory only",
+    "endpoint": "exactly one fresh profiler-off c32 control/candidate pair",
+    "trace": "one minimum candidate trace after candidate-path proof",
+    "required": [
+      "32/32 sane outputs per arm",
+      "exact token and cache accounting",
+      "observed-source hash binding",
+      "candidate-path proof",
+      "ordering and lifetime proof",
+      "no new synchronization predecessor"
+    ],
+    "stop_without_endpoint_if": [
+      "the observed source already implements the proposed overlap",
+      "the observed source invalidates the measured causal chain",
+      "no single equivalent intervention can be source-bound"
+    ]
+  },
+  "quarantine": {
+    "terminal": "artifacts/scheduler-gap-repair-20260723t0245z/TERMINAL.json",
+    "terminal_sha256": "6971f8a9e146d4b9661e294bf8edc02991848ed6f71eb474ea88a62a5adc94be",
+    "pair": "artifacts/scheduler-gap-repair-20260723t0245z/PERSISTED_PAIR.json",
+    "pair_sha256": "df4af852ba36576d9db63266800ac5a591231290f3019d15237f4308be62605b",
+    "trace": "artifacts/scheduler-gap-repair-20260723t0245z/candidate-sync-trace.sqlite",
+    "trace_sha256": "62c9cc20e7791d1f3a04c5a87412c2b0425e456b930dc591d6b4161fdbd0b750",
+    "reason": "The scheduler intervention was not proven installed; the pair is a producer-fused metadata control/candidate repeat and the trace cannot pass its hash-bound analyzer.",
+    "reuse_forbidden": true
+  },
+  "stacked_frontier": {
+    "service_seconds_per_request": 0.6746877474374742,
+    "economic_ceiling_seconds_per_request": 0.6381105231,
+    "metadata_terminal_sha256": "f50e5abb9e36b31aed9f04baea4a2525d0b55cf69e7eba44a7990b8ffbb5cad7"
+  },
+  "forbidden": [
+    "reusing or relabeling the quarantined pair or trace",
+    "continuous-decode-step replay",
+    "flag sweep",
+    "workload or concurrency change",
+    "new provider resource",
+    "second scheduler candidate"
+  ]
+}

@@ -1,0 +1,2 @@
+Error in sitecustomize; set PYTHONVERBOSE for traceback:
+RuntimeError: pinned schedule_batch source mismatch:b6480f792867d7aba3dc39ef66048408c6c92ddad3ed81b23934493a351be459

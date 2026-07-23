@@ -1,0 +1,7 @@
+{
+  "classification": "ordinary_consumer_stage_filesystem_defect",
+  "completed_producer": "PERSISTED_PAIR.json",
+  "diagnostic": "The remote trace cleanup could not remove root-owned files from an earlier trace; sync_trace never reached server launch.",
+  "repair": "Remove only the stale remote trace and trace-audit directories as root, then run sync_trace once against the already-persisted pair.",
+  "pair_replay_forbidden": true
+}

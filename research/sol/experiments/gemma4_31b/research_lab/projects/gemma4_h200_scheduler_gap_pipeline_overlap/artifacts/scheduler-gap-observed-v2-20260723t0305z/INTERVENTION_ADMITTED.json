@@ -1,0 +1,17 @@
+{
+  "boundary": "scheduler_observed_overlap",
+  "files": [
+    {
+      "path": "inputs/stacked_metadata/producer_fused_swa_translation.py",
+      "remote_name": "residual_intervention.py",
+      "sha256": "9b5a51284ac313014988f426c35b818ae2590cb7d4a72ec604a6ad80a63336b3"
+    },
+    {
+      "path": "intervention/observed_source_schedule_stream_forward_penalty_snapshot.py",
+      "remote_name": "scheduler_intervention.py",
+      "sha256": "3b5aa497985a400c16189db8359a458d981adff66d8465c26a92ed54394414e6"
+    }
+  ],
+  "intervention_id": "observed_source_schedule_stream_forward_penalty_snapshot",
+  "source_justification": "The required observed schedule_batch hash is persisted. Its only diff is the retained pinned/nonblocking penalty-token transfer; the observed scheduler still produces copy_for_forward inside forward_stream_ctx, so the same 358-gap chain survives. Both arms retain the exact producer-fused metadata predecessor and only the candidate installs the single observed-source scheduler overlap."
+}

@@ -1,0 +1,30 @@
+{
+  "classification": "typed_external_or_owner_boundary",
+  "error": {
+    "message": "typed_trace_boundary:rm -rf \"$artifacts/trace\" \"$artifacts/trace-audit\"",
+    "type": "RuntimeError"
+  },
+  "invocation_state": {
+    "candidate_cuda_started": true,
+    "candidate_science_started": true,
+    "control_cuda_started": true,
+    "control_science_started": true,
+    "profile_cuda_started": false,
+    "profile_science_started": false,
+    "trace_cuda_started": true,
+    "trace_science_started": true,
+    "validation_cuda_started": true
+  },
+  "pass": false,
+  "provider_exposure_seconds": 16.51013493537903,
+  "provider_spend_usd": 0.01128192619085312,
+  "schema_version": 1,
+  "status": "terminal",
+  "worker_terminal": {
+    "classification": "integration_failure",
+    "message": "rm -rf \"$artifacts/trace\" \"$artifacts/trace-audit\"",
+    "schema_version": 1,
+    "status": "terminal",
+    "timestamp_utc": "2026-07-23T02:45:01.346282Z"
+  }
+}

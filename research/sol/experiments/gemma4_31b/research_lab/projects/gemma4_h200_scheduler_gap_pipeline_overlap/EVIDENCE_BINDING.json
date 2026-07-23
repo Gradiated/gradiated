@@ -29,7 +29,11 @@
     "retained_trace_sqlite": "../gemma4_h200_penalizer_host_gate_elimination/artifacts/host-gate-20260723t0003z/candidate-sync-trace.sqlite",
     "retained_trace_sqlite_sha256": "c42cebd67dff6147843c678a6b7524e75c8477b79bbb5515256b1e619d63a698",
     "supporting_later_trace": "../gemma4_h200_flashinfer_metadata_scalar_elimination/artifacts/metadata-scalar-20260723t0107z/CANDIDATE_TRACE_ATTRIBUTION.json",
-    "supporting_later_trace_sha256": "1f348ee6a25c11e4b414923cee760d10563ca4b8dc76e03e48364a9e9500b454"
+    "supporting_later_trace_sha256": "1f348ee6a25c11e4b414923cee760d10563ca4b8dc76e03e48364a9e9500b454",
+    "stacked_metadata_terminal": "../gemma4_h200_flashinfer_metadata_scalar_elimination/artifacts/metadata-fused-20260723t0223z/TERMINAL.json",
+    "stacked_metadata_terminal_sha256": "f50e5abb9e36b31aed9f04baea4a2525d0b55cf69e7eba44a7990b8ffbb5cad7",
+    "stacked_metadata_intervention": "../gemma4_h200_flashinfer_metadata_scalar_elimination/FROZEN_INTERVENTION.json",
+    "stacked_metadata_intervention_sha256": "454c25e08a709725dad781f4ae1ead5f16226f63523eb34e670f1d43ff59724b"
   },
   "measured_boundary": {
     "evidence_class": "measured_non_overlapping_trace",
@@ -39,7 +43,7 @@
     "prefill_scheduler_gap_seconds": 0.358802523,
     "profile_service_seconds_per_request": 0.6873078342499923
   },
-  "current_frontier_seconds_per_request": 0.6762324541249995,
+  "current_frontier_seconds_per_request": 0.6746877474374742,
   "economic_ceiling_seconds_per_request": 0.6381105231,
   "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
   "pass": true

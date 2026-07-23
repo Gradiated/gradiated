@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "status": "frozen_before_iteration_2_scientific_invocation",
+  "id": "observed_source_schedule_stream_forward_penalty_snapshot",
+  "observed_source_artifact": "artifacts/scheduler-gap-rebind-20260723t0258z/observed-source/schedule_batch.py",
+  "observed_sources": {
+    "schedule_batch.py": "b6480f792867d7aba3dc39ef66048408c6c92ddad3ed81b23934493a351be459",
+    "scheduler.py": "3a26deea85f43d61c27b94013288ad95d6ee75111fe40134893541777c9c8cd4",
+    "sampling_batch_info.py": "e7903417a4cab05294975d069555987e2720557dd9fd0b8d79a6f934f3fbb0db",
+    "orchestrator.py": "88d9a4c04866a8b2dad0efe6f010f28f7e7dfa0e65708920f7845d760e833192"
+  },
+  "frozen_source_diff": {
+    "frozen_schedule_batch_sha256": "eea77dac02f593da24e953f0a0ea03237f2874d0ef27522044e8fd6397fcb874",
+    "observed_schedule_batch_sha256": "b6480f792867d7aba3dc39ef66048408c6c92ddad3ed81b23934493a351be459",
+    "changed_hunks": 1,
+    "only_change": "ScheduleBatch.prepare_for_decode constructs latest output IDs in pinned host memory, transfers them to self.device with non_blocking=True, and emits the retained path audit.",
+    "scheduler_overlap_already_present": false
+  },
+  "causal_rebind": {
+    "survives": true,
+    "measured_target": {
+      "count": 358,
+      "total_ns": 643528382,
+      "predecessor": "index_elementwise_kernel grid=1 block=128",
+      "consumer": "vectorized_elementwise_kernel grid=8192 block=128"
+    },
+    "observed_call_chain": [
+      "Scheduler.run_batch enters forward_stream_ctx",
+      "Scheduler._forward_isolation calls SamplingBatchInfo.copy_for_forward",
+      "SamplingBatchInfo.copy_for_forward calls update_penalties",
+      "update_penalties calls BatchedPenalizerOrchestrator.accumulate_additive_penalties",
+      "the retained BatchedMinNewTokensPenalizer applies the dense stop-token penalty add"
+    ],
+    "why_diff_does_not_invalidate": "The pinned host-to-device token transfer precedes penalty accumulation and changes neither copy_for_forward placement nor the dense-add producer/consumer chain."
+  },
+  "single_intervention": {
+    "path": "intervention/observed_source_schedule_stream_forward_penalty_snapshot.py",
+    "sha256": "3b5aa497985a400c16189db8359a458d981adff66d8465c26a92ed54394414e6",
+    "causal_change": "Build exactly one forward-only SamplingBatchInfo penalty snapshot on schedule_stream before the stock run_batch enters forward_stream_ctx, then substitute it in _forward_isolation.",
+    "ordering": "The observed stock forward_stream.wait_stream(schedule_stream) remains after production and before resolve_forward_inputs and model forward.",
+    "lifetime": "The observed record_batch_in_overlap two-iteration ring pins the substituted SamplingBatchInfo and its penalty tensors.",
+    "failure_mode": "Fail closed unless the four observed source hashes match and every overlap forward consumes a prepared snapshot."
+  },
+  "prediction": {
+    "candidate_matched_global_gap_ns": "strictly_less_than_643528382",
+    "candidate_service_seconds_per_request": "less_than_control",
+    "new_synchronization_predecessors": 0
+  }
+}

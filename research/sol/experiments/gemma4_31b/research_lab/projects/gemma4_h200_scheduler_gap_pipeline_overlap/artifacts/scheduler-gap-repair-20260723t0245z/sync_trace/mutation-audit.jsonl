@@ -1,0 +1,2 @@
+{"batch_size": 0, "candidate_path": "update_sliding_window_buffer.device_count_masked_swa_gather", "capacity": 1, "graph_safe": true, "no_device_scalar_read": true, "phase": "runtime_invocation", "valid_count_source": "window_kv_indptr[batch_size] read inside Triton kernel"}
+{"batch_size": 0, "candidate_path": "update_sliding_window_buffer.device_count_masked_swa_gather", "capacity": 1, "graph_safe": true, "no_device_scalar_read": true, "phase": "runtime_invocation", "valid_count_source": "window_kv_indptr[batch_size] read inside Triton kernel"}

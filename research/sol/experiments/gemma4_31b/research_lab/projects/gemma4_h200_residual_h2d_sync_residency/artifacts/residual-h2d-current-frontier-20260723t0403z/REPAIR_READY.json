@@ -1,0 +1,19 @@
+{
+  "constraint": "Repair only ordinary wiring for the same workload, bindings, and trace decision gate.",
+  "invocation_state": {
+    "candidate_cuda_started": false,
+    "candidate_science_started": false,
+    "trace_cuda_started": true,
+    "trace_science_started": false
+  },
+  "mode": "trace",
+  "repair_deadline_epoch": 1784781398,
+  "schema_version": 1,
+  "worker_terminal": {
+    "classification": "integration_failure",
+    "message": "nsys_sampling_frequency_cli_syntax_before_science",
+    "schema_version": 1,
+    "status": "terminal",
+    "timestamp_utc": "2026-07-23T04:16:33.093502Z"
+  }
+}

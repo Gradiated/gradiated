@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "checkpoint_bytes": 62578655208
+  },
+  "runtime": {
+    "release": "sglang v0.5.13",
+    "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+  },
+  "workload": {
+    "requests": 32,
+    "concurrency": 32,
+    "prompt_tokens_per_request": 4214,
+    "completion_tokens_per_request": 358,
+    "fresh_prompt_tokens_total": 117728,
+    "cached_prompt_tokens_total": 17120
+  },
+  "authoritative_identity": {
+    "source": "../gemma4_h200_scheduler_gap_pipeline_overlap/EVIDENCE_BINDING.json",
+    "source_sha256": "7edf0aedb6d447d95dc19a5bd409d367502f3344b5643ffacf67b0ae351fbc27",
+    "input_manifest": "../gemma4_h200_decode_sync_graph_elimination/INPUT_MANIFEST.json",
+    "input_manifest_sha256": "e945ee245642cf84cc730bd877f731660a772778b24770b8387d7f92fa0cb432"
+  },
+  "retained_frontier": {
+    "terminal": "../gemma4_h200_flashinfer_metadata_scalar_elimination/artifacts/metadata-fused-20260723t0223z/TERMINAL.json",
+    "terminal_sha256": "f50e5abb9e36b31aed9f04baea4a2525d0b55cf69e7eba44a7990b8ffbb5cad7",
+    "service_seconds_per_request": 0.6746877474374742
+  },
+  "prior_scope_mismatched_signature": {
+    "classification": "source_discovery_prior_only_fixed_capacity_candidate_trace",
+    "counter": "../gemma4_h200_flashinfer_metadata_scalar_elimination/artifacts/metadata-scalar-20260723t0107z/CANDIDATE_SYNC_COUNTER.json",
+    "counter_sha256": "7222069e4bcbaa2908d278e2bd639c9f3f639a4db0a8bd0e0963220823645087",
+    "trace": "../gemma4_h200_flashinfer_metadata_scalar_elimination/artifacts/metadata-scalar-20260723t0107z/candidate-sync-trace.sqlite",
+    "trace_sha256": "74774be0809aaa07541dbe283e14a8820e1b36824a4d9803ab35a88ab54f3caf",
+    "long_sync_count": 29,
+    "long_sync_seconds": 4.691957794,
+    "predecessors": [
+      {
+        "bytes": 16,
+        "count": 14,
+        "copy_kind": 1
+      },
+      {
+        "bytes": 8,
+        "count": 14,
+        "copy_kind": 1
+      },
+      {
+        "bytes": null,
+        "count": 1,
+        "copy_kind": null
+      }
+    ],
+    "transfer_to_current_frontier_forbidden": true
+  },
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "economic_ceiling_seconds_per_request": 0.6381105231,
+  "pass": true
+}

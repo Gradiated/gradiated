@@ -1,0 +1,7 @@
+{
+  "classification": "trace_complete",
+  "message": "candidate_prediction_trace_persisted",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-23T04:39:53.912622Z"
+}

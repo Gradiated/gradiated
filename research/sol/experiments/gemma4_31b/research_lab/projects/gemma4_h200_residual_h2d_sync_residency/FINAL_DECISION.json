@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "status": "terminal",
+  "classification": "close_pinned_prefix_pointer_h2d_no_material_sync_or_endpoint_gain",
+  "pass": true,
+  "decision": "Close the exact pinned asynchronous prefix-pointer intervention and release the warm H200. It removed the bound transfer signature but did not remove the long synchronization or deliver a material whole-request gain.",
+  "source_trace": {
+    "long_sync_count": 29,
+    "long_sync_seconds": 4.71288894,
+    "bound_predecessors": {
+      "16_byte_write_req_to_token_pool_triton": 14,
+      "8_byte_write_req_to_token_pool_triton": 14
+    }
+  },
+  "profiler_off_pair": {
+    "control_service_seconds_per_request": 0.6774429485938072,
+    "candidate_service_seconds_per_request": 0.6768880492500102,
+    "reduction_fraction": 0.0008191085979251111,
+    "complete_requests_each_arm": 32,
+    "cached_prompt_tokens_delta_each_arm": 17120,
+    "uncached_prompt_tokens_delta_each_arm": 117728,
+    "economic_ceiling_seconds_per_request": 0.6381105231,
+    "ceiling_pass": false
+  },
+  "prediction_trace": {
+    "long_sync_count": 29,
+    "long_sync_seconds": 4.705011568,
+    "bound_source_signature_remaining": 0,
+    "distinct_remaining_predecessors": {
+      "8_byte_vectorized_elementwise_kernel": 14
+    },
+    "interpretation": "The intervention removed both 8-byte and 16-byte predecessor groups whose immediate consumer was write_req_to_token_pool_triton. A different 8-byte H2D became the immediate predecessor of 14 synchronizations, while count and cumulative duration were effectively unchanged. This falsifies synchronization elimination for the frozen intervention."
+  },
+  "provider": {
+    "first_trace_spend_usd": 0.37308950799306234,
+    "pair_and_prediction_spend_usd": 0.31529736255407337,
+    "cumulative_spend_usd": 0.6883868705471357,
+    "authorized_spend_usd": 12.0,
+    "claimed_seconds": 1007.3962099552155
+  },
+  "artifacts": {
+    "source_binding": "SOURCE_BINDING.json",
+    "current_trace_binding": "artifacts/residual-h2d-current-frontier-20260723t0403z/CURRENT_H2D_BINDING.corrected.json",
+    "pair_terminal": "artifacts/residual-h2d-pair-20260723t0432z/PERSISTED_PAIR.json",
+    "prediction_binding": "artifacts/residual-h2d-pair-20260723t0432z/PREDICTION_H2D_BINDING.json",
+    "terminal": "artifacts/residual-h2d-pair-20260723t0432z/TERMINAL.json"
+  }
+}

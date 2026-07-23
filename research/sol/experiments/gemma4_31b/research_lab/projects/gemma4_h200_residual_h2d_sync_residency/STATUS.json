@@ -1,0 +1,20 @@
+{
+  "status": "complete",
+  "priority": 1500,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 12.0,
+  "actual_spend_usd": 0.6883868705471357,
+  "allocation_limit": 1,
+  "active_session": null,
+  "summary": "Closed the exact pinned asynchronous prefix-pointer intervention. It removed the 14x16-byte plus 14x8-byte write_req_to_token_pool_triton predecessor signature, but a distinct 14x8-byte vectorized-elementwise predecessor remained; long-sync count stayed 29, long-sync time improved only 0.167%, and the profiler-off endpoint pair improved only 0.0819%.",
+  "next_action": "No replay. The warm H200 is released ready; the residual small-H2D synchronization-residency lane is closed for this exact intervention.",
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "compute_budget": "One retained H200, at most 90 claimed GPU-minutes.",
+  "wall_clock_budget": "At most three hours from first researcher start.",
+  "storage_budget": "At most 8 GiB retrieved artifacts.",
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "economic_ceiling_seconds_per_request": 0.6381105231,
+  "current_frontier_seconds_per_request": 0.6746877474374742,
+  "immutable_binding": "EVIDENCE_BINDING.json",
+  "reservation_gate": "Do not claim the bench until the project reservation is present in the campaign spend ledger."
+}

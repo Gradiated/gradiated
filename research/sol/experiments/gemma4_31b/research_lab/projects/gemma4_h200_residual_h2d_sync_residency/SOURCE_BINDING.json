@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "status": "intervention_admitted",
+  "evidence_class": "measured_current_frontier_nsight_trace_plus_exact_pinned_source",
+  "trace": {
+    "sqlite": "artifacts/residual-h2d-current-frontier-20260723t0403z/current-frontier.sqlite",
+    "sqlite_sha256": "73d03c99293d425e73c9d72e94bdb0df2b02215c3804400754b7b480c59cdeef",
+    "corrected_binding": "artifacts/residual-h2d-current-frontier-20260723t0403z/CURRENT_H2D_BINDING.corrected.json",
+    "analyzer_defect": "CUDA/Python backtrace instrumentation emitted an alias and versioned runtime row with the same correlation id; predecessor selection must skip same-correlation aliases."
+  },
+  "runtime_binding": {
+    "runtime_api_aliases": [
+      "cudaMemcpyAsync",
+      "cudaMemcpyAsync_v3020"
+    ],
+    "thread_global_tid": 281477845614763,
+    "thread_name": "sglang::schedul",
+    "cuda_stream_id": 37,
+    "phase": "decode",
+    "occurrences": {
+      "8_bytes": 14,
+      "16_bytes": 14,
+      "all_bound_long_syncs": 28,
+      "all_long_syncs": 29
+    },
+    "immediate_gpu_consumer": "write_req_to_token_pool_triton"
+  },
+  "source_binding": {
+    "repository": "sgl-project/sglang",
+    "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "project_local_source": "inputs/source/common.py",
+    "source_sha256": "987c02d71dd773d32263d6d34d94d508b74c707e0ca3d918723e981088bb14a9",
+    "function": "sglang.srt.mem_cache.common.write_cache_indices",
+    "producer": "torch.tensor([t.data_ptr() for t in prefix_tensors], device=req_to_token_pool.device, dtype=torch.uint64)",
+    "producer_semantics": "One ordered uint64 device pointer for each admitted request prefix tensor; c32 dynamic scheduling produced one- and two-request extend batches.",
+    "consumer": "write_req_to_token_pool_triton[(req_pool_indices_tensor.shape[0],)]",
+    "consumer_semantics": "The Triton kernel uses each pointer to copy the existing prefix token indices into the corresponding request-to-token-pool row before appending the newly allocated cache locations."
+  },
+  "independently_removable": true,
+  "endpoint_relevance": {
+    "reason": "The source executes for dynamically admitted extend batches during the exact c32 request window and its 28 copies immediately precede 28 of 29 measured long scheduler-thread synchronizations.",
+    "non_overlapping_with_closed_paths": true,
+    "does_not_change": [
+      "model",
+      "cache accounting",
+      "request ordering",
+      "sampling",
+      "pointer values",
+      "pointer dtype",
+      "consumer grid",
+      "consumer layout"
+    ]
+  },
+  "frozen_intervention": {
+    "name": "pinned_async_prefix_pointer_h2d",
+    "implementation": "pinned_prefix_pointer_h2d.py",
+    "implementation_sha256": "f4f4c800d82b40b1d51e8022c1ca1ed9606056c64f4b666894359a7cf365fc43",
+    "change": "Construct the transient uint64 host pointer tensor in pinned memory, then transfer it to the same device with non_blocking=True before the unchanged consumer launch.",
+    "prediction": "The repeated 8-/16-byte H2D -> long cudaStreamSynchronize signature falls from 28 occurrences to zero without a replacement synchronization; whole-request service time must improve to retain the intervention."
+  }
+}

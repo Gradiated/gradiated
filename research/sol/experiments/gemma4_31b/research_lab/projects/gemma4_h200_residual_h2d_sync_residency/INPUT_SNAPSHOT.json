@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "checkpoint": [
+    {
+      "path": "inputs/checkpoint/chat_template.jinja",
+      "remote_name": "chat_template.jinja",
+      "bytes": 18683,
+      "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"
+    },
+    {
+      "path": "inputs/checkpoint/config.json",
+      "remote_name": "config.json",
+      "bytes": 4621,
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    {
+      "path": "inputs/checkpoint/model-00001-of-00002.safetensors",
+      "remote_name": "model-00001-of-00002.safetensors",
+      "bytes": 49784788364,
+      "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+    },
+    {
+      "path": "inputs/checkpoint/model-00002-of-00002.safetensors",
+      "remote_name": "model-00002-of-00002.safetensors",
+      "bytes": 12761549884,
+      "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"
+    },
+    {
+      "path": "inputs/checkpoint/model.safetensors.index.json",
+      "remote_name": "model.safetensors.index.json",
+      "bytes": 120246,
+      "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+    },
+    {
+      "path": "inputs/checkpoint/processor_config.json",
+      "remote_name": "processor_config.json",
+      "bytes": 1689,
+      "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"
+    },
+    {
+      "path": "inputs/checkpoint/tokenizer.json",
+      "remote_name": "tokenizer.json",
+      "bytes": 32169626,
+      "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+    },
+    {
+      "path": "inputs/checkpoint/tokenizer_config.json",
+      "remote_name": "tokenizer_config.json",
+      "bytes": 2095,
+      "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"
+    }
+  ],
+  "programs": [
+    {
+      "path": "inputs/bound/1b563ea1dd933d097a337b33fb17dc13601ded1689597071c8f6fd9e74f17912/authoritative_qkv_terminal.json",
+      "remote_name": "AUTHORITATIVE_QKV_TERMINAL.json",
+      "bytes": 51033,
+      "sha256": "1b563ea1dd933d097a337b33fb17dc13601ded1689597071c8f6fd9e74f17912"
+    },
+    {
+      "path": "inputs/bound/b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc/endpoint_entrypoint.py",
+      "remote_name": "proven_v0513_endpoint_entrypoint.py",
+      "bytes": 6062,
+      "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc"
+    },
+    {
+      "path": "inputs/bound/df65b1e49c941c27a975ecb1f2d34041a0e63695c2e3515cf950406204f614f3/paired_runner.py",
+      "remote_name": "proven_v0513_paired_endpoint_runner.py",
+      "bytes": 12417,
+      "sha256": "df65b1e49c941c27a975ecb1f2d34041a0e63695c2e3515cf950406204f614f3"
+    },
+    {
+      "path": "inputs/bound/143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7/qkv_runner.py",
+      "remote_name": "fp8_qkv_paired_runner.py",
+      "bytes": 9494,
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    {
+      "path": "inputs/bound/5791f6718b90b1ac555f7cb53179b18fd523ffb9f469d02582482431623d39fa/qkv_sitecustomize.py",
+      "remote_name": "bound_stack_sitecustomize.py",
+      "bytes": 2192,
+      "sha256": "5791f6718b90b1ac555f7cb53179b18fd523ffb9f469d02582482431623d39fa"
+    },
+    {
+      "path": "inputs/bound/71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588/qkv_installer.py",
+      "remote_name": "install_endpoint_patch.py",
+      "bytes": 6370,
+      "sha256": "71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588"
+    },
+    {
+      "path": "inputs/bound/0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d/qkv_kernel.py",
+      "remote_name": "qkv_epilogue_discriminator.py",
+      "bytes": 26612,
+      "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"
+    },
+    {
+      "path": "inputs/bound/f6c80216e29b426811badea59e6e148629d0f5b951efa0e314b04ae19c5b5ffc/qkv_launcher.sh",
+      "remote_name": "bound_remote_fp8_stack.sh",
+      "bytes": 8672,
+      "sha256": "f6c80216e29b426811badea59e6e148629d0f5b951efa0e314b04ae19c5b5ffc"
+    },
+    {
+      "path": "inputs/bound/d999420ebd05dacd0e15cf08aad34f6a68b657367bf6dc28c4738df0d0663586/qkv_input_manifest.json",
+      "remote_name": "FP8_QKV_INPUT_MANIFEST.json",
+      "bytes": 3132,
+      "sha256": "d999420ebd05dacd0e15cf08aad34f6a68b657367bf6dc28c4738df0d0663586"
+    },
+    {
+      "path": "inputs/interventions/attention_deferred_local_kv.py",
+      "remote_name": "attention_intervention.py",
+      "bytes": 4606,
+      "sha256": "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8"
+    },
+    {
+      "path": "inputs/interventions/pinned_async_penalty_tokens.py",
+      "remote_name": "pinned_async_penalty_tokens.py",
+      "bytes": 2929,
+      "sha256": "58f4c65846af62ad21aeb765d7764686c364335d29fff45eac65da86ab296197"
+    },
+    {
+      "path": "inputs/interventions/host_min_new_tokens_gate.py",
+      "remote_name": "host_min_new_tokens_gate.py",
+      "bytes": 6024,
+      "sha256": "2779aae2c51c63ef3119edff9b57e39f09576975ec6e15fb66928e6069405c2a"
+    },
+    {
+      "path": "inputs/interventions/producer_fused_swa_translation.py",
+      "remote_name": "residual_intervention.py",
+      "bytes": 4653,
+      "sha256": "9b5a51284ac313014988f426c35b818ae2590cb7d4a72ec604a6ad80a63336b3"
+    }
+  ]
+}

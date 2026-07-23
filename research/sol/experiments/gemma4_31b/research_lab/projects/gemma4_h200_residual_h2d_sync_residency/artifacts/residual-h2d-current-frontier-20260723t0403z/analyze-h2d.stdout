@@ -1,0 +1,44 @@
+{
+  "classification": "no_repeated_current_stack_small_h2d_predecessor",
+  "current_stack_path_proof_required": [
+    "dynamic_fp8",
+    "qkv_epilogue",
+    "deferred_local_fp8_kv",
+    "pinned_async_penalty_tokens",
+    "host_required_dense_add",
+    "producer_fused_swa_mapping"
+  ],
+  "decision_note": "The prior 8-byte/16-byte signature does not survive as a repeated long-sync predecessor on the current producer-fused stack.",
+  "evidence_class": "measured_current_frontier_nsight_trace",
+  "independently_removable": false,
+  "measured": {
+    "groups": [],
+    "long_sync_count": 29,
+    "long_sync_seconds": 4.712888939999999,
+    "occurrences": [],
+    "small_h2d_long_sync_predecessor_count": 0
+  },
+  "pass": true,
+  "schema_version": 1,
+  "stack_schema": {
+    "CUDA_CALLCHAINS": {
+      "columns": [
+        "id",
+        "symbol",
+        "module",
+        "unresolved",
+        "originalIP",
+        "stackDepth"
+      ],
+      "row_count": 120305
+    }
+  },
+  "status": "terminal",
+  "surviving_repeated_small_h2d": false,
+  "trace": {
+    "decode_end_ns": 23333600785,
+    "decode_start_ns": 8106753463,
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_residual_h2d_sync_residency/artifacts/residual-h2d-current-frontier-20260723t0403z/current-frontier.sqlite",
+    "sha256": "73d03c99293d425e73c9d72e94bdb0df2b02215c3804400754b7b480c59cdeef"
+  }
+}

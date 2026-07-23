@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "admitted": true,
+  "boundary": "residual_prefix_pointer_h2d",
+  "source_binding": "SOURCE_BINDING.json",
+  "worker_mode": "pair",
+  "prediction_mode": "candidate_trace",
+  "files": [
+    {
+      "path": "pinned_prefix_pointer_h2d.py",
+      "remote_name": "pinned_prefix_pointer_h2d.py",
+      "sha256": "f4f4c800d82b40b1d51e8022c1ca1ed9606056c64f4b666894359a7cf365fc43"
+    }
+  ],
+  "decision_gates": {
+    "complete_requests_each_arm": 32,
+    "cached_prompt_tokens_delta_each_arm": 17120,
+    "uncached_prompt_tokens_delta_each_arm": 117728,
+    "candidate_path_required": true,
+    "prediction_small_h2d_long_sync_predecessor_count": 0,
+    "retain_only_if_candidate_faster": true,
+    "promote_only_at_or_below_seconds_per_request": 0.6381105231
+  }
+}

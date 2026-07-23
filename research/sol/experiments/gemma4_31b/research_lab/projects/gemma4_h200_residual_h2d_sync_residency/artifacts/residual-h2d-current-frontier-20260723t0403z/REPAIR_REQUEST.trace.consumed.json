@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "retry": true,
+  "mode": "trace",
+  "reason": "Remove unsupported Nsight --sampling-frequency option and fail readiness immediately when the profiled container has exited. Workload, current-frontier stack, trace backtraces, and decision gates are unchanged.",
+  "files": [
+    {
+      "path": "remote_trace.sh",
+      "remote_name": "remote_trace.sh",
+      "sha256": "48656d0d7c26ee1360f53a7548a7a58505fafcf92b91445a8fabc32e09c6c89a"
+    }
+  ]
+}

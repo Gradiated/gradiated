@@ -1,0 +1,7 @@
+{
+  "classification": "trace_complete",
+  "message": "current_frontier_sync_trace_persisted",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-23T04:20:02.721354Z"
+}

@@ -1,0 +1,44 @@
+/usr/local/lib/python3.12/dist-packages/torchao/quantization/quant_api.py:1731: SyntaxWarning: invalid escape sequence '\.'
+  """Configuration class for applying different quantization configs to modules or parameters based on their fully qualified names (FQNs).
+Traceback (most recent call last):
+  File "/work/input/component_benchmark.py", line 382, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/work/input/component_benchmark.py", line 190, in main
+    smoke_tokens, smoke_values, smoke_partials, smoke_indices = candidate(rows[:1])
+                                                                ^^^^^^^^^^^^^^^^^^^
+  File "/work/input/component_benchmark.py", line 175, in candidate
+    return fp8_greedy_top1(
+           ^^^^^^^^^^^^^^^^
+  File "/work/input/fused_top1.py", line 158, in fp8_greedy_top1
+    _reduce_partial_top1[(m,)](
+  File "/usr/local/lib/python3.12/dist-packages/triton/runtime/jit.py", line 370, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/triton/runtime/jit.py", line 720, in run
+    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/triton/runtime/jit.py", line 849, in _do_compile
+    kernel = self.compile(src, target=target, options=options.__dict__)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/triton/compiler/compiler.py", line 304, in compile
+    module = src.make_ir(target, options, codegen_fns, module_map, context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/triton/compiler/compiler.py", line 80, in make_ir
+    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+triton.compiler.errors.CompilationError: at 19:14:
+):
+    row = tl.program_id(0)
+    offsets = tl.arange(0, block_partials)
+    values = tl.load(
+        partial_values + row * partials + offsets,
+        mask=offsets < partials,
+        other=-float("inf"),
+    )
+    indices = tl.load(
+        partial_indices + row * partials + offsets,
+        mask=offsets < partials,
+        other=VOCAB,
+              ^
+NameError("Cannot access global variable VOCAB from within @jit'ed function. Triton kernels can only access global variables that are instanstiated as constexpr (`x = triton.language.constexpr(42)`). Note that this is different from annotating a variable as constexpr (`x: triton.language.constexpr = 42`), which is not supported.  Alternatively, set the envvar TRITON_ALLOW_NON_CONSTEXPR_GLOBALS=1, but we do not promise to support this forever.")

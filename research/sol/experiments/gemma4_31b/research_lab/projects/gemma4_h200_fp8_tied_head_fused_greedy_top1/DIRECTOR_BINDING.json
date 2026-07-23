@@ -1,0 +1,67 @@
+{
+  "bench": {
+    "accelerator": "nvidia-h200-sxm",
+    "id": "h200-sync-linear-e00vhh6h29fj68x91g"
+  },
+  "candidate": {
+    "activation_dtype": "bfloat16",
+    "embedding_dtype": "bfloat16_unchanged",
+    "head_dim_k": 5376,
+    "m_shapes": [
+      1,
+      2,
+      4,
+      8,
+      12,
+      16,
+      24,
+      32
+    ],
+    "output": "one_greedy_token_id_per_live_row",
+    "vocabulary_n": 262144,
+    "weight_dtype": "float8_e4m3fn",
+    "weight_scale": "predecessor_per_tensor"
+  },
+  "checkpoint": {
+    "identity": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "manifest_path": "../gemma4_h200_width16384_lowrank_recovery/inputs/CHECKPOINT_SHA256SUMS.txt",
+    "manifest_sha256": "7ed5b04ef9c115a2cbba771df463ca0cacbfb87cfa298773e8b037d12bcea735"
+  },
+  "predecessor_component": {
+    "e4m3_m32_median_ms": 0.4155679941177368,
+    "full_logits_dtype": "bfloat16",
+    "path": "../gemma4_h200_fp8_tied_head_endpoint/artifacts/attempt4/retrieved/tied-head/COMPONENT_RESULT.json",
+    "sha256": "59abd9e73f5b8df2e221d7a128fcef0bdf85f8aa66089a23fa7fe9476fcd0810",
+    "stock_bf16_m32_median_ms": 0.714847981929779
+  },
+  "predecessor_endpoint": {
+    "cached_prompt_tokens": 17120,
+    "classification": "endpoint_positive",
+    "fresh_prompt_tokens": 117728,
+    "path": "../gemma4_h200_fp8_tied_head_endpoint/iterations/c32-topology-settled-resume-20260723t2110z/resident-consumer-repair-artifacts/FINAL_TERMINAL.json",
+    "service_seconds_per_request": 0.6518282819688466,
+    "sha256": "167c2de86c6316d836b9dc9cbf486dfcf09dc59274f39b45ff5a9388d68690a5"
+  },
+  "runtime": {
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "predecessor_binding_path": "../gemma4_h200_fp8_tied_head_endpoint/DIRECTOR_BINDING.json",
+    "predecessor_binding_sha256": "13f6d1194b6f4e3b8a112595907c3e9a5e282f21c303067a0c8ccb72c9c14fc5",
+    "target_consumer": "E4M3_ParallelLMHead_to_monotonic_softcap_to_temperature_zero_greedy_sampling"
+  },
+  "semantic_contract": {
+    "fallback": "Every non-greedy or logprob-requesting call uses the unchanged full-logits path.",
+    "softcap": "Gemma final_logit_softcapping=30 is monotonic and may be elided only for the selected-index path.",
+    "ties": "Match the stock greedy sampler's lowest-vocabulary-index tie rule.",
+    "token_gate": "Every live-row token ID must match the predecessor E4M3 full-logits plus softcap plus sampler consumer."
+  },
+  "workload": {
+    "cached_prompt_tokens": 17120,
+    "completion_tokens_per_request": 358,
+    "concurrency": 32,
+    "fresh_prompt_tokens": 117728,
+    "ignore_eos": true,
+    "logprobs_requested": false,
+    "temperature": 0
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,26 @@
+{
+  "actual_spend_usd": 1.222155046333333,
+  "bench_claimed_at_utc": "2026-07-23T15:49:36.569317Z",
+  "bench_released_at_utc": "2026-07-23T16:19:25.088897Z",
+  "candidate_extension_sha256": "cddaf2bc58281a935c638ebec0f615cbabb8f6d2833bff8ca6c242063a05075f",
+  "candidate_median_ms": 0.3936319947242737,
+  "component_terminal_sha256": "8f9489e38f23d61389081d97454c63b43c27102b4ba5f2e158ddc9288cb1f50c",
+  "conditional_endpoint_admitted": false,
+  "control_median_ms": 0.2680000066757202,
+  "current_frontier_seconds_per_request": 0.6556567115001144,
+  "endpoint_invoked": false,
+  "numerical": {
+    "all_finite": true,
+    "cosine": 0.9999933242797852,
+    "max_abs_error": 0.0009765625,
+    "relative_l2": 0.00414414843544364
+  },
+  "reduction_fraction": {
+    "lower_95": -0.6196089422166864,
+    "point": -0.4687760631311031,
+    "upper_95": -0.39397537777941394
+  },
+  "schema_version": 1,
+  "server_state": "Settled contiguous-ring endpoint retained healthy",
+  "status": "component_nonpositive_reject"
+}

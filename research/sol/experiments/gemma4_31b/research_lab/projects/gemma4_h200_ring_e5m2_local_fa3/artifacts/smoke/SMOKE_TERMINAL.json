@@ -1,0 +1,13 @@
+{
+  "extension_sha256": "cddaf2bc58281a935c638ebec0f615cbabb8f6d2833bff8ca6c242063a05075f",
+  "numerical": {
+    "all_finite": true,
+    "checksum": 19.96599006652832,
+    "cosine": 0.9999966621398926,
+    "max_abs_error": 0.00390625,
+    "mean_abs_error": 0.00015190296107903123,
+    "relative_l2": 0.002810150384902954
+  },
+  "schema_version": 1,
+  "status": "smoke_pass"
+}

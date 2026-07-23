@@ -1,0 +1,17 @@
+/usr/local/lib/python3.12/dist-packages/torchao/quantization/quant_api.py:1731: SyntaxWarning: invalid escape sequence '\.'
+  """Configuration class for applying different quantization configs to modules or parameters based on their fully qualified names (FQNs).
+Traceback (most recent call last):
+  File "/work/project/ring_e5m2_component.py", line 517, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/work/project/ring_e5m2_component.py", line 317, in main
+    fixture = make_fixture(batch, context, args.seed)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/project/ring_e5m2_component.py", line 288, in make_fixture
+    return q, k_ring, v_ring, request_ids, starts.to(torch.int32), context_lens
+                                           ^^^^^^^^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: an illegal memory access was encountered
+Search for `cudaErrorIllegalAddress' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.

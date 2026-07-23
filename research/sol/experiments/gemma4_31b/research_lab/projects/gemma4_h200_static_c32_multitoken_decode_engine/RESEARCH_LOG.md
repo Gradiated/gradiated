@@ -62,3 +62,33 @@ cumulative project exposure to `$1.6283636378`. The bench was released to
 maintenance with the exact retained process for director reuse/removal
 disposition. The owner is patched so a future absent pre-invocation marker is
 preserved under the live claim instead of causing release-before-retrieval.
+
+## 2026-07-23 — dependency-supergraph topology reject
+
+The director removed only the completed tied-head server and verified the
+retained H200 empty. This project rehashed `DIRECTOR_BINDING.json` and recovery
+archive `3e193c80d218fb9417cb1e5efea399ef9317a6bbae1e725467351ab41840c949`,
+atomically claimed the same bench, staged the immutable inputs, and invoked the
+scientifically unstarted dependency-supergraph component once.
+
+Measured result: the candidate installed and emitted
+`supergraph_capture_started` for the first seven-forward block. During active
+parent stream capture, `runner.graphs[32].replay()` raised `RuntimeError:
+Cannot prepare for replay during capturing stage`; PyTorch reported
+`cudaStreamCaptureStatusActive`. The scheduler exited, and the final GPU sample
+was 4 MiB at 0% utilization. The candidate CUDA path therefore executed and the
+arm is consumed; this is not a candidate-absent integration attempt.
+
+No component transitions were produced, so 704-token equality, 32-row
+equality, finite outputs, byte-exact KV/position transitions, and the 3-versus-
+21 boundary claim were not established. The quality gate failed closed and the
+conditional endpoint did not start. The claim added 161.939 seconds /
+`$0.1106586131`, bringing conservative cumulative project exposure to
+`$1.7390222509`. The compact archive is
+`f94fce3efa113c34c8d5a625e389b1280b4de44319e8f91731a436935d6bcd31`;
+all terminal evidence was retrieved before the bench was released available.
+
+Next: terminal for this admitted topology. Do not retry the consumed candidate.
+A new arm would require director admission of a materially different mechanism
+that does not nest an existing `torch.cuda.CUDAGraph.replay()` inside parent
+capture.

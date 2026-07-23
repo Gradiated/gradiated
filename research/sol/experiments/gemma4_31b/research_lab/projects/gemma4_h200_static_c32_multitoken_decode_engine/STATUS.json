@@ -1,6 +1,6 @@
 {
   "active_session": null,
-  "actual_spend_usd": 1.6283636378308027,
+  "actual_spend_usd": 1.7390222509364175,
   "allocation_limit": 1,
   "authorized_spend_usd": 16.0,
   "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
@@ -21,13 +21,13 @@
   },
   "immutable_binding": "DIRECTOR_BINDING.json",
   "immutable_binding_verifier": "verify_director_binding.py",
-  "next_action": "Director disposition is required for the healthy retained priority-4500 container gemma-fp8-tied-head-topology-settled, which still owns 122176 MiB and port 30001 despite that project releasing the bench available. Either assign an explicitly compatible inheritor or remove only that terminal container, verify the H200 empty, and return the bench ready. Then rehash and run the still-unconsumed dependency-supergraph component exactly once; do not stack the tied head or replay the consumed direct candidate.",
-  "priority": 4450,
+  "next_action": "Terminal for the admitted dependency-supergraph arm. Do not retry this consumed candidate or run its conditional endpoint. A future continuation requires the director to admit a materially different execution topology that does not replay a torch.cuda.CUDAGraph while a parent stream capture is active.",
+  "priority": 4700,
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
   "quality_claim_authorized": false,
   "researcher_profile": "deep",
   "reservation_gate": "Prepare offline; do not claim until the renewed $16 reservation is durable, DIRECTOR_BINDING.json inputs rehash exactly, and priority-4500 releases the shared bench.",
-  "result": {
+  "consumed_direct_replay_result": {
     "artifact_root": "artifacts/static-c32-resume1-20260723t1952z",
     "candidate_decode_boundaries": 3,
     "candidate_decode_wall_seconds": 5.195788910990814,
@@ -49,25 +49,39 @@
     "terminal_sha256": "a7d7722b536450f82d53fa5df50c3248cd95e25f3170f631930f9d406858d28e",
     "token_id_equality": false
   },
-  "scientific_blocker": {
-    "artifact_root": "artifacts/static-c32-supergraph-20260723t2111z",
-    "candidate_cuda_started": false,
-    "candidate_invocation_started": false,
-    "classification": "typed_external_retained_tied_head_server_owns_hbm",
-    "evidence_archive_sha256": "3e193c80d218fb9417cb1e5efea399ef9317a6bbae1e725467351ab41840c949",
-    "owner_retrieval_defect": "The first owner did not retain its claim when INVOCATION_STATE.json was absent. The project immediately reclaimed the same bench, retrieved the remote terminal, logs, container inspect and GPU process evidence, proved candidate absence, and released to maintenance.",
-    "retained_container": "gemma-fp8-tied-head-topology-settled",
-    "retained_gpu_memory_mib": 122176,
-    "scientific_arm_consumed": false
+  "result": {
+    "artifact_archive_sha256": "f94fce3efa113c34c8d5a625e389b1280b4de44319e8f91731a436935d6bcd31",
+    "artifact_root": "artifacts/static-c32-supergraph-resume-20260723t2134z",
+    "candidate_component_cuda_started": true,
+    "candidate_component_started": true,
+    "candidate_endpoint_started": false,
+    "classification": "component_topology_reject_nested_cuda_graph_replay_unsupported",
+    "component_gate_pass": false,
+    "control_decode_boundaries": null,
+    "candidate_decode_boundaries": null,
+    "finite_transition_outputs": null,
+    "kv_transition_equality": null,
+    "position_transition_equality": null,
+    "rows_token_exact": null,
+    "root_error": "PyTorch rejected runner.graphs[32].replay() during active parent CUDA stream capture: Cannot prepare for replay during capturing stage.",
+    "stock_control_capture_started": false,
+    "token_id_matches": null,
+    "token_id_total": 704,
+    "topology_evidence": {
+      "block_len": 7,
+      "cuda_stream_capture_status": "cudaStreamCaptureStatusActive",
+      "event": "supergraph_capture_started",
+      "existing_child_graph": "runner.graphs[32]"
+    }
   },
   "maintenance_resolution": {
-    "artifact": "../../artifacts/DIRECTOR_MAINTENANCE_20260723T2104Z.json",
+    "artifact": "../../artifacts/DIRECTOR_MAINTENANCE_20260723T2131Z.json",
     "compute_processes": 0,
     "gpu_memory_used_mib": 0,
-    "resolved_at_utc": "2026-07-23T21:04:08Z"
+    "resolved_at_utc": "2026-07-23T21:31:36Z"
   },
-  "status": "blocked",
+  "status": "complete",
   "storage_budget": "At most 12 GiB; no checkpoint duplication.",
-  "summary": "The prepared dependency-supergraph remains scientifically unstarted. Its worker stopped before creating any invocation state or candidate audit because priority-4500's healthy tied-head container still occupied 122176 MiB. Recovery retrieved and hash-bound the remote terminal, logs, inspect, and GPU evidence; the bench is in maintenance for director reuse/removal disposition.",
+  "summary": "The one dependency-supergraph arm is consumed and rejected at its first seven-forward block capture. The candidate path was installed and CUDA capture began, but PyTorch forbids replay of the existing c32 child CUDAGraph while a parent stream capture is active. No transition result or stock control was produced, the exactness gate did not pass, and the conditional endpoint did not start.",
   "wall_deadline_utc": "2026-07-24T01:15:00Z"
 }

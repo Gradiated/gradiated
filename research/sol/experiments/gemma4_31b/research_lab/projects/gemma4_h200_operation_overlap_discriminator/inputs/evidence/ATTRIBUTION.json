@@ -1,0 +1,171 @@
+{
+  "attribution_rule": "Every wall interval is assigned once. Concurrent GPU intervals use the longest active kernel; idle intervals use active CUDA synchronization/launch APIs, then scheduler_gap.",
+  "boundaries": [
+    {
+      "boundary": "synchronization",
+      "seconds": 8.427220698,
+      "wall_fraction": 0.3657870066569545
+    },
+    {
+      "boundary": "attention_kv",
+      "seconds": 6.507778421,
+      "wall_fraction": 0.2824728192023329
+    },
+    {
+      "boundary": "fp8_linear",
+      "seconds": 5.292656685,
+      "wall_fraction": 0.22972995670192067
+    },
+    {
+      "boundary": "scheduler_gap",
+      "seconds": 1.151088036,
+      "wall_fraction": 0.04996345321619494
+    },
+    {
+      "boundary": "other_gpu",
+      "seconds": 0.885783298,
+      "wall_fraction": 0.03844779112039165
+    },
+    {
+      "boundary": "qkv_norm_rope",
+      "seconds": 0.302389054,
+      "wall_fraction": 0.013125322199611886
+    },
+    {
+      "boundary": "launch",
+      "seconds": 0.256733377,
+      "wall_fraction": 0.011143618619605946
+    },
+    {
+      "boundary": "normalization_activation",
+      "seconds": 0.214190627,
+      "wall_fraction": 0.009297032926039343
+    },
+    {
+      "boundary": "cache_conversion_write",
+      "seconds": 0.000760259,
+      "wall_fraction": 3.299935694813455e-05
+    }
+  ],
+  "cross_family_gpu_overlap_seconds": 0.001258721,
+  "evidence_class": "measured",
+  "hottest_eligible_boundary": {
+    "boundary": "synchronization",
+    "seconds": 8.427220698,
+    "wall_fraction": 0.3657870066569545
+  },
+  "kernel_rows": 113008,
+  "pass": true,
+  "phases": {
+    "decode": {
+      "boundaries": [
+        {
+          "boundary": "synchronization",
+          "seconds": 8.375068794,
+          "wall_fraction": 0.5251963544668495
+        },
+        {
+          "boundary": "attention_kv",
+          "seconds": 3.179538877,
+          "wall_fraction": 0.19938728482831622
+        },
+        {
+          "boundary": "fp8_linear",
+          "seconds": 2.576296436,
+          "wall_fraction": 0.1615582545641281
+        },
+        {
+          "boundary": "scheduler_gap",
+          "seconds": 0.766971497,
+          "wall_fraction": 0.048096397069951315
+        },
+        {
+          "boundary": "other_gpu",
+          "seconds": 0.566853607,
+          "wall_fraction": 0.03554710477435921
+        },
+        {
+          "boundary": "launch",
+          "seconds": 0.231789401,
+          "wall_fraction": 0.014535396831183897
+        },
+        {
+          "boundary": "qkv_norm_rope",
+          "seconds": 0.146152481,
+          "wall_fraction": 0.009165148622119545
+        },
+        {
+          "boundary": "normalization_activation",
+          "seconds": 0.103405741,
+          "wall_fraction": 0.006484522042738368
+        },
+        {
+          "boundary": "cache_conversion_write",
+          "seconds": 0.00047101,
+          "wall_fraction": 2.9536800353765646e-05
+        }
+      ],
+      "seconds": 15.946547844
+    },
+    "prefill": {
+      "boundaries": [
+        {
+          "boundary": "attention_kv",
+          "seconds": 3.328239544,
+          "wall_fraction": 0.4692914345894437
+        },
+        {
+          "boundary": "fp8_linear",
+          "seconds": 2.716360249,
+          "wall_fraction": 0.3830146782592727
+        },
+        {
+          "boundary": "scheduler_gap",
+          "seconds": 0.384116539,
+          "wall_fraction": 0.054161546743776684
+        },
+        {
+          "boundary": "other_gpu",
+          "seconds": 0.318929691,
+          "wall_fraction": 0.04497001199699645
+        },
+        {
+          "boundary": "qkv_norm_rope",
+          "seconds": 0.156236573,
+          "wall_fraction": 0.022029810207227184
+        },
+        {
+          "boundary": "normalization_activation",
+          "seconds": 0.110784886,
+          "wall_fraction": 0.015620990434866361
+        },
+        {
+          "boundary": "synchronization",
+          "seconds": 0.052151904,
+          "wall_fraction": 0.007353569814063524
+        },
+        {
+          "boundary": "launch",
+          "seconds": 0.024943976,
+          "wall_fraction": 0.003517173005923715
+        },
+        {
+          "boundary": "cache_conversion_write",
+          "seconds": 0.000289249,
+          "wall_fraction": 4.078494842965005e-05
+        }
+      ],
+      "seconds": 7.092052611
+    },
+    "split_rule": "Non-overlapping median-TTFT proxy: prefill ends at the median first-token timestamp; the remainder is decode."
+  },
+  "profile_control_service_seconds_per_request": 0.7051819141250064,
+  "runtime_rows": 378688,
+  "schema_version": 1,
+  "window": {
+    "end_ns": 23955636925,
+    "seconds": 23.038600455,
+    "source": "cuda_profiler_capture_range",
+    "start_ns": 917036470
+  }
+}

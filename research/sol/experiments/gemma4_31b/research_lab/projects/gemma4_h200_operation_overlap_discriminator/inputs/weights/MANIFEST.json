@@ -1,0 +1,30 @@
+{
+  "byte_semantics": "Tensor payload bytes copied without conversion; only the safetensors header and selected-key offsets were rewritten.",
+  "schema_version": 1,
+  "snapshot": {
+    "bytes": 462422360,
+    "keys": {
+      "model.language_model.layers.0.mlp.gate_proj.weight": {
+        "dtype": "BF16",
+        "shape": [
+          21504,
+          5376
+        ]
+      },
+      "model.language_model.layers.0.mlp.up_proj.weight": {
+        "dtype": "BF16",
+        "shape": [
+          21504,
+          5376
+        ]
+      }
+    },
+    "mode": "0444",
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_operation_overlap_discriminator/inputs/weights/layer0-gate-up.safetensors",
+    "sha256": "0c93b4d5ea1c4d5ff685d7817fe17a94de8509c1b43e479703748cac490fd8ac"
+  },
+  "source": {
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_layer_dataflow_fusion/inputs/component/layer0-rms-qkv-gate-up.safetensors",
+    "sha256": "8230f5dcca70dd7e3b6f63d9614fc9b7ece632b539da00813b1a5af1d41923af"
+  }
+}

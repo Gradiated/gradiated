@@ -1,7 +1,7 @@
 {
   "status": "active",
   "priority": 5900,
-  "researcher_profile": "deep",
+  "researcher_profile": "execution",
   "authorized_spend_usd": 12.0,
   "actual_spend_usd": 0.0,
   "accelerator_requirement": "nvidia-h200-sxm",
@@ -9,9 +9,29 @@
   "provider_mutation": "forbidden_researcher_retained_bench_only",
   "bench_queue_after": "gemma4_h200_ngram_production_validation",
   "active_session": null,
-  "summary": "Prepare an exact-shape attention/KV plus FP8-linear serial/concurrent discriminator offline, then use the retained H200 after the named n-gram validation releases.",
-  "next_action": "Mechanically bind the dominant production operations and build the exact-consumer serial/concurrent harness offline. Do not claim h200-sync-linear-e00vhh6h29fj68x91g until gemma4_h200_ngram_production_validation releases it.",
+  "summary": "The dominant production local-attention and gate/up FP8 consumers are mechanically bound and the immutable project-local serial/concurrent harness passes offline validation. GPU science remains unstarted behind the named n-gram queue boundary.",
+  "next_action": "After gemma4_h200_ngram_production_validation releases h200-sync-linear-e00vhh6h29fj68x91g, atomically claim that bench, transfer the already-materialized project-local snapshot once, and run EXPERIMENT_SPEC.json profiler-off. Do not resolve shared source or checkpoint paths after claim.",
   "quality_claim_authorized": false,
   "terminal_artifact": null,
+  "scientific_invocations_consumed": 0,
+  "offline_binding": {
+    "binding": "BINDING.json",
+    "binding_sha256": "d290788616fb30b0a222177e71a711cdd8f0df22a3bd76e6a07cd0642f784879",
+    "experiment_spec": "EXPERIMENT_SPEC.json",
+    "runner": "operation_overlap_harness.py",
+    "runner_sha256": "ac981309dcb78ee0e87c088b68d399f09cf06bc70342b0b929a549d4cfdf7ce3",
+    "weight_snapshot": "inputs/weights/layer0-gate-up.safetensors",
+    "weight_snapshot_sha256": "0c93b4d5ea1c4d5ff685d7817fe17a94de8509c1b43e479703748cac490fd8ac",
+    "weight_snapshot_bytes": 462422360,
+    "offline_validation": "artifacts/offline-validation/OFFLINE_VALIDATION.json",
+    "offline_validation_sha256": "4647b62ec2d0a1343c150ef8d2bd06a01c44aaeb98d26c67285f3b1639b53318",
+    "gpu_science_started": false
+  },
+  "queue_observation": {
+    "checked_at_utc": "2026-07-23T23:25:10Z",
+    "predecessor_status": "active",
+    "predecessor_project": "gemma4_h200_ngram_production_validation",
+    "bench_claimed_by_this_project": false
+  },
   "wall_deadline_utc": "2026-07-24T09:30:00Z"
 }

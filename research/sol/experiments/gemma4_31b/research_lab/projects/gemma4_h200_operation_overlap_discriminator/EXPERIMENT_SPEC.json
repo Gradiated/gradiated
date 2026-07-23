@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "status": "preregistered_offline_pending_named_queue_release",
+  "causal_hypothesis": "The 2,048-row local sliding-window attention launch and the independent 2,048x5,376 by 5,376x43,008 FP8 gate/up launch have complementary enough H200 resource use that separate streams reduce their combined critical path.",
+  "expected_direction": "concurrent_elapsed_ms < serial_component_sum_ms",
+  "control": "The exact production attention consumer followed by the exact production FP8-linear consumer on one CUDA stream.",
+  "candidate": "The same immutable inputs and consumers launched concurrently on two distinct CUDA streams.",
+  "identities": {
+    "binding": "BINDING.json",
+    "binding_sha256": "d290788616fb30b0a222177e71a711cdd8f0df22a3bd76e6a07cd0642f784879",
+    "runner": "operation_overlap_harness.py",
+    "runner_sha256": "ac981309dcb78ee0e87c088b68d399f09cf06bc70342b0b929a549d4cfdf7ce3",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "sglang v0.5.13@28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "hardware": "nvidia-h200-sxm"
+  },
+  "workload": {
+    "service_concurrency": 32,
+    "independent_nano_batches": 2,
+    "attention": "M=2048, prefix=1024, q_heads=32, kv_heads=16, head_dim=256, bf16 QKV, fp8_e5m2 cache, local window=1024",
+    "fp8_linear": "M=2048, K=5376, N=43008, fp8_e4m3fn row-scaled activation and column-major weight, bf16 output",
+    "seed": 20260724,
+    "warmups": 5,
+    "alternating_repetitions_per_mode": 21
+  },
+  "quality_gate": {
+    "attention_serial_concurrent": "bitwise equal, finite, complete output consumed",
+    "fp8_linear_serial_concurrent": "bitwise equal, finite, complete output consumed"
+  },
+  "decision_gates": {
+    "promote_runtime_slice": "concurrent median <= 0.80 * component median sum",
+    "close_pair": "concurrent median >= 0.90 * component median sum or decisive destructive-interference counters",
+    "otherwise": "ambiguous component overlap; collect only the preregistered decisive counters"
+  },
+  "competing_explanation": "Both kernels saturate SM/register/shared-memory and L2/HBM resources enough that concurrency merely time-slices or slows one another.",
+  "physical_prior": "Same-SM co-residency is impossible from measured resources: attention uses 65,280 registers/CTA and FP8 uses 64,512 registers/CTA against 65,536 registers/SM; FP8 also uses 214,016 B dynamic shared memory. A gain requires spatial CTA partitioning across the 132 SMs.",
+  "analytical_ideal_ratio_from_trace_means": 0.6344681995615935,
+  "critical_path_method": "CUDA-event interval from a timer stream through explicit start and completion event dependencies; never sum overlapping profiler durations.",
+  "opportunity": {
+    "id": "local_extend_gate_up_overlap",
+    "observation": "Measured cross-family overlap was 0.001258721 s while attention/KV and FP8 linears owned 28.2473% and 22.9730% of non-overlapping request wall time.",
+    "evidence_scope": "Exact pinned Gemma 4 c32 H200 endpoint trace; dynamic-chunk prefill mixed with decode.",
+    "competing_explanations": [
+      "Runtime serialization hides complementary-resource overlap.",
+      "Resource interference prevents useful overlap."
+    ],
+    "mechanism": "Schedule independent local-attention and FP8 gate/up regions on separate streams.",
+    "falsifier": "Exact-output concurrent median is >=90% of the component median sum, or counters show destructive interference.",
+    "next_measurement": "Profiler-off exact-consumer serial/concurrent H200 component.",
+    "cost_usd": 0.5,
+    "decision_impact": 0.9,
+    "uncertainty": 0.8,
+    "discrimination_power": 0.95,
+    "readiness": 1.0,
+    "transfer_penalty": 0.25
+  },
+  "budget": {
+    "cumulative_authorized_usd": 12.0,
+    "prior_actual_usd": 0.0,
+    "maximum_claimed_gpu_hours": 4,
+    "absolute_deadline_utc": "2026-07-24T09:30:00Z",
+    "storage_bytes": 8589934592
+  },
+  "queue_boundary": {
+    "bench": "h200-sync-linear-e00vhh6h29fj68x91g",
+    "after_project": "gemma4_h200_ngram_production_validation",
+    "claim_before_release_forbidden": true
+  },
+  "command_inside_pinned_container": "python3 /work/project/operation_overlap_harness.py --binding /work/project/BINDING.json --input-root /work/project/inputs --artifact-root /work/artifacts/overlap-component --warmups 5 --iterations 21 --seed 20260724",
+  "artifacts": [
+    "INVOCATION_STATE.json",
+    "COMPONENT_TERMINAL.json",
+    "raw stdout/stderr",
+    "profiler-off samples",
+    "conditional minimal Nsight counters"
+  ],
+  "failure_contract": "Ordinary import, path, API, numeric-guard, telemetry, or retrieval failures before a decision-bearing invocation are repaired under the same retained claim. A completed producer or scientific arm is not replayed.",
+  "transfer_limit": "A positive component result supports only this exact operation pair and geometry; runtime or endpoint claims require the preregistered integrated slice."
+}

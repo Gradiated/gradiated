@@ -1,0 +1,6 @@
+{
+  "compute_processes": "",
+  "compute_query_returncode": 0,
+  "gpu": "0 MiB, 0 %",
+  "zero": true
+}

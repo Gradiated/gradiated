@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "classification": "sequential_ngram_production_validation_analysis",
+  "raw_control": "artifacts/sequential-validation/retrieved/CONTROL_STAGE.json",
+  "raw_candidate": "artifacts/sequential-validation/retrieved/CANDIDATE_STAGE.json",
+  "token_identity": {
+    "pass": false,
+    "reason": "Both API captures returned no server-side output token IDs or logprobs despite return_logprob requests; exact generated-token identity is therefore unproved."
+  },
+  "semantic_rows": {
+    "ordinary_text": "equal",
+    "stop_length": "equal",
+    "cached_prefix": "equal",
+    "repeated_pattern": "equal",
+    "serial_batched_text": "stable within both arms",
+    "multi_tool": "equal tool names, arguments, finish reason, and usage",
+    "single_tool": "tool name, arguments, and finish reason equal, but control completion_tokens=24 and candidate completion_tokens=41"
+  },
+  "target_verification": {
+    "source": "artifacts/sequential-validation/retrieved/ngram_worker.py",
+    "target_forward": "target_worker.forward_batch_generation(batch, is_verify=True)",
+    "verify": "verify_input.verify(batch, logits_output, self.page_size, vocab_mask)",
+    "assistant_absent": true
+  },
+  "candidate_quality_discriminator": {
+    "artifact": "artifacts/sequential-validation/retrieved/CANDIDATE_QUALITY_DISCRIMINATOR.json",
+    "gpqa_minimal": "pass: internal-energy answer 60",
+    "taubench_minimal": "pass: lookup_user(demo_user) tool call",
+    "interpretation": "The smallest candidate-side discriminator found no immediate material capability failure, but cannot transfer broad evidence or qualify production because exact token and feature gates failed."
+  },
+  "decision": "Keep native NGRAM throughput as quality-unqualified; do not transfer the bound broad-quality evidence or promote the endpoint."
+}

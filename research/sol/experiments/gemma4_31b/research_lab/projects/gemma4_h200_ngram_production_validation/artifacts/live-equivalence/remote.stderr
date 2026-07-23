@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/home/glmrunner/gemma4-h200-ngram-speculative-endpoint/ngram-production-validation-suite.py", line 90, in <module>
+    if __name__ == '__main__': main()
+                               ^^^^^^
+  File "/home/glmrunner/gemma4-h200-ngram-speculative-endpoint/ngram-production-validation-suite.py", line 73, in main
+    wait(port)
+  File "/home/glmrunner/gemma4-h200-ngram-speculative-endpoint/ngram-production-validation-suite.py", line 34, in wait
+    raise RuntimeError(f'server_not_ready:{port}')
+RuntimeError: server_not_ready:30001

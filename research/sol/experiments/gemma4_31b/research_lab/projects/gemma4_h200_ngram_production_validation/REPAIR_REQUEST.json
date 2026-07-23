@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "request": "Consume DIRECTOR_CONTROL_MOUNT_REPAIR.json. Add exactly the known-good read-only resident checkpoint bind at /work/checkpoint to gemma-ngram-control; preserve every other launch byte and scientific gate.",
+  "requested_at_utc": "2026-07-23T08:51:30Z",
+  "authorization": "DIRECTOR_CONTROL_MOUNT_REPAIR.json"
+}

@@ -1,0 +1,29 @@
+# Research log
+
+## 2026-07-23 — admitted from the native n-gram performance survivor
+
+Decision: validate production semantics before treating the measured native n-gram endpoint as the campaign's qualified frontier. The exact c32 pair measured `0.7022385985→0.5967508053 s/request` with 32/32 requests and exact accounting, but a director-derived preliminary SSE reconstruction differs on 19/32 temperature-zero, fixed-seed requests and the runner persisted no token IDs. This is an unresolved quality/consumer boundary, not a performance invalidation.
+
+Scope and limits: preserve the exact checkpoint, image/runtime, current FP8/QKV/simple-gain stack, frozen native n-gram contract, workload, and tool parser. First resolve the existing raw pair and pinned target-verification semantics offline. Then, under an `$8` maximum, at most 75 claimed H200 minutes, 150 wall minutes, and 8 GiB new artifacts, run one deterministic token/feature equivalence suite on the retained bench. Broad quality capture is conditional only if exact equivalence fails. No setting sweep, performance replay, assistant, provider mutation, or checkpoint copy is authorized.
+
+## 2026-07-23 — persisted SSE ambiguity resolved; live control consumer needs repair
+
+Question: can the frozen native NGRAM endpoint be compared against a fresh matched non-speculative control without disturbing the retained server?
+
+Action and evidence: `prepare_validation.py` froze the named pair inputs and wrote `artifacts/persisted-pair-normalization/NORMALIZED_PERSISTED_PAIR.json`. Concatenation reproduces the director screen (13/32 equal), while terminal-chunk and prefix-aware reconstruction are 0/32 equal and contain contradictory chunk representations; persisted SSE cannot establish token semantics. The resident image source was inspected before any restart: `NGRAMWorker` binds `target_worker.forward_batch_generation(batch, is_verify=True)` and subsequently `verify_input.verify(...)` (remote compact binding in `artifacts/live-equivalence` retrieval root). The healthy candidate was not restarted. A fresh non-speculative control failed before model load on three bounded environment repairs: its exact diagnostic is `artifacts/live-equivalence/control-startup-retrieved.stderr`, ending in `AutoConfig` rejecting absent `model_type`. No control reached `/v1/models`, no candidate request was sent, and no candidate CUDA/scientific invocation began.
+
+Interpretation: this is a pre-scientific control consumer defect, not a token-equivalence result or a quality failure. The claim consumed approximately 9.7 minutes at $2.46/hour; `STATUS.json.actual_spend_usd` conservatively records `$0.40`. `REPAIR_READY.json` and `REPAIR_REQUEST.json` preserve the same-scope continuation. The NGRAM server, checkpoint, image, and caches remain healthy for a repaired control launcher.
+
+## 2026-07-23 — director binds the final control repair to the known-good mount
+
+The failure is now mechanically localized. The validation launcher mounted only the project root at `/work`; the known-good n-gram predecessor also mounted the director-verified resident checkpoint from `/home/glmrunner/gemma4-h200-flashinfer-metadata-scalar-elimination/checkpoint` at `/work/checkpoint:ro`. `DIRECTOR_CONTROL_MOUNT_REPAIR.json` authorizes exactly that missing read-only bind and no other launch or scientific change. If the repaired control reaches `/v1/models`, run the frozen token/tool suite once. If it still fails before readiness, close this validation route operationally inconclusive rather than opening another repair. No candidate request or quality result exists yet.
+
+## 2026-07-23 — final checkpoint-bind repair reached model construction but exhausted co-resident H200 memory
+
+The exact director-authorized checkpoint bind was added and repaired the prior AutoConfig failure: the control recognized `Gemma4ForConditionalGeneration` and began FP8 QKV weight construction. It then exited before `/v1/models` with CUDA OOM, reporting only `53.94 MiB` free while the preserved `gemma-ngram-pair` service remained healthy. `artifacts/final-mount-repair/control-final.remote.log` retains the raw remote diagnostic and candidate-state marker. The worker never issued a candidate request; no token/tool gate or conditional GPQA/TauBench discriminator ran. This is the preregistered final pre-readiness boundary, so production validation closes operationally inconclusive. The cumulative project exposure is conservatively updated to `$0.50`; the measured NGRAM throughput result remains quality-unqualified.
+
+## 2026-07-23 — sequential validation resolves co-residency but does not qualify NGRAM
+
+On the director-cleared H200, the matched control ran first, persisted raw responses, then was removed with `ZERO_HBM_AFTER_CONTROL.json` proving no compute process and `0 MiB`. The byte-identical native NGRAM stage then ran once. Ordinary text, stop/length, cached-prefix, repeated-pattern, and serial/batched text semantics were equal; multi-tool names, arguments, finish reason, and usage were also equal. The copied runtime `ngram_worker.py` proves target forward verification followed by `verify_input.verify`, and the candidate command has no assistant model.
+
+The production gate nevertheless fails. The API supplied no server-side output token IDs or logprobs in either capture, so exact generated-token identity remains unproved. The native single-tool response also differed in completion accounting: 24 control tokens versus 41 NGRAM tokens, despite matching parsed call. The required bounded candidate-side discriminator was then run separately: it returned the correct internal-energy answer (60) and the expected `lookup_user(demo_user)` call. That limited capture does not transfer broad quality evidence or overcome the exact token/feature gate. `SEQUENTIAL_ANALYSIS.json` links all raw captures and the decision. Conservative cumulative exposure is `$1.00`.

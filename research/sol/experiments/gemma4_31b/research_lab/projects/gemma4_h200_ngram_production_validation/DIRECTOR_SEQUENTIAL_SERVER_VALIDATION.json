@@ -1,0 +1,75 @@
+{
+  "bench": {
+    "accelerator": "nvidia-h200-sxm",
+    "deadline_utc": "2026-07-24T01:30:00Z",
+    "hourly_cost_usd": 2.46,
+    "id": "h200-sync-linear-e00vhh6h29fj68x91g"
+  },
+  "candidate": {
+    "contract_path": "../gemma4_h200_ngram_speculative_endpoint/NGRAM_CONTRACT.json",
+    "contract_sha256": "5b3b043fc192e4001414c67fbe587d6089f5ba064fa22e76ef1772c71f649833",
+    "performance_terminal_path": "../gemma4_h200_ngram_speculative_endpoint/artifacts/ngram-diagnostic-20260723t0815z/PAIRED_TERMINAL.json",
+    "performance_terminal_sha256": "cea685ac7d04533754d640d34c3d54c61ac3101c3dfea07c8cb9deb0b4af4e04",
+    "service_seconds_per_request": 0.5967508053124675
+  },
+  "campaign_gate": {
+    "economic_ceiling_seconds_per_request": 0.6381105231,
+    "performance_replay_forbidden": true,
+    "production_promotion": "Require target-verification path proof, exact deterministic generated-token equivalence, exact native single- and multi-tool behavior, and either transferable bound quality evidence or a passing candidate-side GPQA-Diamond/TauBench discriminator."
+  },
+  "control": {
+    "all_other_server_and_request_fields": "byte-identical to candidate",
+    "checkpoint": "same exact read-only checkpoint",
+    "speculative_algorithm": null
+  },
+  "current_maintenance_predecessor": {
+    "cleanup_action": "Director removes only the completed gemma-static-c32-supergraph container and verifies zero accelerator processes before this project may claim.",
+    "container": "gemma-static-c32-supergraph",
+    "director_maintenance_artifact": "../../artifacts/DIRECTOR_MAINTENANCE_20260723T2307Z.json",
+    "director_maintenance_artifact_sha256": "9fd6a146c1ced14d07b74a4fc243e4b23a55caa564232b0a02f028fbc361f93e",
+    "terminal_path": "../gemma4_h200_static_c32_multitoken_decode_engine/artifacts/static-c32-direct-model-20260723t2242z/TERMINAL.json",
+    "terminal_sha256": "51f7ba58f9222658c4a7356cf4705a95151eccd37442dd859bb8f7e46dbe13eb"
+  },
+  "immutable_parent": {
+    "path": "EVIDENCE_BINDING.json",
+    "sha256": "c4d0d7b39a557e300990d9b915abbd0a10a4a5bde5c00dfac733270f80eca051"
+  },
+  "quality_evidence": {
+    "bindings_path": "../gemma4_h200_v0513_fp8_production_validation/BINDINGS.json",
+    "bindings_sha256": "98bf28ca29a937861bddf1812317b0751c526e53a1983331b4434b95bf488a92",
+    "tool_consumer_terminal_path": "../gemma4_h200_v0513_fp8_production_validation/artifacts/tool-bridge-20260720t0458z/FINAL_TERMINAL.json",
+    "tool_consumer_terminal_sha256": "7d9f6a1a8e376489e30cd67dacf753aa8574bc8348a140341b3439b7ee8b5430",
+    "transfer_rule": "Transfer the bound FP8 GPQA-Diamond, TauBench, NLL, and tool-consumer result only after the sequential suite proves exact generated-token and feature equivalence. If equivalence fails, run only the smallest hash-bound candidate-side GPQA-Diamond/TauBench raw capture through the existing normalizer and scorer."
+  },
+  "runtime": {
+    "checkpoint": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "release": "sglang v0.5.13"
+  },
+  "schema_version": 1,
+  "sequential_execution": {
+    "candidate_stage": [
+      "Start the frozen native NGRAM server only after the zero-HBM control cleanup proof.",
+      "Run the byte-identical token and feature suite once and retain raw response events plus server-side generated token IDs.",
+      "Prove NGRAMWorker target verification and absence of assistant execution."
+    ],
+    "control_stage": [
+      "Start one matched non-speculative server on the otherwise empty H200.",
+      "Run the frozen deterministic text, stop/length, cached-prefix, repeated-pattern, serial/batched, and native tool suite once.",
+      "Persist raw response events, server-side generated token IDs, usage, finish reasons, and parser outputs.",
+      "Stop and remove the control container, then require zero compute processes and zero used HBM before candidate startup."
+    ],
+    "forbidden": [
+      "co-resident control and candidate servers",
+      "performance pair replay",
+      "NGRAM setting, sampling, checkpoint, runtime, workload, parser, or precision change",
+      "assistant model or external corpus",
+      "broad benchmark regeneration after exact equivalence passes"
+    ]
+  },
+  "workload_runner": {
+    "path": "../gemma4_h200_ngram_speculative_endpoint/inputs/bound/exact_runner.py",
+    "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+  }
+}

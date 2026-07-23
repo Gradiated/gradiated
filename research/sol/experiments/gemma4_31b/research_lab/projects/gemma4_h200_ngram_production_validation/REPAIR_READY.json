@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "classification": "pre_scientific_control_launch_repair",
+  "candidate_cuda_or_scientific_invocation_began": false,
+  "diagnostic": "Matched control gemma-ngram-control exited before model load: AutoConfig rejected the checkpoint because model_type was absent. Three bounded launch repairs retained the same image, checkpoint, and candidate server; all failed before control /v1/models.",
+  "artifacts": "artifacts/live-equivalence/control-startup-retrieved.stderr",
+  "repair_deadline_utc": "2026-07-23T09:51:33Z"
+}

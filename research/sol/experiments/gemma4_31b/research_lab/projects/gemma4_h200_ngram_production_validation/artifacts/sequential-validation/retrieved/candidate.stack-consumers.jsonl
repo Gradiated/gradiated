@@ -1,0 +1,2 @@
+{"consumer": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm", "out_dtype": "torch.bfloat16", "pid": 116}
+{"consumer": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm", "out_dtype": "torch.bfloat16", "pid": 116}

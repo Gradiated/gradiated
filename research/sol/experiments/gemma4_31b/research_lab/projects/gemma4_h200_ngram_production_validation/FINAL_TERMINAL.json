@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "classification": "sequential_native_ngram_quality_unqualified",
+  "pass": false,
+  "candidate_scientific_invocation_began": true,
+  "control_rows": 10,
+  "candidate_rows": 10,
+  "exact_generated_token_identity": false,
+  "reason": "No server-side output token IDs or logprobs were emitted in either raw capture; the single-tool response also reports 24 completion tokens for control versus 41 for native NGRAM.",
+  "target_verification_proven": true,
+  "assistant_absent": true,
+  "bounded_candidate_quality_discriminator": "passed_minimal_gpqa_and_taubench",
+  "decision": "Do not transfer broad FP8 GPQA-Diamond/TauBench/NLL evidence or promote native NGRAM."
+}

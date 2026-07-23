@@ -1,0 +1,160 @@
+{
+  "classification": "bounded_candidate_side_gpqa_taubench_discriminator",
+  "count": 2,
+  "rows": [
+    {
+      "content": "60",
+      "finish_reason": "stop",
+      "id": "gpqa_minimal",
+      "raw_sha256": "62309bc50accbf933ded2451297e3e860ad26fb2fb3766d656f9dbfcdef0025b",
+      "request": {
+        "max_tokens": 32,
+        "messages": [
+          {
+            "content": "A closed system absorbs 100 J of heat and does 40 J of work on its surroundings. What is the change in internal energy in joules? Reply with only the number.",
+            "role": "user"
+          }
+        ],
+        "model": "google/gemma-4-31B-it",
+        "seed": 20260718,
+        "temperature": 0
+      },
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "matched_stop": 106,
+            "message": {
+              "content": "60",
+              "reasoning_content": null,
+              "role": "assistant",
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 1784849371,
+        "id": "f0b4237368b543f1ade944de402c1fad",
+        "metadata": {
+          "weight_version": "default"
+        },
+        "model": "google/gemma-4-31B-it",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 3,
+          "prompt_tokens": 53,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 56
+        }
+      },
+      "tool_calls": null,
+      "usage": {
+        "completion_tokens": 3,
+        "prompt_tokens": 53,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 56
+      }
+    },
+    {
+      "content": "",
+      "finish_reason": "tool_calls",
+      "id": "taubench_minimal",
+      "raw_sha256": "5b339451a0e7dfe95dbafa9e8a6b53a5897850a5ff0cf60c0eb679f14a685867",
+      "request": {
+        "max_tokens": 128,
+        "messages": [
+          {
+            "content": "Use lookup_user to look up user_id demo_user.",
+            "role": "user"
+          }
+        ],
+        "model": "google/gemma-4-31B-it",
+        "seed": 20260718,
+        "temperature": 0,
+        "tool_choice": "required",
+        "tools": [
+          {
+            "function": {
+              "description": "Look up a user by id.",
+              "name": "lookup_user",
+              "parameters": {
+                "properties": {
+                  "user_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "user_id"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "function"
+          }
+        ]
+      },
+      "response": {
+        "choices": [
+          {
+            "finish_reason": "tool_calls",
+            "index": 0,
+            "logprobs": null,
+            "matched_stop": null,
+            "message": {
+              "content": "",
+              "reasoning_content": null,
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"user_id\": \"demo_user\"}",
+                    "name": "lookup_user"
+                  },
+                  "id": "call_52e17432f93947f69507bf1f",
+                  "index": 0,
+                  "type": "function"
+                }
+              ]
+            }
+          }
+        ],
+        "created": 1784849372,
+        "id": "eabb9c1f8fdc4d5095ea1cf13318c9bf",
+        "metadata": {
+          "weight_version": "default"
+        },
+        "model": "google/gemma-4-31B-it",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 24,
+          "prompt_tokens": 80,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 104
+        }
+      },
+      "tool_calls": [
+        {
+          "function": {
+            "arguments": "{\"user_id\": \"demo_user\"}",
+            "name": "lookup_user"
+          },
+          "id": "call_52e17432f93947f69507bf1f",
+          "index": 0,
+          "type": "function"
+        }
+      ],
+      "usage": {
+        "completion_tokens": 24,
+        "prompt_tokens": 80,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 104
+      }
+    }
+  ],
+  "schema_version": 1
+}

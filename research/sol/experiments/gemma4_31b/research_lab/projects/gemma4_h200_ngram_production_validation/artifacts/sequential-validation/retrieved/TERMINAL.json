@@ -1,0 +1,12 @@
+{
+  "candidate_rows": 10,
+  "candidate_scientific_invocation_started": true,
+  "classification": "sequential_native_ngram_token_tool_equivalence",
+  "control_rows": 10,
+  "exact_token_and_response_identity": false,
+  "native_tool_equal": false,
+  "pass": false,
+  "schema_version": 1,
+  "serial_batched_stable": false,
+  "target_verification_and_no_assistant": false
+}

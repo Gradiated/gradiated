@@ -1,0 +1,16 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 0,
+  "authorized_spend_usd": 0.0,
+  "binding": "DIRECTOR_BINDING.json",
+  "compute_budget": "At most 2 local CPU-hours; no GPU.",
+  "next_action": "Closed: no homogeneous H200 P/D topology clears the preregistered 20% cost gate under the calibrated uncertainty surface. Do not request or claim a GPU.",
+  "priority": 5995,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "execution",
+  "status": "complete",
+  "storage_budget": "At most 1 GiB of project-local artifacts.",
+  "summary": "Closed route: 1,980-row calibrated CPU discrete-event surface produced zero promotion rows; best stable p95-nonworse case was 14.05% lower derived cost at 8 GPUs, 2:6 P:D, still below the 20% gate.",
+  "wall_clock_budget": "At most 90 minutes from researcher start."
+}

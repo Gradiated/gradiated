@@ -1,0 +1,21 @@
+{
+  "candidate_cuda_started": true,
+  "candidate_science_started": true,
+  "completed_boundary": [
+    "zero",
+    "positive_extreme",
+    "negative_extreme"
+  ],
+  "completed_m": [
+    1,
+    2,
+    4,
+    8,
+    12,
+    16,
+    24,
+    32
+  ],
+  "control_science_started": true,
+  "schema_version": 1
+}

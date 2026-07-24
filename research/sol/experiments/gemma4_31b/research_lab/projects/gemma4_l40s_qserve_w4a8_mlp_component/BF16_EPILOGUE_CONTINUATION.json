@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "decision": "bf16_safe_qserve_progressive_epilogue_then_conditional_endpoint",
+  "bench": {
+    "id": "l40s-qserve-e00a74kcbps8v00fk4",
+    "accelerator": "nvidia-l40s",
+    "deadline_utc": "2026-07-24T08:15:00Z",
+    "cleanup_watchdog_deadline_utc": "2026-07-24T08:30:59.577420Z"
+  },
+  "prior_terminal": {
+    "archive": "artifacts/l40s-qserve-20260724t0233z/final-remote-output.tar.gz",
+    "archive_sha256": "d4c07adbfe6e502da2be00fdad16e20445379fa40db309fcdf034d799b837824",
+    "classification": "component_reject",
+    "production_rows_correct": 8,
+    "production_speedup_range": [
+      1.8377534790326169,
+      1.8873992983305325
+    ],
+    "failed_boundary": "positive_extreme_nonfinite",
+    "candidate_output_dtype": "float16",
+    "control_output_dtype": "bfloat16"
+  },
+  "hypothesis": "The isolated positive-extreme nonfinite result is caused by the candidate's FP16 gate/up and down epilogue range; preserving BF16 range across those outputs and the adjacent activation-quant input will retain the fixed W4A8 schedule's production correctness and speed.",
+  "fixed_mechanism": {
+    "qserve_revision": "02b2925aa6fa3b92b06316a1524b7f38922cd9c8",
+    "group_size": 128,
+    "activation_dtype": "int8",
+    "schedule": "CTA_M=32,CTA_N=64,CTA_K=128,WARP_M=32,WARP_N=32,WARP_K=64,STAGES=3",
+    "candidate_change": "BF16 gate/up and down GEMM epilogues plus the strictly required BF16 activation-quant input",
+    "prohibited": [
+      "FP16 clipping or saturation",
+      "boundary weakening or fallback",
+      "group, representation, tile, stage, or warp sweep",
+      "Marlin replay",
+      "checkpoint staging before component gates pass",
+      "DFlash or H200 interaction"
+    ]
+  },
+  "gates": [
+    {
+      "stage": "boundary_first",
+      "requirements": [
+        "zero, positive-extreme, and negative-extreme outputs all finite",
+        "candidate BF16 symbols and complete outputs proven"
+      ]
+    },
+    {
+      "stage": "production_component",
+      "unlocked_by": "boundary_first_pass",
+      "requirements": [
+        "all M in {1,2,4,8,12,16,24,32} finite",
+        "relative_l2 <= 0.02 against the dequantized-W4 oracle",
+        "cosine_similarity >= 0.999",
+        "positive warm latency against the same online-FP8 comparator",
+        "compiler resources and only discriminating counters persisted"
+      ]
+    },
+    {
+      "stage": "real_checkpoint_endpoint",
+      "unlocked_by": "production_component_pass",
+      "requirements": [
+        "exact checkpoint and tokenizer identities",
+        "32/32 finite complete requests",
+        "4214 prompt and 358 completion tokens per request",
+        "valid coherence and tool/text behavior",
+        "complete cache/accounting and raw request rows",
+        "service_time_seconds_per_request <= 1.8853265455"
+      ]
+    }
+  ],
+  "economics": {
+    "l40s_committed_planning_usd_per_hour": 1.1,
+    "h200_committed_planning_usd_per_hour": 3.25,
+    "h200_ceiling_seconds_per_request": 0.6381105231,
+    "l40s_price_normalized_ceiling_seconds_per_request": 1.8853265455
+  },
+  "limits": {
+    "authorized_spend_usd": 14.0,
+    "additional_l40s_gpu_hours": 5.0,
+    "project_local_storage_gib": 20,
+    "provider_disk_gib": 150,
+    "provider_creation": false
+  }
+}

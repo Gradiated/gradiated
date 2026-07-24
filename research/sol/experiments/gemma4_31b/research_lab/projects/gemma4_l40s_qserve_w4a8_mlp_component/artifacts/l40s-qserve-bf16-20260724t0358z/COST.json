@@ -1,0 +1,11 @@
+{
+  "claim_exposure_seconds": 4587.451617,
+  "claim_exposure_usd": 1.0996928152858323,
+  "claim_started_at": "2026-07-24T04:00:13.415404Z",
+  "cumulative_spend_usd": 1.6504614233037829,
+  "prior_spend_usd": 0.5507686080179506,
+  "rate_usd_per_hour": 0.8629833,
+  "released_at": "2026-07-24T05:16:40.867021Z",
+  "schema_version": 1,
+  "source": "Conservative pool claim-to-release exposure plus prior measured exposure."
+}

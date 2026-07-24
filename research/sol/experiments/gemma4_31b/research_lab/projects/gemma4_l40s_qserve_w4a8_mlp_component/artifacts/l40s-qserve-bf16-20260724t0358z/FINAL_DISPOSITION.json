@@ -1,0 +1,21 @@
+{
+  "contents": {
+    "artifacts": "artifacts/l40s-qserve-bf16-20260724t0358z",
+    "candidate_cuda_started": true,
+    "checkpoint": "/home/glmrunner/gemma4-qserve-endpoint/checkpoint; exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4, 62,578,655,208 bytes",
+    "classification": "endpoint_reject",
+    "compiled_extension": "/home/glmrunner/gemma4-qserve-bf16/runs/8828d463cf965bab69e4eb1890c38a6ab713a6f555a5e4388ec1601472efb08a/inputs/bf16_epilogue/qserve_sm89/build",
+    "endpoint": "http://127.0.0.1:30000 in gemma-qserve-bf16-endpoint",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "next_need": "Director disposition. The live exact-checkpoint server and immutable W4 cache are retained for diagnosis; do not replay the consumed coherence arm.",
+    "project": "gemma4_l40s_qserve_w4a8_mlp_component",
+    "result": "BF16 component passed all boundaries and eight production rows at 1.8706-1.9241x, but exact-checkpoint coherence failed all three prompts with degenerate repeated tokens; c32 was not started.",
+    "scientific_invocation_started": true,
+    "scientific_terminal": "artifacts/l40s-qserve-bf16-20260724t0358z/endpoint-retrieved/artifacts/bf16-qserve-c32/ENDPOINT_TERMINAL.json",
+    "server_state": "gemma-qserve-bf16-endpoint remains healthy with restart_count=0 on port 30000; PID 15287 used 37,564 MiB at final capture. Exact checkpoint and 180-file content-addressed W4 cache remain resident under /home/glmrunner/gemma4-qserve-endpoint.",
+    "status": "maintenance",
+    "w4_cache": "/home/glmrunner/gemma4-qserve-endpoint/w4_cache/d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2; 180 files, manifest retrieved"
+  },
+  "release_condition": "maintenance",
+  "schema_version": 1
+}

@@ -1,0 +1,12 @@
+{
+  "status": "ready",
+  "classification": "component_reject",
+  "scientific_terminal": "component/TERMINAL.json",
+  "result": "All eight production M rows passed correctness and candidate-path checks; positive-extreme boundary output was nonfinite, so the fixed schedule is rejected.",
+  "candidate_cuda_started": true,
+  "compiled_extension": "inputs/qserve_sm89/build",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "artifacts": "artifacts/l40s-qserve-20260724t0233z/final-remote-output.tar.gz",
+  "next_need": "No continuation authorized; retain image and compiled cache for director review or compatible maintenance."
+  ,"server_state": "No container remains; pinned image and compiled SM89 extension remain resident on the 150-GiB disk. Candidate CUDA/scientific arm completed once and was rejected on the positive-extreme finite-output boundary."
+}

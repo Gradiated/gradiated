@@ -1,23 +1,40 @@
 {
-    "accelerator_requirement": "nvidia-l40s",
-    "active_session": null,
-    "actual_spend_usd": 0.0,
-    "allocation_limit": 1,
-    "authorized_spend_usd": 12.0,
-    "binding": "DIRECTOR_BINDING.json",
-    "compute_budget": "At most 8 local CPU-hours, then at most 6 L40S GPU-hours after director provisioning.",
-    "gpu_input_manifest": {
-        "path": "GPU_INPUT_MANIFEST.json",
-        "sha256": "0b9c1090d51ca63979d7fa086a49a3bbc839e1617c1d6324eb54cfcbcfbe4f1a"
+  "accelerator_requirement": "nvidia-l40s",
+  "active_session": null,
+  "actual_spend_usd": 1.6504614233037829,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 14.0,
+  "binding": "BF16_EPILOGUE_CONTINUATION.json",
+  "compute_budget": "At most 8 local CPU-hours and 5 additional L40S GPU-hours on the existing bench.",
+  "last_result_classification": "endpoint_reject",
+  "next_action": "Director disposition only. The BF16 component is positive, but its exact-checkpoint coherence arm is consumed and rejected; do not replay it or start c32. Bench l40s-qserve-e00a74kcbps8v00fk4 is released to maintenance with the healthy loaded server, exact checkpoint, compiled extension, and 180-file W4 cache retained.",
+  "priority": 6100,
+  "prior_gpu_input_manifest": {
+    "path": "GPU_INPUT_MANIFEST.json",
+    "sha256": "0b9c1090d51ca63979d7fa086a49a3bbc839e1617c1d6324eb54cfcbcfbe4f1a"
+  },
+  "provider_mutation": "director_resized_existing_managed_boot_disk_to_150_gib",
+  "provider_request": "PROVIDER_REQUEST.json",
+  "researcher_profile": "deep",
+  "result": {
+    "bf16_component": {
+      "classification": "component_positive",
+      "production_speedup_range": [
+        1.870607730514651,
+        1.9241003940693524
+      ],
+      "terminal": "artifacts/l40s-qserve-bf16-20260724t0358z/retrieved/component/TERMINAL.json"
     },
-    "last_result_classification": "offline_exact_consumer_packet_ready",
-    "next_action": "Director: provision and register one nvidia-l40s bench from PROVIDER_REQUEST.json. Researcher after registration: atomically claim it and run the immutable checkpoint-free compile/correctness/timing packet once.",
-    "priority": 5995,
-    "provider_request": "PROVIDER_REQUEST.json",
-    "provider_mutation": "director_owned_future_l40s_only",
-    "researcher_profile": "execution",
-    "status": "active",
-    "storage_budget": "At most 20 GiB project-local and one later 150-GiB provider disk.",
-    "summary": "Immutable SM89 QServe progressive W4A8 exact Gemma MLP packet is ready; no GPU was created or claimed, and the next evidence is one director-provisioned L40S compile/correctness/timing run.",
-    "wall_clock_budget": "At most 10 hours from researcher start."
+    "endpoint": {
+      "c32_started": false,
+      "classification": "endpoint_reject",
+      "coherence_passes": 0,
+      "coherence_rows": 3,
+      "terminal": "artifacts/l40s-qserve-bf16-20260724t0358z/endpoint-retrieved/artifacts/bf16-qserve-c32/ENDPOINT_TERMINAL.json"
+    }
+  },
+  "status": "complete",
+  "storage_budget": "At most 20 GiB project-local and the existing 150-GiB provider disk; checkpoint staging is conditional on both component gates.",
+  "summary": "The BF16 epilogue fixed the FP16 range failure and preserved a 1.87-1.92x isolated MLP speedup, but exact-checkpoint coherence produced degenerate repeated tokens on all prompts. This rejects the endpoint and closes the c32 gate.",
+  "wall_clock_budget": "Through 2026-07-24T08:15:00Z, before the existing 08:30:59Z cleanup watchdog."
 }

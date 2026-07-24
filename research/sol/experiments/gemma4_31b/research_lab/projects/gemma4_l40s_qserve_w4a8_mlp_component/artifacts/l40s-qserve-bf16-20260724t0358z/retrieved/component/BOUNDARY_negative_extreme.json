@@ -1,0 +1,12 @@
+{
+  "activation_scale_finite": true,
+  "case": "negative_extreme",
+  "gate_up_dtype": "torch.bfloat16",
+  "gate_up_finite": true,
+  "input_value": -4.0,
+  "output_absolute_max": 0.0,
+  "output_consumed_sum_squares_fp64": 0.0,
+  "output_dtype": "torch.bfloat16",
+  "output_finite": true,
+  "pass": true
+}

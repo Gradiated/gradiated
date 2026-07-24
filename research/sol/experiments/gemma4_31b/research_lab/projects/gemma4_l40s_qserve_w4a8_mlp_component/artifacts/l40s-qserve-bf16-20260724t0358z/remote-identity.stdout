@@ -1,0 +1,5 @@
+gemma4-qserve-l40s-20260724t0230z
+NVIDIA L40S, GPU-4cdfc14a-c633-e61e-9235-56118c547d80, 46068 MiB
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda1       145G   44G  101G  31% /
+image_present

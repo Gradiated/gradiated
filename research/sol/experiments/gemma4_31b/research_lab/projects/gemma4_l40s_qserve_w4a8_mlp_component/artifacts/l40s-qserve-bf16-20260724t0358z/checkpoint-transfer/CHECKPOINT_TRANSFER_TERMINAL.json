@@ -1,0 +1,71 @@
+{
+  "checkpoint_bytes": 62578655208,
+  "files": [
+    {
+      "bytes": 49784788364,
+      "bytes_per_second": 54565320.26813528,
+      "name": "model-00001-of-00002.safetensors",
+      "seconds": 912.3888235120103,
+      "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+      "status": "transferred"
+    },
+    {
+      "bytes": 12761549884,
+      "bytes_per_second": 58428974.532594614,
+      "name": "model-00002-of-00002.safetensors",
+      "seconds": 218.4113273608964,
+      "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10",
+      "status": "transferred"
+    },
+    {
+      "bytes": 4621,
+      "bytes_per_second": 5146.804254308703,
+      "name": "config.json",
+      "seconds": 0.897838692064397,
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "status": "transferred"
+    },
+    {
+      "bytes": 32169626,
+      "bytes_per_second": 11803240.915131489,
+      "name": "tokenizer.json",
+      "seconds": 2.7254909250186756,
+      "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f",
+      "status": "transferred"
+    },
+    {
+      "bytes": 2095,
+      "bytes_per_second": 2775.6483378533717,
+      "name": "tokenizer_config.json",
+      "seconds": 0.7547786120558158,
+      "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df",
+      "status": "transferred"
+    },
+    {
+      "bytes": 18683,
+      "bytes_per_second": 19203.294462946888,
+      "name": "chat_template.jinja",
+      "seconds": 0.972905979026109,
+      "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+      "status": "transferred"
+    },
+    {
+      "bytes": 1689,
+      "bytes_per_second": 2224.6577872923694,
+      "name": "processor_config.json",
+      "seconds": 0.7592178939376026,
+      "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c",
+      "status": "transferred"
+    },
+    {
+      "bytes": 120246,
+      "bytes_per_second": 115185.03892947693,
+      "name": "model.safetensors.index.json",
+      "seconds": 1.0439376599388197,
+      "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+      "status": "transferred"
+    }
+  ],
+  "pass": true,
+  "schema_version": 1
+}

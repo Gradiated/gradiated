@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "decision": "bf16_safe_qserve_progressive_epilogue_boundary_first",
+  "prior_manifest_sha256": "0b9c1090d51ca63979d7fa086a49a3bbc839e1617c1d6324eb54cfcbcfbe4f1a",
+  "qserve_revision": "02b2925aa6fa3b92b06316a1524b7f38922cd9c8",
+  "fixed_schedule": "CTA_M=32,CTA_N=64,CTA_K=128,WARP_M=32,WARP_N=32,WARP_K=64,STAGES=3",
+  "files": {
+    "inputs/bf16_epilogue/BF16_EXPERIMENT_SPEC.json": "10e2ec4b8f82a924f5c922d602b3a97418c3cee8d450fd22fba1f5291e25ae97",
+    "inputs/bf16_epilogue/compile_report.py": "6f3435144fb113cea6588209d355a4ac7c905ae2e86588b5248e86fd060477c0",
+    "inputs/bf16_epilogue/qserve_bf16_component.py": "959e1b3df8f818661bdcbe0dccdbdb50614d9981ce591e58ac78255f9e77e7b2",
+    "inputs/bf16_epilogue/qserve_sm89/LICENSE.qserve-apache-2.0": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "inputs/bf16_epilogue/qserve_sm89/activation_quant.cu": "8b2557514f65827023cf8abef968c7c3724273a262b8b72e95b366ae1684492c",
+    "inputs/bf16_epilogue/qserve_sm89/bindings.cpp": "45d35859b33a441fecd2e40487b306c20e2829954aba5bbeb1c930a70273c68d",
+    "inputs/bf16_epilogue/qserve_sm89/gemm_cuda.h": "c205dc5288aa9fa1deb3caefb95c9d706517618bc3a83401b773b85a284d4817",
+    "inputs/bf16_epilogue/qserve_sm89/qserve_w4a8_gemm.cu": "0b682281f720b07b362bc2e6fc637295dbc1fdd0ad8f4a3c6f26aa1ba252ec9a",
+    "inputs/bf16_epilogue/qserve_sm89/setup.py": "dcb3edef21240ae0092fb4d3b2e24b8b3544231fd76745869bcbfdf37ffe8d01",
+    "inputs/bf16_epilogue/run_bf16_component.sh": "f3cccb449d11ab94a8838282d77bace56251ce4423325ab11323ea3d488bd2e9",
+    "inputs/bf16_epilogue/verify_packet.py": "850f7d9ac45b95878e718342318d1b33c78777e5c1d0f29f4a8ac69c82ddbcb8"
+  }
+}

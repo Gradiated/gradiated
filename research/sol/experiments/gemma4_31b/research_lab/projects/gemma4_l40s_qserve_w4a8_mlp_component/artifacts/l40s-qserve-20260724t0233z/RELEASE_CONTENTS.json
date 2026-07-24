@@ -1,0 +1,9 @@
+{
+  "status": "maintenance",
+  "classification": "typed_pre_science_environment_blocker",
+  "blocker": "Pinned SGLang image sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6 cannot fit the registered 40-GiB disk.",
+  "scientific_invocation_started": false,
+  "candidate_cuda_started": false,
+  "artifacts": "artifacts/l40s-qserve-20260724t0233z/remote-output.tar.gz",
+  "next_need": "Director must provide a compatible larger disk or preloaded pinned image; rerun the unchanged packet only after that repair."
+}

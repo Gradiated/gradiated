@@ -1,0 +1,5 @@
+{
+  "artifact_root": "artifacts/grammar-safe-20260724t012615Z",
+  "classification": "typed_remote_orchestration_boundary",
+  "error": "FileNotFoundError: [Errno 2] No such file or directory: '/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_grammar_safe_routing_endpoint/artifacts/grammar-safe-20260724t012615Z/retrieved/artifacts/TERMINAL.json'"
+}

@@ -1,0 +1,33 @@
+{
+  "status": "terminal",
+  "priority": 5990,
+  "researcher_profile": "execution",
+  "authorized_spend_usd": 8.0,
+  "actual_spend_usd": 0.40,
+  "allocation_limit": 1,
+  "active_session": null,
+  "summary": "Terminal reject: the scheduler hook was implemented and candidate c32 timing was below the ceiling, but native tool rows diverged and exact c32 token evidence was absent.",
+  "next_action": "Director disposition required; do not replay the consumed candidate arm or remove the retained candidate server without an explicit successor decision.",
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "compute_budget": "One retained H200, at most 90 claimed GPU-minutes.",
+  "wall_clock_budget": "At most 150 minutes from researcher start.",
+  "storage_budget": "At most 8 GiB of new project-local artifacts.",
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "economic_ceiling_seconds_per_request": 0.6381105231,
+  "provisional_ngram_seconds_per_request": 0.5967508053124675,
+  "immutable_binding": "DIRECTOR_BINDING.json",
+  "reservation_gate": "Do not claim until the renewed $8 reservation is present, every DIRECTOR_BINDING.json input rehashes exactly, and the pool still shows the assigned H200 empty and available.",
+  "terminal": "FINAL_TERMINAL.json",
+  "artifact_root": "artifacts/grammar-safe-20260724t012615Z/retrieved/artifacts",
+  "candidate_arm_consumed": true,
+  "control_arm_consumed": true,
+  "forbidden": [
+    "unchanged native NGRAM production promotion",
+    "NGRAM parameter or sampling sweep",
+    "tool-output canonicalization or accounting rewrite",
+    "performance-only replay without server token identity",
+    "broad quality regeneration",
+    "provider lifecycle mutation",
+    "any interaction with the independent DFlash bench"
+  ]
+}

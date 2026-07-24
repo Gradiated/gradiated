@@ -1,0 +1,3 @@
+usage: gpu_pool.py [-h] --lab LAB
+                   {list,register,claim,heartbeat,update,release,drain,reclaim,ready,replace-watchdog,retire} ...
+gpu_pool.py: error: unrecognized arguments: --bench h200-sync-linear-e00vhh6h29fj68x91g

@@ -1,0 +1,286 @@
+[
+  {
+    "id": "ordinary",
+    "mode": "serial",
+    "normalized": {
+      "content": "Paris",
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 22,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 24
+      }
+    },
+    "request": {
+      "max_tokens": 16,
+      "messages": [
+        {
+          "content": "State the capital of France in one word.",
+          "role": "user"
+        }
+      ],
+      "model": "google/gemma-4-31B-it",
+      "return_logprob": true,
+      "seed": 20260718,
+      "temperature": 0,
+      "top_logprobs_num": 1
+    },
+    "response_sha256": "764652c0e1cfa7e2b57123d514425714a29fee48314f2210a68884800a6b96e6"
+  },
+  {
+    "id": "stop_length",
+    "mode": "serial",
+    "normalized": {
+      "content": "OK",
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 18,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 20
+      }
+    },
+    "request": {
+      "max_tokens": 16,
+      "messages": [
+        {
+          "content": "Reply exactly with OK.",
+          "role": "user"
+        }
+      ],
+      "model": "google/gemma-4-31B-it",
+      "return_logprob": true,
+      "seed": 20260718,
+      "temperature": 0,
+      "top_logprobs_num": 1
+    },
+    "response_sha256": "ebacb565b185be0bfaf3de82c0573213e216e3e85b0d4db4c236d175c9f8b4af"
+  },
+  {
+    "id": "cached_prefix",
+    "mode": "serial",
+    "normalized": {
+      "content": "Blue",
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 37,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 39
+      }
+    },
+    "request": {
+      "max_tokens": 16,
+      "messages": [
+        {
+          "content": "You are concise. Reply with only the requested word.",
+          "role": "system"
+        },
+        {
+          "content": "What color is a clear daytime sky?",
+          "role": "user"
+        }
+      ],
+      "model": "google/gemma-4-31B-it",
+      "return_logprob": true,
+      "seed": 20260718,
+      "temperature": 0,
+      "top_logprobs_num": 1
+    },
+    "response_sha256": "c4732689f5e85db9ae6887c89635a621ca160062801d5ab644e057cb4222c0e4"
+  },
+  {
+    "id": "repeated_pattern",
+    "mode": "serial",
+    "normalized": {
+      "content": "abab",
+      "finish_reason": "stop",
+      "tool_calls": [],
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 22,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 24
+      }
+    },
+    "request": {
+      "max_tokens": 16,
+      "messages": [
+        {
+          "content": "Continue this pattern with four letters: ababab",
+          "role": "user"
+        }
+      ],
+      "model": "google/gemma-4-31B-it",
+      "return_logprob": true,
+      "seed": 20260718,
+      "temperature": 0,
+      "top_logprobs_num": 1
+    },
+    "response_sha256": "fb8d09c38605da350818ab3a9092ce7cd9655a958299927bd9aec57416226088"
+  },
+  {
+    "id": "single_tool",
+    "mode": "serial",
+    "normalized": {
+      "content": "",
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        {
+          "arguments": "{\"user_id\": \"demo_user\"}",
+          "index": 0,
+          "name": "lookup_user",
+          "type": "function"
+        }
+      ],
+      "usage": {
+        "completion_tokens": 24,
+        "prompt_tokens": 127,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 151
+      }
+    },
+    "request": {
+      "max_tokens": 128,
+      "messages": [
+        {
+          "content": "Call lookup_user for user_id demo_user.",
+          "role": "user"
+        }
+      ],
+      "model": "google/gemma-4-31B-it",
+      "seed": 20260718,
+      "temperature": 0,
+      "tool_choice": "required",
+      "tools": [
+        {
+          "function": {
+            "description": "Look up a user by id.",
+            "name": "lookup_user",
+            "parameters": {
+              "properties": {
+                "user_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "user_id"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "function"
+        },
+        {
+          "function": {
+            "description": "Get details for a user.",
+            "name": "get_user_details",
+            "parameters": {
+              "properties": {
+                "user_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "user_id"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "function"
+        }
+      ]
+    },
+    "response_sha256": "476c44b3b61627c0793771147c1a7e141b04c0b01d32e33e1777df3beb6284eb"
+  },
+  {
+    "id": "multi_tool",
+    "mode": "serial",
+    "normalized": {
+      "content": "",
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        {
+          "arguments": "{\"user_id\": \"demo_user\"}",
+          "index": 0,
+          "name": "lookup_user",
+          "type": "function"
+        },
+        {
+          "arguments": "{\"user_id\": \"demo_user\"}",
+          "index": 1,
+          "name": "get_user_details",
+          "type": "function"
+        }
+      ],
+      "usage": {
+        "completion_tokens": 80,
+        "prompt_tokens": 148,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 228
+      }
+    },
+    "request": {
+      "max_tokens": 128,
+      "messages": [
+        {
+          "content": "Call lookup_user for user_id demo_user, then get_user_details for user_id demo_user. Use both tools in that order.",
+          "role": "user"
+        }
+      ],
+      "model": "google/gemma-4-31B-it",
+      "seed": 20260718,
+      "temperature": 0,
+      "tool_choice": "required",
+      "tools": [
+        {
+          "function": {
+            "description": "Look up a user by id.",
+            "name": "lookup_user",
+            "parameters": {
+              "properties": {
+                "user_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "user_id"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "function"
+        },
+        {
+          "function": {
+            "description": "Get details for a user.",
+            "name": "get_user_details",
+            "parameters": {
+              "properties": {
+                "user_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "user_id"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "function"
+        }
+      ]
+    },
+    "response_sha256": "0dc63a8f3a50ccb88c36a7934f7c7342ba6ff76cd3b570753fa3d6e5d51d9c0f"
+  }
+]

@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "classification": "grammar_safe_native_ngram_routing_endpoint_binding",
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+  },
+  "runtime": {
+    "release": "sglang v0.5.13",
+    "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+  },
+  "bench": {
+    "id": "h200-sync-linear-e00vhh6h29fj68x91g",
+    "accelerator": "nvidia-h200-sxm",
+    "hourly_cost_usd": 2.46,
+    "deadline_utc": "2026-07-24T10:30:00Z"
+  },
+  "inputs": {
+    "production_validation_binding": {
+      "path": "../gemma4_h200_ngram_production_validation/EVIDENCE_BINDING.json",
+      "sha256": "c4d0d7b39a557e300990d9b915abbd0a10a4a5bde5c00dfac733270f80eca051"
+    },
+    "ngram_contract": {
+      "path": "../gemma4_h200_ngram_speculative_endpoint/NGRAM_CONTRACT.json",
+      "sha256": "5b3b043fc192e4001414c67fbe587d6089f5ba064fa22e76ef1772c71f649833"
+    },
+    "endpoint_runner": {
+      "path": "../gemma4_h200_ngram_speculative_endpoint/inputs/bound/exact_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    "paired_performance_terminal": {
+      "path": "../gemma4_h200_ngram_speculative_endpoint/artifacts/ngram-diagnostic-20260723t0815z/PAIRED_TERMINAL.json",
+      "sha256": "cea685ac7d04533754d640d34c3d54c61ac3101c3dfea07c8cb9deb0b4af4e04"
+    },
+    "final_trace_analysis": {
+      "path": "../gemma4_h200_ngram_production_validation/TOKEN_TRACE_ANALYSIS.json",
+      "sha256": "6b61fa7b0a2407c1748a195f46c9c5508323ef2610bdb4a730f577090143e72c"
+    },
+    "token_divergence": {
+      "path": "../gemma4_h200_ngram_production_validation/artifacts/token-trace-repair/retrieved/TOKEN_DIVERGENCE_ANALYSIS.json",
+      "sha256": "f509ca11ac9461ec3caa89b03f761515d25de49b5b5e473d3a1e231dfb849478"
+    },
+    "pinned_ngram_worker": {
+      "path": "../gemma4_h200_ngram_production_validation/artifacts/sequential-validation/retrieved/ngram_worker.py",
+      "sha256": "27721b777cae08657ec9854ec0137a0db50afd49d84809503312fa43e399b554"
+    },
+    "proven_endpoint_launcher": {
+      "path": "../gemma4_h200_ngram_speculative_endpoint/remote_ngram_diagnostic.sh",
+      "sha256": "0ac38f2ae9918af862a8b67d91a4844ca2eaba0301314bb021df48a5c89fd3a2"
+    },
+    "proven_trace_launcher": {
+      "path": "../gemma4_h200_ngram_production_validation/remote_token_trace_validation.py",
+      "sha256": "7f592f047acb0ee6b19f995461e1c6985d243447b4d1f4867f5b02b8b0cccb5e"
+    },
+    "quality_bindings": {
+      "path": "../gemma4_h200_v0513_fp8_production_validation/BINDINGS.json",
+      "sha256": "98bf28ca29a937861bddf1812317b0751c526e53a1983331b4434b95bf488a92"
+    },
+    "tool_consumer_terminal": {
+      "path": "../gemma4_h200_v0513_fp8_production_validation/artifacts/tool-bridge-20260720t0458z/FINAL_TERMINAL.json",
+      "sha256": "7d9f6a1a8e376489e30cd67dacf753aa8574bc8348a140341b3439b7ee8b5430"
+    }
+  },
+  "observed_mechanism": {
+    "native_ngram_service_seconds_per_request": 0.5967508053124675,
+    "control_seconds_per_request": 0.7022385984687389,
+    "economic_ceiling_seconds_per_request": 0.6381105231,
+    "divergent_class": "grammar-constrained single-tool generation",
+    "divergent_control_tokens": 24,
+    "divergent_ngram_tokens": 41,
+    "ordinary_exact_rows": 8,
+    "multi_tool_exact_rows": 1,
+    "c32_has_tools_response_format_or_grammar": false
+  },
+  "intervention": {
+    "rule": "Use ordinary target autoregressive generation for grammar-constrained batches or requests; retain the unchanged native NGRAM path for non-grammar traffic.",
+    "allowed_mixed_batch_fallback": "A whole mixed batch may use autoregressive target decoding when per-request separation would change pinned batching semantics.",
+    "required_proof": [
+      "zero NGRAM proposal and verification activity for grammar/tool rows",
+      "real NGRAM proposal, target verification, and acceptance for ordinary rows",
+      "exact server-boundary token and feature equality for all ten validation rows",
+      "exact server-boundary token equality for all 32 c32 rows",
+      "candidate c32 service time <= 0.6381105231 s/request"
+    ]
+  },
+  "limits": {
+    "authorized_spend_usd": 8.0,
+    "compute": "At most 90 claimed H200 minutes.",
+    "wall_clock": "At most 150 minutes.",
+    "storage": "At most 8 GiB.",
+    "provider_mutation": "forbidden"
+  }
+}
+

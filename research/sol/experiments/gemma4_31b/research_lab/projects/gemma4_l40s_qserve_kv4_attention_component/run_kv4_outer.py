@@ -209,6 +209,100 @@ def main() -> int:
         )
         if prepare.returncode:
             raise RuntimeError("typed_remote_boundary:prepare_failed")
+        resident_output = f"{REMOTE_ROOT}/outputs/kv4-l40s-pointer-repair-20260724t0710z"
+        resident_terminal = run_ssh(
+            ip, KEY,
+            f"test -f {shlex.quote(resident_output + '/COMPONENT_TERMINAL.json')}",
+            timeout=60,
+        )
+        if resident_terminal.returncode == 0:
+            resident_pack = run_ssh(
+                ip, KEY,
+                f"cd {shlex.quote(resident_output)} && rm -f resident-compact.tar.gz.part "
+                "&& files=\"$(find . -maxdepth 1 -type f ! -name 'resident-compact.tar.gz' "
+                "! -name 'resident-compact.tar.gz.part' -printf '%f ')\" && test -n \"$files\" "
+                "&& tar -czf resident-compact.tar.gz.part $files "
+                "&& mv resident-compact.tar.gz.part resident-compact.tar.gz",
+                timeout=90,
+            )
+            if resident_pack.returncode:
+                raise RuntimeError("typed_retrieval_boundary:resident_compact_pack_failed")
+            resident_copy = scp_from(ip, f"{resident_output}/resident-compact.tar.gz", root / "resident-compact.tar.gz")
+            if resident_copy.returncode:
+                raise RuntimeError("typed_retrieval_boundary:resident_compact_scp_failed")
+            with tarfile.open(root / "resident-compact.tar.gz", "r:gz") as archive:
+                archive.extractall(root / "resident-retrieved", filter="data")
+            terminal_path = root / "resident-retrieved/COMPONENT_TERMINAL.json"
+            state_path = root / "resident-retrieved/INVOCATION_STATE.json"
+            terminal = json.loads(terminal_path.read_text())
+            state = json.loads(state_path.read_text()) if state_path.is_file() else None
+            emit("resident_terminal_retrieved", classification=terminal.get("classification"), invocation=state)
+            # A persisted decision-bearing terminal closes the component arm.
+            # Counters below consume the same resident packet/output only when it passed.
+            if terminal.get("classification") != "component_positive":
+                release_condition = "ready"
+                release_contents = {
+                    "project": NAME,
+                    "classification": terminal.get("classification"),
+                    "artifacts": str(root.relative_to(PROJECT)),
+                    "scientific_terminal": str(terminal_path.relative_to(PROJECT)),
+                    "result": "Resident KV4 component terminal consumed; no replay or counters after a non-passing component.",
+                    "server_state": "No component container remains; resident immutable packet and outputs retained.",
+                }
+                return 0
+            remote_output = resident_output
+            remote_packet = f"{REMOTE_ROOT}/packets/{PACKET_SHA256}.tar.gz"
+            remote_run = f"{REMOTE_ROOT}/runs/{PACKET_SHA256}"
+            metrics = ",".join((
+                "dram__bytes_read.sum", "lts__t_sectors_op_read.sum",
+                "sm__warps_active.avg.pct_of_peak_sustained_active",
+                "launch__registers_per_thread", "smsp__sass_inst_executed_op_local_ld.sum",
+                "smsp__sass_inst_executed_op_local_st.sum", "smsp__inst_executed_op_barrier.sum",
+            ))
+            for geometry in ("local", "global"):
+                for target in ("control", "candidate"):
+                    label = f"{geometry}-{target}"
+                    profile = (
+                        f"sudo docker run --rm --gpus all --ipc=host --cap-add SYS_ADMIN "
+                        f"-v {shlex.quote(remote_run)}:/packet:ro -v {shlex.quote(remote_output)}:/output "
+                        f"{shlex.quote(IMAGE)} bash -lc "
+                        + shlex.quote(
+                            f"export PYTHONPATH=/packet/inputs/exact_gemma_kv4; "
+                            f"ncu --target-processes all --metrics {metrics} --csv --page raw "
+                            f"python3 /packet/inputs/exact_gemma_kv4/kv4_component.py "
+                            f"--artifact-root /output/profile-{label} --profile-only "
+                            f"--geometry {geometry} --target {target} "
+                            f">/output/profile-{label}.csv 2>/output/profile-{label}.stderr"
+                        )
+                    )
+                    counter = run_ssh(ip, KEY, profile, timeout=max(300, deadline - int(time.time()) - 180))
+                    emit("resident_counter_finished", label=label, returncode=counter.returncode)
+                    if counter.returncode:
+                        raise RuntimeError(f"typed_counter_boundary:ncu_failed:{label}")
+            packed = run_ssh(
+                ip, KEY,
+                f"sudo tar -czf {shlex.quote(remote_output + '/retrieval.tar.gz')} "
+                f"-C {shlex.quote(remote_output)} --exclude=retrieval.tar.gz . && "
+                f"sudo chown glmrunner:glmrunner {shlex.quote(remote_output + '/retrieval.tar.gz')}",
+                timeout=180,
+            )
+            if packed.returncode:
+                raise RuntimeError("typed_retrieval_boundary:resident_bulk_pack_failed")
+            bulk = scp_from(ip, f"{remote_output}/retrieval.tar.gz", root / "resident-remote-output.tar.gz")
+            if bulk.returncode:
+                raise RuntimeError("typed_retrieval_boundary:resident_bulk_scp_failed")
+            release_condition = "ready"
+            release_contents = {
+                "project": NAME,
+                "classification": terminal["classification"],
+                "artifacts": str(root.relative_to(PROJECT)),
+                "scientific_terminal": str(terminal_path.relative_to(PROJECT)),
+                "candidate_cuda_started": bool(state and state.get("candidate_cuda_invocation_started")),
+                "scientific_invocation_started": bool(state and state.get("candidate_scientific_invocation_started")),
+                "result": "Resident exact D256-local/D512-global KV4 component terminal consumed and fixed counters completed.",
+                "server_state": "No component container remains; immutable KV4 packet and Triton caches remain on disk.",
+            }
+            return 0
         matched = run_ssh(
             ip, KEY,
             f"test -f {shlex.quote(remote_packet)} && "
@@ -259,9 +353,13 @@ def main() -> int:
         # Retrieve the compact decision evidence before any optional bulk archive.
         compact = run_ssh(
             ip, KEY,
-            f"cd {shlex.quote(remote_output)} && tar -czf compact.tar.gz "
-            "COMPONENT_TERMINAL.json ERROR_TERMINAL.json INVOCATION_STATE.json worker.stdout worker.stderr "
-            "2>/dev/null || tar -czf compact.tar.gz $(find . -maxdepth 1 -type f -printf '%f ')",
+            f"cd {shlex.quote(remote_output)} && "
+            "rm -f compact.tar.gz.part && "
+            "files=\"$(find . -maxdepth 1 -type f "
+            "! -name 'compact.tar.gz' ! -name 'compact.tar.gz.part' -printf '%f ')\" && "
+            "test -n \"$files\" && "
+            "tar -czf compact.tar.gz.part $files && "
+            "mv compact.tar.gz.part compact.tar.gz",
             timeout=90,
         )
         if compact.returncode:

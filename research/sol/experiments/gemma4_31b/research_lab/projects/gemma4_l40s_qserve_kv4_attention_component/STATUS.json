@@ -1,22 +1,21 @@
 {
   "active_session": {
-    "artifact_root": "artifacts/kv4-l40s-pointer-repair-20260724t0710z",
+    "artifact_root": "artifacts/kv4-l40s-resident-retrieve-20260724t0722z",
     "deadline_utc": "2026-07-24T08:15:00Z",
-    "expected_terminal": "artifacts/kv4-l40s-pointer-repair-20260724t0710z/retrieved/COMPONENT_TERMINAL.json",
-    "forward_progress": "Pointer-only immutable packet verified; bounded owner is active and will atomically claim the admitted L40S before staging and running the one frozen component plus fixed counters.",
+    "expected_terminal": "artifacts/kv4-l40s-resident-retrieve-20260724t0722z/resident-retrieved/COMPONENT_TERMINAL.json",
+    "forward_progress": "Retrieval-first owner is active: it will atomically retrieve the resident pointer-repair output before any CUDA invocation and consume a persisted component terminal without replay.",
     "packet_sha256": "45472047380028df34f8d702c3101dab326154bdfb919bfb835c12ff7761de8f",
-    "manifest_sha256": "c52ba4019a47c7713124e2bc10b95104cf6fd9df37f50f0219eb966b9f38a2f8",
-    "main_pid": 4010142,
-    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-kv4-l40s-pointer-repair-20260724t0710z.service",
-    "unit": "gemma4-kv4-l40s-pointer-repair-20260724t0710z.service",
+    "main_pid": 4014840,
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-kv4-l40s-resident-retrieve-20260724t0722z.service",
+    "unit": "gemma4-kv4-l40s-resident-retrieve-20260724t0722z.service",
     "unit_manager": "user"
   },
-  "actual_spend_usd": 0.006726643004733981,
+  "actual_spend_usd": 0.012539084501594185,
   "authorized_spend_usd": 4.0,
   "candidate_arm_consumed": false,
-  "classification": "triton_pointer_repair_admitted",
+  "classification": "retrieval_first_pointer_repair_continuation",
   "compute_budget": "At most 3 additional local CPU-hours and 1.1 L40S GPU-hours on the existing bench.",
-  "next_action": "Consume KV4_TRITON_POINTER_REPAIR.json. Replace only illegal producer SSA tensor indexing with masked pointer-based tl.load operations, regenerate and hash one immutable packet, then start one bounded owner to claim l40s-qserve-e00a74kcbps8v00fk4 and run the unchanged correctness/timing component once plus its fixed minimum counters. Keep the claim through ordinary repairable integration defects.",
+  "next_action": "Start one replacement bounded owner using the already-corrected run_kv4_outer.py and immutable pointer-repair packet 45472047380028df34f8d702c3101dab326154bdfb919bfb835c12ff7761de8f. Claim available bench l40s-qserve-e00a74kcbps8v00fk4, retrieve the resident remote output atomically before invoking CUDA, and classify it. If COMPONENT_TERMINAL.json exists, consume it and do not replay. If the evidence proves another pre-science integration boundary, repair and rerun once in the same uninterrupted claim before 08:15Z. Collect the fixed counters only after a passing component terminal.",
   "priority": 6300,
   "researcher_profile": "execution",
   "result": {
@@ -29,10 +28,13 @@
     "error_terminal": "artifacts/kv4-l40s-20260724t0550z/retrieved/ERROR_TERMINAL.json",
     "invocation_state": "artifacts/kv4-l40s-20260724t0550z/retrieved/INVOCATION_STATE.json",
     "cost": "artifacts/kv4-l40s-20260724t0550z/COST.json",
+    "pointer_repair_attempt": "artifacts/kv4-l40s-pointer-repair-20260724t0710z",
+    "pointer_repair_cost": "artifacts/kv4-l40s-pointer-repair-20260724t0710z/COST.json",
+    "pointer_repair_outer_failure": "typed_retrieval_boundary:compact_pack_failed",
     "failure": "Triton CompilationError: tensor indexing k[even]/v[even] in _pack_affine_kv4 requires tl.load pointer arithmetic; no candidate kernel launched and no COMPONENT_TERMINAL.json exists."
   },
   "status": "active",
   "storage_budget": "At most 4 GiB project-local plus 4 GiB temporary on the retained bench.",
-  "summary": "The prior unconsumed packet failed only on illegal producer SSA tensor indexing. The admitted repair replaces it with pointer-derived masked tl.load operations, preserving every scientific dimension. Its new immutable packet is verified and a single bounded owner is launching against the retained L40S.",
+  "summary": "The pointer-only packet reached the remote worker, but the owner failed while packing compact evidence because its tar input included its own output archive. The owner is dead and no terminal was retrieved; cumulative claim exposure is $0.0125390845. The archive command is now atomic and excludes final/partial outputs. The retained L40S is available for one retrieval-first continuation in this same project.",
   "wall_clock_budget": "Complete the repaired packet and its one bounded owner by 2026-07-24T08:15:00Z; lifecycle watchdog remains 2026-07-24T08:30:59.577420Z."
 }

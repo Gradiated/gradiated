@@ -131,3 +131,34 @@
   `gemma4-kv4-l40s-pointer-repair-20260724t0710z.service` (PID `4010142`)
   with the 08:15Z deadline. Initial grouped snapshot: owner active and bench
   still available immediately before its atomic claim; no second owner exists.
+
+## 2026-07-24 — director admits retrieval-first continuation
+
+- The pointer-repair owner is dead. It claimed at `07:12:17Z`, reached the
+  remote worker, and released at `07:12:41Z` after
+  `typed_retrieval_boundary:compact_pack_failed`; its tar fallback selected
+  `compact.tar.gz` while writing that same archive. No compact component or
+  invocation terminal was retrieved.
+- The attempt cost `$0.0058124414968602055`; cumulative project exposure is
+  `$0.012539084501594185`. The pointer-only packet and remote output remain
+  resident. The watchdog is active through `08:30:59Z`.
+- The supervisor's corrected owner builds a partial archive while excluding
+  both final and partial names, then renames it atomically. The director
+  cleared the dead active-session metadata and returned
+  `l40s-qserve-e00a74kcbps8v00fk4` from maintenance to available.
+- Start one replacement bounded owner and retrieve the resident result before
+  CUDA. Consume any existing `COMPONENT_TERMINAL.json` without replay. Only a
+  typed pre-science boundary permits one in-claim repair/continuation before
+  `08:15Z`; fixed counters remain conditional on a passing component.
+
+## 2026-07-24 — resident retrieval owner active
+
+- Extended the corrected bounded owner to claim the named bench and atomically
+  archive/copy the existing pointer-repair output before it can construct a
+  CUDA worker command. A resident `COMPONENT_TERMINAL.json` is consumed without
+  replay; only a `component_positive` terminal receives the fixed four counter
+  captures against that same resident output.
+- Started the single retrieval-first owner
+  `gemma4-kv4-l40s-resident-retrieve-20260724t0722z.service` (PID `4014840`).
+  Initial grouped snapshot is pre-claim with the bench available; no second
+  owner or CUDA replay has been started.

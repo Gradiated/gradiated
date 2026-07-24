@@ -1,0 +1,22 @@
+Traceback (most recent call last):
+  File "/trace/trace_runner.repair3.py", line 230, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/trace/trace_runner.repair3.py", line 157, in main
+    rows.append(run_request(input_ids, depth, f"depth-{depth}"))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/trace/trace_runner.repair3.py", line 87, in run_request
+    flush, flush_raw = post("/flush_cache", {}, timeout=60)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/trace/trace_runner.repair3.py", line 38, in post
+    return (json.loads(raw) if raw.strip() else {}), raw
+            ^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)

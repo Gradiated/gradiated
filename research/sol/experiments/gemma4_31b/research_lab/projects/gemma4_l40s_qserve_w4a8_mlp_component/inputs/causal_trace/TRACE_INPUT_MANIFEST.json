@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "decision": "real_weight_layer_depth_causal_discriminator",
+  "files": [
+    {
+      "path": "TRACE_SPEC.json",
+      "sha256": "5c8a106e8666629b2c82d6c718332886086d2b03e331d3d8e2d119f6f972c0ad"
+    },
+    {
+      "path": "sitecustomize.py",
+      "sha256": "4878a64f1618b4ef226577a2c0155fe4b0f8d1fd81682a9aa0fc880c3ca93000"
+    },
+    {
+      "path": "trace_runner.py",
+      "sha256": "2b7704ecf9f2600d98362a6ca5d9c0bef8ddea9cd9ea27f938647ee3ec609953"
+    },
+    {
+      "path": "oracle_compare.py",
+      "sha256": "33e451d36286e4b508e5c1bdd37bdf96603e0f572a0ea877fcfecd5cb202b346"
+    },
+    {
+      "path": "finalize_trace.py",
+      "sha256": "e34f68191e3734d5f1a411ddd8119bb4c200e2963a9a4a079317d72ba658db0b"
+    },
+    {
+      "path": "run_trace.sh",
+      "sha256": "02a0541be0bae8f028cbb372a3bafd4323551f8aff9c29efeddcfac0506ce771"
+    },
+    {
+      "path": "verify_trace.py",
+      "sha256": "bc7e4a210c6110f21ae42bfd4b740dafa6739a7760eb7dab1bea58816fc2c4f6"
+    }
+  ],
+  "authoritative_inputs": {
+    "discriminator_sha256": "2bdcc95bcd9c57f13b1cb1fb94e04555ab0a913070da2568c873d6b7cee05eb2",
+    "base_overlay_sha256": "ca9a4be48e63a7b80f4f1d081013e9a12d2e39c1aa2c9ffda376e6d8c4737153",
+    "w4_representation_manifest_sha256": "b086a0f76af3f69b992ab90d09e4cf2b2cfa9d56fa6c0540263a8ad5484e84dd",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "endpoint_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "compiled_packet_sha256": "8828d463cf965bab69e4eb1890c38a6ab713a6f555a5e4388ec1601472efb08a"
+  }
+}

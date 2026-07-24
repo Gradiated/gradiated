@@ -1,0 +1,10 @@
+{
+  "claim_exposure_seconds": 3822.741030931473,
+  "claim_exposure_usd": 0.9163782416440679,
+  "claim_started_epoch": 1784871993.025745,
+  "cumulative_spend_usd": 2.566839664947851,
+  "prior_spend_usd": 1.6504614233037829,
+  "rate_usd_per_hour": 0.8629833,
+  "released_epoch": 1784875815.7667758,
+  "schema_version": 1
+}

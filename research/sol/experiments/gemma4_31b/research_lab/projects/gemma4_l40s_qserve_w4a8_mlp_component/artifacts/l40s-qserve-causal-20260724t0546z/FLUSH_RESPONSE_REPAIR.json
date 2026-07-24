@@ -1,0 +1,14 @@
+{
+  "classification": "pre_generate_api_parser_repair",
+  "diagnostic": "the successful /flush_cache endpoint returned a plain-text status body; the shared POST helper required JSON before any /generate request",
+  "evidence": {
+    "depths_completed": [],
+    "layer_route_events": 0,
+    "request_rows": 0
+  },
+  "patched_file": "inputs/causal_trace/trace_runner.py",
+  "patched_sha256": "0c919025c7932d1b91b9babbe6aa5ed07c0cc45350db270d147f71e034263fbe",
+  "repair": "preserve a non-JSON successful HTTP body as raw_text while retaining its raw response hash",
+  "schema_version": 1,
+  "timestamp_utc": "2026-07-24T06:12:45Z"
+}

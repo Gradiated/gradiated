@@ -1,0 +1,30 @@
+{
+  "classification": "post_producer_consumer_repair",
+  "completed_producer": {
+    "depths": [
+      0,
+      1,
+      15,
+      30,
+      45,
+      60
+    ],
+    "replay_permitted": false
+  },
+  "files": {
+    "finalize_trace.py": "84f7df3f7d1a2c804f015e8717e8bb98cd3d105801d481816ba383228b65c4f1",
+    "normalize_trace.py": "03a6e92a61fbc01bb2c0f3e39ae4c4e017bb89d2e72b93d5fb151c22cfc6344a",
+    "normalize_oracle.py": "e7c930bf3c0bb7714cf14c71cafd562f341167fdd886831739eec19991549b83",
+    "oracle_compare.py": "58620021bd5732d2476a766cd81d9eb8243a4bf51b2424ef30e75231e6607b80",
+    "recapture.py": "7a0c7982bec5db89b8ebfdfdc7c4fd4e3d636eb7e0f0a8b4b88ea2ecaab58ae1"
+  },
+  "repairs": [
+    "normalize the fixed 21-token prompt as observed M<=32 forward step 0 and map output token index n to observed step n",
+    "rerun only the invalidated first-divergent hidden-state capture consumer",
+    "restore column-major strides for the cached FP8 control inside the oracle consumer",
+    "validate path counts against complete 60-layer forward steps rather than an incorrect output-token-minus-one estimate",
+    "normalize the completed oracle target metadata without recomputing its measured tensors"
+  ],
+  "schema_version": 1,
+  "timestamp_utc": "2026-07-24T06:47:05Z"
+}

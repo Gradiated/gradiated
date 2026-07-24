@@ -133,3 +133,25 @@ Marlin, or start checkpoint staging before the component gates pass.
 - Storage: at most 20 GiB project-local and the existing 150-GiB provider disk.
 - Provider lifecycle is director-owned.
 - Do not inspect, wait for, restart, or modify DFlash or its H200.
+
+## 2026-07-24 continuation — real-weight layer-depth discriminator
+
+The BF16 kernel and exact checkpoint producer are consumed. The component
+matches its dequantized-W4 oracle, but the real endpoint collapsed on all three
+coherence prompts. The 180-file manifest additionally shows roughly 12–13%
+relative-L2 reconstruction error for the uncalibrated real W4 shards. This is
+not enough to distinguish a cumulative representation failure from a
+layer/shard routing defect.
+
+Consume `REAL_WEIGHT_CAUSAL_DISCRIMINATOR.json`. Reuse the resident healthy
+server, exact checkpoint, cached FP8 and W4 weights, and compiled SM89
+extension. On one new deterministic prompt, run only the fixed W4-prefix-depth
+trace and compare the first divergent real layer against the dequantized-W4
+oracle and original FP8/BF16-semantics output.
+
+A fused-versus-oracle or discrete layer-routing mismatch permits one narrow
+mapping, ordering, scale, or routing repair, followed by one new held-out
+coherence set and conditional c32 endpoint. A fused-oracle match with
+cumulative depth degradation closes uncalibrated all-layer W4. Do not replay
+the consumed prompts, regenerate weights, or open calibration, mixed-precision,
+format, group-size, or schedule sweeps.

@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "decision": "real_weight_layer_depth_causal_discriminator",
+  "question": "Does the exact-checkpoint collapse come from a discrete runtime packing or layer-routing defect, or from cumulative error in the uncalibrated progressive W4 representation?",
+  "authoritative_inputs": {
+    "checkpoint": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "runtime": "SGLang v0.5.13",
+    "endpoint_terminal": {
+      "path": "artifacts/l40s-qserve-bf16-20260724t0358z/endpoint-retrieved/artifacts/bf16-qserve-c32/ENDPOINT_TERMINAL.json",
+      "sha256": "0c2805e6d2b5c912c817233046577e6cb9fd25e2c64f8f58dbf07cbd298f5508"
+    },
+    "w4_representation_manifest": {
+      "path": "artifacts/l40s-qserve-bf16-20260724t0358z/endpoint-retrieved/artifacts/bf16-qserve-c32/W4_REPRESENTATION_MANIFEST.json",
+      "sha256": "b086a0f76af3f69b992ab90d09e4cf2b2cfa9d56fa6c0540263a8ad5484e84dd",
+      "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+      "file_count": 180,
+      "bytes": 31556789100
+    },
+    "w4_pack_events": {
+      "path": "artifacts/l40s-qserve-bf16-20260724t0358z/endpoint-retrieved/artifacts/bf16-qserve-c32/qserve-events.jsonl",
+      "sha256": "6c51c7f191a7a8315a07365190546bb3a9d066f224d87508037291e7bff926c5",
+      "pack_event_count": 180,
+      "relative_l2_min": 0.11947804561944289,
+      "relative_l2_mean": 0.12432262928076147,
+      "relative_l2_max": 0.1362268028870454
+    },
+    "runtime_overlay": {
+      "path": "inputs/endpoint/sitecustomize.py",
+      "sha256": "ca9a4be48e63a7b80f4f1d081013e9a12d2e39c1aa2c9ffda376e6d8c4737153"
+    }
+  },
+  "resource": {
+    "bench_id": "l40s-qserve-e00a74kcbps8v00fk4",
+    "accelerator": "nvidia-l40s",
+    "hourly_cost_usd": 0.8629833,
+    "watchdog_deadline_utc": "2026-07-24T08:30:59.577420Z",
+    "resident_server": "gemma-qserve-bf16-endpoint",
+    "resident_checkpoint": "/home/glmrunner/gemma4-qserve-endpoint/checkpoint",
+    "resident_w4_cache": "/home/glmrunner/gemma4-qserve-endpoint/w4_cache/d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+  },
+  "frozen_discriminator": {
+    "request": {
+      "prompt": "Reply with exactly: cobalt:17",
+      "temperature": 0.0,
+      "max_new_tokens": 32,
+      "stream": false
+    },
+    "w4_layer_prefix_depths": [
+      0,
+      1,
+      15,
+      30,
+      45,
+      60
+    ],
+    "requirements": [
+      "Use the already-cached per-layer FP8 weights as the depth-zero decode reference and the already-cached W4 weights for the selected prefix; do not regenerate either representation.",
+      "Persist scheduler and emitted token IDs, raw text, finish reason, selected W4 layer count, first-token logits or top-k logits, and candidate/FP8 path counts for every depth.",
+      "At the earliest decision-bearing divergence, capture one real hidden-state input and compare the fused W4 output, the dequantized-W4 oracle, and the original cached FP8/BF16-semantics MLP output for gate/up, activation, and down.",
+      "Consume every measured tensor and synchronize outside timing. Preserve exact gate/up shard order, group-128 scales and zeros, and the fixed SM89 kernel."
+    ]
+  },
+  "decision_rules": {
+    "integration_defect": "A fused candidate mismatch against its dequantized-W4 oracle, a discontinuous layer-specific failure, or an incorrect layer/shard/path count permits one source-local mapping, ordering, scale, or routing repair.",
+    "representation_reject": "If the fused candidate matches the dequantized-W4 oracle and the depth curve shows cumulative degradation from the real W4 representation, close this uncalibrated all-layer W4 route. Do not open calibration, mixed-precision, clipping, format, group-size, or schedule sweeps in this project.",
+    "conditional_repair_validation": "After one proven integration repair only, run one new three-prompt held-out coherence set. It must be finite, nondegenerate, semantically valid, and persist raw token IDs and path evidence. The consumed prior three prompts may not be replayed.",
+    "conditional_endpoint": "Only a held-out coherence pass may unlock one unchanged c32 endpoint. Require 32/32 finite valid completions, no reloads, stable memory, complete raw rows, and service time at or below 1.8853265455 seconds per request."
+  },
+  "prohibitions": [
+    "Do not replay the consumed coherence prompts or the BF16 component packet.",
+    "Do not start c32 before a proven integration repair and held-out coherence pass.",
+    "Do not regenerate the checkpoint, W4 cache, or compiled extension.",
+    "Do not change the W4 representation, group size, kernel schedule, model, sampler, or workload.",
+    "Do not create, resize, or destroy a provider resource."
+  ]
+}

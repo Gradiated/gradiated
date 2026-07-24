@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "classification": "pre_science_launcher_path_repair",
+  "candidate_arm_consumed": false,
+  "diagnostic": "run_trace.sh referenced /home/glmrunner/gemma4-qserve-causal-trace/input instead of its immutable hash directory; verify_trace.py was never opened and TRACE_SCIENCE_STARTED.txt does not exist.",
+  "scope": "Change only the launcher trace-directory resolution to dirname($0); all model, checkpoint, cache, overlay, request, depth, oracle, and decision bytes remain unchanged.",
+  "original_run_trace_sha256": "02a0541be0bae8f028cbb372a3bafd4323551f8aff9c29efeddcfac0506ce771",
+  "repaired_run_trace_sha256": "59a0fe748583cb2402062e7154682c5f72022a7025653aafa019b22a38d5bd2d"
+}

@@ -1,0 +1,10 @@
+{
+  "absolute_repair_deadline_epoch": 1784880900.0,
+  "classification": "recoverable_trace_failure",
+  "invocation": {},
+  "ip": "89.169.96.194",
+  "remote_input": "/home/glmrunner/gemma4-qserve-causal-trace/runs/83e21dde721c268c74f67f182bdbc57a0afe1de6901a6afc5e1fd386f6277c40",
+  "remote_output": "/home/glmrunner/gemma4-qserve-endpoint/artifacts/qserve-causal-trace",
+  "schema_version": 1,
+  "worker_returncode": 2
+}

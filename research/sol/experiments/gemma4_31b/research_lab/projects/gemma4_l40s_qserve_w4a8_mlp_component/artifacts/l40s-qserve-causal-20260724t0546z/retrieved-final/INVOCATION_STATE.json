@@ -1,0 +1,15 @@
+{
+  "depths_completed": [
+    0,
+    1,
+    15,
+    30,
+    45,
+    60
+  ],
+  "model_probe_passed": true,
+  "oracle_started": true,
+  "schema_version": 1,
+  "scientific_terminal": "uncalibrated_w4_representation_reject",
+  "trace_science_started": true
+}

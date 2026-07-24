@@ -76,3 +76,52 @@
   `gemma-qserve-bf16-endpoint` container, exact checkpoint, compiled extension,
   and immutable 180-file cache remain resident for director disposition; the
   consumed coherence arm must not be replayed.
+
+## 2026-07-24 — director admits one causal real-weight discriminator
+
+- Evidence: the kernel remains correct against its dequantized-W4 oracle, while
+  the exact 180-file cache records about 12–13% reconstruction error per real
+  shard and the all-layer endpoint collapsed on 3/3 prompts.
+- Decision: reactivate this same project for
+  `REAL_WEIGHT_CAUSAL_DISCRIMINATOR.json`, using fixed W4-prefix depths and one
+  first-divergent-layer oracle comparison on the resident L40S.
+- Stop rule: a fused-oracle match plus cumulative degradation closes
+  uncalibrated W4. Only a proven discrete mapping/order/scale/routing defect
+  permits one repair, new held-out coherence, and conditional c32.
+- Limits: cumulative project authority `$6`, existing bench only, through
+  `08:15Z`; no representation or schedule sweep and no consumed-prompt replay.
+
+## 2026-07-24 — causal trace closes uncalibrated all-layer W4
+
+- Action: claimed only `l40s-qserve-e00a74kcbps8v00fk4` and ran the fixed
+  real-weight prefix depths `0,1,15,30,45,60` against the resident exact
+  checkpoint, 180-file W4/FP8 cache, and BF16 SM89 extension. A depth-0
+  control-prefill failure mechanically proved the cached FP8 B operand had
+  lost its required column-major stride; the single allowed routing/layout
+  repair restored that stride without regenerating weights or replaying a W4
+  candidate path.
+- Measured trace: depth 0 returned exactly `cobalt:17` with `420` FP8 layer
+  calls. Depth 1 first diverged at layer 0/output-token index 2 while retaining
+  the visible text; its audit was `8` W4 plus `472` FP8 calls. Depths 15, 30,
+  45, and 60 all diverged at token 0 and reached the 32-token length cap with
+  increasingly degenerate text. Their exact W4/FP8 counts were
+  `495/1485`, `990/990`, `1485/495`, and `1980/0`.
+- First-divergent-layer oracle: on the real layer-0, forward-step-2 hidden
+  state, fused W4 versus the dequantized-W4 oracle was finite with relative L2
+  `7.67e-6` at gate/up and `0` at activation and down (cosine `1.0`). The
+  dequantized-W4 oracle versus cached FP8 was `4.23%` at gate/up, `11.93%`
+  after activation, and `15.42%` at down. A corrected capture reproduced the
+  common two-token prefix but not the original depth-1 token insertion; this
+  residual nondeterminism is retained and does not authorize a second repair.
+- Decision: terminal
+  `artifacts/l40s-qserve-causal-20260724t0546z/retrieved-final/TERMINAL.json`
+  classifies `uncalibrated_w4_representation_reject`. The fused kernel follows
+  the lossy representation; cumulative real-weight error, not a fused packing
+  mismatch, explains the endpoint collapse. Held-out coherence and c32 did not
+  start.
+- Resource/economics: complete evidence was retrieved before release. The
+  claim lasted `3822.741 s` and cost `$0.9163782416`; cumulative conservative
+  project exposure is `$2.5668396649`, below the `$6` ceiling. The healthy
+  trace-enabled server, exact checkpoint, W4 cache, and compiled extension
+  remain resident, and the bench was released to maintenance for director
+  disposition.

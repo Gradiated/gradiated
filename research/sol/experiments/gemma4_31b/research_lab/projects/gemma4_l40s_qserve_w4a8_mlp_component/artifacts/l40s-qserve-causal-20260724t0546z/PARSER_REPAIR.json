@@ -1,0 +1,15 @@
+{
+  "classification": "pre_request_parser_repair",
+  "diagnostic": "transformers returned a BatchEncoding with input_ids; the runner accepted only a bare list and exited before any /generate request",
+  "evidence": {
+    "depths_completed": [],
+    "layer_route_events": 0,
+    "model_probe_passed": true,
+    "request_rows": 0
+  },
+  "patched_file": "inputs/causal_trace/trace_runner.py",
+  "patched_sha256": "fdd2c4da35004108a50aa09b36b58862459723d1cfbdb861052bea565fdb48d3",
+  "repair": "unwrap BatchEncoding.input_ids before the existing integer-list validation",
+  "schema_version": 1,
+  "timestamp_utc": "2026-07-24T06:10:13Z"
+}

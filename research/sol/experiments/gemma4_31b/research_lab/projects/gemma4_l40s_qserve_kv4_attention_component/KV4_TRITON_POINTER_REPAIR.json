@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "decision": "repair_prelaunch_triton_tensor_indexing_and_run_same_component",
+  "classification": "typed_pre_science_compilation_repair",
+  "authoritative_failure": {
+    "error_terminal": "artifacts/kv4-l40s-20260724t0550z/retrieved/ERROR_TERMINAL.json",
+    "error_terminal_sha256": "a44acd5f42b4dd306290032dea5f0273371e030695ce56db2827193f5726bddf",
+    "invocation_state": "artifacts/kv4-l40s-20260724t0550z/retrieved/INVOCATION_STATE.json",
+    "invocation_state_sha256": "f669dead65ee8c5cee807c78fd7fe40efcb8c86e1ab0f2b617c1586d9cdb90fe",
+    "finding": "The affine KV4 producer failed Triton compilation on SSA tensor indexing before producer completion, candidate-kernel launch, any complete-output correctness row, timing row, or counter packet."
+  },
+  "immutable_scientific_identity": {
+    "bench": "l40s-qserve-e00a74kcbps8v00fk4",
+    "accelerator": "nvidia-l40s",
+    "architecture": "sm89",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "control_source_sha256": "1040f43a62e5bab1c77974b9487cc165b0decc9134813cf3135b193acbd5c863",
+    "representation": "affine KV4 with the frozen quantization equations and nibble layout",
+    "geometry": "Gemma 4 D256 local and D512 global attention"
+  },
+  "repair_scope": [
+    "Change only the producer's illegal SSA tensor indexing. Form even and odd source pointers from the original K and V pointers and use masked tl.load operations.",
+    "Preserve the representation, quantization equations, nibble layout, D256-local/D512-global geometry, decoder, dequantized-cache oracle, transition suite, fixed schedule, installed-SGLang FP8 control, thresholds, and counter packet.",
+    "Regenerate one immutable manifest and packet with all new source and archive hashes recorded before claiming the bench.",
+    "Start one new bounded owner, atomically claim the existing L40S, keep that claim through ordinary repairable integration defects, and run the unchanged component once.",
+    "Retrieve the compact component terminal before collecting only the already-fixed minimum counter packet."
+  ],
+  "gates": {
+    "arm_accounting": "The prior attempt did not consume the scientific arm because the producer never completed and no decision-bearing row exists.",
+    "correctness": "All frozen complete-output, transition, finite-output, and dequantized-cache-oracle gates must pass.",
+    "performance": "Use the frozen matched timing packet and weighting; do not reinterpret a correctness failure as a performance result."
+  },
+  "prohibitions": [
+    "No representation, schedule, geometry, threshold, control, workload, or counter change.",
+    "No endpoint, checkpoint consumer, quality transfer, parameter sweep, or second scientific replay.",
+    "No new provider resource or provider lifecycle mutation."
+  ],
+  "resource": {
+    "hourly_cost_usd": 0.8629833,
+    "cumulative_authority_usd": 4.0,
+    "maximum_l40s_hours": 1.1,
+    "project_deadline_utc": "2026-07-24T08:15:00Z",
+    "watchdog_deadline_utc": "2026-07-24T08:30:59.577420Z"
+  }
+}

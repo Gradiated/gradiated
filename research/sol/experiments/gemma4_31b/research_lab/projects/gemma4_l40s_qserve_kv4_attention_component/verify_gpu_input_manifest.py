@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import argparse
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent
-MANIFEST = ROOT / "KV4_ATTENTION_GPU_INPUT_MANIFEST.json"
 
 
 def sha256(path: Path) -> str:
@@ -19,7 +19,11 @@ def sha256(path: Path) -> str:
 
 
 def main() -> int:
-    manifest = json.loads(MANIFEST.read_text())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--manifest", default="KV4_ATTENTION_GPU_INPUT_MANIFEST.json")
+    args = parser.parse_args()
+    manifest_path = ROOT / args.manifest
+    manifest = json.loads(manifest_path.read_text())
     assert manifest["schema_version"] == 1
     assert manifest["required_compute_capability"] == "8.9"
     assert manifest["scientific_invocations"] == {
@@ -43,7 +47,8 @@ def main() -> int:
     assert spec["measurement"]["iterations"] == 50
     print(json.dumps({
         "valid": True,
-        "manifest_sha256": sha256(MANIFEST),
+        "manifest": str(manifest_path.relative_to(ROOT)),
+        "manifest_sha256": sha256(manifest_path),
         "file_count": len(manifest["files"]),
     }, sort_keys=True))
     return 0

@@ -98,10 +98,30 @@ def _pack_affine_kv4(
 
     even = tl.arange(0, BLOCK_D // 2) * 2
     pair_mask = (slot >= 0) & (even < D)
-    k0 = tl.maximum(0.0, tl.minimum(15.0, tl.floor(k[even] / ks + kz + 0.5))).to(tl.uint8)
-    k1 = tl.maximum(0.0, tl.minimum(15.0, tl.floor(k[even + 1] / ks + kz + 0.5))).to(tl.uint8)
-    v0 = tl.maximum(0.0, tl.minimum(15.0, tl.floor(v[even] / vs + vz + 0.5))).to(tl.uint8)
-    v1 = tl.maximum(0.0, tl.minimum(15.0, tl.floor(v[even + 1] / vs + vz + 0.5))).to(tl.uint8)
+    k0_source = tl.load(
+        K + row * stride_km + kvh * stride_kh + even * stride_kd,
+        mask=pair_mask,
+        other=0.0,
+    ).to(tl.float32)
+    k1_source = tl.load(
+        K + row * stride_km + kvh * stride_kh + (even + 1) * stride_kd,
+        mask=pair_mask,
+        other=0.0,
+    ).to(tl.float32)
+    v0_source = tl.load(
+        V + row * stride_vm + kvh * stride_vh + even * stride_vd,
+        mask=pair_mask,
+        other=0.0,
+    ).to(tl.float32)
+    v1_source = tl.load(
+        V + row * stride_vm + kvh * stride_vh + (even + 1) * stride_vd,
+        mask=pair_mask,
+        other=0.0,
+    ).to(tl.float32)
+    k0 = tl.maximum(0.0, tl.minimum(15.0, tl.floor(k0_source / ks + kz + 0.5))).to(tl.uint8)
+    k1 = tl.maximum(0.0, tl.minimum(15.0, tl.floor(k1_source / ks + kz + 0.5))).to(tl.uint8)
+    v0 = tl.maximum(0.0, tl.minimum(15.0, tl.floor(v0_source / vs + vz + 0.5))).to(tl.uint8)
+    v1 = tl.maximum(0.0, tl.minimum(15.0, tl.floor(v1_source / vs + vz + 0.5))).to(tl.uint8)
     tl.store(
         K4 + slot * stride_k4s + kvh * stride_k4h + even // 2,
         k0 | (k1 << 4),

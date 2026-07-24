@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "packet": "exact Gemma-4 progressive KV4 producer and fused decode component — pointer-only Triton repair",
+  "created_utc": "2026-07-24T07:10:00Z",
+  "repair_contract": "KV4_TRITON_POINTER_REPAIR.json",
+  "bench_id": "l40s-qserve-e00a74kcbps8v00fk4",
+  "accelerator": "nvidia-l40s",
+  "required_compute_capability": "8.9",
+  "container_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "installed_control_source": {
+    "module": "sglang.srt.layers.attention.triton_ops.decode_attention",
+    "sha256": "1040f43a9ea579b944aa037b585997f8d7b585d85f459a1b1f420002b4bd092a",
+    "admission": "worker hashes the installed bytes before the first CUDA invocation"
+  },
+  "files": {
+    "EXACT_GEMMA_KV4_CONTINUATION.json": "1f9f5e360640c88c5eaea0f0177b63a93dd404f9e79546ce786291f044638ed9",
+    "KV4_TRITON_POINTER_REPAIR.json": "800a9632fabdd69d2d7a8132154a070462caae42f256db7b9614ba34079b7048",
+    "KV4_ATTENTION_SOURCE_GEOMETRY_REJECT.json": "c9580f8f4d6f87ed1414becda414ae199700e155160df5c09c713520403ca814",
+    "EXPERIMENT_SPEC.json": "c75708908fabb054a158751d7f69711370592b8d69889769afe44a288f76e537",
+    "inputs/exact_gemma_kv4/kv4_kernels.py": "5423ce886892f9a0e5efc29f17e5706694f3707b1e8cf255fa58c9c338ef7650",
+    "inputs/exact_gemma_kv4/kv4_component.py": "0f6a2deabb0dbc231055715c258eb7c86d1fc4d5e6e65b7bdf32e982b61dee7a",
+    "inputs/exact_gemma_kv4/run_component.sh": "a1aa2c01134c279ee3c849c4e4b9868274a11b69eddc3bb1a9be1b4083a0f156"
+  },
+  "scientific_invocations": {
+    "component": 1,
+    "counter_replays": 4,
+    "sweep": false,
+    "endpoint": false,
+    "checkpoint": false
+  },
+  "expected_terminal": "COMPONENT_TERMINAL.json"
+}

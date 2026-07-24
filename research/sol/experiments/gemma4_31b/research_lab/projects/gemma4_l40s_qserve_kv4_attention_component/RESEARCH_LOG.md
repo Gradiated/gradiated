@@ -98,3 +98,36 @@
   The compact diagnostic archive and raw stdout/stderr are retained under
   `artifacts/kv4-l40s-20260724t0550z/`; the bench was released and is no longer
   owned by this project.
+
+## 2026-07-24 — director corrects deadline and admits pointer-only repair
+
+- The prior terminal's deadline interpretation was wrong: director review at
+  `07:04Z` preceded the `08:15Z` project deadline. Provider reconciliation
+  found instance `computeinstance-e00a74kcbps8v00fk4` RUNNING, disk
+  `computedisk-e00svftc564m2pcp68` READY, the pool bench available, and the
+  recorded watchdog active through `08:30:59Z`.
+- `ERROR_TERMINAL.json` and `INVOCATION_STATE.json` prove a narrow prelaunch
+  defect: Triton rejected SSA tensor indexing, `producer_completed` is false,
+  and no correctness, timing, or counter result exists. The scientific arm is
+  therefore unconsumed.
+- `KV4_TRITON_POINTER_REPAIR.json` admits one repair in this same project:
+  pointer-derived even/odd masked loads only, with all representation,
+  geometry, decoder, oracle, schedule, control, thresholds, and counters
+  frozen. Regenerate one immutable packet and run it once under a single new
+  bounded owner. Cumulative project authority is `$4`, maximum L40S time is
+  1.1 hours, and the project deadline remains `08:15Z`.
+
+## 2026-07-24 — pointer-only packet frozen; owner active
+
+- Replaced only the four illegal producer SSA gathers with pointer-derived,
+  masked `tl.load` operations for even/odd K and V elements. Quantization,
+  nibble packing, geometry, decoder, control, oracle, transition suite,
+  timing, and counters remain bound to the admitted packet.
+- Verified new manifest `KV4_TRITON_POINTER_REPAIR_INPUT_MANIFEST.json`
+  (`c52ba4019a47c7713124e2bc10b95104cf6fd9df37f50f0219eb966b9f38a2f8`)
+  and archive `KV4_TRITON_POINTER_REPAIR_PACKET.tar.gz`
+  (`45472047380028df34f8d702c3101dab326154bdfb919bfb835c12ff7761de8f`).
+- Started the sole bounded owner
+  `gemma4-kv4-l40s-pointer-repair-20260724t0710z.service` (PID `4010142`)
+  with the 08:15Z deadline. Initial grouped snapshot: owner active and bench
+  still available immediately before its atomic claim; no second owner exists.

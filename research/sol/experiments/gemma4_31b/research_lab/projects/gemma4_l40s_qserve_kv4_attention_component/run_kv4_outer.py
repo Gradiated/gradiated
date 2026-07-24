@@ -34,11 +34,13 @@ IMAGE = (
     "docker.io/lmsysorg/sglang@"
     "sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
 )
-PACKET_SHA256 = "5a99a16532ee0fd984b292009ab3802f7bd815d789d487cf52b4b0d90257c769"
-MANIFEST_SHA256 = "ceba9153fb5b472b16e048e18d79a17db67017c804dec354dd7044073fea40fd"
+PACKET_NAME = "KV4_TRITON_POINTER_REPAIR_PACKET.tar.gz"
+MANIFEST_NAME = "KV4_TRITON_POINTER_REPAIR_INPUT_MANIFEST.json"
+PACKET_SHA256 = "45472047380028df34f8d702c3101dab326154bdfb919bfb835c12ff7761de8f"
+MANIFEST_SHA256 = "c52ba4019a47c7713124e2bc10b95104cf6fd9df37f50f0219eb966b9f38a2f8"
 RATE = 0.8629833
-AUTHORIZED_USD = 8.0
-PRIOR_SPEND_USD = 0.0
+AUTHORIZED_USD = 4.0
+PRIOR_SPEND_USD = 0.006726643004733981
 REMOTE_ROOT = "/home/glmrunner/gemma4-kv4-attention"
 
 
@@ -120,12 +122,12 @@ def main() -> int:
             handle.write(json.dumps({"epoch": time.time(), "event": event, **fields}, sort_keys=True) + "\n")
             handle.flush()
 
-    packet = PROJECT / "KV4_GPU_PACKET.tar.gz"
-    manifest = PROJECT / "KV4_ATTENTION_GPU_INPUT_MANIFEST.json"
+    packet = PROJECT / PACKET_NAME
+    manifest = PROJECT / MANIFEST_NAME
     if sha256(packet) != PACKET_SHA256 or sha256(manifest) != MANIFEST_SHA256:
         raise RuntimeError("project_local_immutable_identity_mismatch")
     with tarfile.open(packet, "r:gz") as archive:
-        if "KV4_ATTENTION_GPU_INPUT_MANIFEST.json" not in archive.getnames():
+        if MANIFEST_NAME not in archive.getnames():
             raise RuntimeError("project_local_packet_missing_manifest")
 
     deadline = min(
@@ -277,7 +279,7 @@ def main() -> int:
              classification=terminal.get("classification") if terminal else None, invocation=state)
 
         if terminal is None:
-            if state and not state.get("candidate_scientific_invocation_started"):
+            if state and not state.get("producer_completed") and not state.get("scientific_terminal_recorded"):
                 atomic(root / "REPAIR_READY.json", {
                     "classification": "recoverable_pre_science_integration_failure",
                     "diagnostic": json.loads((root / "retrieved/ERROR_TERMINAL.json").read_text())

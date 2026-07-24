@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/usr/bin/timeout",
+    "--signal=TERM",
+    "7200",
+    "python3",
+    "/home/glmrunner/gemma4-ngram-sustainable-cost/project/remote_sustainable.py"
+  ],
+  "cwd": "/home/glmrunner/gemma4-ngram-sustainable-cost",
+  "launched_at_utc": "2026-07-24T14:17:11.726323Z",
+  "log": "/home/glmrunner/gemma4-ngram-sustainable-cost/OWNER.log",
+  "pid": 52118,
+  "start_ticks": 1734244,
+  "unit_manager": "remote-shell"
+}

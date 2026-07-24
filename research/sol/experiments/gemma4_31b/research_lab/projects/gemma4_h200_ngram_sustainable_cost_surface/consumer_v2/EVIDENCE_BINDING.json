@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-24T13:17:47Z",
+  "kind": "qualified_ngram_sustainable_cost_binding",
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_bytes": 62578655208
+  },
+  "runtime": {
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "dtype": "bfloat16",
+    "quantization": "fp8",
+    "kv_cache_dtype": "fp8_e5m2",
+    "tensor_parallel_size": 1,
+    "max_running_requests": 32,
+    "speculative_algorithm": "NGRAM",
+    "launch": {
+      "path": "../gemma4_h200_ngram_decode_equivalent_production_validation/artifacts/quality-final-20260724t1304z/ngram-launch.json",
+      "sha256": "8349853a7eac9e73211f5d3081c834c05f78e0fd292ddbe5acb921b1824a523d"
+    }
+  },
+  "quality": {
+    "path": "../gemma4_h200_ngram_decode_equivalent_production_validation/artifacts/quality-final-20260724t1304z/TERMINAL.json",
+    "sha256": "b4e52f2471444db7386979029932f528cbf988660a1db1af0ba98d3c3b33cbe7",
+    "pass": true,
+    "gpqa_control_and_candidate": "55/198",
+    "taubench_control_and_candidate": "10/165",
+    "candidate_completion_tokens_delta": -18
+  },
+  "trace_contract": {
+    "packet": {
+      "path": "../gemma_exact_cache_trace_contract/TRACE_PACKET.json",
+      "sha256": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68"
+    },
+    "terminal": {
+      "path": "../gemma_exact_cache_trace_contract/TRACE_TERMINAL.json",
+      "sha256": "6ba6e338158a2977a8785dc425ffa932a2175be90b1add9b0b33cd5e05bea7a2"
+    },
+    "prompt_tokens": 4214,
+    "requested_output_tokens": 358,
+    "common_prefix_tokens": 535,
+    "maximum_cacheable_prompt_fraction": 0.12529663028001897,
+    "separate_10k_disjoint": true
+  },
+  "economic_gate": {
+    "measured_seconds_per_request": 0.625149101968745,
+    "capacity_requests_per_second": 1.5996183899980971,
+    "fixed_arrival_rate_requests_per_second": 1.4396565509982875,
+    "fixed_arrival_spacing_seconds": 0.6946101132986054,
+    "production_planning_usd_per_gpu_hour": 3.25,
+    "production_range_usd_per_gpu_hour": [2.925, 3.6],
+    "raw_gpu_usd_per_m_total_tokens_full_utilization": 0.12344066427277271,
+    "raw_gpu_usd_per_m_total_tokens_90pct_utilization": 0.13715629363641413,
+    "market_blend_target_usd_per_m_tokens": 0.14
+  }
+}

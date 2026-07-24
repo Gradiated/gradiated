@@ -1,0 +1,14 @@
+{
+  "output_sha256": "28e9d563806e8a8cba16214d8267240bbe2683958c517fac176df02d47ab469c",
+  "request_id": "sustainable-10k",
+  "timing": {
+    "latency_seconds": 5.667830798000068,
+    "raw_sha256": "873aef1f8980e0435bd53bdea8dd9c75dd03becb7c6b43efe8c935f56c59ddd8",
+    "ttft_seconds": 5.667825298001844
+  },
+  "usage": {
+    "completion_tokens": 358,
+    "prompt_tokens": 10000,
+    "total_tokens": 10358
+  }
+}

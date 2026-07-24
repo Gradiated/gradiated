@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "decision": "reject_swa_leaf_overlock_as_request_809_cause",
+  "candidate_sample_consumed": true,
+  "evidence": {
+    "identity": {
+      "intervention_binding": "INTERVENTION_BINDING.json",
+      "packet_sha256": "d81b827129576a3cfd1d8b4b71e29942f343f864100bfdcaf060d265a259ce81",
+      "terminal_sha256": "0c874d3ef44155c7132c074e3006eb8ec68d35b4eb7809bd3198696a3ad3f986",
+      "request_rows_sha256": "de2e5ee1b221318366120ad37884372d9f6a578f44c9af9756accf1c399178b0",
+      "ownership_rows_sha256": "b251298f1eaac8b5ebf9fe33e2133779ed7a2484de919059a1730cf38eb37d7b",
+      "snapshot": "artifacts/swa-pressure-20260724t194035z/snapshots/1d53e273b794d1e01665830077b533bdf49acb5aa5d3cce8c525797b3b13902e"
+    },
+    "path": {
+      "installed_source_sha256": "96c07d8f05a71eb4a70eef394db0c92783128ad8e9fc3cc84c6beaf8504e542f",
+      "environment_observed": "SGLANG_OPT_SWA_SPLIT_LEAF_ON_INSERT=1",
+      "maximum_locked_leaf_tokens": 1023,
+      "control_swa_used_tokens_at_transition": 26828,
+      "candidate_swa_used_tokens_at_transition": 17658,
+      "candidate_minus_control_swa_used_tokens": -9170,
+      "candidate_swa_used_reduction_fraction": 0.34180706724392425
+    },
+    "transition": {
+      "first_128_mib_growth_approx_request_index": 809.8569742463416,
+      "first_128_mib_growth_elapsed_seconds": 562.5348446369171,
+      "initial_hbm_mib": 123326,
+      "maximum_hbm_mib": 128492,
+      "hbm_growth_mib": 5166,
+      "torch_reserved_growth_bytes": 5960105984,
+      "metrics_at_first_growth": {
+        "num_running_requests": 14,
+        "num_queue_requests": 0,
+        "num_retracted_requests": 0,
+        "swa_available_tokens": 787,
+        "swa_evictable_tokens": 179587,
+        "swa_used_tokens": 17658,
+        "kv_available_tokens": 48248,
+        "kv_evictable_tokens": 141260,
+        "kv_used_tokens": 58033,
+        "evicted_tokens_total": 3345609
+      }
+    },
+    "semantics": {
+      "scheduled": 1036,
+      "completed": 1036,
+      "failures": 0,
+      "output_token_sequences_matching": 1036,
+      "finish_reasons_matching": 1036,
+      "usage_rows_matching": 1036
+    },
+    "service": {
+      "elapsed_seconds": 734.878730012002,
+      "arrival_spacing_seconds": 0.6946101132986054,
+      "final_client_queue_seconds": 9.184204112944599,
+      "late_queue_slope_seconds_per_request_800_1035": 0.04371491299367778,
+      "request_800_899_mean_latency_seconds": 22.47686025588002,
+      "request_900_999_mean_latency_seconds": 23.75553458805989,
+      "server_queue_final": 0,
+      "retractions_final": 0
+    },
+    "economics": {
+      "planning_h200_usd_per_hour": 3.25,
+      "tokens_per_second": 6445.40630523167,
+      "usd_per_million_total_tokens": 0.14006530155360453,
+      "gate_usd_per_million_total_tokens": 0.14,
+      "gate_excess_fraction": 0.0004664396686037657,
+      "actual_project_provider_spend_usd": 0.6213069812774659
+    }
+  },
+  "gates": {
+    "all_requests_complete": true,
+    "exact_index_aligned_semantics": true,
+    "no_server_queue_or_retractions": true,
+    "final_client_queue_within_one_arrival": false,
+    "late_window_non_positive_trend": false,
+    "planning_cost_at_or_below_0_14": false,
+    "request_809_pressure_transition_removed_or_moved": false,
+    "retain_intervention": false
+  },
+  "interpretation": {
+    "measured": "The split hook reduced SWA occupancy by 9,170 tokens at the transition and capped observed locked leaf size at 1,023 tokens, but the first HBM step still occurred at request 809.86 with 14 active requests. HBM grew 5,166 MiB, final queue reached 9.184 s, and the trajectory cost $0.140065/M.",
+    "source_backed": "The intervention changes only SWARadixCache leaf ownership before inc_lock_ref and leaves request, scheduler, model, KV, NGRAM, attention, context, and max-running settings fixed.",
+    "inferred": "Excess SWA leaf locking is a real secondary pressure source, not the cause of the collapse. The scope-matched co-growth of PyTorch reserved bytes and HBM after active batch topology reaches 14 shifts the next causal discriminator toward retained tensor/workspace or graph-pool ownership, not another SWA leaf threshold."
+  },
+  "next_action": "Close this exact mechanism and do not replay it. Preserve the exact comparator and ownership telemetry. A materially different project should bind the 5.96 GB PyTorch-reserved staircase to a concrete CUDA-graph, target-verification workspace, or batch-topology allocation site before any new candidate."
+}

@@ -1,0 +1,11 @@
+{
+  "artifacts": "artifacts/swa-pressure-20260724t194035z",
+  "candidate_sample_consumed": true,
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "gpu_processes": "true\n127795, 128482",
+  "project": "gemma4_h200_ngram_swa_kv_pressure_discriminator",
+  "result": "reject_swa_leaf_overlock_as_request_809_cause",
+  "runtime": "Pinned SGLang v0.5.13 FP8, page-1 E5M2 KV, NGRAM, exact SWA ownership instrumentation, image, checkpoint, CUDA graph, JIT, and tokenizer caches retained.",
+  "scientific_invocation_started": true,
+  "server_state": "Healthy loaded container gemma4-ngram-swa-pressure remains on port 30000 using 128482 MiB; no compatible successor is identified, so the bench remains in maintenance for director disposition."
+}

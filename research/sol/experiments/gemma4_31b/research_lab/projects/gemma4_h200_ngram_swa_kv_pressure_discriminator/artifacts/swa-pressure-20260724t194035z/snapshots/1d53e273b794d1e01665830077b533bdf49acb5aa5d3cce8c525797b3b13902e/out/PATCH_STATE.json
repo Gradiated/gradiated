@@ -1,0 +1,9 @@
+{
+  "environment": "1",
+  "installed_path": "/sgl-workspace/sglang/python/sglang/srt/mem_cache/swa_radix_cache.py",
+  "installed_sha256": "96c07d8f05a71eb4a70eef394db0c92783128ad8e9fc3cc84c6beaf8504e542f",
+  "kind": "page_aligned_swa_leaf_split_on_insert",
+  "semantics": "cache ownership geometry only; requests and scheduler unchanged",
+  "source_path": "/work/inputs/source/mem_cache/swa_radix_cache.py",
+  "source_sha256": "96c07d8f05a71eb4a70eef394db0c92783128ad8e9fc3cc84c6beaf8504e542f"
+}

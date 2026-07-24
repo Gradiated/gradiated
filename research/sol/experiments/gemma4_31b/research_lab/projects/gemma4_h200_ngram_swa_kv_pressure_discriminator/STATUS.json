@@ -1,0 +1,17 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.6213069812774659,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 8.0,
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "compute_budget": "One retained H200, at most 80 claimed GPU-minutes.",
+  "next_action": "Close this consumed mechanism; replay no arm. Use RESULT_ANALYSIS.json to open a materially different allocation-ownership discriminator for the 5.96 GB PyTorch-reserved/HBM staircase, binding one CUDA-graph, target-verification workspace, or batch-topology allocation site before claim. The healthy loaded candidate server remains on the maintenance bench for director disposition.",
+  "priority": 7600,
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "researcher_profile": "deep",
+  "reservation_gate": "Before claim, hash-check all bound evidence and persist one source-specific intervention with a predicted counter and service effect. No generic concurrency, wave, cache-size, threshold, backend, QLEN, ring, corpus, or NGRAM-setting sweep is permitted.",
+  "status": "complete",
+  "storage_budget": "At most 12 GiB of additional project-local artifacts.",
+  "summary": "Valid negative discriminator: the bound hook capped locked SWA leaves at 1,023 tokens and reduced transition SWA occupancy by 9,170 tokens, but the HBM step still began at request 809.86 with 14 running requests and grew 5,166 MiB. All 1,036 token sequences, finish reasons, and usage rows matched exactly, but final client queue was 9.184 s with +0.0437 s/request late trend and planning cost was $0.140065/M. Reject SWA leaf over-locking as the cause.",
+  "wall_clock_budget": "Complete and release by 2026-07-24T20:50:00Z, leaving ten minutes before the verified 21:00Z lifecycle watchdog."
+}

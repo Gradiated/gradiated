@@ -1,0 +1,59 @@
+{
+  "bench": {
+    "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+    "watchdog_deadline_utc": "2026-07-25T01:00:00Z",
+    "watchdog_unit": "gemma4-ngram-verifier-h200-20260725t0100-watchdog.service"
+  },
+  "closed_predecessor": {
+    "binding": {
+      "path": "../gemma4_h200_ngram_adaptive_draft_depth/DIRECTOR_BINDING.json",
+      "sha256": "4ff2b494e4e8170900fcafa9c5b9c6c210d01c7bb63a8acc8819b0bc004fe9f9"
+    },
+    "component_terminal": {
+      "path": "../gemma4_h200_ngram_adaptive_draft_depth/artifacts/adaptive-depth-20260724t215325z/snapshots/d47b1a65ad05b1a1db595b3a1786acaa4be1a87d7c9eeac1cb17d73748f8d7da/out/COMPONENT_TERMINAL.json",
+      "sha256": "1c912c3dce124eab01dce27ff9dff1e728e9e4ff6e689fccbef7f7c9ede0a898"
+    },
+    "installed_consumer_sources": {
+      "path": "../gemma4_h200_ngram_adaptive_draft_depth/artifacts/adaptive-depth-20260724t215325z/snapshots/d47b1a65ad05b1a1db595b3a1786acaa4be1a87d7c9eeac1cb17d73748f8d7da/installed-consumer-sources.tar.gz",
+      "sha256": "a9f58ef78cc089747460dff368c8acd0ec26813f75b7ef974ec34a3aa77c0bd6"
+    }
+  },
+  "identities": {
+    "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint",
+    "checkpoint_manifest": {
+      "path": "../gemma4_h200_ngram_torch_reserved_staircase/packet/inputs/CHECKPOINT_MANIFEST.json",
+      "sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "request_rate_per_second": 1.439656551,
+    "requests": 1036
+  },
+  "intervention": {
+    "high_load_min_running_requests": 8,
+    "stage_one_rows": 6,
+    "stage_two_rows": 6,
+    "tree_depth": 12,
+    "tree_producer": "unchanged"
+  },
+  "sparse_baseline": {
+    "final_terminal": {
+      "path": "../gemma4_h200_ngram_sparse_penalty_verify/artifacts/sparse-penalty-20260724t210733z/snapshots/dbf551f5217d992283c601dbbb77a6615fb0f9e9d36ad58d7593674efc374e8d/out/FINAL_TERMINAL.json",
+      "sha256": "084d861fa82f918d7d60816a20fb3cbcc2f744c6865530b886c52dc883dc9b21"
+    },
+    "patch_state": {
+      "path": "../gemma4_h200_ngram_sparse_penalty_verify/artifacts/sparse-penalty-20260724t210733z/snapshots/dbf551f5217d992283c601dbbb77a6615fb0f9e9d36ad58d7593674efc374e8d/out/PATCH_STATE.json",
+      "sha256": "1f565495e804ccffd7ddec6f9513cda4081aaa6872ebf7fc1d291cc5cddad9ec"
+    },
+    "requests_comparator": {
+      "path": "../gemma4_h200_ngram_sparse_penalty_verify/artifacts/sparse-penalty-20260724t210733z/snapshots/dbf551f5217d992283c601dbbb77a6615fb0f9e9d36ad58d7593674efc374e8d/out/requests.jsonl",
+      "sha256": "12f9c7807c6f46cc8258b7c5cdae6ab529e2fb3bd9c82298296f8616ab42a253"
+    },
+    "telemetry": {
+      "path": "../gemma4_h200_ngram_sparse_penalty_verify/artifacts/sparse-penalty-20260724t210733z/snapshots/dbf551f5217d992283c601dbbb77a6615fb0f9e9d36ad58d7593674efc374e8d/out/telemetry.jsonl",
+      "sha256": "ccd467e9fcdaeced3d1e9bee59627263e80b86079109272d0f226ab698f9a731"
+    }
+  },
+  "schema_version": 1
+}

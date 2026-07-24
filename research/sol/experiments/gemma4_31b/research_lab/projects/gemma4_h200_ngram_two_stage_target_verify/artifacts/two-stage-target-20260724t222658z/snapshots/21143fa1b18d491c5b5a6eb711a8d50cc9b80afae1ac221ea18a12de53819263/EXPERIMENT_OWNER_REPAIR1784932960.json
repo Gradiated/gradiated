@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "remote_experiment.py"
+  ],
+  "cwd": "/home/glmrunner/gemma4-h200-ngram-two-stage-target-verify",
+  "launched_at_utc": "2026-07-24T22:42:45.543304Z",
+  "log": "/home/glmrunner/gemma4-h200-ngram-two-stage-target-verify/EXPERIMENT_OWNER_REPAIR1784932960.log",
+  "pid": 183238,
+  "start_ticks": 4767625,
+  "unit_manager": "pid"
+}

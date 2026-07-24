@@ -1,0 +1,10 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_two_stage_target_verify/REPAIR_PACKET.full-mask-split.tar",
+  "packet_sha256": "670fb08795a6f754b8e8034b0d04d9f872312c76db8a9b240d2f688f68ac6246",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_two_stage_target_verify/REPAIR_PACKET.full-mask-split.tar",
+  "ready_sha256": "989bcb82529277e2ed9488da6b8795ff8b0b64b3d8b095132af3c265ec47acd1",
+  "requested_at_utc": "2026-07-24T22:42:17.650116Z",
+  "retry_scope": "retry only the unpersisted prefix with exact variable-width full-mask splitting; preserve the failed snapshot; no arm was consumed",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

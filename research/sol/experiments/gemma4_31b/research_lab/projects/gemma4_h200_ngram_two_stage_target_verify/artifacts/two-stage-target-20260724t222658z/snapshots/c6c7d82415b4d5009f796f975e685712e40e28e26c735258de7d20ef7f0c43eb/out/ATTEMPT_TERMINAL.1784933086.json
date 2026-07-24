@@ -1,0 +1,12 @@
+{
+  "candidate_cuda_started": true,
+  "classification": "ordinary_integration_or_consumer_defect",
+  "container_stderr_sha256": "6e154f0acbb7f274434eca9bdb15924910395f6f7863e69c20d0d08e5e4e9a96",
+  "container_stdout_sha256": "b46b85b7d2af6c962d09691d37d783347b685d12f70726b6f7fb01a8ec260c06",
+  "error": "NameError(\"name 'time' is not defined\")",
+  "phase": "prefix_through_request_870",
+  "prefix_persisted": false,
+  "schema_version": 1,
+  "scientific_invocation_started": true,
+  "traceback": "Traceback (most recent call last):\n  File \"/home/glmrunner/gemma4-h200-ngram-two-stage-target-verify/remote_experiment.py\", line 363, in <module>\n    main()\n  File \"/home/glmrunner/gemma4-h200-ngram-two-stage-target-verify/remote_experiment.py\", line 301, in main\n    prepare_arm_root(\"prefix-through-870\")\n  File \"/home/glmrunner/gemma4-h200-ngram-two-stage-target-verify/remote_experiment.py\", line 243, in prepare_arm_root\n    destination = OUT / f\"{name}.invalid-attempt-{int(time.time())}\"\n                                                      ^^^^\nNameError: name 'time' is not defined. Did you forget to import 'time'\n"
+}

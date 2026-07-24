@@ -1,0 +1,36 @@
+{
+  "artifact_contract": {
+    "accepted_and_bonus_tokens": "TWO_STAGE_EVENTS.jsonl",
+    "cache_ownership": "TWO_STAGE_EVENTS.jsonl",
+    "candidate_requests": "requests.jsonl",
+    "stage_terminal": "ARM_TERMINAL.json",
+    "terminal": "FINAL_TERMINAL.json",
+    "target_rows_and_forward_timing": "TWO_STAGE_EVENTS.jsonl"
+  },
+  "budget": {
+    "authorized_cumulative_provider_usd": 8.0,
+    "hourly_usd": 2.46,
+    "release_deadline_utc": "2026-07-25T00:50:00Z"
+  },
+  "decision": "Admit the sole candidate-only 1,036-request trajectory only if the candidate-only prefix through request index 870 is index-exact and saves target rows with exact cache ownership.",
+  "hypothesis": "At eight or more running requests, full-tree greedy traversal usually terminates within the first six target rows, so conditionally executing rows seven through twelve only for continuation survivors reduces target work without changing depth-12 NGRAM semantics.",
+  "quality_gate": {
+    "cache_ownership_exact": true,
+    "depth_12_producer_unchanged": true,
+    "finish_reason_usage_exact": true,
+    "index_aligned_output_tokens_exact": true,
+    "target_rows_saved_positive": true
+  },
+  "scope": {
+    "high_load_min_running_requests": 8,
+    "prefix_last_request_index": 870,
+    "stage_one_rows": 6,
+    "stage_two_rows": 6,
+    "tree_depth": 12
+  },
+  "slo": "Complete both conditionally admitted candidate-only stages and release the retained H200 by 00:50Z.",
+  "timeout": {
+    "absolute_utc": "2026-07-25T00:50:00Z",
+    "repair_request_deadline_utc": "2026-07-25T00:44:00Z"
+  }
+}

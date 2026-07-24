@@ -1,0 +1,10 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_two_stage_target_verify/REPAIR_PACKET.full-mask-split-v2.tar",
+  "packet_sha256": "6c0d90853c8373b7055aa80b3b1de172f4fdd787d466cd20f4181b996421b0e8",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_two_stage_target_verify/REPAIR_PACKET.full-mask-split-v2.tar",
+  "ready_sha256": "96651f420dff2e49bf3496653840873fc9ab129ac1fd3fd75d059b1635e5b184",
+  "requested_at_utc": "2026-07-24T22:44:03.251826Z",
+  "retry_scope": "retry only the unstarted repaired prefix consumer after adding the missing standard-library import; preserve both invalid attempts",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

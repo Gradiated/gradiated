@@ -1,0 +1,8 @@
+{
+  "attempt": false,
+  "final": true,
+  "owner_live": false,
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "{\"command\": [\"python3\", \"remote_experiment.py\"], \"cwd\": \"/home/glmrunner/gemma4-h200-ngram-two-stage-target-verify\", \"launched_at_utc\": \"2026-07-24T22:44:48.116267Z\", \"live\": false, \"log\": \"/home/glmrunner/gemma4-h200-ngram-two-stage-target-verify/EXPERIMENT_OWNER_REPAIR1784933082.log\", \"pid\": 184168, \"start_ticks\": 4779883, \"unit_manager\": \"pid\"}\nFINAL_PRESENT\n{\n  \"candidate_cuda_started\": false,\n  \"phase\": \"prefix_through_request_870\",\n  \"schema_version\": 1,\n  \"scientific_invocation_started\": true\n}\n"
+}

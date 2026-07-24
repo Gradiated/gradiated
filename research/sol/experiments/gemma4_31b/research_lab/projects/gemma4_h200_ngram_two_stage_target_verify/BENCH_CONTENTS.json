@@ -1,0 +1,13 @@
+{
+  "artifacts": "artifacts/two-stage-target-20260724t222658z",
+  "candidate_sample_consumed": true,
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "component_science_consumed": true,
+  "gpu_processes": "gemma4-ngram-two-stage-target-candidate Up 11 minutes\n184521, 128558",
+  "project": "gemma4_h200_ngram_two_stage_target_verify",
+  "result": "two_stage_prefix_nonpositive_or_inexact",
+  "runtime": "Pinned SGLang v0.5.13 FP8, page-1 E5M2 KV, depth-12 NGRAM producer, sparse penalty, and two-stage target verifier.",
+  "schema_version": 1,
+  "scientific_invocation_started": true,
+  "server_state": "Final candidate container remains loaded on port 30000; no compatible successor is identified."
+}

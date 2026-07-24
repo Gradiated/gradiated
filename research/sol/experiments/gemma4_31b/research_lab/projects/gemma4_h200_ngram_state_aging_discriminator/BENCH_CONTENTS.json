@@ -1,0 +1,8 @@
+{
+  "artifacts": "artifacts/state-aging-20260724t145451z contains the retrieved consumed candidate terminal, 1036 request rows, 358 telemetry samples, NGRAM operation trace, metrics, and hashes.",
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "gpu_processes": "Candidate server process PID 58735 occupied approximately 128608 MiB at terminal retrieval.",
+  "project": "gemma4_h200_ngram_state_aging_discriminator",
+  "result": "valid_corpus_lifetime_hypothesis_falsification",
+  "server_state": "Healthy instrumented candidate container gemma4-ngram-state-aging remains loaded on port 30000; release is maintenance because no compatible successor was identified."
+}

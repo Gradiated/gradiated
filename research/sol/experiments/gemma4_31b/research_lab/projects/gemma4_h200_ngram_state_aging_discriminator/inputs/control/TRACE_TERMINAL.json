@@ -1,0 +1,63 @@
+{
+  "checks": {
+    "all_suffixes_distinct": true,
+    "cache_arithmetic": true,
+    "cross_group_lcp_zero": true,
+    "exact_image_runtime": true,
+    "exact_prompt_and_scored_output_lengths": true,
+    "group_geometry": true,
+    "intra_group_lcp_exact_535": true,
+    "model_revision": true,
+    "request_ids_unique": true,
+    "request_schema_and_content_hashes": true,
+    "runner_contract": true,
+    "schema": true,
+    "separate_10k_exact_and_disjoint": true,
+    "token_ids_in_verified_vocab_and_not_special": true,
+    "tokenizer_identity": true,
+    "validator_exception_free": true
+  },
+  "classification": "offline deterministic trace validation; no live cache realization claim",
+  "details": {
+    "cross_group_first_prompt_lcps": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "intended_common_fraction": 0.1269577598481253,
+    "intra_group_pairwise_lcp_unique_values": {
+      "primary_c1": [
+        535
+      ],
+      "primary_c16": [
+        535
+      ],
+      "primary_c4": [
+        535
+      ],
+      "primary_c8": [
+        535
+      ]
+    },
+    "maximum_cacheable_fraction": 0.12529663028001897,
+    "primary_requests_including_warmups": 33,
+    "scored_primary_requests": 29,
+    "separate_10k_to_primary_lcp_unique_values": [
+      0
+    ],
+    "unique_suffix_hashes": 33
+  },
+  "finished_at_utc": "2026-07-18T15:35:03.300398+00:00",
+  "kind": "exact_gemma_cache_trace_terminal",
+  "next_action": "Offer the packet to the active exact-image owner only if it does not delay or weaken that owner's final-program gate; live hit/query deltas remain mandatory.",
+  "pass": true,
+  "provider_mutation": "forbidden_and_not_attempted",
+  "schema_version": 1,
+  "spend_usd": 0.0,
+  "status": "pass",
+  "trace_packet_sha256": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68",
+  "validator_sha256": "b8d56b0c82cf24ffbbdd4cc9795ff5dbb035d9d31d9c861eac18f66ca362a6e3"
+}

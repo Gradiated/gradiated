@@ -1,0 +1,18 @@
+{
+  "candidate_sample_consumed": true,
+  "disposition": "The semantic comparator limitation prevents accepting the intervention, but does not invalidate the timing/state falsification because the candidate also fails the preregistered service-stability criterion.",
+  "kind": "post_measurement_comparator_repair_without_candidate_replay",
+  "request_identity": {
+    "candidate_compact_hashes_recomputed": 1,
+    "candidate_rows": 1036,
+    "diagnosis": "Both launchers derive the same body from the same frozen trace and apply the same index-535 suffix, but both shallow-copy the shared prompt list. The stock row hashes the mutable request object after HTTP completion, and the candidate additionally used compact JSON. Recorded per-row hashes therefore do not bind the already-serialized HTTP payload and are not a valid cross-run comparator.",
+    "stock_recorded_hashes_matching_intended_index": 1
+  },
+  "response_identity": {
+    "candidate_dominant_normalized_response_count": 1035,
+    "candidate_finish_reason_and_usage_complete": 1036,
+    "candidate_normalized_response_hashes": 2,
+    "candidate_rows_with_output_token_ids": 1036,
+    "stock_limitation": "The persisted stock rows retain only whole raw-response hashes, not token IDs or normalized semantics; raw JSON includes non-semantic metadata and all whole-response hashes differ. Exact per-response cross-run semantics cannot be reconstructed."
+  }
+}

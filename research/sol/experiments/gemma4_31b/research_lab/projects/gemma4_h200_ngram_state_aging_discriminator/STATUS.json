@@ -1,0 +1,47 @@
+{
+  "status": "complete",
+  "priority": 7100,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 8.0,
+  "actual_spend_usd": 0.6664185735500001,
+  "allocation_limit": 1,
+  "active_session": null,
+  "summary": "Valid negative discriminator: resetting only the online NGRAM corpus at request 650 did not move the stock-like phase change. The trie was only 552/10,000,000 nodes before reset and corpus synchronization totaled 47.4 ms across 8,483 prepares. The candidate completed 1,036/1,036 requests, but latency again rose to 21.9-23.2 s in requests 800-999, HBM grew 5,250 MiB, and final client queue was 6.432 s. Reject bounded corpus lifetime; the fixed 1.439656551 request/s placement remains unsustainable.",
+  "next_action": "Do not replay this consumed candidate. Close NGRAM corpus aging and use RESULT_ANALYSIS.json to open one occupancy-dependent SWA/KV/allocator or batch-topology discriminator. The HBM step began near request 809 with 14 running requests, 737 SWA tokens available, and 3.35M cumulative evictions. The retained instrumented server is on the maintenance bench for director disposition.",
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "compute_budget": "One retained H200, at most 125 claimed GPU-minutes.",
+  "wall_clock_budget": "Finish and release by 2026-07-24T16:45:00Z.",
+  "storage_budget": "At most 12 GiB of new project-local artifacts.",
+  "reservation_gate": "All DIRECTOR_BINDING inputs and the project-local frozen candidate packet were hash-checked before the single claim.",
+  "terminal": {
+    "classification": "valid_negative_bounded_corpus_lifetime_hypothesis_falsified",
+    "path": "artifacts/state-aging-20260724t145451z/retrieved/out/FINAL_TERMINAL.json",
+    "analysis": "RESULT_ANALYSIS.json",
+    "sha256_manifest": "artifacts/state-aging-20260724t145451z/SHA256SUMS",
+    "requests": 1036,
+    "failures": 0,
+    "tokens_per_second": 6499.2268067794375,
+    "production_cost_usd_per_m_tokens": 0.13890541207703003,
+    "queue_stable_at_admitted_rate": false,
+    "final_client_queue_seconds": 6.431630190330679,
+    "corpus_intervention_retained": false
+  },
+  "spend_basis": {
+    "hourly_cost_usd": 2.46,
+    "claim_utc": [
+      "2026-07-24T14:54:29.932470Z",
+      "2026-07-24T15:10:45.179163Z"
+    ],
+    "claimed_seconds": 975.246693,
+    "method": "Full project-assigned exposure from the single idempotent retained-H200 claim through repaired release, including owner and release defects."
+  },
+  "bench_disposition": {
+    "condition": "maintenance",
+    "released_at_utc": "2026-07-24T15:10:45.179163Z",
+    "server": "gemma4-ngram-state-aging",
+    "port": 30000,
+    "gpu_process_pid": 58735,
+    "gpu_memory_mib": 128608
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "decision": {
+    "derivation": "Reset 50 admissions before the persisted stable-through-700 boundary, leaving 386 requests to test immediate and durable recovery.",
+    "operation": "NgramCorpus.reset() once at the first batch reaching the bound",
+    "prefix_swa_kv_cache_operation_at_boundary": "none",
+    "rollover_after_distinct_primary_requests": 650,
+    "semantics": "target-verified, intended semantics-preserving"
+  },
+  "files": {
+    "intervention/ngram.cpp": {
+      "bytes": 8275,
+      "sha256": "6c29abda233691bfaf1acc1d80e71945853f1fb83aef2ad392ccaa0cc533da23"
+    },
+    "intervention/ngram.h": {
+      "bytes": 2728,
+      "sha256": "7020e349436563093bf8a7747243a6c2839f6d79d9b1d82fc5a772b6fcd2ff9c"
+    },
+    "intervention/ngram_corpus_ffi.cpp": {
+      "bytes": 7218,
+      "sha256": "1e8af7e30d46bc1aab6aee0bcc2483a4e96f1c606e667bbdd7937629a4cb30c2"
+    },
+    "intervention/sitecustomize.py": {
+      "bytes": 9640,
+      "sha256": "f2634790aa582adfa393c581f7ff46424777be5cce4f0c11dd012a02f93be24f"
+    },
+    "intervention/trie.cpp": {
+      "bytes": 10538,
+      "sha256": "9f14f2d05521427a0782db8c6058bbda1191dd09baf535e202c7412f82496ac9"
+    },
+    "intervention/trie.h": {
+      "bytes": 4943,
+      "sha256": "680ad2b5c0b43109108b487014f862bb5b33514015a5c2b663432383b9a583d7"
+    },
+    "remote_candidate.py": {
+      "bytes": 16448,
+      "sha256": "2e74dda4a926c6c950aca37cd7e756b243c443c98a2d527f63e6d0d13b8ff49e"
+    }
+  },
+  "instrumentation": {
+    "corpus": [
+      "synchronize time",
+      "batch_get time",
+      "batch_put enqueue time",
+      "online trie used/capacity",
+      "native and Python match-state counts",
+      "pending inserts"
+    ],
+    "runtime": [
+      "target verify time",
+      "total NGRAM forward time",
+      "SWA/KV occupancy and eviction",
+      "HBM/utilization/power",
+      "server/client queue",
+      "per-100-request latency"
+    ]
+  },
+  "kind": "frozen_single_ngram_corpus_lifetime_candidate",
+  "schema_version": 1,
+  "workload": {
+    "arrival_spacing_seconds": 0.6946101132986054,
+    "completion_tokens": 358,
+    "max_workers": 32,
+    "prompt_tokens": 4214,
+    "request_bytes_source": "inputs/control/TRACE_PACKET.json",
+    "scheduled_requests": 1036,
+    "stock_comparator": "inputs/control/requests.jsonl"
+  }
+}

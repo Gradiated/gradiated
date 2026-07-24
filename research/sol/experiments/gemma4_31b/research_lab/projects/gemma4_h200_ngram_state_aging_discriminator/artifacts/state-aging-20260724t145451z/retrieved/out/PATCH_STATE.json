@@ -1,0 +1,38 @@
+{
+  "cpp_probe": {
+    "files": [
+      {
+        "file": "trie.h",
+        "installed_sha256": "680ad2b5c0b43109108b487014f862bb5b33514015a5c2b663432383b9a583d7",
+        "source_sha256": "680ad2b5c0b43109108b487014f862bb5b33514015a5c2b663432383b9a583d7"
+      },
+      {
+        "file": "trie.cpp",
+        "installed_sha256": "9f14f2d05521427a0782db8c6058bbda1191dd09baf535e202c7412f82496ac9",
+        "source_sha256": "9f14f2d05521427a0782db8c6058bbda1191dd09baf535e202c7412f82496ac9"
+      },
+      {
+        "file": "ngram.h",
+        "installed_sha256": "7020e349436563093bf8a7747243a6c2839f6d79d9b1d82fc5a772b6fcd2ff9c",
+        "source_sha256": "7020e349436563093bf8a7747243a6c2839f6d79d9b1d82fc5a772b6fcd2ff9c"
+      },
+      {
+        "file": "ngram.cpp",
+        "installed_sha256": "6c29abda233691bfaf1acc1d80e71945853f1fb83aef2ad392ccaa0cc533da23",
+        "source_sha256": "6c29abda233691bfaf1acc1d80e71945853f1fb83aef2ad392ccaa0cc533da23"
+      },
+      {
+        "file": "ngram_corpus_ffi.cpp",
+        "installed_sha256": "1e8af7e30d46bc1aab6aee0bcc2483a4e96f1c606e667bbdd7937629a4cb30c2",
+        "source_sha256": "1e8af7e30d46bc1aab6aee0bcc2483a4e96f1c606e667bbdd7937629a4cb30c2"
+      }
+    ],
+    "package": "/sgl-workspace/sglang/python/sglang"
+  },
+  "kind": "ngram_state_aging_candidate_patch",
+  "kv_cache_reset": false,
+  "prefix_cache_reset": false,
+  "rollover_requests": 650,
+  "sitecustomize_sha256": "f2634790aa582adfa393c581f7ff46424777be5cce4f0c11dd012a02f93be24f",
+  "swa_cache_reset": false
+}

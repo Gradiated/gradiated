@@ -1,0 +1,34 @@
+{
+  "status": "active",
+  "priority": 6790,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 8.0,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 1,
+  "active_session": null,
+  "summary": "The exact source/trace/counter packet is project-local and hash-verified. Priority-6800 currently owns the retained H200 and has begun its fresh quality capture; after its terminal and release, one bounded owner will stage only this project's immutable snapshot, collect the exact c32 trace, retain the claim for one source-justified intervention, and run one matched profiler-off c32 pair.",
+  "next_action": "Wait for priority-6800 gemma4_h200_ngram_decode_equivalent_production_validation to emit a terminal and release h200-ngram-verifier-e00kcm9nfhwt7e7gbc. Then start run_owner.py once. Analyze its retrieved 16-step exact-c32 CPU+CUDA trace, write exactly one candidate_source.py plus INTERVENTION_REQUEST.json at the dominant measured non-overlapping boundary, and let the same owner run the sole matched profiler-off c32 pair and release. Run no concurrency, flag, or NGRAM-parameter sweep.",
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "compute_budget": "One retained H200, at most 105 claimed GPU-minutes after priority-6800 releases.",
+  "wall_clock_budget": "Complete and release by 2026-07-24T16:45:00Z.",
+  "storage_budget": "At most 12 GiB of new project-local artifacts.",
+  "baseline_seconds_per_request": 0.625149101968745,
+  "economic_ceiling_seconds_per_request": 0.6381105231,
+  "immutable_binding": "EVIDENCE_BINDING.json",
+  "reservation_gate": "Do not claim until the full $8 cumulative reservation is present, EVIDENCE_BINDING.json rehashes exactly, priority-6800 is non-active, and the assigned H200 is empty and available.",
+  "offline_packet": {
+    "path": "SOURCE_TRACE_COUNTER_PACKET.json",
+    "sha256": "3c6a68a054452597dca5b4ec6ffd31a735fbe29229e4b1ce1c701d205003547f",
+    "checkpoint_bytes": 62578655208,
+    "checkpoint_materialization": "project-local immutable hard links to the previously verified bytes; only this path is admitted to staging",
+    "profile": "SGLang /start_profile CPU+CUDA trace, 16 steps, with source-bound NGRAM semantic ranges",
+    "owner": "run_owner.py retains one claim across staging, profile retrieval, intervention handoff, matched pair, and release"
+  },
+  "queue_observation": {
+    "observed_at_utc": "2026-07-24T11:00:53Z",
+    "predecessor_status": "active",
+    "predecessor_forward_progress": "remote owner alive; fresh control capture started; candidate unstarted",
+    "bench_status": "claimed by gemma4_h200_ngram_decode_equivalent_production_validation"
+  }
+}

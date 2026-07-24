@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "classification": "decode_shape_lm_head_target_verification",
+  "bound_at_utc": "2026-07-24T09:19:21Z",
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "hidden_size": 5376,
+    "vocab_size": 262144,
+    "layers": 60,
+    "attention": "five sliding-window layers followed by one full-attention layer",
+    "sliding_window": 1024
+  },
+  "runtime": {
+    "release": "sglang v0.5.13",
+    "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+  },
+  "source_observation": {
+    "native_target_verify_shape": "[batch_size * 12, 5376] x [5376, 262144]",
+    "ordinary_decode_shape": "[batch_size, 5376] x [5376, 262144]",
+    "target_verify_mode": "ForwardMode.TARGET_VERIFY",
+    "cache_slots_per_request": 12,
+    "default_attention_dispatch": "hybrid prefill-side target verification with tree mask",
+    "activation_quantization": "dynamic per-token FP8 for dense linears on CUDA",
+    "tied_lm_head": "BF16 embedding/lm-head torch.matmul"
+  },
+  "hypothesis": {
+    "cause": "The tied BF16 LM-head GEMM selects a different M-shape implementation for multi-token target verification than for ordinary autoregressive decode; close top-two logits can therefore cross at temperature zero even when the verifier hidden row is otherwise equivalent.",
+    "intervention": "Keep the 60-layer multi-token target forward unchanged, but reshape request-major verifier hidden rows and project each draft depth as one contiguous batch_size-row LM-head call. Reassemble logits in the original request-major order.",
+    "prediction": "The candidate target top-two logits and argmax match ordinary decode at the first native divergence while retaining transformer, cache, and attention amortization. Only the final vocabulary projection becomes 12 decode-shaped calls.",
+    "falsifier": "Any four-row candidate emitted-token mismatch or target argmax mismatch closes this LM-head mechanism and prevents the ten-row/c32 pair."
+  },
+  "files": {
+    "candidate": {
+      "path": "decode_equivalent_lm_head.py",
+      "sha256": "4d99a94e97d0ef01fbfdaa9f7a25742f07f9fb4236d93d07900626f5ff9b53f9"
+    },
+    "discriminator": {
+      "path": "discriminator_hook.py",
+      "sha256": "adc425a6b5b2a2ca773c272b587a22ba1a28d0728b57d64d48c86e7373ed2fee"
+    },
+    "sitecustomize": {
+      "path": "sitecustomize.py",
+      "sha256": "7b3a50bca0e2ee1ee866fdbc3c0a87fd9fbf16fc57bfd01706a4e32119122119"
+    },
+    "remote_experiment": {
+      "path": "remote_experiment.py",
+      "sha256": "e057df8e9bef51426b16027c2c981a193a730aa182b1bdfbd37ab1c811abf471",
+      "measurement_only_change": "Cumulative token-event consumer concatenates every scheduler_to_detokenizer delta per request; the consumed discriminator is not replayed."
+    },
+    "checkpoint_manifest": {
+      "path": "CHECKPOINT_MANIFEST.json",
+      "sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6"
+    },
+    "control_trace": {
+      "path": "inputs/traces/control-trace-events.jsonl",
+      "sha256": "af777e64553df10dd8a2ce35572703ecad738cc9b34686f49b379a384005a317"
+    },
+    "candidate_trace": {
+      "path": "inputs/traces/candidate-trace-events.jsonl",
+      "sha256": "e569b8af4e64c06e267ac4099296558bd69e298594dce57e490b18bdc3917b9a"
+    },
+    "exact_runner": {
+      "path": "inputs/bound/exact_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    }
+  },
+  "measurement_gate": {
+    "discriminator_rows": [
+      "ordinary",
+      "repeated_pattern",
+      "single_tool",
+      "c32_row_00"
+    ],
+    "conditional_work": "Only exact four-row candidate tokens admit the ten-row exact token/tool suite and matched c32 control/candidate pair.",
+    "latency_ceiling_seconds_per_request": 0.6381105231
+  }
+}

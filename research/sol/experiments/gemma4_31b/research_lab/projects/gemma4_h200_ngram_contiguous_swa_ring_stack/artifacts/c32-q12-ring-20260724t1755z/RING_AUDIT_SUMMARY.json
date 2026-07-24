@@ -1,0 +1,15 @@
+{
+  "rows": 66,
+  "first": {
+    "event": "ring_region_reserved",
+    "layer_id": null,
+    "request_pool_indices": null,
+    "ring_rows": null,
+    "prefix_lens": null,
+    "extend_lens": null,
+    "current_k": null,
+    "current_v": null,
+    "prefix_k": null,
+    "prefix_v": null
+  }
+}

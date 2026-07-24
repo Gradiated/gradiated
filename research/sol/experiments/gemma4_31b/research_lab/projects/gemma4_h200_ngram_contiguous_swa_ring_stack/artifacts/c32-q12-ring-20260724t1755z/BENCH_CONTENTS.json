@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_ngram_contiguous_swa_ring_stack",
+  "result": "component_positive_integrated_candidate_semantic_failure",
+  "artifacts": "projects/gemma4_h200_ngram_contiguous_swa_ring_stack/artifacts/c32-q12-ring-20260724t1755z",
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "runtime": "Pinned SGLang image and CUDA/JIT caches retained.",
+  "server_state": "Candidate container removed; accelerator unoccupied.",
+  "next": "Do not replay this contiguous-ring/NGRAM candidate without a new disposition; first localize fresh-extend producer mismatch."
+}

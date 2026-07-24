@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-24T17:40:00Z",
+  "kind": "qualified_ngram_contiguous_local_swa_ring_stack_binding",
+  "project": "gemma4_h200_ngram_contiguous_swa_ring_stack",
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_bytes": 62578655208
+  },
+  "runtime": {
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "dtype": "bfloat16",
+    "quantization": "fp8",
+    "kv_cache_dtype": "fp8_e5m2",
+    "tensor_parallel_size": 1,
+    "context_length": 5000,
+    "max_running_requests": 32,
+    "speculative_algorithm": "NGRAM"
+  },
+  "authoritative_inputs": {
+    "wave_director_binding": {
+      "path": "../gemma4_h200_ngram_wave_batching_sustainable/DIRECTOR_BINDING.json",
+      "sha256": "b160a194d88866f9bfc095d7c78b543ad0c4319e41be58f1ce1721119bacdd1b"
+    },
+    "wave_steady_state_disposition": {
+      "path": "../gemma4_h200_ngram_wave_batching_sustainable/DIRECTOR_STEADY_STATE_DISPOSITION.json",
+      "sha256": "baa62900fa408a4d1ecf5f2c3c369f3f9804d58b866b0579c3fb898ac629ac5a"
+    },
+    "wave_terminal": {
+      "path": "../gemma4_h200_ngram_wave_batching_sustainable/artifacts/wave-adoption-20260724t155535z/retrieved/out/FINAL_TERMINAL.json",
+      "sha256": "54ebd37d48d2bc4508aaf3ecc89c08ddf8bc6731719b7443b356cee0939a4f63"
+    },
+    "frozen_request_rows": {
+      "path": "../gemma4_h200_ngram_wave_batching_sustainable/inputs/bound/requests.jsonl",
+      "sha256": "10e7edacaa194fd0f43b3a3c38f7d91cec0ceba22df8e08e3b5897b174346135"
+    },
+    "ring_terminal": {
+      "path": "../gemma4_h200_swa_contiguous_ring_cache/artifacts/RING_PRODUCER_BINDING_FINAL_TERMINAL.json",
+      "sha256": "c5d6e7093dd717239471133cfa7280afd4c7bb56bc26911a7c282d7b5287b8d6"
+    },
+    "ring_implementation_manifest": {
+      "path": "../gemma4_h200_swa_contiguous_ring_cache/ENDPOINT_GPU_MANIFEST.json",
+      "sha256": "73778dfbc4b37506cd05262496a57179ae1733c69547bdb5281d8b808bf51e76"
+    },
+    "corrected_ngram_trace": {
+      "path": "../gemma4_h200_ngram_verification_critical_path/artifacts/ngram-critical-20260724t115729Z/TRACE_ANALYSIS_REPAIR.json",
+      "sha256": "a22e25b3e911891d75e1008f22a03ad2a7d160584e1c83e660b8a3238602304f"
+    },
+    "closed_m384_terminal": {
+      "path": "../gemma4_h200_ngram_m384_fp8_cluster_schedule/LATEST_TERMINAL.json",
+      "sha256": "1f2ed4efd782b974885e3324ed15b27a9bb49d13ef0c0d67ad1174e0d0b3d835"
+    },
+    "quality_terminal": {
+      "path": "../gemma4_h200_ngram_decode_equivalent_production_validation/artifacts/quality-final-20260724t1304z/TERMINAL.json",
+      "sha256": "b4e52f2471444db7386979029932f528cbf988660a1db1af0ba98d3c3b33cbe7"
+    },
+    "stock_ngram_launch": {
+      "path": "../gemma4_h200_ngram_decode_equivalent_production_validation/artifacts/quality-final-20260724t1304z/ngram-launch.json",
+      "sha256": "8349853a7eac9e73211f5d3081c834c05f78e0fd292ddbe5acb921b1824a523d"
+    }
+  },
+  "retained_ring": {
+    "local_layers": 50,
+    "global_layers": 10,
+    "local_window_tokens": 1024,
+    "local_query_heads": 32,
+    "local_kv_heads": 16,
+    "local_head_dim": 256,
+    "kv_dtype": "fp8_e5m2",
+    "control_layout": "page_size_1_paged",
+    "candidate_layout": "request_owned_contiguous_circular",
+    "component_local_consumer_reduction_fraction": 0.248346481,
+    "control_seconds_per_request": 0.6766461551248995,
+    "candidate_seconds_per_request": 0.6556567115001144,
+    "endpoint_reduction_fraction": 0.031019822496
+  },
+  "ngram_target_verification": {
+    "concurrency": 32,
+    "draft_rows_per_request": 12,
+    "query_rows_per_step": 12,
+    "target_rows_per_step": 384,
+    "local_layers_per_step": 50,
+    "global_layers_per_step": 10,
+    "stock_attention_tile_m": 64,
+    "trace_target_verification_steps": 15,
+    "trace_attention_launches": 900
+  },
+  "wave_policy": {
+    "requests": 1036,
+    "full_waves": 32,
+    "tail_requests": 12,
+    "wave_size_requests": 32,
+    "release_period_seconds": 22.227523626,
+    "stock_full_wave_server_span_max_seconds": 17.684530305999942,
+    "stock_minimum_headroom_seconds": 4.542993320000058,
+    "stock_steady_cost_usd_per_million_total_tokens": 0.137156293636251,
+    "stock_finite_cost_usd_per_million_total_tokens": 0.14012183965773806
+  },
+  "quality": {
+    "gpqa_control_and_candidate": "55/198",
+    "taubench_control_and_candidate": "10/165",
+    "candidate_completion_tokens_delta": -18,
+    "authority": "fresh matched quality terminal; do not replay"
+  },
+  "candidate_contract": {
+    "component_first": true,
+    "component_scope": "one exact c32 Q12 real-transition local target-verification consumer",
+    "endpoint_scope": "one candidate-only frozen 1036-request 32-wave-plus-tail trajectory",
+    "control_replay": false,
+    "required_local_candidate_path_layers": 50,
+    "required_global_stock_path_layers": 10,
+    "full_wave_deadline_seconds": 22.227523626,
+    "finite_cost_ceiling_usd_per_million_total_tokens": 0.14,
+    "steady_cost_ceiling_usd_per_million_total_tokens": 0.137156293636251
+  }
+}
+

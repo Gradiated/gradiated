@@ -1,0 +1,16 @@
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.0.1
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+{"candidate_path": {"global_layers_stock": 10, "local_layers": 50, "q_rows_per_request": 12, "request_owned_contiguous_e5m2_ring": true, "ring_wrap_requests": 32}, "component_pass": true, "correct": {"allclose": true, "finite": true, "max_abs_error": 0.0, "padded_row_noop": true, "relative_l2": 0.0, "ring_transition_bytes_exact": true}, "kind": "exact_c32_q12_ngram_local_target_verification_ring_layout", "positive_whole_request_bound_fraction": 0.0057752265724487295, "schema_version": 1, "timing": {"candidate": {"median_ms": 1.4791680574417114, "p90_ms": 1.4869120121002197, "samples_ms": [1.4835840463638306, 1.4767999649047852, 1.477952003479004, 1.48198401927948, 1.4808000326156616, 1.478335976600647, 1.4868160486221313, 1.4893120527267456, 1.4795520305633545, 1.4869120121002197, 1.4759039878845215, 1.4754559993743896, 1.4718079566955566, 1.4791680574417114, 1.4826879501342773, 1.4776639938354492, 1.4751039743423462, 1.4794880151748657, 1.4791359901428223, 1.4777920246124268, 1.4876480102539062, 1.4793599843978882, 1.4821120500564575, 1.4713280200958252, 1.4697599411010742]}, "control": {"median_ms": 1.4929280281066895, "p90_ms": 1.4991999864578247, "samples_ms": [1.5191680192947388, 1.490623950958252, 1.4888960123062134, 1.502943992614746, 1.4893120527267456, 1.4929280281066895, 1.4883519411087036, 1.4991999864578247, 1.4908479452133179, 1.4913599491119385, 1.492192029953003, 1.497696042060852, 1.499135971069336, 1.4928640127182007, 1.4897279739379883, 1.4915839433670044, 1.4854719638824463, 1.4948480129241943, 1.4977279901504517, 1.49344003200531, 1.4957760572433472, 1.4939520359039307, 1.4944640398025513, 1.4933120012283325, 1.4919359683990479]}, "reduction_fraction": 0.0092167675908853}}

@@ -1,0 +1,18 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 1.000768,
+  "authorized_spend_usd": 8.0,
+  "last_researcher_run": {
+    "at_utc": "2026-07-24T21:23:31Z",
+    "component_result": "exact_sparse_positive_component",
+    "endpoint_result": "terminal_negative",
+    "profile": "deep",
+    "skill": "$researcher + $kernel-research"
+  },
+  "next_action": "Close the dense penalty consumer as the sustainable-throughput-collapse owner. Preserve the exact sparse component as a small stackable implementation reference only; do not replay its consumed component or 1,036-request endpoint. Director should select a materially distinct late-batch mechanism.",
+  "priority": 7800,
+  "researcher_profile": "deep",
+  "status": "complete",
+  "summary": "Exact sparse min-new-token columns cut the real max-shape penalty-plus-greedy component 84.42%, but improved the fixed endpoint only 0.107%; final drift remained 7.095 seconds with +0.038268 seconds/request final-100 slope. Close as throughput-collapse owner.",
+  "wall_clock_budget": "Claim for at most 70 minutes and release by 2026-07-24T22:20:00Z, leaving ten minutes before the verified 22:30Z watchdog."
+}

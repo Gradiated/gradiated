@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "remote_experiment.py"
+  ],
+  "cwd": "/home/glmrunner/gemma4-h200-ngram-sparse-penalty",
+  "launched_at_utc": "2026-07-24T21:07:40.820663Z",
+  "log": "/home/glmrunner/gemma4-h200-ngram-sparse-penalty/EXPERIMENT_OWNER.log",
+  "pid": 152917,
+  "start_ticks": 4197153,
+  "unit_manager": "remote-shell"
+}

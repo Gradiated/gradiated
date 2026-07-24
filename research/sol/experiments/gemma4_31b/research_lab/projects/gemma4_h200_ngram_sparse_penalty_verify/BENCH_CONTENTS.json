@@ -1,0 +1,10 @@
+{
+  "artifacts": "artifacts/sparse-penalty-20260724t210733z",
+  "candidate_sample_consumed": true,
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "component_result": "exact_sparse_positive_component",
+  "gpu_processes": "gemma4-ngram-sparse-penalty-candidate Up 13 minutes\n154917, 123966",
+  "project": "gemma4_h200_ngram_sparse_penalty_verify",
+  "result": "measured_direct_sparse_penalty_candidate",
+  "server_state": "Final sparse candidate or component container remains loaded; no compatible successor identified."
+}

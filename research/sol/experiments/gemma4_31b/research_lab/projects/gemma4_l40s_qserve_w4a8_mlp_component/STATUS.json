@@ -1,0 +1,23 @@
+{
+    "accelerator_requirement": "nvidia-l40s",
+    "active_session": null,
+    "actual_spend_usd": 0.0,
+    "allocation_limit": 1,
+    "authorized_spend_usd": 12.0,
+    "binding": "DIRECTOR_BINDING.json",
+    "compute_budget": "At most 8 local CPU-hours, then at most 6 L40S GPU-hours after director provisioning.",
+    "gpu_input_manifest": {
+        "path": "GPU_INPUT_MANIFEST.json",
+        "sha256": "0b9c1090d51ca63979d7fa086a49a3bbc839e1617c1d6324eb54cfcbcfbe4f1a"
+    },
+    "last_result_classification": "offline_exact_consumer_packet_ready",
+    "next_action": "Director: provision and register one nvidia-l40s bench from PROVIDER_REQUEST.json. Researcher after registration: atomically claim it and run the immutable checkpoint-free compile/correctness/timing packet once.",
+    "priority": 5995,
+    "provider_request": "PROVIDER_REQUEST.json",
+    "provider_mutation": "director_owned_future_l40s_only",
+    "researcher_profile": "execution",
+    "status": "active",
+    "storage_budget": "At most 20 GiB project-local and one later 150-GiB provider disk.",
+    "summary": "Immutable SM89 QServe progressive W4A8 exact Gemma MLP packet is ready; no GPU was created or claimed, and the next evidence is one director-provisioned L40S compile/correctness/timing run.",
+    "wall_clock_budget": "At most 10 hours from researcher start."
+}

@@ -1,0 +1,52 @@
+{
+  "candidate": {
+    "group_size": 128,
+    "qserve_revision": "02b2925aa6fa3b92b06316a1524b7f38922cd9c8",
+    "schedule": "CTA_M=32,CTA_N=64,CTA_K=128,WARP_M=32,WARP_N=32,WARP_K=64,STAGES=3",
+    "symbols": [
+      "qserve_sm89.quantize_bf16_s8",
+      "qserve_sm89.w4a8_gemm",
+      "qserve_sm89.gelu_mul_quant_s8"
+    ]
+  },
+  "control": {
+    "container": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "symbols": [
+      "sglang.srt.layers.quantization.fp8_kernel.sglang_per_token_quant_fp8",
+      "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm",
+      "sglang.srt.layers.activation.GeluAndMul"
+    ]
+  },
+  "execution": {
+    "command": "bash inputs/run_l40s_component.sh PROJECT_ABSOLUTE_PATH OUTPUT_ABSOLUTE_PATH",
+    "expected_compile_terminal": "OUTPUT_ABSOLUTE_PATH/COMPILE_TERMINAL.json",
+    "expected_scientific_terminal": "OUTPUT_ABSOLUTE_PATH/component/TERMINAL.json",
+    "target": "one exact NVIDIA L40S (SM89)"
+  },
+  "files": {
+    "DIRECTOR_BINDING.json": "044602f7e0a52dcc3117b258a7b1f42ac35b1fe9127bcef07d3d8651b06c467d",
+    "MECHANISM_BINDING.json": "a9341ecefaaf3dae65d7aab99ee17bf11943f62e24680a4f04d885f71c7288ae",
+    "PROJECT.md": "6f0c6d89860c62117cfd57c3ce21cec3a47deabeb4dab2c5c839d71ca8d17d12",
+    "inputs/EXPERIMENT_SPEC.json": "4cdac9c103d31a7730fa3d1fe6ddc96aff98de43619a83259143da1e28578e0c",
+    "inputs/compile_report.py": "6f3435144fb113cea6588209d355a4ac7c905ae2e86588b5248e86fd060477c0",
+    "inputs/qserve_mlp_component.py": "44fa4069f90541152329e127f51db797d43f5d2aaa18f1c11aae8738a9bd50e2",
+    "inputs/qserve_sm89/LICENSE.qserve-apache-2.0": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "inputs/qserve_sm89/activation_quant.cu": "9effa10b52204e2b019d6ed6079baf520097b6e10ddfd63b2693cf2f01a91d8c",
+    "inputs/qserve_sm89/bindings.cpp": "73f5b56e48984cc03ee67482117df0d908a2701c75d54e908ac0e585d3bcbb6d",
+    "inputs/qserve_sm89/gemm_cuda.h": "c205dc5288aa9fa1deb3caefb95c9d706517618bc3a83401b773b85a284d4817",
+    "inputs/qserve_sm89/qserve_w4a8_gemm.cu": "ed866c939743e7adc53e6a23a6cd99b92ad1a62e1138979361eafd9369f0e4d9",
+    "inputs/qserve_sm89/setup.py": "dcb3edef21240ae0092fb4d3b2e24b8b3544231fd76745869bcbfdf37ffe8d01",
+    "inputs/qserve_upstream_reference/activation.py": "8e90881b561ee43618b9cb738c1644a5e2c470ded2d697bd21a7309af19d9f3b",
+    "inputs/qserve_upstream_reference/setup.py": "6b24d3482e64ac4ad155297f2929dfbb3b44cfec95ee9a12951feb76bdaee08c",
+    "inputs/qserve_upstream_reference/w4a8_linear.py": "17fd02cd509c54f97d02774b9708dec50d08712ae1819e869eeec8408f51c111",
+    "inputs/run_l40s_component.sh": "278008f0a79bfe2717d00a04fd716b13cdddcef2df2f1266b1e845ff4c48e07e",
+    "inputs/verify_packet.py": "850f7d9ac45b95878e718342318d1b33c78777e5c1d0f29f4a8ac69c82ddbcb8"
+  },
+  "geometry": {
+    "decode_m": [1, 2, 4, 8, 12, 16, 24, 32],
+    "down": [21504, 5376],
+    "gate_up": [5376, 43008],
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+  },
+  "schema_version": 1
+}

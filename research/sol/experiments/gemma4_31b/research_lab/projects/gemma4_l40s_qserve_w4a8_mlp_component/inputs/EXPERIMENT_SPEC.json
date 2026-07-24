@@ -1,0 +1,54 @@
+{
+  "accelerator": {
+    "architecture": "sm89",
+    "exact_name_substring": "L40S",
+    "sm_count": 142
+  },
+  "baseline": {
+    "activation": "sglang.srt.layers.activation.GeluAndMul(approximate=\"tanh\")",
+    "consumer": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm",
+    "producer": "sglang.srt.layers.quantization.fp8_kernel.sglang_per_token_quant_fp8",
+    "weight_format": "E4M3 per-output-channel"
+  },
+  "candidate": {
+    "activation": "qserve_sm89.gelu_mul_quant_s8",
+    "consumer": "qserve_sm89.w4a8_gemm",
+    "group_size": 128,
+    "producer": "qserve_sm89.quantize_bf16_s8",
+    "qserve_revision": "02b2925aa6fa3b92b06316a1524b7f38922cd9c8",
+    "schedule": {
+      "cta_k": 128,
+      "cta_m": 32,
+      "cta_n": 64,
+      "stages": 3,
+      "threads": 128,
+      "warp_k": 64,
+      "warp_m": 32,
+      "warp_n": 32
+    },
+    "weight_format": "progressive asymmetric W4 over signed-int8 stage, group-128, per-output fp16 stage-1 scale"
+  },
+  "correctness": {
+    "cosine_minimum": 0.999,
+    "finite_required": true,
+    "relative_l2_maximum": 0.02,
+    "required_m": [1, 2, 4, 8, 12, 16, 24, 32],
+    "zero_and_extreme_cases": true
+  },
+  "geometry": {
+    "activation": "GeluAndMul tanh approximation",
+    "down": [21504, 5376],
+    "gate_up": [5376, 43008],
+    "hidden": 5376,
+    "intermediate": 21504,
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+  },
+  "measurement": {
+    "iterations": 50,
+    "profiler": "off for timing",
+    "summary": ["minimum_ms", "p50_ms", "p95_ms", "maximum_ms"],
+    "warmups": 10
+  },
+  "schema_version": 1,
+  "seed": 20260724
+}

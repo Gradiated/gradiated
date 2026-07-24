@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_torch_reserved_staircase/adopt_candidate_owner.py"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_torch_reserved_staircase",
+  "launched_at_utc": "2026-07-24T20:33:43.026795Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_torch_reserved_staircase/CANDIDATE_LOCAL_OWNER.log",
+  "pid": 97506,
+  "start_ticks": 104124042,
+  "unit_manager": "pid"
+}

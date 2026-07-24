@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_torch_reserved_staircase/run_bench_owner.py", line 427, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_torch_reserved_staircase/run_bench_owner.py", line 261, in main
+    claimed_at = claim_started_at()
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_torch_reserved_staircase/run_bench_owner.py", line 118, in claim_started_at
+    bench = next(row for row in inventory["benches"] if row["id"] == BENCH)
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_torch_reserved_staircase/run_bench_owner.py", line 118, in <genexpr>
+    bench = next(row for row in inventory["benches"] if row["id"] == BENCH)
+                                                        ~~~^^^^^^
+TypeError: string indices must be integers, not 'str'

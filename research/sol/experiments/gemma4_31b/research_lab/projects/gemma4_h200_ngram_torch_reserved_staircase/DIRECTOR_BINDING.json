@@ -1,0 +1,40 @@
+{
+  "bench": {
+    "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+    "retained_container": "gemma4-ngram-swa-pressure",
+    "retained_container_health": "healthy_on_port_30000",
+    "retained_container_use": "read_only_source_and_runtime_donor_until_claimed",
+    "watchdog_deadline_utc": "2026-07-24T21:00:00Z",
+    "watchdog_unit": "gemma4-ngram-verifier-h200-20260724t2100-watchdog.service"
+  },
+  "identities": {
+    "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it",
+    "request_rate_per_second": 1.439656551,
+    "requests": 1036
+  },
+  "pressure_result": {
+    "analysis": {
+      "path": "../gemma4_h200_ngram_swa_kv_pressure_discriminator/RESULT_ANALYSIS.json",
+      "sha256": "ad94bda0f4ba6bd01ade5c24b0049d0391e9c463e3efbc3c193c904caea6dbc9"
+    },
+    "final_terminal": {
+      "path": "../gemma4_h200_ngram_swa_kv_pressure_discriminator/artifacts/swa-pressure-20260724t194035z/snapshots/1d53e273b794d1e01665830077b533bdf49acb5aa5d3cce8c525797b3b13902e/out/FINAL_TERMINAL.json",
+      "sha256": "0c874d3ef44155c7132c074e3006eb8ec68d35b4eb7809bd3198696a3ad3f986"
+    },
+    "requests_comparator": {
+      "path": "../gemma4_h200_ngram_swa_kv_pressure_discriminator/artifacts/swa-pressure-20260724t194035z/snapshots/1d53e273b794d1e01665830077b533bdf49acb5aa5d3cce8c525797b3b13902e/out/requests.jsonl",
+      "sha256": "de2e5ee1b221318366120ad37884372d9f6a578f44c9af9756accf1c399178b0"
+    },
+    "swa_ownership": {
+      "path": "../gemma4_h200_ngram_swa_kv_pressure_discriminator/artifacts/swa-pressure-20260724t194035z/snapshots/1d53e273b794d1e01665830077b533bdf49acb5aa5d3cce8c525797b3b13902e/out/swa-ownership.jsonl",
+      "sha256": "b251298f1eaac8b5ebf9fe33e2133779ed7a2484de919059a1730cf38eb37d7b"
+    },
+    "telemetry": {
+      "path": "../gemma4_h200_ngram_swa_kv_pressure_discriminator/artifacts/swa-pressure-20260724t194035z/snapshots/1d53e273b794d1e01665830077b533bdf49acb5aa5d3cce8c525797b3b13902e/out/telemetry.jsonl",
+      "sha256": "5b53dc9a8b80a2df355564101835a2d8ad68030a753ebfbeb3945c1f61841341"
+    }
+  },
+  "schema_version": 1
+}

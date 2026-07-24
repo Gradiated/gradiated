@@ -1,0 +1,10 @@
+{
+  "candidate_packet_sha256": "9d40a738d8b9853df3c0f29ef900cb0e3b894eb3b21c3162690260b67208cbd4",
+  "intervention_sha256": "eef9e074366b01b01f221dac2afef04eb749a95b55a09b5807288c19d976903d",
+  "remote_candidate_sha256": "73bfc437e8670d6cc00344d0e75804e9e636b802d79d8a600df1f74b0b3803c0",
+  "comparator_sha256": "de2e5ee1b221318366120ad37884372d9f6a578f44c9af9756accf1c399178b0",
+  "trace_packet_sha256": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68",
+  "admission_basis": "ALLOCATION_ATTRIBUTION.json",
+  "scheduled_requests": 1036,
+  "sample_limit": 1
+}

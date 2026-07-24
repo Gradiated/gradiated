@@ -1,0 +1,20 @@
+{
+  "attempts": [
+    {
+      "kind": "invalid_preinvocation_controller_attempt",
+      "diagnostic": "The first owner assumed runtime/gpus.json benches was a list; the live pool used a keyed object.",
+      "science_started": false,
+      "claim_released": false,
+      "amendment": "Accept both keyed-object and list inventory encodings, then restart only the controller."
+    },
+    {
+      "kind": "durable_controller_wait_deadline_defect",
+      "diagnostic": "The attribution owner's repair wait ended at 20:40Z, four minutes before the exact candidate schedule.",
+      "producer_state": "The valid attribution producer was already persisted and was not replayed.",
+      "candidate_replayed": false,
+      "claim_released": false,
+      "amendment": "Start replacement PID owner 97506 with the original 20:50Z absolute deadline, verify it live and heartbeating, then terminate prior PID 88958. The replacement retrieved the candidate terminal and released once at 20:44:14Z."
+    }
+  ],
+  "final_disposition": "scientific_terminal_released_maintenance"
+}

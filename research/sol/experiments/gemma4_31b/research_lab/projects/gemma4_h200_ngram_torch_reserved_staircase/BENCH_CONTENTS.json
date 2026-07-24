@@ -1,0 +1,14 @@
+{
+  "artifacts": "Attribution prefix is content-addressed under artifacts/torch-staircase-20260724t201342z; candidate terminal and telemetry are under artifacts/broadcast-reuse-20260724t203343z.",
+  "candidate": "The single broadcast-reuse candidate is consumed: 1,036/1,036 exact, no failures/retractions/server queue, 90.08% HBM-staircase reduction, but 7.858 s final client drift.",
+  "candidate_sample_consumed": true,
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "conditional_gate": "Consumed and closed; replay neither attribution nor candidate.",
+  "expected_first_arms": "Both admitted arms are consumed.",
+  "gpu_processes": "true\n144547, 123828",
+  "next": "Director disposition: loaded candidate is useful only as exact retained evidence; throughput promotion failed.",
+  "project": "gemma4_h200_ngram_torch_reserved_staircase",
+  "residual_bottleneck": "Client release drift still grows +0.04252 s/request over the final 100 after removing 90.08% of the HBM staircase.",
+  "result": "allocation_owner_confirmed_candidate_service_negative",
+  "server_state": "Healthy broadcast-reuse candidate container gemma4-ngram-torch-staircase-candidate remains loaded on port 30000 in maintenance, using 123,828 MiB at release."
+}

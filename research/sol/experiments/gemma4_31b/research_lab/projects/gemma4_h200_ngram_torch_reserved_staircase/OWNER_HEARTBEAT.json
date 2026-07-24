@@ -1,0 +1,5 @@
+{
+  "at_utc": "2026-07-24T20:44:14.068923Z",
+  "returncode": 2,
+  "stderr": "usage: gpu_pool.py [-h] --lab LAB\n                   {list,register,claim,heartbeat,update,release,drain,reclaim,ready,replace-watchdog,retire} ...\ngpu_pool.py: error: project does not own a GPU bench: gemma4_h200_ngram_torch_reserved_staircase\n"
+}

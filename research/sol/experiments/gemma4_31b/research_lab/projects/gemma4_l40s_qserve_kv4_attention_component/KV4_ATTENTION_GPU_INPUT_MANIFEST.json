@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "packet": "exact Gemma-4 progressive KV4 producer and fused decode component",
+  "created_utc": "2026-07-24T05:45:00Z",
+  "bench_id": "l40s-qserve-e00a74kcbps8v00fk4",
+  "accelerator": "nvidia-l40s",
+  "required_compute_capability": "8.9",
+  "container_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "installed_control_source": {
+    "module": "sglang.srt.layers.attention.triton_ops.decode_attention",
+    "sha256": "1040f43a9ea579b944aa037b585997f8d7b585d85f459a1b1f420002b4bd092a",
+    "admission": "worker hashes the installed bytes before the first CUDA invocation"
+  },
+  "files": {
+    "EXACT_GEMMA_KV4_CONTINUATION.json": "1f9f5e360640c88c5eaea0f0177b63a93dd404f9e79546ce786291f044638ed9",
+    "KV4_ATTENTION_SOURCE_GEOMETRY_REJECT.json": "c9580f8f4d6f87ed1414becda414ae199700e155160df5c09c713520403ca814",
+    "EXPERIMENT_SPEC.json": "c75708908fabb054a158751d7f69711370592b8d69889769afe44a288f76e537",
+    "inputs/exact_gemma_kv4/kv4_kernels.py": "0b8d0c8d0a5777726c4e7e606c54783e27c3133f61dc72c1c1f3cd8d73551c43",
+    "inputs/exact_gemma_kv4/kv4_component.py": "0f6a2deabb0dbc231055715c258eb7c86d1fc4d5e6e65b7bdf32e982b61dee7a",
+    "inputs/exact_gemma_kv4/run_component.sh": "a1aa2c01134c279ee3c849c4e4b9868274a11b69eddc3bb1a9be1b4083a0f156"
+  },
+  "scientific_invocations": {
+    "component": 1,
+    "counter_replays": 4,
+    "sweep": false,
+    "endpoint": false,
+    "checkpoint": false
+  },
+  "queue_gate": "claim only after priority-6200 gemma4_l40s_qserve_w4a8_mlp_component releases the exact bench",
+  "expected_terminal": "COMPONENT_TERMINAL.json"
+}

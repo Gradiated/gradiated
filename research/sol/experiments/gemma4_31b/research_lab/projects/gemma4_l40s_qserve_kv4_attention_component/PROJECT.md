@@ -77,3 +77,21 @@ the fixed KV4 mechanism without a representation or schedule sweep.
 - Spend: `$0`.
 - Provider operations, GPU claims, checkpoint downloads, and DFlash/H200 work
   are prohibited.
+
+## 2026-07-24 continuation — exact Gemma D256/D512 SM89 kernel
+
+The pinned OmniServe route is closed exactly as recorded in
+`KV4_ATTENTION_SOURCE_GEOMETRY_REJECT.json`: its decoder instantiates only
+D128, and its producer stops at D256. The candidate arm remains unconsumed.
+The director now explicitly authorizes the materially different kernel design
+described in `EXACT_GEMMA_KV4_CONTINUATION.json`.
+
+Use the bound affine KV4 representation and paged ownership contract, but
+implement only the exact D256 local and D512 global Gemma producer/consumer
+paths. Choose one fixed SM89 schedule from source, model geometry, and
+accelerator constraints; do not create a generic head-dimension family or a
+tile/representation sweep. Prepare the checkpoint-free packet offline behind
+priority-6200, then use the retained L40S only after that predecessor releases.
+The paid result is one complete-output correctness/timing component and the
+minimum counters needed to explain it. No endpoint or quality claim is
+authorized.

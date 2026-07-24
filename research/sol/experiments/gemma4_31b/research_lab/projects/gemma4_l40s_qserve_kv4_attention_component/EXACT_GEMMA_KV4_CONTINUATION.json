@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "decision": "replace_unsupported_upstream_dispatch_with_one_exact_gemma_sm89_kernel",
+  "question": "Can one exact D256-local and D512-global progressive KV4 producer/fused-attention consumer reduce the pinned Gemma hybrid-attention path on L40S while preserving transition semantics and complete outputs?",
+  "authoritative_reject": {
+    "path": "KV4_ATTENTION_SOURCE_GEOMETRY_REJECT.json",
+    "sha256": "c9580f8f4d6f87ed1414becda414ae199700e155160df5c09c713520403ca814",
+    "closed_route": "OmniServe decoder D128 dispatch and producer maximum D256"
+  },
+  "fixed_geometry": {
+    "checkpoint": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.13 Triton control",
+    "local": {
+      "layers": 50,
+      "query_heads": 32,
+      "kv_heads": 16,
+      "head_dim": 256,
+      "window_tokens": 1024
+    },
+    "global": {
+      "layers": 10,
+      "query_heads": 32,
+      "kv_heads": 4,
+      "head_dim": 512
+    },
+    "decode_m": [
+      1,
+      2,
+      4,
+      8,
+      12,
+      16,
+      24,
+      32
+    ],
+    "page_size_tokens": 1,
+    "kv_control_dtype": "FP8 E5M2",
+    "query_dtype": "BF16"
+  },
+  "fixed_representation": {
+    "cache_dtype": "unsigned affine INT4 packed two values per byte",
+    "granularity": "independent K and V scale and zero per token per KV head",
+    "scale": "(max - min) / 15 in FP16",
+    "zero": "-15 * min / (max - min) in FP16",
+    "consumption": "dequantize inside QK and softmax-times-V loads without materializing a full dequantized cache"
+  },
+  "scope": [
+    "Implement one source-bound SM89 producer and fused decoder covering exact D256 local and D512 global geometry; do not add a generic head-dimension family.",
+    "Choose one fixed schedule from exact register, shared-memory, grid-wave, L2 and DRAM reasoning. No tile, group, representation, or multiblock sweep.",
+    "Build a checkpoint-free actual-consumer packet covering first extend-to-decode ownership, request reuse, padded rows, positions, local eviction/windowing, global block tables, and complete attention outputs.",
+    "Run on l40s-qserve-e00a74kcbps8v00fk4 only after gemma4_l40s_qserve_w4a8_mlp_component releases it. Compare producer-plus-consumer time and complete outputs against the pinned FP8-E5M2 control.",
+    "Collect only counters that distinguish fused KV4 byte reduction from register/shared-memory pressure, underfilled grids, spills, or extra synchronization."
+  ],
+  "gates": {
+    "correctness": "All transition rows finite with exact shape/cardinality; preserve positions, request ownership and cache transitions; report relative L2, cosine and maximum error for complete local and global outputs.",
+    "performance": "Report warm local/global producer-plus-consumer distributions and the 50:10 layer-weighted request bound. Retain any correct positive component with a credible endpoint path; reject a slower or semantically invalid fixed kernel.",
+    "queue_order": "Do not claim l40s-qserve-e00a74kcbps8v00fk4 until priority-6200 gemma4_l40s_qserve_w4a8_mlp_component releases it."
+  },
+  "prohibitions": [
+    "Do not port, tune, or replay the closed H200 group-64 INT4 implementation.",
+    "Do not claim support from the pinned OmniServe D128 dispatch.",
+    "Do not claim a checkpoint, endpoint, quality, or provider-creation result.",
+    "Do not interact with the QServe MLP server while its predecessor claim is active."
+  ]
+}

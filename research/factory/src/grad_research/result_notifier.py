@@ -64,6 +64,10 @@ def research_update(lab_dir: Path, event: dict[str, Any]) -> str:
     return "\n".join(lines)[:3500]
 
 
+def template_text_parameter(text: str) -> str:
+    return " ".join(text.split())[:3500]
+
+
 def whatsapp_payload(
     recipient: str,
     text: str,
@@ -86,7 +90,9 @@ def whatsapp_payload(
                 "components": [
                     {
                         "type": "body",
-                        "parameters": [{"type": "text", "text": text}],
+                        "parameters": [
+                            {"type": "text", "text": template_text_parameter(text)}
+                        ],
                     }
                 ],
             },

@@ -222,6 +222,94 @@ class SimpleLabHarnessTests(unittest.TestCase):
                 "absence of project-local code is not a typed blocker",
                 runner.calls[1]["prompt"],
             )
+            self.assertIn(
+                "materialize the admitted bytes under this project before claiming",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "Do not resolve the shared path again after the claim",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "ordinary launcher, path, CLI/API, parser, numeric-guard, telemetry, comparator, archive, or retrieval defect is not scientific evidence",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "patch and retry only the invalidated operation inside the same claimed bench/session",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "Candidate CUDA execution or a pre-call `*_science_started` marker proves path entry",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "Judge consumption from evidence, not intent markers",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "A complete interpretable candidate result is a sample",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "may be amended and retried, even when some candidate bytes executed",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "do not count the retry as another independent sample",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "protects valid measurements and completed costly stages",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "claim, heartbeat, and final release in one bounded outer controller",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "must not unconditionally release the bench on a recoverable pre-invocation exit",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "preserve that producer artifact and patch only the consumer on the same retained bench",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "do not rerun training, conversion, calibration, or another scientific producer invocation",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "retrieve its compact terminal, hash, and manifest first",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "only when that transfer does not delay GPU progress",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "start it inside that durable claim owner before copying bytes",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "never retry an all-files overwrite against already-matched read-only files",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "retrieve its remote compact terminal",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "Never release first and later guess whether the arm was consumed",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "do not promote the attempt terminal to the project's scientific terminal or release the warm bench",
+                runner.calls[1]["prompt"],
+            )
+            self.assertIn(
+                "write `REPAIR_READY.json` with the diagnostic and an absolute repair deadline",
+                runner.calls[1]["prompt"],
+            )
             self.assertIn("Latest director decision", runner.calls[1]["prompt"])
             self.assertIn(
                 "The BF16 development control and frozen NLL ceilings are ready.",

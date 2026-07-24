@@ -5,7 +5,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from grad_research.result_notifier import ResultNotifier, research_update, whatsapp_payload
+from grad_research.result_notifier import (
+    ResultNotifier,
+    research_update,
+    template_text_parameter,
+    whatsapp_payload,
+)
 
 
 class FakeSender:
@@ -54,6 +59,36 @@ class ResultNotifierTests(unittest.TestCase):
             "measured result",
             payload["template"]["components"][0]["parameters"][0]["text"],
         )
+
+    def test_template_text_parameter_removes_meta_forbidden_whitespace(self):
+        self.assertEqual(
+            "Project: kernel Status: complete Result: 8% faster",
+            template_text_parameter(
+                "Project: kernel\nStatus:\tcomplete     Result: 8% faster"
+            ),
+        )
+
+    def test_template_payload_sanitizes_parameter_but_freeform_preserves_text(self):
+        text = "Result:\n8% faster\t at c32"
+
+        template = whatsapp_payload(
+            "4912345",
+            text,
+            template_name="research_result",
+            template_language="en",
+        )
+        freeform = whatsapp_payload(
+            "4912345",
+            text,
+            template_name=None,
+            template_language="en",
+        )
+
+        self.assertEqual(
+            "Result: 8% faster at c32",
+            template["template"]["components"][0]["parameters"][0]["text"],
+        )
+        self.assertEqual(text, freeform["text"]["body"])
 
     def test_new_researcher_completion_is_sent_once_and_recorded(self):
         with tempfile.TemporaryDirectory() as directory:

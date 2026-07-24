@@ -1,0 +1,119 @@
+{
+  "candidate_endpoint_admitted": true,
+  "component": {
+    "active_penalizers": [
+      {
+        "class": "BatchedMinNewTokensPenalizer",
+        "multiplicative": false,
+        "prepared": true
+      }
+    ],
+    "all_penalizers": [
+      {
+        "class": "BatchedMinNewTokensPenalizer",
+        "multiplicative": false,
+        "prepared": true
+      },
+      {
+        "class": "BatchedPresencePenalizer",
+        "multiplicative": false,
+        "prepared": false
+      },
+      {
+        "class": "BatchedRepetitionPenalizer",
+        "multiplicative": true,
+        "prepared": false
+      },
+      {
+        "class": "BatchedFrequencyPenalizer",
+        "multiplicative": false,
+        "prepared": false
+      }
+    ],
+    "baseline_penalty_plus_argmax_ms": {
+      "max": 1.2038079500198364,
+      "median": 1.1933119893074036,
+      "min": 1.1811840534210205,
+      "samples": [
+        1.20307195186615,
+        1.193727970123291,
+        1.1963839530944824,
+        1.1912000179290771,
+        1.1929919719696045,
+        1.1811840534210205,
+        1.190335988998413,
+        1.1846719980239868,
+        1.2038079500198364,
+        1.1901439428329468,
+        1.1936320066452026,
+        1.1963839530944824,
+        1.2028160095214844,
+        1.1957759857177734,
+        1.1928960084915161,
+        1.1853439807891846,
+        1.197376012802124,
+        1.183359980583191,
+        1.1946239471435547,
+        1.1891200542449951
+      ]
+    },
+    "candidate_path": "direct_min_new_token_columns_then_unchanged_torch_argmax",
+    "candidate_penalty_plus_argmax_ms": {
+      "max": 0.19491200149059296,
+      "median": 0.18593599647283554,
+      "min": 0.1820800006389618,
+      "samples": [
+        0.18614399433135986,
+        0.1921280026435852,
+        0.1870719939470291,
+        0.18278400599956512,
+        0.19183999300003052,
+        0.19289599359035492,
+        0.18396799266338348,
+        0.1879359930753708,
+        0.18384000658988953,
+        0.18303999304771423,
+        0.18691200017929077,
+        0.1828799992799759,
+        0.18911999464035034,
+        0.18467199802398682,
+        0.1831039935350418,
+        0.19491200149059296,
+        0.18572799861431122,
+        0.18934400379657745,
+        0.1842239946126938,
+        0.1820800006389618
+      ]
+    },
+    "dense_logits_bytes": 402653184,
+    "dense_penalty_application_read_write_bytes": 805306368,
+    "dtype": "torch.float32",
+    "exact": true,
+    "exact_logits": true,
+    "exact_selected_tokens": true,
+    "nonzero_additive_coordinates_per_request": 32,
+    "nonzero_coordinates_after_repeat": 384,
+    "real_call": true,
+    "repeat": 12,
+    "selected_token_count": 384,
+    "shape": [
+      384,
+      262144
+    ],
+    "speedup_fraction": 0.8441849255359007,
+    "stride": [
+      262144,
+      1
+    ],
+    "target_rows": 384
+  },
+  "component_science_consumed": true,
+  "physical_hypothesis": "Direct stop-token column writes remove a dense FP32 logits read-modify-write before the unchanged greedy argmax.",
+  "predicted_counter_movement": {
+    "argmax_bytes_unchanged": 402653184,
+    "removed_dense_penalty_read_write_bytes_per_max_call": 805306368
+  },
+  "request_elapsed_seconds": 26.78856377399643,
+  "request_failures": [],
+  "result": "exact_sparse_positive_component"
+}

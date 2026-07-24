@@ -1,0 +1,18 @@
+{
+  "candidate_cuda_marker": true,
+  "component_persisted": false,
+  "error": "FileNotFoundError(2, 'No such file or directory')",
+  "logs_sha256": {
+    "gemma4-ngram-adaptive-candidate": {
+      "stderr": "6fc627e8b833c99c30c49873fa85a004ccbe4840fc1394b97e1c9aab65f8401f",
+      "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "gemma4-ngram-adaptive-reference": {
+      "stderr": "ecec030c6ae641dda7edd1fbbf7a09422e9de5053a19e1f0162b38d51e1b4a38",
+      "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "phase": "high_load_depth_candidate",
+  "result": "recoverable_experiment_or_consumer_defect",
+  "science_started": true
+}

@@ -1,0 +1,9 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_adaptive_draft_depth/DEPTH6_GRAPH_REPAIR_PACKET.tar",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_adaptive_draft_depth/DEPTH6_GRAPH_REPAIR_PACKET.tar",
+  "ready_sha256": "96e9b790035b35b7022fe27ae72eb2feedad0cc6620d1cf630be0c777ec6ca5c",
+  "requested_at_utc": "2026-07-24T22:00:32.765659Z",
+  "retry_scope": "Retry only the invalid high-load depth component: bypass fixed depth-12 CUDA graphs for depth-6 target verify, fix prompt-array serialization, reuse installed source capture, and admit the unstarted endpoint only on exact accepted/bonus tokens.",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

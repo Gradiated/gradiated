@@ -1,0 +1,10 @@
+{
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_adaptive_draft_depth/COMPONENT_REPAIR_PACKET.tar",
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_adaptive_draft_depth/COMPONENT_REPAIR_PACKET.tar",
+  "packet_sha256": "364241dce18899c86faf25452285a995a2af6e394dee9ceea393c8451d61e198",
+  "ready_sha256": "462d8c1c4eaaecfb681f55e159fce9e4c8423a6a534bb53b5786cf6c31046e18",
+  "requested_at_utc": "2026-07-24T21:48:51.928338Z",
+  "retry_scope": "Retry only the invalid high-load depth-12/depth-6 component observer/consumer; reuse installed source capture, preserve the first invalid attempt, and admit the unstarted endpoint only on an exact component terminal.",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

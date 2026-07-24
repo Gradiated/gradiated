@@ -1,0 +1,10 @@
+{
+  "artifacts": "artifacts/adaptive-depth-20260724t215325z",
+  "candidate_sample_consumed": false,
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "component_result": "adaptive_depth_component_reject",
+  "gpu_processes": "",
+  "project": "gemma4_h200_ngram_adaptive_draft_depth",
+  "result": "adaptive_depth_component_reject_no_endpoint",
+  "server_state": "Final adaptive-depth candidate container remains loaded on port 30000; no compatible successor identified."
+}

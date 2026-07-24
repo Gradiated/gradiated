@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "remote_experiment.py"
+  ],
+  "cwd": "/home/glmrunner/gemma4-h200-ngram-adaptive-depth",
+  "launched_at_utc": "2026-07-24T21:37:59.086106Z",
+  "log": "/home/glmrunner/gemma4-h200-ngram-adaptive-depth/EXPERIMENT_OWNER.log",
+  "pid": 163395,
+  "start_ticks": 4378980,
+  "unit_manager": "remote-shell"
+}

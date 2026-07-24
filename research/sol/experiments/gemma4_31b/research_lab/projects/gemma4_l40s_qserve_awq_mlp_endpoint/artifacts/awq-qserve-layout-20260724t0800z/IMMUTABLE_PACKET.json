@@ -1,0 +1,9 @@
+{
+  "bytes": 8144,
+  "classification": "immutable_offline_rejection_packet",
+  "gpu_admission": false,
+  "path": "artifacts/awq-qserve-layout-20260724t0800z/OFFLINE_REJECTION_PACKET.tar.gz",
+  "reason": "fixed_qserve_progressive_scale_incompatibility",
+  "schema_version": 1,
+  "sha256": "eade73c33b55f05adb59501dafa7f2337a1e5cbe8746c893b5f18328db2a92c5"
+}

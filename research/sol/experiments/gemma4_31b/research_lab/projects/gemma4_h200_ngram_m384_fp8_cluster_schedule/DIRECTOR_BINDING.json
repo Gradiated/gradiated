@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-24T17:00:00Z",
+  "kind": "gemma4_h200_ngram_m384_fp8_cluster_schedule_binding",
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_bytes": 62578655208,
+    "guest_path": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint"
+  },
+  "runtime": {
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "dtype": "bfloat16",
+    "quantization": "fp8",
+    "kv_cache_dtype": "fp8_e5m2",
+    "tensor_parallel_size": 1,
+    "context_length": 5000,
+    "max_running_requests": 32,
+    "speculative_algorithm": "NGRAM",
+    "draft_tokens": 12
+  },
+  "workload": {
+    "concurrency": 32,
+    "prompt_tokens_per_request": 4214,
+    "completion_tokens_per_request": 358,
+    "target_verification_rows": 384
+  },
+  "authoritative_inputs": {
+    "qualified_wave_director_binding": {
+      "path": "../gemma4_h200_ngram_wave_batching_sustainable/DIRECTOR_BINDING.json",
+      "sha256": "b160a194d88866f9bfc095d7c78b543ad0c4319e41be58f1ce1721119bacdd1b"
+    },
+    "wave_terminal": {
+      "path": "../gemma4_h200_ngram_wave_batching_sustainable/artifacts/wave-adoption-20260724t155535z/retrieved/out/FINAL_TERMINAL.json",
+      "sha256": "54ebd37d48d2bc4508aaf3ecc89c08ddf8bc6731719b7443b356cee0939a4f63"
+    },
+    "critical_path_trace_analysis": {
+      "path": "../gemma4_h200_ngram_verification_critical_path/artifacts/ngram-critical-20260724t115729Z/TRACE_ANALYSIS.json",
+      "sha256": "ea3eab8e6c9806cf6242dd2ad8d101753d9f991a7e3f80621476de9c34363ceb"
+    },
+    "persisted_control_terminal": {
+      "path": "../gemma4_h200_ngram_qlen_mask_target_verify/artifacts/qlen-mask-20260724t163813z/retrieved-final/artifacts/pair/control/TERMINAL.json",
+      "sha256": "78709271e4b95b80f3e29e73f09703df5f7ab51df2af11c6cb2dff1189e8e7bd",
+      "service_seconds_per_request": 0.6049806232813353
+    },
+    "persisted_control_workload": {
+      "path": "../gemma4_h200_ngram_qlen_mask_target_verify/artifacts/qlen-mask-20260724t163813z/retrieved-final/artifacts/pair/control/WORKLOAD.json",
+      "sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
+    },
+    "quality_terminal": {
+      "path": "../gemma4_h200_ngram_decode_equivalent_production_validation/artifacts/quality-final-20260724t1304z/TERMINAL.json",
+      "sha256": "b4e52f2471444db7386979029932f528cbf988660a1db1af0ba98d3c3b33cbe7"
+    },
+    "stock_launch": {
+      "path": "../gemma4_h200_ngram_decode_equivalent_production_validation/artifacts/quality-final-20260724t1304z/ngram-launch.json",
+      "sha256": "8349853a7eac9e73211f5d3081c834c05f78e0fd292ddbe5acb921b1824a523d"
+    }
+  },
+  "measured_kernel": {
+    "trace_window_us": 3165732.4599609375,
+    "summed_fp8_cutlass_us": 1163217.6339999984,
+    "tile": [128, 128, 128],
+    "stock_cluster": [2, 1, 1],
+    "candidate_cluster": [1, 2, 1],
+    "schedule": "cutlass::gemm::KernelTmaWarpSpecializedPingpongFP8FastAccum",
+    "epilogue": "c3x::ScaledEpilogue"
+  },
+  "serving_evidence": {
+    "wave_spec_accept_length": 11.82857142857143,
+    "wave_spec_accept_rate": 0.9844155844155844,
+    "quality_gpqa_control_and_candidate": "55/198",
+    "quality_taubench_control_and_candidate": "10/165"
+  }
+}
+

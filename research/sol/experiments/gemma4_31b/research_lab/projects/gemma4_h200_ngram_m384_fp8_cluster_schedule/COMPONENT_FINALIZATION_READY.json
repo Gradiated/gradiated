@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "classification": "component_scientific_result_ready_for_consumer",
+  "observed_at_utc": "2026-07-24T17:35:30Z",
+  "diagnostic": "Six exact live M384 real-weight projection shapes are persisted. Every candidate row is incorrect and orders of magnitude slower; the request path was stopped after the component decision became terminal. No endpoint arm began.",
+  "candidate_cuda_executed": true,
+  "scientific_invocation_started": true,
+  "interpretable_candidate_result_persisted": true,
+  "retry_scope": "consumer-only finalization of the persisted component rows; no GPU or endpoint invocation",
+  "remote_audit_path": "/home/glmrunner/gemma4-h200-ngram-m384-cluster/artifacts/COMPONENT_AUDIT_PERSISTED.jsonl"
+}

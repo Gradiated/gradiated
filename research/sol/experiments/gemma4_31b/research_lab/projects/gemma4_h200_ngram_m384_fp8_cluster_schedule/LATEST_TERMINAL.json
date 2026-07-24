@@ -1,0 +1,285 @@
+{
+  "classification": "scientific_terminal",
+  "component": {
+    "candidate_build_sha256": "4f6d6a5ff0b194c0923037f891b8f8b5be3901a67ffb7a4df899639fbcd09189",
+    "candidate_path_rows": 6,
+    "candidate_sum_of_shape_medians_us": 588962.4481201172,
+    "classification": "scientific_terminal",
+    "compiler_log_sha256": "f38221f0d292b69733fba8694f556551f0747f9ea4612b07da0a477c179550f0",
+    "component_pass": false,
+    "component_rows": [
+      {
+        "candidate": {
+          "maximum_us": 135382.62939453125,
+          "mean_us": 103054.51583862305,
+          "median_us": 103390.7356262207,
+          "minimum_us": 77145.75958251953,
+          "p90_us": 124097.82409667969
+        },
+        "candidate_speedup_fraction": -1050.9161648976137,
+        "family": "qkv_proj",
+        "phase": "exact_real_weight_component",
+        "prefix": "model.language_model.layers.0.self_attn.qkv_proj",
+        "projection": {
+          "bitwise_equal": false,
+          "candidate_nonfinite": 0,
+          "max_absolute_error": 96993288.0,
+          "reference_nonfinite": 0,
+          "relative_l2": 30094.728515625
+        },
+        "repetitions": 20,
+        "returned_to_unchanged_consumer": true,
+        "shape_mnk": [
+          384,
+          16384,
+          5376
+        ],
+        "stock": {
+          "maximum_us": 104.41599786281586,
+          "mean_us": 99.02399964630604,
+          "median_us": 98.28799962997437,
+          "minimum_us": 96.0640013217926,
+          "p90_us": 102.84800082445145
+        }
+      },
+      {
+        "candidate": {
+          "maximum_us": 134089.7674560547,
+          "mean_us": 101150.36849975586,
+          "median_us": 97776.49688720703,
+          "minimum_us": 76554.81719970703,
+          "p90_us": 120991.93572998047
+        },
+        "candidate_speedup_fraction": -1547.2724565816839,
+        "family": "o_proj",
+        "phase": "exact_real_weight_component",
+        "prefix": "model.language_model.layers.0.self_attn.o_proj",
+        "projection": {
+          "bitwise_equal": false,
+          "candidate_nonfinite": 0,
+          "max_absolute_error": 94896136.0,
+          "reference_nonfinite": 0,
+          "relative_l2": 224964.328125
+        },
+        "repetitions": 20,
+        "returned_to_unchanged_consumer": true,
+        "shape_mnk": [
+          384,
+          5376,
+          8192
+        ],
+        "stock": {
+          "maximum_us": 68.64000111818314,
+          "mean_us": 63.744000159204006,
+          "median_us": 63.151996582746506,
+          "minimum_us": 61.5679994225502,
+          "p90_us": 66.84800237417221
+        }
+      },
+      {
+        "candidate": {
+          "maximum_us": 127023.5824584961,
+          "mean_us": 98506.15310668945,
+          "median_us": 98592.18978881836,
+          "minimum_us": 72983.13903808594,
+          "p90_us": 111338.30261230469
+        },
+        "candidate_speedup_fraction": -426.4722038978127,
+        "family": "gate_up_proj",
+        "phase": "exact_real_weight_component",
+        "prefix": "model.language_model.layers.0.mlp.gate_up_proj",
+        "projection": {
+          "bitwise_equal": false,
+          "candidate_nonfinite": 584726,
+          "max_absolute_error": NaN,
+          "reference_nonfinite": 0,
+          "relative_l2": NaN
+        },
+        "repetitions": 20,
+        "returned_to_unchanged_consumer": true,
+        "shape_mnk": [
+          384,
+          43008,
+          5376
+        ],
+        "stock": {
+          "maximum_us": 234.72000658512115,
+          "mean_us": 230.21760061383247,
+          "median_us": 230.6400015950203,
+          "minimum_us": 224.03199970722198,
+          "p90_us": 233.50399732589722
+        }
+      },
+      {
+        "candidate": {
+          "maximum_us": 135976.806640625,
+          "mean_us": 96988.32702636719,
+          "median_us": 96104.53033447266,
+          "minimum_us": 79047.5845336914,
+          "p90_us": 122087.58544921875
+        },
+        "candidate_speedup_fraction": -641.3412494920602,
+        "family": "down_proj",
+        "phase": "exact_real_weight_component",
+        "prefix": "model.language_model.layers.0.mlp.down_proj",
+        "projection": {
+          "bitwise_equal": false,
+          "candidate_nonfinite": 0,
+          "max_absolute_error": NaN,
+          "reference_nonfinite": 1575168,
+          "relative_l2": NaN
+        },
+        "repetitions": 20,
+        "returned_to_unchanged_consumer": true,
+        "shape_mnk": [
+          384,
+          5376,
+          21504
+        ],
+        "stock": {
+          "maximum_us": 158.2079976797104,
+          "mean_us": 150.19679963588715,
+          "median_us": 149.61600303649902,
+          "minimum_us": 145.91999351978302,
+          "p90_us": 154.91199493408203
+        }
+      },
+      {
+        "candidate": {
+          "maximum_us": 125577.2476196289,
+          "mean_us": 99479.4864654541,
+          "median_us": 99017.37594604492,
+          "minimum_us": 78705.69610595703,
+          "p90_us": 114289.59655761719
+        },
+        "candidate_speedup_fraction": -837.4481934773792,
+        "family": "qkv_proj",
+        "phase": "exact_real_weight_component",
+        "prefix": "model.language_model.layers.5.self_attn.qkv_proj",
+        "projection": {
+          "bitwise_equal": false,
+          "candidate_nonfinite": 0,
+          "max_absolute_error": 94371840.0,
+          "reference_nonfinite": 0,
+          "relative_l2": Infinity
+        },
+        "repetitions": 20,
+        "returned_to_unchanged_consumer": true,
+        "shape_mnk": [
+          384,
+          20480,
+          5376
+        ],
+        "stock": {
+          "maximum_us": 123.99999797344208,
+          "mean_us": 118.88959966599941,
+          "median_us": 118.0959977209568,
+          "minimum_us": 116.22399836778641,
+          "p90_us": 122.14399874210358
+        }
+      },
+      {
+        "candidate": {
+          "maximum_us": 135522.36938476562,
+          "mean_us": 96101.6414642334,
+          "median_us": 94081.11953735352,
+          "minimum_us": 79070.01495361328,
+          "p90_us": 109778.04565429688
+        },
+        "candidate_speedup_fraction": -799.445130096419,
+        "family": "o_proj",
+        "phase": "exact_real_weight_component",
+        "prefix": "model.language_model.layers.5.self_attn.o_proj",
+        "projection": {
+          "bitwise_equal": false,
+          "candidate_nonfinite": 0,
+          "max_absolute_error": 106.0,
+          "reference_nonfinite": 0,
+          "relative_l2": 1.0
+        },
+        "repetitions": 20,
+        "returned_to_unchanged_consumer": true,
+        "shape_mnk": [
+          384,
+          5376,
+          16384
+        ],
+        "stock": {
+          "maximum_us": 123.9359974861145,
+          "mean_us": 118.37599948048592,
+          "median_us": 117.53600090742111,
+          "minimum_us": 116.19199812412262,
+          "p90_us": 121.69600278139114
+        }
+      }
+    ],
+    "component_speedup_fraction": -756.6755867789421,
+    "endpoint_admitted": false,
+    "endpoint_executed": false,
+    "exact_live_m384_verified": true,
+    "expected_shape_coverage_pass": true,
+    "families": [
+      "down_proj",
+      "gate_up_proj",
+      "o_proj",
+      "qkv_proj"
+    ],
+    "grid_cta_reduction_fraction_by_shape": {
+      "384x16384x5376": 0.25,
+      "384x20480x5376": 0.25,
+      "384x43008x5376": 0.25,
+      "384x5376x16384": 0.25,
+      "384x5376x21504": 0.25,
+      "384x5376x8192": 0.25
+    },
+    "interpretation": "The N-oriented cluster removes the modeled 25% padded CTA count at every observed shape but is unsupported/incorrect in this production CUTLASS instantiation: outputs diverge or become nonfinite, SM90 architecture guards fire, and latency regresses by orders of magnitude.",
+    "kind": "exact_real_weight_m384_component",
+    "median_family_speedup_fraction": -818.4466617868991,
+    "numerical_pass": false,
+    "partial_server_stdout": {
+      "bytes": 914307429,
+      "remote_path": "/home/glmrunner/gemma4-h200-ngram-m384-cluster/artifacts/component.server.partial.stdout",
+      "sha256": "30f14a1367c6346957384d3b11961b1e3de04c89a286133536e00af7c12330ae"
+    },
+    "raw_component_audit_sha256": "15b25dab3d8af7cdbaf3a0c6fdb12e4b1f43ef708bb61ee7ca7c4a098e819ab9",
+    "result": "candidate_correctness_and_performance_failure",
+    "schema_version": 1,
+    "shapes_mnk": [
+      [
+        384,
+        5376,
+        8192
+      ],
+      [
+        384,
+        5376,
+        16384
+      ],
+      [
+        384,
+        5376,
+        21504
+      ],
+      [
+        384,
+        16384,
+        5376
+      ],
+      [
+        384,
+        20480,
+        5376
+      ],
+      [
+        384,
+        43008,
+        5376
+      ]
+    ],
+    "stock_sum_of_shape_medians_us": 777.3279994726181
+  },
+  "control_replayed": false,
+  "endpoint_executed": false,
+  "result": "candidate_correctness_and_performance_failure",
+  "schema_version": 1
+}

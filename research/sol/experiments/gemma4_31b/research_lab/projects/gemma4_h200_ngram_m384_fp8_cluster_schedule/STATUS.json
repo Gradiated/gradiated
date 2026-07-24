@@ -1,0 +1,24 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.6197179234902064,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 8.0,
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "compute_budget": "One retained H200 under cumulative $8 authority; at most 55 claimed GPU-minutes.",
+  "next_action": "Closed this exact 1x2x1 orientation. Do not run the endpoint or replay the component; director should select a materially different FP8 mechanism.",
+  "priority": 7400,
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "researcher_profile": "deep",
+  "reservation_gate": "Do not claim until the harness reserves the cumulative $8 authority and the single candidate plus exact consumer are hash-frozen. No provider creation, control replay, or parameter sweep.",
+  "status": "complete",
+  "storage_budget": "At most 10 GiB of new project-local artifacts.",
+  "summary": "M384 cluster terminal: candidate_correctness_and_performance_failure.",
+  "terminal": {
+    "classification": "scientific_terminal",
+    "current_attempt_provider_spend_usd": 0.6197179234902064,
+    "path": "LATEST_TERMINAL.json",
+    "raw_artifact_path": "artifacts/m384-cluster-20260724t172301z/retrieved-final/artifacts/FINAL_TERMINAL.json",
+    "prior_provider_spend_usd": 0.0
+  },
+  "wall_clock_budget": "Complete and release by 2026-07-24T18:50:00Z, leaving ten minutes before the verified 19:00Z lifecycle watchdog."
+}

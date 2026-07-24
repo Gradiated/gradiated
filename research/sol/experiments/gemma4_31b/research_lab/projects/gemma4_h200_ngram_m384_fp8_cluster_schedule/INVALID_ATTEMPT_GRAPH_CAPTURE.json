@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "classification": "ordinary_component_harness_defect",
+  "observed_at_utc": "2026-07-24T17:26:00Z",
+  "diagnostic": "The component comparator activated during CUDA-graph capture before HTTP readiness. Nested CUDA-event timing and synchronization inside capture produced invalid 80-138 ms timings and SM90 architecture-conditional guard messages. The exact request runner had not started.",
+  "candidate_cuda_executed": true,
+  "scientific_invocation_started": false,
+  "interpretable_candidate_result_persisted": false,
+  "preserved_remote_artifacts": [
+    "artifacts/INVALID_ATTEMPT_graph_capture_component-audit.jsonl",
+    "artifacts/INVALID_ATTEMPT_graph_capture_launch.json",
+    "artifacts/INVOCATION_STATE.json"
+  ],
+  "causal_amendment": "Keep stock dispatch during component CUDA-graph capture; create a project-visible enable marker only after HTTP readiness and immediately before the exact NGRAM runner. Candidate code, M384 guard, cluster, tile, weights, runtime, and endpoint question remain unchanged.",
+  "retry_scope": "component only; endpoint remains unstarted and conditional"
+}

@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-24T17:22:19Z",
+  "director_binding_sha256": "b2e2665c1828b3960dee58e213070e4b0a982a2116008a807c6b80b93bb104b4",
+  "candidate": {
+    "guard": "M == 384",
+    "tile_mnk": [128, 128, 128],
+    "stock_cluster_mnk": [2, 1, 1],
+    "candidate_cluster_mnk": [1, 2, 1],
+    "schedule": "KernelTmaWarpSpecializedPingpongFP8FastAccum",
+    "epilogue": "ScaledEpilogue_bfloat16"
+  },
+  "files": [
+    {
+      "path": "inputs/kernel-build-base.tar.gz",
+      "remote": "kernel-build-base.tar.gz",
+      "sha256": "90c4480e801699a7067dac87a32aa55e6550173474d298814bcb0432db297aa4",
+      "bytes": 33699896
+    },
+    {
+      "path": "inputs/ngram-runtime.tar",
+      "remote": "ngram-runtime.tar",
+      "sha256": "977d5b5cf7b7d8bdb317beaa2ab67d0b69bcb1e61b499545e8d5a5d0db3a57be",
+      "bytes": 604160
+    },
+    {
+      "path": "inputs/persisted-control.tar.gz",
+      "remote": "persisted-control.tar.gz",
+      "sha256": "39db2ed169c9ecede649ab07e994fd824a1934f6600df3cc64d7b29875d3bccf",
+      "bytes": 28314
+    },
+    {
+      "path": "inputs/detached-owner",
+      "remote": "detached-owner",
+      "sha256": "a2c7b59af7de411cf465288d106b75a940fa3668461b98b6a74dfa1c4973a456",
+      "bytes": 4780
+    },
+    {
+      "path": "m384_cluster_extension.cu",
+      "remote": "project/m384_cluster_extension.cu",
+      "sha256": "933f82bd550ffe4844e426eb8ad5aec26fca489503407a57c112272e130f4e53",
+      "bytes": 2363
+    },
+    {
+      "path": "build_candidate.py",
+      "remote": "project/build_candidate.py",
+      "sha256": "835221b8dade84fc4dbb8a5635b6353f3cff49736786cc4f494e1ba971cdb35a",
+      "bytes": 2244
+    },
+    {
+      "path": "m384_probe.py",
+      "remote": "project/m384_probe.py",
+      "sha256": "87ac4768f9747bb5c2969f6fc0c1903ad7de868ca51572e61d39cb8e81d388e3",
+      "bytes": 5933
+    },
+    {
+      "path": "cluster_endpoint_entrypoint.py",
+      "remote": "project/cluster_endpoint_entrypoint.py",
+      "sha256": "86e3cd69dae4f0a81ea5f3a62f1432135d7ef4692f382cc3409f0335d1cbc8ef",
+      "bytes": 6266
+    },
+    {
+      "path": "remote_experiment.py",
+      "remote": "project/remote_experiment.py",
+      "sha256": "206efcc688289db7f5c1c79b2f905a200d0765e7ce70d65b32774c7ee24d72ec",
+      "bytes": 17280
+    }
+  ]
+}

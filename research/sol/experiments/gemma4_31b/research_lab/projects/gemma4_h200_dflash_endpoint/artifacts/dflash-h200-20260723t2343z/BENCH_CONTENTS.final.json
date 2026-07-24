@@ -1,0 +1,11 @@
+{
+  "artifacts": "projects/gemma4_h200_dflash_endpoint/artifacts/dflash-h200-20260723t2343z",
+  "caches": "Pinned SGLang source/image layers plus exact target and DFlash draft downloads retained; no server or compute process remains.",
+  "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+  "image": "gemma4-dflash-sglang:588d1f7bc942, repaired dependency layer image sha256:602485488f59919fee0e57a08ab631a3f2a141b99ef85853075d265a57889333",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_h200_dflash_endpoint",
+  "result": "typed_upstream_target_runtime_incompatibility",
+  "runtime": "SGLang 588d1f7bc9424201f89957e145f9d5af633a3eb8",
+  "server_state": "No server retained; final remote check is 0 MiB GPU. Target class lacks DFLASH's required set_dflash_layers_to_capture hook."
+}

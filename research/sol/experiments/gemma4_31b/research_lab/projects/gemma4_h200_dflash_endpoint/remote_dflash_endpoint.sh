@@ -8,7 +8,7 @@ image=gemma4-dflash-sglang:588d1f7bc942
 commit=588d1f7bc9424201f89957e145f9d5af633a3eb8
 target_revision=b9ea41a2887d8607f594846523f94c6cc75ac8a4
 draft_revision=eabd648301ce28583cc14757912e5e0f84e152e1
-project=/work/project
+project=/home/glmrunner/gemma4-dflash/project
 
 docker() { sudo docker "$@"; }
 
@@ -18,11 +18,21 @@ git -C "$source_dir" fetch --depth=1 origin "$commit"
 git -C "$source_dir" checkout --detach "$commit"
 test "$(git -C "$source_dir" rev-parse HEAD)" = "$commit"
 test "$(sha256sum "$source_dir/python/pyproject.toml" | awk '{print $1}')" = 6b40552b99409cf95cc5f2341786e2732c9d6b7db2d220ecd57fd95441b412ac
-docker build -f "$source_dir/docker/Dockerfile" -t "$image" "$source_dir"
+cp "$source_dir/sgl-model-gateway/README.md" "$source_dir/sgl-model-gateway/bindings/python/README.md"
+sed -i 's|readme = "../../README.md"|readme = "README.md"|' "$source_dir/sgl-model-gateway/bindings/python/pyproject.toml"
+# The local editable SGLang install uses --no-deps after the gateway wheel
+# reinstall.  Its OpenAI 2.6.1 dependency needs distro at server import time.
+# Keep the upstream source commit intact; append this pinned image-only repair.
+if ! grep -q '^# DFLASH_REPAIR4_OPENAI_DISTRO$' "$source_dir/docker/Dockerfile"; then
+  printf '\n# DFLASH_REPAIR4_OPENAI_DISTRO\nRUN python3 -m pip install --no-cache-dir distro==1.9.0\n' >> "$source_dir/docker/Dockerfile"
+fi
+docker build --build-arg BRANCH_TYPE=local -f "$source_dir/docker/Dockerfile" -t "$image" "$source_dir"
 docker image inspect "$image" --format '{{.Id}}' > "$root/IMAGE_ID.txt"
 
 stage_models() {
-  docker run --rm -e HF_TOKEN="${HF_TOKEN:-}" -v "$models:/models" "$image" python3 - <<'PY'
+  # Keep stdin attached: Python otherwise receives an empty heredoc and exits
+  # successfully without materializing either immutable revision.
+  docker run --rm -i -e HF_TOKEN="${HF_TOKEN:-}" -v "$models:/models" "$image" python3 - <<'PY'
 from huggingface_hub import snapshot_download
 snapshot_download("google/gemma-4-31B-it", revision="b9ea41a2887d8607f594846523f94c6cc75ac8a4", local_dir="/models/target")
 snapshot_download("z-lab/gemma-4-31B-it-DFlash", revision="eabd648301ce28583cc14757912e5e0f84e152e1", local_dir="/models/draft")

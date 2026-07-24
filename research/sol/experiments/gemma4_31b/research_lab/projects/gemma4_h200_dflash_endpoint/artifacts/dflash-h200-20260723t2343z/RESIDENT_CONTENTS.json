@@ -1,0 +1,9 @@
+{
+  "artifacts": "projects/gemma4_h200_dflash_endpoint/artifacts/dflash-h200-20260723t2343z",
+  "caches": "Pinned source checkout and Docker layer download retained for in-place continuation.",
+  "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_h200_dflash_endpoint",
+  "runtime": "Pinned SGLang 588d1f7bc942 build in progress after pre-invocation Docker permission repair; source checkout resident.",
+  "server_state": "No workload accepted; Docker image build downloading base layers."
+}

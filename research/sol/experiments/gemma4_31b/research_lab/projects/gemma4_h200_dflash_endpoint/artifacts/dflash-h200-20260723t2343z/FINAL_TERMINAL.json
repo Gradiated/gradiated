@@ -1,0 +1,22 @@
+{
+  "actual_spend_usd": 7.11,
+  "ar_diagnostic": {
+    "artifact": "retrieved-terminal/ar-diagnostic/TERMINAL.json",
+    "batch_seconds": 19.495727994000845,
+    "complete_requests": 4,
+    "concurrency": 4,
+    "raw_token_ids_present": false,
+    "service_seconds_per_request": 4.873931998500211
+  },
+  "candidate_cuda_started": true,
+  "candidate_scientific_request_started": false,
+  "candidate_startup": {
+    "diagnostic": "Gemma4ForConditionalGeneration does not implement set_dflash_layers_to_capture, required for DFLASH.",
+    "docker_log_sha256": "5ece81c9042196abf6bcd63be0063ab59e8590630a48e9ca1157494d4921ef23",
+    "request_rows": 0
+  },
+  "draft_revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+  "result": "typed_upstream_target_runtime_incompatibility",
+  "runtime_commit": "588d1f7bc9424201f89957e145f9d5af633a3eb8",
+  "target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+}

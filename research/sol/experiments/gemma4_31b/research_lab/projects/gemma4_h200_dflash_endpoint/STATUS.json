@@ -1,16 +1,16 @@
 {
-  "status": "active",
+  "status": "complete",
   "priority": 6000,
   "researcher_profile": "execution",
   "authorized_spend_usd": 28.0,
-  "actual_spend_usd": 0.0,
+  "actual_spend_usd": 7.11,
   "accelerator_requirement": "nvidia-h200-sxm",
   "allocation_limit": 1,
-  "provider_mutation": "director_owned_independent_bench_required",
+  "provider_mutation": "director_owned_independent_bench_registered",
   "active_session": null,
-  "summary": "Offline binding is complete: use merged SGLang DFlash PR #23000 at 588d1f7bc9424201f89957e145f9d5af633a3eb8 with draft z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1. Project-local runner, reconciler, and pinned build launcher are verified locally.",
-  "next_action": "Director: reserve/register one independent nvidia-h200-sxm bench (not h200-sync-linear-e00vhh6h29fj68x91g) at an actual metered rate that cannot exceed the remaining $28 cumulative authority, then the researcher will claim it and run the four-request AR/DFlash diagnostic followed by the conditional matched c32 pair.",
+  "summary": "The four-request same-runtime AR producer completed, but pinned SGLang DFLASH cannot initialize for the bound Gemma4ForConditionalGeneration target because the class lacks set_dflash_layers_to_capture. The H200 was released ready with source/image/model caches retained.",
+  "next_action": "Closed: do not replay this bound upstream DFlash route. Any successor must bind a runtime/model-class integration that implements the required DFLASH capture hook before requesting paid GPU time.",
   "quality_claim_authorized": false,
-  "terminal_artifact": null,
+  "terminal_artifact": "artifacts/dflash-h200-20260723t2343z/FINAL_TERMINAL.json",
   "wall_deadline_utc": "2026-07-24T10:00:00Z"
 }

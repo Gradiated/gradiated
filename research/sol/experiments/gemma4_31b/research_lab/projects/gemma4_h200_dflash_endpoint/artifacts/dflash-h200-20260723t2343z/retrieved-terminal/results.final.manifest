@@ -1,0 +1,12 @@
+ar-diagnostic/TERMINAL.json 3250
+ar-diagnostic/WORKLOAD.json 417
+ar-diagnostic/metrics-after.prom 63126
+ar-diagnostic/metrics-before.prom 15384
+ar-diagnostic/request-00.json 599
+ar-diagnostic/request-01.json 597
+ar-diagnostic/request-02.json 598
+ar-diagnostic/request-03.json 598
+ar-diagnostic/response-00.sse 84386
+ar-diagnostic/response-01.sse 85525
+ar-diagnostic/response-02.sse 84385
+ar-diagnostic/response-03.sse 86534

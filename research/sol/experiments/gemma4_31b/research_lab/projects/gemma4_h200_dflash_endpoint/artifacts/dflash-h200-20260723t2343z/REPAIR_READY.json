@@ -1,0 +1,6 @@
+{
+  "classification": "pre_invocation_integration_failure",
+  "diagnostic": "repair6 materialized the immutable target and draft and loaded the AR target server, but the project mount used host /work/project and was empty. The runner file was absent before any HTTP workload request. Retrieved owner terminal proves the loaded producer has no request rows or scientific terminal.",
+  "repair_deadline_utc": "2026-07-24T09:20:00Z",
+  "same_bindings_required": true
+}

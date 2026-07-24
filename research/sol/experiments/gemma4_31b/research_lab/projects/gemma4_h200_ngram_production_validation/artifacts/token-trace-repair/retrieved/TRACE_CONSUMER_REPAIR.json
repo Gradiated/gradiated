@@ -1,0 +1,8 @@
+{
+  "classification": "post_producer_trace_consumer_repair",
+  "control_producer": "completed once; its ten scheduler-to-detokenizer rows are persisted",
+  "defect": "The first tokenizer trace wrapper observed request state after TokenizerManager retired it, so no post-generation records were written.",
+  "repair": "Capture final BatchStrOutput before the original tokenizer handler and reconstruct the completed control pre-parser bytes from its persisted scheduler IDs using the exact mounted tokenizer.",
+  "candidate_authority": "The frozen candidate suite remains unstarted and will run once after the unchanged hook repair.",
+  "forbidden": ["control replay", "performance replay", "NGRAM change", "broad quality"]
+}

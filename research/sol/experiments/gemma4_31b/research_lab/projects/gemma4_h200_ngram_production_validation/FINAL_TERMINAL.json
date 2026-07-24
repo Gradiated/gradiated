@@ -1,14 +1,16 @@
 {
   "schema_version": 1,
-  "classification": "sequential_native_ngram_quality_unqualified",
+  "classification": "native_ngram_generated_token_divergence",
   "pass": false,
-  "candidate_scientific_invocation_began": true,
   "control_rows": 10,
   "candidate_rows": 10,
-  "exact_generated_token_identity": false,
-  "reason": "No server-side output token IDs or logprobs were emitted in either raw capture; the single-tool response also reports 24 completion tokens for control versus 41 for native NGRAM.",
-  "target_verification_proven": true,
-  "assistant_absent": true,
-  "bounded_candidate_quality_discriminator": "passed_minimal_gpqa_and_taubench",
-  "decision": "Do not transfer broad FP8 GPQA-Diamond/TauBench/NLL evidence or promote native NGRAM."
+  "candidate_scientific_invocation_began": true,
+  "text_and_normalized_tool_payloads_equal": true,
+  "scheduler_and_emitted_token_sequences_equal": false,
+  "divergent_case": "single_tool",
+  "control_completion_tokens": 24,
+  "candidate_completion_tokens": 41,
+  "counter_only_repair_authorized": false,
+  "reason": "The shared server-boundary trace proves a generated token sequence and raw pre-parser-byte divergence, not merely usage serialization: compact control JSON is 24 tokens; whitespace-formatted NGRAM JSON is 41 tokens.",
+  "decision": "Close unchanged native NGRAM as quality-unqualified. Do not transfer broad FP8 quality evidence, promote the endpoint, replay performance, or change NGRAM settings."
 }

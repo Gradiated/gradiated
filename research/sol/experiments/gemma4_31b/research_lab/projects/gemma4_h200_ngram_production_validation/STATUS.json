@@ -1,26 +1,26 @@
 {
   "status": "complete",
-  "priority": 5300,
+  "priority": 5980,
   "researcher_profile": "execution",
-  "authorized_spend_usd": 12.0,
-  "actual_spend_usd": 1.0,
+  "authorized_spend_usd": 8.0,
+  "actual_spend_usd": 1.5,
   "allocation_limit": 1,
   "active_session": null,
-  "summary": "Sequential control and NGRAM captures ran on an empty H200, with zero-HBM control cleanup proven. Text, batched stability, and multi-tool semantics matched, and target verification/no assistant are source-proven; however, the API emitted no server-side token IDs and single-tool completion accounting differed (24 control vs 41 NGRAM). The minimal candidate GPQA/TauBench discriminator passed, but production promotion remains blocked.",
-  "next_action": "Complete: retain 0.5967508053 s/request as quality-unqualified. Do not transfer broad FP8 quality evidence, promote native NGRAM, replay performance, or change NGRAM settings without a new admission that repairs server-side token capture and resolves the single-tool token-accounting difference.",
+  "summary": "Final shared-boundary traces prove native NGRAM has a real single-tool generated-token divergence: control emits compact JSON in 24 IDs while NGRAM emits whitespace-formatted equivalent JSON in 41 IDs. Text, finish reason, and normalized tool payload match, but the all-row exact-token gate fails; the counter-only exception is unavailable.",
+  "next_action": "Complete: native NGRAM is closed unchanged as quality-unqualified. Do not transfer broad FP8 quality evidence, promote 0.5967508053 s/request, repair accounting, rerun the trace or performance pair, or change NGRAM settings without a materially new director admission.",
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
-  "compute_budget": "One retained H200, at most 120 claimed GPU-minutes.",
-  "wall_clock_budget": "At most 140 minutes from researcher start; release no later than 2026-07-24T01:20:00Z.",
-  "storage_budget": "At most 8 GiB of new project-local artifacts.",
+  "compute_budget": "One retained H200, at most 90 claimed GPU-minutes.",
+  "wall_clock_budget": "At most 120 minutes from researcher start.",
+  "storage_budget": "At most 6 GiB of new project-local artifacts.",
   "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
   "economic_ceiling_seconds_per_request": 0.6381105231,
   "provisional_ngram_seconds_per_request": 0.5967508053124675,
   "immutable_binding": "EVIDENCE_BINDING.json",
-  "continuation_binding": "DIRECTOR_SEQUENTIAL_SERVER_VALIDATION.json",
+  "continuation_binding": "DIRECTOR_TOKEN_TRACE_REPAIR.json",
   "director_maintenance": {
     "artifact": "../../artifacts/DIRECTOR_MAINTENANCE_20260723T2307Z.json",
     "sha256": "9fd6a146c1ced14d07b74a4fc243e4b23a55caa564232b0a02f028fbc361f93e"
   },
   "director_control_mount_repair": "DIRECTOR_CONTROL_MOUNT_REPAIR.json",
-  "reservation_gate": "Do not claim the bench until this project's renewed $12 reservation is present in the campaign spend ledger, both bindings rehash exactly, and the director maintenance artifact proves the assigned H200 is empty."
+  "reservation_gate": "Do not claim the bench until this project's renewed $8 reservation is present in the campaign spend ledger, DIRECTOR_TOKEN_TRACE_REPAIR.json and every bound artifact rehash exactly, and the pool still shows the assigned H200 empty and available."
 }

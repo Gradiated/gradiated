@@ -1,0 +1,12 @@
+{
+  "candidate_final_rows": 10,
+  "candidate_scientific_invocation_started": true,
+  "classification": "server_side_token_trace_after_control_consumer_repair",
+  "control_final_rows": 10,
+  "exact_completion_accounting": false,
+  "exact_normalized_api_payload": true,
+  "exact_scheduler_and_emitted_tokens": false,
+  "pass": false,
+  "scheduler_delta_reconstructs_final": true,
+  "schema_version": 1
+}

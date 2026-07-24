@@ -76,3 +76,33 @@ equivalence fails, run only the smallest candidate-side GPQA-Diamond/TauBench
 raw capture through the existing bound normalizer/scorer. Do not replay the
 performance pair, tune NGRAM, add an assistant or corpus, or change checkpoint,
 runtime, precision, sampling, workload, or parser bytes.
+
+## Director continuation — final server-side token trace
+
+The sequential validation narrowed the remaining production gate to one
+observable boundary. All ordinary text cases, serial/batched stability, and
+multi-tool semantics matched. The single-tool parser result also matched, but
+control reported 24 completion tokens while NGRAM reported 41, and both API
+captures exposed empty token-id arrays. This is not yet evidence of token
+divergence.
+
+Consume `DIRECTOR_TOKEN_TRACE_REPAIR.json` under renewed `$8` authority. Add
+one identical project-local trace hook at the pinned runtime's shared
+post-generation, pre-parser/output-serialization boundary. It must persist the
+actual scheduler `output_ids`, stop-trimmed emitted token IDs, parser input
+bytes, completion-counter inputs, finish reason, and normalized tool payload
+for both the non-speculative control and native NGRAM candidate.
+
+Run only the frozen ten-row suite sequentially on the empty retained H200,
+including zero-HBM cleanup between servers. Promotion requires exact scheduler
+and emitted token sequences, exact completion accounting, and exact normalized
+text/tool semantics on every row. Exclude only response IDs, timestamps, and
+generated tool-call UUIDs. If tokens already match and the 24-versus-41
+difference is mechanically isolated to usage serialization, one counter-only
+repair and one unchanged trace rerun are allowed. Any generated-token
+divergence or broader feature defect closes unchanged native NGRAM.
+
+Do not replay the performance pair, change NGRAM settings, sampling, workload,
+checkpoint, runtime, precision, or parser bytes, add an assistant, or regenerate
+broad quality evidence. The existing `0.5967508053 s/request` result and bound
+quality evidence may be promoted only after this exact trace gate passes.

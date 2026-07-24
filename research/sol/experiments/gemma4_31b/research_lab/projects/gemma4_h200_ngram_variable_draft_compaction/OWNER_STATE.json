@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "run_owner.py"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_variable_draft_compaction",
+  "launched_at_utc": "2026-07-24T13:43:37.021807Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_variable_draft_compaction/OWNER.log",
+  "pid": 4128256,
+  "start_ticks": 101663442,
+  "unit_manager": "remote-shell"
+}

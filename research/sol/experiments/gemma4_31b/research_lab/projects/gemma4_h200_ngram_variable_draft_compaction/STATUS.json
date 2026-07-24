@@ -1,0 +1,28 @@
+{
+  "status": "complete",
+  "priority": 6990,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 10.0,
+  "actual_spend_usd": 0.6104805943594334,
+  "allocation_limit": 1,
+  "active_session": null,
+  "summary": "Valid negative terminal: official pre-padding valid lengths removed 332/2772 target and KV rows (11.98%), but the compact representation failed simultaneous c4 exactness at the first all-one verification and reduced-shape target forwards were 53.45% slower in aggregate. The c32 gate stayed closed.",
+  "next_action": "Do not replay this packet or run its c32 endpoint pair. A future lineage must first correct multi-request compact row ownership/attention mapping and eliminate the eager dynamic-shape overhead.",
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "compute_budget": "One retained H200, at most 180 claimed GPU-minutes.",
+  "wall_clock_budget": "Complete and release by 2026-07-24T16:45:00Z.",
+  "storage_budget": "At most 14 GiB of new project-local artifacts.",
+  "reservation_gate": "Satisfied before claim: reservation durable, EVIDENCE_BINDING inputs exact, project-local checkpoint manifest reconciled, and executed packet frozen.",
+  "terminal": {
+    "classification": "valid_negative_component_terminal",
+    "result": "component_not_admitted",
+    "executed_packet": "EXECUTED_PACKET.json",
+    "scientific_terminal": "artifacts/variable-compaction-20260724t134337Z/retrieved/artifacts/TERMINAL.json",
+    "causal_terminal": "artifacts/variable-compaction-20260724t134337Z/retrieved/artifacts/CAUSAL_TERMINAL.json",
+    "owner_terminal": "artifacts/variable-compaction-20260724t134337Z/OWNER_TERMINAL.json",
+    "bench_released_at_utc": "2026-07-24T13:59:43.557229Z",
+    "bench_release_condition": "ready",
+    "endpoint_pair_run": false
+  }
+}

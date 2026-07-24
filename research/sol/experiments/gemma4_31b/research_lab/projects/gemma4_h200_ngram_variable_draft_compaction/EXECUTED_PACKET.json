@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "frozen_at_utc": "2026-07-24T13:57:08Z",
+  "kind": "executed_gemma4_ngram_variable_compaction_packet",
+  "base_packet": "IMMUTABLE_PACKET.json",
+  "repair_packet": "REPAIR_PACKET.json",
+  "repair_packet_sha256": "d71ce6a2b3622fea4ecd8252020487bb9389b1a3f3764dba75e3889aad796e91",
+  "execution_files": [
+    {
+      "path": "inputs/compaction-source-packet.tar.gz",
+      "bytes": 28507,
+      "sha256": "eca55322c06b9d6ec91844a1cb310316c86dca9f9aed4570fa67ad36f957f553"
+    },
+    {
+      "path": "variable_decode_lm_head.py",
+      "bytes": 5314,
+      "sha256": "b1106c6ed476e0439c84a58003301a45fdc3b9698bf5ea16aac724d7c00b9c31"
+    },
+    {
+      "path": "sitecustomize.py",
+      "bytes": 288,
+      "sha256": "03228a06302522604b9952e0a61dc0bb1692f8010b94403bc48bf65ca83e7d1b"
+    },
+    {
+      "path": "inputs/control-runtime-snapshot.tar.gz",
+      "bytes": 6441,
+      "sha256": "d0bd8ff92baed6096a48eed7cfac3d21e7e82cb5a4b3bd6f55892de793d04bb0"
+    },
+    {
+      "path": "remote_experiment.py",
+      "bytes": 19251,
+      "sha256": "a1b9ff5d9b8354e2502b11e53aa73b3d022a9b603e686374ddbb64e00f532582"
+    },
+    {
+      "path": "inputs/detached-owner",
+      "bytes": 4647,
+      "sha256": "c13dfa79d7488c2a186e5e2f5007bbecdaba6c222fbaf25844d8f089f9bcc7bc"
+    },
+    {
+      "path": "run_owner.py",
+      "bytes": 15408,
+      "sha256": "d55ef09e5567edede89216e208f296482c89e5184b5ed7166d381d11f7f35026"
+    }
+  ],
+  "checkpoint_manifest": "IMMUTABLE_PACKET.json#checkpoint",
+  "scientific_terminal": "artifacts/variable-compaction-20260724t134337Z/retrieved/artifacts/TERMINAL.json",
+  "causal_terminal": "artifacts/variable-compaction-20260724t134337Z/retrieved/artifacts/CAUSAL_TERMINAL.json",
+  "claim_terminal": "artifacts/variable-compaction-20260724t134337Z/OWNER_TERMINAL.json"
+}

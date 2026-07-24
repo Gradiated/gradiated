@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "frozen_at_utc": "2026-07-24T13:36:00Z",
+  "kind": "gemma4_ngram_variable_draft_compaction_packet",
+  "base": {
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "evidence_binding_sha256": "af19cbd5ef27454405ed9f6e5d7318f84326d49e043a301ee8781a1005270d48"
+  },
+  "checkpoint": {
+    "local_path": "inputs/checkpoint",
+    "total_bytes": 62578655208,
+    "materialization": "immutable project-local hard links to the already hash-verified admitted bytes",
+    "resident_path": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint",
+    "resident_contract": "The owner uses this frozen path directly only after reconciling every file against the project-local manifest; it does not discover or resolve another shared path after claim.",
+    "files": {
+      "chat_template.jinja": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+      "config.json": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "model-00001-of-00002.safetensors": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+      "model-00002-of-00002.safetensors": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10",
+      "model.safetensors.index.json": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+      "processor_config.json": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c",
+      "tokenizer.json": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f",
+      "tokenizer_config.json": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"
+    }
+  },
+  "official_validity_contract": {
+    "producer_symbol": "ngram::fillResult",
+    "source": "python/sglang/jit_kernel/csrc/ngram_corpus/result.cpp",
+    "invariant": "valid_length is info.token.size() after BFS emits the root and real tree nodes and before the official zero-padding loop",
+    "why_not_token_zero": "The official padded token/mask/retrieve outputs cannot distinguish an empty tree from a genuine token-0 root child. The packet therefore exports the pre-padding producer count instead of interpreting token IDs."
+  },
+  "representation": {
+    "name": "request-major compact rows plus fixed-consumer remap",
+    "target_rows": "sum(valid_lengths)",
+    "fixed_consumer_rows": "batch_size * 12",
+    "fields": [
+      "valid_lengths",
+      "compact draft tokens",
+      "compact positions",
+      "compact tree masks",
+      "variable qo_indptr",
+      "compact KV allocation",
+      "fixed-to-compact acceptance and KV remap"
+    ],
+    "lm_head_contract": "Twelve batch-size-preserving depth projections are retained; inactive request rows are zero-filled and discarded so valid-row projection geometry remains matched to the qualified control."
+  },
+  "files": [
+    {
+      "path": "inputs/compaction-source-packet.tar.gz",
+      "bytes": 28465,
+      "sha256": "95f50d6d1dba4194929435e1342466dec25ee7221232f0fb05c9330ab355fc98"
+    },
+    {
+      "path": "variable_decode_lm_head.py",
+      "bytes": 4537,
+      "sha256": "caa6320ab84be4a90ad999e05594d445ad876f60bc5a97709c0ab195083c6e81"
+    },
+    {
+      "path": "sitecustomize.py",
+      "bytes": 288,
+      "sha256": "03228a06302522604b9952e0a61dc0bb1692f8010b94403bc48bf65ca83e7d1b"
+    },
+    {
+      "path": "inputs/control-runtime-snapshot.tar.gz",
+      "bytes": 6441,
+      "sha256": "d0bd8ff92baed6096a48eed7cfac3d21e7e82cb5a4b3bd6f55892de793d04bb0",
+      "members": {
+        "decode_equivalent_lm_head.py": "4d99a94e97d0ef01fbfdaa9f7a25742f07f9fb4236d93d07900626f5ff9b53f9",
+        "inputs/bound/endpoint_entrypoint.py": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc",
+        "inputs/bound/exact_runner.py": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+      }
+    },
+    {
+      "path": "remote_experiment.py",
+      "bytes": 18292,
+      "sha256": "ac73a718974861233741f75d86655b1e4d9768c0eb8e9a73a3b11a70e565cf04"
+    },
+    {
+      "path": "inputs/detached-owner",
+      "bytes": 4647,
+      "sha256": "c13dfa79d7488c2a186e5e2f5007bbecdaba6c222fbaf25844d8f089f9bcc7bc"
+    }
+  ],
+  "patched_source_sha256": {
+    "python/sglang/jit_kernel/csrc/ngram_corpus/result.h": "79188c3cecdcb05d245aed6022cbf19e462a467370071c4c4ac2bc0ba719ffd3",
+    "python/sglang/jit_kernel/csrc/ngram_corpus/result.cpp": "e41304e793a9142f5ba5d5794ef846e9f30a388aebdfccfd15c0c381d495d461",
+    "python/sglang/jit_kernel/csrc/ngram_corpus/ngram.cpp": "91692def8e97c339177dd61d8bf453305cee94f83180836eb7338f1f9c8ea324",
+    "python/sglang/jit_kernel/csrc/ngram_corpus/ngram_corpus_ffi.cpp": "a4b96978ffef502675d36e25f7dc8b8d31b7048432718481254b438ed2406d38",
+    "python/sglang/jit_kernel/ngram_corpus.py": "41f35025e92bae160874243a81002a4430847cf19ea114ee83da317b8069f3e7",
+    "python/sglang/srt/speculative/cpp_ngram/ngram_corpus.py": "b7397f3039bc8fd1a3aa94408b8439355e7488d209043b706fbfc8380f1c887e",
+    "python/sglang/srt/speculative/ngram_worker.py": "18d1bbcef96d454ef4cf2e0c5150ed1773f08acf2a9a71f1b99fbd07edbec138",
+    "python/sglang/srt/speculative/ngram_info.py": "e24ed3c175573fce57f01d4e9bf03d4fc8461b4b741c5cb820bf188e3807f6e8",
+    "python/sglang/srt/layers/attention/triton_backend.py": "8a9375984325ddbb4d85e374b82ce12f52213df499e7950f2411293d55dce4d7"
+  },
+  "admission": {
+    "component_rows": [
+      "all_one",
+      "persisted_mixed",
+      "all_twelve"
+    ],
+    "endpoint_pair": "one matched c32 control/candidate pair only after exact positive component",
+    "deadline_utc": "2026-07-24T16:45:00Z"
+  },
+  "owner": {
+    "path": "run_owner.py",
+    "bytes": 15408,
+    "sha256": "d55ef09e5567edede89216e208f296482c89e5184b5ed7166d381d11f7f35026",
+    "controller": "project-local invocation of the shared detached-owner tool"
+  }
+}

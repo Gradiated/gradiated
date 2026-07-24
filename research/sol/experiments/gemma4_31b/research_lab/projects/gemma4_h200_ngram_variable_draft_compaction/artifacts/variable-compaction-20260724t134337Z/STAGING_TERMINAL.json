@@ -1,0 +1,35 @@
+{
+  "files": [
+    {
+      "bytes": 28507,
+      "name": "compaction-source-packet.tar.gz",
+      "sha256": "eca55322c06b9d6ec91844a1cb310316c86dca9f9aed4570fa67ad36f957f553"
+    },
+    {
+      "bytes": 6441,
+      "name": "control-runtime-snapshot.tar.gz",
+      "sha256": "d0bd8ff92baed6096a48eed7cfac3d21e7e82cb5a4b3bd6f55892de793d04bb0"
+    },
+    {
+      "bytes": 5314,
+      "name": "variable_decode_lm_head.py",
+      "sha256": "b1106c6ed476e0439c84a58003301a45fdc3b9698bf5ea16aac724d7c00b9c31"
+    },
+    {
+      "bytes": 288,
+      "name": "sitecustomize.py",
+      "sha256": "03228a06302522604b9952e0a61dc0bb1692f8010b94403bc48bf65ca83e7d1b"
+    },
+    {
+      "bytes": 19251,
+      "name": "remote_experiment.py",
+      "sha256": "a1b9ff5d9b8354e2502b11e53aa73b3d022a9b603e686374ddbb64e00f532582"
+    },
+    {
+      "bytes": 4647,
+      "name": "detached-owner",
+      "sha256": "c13dfa79d7488c2a186e5e2f5007bbecdaba6c222fbaf25844d8f089f9bcc7bc"
+    }
+  ],
+  "pass": true
+}

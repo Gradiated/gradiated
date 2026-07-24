@@ -1,0 +1,196 @@
+{
+  "admit_c32": false,
+  "all_c1_exact": true,
+  "all_mixed_exact": true,
+  "c4_exact_requests": 1,
+  "c4_total_requests": 4,
+  "candidate_counters": {
+    "accepted_tokens": 2101,
+    "allocated_kv_slots": 2440,
+    "events": 123,
+    "fixed_target_rows": 2772,
+    "removed_target_rows": 332,
+    "request_events": 231,
+    "retained_kv_slots": 2101,
+    "target_row_reduction_fraction": 0.11976911976911978,
+    "valid_target_rows": 2440
+  },
+  "causal_delta": {
+    "accepted_tokens_delta": 0,
+    "allocated_kv_slots_removed": 332,
+    "retained_kv_slots_delta": 0
+  },
+  "classification": "valid_negative_component_terminal",
+  "comparator_correction": "The raw aggregate paired flattened batch rows by shape and treated missing return_token_ids as empty exact lists. This offline consumer uses persisted response IDs to align c1/c4 logical requests, first arrival to align the staggered mixed requests, exact stream text, and request-local target top-2/acceptance slices.",
+  "control_counters": {
+    "accepted_tokens": 2101,
+    "allocated_kv_slots": 2772,
+    "events": 130,
+    "fixed_target_rows": 2772,
+    "removed_target_rows": 332,
+    "request_events": 231,
+    "retained_kv_slots": 2101,
+    "target_row_reduction_fraction": 0.11976911976911978,
+    "valid_target_rows": 2440
+  },
+  "coverage": {
+    "all_one": true,
+    "all_twelve": true,
+    "mixed_batch": true,
+    "observed_lengths": [
+      1,
+      2,
+      3,
+      4,
+      6,
+      8,
+      12
+    ],
+    "pass": true
+  },
+  "decision": "Reject this packet: simultaneous multi-request exactness fails and reduced compact shapes are slower. The preregistered c32 gate remains closed.",
+  "endpoint_pair_run": false,
+  "first_divergence": {
+    "interpretation": "Single-request and staggered mixed request-local consumers are exact, but simultaneous four-request compaction changes target logits/acceptance immediately for multiple matched requests. This localizes the correctness failure to multi-request compact row ownership/attention mapping, not producer validity.",
+    "row": "c4 all-one first target verification"
+  },
+  "matched_request_inputs": {
+    "c4": true
+  },
+  "performance": {
+    "full_shape_rows": [
+      {
+        "candidate_count": 65,
+        "candidate_target_forward_median_ms": 25.095455169677734,
+        "control_count": 75,
+        "control_target_forward_median_ms": 32.046207427978516,
+        "paired_count": 65,
+        "shape": [
+          12
+        ],
+        "target_forward_speedup": 1.2769725518546966
+      },
+      {
+        "candidate_count": 27,
+        "candidate_target_forward_median_ms": 26.254528045654297,
+        "control_count": 27,
+        "control_target_forward_median_ms": 33.294464111328125,
+        "paired_count": 27,
+        "shape": [
+          12,
+          12,
+          12,
+          12
+        ],
+        "target_forward_speedup": 1.2681417869493599
+      }
+    ],
+    "reduced_shape_candidate_median_sum_ms": 604.398946762085,
+    "reduced_shape_control_median_sum_ms": 393.8659620285034,
+    "reduced_shape_slowdown_fraction": 0.5345295228084361
+  },
+  "raw_component_terminal": "COMPONENT_TERMINAL.json",
+  "request_local_exactness": {
+    "c1-0": {
+      "candidate_events": 33,
+      "control_events": 33,
+      "exact_accepted_token_ids": true,
+      "exact_target_top2_and_acceptance": true,
+      "first_divergent_event": null
+    },
+    "c4-0": {
+      "candidate_events": 33,
+      "control_events": 33,
+      "exact_accepted_token_ids": false,
+      "exact_target_top2_and_acceptance": false,
+      "first_divergent_event": 0
+    },
+    "c4-1": {
+      "candidate_events": 58,
+      "control_events": 58,
+      "exact_accepted_token_ids": true,
+      "exact_target_top2_and_acceptance": true,
+      "first_divergent_event": null
+    },
+    "c4-2": {
+      "candidate_events": 33,
+      "control_events": 33,
+      "exact_accepted_token_ids": true,
+      "exact_target_top2_and_acceptance": false,
+      "first_divergent_event": 0
+    },
+    "c4-3": {
+      "candidate_events": 33,
+      "control_events": 33,
+      "exact_accepted_token_ids": false,
+      "exact_target_top2_and_acceptance": false,
+      "first_divergent_event": 0
+    },
+    "mixed-0": {
+      "candidate_events": 6,
+      "control_events": 6,
+      "exact_accepted_token_ids": true,
+      "exact_target_top2_and_acceptance": true,
+      "first_divergent_event": null
+    },
+    "mixed-1": {
+      "candidate_events": 10,
+      "control_events": 10,
+      "exact_accepted_token_ids": true,
+      "exact_target_top2_and_acceptance": true,
+      "first_divergent_event": null
+    },
+    "mixed-2": {
+      "candidate_events": 11,
+      "control_events": 11,
+      "exact_accepted_token_ids": true,
+      "exact_target_top2_and_acceptance": true,
+      "first_divergent_event": null
+    },
+    "mixed-3": {
+      "candidate_events": 14,
+      "control_events": 14,
+      "exact_accepted_token_ids": true,
+      "exact_target_top2_and_acceptance": true,
+      "first_divergent_event": null
+    }
+  },
+  "response_text_exactness": {
+    "c1-0": {
+      "candidate_bytes": 3938,
+      "candidate_sha256": "4008701f49024770d594ff9b619d6000af753b5263b204aaf004e0e2f09b41a3",
+      "control_bytes": 3938,
+      "control_sha256": "4008701f49024770d594ff9b619d6000af753b5263b204aaf004e0e2f09b41a3",
+      "exact": true
+    },
+    "c4-0": {
+      "candidate_bytes": 716,
+      "candidate_sha256": "2b762fc3a54e0db322333fca2dacbe2a982e0c0f4b3f3d35574de900f6effdf5",
+      "control_bytes": 3938,
+      "control_sha256": "4008701f49024770d594ff9b619d6000af753b5263b204aaf004e0e2f09b41a3",
+      "exact": false
+    },
+    "c4-1": {
+      "candidate_bytes": 2498,
+      "candidate_sha256": "29e78a3822fe901e549f7b9c9ddfae1b289451d9e3ff57127b001c71eac04eda",
+      "control_bytes": 2498,
+      "control_sha256": "29e78a3822fe901e549f7b9c9ddfae1b289451d9e3ff57127b001c71eac04eda",
+      "exact": true
+    },
+    "c4-2": {
+      "candidate_bytes": 716,
+      "candidate_sha256": "1a59b4cce2566c01c4458075baa9c4f35b68caf920ad205ed0c5529d8b19d854",
+      "control_bytes": 716,
+      "control_sha256": "1a59b4cce2566c01c4458075baa9c4f35b68caf920ad205ed0c5529d8b19d854",
+      "exact": true
+    },
+    "c4-3": {
+      "candidate_bytes": 2864,
+      "candidate_sha256": "d07855d2d12dc098b6f68145e9db85f00be4a94dcea4d0ee973c43dba1e88e88",
+      "control_bytes": 2148,
+      "control_sha256": "1b91c76b6959f03a7cdda0908bdfaf1132bb4ec47f1a49e39628e34e75e199c2",
+      "exact": false
+    }
+  },
+  "schema_version": 1
+}

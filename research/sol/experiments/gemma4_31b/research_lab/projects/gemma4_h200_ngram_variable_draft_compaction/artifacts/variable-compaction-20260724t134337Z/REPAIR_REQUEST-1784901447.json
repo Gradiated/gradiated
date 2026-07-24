@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "requested_at_utc": "2026-07-24T13:57:08Z",
+  "action": "relaunch",
+  "classification": "ordinary_lm_head_graph_dummy_integration_defect",
+  "scope": "Run only the unconsumed candidate component and conditional endpoint against the retained control artifacts.",
+  "packet": "REPAIR_PACKET.json",
+  "preserve_consumed_stages": [
+    "control-component-c1",
+    "control-component-c4",
+    "control-mixed"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "concurrency": 4,
+  "intended_shared_prefix_fraction": 0.1269577598481253,
+  "output_tokens": 358,
+  "prompt_tokens": 4214,
+  "request_sha256": [
+    "f8558dbfd3cca6d46239961b85967f18960a19c1bace8cb9302cdcbb2edd3c95",
+    "a4032cd38401a2d9214786ebbc4fb8f2cb5475baaab6e476b193b930b3b942be",
+    "9849f0f4bb1251977c16a1fd8fe5d16289171d23ff75d593e9dd6960f2123b22",
+    "9368a13c21460cc7e763de23a038a6255ba6e8e7f16ff936aa82ef357f49a711"
+  ],
+  "shared_prefix_tokens": 535
+}

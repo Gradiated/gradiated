@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "requested_at_utc": "2026-07-24T13:49:00Z",
+  "action": "relaunch",
+  "repair_packet": "REPAIR_PACKET.json",
+  "source_packet_sha256": "eca55322c06b9d6ec91844a1cb310316c86dca9f9aed4570fa67ad36f957f553",
+  "scope": "Retry the unstarted exact component after the graph-capture dummy constructor repair."
+}

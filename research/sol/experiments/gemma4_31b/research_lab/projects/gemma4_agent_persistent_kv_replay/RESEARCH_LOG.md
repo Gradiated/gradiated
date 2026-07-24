@@ -37,3 +37,8 @@ the next separately authorized paid cycle in `artifacts/NEXT_CYCLE_PACKET.json`.
 Artifacts: `artifacts/SOURCE_MANIFEST.json`, `TURN_LEDGER.jsonl`,
 `CAPACITY_LEDGERS.jsonl`, `POLICY_SUMMARY.json`, `CALIBRATED_DECISION.json`, and
 `NEXT_CYCLE_PACKET.json`.
+### 2026-07-24 — paid 905-request persistent-KV endpoint pair
+
+Measured on the retained H200 with the exact pinned checkpoint/image, 165 sessions, and 905 requests per arm. Control disabled radix caching; candidate used tenant-isolated session-affine radix/LRU persistence with a 50,000-token cache budget derived as 16.25 GiB. Both arms completed 905/905 with no request errors and separate raw response plus before/after Prometheus artifacts. Candidate reused 286,127/600,735 prompt tokens (47.6331%), versus 0 cached tokens in control; endpoint e2e metric was 702.328 s versus 718.941 s (2.3108% lower), and client wall time was 770.869 s versus 787.726 s (2.1406% lower). Actual provider exposure was $1.188205.
+
+The quality gate rejected promotion: strict content matched 564/905, raw tool-call structures 418/905, and semantic tool-call structures after removing generated IDs 698/905. Both arms returned empty token-ID arrays, so exact token identity was not evidenced; raw response hashes matched 0/905. This is decision-bearing scientific evidence: cache reuse and a small endpoint win are present, but identical token/tool behavior was not. Close the route and do not retry either consumed arm. The runner’s metric-name parser missed the current SGLang histogram/counter names; raw runtime Prometheus captures and response usage were retained for the measured decision.

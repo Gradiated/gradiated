@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "decision": "close_route_quality_gate_reject",
+  "classification": "cache_positive_endpoint_nonoverlap_measured_but_behavior_not_identical",
+  "artifact_root": "artifacts/paid-20260724t000941Z",
+  "final_terminal_sha256": "831ba61c53991b2c2068cf553c4fcce4476bfbfd3267bac3843c2fce667c7b4d",
+  "actual_spend_usd": 1.188205,
+  "workload": {"sessions": 165, "requests_per_arm": 905, "prompt_tokens_per_arm": 600735},
+  "control": {"rows": 905, "generation_tokens": 52463, "endpoint_e2e_seconds": 718.9407578300452, "wall_seconds": 787.7260351588484, "uncached_prompt_tokens": 600735},
+  "candidate": {"rows": 905, "generation_tokens": 52322, "endpoint_e2e_seconds": 702.327761209177, "wall_seconds": 770.8694276387105, "cached_prompt_tokens": 286127, "uncached_prompt_tokens": 314608},
+  "derived": {"cache_reuse_fraction": 0.4763305760402016, "endpoint_e2e_reduction_fraction": 0.0231083527516994, "wall_reduction_fraction": 0.0214063744869244},
+  "quality_gate": {"strict_response_matches": {"content": 564, "tool_calls": 418, "output_token_ids": 905}, "semantic_tool_call_matches_ignoring_generated_ids": 698, "raw_response_matches": 0, "returned_token_ids_empty_in_both_arms": true, "identical_token_tool_behavior": false},
+  "attribution": "Sequential control and candidate containers used separate raw response directories and non-overlapping before/after Prometheus snapshots on the pinned endpoint; metric parser omission is retained as a harness defect, while raw response usage and runtime Prometheus artifacts provide the measured cache signal.",
+  "interpretation": "The 16-GiB tenant-isolated session-affine cache materially reused prefix tokens, but the preregistered identical token/tool behavior gate failed. Do not promote the route or run another consumed arm."
+}

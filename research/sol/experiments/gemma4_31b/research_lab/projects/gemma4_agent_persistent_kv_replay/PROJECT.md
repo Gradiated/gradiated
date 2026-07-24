@@ -15,7 +15,9 @@ lab's synthetic exact mix currently records only 12.6958% cached prompt tokens.
 A trace replay can cheaply determine whether product traffic contains enough
 additional exact-prefix reuse to justify a persistent-KV service.
 
-Use `$experiment-run`. This is a zero-GPU project tonight.
+Use `$experiment-run`. The first phase is a zero-GPU replay; the paid
+continuation below is admitted only because that replay passed its preregistered
+plausibility gate.
 
 ## Scope and immediate experiment
 
@@ -58,3 +60,35 @@ with the lab's measured prefill/decode split and report the transfer range.
 - Artifacts: input/source manifest, replay script, per-turn token ledger,
   capacity/eviction sensitivity, calibrated cost range, and one decision
   terminal.
+
+## Paid endpoint continuation — 2026-07-24
+
+The exact-token replay measured `481,820 / 600,735` repeated-prefix tokens
+(`80.2051%`). At 16 GiB, session affinity retained all of them without reloads;
+the calibrated endpoint opportunity is 25.26–48.12%. This passes the original
+gate and changes the next question from plausibility to measured realization.
+
+Consume `DIRECTOR_GPU_BINDING.json` and claim only retained bench
+`h200-sync-linear-e00vhh6h29fj68x91g`. Use its exact checkpoint and pinned
+SGLang image. Run one matched pair over the same 165 sessions and 905 cumulative
+requests in the same interleaved turn-round order:
+
+1. Control: explicitly disable or reset cross-turn persistent reuse while
+   preserving ordinary within-request semantics.
+2. Candidate: tenant-isolated content-addressed exact-prefix persistence,
+   session affinity, LRU admission, and a fixed 16-GiB KV budget.
+
+Persist raw cache hit, miss, eviction, reload, admitted-token and byte counters;
+non-overlapping prefill, decode, and complete-request timing; HBM residency;
+request ownership; output token IDs; and tool-call payloads. Require identical
+deterministic outputs and tool-call behavior. Attribute savings to avoided
+prefill work rather than token ratios, and report the matched endpoint cost
+delta. The safe synthetic tool-result limitation remains explicit.
+
+Repair one ordinary runtime/API/cache-control integration defect in place on
+the retained bench. Do not introduce a distributed cache, cross-tenant reuse,
+new tokenizer/workload, cache-size sweep, routing sweep, broad quality suite,
+or another provider allocation. A complete exact pair decides the route.
+
+Continuation maximum spend: `$12`; one H200 claim; at most four provider hours;
+science deadline `2026-07-24T09:45:00Z`; use the existing `10:30Z` lab watchdog.

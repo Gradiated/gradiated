@@ -1,27 +1,31 @@
 {
-  "status": "complete",
-  "priority": 5800,
-  "researcher_profile": "execution",
-  "authorized_spend_usd": 0.0,
-  "actual_spend_usd": 0.0,
-  "provider_mutation": "forbidden",
+  "accelerator_requirement": "nvidia-h200-sxm",
   "active_session": null,
-  "summary": "Replay TauBench-style cumulative tool sessions and quantify exact content-addressed KV reuse, capacity, eviction and calibrated cost opportunity without a GPU.",
-  "next_action": "Hand off the separately authorized same-runtime persistent-KV on/off endpoint arm; this zero-budget replay is complete.",
-  "quality_claim_authorized": false,
-  "terminal_artifact": "artifacts/CALIBRATED_DECISION.json",
-  "terminal_sha256": "815c25776e45ff37552e6c73e9850f79c4c4328015b52c118862785fbdf64e66",
-  "decision": "plausible_at_16GiB_affinity_only; nominate_next_cycle_endpoint_arm",
-  "measured": {
-    "sessions": 165,
-    "turns": 905,
-    "request_tokens": 600735,
+  "actual_spend_usd": 1.188205,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 12.0,
+  "limitations": [
+    "synthetic deterministic tool-result payloads; no GPU endpoint timing",
+    "calibration uses campaign prefill-share anchor and explicit sensitivity range"
+  ],
+  "next_action": "Close route: cache-positive endpoint measurement failed identical token/tool behavior gate; no retry of consumed arms.",
+  "predecessor": {
+    "decision": "plausible_at_16GiB_affinity_only",
     "ideal_repeated_prefix_tokens": 481820,
-    "ideal_repeated_prefix_fraction": 0.8020508210775134,
-    "affinity_16GiB_hit_fraction": 0.8020508210775134,
-    "arbitrary_16GiB_hit_fraction": 0.1999633781950444,
-    "affinity_1GiB_hit_fraction": 0.19419544391453802
+    "request_tokens": 600735,
+    "sessions": 165,
+    "terminal_artifact": "artifacts/CALIBRATED_DECISION.json",
+    "terminal_sha256": "815c25776e45ff37552e6c73e9850f79c4c4328015b52c118862785fbdf64e66",
+    "turns": 905
   },
-  "limitations": ["synthetic deterministic tool-result payloads; no GPU endpoint timing", "calibration uses campaign prefill-share anchor and explicit sensitivity range"],
-  "wall_deadline_utc": "2026-07-24T09:00:00Z"
+  "priority": 5950,
+  "provider_mutation": "forbidden_researcher_retained_bench_only",
+  "quality_claim_authorized": false,
+  "researcher_profile": "execution",
+  "status": "complete",
+  "summary": "cache_positive_endpoint_nonoverlap_measured_but_behavior_not_identical",
+  "decision_artifact": "PAID_DECISION.json",
+  "terminal_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_agent_persistent_kv_replay/artifacts/paid-20260724t000941Z/FINAL_TERMINAL.json",
+  "terminal_sha256": "831ba61c53991b2c2068cf553c4fcce4476bfbfd3267bac3843c2fce667c7b4d",
+  "wall_deadline_utc": "2026-07-24T09:45:00Z"
 }

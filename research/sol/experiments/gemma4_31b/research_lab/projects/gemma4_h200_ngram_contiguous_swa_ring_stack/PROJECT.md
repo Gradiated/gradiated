@@ -117,3 +117,32 @@ replaying valid stages.
 - Storage: at most 10 GiB of new project-local artifacts
 - Provider mutation: forbidden
 
+## 2026-07-24 director continuation — repair the live suffix
+
+The first integrated trajectory does not close this stack. Its real first
+extend contained 2,048 tokens, but the local ring has 1,024 physical slots.
+The producer issued both logical halves to the same destinations, and the
+observer then reread all 2,048 logical positions after the ring had wrapped.
+Exactly 1,024 K tokens and 1,024 V tokens matched stock. One member of every
+aliased position pair must differ after overwrite, so the reported whole-row
+relative errors do not establish a mismatch in the live 1,024-token window.
+
+Consume `DIRECTOR_REPAIR.json`. Preserve the positive component without
+replay. Starting from the hash-bound post-null-guard patch, filter the
+canonical paged E5M2 producer bytes, request IDs, and absolute positions to
+each request's last `min(extend_len, 1024)` current tokens before the Triton
+store. This removes duplicate destinations rather than depending on their
+write order. Apply the identical live-suffix mask to the transition observer.
+
+Run one real 2,048-token extend discriminator. Require exact live-suffix K/V
+bytes, no duplicate physical destinations, and exact stock-versus-ring output
+for the first local consumer and first subsequent Q12 target-verification
+transition. Reuse all other exact component evidence. Only that pass admits
+one resumed candidate-only 1,036-request trajectory; the earlier stop produced
+no complete interpretable wave sample. Do not replay stock, the positive
+component, or any consumed project.
+
+This continuation remains `execution`: the physical cause and exact source
+boundary are localized. If the live suffix or first real consumer still
+diverges, or if the repaired trajectory is semantically or economically
+non-positive, close the ring-plus-NGRAM interaction.

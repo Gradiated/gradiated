@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "kind": "ngram_ring_live_suffix_repair",
+  "director_repair_sha256": "a9c883763231f6c1b269782f145226bb182aa06cd7de3d9431671d172e6087eb",
+  "hypothesis": "writing and observing only the last 1024 entries of a 2048-token append preserves the live circular E5M2 state without duplicate ring destinations",
+  "files": {
+    "inputs/ring/endpoint_ring_patch.py": "a47ba6c4179aaec4d72e21529d8e56b894de62a99f35bdafc3239957a3c65dff",
+    "inputs/ring/ring_kv.py": "8682c985de86eeefefa91f50874902a635a2d30c8c533d786445b35645f17188",
+    "inputs/ring/ring_ownership.py": "0ee0d372795dd0f7555a3906f2247730b44d2a1640f4bc661f6a6ed66a86342e",
+    "inputs/ring/sitecustomize.py": "7ec0b0aaf28c5d55beca82e2b4a4205d9cce7ce71bb593ceabefd9a55be5cde7",
+    "live_suffix_probe.py": "fe2b312a95d47956f432ca336fc676d73f8a997efce93794379e8d2e1d099aa1",
+    "candidate_wave.py": "cb3915601e376aa25fc10f13b16cec436533a979688a530d964d95c055ad1801"
+  },
+  "positive_component_reused": true,
+  "component_replayed": false
+}

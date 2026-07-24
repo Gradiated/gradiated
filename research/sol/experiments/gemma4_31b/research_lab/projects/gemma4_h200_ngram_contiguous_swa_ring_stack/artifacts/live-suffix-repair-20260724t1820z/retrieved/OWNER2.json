@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "live_suffix_probe.py"
+  ],
+  "cwd": "/home/glmrunner/gemma4-ngram-ring-live-suffix",
+  "launched_at_utc": "2026-07-24T18:22:01.642954Z",
+  "log": "/home/glmrunner/gemma4-ngram-ring-live-suffix/OWNER2.log",
+  "pid": 109527,
+  "start_ticks": 3203235,
+  "unit_manager": "pid"
+}

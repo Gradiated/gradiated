@@ -1,26 +1,28 @@
 {
   "active_session": null,
-  "actual_spend_usd": 0.60475,
+  "actual_spend_usd": 0.80155,
   "allocation_limit": 1,
   "authorized_spend_usd": 8.0,
   "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
   "compute_budget": "One retained H200 under cumulative $8 authority; at most 60 claimed GPU-minutes.",
-  "next_action": "Hash-check DIRECTOR_BINDING.json, freeze the retained contiguous E5M2 ring implementation, and prove one exact positive c32 Q12 NGRAM local target-verification component. Only then run one candidate-only frozen 1036-request wave trajectory against persisted controls; release by 18:50Z.",
-  "priority": 7500,
+  "next_action": "Hash-check DIRECTOR_REPAIR.json and freeze one live-suffix repair from endpoint patch 61a84766. Store and compare only each request's last min(extend_len, 1024) current tokens, prove one exact real 2048-token extend plus first local/Q12 consumer, then resume the invalidated candidate-only wave stage once without replaying stock or the positive component.",
+  "priority": 7510,
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
   "researcher_profile": "execution",
-  "reservation_gate": "Do not claim until the harness reserves the cumulative $8 authority and the retained ring implementation plus exact NGRAM consumer packet are hash-frozen. No provider creation, stock replay, or parameter sweep.",
+  "reservation_gate": "Reactivate under the same cumulative $8 authority only after DIRECTOR_REPAIR.json and the single live-suffix patch are hash-frozen. Reuse the positive component; no provider creation, stock replay, component replay, or parameter sweep.",
   "status": "complete",
   "storage_budget": "At most 10 GiB of new project-local artifacts; do not duplicate the checkpoint.",
-  "summary": "Exact positive c32/Q12 component (0.5775% whole-request bound) admitted one candidate-only trajectory. The real integrated ring producer immediately violated E5M2 transition-byte semantics (K relative L2 0.8614; V 0.8141), so the trajectory was stopped as a scientific semantic failure without replay.",
-  "terminal": {
-    "classification": "scientific_terminal_integrated_candidate_semantic_failure",
+  "summary": "Live-suffix repair passed exact 2048-token E5M2 producer bytes (1024 live tokens, zero duplicate destinations), but the retained endpoint patch has no NGRAM Q12 ring-consumer route: zero decode consumer audit rows. Candidate wave remains unstarted after the invalidated prior attempt.",
+  "terminal": {"classification": "integrated_q12_candidate_path_absent", "path": "artifacts/live-suffix-repair-20260724t1820z/FINAL_TERMINAL.json", "conservative_cumulative_h200_exposure_usd": 0.80155, "live_suffix_exact": true, "q12_ring_consumer_rows": 0, "candidate_wave_resumed": false},
+  "prior_attempt": {
+    "classification": "invalidated_overwritten_history_observer",
     "path": "artifacts/c32-q12-ring-20260724t1755z/FINAL_TERMINAL.json",
     "conservative_claimed_h200_exposure_usd": 0.60475,
     "component_positive_whole_request_bound_fraction": 0.0057752265724487295,
     "candidate_science_started": true,
     "candidate_wave_complete": false,
-    "candidate_semantic_failure": true
+    "candidate_semantic_failure_reported": true,
+    "director_disposition": "not a valid semantic close; live suffix and first real consumer were not isolated"
   },
   "wall_clock_budget": "Complete and release by 2026-07-24T18:50:00Z, leaving ten minutes before the verified 19:00Z lifecycle watchdog."
 }

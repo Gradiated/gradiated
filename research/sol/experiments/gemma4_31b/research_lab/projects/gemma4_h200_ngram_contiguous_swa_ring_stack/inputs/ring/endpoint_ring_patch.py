@@ -214,6 +214,8 @@ def install():
         prefix_lens,
         positions,
         repeated_ids,
+        expected_k,
+        expected_v,
     ):
         if (
             os.environ.get("RING_CACHE_TRACE_TRANSITIONS") != "1"
@@ -227,9 +229,12 @@ def install():
         backend._ring_extend_trace_slots.add(request_slots)
         valid = repeated_ids >= 0
         ring_positions = positions & (RING_TOKENS - 1)
-        swa_locs = backend.forward_metadata.swa_out_cache_loc[: positions.numel()]
         current_k = k_ring[repeated_ids[valid].long(), ring_positions[valid].long()]
         current_v = v_ring[repeated_ids[valid].long(), ring_positions[valid].long()]
+        destinations = (
+            repeated_ids[valid].to(torch.int64) * RING_TOKENS
+            + ring_positions[valid].to(torch.int64)
+        )
         row = {
             "event": "ring_transition_extend",
             "layer_id": layer.layer_id,
@@ -239,14 +244,16 @@ def install():
             "prefix_lens": _tensor_values(prefix_lens),
             "extend_lens": _tensor_values(forward_batch.extend_seq_lens),
             "scales": scale_audit(layer),
+            "live_suffix_tokens": int(valid.sum().item()),
+            "duplicate_live_destinations": int(destinations.numel() - torch.unique(destinations).numel()),
             "absolute_positions": _tensor_values(positions),
-            "current_k": _comparison(current_k, k_paged[swa_locs[valid]]),
-            "current_v": _comparison(current_v, v_paged[swa_locs[valid]]),
+            "current_k": _comparison(current_k, expected_k[valid]),
+            "current_v": _comparison(current_v, expected_v[valid]),
             "current_k_tokens": _token_comparison(
-                current_k, k_paged[swa_locs[valid]]
+                current_k, expected_k[valid]
             ),
             "current_v_tokens": _token_comparison(
-                current_v, v_paged[swa_locs[valid]]
+                current_v, expected_v[valid]
             ),
         }
         indptr = backend.forward_metadata.window_kv_indptr
@@ -355,20 +362,32 @@ def install():
             - repeated_starts
             + repeated_prefix
         )
+        live_indices = torch.cat(
+            [
+                torch.arange(
+                    int(start.item()) + max(0, int(length.item()) - RING_TOKENS),
+                    int(start.item()) + int(length.item()),
+                    device=k.device,
+                )
+                for start, length in zip(starts, lengths)
+            ]
+        )
+        live_ids = repeated_ids[live_indices]
+        live_positions = positions[live_indices]
         # The deferred production path has already committed the fused
         # RMSNorm+RoPE output to the canonical E5M2 SWA locations. Source the
         # ring from those exact bytes so its slice, layout, rotary convention,
         # and scale are identical to stock. Both sides are E5M2, hence scale 1.
         swa_locs = self.forward_metadata.swa_out_cache_loc[: k.shape[0]]
-        produced_k = k_paged[swa_locs]
-        produced_v = v_paged[swa_locs]
+        produced_k = k_paged[swa_locs][live_indices]
+        produced_v = v_paged[swa_locs][live_indices]
         store_ring_kv_bytes(
             produced_k,
             produced_v,
             k_ring,
             v_ring,
-            repeated_ids,
-            positions,
+            live_ids,
+            live_positions,
         )
         trace_extend(
             self,
@@ -380,8 +399,10 @@ def install():
             v_ring,
             request_ids,
             prefix_lens,
-            positions,
-            repeated_ids,
+            live_positions,
+            live_ids,
+            produced_k,
+            produced_v,
         )
         return result
 

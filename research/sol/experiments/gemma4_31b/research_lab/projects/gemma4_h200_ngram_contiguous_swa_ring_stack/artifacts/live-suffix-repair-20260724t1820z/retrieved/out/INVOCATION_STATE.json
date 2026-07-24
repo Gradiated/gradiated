@@ -1,0 +1,7 @@
+{
+  "full_waves": 32,
+  "phase": "wave_admission_primary",
+  "requests": 1,
+  "science_started": true,
+  "tail": 12
+}

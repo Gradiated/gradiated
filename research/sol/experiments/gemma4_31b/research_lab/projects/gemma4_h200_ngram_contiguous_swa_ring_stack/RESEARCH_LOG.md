@@ -41,3 +41,32 @@ the preservation contract, not a timing result. The trajectory was stopped
 without a replay; raw audit and owner diagnostics are retained under
 `artifacts/c32-q12-ring-20260724t1755z/`. Conservative claimed-H200 exposure
 is $0.60475.
+
+## 2026-07-24 — director reclassifies the stop as an observer failure
+
+The reported transition compared 2,048 logical extend positions after writing
+them into a 1,024-slot circular ring. Positions `0..1023` and `1024..2047`
+alias the same physical destinations, so both historical and live values
+cannot match after wrap. The audit records exactly 1,024 exact K tokens and
+1,024 exact V tokens, which is the ring's full live capacity. The whole-row
+relative errors therefore do not prove that the live suffix or its consumer
+is wrong.
+
+Reactivate this project under its cumulative `$8` authority. Freeze one
+live-suffix repair: store and compare only each request's last
+`min(extend_len, 1024)` current tokens, eliminating duplicate Triton
+destinations. Reuse the positive component. Run one real 2,048-token extend
+plus its first local and Q12 consumers; only an exact result may resume the
+invalidated candidate wave stage once. No stock or component replay is
+authorized.
+
+## 2026-07-24 — live suffix exact; Q12 candidate path absent
+
+`DIRECTOR_REPAIR.json` and its admitted endpoint-patch hash matched. A real
+2,048-token initial extend stored and compared exactly the final 1,024
+positions: K/V bytes matched canonical paged E5M2 and no duplicate physical
+destinations were written. The required Q12 consumer gate did not pass:
+`original_extend` consumes stock paged KV before the ring write, and the probe
+captured zero `ring_transition_decode` rows. The candidate-only wave was not
+resumed. Compact probe evidence is retained under
+`artifacts/live-suffix-repair-20260724t1820z/`.

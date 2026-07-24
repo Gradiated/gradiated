@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "classification": "integrated_q12_candidate_path_absent",
+  "live_suffix_repair": {"extend_tokens": 2048, "live_suffix_tokens": 1024, "duplicate_live_destinations": 0, "k_exact_bytes": true, "v_exact_bytes": true},
+  "consumer_gate": {"ring_transition_decode_rows": 0, "first_local_q12_ring_consumer_exact": false, "reason": "original_extend consumes stock paged KV before the ring write"},
+  "candidate_wave_resumed": false,
+  "probe_archive_sha256": "822518394b91c7469b4176cae87d0a59f76e06f914cdfa0f74680386be781563",
+  "audit_sha256": "37fc1bf554bcba9f14cdbd859319408ec53e6c81b09ca309abe14e6d9911713c"
+}

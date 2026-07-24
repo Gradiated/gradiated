@@ -1,0 +1,132 @@
+{
+  "classification": "fixed_qserve_progressive_scale_incompatibility",
+  "consumer": {
+    "layout": "QServe W4A8 per-group compute-aware SM89",
+    "s1_scale_dtype": "float16",
+    "s2_scale_dtype": "int8",
+    "stage1_weight_dtype": "int8"
+  },
+  "gpu_admission": false,
+  "interpretation": "At least one active AWQ scale set cannot be represented by the fixed QServe FP16-per-output times integer-per-group scale contract. Approximation would be requantization and is outside the admitted scope.",
+  "pass": false,
+  "projections": [
+    {
+      "active_group_count_max": 42,
+      "active_group_count_min": 42,
+      "best_witness": {
+        "active_groups": 42,
+        "output_channel": 14607,
+        "required_max_stage2": 163
+      },
+      "convertible_output_channels": 0,
+      "exact_scale_output_channels": 21504,
+      "groups": 42,
+      "input_features": 5376,
+      "minimum_required_max_stage2": {
+        "maximum": 1456,
+        "median": 286.0,
+        "minimum": 163
+      },
+      "output_features": 21504,
+      "pass": false,
+      "projection": "gate_proj",
+      "required_scaled_zero_absolute_maximum": {
+        "maximum": 14872,
+        "median": 2500.0,
+        "minimum": 1344
+      },
+      "required_stage1_absolute_maximum": {
+        "maximum": 17472,
+        "median": 2640.0,
+        "minimum": 1377
+      },
+      "stage1_range_output_channels": 0,
+      "worst_witness": {
+        "active_groups": 42,
+        "output_channel": 5338,
+        "required_max_stage2": 1456
+      }
+    },
+    {
+      "active_group_count_max": 42,
+      "active_group_count_min": 42,
+      "best_witness": {
+        "active_groups": 42,
+        "output_channel": 9496,
+        "required_max_stage2": 166
+      },
+      "convertible_output_channels": 0,
+      "exact_scale_output_channels": 21504,
+      "groups": 42,
+      "input_features": 5376,
+      "minimum_required_max_stage2": {
+        "maximum": 1200,
+        "median": 296.0,
+        "minimum": 166
+      },
+      "output_features": 21504,
+      "pass": false,
+      "projection": "up_proj",
+      "required_scaled_zero_absolute_maximum": {
+        "maximum": 12192,
+        "median": 2510.0,
+        "minimum": 1323
+      },
+      "required_stage1_absolute_maximum": {
+        "maximum": 13440,
+        "median": 2618.0,
+        "minimum": 1344
+      },
+      "stage1_range_output_channels": 0,
+      "worst_witness": {
+        "active_groups": 42,
+        "output_channel": 11406,
+        "required_max_stage2": 1200
+      }
+    },
+    {
+      "active_group_count_max": 168,
+      "active_group_count_min": 168,
+      "best_witness": {
+        "active_groups": 168,
+        "output_channel": 4009,
+        "required_max_stage2": 251
+      },
+      "convertible_output_channels": 0,
+      "exact_scale_output_channels": 5376,
+      "groups": 168,
+      "input_features": 21504,
+      "minimum_required_max_stage2": {
+        "maximum": 1224,
+        "median": 394.0,
+        "minimum": 251
+      },
+      "output_features": 5376,
+      "pass": false,
+      "projection": "down_proj",
+      "required_scaled_zero_absolute_maximum": {
+        "maximum": 12428,
+        "median": 3440.0,
+        "minimum": 2460
+      },
+      "required_stage1_absolute_maximum": {
+        "maximum": 12240,
+        "median": 3560.0,
+        "minimum": 2510
+      },
+      "stage1_range_output_channels": 0,
+      "worst_witness": {
+        "active_groups": 168,
+        "output_channel": 1684,
+        "required_max_stage2": 1224
+      }
+    }
+  ],
+  "round_trips": [],
+  "schema_version": 1,
+  "source": {
+    "format": "AWQ W4 group_size=128 zero_point=true GEMM",
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_mlp_w4_fp8_hybrid/inputs/layer0_mlp_awq.safetensors",
+    "sha256": "871a79d70b4fe23a5b036a765a129556ff2b4a2affc86606e843dbae215e04f8"
+  }
+}

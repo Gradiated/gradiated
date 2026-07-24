@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "admitted_at_utc": "2026-07-23T05:57:59Z",
+  "current_stack": {
+    "identity": "../gemma4_h200_residual_h2d_sync_residency/EVIDENCE_BINDING.json",
+    "identity_sha256": "7675d823029db9a019f40044ede07ff0a2b101212acbd915723af69b5174b103",
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "checkpoint_bytes": 62578655208,
+    "runtime_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "workload": {
+      "requests": 32,
+      "concurrency": 32,
+      "prompt_tokens_per_request": 4214,
+      "completion_tokens_per_request": 358,
+      "fresh_prompt_tokens_total": 117728,
+      "cached_prompt_tokens_total": 17120
+    },
+    "frontier_seconds_per_request": 0.6746877474374742
+  },
+  "measured_relevance": {
+    "trace": "../gemma4_h200_residual_h2d_sync_residency/artifacts/residual-h2d-current-frontier-20260723t0403z/CURRENT_TRACE_ATTRIBUTION.json",
+    "trace_sha256": "5679e8d635c759e9d37fdccfece02a9ac23d4ad8c565c9fb3558ab9e005801be",
+    "fp8_linear_seconds": 5.375939818,
+    "fp8_linear_wall_fraction": 0.24058942625425167,
+    "decode_fp8_linear_seconds": 2.612035063,
+    "prefill_fp8_linear_seconds": 2.763904755,
+    "historical_gate_up_plus_down_fraction_of_fp8_family": 0.7037
+  },
+  "w4_representation": {
+    "bindings": "../h200_w4_full_endpoint_background_frontier/BINDINGS.json",
+    "bindings_sha256": "caa363f91c1bd2191facb500b26dd5705485b67afe5d362637bc08b079ffe577",
+    "checkpoint_terminal": "../h100_w4_full_endpoint_background_frontier/W4_CHECKPOINT_TERMINAL.json",
+    "checkpoint_terminal_sha256": "f5bfda8b22bc15ee3842c47c922106389453602a4dd1f02c70020656d02a2271",
+    "checkpoint_root": "../h100_w4_full_endpoint_background_frontier/artifacts/w4-checkpoint-owner-20260717T223754Z/checkpoint-repair-2",
+    "checkpoint_bytes": 19220755443,
+    "file_manifest_sha256": "afd8d50f78ac492d262bcaccd39859333e3d309f7b2d9c371d71ab94df8d5984",
+    "config_sha256": "8bd2a7878e552cda91422cc0f41eb96094b0e78a7481787984312a03e35132f2",
+    "quant_config_sha256": "74501cba9326f0309294b9c5467ad21586af7b59b2757b9fc95398aeb3a63f50",
+    "format": "AWQ W4 group_size=128 zero_point=true GEMM",
+    "evidence_boundary": "performance proxy only; quality and production eligibility are unmeasured"
+  },
+  "operation": {
+    "producer_consumer": "MergedColumnParallelLinear gate_up_proj -> GeluAndMul -> down_proj",
+    "baseline": "current SGLang fp8_scaled_mm with E4M3 weights and per-token activation scaling",
+    "candidate": "strongest supported current-library group-128 W4 consumer for decode MLP only",
+    "decode_m": [1, 2, 4, 8, 12, 16, 24, 32],
+    "prefill_fallback_m": [397, 1409, 1631, 2048],
+    "gate_up_shape": "[M,5376] x [5376,43008]",
+    "down_shape": "[M,21504] x [21504,5376]",
+    "target_accelerator": "nvidia-h200-sxm",
+    "predicted_change": "Reduce compulsory decode MLP weight bytes by at least 35% without increasing launches or synchronization; prefill remains on the current FP8 consumer."
+  },
+  "gates": {
+    "component": "Real W4 tensors must reach the actual downstream consumer; compare complete outputs to a dequantized-W4 reference and record max error, relative L2, cosine, saturation, and nonfinite counts.",
+    "physical": "Measure warm distributions plus DRAM/L2 bytes, tensor activity, launches, grid waves, registers, shared memory, and spills only as needed to test the weight-byte prediction.",
+    "endpoint": "At most one c32 pair after a >=3% call-weighted whole-request bound and 3/3 cheap coherence pass; require 32/32 rows and exact prompt/cache accounting.",
+    "forbidden": [
+      "W4 format, group-size, kernel, or tile sweep",
+      "W4 attention, QKV, output head, or prefill",
+      "model training or broad quality evaluation",
+      "new provider resource"
+    ]
+  }
+}

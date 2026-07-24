@@ -1,0 +1,55 @@
+{
+  "accelerator": "nvidia-l40s",
+  "architecture": "sm89",
+  "classification": "immutable_exact_awq_sm89_consumer_packet",
+  "files": {
+    "EXACT_CONSUMER_BINDING.json": "67c31d1ba4a613ecc6291089c820e9e7eb5c94752ff843e6481bb938063eb4bb",
+    "inputs/exact_consumer/compile_report.py": "6f3435144fb113cea6588209d355a4ac7c905ae2e86588b5248e86fd060477c0",
+    "inputs/exact_consumer/exact_component.py": "f101684a2e026b816f3666be4b64dfb7744e1461d63e0af63b19a2210016aefd",
+    "inputs/exact_consumer/prepare_exact_inputs.py": "696da9f7633f40ff23b35f069e16ec498db4f5d69d0a802822ebe1e95499489c",
+    "inputs/exact_consumer/producer/layer0_exact_compute_v1/PREPARE_TERMINAL.json": "375a6535b5428f164c429e05a9b516921aab3a6cf6ba395e1cccbbe76abc223c",
+    "inputs/exact_consumer/producer/layer0_exact_compute_v1/down_proj.qweight.npy": "6f839a1e2fca5651519812a92d5bf66e87711e4bf688d69d8a3187bced183c5d",
+    "inputs/exact_consumer/producer/layer0_exact_compute_v1/down_proj.scales_bf16_bits.npy": "5829bfdc95272e33f580e9b6e66bc4b8fc4783bec8ee75d7bbba28323e8e2c99",
+    "inputs/exact_consumer/producer/layer0_exact_compute_v1/down_proj.zeros.npy": "4864c48bd7d950ea7fc97f4038c8b2c7f0314b6432cd23ac0b169a3f07fc098d",
+    "inputs/exact_consumer/producer/layer0_exact_compute_v1/gate_proj.qweight.npy": "0aa866894ea8f24dab6c9eeda1431874319dc7258d67a285faf6a28ac51c1b6a",
+    "inputs/exact_consumer/producer/layer0_exact_compute_v1/gate_proj.scales_bf16_bits.npy": "0e17d13b32775d08d807c57078aba73a0a0e44b0dceeaf1aad43b975020a3e3c",
+    "inputs/exact_consumer/producer/layer0_exact_compute_v1/gate_proj.zeros.npy": "807db3ea000bfcefd10e1b172ca61cc54ff2e546c0218b8ea558aee13975071f",
+    "inputs/exact_consumer/producer/layer0_exact_compute_v1/up_proj.qweight.npy": "3bea129a25e8ebbf11b83bbc538a7ac6cd1db7950800ffe1c43435fe84692374",
+    "inputs/exact_consumer/producer/layer0_exact_compute_v1/up_proj.scales_bf16_bits.npy": "1e73c0487e20359b99f348d73e289b1c8b98d8ce70cde60d1e0c4009977baf25",
+    "inputs/exact_consumer/producer/layer0_exact_compute_v1/up_proj.zeros.npy": "d93fd0dabd8f8b834b892010ce88fda6afe2d52e13676ff329d36926dddeb7da",
+    "inputs/exact_consumer/producer/layer0_mlp_awq-871a79d70b4fe23a.safetensors": "871a79d70b4fe23a5b036a765a129556ff2b4a2affc86606e843dbae215e04f8",
+    "inputs/exact_consumer/qserve_sm89/LICENSE.qserve-apache-2.0": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "inputs/exact_consumer/qserve_sm89/activation_quant.cu": "548b3014c5428cb2a3c6be227a07602c9aec541ad261cba2e9ee8ca8ec99d7f6",
+    "inputs/exact_consumer/qserve_sm89/bindings.cpp": "257f907b215732c5f3c48f5d1f3d42996ac8ad47ae81a4c289abe625c0e6ae03",
+    "inputs/exact_consumer/qserve_sm89/exact_awq_w4a8_gemm.cu": "b2ff920ef44cce3f53c2eb98082ab3d86a03711a5dd4c34f4bfcb70048c9f5bf",
+    "inputs/exact_consumer/qserve_sm89/gemm_cuda.h": "49e1d88b280bfcf82fb778d8e55d47be34012d1b782b3ccc232b74bcc770f2d9",
+    "inputs/exact_consumer/qserve_sm89/setup.py": "620ac84307c5e8dceb543d3e00adfaa0206a7e04447784ac035df00b078bba37",
+    "inputs/exact_consumer/reference/FACTOR_REJECTION_TERMINAL.json": "780edf9830351c2e9b789127882d4b0e4199d80ec6590254c55a20e204c25a84",
+    "inputs/exact_consumer/reference/MIXED_W4_FP8_BINDING.json": "939210b7ca17d34eee1d39d08b9e21ac6c353aae57f94e4753caa8718c8e3ef1",
+    "inputs/exact_consumer/reference/QSERVE_MECHANISM_BINDING.json": "a9341ecefaaf3dae65d7aab99ee17bf11943f62e24680a4f04d885f71c7288ae",
+    "inputs/exact_consumer/reference/qserve_w4a8_gemm-ed866c939743e7ad.cu": "ed866c939743e7adc53e6a23a6cd99b92ad1a62e1138979361eafd9369f0e4d9",
+    "inputs/exact_consumer/run_component.sh": "52ebaea9ba538f2e3d3cc9ba44a136bc23e7facc8166765646b7ac3f1e967f8d",
+    "inputs/exact_consumer/test_prepare_exact_inputs.py": "9f8121f0195cfe532c6de368441e9a22453fd1868092dd5a674ef9591af6eea2"
+  },
+  "fixed_schedule": {
+    "cta": [
+      32,
+      64,
+      128
+    ],
+    "group_size": 128,
+    "partial_accumulation": "int32 group partial -> BF16 AWQ scale * FP16 token scale -> FP32 serial accumulation",
+    "stages": 3,
+    "warp": [
+      32,
+      32,
+      64
+    ],
+    "warps": 4
+  },
+  "model": "google/gemma-4-31B-it",
+  "producer_terminal_sha256": "375a6535b5428f164c429e05a9b516921aab3a6cf6ba395e1cccbbe76abc223c",
+  "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "schema_version": 1,
+  "source_awq_sha256": "871a79d70b4fe23a5b036a765a129556ff2b4a2affc86606e843dbae215e04f8"
+}

@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "hypothesis": "A fixed SM89 W4A8 consumer can preserve the original activation-aware AWQ semantics by applying each BF16 group scale to its K-group int32 partial before accumulation, while reusing one serial partial accumulator and avoiding Marlin's measured 200-register, 233472-byte shared-memory residency collapse.",
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+  },
+  "awq_representation": {
+    "source_binding": "../gemma4_h200_mlp_w4_fp8_hybrid/MIXED_W4_FP8_BINDING.json",
+    "source_binding_sha256": "939210b7ca17d34eee1d39d08b9e21ac6c353aae57f94e4753caa8718c8e3ef1",
+    "layer0_snapshot": "../gemma4_h200_mlp_w4_fp8_hybrid/inputs/layer0_mlp_awq.safetensors",
+    "layer0_snapshot_sha256": "871a79d70b4fe23a5b036a765a129556ff2b4a2affc86606e843dbae215e04f8",
+    "full_mlp_checkpoint": "../gemma4_h200_mlp_w4_fp8_hybrid/inputs/w4_checkpoint/mlp-awq.safetensors",
+    "full_mlp_checkpoint_sha256": "2e080adb1cd48b02ee17d915977fa0d6124610590e1edcbc39dc26e843e27153",
+    "format": "AWQ W4 group_size=128 zero_point=true GEMM with original BF16 per-group scales",
+    "calibration_or_requantization": false
+  },
+  "predecessor_falsifier": {
+    "project": "../gemma4_l40s_qserve_awq_mlp_endpoint",
+    "terminal": "../gemma4_l40s_qserve_awq_mlp_endpoint/artifacts/awq-qserve-layout-20260724t0800z/ROUND_TRIP_TERMINAL.json",
+    "terminal_sha256": "780edf9830351c2e9b789127882d4b0e4199d80ec6590254c55a20e204c25a84",
+    "source_manifest_sha256": "0a5474c3e9c891036ede82c64d19ba6e1e3765d8ae4f065d8e94ab510c32b449",
+    "finding": "Zero gate, up, or down output channels can exactly factor the AWQ BF16 group scales into fixed QServe FP16 per-output scale, byte group multiplier, and signed-int8 stage-1 range."
+  },
+  "starting_consumer": {
+    "qserve_revision": "02b2925aa6fa3b92b06316a1524b7f38922cd9c8",
+    "mechanism_binding": "../gemma4_l40s_qserve_w4a8_mlp_component/MECHANISM_BINDING.json",
+    "mechanism_binding_sha256": "a9341ecefaaf3dae65d7aab99ee17bf11943f62e24680a4f04d885f71c7288ae",
+    "source": "../gemma4_l40s_qserve_w4a8_mlp_component/inputs/qserve_sm89/qserve_w4a8_gemm.cu",
+    "source_sha256": "ed866c939743e7adc53e6a23a6cd99b92ad1a62e1138979361eafd9369f0e4d9",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "accelerator": "nvidia-l40s",
+    "architecture": "sm89",
+    "measured_unscaled_component_speedup_range": [
+      1.870607730514651,
+      1.9241003940693524
+    ]
+  },
+  "exact_operation": {
+    "phase": "decode MLP only; prefill remains online FP8",
+    "chain": "MergedColumnParallelLinear gate_up_proj -> GeluAndMul(tanh) -> down_proj",
+    "gate_up_shape": "[M,5376] x [5376,43008]",
+    "down_shape": "[M,21504] x [21504,5376]",
+    "decode_m": [
+      1,
+      2,
+      4,
+      8,
+      12,
+      16,
+      24,
+      32
+    ],
+    "activation_input": "dynamic symmetric per-token signed int8 with FP16 scale",
+    "weight_input": "centered uint4 AWQ codes plus original BF16 scale and zero per K-group",
+    "accumulation": "int32 tensor-core partial per K=128 group, multiplied by original BF16 AWQ scale and activation scale, accumulated in FP32 across groups",
+    "output": "BF16 gate/up and down outputs; unchanged fused GeluAndMul plus dynamic int8 producer between projections"
+  },
+  "physical_prediction": {
+    "causal_change": "Replace QServe's unrepresentable byte group-scale factorization with serial K-group partial scaling by the original BF16 AWQ scale.",
+    "registers": "Reuse one group partial accumulator; compiled register count should remain below the measured Marlin 200-thread value unless the compiler extends group-partial live ranges.",
+    "shared_memory": "Retain QServe-style packed-weight staging and avoid Marlin's measured 233472 bytes/block; exact compiled value is a paid result.",
+    "traffic": "Add one BF16 scale load per output/K-group while preserving packed W4 compulsory weight bytes and avoiding materialized dequantized weights.",
+    "falsifier": "Incorrect full-chain outputs, nonfinite boundary rows, compiler resource collapse comparable to Marlin, absent candidate symbols, or nonpositive warm M32 chain timing versus online FP8."
+  },
+  "paid_sequence": [
+    "Prepare one fixed source patch and immutable packet offline; no tile, schedule, or representation sweep.",
+    "After priority-6300 releases and the director-owned watchdog is valid, claim the retained L40S and make the smallest exact target-GPU discovery call.",
+    "Repair ordinary compile/API defects in the same claim, then run the frozen boundary and M=1..32 complete-chain correctness/timing packet profiler-off.",
+    "Collect only registers, spills, shared memory, tensor activity, and DRAM/L2 counters required to test the physical prediction.",
+    "Only a correct positive component may run three new coherence prompts; only three coherent outputs may trigger one matched c32 pair at or below 1.8853265455 seconds/request."
+  ],
+  "prohibitions": [
+    "No AWQ recalibration, requantization, clipping, scale approximation, group-size, bit-width, mixed-precision, tile, or schedule sweep.",
+    "No reuse of consumed uncalibrated coherence prompts or causal traces.",
+    "No GPU claim before priority-6300 releases and a valid director lifecycle covers the run.",
+    "No provider creation or teardown by the researcher and no quality claim from component equality alone."
+  ]
+}

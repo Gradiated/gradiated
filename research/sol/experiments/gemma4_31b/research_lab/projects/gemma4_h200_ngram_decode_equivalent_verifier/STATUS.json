@@ -1,0 +1,36 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "authorized_spend_usd": 20.0,
+  "classification": "typed_external_pool_blocker_after_complete_offline_binding",
+  "compute_budget": "At most 6.5 claimed H200 hours and 8 local CPU-hours.",
+  "next_action": "Director: provision and register one preemptible 250-GiB nvidia-h200-sxm lab bench for google/gemma-4-31B-it at $2.46/hour with at least 6.5 claim-hours before the project deadline. Researcher: atomically claim it, reconcile and stage the already materialized 62,578,655,208-byte project-local checkpoint plus pinned image, run remote_experiment.py, and conditionally run the ten-row suite plus matched c32 pair only if DISCRIMINATOR_TERMINAL.json passes.",
+  "priority": 6500,
+  "provider_request": {
+    "accelerator": "nvidia-h200-sxm",
+    "disk_gib": 250,
+    "hourly_cost_usd": 2.46,
+    "platform": "gpu-h200-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "preemptible": true,
+    "provision_after_reservation": true
+  },
+  "researcher_profile": "deep",
+  "status": "active",
+  "storage_budget": "One 250-GiB provider disk and at most 12 GiB new project artifacts.",
+  "summary": "Offline execution binding is complete. The exact checkpoint, runner, closed traces, pinned v0.5.13 source, four-row internal discriminator, and one decode-shape tied-LM-head verifier intervention are project-local and hash-bound. Containerized CPU ordering tests pass. The atomic claim returned the typed external boundary 'no available GPU bench matches this project'; zero scientific or provider invocation began and spend remains $0.",
+  "external_blocker": {
+    "path": "EXTERNAL_BLOCKER.json",
+    "classification": "typed_external_gpu_pool_boundary",
+    "observed_at_utc": "2026-07-24T09:19:21Z",
+    "candidate_arm_consumed": false
+  },
+  "intervention_binding": "INTERVENTION_BINDING.json",
+  "checkpoint_manifest": "CHECKPOINT_MANIFEST.json",
+  "offline_validation": {
+    "python_compile": "pass",
+    "containerized_projection_ordering_tests": "3/3 pass",
+    "devex_check": "pass"
+  },
+  "wall_clock_budget": "Complete by 2026-07-24T17:00:00Z."
+}

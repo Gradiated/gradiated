@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "kind": "gemma4_h200_ngram_verification_critical_path",
+  "status": "complete",
+  "result": "intervention_rejected",
+  "terminal": "FINAL_TERMINAL.json",
+  "actual_spend_usd": 2.4478860696166667,
+  "bench_released_ready": true,
+  "profile_trace_sha256": "37e2c73a57e8e63bd7ec0a3465cc1edded8b9dc63507d97e85a767306a97a48b",
+  "pair": {
+    "complete_32_control": true,
+    "complete_32_candidate": true,
+    "server_stable": true,
+    "semantics_match": false,
+    "control_seconds_per_request": 0.6156447256562387,
+    "candidate_seconds_per_request": 0.6369304755312584,
+    "service_time_delta_fraction": 0.03457472952818752,
+    "p95_delta_fraction": 0.024542161786894612,
+    "decision": "Reject and do not replay the consumed pair."
+  }
+}

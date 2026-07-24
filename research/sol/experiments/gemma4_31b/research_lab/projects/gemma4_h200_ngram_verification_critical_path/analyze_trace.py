@@ -18,8 +18,11 @@ RANGES = [
 
 
 def load(path: pathlib.Path) -> dict:
-    opener = gzip.open if path.suffix == ".gz" else path.open
-    with opener(path, "rt", encoding="utf-8") as handle:
+    if path.suffix == ".gz":
+        handle = gzip.open(path, "rt", encoding="utf-8")
+    else:
+        handle = path.open("rt", encoding="utf-8")
+    with handle:
         return json.load(handle)
 
 

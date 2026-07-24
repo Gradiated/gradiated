@@ -29,14 +29,14 @@ candidate terminal, launch, runner, model, image, checkpoint, and source
 symbols. Prepare one Nsight Systems capture contract plus only the minimum
 kernel counters needed to distinguish the top non-overlapping boundary.
 
-After priority-6800 emits a terminal and releases
-`h200-ngram-verifier-e00kcm9nfhwt7e7gbc`, atomically claim it. Run one bounded
-profiler capture of the exact c32 NGRAM endpoint. Attribute wall time across
-draft lookup, target forward/verification, accepted-token bookkeeping,
-sampling/LM head, cache/position updates, graph launches, scheduler/host gaps,
-and serialization. Then implement exactly one source-level intervention
-justified by the dominant measured boundary and run a matched profiler-off c32
-control/candidate pair.
+The director provisioned independent bench
+`h200-ngram-critical-e00bwcwgsxawx1jmgw` so this project does not serialize
+behind priority-6800. Atomically claim it and run one bounded profiler capture
+of the exact c32 NGRAM endpoint. Attribute wall time across draft lookup,
+target forward/verification, accepted-token bookkeeping, sampling/LM head,
+cache/position updates, graph launches, scheduler/host gaps, and serialization.
+Then implement exactly one source-level intervention justified by the dominant
+measured boundary and run a matched profiler-off c32 control/candidate pair.
 
 The intervention must preserve the exact target, runtime stack, NGRAM settings,
 request bytes, accepted token sequence, parsed tool semantics, finish reason,
@@ -58,8 +58,7 @@ quality or the broader campaign.
 - Priority: `6790`
 - Researcher profile: `deep`
 - Authorized cumulative spend: `$8`
-- Compute: one retained H200, at most 105 claimed GPU-minutes
-- Wall clock: complete and release by `2026-07-24T16:45:00Z`
+- Compute: one independent H200, at most 105 claimed GPU-minutes
+- Wall clock: complete and release by `2026-07-24T14:20:00Z`
 - Storage: at most 12 GiB of new project-local artifacts
 - Provider mutation: forbidden
-

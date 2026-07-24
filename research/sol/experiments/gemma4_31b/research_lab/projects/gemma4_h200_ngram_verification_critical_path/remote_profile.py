@@ -11,12 +11,12 @@ import urllib.request
 
 ROOT = pathlib.Path("/home/glmrunner/gemma4-ngram-critical")
 PROJECT = ROOT / "project"
-OUT = ROOT / "artifacts/profile"
+OUT = ROOT / "artifacts" / os.environ.get("PROFILE_OUTPUT_SUBDIR", "profile")
 IMAGE = (
     "docker.io/lmsysorg/sglang@sha256:"
     "6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
 )
-CONTAINER = "gemma-ngram-critical-profile"
+CONTAINER = os.environ.get("PROFILE_CONTAINER", "gemma-ngram-critical-profile")
 
 
 def atomic(path: pathlib.Path, value: object) -> None:
@@ -95,7 +95,7 @@ def launch() -> None:
         "-e",
         "NGRAM_PROFILE_RANGES=1",
         "-e",
-        "SGLANG_TORCH_PROFILER_DIR=/work/artifacts/profile/torch",
+        f"SGLANG_TORCH_PROFILER_DIR=/work/artifacts/{OUT.name}/torch",
         "-e",
         "SGLANG_PROFILE_WITH_STACK=0",
         "-e",
@@ -149,7 +149,7 @@ def main() -> int:
             "python3",
             "/work/project/profile_runner.py",
             "--output",
-            "/work/artifacts/profile/c32",
+            f"/work/artifacts/{OUT.name}/c32",
             "--arm",
             "exact-ngram-profile",
             "--concurrency",
@@ -166,6 +166,7 @@ def main() -> int:
     traces: list[pathlib.Path] = []
     while time.monotonic() < trace_deadline:
         traces = sorted((OUT / "torch").rglob("*trace*.json"))
+        traces.extend(sorted((OUT / "torch").rglob("*trace*.json.gz")))
         if traces:
             break
         time.sleep(2)

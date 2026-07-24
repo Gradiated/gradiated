@@ -1,0 +1,197 @@
+{
+  "files": [
+    {
+      "bytes": 18683,
+      "path": "/home/glmrunner/gemma4-ngram-critical/checkpoint/chat_template.jinja",
+      "reused": false,
+      "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"
+    },
+    {
+      "bytes": 4621,
+      "path": "/home/glmrunner/gemma4-ngram-critical/checkpoint/config.json",
+      "reused": false,
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    {
+      "bytes": 49784788364,
+      "path": "/home/glmrunner/gemma4-ngram-critical/checkpoint/model-00001-of-00002.safetensors",
+      "reused": false,
+      "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+    },
+    {
+      "bytes": 12761549884,
+      "path": "/home/glmrunner/gemma4-ngram-critical/checkpoint/model-00002-of-00002.safetensors",
+      "reused": false,
+      "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"
+    },
+    {
+      "bytes": 120246,
+      "path": "/home/glmrunner/gemma4-ngram-critical/checkpoint/model.safetensors.index.json",
+      "reused": false,
+      "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+    },
+    {
+      "bytes": 1689,
+      "path": "/home/glmrunner/gemma4-ngram-critical/checkpoint/processor_config.json",
+      "reused": false,
+      "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"
+    },
+    {
+      "bytes": 32169626,
+      "path": "/home/glmrunner/gemma4-ngram-critical/checkpoint/tokenizer.json",
+      "reused": false,
+      "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+    },
+    {
+      "bytes": 2095,
+      "path": "/home/glmrunner/gemma4-ngram-critical/checkpoint/tokenizer_config.json",
+      "reused": false,
+      "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"
+    },
+    {
+      "bytes": 9147,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/bound/__pycache__/endpoint_entrypoint.cpython-313.pyc",
+      "reused": false,
+      "sha256": "ef43ac6509ea7cc266d394d4a1c24cd5171886ea13082cb9741e3386b0ddb587"
+    },
+    {
+      "bytes": 16439,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/bound/__pycache__/exact_runner.cpython-313.pyc",
+      "reused": false,
+      "sha256": "ddd0459438e391cb089987c7e9692d1674ee9f30e29b116e3819244b135405b5"
+    },
+    {
+      "bytes": 5043,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/bound/decode_equivalent_lm_head.py",
+      "reused": false,
+      "sha256": "4d99a94e97d0ef01fbfdaa9f7a25742f07f9fb4236d93d07900626f5ff9b53f9"
+    },
+    {
+      "bytes": 6179,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/bound/endpoint_entrypoint.py",
+      "reused": false,
+      "sha256": "cb82df3a9e3772390b628de6bacbe0131645ff12c2264200858c14b7c738d1b2"
+    },
+    {
+      "bytes": 9494,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/bound/exact_runner.py",
+      "reused": false,
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    {
+      "bytes": 568,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/bound/sitecustomize.py",
+      "reused": false,
+      "sha256": "7b3a50bca0e2ee1ee866fdbc3c0a87fd9fbf16fc57bfd01706a4e32119122119"
+    },
+    {
+      "bytes": 1577,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/evidence/CHECKPOINT_MANIFEST.json",
+      "reused": false,
+      "sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6"
+    },
+    {
+      "bytes": 3936,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/evidence/INTERVENTION_BINDING.json",
+      "reused": false,
+      "sha256": "1402d564f149af0af193579e006c31dec3518e6208ae1a339eea9bdb16db9af8"
+    },
+    {
+      "bytes": 855923,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/evidence/TERMINAL.json",
+      "reused": false,
+      "sha256": "ccb15cd9ef5d85ce0791bf3aab417fd5d976e3bda7b5f78c13a6039e90d72e71"
+    },
+    {
+      "bytes": 1376,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/evidence/TRACE_INTERPRETATION.json",
+      "reused": false,
+      "sha256": "9a855b6b9e2776827437240a95b29456d34f6a60b5c2c5218eee34c8da7d50c8"
+    },
+    {
+      "bytes": 1156,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/evidence/candidate-full-launch.json",
+      "reused": false,
+      "sha256": "7de2ef335f8d42deb7c36eca0153b2a06fd168a3fd74812c1618217348905970"
+    },
+    {
+      "bytes": 61591,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/source/forward_batch_info.py",
+      "reused": false,
+      "sha256": "c977296f3b90be69fff5312f2b3af7699a17b20af24614b139f69888e5776516"
+    },
+    {
+      "bytes": 56461,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/source/gemma4_causal.py",
+      "reused": false,
+      "sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989"
+    },
+    {
+      "bytes": 6038,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/source/hybrid_attn_backend.py",
+      "reused": false,
+      "sha256": "c1dc9785ead5131375b9c66992ce66be4394deeff7b55b33a72b90d414fafce9"
+    },
+    {
+      "bytes": 47157,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/source/logits_processor.py",
+      "reused": false,
+      "sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14"
+    },
+    {
+      "bytes": 156397,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/source/model_runner.py",
+      "reused": false,
+      "sha256": "f4dad073eb9f89afd4cda0439b97dee63f8de131d0ed10078b817dba1f978f59"
+    },
+    {
+      "bytes": 18614,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/source/ngram_info.py",
+      "reused": false,
+      "sha256": "ffa88c663e1893c306710ac801da0693d8248ebcfd1a5bc705c157f90657af1c"
+    },
+    {
+      "bytes": 15402,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/source/ngram_worker.py",
+      "reused": false,
+      "sha256": "27721b777cae08657ec9854ec0137a0db50afd49d84809503312fa43e399b554"
+    },
+    {
+      "bytes": 22003,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/inputs/source/tp_worker.py",
+      "reused": false,
+      "sha256": "f2e00ea7d53b7250231d44b9d52415c6f6b5f936b0e7c6af4a13f5aff6c1e509"
+    },
+    {
+      "bytes": 7930,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/SOURCE_TRACE_COUNTER_PACKET.json",
+      "reused": false,
+      "sha256": "3c6a68a054452597dca5b4ec6ffd31a735fbe29229e4b1ce1c701d205003547f"
+    },
+    {
+      "bytes": 10101,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/profile_runner.py",
+      "reused": false,
+      "sha256": "c30adf8b1b93147a47f9078b3827536ece7938ee147d32fe3e3322a37a45f577"
+    },
+    {
+      "bytes": 1497,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/profile_ranges.py",
+      "reused": false,
+      "sha256": "5a6a7dfa3057068070193130758f9be6581f1646e24ca2751a7f5b760853bc85"
+    },
+    {
+      "bytes": 6354,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/remote_profile.py",
+      "reused": false,
+      "sha256": "14afabf00634029d0a9ff82575e50a7b7c5dcf8f32cd08168ee956fce1cbdf50"
+    },
+    {
+      "bytes": 9805,
+      "path": "/home/glmrunner/gemma4-ngram-critical/project/remote_pair.py",
+      "reused": false,
+      "sha256": "6f391c3a9e1aa206a00ced34d1e07b306e29b1279cbd849f83a97b2e6f806df2"
+    }
+  ],
+  "pass": true
+}

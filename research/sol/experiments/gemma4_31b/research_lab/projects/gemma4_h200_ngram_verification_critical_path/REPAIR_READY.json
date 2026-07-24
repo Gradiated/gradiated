@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "classification": "recoverable_profile_window_harness_defect",
+  "artifact_root": "artifacts/ngram-critical-20260724t115729Z",
+  "claim_retained": true,
+  "scientific_invocation_started": true,
+  "candidate_intervention_started": false,
+  "resolved": true,
+  "resolved_by": "artifacts/ngram-critical-20260724t115729Z/retrieved/artifacts/profile-repair/PROFILE_TERMINAL.json",
+  "diagnostic": "The complete first profile persisted 15 ngram.target_forward_other calls and server logs identify every captured call as prefill. No target-verification range was captured because /start_profile preceded c32 prompt admission.",
+  "repair": "Preserve the complete failed trace and c32 terminal; retry only the profile producer with the same workload after a 32-party first-token admission barrier, then require target-verification ranges before selecting the intervention.",
+  "repair_deadline_utc": "2026-07-24T12:40:00Z"
+}

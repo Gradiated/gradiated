@@ -23,12 +23,14 @@ NEBIUS = pathlib.Path(
 KEY = pathlib.Path("/root/.config/nebius/glm-campaign/ssh_ed25519")
 KNOWN_HOSTS = pathlib.Path("/root/.config/nebius/glm-campaign/known_hosts")
 NAME = "gemma4_h200_ngram_verification_critical_path"
-PREDECESSOR = "gemma4_h200_ngram_decode_equivalent_production_validation"
-BENCH = "h200-ngram-verifier-e00kcm9nfhwt7e7gbc"
+BENCH = "h200-ngram-critical-e00bwcwgsxawx1jmgw"
 REMOTE = "/home/glmrunner/gemma4-ngram-critical"
-DEADLINE = dt.datetime(2026, 7, 24, 16, 45, tzinfo=dt.timezone.utc)
+DEADLINE = dt.datetime(2026, 7, 24, 13, 10, tzinfo=dt.timezone.utc)
 INTERVENTION_DEADLINE = dt.datetime(
-    2026, 7, 24, 16, 10, tzinfo=dt.timezone.utc
+    2026, 7, 24, 12, 40, tzinfo=dt.timezone.utc
+)
+PROVIDER_STARTED = dt.datetime(
+    2026, 7, 24, 11, 20, 18, tzinfo=dt.timezone.utc
 )
 IMAGE = (
     "docker.io/lmsysorg/sglang@"
@@ -144,18 +146,26 @@ def scp_from(
     )
 
 
-def predecessor_released() -> None:
-    status = json.loads((LAB / "projects" / PREDECESSOR / "STATUS.json").read_text())
-    if status.get("status") == "active":
-        raise RuntimeError("typed_queue_boundary:priority_6800_active")
+def launch_gate() -> None:
+    status = json.loads((PROJECT / "STATUS.json").read_text())
+    if status.get("bench_id") != BENCH:
+        raise RuntimeError("typed_binding_boundary:status_bench_mismatch")
     inventory = json.loads((LAB / "runtime/gpus.json").read_text())
     benches = inventory["benches"]
     bench = benches[BENCH] if isinstance(benches, dict) else next(
         row for row in benches if row["id"] == BENCH
     )
-    if bench.get("status") != "available" or bench.get("claim") is not None:
+    claim = bench.get("claim")
+    attached = (
+        bench.get("status") == "claimed"
+        and isinstance(claim, dict)
+        and claim.get("project") == NAME
+    )
+    if not attached and (
+        bench.get("status") != "available" or bench.get("claim") is not None
+    ):
         raise RuntimeError("typed_pool_boundary:assigned_bench_not_available")
-    if "No containers or experiment worker remain" not in bench["contents"].get(
+    if not attached and "not awaited or started" not in bench["contents"].get(
         "server_state", ""
     ):
         raise RuntimeError("typed_resident_boundary:bench_not_empty")
@@ -304,14 +314,26 @@ def stage_packet(ip: str, artifact: pathlib.Path) -> list[dict[str, object]]:
 
 
 def pull_image(ip: str, artifact: pathlib.Path) -> None:
-    result = ssh(
+    inspect = ssh(
         ip,
         f"sudo docker image inspect {shlex.quote(IMAGE)} "
         "--format '{{json .RepoDigests}}'",
         60,
     )
-    (artifact / "docker-image.json").write_text(result.stdout)
-    if result.returncode or "6113665a292b50fe" not in result.stdout:
+    if inspect.returncode:
+        pull = ssh(ip, f"sudo docker pull {shlex.quote(IMAGE)}", 5400)
+        (artifact / "docker-pull.stdout").write_text(pull.stdout)
+        (artifact / "docker-pull.stderr").write_text(pull.stderr)
+        if pull.returncode:
+            raise RuntimeError("typed_image_boundary:pull_failed")
+    final = ssh(
+        ip,
+        f"sudo docker image inspect {shlex.quote(IMAGE)} "
+        "--format '{{json .RepoDigests}}'",
+        60,
+    )
+    (artifact / "docker-image.json").write_text(final.stdout)
+    if final.returncode or "6113665a292b50fe" not in final.stdout:
         raise RuntimeError("typed_image_boundary:resident_digest_missing")
 
 
@@ -326,6 +348,7 @@ def start_worker(ip: str, stage: str, script: str, timeout_seconds: int) -> None
     )
     result = ssh(
         ip,
+        f"install -d {REMOTE}/artifacts; "
         f"rm -f {pid} {exit_path} {exit_path}.part; "
         f"nohup /usr/bin/bash -lc {shlex.quote(command)} "
         f"> {REMOTE}/artifacts/{stage}.worker.stdout "
@@ -463,6 +486,8 @@ def stage_candidate(
 
 
 def release(artifact: pathlib.Path, condition: str, contents: dict) -> None:
+    contents_path = artifact / "BENCH_CONTENTS.json"
+    atomic(contents_path, contents)
     result = pool(
         "release",
         "--project",
@@ -470,7 +495,7 @@ def release(artifact: pathlib.Path, condition: str, contents: dict) -> None:
         "--condition",
         condition,
         "--contents",
-        json.dumps(contents, sort_keys=True),
+        str(contents_path),
     )
     (artifact / "release.stdout").write_text(result.stdout)
     (artifact / "release.stderr").write_text(result.stderr)
@@ -479,7 +504,7 @@ def release(artifact: pathlib.Path, condition: str, contents: dict) -> None:
 
 
 def main() -> int:
-    predecessor_released()
+    launch_gate()
     packet = PROJECT / "SOURCE_TRACE_COUNTER_PACKET.json"
     if not packet.exists():
         raise RuntimeError("typed_packet_boundary:missing")
@@ -487,6 +512,11 @@ def main() -> int:
         "ngram-critical-" + time.strftime("%Y%m%dt%H%M%SZ", time.gmtime())
     )
     artifact.mkdir(parents=True, exist_ok=False)
+    repair_ready = PROJECT / "REPAIR_READY.json"
+    repair_request = PROJECT / "REPAIR_REQUEST.json"
+    if repair_ready.exists() and repair_request.exists():
+        repair_ready.replace(artifact / "PRIOR_REPAIR_READY.json")
+        repair_request.replace(artifact / "PRIOR_REPAIR_REQUEST.json")
     claim_started = dt.datetime.now(dt.timezone.utc)
     claim = pool(
         "claim",
@@ -591,10 +621,10 @@ def main() -> int:
             raise RuntimeError("typed_deadline_boundary:pair_repair_not_supplied")
         pair_terminal = json.loads(pair_terminal_path.read_text())
         atomic(artifact / "PAIR_TERMINAL.json", pair_terminal)
-        claimed_hours = (
-            dt.datetime.now(dt.timezone.utc) - claim_started
+        provider_hours = (
+            dt.datetime.now(dt.timezone.utc) - PROVIDER_STARTED
         ).total_seconds() / 3600
-        actual_spend = claimed_hours * 2.46
+        actual_spend = provider_hours * 2.46
         terminal = {
             "schema_version": 1,
             "kind": "ngram_verification_critical_path",
@@ -602,6 +632,7 @@ def main() -> int:
             "pair": pair_terminal,
             "pair_returncode": pair_rc,
             "claim_started_at_utc": claim_started.isoformat(),
+            "provider_started_at_utc": PROVIDER_STARTED.isoformat(),
             "claim_completed_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
             "actual_spend_usd": actual_spend,
             "result": (

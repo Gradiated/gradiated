@@ -29,17 +29,16 @@
     "required_pair": "one exact profiler-off c32 baseline/intervention pair"
   },
   "bench": {
-    "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+    "id": "h200-ngram-critical-e00bwcwgsxawx1jmgw",
     "accelerator": "nvidia-h200-sxm",
-    "deadline_utc": "2026-07-24T17:00:00Z",
+    "deadline_utc": "2026-07-24T14:28:00Z",
     "hourly_cost_usd": 2.46
   },
   "forbidden": [
-    "claim before priority-6800 releases",
+    "claim the priority-6800 quality bench",
     "change NGRAM settings, sampling, checkpoint, precision, or request bytes",
     "run a concurrency or generic flag sweep",
     "implement more than one scientific intervention",
     "infer a gain from a profiler-only result"
   ]
 }
-

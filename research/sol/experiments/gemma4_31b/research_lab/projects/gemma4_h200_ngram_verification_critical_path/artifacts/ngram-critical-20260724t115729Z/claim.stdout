@@ -1,0 +1,45 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-24T11:25:30.815361Z",
+    "heartbeat_at": "2026-07-24T11:53:17.885269Z",
+    "lease_seconds": 6300,
+    "lease_until_utc": "2026-07-24T13:38:17.885269Z",
+    "project": "gemma4_h200_ngram_verification_critical_path",
+    "stale": false
+  },
+  "contents": {
+    "artifacts": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_verification_critical_path/artifacts",
+    "caches": "Fresh 250-GiB provider disk; retain the pinned image, exact checkpoint, trace packet, source snapshot, profiler outputs, and intervention build cache for in-place repair and compatible follow-up.",
+    "checkpoint": "Exact 62,578,655,208-byte google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 checkpoint is project-local and hash-bound but not yet staged on this guest.",
+    "expected_first_arms": "One exact c32 NGRAM CPU+CUDA critical-path trace, then exactly one source-justified intervention and one matched profiler-off c32 pair.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_h200_ngram_verification_critical_path",
+    "runtime": "Fresh Nebius ubuntu24.04-cuda13.0 H200 bench for the pinned SGLang v0.5.13 source/trace packet and one source-level verification intervention.",
+    "server_state": "Provider instance RUNNING and disk READY; guest readiness, checkpoint staging, image pull, profiler, server, CUDA execution, and scientific invocation were not awaited or started by the director."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-ngram-critical-e00bwcwgsxawx1jmgw",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-24T14:28:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-ngram-critical-h200-20260724t1428-watchdog.service",
+      "main_pid": 4081483,
+      "unit": "gemma4-ngram-critical-h200-20260724t1428-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-24T11:23:04.059702Z",
+  "resource": {
+    "disk_id": "computedisk-e00ptxcxg2dwsg6xg6",
+    "disk_name": "gemma4-ngram-critical-h200-20260724t1120z-boot",
+    "instance_id": "computeinstance-e00bwcwgsxawx1jmgw",
+    "instance_name": "gemma4-ngram-critical-h200-20260724t1120z"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-24T11:53:17.885269Z"
+}

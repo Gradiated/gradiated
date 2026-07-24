@@ -1,0 +1,10 @@
+{
+  "baseline_source_sha256": "4d99a94e97d0ef01fbfdaa9f7a25742f07f9fb4236d93d07900626f5ff9b53f9",
+  "candidate_source_sha256": "cf14f4ee20258f1cd7b14bdf47dff5e78f386253f65d1ec4ba224a4f0d1eec01",
+  "mount_target": "decode_equivalent_lm_head.py",
+  "order": [
+    "control",
+    "candidate"
+  ],
+  "schema_version": 1
+}

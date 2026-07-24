@@ -87,7 +87,14 @@ def gpu_sample(path: pathlib.Path, stop: threading.Event) -> None:
             stop.wait(0.25)
 
 
-def one(index: int, body: dict, root: pathlib.Path, ready: threading.Barrier, release: threading.Barrier) -> dict:
+def one(
+    index: int,
+    body: dict,
+    root: pathlib.Path,
+    ready: threading.Barrier,
+    release: threading.Barrier,
+    first_token: threading.Barrier,
+) -> dict:
     ready.wait(timeout=120)
     release.wait(timeout=120)
     started = time.monotonic()
@@ -107,6 +114,7 @@ def one(index: int, body: dict, root: pathlib.Path, ready: threading.Barrier, re
                     choice = (item.get("choices") or [{}])[0]
                     if choice.get("text") and first is None:
                         first = now
+                        first_token.wait(timeout=900)
                     text += choice.get("text") or ""
                     if choice.get("token_ids"):
                         output_ids.extend(choice["token_ids"])
@@ -170,26 +178,30 @@ def main() -> int:
     warmup = dict(bodies[0]); warmup.update({"prompt": prefix + warmup_suffix, "max_tokens": 1, "min_tokens": 1, "stream": False})
     with post(warmup) as response:
         (root / "warmup.json").write_bytes(response.read())
-    profile_output = "/work/artifacts/profile/torch"
-    profile_response = post_control(
-        "/start_profile",
-        {
-            "output_dir": profile_output,
-            "num_steps": 16,
-            "activities": ["CPU", "GPU"],
-            "merge_profiles": False,
-        },
-    )
-    (root / "profile-start.json").write_bytes(profile_response)
     before = get("/metrics"); (root / "metrics-before.prom").write_bytes(before)
     ready = threading.Barrier(concurrency + 1)
     release = threading.Barrier(concurrency + 1)
+    first_token = threading.Barrier(concurrency + 1)
     stop = threading.Event(); sampler = threading.Thread(target=gpu_sample, args=(root / "gpu.csv", stop), daemon=True); sampler.start()
     started = time.monotonic()
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
-        futures = [pool.submit(one, i, body, root, ready, release) for i, body in enumerate(bodies)]
+        futures = [
+            pool.submit(one, i, body, root, ready, release, first_token)
+            for i, body in enumerate(bodies)
+        ]
         ready.wait(timeout=120)
         release.wait(timeout=120)
+        first_token.wait(timeout=900)
+        profile_response = post_control(
+            "/start_profile",
+            {
+                "output_dir": str(root.parent / "torch"),
+                "num_steps": 16,
+                "activities": ["CPU", "GPU"],
+                "merge_profiles": False,
+            },
+        )
+        (root / "profile-start.json").write_bytes(profile_response)
         rows = [future.result() for future in futures]
     batch_seconds = time.monotonic() - started
     stop.set(); sampler.join(timeout=3)

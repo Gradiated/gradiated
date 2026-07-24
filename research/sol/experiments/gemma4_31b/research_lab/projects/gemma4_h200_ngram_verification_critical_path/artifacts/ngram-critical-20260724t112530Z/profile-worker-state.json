@@ -1,0 +1,6 @@
+{
+  "observed_at": "2026-07-24T11:53:50.578366+00:00",
+  "returncode": 0,
+  "stderr": "bash: line 1: kill: (11388) - No such process\n",
+  "stdout": "lost\n"
+}

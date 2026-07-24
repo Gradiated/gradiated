@@ -1,0 +1,9 @@
+{
+  "artifact_root": "artifacts/ngram-critical-20260724t115729Z",
+  "claim_retained": true,
+  "consumed": true,
+  "resolved_by": "INTERVENTION_REQUEST.json",
+  "intervention_deadline_utc": "2026-07-24T12:40:00+00:00",
+  "next": "Analyze the retrieved exact c32 trace, install exactly one candidate_source.py, and write INTERVENTION_REQUEST.json.",
+  "schema_version": 1
+}

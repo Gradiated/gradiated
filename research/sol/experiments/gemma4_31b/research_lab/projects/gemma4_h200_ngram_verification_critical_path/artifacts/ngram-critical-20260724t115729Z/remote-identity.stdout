@@ -1,0 +1,5 @@
+gemma4-ngram-critical-h200-20260724t1120z
+NVIDIA H200, GPU-6581b11f-2db0-1d5e-51db-be481a3ee294
+Docker version 29.5.3, build d1c06ef
+Filesystem        1B-blocks         Used    Available Use% Mounted on
+/dev/vda1      258906374144 109312294912 149577302016  43% /

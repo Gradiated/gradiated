@@ -1,0 +1,7 @@
+{
+  "artifact_root": "artifacts/ngram-critical-20260724t115729Z",
+  "phase": "terminal",
+  "result": "intervention_rejected",
+  "terminal": "FINAL_TERMINAL.json",
+  "bench_released_ready": true
+}

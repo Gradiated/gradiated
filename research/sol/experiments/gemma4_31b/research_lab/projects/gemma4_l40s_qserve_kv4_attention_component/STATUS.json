@@ -1,39 +1,27 @@
 {
-  "active_session": {
-    "artifact_root": "artifacts/kv4-l40s-20260724t0550z",
-    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-kv4-l40s-20260724t0550z.service",
-    "deadline_utc": "2026-07-24T08:15:00Z",
-    "expected_terminal": "artifacts/kv4-l40s-20260724t0550z/retrieved/COMPONENT_TERMINAL.json",
-    "forward_progress": "Immutable packet validated and frozen; durable owner is waiting behind priority-6200 without a pool claim or guest access.",
-    "main_pid": 3993866,
-    "packet_sha256": "5a99a16532ee0fd984b292009ab3802f7bd815d789d487cf52b4b0d90257c769",
-    "queue_observation": {
-      "bench_claimed_at": "2026-07-24T05:46:33.025745Z",
-      "bench_claim_project": "gemma4_l40s_qserve_w4a8_mlp_component",
-      "bench_status": "claimed",
-      "observed_utc": "2026-07-24T05:51:03.358206Z",
-      "predecessor_status": "active"
-    },
-    "unit": "gemma4-kv4-l40s-20260724t0550z.service",
-    "unit_manager": "user"
-  },
-  "actual_spend_usd": 0.0,
+  "active_session": null,
+  "actual_spend_usd": 0.006726643004733981,
   "authorized_spend_usd": 8.0,
   "candidate_arm_consumed": false,
-  "classification": "exact_gemma_kernel_continuation",
+  "classification": "typed_pre_science_triton_compilation_boundary",
   "compute_budget": "At most 6 local CPU-hours and 1.5 L40S GPU-hours on the existing bench after the named predecessor releases.",
-  "next_action": "Durable owner gemma4-kv4-l40s-20260724t0550z.service is waiting without a claim. After priority-6200 becomes non-active and releases l40s-qserve-e00a74kcbps8v00fk4 as available, it will atomically claim that exact bench, run immutable packet 5a99a16532ee0fd984b292009ab3802f7bd815d789d487cf52b4b0d90257c769 once, retrieve the compact terminal before counters, collect the fixed minimum counter packet, and release. Do not start a second owner.",
+  "next_action": "Director disposition required. The only admitted immutable packet failed its first producer compilation before a kernel launch, correctness row, timing row, or scientific terminal. Its owner released the retained session and the 2026-07-24T08:15:00Z repair deadline expired, so do not start a second owner or replay this packet. A later explicit admission may bind a repaired immutable packet and a new bounded owner.",
   "priority": 6190,
-  "researcher_profile": "deep",
+  "researcher_profile": "execution",
   "result": {
     "manifest": "KV4_ATTENTION_GPU_INPUT_MANIFEST.json",
     "manifest_sha256": "ceba9153fb5b472b16e048e18d79a17db67017c804dec354dd7044073fea40fd",
     "packet": "KV4_GPU_PACKET.tar.gz",
     "packet_sha256": "5a99a16532ee0fd984b292009ab3802f7bd815d789d487cf52b4b0d90257c769",
-    "prior_typed_reject": "KV4_ATTENTION_SOURCE_GEOMETRY_REJECT.json"
+    "prior_typed_reject": "KV4_ATTENTION_SOURCE_GEOMETRY_REJECT.json",
+    "attempt_artifact_root": "artifacts/kv4-l40s-20260724t0550z",
+    "error_terminal": "artifacts/kv4-l40s-20260724t0550z/retrieved/ERROR_TERMINAL.json",
+    "invocation_state": "artifacts/kv4-l40s-20260724t0550z/retrieved/INVOCATION_STATE.json",
+    "cost": "artifacts/kv4-l40s-20260724t0550z/COST.json",
+    "failure": "Triton CompilationError: tensor indexing k[even]/v[even] in _pack_affine_kv4 requires tl.load pointer arithmetic; no candidate kernel launched and no COMPONENT_TERMINAL.json exists."
   },
-  "status": "active",
+  "status": "terminal",
   "storage_budget": "At most 4 GiB project-local plus 4 GiB temporary on the retained bench.",
-  "summary": "The exact D256-local/D512-global SM89 progressive-KV4 producer, fused decoder, dequantized-cache oracle, transition suite, and matched installed-SGLang FP8 control are frozen. A bounded durable owner is waiting behind priority-6200; no claim, CUDA invocation, or spend has occurred.",
-  "wall_clock_budget": "Through 2026-07-24T08:15:00Z, before the existing 08:30:59Z cleanup watchdog."
+  "summary": "The durable owner claimed the exact L40S at 07:00:03Z, staged packet 5a99a16532ee0fd984b292009ab3802f7bd815d789d487cf52b4b0d90257c769, and retrieved compact diagnostics. The first producer compilation failed before a candidate kernel launch or decision-bearing row; the owner then released the bench to maintenance. The immutable packet cannot be repaired or replayed under the expired owner/session.",
+  "wall_clock_budget": "Expired 2026-07-24T08:15:00Z; existing watchdog deadline was 2026-07-24T08:30:59Z."
 }

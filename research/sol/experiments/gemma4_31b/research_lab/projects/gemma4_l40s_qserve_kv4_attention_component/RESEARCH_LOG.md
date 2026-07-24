@@ -76,3 +76,25 @@
   only queue-waiting: no pool claim, guest access, CUDA invocation, or spend
   occurred. It may claim only after the predecessor is non-active and the pool
   exposes this exact bench as available.
+
+## 2026-07-24 — terminal pre-science compilation boundary
+
+- Question: did the one admitted immutable L40S packet produce its required
+  correctness/timing component evidence?
+- Action/evidence: the existing owner claimed `l40s-qserve-e00a74kcbps8v00fk4`
+  at `07:00:03Z`, transferred the bound packet, and retrieved the compact
+  evidence before release. Its first transition-suite producer compile failed
+  in `_pack_affine_kv4`: Triton rejects tensor indexing `k[even]`/`v[even]`
+  outside pointer arithmetic (`ERROR_TERMINAL.json`). `INVOCATION_STATE.json`
+  records no completed producer and no scientific terminal; no complete-output
+  row, timing sample, or counter packet exists.
+- Interpretation: this is an ordinary pre-kernel Triton integration defect, not
+  numerical evidence for or against KV4. The owner marked its pre-call intent
+  as scientific and released the bench anyway, so the required same-claim
+  repair route was unavailable after the `08:15Z` deadline. Do not alter or
+  replay the frozen packet without a new director admission.
+- Cost/cleanup: `COST.json` records 28.060699 seconds of L40S claim exposure
+  at `$0.8629833/hour`, or `$0.006726643004733981` cumulative project spend.
+  The compact diagnostic archive and raw stdout/stderr are retained under
+  `artifacts/kv4-l40s-20260724t0550z/`; the bench was released and is no longer
+  owned by this project.

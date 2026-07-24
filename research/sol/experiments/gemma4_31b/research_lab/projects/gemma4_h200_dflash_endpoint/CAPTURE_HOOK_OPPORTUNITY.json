@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "opportunities": [
+    {
+      "id": "gemma4_exact_dflash_capture_hook",
+      "observation": "The consumed AR diagnostic passed, and the DFlash server rejected before its first request solely because the pinned Gemma4ForConditionalGeneration lacked the capture hook.",
+      "evidence_scope": "SGLang 588d1f7bc942, Gemma 4 31B target, public five-layer DFlash draft, retained Nebius H200",
+      "phase": "target prefill and verification hidden-state production",
+      "resource_signature": "Six BF16 features per token, each width 5376; no model parameter or attention change",
+      "uncertainty": 0.2,
+      "competing_explanations": [
+        "Gemma hybrid local/global layer ordering differs from the draft checkpoint contract",
+        "Draft verification acceptance is too low to offset draft and target verification cost"
+      ],
+      "mechanism": "Reuse the model's existing auxiliary capture loop with the same plus-one indexing used by supported DFlash targets and current upstream Gemma 4.",
+      "modifiable_fraction": "Unknown until exact endpoint execution",
+      "upper_bound": "Unknown; vendor B300 results are non-transferable",
+      "falsifier": "Exact diagnostic has no accepted drafts, feature-shape failure, or decoded output mismatch",
+      "next_measurement": "None for this exact integration; director disposition after the consumed diagnostic exposed a tied-head runtime incompatibility.",
+      "cost_usd": 2.5,
+      "decision_impact": 1.0,
+      "discrimination_power": 1.0,
+      "readiness": 1.0,
+      "transfer_penalty": 0.0,
+      "outcome": {
+        "status": "falsified_at_runtime_boundary",
+        "result": "typed_dflash_gemma4_tied_head_runtime_incompatibility",
+        "candidate_arm_consumed": true,
+        "conditional_c32_pair_started": false,
+        "incremental_provider_exposure_usd": 1.139
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+gemma4_dflash_capture_hook.patch: OK
+dflash_endpoint_runner.py: OK
+evaluate_dflash_diagnostic.py: OK
+reconcile_dflash.py: OK
+remote_capture_hook_continuation.sh: OK
+consumed-ar-diagnostic/TERMINAL.json: OK
+consumed-ar-diagnostic/WORKLOAD.json: OK
+consumed-ar-diagnostic/metrics-after.prom: OK
+consumed-ar-diagnostic/metrics-before.prom: OK
+consumed-ar-diagnostic/request-00.json: OK
+consumed-ar-diagnostic/request-01.json: OK
+consumed-ar-diagnostic/request-02.json: OK
+consumed-ar-diagnostic/request-03.json: OK
+consumed-ar-diagnostic/response-00.sse: OK
+consumed-ar-diagnostic/response-01.sse: OK
+consumed-ar-diagnostic/response-02.sse: OK
+consumed-ar-diagnostic/response-03.sse: OK

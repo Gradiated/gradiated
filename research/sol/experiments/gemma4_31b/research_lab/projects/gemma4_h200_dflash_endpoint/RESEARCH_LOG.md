@@ -66,3 +66,26 @@ incompatibility, not a latency or quality result; the conditional c32 pair is
 therefore not admitted. Raw producer, startup terminal, inspection, and hashes
 are under `artifacts/dflash-h200-20260723t2343z/retrieved-terminal/`. The
 conservative claimed-provider exposure through terminal capture is `$7.11`.
+
+## 2026-07-24 — capture-hook continuation reaches the candidate runtime
+
+Bound the exact upstream Gemma 4 capture contract to pinned SGLang: requested
+checkpoint layers `[1,12,23,35,46,57]` map to Gemma's ascending pre-layer
+capture indices `[2,13,24,36,47,58]`, producing six width-5376 features without
+altering the target forward. Two pre-science defects (the image banner in a
+module-path probe and native `seed` versus `sampling_seed`) were repaired with
+the same model, image, workload, and gate. The seed failure was retained
+separately because all four streams stopped before scheduler admission and
+DFlash verification.
+
+The first decision-bearing DFlash diagnostic then initialized the draft runner,
+accepted four native requests, executed target prefill, reached 100% GPU
+utilization and 131,052 MiB HBM, and returned one token on two requests before
+the scheduler raised: `DFLASH greedy sampling requires a vocab-parallel head
+with weight and shard_indices`. Pinned Gemma 4 ties logits to
+`language_model.embed_tokens`, so the exact DFlash greedy-head contract is not
+satisfied. This is a measured target/runtime incompatibility after candidate
+execution, not a performance result. The diagnostic is consumed, no retry is
+allowed, and the conditional c32 pair was not started. Cumulative conservative
+provider exposure is `$8.249`; the retrieved archive hashes to
+`f6deb8624962c8bae7f232b2bbaa7428a07b204b543b541dee04c82b291d7413`.

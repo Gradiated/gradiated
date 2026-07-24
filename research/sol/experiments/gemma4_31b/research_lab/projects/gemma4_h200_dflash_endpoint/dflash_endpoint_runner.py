@@ -39,26 +39,41 @@ def tokens(label: str, count: int) -> list[int]:
 
 
 def request(base: str, body: dict, timeout: float):
-    return urllib.request.urlopen(urllib.request.Request(base + "/v1/completions", canonical(body), {"Content-Type": "application/json"}), timeout=timeout)
+    return urllib.request.urlopen(
+        urllib.request.Request(
+            base + "/generate",
+            canonical(body),
+            {"Content-Type": "application/json"},
+        ),
+        timeout=timeout,
+    )
 
 
 def one(base: str, index: int, body: dict, root: pathlib.Path, ready: threading.Barrier, release: threading.Barrier) -> dict:
     ready.wait(timeout=120); release.wait(timeout=120)
-    started, first, error, text, usage, ids, chunks = time.monotonic(), None, None, "", {}, [], []
+    started, first, error, text, meta, ids, chunks = time.monotonic(), None, None, "", {}, [], []
     try:
         with request(base, body, 1200) as response:
             for raw in response:
                 chunks.append(raw)
-                if raw.startswith(b"data: ") and raw.strip() != b"data: [DONE]":
-                    item = json.loads(raw[6:]); choice = (item.get("choices") or [{}])[0]
-                    if choice.get("text") and first is None: first = time.monotonic()
-                    text += choice.get("text") or ""; ids.extend(choice.get("token_ids") or [])
-                    if item.get("usage"): usage = item["usage"]
+                if raw.startswith(b"data: "):
+                    item = json.loads(raw[6:])
+                    if item.get("error"):
+                        raise RuntimeError(str(item["error"]))
+                    delta_text = item.get("text") or ""
+                    delta_ids = item.get("output_ids") or []
+                    if (delta_text or delta_ids) and first is None:
+                        first = time.monotonic()
+                    text += delta_text
+                    ids.extend(int(value) for value in delta_ids)
+                    if item.get("meta_info"):
+                        meta = item["meta_info"]
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"[:2000]
     ended, raw = time.monotonic(), b"".join(chunks)
     (root / f"response-{index:02d}.sse").write_bytes(raw)
-    row = {"index": index, "started_monotonic_s": started, "first_token_monotonic_s": first, "ended_monotonic_s": ended, "wall_seconds": ended-started, "ttft_seconds": None if first is None else first-started, "decode_seconds": None if first is None else ended-first, "error": error, "prompt_tokens": usage.get("prompt_tokens"), "completion_tokens": usage.get("completion_tokens"), "token_ids": ids, "returned_token_ids": len(ids), "text_nonempty": bool(text), "text_finite": error is None and all(math.isfinite(float(ord(c))) for c in text), "request_sha256": hashlib.sha256(canonical(body)).hexdigest(), "response_sha256": hashlib.sha256(raw).hexdigest()}
+    (root / f"response-{index:02d}.txt").write_text(text)
+    row = {"index": index, "started_monotonic_s": started, "first_token_monotonic_s": first, "ended_monotonic_s": ended, "wall_seconds": ended-started, "ttft_seconds": None if first is None else first-started, "decode_seconds": None if first is None else ended-first, "error": error, "prompt_tokens": meta.get("prompt_tokens"), "completion_tokens": meta.get("completion_tokens"), "cached_tokens": meta.get("cached_tokens"), "token_ids": ids, "returned_token_ids": len(ids), "text_nonempty": bool(text), "text_finite": error is None and all(math.isfinite(float(ord(c))) for c in text), "text_sha256": hashlib.sha256(text.encode()).hexdigest(), "request_sha256": hashlib.sha256(canonical(body)).hexdigest(), "response_sha256": hashlib.sha256(raw).hexdigest()}
     atomic(root / f"request-{index:02d}.json", row)
     return row
 
@@ -74,8 +89,8 @@ def main() -> int:
     prefix = tokens("common-prefix", COMMON_TOKENS); bodies = []
     for index in range(args.concurrency):
         suffix = tokens(f"suffix-{index}", PROMPT_TOKENS-COMMON_TOKENS); suffix[0] = 200000 + index
-        bodies.append({"model": MODEL, "prompt": prefix+suffix, "max_tokens": OUTPUT_TOKENS, "min_tokens": OUTPUT_TOKENS, "ignore_eos": True, "temperature": 0, "seed": 20260718, "stream": True, "stream_options": {"include_usage": True}, "return_token_ids": True, "add_special_tokens": False})
-    atomic(root / "WORKLOAD.json", {"prompt_tokens": PROMPT_TOKENS, "output_tokens": OUTPUT_TOKENS, "concurrency": args.concurrency, "shared_prefix_tokens": COMMON_TOKENS, "request_sha256": [hashlib.sha256(canonical(body)).hexdigest() for body in bodies]})
+        bodies.append({"input_ids": prefix+suffix, "sampling_params": {"max_new_tokens": OUTPUT_TOKENS, "min_new_tokens": OUTPUT_TOKENS, "ignore_eos": True, "temperature": 0, "sampling_seed": 20260718}, "stream": True})
+    atomic(root / "WORKLOAD.json", {"prompt_tokens": PROMPT_TOKENS, "output_tokens": OUTPUT_TOKENS, "concurrency": args.concurrency, "shared_prefix_tokens": COMMON_TOKENS, "api": "/generate", "request_sha256": [hashlib.sha256(canonical(body)).hexdigest() for body in bodies], "input_ids_sha256": [hashlib.sha256(canonical(body["input_ids"])).hexdigest() for body in bodies]})
     urllib.request.urlopen(args.base + "/v1/models", timeout=30).read()
     try: urllib.request.urlopen(urllib.request.Request(args.base + "/flush_cache", b"{}", {"Content-Type": "application/json"}), timeout=30).read()
     except Exception as exc: (root / "flush_cache.error").write_text(repr(exc) + "\n")

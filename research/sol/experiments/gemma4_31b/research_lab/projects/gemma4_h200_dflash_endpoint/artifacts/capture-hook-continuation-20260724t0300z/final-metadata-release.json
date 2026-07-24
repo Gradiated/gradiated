@@ -1,0 +1,45 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": null,
+  "contents": {
+    "actual_spend_usd": 8.249,
+    "artifacts": "artifacts/capture-hook-continuation-20260724t0300z",
+    "caches": "Pinned SGLang source/image layers plus exact target and DFlash draft downloads retained; no server or compute process remains.",
+    "candidate_arm_consumed": true,
+    "candidate_scientific_invocation_started": true,
+    "checkpoint": "Exact target and DFlash draft revisions are fully staged and retained on the 250-GiB disk.",
+    "compatible_successor": "gemma4_h200_dflash_endpoint",
+    "conditional_c32_pair_started": false,
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+    "expected_first_arms": "After the source-bound Gemma capture hook is ready, run only the four-request DFlash acceptance/verification diagnostic; the autoregressive diagnostic is consumed. Run one matched c32 pair only on a passing candidate diagnostic.",
+    "image": "gemma4-dflash-sglang:588d1f7bc942, repaired dependency layer image sha256:602485488f59919fee0e57a08ab631a3f2a141b99ef85853075d265a57889333",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_h200_dflash_endpoint",
+    "result": "typed_dflash_gemma4_tied_head_runtime_incompatibility",
+    "runtime": "SGLang 588d1f7bc942 plus project-bound Gemma 4 DFlash capture hook.",
+    "server_state": "Container remains Up but the scheduler exited after the tied-head runtime exception; GPU memory is 1 MiB and the endpoint is not healthy. Exact source, image, target, draft, and caches remain resident. Maintenance disposition required."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-dflash-e00q45wf04571cb67n",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-24T09:35:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-20260723t2337z-watchdog.service",
+      "main_pid": 3881377,
+      "unit": "gemma4-dflash-h200-20260723t2337z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-23T23:39:17.597073Z",
+  "resource": {
+    "disk_id": "computedisk-e00a75b8406tsvjg5d",
+    "disk_name": "gemma4-dflash-h200-20260723t2337z-boot",
+    "instance_id": "computeinstance-e00q45wf04571cb67n",
+    "instance_name": "gemma4-dflash-h200-20260723t2337z"
+  },
+  "status": "maintenance",
+  "updated_at": "2026-07-24T03:28:05.695469Z"
+}

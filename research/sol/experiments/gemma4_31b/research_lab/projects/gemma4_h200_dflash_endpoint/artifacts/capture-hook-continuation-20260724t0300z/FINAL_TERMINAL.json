@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "status": "terminal",
+  "result": "typed_dflash_gemma4_tied_head_runtime_incompatibility",
+  "candidate_arm_consumed": true,
+  "ar_diagnostic_replayed": false,
+  "conditional_c32_pair_started": false,
+  "identities": {
+    "target": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime": "SGLang@588d1f7bc9424201f89957e145f9d5af633a3eb8",
+    "image": "sha256:6ea91a3eb42131525d1c4fc1905315a0a025c30e8fc2557fdc640025067c360e",
+    "bench": "h200-dflash-e00q45wf04571cb67n"
+  },
+  "capture_hook": {
+    "class": "Gemma4ForConditionalGeneration",
+    "method": "set_dflash_layers_to_capture",
+    "requested_target_layers": [1, 12, 23, 35, 46, 57],
+    "bound_internal_indices": [2, 13, 24, 36, 47, 58],
+    "patched_source_sha256": "5734767925504a60e80af7e2d25610e27013d3a8a2ad853a3e7d654e700e9bc6",
+    "patch_sha256": "38ffc915233bcf14c46ad26fde920405b41bdaf8e18d40cc96093c9658c37ab5"
+  },
+  "diagnostic": {
+    "concurrency": 4,
+    "prompt_tokens_per_request": 4214,
+    "required_output_tokens_per_request": 358,
+    "shared_prefix_tokens": 535,
+    "http_requests": 4,
+    "prefill_batches_observed": 2,
+    "requests_returning_one_token": 2,
+    "total_returned_token_ids": 2,
+    "complete_requests": 0,
+    "dflash_verify_events": 0,
+    "root_exception": "RuntimeError: DFLASH greedy sampling requires a vocab-parallel head with `weight` and `shard_indices`."
+  },
+  "interpretation": {
+    "classification": "measured runtime incompatibility after decision-bearing candidate execution",
+    "cause": "The pinned DFlash worker's greedy sampler requires a vocab-parallel LM head, while pinned Gemma 4 ties logits to language_model.embed_tokens.",
+    "performance_result_valid": false,
+    "quality_result_valid": false,
+    "decision": "Close this exact integration without retry; do not admit the matched c32 pair."
+  },
+  "gpu_telemetry": {
+    "label": "measured",
+    "samples": 12,
+    "peak_utilization_percent": 100.0,
+    "peak_memory_mib": 131052.0,
+    "peak_power_w": 633.72
+  },
+  "actual_spend_usd": 8.249,
+  "evidence": {
+    "retrieved_archive": "capture-hook-continuation.tar.gz",
+    "retrieved_archive_sha256": "f6deb8624962c8bae7f232b2bbaa7428a07b204b543b541dee04c82b291d7413",
+    "server_log": "retrieved-final/capture-hook-continuation/dflash-diagnostic.server.log",
+    "server_log_sha256": "13a1f33c9da196a2140efcae54cf1220429bfb7ea2ab06100ff2abd9a389e2f5",
+    "remote_terminal": "retrieved-final/capture-hook-continuation/REMOTE_TERMINAL.json",
+    "remote_terminal_sha256": "848c8ed26f97e4f3c01ac4278c2d0f2587df83cc082439530abd65b181b57422",
+    "workload": "retrieved-final/capture-hook-continuation/results/dflash-diagnostic/WORKLOAD.json",
+    "workload_sha256": "25d61574f86814f83d4d044d40ce520eb66a3cb2c0325395a4ff65093f3a54e2",
+    "pre_science_seed_failure_archive": "capture-hook-pre-science-seed-failure-20260724t0319z.tar.gz",
+    "pre_science_seed_failure_archive_sha256": "c4747e91b07743bcc300d75339e6eb978a7eb9cf58df95f54526e72f42103bf9"
+  }
+}

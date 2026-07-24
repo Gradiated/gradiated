@@ -1,0 +1,8 @@
+{
+  "classification": "wholly_absent_candidate_api_wiring_failure",
+  "dflash_verify_events": 0,
+  "requests_reached_http": 4,
+  "resident_server_reused": true,
+  "returned_token_ids": 0,
+  "scheduler_requests": 0
+}

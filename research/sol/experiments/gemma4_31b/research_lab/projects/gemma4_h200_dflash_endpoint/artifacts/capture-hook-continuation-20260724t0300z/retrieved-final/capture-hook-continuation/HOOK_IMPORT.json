@@ -1,0 +1,24 @@
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.0.1
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+WARNING: The NVIDIA Driver was not detected.  GPU functionality will not be available.
+   Use the NVIDIA Container Toolkit to start this container with GPU support; see
+   https://docs.nvidia.com/datacenter/cloud-native/ .
+
+{
+  "class": "Gemma4ForConditionalGeneration",
+  "method": "set_dflash_layers_to_capture",
+  "source": "    def set_dflash_layers_to_capture(self, layer_ids: List[int]):\n        if layer_ids is None:\n            raise ValueError(\n                \"DFLASH requires explicit layer_ids for aux hidden capture.\"\n            )\n        self.capture_aux_hidden_states = True\n        self.language_model.layers_to_capture = [val + 1 for val in layer_ids]\n"
+}

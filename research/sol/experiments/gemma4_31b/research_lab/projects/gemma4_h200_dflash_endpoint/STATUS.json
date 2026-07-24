@@ -1,16 +1,23 @@
 {
-  "status": "complete",
-  "priority": 6000,
-  "researcher_profile": "execution",
-  "authorized_spend_usd": 28.0,
-  "actual_spend_usd": 7.11,
   "accelerator_requirement": "nvidia-h200-sxm",
-  "allocation_limit": 1,
-  "provider_mutation": "director_owned_independent_bench_registered",
   "active_session": null,
-  "summary": "The four-request same-runtime AR producer completed, but pinned SGLang DFLASH cannot initialize for the bound Gemma4ForConditionalGeneration target because the class lacks set_dflash_layers_to_capture. The H200 was released ready with source/image/model caches retained.",
-  "next_action": "Closed: do not replay this bound upstream DFlash route. Any successor must bind a runtime/model-class integration that implements the required DFLASH capture hook before requesting paid GPU time.",
+  "actual_spend_usd": 8.249,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 17.0,
+  "continuation_binding": "GEMMA4_CAPTURE_HOOK_CONTINUATION.json",
+  "last_owner": {
+    "artifact_root": "artifacts/capture-hook-continuation-20260724t0300z",
+    "deadline_utc": "2026-07-24T06:45:00Z",
+    "unit": "gemma4-dflash-capture-hook-owner.service",
+    "unit_manager": "user"
+  },
+  "next_action": "Director disposition: close this exact DFlash integration at the measured Gemma 4 tied-head runtime incompatibility. Do not retry the consumed candidate diagnostic or admit the c32 pair.",
+  "priority": 6000,
+  "provider_mutation": "director_owned_independent_bench_registered",
   "quality_claim_authorized": false,
-  "terminal_artifact": "artifacts/dflash-h200-20260723t2343z/FINAL_TERMINAL.json",
+  "researcher_profile": "deep",
+  "status": "terminal",
+  "summary": "The exact capture hook initialized DFlash, but the decision-bearing diagnostic failed after prefill because Gemma 4's tied embedding head lacks the vocab-parallel head contract required by DFlash greedy sampling. The candidate arm is consumed; c32 was not started.",
+  "terminal_artifact": "artifacts/capture-hook-continuation-20260724t0300z/FINAL_TERMINAL.json",
   "wall_deadline_utc": "2026-07-24T10:00:00Z"
 }

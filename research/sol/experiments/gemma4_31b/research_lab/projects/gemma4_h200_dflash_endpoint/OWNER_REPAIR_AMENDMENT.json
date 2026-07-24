@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "parent_input_archive_sha256": "57b3475738d583de4ecd30dfea1ca4e10a3c85cc3ff73b2e4d6e672cfb19c9ee",
+  "measured_failure": "The staged immutable archive was verified at continuation-inputs-20260724-hook1, but the remote worker's local constant omitted the suffix and failed at its first cd.",
+  "classification": "pre_science_launcher_path_defect",
+  "evidence": {
+    "remote_terminal": "artifacts/capture-hook-continuation-20260724t0300z/retrieved/capture-hook-continuation/REMOTE_TERMINAL.json",
+    "science_started": false,
+    "candidate_workload_started": false,
+    "stage": "preflight"
+  },
+  "causal_change": "Correct only the immutable-input directory constant and allow the same durable owner artifact root to resume.",
+  "unchanged": [
+    "capture hook",
+    "runtime and model identities",
+    "attention backends",
+    "DFlash token count",
+    "workload",
+    "diagnostic and c32 decision gates",
+    "claimed bench"
+  ],
+  "repair_deadline_utc": "2026-07-24T06:45:00Z"
+}

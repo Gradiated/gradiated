@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "decision": "Run the source-bound Gemma 4 DFlash continuation on the retained H200.",
+  "causal_hypothesis": "Capturing the six checkpoint-trained Gemma 4 layer outputs enables the public DFlash draft to reduce target forwards per emitted token while preserving greedy target semantics.",
+  "stock_control": "The consumed four-request AR diagnostic for admission, followed only after a passing candidate diagnostic by one new native-API AR c32 arm.",
+  "candidate_change": "Add only Gemma4ForConditionalGeneration.set_dflash_layers_to_capture using the upstream plus-one capture contract.",
+  "identities": {
+    "target": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime": "SGLang@588d1f7bc9424201f89957e145f9d5af633a3eb8",
+    "hardware": "h200-dflash-e00q45wf04571cb67n / nvidia-h200-sxm",
+    "speculative_num_draft_tokens": 16,
+    "target_attention_backend": "triton",
+    "draft_attention_backend": "fa4"
+  },
+  "workload": {
+    "prompt_tokens_per_request": 4214,
+    "forced_output_tokens_per_request": 358,
+    "shared_prefix_tokens": 535,
+    "diagnostic_concurrency": 4,
+    "conditional_pair_concurrency": 32,
+    "temperature": 0,
+    "seed": 20260718
+  },
+  "quality_gate": "Candidate diagnostic: 4/4 finite completions, 358 raw IDs each, real verify events and accepted drafts, and decoded text equality to consumed AR. Pair: 32/32 each, exact raw token-ID and decoded-text equality.",
+  "slo": "32/32 completion and exact ownership/accounting; compare candidate service time to same-runtime AR and 0.6518282820 seconds/request.",
+  "budget": {
+    "cumulative_authorized_usd": 17.0,
+    "prior_actual_usd": 7.11,
+    "metered_rate_usd_per_hour": 2.46,
+    "hard_owner_deadline_utc": "2026-07-24T06:45:00Z"
+  },
+  "stop_rules": [
+    "Do not replay AR diagnostic.",
+    "Do not start c32 unless the candidate diagnostic passes every gate.",
+    "Do not retry a decision-bearing candidate invocation.",
+    "Retain the same claim for ordinary pre-invocation integration repair until the hard deadline."
+  ],
+  "artifact_contract": "Immutable input archive and hashes; patched source diff/hash; image ID and hook import; health probes; invocation markers; raw SSE, texts, token IDs, metrics, DFlash verification telemetry, GPU telemetry, per-stage terminals, reconciled terminal, retrieval hash, resident state, release, and cumulative spend."
+}

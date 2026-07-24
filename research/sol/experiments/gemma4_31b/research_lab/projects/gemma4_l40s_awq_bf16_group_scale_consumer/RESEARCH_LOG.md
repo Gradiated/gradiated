@@ -55,3 +55,40 @@
   the component, fixed register/shared/spill/tensor/traffic/barrier counters,
   and only the conditional coherence/c32 continuation under one bounded
   claim.
+
+## 2026-07-24 — director admits the immutable packet on retained L40S
+
+- KV4 closed at its `08:15Z` repair deadline without a scientific terminal.
+  One-shot provider reconciliation verified the retained instance RUNNING and
+  its 150-GiB managed disk READY.
+- A replacement cleanup watchdog is active through `14:00Z`; the project
+  owner must finish by `13:45Z`. The existing image, exact checkpoint, and
+  compiled SM89 caches remain resident.
+- The next work is fixed execution, so routing is `execution`. Claim
+  `l40s-qserve-e00a74kcbps8v00fk4` once, run packet `e3bc8f…` with bundle
+  `a98b0c…`, collect only the bound counters, and start new coherence/c32 only
+  after a correct positive component. No calibration, requantization, tile,
+  representation, or schedule sweep is authorized.
+
+## 2026-07-24 — consumed candidate; control API and controller boundary
+
+- Action (measured): atomically claimed the admitted L40S, verified and
+  staged immutable packet `e3bc8f…` and data `a98b0c…`, and invoked the
+  fixed container worker. The packet compiled for SM89: `dense_kernel0` used
+  127 registers with zero spill loads/stores.
+- Evidence (measured): remote `component/INVOCATION_STATE.json` records
+  `candidate_cuda_started=true` and `candidate_science_started=true` with no
+  completed row. The first M=1 candidate chain therefore executed. Its FP8
+  control then failed before `control_science_started` with
+  `RuntimeError: mat_b must be a column major tensor` from
+  `sgl_kernel.fp8_scaled_mm`. The retained raw worker output, compile terminal,
+  invocation state, and post-fault retrieval are under
+  `artifacts/exact-awq-consumer-20260724t0829z/`.
+- Interpretation: this is an ordinary control-consumer API defect, but the
+  outer controller mishandled its retrieval-pack error and released the claim
+  to maintenance. Since candidate CUDA bytes partially executed, replay is
+  forbidden; since the uninterrupted claim no longer exists, its same-session
+  repair exception cannot be applied. No counters, coherence prompts, or c32
+  endpoint ran. Conservatively derived provider exposure is
+  `$0.024948443867448687`.
+- Next: typed director disposition; do not replay the fixed candidate.

@@ -1,21 +1,10 @@
 {
   "active_session": null,
-  "actual_spend_usd": 0.0,
+  "actual_spend_usd": 0.024948443867448687,
   "authorized_spend_usd": 8.0,
-  "blocker": {
-    "classification": "typed_external_queue_and_lifecycle_boundary",
-    "observed_at_utc": "2026-07-24T08:10:16Z",
-    "predecessor": "gemma4_l40s_qserve_kv4_attention_component",
-    "predecessor_status": "active",
-    "required_bench": "l40s-qserve-e00a74kcbps8v00fk4",
-    "bench_status": "maintenance",
-    "bench_claim": null,
-    "watchdog_deadline_utc": "2026-07-24T08:30:59.577420Z",
-    "exact_need": "The director must settle priority-6300, return the retained L40S to available, and install a lifecycle that covers the bounded exact-consumer component, minimum counters, and any admitted conditional coherence/c32 continuation."
-  },
-  "classification": "exact_awq_bf16_group_scale_consumer",
+  "classification": "candidate_consumed_control_api_failure_after_controller_release",
   "compute_budget": "At most 6 local CPU-hours and 1.5 L40S GPU-hours.",
-  "next_action": "After the director settles priority-6300, returns l40s-qserve-e00a74kcbps8v00fk4 from maintenance to available, and installs a lifecycle covering the run, claim it once and execute immutable source/runner packet e3bc8fe9fef4efcca329fa82eb475cef086238ba012cee3e233171b583c49061 with data bundle a98b0ca99d8e4f2d335dffb546931f072dc17d269d3d1b46723ac9eb17254753. Run the exact-consumer component, minimum causal counters, and only the conditional coherence/c32 sequence. Repair an ordinary compile/API/consumer defect under that same claim without changing the fixed intervention.",
+  "next_action": "Typed boundary: do not replay the fixed candidate. The M=1 candidate CUDA chain executed, then the unstarted control hit fp8_scaled_mm column-major API incompatibility; the outer controller incorrectly released the required uninterrupted claim to maintenance after its retrieval-pack error. Director disposition is required before any new project action.",
   "offline_evidence": {
     "classification": "exact_awq_qserve_compute_layout",
     "pass": true,
@@ -36,9 +25,9 @@
     "deterministic_rebuild_verified": true
   },
   "priority": 6295,
-  "researcher_profile": "deep",
-  "status": "active",
+  "researcher_profile": "execution",
+  "status": "blocked",
   "storage_budget": "At most 4 GiB new project artifacts; consume existing AWQ checkpoint, image, and caches read-only without duplication.",
-  "summary": "The one fixed SM89 consumer and immutable source/reference/runner packet are complete offline. Every real layer-0 AWQ code, zero, and BF16 scale bit round-trips exactly into QServe packed staging without calibration or requantization. GPU execution is unstarted because priority-6300 left the only L40S in maintenance while its project remains active, and the current director watchdog does not cover the admitted continuation.",
-  "wall_clock_budget": "Five hours from first researcher start; GPU work remains queued behind priority-6300 and valid director lifecycle."
+  "summary": "Immutable packet/data staging passed and SM89 compilation completed (candidate dense kernel: 127 registers, zero spills). The first M=1 candidate CUDA chain executed, but no row persisted because the FP8 control failed immediately on its required column-major mat_b layout. Remote invocation evidence was retrieved after the controller's retrieval-pack fault; the controller had already released the bench to maintenance, so the same uninterrupted-claim repair exception is unavailable.",
+  "wall_clock_budget": "Complete the bounded owner by 2026-07-24T13:45:00Z; director lifecycle deadline is 2026-07-24T14:00:00Z."
 }

@@ -1,0 +1,6 @@
+{
+  "artifacts": "artifacts/exact-awq-consumer-20260724t0829z",
+  "classification": "outer_controller_failure",
+  "diagnostic": "RuntimeError:typed_retrieval_boundary:remote_pack_failed",
+  "project": "gemma4_l40s_awq_bf16_group_scale_consumer"
+}

@@ -7,6 +7,13 @@
     "forward_progress": "Immutable packet validated and frozen; durable owner is waiting behind priority-6200 without a pool claim or guest access.",
     "main_pid": 3993866,
     "packet_sha256": "5a99a16532ee0fd984b292009ab3802f7bd815d789d487cf52b4b0d90257c769",
+    "queue_observation": {
+      "bench_claimed_at": "2026-07-24T05:46:33.025745Z",
+      "bench_claim_project": "gemma4_l40s_qserve_w4a8_mlp_component",
+      "bench_status": "claimed",
+      "observed_utc": "2026-07-24T05:51:03.358206Z",
+      "predecessor_status": "active"
+    },
     "unit": "gemma4-kv4-l40s-20260724t0550z.service",
     "unit_manager": "user"
   },

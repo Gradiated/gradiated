@@ -1,0 +1,42 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 0,
+  "authorized_spend_usd": 0.0,
+  "bench_need": {
+    "accelerator": "nvidia-h100-sxm",
+    "checkpoint": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 from packet/CHECKPOINT_MANIFEST.json",
+    "count": 1,
+    "minimum_hbm_gb": 80,
+    "minimum_safe_claimed_minutes": 45,
+    "resident_state": "Exact immutable checkpoint plus digest-pinned official v0.5.15 image, or empty capacity for staging under a durable owner."
+  },
+  "candidate_sample_consumed": false,
+  "compute_budget": "At most 1 local CPU-hour; no GPU or provider use.",
+  "director_binding_verified": true,
+  "next_action": "Offline phase complete. Director may authorize a paid extension only after registering a compatible 80 GB H100 SXM bench, reserving positive spend, and expanding the storage contract so the manifest-bound checkpoint bytes can be materialized under this project before claim. Then execute H100_EXECUTION_PACKET.json: requests 0-170 once, followed by a fresh-container 0-790 endpoint only if all discriminator gates pass.",
+  "packet": {
+    "decision": "nominate_one",
+    "execution_packet": "H100_EXECUTION_PACKET.json",
+    "execution_packet_sha256": "584f7a26d13b78eb2fe65bafaf276d48f590de65ebc37583bc6a7441a979276a",
+    "fit_hurdle": "H100_FIT_HURDLE.json",
+    "fit_hurdle_sha256": "0d33de436f1519ae712d3e3caca88923106c8601eab3b16f101757cd0999fead",
+    "manifest": "PACKET_MANIFEST.json",
+    "manifest_sha256": "6bcc848dfc3d44d9248bcb79e62fdcb2eeed5cb56a6be8bb45d4dfcff3c26cd7",
+    "runner_sha256": "789d2c4a34114009febabaf393d1a6e75dd1ffeb05acd1dbe82338db12355e8d"
+  },
+  "priority": 8435,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "execution",
+  "status": "completed",
+  "storage_budget": "At most 2 GiB project-local; no model weights or container layers.",
+  "summary": "Nominated one exact v0.5.15 H100 SXM packet: conservative fit is positive, raw $0.14/M ceiling is 0.82296 s/request, sustainable 90%-utilization ceiling is 0.740664 s/request, and H100 throughput remains unmeasured.",
+  "terminal": {
+    "classification": "offline_h100_execution_packet_ready",
+    "decision": "nominate_one",
+    "gpu_claimed": false,
+    "provider_mutated": false,
+    "spend_usd": 0.0
+  },
+  "wall_clock_budget": "60 minutes from researcher start."
+}

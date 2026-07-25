@@ -1,0 +1,34 @@
+{
+  "opportunities": [
+    {
+      "competing_explanations": [
+        "The 255-register attention kernels are dominated by useful KV traversal and a smaller query tile will only add launch overhead.",
+        "The trace-selected target cycles are not representative of the whole request because prefill and draining batches dominate service time.",
+        "The 20% ceiling is open only under counter-derived extrapolation and closes under a new whole-request capture."
+      ],
+      "cost_usd": 8.0,
+      "decision_impact": 1.0,
+      "decision_resolution_per_dollar": 0.03608515625,
+      "discrimination_power": 0.95,
+      "evidence_scope": "Gemma 4 31B revision b9ea41a, SGLang 28b095c, H200 SXM, native NGRAM c32 depth-12 M384 target verification",
+      "falsifier": "Exact-consumer mismatch, missing candidate-path proof under CUDA graph replay, warm component regression, or a scope-matched critical-path bound below the retained-gain threshold.",
+      "id": "fixed_m384_q12_attention_executor",
+      "intuition": "At q_len=12 the stock Hopper tile keeps state for 2.7x to 5.3x more rows than are live; exact specialization can lower register pressure and useless score/value work without changing masks, positions, cache ownership, or semantics.",
+      "kill_rule": "Close this decomposition after one correct exact-shape candidate if component timing is negative or the corrected whole-request ceiling is closed.",
+      "mechanism": "Dispatch only exact c32 q_len=12 M384 target verification to an eight-row attention tile, reducing padded query rows and accumulator live state while retaining the stock kernel for every other shape.",
+      "next_measurement": "After DFlash releases, run one short whole-request capture, exact-consumer stock/candidate oracle, warm alternating component A/B, candidate-path/resource counters, and one endpoint pair only when the measured bound warrants it.",
+      "observation": "The exact post-barrier M384 trace spends 1.488205758 s of summed kernel time across 900 extend-attention launches in 15 non-overlapping target-verification cycles. Both local and global subtypes use 255 registers/thread and materialize 64-row or 32-row query tiles although each c32 request contributes exactly 12 query rows.",
+      "promotion_rule": "Retain any reproducible exact positive component and endpoint effect; claim the 20% objective only from the matched endpoint.",
+      "readiness": 0.65,
+      "residual_bottleneck_rule": "If attention improves, remeasure the non-overlapping target-forward union before considering FP8 projections; do not optimize mask, penalty, allocator, or LM-head symptoms.",
+      "transfer_penalty": 0.15,
+      "uncertainty": 0.55
+    }
+  ],
+  "ranking_method": {
+    "claim_limit": "triage heuristic only; inputs are judgments and score is not a performance prediction",
+    "formula": "impact*uncertainty*discrimination*readiness*(1-transfer_penalty)/cost_usd",
+    "name": "heuristic_decision_resolution_per_dollar_v1"
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "classification": "source_complete_offline_scientific_terminal",
+  "result": "complete_target_forward_ceiling_open_attention_candidate_stackable_only",
+  "provider_spend_usd": 0.0,
+  "bindings": {
+    "director_offline_phase": {
+      "path": "DIRECTOR_OFFLINE_PHASE_BINDING.json",
+      "sha256": "ab8295bdd196a6a19aaf5949cf86e4354a5324590420f3430173e4a83c4f9636"
+    },
+    "evidence": {
+      "path": "EVIDENCE_BINDING.json",
+      "sha256": "ff113cee36d0d03a36700d1da5436e5b70d7f98e5942c720ebc044f732159507",
+      "all_nine_external_artifacts_verified": true
+    },
+    "critical_path": {
+      "path": "artifacts/BOUND_CRITICAL_PATH.json",
+      "sha256": "5431905756e8a05b4f3191f1d8b9ee9788724a3cf8d8e2e7ff4f0a97a58867e7"
+    },
+    "immutable_packet": {
+      "path": "IMMUTABLE_PACKET.json",
+      "sha256": "1d378986313a4637e60537698a8bd5bfd35fa0ca0125e152017ad726ddb5e89e"
+    }
+  },
+  "critical_path": {
+    "evidence_type": "measured exact post-barrier trace plus derived full-request counter bound",
+    "captured_exact_m384_cycles": 15,
+    "qualified_baseline_seconds_per_request": 0.625149101968745,
+    "objective_seconds_per_request": 0.500119281574996,
+    "complete_target_forward_seconds_per_request_range": [
+      0.15854849277276992,
+      0.18085831820983886
+    ],
+    "complete_target_forward_fraction_of_request_range": [
+      0.25361708474580313,
+      0.28930429179258593
+    ],
+    "required_complete_target_forward_speedup_fraction_range": [
+      0.691313629537816,
+      0.7885904066772836
+    ],
+    "complete_executor_20_percent_ceiling_open": true,
+    "attention_fraction_of_target_gpu_union": 0.6713160999648242,
+    "attention_maximum_whole_request_fraction_range": [
+      0.17025723221600086,
+      0.19421462886928428
+    ],
+    "attention_candidate_20_percent_ceiling_open": false,
+    "interpretation": "A cohesive whole-target executor remains a 20%-class opportunity, but eliminating the entire measured M384 attention family would save at most 17.03-19.42% of a qualified request. The implemented attention schedule is therefore a stackable component candidate, not standalone evidence for the campaign objective."
+  },
+  "implementation": {
+    "candidate": {
+      "path": "intervention/extend_attention_fixed_m384.py",
+      "sha256": "3086f691c3574900a24907c1273fb9dc1cdf5191e8e217e7b98fe36f3b394877",
+      "change": "Guarded H200 batch-32, M384, max-extend-12 local/global target verification uses BLOCK_M=8 with unchanged BLOCK_N=64 and stock fallback."
+    },
+    "exact_consumer_oracle": {
+      "path": "exact_consumer_oracle.py",
+      "sha256": "7a8722084244263232f1159af533aa5a276bf786d7099c543e347d508e29bb61",
+      "consumer": "Real pinned SGLang extend_attention, exact c32 local/global geometries, FP8 paged KV, BF16 q/output, custom tree mask, CUDA-graph replay, exactness gates, and warm alternating timing."
+    },
+    "paid_phase_consumers": [
+      "remote_experiment.py",
+      "endpoint_pair.py",
+      "run_bench_owner.py"
+    ],
+    "offline_compile": {
+      "path": "artifacts/SM90_M8_COMPILE_RESULT.json",
+      "sha256": "bca34a1fcad135b508ad29a93d4e4b5cad84d7b1a1e7fbe42c53a5c06c3449d3",
+      "result": "Triton 3.6.0 compiled the isolated M8xK tensor-core shape for SM90; this proves schedule legality only."
+    }
+  },
+  "scope_limits": [
+    "The actual candidate was not executed because the current director phase forbids GPU and remote-bench access.",
+    "The compile probe establishes shape legality, not candidate correctness, resources, or performance.",
+    "The full-request target-forward shares are counter-derived bounds from the persisted exact-c32 trace."
+  ],
+  "gpu_nomination": {
+    "authorized_now": false,
+    "recommendation": "The director should consume this terminal after DFlash releases and nominate a paid follow-up only if a stackable attention component remains competitive. Any follow-up needs an explicit new execution binding and lifecycle/watchdog confirmation.",
+    "preferred_bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "minimum_remaining_lifecycle_minutes_at_claim": 90,
+    "maximum_claim_hours": 3,
+    "maximum_cumulative_provider_spend_usd": 8.0
+  },
+  "closed_replays": [
+    "rejected 1x2x1 FP8 cluster candidate",
+    "prior BLOCK_M=16 and BLOCK_M=32 tree candidates",
+    "mask, penalty, and allocator symptom optimizations"
+  ]
+}

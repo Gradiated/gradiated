@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T15:40:00Z",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "baseline_seconds_per_request": 0.625149101968745,
+  "target_seconds_per_request": 0.500119281574996,
+  "bound_artifacts": {
+    "qualified_baseline": {
+      "path": "../gemma4_h200_ngram_decode_equivalent_production_validation/STATUS.json",
+      "sha256": "e416e8cebe6b1a6927b048e61e0c8cb3b84013f51c2fecf43430afee482bbca3"
+    },
+    "verification_trace_terminal": {
+      "path": "../gemma4_h200_ngram_verification_critical_path/FINAL_TERMINAL.json",
+      "sha256": "9c70c2d96777387717fdbf6f5dbbc499ca88b8e76e13f1b3233d598e499527d5"
+    },
+    "verification_source_packet": {
+      "path": "../gemma4_h200_ngram_verification_critical_path/SOURCE_TRACE_COUNTER_PACKET.json",
+      "sha256": "3c6a68a054452597dca5b4ec6ffd31a735fbe29229e4b1ce1c701d205003547f"
+    },
+    "rejected_m384_cluster": {
+      "path": "../gemma4_h200_ngram_m384_fp8_cluster_schedule/LATEST_TERMINAL.json",
+      "sha256": "1f2ed4efd782b974885e3324ed15b27a9bb49d13ef0c0d67ad1174e0d0b3d835"
+    },
+    "proposal_surface": {
+      "path": "../gemma4_ngram_proposal_ensemble/PROPOSAL_ENSEMBLE_RESULT.json",
+      "sha256": "9f08f35291ec138a7c5a5c3562e62ce68e67657a26a76f0a4075aef3f9f05a31"
+    },
+    "packed_mask_endpoint": {
+      "path": "../gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_WORKLOAD_SCHEMA_REPAIR_TERMINAL.json",
+      "sha256": "d62eef2be2aebfdf930a69a992454a6d457dfbc8b6a51349f91491ffc2844218"
+    },
+    "sparse_penalty_endpoint": {
+      "path": "../gemma4_h200_ngram_sparse_penalty_verify/STATUS.json",
+      "sha256": "e7c7d73f9c861e159e7a226474b47a5c650024e10f33a8e8b9251c155fd8b86a"
+    },
+    "prior_fp8_fusion": {
+      "path": "../gemma4_h200_fp8_layer_dataflow_fusion/STATUS.json",
+      "sha256": "c62dd4e6fb44294f12cf63fbad1cfd2e1110e830f10f66fd173766b959a97caa"
+    },
+    "global_attention_counters": {
+      "path": "../gemma4_h200_v0513_fp8_qkv_residual_profile/STATUS.json",
+      "sha256": "c603dd93f3535c75e4a0e1b7df9a7c78cc5ddbe778e48f365216ccd67ab6efa9"
+    }
+  },
+  "scope_rules": [
+    "The 94.4% verification-window observation is not automatically a whole-request share; calculate the non-overlapping request union before claiming a 20% ceiling.",
+    "The rejected 1x2x1 M384 cluster orientation closes only that schedule and implementation.",
+    "Do not replay mask, penalty, allocator, generic RMSNorm-FP8, or BLOCK_M=16 interventions.",
+    "Implement against the exact target consumer and measure profiler-off before endpoint promotion."
+  ]
+}

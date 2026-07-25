@@ -1,0 +1,285 @@
+{
+  "binding": {
+    "all_external_hashes_match": true,
+    "external": {
+      "global_attention_counters": {
+        "actual_sha256": "c603dd93f3535c75e4a0e1b7df9a7c78cc5ddbe778e48f365216ccd67ab6efa9",
+        "expected_sha256": "c603dd93f3535c75e4a0e1b7df9a7c78cc5ddbe778e48f365216ccd67ab6efa9",
+        "match": true,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/STATUS.json"
+      },
+      "packed_mask_endpoint": {
+        "actual_sha256": "d62eef2be2aebfdf930a69a992454a6d457dfbc8b6a51349f91491ffc2844218",
+        "expected_sha256": "d62eef2be2aebfdf930a69a992454a6d457dfbc8b6a51349f91491ffc2844218",
+        "match": true,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_WORKLOAD_SCHEMA_REPAIR_TERMINAL.json"
+      },
+      "prior_fp8_fusion": {
+        "actual_sha256": "c62dd4e6fb44294f12cf63fbad1cfd2e1110e830f10f66fd173766b959a97caa",
+        "expected_sha256": "c62dd4e6fb44294f12cf63fbad1cfd2e1110e830f10f66fd173766b959a97caa",
+        "match": true,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_layer_dataflow_fusion/STATUS.json"
+      },
+      "proposal_surface": {
+        "actual_sha256": "9f08f35291ec138a7c5a5c3562e62ce68e67657a26a76f0a4075aef3f9f05a31",
+        "expected_sha256": "9f08f35291ec138a7c5a5c3562e62ce68e67657a26a76f0a4075aef3f9f05a31",
+        "match": true,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_proposal_ensemble/PROPOSAL_ENSEMBLE_RESULT.json"
+      },
+      "qualified_baseline": {
+        "actual_sha256": "e416e8cebe6b1a6927b048e61e0c8cb3b84013f51c2fecf43430afee482bbca3",
+        "expected_sha256": "e416e8cebe6b1a6927b048e61e0c8cb3b84013f51c2fecf43430afee482bbca3",
+        "match": true,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_production_validation/STATUS.json"
+      },
+      "rejected_m384_cluster": {
+        "actual_sha256": "1f2ed4efd782b974885e3324ed15b27a9bb49d13ef0c0d67ad1174e0d0b3d835",
+        "expected_sha256": "1f2ed4efd782b974885e3324ed15b27a9bb49d13ef0c0d67ad1174e0d0b3d835",
+        "match": true,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_m384_fp8_cluster_schedule/LATEST_TERMINAL.json"
+      },
+      "sparse_penalty_endpoint": {
+        "actual_sha256": "e7c7d73f9c861e159e7a226474b47a5c650024e10f33a8e8b9251c155fd8b86a",
+        "expected_sha256": "e7c7d73f9c861e159e7a226474b47a5c650024e10f33a8e8b9251c155fd8b86a",
+        "match": true,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_sparse_penalty_verify/STATUS.json"
+      },
+      "verification_source_packet": {
+        "actual_sha256": "3c6a68a054452597dca5b4ec6ffd31a735fbe29229e4b1ce1c701d205003547f",
+        "expected_sha256": "3c6a68a054452597dca5b4ec6ffd31a735fbe29229e4b1ce1c701d205003547f",
+        "match": true,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_verification_critical_path/SOURCE_TRACE_COUNTER_PACKET.json"
+      },
+      "verification_trace_terminal": {
+        "actual_sha256": "9c70c2d96777387717fdbf6f5dbbc499ca88b8e76e13f1b3233d598e499527d5",
+        "expected_sha256": "9c70c2d96777387717fdbf6f5dbbc499ca88b8e76e13f1b3233d598e499527d5",
+        "match": true,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_verification_critical_path/FINAL_TERMINAL.json"
+      }
+    },
+    "project_local_immutable_snapshots": {
+      "inputs/evidence/EXACT_C32_TERMINAL.json": "6ca48ede7fb2a2ed236b021d5b815ef9d1506020c5693f81c2cff5f7fee71282",
+      "inputs/evidence/metrics-after.prom": "1a16e8775f3e2710142f3b8fad403cee8c9fc3fe36523d2c53e12166c04c1a78",
+      "inputs/evidence/metrics-before.prom": "d495cff990e9b8822e333e90bf755df5eb80aabc705a0b7b32a78ec7a08012f8",
+      "inputs/trace/exact_c32_profile.trace.json.gz": "37e2c73a57e8e63bd7ec0a3465cc1edded8b9dc63507d97e85a767306a97a48b"
+    }
+  },
+  "classification": "measured_trace_plus_counter_derived_whole_request_bound",
+  "decision": {
+    "falsifier": "Reject if the exact consumer differs, graph replay does not select the candidate, or warm target-forward critical time fails to beat stock by enough to retain a material whole-request bound.",
+    "interpretation": "The complete target-forward executor retains a 25.36-28.93% whole-request ceiling, but the measured attention family alone is at most 17.03-19.42%. This intervention can be retained as a stackable gain but cannot by itself establish the 20% project objective.",
+    "result": "20_percent_ceiling_open_but_requires_large_boundary_speedup",
+    "selected_boundary": "fixed_m384_extend_attention",
+    "selected_change": "Exact q_len=12 c32 attention dispatch with an eight-row query tile for both local and global layers; preserve the stock fallback for every other geometry.",
+    "selected_change_20_percent_ceiling_open": false
+  },
+  "kernel_families": {
+    "attention": {
+      "consumer": "Gemma4Attention.forward output projection",
+      "exact_geometry": [
+        {
+          "dtype": "bf16 query / fp8_e5m2 KV cache / bf16 output",
+          "kv_heads": 16,
+          "layers": 50,
+          "q_shape": [
+            384,
+            32,
+            256
+          ],
+          "subtype": "local_sliding_extend",
+          "v_head_dim": 256,
+          "window": 1024
+        },
+        {
+          "dtype": "bf16 query / fp8_e5m2 KV cache / bf16 output",
+          "kv_heads": 4,
+          "layers": 10,
+          "q_shape": [
+            384,
+            32,
+            512
+          ],
+          "subtype": "global_extend",
+          "v_head_dim": 512,
+          "window": null
+        }
+      ],
+      "launches": 900,
+      "launches_per_target_cycle": 60.0,
+      "maximum_whole_request_fraction_range": [
+        0.17025723221600086,
+        0.19421462886928428
+      ],
+      "physical_interpretation": "Both exact M384 subtypes compile at 255 registers/thread and one CTA per SM. The trace realizes 7.76 grid waves per layer, so the dominant fixed-shape opportunity is reducing per-CTA live query-row state and padded query work, not adding grid supply.",
+      "producer": "TritonAttnBackend.forward_extend",
+      "subtypes": [
+        {
+          "block": [
+            256,
+            1,
+            1
+          ],
+          "dynamic_shared_memory_bytes": 81920,
+          "grid": [
+            32,
+            32,
+            1
+          ],
+          "kernel": "_fwd_kernel",
+          "launches": 750,
+          "maximum_us": 1346.946,
+          "median_us": 1329.763,
+          "minimum_us": 1317.891,
+          "registers_per_thread": 255,
+          "summed_us": 997521.149
+        },
+        {
+          "block": [
+            256,
+            1,
+            1
+          ],
+          "dynamic_shared_memory_bytes": 102400,
+          "grid": [
+            32,
+            32,
+            1
+          ],
+          "kernel": "_fwd_kernel",
+          "launches": 150,
+          "maximum_us": 3338.375,
+          "median_us": 3270.79,
+          "minimum_us": 3216.71,
+          "registers_per_thread": 255,
+          "summed_us": 490684.609
+        }
+      ],
+      "summed_fraction_of_gpu_union": 0.6713160999648242,
+      "summed_us": 1488205.758,
+      "symbol": "sglang.srt.layers.attention.triton_ops.extend_attention._fwd_kernel"
+    },
+    "fp8_projections": {
+      "consumer": "Gemma4 attention/MLP residual stream",
+      "dynamic_shared_memory_bytes": 214016,
+      "launches": 3600,
+      "launches_per_target_cycle": 240.0,
+      "median_us": 116.241,
+      "producer": "dynamic per-token FP8 quantization",
+      "registers_per_thread": 168,
+      "shapes_mnk": [
+        {
+          "calls_per_cycle": 50,
+          "family": "local_qkv",
+          "shape": [
+            384,
+            16384,
+            5376
+          ]
+        },
+        {
+          "calls_per_cycle": 10,
+          "family": "global_qkv",
+          "shape": [
+            384,
+            20480,
+            5376
+          ]
+        },
+        {
+          "calls_per_cycle": 50,
+          "family": "local_o",
+          "shape": [
+            384,
+            5376,
+            8192
+          ]
+        },
+        {
+          "calls_per_cycle": 10,
+          "family": "global_o",
+          "shape": [
+            384,
+            5376,
+            16384
+          ]
+        },
+        {
+          "calls_per_cycle": 60,
+          "family": "gate_up",
+          "shape": [
+            384,
+            43008,
+            5376
+          ]
+        },
+        {
+          "calls_per_cycle": 60,
+          "family": "down",
+          "shape": [
+            384,
+            5376,
+            21504
+          ]
+        }
+      ],
+      "summed_us": 446863.844,
+      "symbol": "CUTLASS SM90 128x128x128 2x1x1 pingpong FP8 fast-accum GEMM"
+    },
+    "tied_lm_head": {
+      "consumer": "NGRAM greedy target verification and acceptance",
+      "depth_launches": 12,
+      "dynamic_shared_memory_bytes": 225436,
+      "launches": 180,
+      "launches_per_target_cycle": 12.0,
+      "median_us": 692.3855,
+      "producer": "request-major depth-sliced hidden states",
+      "registers_per_thread": 168,
+      "shape_mnk": [
+        32,
+        262144,
+        5376
+      ],
+      "summed_us": 124664.394,
+      "symbol": "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT"
+    }
+  },
+  "schema_version": 1,
+  "scope": {
+    "concurrency": 32,
+    "depth": 12,
+    "hardware": "nvidia-h200-sxm",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "output_tokens_per_request": 358,
+    "runtime_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "speculative_algorithm": "NGRAM",
+    "target_rows": 384
+  },
+  "target_verification_critical_path": {
+    "captured_cycles": 15,
+    "ceiling_20_percent_physically_open": true,
+    "conservative_fraction_of_qualified_baseline": 0.25361708474580313,
+    "conservative_projected_seconds_per_request": 0.15854849277276992,
+    "coverage_limit": "The exact trace covers 15 fully active post-first-token M384 cycles, not the whole request. Full-request target share is counter-derived and must be replaced by one short scope-matched H200 capture before an endpoint claim.",
+    "cuda_graph_passes_counter": 38.0,
+    "gpu_interval_union_us": 2216848.006591797,
+    "graph_count_fraction_of_qualified_baseline": 0.28930429179258593,
+    "graph_count_projected_seconds_per_request": 0.18085831820983886,
+    "mean_cycle_us": 152301.7416503906,
+    "mean_recurrence_us": 158342.11835588727,
+    "median_cycle_us": 152265.71606445312,
+    "non_overlapping_union_us": 2284526.1247558594,
+    "request_equivalent_full_batch_passes": 33.3125,
+    "request_verify_calls_counter": 1066.0,
+    "required_target_boundary_speedup_fraction_range": [
+      0.691313629537816,
+      0.7885904066772836
+    ]
+  },
+  "whole_request": {
+    "measured_profiled_batch_seconds": 20.488282891999916,
+    "measured_profiled_service_seconds_per_request": 0.6402588403749974,
+    "objective_seconds_per_request": 0.500119281574996,
+    "quality_qualified_baseline_seconds_per_request": 0.625149101968745,
+    "required_savings_seconds_per_request": 0.125029820393749
+  }
+}

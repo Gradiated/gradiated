@@ -1,0 +1,32 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 0,
+  "authorized_spend_usd": 0.0,
+  "candidate": {
+    "commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "packet": "artifacts/candidate-v0.5.15",
+    "packet_manifest_sha256": "2265be26b69d1d2ee1733a71d0a76f804ae088d7d56f23a872aadebdaf9833dc",
+    "release": "v0.5.15"
+  },
+  "candidate_sample_consumed": false,
+  "compute_budget": "At most 2 local CPU-hours; no GPU or provider use.",
+  "director_binding_verified": true,
+  "next_action": "Await a separate director authorization after priority-8500 releases. If authorized, claim the retained H200, stage artifacts/candidate-v0.5.15 without resolving shared inputs again, launch the digest-pinned v0.5.15 CUDA 12.9 image with unchanged bound flags, and run the immutable requests-0-through-170 activation/semantic discriminator. Run one unmodified 791-request endpoint only if every discriminator gate passes.",
+  "priority": 8450,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "execution",
+  "status": "awaiting_director_authorization",
+  "storage_budget": "At most 3 GiB project-local; no model weights.",
+  "summary": "Offline source phase complete: nominate exactly official SGLang v0.5.15, whose NGRAM spec-v2 and single-owner accepted-KV state transition is causally capable of repairing the pinned target-verification divergence while retaining native FP8 depth-12 Gemma/Triton support. Immutable 171-request discriminator packet is ready; no GPU/provider use occurred.",
+  "terminal": {
+    "classification": "offline_candidate_packet_ready",
+    "candidate_sample_consumed": false,
+    "execution_ready": true,
+    "gpu_claimed": false,
+    "packet_verified": true,
+    "provider_mutated": false
+  },
+  "wall_clock_budget": "75 minutes from researcher start."
+}

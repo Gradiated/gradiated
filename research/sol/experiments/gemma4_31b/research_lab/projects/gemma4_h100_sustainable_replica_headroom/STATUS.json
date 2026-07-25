@@ -1,0 +1,16 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 0,
+  "authorized_spend_usd": 0.0,
+  "bench_need": null,
+  "compute_budget": "CPU only: at most 45 CPU minutes and 1 GiB RAM.",
+  "next_action": "Terminal analytical result persisted. Do not claim or mutate the H100; await the sole 791-request direct endpoint only if a director asks to reconcile its measured service time and queue fields with HEADROOM_RESULT.json.",
+  "priority": 8360,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "execution",
+  "status": "complete",
+  "storage_budget": "At most 256 MiB project-local artifacts.",
+  "summary": "Completed analytical replay: central 0.707334 s/request requires two replicas at 90% headroom; finite exact-trace provision costs $0.236335/M planning ($0.248996/M actual) despite the $0.133700/M continuous 90%-utilization model.",
+  "wall_clock_budget": "Typed result by 2026-07-25T11:20:00Z."
+}

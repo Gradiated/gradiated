@@ -1,0 +1,21 @@
+{
+  "command": "g++ -std=c++17 -O2 -I <f63458b5-ngram-source> ngram_tree_probe.cpp trie.cpp result.cpp -o probe && probe",
+  "classification": "measured_exact_source_equivalence_fixture",
+  "expected_and_observed_bfs_accepted_drafts": {
+    "dominant_only": 11,
+    "persistent_alternate": 2,
+    "persistent_alternate_after_four_normal": 4,
+    "three_token_transient": 4
+  },
+  "result": "The project Python native replay matched all four outputs from the compiled pinned C++ BFS trie.",
+  "source_sha256": {
+    "ngram.cpp": "f5abaeb8ee741a461ec0a631104a9bca867ffe0878c1fe281212841077e2219b",
+    "ngram.h": "7f2107748fcabde38d80f882227b1ebbcdc288c5212fa7ee4db790c80b6ce36f",
+    "param.h": "e0a4c0899655d322f21421a62ab58b7cca4e2874150756388f9ed143f4c62233",
+    "result.cpp": "d675ffef9de8cbfb37c5b6534836634474eab0b404ff43a87facb0ab85365bc1",
+    "result.h": "8bee2f4d278645bc353ffa8269439bbaafa7638dd9dce241302ab1b2ff772537",
+    "trie.cpp": "9f14f2d05521427a0782db8c6058bbda1191dd09baf535e202c7412f82496ac9",
+    "trie.h": "76d3a6d59181a1c6ed7922bf15dfcf815762260106b06f3cfb5095d939728579"
+  },
+  "sglang_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6"
+}

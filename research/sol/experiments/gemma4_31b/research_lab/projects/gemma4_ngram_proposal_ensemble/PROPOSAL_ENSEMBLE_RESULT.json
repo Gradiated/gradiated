@@ -1,0 +1,694 @@
+{
+  "actual_spend_usd": 0.0,
+  "causality_audit": {
+    "deterministic_repeated_calls": true,
+    "full_output_not_passed_to_proposal": true,
+    "proposal_inputs": [
+      "prompt_ids",
+      "already_emitted_output_prefix"
+    ]
+  },
+  "classification": "close_measured_proposal_surface_below_gate",
+  "decision": {
+    "gates": {
+      "endpoint_first_791_at_least_20pct": false,
+      "gpqa_198_at_least_20pct": false,
+      "leakage_safe": true,
+      "nontrivial_rows": true
+    },
+    "promoted": false,
+    "reason": "The deterministic ensemble did not clear the 20% fixed target-work gate on both useful scopes."
+  },
+  "identities": {
+    "inputs": {
+      "TRACE_PACKET.json": {
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/inputs/TRACE_PACKET.json",
+        "sha256": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68"
+      },
+      "control-gpqa.jsonl": {
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_production_validation/artifacts/quality-final-20260724t1304z/control-gpqa.jsonl",
+        "sha256": "64054a6d40df534f21c3108088e04968d0e9a562fe3c90f47ed199f12c3708b5"
+      },
+      "exact_semantic_rows.jsonl": {
+        "bytes": 3126546,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/inputs/exact_semantic_rows.jsonl",
+        "sha256": "630d05bd860d1dd22c3e35ba2d8f792afc5051f0c68e0a74a9deda8140a02b36"
+      },
+      "requests.jsonl": {
+        "bytes": 506544,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/inputs/requests.jsonl",
+        "sha256": "10e7edacaa194fd0f43b3a3c38f7d91cec0ceba22df8e08e3b5897b174346135"
+      },
+      "tokenizer.json": {
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/inputs/checkpoint/tokenizer.json",
+        "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+      },
+      "tokenizer_config.json": {
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/inputs/checkpoint/tokenizer_config.json",
+        "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"
+      }
+    },
+    "native_source": {
+      "ngram.cpp": "f5abaeb8ee741a461ec0a631104a9bca867ffe0878c1fe281212841077e2219b",
+      "ngram.h": "7f2107748fcabde38d80f882227b1ebbcdc288c5212fa7ee4db790c80b6ce36f",
+      "param.h": "e0a4c0899655d322f21421a62ab58b7cca4e2874150756388f9ed143f4c62233",
+      "result.cpp": "d675ffef9de8cbfb37c5b6534836634474eab0b404ff43a87facb0ab85365bc1",
+      "result.h": "8bee2f4d278645bc353ffa8269439bbaafa7638dd9dce241302ab1b2ff772537",
+      "trie.cpp": "9f14f2d05521427a0782db8c6058bbda1191dd09baf535e202c7412f82496ac9",
+      "trie.h": "76d3a6d59181a1c6ed7922bf15dfcf815762260106b06f3cfb5095d939728579"
+    },
+    "replay_code_sha256": "fca5763fb7d4d601d681240c972507d8d811d57b89385a8436550190354a7ac8",
+    "schema_version": 1
+  },
+  "methods": {
+    "ensemble": "output-history order>=2/support>=2; else prompt order>=4; else native",
+    "native": "source-equivalent v0.5.15 BFS shared trie, depth 18, 11 proposal nodes plus root",
+    "output_history": "current-request multi-order 18..1, frequency then recency then token-id tie-break",
+    "prompt": "longest suffix match in current prompt, most-recent occurrence tie-break"
+  },
+  "native_source_fixture_audit": {
+    "all_match_pinned_cpp_probe": true,
+    "cases": {
+      "dominant_only": {
+        "actual": 11,
+        "expected": 11
+      },
+      "persistent_alternate": {
+        "actual": 2,
+        "expected": 2
+      },
+      "persistent_alternate_after_four_normal": {
+        "actual": 4,
+        "expected": 4
+      },
+      "three_token_transient": {
+        "actual": 4,
+        "expected": 4
+      }
+    },
+    "probe": "Exact f63458b5 v0.5.15 trie.cpp/result.cpp compiled with g++ -std=c++17 -O2."
+  },
+  "reductions_vs_native": {
+    "endpoint_all_1036": {
+      "ensemble": {
+        "fixed_target_row_reduction": 0.0,
+        "target_pass_reduction": 0.0
+      },
+      "output_history": {
+        "fixed_target_row_reduction": -0.06656371650098114,
+        "target_pass_reduction": -0.06656371650098114
+      },
+      "prompt": {
+        "fixed_target_row_reduction": -10.932181578354728,
+        "target_pass_reduction": -10.932181578354728
+      }
+    },
+    "endpoint_first_791": {
+      "ensemble": {
+        "fixed_target_row_reduction": 0.0,
+        "target_pass_reduction": 0.0
+      },
+      "output_history": {
+        "fixed_target_row_reduction": -0.06653183331226553,
+        "target_pass_reduction": -0.06653183331226553
+      },
+      "prompt": {
+        "fixed_target_row_reduction": -10.931824885180971,
+        "target_pass_reduction": -10.931824885180971
+      }
+    },
+    "endpoint_tail_245": {
+      "ensemble": {
+        "fixed_target_row_reduction": 0.0,
+        "target_pass_reduction": 0.0
+      },
+      "output_history": {
+        "fixed_target_row_reduction": -0.06666666666666665,
+        "target_pass_reduction": -0.06666666666666665
+      },
+      "prompt": {
+        "fixed_target_row_reduction": -10.933333333333334,
+        "target_pass_reduction": -10.933333333333334
+      }
+    },
+    "gpqa_198": {
+      "ensemble": {
+        "fixed_target_row_reduction": 0.025352112676056304,
+        "target_pass_reduction": 0.025352112676056304
+      },
+      "output_history": {
+        "fixed_target_row_reduction": -0.6309859154929578,
+        "target_pass_reduction": -0.6309859154929578
+      },
+      "prompt": {
+        "fixed_target_row_reduction": -0.3943661971830985,
+        "target_pass_reduction": -0.3943661971830985
+      }
+    }
+  },
+  "schema_version": 1,
+  "summary": {
+    "endpoint_all_1036": {
+      "ensemble": {
+        "accepted_drafts_histogram": {
+          "0": 1,
+          "1": 1,
+          "10": 1035,
+          "11": 30043,
+          "3": 1,
+          "7": 2
+        },
+        "emitted_per_pass_histogram": {
+          "1": 1,
+          "10": 1035,
+          "12": 30043,
+          "2": 1,
+          "4": 1,
+          "7": 1,
+          "8": 1
+        },
+        "estimated_algorithm_working_set_bytes": 891901,
+        "fixed_target_rows": 372996,
+        "fixed_target_rows_per_emitted_token": 1.0056836565216454,
+        "logical_target_rows": 372963,
+        "logical_target_rows_per_emitted_token": 1.0055946808740104,
+        "lookup_ns_per_emitted_token": 72567.2344993637,
+        "lookup_ns_per_row": {
+          "mean": 25979069.9507722,
+          "median": 23234572.0,
+          "p95": 35008179.75
+        },
+        "no_match_frequency": 3.2171926776694654e-05,
+        "output_tokens": 370888,
+        "proposed_nodes": 341880,
+        "proposed_nodes_per_emitted_token": 0.9217877094972067,
+        "rows": 1036,
+        "selected_sources": {
+          "native": 2075,
+          "output_history": 29008
+        },
+        "target_passes": 31083,
+        "target_passes_per_emitted_token": 0.08380697137680378
+      },
+      "native": {
+        "accepted_drafts_histogram": {
+          "0": 1,
+          "1": 1,
+          "10": 1035,
+          "11": 30043,
+          "3": 1,
+          "7": 2
+        },
+        "emitted_per_pass_histogram": {
+          "1": 1,
+          "10": 1035,
+          "12": 30043,
+          "2": 1,
+          "4": 1,
+          "7": 1,
+          "8": 1
+        },
+        "estimated_algorithm_working_set_bytes": 120292,
+        "fixed_target_rows": 372996,
+        "fixed_target_rows_per_emitted_token": 1.0056836565216454,
+        "logical_target_rows": 372963,
+        "logical_target_rows_per_emitted_token": 1.0055946808740104,
+        "lookup_ns_per_emitted_token": 6635.026315221846,
+        "lookup_ns_per_row": {
+          "mean": 2375339.420849421,
+          "median": 2043130.5,
+          "p95": 2872118.0
+        },
+        "no_match_frequency": 3.2171926776694654e-05,
+        "output_tokens": 370888,
+        "proposed_nodes": 341880,
+        "proposed_nodes_per_emitted_token": 0.9217877094972067,
+        "rows": 1036,
+        "selected_sources": {},
+        "target_passes": 31083,
+        "target_passes_per_emitted_token": 0.08380697137680378
+      },
+      "output_history": {
+        "accepted_drafts_histogram": {
+          "0": 2072,
+          "11": 30044,
+          "8": 1036
+        },
+        "emitted_per_pass_histogram": {
+          "1": 2072,
+          "12": 30044,
+          "8": 1036
+        },
+        "estimated_algorithm_working_set_bytes": 13056,
+        "fixed_target_rows": 397824,
+        "fixed_target_rows_per_emitted_token": 1.0726256983240223,
+        "logical_target_rows": 375032,
+        "logical_target_rows_per_emitted_token": 1.011173184357542,
+        "lookup_ns_per_emitted_token": 66213.70444986087,
+        "lookup_ns_per_row": {
+          "mean": 23704506.193050195,
+          "median": 21414274.0,
+          "p95": 32639866.25
+        },
+        "no_match_frequency": 0.0625,
+        "output_tokens": 370888,
+        "proposed_nodes": 341880,
+        "proposed_nodes_per_emitted_token": 0.9217877094972067,
+        "rows": 1036,
+        "selected_sources": {},
+        "target_passes": 33152,
+        "target_passes_per_emitted_token": 0.0893854748603352
+      },
+      "prompt": {
+        "accepted_drafts_histogram": {
+          "0": 370888
+        },
+        "emitted_per_pass_histogram": {
+          "1": 370888
+        },
+        "estimated_algorithm_working_set_bytes": 784785,
+        "fixed_target_rows": 4450656,
+        "fixed_target_rows_per_emitted_token": 12.0,
+        "logical_target_rows": 370888,
+        "logical_target_rows_per_emitted_token": 1.0,
+        "lookup_ns_per_emitted_token": 14829.512653415586,
+        "lookup_ns_per_row": {
+          "mean": 5308965.52992278,
+          "median": 4688740.5,
+          "p95": 6781962.5
+        },
+        "no_match_frequency": 1.0,
+        "output_tokens": 370888,
+        "proposed_nodes": 0,
+        "proposed_nodes_per_emitted_token": 0.0,
+        "rows": 1036,
+        "selected_sources": {},
+        "target_passes": 370888,
+        "target_passes_per_emitted_token": 1.0
+      }
+    },
+    "endpoint_first_791": {
+      "ensemble": {
+        "accepted_drafts_histogram": {
+          "0": 1,
+          "1": 1,
+          "10": 790,
+          "11": 22938,
+          "3": 1,
+          "7": 2
+        },
+        "emitted_per_pass_histogram": {
+          "1": 1,
+          "10": 790,
+          "12": 22938,
+          "2": 1,
+          "4": 1,
+          "7": 1,
+          "8": 1
+        },
+        "estimated_algorithm_working_set_bytes": 891901,
+        "fixed_target_rows": 284796,
+        "fixed_target_rows_per_emitted_token": 1.0057137206986417,
+        "logical_target_rows": 284763,
+        "logical_target_rows_per_emitted_token": 1.0055971862220936,
+        "lookup_ns_per_emitted_token": 72039.30253409516,
+        "lookup_ns_per_row": {
+          "mean": 25790070.30720607,
+          "median": 23127790,
+          "p95": 34701921.5
+        },
+        "no_match_frequency": 4.2135423250326547e-05,
+        "output_tokens": 283178,
+        "proposed_nodes": 261030,
+        "proposed_nodes_per_emitted_token": 0.9217877094972067,
+        "rows": 791,
+        "selected_sources": {
+          "native": 1585,
+          "output_history": 22148
+        },
+        "target_passes": 23733,
+        "target_passes_per_emitted_token": 0.08380947672488682
+      },
+      "native": {
+        "accepted_drafts_histogram": {
+          "0": 1,
+          "1": 1,
+          "10": 790,
+          "11": 22938,
+          "3": 1,
+          "7": 2
+        },
+        "emitted_per_pass_histogram": {
+          "1": 1,
+          "10": 790,
+          "12": 22938,
+          "2": 1,
+          "4": 1,
+          "7": 1,
+          "8": 1
+        },
+        "estimated_algorithm_working_set_bytes": 120292,
+        "fixed_target_rows": 284796,
+        "fixed_target_rows_per_emitted_token": 1.0057137206986417,
+        "logical_target_rows": 284763,
+        "logical_target_rows_per_emitted_token": 1.0055971862220936,
+        "lookup_ns_per_emitted_token": 6672.532721468476,
+        "lookup_ns_per_row": {
+          "mean": 2388766.714285714,
+          "median": 2039521,
+          "p95": 2900685.0
+        },
+        "no_match_frequency": 4.2135423250326547e-05,
+        "output_tokens": 283178,
+        "proposed_nodes": 261030,
+        "proposed_nodes_per_emitted_token": 0.9217877094972067,
+        "rows": 791,
+        "selected_sources": {},
+        "target_passes": 23733,
+        "target_passes_per_emitted_token": 0.08380947672488682
+      },
+      "output_history": {
+        "accepted_drafts_histogram": {
+          "0": 1582,
+          "11": 22939,
+          "8": 791
+        },
+        "emitted_per_pass_histogram": {
+          "1": 1582,
+          "12": 22939,
+          "8": 791
+        },
+        "estimated_algorithm_working_set_bytes": 13056,
+        "fixed_target_rows": 303744,
+        "fixed_target_rows_per_emitted_token": 1.0726256983240223,
+        "logical_target_rows": 286342,
+        "logical_target_rows_per_emitted_token": 1.011173184357542,
+        "lookup_ns_per_emitted_token": 67012.44763011251,
+        "lookup_ns_per_row": {
+          "mean": 23990456.25158028,
+          "median": 21706570,
+          "p95": 32956270.5
+        },
+        "no_match_frequency": 0.0625,
+        "output_tokens": 283178,
+        "proposed_nodes": 261030,
+        "proposed_nodes_per_emitted_token": 0.9217877094972067,
+        "rows": 791,
+        "selected_sources": {},
+        "target_passes": 25312,
+        "target_passes_per_emitted_token": 0.0893854748603352
+      },
+      "prompt": {
+        "accepted_drafts_histogram": {
+          "0": 283178
+        },
+        "emitted_per_pass_histogram": {
+          "1": 283178
+        },
+        "estimated_algorithm_working_set_bytes": 784785,
+        "fixed_target_rows": 3398136,
+        "fixed_target_rows_per_emitted_token": 12.0,
+        "logical_target_rows": 283178,
+        "logical_target_rows_per_emitted_token": 1.0,
+        "lookup_ns_per_emitted_token": 14828.471367832246,
+        "lookup_ns_per_row": {
+          "mean": 5308592.7496839445,
+          "median": 4660776,
+          "p95": 7030426.5
+        },
+        "no_match_frequency": 1.0,
+        "output_tokens": 283178,
+        "proposed_nodes": 0,
+        "proposed_nodes_per_emitted_token": 0.0,
+        "rows": 791,
+        "selected_sources": {},
+        "target_passes": 283178,
+        "target_passes_per_emitted_token": 1.0
+      }
+    },
+    "endpoint_tail_245": {
+      "ensemble": {
+        "accepted_drafts_histogram": {
+          "10": 245,
+          "11": 7105
+        },
+        "emitted_per_pass_histogram": {
+          "10": 245,
+          "12": 7105
+        },
+        "estimated_algorithm_working_set_bytes": 891901,
+        "fixed_target_rows": 88200,
+        "fixed_target_rows_per_emitted_token": 1.005586592178771,
+        "logical_target_rows": 88200,
+        "logical_target_rows_per_emitted_token": 1.005586592178771,
+        "lookup_ns_per_emitted_token": 74271.70055865921,
+        "lookup_ns_per_row": {
+          "mean": 26589268.8,
+          "median": 23873125,
+          "p95": 36292292.0
+        },
+        "no_match_frequency": 0.0,
+        "output_tokens": 87710,
+        "proposed_nodes": 80850,
+        "proposed_nodes_per_emitted_token": 0.9217877094972067,
+        "rows": 245,
+        "selected_sources": {
+          "native": 490,
+          "output_history": 6860
+        },
+        "target_passes": 7350,
+        "target_passes_per_emitted_token": 0.08379888268156424
+      },
+      "native": {
+        "accepted_drafts_histogram": {
+          "10": 245,
+          "11": 7105
+        },
+        "emitted_per_pass_histogram": {
+          "10": 245,
+          "12": 7105
+        },
+        "estimated_algorithm_working_set_bytes": 120292,
+        "fixed_target_rows": 88200,
+        "fixed_target_rows_per_emitted_token": 1.005586592178771,
+        "logical_target_rows": 88200,
+        "logical_target_rows_per_emitted_token": 1.005586592178771,
+        "lookup_ns_per_emitted_token": 6513.934203625584,
+        "lookup_ns_per_row": {
+          "mean": 2331988.444897959,
+          "median": 2044956,
+          "p95": 2622063.0
+        },
+        "no_match_frequency": 0.0,
+        "output_tokens": 87710,
+        "proposed_nodes": 80850,
+        "proposed_nodes_per_emitted_token": 0.9217877094972067,
+        "rows": 245,
+        "selected_sources": {},
+        "target_passes": 7350,
+        "target_passes_per_emitted_token": 0.08379888268156424
+      },
+      "output_history": {
+        "accepted_drafts_histogram": {
+          "0": 490,
+          "11": 7105,
+          "8": 245
+        },
+        "emitted_per_pass_histogram": {
+          "1": 490,
+          "12": 7105,
+          "8": 245
+        },
+        "estimated_algorithm_working_set_bytes": 13056,
+        "fixed_target_rows": 94080,
+        "fixed_target_rows_per_emitted_token": 1.0726256983240223,
+        "logical_target_rows": 88690,
+        "logical_target_rows_per_emitted_token": 1.011173184357542,
+        "lookup_ns_per_emitted_token": 63634.90503933417,
+        "lookup_ns_per_row": {
+          "mean": 22781296.004081633,
+          "median": 20543947,
+          "p95": 31483862.2
+        },
+        "no_match_frequency": 0.0625,
+        "output_tokens": 87710,
+        "proposed_nodes": 80850,
+        "proposed_nodes_per_emitted_token": 0.9217877094972067,
+        "rows": 245,
+        "selected_sources": {},
+        "target_passes": 7840,
+        "target_passes_per_emitted_token": 0.0893854748603352
+      },
+      "prompt": {
+        "accepted_drafts_histogram": {
+          "0": 87710
+        },
+        "emitted_per_pass_histogram": {
+          "1": 87710
+        },
+        "estimated_algorithm_working_set_bytes": 784785,
+        "fixed_target_rows": 1052520,
+        "fixed_target_rows_per_emitted_token": 12.0,
+        "logical_target_rows": 87710,
+        "logical_target_rows_per_emitted_token": 1.0,
+        "lookup_ns_per_emitted_token": 14832.87451829894,
+        "lookup_ns_per_row": {
+          "mean": 5310169.07755102,
+          "median": 4787538,
+          "p95": 6456382.0
+        },
+        "no_match_frequency": 1.0,
+        "output_tokens": 87710,
+        "proposed_nodes": 0,
+        "proposed_nodes_per_emitted_token": 0.0,
+        "rows": 245,
+        "selected_sources": {},
+        "target_passes": 87710,
+        "target_passes_per_emitted_token": 1.0
+      }
+    },
+    "gpqa_198": {
+      "ensemble": {
+        "accepted_drafts_histogram": {
+          "0": 371,
+          "1": 177,
+          "2": 64,
+          "3": 55,
+          "4": 21,
+          "5": 4
+        },
+        "emitted_per_pass_histogram": {
+          "1": 431,
+          "2": 153,
+          "3": 33,
+          "4": 55,
+          "5": 18,
+          "6": 2
+        },
+        "estimated_algorithm_working_set_bytes": 3602517,
+        "fixed_target_rows": 8304,
+        "fixed_target_rows_per_emitted_token": 7.170984455958549,
+        "logical_target_rows": 5184,
+        "logical_target_rows_per_emitted_token": 4.476683937823834,
+        "lookup_ns_per_emitted_token": 81051.44300518135,
+        "lookup_ns_per_row": {
+          "mean": 474028.13636363635,
+          "median": 419045.5,
+          "p95": 963462.9999999995
+        },
+        "no_match_frequency": 0.26734104046242774,
+        "output_tokens": 1158,
+        "proposed_nodes": 4492,
+        "proposed_nodes_per_emitted_token": 3.8791018998272886,
+        "rows": 198,
+        "selected_sources": {
+          "native": 661,
+          "prompt": 31
+        },
+        "target_passes": 692,
+        "target_passes_per_emitted_token": 0.5975820379965457
+      },
+      "native": {
+        "accepted_drafts_histogram": {
+          "0": 402,
+          "1": 177,
+          "2": 53,
+          "3": 53,
+          "4": 23,
+          "5": 2
+        },
+        "emitted_per_pass_histogram": {
+          "1": 462,
+          "2": 142,
+          "3": 32,
+          "4": 54,
+          "5": 20
+        },
+        "estimated_algorithm_working_set_bytes": 3408504,
+        "fixed_target_rows": 8520,
+        "fixed_target_rows_per_emitted_token": 7.357512953367876,
+        "logical_target_rows": 5004,
+        "logical_target_rows_per_emitted_token": 4.321243523316062,
+        "lookup_ns_per_emitted_token": 33077.96545768566,
+        "lookup_ns_per_row": {
+          "mean": 193455.9797979798,
+          "median": 177619.5,
+          "p95": 356981.5499999999
+        },
+        "no_match_frequency": 0.30422535211267604,
+        "output_tokens": 1158,
+        "proposed_nodes": 4294,
+        "proposed_nodes_per_emitted_token": 3.708117443868739,
+        "rows": 198,
+        "selected_sources": {},
+        "target_passes": 710,
+        "target_passes_per_emitted_token": 0.613126079447323
+      },
+      "output_history": {
+        "accepted_drafts_histogram": {
+          "0": 1158
+        },
+        "emitted_per_pass_histogram": {
+          "1": 1158
+        },
+        "estimated_algorithm_working_set_bytes": 344,
+        "fixed_target_rows": 13896,
+        "fixed_target_rows_per_emitted_token": 12.0,
+        "logical_target_rows": 1521,
+        "logical_target_rows_per_emitted_token": 1.3134715025906736,
+        "lookup_ns_per_emitted_token": 7884.1796200345425,
+        "lookup_ns_per_row": {
+          "mean": 46110.50505050505,
+          "median": 11908.0,
+          "p95": 62502.99999999985
+        },
+        "no_match_frequency": 0.9715025906735751,
+        "output_tokens": 1158,
+        "proposed_nodes": 363,
+        "proposed_nodes_per_emitted_token": 0.3134715025906736,
+        "rows": 198,
+        "selected_sources": {},
+        "target_passes": 1158,
+        "target_passes_per_emitted_token": 1.0
+      },
+      "prompt": {
+        "accepted_drafts_histogram": {
+          "0": 891,
+          "1": 43,
+          "2": 27,
+          "3": 11,
+          "4": 15,
+          "6": 3
+        },
+        "emitted_per_pass_histogram": {
+          "1": 900,
+          "2": 45,
+          "3": 19,
+          "4": 23,
+          "6": 2,
+          "7": 1
+        },
+        "estimated_algorithm_working_set_bytes": 201533,
+        "fixed_target_rows": 11880,
+        "fixed_target_rows_per_emitted_token": 10.259067357512953,
+        "logical_target_rows": 5203,
+        "logical_target_rows_per_emitted_token": 4.493091537132988,
+        "lookup_ns_per_emitted_token": 79093.28756476684,
+        "lookup_ns_per_row": {
+          "mean": 462575.8939393939,
+          "median": 368253.0,
+          "p95": 763495.8499999997
+        },
+        "no_match_frequency": 0.6131313131313131,
+        "output_tokens": 1158,
+        "proposed_nodes": 4213,
+        "proposed_nodes_per_emitted_token": 3.638169257340242,
+        "rows": 198,
+        "selected_sources": {},
+        "target_passes": 990,
+        "target_passes_per_emitted_token": 0.8549222797927462
+      }
+    }
+  },
+  "transfer_limit": "CPU causal token replay; no serving-speed or GPU claim."
+}

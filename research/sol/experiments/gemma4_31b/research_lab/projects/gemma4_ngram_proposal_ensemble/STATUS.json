@@ -1,0 +1,19 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "compute_budget": "Four local CPU-hours; no provider or GPU mutation in this stage.",
+  "decision": "close_measured_proposal_surface_below_gate",
+  "last_result_classification": "close_measured_proposal_surface_below_gate",
+  "next_action": null,
+  "priority": 8470,
+  "provider_mutation": "forbidden_zero_cost_trace_experiment",
+  "researcher_profile": "deep",
+  "status": "complete",
+  "storage_budget": "At most 3 GiB project-local artifacts.",
+  "summary": "Closed with measured CPU replay: the leakage-safe ensemble changed endpoint target work by 0.0% and improved GPQA target passes by only 2.535%, below the required 20%; no runtime patch or GPU follow-up.",
+  "terminal_artifact": "PROPOSAL_ENSEMBLE_RESULT.json",
+  "terminal_artifact_sha256": "9f08f35291ec138a7c5a5c3562e62ce68e67657a26a76f0a4075aef3f9f05a31",
+  "wall_clock_budget": "Complete the trace decision by 2026-07-25T19:00:00Z."
+}

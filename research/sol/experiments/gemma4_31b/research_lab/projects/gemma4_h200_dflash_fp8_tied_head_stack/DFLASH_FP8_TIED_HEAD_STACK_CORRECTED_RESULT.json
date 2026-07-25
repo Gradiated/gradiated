@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "status": "terminal",
+  "classification": "source_complete_verified_waiting_for_dflash_terminal",
+  "project": "gemma4_h200_dflash_fp8_tied_head_stack",
+  "completed_at_utc": "2026-07-25T16:07:33Z",
+  "question": "Does the preserved source-complete DFlash plus target-only E4M3 overlay pass its full recursive identity and deterministic fixture gates after replacing only the false dflash_accept_bonus.py digest with the mechanically observed pinned-commit digest?",
+  "decision": "The offline composition is source-complete and verified. Preserve the unchanged overlay and conditional launcher while waiting for the active DFlash project's real diagnostic terminal; this project neither nominates nor executes an H200 follow-up.",
+  "correction_contract": {
+    "artifact": "DIRECTOR_SOURCE_IDENTITY_CORRECTION_BINDING.json",
+    "sha256": "a16a1ab71de0020b954388830765051383a5992da0c2d5857e7d9b7d4213ae1b",
+    "bound_input_count": 7,
+    "bound_inputs_pass": true
+  },
+  "source_identity": {
+    "runtime": "SGLang 588d1f7bc9424201f89957e145f9d5af633a3eb8",
+    "original_runtime_binding": "../gemma4_h200_dflash_endpoint/DRAFT_RUNTIME_BINDING.json",
+    "original_runtime_binding_sha256": "f9845ea6b80a39ba99486842d15e64eabc84713a63daf16470453b395c13c16e",
+    "original_runtime_binding_preserved_unchanged": true,
+    "corrected_project_local_binding": "DRAFT_RUNTIME_BINDING_CORRECTED_LOCAL.json",
+    "corrected_project_local_binding_sha256": "d9df52f109813b459ce5f5cb5417a82af89e323bb3f90bcd26221d9d2c7d8098",
+    "only_authorized_field_changed": true,
+    "changed_field": "runtime_source.dflash_sources.python/sglang/srt/speculative/triton_ops/dflash_accept_bonus.py",
+    "false_declared_sha256": "422ffbd00b54913f3d9c14d2596ffd79e51800b6565dc0de78603a36dbd6fd4e",
+    "correct_observed_sha256": "422ffbd00b54913f3d9c14d2596ffd79e51800b6565dc0de78603a36dbd6fdce"
+  },
+  "corrected_verification": {
+    "artifact": "DIRECTOR_SOURCE_IDENTITY_CORRECTION_VERIFICATION.json",
+    "sha256": "8a10421ea3eb2029fee851f41617f60f835ad6009bc2a408b4126e68908407a7",
+    "status": "pass",
+    "check_count": 49,
+    "pass_count": 49,
+    "failure_count": 0,
+    "prior_compact_archive_member_count": 10,
+    "excluded_non_file_digest": "The declared CUDA base OCI manifest digest has no bound local file path and was not queried under the zero-provider offline contract."
+  },
+  "fixtures": {
+    "original_artifact": "DFLASH_FP8_TIED_HEAD_STACK_FIXTURES.json",
+    "corrected_rerun_artifact": "DFLASH_FP8_TIED_HEAD_STACK_CORRECTED_FIXTURES.json",
+    "sha256": "964d31d167bfa245ad054ae9f9192ecb926aaf45275b7a8814ea21b1b9342a25",
+    "byte_identical_to_original": true,
+    "status": "pass",
+    "complete_logit_elements_compared": 1048576,
+    "bf16_fixture_logits_bit_exact": true,
+    "boundary_and_tie_tokens": [
+      0,
+      262143,
+      0,
+      262142
+    ],
+    "padded_target_head_m": [
+      16,
+      32,
+      64,
+      128,
+      192,
+      256,
+      384,
+      512
+    ],
+    "covered": [
+      "target E4M3 versus draft tied-BF16 ownership",
+      "tied BF16 embedding identity",
+      "full-vocabulary boundary indices and lowest-index ties",
+      "BF16 target logits and softcap input",
+      "graph padded shapes and raw-row slicing",
+      "cancellation and completion",
+      "empty and partial acceptance",
+      "request-slot reuse",
+      "source mismatch fail-closed"
+    ],
+    "scope": "CPU-safe deterministic source/contract fixtures; not an exact CUDA consumer run"
+  },
+  "preserved_intervention": {
+    "overlay": "overlay/dflash_fp8_tied_head_stack.py",
+    "overlay_sha256": "4642d858f25684605a4dcae7cd0c123711beb5daa4f789e5cb81a11edddd4e7d",
+    "sitecustomize": "overlay/sitecustomize.py",
+    "sitecustomize_sha256": "9e5f7827173b1be30fb774986afbac45dea0c5e8f297fe57ad72c35b255fc2ed",
+    "conditional_launcher": "conditional_fp8_stack_launcher.sh",
+    "conditional_launcher_sha256": "2bee0639af851c52e31e5fc6850122210a6111d3f319109dbf77a4e3ef97b1d3",
+    "changed_during_correction": false,
+    "target_projection": "Separate E4M3 [5376,262144] target weight with admitted per-tensor dequant scale 0.002162388525903225, used only by LogitsProcessor.",
+    "draft_projection": "The tied BF16 language_model.embed_tokens / lm_head.weight storage remains the direct DFlash draft vocabulary head.",
+    "request_or_slot_state": false
+  },
+  "claims": {
+    "offline_source_composition": true,
+    "performance": false,
+    "quality": false,
+    "gpu_compatibility": false,
+    "h200_followup_nominated": false
+  },
+  "authorization": {
+    "authorized_spend_usd": 0.0,
+    "actual_spend_usd": 0.0,
+    "provider_mutation": false,
+    "gpu_access": false,
+    "checkpoint_access": false,
+    "remote_bench_access": false,
+    "active_owner_artifact_access": false
+  },
+  "next": "Wait for director disposition after the active DFlash project produces a real diagnostic terminal. A later director may consider the preserved conditional launcher only if that terminal is diagnostic_pass with complete requests, raw token IDs, initialized drafting, target verification events, and positive accepted drafts."
+}

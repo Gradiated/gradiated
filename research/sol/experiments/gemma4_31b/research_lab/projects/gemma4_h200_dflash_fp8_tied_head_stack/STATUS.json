@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_h200_dflash_fp8_tied_head_stack",
+  "status": "terminal",
+  "priority": 8470,
+  "researcher_profile": "execution",
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.0,
+  "active_session": null,
+  "summary": "The director-authorized project-local source-identity correction passes all 49 recursive checks and all deterministic target/draft ownership, boundary/tie, padded-shape, lifecycle, acceptance, slot-reuse, and fail-closed fixtures. The original DFlash runtime binding and the overlay/launcher remain unchanged.",
+  "next_action": "Wait for director disposition after the active DFlash project produces a real diagnostic terminal. A later director may consider the preserved conditional launcher only after a diagnostic_pass with complete requests, raw token IDs, initialized drafting, target verification events, and positive accepted drafts; this project did not inspect that owner or nominate a follow-up.",
+  "decision": "source_complete_verified_waiting_for_dflash_terminal",
+  "deadline_utc": "2026-07-25T16:25:00Z",
+  "prior_terminal_artifact": "DFLASH_FP8_TIED_HEAD_STACK_RESULT.json",
+  "prior_completed_at_utc": "2026-07-25T15:54:00Z",
+  "binding_verification": {
+    "artifact": "DIRECTOR_BINDING_VERIFICATION.json",
+    "checks": 49,
+    "failures": 1
+  },
+  "correction_binding": {
+    "artifact": "DIRECTOR_SOURCE_IDENTITY_CORRECTION_BINDING.json",
+    "sha256": "a16a1ab71de0020b954388830765051383a5992da0c2d5857e7d9b7d4213ae1b",
+    "bound_inputs": 7,
+    "failures": 0
+  },
+  "correction_verification": {
+    "artifact": "DIRECTOR_SOURCE_IDENTITY_CORRECTION_VERIFICATION.json",
+    "sha256": "8a10421ea3eb2029fee851f41617f60f835ad6009bc2a408b4126e68908407a7",
+    "checks": 49,
+    "failures": 0,
+    "only_authorized_field_changed": true
+  },
+  "fixture_result": {
+    "artifact": "DFLASH_FP8_TIED_HEAD_STACK_CORRECTED_FIXTURES.json",
+    "sha256": "964d31d167bfa245ad054ae9f9192ecb926aaf45275b7a8814ea21b1b9342a25",
+    "status": "pass",
+    "byte_identical_to_original": true
+  },
+  "source_fixture_manifest": "DFLASH_FP8_TIED_HEAD_STACK_MANIFEST.json",
+  "terminal_artifact": "DFLASH_FP8_TIED_HEAD_STACK_CORRECTED_RESULT.json",
+  "completed_at_utc": "2026-07-25T16:07:33Z"
+}

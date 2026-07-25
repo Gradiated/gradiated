@@ -1,0 +1,189 @@
+{
+  "cuda_graph_contract": {
+    "capture_batch_sizes": [
+      1,
+      2,
+      4,
+      8,
+      12,
+      16,
+      24,
+      32
+    ],
+    "draft_token_num": 16,
+    "padded_target_head_shapes": [
+      {
+        "capture_batch_size": 1,
+        "target_head_m": 16
+      },
+      {
+        "capture_batch_size": 2,
+        "target_head_m": 32
+      },
+      {
+        "capture_batch_size": 4,
+        "target_head_m": 64
+      },
+      {
+        "capture_batch_size": 8,
+        "target_head_m": 128
+      },
+      {
+        "capture_batch_size": 12,
+        "target_head_m": 192
+      },
+      {
+        "capture_batch_size": 16,
+        "target_head_m": 256
+      },
+      {
+        "capture_batch_size": 24,
+        "target_head_m": 384
+      },
+      {
+        "capture_batch_size": 32,
+        "target_head_m": 512
+      }
+    ],
+    "raw_rows_sliced_before_verify": true,
+    "slot_reuse_stale_padding_excluded": true
+  },
+  "draft_projection": {
+    "dtype": "torch.bfloat16",
+    "storage": "lm_head.weight",
+    "tokens": [
+      0,
+      262143,
+      0,
+      262142
+    ]
+  },
+  "embedding": {
+    "dtype": "torch.bfloat16",
+    "same_data_ptr": true,
+    "same_parameter": true,
+    "shape": [
+      262144,
+      4
+    ]
+  },
+  "fail_closed_source_mismatch": true,
+  "full_vocabulary": {
+    "added_range": [
+      262144,
+      262144
+    ],
+    "boundary_and_tie_tokens": [
+      0,
+      262143,
+      0,
+      262142
+    ],
+    "org_range": [
+      0,
+      262144
+    ]
+  },
+  "lifecycle": {
+    "cancelled_request_filtered": [
+      7,
+      11
+    ],
+    "completion_truncation": {
+      "accepted_drafts": 0,
+      "appended": [
+        20
+      ],
+      "bonus": 99,
+      "commit_len": 1
+    },
+    "empty_acceptance": {
+      "accepted_drafts": 0,
+      "appended": [
+        99
+      ],
+      "bonus": 99,
+      "commit_len": 1
+    },
+    "partial_acceptance": {
+      "accepted_drafts": 2,
+      "appended": [
+        20,
+        21,
+        99
+      ],
+      "bonus": 99,
+      "commit_len": 3
+    },
+    "projection_request_state": false,
+    "projection_slot_state": false,
+    "slot_reuse_request_ids": [
+      7,
+      3,
+      11
+    ]
+  },
+  "ownership": {
+    "draft_owner": "tied_bf16_weight",
+    "embedding_dtype": "torch.bfloat16",
+    "separate_storage": true,
+    "target_owner": "target_logits_only",
+    "target_weight_dtype": "torch.float8_e4m3fn"
+  },
+  "runtime_commit": "588d1f7bc9424201f89957e145f9d5af633a3eb8",
+  "schema_version": 1,
+  "source_anchors": {
+    "draft_does_not_call_logits_processor": true,
+    "draft_uses_tied_bf16_weight": true,
+    "graph_raw_hidden_slice": true,
+    "graph_raw_logit_slice": true,
+    "greedy_acceptance_rule": true,
+    "greedy_sampler_lowest_index": true,
+    "softcap_after_head": true,
+    "target_head_inside_forward": true,
+    "target_verify_uses_full_logits": true,
+    "tied_head_adapter": true
+  },
+  "source_hashes": {
+    "layers/logits_processor.py": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14",
+    "layers/sampler.py": "85541951e1cf50d10c54978178e403ff9d4aa6f223e629ea91965735ba882a8f",
+    "layers/vocab_parallel_embedding.py": "014a8df6559d8af35f0b21f8416e5ab2997e715a0687dc4b7b70c461b3e2e28b",
+    "model_executor/model_runner.py": "27700b47b4d9920f6d0c38bd30c11ed2503e143a42c54c4bb00fc9f21b02170c",
+    "model_executor/runner/base_cuda_graph_runner.py": "3c41ea490798de9df74d8779ed32d2faa4f93c4cbce5191424c763bb74d6160f",
+    "model_executor/runner/decode_cuda_graph_runner.py": "324ec71b9b78e12099199f5c015803e77e5fb1600c25b891c5ff32d24d16b41d",
+    "models/gemma4_mm.py": "72d6d7ebe63dfa143b78f6e2fb50969ec59d5469c390a52ae2ca7bdb84c6622b",
+    "speculative/dflash_info.py": "f17c37c1d0047e75f3214ec67cf2b02dd52cfcec35cf0daaaee0407f892a0e53",
+    "speculative/dflash_utils.py": "f6935ff13d8b0c24ab2b443509ba8425918f8b4a6fafc520cd8a875f91891030",
+    "speculative/dflash_worker.py": "2ad9f037efb19ba4d108daef1290aa7da6ada45ab5b186c33f3f2898376e7498",
+    "speculative/triton_ops/dflash_accept_bonus.py": "422ffbd00b54913f3d9c14d2596ffd79e51800b6565dc0de78603a36dbd6fdce"
+  },
+  "status": "pass",
+  "target_projection": {
+    "bf16_logits_bit_exact": true,
+    "complete_logit_elements_compared": 1048576,
+    "dtype": "torch.float8_e4m3fn",
+    "expected_tokens": [
+      0,
+      262143,
+      0,
+      262142
+    ],
+    "separate_storage": true,
+    "shape": [
+      4,
+      262144
+    ],
+    "softcap_tokens": [
+      0,
+      262143,
+      0,
+      262142
+    ],
+    "target_tokens": [
+      0,
+      262143,
+      0,
+      262142
+    ]
+  }
+}

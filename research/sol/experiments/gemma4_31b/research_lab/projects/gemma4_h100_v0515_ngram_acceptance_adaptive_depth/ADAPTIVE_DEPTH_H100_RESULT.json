@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T13:40:00Z",
+  "project": "gemma4_h100_v0515_ngram_acceptance_adaptive_depth",
+  "classification": "source_complete_h100_component_ready",
+  "decision_scope": "future_checkpoint_free_exact_h100_component_only",
+  "semantics": "The representation changes speculative iteration depth but must preserve greedy target-model token semantics. It is not required to match the depth-12 iteration boundary or accepted-draft count.",
+  "provider_or_gpu_used": false,
+  "actual_spend_usd": 0.0,
+  "director_binding": {
+    "path": "DIRECTOR_BINDING.json",
+    "sha256": "bf640623c908f9273c24d6af04be10f3e7cf2a28738ff80f287d83f21ca98ddb",
+    "verification_path": "DIRECTOR_BINDING_VERIFIED.json",
+    "verification_sha256": "27130088205106e0e36ccc0ee5001b7d3846b814c65be3a06fd5a95b0b3f2ffb",
+    "all_bound_hashes_match": true
+  },
+  "prior_h200_negative": {
+    "reconstruction_path": "H200_FAILURE_RECONSTRUCTION.json",
+    "reconstruction_sha256": "2743f25138a2a9dbc90c1661136ee7d3d9d88f8a025e8799e84222d74d1d0c62",
+    "evidence_label": "measured_h200_component_plus_source_backtrace",
+    "measured": {
+      "batch_size": 8,
+      "reference_depth": 12,
+      "reference_target_rows": 96,
+      "candidate_depth": 6,
+      "candidate_target_rows": 48,
+      "exact_draft_prefixes": "8/8",
+      "exact_target_prediction_prefixes": "0/8",
+      "exact_accepted_bonus_rows": "0/8",
+      "exact_accepted_draft_counts": "7/8",
+      "component_science_consumed": true,
+      "candidate_endpoint_science_consumed": false,
+      "terminal": "adaptive_depth_component_reject_no_endpoint"
+    },
+    "first_violated_invariant": "The compact candidate mutated worker depth to 6 while retaining a native fixed-depth-12 corpus, then sliced the producer's tokens and mask. Production and consumption no longer had one depth owner even though the adapter returned six-row arrays.",
+    "exact_v0515_repeat_defects": [
+      "Pinned v0.5.15 eager Triton target-verify metadata would still use startup depth 12 for qo_indptr, mask lengths, and max_extend_len around 48 width-6 query rows.",
+      "Pinned v0.5.15 NGRAMWorker would return immutable startup result stride 12 while candidate next_token_ids were packed at width 6; scheduler settlement slices by that result stride."
+    ],
+    "evidence_scope": "The first invariant is reconstructed directly from the immutable H200 compact. The attention and scheduler defects are source-backed for the bound H100 v0.5.15 snapshot and are closure requirements for the new candidate, not claims that uncaptured H200 source was identical.",
+    "hardware_effect": false,
+    "transfer": "The result rejects the partial fixed-depth-12-producer/width-6-consumer patch only. It does not reject a true exact-depth producer with dynamic eager attention metadata and active result ownership."
+  },
+  "source_trace": {
+    "path": "SOURCE_CONTRACT_TRACE.json",
+    "sha256": "df1a9586d3f39b893bd87d224b3253ae59aa866185a0a3f3605b833320561590",
+    "evidence_label": "source_backed",
+    "pinned_runtime": "SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "critical_findings": [
+      "NgramCorpus fixes draft_token_num in the native corpus constructor and batch_get calls native match_stateful.",
+      "NGRAMWorker propagates one scalar depth through row buffers, tree reconstruction, positions, cache allocation, NgramVerifyInput, acceptance, KV movement, and result construction.",
+      "NgramVerifyInput attention arguments are already expressed from its active draft_token_num.",
+      "Triton target-verify eager and graph metadata currently use the backend startup num_draft_tokens and therefore require an active-depth edit.",
+      "KV movement already sizes from accept_index.shape[1] and advances each request by correct drafts plus its bonus.",
+      "BatchResultProcessor already consumes a per-result speculative_num_draft_tokens stride.",
+      "DecodeCudaGraphRunner is captured at one num_tokens_per_bs and currently rejects NGRAM input rows that do not match it."
+    ]
+  },
+  "candidate": {
+    "name": "dual_exact_depth_producers_ragged_prior_result_carrier_dynamic_eager_metadata",
+    "frozen_rule": {
+      "running_requests_1_through_7": 12,
+      "running_requests_8_or_more": 6
+    },
+    "source_plan": {
+      "path": "ADAPTIVE_DEPTH_SOURCE_PLAN.md",
+      "sha256": "b7b05f78ff034a1c1259c21fc2d28f3d5bdba9d3a8ebdf77f10be26002230aa4"
+    },
+    "project_local_implementation": {
+      "adaptive_depth_contract.py": "dc2a6cbf477f72f219a84906e8ec2610f413f910929f77a713e8a9fca4390dca",
+      "run_adaptive_depth_fixtures.py": "842e9b7000d22a6673596063c76e22754cca0dfe2cc4e64c597e0c0968439242",
+      "verify_source_contract.py": "fecd942e30e968fc02395eddb779dcfefed5533b75043a281162643fd6ce5a26"
+    },
+    "edited_symbols_for_future_component": [
+      "sglang.srt.speculative.ngram_worker.NGRAMWorker.__init__",
+      "sglang.srt.speculative.ngram_worker.NGRAMWorker._init_preallocated_tensors",
+      "sglang.srt.speculative.ngram_worker.NGRAMWorker.clear_cache_pool",
+      "sglang.srt.speculative.ngram_worker.NGRAMWorker.add_external_corpus",
+      "sglang.srt.speculative.ngram_worker.NGRAMWorker.commit_corpus_load",
+      "sglang.srt.speculative.ngram_worker.NGRAMWorker.remove_external_corpus",
+      "sglang.srt.speculative.ngram_worker.NGRAMWorker.list_external_corpora",
+      "sglang.srt.speculative.ngram_worker.NGRAMWorker._prepare_draft_tokens",
+      "sglang.srt.speculative.ngram_worker.NGRAMWorker._prepare_for_speculative_decoding",
+      "sglang.srt.speculative.ngram_worker.NGRAMWorker._update_ngram_corpus",
+      "sglang.srt.speculative.ngram_worker.NGRAMWorker.forward_batch_generation",
+      "sglang.srt.speculative.ngram_info.NgramVerifyInput.__init__",
+      "sglang.srt.speculative.ngram_info.NgramVerifyInput.filter_batch",
+      "sglang.srt.speculative.ngram_info.NgramVerifyInput.merge_batch",
+      "sglang.srt.speculative.ngram_info.NgramVerifyInput.generate_attn_arg_prefill",
+      "sglang.srt.layers.attention.triton_backend.TritonAttnBackend.init_forward_metadata",
+      "sglang.srt.layers.attention.triton_backend.TritonAttnBackend._update_target_verify_buffers",
+      "sglang.srt.model_executor.runner.decode_cuda_graph_runner.DecodeCudaGraphRunner.can_run_graph"
+    ],
+    "unchanged_consumers": [
+      "sglang.srt.speculative.eagle_utils.eagle_sample",
+      "sglang.srt.speculative.spec_utils.move_accept_tokens_to_target_kvcache",
+      "sglang.srt.managers.scheduler_components.batch_result_processor.BatchResultProcessor._resolve_spec_v2_tokens",
+      "sglang.srt.model_executor.runner.decode_cuda_graph_runner.DecodeCudaGraphRunner.get_spec_info"
+    ],
+    "graph_contract": {
+      "depth_12": "existing exact-depth graph admitted after strict row, position, mask, output-cache, and spec depth checks",
+      "depth_6": "fail closed to corrected eager target-verify; no padding, slicing disguise, or dynamic recapture in this candidate"
+    }
+  },
+  "fixtures": {
+    "path": "ADAPTIVE_DEPTH_CPU_FIXTURES.json",
+    "sha256": "0813744f923512caa9f040052ed1ef5d1d57d81eda594ce7872a0a28f318ab3e",
+    "evidence_label": "synthetic_cpu_state_fixture_over_source_bound_contract",
+    "result": "all_cpu_state_fixtures_passed",
+    "positive": [
+      "depth-12 batch size 7",
+      "depth-6 batch size 8",
+      "exact-depth producer routing and match-state reset across 7-to-8",
+      "per-request token, position, and mask identity under permutation",
+      "ragged merge of prior width-12 and width-6 result carriers",
+      "mixed completion settlement",
+      "accept-index, accepted/bonus row, and KV source/destination ownership"
+    ],
+    "fail_closed": [
+      "producer/consumer depth mismatch",
+      "tree-mask forward edge",
+      "out-of-bounds accepted row",
+      "inconsistent ragged carrier terminal offset",
+      "unknown completed-request ownership",
+      "depth-6 input against depth-12 graph"
+    ],
+    "harness_amendment": "The first local fixture construction attempted to merge duplicate request IDs and was rejected by the candidate. No result artifact was emitted. The fixture was corrected to use disjoint identities and rerun once."
+  },
+  "measured_acceptance_context": {
+    "evidence_label": "measured_h100_endpoint_telemetry",
+    "source_sha256": "fd6bbba8d0015e7e3cac694aa4ebadd1569456ba9363c9dd58036f7a13e7adb1",
+    "by_running_requests": {
+      "1_to_7": 11.876,
+      "8_to_23": 5.255,
+      "24_to_31": 5.103
+    },
+    "interpretation": "This telemetry fixes the admitted rule; it does not prove semantic equivalence, component latency, or endpoint gain."
+  },
+  "analytical_work_bound": {
+    "evidence_label": "analytical",
+    "variables": {
+      "B": "running requests in the batch",
+      "L": "per-request prefix length; equal-L expression shown"
+    },
+    "running_requests_1_to_7": {
+      "depth": 12,
+      "eliminated_target_rows": 0,
+      "target_row_reduction_fraction": 0.0,
+      "eliminated_tree_mask_elements_per_request": 0,
+      "eliminated_attention_score_or_full_mask_elements": 0
+    },
+    "running_requests_8_to_23": {
+      "depth": 6,
+      "eliminated_target_rows": "6*B",
+      "target_row_reduction_fraction": 0.5,
+      "eliminated_tree_mask_elements": "108*B",
+      "tree_mask_reduction_fraction": 0.75,
+      "baseline_attention_score_or_full_mask_elements": "12*B*(L+12)",
+      "candidate_attention_score_or_full_mask_elements": "6*B*(L+6)",
+      "eliminated_attention_score_or_full_mask_elements": "B*(6*L+108)",
+      "attention_element_reduction_fraction": "(L+18)/(2*L+24)"
+    },
+    "running_requests_24_to_31": {
+      "depth": 6,
+      "eliminated_target_rows": "6*B",
+      "target_row_reduction_fraction": 0.5,
+      "eliminated_tree_mask_elements": "108*B",
+      "tree_mask_reduction_fraction": 0.75,
+      "baseline_attention_score_or_full_mask_elements": "12*B*(L+12)",
+      "candidate_attention_score_or_full_mask_elements": "6*B*(L+6)",
+      "eliminated_attention_score_or_full_mask_elements": "B*(6*L+108)",
+      "attention_element_reduction_fraction": "(L+18)/(2*L+24)"
+    },
+    "example_L_1024": {
+      "attention_element_reduction_fraction": 0.502895752895753,
+      "B_8": {
+        "baseline": 99456,
+        "candidate": 49440,
+        "eliminated": 50016
+      },
+      "B_23": {
+        "baseline": 285936,
+        "candidate": 142140,
+        "eliminated": 143796
+      },
+      "B_24": {
+        "baseline": 298368,
+        "candidate": 148320,
+        "eliminated": 150048
+      },
+      "B_31": {
+        "baseline": 385392,
+        "candidate": 191580,
+        "eliminated": 193812
+      }
+    },
+    "excluded_claims": [
+      "No milliseconds or kernel timing was measured.",
+      "No H100 execution was performed.",
+      "No endpoint speed, throughput, economics, sustainability, or production readiness is inferred."
+    ]
+  },
+  "future_component": {
+    "authorized": false,
+    "smallest_exact_test": "On the pinned H100 image without a checkpoint, run native exact-depth-6 and depth-12 producers into real Triton eager target-verify attention over synthetic paged KV, consume logits with real greedy acceptance and KV movement, and prove depth-12 graph admission plus depth-6 eager fallback at batch sizes 7 and 8.",
+    "acceptance_gate": "Producer bytes match standalone fixed-depth native producers; per-request rows, masks, positions, logits, accept/bonus ownership, and KV moves are exact or within the pinned consumer numerical contract; any cross-request or graph-shape discrepancy rejects."
+  }
+}

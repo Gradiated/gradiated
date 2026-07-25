@@ -1,0 +1,150 @@
+{
+  "chain": [
+    "NgramCorpus.__init__ fixes producer depth in the native object",
+    "NgramCorpus.batch_get calls native match_stateful",
+    "NGRAMWorker._prepare_draft_tokens requires bs*active_depth rows",
+    "NGRAMWorker._prepare_for_speculative_decoding packs rows, positions, masks, and out_cache_loc",
+    "TritonAttnBackend target-verify metadata currently uses startup depth",
+    "eagle_sample consumes active NgramVerifyInput and target logits",
+    "move_accept_tokens_to_target_kvcache derives width from accept_index",
+    "GenerationBatchResult carries the scheduler slicing stride",
+    "DecodeCudaGraphRunner admits only rows matching captured num_tokens_per_bs"
+  ],
+  "evidence_label": "source_backed",
+  "result": "exact_v0515_contract_traced",
+  "schema_version": 1,
+  "source_trace": {
+    "batch_result_processor": {
+      "anchors": {
+        "next_token_ids[i * stride : i * stride + accept_lens[i]]": [
+          559
+        ],
+        "stride = result.speculative_num_draft_tokens": [
+          555,
+          705
+        ]
+      },
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/source/python/sglang/srt/managers/scheduler_components/batch_result_processor.py",
+      "sha256": "d6274912963ab21acc4a4462bc9cda9e8d938a6e7e9dd808f9c42bb85165cdb0"
+    },
+    "decode_cuda_graph_runner": {
+      "anchors": {
+        "== forward_batch.input_ids.numel()": [
+          465
+        ],
+        "forward_batch.batch_size * self.num_tokens_per_bs": [
+          464
+        ],
+        "raw_num_token = raw_bs * self.num_tokens_per_bs": [
+          938
+        ],
+        "self.num_tokens_per_bs = model_runner.decode_num_tokens_per_bs(": [
+          243
+        ]
+      },
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/source/python/sglang/srt/model_executor/runner/decode_cuda_graph_runner.py",
+      "sha256": "f5fb4b20c60dfca0ceb439da2137f545f89d3536cf70b2c776f0edeb28c093ce"
+    },
+    "ngram_corpus": {
+      "anchors": {
+        "draft_token_num=draft_token_num": [
+          32
+        ],
+        "return self._obj.match_stateful": [
+          107
+        ],
+        "self.draft_token_num = draft_token_num": [
+          37
+        ]
+      },
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/source/python/sglang/srt/speculative/cpp_ngram/ngram_corpus.py",
+      "sha256": "7b434d5ccc5158df4bafe4b95dbc2e277020132d335f2e79ebf56489633bf874"
+    },
+    "ngram_info": {
+      "anchors": {
+        "* self.draft_token_num": [
+          79,
+          100
+        ],
+        "paged_kernel_lens = paged_kernel_lens + self.draft_token_num": [
+          74
+        ],
+        "self.accept_tokens.reshape(-1, self.draft_token_num)": [
+          125
+        ]
+      },
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/source/python/sglang/srt/speculative/ngram_info.py",
+      "sha256": "48ee9b9e6880fa4ec11e2dbe491fcd24490b05d871660d713bf9092c9c4ea95b"
+    },
+    "ngram_worker": {
+      "anchors": {
+        ") = eagle_sample(": [
+          436
+        ],
+        "draft_token_num=self.draft_token_num": [
+          330,
+          343,
+          505
+        ],
+        "draft_token_num=server_args.speculative_num_draft_tokens": [
+          84
+        ],
+        "end_offset=batch.seq_lens + self.draft_token_num": [
+          328
+        ],
+        "move_accept_tokens_to_target_kvcache(": [
+          451
+        ],
+        "reconstruct_indices_from_tree_mask(": [
+          288
+        ],
+        "self.draft_token_num: int =": [
+          64
+        ],
+        "speculative_num_draft_tokens=self.speculative_num_draft_tokens": [
+          520
+        ],
+        "total_draft_token_num == bs * self.draft_token_num": [
+          263
+        ]
+      },
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/source/python/sglang/srt/speculative/ngram_worker.py",
+      "sha256": "63b79c73c7615b07f61a4c21f3483a6542ffa5a2bbfb7f891a366294a4a9214e"
+    },
+    "spec_utils": {
+      "anchors": {
+        "batch.seq_lens + num_correct_drafts + 1": [
+          566
+        ],
+        "move_kv_cache(": [
+          577
+        ],
+        "size = bs * accept_index.shape[1]": [
+          546
+        ]
+      },
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/source/python/sglang/srt/speculative/spec_utils.py",
+      "sha256": "017b0a92a3f66382a1bf7212b96fc073d1f8748714764ca6090cd4e46b19e3cc"
+    },
+    "triton_backend": {
+      "anchors": {
+        "(1 + bs) * self.num_draft_tokens": [
+          449,
+          780
+        ],
+        "max_extend_len = self.num_draft_tokens": [
+          824
+        ],
+        "self.num_draft_tokens = model_runner.server_args.speculative_num_draft_tokens": [
+          158
+        ],
+        "seq_mask_len = self.num_draft_tokens *": [
+          485,
+          818
+        ]
+      },
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/source/python/sglang/srt/layers/attention/triton_backend.py",
+      "sha256": "c09161c77e4586064c0d70c5dda4f943378510a4facb187590ac31e17b0e6e73"
+    }
+  }
+}

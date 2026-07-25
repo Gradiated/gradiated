@@ -1,0 +1,22 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "candidate": "dual_exact_depth_producers_ragged_prior_result_carrier_dynamic_eager_metadata",
+  "compute_budget": "At most 45 CPU-minutes and 8 GiB RAM; no CUDA, GPU bench, or provider.",
+  "decision": "source_complete_h100_component_ready",
+  "decision_artifact": "ADAPTIVE_DEPTH_H100_DECISION.md",
+  "director_binding": "DIRECTOR_BINDING.json",
+  "director_binding_sha256": "bf640623c908f9273c24d6af04be10f3e7cf2a28738ff80f287d83f21ca98ddb",
+  "next_action": "Await separate authorization for the preregistered checkpoint-free exact H100 component: native depth-6/depth-12 producers into real Triton eager target verification, greedy acceptance, KV movement, and strict depth-12 graph/depth-6 eager fallback at batch sizes 7 and 8. Do not infer endpoint speed or launch under this project's zero-provider contract.",
+  "priority": 8420,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "execution",
+  "result_artifact": "ADAPTIVE_DEPTH_H100_RESULT.json",
+  "status": "complete",
+  "storage_budget": "At most 1 GiB of project-local source, fixtures, and artifacts.",
+  "summary": "All bound hashes matched. The prior H200 compact first violated depth ownership by mutating the worker to 6 while retaining and slicing a native depth-12 producer. The exact pinned H100 v0.5.15 trace separately proves that a repeat would also retain depth-12 Triton metadata and scheduler stride. One materially different exact-depth producer plus ragged-carrier representation passes CPU/state boundary, permutation, completion, acceptance/bonus, KV, graph, and fail-closed fixtures. Analytical high-load savings are 50% of target rows and B*(6L+108) full-mask attention elements; no GPU or endpoint-speed claim.",
+  "updated_at_utc": "2026-07-25T13:40:00Z",
+  "wall_clock_budget": "Up to 7200 seconds of local work; decision artifact due by 2026-07-25T15:30:00Z."
+}

@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+
+import pathlib
+import sys
+
+
+FACTORY_ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(FACTORY_ROOT / "src"))
+
+from grad_research.science_tools.endpoint_pair import main  # noqa: E402
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

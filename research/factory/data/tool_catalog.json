@@ -1,0 +1,368 @@
+{
+  "schema_version": 1,
+  "tools": [
+    {
+      "id": "nvidia-smi",
+      "tier": "base",
+      "category": "profiling",
+      "platforms": ["nvidia"],
+      "summary": "GPU inventory, utilization, clocks, power, and process state.",
+      "probe": ["nvidia-smi", "--version"],
+      "source_url": "https://developer.nvidia.com/system-management-interface"
+    },
+    {
+      "id": "nsight-systems",
+      "tier": "base",
+      "category": "profiling",
+      "platforms": ["nvidia"],
+      "summary": "CPU/GPU timelines and serving critical-path traces.",
+      "probe": ["nsys", "--version"],
+      "source_url": "https://developer.nvidia.com/nsight-systems"
+    },
+    {
+      "id": "nsight-compute",
+      "tier": "base",
+      "category": "profiling",
+      "platforms": ["nvidia"],
+      "summary": "Kernel counters, rooflines, source correlation, and memory analysis.",
+      "probe": ["ncu", "--version"],
+      "source_url": "https://developer.nvidia.com/nsight-compute"
+    },
+    {
+      "id": "compute-sanitizer",
+      "tier": "base",
+      "category": "profiling",
+      "platforms": ["nvidia"],
+      "summary": "CUDA memory, race, synchronization, and initialization checking.",
+      "probe": ["compute-sanitizer", "--version"],
+      "source_url": "https://docs.nvidia.com/compute-sanitizer/"
+    },
+    {
+      "id": "dcgm",
+      "tier": "base",
+      "category": "profiling",
+      "platforms": ["nvidia"],
+      "summary": "Node health, diagnostics, field telemetry, and profiling counters.",
+      "probe": ["dcgmi", "--version"],
+      "source_url": "https://github.com/NVIDIA/DCGM"
+    },
+    {
+      "id": "amd-smi",
+      "tier": "base",
+      "category": "profiling",
+      "platforms": ["amd"],
+      "summary": "AMD accelerator inventory, clocks, power, processes, and health.",
+      "probe": ["amd-smi", "version"],
+      "source_url": "https://github.com/ROCm/amdsmi"
+    },
+    {
+      "id": "rocprofiler-systems",
+      "tier": "base",
+      "category": "profiling",
+      "platforms": ["amd"],
+      "summary": "ROCm system-wide CPU/GPU tracing and critical-path analysis.",
+      "probe": ["rocprof-sys-avail", "--help"],
+      "source_url": "https://github.com/ROCm/rocprofiler-systems"
+    },
+    {
+      "id": "rocprofiler-compute",
+      "tier": "base",
+      "category": "profiling",
+      "platforms": ["amd"],
+      "summary": "AMD kernel performance counters and roofline analysis.",
+      "probe": ["rocprof-compute", "--version"],
+      "source_url": "https://github.com/ROCm/rocprofiler-compute"
+    },
+    {
+      "id": "pytorch-profiler",
+      "tier": "base",
+      "category": "profiling",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "Framework operators, shapes, stacks, device activity, and execution traces.",
+      "probe": ["python3", "-c", "import torch.profiler"],
+      "source_url": "https://github.com/pytorch/kineto"
+    },
+    {
+      "id": "perfetto",
+      "tier": "base",
+      "category": "profiling",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "Queryable trace processing and cross-stack timeline inspection.",
+      "probe": ["trace_processor_shell", "--version"],
+      "source_url": "https://github.com/google/perfetto"
+    },
+    {
+      "id": "cuda-binary-tools",
+      "tier": "base",
+      "category": "kernel",
+      "platforms": ["nvidia"],
+      "summary": "Inspect cubins, SASS, registers, sections, and generated machine code.",
+      "probe": ["nvdisasm", "--version"],
+      "source_url": "https://docs.nvidia.com/cuda/cuda-binary-utilities/"
+    },
+    {
+      "id": "git",
+      "tier": "base",
+      "category": "build-download",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "Pinned source acquisition and worktree identity.",
+      "probe": ["git", "--version"],
+      "source_url": "https://github.com/git/git"
+    },
+    {
+      "id": "uv",
+      "tier": "base",
+      "category": "build-download",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "Fast pinned Python environments and command execution.",
+      "probe": ["uv", "--version"],
+      "source_url": "https://github.com/astral-sh/uv"
+    },
+    {
+      "id": "sccache",
+      "tier": "base",
+      "category": "build-download",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "Persistent compiler cache for C++, CUDA, and HIP builds.",
+      "probe": ["sccache", "--version"],
+      "source_url": "https://github.com/mozilla/sccache"
+    },
+    {
+      "id": "huggingface-cli",
+      "tier": "base",
+      "category": "build-download",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "Resumable checkpoint and dataset download into retained caches.",
+      "probe": ["hf", "--help"],
+      "source_url": "https://github.com/huggingface/huggingface_hub"
+    },
+    {
+      "id": "triton",
+      "tier": "route",
+      "category": "kernel",
+      "platforms": ["nvidia", "amd"],
+      "summary": "Rapid exact-shape kernel authoring with inspectable generated code.",
+      "probe": ["python3", "-c", "import triton; print(triton.__version__)"],
+      "source_url": "https://github.com/triton-lang/triton"
+    },
+    {
+      "id": "cutlass-cute",
+      "tier": "route",
+      "category": "kernel",
+      "platforms": ["nvidia"],
+      "summary": "Architecture-specific CUDA templates and CuTe DSL kernels.",
+      "probe": ["cutlass_profiler", "--help"],
+      "source_url": "https://github.com/NVIDIA/cutlass"
+    },
+    {
+      "id": "flashinfer",
+      "tier": "route",
+      "category": "kernel",
+      "platforms": ["nvidia"],
+      "summary": "Attention, KV-cache, sampling, communication, and MoE kernel paths.",
+      "probe": ["python3", "-c", "import flashinfer; print(flashinfer.__version__)"],
+      "source_url": "https://github.com/flashinfer-ai/flashinfer"
+    },
+    {
+      "id": "flashinfer-bench",
+      "tier": "route",
+      "category": "kernel",
+      "platforms": ["nvidia"],
+      "summary": "Production-trace kernel workloads with correctness and timing evaluation.",
+      "probe": ["python3", "-c", "import flashinfer_bench"],
+      "source_url": "https://github.com/flashinfer-ai/flashinfer-bench"
+    },
+    {
+      "id": "tilelang",
+      "tier": "route",
+      "category": "kernel",
+      "platforms": ["nvidia", "amd"],
+      "summary": "Cross-vendor tiled kernels with explicit layouts and pipelines.",
+      "probe": ["python3", "-c", "import tilelang; print(tilelang.__version__)"],
+      "source_url": "https://github.com/tile-ai/tilelang"
+    },
+    {
+      "id": "modelopt",
+      "tier": "route",
+      "category": "model-surgery",
+      "platforms": ["nvidia"],
+      "summary": "Quantization, sparsity, pruning, distillation, and speculative optimization.",
+      "probe": ["python3", "-c", "import modelopt; print(modelopt.__version__)"],
+      "source_url": "https://github.com/NVIDIA/Model-Optimizer"
+    },
+    {
+      "id": "torchao",
+      "tier": "route",
+      "category": "model-surgery",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "PyTorch-native quantization and sparsity primitives.",
+      "probe": ["python3", "-c", "import torchao; print(torchao.__version__)"],
+      "source_url": "https://github.com/pytorch/ao"
+    },
+    {
+      "id": "llm-compressor",
+      "tier": "route",
+      "category": "model-surgery",
+      "platforms": ["nvidia", "amd"],
+      "summary": "Runtime-oriented quantization, sparsity, and compressed checkpoint recipes.",
+      "probe": ["python3", "-c", "import llmcompressor; print(llmcompressor.__version__)"],
+      "source_url": "https://github.com/vllm-project/llm-compressor"
+    },
+    {
+      "id": "aiperf",
+      "tier": "route",
+      "category": "endpoint",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "OpenAI-compatible endpoint load generation and latency/throughput metrics.",
+      "probe": ["aiperf", "--help"],
+      "source_url": "https://github.com/ai-dynamo/aiperf"
+    },
+    {
+      "id": "guidellm",
+      "tier": "route",
+      "category": "endpoint",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "Request-rate and concurrency sweeps for OpenAI-compatible servers.",
+      "probe": ["guidellm", "--help"],
+      "source_url": "https://github.com/vllm-project/guidellm"
+    },
+    {
+      "id": "vllm",
+      "tier": "route",
+      "category": "endpoint",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "Production serving runtime and runtime-native benchmark commands.",
+      "probe": ["vllm", "--version"],
+      "source_url": "https://github.com/vllm-project/vllm"
+    },
+    {
+      "id": "sglang",
+      "tier": "route",
+      "category": "endpoint",
+      "platforms": ["nvidia", "amd"],
+      "summary": "Production serving runtime with model-specific kernel and scheduler seams.",
+      "probe": ["python3", "-c", "import sglang; print(sglang.__version__)"],
+      "source_url": "https://github.com/sgl-project/sglang"
+    },
+    {
+      "id": "tensorrt-llm",
+      "tier": "route",
+      "category": "endpoint",
+      "platforms": ["nvidia"],
+      "summary": "NVIDIA inference runtime and architecture-specific optimized engines.",
+      "probe": ["trtllm-serve", "--help"],
+      "source_url": "https://github.com/NVIDIA/TensorRT-LLM"
+    },
+    {
+      "id": "lm-evaluation-harness",
+      "tier": "route",
+      "category": "quality",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "Reproducible academic and model capability evaluations.",
+      "probe": ["lm_eval", "--help"],
+      "source_url": "https://github.com/EleutherAI/lm-evaluation-harness"
+    },
+    {
+      "id": "inspect-ai",
+      "tier": "route",
+      "category": "quality",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "Agent and tool-use evaluation with inspectable task transcripts.",
+      "probe": ["inspect", "--version"],
+      "source_url": "https://github.com/UKGovernmentBEIS/inspect_ai"
+    },
+    {
+      "id": "tau-bench",
+      "tier": "reference",
+      "category": "quality",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "Reference agent tool-use benchmark used for OpenRouter-relevant quality.",
+      "source_url": "https://github.com/sierra-research/tau-bench"
+    },
+    {
+      "id": "gpqa",
+      "tier": "reference",
+      "category": "quality",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "Reference source for GPQA Diamond capability evaluation.",
+      "source_url": "https://github.com/idavidrein/gpqa"
+    },
+    {
+      "id": "nccl-tests",
+      "tier": "route",
+      "category": "distributed",
+      "platforms": ["nvidia"],
+      "summary": "Collective communication bandwidth, latency, and topology checks.",
+      "probe": ["all_reduce_perf", "--help"],
+      "source_url": "https://github.com/NVIDIA/nccl-tests"
+    },
+    {
+      "id": "nvbandwidth",
+      "tier": "route",
+      "category": "distributed",
+      "platforms": ["nvidia"],
+      "summary": "Host/device and peer-to-peer memory bandwidth characterization.",
+      "probe": ["nvbandwidth", "--help"],
+      "source_url": "https://github.com/NVIDIA/nvbandwidth"
+    },
+    {
+      "id": "rccl-tests",
+      "tier": "route",
+      "category": "distributed",
+      "platforms": ["amd"],
+      "summary": "AMD collective communication bandwidth and topology checks.",
+      "probe": ["all_reduce_perf", "--help"],
+      "source_url": "https://github.com/ROCm/rccl-tests"
+    },
+    {
+      "id": "nnsight",
+      "tier": "reference",
+      "category": "model-surgery",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "Offline activation tracing and model intervention experiments.",
+      "probe": ["python3", "-c", "import nnsight; print(nnsight.__version__)"],
+      "source_url": "https://github.com/ndif-team/nnsight"
+    },
+    {
+      "id": "kernelbench",
+      "tier": "reference",
+      "category": "kernel",
+      "platforms": ["nvidia"],
+      "summary": "Reference benchmark for generated PyTorch replacement kernels.",
+      "source_url": "https://github.com/ScalingIntelligence/KernelBench"
+    },
+    {
+      "id": "tritonbench",
+      "tier": "reference",
+      "category": "kernel",
+      "platforms": ["nvidia", "amd"],
+      "summary": "Operator benchmark corpus for Triton and framework kernels.",
+      "source_url": "https://github.com/meta-pytorch/tritonbench"
+    },
+    {
+      "id": "thunderkittens",
+      "tier": "reference",
+      "category": "kernel",
+      "platforms": ["nvidia"],
+      "summary": "Hopper and Blackwell tile primitives and megakernel examples.",
+      "source_url": "https://github.com/HazyResearch/ThunderKittens"
+    },
+    {
+      "id": "nixl",
+      "tier": "reference",
+      "category": "distributed",
+      "platforms": ["nvidia", "amd", "cpu"],
+      "summary": "Portable inference data movement and tiered-memory transfer library.",
+      "source_url": "https://github.com/ai-dynamo/nixl"
+    },
+    {
+      "id": "holistic-trace-analysis",
+      "tier": "reference",
+      "category": "profiling",
+      "platforms": ["nvidia"],
+      "summary": "Distributed PyTorch trace analysis and temporal breakdowns.",
+      "probe": ["python3", "-c", "import hta"],
+      "source_url": "https://github.com/facebookresearch/HolisticTraceAnalysis"
+    }
+  ]
+}

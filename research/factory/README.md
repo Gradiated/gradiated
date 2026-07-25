@@ -87,6 +87,8 @@ The director can return an inspected maintenance bench to service with `ready --
 
 [`PROFILING.md`](PROFILING.md) documents the provider-neutral `research/factory/tools/grad-profile` command. It records profiler-off baselines, bounded NVIDIA Nsight or AMD ROCm captures, exact-shape/codegen artifacts, normalized timeline/counter summaries, energy, and $/token comparisons. Deep profiling is optional and question-driven; it must not delay credible experiments.
 
+[`SCIENTIFIC_TOOLS.md`](SCIENTIFIC_TOOLS.md) documents the optional instrument shelf for matched endpoint replay, first-divergence localization, exact-shape reproduction and kernel evaluation, hot-operation replacement, model surgery, warm workspaces, and upstream tool discovery. These tools are available through the shared `tools` directory and do not add harness stages or replace researcher judgment.
+
 [`data/providers.json`](data/providers.json) tracks Nebius, RunPod, Scaleway, and Gcore interfaces and verified profiler-access status without storing credentials. [`docs/GCORE.md`](docs/GCORE.md) contains the Gcore usage guide plus its daily-refreshed Markdown price/availability snapshot. [`data/profiling_shape_atlas.json`](data/profiling_shape_atlas.json) is the shared exact-shape measurement inventory.
 
 ## Shared GPU price inventory

@@ -1,0 +1,29 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 3.0,
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "candidate_sample_consumed": false,
+  "compute_budget": "At most 2 local CPU-hours and 45 H200 minutes total, including setup and failed attempts.",
+  "execution_binding": "EXECUTION_BINDING.json",
+  "next_action": "Director disposition is required to move h200-ngram-verifier-e00kcm9nfhwt7e7gbc from maintenance to available for this project. Then atomically claim it, transfer only the immutable project-local EXECUTION_BINDING.json packet, replace the resident support-two overlay in place, run one candidate-only 791-request discriminator, and conditionally run the 1,036-request endpoint under PROJECT.md gates.",
+  "offline_probe": {
+    "artifact": "artifacts/offline-lifecycle-probe/RESULT.json",
+    "causal_prediction": "The live request is isolated, but request-32 post-completion commit reproduces dominant accepted depth 4.",
+    "result": "pass"
+  },
+  "priority": 8500,
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "researcher_profile": "execution",
+  "status": "blocked",
+  "storage_budget": "At most 6 GiB project-local.",
+  "summary": "Exact offline lifecycle and bounded commit probe passed. The 791-request GPU sample is unconsumed because the released compatible H200 is director-held in maintenance.",
+  "terminal": {
+    "artifact": "artifacts/gpu-claim-20260725t0455z/CLAIM_TERMINAL.json",
+    "candidate_sample_consumed": false,
+    "classification": "typed_pool_maintenance_boundary",
+    "need": "Director must make the compatible retained H200 available with sufficient watchdog coverage; no provider resource may be created."
+  },
+  "wall_clock_budget": "90 minutes from researcher start; any GPU owner needs a lifecycle deadline covering its full run plus cleanup."
+}

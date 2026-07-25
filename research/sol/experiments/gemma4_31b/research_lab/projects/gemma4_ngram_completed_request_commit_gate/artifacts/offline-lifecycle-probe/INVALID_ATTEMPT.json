@@ -1,0 +1,8 @@
+{
+  "attempt": 1,
+  "classification": "invalid_comparator_assertion",
+  "candidate_execution_reached": true,
+  "causal_amendment": "Request 32 contains the transient tokens 25627, 1767, and 1154, not the persistent-alternate token 3055. The post-completion dominant depth of 4 was observed exactly; the independent 3055 depth must remain 0.",
+  "interpretable_candidate_result_persisted": false,
+  "retry_scope": "Change only the expected request_32_post_completion_visible alternate depth from 4 to 0 and rerun the offline consumer."
+}

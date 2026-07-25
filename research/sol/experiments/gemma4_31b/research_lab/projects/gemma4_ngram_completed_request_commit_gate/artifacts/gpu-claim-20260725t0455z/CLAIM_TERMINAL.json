@@ -1,0 +1,12 @@
+{
+  "at_utc": "2026-07-25T04:55:07Z",
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "candidate_sample_consumed": false,
+  "classification": "typed_pool_maintenance_boundary",
+  "claim_exit_code": 2,
+  "claim_stderr": "gpu_pool.py: error: no available GPU bench matches this project",
+  "observed_bench_status": "maintenance",
+  "observed_claim": null,
+  "provider_spend_usd": 0.0,
+  "required_external_change": "Director must inspect the healthy resident support-two server and mark this compatible registered H200 available for gemma4_ngram_completed_request_commit_gate, with watchdog coverage for the bounded discriminator and cleanup."
+}

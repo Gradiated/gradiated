@@ -183,7 +183,11 @@ def check_gates() -> tuple[dict[str, Any], list[tuple[pathlib.Path, dict[str, An
                 "typed_scientific_boundary:predecessor_already_meets_campaign_target"
             )
     bench = inventory_bench()
-    if bench.get("status") != "available" or bench.get("claim"):
+    claim = bench.get("claim")
+    claim_is_ours = isinstance(claim, dict) and claim.get("project") == NAME
+    if bench.get("status") not in {"available", "claimed"} or (
+        claim and not claim_is_ours
+    ):
         raise RuntimeError("typed_queue_boundary:predecessor_claim_not_released")
     lifecycle = dt.datetime.fromisoformat(
         bench["lifecycle"]["deadline_utc"].replace("Z", "+00:00")

@@ -57,3 +57,22 @@ No retail latency or reliability is claimed.
 
 **Next.** Do not claim or inspect the live H100. Reconcile this frontier only
 when the direct endpoint supplies an exact `service_seconds_per_request`.
+
+## 2026-07-25 — measured-endpoint overflow reconciliation
+
+**Action.** Verified the reconciliation's six content hashes, reproduced the
+prior 0.707333994-second control, then replayed the measured 791-request
+prefix at 0.780757973 seconds/request and separately extrapolated all 1,036
+requests at that rate.
+
+**Evidence.** The measured prefix's finite one-H100 wait reaches 68.057 seconds
+and its 64-period drain extension reaches 4,405.604 seconds. Its one-second
+periodic cap spills 88 requests at `$0.133066/M` capability-listed and
+`$0.133369/M` methodology-matched. The 1,036-row extrapolation reaches 89.163
+seconds finite wait, 5,756.403 seconds periodic extension, and needs 115
+one-second-cap spills. Exact frontiers and actual-rate values are in
+`ENDPOINT_OVERFLOW_RESULT_20260725.json`.
+
+**Interpretation.** Deployment reject: the endpoint has normalized semantic
+divergence at request 277. These economics remain analytical and cannot be
+promoted without a semantic repair.

@@ -1,5 +1,18 @@
 # H100 sustainable replica-headroom replay
 
+## Measured-endpoint reconciliation
+
+The original overflow frontier used the 171-request discriminator and named
+the pending endpoint service rate as its decisive unknown. The 791-request
+endpoint is now measured at `0.780757973` seconds/request, so this project must
+recompute finite and periodic one-H100-plus-retail frontiers on the observed
+791-request prefix and separately on the 1,036-request extrapolation.
+
+This iteration is analytical scheduling evidence only. The endpoint's
+normalized semantic divergence remains a production-eligibility blocker. The
+dated contract is frozen in
+`DIRECTOR_ENDPOINT_OVERFLOW_RECONCILIATION_20260725.json`.
+
 ## Question
 
 Does the settled H100 v0.5.15 NGRAM service rate remain at or below the

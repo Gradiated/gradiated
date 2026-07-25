@@ -1,0 +1,21 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 0,
+  "authorized_spend_usd": 0.0,
+  "bench_need": null,
+  "compute_budget": "At most 10 CPU-minutes and 2 GiB RAM; no CUDA.",
+  "director_binding": "DIRECTOR_BINDING.json",
+  "director_binding_sha256": "8b0a4918df442f9e670d5a3cfed230b7346d905849a12ef45470ce2cf14e6666",
+  "completed_at_utc": "2026-07-25T12:33:00Z",
+  "deadline_met": false,
+  "decision": "indeterminate_missing_actual_artifact",
+  "next_action": "Director review. If a future separately authorized replay is admitted, capture the single per_rid_target_accept_settlement_conservation invariant from SEMANTIC_DIVERGENCE_RESULT.json; this project must not replay the consumed endpoint.",
+  "priority": 8310,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "deep",
+  "status": "complete",
+  "storage_budget": "At most 128 MiB project-local artifacts.",
+  "summary": "All bound hashes matched. The observer proves a raw output_ids mismatch at request 277 index 19, not text normalization, but the actual row and verification trace are absent. Frozen v0.5.15 source preserves rid/row ownership through corpus, verification, graph padding, and scheduler settlement with no source-proven leak. Batch numerics, runtime ownership, target-verified divergence, and response truncation remain unseparated: indeterminate_missing_actual_artifact.",
+  "wall_clock_budget": "At most 720 seconds; finish by 2026-07-25T12:28:00Z."
+}

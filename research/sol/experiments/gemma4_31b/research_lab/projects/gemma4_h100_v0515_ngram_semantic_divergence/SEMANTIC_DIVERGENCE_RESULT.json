@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T12:33:00Z",
+  "scheduled_deadline_utc": "2026-07-25T12:28:00Z",
+  "deadline_met": false,
+  "project": "gemma4_h100_v0515_ngram_semantic_divergence",
+  "decision": "indeterminate_missing_actual_artifact",
+  "typed_terminal": {
+    "type": "indeterminate_missing_actual_artifact",
+    "reason": "The terminal retains only request=277 and first_output_token_mismatch=19. The actual semantic row, target logits/margin, acceptance trace, and exact endpoint batch membership were not retrieved, so response truncation, batch-dependent target variation, runtime ownership failure, and target-verified semantic failure cannot be separated.",
+    "missing": [
+      "request_277_actual_response_row",
+      "request_277_actual_output_ids_and_length",
+      "request_277_finish_reason",
+      "request_277_target_logits_and_top2_margin_at_output_token_19",
+      "request_277_accept_index_and_accept_len_history",
+      "request_277_exact_endpoint_batch_membership"
+    ]
+  },
+  "binding_verification": {
+    "all_match": true,
+    "director_binding_sha256": "8b0a4918df442f9e670d5a3cfed230b7346d905849a12ef45470ce2cf14e6666",
+    "bound_inputs": {
+      "endpoint_terminal": "8829761b4f2227852feb654a45a714e5678fecdddbb76e96baad2ce3ba43b684",
+      "matched_runner": "56bcd0aff2e85533f360e0fd58af87edc0bfcc79c1b0f16ed164587f964fabc4",
+      "bound_semantic_rows": "630d05bd860d1dd22c3e35ba2d8f792afc5051f0c68e0a74a9deda8140a02b36",
+      "request_trace": "10e7edacaa194fd0f43b3a3c38f7d91cec0ceba22df8e08e3b5897b174346135",
+      "ngram_worker": "63b79c73c7615b07f61a4c21f3483a6542ffa5a2bbfb7f891a366294a4a9214e",
+      "batch_result_processor": "d6274912963ab21acc4a4462bc9cda9e8d938a6e7e9dd808f9c42bb85165cdb0",
+      "decode_graph_runner": "f5fb4b20c60dfca0ceb439da2137f545f89d3536cf70b2c776f0edeb28c093ce",
+      "endpoint_overflow_result": "a6f985dfb9568983f3ba84149be320354be1f30d5bd2bba493458b9f92a2b8d7"
+    }
+  },
+  "request_277": {
+    "index_basis": "zero_based",
+    "request_id": "tail-overlap-277",
+    "prompt_tokens": 4214,
+    "template_mutation": {
+      "position": 535,
+      "token_id": 200277
+    },
+    "sampling": {
+      "temperature": 0,
+      "min_new_tokens": 358,
+      "max_new_tokens": 358,
+      "ignore_eos": true
+    },
+    "planned_arrival_s": 192.40700138371372,
+    "constructed_request_sha256": "985d5d363ef578af43ebea09424ffe6812a53c7ac45cb972f4fd25234b445314",
+    "expected": {
+      "output_ids": "358 repetitions of token 51935",
+      "finish_reason": {
+        "length": 358,
+        "type": "length"
+      },
+      "usage": {
+        "completion_tokens": 358,
+        "prompt_tokens": 4214,
+        "total_tokens": 4572
+      }
+    },
+    "observed_summary_only": {
+      "first_output_token_mismatch": 19,
+      "actual_row_retrieved": false
+    },
+    "trace_limit": "The bound requests.jsonl historical trace had requests 274-277 active at its request-277 submission, but the endpoint runner only verifies this file through INPUT_MANIFEST and schedules from exact_semantic_rows.jsonl. That historical active set is not endpoint batch membership."
+  },
+  "observer": {
+    "proven": [
+      "The future binds index 277, constructed request 277, and expected control row 277.",
+      "The semantic object contains exactly output_ids, finish_reason, and usage.",
+      "Raw integer output_ids are compared before whole-object equality.",
+      "The mismatch is the first unequal zero-based token index, or the shorter length after an equal prefix.",
+      "The terminal discards the actual semantic row."
+    ],
+    "ruled_out": [
+      "whitespace_normalization",
+      "text_normalization",
+      "finish_reason_only_mismatch",
+      "usage_only_mismatch"
+    ],
+    "not_ruled_out": [
+      "actual_output_ids_length_19_with_equal_prefix",
+      "response_serialization_or_output_id_truncation",
+      "raw_token_value_mismatch_at_index_19"
+    ],
+    "source": "h100_matched_runner.py:49-98,241-276,315-327,355-405,447-507"
+  },
+  "causal_chain": [
+    {
+      "stage": "request_and_schedule",
+      "finding": "The runner mutates prompt position 535 by request index and releases row i at exact_semantic_rows[i].arrival_s; each future carries i, request, and expected row together.",
+      "source": "h100_matched_runner.py:85-98,315-327,355-387"
+    },
+    {
+      "stage": "corpus_and_request_ownership",
+      "finding": "Corpus inserts are shared proposals, while incremental match state is allocated by rid. Dynamic filter/merge applies the same row transform to accept tokens, accept lengths, and future indices.",
+      "source": "ngram_corpus.py:39-56,95-116; ngram_info.py:120-145; schedule_batch.py:2695-2828"
+    },
+    {
+      "stage": "draft_construction",
+      "finding": "Each row splices that row's prior accepts in overlap mode, queries by req.rid, and constructs 12 drafts, positions, retrieval links, and its mask.",
+      "source": "ngram_worker.py:209-344"
+    },
+    {
+      "stage": "target_verification",
+      "finding": "The target evaluates the tree. Greedy sampling computes torch.argmax target predictions and verify_tree_greedy_func returns predict, accept_index, and accept length. Corpus tokens are not emitted without target verification.",
+      "source": "ngram_worker.py:383-467; eagle_utils.py:538-633,765-768"
+    },
+    {
+      "stage": "kv_movement",
+      "finding": "Per-row accepted indices select verified KV locations; the worker moves accepted drafts plus the target bonus and publishes seq_lens + accept_lens.",
+      "source": "ngram_worker.py:437-456; spec_utils.py:527-579"
+    },
+    {
+      "stage": "cuda_graph_padding",
+      "finding": "Replay pads to a graph bucket, resets request-index, sequence-length, position, and cache-location tails, initializes target-verify metadata from runtime spec_info, and slices logits back to raw_bs * 12. No source path returns padded logits to acceptance.",
+      "source": "decode_cuda_graph_runner.py:907-1060; cuda_graph_buffer_registry.py:379-469,527-609; triton_backend.py:438-497,1058-1083"
+    },
+    {
+      "stage": "scheduler_settlement",
+      "finding": "Overlap publishes lengths keyed by req_pool_indices and carries NGRAM accepts in spec_info. The result processor slices flattened accepts at i*12 for accept_lens[i], increments the same request's committed KV length, and extends its output_ids.",
+      "source": "scheduler.py:3220-3305,3404-3417; overlap_utils.py:276-327; schedule_batch.py:2695-2828; batch_result_processor.py:531-584,629-721"
+    }
+  ],
+  "causal_classification": {
+    "observer_false_positive": {
+      "status": "partially_falsified_not_excluded",
+      "evidence": "The difference is raw output_ids, not normalization or finish/usage only; absent output length and IDs leave truncation/serialization untested."
+    },
+    "batch_nondeterminism": {
+      "status": "plausible_unmeasured",
+      "evidence": "Greedy target verification uses argmax under dynamic batching, FP8 weights/KV, and CUDA graphs. There is no request-277 logits/margin, exact batch membership, or matched 791-request A/A. The 171-request pass is not an A/A of this state."
+    },
+    "request_or_corpus_ownership_defect": {
+      "status": "plausible_not_source_proven",
+      "evidence": "Frozen Python preserves rid and row transforms; corpus sharing changes proposals, not direct emissions. A kernel/runtime mapping defect remains possible because no per-rid accept/KV/scheduler trace exists."
+    },
+    "target_verified_semantic_failure": {
+      "status": "plausible_not_proven",
+      "evidence": "A target token could differ at verification or a verified chain could be mis-settled, but missing runtime evidence does not locate the first divergent state."
+    }
+  },
+  "single_future_invariant": {
+    "name": "per_rid_target_accept_settlement_conservation",
+    "scope": "One separately authorized exact replay through request 277; no replay is authorized in this project.",
+    "capture": [
+      "rid, batch_row, req_pool_index",
+      "raw_bs, padded_bs, seq_len_before",
+      "draft_tokens",
+      "target_argmax_and_top2_margin",
+      "accept_index, accept_len, accepted_tokens",
+      "kv_committed_len_before_and_after",
+      "scheduler_emitted_tokens",
+      "serialized_response_output_ids"
+    ],
+    "assertion": "For each rid and verify step, accepted tokens must equal that row's target-verified chain, scheduler emission must equal accepted tokens, KV committed-length delta must equal accept_len, and padded rows must never enter accepted or serialized output.",
+    "discrimination": {
+      "target_argmax_first_differs": "target numerical or deterministic target-path difference; identical A/A repetition plus margin separates them",
+      "target_argmax_expected_but_accept_or_emit_differs": "verification, request ownership, or settlement defect",
+      "runtime_emit_expected_but_response_differs": "observer or response serialization defect",
+      "target_verified_and_settled_diff_repeats": "target_verified_semantic_failure"
+    }
+  },
+  "source_identity": {
+    "commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "full_checkout_head_match": true,
+    "additional_source_sha256": {
+      "ngram_info.py": "48ee9b9e6880fa4ec11e2dbe491fcd24490b05d871660d713bf9092c9c4ea95b",
+      "ngram_corpus.py": "7b434d5ccc5158df4bafe4b95dbc2e277020132d335f2e79ebf56489633bf874",
+      "eagle_utils.py": "ee10d53d6bb583fbed6400ae36697fc6b80a58a11ec7db7a3306f36d035ea4ff",
+      "spec_utils.py": "017b0a92a3f66382a1bf7212b96fc073d1f8748714764ca6090cd4e46b19e3cc",
+      "scheduler.py": "4f9f52ab2c3679286f93d76b71c446b4b00c374831d289129ae52613a6618edb",
+      "overlap_utils.py": "ce7ee7982d0ac5efb11245550abc033cb5e5d7f61e4e1b042fa20161e24b6a3c",
+      "schedule_batch.py": "318db41d8b0c7ab114dd8f64b7e5c7c87540dc09d585ca283d1b037573c4136e",
+      "triton_backend.py": "c09161c77e4586064c0d70c5dda4f943378510a4facb187590ac31e17b0e6e73",
+      "cuda_graph_buffer_registry.py": "1eb3c6e9d678fd42a5ccf2710e3f18be20e456948419d9df39c616b9d16eae14"
+    }
+  },
+  "resources": {
+    "provider_or_gpu_used": false,
+    "provider_spend_usd": 0.0,
+    "packed_mask_project_inspected": false
+  }
+}

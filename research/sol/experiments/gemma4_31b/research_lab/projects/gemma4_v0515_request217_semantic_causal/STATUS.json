@@ -1,8 +1,22 @@
 {
   "active_session": null,
-  "actual_spend_usd": 0.0,
-  "allocation_limit": 0,
-  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.184778,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 1.5,
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "bench_need": {
+    "accelerator": "nvidia-h200-sxm",
+    "count": 1,
+    "minimum_hbm_gb": 120,
+    "minimum_safe_claimed_minutes": 35,
+    "resident_state": "Digest-pinned official v0.5.15 image, exact checkpoint, packet-compatible runtime, and retained caches."
+  },
+  "binding_verification": {
+    "director_execution_binding_sha256": "5752f1e43bbdffc5c255a60e224a3c1b2d1bbafe202b3bb627d06607f27bd65c",
+    "packet_manifest_sha256": "f9eb015f1d60ee3f3af5fd2f3ce53dbbb1b204cda6dc495e7502bf0c09217681",
+    "verified_at_utc": "2026-07-25T07:08:51Z",
+    "verified_manifest_entries": 18
+  },
   "candidate": {
     "classification": "content_addressed_exactness_preserving_runtime_configuration",
     "delta": [
@@ -19,8 +33,9 @@
     "repair_contract": "REPAIR_CANDIDATE.json",
     "repair_contract_sha256": "21e2a5381b7fa70642fe4c0cfdeb542afa9cef7232b4d24b1f98e14d3d2e9ae5"
   },
-  "candidate_sample_consumed": false,
-  "compute_budget": "At most 2 local CPU-hours; no GPU.",
+  "candidate_sample_consumed": true,
+  "compute_budget": "Complete; no GPU claim was made during residual localization.",
+  "director_execution_binding": "DIRECTOR_EXECUTION_BINDING.json",
   "localization": {
     "artifact": "LOCALIZATION.json",
     "artifact_sha256": "6cdd3101ae5ef5378005fad6c9f75603ce1147c7026af1991121fa71f9daa1f1",
@@ -32,12 +47,37 @@
     "measured_token_transition": "51935 x19, then verifier bonus 3055",
     "unmeasured_boundary": "target-verify versus ordinary-decode logits, margin, and exact KV bytes"
   },
-  "next_action": "Director may bind one retained-H200 requests-0-through-217 discriminator using the immutable packet. Restart official v0.5.15 only with the exact decode-attention launch, require every packet gate, and do not replay the rejected 791-request endpoint. This project has no GPU or spend authority.",
-  "priority": 8405,
-  "provider_mutation": "forbidden",
+  "next_action": "Typed none closes this v0.5.15 request-217 semantic-repair route. Do not replay the consumed 218-request discriminator or rejected 791-request endpoint; the director may select compatible retained-H200 reuse or teardown.",
+  "priority": 8425,
+  "provider_mutation": "forbidden_researcher_bench_claim_only",
   "researcher_profile": "deep",
+  "residual_terminal": {
+    "classification": "no_materially_distinct_exactness_preserving_repair_candidate",
+    "mechanical_verification": "RESIDUAL_MECHANICAL_VERIFICATION.json",
+    "mechanical_verification_sha256": "89ee8382fd52299ee45ff91f6359f4a47c9cd953141ddfbbe4407bb9c05a51ef",
+    "result": "typed_none",
+    "terminal": "TYPED_NONE.json",
+    "terminal_sha256": "4212ea6c5b766ff618e46694e18c2f54e00f7f0cda9e551a712577155bc4dc1a"
+  },
+  "spend_basis": {
+    "conservative_total_usd": 0.184778,
+    "components_usd": [
+      0.005146642045180003,
+      0.004050196202596028,
+      0.17558054060141243
+    ],
+    "method": "Upward-rounded sum of the two preserved invalid pre-sample claim exposures and the complete 218-request candidate claim exposure."
+  },
   "status": "complete",
   "storage_budget": "At most 3 GiB project-local.",
-  "summary": "Binding verified and first divergence localized to the target verifier's greedy bonus path, not corpus proposal, normalization, accounting, or observed request ownership. One official decode-attention routing candidate and 218-request discriminator packet are content-addressed and locally verified; GPU effect remains unmeasured.",
-  "wall_clock_budget": "45 minutes."
+  "summary": "Mechanical audit proves the complete decode-attention sample reproduced the prior endpoint's first 218 semantic rows byte-for-byte. Both per-mode backends were Triton, so v0.5.15 never constructed HybridAttnBackend; the speculative-attention-mode flag was inert, and TARGET_VERIFY retained Triton forward_extend. No materially distinct exactness-preserving and economically credible repair remains in scope.",
+  "terminal": {
+    "artifact_root": "artifacts/request217-decode-20260725t072904z",
+    "candidate_sample_consumed": true,
+    "classification": "measured_request217_discriminator",
+    "repair_admitted": false,
+    "terminal": "artifacts/request217-decode-20260725t072904z/retrieved/out/FINAL_TERMINAL.json",
+    "terminal_sha256": "ed726a2f0d7af3305365ee9fba78747d7a31271b763f5f18737375ede7d80e12"
+  },
+  "wall_clock_budget": "Complete."
 }

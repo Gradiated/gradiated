@@ -1,0 +1,52 @@
+{
+  "candidate": null,
+  "classification": "no_materially_distinct_exactness_preserving_repair_candidate",
+  "discriminator_packet": null,
+  "inferred": {
+    "alternate_backend_launch": "not_causal: it would be a backend replacement/sweep and still a multi-token extend path, without evidence that it preserves ordinary-decode logits",
+    "remaining_scientific_boundary": "multi-token TARGET_VERIFY state/attention/numerical dataflow before the greedy verifier bonus",
+    "same_backend_wrapper_patch": "not_materially_distinct: constructing two Triton objects would still call Triton forward_extend for TARGET_VERIFY",
+    "serial_decode_verification": "not_economic: it removes the depth-12 target-transformer amortization that makes native NGRAM competitive and adds proposal/verification overhead to ordinary decode"
+  },
+  "measured": {
+    "candidate_and_prior_first_218_semantics_identical": true,
+    "candidate_sample_consumed": true,
+    "complete_requests": 218,
+    "failures": 0,
+    "first_218_semantics_sha256": "6f4c5542e47fdea3c5acace8670fa1cf8c8094fef8b9b39200733e8f26f3eb1d",
+    "native_ngram_activation_observed": true,
+    "request_217_divergence": {
+      "actual_token": 3055,
+      "bound_token": 51935,
+      "output_token_index": 19
+    }
+  },
+  "mechanical_verification": {
+    "path": "RESIDUAL_MECHANICAL_VERIFICATION.json",
+    "sha256": "89ee8382fd52299ee45ff91f6359f4a47c9cd953141ddfbbe4407bb9c05a51ef"
+  },
+  "next_action": "Close this v0.5.15 request-217 semantic-repair route; no further H200 sample is justified by the bound evidence.",
+  "replay_prohibited": [
+    "request217_decode_attention_semantic_discriminator",
+    "rejected_791_request_endpoint"
+  ],
+  "result": "typed_none",
+  "schema_version": 1,
+  "source_derived": {
+    "causal_chain": [
+      "ServerArgs resolves both explicit per-mode attention backends to triton.",
+      "ModelRunner constructs HybridAttnBackend only when the resolved backend names differ.",
+      "The speculative_attention_mode runtime read that selects a backend is inside HybridAttnBackend.",
+      "Without HybridAttnBackend, TARGET_VERIFY reaches the single Triton backend.",
+      "Base AttentionBackend dispatches every non-DECODE mode, including TARGET_VERIFY, to forward_extend.",
+      "Triton TARGET_VERIFY therefore retains extend_attention_fwd with its tree mask; the flag does not invoke forward_decode or decode_attention_fwd.",
+      "The unchanged execution path explains the byte-identical first-218 semantic trajectory and preserved request-217 verifier-bonus divergence."
+    ],
+    "hybrid_backend_constructed": false,
+    "launch_backend_pair": {
+      "decode": "triton",
+      "prefill": "triton"
+    },
+    "speculative_attention_mode_runtime_routing_activated": false
+  }
+}

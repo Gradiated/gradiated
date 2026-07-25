@@ -1,0 +1,1550 @@
+{
+  "cpu_mapping_oracle": {
+    "classification": "CPU analytical mapping oracle",
+    "command": "python3 analyze_transactions.py --check",
+    "mapping_rows": [
+      {
+        "absolute_position": 0,
+        "generation": 0,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1,
+        "generation": 0,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 0,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 0,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 0,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 0,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 0,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 0,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 0,
+        "generation": 1,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1,
+        "generation": 1,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 1,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 1,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 1,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 1,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 1,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 1,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 0,
+        "generation": 17,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1,
+        "generation": 17,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 17,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 17,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 17,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 17,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 17,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 17,
+        "request_row": -1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 0,
+        "generation": 0,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1,
+        "generation": 0,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 0,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 0,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 0,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 0,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 0,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 0,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 0,
+        "generation": 1,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1,
+        "generation": 1,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 1,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 1,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 1,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 1,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 1,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 1,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 0,
+        "generation": 17,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1,
+        "generation": 17,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 17,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 17,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 17,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 17,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 17,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 17,
+        "request_row": 0,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 0,
+        "generation": 0,
+        "request_row": 1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1,
+        "generation": 0,
+        "request_row": 1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 0,
+        "request_row": 1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 0,
+        "request_row": 1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 0,
+        "request_row": 1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 0,
+        "request_row": 1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 0,
+        "request_row": 1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 0,
+        "request_row": 1,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 0,
+        "generation": 1,
+        "request_row": 1,
+        "ring_position": 0,
+        "valid": true
+      },
+      {
+        "absolute_position": 1,
+        "generation": 1,
+        "request_row": 1,
+        "ring_position": 1,
+        "valid": true
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 1,
+        "request_row": 1,
+        "ring_position": 1022,
+        "valid": true
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 1,
+        "request_row": 1,
+        "ring_position": 1023,
+        "valid": true
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 1,
+        "request_row": 1,
+        "ring_position": 0,
+        "valid": true
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 1,
+        "request_row": 1,
+        "ring_position": 1,
+        "valid": true
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 1,
+        "request_row": 1,
+        "ring_position": 117,
+        "valid": true
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 1,
+        "request_row": 1,
+        "ring_position": 475,
+        "valid": true
+      },
+      {
+        "absolute_position": 0,
+        "generation": 17,
+        "request_row": 1,
+        "ring_position": 0,
+        "valid": true
+      },
+      {
+        "absolute_position": 1,
+        "generation": 17,
+        "request_row": 1,
+        "ring_position": 1,
+        "valid": true
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 17,
+        "request_row": 1,
+        "ring_position": 1022,
+        "valid": true
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 17,
+        "request_row": 1,
+        "ring_position": 1023,
+        "valid": true
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 17,
+        "request_row": 1,
+        "ring_position": 0,
+        "valid": true
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 17,
+        "request_row": 1,
+        "ring_position": 1,
+        "valid": true
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 17,
+        "request_row": 1,
+        "ring_position": 117,
+        "valid": true
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 17,
+        "request_row": 1,
+        "ring_position": 475,
+        "valid": true
+      },
+      {
+        "absolute_position": 0,
+        "generation": 0,
+        "request_row": 31,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1,
+        "generation": 0,
+        "request_row": 31,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 0,
+        "request_row": 31,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 0,
+        "request_row": 31,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 0,
+        "request_row": 31,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 0,
+        "request_row": 31,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 0,
+        "request_row": 31,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 0,
+        "request_row": 31,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 0,
+        "generation": 1,
+        "request_row": 31,
+        "ring_position": 0,
+        "valid": true
+      },
+      {
+        "absolute_position": 1,
+        "generation": 1,
+        "request_row": 31,
+        "ring_position": 1,
+        "valid": true
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 1,
+        "request_row": 31,
+        "ring_position": 1022,
+        "valid": true
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 1,
+        "request_row": 31,
+        "ring_position": 1023,
+        "valid": true
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 1,
+        "request_row": 31,
+        "ring_position": 0,
+        "valid": true
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 1,
+        "request_row": 31,
+        "ring_position": 1,
+        "valid": true
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 1,
+        "request_row": 31,
+        "ring_position": 117,
+        "valid": true
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 1,
+        "request_row": 31,
+        "ring_position": 475,
+        "valid": true
+      },
+      {
+        "absolute_position": 0,
+        "generation": 17,
+        "request_row": 31,
+        "ring_position": 0,
+        "valid": true
+      },
+      {
+        "absolute_position": 1,
+        "generation": 17,
+        "request_row": 31,
+        "ring_position": 1,
+        "valid": true
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 17,
+        "request_row": 31,
+        "ring_position": 1022,
+        "valid": true
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 17,
+        "request_row": 31,
+        "ring_position": 1023,
+        "valid": true
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 17,
+        "request_row": 31,
+        "ring_position": 0,
+        "valid": true
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 17,
+        "request_row": 31,
+        "ring_position": 1,
+        "valid": true
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 17,
+        "request_row": 31,
+        "ring_position": 117,
+        "valid": true
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 17,
+        "request_row": 31,
+        "ring_position": 475,
+        "valid": true
+      },
+      {
+        "absolute_position": 0,
+        "generation": 0,
+        "request_row": 32,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1,
+        "generation": 0,
+        "request_row": 32,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 0,
+        "request_row": 32,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 0,
+        "request_row": 32,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 0,
+        "request_row": 32,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 0,
+        "request_row": 32,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 0,
+        "request_row": 32,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 0,
+        "request_row": 32,
+        "ring_position": -1,
+        "valid": false
+      },
+      {
+        "absolute_position": 0,
+        "generation": 1,
+        "request_row": 32,
+        "ring_position": 0,
+        "valid": true
+      },
+      {
+        "absolute_position": 1,
+        "generation": 1,
+        "request_row": 32,
+        "ring_position": 1,
+        "valid": true
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 1,
+        "request_row": 32,
+        "ring_position": 1022,
+        "valid": true
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 1,
+        "request_row": 32,
+        "ring_position": 1023,
+        "valid": true
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 1,
+        "request_row": 32,
+        "ring_position": 0,
+        "valid": true
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 1,
+        "request_row": 32,
+        "ring_position": 1,
+        "valid": true
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 1,
+        "request_row": 32,
+        "ring_position": 117,
+        "valid": true
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 1,
+        "request_row": 32,
+        "ring_position": 475,
+        "valid": true
+      },
+      {
+        "absolute_position": 0,
+        "generation": 17,
+        "request_row": 32,
+        "ring_position": 0,
+        "valid": true
+      },
+      {
+        "absolute_position": 1,
+        "generation": 17,
+        "request_row": 32,
+        "ring_position": 1,
+        "valid": true
+      },
+      {
+        "absolute_position": 1022,
+        "generation": 17,
+        "request_row": 32,
+        "ring_position": 1022,
+        "valid": true
+      },
+      {
+        "absolute_position": 1023,
+        "generation": 17,
+        "request_row": 32,
+        "ring_position": 1023,
+        "valid": true
+      },
+      {
+        "absolute_position": 1024,
+        "generation": 17,
+        "request_row": 32,
+        "ring_position": 0,
+        "valid": true
+      },
+      {
+        "absolute_position": 1025,
+        "generation": 17,
+        "request_row": 32,
+        "ring_position": 1,
+        "valid": true
+      },
+      {
+        "absolute_position": 4213,
+        "generation": 17,
+        "request_row": 32,
+        "ring_position": 117,
+        "valid": true
+      },
+      {
+        "absolute_position": 4571,
+        "generation": 17,
+        "request_row": 32,
+        "ring_position": 475,
+        "valid": true
+      }
+    ],
+    "oracle_sha256": "240735101720ed59586209007d04b0a4b92dbd557935578d7aa2ff3f82147e24",
+    "padded_and_stale_rule": "request_row<=0 or generation<=0 maps to -1 and must no-op before any K/V address calculation",
+    "payload_invariant_scope": "All valid integer stock slot permutations, because each slot stride is 4,096 bytes and each selected head slice is an aligned 256 bytes. The three schedules are discriminating witnesses, not a claimed reconstruction of live allocator values.",
+    "payload_rows": [
+      {
+        "head": 0,
+        "layout": "stock",
+        "schedule": "initial_contiguous",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 0,
+        "layout": "ring",
+        "schedule": "initial_contiguous",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 1,
+        "layout": "stock",
+        "schedule": "initial_contiguous",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 1,
+        "layout": "ring",
+        "schedule": "initial_contiguous",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 15,
+        "layout": "stock",
+        "schedule": "initial_contiguous",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 15,
+        "layout": "ring",
+        "schedule": "initial_contiguous",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 0,
+        "layout": "stock",
+        "schedule": "chunk_segments",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 0,
+        "layout": "ring",
+        "schedule": "chunk_segments",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 1,
+        "layout": "stock",
+        "schedule": "chunk_segments",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 1,
+        "layout": "ring",
+        "schedule": "chunk_segments",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 15,
+        "layout": "stock",
+        "schedule": "chunk_segments",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 15,
+        "layout": "ring",
+        "schedule": "chunk_segments",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 0,
+        "layout": "stock",
+        "schedule": "recycled_permutation",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 0,
+        "layout": "ring",
+        "schedule": "recycled_permutation",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 1,
+        "layout": "stock",
+        "schedule": "recycled_permutation",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 1,
+        "layout": "ring",
+        "schedule": "recycled_permutation",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 15,
+        "layout": "stock",
+        "schedule": "recycled_permutation",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      },
+      {
+        "head": 15,
+        "layout": "ring",
+        "schedule": "recycled_permutation",
+        "sectors_per_k_or_v": 8184,
+        "transactions_per_k_or_v": 2046
+      }
+    ]
+  },
+  "evidence_labels": {
+    "endpoint_speedup": "not measured and not claimed",
+    "index_sector_counts": "analytical issued-request model; not cache-level or DRAM counters",
+    "live_h100": "not claimed, inspected, signaled, or mutated",
+    "payload_sector_invariance": "analytical and CPU-oracle checked",
+    "request_counts_and_release_groups": "measured trace",
+    "runtime_source_and_geometry": "source-backed/derived"
+  },
+  "historical_separation": {
+    "h100_l2": "The bound H100 L2 result closes persistent capacity residency; this result independently closes payload coalescing and leaves only metadata.",
+    "h200_v0513": "The measured 3.10198225% H200 v0.5.13 ring endpoint is a non-transferable prior. It does not override the H100/v0.5.15 payload-sector invariant or supply missing scheduler events."
+  },
+  "lifecycle_requirements_if_reopened": [
+    {
+      "hazard": "CUDA graph padding",
+      "requirement": "row zero and generation zero map to -1 and no-op before producer or consumer address calculation; captured ring addresses remain stable."
+    },
+    {
+      "hazard": "request reuse and reorder",
+      "requirement": "Use a generation-tagged request-row lease, not batch lane; free atomically invalidates the old generation."
+    },
+    {
+      "hazard": "prefix sharing and restoration",
+      "requirement": "Preserve reference-counted aliasing or copy canonical producer bytes into each owner before access; the trace has a 528-token cacheable common prefix inside release groups."
+    },
+    {
+      "hazard": "NGRAM accepted-KV settlement",
+      "requirement": "Only scheduler-committed accepted tokens advance the ring; rejected draft positions cannot overwrite committed entries."
+    },
+    {
+      "hazard": "five-local/one-global cadence",
+      "requirement": "Only the 50 listed local layers use a ring. Ten global layers retain full paged ownership and canonical buffers."
+    }
+  ],
+  "model_geometry": {
+    "global_layer_ids": [
+      5,
+      11,
+      17,
+      23,
+      29,
+      35,
+      41,
+      47,
+      53,
+      59
+    ],
+    "head_dim": 256,
+    "kv_bytes_per_token_k_plus_v": 8192,
+    "kv_dtype": "fp8_e5m2",
+    "kv_element_bytes": 1,
+    "kv_heads": 16,
+    "kv_row_bytes_one_tensor": 4096,
+    "local_layer_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      6,
+      7,
+      8,
+      9,
+      10,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      19,
+      20,
+      21,
+      22,
+      24,
+      25,
+      26,
+      27,
+      28,
+      30,
+      31,
+      32,
+      33,
+      34,
+      36,
+      37,
+      38,
+      39,
+      40,
+      42,
+      43,
+      44,
+      45,
+      46,
+      48,
+      49,
+      50,
+      51,
+      52,
+      54,
+      55,
+      56,
+      57,
+      58
+    ],
+    "local_layers": 50,
+    "ngram_depth": 12,
+    "page_size": 1,
+    "query_heads": 32,
+    "runtime_prefix_window_tokens": 1023,
+    "semantic_window_tokens": 1024
+  },
+  "release_group_index_alignment": {
+    "12": {
+      "group_size": 12,
+      "index_bytes_per_request": 8184,
+      "sector_counts_by_request_lane": {
+        "256": 6,
+        "257": 6
+      },
+      "sectors_per_one_consumer_stream": 3078,
+      "transaction_counts_by_request_lane": {
+        "64": 1,
+        "65": 11
+      },
+      "transactions_per_one_consumer_stream": 779
+    },
+    "32": {
+      "group_size": 32,
+      "index_bytes_per_request": 8184,
+      "sector_counts_by_request_lane": {
+        "256": 16,
+        "257": 16
+      },
+      "sectors_per_one_consumer_stream": 8208,
+      "transaction_counts_by_request_lane": {
+        "64": 4,
+        "65": 28
+      },
+      "transactions_per_one_consumer_stream": 2076
+    }
+  },
+  "request_geometry": {
+    "completion_tokens": 358,
+    "internal_scheduler_trace_present": false,
+    "missing_internal_fields": [
+      "forward batch membership and request order",
+      "chunked-prefill boundaries",
+      "per-step accepted NGRAM depth",
+      "allocator alloc/free/evict events",
+      "req_to_token and full_to_swa values"
+    ],
+    "prompt_tokens": 4214,
+    "release_group_count": 33,
+    "release_group_size_histogram": {
+      "12": 1,
+      "32": 32
+    },
+    "request_sha256_unique": 1036,
+    "rows": 1036,
+    "total_tokens": 4572
+  },
+  "result": "typed_none",
+  "runtime_identity": {
+    "accelerator": "nvidia-h100-sxm",
+    "gpu_used": false,
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "sglang_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6"
+  },
+  "schema_version": 1,
+  "smallest_future_h100_falsifier": {
+    "authorized_now": false,
+    "checkpoint_free": true,
+    "consumer": "Pinned v0.5.15 extend_attention_fwd in a fresh process, stock window_kv_indices versus one direct packed-row ring variant; consume full output against the stock CPU/high-precision oracle.",
+    "falsifies_typed_none_if": "The direct ring reduces payload-attributed L2/DRAM sectors, not only index metadata, or produces a stable consumer latency gain larger than the 1.55% local requested-sector ceiling with exact outputs and no hidden representation change.",
+    "minimum_counters": [
+      "l1tex__t_sectors_pipe_lsu_mem_global_op_ld.sum",
+      "lts__t_sectors_op_read.sum",
+      "dram__sectors_read.sum"
+    ],
+    "profiler_off_first": "Warm both paths, then report CUDA-event median and p95 with exact output equality or bounded error and candidate-path identity.",
+    "shape": {
+      "batch": 32,
+      "head_dim": 256,
+      "kv_dtype": "fp8_e5m2",
+      "kv_heads": 16,
+      "local_layers": 1,
+      "page_size": 1,
+      "prefix_tokens": 1023,
+      "query_heads": 32,
+      "query_tokens_per_request": 12
+    }
+  },
+  "source_binding": {
+    "auxiliary": {
+      "accelerator_inventory": {
+        "bytes": 62323,
+        "path": "research/factory/data/accelerator_inventory.json",
+        "sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8"
+      },
+      "analysis_script": {
+        "bytes": 35179,
+        "path": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_local_kv_transaction_coalescing/analyze_transactions.py",
+        "sha256": "63a633f8f308924e527174b594dddd1b6b67a1e1da2eb508e3f3d06bd5658ccc"
+      },
+      "checkpoint_config": {
+        "bytes": 4621,
+        "path": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/inputs/checkpoint/config.json",
+        "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+      },
+      "exact_semantic_rows": {
+        "bytes": 3126546,
+        "path": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/inputs/exact_semantic_rows.jsonl",
+        "sha256": "630d05bd860d1dd22c3e35ba2d8f792afc5051f0c68e0a74a9deda8140a02b36"
+      },
+      "h100_l2_result": {
+        "bytes": 24592,
+        "path": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_local_kv_l2_residency/CAUSAL_RESULT.json",
+        "sha256": "df3ea75c55679f6f676ba12383b7c829061141e91373bb6a0a64c560b87c2f37"
+      },
+      "h200_ring_terminal": {
+        "bytes": 81664,
+        "path": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_swa_contiguous_ring_cache/artifacts/RING_PRODUCER_BINDING_FINAL_TERMINAL.json",
+        "sha256": "c5d6e7093dd717239471133cfa7280afd4c7bb56bc26911a7c282d7b5287b8d6"
+      },
+      "packet_manifest": {
+        "bytes": 3008,
+        "path": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/PACKET_MANIFEST.json",
+        "sha256": "8127631191fe1afc47e718502ff61980b1e51adb8ac43c2f28e140ff506173bd"
+      },
+      "requests": {
+        "bytes": 506544,
+        "path": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/inputs/requests.jsonl",
+        "sha256": "10e7edacaa194fd0f43b3a3c38f7d91cec0ceba22df8e08e3b5897b174346135"
+      },
+      "test_script": {
+        "bytes": 1851,
+        "path": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_local_kv_transaction_coalescing/test_analyze_transactions.py",
+        "sha256": "83c4ed894f82c2c27708f902fb1775ecb1d96dbfb426b5e91dd7ab03fbefccac"
+      }
+    },
+    "runtime_sources": {
+      "allocation_call_sites": {
+        "bytes": 25699,
+        "git_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+        "git_path": "python/sglang/srt/mem_cache/common.py",
+        "required_symbols": [
+          "if _alloc_page_size(batch) == 1:",
+          "alloc_token_slots"
+        ],
+        "sha256": "2dce58dd6f323208e34801e044ae087d6d032464efd01342c604efea3de156df",
+        "workspace_path": ".agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/mem_cache/common.py"
+      },
+      "decode_consumer": {
+        "bytes": 28042,
+        "git_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+        "git_path": "python/sglang/srt/layers/attention/triton_ops/decode_attention.py",
+        "required_symbols": [
+          "kv_loc = tl.load",
+          "BLOCK_H = 16",
+          "decode_attention_fwd_grouped"
+        ],
+        "sha256": "4ecf5d81f06fcc8aa36479541ff3857a1416e2d8def2c5fa818808148febaa75",
+        "workspace_path": ".agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/layers/attention/triton_ops/decode_attention.py"
+      },
+      "extend_consumer": {
+        "bytes": 39456,
+        "git_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+        "git_path": "python/sglang/srt/layers/attention/triton_ops/extend_attention.py",
+        "required_symbols": [
+          "offs_kv_loc = tl.load",
+          "BLOCK_M, BLOCK_N = (64, 64)",
+          "grid = (batch_size, head_num"
+        ],
+        "sha256": "2f4a934625b38d2e797a92c5966270c4d36ebfce9dc0093fb83bf18b140e9f28",
+        "workspace_path": ".agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/layers/attention/triton_ops/extend_attention.py"
+      },
+      "gemma4_model": {
+        "bytes": 56753,
+        "git_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+        "git_path": "python/sglang/srt/models/gemma4_causal.py",
+        "required_symbols": [
+          "def get_attention_sliding_window_size",
+          "return config.sliding_window - 1"
+        ],
+        "sha256": "9b7fccf2f35a57aa16de0fbc3abc0ca84b5fe34431535e26eea13a27b2cfda2e",
+        "workspace_path": ".agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/models/gemma4_causal.py"
+      },
+      "kv_indices_producer": {
+        "bytes": 5138,
+        "git_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+        "git_path": "python/sglang/srt/layers/attention/triton_ops/kv_indices.py",
+        "required_symbols": [
+          "create_flashinfer_kv_indices_triton"
+        ],
+        "sha256": "ab8bd0fc5e2aa00a86b242368e2e701d660df938b72e950226294fa5594b3c48",
+        "workspace_path": ".agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/layers/attention/triton_ops/kv_indices.py"
+      },
+      "memory_pool": {
+        "bytes": 151407,
+        "git_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+        "git_path": "python/sglang/srt/mem_cache/memory_pool.py",
+        "required_symbols": [
+          "class ReqToTokenPool",
+          "dtype=torch.int32"
+        ],
+        "sha256": "7e585c4c5870ac84a048069e61bfd9892f2c638b2d89964e927d2c554f3f951e",
+        "workspace_path": ".agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/mem_cache/memory_pool.py"
+      },
+      "swa_allocator": {
+        "bytes": 17311,
+        "git_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+        "git_path": "python/sglang/srt/mem_cache/allocator/swa.py",
+        "required_symbols": [
+          "class SWATokenToKVPoolAllocator",
+          "full_to_swa_index_mapping"
+        ],
+        "sha256": "43c41e269dd3d8eefd3131c457aff5c0458c37524e1f23242b25e21ceb16429b",
+        "workspace_path": ".agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/mem_cache/allocator/swa.py"
+      },
+      "swa_pool": {
+        "bytes": 10499,
+        "git_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+        "git_path": "python/sglang/srt/mem_cache/swa_memory_pool.py",
+        "required_symbols": [
+          "class SWAKVPool",
+          "translate_loc_from_full_to_swa",
+          "set_kv_buffer"
+        ],
+        "sha256": "1a43bf0ef33319d3a8094026b0457c7282c9cd650acf60d335724ee1dd6043fd",
+        "workspace_path": ".agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/mem_cache/swa_memory_pool.py"
+      },
+      "token_allocator": {
+        "bytes": 2773,
+        "git_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+        "git_path": "python/sglang/srt/mem_cache/allocator/token.py",
+        "required_symbols": [
+          "class TokenToKVPoolAllocator",
+          "select_index = self.free_pages[:need_size]",
+          "self.free_pages = torch.cat"
+        ],
+        "sha256": "8e9c936a0e51307eae876dcf175ed91f6e505a77b2c8a3a2e3f390d0440916a9",
+        "workspace_path": ".agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/mem_cache/allocator/token.py"
+      },
+      "triton_backend": {
+        "bytes": 80638,
+        "git_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+        "git_path": "python/sglang/srt/layers/attention/triton_backend.py",
+        "required_symbols": [
+          "def update_sliding_window_buffer",
+          "dtype=torch.int64",
+          "forward_extend",
+          "forward_decode"
+        ],
+        "sha256": "c09161c77e4586064c0d70c5dda4f943378510a4facb187590ac31e17b0e6e73",
+        "workspace_path": ".agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/layers/attention/triton_backend.py"
+      }
+    }
+  },
+  "source_line_numbers": {
+    "allocation_call_sites": {
+      "alloc_token_slots": 269,
+      "if _alloc_page_size(batch) == 1:": 481
+    },
+    "decode_consumer": {
+      "BLOCK_H = 16": 599,
+      "decode_attention_fwd_grouped": 841,
+      "kv_loc = tl.load": 170
+    },
+    "extend_consumer": {
+      "BLOCK_M, BLOCK_N = (64, 64)": 75,
+      "grid = (batch_size, head_num": 684,
+      "offs_kv_loc = tl.load": 394
+    },
+    "gemma4_model": {
+      "def get_attention_sliding_window_size": 70,
+      "return config.sliding_window - 1": 71
+    },
+    "kv_indices_producer": {
+      "create_flashinfer_kv_indices_triton": 9
+    },
+    "memory_pool": {
+      "class ReqToTokenPool": 242,
+      "dtype=torch.int32": 266
+    },
+    "swa_allocator": {
+      "class SWATokenToKVPoolAllocator": 20,
+      "full_to_swa_index_mapping": 82
+    },
+    "swa_pool": {
+      "class SWAKVPool": 19,
+      "set_kv_buffer": 153,
+      "translate_loc_from_full_to_swa": 148
+    },
+    "token_allocator": {
+      "class TokenToKVPoolAllocator": 28,
+      "select_index = self.free_pages[:need_size]": 62,
+      "self.free_pages = torch.cat": 74
+    },
+    "triton_backend": {
+      "def update_sliding_window_buffer": 1953,
+      "dtype=torch.int64": 271,
+      "forward_decode": 1641,
+      "forward_extend": 1201
+    }
+  },
+  "source_reconstruction": {
+    "address_schedule": "Initial allocation order and free policy are source-complete, but the exact realized sequence is a function of scheduler batch membership, DCP chunks, radix eviction, accepted draft depth, and free timing. Those events are absent from the bound trace. The physical conclusion does not assume a replacement synthetic schedule: it quantifies all integer slot permutations.",
+    "alignment": "Each K or V slot row is 16*256=4096 E5M2 bytes. Selecting any head adds a 256-byte-aligned offset. Every 256-byte head slice therefore occupies exactly eight 32-byte sectors and two 128-byte transactions regardless of the slot integer.",
+    "decode_consumer": "GQA decode selects the grouped kernel. BLOCK_H=16 groups the two query heads per KV head; with 16 KV heads and eight configured splits, the split CTAs collectively consume each request's index stream 16 times and request each KV-head payload once.",
+    "extend_consumer": "Hopper head_dim 256 selects BLOCK_M=64, BLOCK_N=64, eight warps. The grid has one CTA per request, query head, and M tile. A 12-query NGRAM target-verification block fits one M tile, so each of 32 query-head CTAs loads one int64 index stream; paired query heads request the same KV-head payload.",
+    "metadata_producer": "update_sliding_window_buffer gathers the last min(seq_len,1023) int32 req_to_token entries into an int64 window_kv_indices buffer and translates them through the int64 full_to_swa map.",
+    "ownership": "ReqToTokenPool is int32 [request_row, logical_position]. At page size one, common.alloc_for_extend/decode calls the token allocator, which slices the head of free_pages; frees append or enter release_pages depending on need_sort. SWA allocation pairs a full slot with a separately allocated SWA slot in an int64 full_to_swa mapping.",
+    "producer": "Gemma4Attention sends canonical K/V through TritonAttnBackend._set_kv_buffer. SWAKVPool selects the local layer buffer and MHATokenToKVPool stores E5M2 at [swa_slot, kv_head, head_dim]."
+  },
+  "transaction_model": {
+    "common_traffic_excluded": "Q/O, softmax intermediates, kv_indptr, sequence lengths, masks, global layers, linears, scheduler, and HTTP work are unchanged.",
+    "counting_boundary": "Global-load request sectors and 128-byte address regions before cache-hit suppression. Payload counts include kernel-requested GQA duplication separately from compulsory unique payload.",
+    "ideal_ring_metadata": "An intentionally optimistic packed 64-bit (request-generation,row/start) scalar per consumer stream; no per-token index array.",
+    "phases": [
+      {
+        "compulsory_unique_payload_bytes": 13023166464000,
+        "consumer_streams": 49728000,
+        "ideal_request_owned_ring": {
+          "metadata_sectors_32b": 49728000,
+          "metadata_transactions_128b": 49728000,
+          "packed_metadata_requested_bytes": 397824000,
+          "payload_sectors_32b": 813947904000,
+          "payload_transactions_128b": 203486976000,
+          "total_sectors_32b": 813997632000,
+          "total_transactions_128b": 203536704000
+        },
+        "index_streams_per_request_layer_step": 32,
+        "kernel_requested_payload_bytes": 26046332928000,
+        "name": "target_verify_ideal_depth_12_lower_step_bound",
+        "payload_request_multiplier": 2,
+        "predicted_reduction": {
+          "fraction_of_stock_requested_sectors": 0.015368883274684953,
+          "fraction_of_stock_requested_transactions": 0.015366224678238106,
+          "metadata_sectors_32b": 12705504000,
+          "metadata_transactions_128b": 3176400000,
+          "payload_bytes": 0,
+          "payload_sectors_32b": 0,
+          "payload_transactions_128b": 0
+        },
+        "producer_metadata_bytes": {
+          "ideal_ring_packed_request_generation": 248640,
+          "scope": "once per model forward, not once per layer",
+          "stock_eager_temporary_upper": 1653331680,
+          "stock_source_minimum": 635896800
+        },
+        "request_layer_steps": 1554000,
+        "steps_per_request": 30,
+        "stock": {
+          "index_requested_bytes": 406973952000,
+          "index_sectors_32b": 12755232000,
+          "index_transactions_128b": 3226128000,
+          "payload_sectors_32b": 813947904000,
+          "payload_transactions_128b": 203486976000,
+          "total_sectors_32b": 826703136000,
+          "total_transactions_128b": 206713104000
+        }
+      },
+      {
+        "compulsory_unique_payload_bytes": 155409786470400,
+        "consumer_streams": 593420800,
+        "ideal_request_owned_ring": {
+          "metadata_sectors_32b": 593420800,
+          "metadata_transactions_128b": 593420800,
+          "packed_metadata_requested_bytes": 4747366400,
+          "payload_sectors_32b": 9713111654400,
+          "payload_transactions_128b": 2428277913600,
+          "total_sectors_32b": 9713705075200,
+          "total_transactions_128b": 2428871334400
+        },
+        "index_streams_per_request_layer_step": 32,
+        "kernel_requested_payload_bytes": 310819572940800,
+        "name": "target_verify_one_accepted_token_upper_step_bound",
+        "payload_request_multiplier": 2,
+        "predicted_reduction": {
+          "fraction_of_stock_requested_sectors": 0.015368883274684953,
+          "fraction_of_stock_requested_transactions": 0.015366224678238106,
+          "metadata_sectors_32b": 151619014400,
+          "metadata_transactions_128b": 37905040000,
+          "payload_bytes": 0,
+          "payload_sectors_32b": 0,
+          "payload_transactions_128b": 0
+        },
+        "producer_metadata_bytes": {
+          "ideal_ring_packed_request_generation": 2967104,
+          "scope": "once per model forward, not once per layer",
+          "stock_eager_temporary_upper": 19729758048,
+          "stock_source_minimum": 7588368480
+        },
+        "request_layer_steps": 18544400,
+        "steps_per_request": 358,
+        "stock": {
+          "index_requested_bytes": 4856555827200,
+          "index_sectors_32b": 152212435200,
+          "index_transactions_128b": 38498460800,
+          "payload_sectors_32b": 9713111654400,
+          "payload_transactions_128b": 2428277913600,
+          "total_sectors_32b": 9865324089600,
+          "total_transactions_128b": 2466776374400
+        }
+      },
+      {
+        "compulsory_unique_payload_bytes": 155409786470400,
+        "consumer_streams": 296710400,
+        "ideal_request_owned_ring": {
+          "metadata_sectors_32b": 296710400,
+          "metadata_transactions_128b": 296710400,
+          "packed_metadata_requested_bytes": 2373683200,
+          "payload_sectors_32b": 4856555827200,
+          "payload_transactions_128b": 1214138956800,
+          "total_sectors_32b": 4856852537600,
+          "total_transactions_128b": 1214435667200
+        },
+        "index_streams_per_request_layer_step": 16,
+        "kernel_requested_payload_bytes": 155409786470400,
+        "name": "stock_grouped_decode_no_spec_reference",
+        "payload_request_multiplier": 1,
+        "predicted_reduction": {
+          "fraction_of_stock_requested_sectors": 0.015368883274684953,
+          "fraction_of_stock_requested_transactions": 0.015366224678238106,
+          "metadata_sectors_32b": 75809507200,
+          "metadata_transactions_128b": 18952520000,
+          "payload_bytes": 0,
+          "payload_sectors_32b": 0,
+          "payload_transactions_128b": 0
+        },
+        "producer_metadata_bytes": {
+          "ideal_ring_packed_request_generation": 2967104,
+          "scope": "once per model forward, not once per layer",
+          "stock_eager_temporary_upper": 19729758048,
+          "stock_source_minimum": 7588368480
+        },
+        "request_layer_steps": 18544400,
+        "steps_per_request": 358,
+        "stock": {
+          "index_requested_bytes": 2428277913600,
+          "index_sectors_32b": 76106217600,
+          "index_transactions_128b": 19249230400,
+          "payload_sectors_32b": 4856555827200,
+          "payload_transactions_128b": 1214138956800,
+          "total_sectors_32b": 4932662044800,
+          "total_transactions_128b": 1233388187200
+        }
+      }
+    ]
+  },
+  "typed_none": {
+    "candidate": null,
+    "decision": "Do not nominate a v0.5.15 H100 ring implementation from this evidence. Stock allocator fragmentation cannot add a K/V payload sector or 128-byte transaction at the bound 256-byte head slice; the ideal ring only deletes index/mapping metadata.",
+    "independent_reasons": [
+      "The stock and ring payload sector/transaction counts are identical for every valid realized allocator permutation.",
+      "The remaining ideal reduction is metadata-only, at most 1.536888% of local consumer requested sectors before cache hits and before unrelated endpoint work.",
+      "The 1,036-row trace has client/release timing and token totals but no internal batching, chunk, acceptance, allocator, or req_to_token events, so one exact live slot sequence cannot be reconstructed without new instrumentation.",
+      "Prefix aliasing and accepted-KV settlement therefore cannot be proven source-complete for a request-owned ring from this trace alone."
+    ],
+    "type": "payload_transactions_are_permutation_invariant_and_only_metadata_reduction_remains"
+  },
+  "whole_request_relevance": {
+    "classification": "analytical upper bound, not endpoint speedup",
+    "local_consumer_requested_sector_upper_fraction": 0.015368883274684953,
+    "local_consumer_requested_transaction_upper_fraction": 0.015366224678238106,
+    "strict_endpoint_lower_fraction": 0.0,
+    "upper_scope": "Exact 1,036 rows and exact release-group alignment, completion steady-window bounds only. Prefill is omitted because the trace does not contain its internal DCP chunks; adding prefill and unchanged endpoint work can only dilute this metadata fraction.",
+    "why_lower_is_zero": "The model has no H100 cache counters or endpoint critical-path share; all deleted index sectors may hit on chip and endpoint work outside the local consumer is positive."
+  }
+}

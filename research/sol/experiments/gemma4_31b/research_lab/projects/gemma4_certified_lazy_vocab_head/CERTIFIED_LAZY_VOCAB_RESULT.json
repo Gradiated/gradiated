@@ -1,0 +1,65 @@
+{
+  "actual_spend_usd": 0.0,
+  "artifacts": {
+    "executable": "certified_lazy_vocab_discriminator.py",
+    "executable_sha256": "74ca37c0cf39523981b46a83183a3df41493ba55af7010fcc070bcef2a66e104",
+    "raw_discriminator": "DISCRIMINATOR_RESULT.json",
+    "raw_discriminator_sha256": "abde4d8668581f6f581544448a84ff925587e9f68f5bfa9c1f87fc0bc3f9f7d9"
+  },
+  "checks": {
+    "all_source_hashes_match": true,
+    "all_source_patterns_present": true,
+    "break_even_below_measured_acceptance_motivation": true,
+    "clustered_has_certified_and_fallback_rows": true,
+    "clustered_token_mismatches_zero": true,
+    "conservative_positive_case_exists": true,
+    "cross_block_tie_falls_back": true,
+    "diffuse_token_mismatches_zero": true,
+    "greedy_rng_unchanged": true,
+    "sampling_tokens_and_rng_equal": true
+  },
+  "classification": "source_bound_cpu_equivalence_and_analytical_h200_component_candidate",
+  "conservative_h200_gate": {
+    "break_even_real_row_certificate_rate": 0.4733361287714464,
+    "claim_scope": "analytical component admission only",
+    "measured_acceptance_motivation_rate": 0.8887333333333333,
+    "positive_case": {
+      "certificate_rate": 0.5,
+      "change_vs_strongest_dense_ms": -0.11666156498300584,
+      "conservative_component_ms": 4.066314204059963,
+      "fractional_change_vs_strongest_dense": -0.027889610512780272,
+      "positive": true
+    },
+    "real_weight_certificate_rate": "unmeasured",
+    "strongest_measured_dense_baseline_ms": 4.182975769042969
+  },
+  "decision": "The exact c32 workload does not require a partition function: it is source-bound to greedy argmax. Admit the certified proposal-block consumer to a separate real-weight H200 component discriminator, while retaining unconditional stock fallback for sampling, logprobs, vocabulary mutations, ties, and interval overlap.",
+  "endpoint_run": false,
+  "gpu_claimed": false,
+  "pass": true,
+  "project": "gemma4_certified_lazy_vocab_head",
+  "provider_mutation": false,
+  "quality": {
+    "greedy_rng_state_unchanged": true,
+    "sampling_rng_state_equal": true,
+    "sampling_tokens_equal": true,
+    "ties_fall_back": true,
+    "token_mismatches": 0
+  },
+  "required_next_measurement": {
+    "authorization": "separate director-authorized resident H200 component run",
+    "endpoint_claim_authorized": false,
+    "falsifiers": [
+      "any token, accepted-prefix, row-order, or RNG mismatch",
+      "real-row certificate rate at or below the analytical break-even gate",
+      "measured graph-safe component median not below 4.182975769042969 ms",
+      "additional immutable residency does not fit the resident endpoint"
+    ],
+    "inputs": [
+      "exact immutable BF16 tied weight eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+      "scope-matched 384-row verifier hidden states and draft proposals"
+    ]
+  },
+  "result": "source_complete_candidate",
+  "schema_version": 1
+}

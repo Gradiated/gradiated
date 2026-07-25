@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_certified_lazy_vocab_head",
+  "status": "complete",
+  "priority": 8530,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.0,
+  "historical_actual_spend_usd": 0.0,
+  "active_session": null,
+  "allocation_limit": 1,
+  "summary": "CPU/source discriminator completed as source_complete_candidate: exact greedy argmax can use a strict proposal-block certificate with stock fallback; sampling and modified-logit consumers remain on the stock path.",
+  "next_action": "Stop this cycle. A director may separately authorize one exact real-weight H200 component discriminator to measure the certificate rate and graph-safe median; no endpoint claim is authorized.",
+  "decision": "source_complete_candidate",
+  "hypothesis": "A static hierarchy over Gemma's immutable tied output weights plus exact certification or lazy rejection can avoid most dense vocabulary evaluation on high-acceptance speculative rows, with stock fallback and positive net H200 economics.",
+  "wall_clock_budget": "At most 90 minutes.",
+  "compute_budget": "CPU and source analysis only; no accelerator claim.",
+  "storage_budget": "At most 2 GiB of new durable artifacts.",
+  "provider_mutation": "forbidden",
+  "terminal_artifact": "CERTIFIED_LAZY_VOCAB_RESULT.json",
+  "terminal": {
+    "path": "CERTIFIED_LAZY_VOCAB_RESULT.json",
+    "sha256": "c4918e00be2225eb326786e3b7975cc8d23a98c5bc0c0c16585b75a742e82210",
+    "result": "source_complete_candidate",
+    "pass": true,
+    "token_mismatches": 0,
+    "gpu_claimed": false,
+    "endpoint_run": false
+  },
+  "evidence": {
+    "executable": "certified_lazy_vocab_discriminator.py",
+    "executable_sha256": "74ca37c0cf39523981b46a83183a3df41493ba55af7010fcc070bcef2a66e104",
+    "raw_result": "DISCRIMINATOR_RESULT.json",
+    "raw_result_sha256": "abde4d8668581f6f581544448a84ff925587e9f68f5bfa9c1f87fc0bc3f9f7d9",
+    "synthetic_certificate_rate": 0.796875,
+    "analytical_break_even_real_row_certificate_rate": 0.4733361287714464,
+    "strongest_measured_dense_component_median_ms": 4.182975769042969,
+    "real_weight_certificate_rate": "unmeasured"
+  },
+  "stop_rules": [
+    "Stop after a typed source_complete_candidate or mechanism_falsified terminal.",
+    "Return mechanism_falsified if exact stock semantics require a full partition function and no mathematically exact alternative consumer removes that dependency.",
+    "Do not request GPU spend, run an endpoint, weaken exact token or RNG equivalence, or substitute an approximate top-k method."
+  ]
+}

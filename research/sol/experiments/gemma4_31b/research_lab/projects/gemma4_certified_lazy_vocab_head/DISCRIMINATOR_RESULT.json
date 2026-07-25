@@ -1,0 +1,406 @@
+{
+  "algorithm": {
+    "certificate": "evaluate the proposal's complete block; require the proposal to be its stable winner and require its strict BF16-and-softcap-widened lower score to exceed every other block's widened Cauchy-Schwarz upper bound",
+    "exactness": "a certified token is forced to be the stable global argmax after the stock output boundary; every inconclusive, tied, changed-weight, unvalidated-softcap, or unsupported consumer uses stock",
+    "fallback": "device-compact every unresolved row and compute stock-equivalent stable dense argmax without materializing the FP32 logits matrix",
+    "index": "1024 static 256-token blocks over the immutable tied BF16 weight; FP32 centers, upward-rounded Euclidean radii, token-to-block map, and cluster-ordered weight copy",
+    "name": "proposal-block MIPS certificate with stock fallback",
+    "row_order": "request-major/depth-minor indices remain unchanged; resolved and fallback tokens are scattered back to their original row slots before the unchanged verify_tree_greedy consumer",
+    "scope": "all-greedy, no-logprob, no-processor, no-penalty, no-bias, no-grammar NGRAM verifier batches"
+  },
+  "checks": {
+    "all_source_hashes_match": true,
+    "all_source_patterns_present": true,
+    "break_even_below_measured_acceptance_motivation": true,
+    "clustered_has_certified_and_fallback_rows": true,
+    "clustered_token_mismatches_zero": true,
+    "conservative_positive_case_exists": true,
+    "cross_block_tie_falls_back": true,
+    "diffuse_token_mismatches_zero": true,
+    "greedy_rng_unchanged": true,
+    "sampling_tokens_and_rng_equal": true
+  },
+  "consumer_trace": [
+    {
+      "candidate_route": "proposal certificate, else stock stable argmax",
+      "consumer": "greedy NGRAM draft acceptance",
+      "label": "source_bound",
+      "minimum_information": "stable exact argmax token for each target verifier row reachable by verify_tree_greedy",
+      "partition_function_required": false,
+      "rng_required": false
+    },
+    {
+      "candidate_route": "certified rows stay lazy; unresolved rows are device-compacted and scanned by fused stock-equivalent dense argmax",
+      "consumer": "greedy rejection and bonus token",
+      "label": "source_bound_and_derived",
+      "minimum_information": "stable exact target argmax at the first rejected edge and the final bonus row; the full logit vector is not observed",
+      "partition_function_required": false,
+      "rng_required": false
+    },
+    {
+      "candidate_route": "whole-batch stock fallback before candidate RNG",
+      "consumer": "non-greedy NGRAM rejection and final sampling",
+      "label": "source_bound",
+      "minimum_information": "full temperature-scaled softmax distribution, top-k/top-p renormalization, per-candidate rejection coins, and one final coin",
+      "partition_function_required": true,
+      "rng_required": true
+    },
+    {
+      "candidate_route": "stock fallback",
+      "consumer": "return logprob or top logprobs",
+      "label": "source_bound",
+      "minimum_information": "full logsumexp normalization and requested ranks",
+      "partition_function_required": true,
+      "rng_required": false
+    },
+    {
+      "candidate_route": "stock fallback; the static raw-weight certificate is invalid after row-dependent vocabulary mutation",
+      "consumer": "custom processor, penalties, logit bias, or grammar",
+      "label": "source_bound_and_analytical",
+      "minimum_information": "argmax or distribution after the exact mutation",
+      "partition_function_required": "depends on sampling mode",
+      "rng_required": "depends on sampling mode"
+    },
+    {
+      "candidate_route": "certify only after BF16 output rounding and outward bounds through the identical fused softcap; any possible finite-precision tie falls back, while sampling/logprob always use stock logits",
+      "consumer": "Gemma final-logit softcap",
+      "label": "analytical",
+      "minimum_information": "ordering only for greedy",
+      "partition_function_required": false,
+      "rng_required": false
+    }
+  ],
+  "cpu_reference": {
+    "clustered_geometry": {
+      "certificate_rate": 0.796875,
+      "certified_rows": 204,
+      "fallback_rows": 52,
+      "geometry": {
+        "block_size": 16,
+        "blocks": 32,
+        "dimension": 64,
+        "rows": 256
+      },
+      "intentionally_wrong_proposals": 52,
+      "label": "synthetic",
+      "minimum_certified_margin": 8.68640624333035,
+      "reasons": {
+        "interval_overlap": 4,
+        "proposal_not_stable_local_argmax": 48,
+        "strict_interval_separation": 204
+      },
+      "seed": 20260725,
+      "token_mismatches": 0
+    },
+    "falsifiers": {
+      "cross_block_tie": {
+        "candidate": 0,
+        "certificate_reason": "interval_overlap",
+        "certified": false,
+        "pass": true,
+        "proposal": 2,
+        "stable_reference": 0
+      },
+      "diffuse_geometry": {
+        "certificate_rate": 0.0,
+        "certified_rows": 0,
+        "expected_behavior": "low certification is safe because every overlap falls back",
+        "rows": 96,
+        "token_mismatches": 0
+      },
+      "label": "synthetic"
+    },
+    "rng_equivalence": {
+      "greedy_rng_state_unchanged": true,
+      "label": "synthetic",
+      "sampling_draws": 128,
+      "sampling_rng_state_equal": true,
+      "sampling_route": "stock fallback before any candidate RNG draw",
+      "sampling_tokens_equal": true
+    }
+  },
+  "experiment": "certified_lazy_vocab_cpu_source_discriminator",
+  "h200_component_bound": {
+    "compute": {
+      "center_flops": 4227858432,
+      "certificate_block_flops": 1056964608,
+      "fallback_flops_scale": "linearly with unresolved rows after compaction",
+      "full_dense_fallback_flops": 1082331758592,
+      "reduction": "one stable argmax reduction per evaluated proposal block and one fused stable argmax reduction over each unresolved dense row"
+    },
+    "conservative_envelope": {
+      "assumed_compute_fraction": 0.25,
+      "assumed_hbm_fraction": 0.5,
+      "break_even_real_row_certificate_rate": 0.4733361287714464,
+      "fixed_launch_reduction_compaction_ms": 0.25,
+      "full_unresolved_compute_time_ms": 4.3752673414532595,
+      "interpretation": "The sum-of-traffic-and-compute envelope beats the strongest measured graph-safe dense component once the real-row certificate rate exceeds the break-even rate. This is a component admission bound, not an H200 measurement or endpoint transfer claim.",
+      "sensitivity": [
+        {
+          "certificate_rate": 0.0,
+          "change_vs_strongest_dense_ms": 2.070972105743624,
+          "conservative_component_ms": 6.253947874786593,
+          "fractional_change_vs_strongest_dense": 0.495095410561617,
+          "positive": false
+        },
+        {
+          "certificate_rate": 0.25,
+          "change_vs_strongest_dense_ms": 0.977155270380309,
+          "conservative_component_ms": 5.160131039423278,
+          "fractional_change_vs_strongest_dense": 0.23360290002441841,
+          "positive": false
+        },
+        {
+          "certificate_rate": 0.5,
+          "change_vs_strongest_dense_ms": -0.11666156498300584,
+          "conservative_component_ms": 4.066314204059963,
+          "fractional_change_vs_strongest_dense": -0.027889610512780272,
+          "positive": true
+        },
+        {
+          "certificate_rate": 0.75,
+          "change_vs_strongest_dense_ms": -1.2104784003463207,
+          "conservative_component_ms": 2.972497368696648,
+          "fractional_change_vs_strongest_dense": -0.28938212104997885,
+          "positive": true
+        },
+        {
+          "certificate_rate": 0.8887333333333333,
+          "change_vs_strongest_dense_ms": -1.8174738228506024,
+          "conservative_component_ms": 2.3655019461923663,
+          "fractional_change_vs_strongest_dense": -0.43449303156408814,
+          "positive": true
+        }
+      ],
+      "strongest_measured_dense_baseline_ms": 4.182975769042969,
+      "traffic_time_ms": 1.6286805333333334,
+      "vendor_bf16_flops_per_second": 989500000000000.0,
+      "vendor_hbm_bytes_per_second": 4800000000000.0
+    },
+    "endpoint_economics_guard": {
+      "campaign_denominator_s_per_request": 0.625149101968745,
+      "campaign_target_s_per_request": 0.500119281574996,
+      "claim": "positive component economics only; exact endpoint measurement is required before transferring any saving to seconds/request",
+      "measured_lm_head_fraction_of_profile_window": 0.05248713500841422
+    },
+    "geometry": {
+      "accumulator_and_bound_dtype": "FP32",
+      "batch": 32,
+      "blocks": 1024,
+      "depth": 12,
+      "hidden": 5376,
+      "rows": 384,
+      "tokens_per_block": 256,
+      "vocab": 262144,
+      "weight_dtype": "BF16"
+    },
+    "label": "analytical_with_measured_baseline_and_vendor_priors",
+    "launch_and_graph_contract": {
+      "candidate_launches": [
+        "fixed-shape center/bound pass",
+        "fixed-shape proposal-block pass",
+        "device compaction of unresolved rows",
+        "fixed-capacity fused dense stable-argmax fallback"
+      ],
+      "cuda_graph": "all buffers and launch extents are static; device masks suppress resolved rows without host-dependent graph topology",
+      "divergence": "confined to masked certificate/fallback rows; a whole batch is routed to the stock graph for non-greedy or modified consumers",
+      "host_synchronization": false
+    },
+    "numerical_contract": {
+      "bf16_output_unit_roundoff": 0.00390625,
+      "fp32_unit_roundoff": 5.960464477539063e-08,
+      "gamma_k": 0.00032053728153857893,
+      "reduction_length": 5376,
+      "rule": "certify only when the proposal is the stable winner in its complete block and its BF16-and-softcap-widened lower interval strictly exceeds every other block's widened Cauchy-Schwarz bound",
+      "softcap": "compare after BF16 GEMM-output rounding and an outward interval for the identical FP32 fused softcap; finite-precision ties or a missing kernel-level enclosure fall back",
+      "softcap_cap": 30.0,
+      "softcap_fp32_envelope": 2.86102294921875e-05,
+      "ties_or_overlap": "stock dense fallback"
+    },
+    "preprocessing_amortization": {
+      "not_claimed": "real-weight clustering time and certificate rate remain unmeasured; both are required in a separately authorized H200 component run",
+      "one_time_bytes": 2841645056,
+      "request_path_cost": "zero after immutable index admission"
+    },
+    "resident_index_and_weight_lifecycle": {
+      "additional_residency_bytes": 2841645056,
+      "cluster_centers_bytes": 22020096,
+      "cluster_ordered_weight_copy_bytes": 2818572288,
+      "construction": "offline deterministic clustering; upward-rounded radii; cluster-ordered BF16 copy hash-bound to the immutable tied weight",
+      "fallback": "the original tied weight and stock consumer remain resident; index mismatch or lifecycle change disables the candidate",
+      "immutable_weight_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+      "radii_bytes": 4096,
+      "token_to_block_bytes": 1048576
+    },
+    "traffic": {
+      "block_score_bytes": 393216,
+      "center_bytes": 22020096,
+      "center_score_bytes": 1572864,
+      "certificate_prepass_bytes": 1086132224,
+      "dense_fp32_logits_avoided_bytes": 402653184,
+      "dense_logits_materialized": false,
+      "fused_fallback_scan_bytes": 2822701056,
+      "hidden_vector_bytes": 4128768,
+      "proposal_block_bytes_no_inter_row_reuse": 1056964608,
+      "total_bytes_with_any_fallback": 3908833280,
+      "weight_bytes": 2818572288
+    }
+  },
+  "pass": true,
+  "result": "source_complete_candidate",
+  "schema_version": 1,
+  "seed": 20260725,
+  "source_binding": {
+    "admitted_workload": {
+      "classification": "all-greedy exact argmax",
+      "concurrency": 32,
+      "draft_depth": 12,
+      "grammar": false,
+      "logprobs": false,
+      "penalties_or_bias": false,
+      "return_token_ids": true,
+      "seed": 20260718,
+      "temperature": 0
+    },
+    "h200_dense_baseline": {
+      "dense_buffer": {
+        "captured_return_same_object": true,
+        "control_return_same_object": true,
+        "data_ptr": 137750976135168,
+        "dtype": "torch.float32",
+        "returned_same_object": true,
+        "shape": [
+          384,
+          262144
+        ],
+        "stride": [
+          262144,
+          1
+        ]
+      },
+      "geometry": {
+        "batch": 32,
+        "buffer_dtype": "torch.float32",
+        "depths": 12,
+        "hidden": 5376,
+        "hidden_dtype": "torch.bfloat16",
+        "row_order": "request_major_depth_minor",
+        "vocab": 262144,
+        "weight_dtype": "torch.bfloat16"
+      },
+      "hardware": "NVIDIA H200",
+      "label": "measured",
+      "profile_window_lm_head_fraction": 0.05248713500841422,
+      "stock_control_median_ms": 9.201120376586914,
+      "strongest_graph_safe_dense_candidate_median_ms": 4.182975769042969,
+      "weight_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+    },
+    "hashes": [
+      {
+        "expected_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+        "match": true,
+        "path": "gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/config.json",
+        "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+      },
+      {
+        "expected_sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14",
+        "match": true,
+        "path": "gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/logits_processor.py",
+        "sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14"
+      },
+      {
+        "expected_sha256": "c977296f3b90be69fff5312f2b3af7699a17b20af24614b139f69888e5776516",
+        "match": true,
+        "path": "gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/forward_batch_info.py",
+        "sha256": "c977296f3b90be69fff5312f2b3af7699a17b20af24614b139f69888e5776516"
+      },
+      {
+        "expected_sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+        "match": true,
+        "path": "gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/exact_runner.py",
+        "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+      },
+      {
+        "path": "gemma4_h200_ngram_verification_critical_path/inputs/source/ngram_info.py",
+        "sha256": "ffa88c663e1893c306710ac801da0693d8248ebcfd1a5bc705c157f90657af1c"
+      },
+      {
+        "path": "gemma4_h200_ngram_verification_critical_path/inputs/source/ngram_worker.py",
+        "sha256": "27721b777cae08657ec9854ec0137a0db50afd49d84809503312fa43e399b554"
+      },
+      {
+        "path": "gemma4_h200_fp8_tied_head_endpoint/iterations/graph-bound-endpoint-20260723t1930z/inputs/source/sampler.py",
+        "sha256": "85541951e1cf50d10c54978178e403ff9d4aa6f223e629ea91965735ba882a8f"
+      },
+      {
+        "path": "gemma4_h200_ngram_persistent_grouped_lm_head/GROUPED_LM_HEAD_H200_GRAPH_REPLAY_TERMINAL.json",
+        "sha256": "d6ce199adc0debcc5e10380e71b219009858c160efc60be56c81d571f240bda1"
+      },
+      {
+        "path": "gemma4_h200_ngram_persistent_grouped_lm_head/OFFLINE_CAUSAL_MODEL.json",
+        "sha256": "4e329c3c616ead0acbcc501705d44f25a397d0a7f5ace6e56738432a34b324b5"
+      }
+    ],
+    "label": "measured_and_source_bound",
+    "model": {
+      "final_logit_softcapping": 30.0,
+      "hidden_size": 5376,
+      "tie_word_embeddings": true,
+      "vocab_size": 262144
+    },
+    "patterns": {
+      "logits_dense_projection": {
+        "pattern": "hidden_states.to(lm_head.weight.dtype), lm_head.weight.T",
+        "present": true
+      },
+      "logits_softcap": {
+        "pattern": "fused_softcap(",
+        "present": true
+      },
+      "ngram_accept_plus_bonus": {
+        "pattern": "self.num_accept_tokens = self.num_correct_drafts + 1",
+        "present": true
+      },
+      "ngram_final_sampling_coins": {
+        "pattern": "coins_for_final_sampling = torch.rand(",
+        "present": true
+      },
+      "ngram_greedy_argmax": {
+        "pattern": "torch.argmax(logits_output.next_token_logits",
+        "present": true
+      },
+      "ngram_rejection_coins": {
+        "pattern": "coins = torch.rand_like(",
+        "present": true
+      },
+      "ngram_sampling_softmax": {
+        "pattern": "target_probs = F.softmax(",
+        "present": true
+      },
+      "runner_fixed_seed": {
+        "pattern": "\"seed\": 20260718",
+        "present": true
+      },
+      "runner_return_token_ids": {
+        "pattern": "\"return_token_ids\": True",
+        "present": true
+      },
+      "runner_temperature_zero": {
+        "pattern": "\"temperature\": 0",
+        "present": true
+      },
+      "sampler_greedy_argmax": {
+        "pattern": "batch_next_token_ids = torch.argmax(logits, -1)",
+        "present": true
+      },
+      "sampler_logprob_full_normalization": {
+        "pattern": "torch.nn.functional.log_softmax(",
+        "present": true
+      },
+      "sampler_sampling_softmax": {
+        "pattern": "logits[:] = torch.softmax(logits, dim=-1)",
+        "present": true
+      }
+    }
+  }
+}

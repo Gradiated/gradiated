@@ -49,6 +49,35 @@ def request(base: str, body: dict, timeout: float):
     )
 
 
+def metrics(base: str, root: pathlib.Path, phase: str) -> None:
+    try:
+        (root / f"metrics-{phase}.prom").write_bytes(
+            urllib.request.urlopen(base + "/metrics", timeout=30).read()
+        )
+    except Exception as exc:
+        (root / f"metrics-{phase}.error").write_text(repr(exc) + "\n")
+
+
+def decode_sse(chunks: list[bytes]) -> tuple[str, list[int], dict]:
+    text, ids, meta = "", [], {}
+    for raw in chunks:
+        if not raw.startswith(b"data: "):
+            continue
+        payload = raw[6:].strip()
+        if payload == b"[DONE]":
+            continue
+        item = json.loads(payload)
+        if item.get("error"):
+            raise RuntimeError(str(item["error"]))
+        if "text" in item:
+            text = item["text"] or ""
+        if "output_ids" in item:
+            ids = [int(value) for value in item["output_ids"]]
+        if item.get("meta_info"):
+            meta = item["meta_info"]
+    return text, ids, meta
+
+
 def one(base: str, index: int, body: dict, root: pathlib.Path, ready: threading.Barrier, release: threading.Barrier) -> dict:
     ready.wait(timeout=120); release.wait(timeout=120)
     started, first, error, text, meta, ids, chunks = time.monotonic(), None, None, "", {}, [], []
@@ -56,31 +85,25 @@ def one(base: str, index: int, body: dict, root: pathlib.Path, ready: threading.
         with request(base, body, 1200) as response:
             for raw in response:
                 chunks.append(raw)
-                if raw.startswith(b"data: "):
+                if raw.startswith(b"data: ") and raw[6:].strip() != b"[DONE]":
                     item = json.loads(raw[6:])
-                    if item.get("error"):
-                        raise RuntimeError(str(item["error"]))
-                    delta_text = item.get("text") or ""
-                    delta_ids = item.get("output_ids") or []
-                    if (delta_text or delta_ids) and first is None:
+                    if (item.get("text") or item.get("output_ids")) and first is None:
                         first = time.monotonic()
-                    text += delta_text
-                    ids.extend(int(value) for value in delta_ids)
-                    if item.get("meta_info"):
-                        meta = item["meta_info"]
+            text, ids, meta = decode_sse(chunks)
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"[:2000]
     ended, raw = time.monotonic(), b"".join(chunks)
     (root / f"response-{index:02d}.sse").write_bytes(raw)
     (root / f"response-{index:02d}.txt").write_text(text)
-    row = {"index": index, "started_monotonic_s": started, "first_token_monotonic_s": first, "ended_monotonic_s": ended, "wall_seconds": ended-started, "ttft_seconds": None if first is None else first-started, "decode_seconds": None if first is None else ended-first, "error": error, "prompt_tokens": meta.get("prompt_tokens"), "completion_tokens": meta.get("completion_tokens"), "cached_tokens": meta.get("cached_tokens"), "token_ids": ids, "returned_token_ids": len(ids), "text_nonempty": bool(text), "text_finite": error is None and all(math.isfinite(float(ord(c))) for c in text), "text_sha256": hashlib.sha256(text.encode()).hexdigest(), "request_sha256": hashlib.sha256(canonical(body)).hexdigest(), "response_sha256": hashlib.sha256(raw).hexdigest()}
+    row = {"index": index, "request_id": meta.get("id"), "started_monotonic_s": started, "first_token_monotonic_s": first, "ended_monotonic_s": ended, "wall_seconds": ended-started, "ttft_seconds": None if first is None else first-started, "decode_seconds": None if first is None else ended-first, "error": error, "prompt_tokens": meta.get("prompt_tokens"), "completion_tokens": meta.get("completion_tokens"), "cached_tokens": meta.get("cached_tokens"), "finish_reason": meta.get("finish_reason"), "usage_fields_present": all(key in meta for key in ("prompt_tokens", "completion_tokens", "cached_tokens")), "token_ids": ids, "returned_token_ids": len(ids), "text_nonempty": bool(text), "text_finite": error is None and all(math.isfinite(float(ord(c))) for c in text), "text_sha256": hashlib.sha256(text.encode()).hexdigest(), "request_sha256": hashlib.sha256(canonical(body)).hexdigest(), "response_sha256": hashlib.sha256(raw).hexdigest()}
     atomic(root / f"request-{index:02d}.json", row)
     return row
 
 
 def summary(values: list[float | None]) -> dict[str, float | None]:
     finite = [value for value in values if value is not None and math.isfinite(value)]
-    return {"mean": statistics.mean(finite) if finite else None, "median": statistics.median(finite) if finite else None, "max": max(finite) if finite else None}
+    ordered = sorted(finite)
+    return {"mean": statistics.mean(finite) if finite else None, "median": statistics.median(finite) if finite else None, "p95": ordered[math.ceil(.95 * len(ordered)) - 1] if ordered else None, "max": max(finite) if finite else None}
 
 
 def main() -> int:
@@ -94,13 +117,13 @@ def main() -> int:
     urllib.request.urlopen(args.base + "/v1/models", timeout=30).read()
     try: urllib.request.urlopen(urllib.request.Request(args.base + "/flush_cache", b"{}", {"Content-Type": "application/json"}), timeout=30).read()
     except Exception as exc: (root / "flush_cache.error").write_text(repr(exc) + "\n")
-    before = urllib.request.urlopen(args.base + "/metrics", timeout=30).read(); (root / "metrics-before.prom").write_bytes(before)
+    metrics(args.base, root, "before")
     ready, release = threading.Barrier(args.concurrency+1), threading.Barrier(args.concurrency+1); started = time.monotonic()
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.concurrency) as pool:
         futures = [pool.submit(one, args.base, index, body, root, ready, release) for index, body in enumerate(bodies)]
         ready.wait(timeout=120); release.wait(timeout=120); rows = [future.result() for future in futures]
-    batch_seconds = time.monotonic()-started; after = urllib.request.urlopen(args.base + "/metrics", timeout=30).read(); (root / "metrics-after.prom").write_bytes(after)
-    valid = all(row["error"] is None and row["prompt_tokens"] == PROMPT_TOKENS and row["completion_tokens"] == OUTPUT_TOKENS and row["text_nonempty"] and row["text_finite"] for row in rows)
+    batch_seconds = time.monotonic()-started; metrics(args.base, root, "after")
+    valid = all(row["error"] is None and row["prompt_tokens"] == PROMPT_TOKENS and row["completion_tokens"] == OUTPUT_TOKENS and row["returned_token_ids"] == OUTPUT_TOKENS and row["finish_reason"] and row["usage_fields_present"] and row["text_nonempty"] and row["text_finite"] for row in rows)
     atomic(root / "TERMINAL.json", {"schema_version": 1, "arm": args.arm, "pass": valid, "concurrency": args.concurrency, "complete_requests": sum(row["error"] is None for row in rows), "batch_seconds": batch_seconds, "service_seconds_per_request": batch_seconds/args.concurrency, "output_tokens_per_second": args.concurrency*OUTPUT_TOKENS/batch_seconds, "raw_token_ids_present": all(row["returned_token_ids"] == OUTPUT_TOKENS for row in rows), "phases": {"ttft": summary([row["ttft_seconds"] for row in rows]), "decode": summary([row["decode_seconds"] for row in rows])}, "rows": rows})
     return 0 if valid else 72
 

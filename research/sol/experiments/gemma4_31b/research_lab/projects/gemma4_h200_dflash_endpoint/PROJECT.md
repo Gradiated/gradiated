@@ -1,5 +1,83 @@
 # Gemma 4 H200 DFlash endpoint
 
+## 2026-07-25 request-level semantic localization
+
+The immutable one-cycle oracle now passes all 112 captured cycles and the tied
+head adapter is bit exact, yet the completed depth-4 c32 pair reports
+`target_emitted_token_equivalence=false` and unequal cache accounting. That
+combination rejects the measured online integration, but it localizes the open
+question to request-level relay, acceptance/bonus commit, sequence/KV commit,
+or stream emission across cycles rather than DFlash logits in isolation.
+
+Use deep reasoning on the pinned target/draft source and the already-retrieved
+complete c32 rows, raw token IDs, accepted-prefix telemetry, and cycle-oracle
+artifacts. Find the first request and cycle at which the verifier's accepted
+target sequence, committed request state, and emitted stream cease to agree.
+Build a deterministic request-indexed replay fixture that crosses at least one
+reject, one accepted prefix, one bonus-token decision, and a subsequent cycle.
+Implement the smallest source repair only when the replay demonstrates the
+causal invariant.
+
+Write `DFLASH_REQUEST_LEVEL_REPAIR_RESULT.json` as either
+`source_complete_request_level_repair` with a passing replay and exact source
+patch, or `online_semantics_falsified` with the first irreparable invariant and
+scope. This phase is `$0`, must not claim a GPU, must not replay either endpoint
+arm, and must not weaken target-token or cache-accounting equivalence. A source
+candidate may nominate one later director-bound diagnostic; it does not
+authorize one.
+
+## 2026-07-25 depth-4 endpoint continuation
+
+The immutable 112-cycle oracle passes and the offline c32 CUDA-event controller
+selects depth 4. The prior `/generate` consumer is invalid evidence because it
+decoded no complete request; repair that observer against the already-retrieved
+SSE bytes before claiming a GPU. On parser pass, run exactly one matched
+same-runtime AR versus DFlash depth-4 c32 pair on the retained H200. Do not
+replay the oracle, four-request diagnostic, or four-depth producer.
+
+The direct decision requires 32/32 complete requests, 358 output tokens,
+request ownership, target/emitted token equivalence, accepted-prefix telemetry,
+cache and usage equality, service time, p95, failures, and clean shutdown.
+Compare both the paired AR control and the qualified
+`0.625149101968745 s/request` denominator; the campaign target remains
+`0.500119281574996 s/request`. The exact binding and remaining reservation are
+in `DIRECTOR_DEPTH4_ENDPOINT_BINDING.json`.
+
+## 2026-07-25 deep continuation: lossless repair and adaptive verification
+
+The adapted diagnostic reached real DFlash drafting and target verification
+but reproduced the deterministic AR control on only two of four requests.
+That result closes the tested integration, not lossless parallel drafting:
+accepted target tokens and committed verifier state should be equivalent to
+ordinary target decoding.
+
+Use the persisted producer and source to find the first semantic divergence.
+Construct a one-cycle oracle containing the AR target IDs, draft proposals,
+target verifier logits and IDs, accepted prefix, bonus token, KV write
+locations, committed sequence length, and the next ordinary target token.
+Localize whether the defect is in hidden-state capture, row/depth ownership,
+verification logits, acceptance, bonus-token handling, or KV/state commit.
+Implement the smallest source-complete repair when the evidence identifies
+one; do not rerun the four-request producer or claim a GPU in this phase.
+
+In the same project, derive a D-Cut/DSpark-style c32 controller for verification
+depths 4, 8, 12, and 16 using measured H200 verification cost and per-position
+draft survival. Keep the block-16 draft checkpoint fixed initially. The
+controller should maximize accepted tokens per measured draft-plus-verification
+GPU time across the batch rather than maximizing accepted length. Persist a
+small simulator or exact cost model and the acceptance telemetry it requires.
+
+The next portfolio-changing result is either:
+
+- a source-complete lossless repair plus an exact one-cycle fixture, ready for
+  one later director-bound H200 diagnostic and adaptive-depth c32 pair; or
+- a precise invariant-level blocker showing that the current Gemma checkpoint
+  or pinned runtime cannot implement the target-equivalent commit path.
+
+This stage has `$0` new provider authority and must not disturb either active
+GPU owner. Relevant recent evidence is summarized in
+`../../evidence/RECENT_INFERENCE_RESEARCH_LANDSCAPE_2026-07-25.md`.
+
 ## Question
 
 Can the public Gemma 4 31B-specific DFlash draft reduce the exact background
@@ -132,3 +210,45 @@ lowest-index ties, and token IDs. After that gate, request one H200 and run a
 fresh four-request candidate diagnostic; run one matched c32 AR/DFlash pair
 only if drafting, acceptance, and target-exact outputs are real. Do not replay
 the prior unadapted diagnostic or repeat checkpoint/runtime discovery.
+
+## 2026-07-25 continuation — exact request-state capture
+
+The retained endpoint evidence now falsifies the request-indexed relay-only
+repair. Three requests diverge at target-prefill token zero, before acceptance
+or relay, and request 25 first diverges at verify cycle one despite an
+AR-equal pending seed. The retained producer did not record the committed KV,
+length, or target-verifier state needed to choose an exact repair.
+
+Consume `DIRECTOR_EXACT_REQUEST_STATE_CAPTURE.json`. Bind and fixture-test the
+observer without CUDA, then—only after the certified-lazy and FP8 component
+owners release—run one matched exact-c32 AR/DFlash diagnostic capture on the
+retained H200. Localize the earliest difference across target-prefill output,
+first-verify result, sequence/committed length, KV locations/content digest,
+accepted prefix, bonus, and stream emission. Do not implement a repair,
+retune DFlash, or make a performance claim in this phase.
+## 2026-07-25 request-ownership observer continuation
+
+The exact request-state owner completed the AR c32 producer with 32/32 valid
+responses and persisted 28 state events, then stopped at a typed retrieval
+boundary before the DFlash arm began. The observer errors are decision-bearing:
+request segments sometimes contained multiple injected markers, and physical
+schedule slots were rebound across requests. The completed AR producer is
+settled and must not be replayed.
+
+Use `$researcher` for a deep, zero-GPU continuation. Consume only
+`artifacts/request-state-capture-owner-20260725T232227Z/retrieved-final`,
+the bound observer, and the pinned request/cache-pool source. Reconstruct the
+authoritative lifetime from request-pool identity through padded schedule rows,
+cache slots, prefix reuse, and slot rebinding. Explain which identity is stable
+at target prefill, ordinary AR decode, and DFlash verify/accept/bonus.
+
+Return `DFLASH_REQUEST_OWNERSHIP_OBSERVER_REPAIR_TERMINAL.json` with either:
+
+- a content-addressed observer repair and CPU fixtures that can capture only
+  the unconsumed DFlash arm while preserving the settled AR producer; or
+- a typed limit proving that a scope-matched candidate-only comparison cannot
+  reuse the retained producer and stating the smallest valid future pair.
+
+Do not claim a GPU, compile, launch an endpoint, rerun AR, implement the
+semantic DFlash repair, weaken token equivalence, or mutate provider lifecycle.
+Budget at most 120 minutes and 2 GiB of new durable artifacts.

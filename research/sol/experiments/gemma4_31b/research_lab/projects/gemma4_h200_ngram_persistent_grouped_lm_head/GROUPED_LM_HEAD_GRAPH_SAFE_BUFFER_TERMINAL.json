@@ -1,0 +1,168 @@
+{
+  "actual_spend_usd": 0.0,
+  "classification": "source_complete_graph_safe_buffer_candidate_with_candidate_path_fixture",
+  "completed_at_utc": "2026-07-25T20:24:00Z",
+  "contract": {
+    "activation": {
+      "captured_live_buffer": "buffer_direct_candidate",
+      "eager_without_live_buffer": "previous_grouped_component_candidate",
+      "unsupported_contract": "qualified_stock_order_fallback"
+    },
+    "buffer": {
+      "device": "same_cuda_device_as_hidden_and_weight",
+      "dtype": "torch.float32",
+      "object": "logits_metadata.next_token_logits_buffer",
+      "shape": [
+        384,
+        262144
+      ],
+      "stride": [
+        262144,
+        1
+      ]
+    },
+    "fail_closed_fields": [
+      "non-production hidden or weight shape",
+      "non-BF16 hidden or weight",
+      "FP32 LM-head mode",
+      "embedding bias",
+      "non-CUDA, non-contiguous, or cross-device inputs",
+      "logit_scale other than null",
+      "tensor-parallel or DP-attention all-gather",
+      "missing, non-FP32, wrong-shape, wrong-stride, non-contiguous, cross-device, or directly aliased live buffer"
+    ],
+    "numerical_boundary": "The FP32 accumulator is explicitly converted to BF16 before Triton stores into the existing FP32 live buffer, matching stock BF16 matmul output followed by _copy_logits_to_buffer. The unchanged fused_softcap then operates in place on that FP32 buffer.",
+    "ordering": {
+      "depth_domain": "12 independent M=32 accumulators; depth is never folded into an M=384 matmul",
+      "logical_program_order": "vocab_block_major_depth_minor_0_through_11",
+      "output_rows": "request_major_depth_minor; row = request * 12 + depth"
+    }
+  },
+  "fixture": {
+    "candidate_cuda_executed": false,
+    "candidate_path_executed": true,
+    "capture_active": true,
+    "checks_passed": 14,
+    "evidence_type": "synthetic_source_execution_not_cuda_execution",
+    "live_buffer_present": true,
+    "pass": true,
+    "result_path": "artifacts/GROUPED_LM_HEAD_GRAPH_SAFE_BUFFER_FIXTURE.json",
+    "result_sha256": "da82f4edfe8a9f90552347fb53b3034af2c2651347a55bb8f3a80fe5bddfe7e2",
+    "source_path": "live_contract_fixture.py",
+    "source_sha256": "9c13967c070ca8fa0ee1d558e8ef0a2f535400dd6e319bf39193e435578bcf06",
+    "stock_fallback_executed": false,
+    "verified": [
+      "captured and buffered contract admitted",
+      "buffer-direct candidate invoked exactly once",
+      "one grouped kernel-launch boundary",
+      "depth-minor logical program order 0 through 11",
+      "request-major row ownership",
+      "live object, pointer, dtype, shape, stride, device, and lifetime",
+      "softcap receives the same live buffer",
+      "post-softcap logits, target IDs, and accepted prefixes match the independent stock oracle"
+    ]
+  },
+  "gpu_claimed": false,
+  "historical_endpoint_replayed": false,
+  "later_gpu_discriminator": {
+    "artifact_contract": [
+      "INVOCATION_STATE.json",
+      "GRAPH_SAFE_BUFFER_RESULT.json",
+      "GRAPH_SAFE_BUFFER_TERMINAL.json"
+    ],
+    "command": "PYTHONPATH=. python3 graph_safe_buffer_discriminator.py --weight /project-local/immutable/model-weight.safetensors --artifact-root /project-local/artifacts/graph-safe-buffer-h200",
+    "pass_requires": [
+      "pinned consumer hash match",
+      "captured stock and candidate graph replays at the exact 384x5376 by 262144 geometry",
+      "same candidate live buffer object, data pointer, FP32 dtype, [384,262144] shape, and [262144,1] stride",
+      "zero max-absolute and relative-L2 error",
+      "exact top-two values and IDs, target IDs, accepted-prefix decisions, and candidate replay",
+      "profiler-off CUDA-event distributions for both graph replays"
+    ],
+    "precondition": "A later director must authorize and claim a compatible H200. The exact weight bytes must first be materialized content-addressed under this project.",
+    "source_path": "graph_safe_buffer_discriminator.py",
+    "source_sha256": "6e69153ae6333b2ef009c78ab892e84ee6a98a2ec8e580eebf896190a8a07867"
+  },
+  "prediction": {
+    "evidence_label": "analytical_from_exact_shapes_and_bound_source; not an H200 measurement",
+    "launches_per_target_verify": {
+      "buffer_materialization_copy": {
+        "buffer_direct_candidate": 0,
+        "previous_grouped_candidate": 1,
+        "predicted_change": -1
+      },
+      "lm_head_projection": {
+        "buffer_direct_candidate": 1,
+        "qualified_stock": 12,
+        "predicted_change": -11
+      },
+      "softcap": {
+        "buffer_direct_candidate": 1,
+        "qualified_stock": 12,
+        "predicted_change": -11
+      }
+    },
+    "output_boundary_bytes": {
+      "buffer_direct_fp32_write": 402653184,
+      "previous_grouped_bf16_temp_read": 201326592,
+      "previous_grouped_bf16_temp_write": 201326592,
+      "previous_grouped_fp32_buffer_write": 402653184,
+      "predicted_bytes_removed_vs_previous_grouped": 402653184
+    },
+    "weight_bytes": {
+      "buffer_direct_change_vs_previous_grouped": 0,
+      "grouped_compulsory_lower_bound": 2818572288,
+      "grouped_worst_case_without_l2_reuse": 33822867456,
+      "qualified_stock_logical_reads": 33822867456,
+      "weight_shape_and_dtype": "[262144,5376] BF16",
+      "why": "Buffer-direct changes only the output epilogue. The existing depth-interleaved grid still places the 12 depth programs for each vocabulary tile adjacently to seek L2 reuse of the same tied-weight tile."
+    }
+  },
+  "project": "gemma4_h200_ngram_persistent_grouped_lm_head",
+  "provenance": {
+    "continuation_contract": {
+      "path": "DIRECTOR_GRAPH_SAFE_BUFFER_CONTINUATION.json",
+      "sha256": "aa73f28f5ffa8bde2adcc330c56ad0322dcbc006e9e7646afc3437d90d4e4133"
+    },
+    "fail_closed_repair": {
+      "path": "grouped_lm_head.py",
+      "sha256_before": "47012c90c81f193deb3413be978a7b0ecf6e8e90bd33189ed84631291e0596be"
+    },
+    "localization_terminal": {
+      "path": "GROUPED_LM_HEAD_ACCEPTANCE_DIVERGENCE_TERMINAL.json",
+      "sha256": "cfa96f0c631c20303414136e94bb53e6b79b4c0adb78e75fa1b9acaa93d7dda8"
+    }
+  },
+  "result": "repair_ready_gpu_unmeasured",
+  "schema_version": 1,
+  "science_consumed_this_turn": false,
+  "source_binding": {
+    "candidate": {
+      "dispatch_symbol": "grouped_lm_head.dispatch_target_get_logits",
+      "integration_symbol": "grouped_lm_head.grouped_get_logits_buffer_direct",
+      "kernel_symbol": "grouped_lm_head._triton_symbols.<locals>.depth_interleaved_grouped_lm_head",
+      "output_symbol": "grouped_lm_head.grouped_lm_head_into",
+      "path": "grouped_lm_head.py",
+      "sha256": "184635396953ccc1cf0c5674e7e573228ef1b5829649b6b9c30e39f3bb6fed5e"
+    },
+    "consumer": {
+      "buffer_symbol": "sglang.srt.layers.logits_processor.LogitsProcessor._copy_logits_to_buffer",
+      "path": "inputs/bound/logits_processor.py",
+      "sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14",
+      "softcap_symbol": "sglang.srt.layers.triton_ops.softcap.softcap_inplace_logits (bound as fused_softcap)",
+      "symbol": "sglang.srt.layers.logits_processor.LogitsProcessor._get_logits"
+    }
+  },
+  "spend_authorized_usd": 0.0,
+  "status": "terminal",
+  "uncertainty": {
+    "first_irreducible_field": "actual SM90 CUDA-graph replay of the BF16-rounded Triton store into the persistent FP32 live buffer",
+    "not_claimed": [
+      "CUDA graph capture or replay success",
+      "H200 numerical equality",
+      "compiled register, spill, cache, or DRAM behavior",
+      "H200 component or endpoint speedup"
+    ],
+    "resolution": "Run only the hash-bound later GPU discriminator after a new director authorization; do not replay either historical endpoint arm."
+  }
+}

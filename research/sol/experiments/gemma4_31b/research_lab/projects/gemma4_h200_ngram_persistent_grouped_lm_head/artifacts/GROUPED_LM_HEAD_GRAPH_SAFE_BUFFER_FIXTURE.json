@@ -1,0 +1,202 @@
+{
+  "activation": {
+    "buffer_direct_blocker": null,
+    "candidate_calls": [
+      "grouped_get_logits_buffer_direct"
+    ],
+    "candidate_symbol": "grouped_get_logits_buffer_direct",
+    "kernel_symbol": "depth_interleaved_grouped_lm_head",
+    "stock_calls": []
+  },
+  "checks": {
+    "candidate_path_executed_once": true,
+    "captured_and_buffered_contract_admitted": true,
+    "depth_minor_program_order_0_through_11": true,
+    "downstream_accepted_prefixes_exact": true,
+    "downstream_target_ids_exact": true,
+    "live_buffer_dtype_shape_stride_preserved": true,
+    "live_buffer_lifetime_preserved": true,
+    "live_buffer_object_preserved": true,
+    "live_buffer_pointer_preserved": true,
+    "one_grouped_kernel_launch": true,
+    "post_softcap_logits_exact": true,
+    "request_major_row_ownership_exact": true,
+    "softcap_boundary_used_live_buffer": true,
+    "stock_fallback_not_executed": true
+  },
+  "classification": "offline_exact_candidate_path_contract_fixture",
+  "downstream": {
+    "candidate_accepted_prefixes_sha256": "f503ef7d6e6511d666bd19d1dd52e9005117d02440699534321b143d127f12e7",
+    "candidate_target_ids_sha256": "5524979794ded156ecca47cd5e78a9c3235437748409aab027d9fa3cc56f5fec",
+    "logits_sha256": "365cf252fd0a53c5e6c7a72210c559ded7b2e0abfb316ca0c82184d971119de4",
+    "stock_accepted_prefixes_sha256": "f503ef7d6e6511d666bd19d1dd52e9005117d02440699534321b143d127f12e7",
+    "stock_target_ids_sha256": "5524979794ded156ecca47cd5e78a9c3235437748409aab027d9fa3cc56f5fec"
+  },
+  "evidence_type": "synthetic_source_execution_not_cuda_execution",
+  "ordering": {
+    "first_request_rows": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1
+      ],
+      [
+        0,
+        2,
+        2
+      ],
+      [
+        0,
+        3,
+        3
+      ],
+      [
+        0,
+        4,
+        4
+      ],
+      [
+        0,
+        5,
+        5
+      ],
+      [
+        0,
+        6,
+        6
+      ],
+      [
+        0,
+        7,
+        7
+      ],
+      [
+        0,
+        8,
+        8
+      ],
+      [
+        0,
+        9,
+        9
+      ],
+      [
+        0,
+        10,
+        10
+      ],
+      [
+        0,
+        11,
+        11
+      ]
+    ],
+    "first_vocab_block_depths": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "last_request_rows": [
+      [
+        31,
+        0,
+        372
+      ],
+      [
+        31,
+        1,
+        373
+      ],
+      [
+        31,
+        2,
+        374
+      ],
+      [
+        31,
+        3,
+        375
+      ],
+      [
+        31,
+        4,
+        376
+      ],
+      [
+        31,
+        5,
+        377
+      ],
+      [
+        31,
+        6,
+        378
+      ],
+      [
+        31,
+        7,
+        379
+      ],
+      [
+        31,
+        8,
+        380
+      ],
+      [
+        31,
+        9,
+        381
+      ],
+      [
+        31,
+        10,
+        382
+      ],
+      [
+        31,
+        11,
+        383
+      ]
+    ],
+    "program_order": "vocab_block_major_depth_minor"
+  },
+  "pass": true,
+  "production_contract": {
+    "batch": 32,
+    "buffer": {
+      "data_ptr": 12288,
+      "device": "cuda:0",
+      "dtype": "torch.float32",
+      "shape": [
+        384,
+        262144
+      ],
+      "stride": [
+        262144,
+        1
+      ]
+    },
+    "cuda_graph_capture_active": true,
+    "depths": 12,
+    "hidden": 5376,
+    "hidden_dtype": "torch.bfloat16",
+    "softcap": 30.0,
+    "vocab": 262144,
+    "weight_dtype": "torch.bfloat16"
+  },
+  "schema_version": 1
+}

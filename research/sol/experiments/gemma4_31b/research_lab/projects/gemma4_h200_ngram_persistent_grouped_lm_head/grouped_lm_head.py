@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import functools
 import hashlib
 import json
 import os
@@ -42,6 +43,7 @@ def _append_audit(row: dict) -> None:
         os.close(descriptor)
 
 
+@functools.lru_cache(maxsize=1)
 def _triton_symbols():
     import triton
     import triton.language as tl
@@ -96,6 +98,21 @@ def _triton_symbols():
 
 
 def grouped_lm_head(hidden_states: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
+    output = torch.empty(
+        (BATCH * DEPTHS, VOCAB),
+        dtype=torch.bfloat16,
+        device=hidden_states.device,
+    )
+    return grouped_lm_head_into(hidden_states, weight, output)
+
+
+def grouped_lm_head_into(
+    hidden_states: torch.Tensor,
+    weight: torch.Tensor,
+    output: torch.Tensor,
+    *,
+    kernel_launcher: Callable | None = None,
+) -> torch.Tensor:
     if hidden_states.dtype != torch.bfloat16 or weight.dtype != torch.bfloat16:
         raise RuntimeError(
             f"grouped_lm_head_dtype:{hidden_states.dtype}:{weight.dtype}"
@@ -104,17 +121,28 @@ def grouped_lm_head(hidden_states: torch.Tensor, weight: torch.Tensor) -> torch.
         raise RuntimeError(f"grouped_lm_head_hidden_shape:{tuple(hidden_states.shape)}")
     if tuple(weight.shape) != (VOCAB, HIDDEN):
         raise RuntimeError(f"grouped_lm_head_weight_shape:{tuple(weight.shape)}")
-    if not hidden_states.is_cuda or not weight.is_cuda:
+    if tuple(output.shape) != (BATCH * DEPTHS, VOCAB):
+        raise RuntimeError(f"grouped_lm_head_output_shape:{tuple(output.shape)}")
+    if output.dtype not in (torch.bfloat16, torch.float32):
+        raise RuntimeError(f"grouped_lm_head_output_dtype:{output.dtype}")
+    if not hidden_states.is_cuda or not weight.is_cuda or not output.is_cuda:
         raise RuntimeError("grouped_lm_head_requires_cuda")
-    if not hidden_states.is_contiguous() or not weight.is_contiguous():
-        raise RuntimeError("grouped_lm_head_requires_contiguous_inputs")
+    if (
+        not hidden_states.is_contiguous()
+        or not weight.is_contiguous()
+        or not output.is_contiguous()
+    ):
+        raise RuntimeError("grouped_lm_head_requires_contiguous_tensors")
+    if not (
+        hidden_states.device == weight.device
+        and hidden_states.device == output.device
+    ):
+        raise RuntimeError("grouped_lm_head_requires_single_device")
+    if kernel_launcher is not None:
+        kernel_launcher(hidden_states, weight, output)
+        return output
 
     triton, kernel = _triton_symbols()
-    output = torch.empty(
-        (BATCH * DEPTHS, VOCAB),
-        dtype=torch.bfloat16,
-        device=hidden_states.device,
-    )
     grid = (triton.cdiv(VOCAB, BLOCK_N) * DEPTHS,)
     kernel[grid](
         hidden_states,
@@ -207,14 +235,36 @@ def grouped_get_logits(
     return logits
 
 
-def grouped_activation_blocker(
+def grouped_get_logits_buffer_direct(
     processor: object,
     hidden_states: torch.Tensor,
     lm_head: object,
     logits_metadata: object,
-    embedding_bias: torch.Tensor | None,
     *,
-    capture_active: bool | None = None,
+    kernel_launcher: Callable | None = None,
+    softcap_operator: Callable | None = None,
+) -> torch.Tensor:
+    logits = logits_metadata.next_token_logits_buffer
+    grouped_lm_head_into(
+        hidden_states,
+        lm_head.weight,
+        logits,
+        kernel_launcher=kernel_launcher,
+    )
+    if processor.final_logit_softcapping:
+        if softcap_operator is None:
+            from sglang.srt.layers.logits_processor import fused_softcap
+
+            softcap_operator = fused_softcap
+        softcap_operator(logits, processor.final_logit_softcapping)
+    return logits
+
+
+def _common_grouped_activation_blocker(
+    processor: object,
+    hidden_states: torch.Tensor,
+    lm_head: object,
+    embedding_bias: torch.Tensor | None,
 ) -> str | None:
     if tuple(hidden_states.shape) != (BATCH * DEPTHS, HIDDEN):
         return "non_production_shape"
@@ -228,6 +278,65 @@ def grouped_activation_blocker(
         return "fp32_lm_head"
     if embedding_bias is not None:
         return "embedding_bias"
+    if not hidden_states.is_cuda or not lm_head.weight.is_cuda:
+        return "non_cuda_input"
+    if not hidden_states.is_contiguous() or not lm_head.weight.is_contiguous():
+        return "non_contiguous_input"
+    if hidden_states.device != lm_head.weight.device:
+        return "input_device_mismatch"
+    return None
+
+
+def grouped_buffer_direct_blocker(
+    processor: object,
+    hidden_states: torch.Tensor,
+    lm_head: object,
+    logits_metadata: object,
+    embedding_bias: torch.Tensor | None,
+) -> str | None:
+    blocker = _common_grouped_activation_blocker(
+        processor, hidden_states, lm_head, embedding_bias
+    )
+    if blocker is not None:
+        return blocker
+    if processor.logit_scale is not None:
+        return "logit_scale"
+    if processor.do_tensor_parallel_all_gather:
+        return "tensor_parallel_all_gather"
+    if processor.do_tensor_parallel_all_gather_dp_attn:
+        return "dp_attention_all_gather"
+    logits = logits_metadata.next_token_logits_buffer
+    if logits is None:
+        return "live_logits_buffer_required"
+    if tuple(logits.shape) != (BATCH * DEPTHS, VOCAB):
+        return "live_logits_buffer_shape"
+    if logits.dtype != torch.float32:
+        return "live_logits_buffer_dtype"
+    if tuple(logits.stride()) != (VOCAB, 1):
+        return "live_logits_buffer_stride"
+    if not logits.is_cuda or not logits.is_contiguous():
+        return "live_logits_buffer_layout"
+    if logits.device != hidden_states.device:
+        return "live_logits_buffer_device"
+    if logits.data_ptr() in (hidden_states.data_ptr(), lm_head.weight.data_ptr()):
+        return "live_logits_buffer_alias"
+    return None
+
+
+def grouped_activation_blocker(
+    processor: object,
+    hidden_states: torch.Tensor,
+    lm_head: object,
+    logits_metadata: object,
+    embedding_bias: torch.Tensor | None,
+    *,
+    capture_active: bool | None = None,
+) -> str | None:
+    blocker = _common_grouped_activation_blocker(
+        processor, hidden_states, lm_head, embedding_bias
+    )
+    if blocker is not None:
+        return blocker
     if logits_metadata.next_token_logits_buffer is not None:
         return "live_logits_buffer"
     if capture_active is None:
@@ -249,12 +358,24 @@ def dispatch_target_get_logits(
     *,
     capture_active: bool | None = None,
     grouped_projector: Callable = grouped_get_logits,
+    buffer_projector: Callable = grouped_get_logits_buffer_direct,
 ) -> torch.Tensor:
     if not logits_metadata.forward_mode.is_target_verify():
         return original(
             processor, hidden_states, lm_head, logits_metadata, embedding_bias
         )
-    blocker = grouped_activation_blocker(
+    buffer_blocker = grouped_buffer_direct_blocker(
+        processor,
+        hidden_states,
+        lm_head,
+        logits_metadata,
+        embedding_bias,
+    )
+    if buffer_blocker is None:
+        return buffer_projector(
+            processor, hidden_states, lm_head, logits_metadata
+        )
+    eager_blocker = grouped_activation_blocker(
         processor,
         hidden_states,
         lm_head,
@@ -262,7 +383,7 @@ def dispatch_target_get_logits(
         embedding_bias,
         capture_active=capture_active,
     )
-    if blocker is None:
+    if eager_blocker is None:
         return grouped_projector(
             processor, hidden_states, lm_head, logits_metadata
         )
@@ -318,9 +439,12 @@ def install() -> None:
             "block_k": BLOCK_K,
             "source_sha256": observed,
             "activation_contract": {
-                "eager_only": True,
-                "next_token_logits_buffer": None,
-                "captured_live_calls": "stock_ordered_fallback",
+                "buffer_direct_symbol": "grouped_get_logits_buffer_direct",
+                "buffer_dtype": "torch.float32",
+                "buffer_shape": [BATCH * DEPTHS, VOCAB],
+                "buffer_stride": [VOCAB, 1],
+                "captured_live_calls": "buffer_direct_candidate",
+                "unsupported_calls": "stock_ordered_fallback",
             },
         }
     )

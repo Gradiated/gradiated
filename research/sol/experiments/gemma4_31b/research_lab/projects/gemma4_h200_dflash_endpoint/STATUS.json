@@ -1,22 +1,50 @@
 {
-  "accelerator_requirement": "nvidia-h200-sxm",
+  "accelerator_requirement": null,
   "active_session": null,
-  "actual_spend_usd": 8.249,
-  "allocation_limit": 1,
-  "authorized_spend_usd": 18.0,
+    "actual_spend_usd": 2.9737686855138894,
+    "preclaim_verification": {
+        "checked_at_utc": "2026-07-25T17:44:38Z",
+        "binding_sha256": "c580bf63c2e78c26ef53af6d22af7a02456302b3258b7e966c7efe0a9a637c80",
+        "all_bound_local_hashes_match": true,
+        "pinned_runtime_source_hashes_match": true,
+        "predecessor_terminal_present": false,
+        "predecessor_claim_released": false,
+        "disposition": "queue_boundary_active_no_bench_mutation"
+    },
+  "allocation_limit": 0,
+  "authorized_spend_usd": 4.0,
   "bench_need": {
-    "accelerator": "nvidia-h200-sxm",
-    "count": 1,
-    "minimum_disk_gib": 250,
-    "minimum_hbm_gb": 141,
-    "minimum_safe_claimed_minutes": 180,
-    "resident_checkpoint": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 and z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1, fully staged and hash-verified",
-    "resident_runtime": "SGLang 588d1f7bc9424201f89957e145f9d5af633a3eb8 source plus gemma4-dflash-sglang:588d1f7bc942 or retained build cache",
-    "tensor_parallel_size": 1
+    "accelerator": null,
+    "preferred_bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "predecessor": "gemma4_h200_ngram_persistent_grouped_lm_head",
+    "purpose": "No claim in this phase. Consume the immutable depth-4/8/12/16 CUDA-event records offline; a fresh cost-only request may be proposed only after a typed validity terminal and a later director decision."
   },
-  "continuation_remaining_spend_usd": 9.751,
-  "continuation_binding": "DIRECTOR_TIED_HEAD_ADAPTER_REOPENING.json",
-  "historical_settled_spend_usd": 8.249,
+  "continuation_authorized_new_spend_usd": 4.0,
+  "continuation_remaining_spend_usd": 1.0262313144861106,
+  "continuation_binding": "DIRECTOR_DFLASH_CYCLE_ORACLE_BINDING.json",
+  "continuation_binding_sha256": "c580bf63c2e78c26ef53af6d22af7a02456302b3258b7e966c7efe0a9a637c80",
+  "decision": "depth_cost_validity_pass_depth_4_selected_endpoint_pair_deferred",
+  "director_cycle_oracle_binding": {
+    "path": "DIRECTOR_DFLASH_CYCLE_ORACLE_BINDING.json",
+    "sha256": "c580bf63c2e78c26ef53af6d22af7a02456302b3258b7e966c7efe0a9a637c80"
+  },
+  "historical_actual_spend_usd": 10.61,
+  "historical_actual_spend_note": "The prior 10.61 USD phase is already present in the campaign settlements. actual_spend_usd is reset to zero for this newly reserved phase so terminal settlement records only incremental exposure.",
+  "historical_settled_spend_usd": 25.969,
+  "historical_settlements": [
+    {
+      "actual_spend_usd": 7.11,
+      "settled_at": "2026-07-24T02:48:56.389541Z"
+    },
+    {
+      "actual_spend_usd": 8.249,
+      "settled_at": "2026-07-24T03:35:34.906955Z"
+    },
+    {
+      "actual_spend_usd": 10.61,
+      "settled_at": "2026-07-25T16:15:00.253046Z"
+    }
+  ],
   "input_packet": {
     "archive": "artifacts/tied-head-adapter-inputs-20260725.tar",
     "archive_sha256": "00efd6d5055e9bf00099a667d3ed65993e6a2062facd74fa3e0bcfec82147c68",
@@ -29,7 +57,60 @@
     "unit": "gemma4-dflash-capture-hook-owner.service",
     "unit_manager": "user"
   },
-  "next_action": "Director provisions or registers one exact resident nvidia-h200-sxm bench satisfying bench_need. Then claim it, transfer only artifacts/tied-head-adapter-inputs-20260725.tar, and run remote_tied_head_adapter.sh: adapted four-request DFlash diagnostic first, conditional matched c32 pair only on gate pass. Do not restage checkpoints or replay the old unadapted diagnostic.",
+  "next_action": "Stop with no GPU claim, oracle replay, endpoint pair, or new spend. After grouped-head completes, the director may decide whether to authorize one depth-4 endpoint pair. The 0.647% component-cost margin over depth 12 is not an endpoint or quality claim.",
+  "depth_measurement_handoff": {
+    "artifact_root": "artifacts/cycle-depth-owner-20260725t1810z/retrieved",
+    "oracle": {
+      "cycles_evaluated": 112,
+      "pass": true,
+      "sha256": "0a4a51ad2df17b92ff839c7adb51cb089594d2d83b808d621b3e9f7a0b3322fd"
+    },
+    "cuda_event_records": {
+      "depth_4": 300,
+      "depth_8": 358,
+      "depth_12": 287,
+      "depth_16": 359
+    },
+    "request_consumer": {
+      "complete_requests_per_depth": 0,
+      "classification": "invalid_for_endpoint_latency_or_quality",
+      "failure": "Every depth terminal records JSONDecodeError in the /generate stream consumer and raw_token_ids_present=false."
+    },
+    "spend_reconciliation_required": false
+  },
+  "depth_cost_validation": {
+    "pass": true,
+    "first_invalid_field": null,
+    "terminal": "DFLASH_C32_DEPTH_COST_TERMINAL.json",
+    "terminal_sha256": "c2cdc9bedbe4de8120ef9641ec7c9d745657e21352c3d388291ef5020ecdf637",
+    "controller_rows": {
+      "depth_4": 277,
+      "depth_8": 332,
+      "depth_12": 261,
+      "depth_16": 334
+    },
+    "summed_draft_plus_verifier_cuda_event_ms": {
+      "depth_4": 21888.58173930645,
+      "depth_8": 23082.174001812935,
+      "depth_12": 22030.279077529907,
+      "depth_16": 24589.310755252838
+    },
+    "selected_depth": 4,
+    "runner_up_depth": 12,
+    "winner_cost_margin_fraction": 0.006473573295477708,
+    "request_consumer_classification": "invalid_for_endpoint_latency_quality_or_token_equivalence_but_separate_from_cycle_cost_validity"
+  },
+  "offline_repair_result": {
+    "controller": "artifacts/offline-first-divergence-20260725/DFLASH_C32_DEPTH_CONTROLLER.json",
+    "controller_sha256": "59bf6066ed3fe8124c023debbc8733b75ecd0a514c4c90c70909e1ab0d11828d",
+    "localization": "artifacts/offline-first-divergence-20260725/DFLASH_FIRST_DIVERGENCE_LOCALIZATION.json",
+    "localization_sha256": "16088208bb9f724d2e8d7a17189563c602d20a1db4b3777784ce365fb3302120",
+    "oracle": "dflash_cycle_oracle.py",
+    "repair": "DFLASH_REQUEST_INDEXED_RELAY_REPAIR.patch",
+    "result": "OFFLINE_DFLASH_REPAIR_RESULT.json",
+    "result_sha256": "6f5c24ea6eeed136a060bb9c5787aeb4bfb8458833546f3f55e53d591e93692f",
+    "status": "source_complete_unmeasured_repair_candidate"
+  },
   "offline_adapter_gate": {
     "complete_logit_elements_compared": 1048576,
     "complete_logits_bit_exact": true,
@@ -39,13 +120,14 @@
     "result_sha256": "1e2648d8a45919b46f0d12f291c28f063cd37cfe29831275856b2b7c00587e42",
     "status": "pass"
   },
-  "priority": 8460,
-  "provider_mutation": "forbidden_researcher_director_provisions_after_offline_gate",
+  "portfolio_priority_reason": "Parallel lossless drafting is the strongest mechanism with a plausible independent 20%-class whole-request gain; the 2/4 semantic mismatch is localization evidence, and source analysis can proceed independently of both claimed benches.",
+  "priority": 8470,
+  "provider_mutation": "forbidden_offline_depth_validity_phase",
   "quality_claim_authorized": false,
   "researcher_profile": "deep",
-  "status": "active",
-  "summary": "The exact pinned DFlash greedy consumer passed a full-vocabulary BF16 tied-head adapter test with 1,048,576 bit-exact logits and correct boundary/tie tokens. The immutable no-restaging diagnostic packet is runnable; the pool has no matching H200, so measurement awaits the exact director-provisioned resident bench_need.",
-  "terminal_artifact": "TIED_HEAD_ADAPTER_RESULT.json",
-  "terminal_artifact_sha256": "8424ebf997159e2f6d5c035d7582ede770f60dbb67d2acc42b8339fd6181da87",
-  "wall_deadline_utc": "2026-07-26T06:00:00Z"
+  "status": "complete",
+  "summary": "The offline validity terminal passes: the observer binds each admitted row to one DFlash decode invocation containing draft and verifier CUDA events. It excludes 96 zero-draft target-only prefill rows and one cold paired row per depth, retains all later finite paired rows without statistical deletion, and selects depth 4 from 1,204 controller rows. The failed /generate consumer remains invalid for endpoint latency, quality, and token-equivalence claims. No GPU was claimed and no new spend was incurred in the offline turn.",
+  "terminal_artifact": "DFLASH_C32_DEPTH_COST_TERMINAL.json",
+  "terminal_artifact_sha256": "c2cdc9bedbe4de8120ef9641ec7c9d745657e21352c3d388291ef5020ecdf637",
+  "wall_deadline_utc": "2026-07-25T20:15:00Z"
 }

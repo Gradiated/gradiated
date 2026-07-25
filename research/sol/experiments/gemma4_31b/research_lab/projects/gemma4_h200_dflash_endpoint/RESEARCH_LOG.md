@@ -131,3 +131,109 @@ Budget reconciliation: the turn contract labels the current `$18` reservation
 as cumulative across all project allocations. Subtracting the settled
 `$8.249` leaves at most `$9.751` for the future H200 claim; this stricter
 current contract supersedes the reopening artifact's larger new-spend field.
+## 2026-07-25 execution continuation — fresh H200 owner launched
+
+Question: can the bound TP=1 tied-head adapter unlock the exact DFlash consumer on a fresh H200 while preserving greedy target semantics?
+
+Action: mechanically verified the director binding and every bound hash, including target/draft/runtime input packet contents, then claimed `h200-dflash-adapter-e00vyqp7gxsr34wrtz` once. The first owner attempt failed pre-science because the fresh disk lacked `/home/glmrunner/gemma4-dflash`; the second exposed the same controller shell boundary before SSH. A bounded foreground smoke probe localized the issue and crossed remote directory creation plus pinned SGLang clone. The owner was patched to derive the archive hash from the binding and avoid the faulty shell construction.
+
+Evidence: the durable controller at `artifacts/tied-head-adapter-owner-20260725t153031z-retry2` is live under `unit_manager: pid`, PID `841139`, start ticks `110944877`, and has reached the bound SGLang image build. No server, CUDA invocation, or scientific request began in the invalid attempts. The active command graph stages only target `b9ea41a2887d8607f594846523f94c6cc75ac8a4`, draft `eabd648301ce28583cc14757912e5e0f84e152e1`, runtime `588d1f7bc9424201f89957e145f9d5af633a3eb8`, and the bound reconstructed image, then invokes `remote_tied_head_adapter.sh`.
+
+Interpretation: the adapter gate and immutable binding remain valid; the observed failures are ordinary controller/staging defects, not scientific evidence. The owner retains the claim through staging, adapted four-request diagnostic, conditional c32 pair, typed retrieval, server stop, and release by 21:45Z. Never replay the old unadapted or historical AR diagnostic.
+
+Next move: retrieve and interpret the owner terminal when it completes; promote only a real DFlash diagnostic gate and exact c32 result.
+## 2026-07-25 repair continuation — resident manifest observer
+
+The first durable owner stopped pre-science after exact target/draft materialization and pinned image construction because `sha256sum` traversed root-owned Hugging Face `.cache` metadata. Remote evidence (`artifacts/REPAIR_DIAGNOSTIC_REMOTE.txt`, SHA-256 `312abc31d0926c00b55c84927957158a77ee759aa162f585922f7a45d8ff2df6`) confirms the pinned source commit, target files, draft files, and base image are resident; no container or scientific invocation was running.
+
+`REPAIR_READY.json` records the typed recoverable boundary. The launcher was amended only to reuse existing model/image bytes and exclude `.cache` metadata from the resident manifest while hashing the actual model files. A same-claim repair owner is now durable at `artifacts/tied-head-adapter-owner-20260725t160538z-repair1` (PID `874035`, start ticks `111155641`, `unit_manager: pid`) and continues directly to `remote_tied_head_adapter.sh` after manifest persistence.
+## 2026-07-25 terminal — adapted DFlash semantic rejection
+
+The persisted four-request DFlash producer was repaired in place without rerunning science: the runner incorrectly parsed cumulative `output_ids` and the terminal `[DONE]` frame. Reconstructed rows contain 358 raw token IDs for all four requests. A second consumer repair accepted the pinned runtime's measured `Decode batch ... accept len` telemetry because this SGLang commit does not emit the older `DFLASH verify completed` phrase.
+
+Measured gate: all 4 requests completed, but candidate text matched the consumed AR control for only 2/4 requests. The diagnostic therefore fails deterministic target-token semantics. Observed acceptance telemetry was 2 `accept len` events, mean 4.77 accepted drafts per observed event (9.54 total from the observed log events). The matched c32 AR/DFlash pair was not started. This is a scientific integration rejection, not a performance result; no endpoint promotion is authorized.
+
+Final typed terminal: `TIED_HEAD_ADAPTER_H200_TERMINAL.json`. Raw producer archive and repaired gate remain preserved under `artifacts/dflash-diagnostic-repair*`. The healthy DFlash server is being stopped and the H200 released ready after final state retrieval.
+
+## 2026-07-25 offline continuation — first divergence and depth controller
+
+Measured persisted evidence is more specific than the 2/4 text gate: each
+candidate row contains 358 copies of one token ID. Request 2 differs from the
+consumed AR stream on output zero (`Is` versus `On`); request 1 repeats
+` hasher` for 228 outputs before AR changes. The other two prompts naturally
+repeat their initial token text for the full forced completion and therefore
+cannot validate state advance. Aggregate SSE metadata supplies 314 actual
+verify cycles, 1,122 accepted drafts, 4,710 proposals, and the full accepted-
+draft histogram, but the consumed AR route has no token IDs and neither route
+persisted per-cycle logits, KV locations, or carried state. The narrowest
+proven boundary is therefore the first prefill-output/verify-settlement cycle;
+offline artifacts cannot decide whether target logits or later settlement
+first fail.
+
+Source comparison identifies one falsifiable owner-state repair. Pinned SGLang
+`588d1f7bc942` defaults `direct_carry_valid=True`, bypassing its request-indexed
+FutureMap relay for bonus IDs and new sequence lengths. Later v0.5.15 removes
+direct carry and always relays request-indexed state. The apply-checked
+`DFLASH_REQUEST_INDEXED_RELAY_REPAIR.patch` changes that default to false,
+without changing verifier math, acceptance, KV geometry, or model bytes.
+`dflash_cycle_oracle.py` now checks draft proposals, target top-1 logits/IDs,
+maximal acceptance, bonus, KV positions/locations, committed length,
+next-cycle seed/length, and ordinary AR; exact pass and stale-relay fixtures
+both behave as preregistered. This is a source-supported repair candidate, not
+a measured semantic fix.
+
+The conditional c32 controller uses the 314-cycle histogram and the existing
+H200 c32 fixed-M384 trace. Its M12 model-kernel/full-GPU-active proxy envelope
+is 137.316–147.819 ms per cycle. Expected emitted tokens at depths 4/8/12/16
+are 3.5350/4.4586/4.5605/4.5732. Depth 8 wins the half-fixed cost envelope;
+under a row-proportional verifier, depth 4 wins until fixed block-16 draft cost
+exceeds about 0.943 times M12 verify cost, then depth 8 wins. This is a
+controller construction only: survival came from a semantically invalid run
+and non-M12 verifier costs are analytical until a lossless DFlash measurement.
+
+Result: `OFFLINE_DFLASH_REPAIR_RESULT.json`
+(`6f5c24ea...3692f`). New provider spend is `$0`; no bench was claimed or
+modified. Next is one fresh director-bound cycle capture with the patch and
+oracle, followed only on pass by DFlash-specific c32 depth-cost measurement.
+
+## 2026-07-25 — bound preclaim verification
+
+All eight local artifacts referenced by
+`DIRECTOR_DFLASH_CYCLE_ORACLE_BINDING.json` matched their bound SHA-256
+digests. The exact upstream `588d1f7bc942` `dflash_info_v2.py`,
+`dflash_worker.py`, and `dflash_worker_v2.py` also match the source digests
+recorded by the repair evidence. The required predecessor has neither a
+durable `MIXED_LOCAL_M384_TERMINAL.json` nor a released claim; its PID owner
+is live and the H200 has a current heartbeat. No H200 connection, claim, or
+provider expenditure was made. The next admissible action remains the bound
+atomic claim after that terminal and release.
+
+## 2026-07-25 — offline DFlash depth-cost validity terminal
+
+Question: do the retrieved depth-4/8/12/16 CUDA events support the bound c32
+cost controller independently of the failed `/generate` stream consumer?
+
+Action: bound the identical observer bytes at all four depths and traced each
+positive pair to one `DFlashWorkerV2.forward_batch_generation` decode call
+containing draft forward then target verification. Classified 96 zero-draft
+rows as target-only prefills and excluded them. Because every fresh server set
+`--skip-server-warmup` and its first paired row had the maximum draft time,
+excluded exactly that one row per depth. Retained every later finite paired
+row: changing live-batch geometry makes the distributions multimodal, and no
+immutable batch-size label justifies statistical deletion.
+
+Measured evidence: 1,204 paired controller rows remain (277/332/261/334 for
+depths 4/8/12/16). Summed draft-plus-verifier CUDA-event costs are
+21,888.582/23,082.174/22,030.279/24,589.311 ms. For the fixed 32 x 358-token
+producer budget, depth 4 minimizes measured cost, 0.647% below depth 12. All
+128 response streams contain final `[DONE]` frames and bound token-count
+metadata, but all four request terminals still have zero complete requests
+because the consumer attempted to JSON-decode `[DONE]`; they authorize no
+endpoint latency, quality, token-identity, or equivalence claim.
+
+Decision: `DFLASH_C32_DEPTH_COST_TERMINAL.json` passes with
+`first_invalid_field=null` and selects depth 4. No GPU was claimed, the
+112-cycle oracle was not replayed, no endpoint pair ran, and new provider
+spend was `$0`. The current phase's previously measured H200 exposure is
+reconciled at `$2.9737686855`; any depth-4 endpoint pair requires a later
+director decision after grouped-head.

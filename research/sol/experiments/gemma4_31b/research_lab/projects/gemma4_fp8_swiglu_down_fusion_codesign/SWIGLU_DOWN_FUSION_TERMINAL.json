@@ -1,0 +1,19 @@
+{
+  "actual_spend_usd": 0.0,
+  "artifact": "SWIGLU_DOWN_FUSION_TERMINAL",
+  "causal_map": {
+    "path": "SWIGLU_DOWN_FUSION_CAUSAL_MAP.json",
+    "sha256": "86af4cb90534324f5b346ff34917ac1e293620b2863aed1191c6a2f5cf4fd81e"
+  },
+  "compilation_performed": false,
+  "decision": "Do not nominate an H200 discriminator from this lane. The only source-complete exact candidate has a favorable point estimate, but it clears the 1% request gate by only 21.3 ms under unverified same-bandwidth and full-launch-credit assumptions. That is not a conservative bound.",
+  "generated_at_utc": "2026-07-25T23:21:52Z",
+  "gpu_claimed": false,
+  "next_action": "Close this zero-GPU lane. Reopen only if independently collected exact-path counters or an already-authorized target-GPU measurement can bound fused shared-memory/reduction efficiency; this terminal does not request a bench.",
+  "provider_mutation": false,
+  "reason_code": "conservative_whole_request_gate_not_supported",
+  "result": "typed_none",
+  "schema_version": 1,
+  "scientific_sample_consumed": false,
+  "terminal_type": "typed_none"
+}

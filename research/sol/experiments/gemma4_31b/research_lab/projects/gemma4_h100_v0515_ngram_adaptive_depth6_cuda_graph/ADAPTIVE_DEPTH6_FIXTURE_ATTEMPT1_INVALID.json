@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "classification": "invalid_observer_attempt",
+  "science_started": false,
+  "candidate_cuda_started": false,
+  "cause": "Python 3.13 direct importlib loader did not register the temporary module in sys.modules before evaluating a dataclass.",
+  "amendment": "Register only the temporary fixture module in sys.modules before exec_module; scientific source and fixture cases unchanged.",
+  "result_persisted": false
+}

@@ -1,0 +1,69 @@
+{
+  "artifacts": {
+    "fixtures": {
+      "path": "ADAPTIVE_DEPTH6_CUDA_GRAPH_FIXTURES.json",
+      "sha256": "f19e6f6bbfc4043b8e83e762ceef975f207a48bdc12c5c2cb214f23b82b30ae9"
+    },
+    "invalid_observer_attempts": [
+      {
+        "path": "ADAPTIVE_DEPTH6_FIXTURE_ATTEMPT1_INVALID.json",
+        "science_started": false,
+        "sha256": "85ab55d999b431be584208714377b863bd2375608e06ead608be6dba91cd3112"
+      },
+      {
+        "path": "ADAPTIVE_DEPTH6_FIXTURE_ATTEMPT2_INVALID.json",
+        "science_started": false,
+        "sha256": "6315af827202f9bbb68ac6db10aed5bea853343b93a44d417730c18378b5deb6"
+      }
+    ],
+    "source_manifest": {
+      "path": "ADAPTIVE_DEPTH6_CUDA_GRAPH_SOURCE_MANIFEST.json",
+      "sha256": "c4a68baf98db90dea7608c943e9365d8e83be68c78ba59952eb62be039de1c37"
+    }
+  },
+  "classification": "source_complete_h100_component_ready",
+  "created_at_utc": "2026-07-25T14:59:00.617064Z",
+  "decision": {
+    "cancellation_completion": "pass",
+    "depth6_capture_owns_exact_metadata_and_buffers": true,
+    "depth_is_part_of_graph_identity": true,
+    "empty_partial_matches": "pass",
+    "exact_depth6_graph_feasible": true,
+    "padding_or_depth_disguise": false,
+    "permutation": "pass",
+    "slot_reuse": "pass",
+    "stale_key_state_and_shape_mismatches": "fail_closed",
+    "transition_7_to_8_to_7": "pass"
+  },
+  "director_binding": {
+    "all_bound_hashes_match": true,
+    "path": "DIRECTOR_BINDING.json",
+    "sha256": "acf5e1c7c2be75d3951472784427219b7939ef7a4915b89c4f6fd83cf3287a42"
+  },
+  "evidence_label": "source_backed_plus_deterministic_offline_state_fixtures",
+  "mechanism": {
+    "attention": "Triton eager and graph target-verify metadata derive all row and mask geometry from active depth",
+    "capture": "each captured batch uses the frozen rule, so batches 1-7 capture 12 rows/request and batches 8+ capture 6 rows/request",
+    "graph_identity": "ShapeKey adds speculative_depth",
+    "kv": "the unchanged KV mover receives active-width accept_index and exact active-depth out_cache_loc",
+    "pool": "capacity-12 allocations remain stable while each graph records only batch*active_depth rows",
+    "replay": "runtime identity validates depth, exact token/position/out-cache counts, exact custom-mask length and captured batch before key lookup",
+    "settlement": "dual native corpus banks, exact-depth buffers, ragged result offsets and active scheduler stride preserve request ownership"
+  },
+  "project": "gemma4_h100_v0515_ngram_adaptive_depth6_cuda_graph",
+  "remaining_gate": "One short exact H100 graph-versus-eager component must execute these immutable bytes after the higher-priority retained endpoint lane releases the compatible bench.",
+  "runtime_identity": {
+    "commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "official_image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "release": "v0.5.15"
+  },
+  "schema_version": 1,
+  "scope": {
+    "actual_spend_usd": 0.0,
+    "checkpoint_loaded": false,
+    "economic_claim": false,
+    "endpoint_requests_submitted": 0,
+    "latency_claim": false,
+    "provider_or_gpu_used": false
+  }
+}

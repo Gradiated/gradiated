@@ -1,0 +1,105 @@
+{
+  "cancellation_completion": "pass",
+  "checkpoint_loaded": false,
+  "empty_partial_matches": "pass",
+  "endpoint_requests_submitted": 0,
+  "evidence_label": "deterministic_project_local_state_and_source_fixtures",
+  "fail_closed": [
+    {
+      "error": "depth_rule_mismatch:8:12:6",
+      "name": "batch8_depth12_stale_key",
+      "result": "fail_closed"
+    },
+    {
+      "error": "depth_rule_mismatch:7:6:12",
+      "name": "batch7_depth6_stale_key",
+      "result": "fail_closed"
+    },
+    {
+      "error": "token_shape_mismatch:96:48",
+      "name": "depth6_padded_to_depth12",
+      "result": "fail_closed"
+    },
+    {
+      "error": "duplicate_request_id",
+      "name": "duplicate_request_ownership",
+      "result": "fail_closed"
+    },
+    {
+      "error": "settlement_owner_unknown",
+      "name": "unknown_completion",
+      "result": "fail_closed"
+    },
+    {
+      "error": "reused_live_request_slot",
+      "name": "live_slot_reuse",
+      "result": "fail_closed"
+    }
+  ],
+  "graph_keys": [
+    [
+      7,
+      12,
+      84
+    ],
+    [
+      8,
+      6,
+      48
+    ],
+    [
+      7,
+      12,
+      84
+    ]
+  ],
+  "permutation": [
+    7,
+    0,
+    6,
+    1,
+    5,
+    2,
+    4,
+    3
+  ],
+  "production_ragged_carrier_filter_merge": "pass",
+  "provider_gpu_seconds": 0,
+  "result": "pass",
+  "runtime_fail_closed": [
+    "positions_shape",
+    "stale_custom_mask",
+    "token_shape",
+    "uncaptured_batch",
+    "wrong_depth"
+  ],
+  "schema_version": 1,
+  "slot_reuse_generation": 0,
+  "source_assertions": [
+    "runner_exact_batch",
+    "runner_exact_identity",
+    "shape_key_depth",
+    "triton_dynamic_depth",
+    "worker_native_depths",
+    "worker_ragged_offsets"
+  ],
+  "source_contract_sha256": "4402cdb355c36e5f5a30d917d486df958aab75f47dfcac47c4c1d6f6c9d52834",
+  "transition": [
+    [
+      7,
+      12,
+      84
+    ],
+    [
+      8,
+      6,
+      48
+    ],
+    [
+      7,
+      12,
+      84
+    ]
+  ],
+  "typed_shape_key_distinguishes_depth": true
+}

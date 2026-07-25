@@ -1,0 +1,101 @@
+{
+  "conservative_current_request_share": {
+    "lower_bound_fraction": 0.017107438795512644,
+    "projection_seconds_for_60_layers_15_steps": 0.34223039999999993,
+    "qualified_batch_seconds": 20.00477126299984,
+    "request_gain_per_component_saved_microsecond": 4.4989267218696476e-05,
+    "scope": "only measured M384 gate/up+down projections; excludes positive M32 decode and MLP activation/quantization costs"
+  },
+  "constants": {
+    "concurrency": 32,
+    "gate_up_output": 43008,
+    "h200_fp8_flops_per_second": 1979000000000000.0,
+    "h200_hbm_bytes_per_second": 4800000000000.0,
+    "h200_l2_bytes": 52428800,
+    "hidden": 5376,
+    "intermediate": 21504,
+    "layers": 60,
+    "qualified_seconds_per_request": 0.625149101968745,
+    "target_verification_steps": 15
+  },
+  "evidence_labels": {
+    "accelerator_limits": "vendor-reported inventory",
+    "geometry_and_byte_model": "analytical",
+    "stock_component_times": "measured on retained H200 by exact-shape sibling projects",
+    "whole_request_share": "derived"
+  },
+  "m32": {
+    "arithmetic_intensity_flop_per_byte": 62.056786055280156,
+    "bytes": {
+      "activation_quant_intermediate_output": 10666496,
+      "total": 357676544,
+      "weight_fp8": 346816512,
+      "weight_scale_fp32": 193536
+    },
+    "candidate_tiles": {
+      "down_cta_tiles": 42,
+      "gate_up_cta_tiles": 336,
+      "m_tiles": 1,
+      "padded_m_tiles": 0,
+      "scheduled_m_tiles": 1,
+      "total_cta_tiles": 378
+    },
+    "cta_tile_reduction_fraction": 0.5,
+    "flops_gate_up_plus_down": 22196256768,
+    "h200_fp8_ridge_flop_per_byte": 412.2916666666667,
+    "hbm_roofline_lower_bound_us": 74.51594666666666,
+    "rows": 32,
+    "stock_tiles": {
+      "down_cta_tiles": 84,
+      "gate_up_cta_tiles": 672,
+      "m_tiles": 1,
+      "padded_m_tiles": 0,
+      "scheduled_m_tiles": 1,
+      "total_cta_tiles": 756
+    },
+    "weight_passes_from_cluster_geometry": 1
+  },
+  "m384": {
+    "arithmetic_intensity_flop_per_byte": 324.02583114087537,
+    "bytes": {
+      "activation_quant_intermediate_output": 127997952,
+      "total": 822018048,
+      "weight_fp8": 693633024,
+      "weight_scale_fp32": 387072
+    },
+    "candidate_tiles": {
+      "down_cta_tiles": 84,
+      "gate_up_cta_tiles": 672,
+      "m_tiles": 3,
+      "padded_m_tiles": 1,
+      "scheduled_m_tiles": 4,
+      "total_cta_tiles": 756
+    },
+    "cta_tile_reduction_fraction": 0.5,
+    "flops_gate_up_plus_down": 266355081216,
+    "h200_fp8_ridge_flop_per_byte": 412.2916666666667,
+    "hbm_roofline_lower_bound_us": 171.25376,
+    "rows": 384,
+    "stock_tiles": {
+      "down_cta_tiles": 168,
+      "gate_up_cta_tiles": 1344,
+      "m_tiles": 3,
+      "padded_m_tiles": 1,
+      "scheduled_m_tiles": 4,
+      "total_cta_tiles": 1512
+    },
+    "weight_passes_from_cluster_geometry": 2
+  },
+  "measured_stock": {
+    "m32_effective_modeled_bandwidth_bytes_per_second": 2850284882505.992,
+    "m32_full_mlp_us": 125.48799812793732,
+    "m384_down_us": 149.616,
+    "m384_gate_plus_down_us": 380.256,
+    "m384_gate_up_us": 230.64
+  },
+  "minimum_h200_result": {
+    "fixed_percentage_gate": null,
+    "rule": "bitwise equality at every consumer boundary and a strictly positive paired-bootstrap 95% lower bound on full-MLP saved time at both M32 and M384"
+  },
+  "schema_version": 1
+}

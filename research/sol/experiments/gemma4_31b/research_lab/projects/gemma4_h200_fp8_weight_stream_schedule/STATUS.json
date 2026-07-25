@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_h200_fp8_weight_stream_schedule",
+  "status": "complete",
+  "priority": 8520,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.0,
+  "historical_actual_spend_usd": 0.0,
+  "active_session": null,
+  "allocation_limit": 1,
+  "summary": "Source-complete exact M32/M384 CUTLASS N-wide FP8 MLP schedule compiled offline; it halves scheduler tiles while preserving K order, M multicast, dynamic quantization, and all consumer semantics.",
+  "next_action": "Director disposition only: after the current owner releases a compatible H200, optionally schedule one component-only run of the immutable module and exact_shape_runner.py. Do not run an endpoint from this project.",
+  "decision": "source_complete_candidate: the buildable output-channel-wide schedule has a positive scope-matched whole-request mapping and warrants one short exact-consumer H200 falsification, but no GPU or endpoint result is claimed.",
+  "hypothesis": "The production 5376-to-21504-to-5376 dense-FP8 MLP path leaves avoidable H200 weight-stream, launch, or epilogue cost at exact c32 row geometries that a source-level schedule/dataflow change can remove with positive whole-request economics.",
+  "wall_clock_budget": "At most 120 minutes.",
+  "compute_budget": "CPU and source work only; no accelerator claim.",
+  "storage_budget": "At most 4 GiB of new durable artifacts.",
+  "provider_mutation": "forbidden",
+  "terminal_artifact": "FP8_WEIGHT_STREAM_SCHEDULE_RESULT.json",
+  "result": "source_complete_candidate",
+  "completed_at": "2026-07-25T21:40:18Z",
+  "h200_claimed": false,
+  "gpu_invocation_started": false,
+  "immutable_module": {
+    "path": "artifacts/immutable/gemma4_fp8_weight_stream-sm90.so",
+    "sha256": "4664d3a6c0ff32bb845bd4d766a549398ecd653191ad1f2f7bfb3da77233b43c"
+  },
+  "stop_rules": [
+    "Stop after a typed source_complete_candidate or mechanism_falsified terminal.",
+    "Return mechanism_falsified if the production path is not a material FP8 weight-stream limiter, the realization is subsumed by the rejected static-FP8 producer ABI, or the conservative physical bound is non-positive.",
+    "Do not claim a GPU, run an endpoint, alter weights or quantization semantics, relax exact output equivalence, or replay the older isolated proxy as current evidence."
+  ]
+}

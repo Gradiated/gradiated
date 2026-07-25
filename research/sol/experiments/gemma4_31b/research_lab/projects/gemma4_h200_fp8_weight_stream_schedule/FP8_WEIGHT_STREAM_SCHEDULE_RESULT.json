@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_fp8_weight_stream_schedule",
+  "completed_at": "2026-07-25T21:40:18Z",
+  "result": "source_complete_candidate",
+  "typed_physical_decision": "worth_one_short_exact_consumer_h200_falsification_after_the_current_owner_releases_the_bench",
+  "decision": "A production-compatible output-channel-wide CUTLASS schedule is buildable for both exact row geometries and has a positive, scope-matched service-time mapping. It preserves dynamic quantization, K reduction order, M-direction multicast, layouts, dtypes, weights, row ownership, and consumer outputs. Admit one component-only H200 run; do not infer an endpoint win before that result.",
+  "scope_and_budget": {
+    "model": "google/gemma-4-31B-it",
+    "accelerator": "nvidia-h200-sxm",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "runtime": "SGLang v0.5.13",
+    "tensor_parallel_size": 1,
+    "gpu_claimed": false,
+    "gpu_invocation_started": false,
+    "provider_mutation": false,
+    "actual_spend_usd": 0.0,
+    "new_durable_bytes_excluding_ignored_build_cache": 1210628
+  },
+  "bound_source": {
+    "authoritative_config": {
+      "path": "../gemma4_hybrid_attention_placement_codesign/inputs/bound/config.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    "gemma4_alias": {
+      "path": "../gemma4_h200_fp8_layer_dataflow_fusion/inputs/source/gemma4_causal.py",
+      "sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+      "symbol": "Gemma4MLP = Gemma3MLP"
+    },
+    "mlp": {
+      "path": "../gemma4_h200_fp8_layer_dataflow_fusion/inputs/source/gemma3_causal.py",
+      "sha256": "a9827bde583c5b8b0abfeaced097c4e9d060fb99ec2961b4f9c66173d3027282",
+      "symbol": "Gemma3MLP.forward"
+    },
+    "fp8_method": {
+      "path": "../gemma4_h200_fp8_layer_dataflow_fusion/inputs/source/fp8.py",
+      "sha256": "c7368db317513e5823283eb5567d15fdb742c3b01a98bfc483cb500291b4285a",
+      "symbol": "Fp8LinearMethod.apply"
+    },
+    "fp8_consumer": {
+      "path": "../gemma4_h200_fp8_layer_dataflow_fusion/inputs/source/fp8_utils.py",
+      "sha256": "a3a130f40974047084e3daff2bd0efbbfe69e197d4c9a5ba3fbc5304dd4e43d9",
+      "symbol": "apply_fp8_linear -> sglang_per_token_quant_fp8 -> sgl_kernel.fp8_scaled_mm"
+    },
+    "cutlass_dispatch": {
+      "sha256": "549d3c1c5c13d67e7309cf50610a51c9485eb181b3a17423247287abd1a0b038",
+      "symbols": [
+        "sm90_fp8_config_M32_largeN",
+        "sm90_fp8_config_default",
+        "cutlass_gemm_caller_sm90_fp8_scaled"
+      ]
+    }
+  },
+  "production_chain": {
+    "evidence_label": "source-backed and measured adjacency",
+    "steps": [
+      "BF16 hidden rows [M,5376]",
+      "dynamic per-token E4M3FN quantization with one FP32 scale per row",
+      "column-major E4M3FN packed gate/up weight [5376,43008] with one FP32 scale per output channel",
+      "FP32-accumulating CUTLASS scaled GEMM with BF16 row-major output [M,43008]",
+      "GeluAndMul(approximate=tanh), splitting gate/up into BF16 [M,21504]",
+      "dynamic per-token E4M3FN quantization with one FP32 scale per row",
+      "column-major E4M3FN down weight [21504,5376] with one FP32 scale per output channel",
+      "FP32-accumulating CUTLASS scaled GEMM with BF16 row-major output [M,5376]"
+    ],
+    "bias": false,
+    "cutlass_output_padding": false,
+    "cuda_graph": "The c32 server launch enables CUDA graphs through batch 32. The candidate adds no host synchronization or data-dependent control after its exact M guard, but graph-capture compatibility remains part of the first H200 component falsification.",
+    "launch_structure_per_layer": "quantize, gate/up GEMM, GELU/product, quantize, down GEMM; this intervention does not change the five-kernel launch count",
+    "adjacency_artifact": {
+      "path": "../gemma4_h200_fp8_layer_dataflow_fusion/ADJACENCY.json",
+      "sha256": "9678bd659729601ec5cde81b3380d81aa23d0941174889fd64d86f3f0a1a561e"
+    }
+  },
+  "exact_shape_binding": {
+    "decode": {
+      "rows": 32,
+      "gate_up_mnk": [
+        32,
+        43008,
+        5376
+      ],
+      "down_mnk": [
+        32,
+        5376,
+        21504
+      ],
+      "stock_full_mlp_median_us": 125.48799812793732,
+      "measurement_artifact": {
+        "path": "../gemma4_h200_mlp_width16384_codesign/artifacts/width16384-component-repair2-20260723t1224z/retrieved/component/ROW_M32.json",
+        "sha256": "eae74b3bc4a57a00b727039633ffbcb9516538f214151c0f1b33c85873e6dbbc"
+      },
+      "transfer_note": "Only the stock exact-width control timing is transferred. The semantics-changing 16,384-width candidate is not evidence for this candidate."
+    },
+    "target_verification": {
+      "rows": 384,
+      "derivation": "32 request-owned target rows times depth 12",
+      "gate_up_mnk": [
+        384,
+        43008,
+        5376
+      ],
+      "down_mnk": [
+        384,
+        5376,
+        21504
+      ],
+      "measured_stock_gate_up_median_us": 230.6400015950203,
+      "measured_stock_down_median_us": 149.61600303649902,
+      "measured_stock_projection_sum_us": 380.2560046315193,
+      "measurement_artifact": {
+        "path": "../gemma4_h200_ngram_m384_fp8_cluster_schedule/COMPONENT_MEASUREMENTS.jsonl",
+        "sha256": "15b25dab3d8af7cdbaf3a0c6fdb12e4b1f43ef708bb61ee7ca7c4a098e819ab9"
+      },
+      "current_profile": {
+        "target_verification_steps": 15,
+        "complete_requests": 32,
+        "path": "../gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/CRITICAL_PATH_FINAL_TERMINAL.json",
+        "sha256": "9c70c2d96777387717fdbf6f5dbbc499ca88b8e76e13f1b3233d598e499527d5"
+      }
+    }
+  },
+  "physical_model": {
+    "evidence_labels": {
+      "bytes_tiles_and_roofline": "analytical",
+      "h200_limits": "vendor-reported accelerator inventory",
+      "component_times": "measured on the retained H200 by scope-matched sibling projects",
+      "request_mapping": "derived"
+    },
+    "h200": {
+      "sms": 132,
+      "hbm_bytes_per_second": 4800000000000.0,
+      "fp8_flops_per_second": 1979000000000000.0,
+      "fp8_ridge_flop_per_byte": 412.2916666666667,
+      "l2_bytes": 52428800,
+      "max_shared_bytes_per_block": 232448
+    },
+    "m32": {
+      "fp8_weight_bytes": 346816512,
+      "other_compulsory_bytes": 10860032,
+      "modeled_total_bytes": 357676544,
+      "weight_to_l2_ratio": 6.615,
+      "flops": 22196256768,
+      "arithmetic_intensity_flop_per_byte": 62.056786055280156,
+      "hbm_roofline_lower_bound_us": 74.51594666666666,
+      "measured_effective_modeled_bandwidth_bytes_per_second": 2850284882505.992,
+      "measured_fraction_of_peak_hbm": 0.5938093505220817,
+      "limiter": "strongly bandwidth-side; the 346.8 MB weights cannot reside in 50 MiB L2 and dominate the exact 32-row chain"
+    },
+    "m384": {
+      "fp8_weight_bytes_with_two_m_cluster_passes": 693633024,
+      "other_modeled_bytes": 128385024,
+      "modeled_total_bytes": 822018048,
+      "flops": 266355081216,
+      "arithmetic_intensity_flop_per_byte": 324.02583114087537,
+      "hbm_roofline_lower_bound_us": 171.25376,
+      "limiter": "still below the H200 FP8 ridge; the two-CTA M cluster multicasts each weight tile but three useful M tiles require two cluster groups, including one padded M tile"
+    },
+    "artifact": {
+      "path": "PHYSICAL_MODEL.json",
+      "sha256": "2bbe7e8f9f6341b0e444f6cefdbe6804c779179c022ba9c21a53155a7f51ad39"
+    }
+  },
+  "intervention": {
+    "mechanism": "Double only the logical output-channel tile while retaining the stock K tile, schedule family, scale epilogue, swap mode, and cluster orientation.",
+    "m32": {
+      "stock_tile_mnk": [
+        64,
+        32,
+        256
+      ],
+      "candidate_tile_mnk": [
+        128,
+        32,
+        256
+      ],
+      "stock_cluster_mnk": [
+        1,
+        1,
+        1
+      ],
+      "candidate_cluster_mnk": [
+        1,
+        1,
+        1
+      ],
+      "swap_ab": true,
+      "stock_to_candidate_scheduler_tiles_gate_plus_down": [
+        756,
+        378
+      ],
+      "candidate_shared_storage_bytes": 205824
+    },
+    "m384": {
+      "stock_tile_mnk": [
+        128,
+        128,
+        128
+      ],
+      "candidate_tile_mnk": [
+        128,
+        256,
+        128
+      ],
+      "stock_cluster_mnk": [
+        2,
+        1,
+        1
+      ],
+      "candidate_cluster_mnk": [
+        2,
+        1,
+        1
+      ],
+      "swap_ab": false,
+      "stock_to_candidate_scheduler_tiles_gate_plus_down": [
+        1512,
+        756
+      ],
+      "candidate_shared_storage_bytes": 214528
+    },
+    "resource_decision": "Both instantiations fit H200's 232,448-byte block limit. The M384 kernel consumes 92.29% of that limit, so a still-wider tile is not admitted.",
+    "predicted_counter_change": "CUTLASS persistent-scheduler work tiles fall exactly 50% at both row geometries while dominant FP8 weight bytes and launch count remain unchanged. Expect lower fixed scheduler/TMA-descriptor cost per output element, approximately unchanged DRAM read bytes, and higher achieved HBM bandwidth; unchanged or slower full-chain CUDA-event time falsifies the mechanism.",
+    "distinct_from_prior_rejections": [
+      "does not alter dynamic FP8 producer ABI or static activation scales",
+      "does not change intermediate width",
+      "does not change cluster orientation or cluster size",
+      "does not duplicate the rejected M384 Cluster<1,2,1> arm",
+      "does not duplicate the rejected M>128 64x256x128 Triton replacement",
+      "does not fuse activation or quantization boundaries"
+    ]
+  },
+  "build_and_runner": {
+    "source": {
+      "path": "fp8_weight_stream_extension.cu",
+      "sha256": "a202e2a265eda05f1d6fd4cc05b7bbc4db1ec6740d70e9dc1dc2f9881356082d"
+    },
+    "build_script": {
+      "path": "build_candidate.py",
+      "sha256": "388a799e3fc4ab2cd98f59a30ccf8d66214c91345adaa2fc6c126e3659256e1d"
+    },
+    "runner": {
+      "path": "exact_shape_runner.py",
+      "sha256": "4c173b090e9e3071a08724a0d18052cae46f8f5cdb558708ffabadad94aa04fb",
+      "consumer_scope": "dynamic quantize -> packed gate/up -> GELU(tanh)*up -> dynamic quantize -> down",
+      "correctness": "bitwise equality and zero nonfinite values at gate/up BF16, GELU product BF16, down-input FP8, down scale, and final BF16",
+      "timing": "alternating paired CUDA events with 10,000-sample seeded paired bootstrap",
+      "scientific_sample_rule": "The output JSON and final checksum must persist; path-entry markers are not samples."
+    },
+    "compile": {
+      "result": "compile_pass",
+      "gpu_used": false,
+      "target": "sm_90",
+      "torch_version": "2.11.0+cu130",
+      "cuda_toolkit": "13.0",
+      "artifact": {
+        "path": "CANDIDATE_BUILD.json",
+        "sha256": "f2c22290dc3db52abfa8114da4ade7d0860565673b6c81ff951d792ade3d13d4"
+      },
+      "immutable_module": {
+        "path": "artifacts/immutable/gemma4_fp8_weight_stream-sm90.so",
+        "sha256": "4664d3a6c0ff32bb845bd4d766a549398ecd653191ad1f2f7bfb3da77233b43c",
+        "bytes": 1149864
+      },
+      "cubin_resources": "Both candidate device kernels encode REG=24, STACK=0, LOCAL=0; CUTLASS dynamic shared storage is 205,824 bytes at M32 and 214,528 bytes at M384."
+    },
+    "invalid_attempt": {
+      "path": "INVALID_BUILD_ATTEMPT.json",
+      "sha256": "39dc9bcb9acb28e5b64b611b398be4444a101778ce8db171e6f94e682efb352c",
+      "classification": "ordinary pre-science template-alias defect; amended and only compilation retried"
+    }
+  },
+  "conservative_whole_request_bound": {
+    "qualified_seconds_per_request": 0.625149101968745,
+    "qualified_batch_seconds_at_c32": 20.00477126299984,
+    "counted_scope": "Only measured M384 gate/up and down projections across 60 layers and 15 observed target-verification steps; M32 decode, activation, and quantization costs are excluded.",
+    "counted_component_seconds_per_batch": 0.3422304041683674,
+    "lower_bound_component_share_fraction": 0.017107439003881307,
+    "positive_gain_mapping": "For a measured M384 full-MLP saving d microseconds, conservative whole-request gain fraction is at least d * 4.4989267218696476e-05. Equivalently, each saved microsecond contributes 0.004498926721869648 percentage points before counting M32 decode.",
+    "interpretation": "This is a positive scope-matched mapping, not a claim that the unmeasured candidate already saves time."
+  },
+  "minimum_measured_component_result": {
+    "correctness": "All five exact consumer boundaries must be finite and bitwise identical at M32 and M384.",
+    "performance": "At both M32 and M384, the paired-bootstrap 95% lower bound on stock minus candidate full-MLP CUDA-event time must be strictly greater than zero.",
+    "fixed_percentage_threshold": null,
+    "reason": "Any statistically resolved positive M384 saving has a strictly positive conservative request contribution under the measured 1.7107% projection-share bound; requiring both row geometries prevents a target-verification gain from hiding a decode loss.",
+    "next_if_pass": "Return the measured component result for director disposition; an endpoint is not authorized by this project.",
+    "next_if_fail": "Close this output-channel-wide schedule realization as mechanism_falsified without replay."
+  },
+  "claims_not_made": [
+    "No candidate CUDA kernel was executed.",
+    "No H200 bench was claimed or touched.",
+    "No endpoint impact, output equivalence, achieved bandwidth, occupancy, or graph-capture success is claimed.",
+    "The old 16,384-width proxy's candidate timing is not transferred."
+  ]
+}

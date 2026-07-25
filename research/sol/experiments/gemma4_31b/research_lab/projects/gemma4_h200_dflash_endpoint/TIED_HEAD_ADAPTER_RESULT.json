@@ -71,6 +71,14 @@
     "gpu_science_started": false,
     "new_provider_spend_usd": 0.0
   },
+  "budget": {
+    "current_contract_is_cumulative": true,
+    "cumulative_authorized_spend_usd": 18.0,
+    "historical_settled_spend_usd": 8.249,
+    "new_spend_this_turn_usd": 0.0,
+    "remaining_spend_usd": 9.751,
+    "reconciliation": "The current user reservation explicitly requires subtracting every prior project allocation, so it supersedes the reopening artifact's larger new-spend allowance."
+  },
   "bench_need": {
     "accelerator": "nvidia-h200-sxm",
     "count": 1,

@@ -97,8 +97,7 @@ proved target capture, draft initialization, request admission, and target
 prefill; it did not execute a Gemma-compatible vocab-parallel adapter. The new
 lane first proves that an unchanged TP=1 tied embedding projection satisfies
 the greedy-head consumer exactly, then earns one fresh diagnostic and
-conditional c32 pair. Prior `$8.249` exposure remains settled; the continuation
-has a separate `$18` maximum.
+conditional c32 pair. Prior `$8.249` exposure remains settled.
 
 ## 2026-07-25 — exact TP=1 adapter gate passes; H200 unavailable
 
@@ -127,3 +126,8 @@ bench matches this project.” No GPU was claimed, no science invocation ran,
 and new spend is `$0`. Exact resident H200 requirements are now in
 `STATUS.json.bench_need`; director provisioning/registration is the typed
 external blocker.
+
+Budget reconciliation: the turn contract labels the current `$18` reservation
+as cumulative across all project allocations. Subtracting the settled
+`$8.249` leaves at most `$9.751` for the future H200 claim; this stricter
+current contract supersedes the reopening artifact's larger new-spend field.

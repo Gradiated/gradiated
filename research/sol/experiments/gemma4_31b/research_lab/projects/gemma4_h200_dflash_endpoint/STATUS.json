@@ -1,9 +1,9 @@
 {
   "accelerator_requirement": "nvidia-h200-sxm",
   "active_session": null,
-  "actual_spend_usd": 0.0,
+  "actual_spend_usd": 8.249,
   "allocation_limit": 1,
-  "authorized_spend_usd": 26.249,
+  "authorized_spend_usd": 18.0,
   "bench_need": {
     "accelerator": "nvidia-h200-sxm",
     "count": 1,
@@ -14,7 +14,7 @@
     "resident_runtime": "SGLang 588d1f7bc9424201f89957e145f9d5af633a3eb8 source plus gemma4-dflash-sglang:588d1f7bc942 or retained build cache",
     "tensor_parallel_size": 1
   },
-  "continuation_authorized_spend_usd": 18.0,
+  "continuation_remaining_spend_usd": 9.751,
   "continuation_binding": "DIRECTOR_TIED_HEAD_ADAPTER_REOPENING.json",
   "historical_settled_spend_usd": 8.249,
   "input_packet": {
@@ -46,6 +46,6 @@
   "status": "active",
   "summary": "The exact pinned DFlash greedy consumer passed a full-vocabulary BF16 tied-head adapter test with 1,048,576 bit-exact logits and correct boundary/tie tokens. The immutable no-restaging diagnostic packet is runnable; the pool has no matching H200, so measurement awaits the exact director-provisioned resident bench_need.",
   "terminal_artifact": "TIED_HEAD_ADAPTER_RESULT.json",
-  "terminal_artifact_sha256": "87b1982d949398f755ca800fe0ee7d33441b458d95e770fa28f600b0a74c7c09",
+  "terminal_artifact_sha256": "8424ebf997159e2f6d5c035d7582ede770f60dbb67d2acc42b8339fd6181da87",
   "wall_deadline_utc": "2026-07-26T06:00:00Z"
 }

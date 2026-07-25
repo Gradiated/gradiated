@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "type": "gemma4_flashhead_clustered_retrieval_offline_decision",
+  "classification": "close_static_balanced_centroid_retrieval_realization",
+  "producer_consumer": {
+    "producer": "Gemma4ForCausalLM post-final-norm BF16 hidden states",
+    "qualified_layout": "[batch=32, depth=12, hidden=5376] request-major target-verification rows",
+    "projection": "12 independent [32,5376] x [5376,262144] tied-BF16 embedding projections",
+    "consumer": "SGLang LogitsProcessor._get_logits -> _compute_lm_head -> monotone final softcap(30) -> target verifier or sampler"
+  },
+  "measured_dense_attribution": {
+    "target_verification_steps": 15,
+    "calls": 180,
+    "calls_per_step": 12,
+    "summed_us": 124664.394,
+    "us_per_step": 8310.9596,
+    "profile_window_fraction": 0.05248713500841422,
+    "sequential_compulsory_bytes_per_step": 34028322816,
+    "useful_flops_per_step": 1082331758592
+  },
+  "embedding_structure": {
+    "shape": [
+      262144,
+      5376
+    ],
+    "dtype": "BF16",
+    "bytes": 2818572288,
+    "l2_norm_quantiles": {
+      "min": 0.5022777318954468,
+      "p01": 0.9590410590171814,
+      "p10": 1.0197594165802002,
+      "p50": 1.1186490058898926,
+      "p90": 1.2099273204803467,
+      "p99": 1.3015289306640625,
+      "max": 6.815070629119873
+    },
+    "token_frequency_evidence": "No persisted campaign token-frequency or target-verifier token-ID distribution was found; frequency-aware routing was not simulated."
+  },
+  "candidate": {
+    "representation": "Exactly balanced hierarchical 2-means over fixed Gaussian projections of the tied token embeddings; exact original-space centroids and exact candidate token dot products.",
+    "index_sweeps": [
+      {
+        "projection_dims": 32,
+        "clusters": [
+          512,
+          1024,
+          2048
+        ],
+        "probes": [
+          1,
+          2,
+          4,
+          8,
+          16,
+          32,
+          64
+        ]
+      },
+      {
+        "projection_dims": 128,
+        "clusters": [
+          512,
+          1024,
+          2048
+        ],
+        "probes": [
+          1,
+          2,
+          4,
+          8,
+          16,
+          32,
+          64
+        ]
+      }
+    ],
+    "query_leakage": false,
+    "sampling_support": "Not implemented. Candidate-only scoring does not preserve full-distribution OpenRouter sampling."
+  },
+  "fixture_finding": {
+    "captured_actual_consumer_rows": 32,
+    "unique_rows": 1,
+    "classification": "degenerate_fixture_invalid_for_recall",
+    "preserved_attempt": "ATTEMPT1_DEGENERATE_REAL_FIXTURE.json",
+    "fallback": "Two deterministic 32-row synthetic structural proxies at the captured hidden-state norm: four-embedding mixtures and isotropic directions.",
+    "production_quality_claim_allowed": false
+  },
+  "results": {
+    "best_common_128d_geometry_below_grouped_exact_floor": {
+      "clusters": 2048,
+      "cluster_size": 128,
+      "probes": 16,
+      "candidates_per_query": 2048,
+      "candidate_fraction_of_vocabulary": 0.0078125,
+      "embedding_mixture": {
+        "top1_recall": 0.34375,
+        "top10_retrieval_recall": 0.340625,
+        "roofline_floor_us": 633.15968
+      },
+      "isotropic": {
+        "top1_recall": 0.375,
+        "top10_retrieval_recall": 0.14375,
+        "roofline_floor_us": 860.24192
+      }
+    },
+    "highest_recall_32d_sweep": {
+      "embedding_mixture": {
+        "candidates_per_query": 32768,
+        "candidate_fraction_of_vocabulary": 0.125,
+        "top1_recall": 0.84375,
+        "top10_retrieval_recall": 0.625,
+        "roofline_floor_us": 6132.5312
+      },
+      "isotropic": {
+        "candidates_per_query": 8192,
+        "candidate_fraction_of_vocabulary": 0.03125,
+        "top1_recall": 0.5,
+        "top10_retrieval_recall": 0.15,
+        "roofline_floor_us": 3249.02912
+      }
+    },
+    "verifier_decision_metric": "Per-position target decision recall equals top-1 recall because the final softcap is monotone; accepted-prefix recall was not measured without draft token IDs and request/depth mapping."
+  },
+  "physical_comparison": {
+    "dense_12xm32": {
+      "measured_us_per_step": 8310.9596,
+      "launches": 12
+    },
+    "grouped_exact_ideal_reuse": {
+      "roofline_floor_us": 1093.8168353633148,
+      "ideal_bytes_per_step": 3024027648,
+      "launches": 1,
+      "evidence": "Analytical floor; independent grouped project is compiled but has not executed."
+    },
+    "retrieval": {
+      "modeled_launches": 4,
+      "limiter_at_useful_recall": "Candidate-cluster weight traffic grows before the tested index reaches acceptable recall.",
+      "maximum_whole_request_opportunity": "The measured dense head is only 5.2487% of the profile window; no tested recall-valid retrieval row earns a transfer estimate."
+    }
+  },
+  "interpretation": {
+    "decision": "The tested training-free balanced centroid mechanism is not a credible competitor to the exact grouped lane. Increasing projection width from 32 to 128 does not repair the recall/cost frontier.",
+    "limiter": "routing recall first, then candidate-cluster HBM traffic at high probe counts",
+    "not_concluded": "This does not falsify learned FlashHead routing, selective quantization, frequency-aware clustering, post-training, model quality, or sampling."
+  },
+  "minimum_next_experiment": {
+    "capture_bytes_approx": 4200000,
+    "capture": "One unseen full target-verification step: 384 post-final-norm BF16 hidden rows, 384 proposed draft token IDs, dense top-10 IDs and values, request/depth mapping, and dense accepted-prefix decisions.",
+    "gate": "Do not open a GPU component for this static index. Resume only if a learned or frequency-aware router produces at least 31/32 per-position top-1 and 90% top-10 recall offline while its H200 model remains below the 1093.817 us grouped-exact floor."
+  },
+  "artifacts": {
+    "simulator": "../../clustered_retrieval_sim.py",
+    "simulator_sha256": "e6d18ddbeba75625734242e750003f8c7a5d45df3dd3f35f32a14483f111b30a",
+    "result_32d": "RESULT.json",
+    "result_32d_sha256": "7e4490fc4164e69c71883f17814d28beb7af65b6c85381ba7ae40d27247a7d16",
+    "result_128d": "RESULT_P128.json",
+    "result_128d_sha256": "301b4ef6af8281c8d0b0a7bd3e4622c2c7a15783ba5a1c002fa4df7744896da5",
+    "checkpoint_shard_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+    "hidden_rows_sha256": "ca17eff46edb8d6ee7e39571fb2dc11cfb0df55ab9b4970a7081e6f0e39162f2"
+  }
+}

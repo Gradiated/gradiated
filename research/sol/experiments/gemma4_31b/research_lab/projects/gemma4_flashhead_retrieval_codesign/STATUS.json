@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_flashhead_retrieval_codesign",
+  "status": "active",
+  "priority": 8550,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.0,
+  "active_session": null,
+  "summary": "A working leakage-free balanced clustered-retrieval simulator consumed the exact tied embedding and exposed a degenerate one-unique-row capture. Two deterministic diverse structural proxies falsified the static centroid route: no 32-D or 128-D geometry met top-1/top-10 recall while beating the ideal grouped-exact H200 floor.",
+  "next_action": "Do not claim a GPU for this static index. Capture one unseen 384-row target-verification step with proposed draft IDs, dense top-10, request/depth mapping, and accepted-prefix decisions only when an existing admitted endpoint can emit it. Resume architecture work only with a learned or frequency-aware router that clears 31/32 top-1 and 90% top-10 offline below the 1093.817 us grouped-exact floor.",
+  "decision": "close_static_balanced_centroid_retrieval_realization",
+  "result": {
+    "decision_artifact": "artifacts/offline-clustered-retrieval-20260725/DECISION.json",
+    "result_32d": "artifacts/offline-clustered-retrieval-20260725/RESULT.json",
+    "result_128d": "artifacts/offline-clustered-retrieval-20260725/RESULT_P128.json",
+    "simulator": "clustered_retrieval_sim.py",
+    "captured_hidden_rows": 32,
+    "captured_unique_rows": 1,
+    "representative_recall_measured": false,
+    "best_common_128d_below_grouped_floor": {
+      "clusters": 2048,
+      "probes": 16,
+      "candidates_per_query": 2048,
+      "embedding_mixture_top1_recall": 0.34375,
+      "isotropic_top1_recall": 0.375
+    },
+    "dense_12xm32_measured_us_per_step": 8310.9596,
+    "grouped_exact_ideal_roofline_us": 1093.8168353633148
+  },
+  "typed_boundary": {
+    "type": "representative_target_verify_capture_absent",
+    "exact_need": "384 post-final-norm BF16 hidden rows, 384 proposed draft token IDs, dense top-10 IDs/values, request/depth mapping, and dense accepted-prefix decisions from one unseen target-verification step",
+    "approximate_bytes": 4200000,
+    "effect": "Synthetic results can close this static realization but cannot establish production recall, accepted-prefix fidelity, model quality, or sampling support."
+  }
+}

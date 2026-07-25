@@ -1,0 +1,940 @@
+{
+  "baselines": {
+    "dense_12xm32_measured": {
+      "calls_per_step": 12,
+      "measured_profile_window_fraction": 0.05248713500841422,
+      "measured_us_per_step": 8310.9596,
+      "sequential_compulsory_bytes_per_step": 34028322816,
+      "useful_flops_per_step": 1082331758592
+    },
+    "grouped_exact_ideal_reuse": {
+      "calls_per_step": 1,
+      "compute_floor_us": 1093.8168353633148,
+      "hbm_floor_us": 630.00576,
+      "ideal_bytes_per_step": 3024027648,
+      "roofline_floor_us": 1093.8168353633148,
+      "status": "analytical floor; the independent grouped project has compiled but not executed",
+      "useful_flops_per_step": 1082331758592
+    }
+  },
+  "classification": "offline_candidate_does_not_beat_grouped_exact_floor_at_recall_gate",
+  "completed_at_unix_s": 1784999832.1772883,
+  "consumer_semantics": {
+    "consumer": "SGLang LogitsProcessor._get_logits -> _compute_lm_head -> final softcap(30) -> target verifier/sampler",
+    "missing_capture": "draft token IDs and 384 matching target-verification hidden rows are absent; accepted-prefix recall is therefore not measured",
+    "producer": "Gemma4ForCausalLM hidden states after final norm",
+    "qualified_target_verify_layout": "[batch=32, depth=12, hidden=5376] request-major, sliced into 12 independent M32 projections",
+    "softcap_note": "Gemma final softcap is monotone, so it cannot change argmax or top-k IDs",
+    "verifier_decision_metric": "candidate argmax equals dense argmax; this preserves the target token decision for any proposed draft token at that position"
+  },
+  "curves": [
+    {
+      "all_32_positions_equivalent": false,
+      "candidate_fraction_of_vocabulary": 0.001953125,
+      "candidates_per_query": 512,
+      "cluster_size": 512,
+      "clusters": 512,
+      "derived_independent_12_position_equivalence": 0.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 4.272722013137948,
+        "candidate_flops_per_12_depth_step": 4227858432,
+        "candidate_hbm_bytes_per_12_depth_step": 80609280,
+        "candidate_hbm_floor_us": 16.7936,
+        "candidate_roofline_floor_us": 16.7936,
+        "candidate_score_flops": 2113929216,
+        "candidate_to_measured_dense_time_ratio_floor": 0.0020206571573275368,
+        "candidates_per_query": 512,
+        "cluster_score_flops": 2113929216,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5924031190324934,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011271132601877612,
+        "unique_candidate_clusters_per_m32_fixture": 1
+      },
+      "probes": 1,
+      "top10_output_overlap": 0.1,
+      "top10_retrieval_recall": 0.1,
+      "top1_recall": 0.0,
+      "verifier_decision_divergence": 1.0,
+      "verifier_decision_recall": 0.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.00390625,
+      "candidates_per_query": 1024,
+      "cluster_size": 512,
+      "clusters": 512,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 6.409083019706922,
+        "candidate_flops_per_12_depth_step": 6341787648,
+        "candidate_hbm_bytes_per_12_depth_step": 147062784,
+        "candidate_hbm_floor_us": 30.63808,
+        "candidate_roofline_floor_us": 30.63808,
+        "candidate_score_flops": 4227858432,
+        "candidate_to_measured_dense_time_ratio_floor": 0.003686467204099993,
+        "candidates_per_query": 1024,
+        "cluster_score_flops": 2113929216,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5924577780670294,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011270092748492354,
+        "unique_candidate_clusters_per_m32_fixture": 2
+      },
+      "probes": 2,
+      "top10_output_overlap": 0.4,
+      "top10_retrieval_recall": 0.4,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.0078125,
+      "candidates_per_query": 2048,
+      "cluster_size": 512,
+      "clusters": 512,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 10.681805032844872,
+        "candidate_flops_per_12_depth_step": 10569646080,
+        "candidate_hbm_bytes_per_12_depth_step": 279969792,
+        "candidate_hbm_floor_us": 58.327040000000004,
+        "candidate_roofline_floor_us": 58.327040000000004,
+        "candidate_score_flops": 8455716864,
+        "candidate_to_measured_dense_time_ratio_floor": 0.007018087297644908,
+        "candidates_per_query": 2048,
+        "cluster_score_flops": 2113929216,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5925670961361014,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.01126801361722509,
+        "unique_candidate_clusters_per_m32_fixture": 4
+      },
+      "probes": 4,
+      "top10_output_overlap": 0.5,
+      "top10_retrieval_recall": 0.5,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.015625,
+      "candidates_per_query": 4096,
+      "cluster_size": 512,
+      "clusters": 512,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 19.227249059120766,
+        "candidate_flops_per_12_depth_step": 19025362944,
+        "candidate_hbm_bytes_per_12_depth_step": 545783808,
+        "candidate_hbm_floor_us": 113.70496,
+        "candidate_roofline_floor_us": 113.70496,
+        "candidate_score_flops": 16911433728,
+        "candidate_to_measured_dense_time_ratio_floor": 0.013681327484734735,
+        "candidates_per_query": 4096,
+        "cluster_score_flops": 2113929216,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5927857322742454,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011263857655217754,
+        "unique_candidate_clusters_per_m32_fixture": 8
+      },
+      "probes": 8,
+      "top10_output_overlap": 0.5,
+      "top10_retrieval_recall": 0.5,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.03125,
+      "candidates_per_query": 8192,
+      "cluster_size": 512,
+      "clusters": 512,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 36.31813711167256,
+        "candidate_flops_per_12_depth_step": 35936796672,
+        "candidate_hbm_bytes_per_12_depth_step": 1077411840,
+        "candidate_hbm_floor_us": 224.4608,
+        "candidate_roofline_floor_us": 224.4608,
+        "candidate_score_flops": 33822867456,
+        "candidate_to_measured_dense_time_ratio_floor": 0.02700780785891439,
+        "candidates_per_query": 8192,
+        "cluster_score_flops": 2113929216,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5932230045505333,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011255554921441585,
+        "unique_candidate_clusters_per_m32_fixture": 16
+      },
+      "probes": 16,
+      "top10_output_overlap": 0.5,
+      "top10_retrieval_recall": 0.5,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.0625,
+      "candidates_per_query": 16384,
+      "cluster_size": 512,
+      "clusters": 512,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 70.49991321677615,
+        "candidate_flops_per_12_depth_step": 69759664128,
+        "candidate_hbm_bytes_per_12_depth_step": 2140667904,
+        "candidate_hbm_floor_us": 445.97248,
+        "candidate_roofline_floor_us": 445.97248,
+        "candidate_score_flops": 67645734912,
+        "candidate_to_measured_dense_time_ratio_floor": 0.0536607686072737,
+        "candidates_per_query": 16384,
+        "cluster_score_flops": 2113929216,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5940975491031093,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011238986120143506,
+        "unique_candidate_clusters_per_m32_fixture": 32
+      },
+      "probes": 32,
+      "top10_output_overlap": 0.5,
+      "top10_retrieval_recall": 0.5,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.125,
+      "candidates_per_query": 32768,
+      "cluster_size": 512,
+      "clusters": 512,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 138.86346542698334,
+        "candidate_flops_per_12_depth_step": 137405399040,
+        "candidate_hbm_bytes_per_12_depth_step": 4267180032,
+        "candidate_hbm_floor_us": 888.9958399999999,
+        "candidate_roofline_floor_us": 888.9958399999999,
+        "candidate_score_flops": 135291469824,
+        "candidate_to_measured_dense_time_ratio_floor": 0.10696669010399232,
+        "candidates_per_query": 32768,
+        "cluster_score_flops": 2113929216,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5958466382082611,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011205994429135889,
+        "unique_candidate_clusters_per_m32_fixture": 64
+      },
+      "probes": 64,
+      "top10_output_overlap": 0.5,
+      "top10_retrieval_recall": 0.5,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.0009765625,
+      "candidates_per_query": 256,
+      "cluster_size": 256,
+      "clusters": 1024,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 5.340902516422436,
+        "candidate_flops_per_12_depth_step": 5284823040,
+        "candidate_hbm_bytes_per_12_depth_step": 53280768,
+        "candidate_hbm_floor_us": 11.100159999999999,
+        "candidate_roofline_floor_us": 11.100159999999999,
+        "candidate_score_flops": 1056964608,
+        "candidate_to_measured_dense_time_ratio_floor": 0.001335605096672591,
+        "candidates_per_query": 256,
+        "cluster_score_flops": 4227858432,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5923806409088233,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011271560289575405,
+        "unique_candidate_clusters_per_m32_fixture": 1
+      },
+      "probes": 1,
+      "top10_output_overlap": 0.3,
+      "top10_retrieval_recall": 0.3,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.001953125,
+      "candidates_per_query": 512,
+      "cluster_size": 256,
+      "clusters": 1024,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 6.409083019706922,
+        "candidate_flops_per_12_depth_step": 6341787648,
+        "candidate_hbm_bytes_per_12_depth_step": 86507520,
+        "candidate_hbm_floor_us": 18.022399999999998,
+        "candidate_roofline_floor_us": 18.022399999999998,
+        "candidate_score_flops": 2113929216,
+        "candidate_to_measured_dense_time_ratio_floor": 0.0021685101200588195,
+        "candidates_per_query": 512,
+        "cluster_score_flops": 4227858432,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5924079704260913,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011271040299438626,
+        "unique_candidate_clusters_per_m32_fixture": 2
+      },
+      "probes": 2,
+      "top10_output_overlap": 0.4,
+      "top10_retrieval_recall": 0.4,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.00390625,
+      "candidates_per_query": 1024,
+      "cluster_size": 256,
+      "clusters": 1024,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 8.545444026275897,
+        "candidate_flops_per_12_depth_step": 8455716864,
+        "candidate_hbm_bytes_per_12_depth_step": 152961024,
+        "candidate_hbm_floor_us": 31.86688,
+        "candidate_roofline_floor_us": 31.86688,
+        "candidate_score_flops": 4227858432,
+        "candidate_to_measured_dense_time_ratio_floor": 0.0038343201668312762,
+        "candidates_per_query": 1024,
+        "cluster_score_flops": 4227858432,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5924626294606273,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011270000463083808,
+        "unique_candidate_clusters_per_m32_fixture": 4
+      },
+      "probes": 4,
+      "top10_output_overlap": 0.4,
+      "top10_retrieval_recall": 0.4,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.0078125,
+      "candidates_per_query": 2048,
+      "cluster_size": 256,
+      "clusters": 1024,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 12.818166039413844,
+        "candidate_flops_per_12_depth_step": 12683575296,
+        "candidate_hbm_bytes_per_12_depth_step": 285868032,
+        "candidate_hbm_floor_us": 59.555839999999996,
+        "candidate_roofline_floor_us": 59.555839999999996,
+        "candidate_score_flops": 8455716864,
+        "candidate_to_measured_dense_time_ratio_floor": 0.00716594026037619,
+        "candidates_per_query": 2048,
+        "cluster_score_flops": 4227858432,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5925719475296993,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011267921365863293,
+        "unique_candidate_clusters_per_m32_fixture": 8
+      },
+      "probes": 8,
+      "top10_output_overlap": 0.4,
+      "top10_retrieval_recall": 0.4,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.015625,
+      "candidates_per_query": 4096,
+      "cluster_size": 256,
+      "clusters": 1024,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 21.363610065689745,
+        "candidate_flops_per_12_depth_step": 21139292160,
+        "candidate_hbm_bytes_per_12_depth_step": 551682048,
+        "candidate_hbm_floor_us": 114.93376,
+        "candidate_roofline_floor_us": 114.93376,
+        "candidate_score_flops": 16911433728,
+        "candidate_to_measured_dense_time_ratio_floor": 0.013829180447466019,
+        "candidates_per_query": 4096,
+        "cluster_score_flops": 4227858432,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5927905836678432,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011263765471892949,
+        "unique_candidate_clusters_per_m32_fixture": 16
+      },
+      "probes": 16,
+      "top10_output_overlap": 0.5,
+      "top10_retrieval_recall": 0.5,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.03125,
+      "candidates_per_query": 8192,
+      "cluster_size": 256,
+      "clusters": 1024,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 38.45449811824153,
+        "candidate_flops_per_12_depth_step": 38050725888,
+        "candidate_hbm_bytes_per_12_depth_step": 1083310080,
+        "candidate_hbm_floor_us": 225.68959999999998,
+        "candidate_roofline_floor_us": 225.68959999999998,
+        "candidate_score_flops": 33822867456,
+        "candidate_to_measured_dense_time_ratio_floor": 0.02715566082164567,
+        "candidates_per_query": 8192,
+        "cluster_score_flops": 4227858432,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5932278559441312,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.01125546287396516,
+        "unique_candidate_clusters_per_m32_fixture": 32
+      },
+      "probes": 32,
+      "top10_output_overlap": 0.5,
+      "top10_retrieval_recall": 0.5,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.0625,
+      "candidates_per_query": 16384,
+      "cluster_size": 256,
+      "clusters": 1024,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 72.63627422334513,
+        "candidate_flops_per_12_depth_step": 71873593344,
+        "candidate_hbm_bytes_per_12_depth_step": 2146566144,
+        "candidate_hbm_floor_us": 447.20128,
+        "candidate_roofline_floor_us": 447.20128,
+        "candidate_score_flops": 67645734912,
+        "candidate_to_measured_dense_time_ratio_floor": 0.05380862157000498,
+        "candidates_per_query": 16384,
+        "cluster_score_flops": 4227858432,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5941024004967072,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011238894343464496,
+        "unique_candidate_clusters_per_m32_fixture": 64
+      },
+      "probes": 64,
+      "top10_output_overlap": 0.5,
+      "top10_retrieval_recall": 0.5,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.00048828125,
+      "candidates_per_query": 128,
+      "cluster_size": 128,
+      "clusters": 2048,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 9.07953427791814,
+        "candidate_flops_per_12_depth_step": 8984199168,
+        "candidate_hbm_bytes_per_12_depth_step": 48463872,
+        "candidate_hbm_floor_us": 10.09664,
+        "candidate_roofline_floor_us": 10.09664,
+        "candidate_score_flops": 528482304,
+        "candidate_to_measured_dense_time_ratio_floor": 0.0012148585104420433,
+        "candidates_per_query": 128,
+        "cluster_score_flops": 8455716864,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.592376678937385,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.01127163567674293,
+        "unique_candidate_clusters_per_m32_fixture": 1
+      },
+      "probes": 1,
+      "top10_output_overlap": 0.3,
+      "top10_retrieval_recall": 0.3,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.0009765625,
+      "candidates_per_query": 256,
+      "cluster_size": 128,
+      "clusters": 2048,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 9.613624529560383,
+        "candidate_flops_per_12_depth_step": 9512681472,
+        "candidate_hbm_bytes_per_12_depth_step": 65077248,
+        "candidate_hbm_floor_us": 13.55776,
+        "candidate_roofline_floor_us": 13.55776,
+        "candidate_score_flops": 1056964608,
+        "candidate_to_measured_dense_time_ratio_floor": 0.0016313110221351575,
+        "candidates_per_query": 256,
+        "cluster_score_flops": 8455716864,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.5923903436960191,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.01127137567219935,
+        "unique_candidate_clusters_per_m32_fixture": 2
+      },
+      "probes": 2,
+      "top10_output_overlap": 0.4,
+      "top10_retrieval_recall": 0.4,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.001953125,
+      "candidates_per_query": 512,
+      "cluster_size": 128,
+      "clusters": 2048,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 10.681805032844872,
+        "candidate_flops_per_12_depth_step": 10569646080,
+        "candidate_hbm_bytes_per_12_depth_step": 98304000,
+        "candidate_hbm_floor_us": 20.48,
+        "candidate_roofline_floor_us": 20.48,
+        "candidate_score_flops": 2113929216,
+        "candidate_to_measured_dense_time_ratio_floor": 0.002464216045521386,
+        "candidates_per_query": 512,
+        "cluster_score_flops": 8455716864,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.592417673213287,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011270855699095922,
+        "unique_candidate_clusters_per_m32_fixture": 4
+      },
+      "probes": 4,
+      "top10_output_overlap": 0.4,
+      "top10_retrieval_recall": 0.4,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.00390625,
+      "candidates_per_query": 1024,
+      "cluster_size": 128,
+      "clusters": 2048,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 12.818166039413844,
+        "candidate_flops_per_12_depth_step": 12683575296,
+        "candidate_hbm_bytes_per_12_depth_step": 164757504,
+        "candidate_hbm_floor_us": 34.32448,
+        "candidate_roofline_floor_us": 34.32448,
+        "candidate_score_flops": 4227858432,
+        "candidate_to_measured_dense_time_ratio_floor": 0.004130026092293843,
+        "candidates_per_query": 1024,
+        "cluster_score_flops": 8455716864,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.592472332247823,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011269815896800732,
+        "unique_candidate_clusters_per_m32_fixture": 8
+      },
+      "probes": 8,
+      "top10_output_overlap": 0.4,
+      "top10_retrieval_recall": 0.4,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.0078125,
+      "candidates_per_query": 2048,
+      "cluster_size": 128,
+      "clusters": 2048,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 17.090888052551794,
+        "candidate_flops_per_12_depth_step": 16911433728,
+        "candidate_hbm_bytes_per_12_depth_step": 297664512,
+        "candidate_hbm_floor_us": 62.013439999999996,
+        "candidate_roofline_floor_us": 62.013439999999996,
+        "candidate_score_flops": 8455716864,
+        "candidate_to_measured_dense_time_ratio_floor": 0.0074616461858387564,
+        "candidates_per_query": 2048,
+        "cluster_score_flops": 8455716864,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.592581650316895,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.0112677368676712,
+        "unique_candidate_clusters_per_m32_fixture": 16
+      },
+      "probes": 16,
+      "top10_output_overlap": 0.4,
+      "top10_retrieval_recall": 0.4,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.015625,
+      "candidates_per_query": 4096,
+      "cluster_size": 128,
+      "clusters": 2048,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 25.63633207882769,
+        "candidate_flops_per_12_depth_step": 25367150592,
+        "candidate_hbm_bytes_per_12_depth_step": 563478528,
+        "candidate_hbm_floor_us": 117.39136,
+        "candidate_roofline_floor_us": 117.39136,
+        "candidate_score_flops": 16911433728,
+        "candidate_to_measured_dense_time_ratio_floor": 0.014124886372928585,
+        "candidates_per_query": 4096,
+        "cluster_score_flops": 8455716864,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.592800286455039,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011263581109769829,
+        "unique_candidate_clusters_per_m32_fixture": 32
+      },
+      "probes": 32,
+      "top10_output_overlap": 0.4,
+      "top10_retrieval_recall": 0.4,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    },
+    {
+      "all_32_positions_equivalent": true,
+      "candidate_fraction_of_vocabulary": 0.03125,
+      "candidates_per_query": 8192,
+      "cluster_size": 128,
+      "clusters": 2048,
+      "derived_independent_12_position_equivalence": 1.0,
+      "physical_cost_model": {
+        "candidate_compute_floor_us": 42.72722013137949,
+        "candidate_flops_per_12_depth_step": 42278584320,
+        "candidate_hbm_bytes_per_12_depth_step": 1095106560,
+        "candidate_hbm_floor_us": 228.1472,
+        "candidate_roofline_floor_us": 228.1472,
+        "candidate_score_flops": 33822867456,
+        "candidate_to_measured_dense_time_ratio_floor": 0.027451366747108238,
+        "candidates_per_query": 8192,
+        "cluster_score_flops": 8455716864,
+        "launch_model": {
+          "dense_12xm32": 12,
+          "grouped_exact": 1,
+          "retrieval": 4,
+          "retrieval_stages": [
+            "cluster_score",
+            "multiprobe_select",
+            "ragged_candidate_score",
+            "candidate_topk_or_verifier_decision"
+          ]
+        },
+        "projected_seconds_per_request_if_floor_transfers": 0.593237558731327,
+        "projected_usd_per_million_total_tokens_if_floor_transfers": 0.011255278783528794,
+        "unique_candidate_clusters_per_m32_fixture": 64
+      },
+      "probes": 64,
+      "top10_output_overlap": 0.5,
+      "top10_retrieval_recall": 0.5,
+      "top1_recall": 1.0,
+      "verifier_decision_divergence": 0.0,
+      "verifier_decision_recall": 1.0
+    }
+  ],
+  "decision_gate": {
+    "minimum_top10_retrieval_recall": 0.9,
+    "minimum_top1_recall": 0.96875,
+    "must_beat": "grouped_exact_ideal_reuse_roofline_floor",
+    "passing_rows": 0,
+    "selected": null
+  },
+  "evidence_labels": {
+    "dense_head_attribution": "measured in the qualified 15-step H200 trace",
+    "h200_costs": "analytical roofline using shared inventory vendor priors and measured dense calibration boundary",
+    "quality": "not measured; no GPQA-Diamond, TauBench, sampling, or OpenRouter feature claim",
+    "recall_curve": "measured on 32 persisted actual-consumer hidden rows and exact checkpoint embedding",
+    "whole_request_projection": "derived upper-bound transfer, not endpoint measurement"
+  },
+  "index_geometries": [
+    {
+      "centroid_build_seconds": 1.366735961055383,
+      "centroid_bytes_bf16_runtime": 5505024,
+      "centroid_bytes_fp32_offline": 11010048,
+      "cluster_size": 512,
+      "clusters": 512
+    },
+    {
+      "centroid_build_seconds": 1.6963465500157326,
+      "centroid_bytes_bf16_runtime": 11010048,
+      "centroid_bytes_fp32_offline": 22020096,
+      "cluster_size": 256,
+      "clusters": 1024
+    },
+    {
+      "centroid_build_seconds": 0.7490283579099923,
+      "centroid_bytes_bf16_runtime": 22020096,
+      "centroid_bytes_fp32_offline": 44040192,
+      "cluster_size": 128,
+      "clusters": 2048
+    }
+  ],
+  "inputs": {
+    "checkpoint_file": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_sync_graph_elimination/inputs/checkpoint/model-00001-of-00002.safetensors",
+    "checkpoint_file_bytes": 49784788364,
+    "checkpoint_file_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+    "embedding_dtype": "torch.bfloat16",
+    "embedding_shape": [
+      262144,
+      5376
+    ],
+    "embedding_tensor": "model.language_model.embed_tokens.weight",
+    "hidden_fixture_boundary": "actual LogitsProcessor._compute_lm_head M32 capture; not a 384-row target-verification capture",
+    "hidden_rows_dtype": "torch.bfloat16",
+    "hidden_rows_file": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_tied_head_fused_greedy_top1/inputs/predecessor/tied-head/real_hidden_rows.pt",
+    "hidden_rows_sha256": "ca17eff46edb8d6ee7e39571fb2dc11cfb0df55ab9b4970a7081e6f0e39162f2",
+    "hidden_rows_shape": [
+      32,
+      5376
+    ],
+    "seed": 20260725
+  },
+  "next_component_if_promising": {
+    "capture": "Persist one unseen full target-verification step: 384 post-final-norm BF16 hidden rows, 384 draft token IDs, dense top-10 IDs/values, request/depth mapping, and accepted-prefix result.",
+    "experiment": "On the retained H200, build the frozen balanced index once, run cluster-score + multiprobe + ragged exact candidate scoring for the selected geometry, and compare per-position argmax plus per-request accepted-prefix decisions.",
+    "minimum_counters": [
+      "CUDA-event latency per 12-depth step",
+      "kernel launch count",
+      "DRAM read bytes",
+      "L2 hit rate",
+      "candidate count and unique clusters per depth"
+    ]
+  },
+  "question": "Can balanced clustered retrieval recover dense tied-head decisions with materially lower physical H200 cost than dense 12xM32 and the ideal grouped-exact baseline?",
+  "representation": {
+    "balance": "exact equal token count per cluster",
+    "candidate_scores": "exact dense BF16-weight dot-product oracle restricted to tokens in selected clusters",
+    "maximum_leaf_clusters": 2048,
+    "method": "balanced hierarchical 2-means over a fixed Gaussian projection of tied BF16 token embeddings",
+    "projection_dims": 32,
+    "query_leakage": false,
+    "runtime_centroids": "exact FP32 mean of original 5376-D embedding rows, modeled as BF16 storage",
+    "sampling_support": "not implemented; the candidate set alone cannot preserve full-distribution sampling",
+    "split_iterations": 3
+  },
+  "schema_version": 1,
+  "timing": {
+    "balanced_hierarchical_kmeans_seconds": 2.1842598950024694,
+    "dense_oracle_seconds": 0.6529732949566096,
+    "embedding_load_and_fp32_conversion_seconds": 1.3534964830614626,
+    "embedding_projection_seconds": 0.8622484470251948,
+    "total_seconds": 9.390998363494873
+  },
+  "type": "gemma4_flashhead_offline_clustered_retrieval_result"
+}

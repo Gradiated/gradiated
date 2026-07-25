@@ -8,8 +8,8 @@
   "actual_spend_usd": 0.0,
   "allocation_limit": 1,
   "active_session": null,
-  "summary": "All director-bound hashes match. A production-shaped depth-interleaved Triton candidate and exact SGLang LogitsProcessor consumer/oracle are project-local and compile for SM90 in the pinned image. The H200 remains correctly owned by priority 8490, so CUDA correctness and timing are unconsumed.",
-  "next_action": "Do not claim while priority 8490 owns the H200. After its MIXED_LOCAL_M384_TERMINAL.json is durable, verify it does not supersede grouped LM-head reuse, confirm the exact $5 ledger reservation and at least 60 lifecycle minutes remain, then atomically claim h200-dflash-adapter-e00vyqp7gxsr34wrtz. Materialize the exact resident checkpoint bytes under this project's remote root with verified immutable hardlinks, run exact_consumer_component.py first, and run one matched c32 endpoint pair only if target IDs, accepted decisions, replay, and a reproducibly positive component bound all pass. Persist PERSISTENT_GROUPED_LM_HEAD_TERMINAL.json and release by 2026-07-25T21:45:00Z.",
+  "summary": "All director-bound hashes match. Mixed-M384 is durable and non-superseding; DFlash's 112-cycle oracle passes; hybrid closed before claim with no consumed science. The production-shaped grouped LM-head candidate is queued solely behind the protected live DFlash c32 owner; CUDA correctness and timing remain unconsumed.",
+  "next_action": "Do not touch or claim h200-dflash-adapter-e00vyqp7gxsr34wrtz while the restored priority-8600 DFlash c32 owner is live. DFLASH_CYCLE_ORACLE_TERMINAL.json is durable and HYBRID_55L5G_H200_COMPONENT_TERMINAL.json closed without a claim. After the DFlash claim releases, confirm the exact $5 ledger reservation and at least 60 lifecycle minutes remain, then atomically claim the named H200. Materialize the exact resident checkpoint bytes under this project's remote root with verified immutable hardlinks, run exact_consumer_component.py first, and run one matched c32 endpoint pair only if target IDs, accepted decisions, replay, and a reproducibly positive component bound all pass. Persist PERSISTENT_GROUPED_LM_HEAD_TERMINAL.json and release by 2026-07-25T21:45:00Z.",
   "decision": "director_admitted_independent_grouped_lm_head_dataflow_lane",
   "offline_evidence": {
     "artifact": "OFFLINE_CAUSAL_MODEL.json",
@@ -34,17 +34,20 @@
     "remote_experiment": "remote_experiment.py",
     "remote_experiment_sha256": "ddc7135b37d31de8636034bc3a5640ce9c44491fc4ef8d39f65e31348ce9bd1b",
     "durable_owner": "run_bench_owner.py",
-    "durable_owner_sha256": "638d297336cb233525e067e45314a20fc57495c5db1e5636b1e56ef2361c8607",
+    "durable_owner_sha256": "ff0d90a17bc885eeb10c0c44d4037afeae9f4862433d0e6e433cf2163bb67bf2",
     "offline_validation": "Pinned Triton 3.6.0 compiled depth_interleaved_grouped_lm_head for SM90 with 8 warps, 3 stages, and 36 KiB shared memory. CUDA execution, numerical equality, compiled registers, DRAM reads, and timing remain target-GPU gates."
   },
   "claim_gate": {
     "reservation": "durable_exact_5_usd",
-    "predecessor": "gemma4_h200_ngram_fixed_m384_executor_rewrite",
-    "predecessor_state": "claimed_live_repair_handshake",
+    "predecessors": [
+      "gemma4_h200_dflash_endpoint",
+      "gemma4_hybrid_attention_placement_codesign"
+    ],
+    "predecessor_state": "mixed_m384_complete_dflash_oracle_passed_hybrid_claim_gate_closed_dflash_c32_owner_live",
     "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
-    "observed_at_utc": "2026-07-25T17:02:38Z",
+    "observed_at_utc": "2026-07-25T19:19:37Z",
     "claim_allowed_now": false,
-    "reason": "Priority 8490 owns and heartbeats the only admitted H200; its mixed-local M384 terminal is not yet durable."
+    "reason": "The DFlash cycle oracle is durable and passes all 112 phase-ordered records; the hybrid project terminalized its unrun claim gate with no consumed science. The director requires the live authorized DFlash c32 owner to remain untouched until it releases the H200."
   },
   "director_binding": {
     "path": "DIRECTOR_BINDING.json",

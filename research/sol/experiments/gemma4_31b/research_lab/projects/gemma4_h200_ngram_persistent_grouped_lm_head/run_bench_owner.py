@@ -23,7 +23,8 @@ REPAIR = pathlib.Path("/root/workspace/research/factory/tools/repair-handshake")
 KEY = pathlib.Path("/root/.config/nebius/glm-campaign/ssh_ed25519")
 KNOWN_HOSTS = pathlib.Path("/root/.config/nebius/glm-campaign/known_hosts")
 NAME = "gemma4_h200_ngram_persistent_grouped_lm_head"
-PREDECESSOR = "gemma4_h200_ngram_fixed_m384_executor_rewrite"
+DFLASH_PREDECESSOR = "gemma4_h200_dflash_endpoint"
+HYBRID_PREDECESSOR = "gemma4_hybrid_attention_placement_codesign"
 BENCH = "h200-dflash-adapter-e00vyqp7gxsr34wrtz"
 REMOTE = "/home/glmrunner/gemma4-persistent-grouped-lm-head"
 RESIDENT_CHECKPOINT = "/home/glmrunner/gemma4-fixed-m384-executor/checkpoint"
@@ -115,11 +116,26 @@ def inventory_bench() -> dict[str, Any]:
     return next(row for row in benches if row["id"] == BENCH)
 
 
-def predecessor_terminal() -> tuple[pathlib.Path, dict[str, Any]]:
-    path = LAB / "projects" / PREDECESSOR / "MIXED_LOCAL_M384_TERMINAL.json"
+def predecessor_terminal(
+    project: str, terminal_name: str, boundary: str
+) -> tuple[pathlib.Path, dict[str, Any]]:
+    path = LAB / "projects" / project / terminal_name
     if not path.exists():
-        raise RuntimeError("typed_queue_boundary:predecessor_terminal_missing")
+        raise RuntimeError(f"typed_queue_boundary:{boundary}_terminal_missing")
     return path, json.loads(path.read_text())
+
+
+def hybrid_terminal_or_bypass() -> tuple[pathlib.Path, dict[str, Any]]:
+    root = LAB / "projects" / HYBRID_PREDECESSOR
+    for name in (
+        "HYBRID_55L5G_H200_COMPONENT_TERMINAL.json",
+        "HYBRID_55L5G_H200_CLAIM_TIME_BYPASS.json",
+        "HYBRID_55L5G_H200_CLAIM_TIME_BYPASS_TERMINAL.json",
+    ):
+        path = root / name
+        if path.exists():
+            return path, json.loads(path.read_text())
+    raise RuntimeError("typed_queue_boundary:priority_8550_terminal_or_bypass_missing")
 
 
 def terminal_service_time(value: object) -> float | None:
@@ -143,22 +159,32 @@ def terminal_service_time(value: object) -> float | None:
     return None
 
 
-def check_gates() -> tuple[dict[str, Any], pathlib.Path, dict[str, Any]]:
+def check_gates() -> tuple[dict[str, Any], list[tuple[pathlib.Path, dict[str, Any]]]]:
     spend = json.loads((LAB / "runtime/spend_cap.json").read_text())
     reservation = spend.get("reservations", {}).get(NAME)
     if not reservation or float(reservation.get("authorized_usd", -1)) != 5.0:
         raise RuntimeError("typed_budget_boundary:exact_5_usd_reservation_missing")
-    terminal_path, terminal = predecessor_terminal()
-    if terminal.get("supersedes_grouped_lm_head") is True:
-        raise RuntimeError("typed_scientific_boundary:predecessor_supersedes_mechanism")
-    service = terminal_service_time(terminal)
-    if service is not None and service <= TARGET_SECONDS_PER_REQUEST:
-        raise RuntimeError(
-            "typed_scientific_boundary:predecessor_already_meets_campaign_target"
-        )
+    predecessors = [
+        predecessor_terminal(
+            DFLASH_PREDECESSOR,
+            "DFLASH_CYCLE_ORACLE_TERMINAL.json",
+            "priority_8600",
+        ),
+        hybrid_terminal_or_bypass(),
+    ]
+    for terminal_path, terminal in predecessors:
+        if terminal.get("supersedes_grouped_lm_head") is True:
+            raise RuntimeError(
+                "typed_scientific_boundary:predecessor_supersedes_mechanism"
+            )
+        service = terminal_service_time(terminal)
+        if service is not None and service <= TARGET_SECONDS_PER_REQUEST:
+            raise RuntimeError(
+                "typed_scientific_boundary:predecessor_already_meets_campaign_target"
+            )
     bench = inventory_bench()
     if bench.get("status") != "available" or bench.get("claim"):
-        raise RuntimeError("typed_queue_boundary:priority_8490_not_released")
+        raise RuntimeError("typed_queue_boundary:predecessor_claim_not_released")
     lifecycle = dt.datetime.fromisoformat(
         bench["lifecycle"]["deadline_utc"].replace("Z", "+00:00")
     )
@@ -167,7 +193,7 @@ def check_gates() -> tuple[dict[str, Any], pathlib.Path, dict[str, Any]]:
         raise RuntimeError("typed_lifecycle_boundary:less_than_60_minutes")
     if not KEY.is_file() or not KNOWN_HOSTS.is_file():
         raise RuntimeError("typed_identity_boundary:local_ssh_identity_missing")
-    return bench, terminal_path, terminal
+    return bench, predecessors
 
 
 def ssh(ip: str, command: str, timeout: int) -> subprocess.CompletedProcess[str]:
@@ -576,7 +602,7 @@ def release(
 
 
 def main() -> int:
-    bench, predecessor_path, predecessor = check_gates()
+    bench, predecessors = check_gates()
     lifecycle = dt.datetime.fromisoformat(
         bench["lifecycle"]["deadline_utc"].replace("Z", "+00:00")
     )
@@ -652,9 +678,14 @@ def main() -> int:
         atomic(
             artifact / "PREDECESSOR_GATE.json",
             {
-                "path": str(predecessor_path),
-                "sha256": sha256(predecessor_path),
-                "terminal": predecessor,
+                "predecessors": [
+                    {
+                        "path": str(path),
+                        "sha256": sha256(path),
+                        "terminal": terminal,
+                    }
+                    for path, terminal in predecessors
+                ],
             },
         )
         for attempt in range(2):

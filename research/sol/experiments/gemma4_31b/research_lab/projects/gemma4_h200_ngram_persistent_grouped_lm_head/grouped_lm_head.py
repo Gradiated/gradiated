@@ -207,6 +207,76 @@ def grouped_get_logits(
     return logits
 
 
+def grouped_activation_blocker(
+    processor: object,
+    hidden_states: torch.Tensor,
+    lm_head: object,
+    logits_metadata: object,
+    embedding_bias: torch.Tensor | None,
+    *,
+    capture_active: bool | None = None,
+) -> str | None:
+    if tuple(hidden_states.shape) != (BATCH * DEPTHS, HIDDEN):
+        return "non_production_shape"
+    if not hasattr(lm_head, "weight"):
+        return "weight_unavailable"
+    if tuple(lm_head.weight.shape) != (VOCAB, HIDDEN):
+        return "non_production_weight_shape"
+    if hidden_states.dtype != torch.bfloat16 or lm_head.weight.dtype != torch.bfloat16:
+        return "non_bfloat16"
+    if processor.use_fp32_lm_head:
+        return "fp32_lm_head"
+    if embedding_bias is not None:
+        return "embedding_bias"
+    if logits_metadata.next_token_logits_buffer is not None:
+        return "live_logits_buffer"
+    if capture_active is None:
+        capture_active = bool(
+            torch.cuda.is_available() and torch.cuda.is_current_stream_capturing()
+        )
+    if capture_active:
+        return "cuda_graph_capture"
+    return None
+
+
+def dispatch_target_get_logits(
+    original: Callable,
+    processor: object,
+    hidden_states: torch.Tensor,
+    lm_head: object,
+    logits_metadata: object,
+    embedding_bias: torch.Tensor | None,
+    *,
+    capture_active: bool | None = None,
+    grouped_projector: Callable = grouped_get_logits,
+) -> torch.Tensor:
+    if not logits_metadata.forward_mode.is_target_verify():
+        return original(
+            processor, hidden_states, lm_head, logits_metadata, embedding_bias
+        )
+    blocker = grouped_activation_blocker(
+        processor,
+        hidden_states,
+        lm_head,
+        logits_metadata,
+        embedding_bias,
+        capture_active=capture_active,
+    )
+    if blocker is None:
+        return grouped_projector(
+            processor, hidden_states, lm_head, logits_metadata
+        )
+    return project_decode_shapes(
+        original,
+        processor,
+        hidden_states,
+        lm_head,
+        logits_metadata,
+        embedding_bias,
+        DEPTHS,
+    )
+
+
 def install() -> None:
     from sglang.srt.layers import logits_processor
 
@@ -226,28 +296,13 @@ def install() -> None:
         logits_metadata,
         embedding_bias=None,
     ):
-        if not logits_metadata.forward_mode.is_target_verify():
-            return original(
-                self, hidden_states, lm_head, logits_metadata, embedding_bias
-            )
-        exact_shape = (
-            tuple(hidden_states.shape) == (BATCH * DEPTHS, HIDDEN)
-            and hasattr(lm_head, "weight")
-            and tuple(lm_head.weight.shape) == (VOCAB, HIDDEN)
-            and hidden_states.dtype == torch.bfloat16
-            and lm_head.weight.dtype == torch.bfloat16
-            and not self.use_fp32_lm_head
-        )
-        if exact_shape:
-            return grouped_get_logits(self, hidden_states, lm_head, logits_metadata)
-        return project_decode_shapes(
+        return dispatch_target_get_logits(
             original,
             self,
             hidden_states,
             lm_head,
             logits_metadata,
             embedding_bias,
-            DEPTHS,
         )
 
     cls._get_logits = grouped_target_get_logits
@@ -262,5 +317,10 @@ def install() -> None:
             "block_n": BLOCK_N,
             "block_k": BLOCK_K,
             "source_sha256": observed,
+            "activation_contract": {
+                "eager_only": True,
+                "next_token_logits_buffer": None,
+                "captured_live_calls": "stock_ordered_fallback",
+            },
         }
     )

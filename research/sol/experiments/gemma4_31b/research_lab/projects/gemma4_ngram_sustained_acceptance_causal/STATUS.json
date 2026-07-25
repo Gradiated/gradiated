@@ -1,0 +1,23 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "compute_budget": "Local CPU/source analysis only; no GPU claim or provider mutation.",
+  "next_action": "If the director admits a measured follow-on, implement only the hash-bound request_local_verified_trunk overlay and run exactly one candidate-only 1036-request full-arrival endpoint. Do not replay a control, threshold-8 bypass, frequency mode, global breadth-one, or any settled scheduler/source arm.",
+  "priority": 8450,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "execution",
+  "status": "complete",
+  "storage_budget": "At most 1 GiB of project-local artifacts.",
+  "summary": "Pinned-source probe exactly reproduced the c32 acceptance length 5.0 from one rare request contaminating the global recency trie. Promoted request_local_verified_trunk with a predicted 58.3% reduction in target rounds/rows and one no-control full-arrival endpoint contract.",
+  "terminal": {
+    "artifact": "artifacts/causal-source-probe/RESULT.json",
+    "candidate": "request_local_verified_trunk",
+    "candidate_endpoint_consumed": false,
+    "classification": "source_bound_causal_candidate_ready",
+    "gpu_science_consumed": false,
+    "result_sha256": "44e631b769d53127ca98907e0205132afa0fd3530595d6dd9962a999d3c3b396"
+  },
+  "wall_clock_budget": "Finish by 2026-07-25T03:15:00Z."
+}

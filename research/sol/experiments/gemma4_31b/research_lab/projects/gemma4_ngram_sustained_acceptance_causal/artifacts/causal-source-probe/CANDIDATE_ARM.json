@@ -1,0 +1,62 @@
+{
+  "candidate": {
+    "material_distinction": "keeps depth 12 and all requests on NGRAM; unlike the closed threshold-8 bypass it changes neither scheduling nor the target verification gate, and unlike a global frequency/breadth tune it prevents one request's branch from displacing another request's already verified path",
+    "minimal_endpoint_arm": {
+      "control_replay": false,
+      "falsification": "reject if unaffected requests lose accepted depth after the first rare output, target rounds do not fall, peak queue exceeds 30, final queue is nonzero, release drift grows, normalized semantics differ, or cost exceeds $0.14/M",
+      "kind": "candidate_only_full_arrival_1036",
+      "release_policy": "every request at its bound arrival_s",
+      "requests": 1036,
+      "required_observations": [
+        "normalized 1036/1036 semantic equality",
+        "zero failures and retractions",
+        "per-request acceptance histogram keyed around the first rare-output insertion",
+        "target verify forward count and rows",
+        "KV slot allocations and rejected-slot frees",
+        "peak/final queue and release drift",
+        "elapsed seconds and planning cost"
+      ],
+      "source_or_server_delta": "apply only the hash-bound request-local verified-trunk overlay; retain the pinned image/model/launch, global BFS fallback, c32, depth 12, and all other source"
+    },
+    "name": "request_local_verified_trunk",
+    "predicted_counters": {
+      "gpu_utilization": "may stay saturated; useful tokens/forward must increase",
+      "kv_slots": "allocations and rejected-slot frees per completion decrease with target-verify round count",
+      "queue": "peak below the measured 41 and no positive terminal drift",
+      "spec_accept_length": "unaffected requests remain near 12 after the first rare branch, instead of the measured collapse to 5",
+      "spec_accept_rate": "unaffected-request rate remains near 1.0 instead of about 0.364",
+      "target_rows_per_completion": "fall by up to 58.333% at unchanged 12 rows/round",
+      "target_verify_rounds_per_358_tokens": "fall from about 71.60 toward 29.83"
+    },
+    "predicted_physical_change": "fewer target-verify rounds per 358-token completion, reducing 12-row Gemma target forwards, KV allocate/free/move traffic, and acceptance synchronization critical time",
+    "predicted_primary_change": "after a rare request diverges, unaffected requests retain their own accepted trunk instead of inheriting the rare global branch; their accepted drafts should remain near 11 while target rows remain 12/request",
+    "semantics": "target-semantics preserving: all 12 rows still pass through the unchanged target verifier; only draft-tree topology changes",
+    "source_delta": "retain a bounded per-rid trie containing only that request's target-verified tokens; at the next draft step reserve its longest verified continuation as the trunk, then fill unused rows from the unchanged global buildRecency tree. Seed and update the local trie only from target-accepted output_ids, erase it with the existing finished-rid cleanup, and fall back to the current global tree until a local continuation exists",
+    "source_symbols": [
+      "NGRAMWorker._prepare_draft_tokens",
+      "NGRAMWorker._update_ngram_corpus",
+      "NgramVerifyInput._fill_requests",
+      "ngram::Trie::buildRecency"
+    ]
+  },
+  "schema_version": 1,
+  "source_identity": {
+    "bound_input_sha256": {
+      "aging_requests": "a703ff70c079084bf88b577f765f78c0e43a49ed2814207d430875d66571e477",
+      "aging_telemetry": "9aaf97c3a289d5cf1abf6597fddd6fd32c312195bdb27a5f12b1e24820b2bef6",
+      "checkpoint_config": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "launch": "8349853a7eac9e73211f5d3081c834c05f78e0fd292ddbe5acb921b1824a523d",
+      "tail_requests": "5658b431b4db0e445d320c5e90a1fcd7c50ae437e5a1809ee068ca068ada4deb",
+      "tail_telemetry": "9985bef41ff9f6bc98243b98c99eb5d2f10d725fe9dee6a084b1a53efe3d0915",
+      "tail_terminal": "8c92c806ff758fc9b6bc3f75ce6b2d3f3b8ac4cbcaf0b7d096fefc8cdd2c7b73"
+    },
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "sha256": {
+      "ngram_info.py": "ffa88c663e1893c306710ac801da0693d8248ebcfd1a5bc705c157f90657af1c",
+      "ngram_worker.py": "27721b777cae08657ec9854ec0137a0db50afd49d84809503312fa43e399b554",
+      "param.h": "e0a4c0899655d322f21421a62ab58b7cca4e2874150756388f9ed143f4c62233",
+      "result.cpp": "d675ffef9de8cbfb37c5b6534836634474eab0b404ff43a87facb0ab85365bc1",
+      "trie.cpp": "9f14f2d05521427a0782db8c6058bbda1191dd09baf535e202c7412f82496ac9"
+    }
+  }
+}

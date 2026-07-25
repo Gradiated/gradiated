@@ -1,0 +1,347 @@
+{
+  "bound_telemetry": {
+    "aging_divergent_requests": [
+      {
+        "completed_seconds": 551.4562466019997,
+        "dominant_tokens": 26,
+        "first_non_dominant_offset": 26,
+        "non_dominant_tokens": [
+          3055
+        ],
+        "output_tokens": 358,
+        "request_index": 790
+      }
+    ],
+    "aging_first_low_acceptance": {
+      "accept_length": 6.101123595505618,
+      "accept_rate": 0.4637385086823289,
+      "elapsed_seconds": 554.30712723732,
+      "queued_requests": 0.0,
+      "running_requests": 6.0
+    },
+    "tail_divergent_requests": [
+      {
+        "completed_seconds": 62.248452601999816,
+        "dominant_tokens": 355,
+        "first_non_dominant_offset": 289,
+        "non_dominant_tokens": [
+          1154,
+          1767,
+          25627
+        ],
+        "output_tokens": 358,
+        "request_index": 32
+      }
+    ],
+    "tail_elapsed_seconds": 776.6183435450002,
+    "tail_final_accept_length": 5.0,
+    "tail_final_accept_rate": 0.36363636363636365,
+    "tail_first_low_acceptance": {
+      "accept_length": 5.188711036225779,
+      "accept_rate": 0.38079191238416177,
+      "elapsed_seconds": 85.13177580500087,
+      "queued_requests": 0.0,
+      "running_requests": 32.0
+    },
+    "tail_peak_queue": 41.0
+  },
+  "candidate": {
+    "material_distinction": "keeps depth 12 and all requests on NGRAM; unlike the closed threshold-8 bypass it changes neither scheduling nor the target verification gate, and unlike a global frequency/breadth tune it prevents one request's branch from displacing another request's already verified path",
+    "minimal_endpoint_arm": {
+      "control_replay": false,
+      "falsification": "reject if unaffected requests lose accepted depth after the first rare output, target rounds do not fall, peak queue exceeds 30, final queue is nonzero, release drift grows, normalized semantics differ, or cost exceeds $0.14/M",
+      "kind": "candidate_only_full_arrival_1036",
+      "release_policy": "every request at its bound arrival_s",
+      "requests": 1036,
+      "required_observations": [
+        "normalized 1036/1036 semantic equality",
+        "zero failures and retractions",
+        "per-request acceptance histogram keyed around the first rare-output insertion",
+        "target verify forward count and rows",
+        "KV slot allocations and rejected-slot frees",
+        "peak/final queue and release drift",
+        "elapsed seconds and planning cost"
+      ],
+      "source_or_server_delta": "apply only the hash-bound request-local verified-trunk overlay; retain the pinned image/model/launch, global BFS fallback, c32, depth 12, and all other source"
+    },
+    "name": "request_local_verified_trunk",
+    "predicted_counters": {
+      "gpu_utilization": "may stay saturated; useful tokens/forward must increase",
+      "kv_slots": "allocations and rejected-slot frees per completion decrease with target-verify round count",
+      "queue": "peak below the measured 41 and no positive terminal drift",
+      "spec_accept_length": "unaffected requests remain near 12 after the first rare branch, instead of the measured collapse to 5",
+      "spec_accept_rate": "unaffected-request rate remains near 1.0 instead of about 0.364",
+      "target_rows_per_completion": "fall by up to 58.333% at unchanged 12 rows/round",
+      "target_verify_rounds_per_358_tokens": "fall from about 71.60 toward 29.83"
+    },
+    "predicted_physical_change": "fewer target-verify rounds per 358-token completion, reducing 12-row Gemma target forwards, KV allocate/free/move traffic, and acceptance synchronization critical time",
+    "predicted_primary_change": "after a rare request diverges, unaffected requests retain their own accepted trunk instead of inheriting the rare global branch; their accepted drafts should remain near 11 while target rows remain 12/request",
+    "semantics": "target-semantics preserving: all 12 rows still pass through the unchanged target verifier; only draft-tree topology changes",
+    "source_delta": "retain a bounded per-rid trie containing only that request's target-verified tokens; at the next draft step reserve its longest verified continuation as the trunk, then fill unused rows from the unchanged global buildRecency tree. Seed and update the local trie only from target-accepted output_ids, erase it with the existing finished-rid cleanup, and fall back to the current global tree until a local continuation exists",
+    "source_symbols": [
+      "NGRAMWorker._prepare_draft_tokens",
+      "NGRAMWorker._update_ngram_corpus",
+      "NgramVerifyInput._fill_requests",
+      "ngram::Trie::buildRecency"
+    ]
+  },
+  "causal_chain": [
+    "NGRAMWorker._update_ngram_corpus inserts every request's last 18 accepted target tokens into one global online corpus after each verify step",
+    "Trie::buildRecency gives recent children fixed breadth entitlement with no request-local ownership or support gate",
+    "the exact request-32 three-token transient makes the pinned source probe accept four drafts, exactly reproducing the final metric length 5.0 (four drafts plus bonus)",
+    "at c32, length 5 instead of 12 expands a 358-token completion from about 29.83 to 71.60 fixed target-verify rounds",
+    "each round materializes 12 rows/request through the 60-layer Gemma target and its 262144-way LM head, so the extra rounds increase KV allocation/free/move traffic and queueing"
+  ],
+  "classification": "source_bound_offline_causal_probe",
+  "derived_load_amplification": {
+    "c32_target_rows_per_round": 384,
+    "evidence_label": "derived from bound metric and fixed source geometry",
+    "observed_rounds_at_accept_length_5": 71.6,
+    "output_tokens_per_request": 358,
+    "rounds_at_accept_length_12": 29.833333333333332,
+    "target_round_and_row_reduction_if_restored": 0.5833333333333333
+  },
+  "exact_source_probe": [
+    {
+      "bfs_accepted_drafts": 11,
+      "bfs_tokens": [
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935
+      ],
+      "linear_accepted_drafts": 11,
+      "linear_tokens": [
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935
+      ],
+      "prob_accepted_drafts": 11,
+      "prob_tokens": [
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935
+      ],
+      "scenario": "dominant_only"
+    },
+    {
+      "bfs_accepted_drafts": 4,
+      "bfs_tokens": [
+        51935,
+        25627,
+        51935,
+        1767,
+        25627,
+        51935,
+        1154,
+        1767,
+        51935,
+        51935,
+        1154,
+        51935
+      ],
+      "linear_accepted_drafts": 11,
+      "linear_tokens": [
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935
+      ],
+      "prob_accepted_drafts": 4,
+      "prob_tokens": [
+        51935,
+        25627,
+        51935,
+        1767,
+        25627,
+        51935,
+        1154,
+        1767,
+        25627,
+        51935,
+        25627,
+        51935
+      ],
+      "scenario": "three_token_transient"
+    },
+    {
+      "bfs_accepted_drafts": 2,
+      "bfs_tokens": [
+        51935,
+        51935,
+        3055,
+        51935,
+        3055,
+        3055,
+        3055,
+        3055,
+        3055,
+        3055,
+        3055,
+        3055
+      ],
+      "linear_accepted_drafts": 0,
+      "linear_tokens": [
+        51935,
+        3055,
+        3055,
+        3055,
+        3055,
+        3055,
+        3055,
+        3055,
+        3055,
+        3055,
+        3055,
+        3055
+      ],
+      "prob_accepted_drafts": 4,
+      "prob_tokens": [
+        51935,
+        3055,
+        51935,
+        3055,
+        3055,
+        51935,
+        3055,
+        3055,
+        3055,
+        51935,
+        3055,
+        51935
+      ],
+      "scenario": "persistent_alternate"
+    },
+    {
+      "bfs_accepted_drafts": 4,
+      "bfs_tokens": [
+        51935,
+        3055,
+        51935,
+        3055,
+        3055,
+        51935,
+        3055,
+        3055,
+        51935,
+        3055,
+        3055,
+        51935
+      ],
+      "linear_accepted_drafts": 11,
+      "linear_tokens": [
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935,
+        51935
+      ],
+      "prob_accepted_drafts": 4,
+      "prob_tokens": [
+        51935,
+        3055,
+        51935,
+        3055,
+        3055,
+        51935,
+        3055,
+        3055,
+        3055,
+        51935,
+        3055,
+        51935
+      ],
+      "scenario": "persistent_alternate_after_four_normal"
+    }
+  ],
+  "gemma_geometry": {
+    "attention_heads": 32,
+    "global_head_dim": 512,
+    "global_kv_heads": 4,
+    "global_layers": 10,
+    "hidden_size": 5376,
+    "intermediate_size": 21504,
+    "layers": 60,
+    "local_head_dim": 256,
+    "local_kv_heads": 16,
+    "local_layers": 50,
+    "sliding_window": 1024,
+    "vocab_size": 262144
+  },
+  "negative_discriminators": {
+    "built_in_frequency_mode": "rejected: exact pinned Trie::buildFrequency accepts only four dominant drafts after both the bound three-token transient and the persistent-alternate-after-four-normal sequence",
+    "global_max_breadth_one": "rejected as the candidate: the structural proxy restores eleven dominant drafts after the transient, but accepts zero when the persistent alternate is the most recent global branch"
+  },
+  "ngram_geometry": {
+    "bfs_breadth": [
+      1,
+      10
+    ],
+    "candidate_policy": "request_local_verified_trunk",
+    "draft_rows_per_request": 12,
+    "match_type_control": "BFS",
+    "max_trie_depth": 18,
+    "proposed_drafts_per_request": 11
+  },
+  "schema_version": 1,
+  "source_identity": {
+    "bound_input_sha256": {
+      "aging_requests": "a703ff70c079084bf88b577f765f78c0e43a49ed2814207d430875d66571e477",
+      "aging_telemetry": "9aaf97c3a289d5cf1abf6597fddd6fd32c312195bdb27a5f12b1e24820b2bef6",
+      "checkpoint_config": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "launch": "8349853a7eac9e73211f5d3081c834c05f78e0fd292ddbe5acb921b1824a523d",
+      "tail_requests": "5658b431b4db0e445d320c5e90a1fcd7c50ae437e5a1809ee068ca068ada4deb",
+      "tail_telemetry": "9985bef41ff9f6bc98243b98c99eb5d2f10d725fe9dee6a084b1a53efe3d0915",
+      "tail_terminal": "8c92c806ff758fc9b6bc3f75ce6b2d3f3b8ac4cbcaf0b7d096fefc8cdd2c7b73"
+    },
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "sha256": {
+      "ngram_info.py": "ffa88c663e1893c306710ac801da0693d8248ebcfd1a5bc705c157f90657af1c",
+      "ngram_worker.py": "27721b777cae08657ec9854ec0137a0db50afd49d84809503312fa43e399b554",
+      "param.h": "e0a4c0899655d322f21421a62ab58b7cca4e2874150756388f9ed143f4c62233",
+      "result.cpp": "d675ffef9de8cbfb37c5b6534836634474eab0b404ff43a87facb0ab85365bc1",
+      "trie.cpp": "9f14f2d05521427a0782db8c6058bbda1191dd09baf535e202c7412f82496ac9"
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "artifact_contract": {
+    "activation": "ACTIVATION_IDENTITY.json",
+    "attempt_terminal": "ATTEMPT_TERMINAL.json only for a recoverable pre-result consumer defect",
+    "raw_rows": "requests.jsonl",
+    "raw_telemetry": "telemetry.jsonl",
+    "science_marker": "INVOCATION_STATE.json",
+    "terminal": "FINAL_TERMINAL.json"
+  },
+  "candidate": "REPAIR_CANDIDATE.json",
+  "execution": {
+    "container_name": "gemma4-v0515-request217-decode",
+    "estimated_request_seconds": 180,
+    "launch": "inputs/decode_attention_launch.json",
+    "release_policy": "requests 0 through 217 at their bound arrival_s",
+    "requests": 218,
+    "runner": "remote_request217_discriminator.py",
+    "runner_environment": {
+      "REQUEST217_CONTAINER": "gemma4-v0515-request217-decode",
+      "REQUEST217_OUT": "<absolute project-local remote output directory>",
+      "REQUEST217_ROOT": "<absolute staged packet root>"
+    },
+    "runner_sha256": "c653ca19dc71ba41f882f9f5676d51d873517ab88f4ef8b3793c6ce4ef773427"
+  },
+  "gates": {
+    "all_218_complete": true,
+    "failures_zero": true,
+    "native_ngram_activation_observed": true,
+    "normalized_semantics_exact": true,
+    "release_drift_bounded": true,
+    "request_217_token_19_exact": true
+  },
+  "identity": {
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6"
+  },
+  "lifecycle": {
+    "bench": "Only the retained compatible H200 after a new director binding; this packet grants no claim authority.",
+    "consumer_repair": "Preserve a failed attempt, keep the claim under its durable owner, and retry only an ordinary invalidated consumer operation when no interpretable candidate result exists.",
+    "server_change": "Restart the official digest-pinned container once with the exact candidate launch because the attention mode is startup-bound.",
+    "terminal": "A complete 218-row result consumes this candidate discriminator and must not be replayed."
+  },
+  "packet_manifest": "PACKET_MANIFEST.json",
+  "schema_version": 1
+}

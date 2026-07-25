@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_wave_frontier_stack/run_owner.py"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_wave_frontier_stack",
+  "launched_at_utc": "2026-07-25T01:38:52.772900Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_wave_frontier_stack/CONTROLLER_OWNER_R3.log",
+  "pid": 253130,
+  "start_ticks": 105955017,
+  "unit_manager": "pid"
+}

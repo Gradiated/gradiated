@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_wave_frontier_stack/run_owner.py", line 88, in <module>
+    if __name__=='__main__': main()
+                             ~~~~^^
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_wave_frontier_stack/run_owner.py", line 57, in main
+    if x.returncode: raise RuntimeError('typed_staging_boundary:extract:'+x.stderr[-500:])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: typed_staging_boundary:extract:Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+NameError: name 'inputs' is not defined. Did you mean: 'input'?
+

@@ -1,0 +1,1 @@
+{"command": ["python3", "remote_wave_frontier.py"], "cwd": "/home/glmrunner/gemma4-h200-ngram-wave-frontier-stack", "launched_at_utc": "2026-07-25T01:22:39.473651Z", "live": true, "log": "/home/glmrunner/gemma4-h200-ngram-wave-frontier-stack/OWNER.log", "pid": 16244, "start_ticks": 356417, "unit_manager": "pid"}

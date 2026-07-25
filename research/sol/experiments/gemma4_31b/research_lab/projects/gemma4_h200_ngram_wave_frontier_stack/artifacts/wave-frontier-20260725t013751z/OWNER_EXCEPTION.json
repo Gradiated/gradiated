@@ -1,0 +1,4 @@
+{
+  "at_utc": "2026-07-25T01:37:58.207008+00:00",
+  "error": "RuntimeError('typed_staging_boundary:extract:Traceback (most recent call last):\\n  File \"<string>\", line 1, in <module>\\nNameError: name \\'inputs\\' is not defined. Did you mean: \\'input\\'?\\n')"
+}

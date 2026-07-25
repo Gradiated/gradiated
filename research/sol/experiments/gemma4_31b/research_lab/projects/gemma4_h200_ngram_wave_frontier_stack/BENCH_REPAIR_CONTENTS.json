@@ -1,0 +1,14 @@
+{
+  "project": "gemma4_h200_ngram_wave_frontier_stack",
+  "result": "invalid_pre_science_bound_manifest_read",
+  "artifacts": "The failed remote owner log records FileNotFoundError for inputs/bound/SHA256SUMS.json before stock_server_load; local PACKET.tar contains the bound manifest and no scientific terminal exists.",
+  "candidate": "The sole native-NGRAM c32-wave frontier-stack trajectory remains unconsumed.",
+  "candidate_sample_consumed": false,
+  "scientific_invocation_started": false,
+  "gpu_processes": "none; exact remote inspection found no candidate container and an empty nvidia-smi compute-process list.",
+  "server_state": "No candidate container or GPU workload started. Resident checkpoint, image, runtime, and caches remain reusable.",
+  "remote_inspection": "Remote owner PID 16244 exited after a pre-server manifest read failure; no typed terminal, candidate container, or GPU process exists.",
+  "repair_scope": "Use a fresh remote root, synchronously hash-check and extract the immutable packet, prove inputs/bound/SHA256SUMS.json is readable and parses before launch, then run only the unconsumed candidate trajectory with the updated fail-closed owner.",
+  "expected_first_arms": "Exactly one candidate-only fixed 1,036-request native depth-12 NGRAM c32-wave trajectory with broadcast penalty reuse and direct sparse min-new-token writes.",
+  "next": "Claim only for priority-8200 gemma4_h200_ngram_wave_frontier_stack after consuming DIRECTOR_REPAIR.json; release by 02:20Z under the verified 02:30Z watchdog."
+}

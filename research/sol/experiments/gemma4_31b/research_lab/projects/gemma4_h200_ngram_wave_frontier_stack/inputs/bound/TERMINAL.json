@@ -1,0 +1,70 @@
+{
+  "candidate": {
+    "arm": "ngram",
+    "economics": {
+      "completion_tokens": 9369,
+      "latency_seconds": 85.3977731919822,
+      "total_tokens": 96795
+    },
+    "gpqa": {
+      "accuracy": 0.2777777777777778,
+      "count": 198
+    },
+    "raw_hashes": {
+      "gpqa": "202e5c48ecc0553ba00f805f7c248defda022d072aeaab0cf728fef44f2b785e",
+      "tau": "d1a67ca2ee34a59d4ca74ca5c4296f0e2760419bbfb1a612eb74e6b0351143cb"
+    },
+    "taubench": {
+      "count": 165,
+      "task_success": 0.06060606060606061
+    }
+  },
+  "classification": "sequential_ngram_production_quality_complete",
+  "completion_token_inflation": -18,
+  "control": {
+    "arm": "control",
+    "economics": {
+      "completion_tokens": 9387,
+      "latency_seconds": 150.4196406339779,
+      "total_tokens": 96813
+    },
+    "gpqa": {
+      "accuracy": 0.2777777777777778,
+      "count": 198
+    },
+    "raw_hashes": {
+      "gpqa": "64054a6d40df534f21c3108088e04968d0e9a562fe3c90f47ed199f12c3708b5",
+      "tau": "b852c8787b6a46a091343a5f56583724de66acc33d5838764ae7b45e5028a9e2"
+    },
+    "taubench": {
+      "count": 165,
+      "task_success": 0.06060606060606061
+    }
+  },
+  "paired_bootstrap": {
+    "gpqa": {
+      "candidate_minus_control": 0.0,
+      "ci_95": [
+        0.0,
+        0.0
+      ],
+      "noninferior_3pp": true,
+      "replicates": 10000
+    },
+    "taubench": {
+      "candidate_minus_control": 0.0,
+      "ci_95": [
+        0.0,
+        0.0
+      ],
+      "noninferior_3pp": true,
+      "replicates": 10000
+    }
+  },
+  "pass": true,
+  "schema_version": 1,
+  "scientific_invocation": {
+    "candidate": true,
+    "control": true
+  }
+}

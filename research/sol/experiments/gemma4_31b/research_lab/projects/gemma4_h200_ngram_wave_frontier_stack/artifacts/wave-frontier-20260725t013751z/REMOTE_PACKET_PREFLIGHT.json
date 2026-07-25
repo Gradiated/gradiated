@@ -1,0 +1,7 @@
+{
+  "packet_sha256": "8c649cc66374fa1b78b381c16a08c1e8ef34e207d29ed7e7c653c6ce34bb7c04",
+  "remote_root": "/home/glmrunner/gemma4-h200-ngram-wave-frontier-stack-r2",
+  "returncode": 1,
+  "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nNameError: name 'inputs' is not defined. Did you mean: 'input'?\n",
+  "stdout": ""
+}

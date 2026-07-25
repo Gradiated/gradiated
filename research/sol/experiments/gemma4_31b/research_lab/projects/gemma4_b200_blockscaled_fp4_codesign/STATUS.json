@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_b200_blockscaled_fp4_codesign",
+  "status": "complete",
+  "priority": 8525,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.0,
+  "historical_actual_spend_usd": 0.0,
+  "active_session": null,
+  "allocation_limit": 1,
+  "decision": "typed_none_current_quality_backed_mlp_only_nvfp4_scope_insufficient",
+  "hypothesis": "A current SM100-native block-scaled FP4 or FP6 producer/consumer can remove enough dominant Gemma 4 linear weight traffic and tensor-core work to offset B200's higher planning rate and beat the campaign's price-normalized target.",
+  "summary": "Closed typed none at zero spend: current ModelOpt/vLLM/CUTLASS SM100 NVFP4 is exact-shape runnable, but NVIDIA's quality-backed Gemma derivative quantizes only MLPs and leaves all attention BF16, saving just 4.095% of text-linear weight bytes versus dense FP8 against a 49.515% whole-request hurdle.",
+  "next_action": null,
+  "scheduler_admission": {
+    "admitted": false,
+    "bench": null,
+    "gpu_claim_allowed": false,
+    "provider_creation_allowed": false,
+    "reason": "terminal typed negative; no B200 claim or provider action warranted"
+  },
+  "economic_gate": {
+    "qualified_h200_s_per_request": 0.625149101968745,
+    "target_h200_s_per_request": 0.500119281574996,
+    "h200_planning_usd_per_gpu_hour": 3.25,
+    "b200_planning_usd_per_gpu_hour": 5.15,
+    "b200_base_case_threshold_s_per_request": 0.315609255362861,
+    "b200_range_threshold_s_per_request": [
+      0.284158682713066,
+      0.349733763339158
+    ]
+  },
+  "wall_clock_budget": "At most 2 hours of researcher wall time; durable executable analysis may span harness turns.",
+  "compute_budget": "Zero provider GPU minutes and zero fresh paid spend in this phase.",
+  "storage_budget": "At most 2 GiB of new local source, manifests, and analysis artifacts; do not copy checkpoint weights.",
+  "provider_mutation": "forbidden_closed_zero_spend",
+  "terminal_artifact": "B200_BLOCKSCALED_FP4_SCREEN.json",
+  "last_result_classification": "current_quality_backed_mlp_only_nvfp4_scope_insufficient",
+  "terminal_sha256": "64246f76eeebc954b4469efb201d9fd17dcbe6e535fe53d37a23d5a116ebccb7",
+  "completed_at_utc": "2026-07-25T22:50:46Z",
+  "artifacts": {
+    "screen": "B200_BLOCKSCALED_FP4_SCREEN.json",
+    "screen_generator": "b200_blockscaled_fp4_screen.py",
+    "screen_generator_sha256": "e9f770c74e80c1091c72d94b797a84b0cb8d4ca980cd906aec4426c3d9bbd3e9",
+    "exact_shape_falsifier": "b200_nvfp4_exact_shape_falsifier.py",
+    "exact_shape_falsifier_sha256": "52705e3e6ec4fee1b54b315ae27ea25c1ac51e0c95fcc8d491a453da1deef470"
+  },
+  "reopen_condition": "A content-addressed exact Gemma 4 31B route with attention plus MLP NVFP4/FP6 coverage and concrete calibration/equivalence evidence, or another supported quality-backed representation saving at least 30% of non-overlapping text-linear bytes.",
+  "stop_rules": [
+    "Do not claim the retained H200, create a B200 resource, or reserve paid spend.",
+    "Do not infer B200 endpoint throughput from nominal bandwidth, peak FLOPS, price, or H200 measurements.",
+    "Do not call an uncalibrated FP4 proxy quality-preserving or deployable.",
+    "Stop with typed_none when no current exact-shape producer-consumer path can plausibly satisfy the explicit price-normalized threshold."
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "binary_sha256": "68d38cefbc15361dc3af9935bb928c8aaf0c5b99dfe37616dbc038632efe2603",
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "{\"algorithm\":\"official_v0.5.15_ngram_cpp\",\"calibrated_completion_steps\":358,\"compared_completion_steps\":358,\"draft_tokens_per_request\":12,\"match_type\":\"BFS\",\"max_trie_depth\":18,\"result\":\"isolated_and_two_stream_proposals_exact\"}\n"
+}

@@ -1,0 +1,39 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 0,
+  "authorized_spend_usd": 0.0,
+  "candidate_sample_consumed": false,
+  "compute_budget": "At most 2 local CPU-hours; no GPU.",
+  "decision": "typed_none",
+  "dependency_result": {
+    "first_semantic_divergence": {
+      "output_token_index": 19,
+      "request": 217
+    },
+    "normalized_semantics_exact": false,
+    "result": "scope_matched_official_v0.5.15_full_trajectory_reject",
+    "sha256": "7e6ba230931ccf0db83917ae0797e89c4fe983d6f53923fa1fcb84e744893367"
+  },
+  "measured_component": {
+    "binary_sha256": "68d38cefbc15361dc3af9935bb928c8aaf0c5b99dfe37616dbc038632efe2603",
+    "compared_completion_states": 358,
+    "result": "official_v0.5.15_isolated_and_two_stream_proposals_exact_after_calibration"
+  },
+  "rejected_analytical_geometry": {
+    "aggregate_demand_density_ratio": 1.9999999999999998,
+    "content_address": "sha256:beb392e8ee3024c56c78cad50ced5f5d20616748ff478ce02cb86da68aa00939",
+    "path": "packet",
+    "requests": 759,
+    "result": "rejected_not_production_valid",
+    "streams": 2
+  },
+  "next_action": "No GPU action is admitted. Reopen only after a content-bound official full trajectory has exact normalized semantics, or a new director binding admits a runtime semantic repair plus scope-matched multiplex discriminator. Never replay the consumed H200 endpoint.",
+  "priority": 8415,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "deep",
+  "status": "completed",
+  "storage_budget": "At most 2 GiB project-local.",
+  "summary": "Typed none. A disjoint calibrated geometry reaches effectively 2.0x density and passes the official CPU corpus-bias probe, but the newly closed scope-matched official v0.5.15 H200 endpoint diverges at request 217, so no production-valid multiplexing packet can be returned without new GPU authority.",
+  "wall_clock_budget": "60 minutes."
+}

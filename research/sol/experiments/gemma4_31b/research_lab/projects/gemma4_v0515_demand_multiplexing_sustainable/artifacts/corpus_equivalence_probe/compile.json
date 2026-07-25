@@ -1,0 +1,19 @@
+{
+  "command": [
+    "g++",
+    "-std=c++20",
+    "-O2",
+    "-pthread",
+    "-I/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/jit_kernel/csrc/ngram_corpus",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_v0515_demand_multiplexing_sustainable/corpus_equivalence_probe.cpp",
+    "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/jit_kernel/csrc/ngram_corpus/ngram.cpp",
+    "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/jit_kernel/csrc/ngram_corpus/trie.cpp",
+    "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/jit_kernel/csrc/ngram_corpus/result.cpp",
+    "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/jit_kernel/csrc/ngram_corpus/suffix_automaton.cpp",
+    "-o",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_v0515_demand_multiplexing_sustainable/artifacts/corpus_equivalence_probe/corpus_equivalence_probe"
+  ],
+  "returncode": 0,
+  "stderr": "",
+  "stdout": ""
+}

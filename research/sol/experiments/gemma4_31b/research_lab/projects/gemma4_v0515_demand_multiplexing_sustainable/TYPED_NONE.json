@@ -1,0 +1,30 @@
+{
+  "analytical_geometry": {
+    "aggregate_demand_density_ratio": "1.99999999999999990123728146185891243351167877367400529424787",
+    "content_address": "sha256:beb392e8ee3024c56c78cad50ced5f5d20616748ff478ce02cb86da68aa00939",
+    "path": "packet",
+    "status": "rejected_not_production_valid"
+  },
+  "candidate_sample_consumed": false,
+  "classification": "scope_matched_official_runtime_semantic_reject",
+  "decision": "typed_none",
+  "dependency_terminal": {
+    "first_semantic_divergence": {
+      "first_output_token_mismatch": 19,
+      "request": 217
+    },
+    "normalized_semantics_exact": false,
+    "path": "projects/gemma4_upstream_ngram_runtime_rebase/artifacts/v0515-endpoint-20260725t062540z/retrieved-final/endpoint-stage/out-endpoint/ENDPOINT_TERMINAL.json",
+    "sha256": "7e6ba230931ccf0db83917ae0797e89c4fe983d6f53923fa1fcb84e744893367"
+  },
+  "gpu_claimed": false,
+  "provider_mutated": false,
+  "reason": "A two-stream disjoint post-calibration geometry reaches the density floor and passes the official CPU corpus-bias probe, but the newly completed scope-matched official v0.5.15 H200 endpoint diverges at request 217. Without a GPU run this project cannot establish that different batching restores semantics, so no production-valid multiplexing packet is returned.",
+  "reopen_only_if": [
+    "A content-bound official v0.5.15 full-trajectory result with exact normalized semantics supersedes the dependency reject.",
+    "A new director binding admits a runtime semantic repair and scope-matched multiplex discriminator.",
+    "The workload semantic gate changes."
+  ],
+  "schema_version": 1,
+  "spend_usd": 0.0
+}

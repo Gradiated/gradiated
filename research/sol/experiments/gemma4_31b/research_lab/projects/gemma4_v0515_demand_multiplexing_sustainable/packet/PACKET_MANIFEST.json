@@ -1,0 +1,75 @@
+{
+  "files": [
+    {
+      "bytes": 5140,
+      "path": "REJECTED_ANALYTICAL_GEOMETRY.json",
+      "sha256": "bb8064891cd3280adbecd3f3d85ce376c5aebc0161387c3905fa1d0e633e93b3"
+    },
+    {
+      "bytes": 1798,
+      "path": "control/DIRECTOR_ENDPOINT_BINDING.json",
+      "sha256": "432bc3efad5771fec37165d51df2ce850de288f8e8be61d5de8bfe827d102602"
+    },
+    {
+      "bytes": 804,
+      "path": "control/FINAL_TERMINAL.json",
+      "sha256": "cf7706e3486963c8e8b8f8a904cddb8cde1503e56728b91a1c3a25a835d9bacd"
+    },
+    {
+      "bytes": 1907,
+      "path": "control/H200_ENDPOINT_TERMINAL.json",
+      "sha256": "7e6ba230931ccf0db83917ae0797e89c4fe983d6f53923fa1fcb84e744893367"
+    },
+    {
+      "bytes": 5685,
+      "path": "evidence/ARRIVAL_ECONOMICS.json",
+      "sha256": "92cb6ad9f5627563670a94f9b68d89d96d142bf2a71e009494193d7aa9357247"
+    },
+    {
+      "bytes": 2889,
+      "path": "evidence/BINDING_VERIFIED.json",
+      "sha256": "017787a735228e992fe837fee9251e74fd2b2470e7edcf59d88040322033d548"
+    },
+    {
+      "bytes": 7518,
+      "path": "evidence/SCHEDULER_CORPUS_CAUSAL_MAP.json",
+      "sha256": "4c01e5ebd1f9c5d5dadd224127ebd7cda38cee628c5a9c408580f10937186cbe"
+    },
+    {
+      "bytes": 298335,
+      "path": "geometry.jsonl",
+      "sha256": "7533570482b4d3559c2c70ac62b34b0cc4f6b23d447d358addf1aa599f1357b4"
+    },
+    {
+      "bytes": 3159811,
+      "path": "inputs/TRACE_PACKET.json",
+      "sha256": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68"
+    },
+    {
+      "bytes": 3126546,
+      "path": "inputs/exact_semantic_rows.jsonl",
+      "sha256": "630d05bd860d1dd22c3e35ba2d8f792afc5051f0c68e0a74a9deda8140a02b36"
+    },
+    {
+      "bytes": 1090,
+      "path": "inputs/ngram-launch.json",
+      "sha256": "8349853a7eac9e73211f5d3081c834c05f78e0fd292ddbe5acb921b1824a523d"
+    },
+    {
+      "bytes": 506544,
+      "path": "inputs/requests.jsonl",
+      "sha256": "10e7edacaa194fd0f43b3a3c38f7d91cec0ceba22df8e08e3b5897b174346135"
+    },
+    {
+      "bytes": 14831,
+      "path": "multiplex_runner.py",
+      "sha256": "ac06209a82080ebeb5ba9b821322b485fdb3625bea38ca3550e534471b6c1ca9"
+    }
+  ],
+  "identity": {
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6"
+  },
+  "schema_version": 1
+}

@@ -1,61 +1,52 @@
 {
   "schema_version": 1,
   "id": "gemma4_hybrid_attention_placement_codesign",
-  "status": "complete",
-  "priority": 8610,
+  "status": "completed",
+  "priority": 8540,
   "researcher_profile": "deep",
   "authorized_spend_usd": 0.0,
   "actual_spend_usd": 0.0,
+  "historical_actual_spend_usd": 0.19,
   "active_session": null,
-  "summary": "Source-complete quality-unsafe 55-local/5-global candidate keeps full attention at layers 5/17/29/41/53 and predicts 5.043-5.325% lower whole-request service time plus 7.493% lower c32 KV residency; no GPU or quality claim.",
-  "next_action": "Director disposition. If this incremental candidate remains competitive after current endpoint work, materialize one nearest-local five-attention-module weight-copy proxy and run a newly bound exact c32 H200 target-forward component. Do not claim an endpoint or quality result from the simulator.",
-  "decision": "candidate_half_global_keep_early_in_each_pair",
+  "allocation_limit": 1,
+  "summary": "A source-complete phase dispatcher isolates the five local proxies to TARGET_VERIFY while retaining stock attention elsewhere. Safe fallback requires mirrored stock/proxy KV allocation, writes, moves, and frees. The zero-ordinary-decode model predicts 10.644-13.558 ms/request net savings (1.703-2.169%) with 1.342 GB extra c32 KV residency.",
+  "next_action": "Only under a new director binding, run the single exact-c32 no-endpoint falsification in PHASE_SELECTIVE_HYBRID_RESULT.json: populate both cache banks, verify stock equivalence before the first target phase, replay one depth-12 TARGET_VERIFY graph, mirror one accept/move/free pattern, and compare the next stock-operator decode with an eager dual-cache reference plus positive net component timing.",
+  "decision": "retain_dual_cache_phase_candidate_for_component_falsification",
+  "hypothesis": "A target-verification-only 55-local/5-global substitution can retain useful attention savings while limiting the intervention surface relative to permanent layer conversion.",
+  "current_binding": {
+    "path": "DIRECTOR_PHASE_SELECTIVE_HYBRID_CONTINUATION.json",
+    "sha256": "bfbbf25a6597e48a0fbeb193837a79a9a41b3b10a510e18dfd88303d57c05cbc"
+  },
+  "prior_result": {
+    "path": "HYBRID_55L5G_H200_EXECUTION_TERMINAL.json",
+    "sha256": "3a705235485720575c7695e184b4a47b6602c360ec49b4752f284e758b62bdfb",
+    "classification": "measured_component_execution",
+    "weighted_attention_reduction_fraction": 0.20334496337472074,
+    "candidate_is_deployable": false
+  },
+  "bench_need": null,
+  "compute_budget": "CPU/source analysis only; no accelerator claim and no paid provider work.",
+  "storage_budget": "At most 1 GiB new source, simulation, and typed evidence artifacts.",
+  "wall_clock_budget": "At most 75 wall-clock minutes for this bounded offline continuation.",
+  "provider_mutation": "forbidden",
+  "terminal_artifact": "PHASE_SELECTIVE_HYBRID_RESULT.json",
   "result": {
-    "classification": "source_complete_offline_placement_simulation",
-    "candidate_is_deployable": false,
-    "full_layer_indices": [
-      5,
-      17,
-      29,
-      41,
-      53
+    "path": "PHASE_SELECTIVE_HYBRID_RESULT.json",
+    "sha256": "125f2411ea951e2958d373910713829a13e0a571e469738412772d38d62a0cca",
+    "classification": "source_complete_candidate",
+    "net_savings_seconds_per_request_range": [
+      0.010643762990254182,
+      0.01355809001813069
     ],
-    "predicted_service_seconds_per_request_range": [
-      0.591857911423119,
-      0.5936235407282918
+    "net_reduction_fraction_range": [
+      0.017025959017991726,
+      0.021687770126251484
     ],
-    "predicted_reduction_fraction_range": [
-      0.05042886751524008,
-      0.05325320062171391
-    ],
-    "predicted_savings_seconds_per_request_range": [
-      0.03152556124045315,
-      0.03329119054562586
-    ],
-    "c32_kv_bytes_saved": 1419509760,
-    "c32_kv_fraction_saved": 0.07492735574927356,
-    "attention_linear_parameters_removed": 330301440,
-    "campaign_20_percent_objective_met": false
+    "extra_shadow_kv_bytes": 1342177280
   },
-  "artifacts": {
-    "simulator": {
-      "path": "simulate_placements.py",
-      "sha256": "4e2aaa4f039ca67fe425c8f4ddd3faccf630592035d2858d90e873ae69b9f2df"
-    },
-    "result": {
-      "path": "PLACEMENT_SIMULATION_RESULT.json",
-      "sha256": "2af53085953393785204eafb2c2dd0e9d335805f8a8e5963ae46fb57ed99e40b"
-    },
-    "test": {
-      "path": "test_simulate_placements.py",
-      "sha256": "d3cc9eeec233643b050feb3413a9579e87e3d9b122f340e20b03ab3c55bab641"
-    }
-  },
-  "quality_recovery": "Nearest-local attention-module initialization for the five converted layers, teacher hidden-state/attention/logit distillation on long-context and tool-use data, continued-pretraining curriculum, then exact served GPQA-Diamond, TauBench, long-context retrieval, tool-format, and multimodal gates.",
-  "limitations": [
-    "M8 has a valid component and NCU producer but no durable endpoint pair.",
-    "Prefill linear time is measured in aggregate and apportioned by exact projection FLOPs.",
-    "The reported range is counter-scenario propagation, not a statistical confidence interval.",
-    "No batching gain, quality evidence, GPU claim, or provider spend is credited."
+  "stop_rules": [
+    "Return typed none if the pinned runtime cannot isolate target-verification rows safely or the derived whole-request bound cannot justify later H200 time.",
+    "Do not claim quality preservation or deployability.",
+    "Do not reopen the completed permanent 55-local/5-global comparison."
   ]
 }

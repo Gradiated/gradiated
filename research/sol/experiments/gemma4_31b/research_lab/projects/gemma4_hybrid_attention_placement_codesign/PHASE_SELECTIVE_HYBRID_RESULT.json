@@ -1,0 +1,245 @@
+{
+  "artifacts": {
+    "dispatcher": "phase_dispatcher.py",
+    "prior_component": "HYBRID_55L5G_H200_EXECUTION_TERMINAL.json",
+    "prior_placement": "PLACEMENT_SIMULATION_RESULT.json",
+    "tests": "test_phase_dispatcher.py"
+  },
+  "cheapest_later_exact_c32_falsification": {
+    "falsifiers": [
+      "any stock-path output divergence before the first TARGET_VERIFY",
+      "any cache-location mismatch or stale accepted stock K/V",
+      "graph recapture or host synchronization caused by phase dispatch",
+      "nonpositive net target-cycle saving"
+    ],
+    "gates": [
+      "stock prefill and pre-verification ordinary decode are bit-exact to control",
+      "all 384 logical rows use proxy only at converted layers",
+      "padded rows never allocate or write cache slots",
+      "both banks survive identical accept/move/free operations",
+      "post-accept stock-operator decode is finite and matches the eager hybrid reference",
+      "net component saving remains positive after shadow maintenance"
+    ],
+    "kind": "single_component_no_endpoint",
+    "steps": [
+      "Populate stock and proxy-local caches from one exact c32 4,214-token prefill.",
+      "Run one stock ordinary-decode row and require control equivalence.",
+      "Replay one depth-12 TARGET_VERIFY graph with 384 logical rows.",
+      "Apply one synthetic accepted-index pattern to both banks, then compare one stock-operator decode with an eager dual-cache reference."
+    ]
+  },
+  "classification": "source_complete_candidate",
+  "cost_model": {
+    "evidence_type": {
+      "gross_target_savings": "derived_from_measured_exact_c32_h200_component",
+      "hbm_write": "analytical_peak_bandwidth_floor",
+      "projection_maintenance": "derived_width-scaled_lower_and_full-qkv-launch_upper_bound"
+    },
+    "gross_target_savings_seconds_per_request_range": [
+      0.012547738928760734,
+      0.014313368233933445
+    ],
+    "kv_residency": {
+      "baseline_bytes_c32_at_4214_prompt": 18945146880,
+      "extra_shadow_local_bytes": 1342177280,
+      "increase_fraction": 0.0708454407084544
+    },
+    "limitations": [
+      "The phase dispatcher and maintenance model are not a GPU measurement.",
+      "A narrow K/V-only GEMM may fall outside both width-scaling bounds.",
+      "The zero ordinary-decode-step scenario matches the speculative target-only accounting; callers must set nonzero steps for a mixed ordinary-decode workload.",
+      "No launch, allocator, cache-move, or graph-recapture overhead is credited beyond the stated projection and HBM terms."
+    ],
+    "maintenance_seconds_per_request": {
+      "ordinary_decode_local_kv_hbm_floor": 0.0,
+      "ordinary_decode_local_kv_projection_range": [
+        0.0,
+        0.0
+      ],
+      "prefill_hbm_floor": 8.738133333333334e-06,
+      "prefill_projection_range": [
+        0.0006358521182116099,
+        0.0012717042364232198
+      ],
+      "target_stock_kv_hbm_floor_range": [
+        1.7056e-06,
+        1.9456e-06
+      ],
+      "target_stock_kv_projection_range": [
+        0.0001089823642578125,
+        0.00062158796875
+      ],
+      "total_range": [
+        0.0007552782158027557,
+        0.001903975938506553
+      ]
+    },
+    "measured_component_binding": {
+      "local_candidate_median_ms": 0.940608024597168,
+      "local_control_median_ms": 1.3491519689559937,
+      "weighted_attention_reduction_fraction": 0.20334496337472074
+    },
+    "net_reduction_fraction_range": [
+      0.017025959017991726,
+      0.021687770126251484
+    ],
+    "net_savings_seconds_per_request_range": [
+      0.010643762990254182,
+      0.01355809001813069
+    ],
+    "predicted_service_seconds_per_request_range": [
+      0.6115910119506143,
+      0.6145053389784908
+    ],
+    "scope": {
+      "baseline_seconds_per_request": 0.625149101968745,
+      "batch": 32,
+      "ordinary_decode_steps_scenario": 0,
+      "target_depth": 12,
+      "target_rows": 384
+    },
+    "target_cycles_per_request_range": [
+      33.3125,
+      38.0
+    ]
+  },
+  "decision": "Retain for one later exact-c32 component falsification. The source-complete dispatcher isolates the proxy to TARGET_VERIFY, but safe stock fallback requires mirrored dual-cache maintenance.",
+  "first_expected_target_decision_divergence": {
+    "location": "TARGET_VERIFY layer 11 attention output, before its residual addition; the 4,214-token prompt already exceeds the proxy's 1,024-token receptive field.",
+    "telemetry": [
+      "forward mode, graph capture batch, logical and padded rows",
+      "layer-11 stock/proxy attention-output max and relative error",
+      "per-request target top-1/top-k logits and accepted draft count",
+      "accepted indices plus stock/proxy cache locations before/after move",
+      "post-accept stock-decode logits versus an eager dual-cache reference"
+    ]
+  },
+  "mechanism": {
+    "cache_semantics": "Both banks receive allocation/write/move/free events. Stock modes write proxy-local shadow K/V so later verification has its 1,024-token history. TARGET_VERIFY writes stock-global shadow K/V so accepted rows remain valid for later stock decode. Rejected speculative rows are freed from both banks. After the first converted layer diverges, later stock-shadow K/V are computed from hybrid hidden state; returning to stock operators does not restore all-stock semantics.",
+    "converted_layers": [
+      11,
+      23,
+      35,
+      47,
+      59
+    ],
+    "cuda_graph_boundary": "The speculative runner captures a distinct TARGET_VERIFY graph with batch_size*tokens_per_request rows, so the Python mode branch is capture-static. Replay changes tensor values and logical size, not the selected attention module.",
+    "dispatch_examples_layer_11": {
+      "DECODE": {
+        "cache_commit_policy": "mirror_alloc_write_move_free_for_both_banks",
+        "graph_contract": "stock_forward_batch_branch",
+        "layer": 11,
+        "logical_rows": 384,
+        "mode": "DECODE",
+        "padded_rows": 0,
+        "primary_attention": "stock",
+        "primary_cache_bank": "stock",
+        "shadow_kv_write_bank": "proxy_local"
+      },
+      "EXTEND": {
+        "cache_commit_policy": "mirror_alloc_write_move_free_for_both_banks",
+        "graph_contract": "stock_forward_batch_branch",
+        "layer": 11,
+        "logical_rows": 384,
+        "mode": "EXTEND",
+        "padded_rows": 0,
+        "primary_attention": "stock",
+        "primary_cache_bank": "stock",
+        "shadow_kv_write_bank": "proxy_local"
+      },
+      "IDLE": {
+        "cache_commit_policy": "stock_runtime_policy",
+        "graph_contract": "stock_forward_batch_branch",
+        "layer": 11,
+        "logical_rows": 384,
+        "mode": "IDLE",
+        "padded_rows": 0,
+        "primary_attention": "none",
+        "primary_cache_bank": null,
+        "shadow_kv_write_bank": null
+      },
+      "TARGET_VERIFY": {
+        "cache_commit_policy": "mirror_alloc_write_move_free_for_both_banks",
+        "graph_contract": "capture_static_target_verify_branch; replay updates values and logical-row count; padded rows perform no cache write",
+        "layer": 11,
+        "logical_rows": 384,
+        "mode": "TARGET_VERIFY",
+        "padded_rows": 0,
+        "primary_attention": "proxy_local",
+        "primary_cache_bank": "proxy_local",
+        "shadow_kv_write_bank": "stock"
+      }
+    },
+    "geometry": {
+      "consequence": "Stock K/V cannot be reinterpreted as proxy-local K/V; projection shapes, RoPE, head geometry, and cache layout differ.",
+      "proxy_local": {
+        "head_dim": 256,
+        "kv_bytes_per_token": 8192,
+        "kv_heads": 16,
+        "receptive_field_tokens": 1024
+      },
+      "stock_global": {
+        "head_dim": 512,
+        "kv_bytes_per_token": 4096,
+        "kv_heads": 4,
+        "receptive_field": "full_prefix"
+      }
+    },
+    "retained_full_layers": [
+      5,
+      17,
+      29,
+      41,
+      53
+    ],
+    "row_ownership": "ForwardMode is scalar per ForwardBatch. TARGET_VERIFY owns all request-major logical rows [request][draft_token]; at c32 depth12 this is 384 rows. Captured padding rows own no request and perform no cache write."
+  },
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "result": "dual_cache_phase_dispatch_candidate",
+  "schema_version": 1,
+  "scope": {
+    "actual_spend_usd": 0.0,
+    "deployable": false,
+    "endpoint_run": false,
+    "gpu_claimed": false,
+    "provider_mutation": false,
+    "quality_preserving": false
+  },
+  "source_contract": {
+    "attention_backend": {
+      "evidence_type": "pinned_source",
+      "path": "projects/gemma4_h200_layerwise_mixed_kv_endpoint/inputs/pinned_source/layers/attention/triton_backend.py",
+      "sha256": "7bc3ae9ef1be59ec07734df442c077a07fb54c28007747f53a552bb81e8e8e2d"
+    },
+    "cuda_graph_runner": {
+      "evidence_type": "pinned_source",
+      "path": "projects/gemma4_h200_static_c32_multitoken_decode_engine/inputs/upstream/model_executor/cuda_graph_runner.py",
+      "sha256": "7d1898247e80ff6a446eb42e4968d2eea0df30b109ee2d089a9ad78791bc079e"
+    },
+    "forward_batch": {
+      "evidence_type": "pinned_source",
+      "path": "projects/gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/forward_batch_info.py",
+      "sha256": "c977296f3b90be69fff5312f2b3af7699a17b20af24614b139f69888e5776516"
+    },
+    "gemma4_model": {
+      "evidence_type": "pinned_source",
+      "path": "projects/gemma4_h200_layerwise_mixed_kv_endpoint/inputs/pinned_source/models/gemma4_causal.py",
+      "sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989"
+    },
+    "ngram_info": {
+      "evidence_type": "pinned_source",
+      "path": "projects/gemma4_h200_ngram_tree_verify_attention/inputs/source/ngram_info.py",
+      "sha256": "ffa88c663e1893c306710ac801da0693d8248ebcfd1a5bc705c157f90657af1c"
+    },
+    "ngram_worker": {
+      "evidence_type": "pinned_source",
+      "path": "projects/gemma4_h200_ngram_tree_verify_attention/inputs/source/ngram_worker.py",
+      "sha256": "27721b777cae08657ec9854ec0137a0db50afd49d84809503312fa43e399b554"
+    },
+    "swa_pool": {
+      "evidence_type": "pinned_source",
+      "path": "projects/gemma4_h200_layerwise_mixed_kv_endpoint/inputs/pinned_source/mem_cache/swa_memory_pool.py",
+      "sha256": "36830cdb84cc344ffb7bac9ff30ba9a41b488d67893a5015ecbba584e95a9858"
+    }
+  }
+}

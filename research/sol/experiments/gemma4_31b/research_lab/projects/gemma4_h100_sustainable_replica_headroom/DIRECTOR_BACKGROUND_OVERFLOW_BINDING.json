@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T11:21:00Z",
+  "decision": "test_one_h100_background_buffering_and_retail_overflow_against_two_replica_cost_step",
+  "project": "gemma4_h100_sustainable_replica_headroom",
+  "question": "Can one saturated H100 plus bounded queueing or a small amount of retail spillover serve the exact trace at a usable background completion time and lower all-in token cost than the strict two-H100 90%-headroom fleet?",
+  "why_now": "The prior replay selected two replicas only because strict 90% headroom was imposed. At the settled 0.707334-second service time, one H100 is about 1.9% below the exact trace's average arrival rate, while the campaign explicitly permits latency-for-cost trades for background traffic. The current retail refresh provides nominal, capability-listed, and methodology-matched spillover prices.",
+  "bound_inputs": {
+    "headroom_result": {
+      "path": "HEADROOM_RESULT.json",
+      "sha256": "897b7b55f1501197aaa0ce6bdefe45a97c1312e99fd18d738512700d155c0eb6"
+    },
+    "request_trace": {
+      "path": "../gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/inputs/requests.jsonl",
+      "sha256": "10e7edacaa194fd0f43b3a3c38f7d91cec0ceba22df8e08e3b5897b174346135",
+      "requests": 1036,
+      "arrival_span_seconds": 718.9214672640567,
+      "total_tokens": 4736592
+    },
+    "settled_discriminator": {
+      "path": "../gemma4_h100_v0515_ngram_price_normalized/artifacts/h100-repair5-20260725t0746z/FINAL_TERMINAL.json",
+      "sha256": "c068fdcfb82ce5ed3e892827f93de5ece36c47064044616e0b71d871768951bf",
+      "service_seconds_per_request": 0.7073339939181298
+    },
+    "frontier_eligibility": {
+      "path": "../exact_market_venue_decision_surface/FRONTIER_ELIGIBILITY_20260725.json",
+      "sha256": "baaff7a5a4c862c942e7cc552f0a2538423a432945c1e1ab46dac9129d782f8d"
+    },
+    "price_inventory": {
+      "path": "/root/workspace/research/factory/data/gpu_prices.json",
+      "sha256": "a6762a032a128e80a5ab655819c9d989949951f1b55032b746b285ed46c9366f"
+    }
+  },
+  "frozen_economics_usd_per_million_total_tokens": {
+    "one_h100_continuous_at_90pct": 0.13369997616805754,
+    "two_h100_exact_trace": 0.2363350230998632,
+    "retail_nominal": 0.119,
+    "retail_capability_listed": 0.135281,
+    "retail_methodology_matched": 0.138
+  },
+  "experiment_contract": {
+    "evidence_type": "deterministic CPU discrete-event simulation and derived economics; not measured endpoint evidence",
+    "baseline": "Reproduce the prior strict two-replica 90%-headroom result exactly before adding policies.",
+    "single_replica_finite_trace": "Replay the exact finite trace on one FIFO H100 regardless of headroom. Report utilization, queue peak, wait and latency p50/p95/p99/max, drain extension, billed span, and planning/actual GPU-token cost.",
+    "periodic_sustainability": "Repeat the exact arrival trace at its original period long enough to expose whether backlog is stable or grows. Report backlog growth per period and time to each observed latency level; do not conceal average-rate overload with a finite-trace drain.",
+    "overflow_policy": "Construct the deterministic Pareto frontier for one H100 plus retail overflow. Route the minimum requests needed to cap predicted FIFO waiting time, preserving original arrivals and per-request token counts. Evaluate the frozen nominal, capability-listed, and methodology-matched retail tiers separately.",
+    "service_sensitivity": "Keep the settled central service time and a parameterized replacement field for the pending 791-request endpoint. Include the exact one-replica stability service ceiling implied by average arrivals and distinguish it from the prior 90%-headroom ceiling.",
+    "decision_output": "Report cost versus queue/latency Pareto points without inventing an interactive SLO. Identify whether any bounded-background policy beats the capability-listed and methodology-matched retail tiers, and state the exact endpoint service field that would move the conclusion."
+  },
+  "artifact_contract": {
+    "result": "BACKGROUND_OVERFLOW_RESULT.json",
+    "decision": "BACKGROUND_OVERFLOW_DECISION.md",
+    "script": "replay_background_overflow.py",
+    "deadline_utc": "2026-07-25T11:58:00Z",
+    "required_outputs": [
+      "hash verification of every bound input",
+      "exact reproduction of the prior two-replica control",
+      "one-replica finite and periodic queue trajectories",
+      "minimum-overflow Pareto frontier for all three retail price tiers",
+      "planning-rate and actual experiment-rate economics kept separate",
+      "measured, analytical, derived, synthetic, and missing labels",
+      "typed nominate, reject, or endpoint-dependent decision"
+    ]
+  },
+  "budgets": {
+    "provider_spend_usd": 0.0,
+    "wall_clock_seconds": 2100,
+    "local_compute": "At most 30 CPU-minutes and 1 GiB RAM; no CUDA.",
+    "storage": "At most 128 MiB."
+  },
+  "prohibitions": [
+    "Do not create, claim, inspect, or mutate a provider resource or GPU bench.",
+    "Do not read, poll, or modify the in-flight H100 endpoint owner.",
+    "Do not replay the consumed 171-request discriminator or invoke the 791-request endpoint.",
+    "Do not refresh retail prices or the shared GPU price inventory.",
+    "Do not reinterpret uptime metadata as a request-failure distribution.",
+    "Do not call the simulation a measured endpoint or production reliability result."
+  ]
+}

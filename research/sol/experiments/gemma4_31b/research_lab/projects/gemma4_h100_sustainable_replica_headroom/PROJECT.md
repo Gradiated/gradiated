@@ -63,3 +63,24 @@ A stable headroom point below the target strengthens the H100 production
 candidate; a negative result supplies the exact service-time or rate reduction
 needed from the pending endpoint or a future mechanism. An irreconcilable
 trace closes only this replay.
+
+## 2026-07-25 background buffering and overflow iteration
+
+The strict 90%-headroom replay selects two H100 replicas, but the settled
+single-H100 service capacity is only slightly below the exact trace's average
+arrival rate. Because the campaign explicitly permits latency-for-cost trades
+for background traffic, test the materially different scheduling question:
+whether finite buffering or minimal retail overflow can remove the discrete
+second-replica step without hiding sustained overload.
+
+Reproduce the prior control, replay one H100 on both the finite trace and
+periodic repetitions, and construct a deterministic cost-versus-wait Pareto
+frontier that spills the minimum requests needed to bound predicted FIFO wait.
+Keep the current nominal, capability-listed, and Artificial Analysis retail
+tiers separate. This remains analytical CPU evidence and must not inspect the
+live endpoint owner or touch any provider.
+
+The exact contract and hashes are in
+`DIRECTOR_BACKGROUND_OVERFLOW_BINDING.json`. Persist
+`BACKGROUND_OVERFLOW_RESULT.json`, `BACKGROUND_OVERFLOW_DECISION.md`, and the
+reproducible simulator by 2026-07-25T11:58:00Z.

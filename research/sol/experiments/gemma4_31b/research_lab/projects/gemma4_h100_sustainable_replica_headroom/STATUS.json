@@ -4,13 +4,17 @@
   "allocation_limit": 0,
   "authorized_spend_usd": 0.0,
   "bench_need": null,
-  "compute_budget": "CPU only: at most 45 CPU minutes and 1 GiB RAM.",
-  "next_action": "Terminal analytical result persisted. Do not claim or mutate the H100; await the sole 791-request direct endpoint only if a director asks to reconcile its measured service time and queue fields with HEADROOM_RESULT.json.",
-  "priority": 8360,
+  "compute_budget": "CPU only: at most 30 CPU minutes and 1 GiB RAM.",
+  "next_action": "Terminal analytical frontier persisted. Do not claim or inspect the H100; reconcile only if the sole 791-request endpoint yields a measured service_seconds_per_request.",
+  "priority": 8325,
   "provider_mutation": "forbidden",
   "researcher_profile": "execution",
   "status": "complete",
   "storage_budget": "At most 256 MiB project-local artifacts.",
-  "summary": "Completed analytical replay: central 0.707334 s/request requires two replicas at 90% headroom; finite exact-trace provision costs $0.236335/M planning ($0.248996/M actual) despite the $0.133700/M continuous 90%-utilization model.",
-  "wall_clock_budget": "Typed result by 2026-07-25T11:20:00Z."
+  "summary": "Completed analytical overflow frontier: finite one-H100 buffering is periodically unstable (+13.876550 s/period); a 1-second cap spills 20 requests/period and costs $0.120663/M capability-listed or $0.120715/M methodology-matched at planning rate.",
+  "wall_clock_budget": "Typed background-overflow result by 2026-07-25T11:58:00Z.",
+  "director_background_overflow_binding": "DIRECTOR_BACKGROUND_OVERFLOW_BINDING.json",
+  "director_background_overflow_binding_sha256": "c00e011e821e56455c216a265f3093c3089280c31c4ca32eae4f97a617ea5838",
+  "current_iteration": "background-buffering-retail-overflow-20260725",
+  "terminal_artifact": "BACKGROUND_OVERFLOW_DECISION.md"
 }

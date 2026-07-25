@@ -29,3 +29,31 @@ is required for the continuous planning estimate to apply.
 
 **Next.** Consume no further H100 work here. Let the sole 791-request direct
 endpoint provide its measured service time and queue fields.
+
+## 2026-07-25 — background buffering and retail-overflow frontier
+
+**Question.** Can background queueing or minimal retail spillover avoid the
+two-H100 step without presenting finite draining as sustainable demand?
+
+**Action.** Verified the five hashes in `DIRECTOR_BACKGROUND_OVERFLOW_BINDING.json`,
+reproduced the two-replica control, and ran deterministic one-H100 FIFO
+replays for the finite trace, 64 periodic repetitions, and every 0/1/5/10/30/
+60/120-second local-wait cap. Greedy overflow is the minimum required to honor
+each cap for this fixed constant-service FIFO model.
+
+**Evidence.** One local H100 drains the finite trace with 13.169216 seconds
+maximum wait but grows 13.876550 seconds per repeated period, reaching an
+888.099228-second extension at period 64. Periodic one-second caps spill 20
+requests (91,440 tokens) per period and cost `$0.120663/M` planning at the
+capability-listed retail tier and `$0.120715/M` at the methodology-matched
+tier—both below their frozen retail comparators. The nominal tier is
+`$0.120349/M`, above its `$0.119/M` comparator. Full source-bound evidence is
+in `BACKGROUND_OVERFLOW_RESULT.json`.
+
+**Interpretation.** `endpoint_dependent_nominate`: finite buffering alone is
+rejected as non-sustainable; bounded overflow is an analytical viable
+capability/methodology cost point pending the exact 791-request service field.
+No retail latency or reliability is claimed.
+
+**Next.** Do not claim or inspect the live H100. Reconcile this frontier only
+when the direct endpoint supplies an exact `service_seconds_per_request`.

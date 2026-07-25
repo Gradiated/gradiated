@@ -1,0 +1,110 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T05:03:58.218903Z",
+    "heartbeat_at": "2026-07-25T05:03:58.218903Z",
+    "lease_seconds": 300,
+    "lease_until_utc": "2026-07-25T05:08:58.218903Z",
+    "project": "gemma4_ngram_completed_request_commit_gate",
+    "stale": false
+  },
+  "contents": {
+    "activation_proved": true,
+    "artifacts": "gemma4_ngram_distinct_request_promotion_gate/artifacts/distinct-request-20260725t043053z and gemma4_ngram_completed_request_commit_gate/artifacts/offline-lifecycle-probe",
+    "caches": "Image, checkpoint, CUDA graph, JIT, tokenizer, and runtime caches retained.",
+    "candidate": "Distinct-request support-two is consumed and rejected; completed-request commit discriminator and conditional endpoint are unconsumed.",
+    "candidate_sample_consumed": true,
+    "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+    "component_result": "exact_positive_threshold_component_but_full_trajectory_reject",
+    "component_science_consumed": true,
+    "conditional_full_endpoint_consumed": false,
+    "conditional_gate": "Require exact normalized semantics, zero failures, fewer target-verify rounds, long unaffected-request trunks, peak queue at most 30, final queue zero, stable release timing, and at most $0.14/M.",
+    "discriminator_semantics_exact": false,
+    "discriminator_unaffected_long_trunks": true,
+    "error": null,
+    "expected_first_arms": "Priority-8500 may claim only after mechanically reverifying the passed offline lifecycle result and bound implementation identities, then run one 791-request completed-request-commit discriminator and a full endpoint only if every gate passes.",
+    "full_result": "full_trajectory_reject",
+    "full_science_consumed": true,
+    "gpu_processes": "Healthy resident SGLang server retained by the completed support-two release; no experiment owner or bench claim is live at this handoff.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "itinerary": [
+      "Priority 8600: run the unconsumed request-local requests-0-through-790 discriminator with overlay SHA-256 d1b5926949729dcc36da61ccebb19ce858b003c28ea98c8f19efe30b56285b95; release by 05:03Z.",
+      "Priority 8550: only after its offline source probe passes, run the distinct-request promotion-gate discriminator and conditional endpoint; release by 06:00Z."
+    ],
+    "metrics_guard_scientific_invocation_started": false,
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Claim only for priority-8500 gemma4_ngram_completed_request_commit_gate; release by the earlier of 45 claimed minutes or 2026-07-25T06:00:00Z.",
+    "project": "gemma4_ngram_completed_request_commit_gate",
+    "promotion_gate_candidate_sample_consumed": false,
+    "remote_executed_overlay_sha256": "26d86808650412dc08e5c7417c93c7cd8aa3cfa812765778339284e9e685dd3f",
+    "remote_inspection": "Container gemma4-ngram-tail-overlap exited cleanly at 2026-07-25T04:10:44Z after the scheduler rejected request-local_tree_underfilled:5; no accelerator compute process remained.",
+    "remote_state": {
+      "owner_live": false,
+      "scientific_terminal_present": true
+    },
+    "repair_candidate_sample_consumed": true,
+    "repair_scope": "Bind retained /work/out overlay evidence, fail closed on activation, localize request 790 at the first target-verify divergence, and repair only the proven ownership/tree-mask/accepted-token/cleanup defect.",
+    "repaired_unexecuted_overlay_sha256": "d1b5926949729dcc36da61ccebb19ce858b003c28ea98c8f19efe30b56285b95",
+    "request_local_result": {
+      "activation_proved": true,
+      "failures": 0,
+      "first_semantic_divergence": {
+        "output_token_index": 38,
+        "request": 170
+      },
+      "normalized_semantics_exact": false,
+      "planning_cost_usd_per_million_total_tokens": 0.30009878052569816,
+      "queue_peak": 41,
+      "requests": 791,
+      "result": "valid_discriminator_reject"
+    },
+    "residual_bottleneck": "The invalid path passed economics at $0.139602/M but had one semantic divergence and zero retrieved overlay trace rows.",
+    "result": "warm_h200_ready_for_completed_request_commit_discriminator",
+    "runtime": "Pinned SGLang v0.5.13 FP8, page-1 E5M2 KV, native depth-12 NGRAM.",
+    "schema_version": 1,
+    "scientific_invocation_started": true,
+    "server_state": "Healthy support-two-patched SGLang server remains loaded on the compatible pinned checkpoint/image/runtime. Priority-8500 must claim before replacing only its bound write-isolation overlay and reloading in place.",
+    "suffix_result": "exact_suffix",
+    "suffix_science_consumed": true,
+    "support_two_candidate_sample_consumed": true,
+    "support_two_result": {
+      "activation_proved": true,
+      "failures": 0,
+      "first_semantic_divergence_request": 790,
+      "normalized_semantics_exact": false,
+      "planning_cost_usd_per_million_total_tokens": 0.1393159641142523,
+      "post_request_790_median_accepted_drafts": 11.0,
+      "post_request_790_p10_accepted_drafts": 11,
+      "queue_final": 0,
+      "queue_peak": 0,
+      "requests": 791,
+      "result": "valid_discriminator_reject"
+    },
+    "tail_overlap_result": "exact_but_economic_and_queue_reject",
+    "tail_overlap_science_consumed": true,
+    "typed_boundary": "At 04:11:53Z fewer than the request-790 bound arrival plus completion seconds remained before the mandatory 04:20Z release, so no further partial discriminator was started."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T06:15:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-ngram-verifier-h200-20260725t0615-watchdog.service",
+      "main_pid": 344296,
+      "unit": "gemma4-ngram-verifier-h200-20260725t0615-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-24T09:29:46.678511Z",
+  "resource": {
+    "disk_id": "computedisk-e00yvdxaa48q0t115t",
+    "disk_name": "gemma4-ngram-verifier-h200-20260724t0927z-boot",
+    "instance_id": "computeinstance-e00kcm9nfhwt7e7gbc",
+    "instance_name": "gemma4-ngram-verifier-h200-20260724t0927z"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T05:03:58.218903Z"
+}

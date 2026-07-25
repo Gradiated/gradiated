@@ -31,3 +31,41 @@ The atomic claim failed with the typed pool boundary in
 must mark that bench available; then transfer only `EXECUTION_BINDING.json`
 bytes, replace the overlay in place, run one 791-request discriminator, and
 run the 1,036-request endpoint only if every PROJECT.md gate passes.
+
+## 2026-07-25 — admitted H200 discriminator launched
+
+Action: reverified `EXECUTION_BINDING.json` and the project-local immutable
+inputs, then atomically claimed the returned retained H200 at 05:03:58Z. A
+durable controller is staging the hash-bound completed-request overlay,
+reloading only the resident container overlay, and running the one permitted
+791-request discriminator. Its absolute deadline is 06:00Z.
+
+Evidence: controller identity and claim are recorded in `STATUS.json` under
+`active_session` and `artifacts/controller/OWNER_STATE.json`; the pool shows
+the claim owned by this project. No candidate terminal existed at the grouped
+post-launch snapshot, so no sample outcome is inferred yet.
+
+## 2026-07-25 — valid discriminator rejects completed-request commit
+
+Question: does withholding each live request's target-verified NGRAM writes
+until completion preserve exact behavior while protecting peer trunks?
+
+Action: the durable owner staged the project-local immutable packet, installed
+overlay SHA-256 `4a36686ac953cb3a7b5d0a9c21fddfef34b6b8493b1bea176f46e6e55f528019`,
+proved worker activation, ran the single 791-request discriminator, retrieved
+its compact archive, and released the bench to maintenance.
+
+Evidence (measured): all 791 requests completed with zero failures, individual
+bound-arrival releases, peak queue 20, and final queue zero. The candidate
+nevertheless diverged from the normalized semantic rows (first divergent
+request: 78), retained only median/p10 accepted depth 4 after request 32
+instead of the required 10/8, and measured `$0.143793/M`, above `$0.14/M`.
+Activation identity passed and 2,692 overlay trace rows persisted. The complete
+terminal is `artifacts/completed-request-20260725t050358z/out-discriminator-0-790-completed-request-20260725t050358z/FINAL_TERMINAL.json`.
+
+Interpretation: a temporal write barrier removes live contamination but merely
+defers the harmful corpus mutation until completion; it neither preserves exact
+semantics nor prevents the sustained long-trunk collapse. This is a valid
+consumed rejection, not a harness defect. The 1,036-request endpoint was not
+admitted, and this candidate must not be replayed without new director
+authorization.

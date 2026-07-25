@@ -1,13 +1,13 @@
 {
   "active_session": null,
-  "actual_spend_usd": 0.0,
+  "actual_spend_usd": 0.4263888290013225,
   "allocation_limit": 1,
   "authorized_spend_usd": 3.0,
   "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
-  "candidate_sample_consumed": false,
+  "candidate_sample_consumed": true,
   "compute_budget": "At most 2 local CPU-hours and 45 H200 minutes total, including setup and failed attempts.",
   "execution_binding": "EXECUTION_BINDING.json",
-  "next_action": "Director disposition is required to move h200-ngram-verifier-e00kcm9nfhwt7e7gbc from maintenance to available for this project. Then atomically claim it, transfer only the immutable project-local EXECUTION_BINDING.json packet, replace the resident support-two overlay in place, run one candidate-only 791-request discriminator, and conditionally run the 1,036-request endpoint under PROJECT.md gates.",
+  "next_action": "Closed: the one permitted 791-request discriminator is valid and rejects completed-request commit. Do not replay the candidate or run the conditional 1,036-request endpoint without new director authorization.",
   "offline_probe": {
     "artifact": "artifacts/offline-lifecycle-probe/RESULT.json",
     "causal_prediction": "The live request is isolated, but request-32 post-completion commit reproduces dominant accepted depth 4.",
@@ -16,14 +16,32 @@
   "priority": 8500,
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
   "researcher_profile": "execution",
-  "status": "blocked",
-  "storage_budget": "At most 6 GiB project-local.",
-  "summary": "Exact offline lifecycle and bounded commit probe passed. The 791-request GPU sample is unconsumed because the released compatible H200 is director-held in maintenance.",
-  "terminal": {
+  "resolved_attempt": {
     "artifact": "artifacts/gpu-claim-20260725t0455z/CLAIM_TERMINAL.json",
     "candidate_sample_consumed": false,
-    "classification": "typed_pool_maintenance_boundary",
-    "need": "Director must make the compatible retained H200 available with sufficient watchdog coverage; no provider resource may be created."
+    "classification": "superseded_pool_maintenance_boundary",
+    "resolution": "The director returned the compatible retained H200 to available at 2026-07-25T04:58:30.011996Z; retry only the unconsumed claim and bound discriminator."
+  },
+  "status": "complete",
+  "storage_budget": "At most 6 GiB project-local.",
+  "summary": "Valid 791-request discriminator rejects completed-request commit: activation and reliability passed, but normalized semantics diverged, post-request-32 long trunks collapsed, and planning cost was $0.143793/M above the $0.14/M gate. The conditional endpoint was not admitted.",
+  "terminal": {
+    "artifact_root": "artifacts/completed-request-20260725t050358z",
+    "candidate_sample_consumed": true,
+    "classification": "discriminator_complete",
+    "discriminator_decision": {
+      "all_complete": true,
+      "all_requests_released_individually_at_bound_arrivals": true,
+      "failures_zero": true,
+      "final_server_queue_zero": true,
+      "max_server_queue_at_most_30": true,
+      "no_growing_release_drift": true,
+      "normalized_semantics_exact": false,
+      "planning_cost_at_or_below_target": false,
+      "positive_activation_identity": true,
+      "post_request_32_unaffected_requests_retain_long_trunks": false
+    },
+    "endpoint_admitted": false
   },
   "wall_clock_budget": "90 minutes from researcher start; any GPU owner needs a lifecycle deadline covering its full run plus cleanup."
 }

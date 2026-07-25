@@ -1,34 +1,113 @@
 {
-  "schema_version": 1,
-  "id": "gemma4_h200_fp8_weight_stream_schedule",
-  "status": "complete",
-  "priority": 8520,
-  "researcher_profile": "deep",
-  "authorized_spend_usd": 0.0,
-  "actual_spend_usd": 0.0,
-  "historical_actual_spend_usd": 0.0,
   "active_session": null,
+  "actual_spend_usd": 0.11543988757775839,
   "allocation_limit": 1,
-  "summary": "Source-complete exact M32/M384 CUTLASS N-wide FP8 MLP schedule compiled offline; it halves scheduler tiles while preserving K order, M multicast, dynamic quantization, and all consumer semantics.",
-  "next_action": "Director disposition only: after the current owner releases a compatible H200, optionally schedule one component-only run of the immutable module and exact_shape_runner.py. Do not run an endpoint from this project.",
-  "decision": "source_complete_candidate: the buildable output-channel-wide schedule has a positive scope-matched whole-request mapping and warrants one short exact-consumer H200 falsification, but no GPU or endpoint result is claimed.",
-  "hypothesis": "The production 5376-to-21504-to-5376 dense-FP8 MLP path leaves avoidable H200 weight-stream, launch, or epilogue cost at exact c32 row geometries that a source-level schedule/dataflow change can remove with positive whole-request economics.",
-  "wall_clock_budget": "At most 120 minutes.",
-  "compute_budget": "CPU and source work only; no accelerator claim.",
-  "storage_budget": "At most 4 GiB of new durable artifacts.",
-  "provider_mutation": "forbidden",
-  "terminal_artifact": "FP8_WEIGHT_STREAM_SCHEDULE_RESULT.json",
-  "result": "source_complete_candidate",
-  "completed_at": "2026-07-25T21:40:18Z",
+  "authorized_spend_usd": 0.0,
+  "compute_budget": "Zero provider GPU minutes; immutable-log and source analysis only.",
+  "completed_at": "2026-07-25T23:03:03Z",
+  "decision": "implementation_defect_localized_with_source_discriminator",
+  "dependency": {
+    "bench": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "durable": true,
+    "evidence": "runtime/gpus.json status=available and claim=null; certified-lazy scientific comparison consumed and project closed",
+    "kind": "exclusive_bench_release",
+    "observed_at_utc": "2026-07-25T22:38:01Z",
+    "project": "gemma4_certified_lazy_vocab_head"
+  },
+  "director_binding": "DIRECTOR_M32_EXACTNESS_LOCALIZATION.json",
+  "director_reactivation": {
+    "bench": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "bench_record_updated_at": "2026-07-25T22:35:56.876210Z",
+    "bench_state_at_commit": "available_with_null_claim",
+    "disposition": "sole_admitted_same_bench_claimant",
+    "predecessor_disposition": "certified-lazy completed and released after its single exact comparison failed both the certificate-rate and latency gates",
+    "reactivated_at_utc": "2026-07-25T22:38:01Z"
+  },
+  "gpu_invocation_started": true,
   "h200_claimed": false,
-  "gpu_invocation_started": false,
+  "historical_actual_spend_usd": 0.11543988757775839,
+  "hypothesis": "The M32 relative-L2 error of 1.0 plus repeated sm90a target diagnostics arise from a build, dispatch, ABI, scale/layout, or output-commit defect in the static module rather than a physical rejection of output-channel-wide FP8 weight-stream scheduling.",
+  "id": "gemma4_h200_fp8_weight_stream_schedule",
   "immutable_module": {
     "path": "artifacts/immutable/gemma4_fp8_weight_stream-sm90.so",
     "sha256": "4664d3a6c0ff32bb845bd4d766a549398ecd653191ad1f2f7bfb3da77233b43c"
   },
+  "latest_claim_boundary": {
+    "bench": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "candidate_cuda_invocation_started": false,
+    "classification": "typed_pool_availability_boundary",
+    "holder": "gemma4_certified_lazy_vocab_head",
+    "holder_heartbeat_at": "2026-07-25T22:30:57.591995Z",
+    "path": "CLAIM_BOUNDARY_CERTIFIED_LAZY_20260725T223057Z.json",
+    "scientific_sample_consumed": false
+  },
+  "next_action": "Director disposition only. Keep the consumed sm_90 module closed without replay. A future arm requires explicit re-admission, a newly content-addressed sm_90a build, and the one-call M32 discriminator; this project does not authorize compilation or GPU use.",
+  "prepared_execution": {
+    "binding_sha256": "9e2a798cc2c5910216b757d342d2af210f2ae19d2f25fac544c0a3eb5c1b45a1",
+    "candidate_invoked": true,
+    "module_sha256": "4664d3a6c0ff32bb845bd4d766a549398ecd653191ad1f2f7bfb3da77233b43c",
+    "runner": "exact_shape_runner.py",
+    "runner_sha256": "f206a108c76e019b2a75915785bd79271b661221a0b8f17d8cfc1343586ae837"
+  },
+  "priority": 8530,
+  "provider_mutation": "forbidden",
+  "repair_ready_path": "REPAIR_READY.json",
+  "researcher_profile": "deep",
+  "result": "implementation_defect_localized_with_source_discriminator",
+  "scheduler_admission": {
+    "admitted": false,
+    "bench": null,
+    "gpu_claim_allowed": false,
+    "provider_creation_allowed": false,
+    "reason": "offline causal localization completed; any corrected build or GPU consumer requires fresh director admission"
+  },
+  "schema_version": 1,
+  "source_result": {
+    "path": "FP8_WEIGHT_STREAM_SCHEDULE_RESULT.json",
+    "result": "source_complete_candidate",
+    "sha256": "af5d1f93146fe042d8ec0c4afde583c353c198d0295823dbef80caccc06e4519"
+  },
+  "status": "complete",
   "stop_rules": [
-    "Stop after a typed source_complete_candidate or mechanism_falsified terminal.",
-    "Return mechanism_falsified if the production path is not a material FP8 weight-stream limiter, the realization is subsumed by the rejected static-FP8 producer ABI, or the conservative physical bound is non-positive.",
-    "Do not claim a GPU, run an endpoint, alter weights or quantization semantics, relax exact output equivalence, or replay the older isolated proxy as current evidence."
-  ]
+    "Do not replay M32 or run M384.",
+    "Do not claim the retained H200, create a provider resource, or mutate provider lifecycle.",
+    "Do not rebuild or replace the consumed immutable module in this iteration.",
+    "Stop after one typed exactness-localization artifact; do not treat the failed static module as evidence against the whole mechanism."
+  ],
+  "storage_budget": "At most 4 GiB of new durable artifacts.",
+  "summary": "Offline immutable-evidence analysis localized the first defect to the consumed builder's compute_90/sm_90 target: its architecture-conditional GMMA guard aborted before accumulation and output commit. Corrected sm_90a source and a one-call M32 discriminator are content-addressed but were neither compiled nor GPU-executed.",
+  "prior_component_terminal": {
+    "actual_spend_usd": 0.11543988757775839,
+    "path": "FP8_WEIGHT_STREAM_H200_COMPONENT_TERMINAL.json",
+    "completed_at_utc": "2026-07-25T22:45:31.149522+00:00",
+    "prior_repairable_error": "remote Docker socket permission was repaired in place before the decision-bearing M32 retry",
+    "raw_evidence_root": "artifacts/h200-component-20260725t224241z",
+    "repair_handshake": {
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "{\"ready_sha256\": \"ed53e7ca43036aeeb8f7b47d4164db28c7e5fe1bc3ae63164ce2c60d305f5cb3\", \"request\": {\"packet_path\": \"projects/gemma4_h200_fp8_weight_stream_schedule/DIRECTOR_DOCKER_PERMISSION_REPAIR.json\", \"patch_artifact\": \"projects/gemma4_h200_fp8_weight_stream_schedule/DIRECTOR_DOCKER_PERMISSION_REPAIR.json\", \"ready_sha256\": \"ed53e7ca43036aeeb8f7b47d4164db28c7e5fe1bc3ae63164ce2c60d305f5cb3\", \"requested_at_utc\": \"2026-07-25T22:45:28.177799Z\", \"retry_scope\": \"only the invalidated M32 Docker consumer operation, then unchanged M384 after valid M32\", \"schema_version\": 1, \"state\": \"repair_requested\"}, \"request_path\": \"/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_weight_stream_schedule/REPAIR_REQUEST.json\", \"state\": \"requested\"}\n"
+    },
+    "m32_exactness": "failed at every persisted comparison stage after candidate CUDA execution",
+    "m384": "not run because the both-shapes exactness requirement is already impossible",
+    "result": "measured_exactness_incompatibility",
+    "schema_version": 1,
+    "scientific_sample_consumed": true
+  },
+  "terminal_artifact": "FP8_WEIGHT_STREAM_M32_EXACTNESS_LOCALIZATION.json",
+  "terminal_artifact_sha256": "d335eed639d992f7c34ffb8014f1b4819307490b7c1404adc5e615d227d0dc80",
+  "localization": {
+    "confidence": "high",
+    "corrected_builder": {
+      "path": "build_candidate.py",
+      "sha256": "f8c39593fd2948b7a45ac20f22226951112d45069dc24ed407c8384960aa6454",
+      "target": "sm_90a"
+    },
+    "discriminator": {
+      "path": "m32_sm90a_exact_consumer_discriminator.py",
+      "sha256": "a4e7f13f6704735c18ebacb71b3e8355baaa7531f1138f0f59754d5a18b90f24"
+    },
+    "first_execution_boundary": "device architecture-conditional MMA guard before GMMA accumulation, scaled epilogue, and TMA output commit",
+    "first_source_boundary": "build_candidate.py selected compute_90/sm_90 for architecture-conditional Hopper GMMA"
+  },
+  "wall_clock_budget": "At most 2 hours of researcher wall time; durable source analysis may span harness turns."
 }

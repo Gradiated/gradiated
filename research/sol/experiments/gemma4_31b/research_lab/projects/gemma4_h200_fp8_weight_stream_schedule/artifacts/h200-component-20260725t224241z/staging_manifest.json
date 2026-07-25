@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "bytes": 11637,
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_weight_stream_schedule/exact_shape_runner.py",
+      "sha256": "f206a108c76e019b2a75915785bd79271b661221a0b8f17d8cfc1343586ae837"
+    },
+    {
+      "bytes": 3429,
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_weight_stream_schedule/DIRECTOR_EXACT_CONSUMER_H200_BINDING.json",
+      "sha256": "9e2a798cc2c5910216b757d342d2af210f2ae19d2f25fac544c0a3eb5c1b45a1"
+    },
+    {
+      "bytes": 3320,
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_weight_stream_schedule/PHYSICAL_MODEL.json",
+      "sha256": "2bbe7e8f9f6341b0e444f6cefdbe6804c779179c022ba9c21a53155a7f51ad39"
+    },
+    {
+      "bytes": 1149864,
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_weight_stream_schedule/artifacts/immutable/gemma4_fp8_weight_stream-sm90.so",
+      "sha256": "4664d3a6c0ff32bb845bd4d766a549398ecd653191ad1f2f7bfb3da77233b43c"
+    }
+  ],
+  "remote_root": "/home/glmrunner/gemma4-fp8-weight-stream-component"
+}

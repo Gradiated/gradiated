@@ -1,5 +1,48 @@
 # H200 FP8 weight-stream schedule
 
+## 2026-07-25 M32 exactness-localization phase
+
+The privileged retry consumed the M32 discriminator once. Candidate CUDA
+execution began, but the immutable module produced a relative-L2 error of
+`1.0`, final BF16 maximum absolute error `0.01092529296875`, and repeated
+`sm90a` target diagnostics. This closes that static module, but it is evidence
+of an implementation or exact-consumer failure rather than a physical timing
+result for the weight-stream mechanism.
+
+Consume `DIRECTOR_M32_EXACTNESS_LOCALIZATION.json` and use
+`$kernel-research`. Work only from the immutable raw result, pinned runner,
+module identity, and source. Locate the first build, dispatch, ABI,
+scale/layout, output-commit, or accumulation boundary that explains the
+failure. Return one content-addressed source discriminator or a typed
+mechanism-level limit in
+`FP8_WEIGHT_STREAM_M32_EXACTNESS_LOCALIZATION.json`.
+
+This phase is zero-GPU. Do not replay M32, run M384, rebuild the consumed
+module, claim the retained H200, or mutate provider lifecycle.
+
+## 2026-07-25 exact-consumer H200 component phase
+
+The source phase returned a buildable SM90 module that doubles only the
+output-channel tile, preserves the production dynamic-FP8 ABI and K reduction
+order, and cuts persistent-scheduler tiles by exactly 50% at both `M=32` and
+`M=384`. Its conservative request mapping counts only the measured M384
+projections, so the remaining question is physical rather than architectural.
+
+Consume `DIRECTOR_EXACT_CONSUMER_H200_BINDING.json` and use
+`$kernel-research`. Prepare without CUDA, then claim the retained H200 only
+after the in-flight phase-selective owner and the higher-priority certified
+lazy-head component have released or terminalized. Run one alternating paired
+stock/candidate comparison through `exact_shape_runner.py` with the immutable
+module. Require finite, bitwise-identical outputs at every bound consumer
+boundary, graph-safe execution, and a strictly positive paired-bootstrap 95%
+lower bound on saved full-MLP time at both row geometries.
+
+Persist raw timing rows, checksums, graph behavior, and the typed terminal.
+Do not tune tiles, rebuild the immutable module, run an endpoint, change
+weights or quantization, or create provider resources. A positive component is
+returned for director disposition; a non-positive or incorrect result closes
+only this output-channel-wide schedule realization.
+
 ## Decision question
 
 Can a source-level scheduling or dataflow change to Gemma 4 31B's dominant
@@ -23,7 +66,8 @@ geometry, production runtime, and c32 phases before transferring any timing.
 
 ## Bound inputs and scope
 
-- Exact model: `google/gemma-4-31B-it` at the campaign's pinned checkpoint.
+- Exact model: `google/gemma-4-31B-it` at revision
+  `b9ea41a2887d8607f594846523f94c6cc75ac8a4`.
 - Target accelerator: NVIDIA H200 SXM.
 - Production runtime: pinned SGLang v0.5.13 in
   `docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6`.

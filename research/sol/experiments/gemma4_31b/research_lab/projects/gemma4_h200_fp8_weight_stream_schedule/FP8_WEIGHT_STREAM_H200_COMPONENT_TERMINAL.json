@@ -1,0 +1,26 @@
+{
+  "actual_spend_usd": 0.11543988757775839,
+  "binding_sha256": "9e2a798cc2c5910216b757d342d2af210f2ae19d2f25fac544c0a3eb5c1b45a1",
+  "candidate_cuda_invocation_started": true,
+  "completed_at_utc": "2026-07-25T22:45:31.149522Z",
+  "decision": "reject_static_fp8_weight_stream_realization",
+  "evidence": {
+    "m32_repair_exit": {"path": "artifacts/h200-component-20260725t224241z/M32_REPAIR.exit", "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865", "value": 2},
+    "m32_repair_stderr": {"path": "artifacts/h200-component-20260725t224241z/M32_REPAIR.stderr", "sha256": "9289aba7f4083be3163b971725f6ec2975f8b75d757e8ffb63ee8d24b57c3064"},
+    "m32_repair_stdout": {"path": "artifacts/h200-component-20260725t224241z/M32_REPAIR.stdout", "sha256": "3412618dfa3760abce44ce9ef2ca7efe7fc6b8336d3d340b7b7b39deb5010314"},
+    "staging_manifest": {"path": "artifacts/h200-component-20260725t224241z/staging_manifest.json", "sha256": "1be8e03c5a004012b6ecf50bbde80720ba59d7392968bc02d85b2698994797d1"}
+  },
+  "m32": {
+    "candidate_output": "nonfinite-free but not bitwise equal to stock at every persisted stage",
+    "comparator_reached": true,
+    "exactness_guard": "failed",
+    "final_max_absolute_error": 0.01092529296875,
+    "final_relative_l2": 1.0
+  },
+  "m384": {"run": false, "reason": "M32 exactness failure makes the required both-shapes gate impossible"},
+  "module_sha256": "4664d3a6c0ff32bb845bd4d766a549398ecd653191ad1f2f7bfb3da77233b43c",
+  "result": "measured_exactness_incompatibility",
+  "runner_sha256": "f206a108c76e019b2a75915785bd79271b661221a0b8f17d8cfc1343586ae837",
+  "schema_version": 1,
+  "scientific_sample_consumed": true
+}

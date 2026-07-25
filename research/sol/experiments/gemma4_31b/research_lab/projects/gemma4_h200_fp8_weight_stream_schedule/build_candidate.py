@@ -52,7 +52,7 @@ def main() -> int:
         extra_cflags=["-O3"],
         extra_cuda_cflags=[
             "-O3",
-            "-gencode=arch=compute_90,code=sm_90",
+            "-gencode=arch=compute_90a,code=sm_90a",
             "-DCUTE_USE_PACKED_TUPLE=1",
             "-DCUTLASS_ENABLE_TENSOR_CORE_MMA=1",
             "--expt-relaxed-constexpr",
@@ -63,22 +63,27 @@ def main() -> int:
         verbose=True,
     )
     module_path = pathlib.Path(module.__file__).resolve()
-    args.snapshot.parent.mkdir(parents=True, exist_ok=True)
-    snapshot_temporary = args.snapshot.with_suffix(args.snapshot.suffix + ".part")
-    shutil.copy2(module_path, snapshot_temporary)
-    snapshot_temporary.replace(args.snapshot)
     resource = subprocess.run(
         ["cuobjdump", "--dump-resource-usage", str(module_path)],
         check=True,
         capture_output=True,
         text=True,
     )
+    resource_usage = resource.stdout + resource.stderr
+    if "arch = sm_90a" not in resource_usage:
+        raise RuntimeError(
+            "candidate fatbinary does not contain the required sm_90a target"
+        )
+    args.snapshot.parent.mkdir(parents=True, exist_ok=True)
+    snapshot_temporary = args.snapshot.with_suffix(args.snapshot.suffix + ".part")
+    shutil.copy2(module_path, snapshot_temporary)
+    snapshot_temporary.replace(args.snapshot)
     atomic_json(
         args.output,
         {
             "schema_version": 1,
             "result": "compile_pass",
-            "target": "sm_90",
+            "target": "sm_90a",
             "torch_version": torch.__version__,
             "torch_cuda_version": torch.version.cuda,
             "candidate_symbol": "gemma4_fp8_weight_stream.fp8_weight_stream",
@@ -99,7 +104,7 @@ def main() -> int:
                 "sha256": sha256(args.snapshot),
             },
             "schedule": dict(module.schedule_metadata()),
-            "cuobjdump_resource_usage": resource.stdout + resource.stderr,
+            "cuobjdump_resource_usage": resource_usage,
             "gpu_was_used": False,
         },
     )

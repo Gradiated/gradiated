@@ -132,6 +132,31 @@ def timed_pairs(
     return stock_us, candidate_us
 
 
+def graph_behavior(call: Callable[[], object], eager_output) -> dict[str, object]:
+    import torch
+
+    torch.cuda.synchronize()
+    graph = torch.cuda.CUDAGraph()
+    with torch.cuda.graph(graph):
+        captured = call()
+    graph.replay()
+    torch.cuda.synchronize()
+    if not hasattr(captured, "shape"):
+        raise RuntimeError("CUDA graph did not retain an MLP output tensor")
+    captured_float = captured.float()
+    equivalence = compare(eager_output, captured)
+    return {
+        "capture_succeeded": True,
+        "replay_succeeded": True,
+        "output_shape": list(captured.shape),
+        "output_dtype": str(captured.dtype),
+        "nonfinite_values": int((~torch.isfinite(captured_float)).sum().item()),
+        "checksum": float(captured_float.sum().item()),
+        "bitwise_equal_to_eager": equivalence["bitwise_equal"],
+        "eager_comparison": equivalence,
+    }
+
+
 def run_shape(module, m: int, repetitions: int, seed: int) -> dict[str, object]:
     import torch
     from sgl_kernel import fp8_scaled_mm
@@ -185,6 +210,8 @@ def run_shape(module, m: int, repetitions: int, seed: int) -> dict[str, object]:
         return chain(candidate_gemm)[-1]
 
     stock_us, candidate_us = timed_pairs(stock_chain, candidate_chain, repetitions)
+    stock_graph = graph_behavior(stock_chain, stock_stages[-1])
+    candidate_graph = graph_behavior(candidate_chain, candidate_stages[-1])
     lower = paired_bootstrap_lower_95(stock_us, candidate_us, seed)
     delta_median = statistics.median(
         [a - b for a, b in zip(stock_us, candidate_us, strict=True)]
@@ -207,6 +234,24 @@ def run_shape(module, m: int, repetitions: int, seed: int) -> dict[str, object]:
             "statistically_positive": lower > 0.0,
             "repetitions": repetitions,
             "order": "alternating paired CUDA events",
+            "raw_paired_cuda_event_us": {
+                "stock": stock_us,
+                "candidate": candidate_us,
+            },
+        },
+        "cuda_graph": {
+            "stock": stock_graph,
+            "candidate": candidate_graph,
+            "safe": (
+                stock_graph["capture_succeeded"]
+                and stock_graph["replay_succeeded"]
+                and stock_graph["nonfinite_values"] == 0
+                and stock_graph["bitwise_equal_to_eager"]
+                and candidate_graph["capture_succeeded"]
+                and candidate_graph["replay_succeeded"]
+                and candidate_graph["nonfinite_values"] == 0
+                and candidate_graph["bitwise_equal_to_eager"]
+            ),
         },
         "consumer": {
             "final_shape": list(final.shape),

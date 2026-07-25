@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T14:55:00Z",
+  "decision": "repair_tied_embedding_head_contract_then_measure_dflash",
+  "question": "Can a semantics-preserving TP=1 adapter expose Gemma 4's tied embedding weight to DFlash greedy verification and unlock the already initialized model-specific draft?",
+  "immutable_inputs": {
+    "runtime_binding": {
+      "path": "DRAFT_RUNTIME_BINDING.json",
+      "sha256": "f9845ea6b80a39ba99486842d15e64eabc84713a63daf16470453b395c13c16e"
+    },
+    "capture_binding": {
+      "path": "CAPTURE_HOOK_BINDING.json",
+      "sha256": "8bc4504cede52d323394664a6876c61d54811ce4bec7ad0f05a6de993b4434de"
+    },
+    "prior_terminal": {
+      "path": "artifacts/capture-hook-continuation-20260724t0300z/FINAL_TERMINAL.json",
+      "sha256": "cf48f81a56645b9234aca82e11e8beba1fe3c8f920724755c04a6af32c47ad30"
+    },
+    "remote_launcher": {
+      "path": "remote_dflash_endpoint.sh",
+      "sha256": "b662e606515c66ebb5340b61b1ab8039fdef18cf5ab2c85f53979fe88905cfb4"
+    },
+    "runner": {
+      "path": "dflash_endpoint_runner.py",
+      "sha256": "14245acaa3a7e82deaddab657ab97cd7873841ab9244b3b31d90a4c9c224aa44"
+    }
+  },
+  "candidate": {
+    "scope": "At TP=1, expose the unchanged tied language_model.embed_tokens weight through the exact vocab-parallel head interface consumed by DFlash, including full-vocabulary shard indices and deterministic lowest-index greedy semantics. Do not duplicate, requantize, or modify the weight.",
+    "unchanged": "Target and draft revisions, captured target layers, speculative depth 16, attention backends, target forward, verification algorithm, workload, and target-token acceptance semantics.",
+    "offline_gate": "A source-level consumer test must prove the adapter returns the same full-vocabulary logits and greedy token IDs as the tied embedding projection, including ties and boundary vocabulary IDs."
+  },
+  "paid_measurement": {
+    "first_arm": "One fresh four-request DFlash diagnostic with accepted-draft, target-forward, verification, HBM, and exact token telemetry.",
+    "conditional_arm": "One matched same-runtime AR/DFlash c32 pair only after real drafting and target-exact outputs pass.",
+    "target": "Retain any valid positive result; 0.50011928158 s/request or lower is a 20% reduction from the quality-qualified 0.62514910197 s/request result.",
+    "bench_need": "One nvidia-h200-sxm with at least 141 GB HBM and 250 GiB disk. Prefer a retained compatible bench; otherwise director provisioning is required after the offline gate.",
+    "maximum_new_spend_usd": 18.0,
+    "deadline_utc": "2026-07-26T06:00:00Z"
+  },
+  "failure_semantics": "The prior diagnostic consumed the unadapted interface. It did not test this adapter. Ordinary source/API/build defects are repaired in place; only an executed exact adapter diagnostic can falsify this continuation."
+}

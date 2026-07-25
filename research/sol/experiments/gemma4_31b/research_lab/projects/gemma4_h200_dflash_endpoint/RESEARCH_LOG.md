@@ -89,3 +89,41 @@ execution, not a performance result. The diagnostic is consumed, no retry is
 allowed, and the conditional c32 pair was not started. Cumulative conservative
 provider exposure is `$8.249`; the retrieved archive hashes to
 `f6deb8624962c8bae7f232b2bbaa7428a07b204b543b541dee04c82b291d7413`.
+
+## 2026-07-25 — tied-head adapter continuation admitted
+
+The director reopened only the untested tied-head interface. The prior run
+proved target capture, draft initialization, request admission, and target
+prefill; it did not execute a Gemma-compatible vocab-parallel adapter. The new
+lane first proves that an unchanged TP=1 tied embedding projection satisfies
+the greedy-head consumer exactly, then earns one fresh diagnostic and
+conditional c32 pair. Prior `$8.249` exposure remains settled; the continuation
+has a separate `$18` maximum.
+
+## 2026-07-25 — exact TP=1 adapter gate passes; H200 unavailable
+
+Verified every immutable reopening hash. At pinned SGLang
+`588d1f7bc942`, `Gemma4ForConditionalGeneration` assigns `lm_head` to the
+same `language_model.embed_tokens` module at PP=1; DFlash's exact greedy
+consumer reads only its `weight` and `shard_indices`. The adapter therefore
+attaches the full `[0,262144)` original-vocabulary range to that existing
+module, rejects TP/PP other than one, and leaves the module, Parameter, data
+pointer, logits path, target forward, and checkpoint bytes unchanged.
+
+Measured offline through the real pinned
+`DFlashWorker._greedy_sample_from_vocab_parallel_head`: all 1,048,576 BF16
+logit elements were bit-exact and boundary/tie fixtures returned
+`[0,262143,0,262142]` as expected, including lowest-index tie resolution.
+The result is
+`artifacts/tied-head-adapter-offline-20260725/TIED_HEAD_ADAPTER_FIXTURES.json`
+(`1e2648d8...7e42`).
+
+The immutable no-restaging packet
+`artifacts/tied-head-adapter-inputs-20260725.tar`
+(`00efd6d5...7c68`) runs only the adapted four-request DFlash diagnostic and
+its conditional matched c32 pair; it embeds the consumed AR text bytes needed
+by the gate. An atomic `nvidia-h200-sxm` pool claim returned “no available GPU
+bench matches this project.” No GPU was claimed, no science invocation ran,
+and new spend is `$0`. Exact resident H200 requirements are now in
+`STATUS.json.bench_need`; director provisioning/registration is the typed
+external blocker.

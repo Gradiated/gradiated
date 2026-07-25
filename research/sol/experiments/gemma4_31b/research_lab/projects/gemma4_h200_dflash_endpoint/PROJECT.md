@@ -97,3 +97,38 @@ nominates the later production suite.
 - Provider lifecycle: director creates/registers and ultimately drains the
   independent bench. The researcher claims/releases it and never creates or
   destroys provider resources.
+
+## 2026-07-24 continuation — bind the missing Gemma 4 capture hook
+
+The upstream route is closed exactly as shipped, but its terminal is
+pre-request: the same-runtime AR diagnostic passed and DFlash accepted no
+request solely because `Gemma4ForConditionalGeneration` lacks
+`set_dflash_layers_to_capture`. Consume
+`GEMMA4_CAPTURE_HOOK_CONTINUATION.json` and use `deep` reasoning to trace the
+pinned DFlash worker, supported target implementations, Gemma 4 hybrid-layer
+ordering, captured hidden states, and target-verification consumer. Implement
+one source-bound hook only when that contract preserves target semantics.
+
+Reuse the retained H200, exact target/draft downloads, source checkout, image
+layers, flags, and runner. Do not replay the consumed AR diagnostic. After the
+patched candidate reaches health, run only the four-request DFlash
+acceptance/verification diagnostic, then the original matched c32 pair if real
+drafting, target verification, acceptance telemetry, and deterministic output
+evidence pass. A semantic incompatibility closes this integration; ordinary
+source, build, API, or consumer defects remain same-claim repairs.
+
+## 2026-07-25 continuation — tied embedding head adapter
+
+The previous candidate initialized DFlash, captured the correct six target
+features, admitted requests, and reached target prefill. It stopped at one
+narrow runtime contract: DFlash expects a vocab-parallel head with `weight` and
+`shard_indices`, while Gemma 4 correctly reuses `embed_tokens` as its tied
+output head. This does not physically reject DFlash.
+
+Consume `DIRECTOR_TIED_HEAD_ADAPTER_REOPENING.json`. First implement and test a
+TP=1 adapter that exposes the unchanged tied weight and full-vocabulary shard
+range to the pinned DFlash greedy consumer. It must preserve complete logits,
+lowest-index ties, and token IDs. After that gate, request one H200 and run a
+fresh four-request candidate diagnostic; run one matched c32 AR/DFlash pair
+only if drafting, acceptance, and target-exact outputs are real. Do not replay
+the prior unadapted diagnostic or repeat checkpoint/runtime discovery.

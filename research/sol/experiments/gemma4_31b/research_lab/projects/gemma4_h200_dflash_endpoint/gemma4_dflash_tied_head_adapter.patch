@@ -1,0 +1,75 @@
+diff --git a/python/sglang/srt/models/gemma4_mm.py b/python/sglang/srt/models/gemma4_mm.py
+index 20fb1af3..f42005e2 100644
+--- a/python/sglang/srt/models/gemma4_mm.py
++++ b/python/sglang/srt/models/gemma4_mm.py
+@@ -28,7 +28,10 @@ from sglang.srt.configs.model_config import (
+     PreTrainedModel,
+ )
+ 
+-from sglang.srt.distributed import get_pp_group
++from sglang.srt.distributed import (
++    get_pp_group,
++    get_tensor_model_parallel_world_size,
++)
+ from sglang.srt.environ import envs
+ from sglang.srt.layers.attention.triton_backend import TritonAttnBackend
+ from sglang.srt.layers.layernorm import Gemma4RMSNorm
+@@ -37,7 +40,10 @@ from sglang.srt.layers.moe.ep_moe.kernels import (
+ from sglang.srt.layers.moe.fused_moe_triton.layer import FusedMoE
+ from sglang.srt.layers.quantization.base_config import QuantizationConfig
+ from sglang.srt.layers.utils import PPMissingLayer
+-from sglang.srt.layers.vocab_parallel_embedding import ParallelLMHead
++from sglang.srt.layers.vocab_parallel_embedding import (
++    ParallelLMHead,
++    VocabParallelEmbeddingShardIndices,
++)
+ from sglang.srt.managers.mm_utils import (
+     MultiModalityDataPaddingPatternMultimodalTokens,
+     general_mm_embed_routine,
+@@ -69,6 +75,30 @@ def get_processor(model_path: str, **kwargs):
+ cached_get_processor = lru_cache(get_processor)
+ 
+ 
++def bind_tp1_tied_embedding_dflash_head(
++    embed_tokens: nn.Embedding,
++    vocab_size: int,
++) -> nn.Embedding:
++    if get_tensor_model_parallel_world_size() != 1:
++        raise ValueError("Gemma 4 tied-head DFLASH adapter requires TP=1.")
++    if embed_tokens.weight.ndim != 2 or embed_tokens.weight.shape[0] != vocab_size:
++        raise ValueError(
++            "Gemma 4 tied-head DFLASH adapter requires an unsharded full-vocabulary "
++            f"weight: expected {vocab_size} rows, got {tuple(embed_tokens.weight.shape)}."
++        )
++    embed_tokens.shard_indices = VocabParallelEmbeddingShardIndices(
++        padded_org_vocab_start_index=0,
++        padded_org_vocab_end_index=vocab_size,
++        padded_added_vocab_start_index=vocab_size,
++        padded_added_vocab_end_index=vocab_size,
++        org_vocab_start_index=0,
++        org_vocab_end_index=vocab_size,
++        added_vocab_start_index=vocab_size,
++        added_vocab_end_index=vocab_size,
++    )
++    return embed_tokens
++
++
+ class Gemma4ImagePixelInputs(TypedDict):
+     pixel_values: torch.Tensor
+     """Shape: `(batch_size * num_images, num_channels, height, width)`"""
+@@ -306,6 +336,15 @@ class Gemma4ForConditionalGeneration(nn.Module):
+             raise ValueError(
+                 "DFLASH requires explicit layer_ids for aux hidden capture."
+             )
++        if self.pp_group.world_size != 1:
++            raise ValueError("Gemma 4 tied-head DFLASH adapter requires PP=1.")
++        tied_head = self.language_model.embed_tokens
++        if self.lm_head is not tied_head:
++            raise ValueError(
++                "Gemma 4 tied-head DFLASH adapter requires lm_head to be the "
++                "language_model.embed_tokens module."
++            )
++        bind_tp1_tied_embedding_dflash_head(tied_head, self.vocab_size)
+         self.capture_aux_hidden_states = True
+         self.language_model.layers_to_capture = [val + 1 for val in layer_ids]
+ 

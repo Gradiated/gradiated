@@ -1,0 +1,72 @@
+{
+  "adapter": {
+    "added_vocab_range": [
+      262144,
+      262144
+    ],
+    "capture_hook_binding_invoked": true,
+    "capture_layer_ids": [
+      1,
+      12,
+      23,
+      35,
+      46,
+      57
+    ],
+    "internal_capture_layer_ids": [
+      2,
+      13,
+      24,
+      36,
+      47,
+      58
+    ],
+    "org_vocab_range": [
+      0,
+      262144
+    ],
+    "same_data_ptr": true,
+    "same_module": true,
+    "same_parameter": true,
+    "source_sha256": "a4f13ca8bdcf2498aa6fac9e6b8ef1ae43f8ef156bd6386062f9c304bf3fefbf",
+    "tp2_rejected": true,
+    "weight_shape": [
+      262144,
+      4
+    ]
+  },
+  "consumer": {
+    "actual_pinned_consumer_invoked": true,
+    "method": "_greedy_sample_from_vocab_parallel_head",
+    "module": "sglang.srt.speculative.dflash_worker.DFlashWorker",
+    "source_sha256": "27680c1a05036a8a3c15786a8d834d9603c2684b7cfe93c03c7ed6712e98b716"
+  },
+  "fixture": {
+    "complete_logit_elements_compared": 1048576,
+    "complete_logits_bit_exact": true,
+    "consumer_tokens": [
+      0,
+      262143,
+      0,
+      262142
+    ],
+    "dtype": "bfloat16",
+    "expected_tokens": [
+      0,
+      262143,
+      0,
+      262142
+    ],
+    "fixtures": [
+      "lowest_vocabulary_boundary",
+      "highest_vocabulary_boundary",
+      "nonadjacent_lowest_index_tie",
+      "adjacent_high_boundary_tie"
+    ],
+    "hidden_size": 4,
+    "vocab_size": 262144
+  },
+  "runtime_commit": "588d1f7bc9424201f89957e145f9d5af633a3eb8",
+  "schema_version": 1,
+  "status": "pass"
+}

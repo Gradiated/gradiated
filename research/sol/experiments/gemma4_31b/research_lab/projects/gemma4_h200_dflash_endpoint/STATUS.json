@@ -1,23 +1,51 @@
 {
   "accelerator_requirement": "nvidia-h200-sxm",
   "active_session": null,
-  "actual_spend_usd": 8.249,
+  "actual_spend_usd": 0.0,
   "allocation_limit": 1,
-  "authorized_spend_usd": 17.0,
-  "continuation_binding": "GEMMA4_CAPTURE_HOOK_CONTINUATION.json",
+  "authorized_spend_usd": 26.249,
+  "bench_need": {
+    "accelerator": "nvidia-h200-sxm",
+    "count": 1,
+    "minimum_disk_gib": 250,
+    "minimum_hbm_gb": 141,
+    "minimum_safe_claimed_minutes": 180,
+    "resident_checkpoint": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 and z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1, fully staged and hash-verified",
+    "resident_runtime": "SGLang 588d1f7bc9424201f89957e145f9d5af633a3eb8 source plus gemma4-dflash-sglang:588d1f7bc942 or retained build cache",
+    "tensor_parallel_size": 1
+  },
+  "continuation_authorized_spend_usd": 18.0,
+  "continuation_binding": "DIRECTOR_TIED_HEAD_ADAPTER_REOPENING.json",
+  "historical_settled_spend_usd": 8.249,
+  "input_packet": {
+    "archive": "artifacts/tied-head-adapter-inputs-20260725.tar",
+    "archive_sha256": "00efd6d5055e9bf00099a667d3ed65993e6a2062facd74fa3e0bcfec82147c68",
+    "manifest": "TIED_HEAD_ADAPTER_INPUTS.json",
+    "manifest_sha256": "5cf43ecf412645574cd68117d9ac76a5abe90c9cdc412a5c5806271735c72eb7"
+  },
   "last_owner": {
     "artifact_root": "artifacts/capture-hook-continuation-20260724t0300z",
     "deadline_utc": "2026-07-24T06:45:00Z",
     "unit": "gemma4-dflash-capture-hook-owner.service",
     "unit_manager": "user"
   },
-  "next_action": "Director disposition: close this exact DFlash integration at the measured Gemma 4 tied-head runtime incompatibility. Do not retry the consumed candidate diagnostic or admit the c32 pair.",
-  "priority": 6000,
-  "provider_mutation": "director_owned_independent_bench_registered",
+  "next_action": "Director provisions or registers one exact resident nvidia-h200-sxm bench satisfying bench_need. Then claim it, transfer only artifacts/tied-head-adapter-inputs-20260725.tar, and run remote_tied_head_adapter.sh: adapted four-request DFlash diagnostic first, conditional matched c32 pair only on gate pass. Do not restage checkpoints or replay the old unadapted diagnostic.",
+  "offline_adapter_gate": {
+    "complete_logit_elements_compared": 1048576,
+    "complete_logits_bit_exact": true,
+    "consumer_tokens": [0, 262143, 0, 262142],
+    "expected_tokens": [0, 262143, 0, 262142],
+    "result": "artifacts/tied-head-adapter-offline-20260725/TIED_HEAD_ADAPTER_FIXTURES.json",
+    "result_sha256": "1e2648d8a45919b46f0d12f291c28f063cd37cfe29831275856b2b7c00587e42",
+    "status": "pass"
+  },
+  "priority": 8460,
+  "provider_mutation": "forbidden_researcher_director_provisions_after_offline_gate",
   "quality_claim_authorized": false,
   "researcher_profile": "deep",
-  "status": "terminal",
-  "summary": "The exact capture hook initialized DFlash, but the decision-bearing diagnostic failed after prefill because Gemma 4's tied embedding head lacks the vocab-parallel head contract required by DFlash greedy sampling. The candidate arm is consumed; c32 was not started.",
-  "terminal_artifact": "artifacts/capture-hook-continuation-20260724t0300z/FINAL_TERMINAL.json",
-  "wall_deadline_utc": "2026-07-24T10:00:00Z"
+  "status": "active",
+  "summary": "The exact pinned DFlash greedy consumer passed a full-vocabulary BF16 tied-head adapter test with 1,048,576 bit-exact logits and correct boundary/tie tokens. The immutable no-restaging diagnostic packet is runnable; the pool has no matching H200, so measurement awaits the exact director-provisioned resident bench_need.",
+  "terminal_artifact": "TIED_HEAD_ADAPTER_RESULT.json",
+  "terminal_artifact_sha256": "87b1982d949398f755ca800fe0ee7d33441b458d95e770fa28f600b0a74c7c09",
+  "wall_deadline_utc": "2026-07-26T06:00:00Z"
 }

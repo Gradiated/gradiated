@@ -1,0 +1,10 @@
+{
+  "batch_size": 32,
+  "chunked_prefill_size": 134848,
+  "compaction_after_layer": 5,
+  "decode_graph_summary_state_budget": 1152,
+  "max_prefill_tokens": 134848,
+  "prompt_tokens_per_request": 4214,
+  "route": "prompt_state_merge_1152_after_layer5",
+  "runtime_behavior": "Candidate-only fixed c32 cohort. Coalesce each request's full prompt into the admitted prefill invocation; every prompt token must contribute exactly once to a protected singleton or weighted summary state. Mixed, partial, or protected-state-overflow rows fail closed before candidate model execution."
+}

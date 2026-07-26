@@ -57,6 +57,18 @@
   },
   "packet_files": [
     {
+      "bytes": 212247,
+      "path": "input/CONTROL_TOKEN_ORACLE.json",
+      "sha256": "5ae3ee1ef81641e778a08063d56cd62c4659470b2da695d8d8bc3e27779dbf7b",
+      "source": "inputs/endpoint/CONTROL_TOKEN_ORACLE.json"
+    },
+    {
+      "bytes": 7156,
+      "path": "input/candidate_resume.py",
+      "sha256": "ab36ffcf2738d2fc4c242cffd23589d8c576d1a4a7143a08af36471b36ac3ce0",
+      "source": "inputs/endpoint/candidate_resume.py"
+    },
+    {
       "bytes": 5043,
       "path": "input/decode_equivalent_lm_head.py",
       "sha256": "4d99a94e97d0ef01fbfdaa9f7a25742f07f9fb4236d93d07900626f5ff9b53f9",
@@ -81,16 +93,22 @@
       "source": "inputs/endpoint/exact_runner.py"
     },
     {
-      "bytes": 18268,
+      "bytes": 18430,
       "path": "input/packed_m384_endpoint.py",
-      "sha256": "861060f77e4dfe8dadd687878f4c34874aa31fbf5398d5f7083635ed3d9a8e39",
+      "sha256": "385b23e38024a66986990d8e3ec7d53dd19ff1033b581e18cb32f7a214a7fec0",
       "source": "inputs/endpoint/packed_m384_endpoint.py"
     },
     {
-      "bytes": 4575,
+      "bytes": 4803,
       "path": "input/sitecustomize.py",
-      "sha256": "f9756b8e0abb616ccfeeab719f01dbc301bf007458cfee990be8385190759776",
+      "sha256": "595d60c06477ed82785deab4b35848d42e1a242a138b7e797123761288bb1f0e",
       "source": "inputs/endpoint/sitecustomize.py"
+    },
+    {
+      "bytes": 5568,
+      "path": "input/token_oracle.py",
+      "sha256": "cc57a354c16d94940e38b33d95acc5594467bc4a52e156498f4d332ec71009d3",
+      "source": "inputs/endpoint/token_oracle.py"
     },
     {
       "bytes": 4176,

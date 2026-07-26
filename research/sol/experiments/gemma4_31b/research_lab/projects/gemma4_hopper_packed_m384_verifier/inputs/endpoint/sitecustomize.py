@@ -101,6 +101,10 @@ def _install_packed_attention() -> None:
                     "kv_indices": kv_indices.numel(),
                     "local": local,
                     "max_len_extend": max_len_extend,
+                    "q_stride": list(q_extend.stride()),
+                    "k_stride": list(k_extend.stride()),
+                    "v_stride": list(v_extend.stride()),
+                    "o_stride": list(o_extend.stride()),
                     "q_shape": list(q_extend.shape),
                     "route": "candidate" if exact else "rejected_no_fallback",
                 }

@@ -6,16 +6,16 @@
   "researcher_profile": "deep",
   "allocation_limit": 1,
   "authorized_spend_usd": 8.0,
-  "actual_spend_usd": 0.34,
+  "actual_spend_usd": 2.134908,
   "active_session": null,
   "hypothesis": "A packed TMA and warp-specialized online-softmax decomposition can remove the measured Hopper register-residency and tail-wave penalty from Gemma target verification and save 8-10% of whole-request service time.",
-  "summary": "ENDPOINT_READY.json now binds the measured V2 kernels unchanged through the pinned SGLang v0.5.13 production paged-KV attention boundary, the exact decode-equivalent NGRAM c32 control/candidate pair, a project-local immutable 62,578,655,208-byte checkpoint snapshot, and fail-closed token/cache/target/no-fallback gates. The settled positive component remains consumed exactly once; no endpoint arm or new GPU claim occurred.",
-  "next_action": "Remain GPU-ineligible until the director consumes ENDPOINT_READY.json sha256:64c738f61a7a031a3b28fbcabee3a9fa8ebfb3e88541426ee8e1c70cdfe0a8d3 and issues an exact endpoint readmission. Then claim only the retained H100, stage from the project-local ENDPOINT_INPUT_MANIFEST.json without resolving shared paths, and run the single bound matched profiler-off c32 pair by the director deadline. Do not replay the settled component.",
+  "summary": "The graph-capture integration defect is repaired offline without changing the measured V2 kernels or scientific geometry. The pinned backend produces shaped Q/O views and contiguous K/V; the kernels already consume explicit token/head strides, so the wrapper now requires only rank-3 tensors with unit feature stride. The persisted raw SSE request IDs join unambiguously to token-event RIDs and ordered scheduler deltas, yielding a 32x358 control token oracle without replay. GRAPH_CAPTURE_REPAIR_READY.json binds the candidate-only resume, retained-state delta, and durable repair owner; the maintenance H100 remains unclaimed pending director consumption.",
+  "next_action": "Director must consume GRAPH_CAPTURE_REPAIR_READY.json (sha256 dccf35e742b0e645c271a5b2fe762817c9bf501d9d1861ba3b5a5ac31a4b7cdf) into GRAPH_CAPTURE_REPAIR_READMISSION.json before any claim. After readmission, launch the bound PID-managed run_graph_repair_owner.py, reuse the retained checkpoint/image, pass CUDA-graph capture as the discovery check, and submit at most the sole unconsumed candidate c32 request by 2026-07-26T19:55:00Z; never replay control or the settled component.",
   "bench_need": {
     "accelerator": "nvidia-h100-sxm",
     "claim_allowed": false,
     "provider_create_allowed": false,
-      "reason": "The endpoint integration and exact matched start command are bound in ENDPOINT_READY.json, but the retained H100 remains durably non-claimable until the director consumes that artifact and issues readmission."
+    "reason": "Offline graph-layout repair, 32x358 persisted control oracle, repair delta, and candidate-only durable owner are bound in GRAPH_CAPTURE_REPAIR_READY.json. The retained H100 remains maintenance-bound until the director consumes that exact artifact into GRAPH_CAPTURE_REPAIR_READMISSION.json."
   },
   "execution_binding": {
     "contract": "EXPERIMENT_CONTRACT.json",
@@ -34,16 +34,7 @@
     "release_deadline_utc": "2026-07-26T17:32:01.095093Z",
     "rebind_request": "DIRECTOR_REBIND_REQUEST.json"
   },
-  "blocker": {
-    "kind": "endpoint_ready_awaiting_director_readmission",
-    "bench_id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
-    "claim_interval_utc": ["2026-07-26T16:57:14.227379Z", "2026-07-26T16:59:15.537760Z"],
-    "candidate_cuda_started": true,
-    "scientific_samples_consumed": 1,
-    "evidence": ["artifacts/h100-component/PACKED_M384_VERIFIER_RESULT.json", "OWNER_TERMINAL.json"],
-      "cause": "The exact endpoint packet is ready, but DIRECTOR_H100_PACKED_M384_ENDPOINT_PROMOTION_20260726T1712Z.json explicitly forbids a GPU claim until the director consumes ENDPOINT_READY.json.",
-      "next": "Director consumes ENDPOINT_READY.json sha256:64c738f61a7a031a3b28fbcabee3a9fa8ebfb3e88541426ee8e1c70cdfe0a8d3 and either readmits the exact command or changes disposition."
-  },
+  "blocker": null,
   "director_recovery": {
     "path": "DIRECTOR_H100_REMOTE_COMMAND_RECOVERY_20260726T1700Z.json",
     "issued_at_utc": "2026-07-26T17:00:55Z",
@@ -67,7 +58,10 @@
     "weighted_attention_p50_reduction_fraction": 0.4752981991883123,
     "projected_target_boundary_reduction_fraction": 0.319075333399402,
     "projected_seconds_saved_per_qualified_request": 0.05058891319144423,
-    "claim_interval_utc": ["2026-07-26T17:08:17.572241Z", "2026-07-26T17:08:38.479850Z"],
+    "claim_interval_utc": [
+      "2026-07-26T17:08:17.572241Z",
+      "2026-07-26T17:08:38.479850Z"
+    ],
     "claim_exposure_usd": 0.02,
     "interpretation": "Measured exact-consumer component positive on H100; endpoint integration remains unmeasured and requires director admission."
   },
@@ -79,7 +73,7 @@
     "gpu_eligible": false,
     "endpoint_release_deadline_utc": "2026-07-26T19:00:00Z",
     "endpoint_ready_sha256": "64c738f61a7a031a3b28fbcabee3a9fa8ebfb3e88541426ee8e1c70cdfe0a8d3",
-    "consumed_by_director": false
+    "consumed_by_director": true
   },
   "endpoint_ready": {
     "path": "ENDPOINT_READY.json",
@@ -92,5 +86,43 @@
     "offline_tests_passed": 6,
     "gpu_claimed": false,
     "endpoint_scientific_sample_consumed": false
+  },
+  "director_endpoint_readmission": {
+    "path": "DIRECTOR_H100_PACKED_M384_ENDPOINT_READMISSION_20260726T1741Z.json",
+    "sha256": "4e8e8c4fb3005a7f5a66d8efdcff627b58273f59065f176265ab2a86fbc90063",
+    "bench_id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+    "owner_source": "run_endpoint_owner.py",
+    "owner_binding": "ENDPOINT_OWNER_BINDING.json",
+    "gpu_eligible_after_owner_binding": true,
+    "component_replay_allowed": false,
+    "endpoint_release_deadline_utc": "2026-07-26T19:00:00Z",
+    "lifecycle_deadline_utc": "2026-07-26T19:05:00Z",
+    "boot_disk_bytes": 214748364800,
+    "guest_root_available_bytes": 166197145600
+  },
+  "director_graph_capture_repair": {
+    "path": "DIRECTOR_H100_PACKED_M384_GRAPH_CAPTURE_REPAIR_20260726T1828Z.json",
+    "sha256": "803290e8b934e4c56635f5afca0e3e7677edd5b08b33275a893f1f07c6c1c923",
+    "required_artifact": "GRAPH_CAPTURE_REPAIR_READY.json",
+    "gpu_eligible": false,
+    "control_request_replay_allowed": false,
+    "candidate_request_submissions_remaining": 1,
+    "candidate_release_deadline_utc": "2026-07-26T19:55:00Z",
+    "lifecycle_deadline_utc": "2026-07-26T20:00:00Z",
+    "retained_checkpoint_and_image": true
+  },
+  "graph_capture_repair_ready": {
+    "path": "GRAPH_CAPTURE_REPAIR_READY.json",
+    "sha256": "dccf35e742b0e645c271a5b2fe762817c9bf501d9d1861ba3b5a5ac31a4b7cdf",
+    "control_oracle": "inputs/endpoint/CONTROL_TOKEN_ORACLE.json",
+    "control_oracle_sha256": "5ae3ee1ef81641e778a08063d56cd62c4659470b2da695d8d8bc3e27779dbf7b",
+    "input_manifest_sha256": "ff8c1c51a8593793a22163de107bc0c01349150141ac75d705800d82de242c6c",
+    "repair_manifest_sha256": "ac4218e5b63172bed8b10b740d390de1084e4fe7f2c882ad0e53037285578e64",
+    "owner": "run_graph_repair_owner.py",
+    "owner_sha256": "a1437d951d9e93f7e2111c43480e06d54c0535ce15d3d99ad950d38a7400cec2",
+    "measured_v2_kernel_ast_unchanged": true,
+    "control_request_replayed": false,
+    "gpu_claimed": false,
+    "consumed_by_director": false
   }
 }

@@ -36,6 +36,10 @@ def packed_m384_dispatch_audit() -> dict[str, int]:
     return dict(_dispatch_counts)
 
 
+def _kernel_layout_compatible(tensor: torch.Tensor) -> bool:
+    return tensor.ndim == 3 and tensor.stride(-1) == 1
+
+
 def _audit_dispatch(kind: str, prefix_tokens: int, partitions: int) -> None:
     _dispatch_counts[kind] += 1
     path = os.environ.get("PACKED_M384_AUDIT")
@@ -488,10 +492,10 @@ def extend_attention_fwd(
         and sinks is None
         and xai_temperature_len == -1
         and head_dim == v_extend.shape[-1]
-        and q_extend.is_contiguous()
-        and k_extend.is_contiguous()
-        and v_extend.is_contiguous()
-        and o_extend.is_contiguous()
+        and _kernel_layout_compatible(q_extend)
+        and _kernel_layout_compatible(k_extend)
+        and _kernel_layout_compatible(v_extend)
+        and _kernel_layout_compatible(o_extend)
     )
     local = (
         exact_common

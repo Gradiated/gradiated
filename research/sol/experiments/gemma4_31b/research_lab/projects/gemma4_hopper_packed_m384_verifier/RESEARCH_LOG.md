@@ -113,6 +113,26 @@ additional spend or sample occurred.
 Next move: wait for the director to transition the maintenance H100 to ready,
 then make the one admitted claim and run the unconsumed paired component sample.
 
+## 2026-07-26 — readmitted c32 endpoint owner launched
+
+Action: implemented the controller-local `run_endpoint_owner.py`, hash-bound it
+in `ENDPOINT_OWNER_BINDING.json` to the 17:41Z readmission, and launched the
+prescribed PID-managed detached owner. The owner atomically claimed only
+`h100-paged-fp8-e00mkpyvykfak0bg1m` at `17:47:45Z` and is staging only the
+project-local endpoint manifest into its isolated remote root.
+
+Evidence: `ENDPOINT_OWNER_STATE.json` records PID `1956275`, start ticks
+`120408264`, and `unit_manager: pid`; the first grouped snapshot proved it is
+live, has a successful claim heartbeat, and crossed into `staging_copy` for
+the bound 49,784,788,364-byte checkpoint shard. No endpoint science-start
+marker or candidate CUDA result exists yet.
+
+Next move: the durable owner verifies and atomically promotes the immutable
+stage, then runs exactly one profiler-off matched c32 control/candidate pair;
+it retrieves the compact terminal and releases to maintenance by 19:00Z, or
+retains the claim through its bounded repair handshake if an ordinary
+integration boundary occurs.
+
 ## 2026-07-26 — offline SM90 compile falsification and packet rebind request
 
 Action: compiled the released v1 source to SM90 CUBIN in the pinned image.
@@ -202,3 +222,68 @@ Next move: after exact director readmission, claim only the retained H100,
 stage from the project-local manifest without resolving shared paths, and run
 the single bound matched c32 pair. Preserve the settled component without
 replay.
+
+## 2026-07-26 — endpoint graph incompatibility terminal
+
+Action: retained the live claim owner through its repair handshake, pulled the
+bound SGLang image, archived the zero-request partial output root, and ran the
+unchanged remote endpoint command against the verified staged checkpoint.
+
+Evidence: the control producer completed once and is preserved in
+`artifacts/endpoint/endpoint-repair2-artifacts.tar.gz`, but its raw SSE lacks
+the requested token-ID field, so its comparator rows retain
+`returned_token_ids: 0`. The candidate server then failed during CUDA-graph
+initialization, before `candidate_science_started`, with
+`packed_m384_exact_shape_required`. `REPAIR_TERMINAL.json` binds the raw
+controller stderr, candidate log, input image-pull proof, compact archive, and
+the no-candidate-request classification. The owner retrieved the repair
+request and released the still-safe bench to maintenance at 18:24:15Z. Its
+continuous claim cost was `$1.794908`; cumulative project spend is
+`$2.134908`, below the `$8` ceiling.
+
+Interpretation: this is an informative endpoint incompatibility for the
+hash-bound implementation: it cannot satisfy the required CUDA-graph fixed
+production path. It is not a measured endpoint gain/loss and does not consume
+the candidate request arm. Altering the route/kernel to special-case graph
+capture would change the admitted endpoint identity, while the completed
+control producer must not be replayed.
+
+Next move: director disposition only. Preserve the staged checkpoint, image,
+raw control producer, and failure archive; any successor needs a newly bound
+graph-compatible candidate and token-ID observer contract.
+
+## 2026-07-26 — graph-layout repair and persisted control oracle bound
+
+Question: can the graph-capture mismatch be repaired without changing the
+three positive V2 kernels, replaying control, or changing the exact c32
+scientific geometry?
+
+Action: compared the admitted router, rejected wrapper, pinned
+`TritonAttnBackend.forward_extend`, and all kernel index expressions. The
+backend supplies shaped Q/O views and explicitly contiguous K/V; all V2
+kernels already receive token/head strides and assume only unit feature
+stride. Replaced the wrapper's full-contiguity requirement with that exact
+rank-3/unit-feature-stride contract. Stream-joined the preserved raw SSE
+response IDs to token-event RIDs and ordered scheduler deltas, then bound a
+candidate-only resume and PID-managed retained-repair owner.
+
+Evidence: `GRAPH_CAPTURE_REPAIR_READY.json`
+(`sha256:dccf35e742b0e645c271a5b2fe762817c9bf501d9d1861ba3b5a5ac31a4b7cdf`)
+binds the repair, delta manifest, exact start command, and owner.
+`inputs/endpoint/CONTROL_TOKEN_ORACLE.json`
+(`sha256:5ae3ee1ef81641e778a08063d56cd62c4659470b2da695d8d8bc3e27779dbf7b`)
+contains 32 unique request hashes/RIDs and exactly 358 emitted token IDs per
+request from the persisted producer. AST hashes for `_score_partition_kernel`,
+`_merge_state_kernel`, and `_value_consumer_kernel` remain identical to the
+measured V2 source. Seven offline consumer, fail-closed, oracle, and AST tests
+pass. No GPU was claimed, no control/component/candidate request replayed, and
+spend remains `$2.134908`.
+
+Interpretation: the graph failure was a wrapper-layout assumption, not a
+kernel or geometry negative. The H100 remains maintenance-bound; readiness is
+not endpoint evidence.
+
+Next move: director consumes the exact readiness digest into
+`GRAPH_CAPTURE_REPAIR_READMISSION.json`; only then launch the bound durable
+owner for CUDA-graph discovery and the sole unconsumed candidate c32 request,
+with release by 19:55Z.

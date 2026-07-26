@@ -1,0 +1,20 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "authorized_spend_usd": 0.0,
+  "decision": "typed_none_missing_scope_matched_target_gaudi3_performance_measurement",
+  "last_researcher_run": {
+    "action": "Ran the zero-spend exact-model Gaudi3/SynapseAI runtime and placement discriminator.",
+    "artifact": "GAUDI3_RUNTIME_PLACEMENT_SCREEN.json",
+    "classification": "typed_none",
+    "completed_at_utc": "2026-07-26T12:52:26Z",
+    "spend_usd": 0.0,
+    "type": "missing_scope_matched_target_gaudi3_performance_measurement"
+  },
+  "next_action": "Director disposition. Reopen only for one authorized, lab-registered IBM gx3d-160x1792x8gaudi3 lifecycle that runs the exact pinned Gemma 4 31B revision through the source-bound vLLM-Gaudi producer/consumer, validates compiled capacity, measures c32 fresh input, cache read, and output phases plus failures/reloads, and clears the source-current all-in hurdle in GAUDI3_RUNTIME_PLACEMENT_SCREEN.json.",
+  "priority": 8760,
+  "researcher_profile": "deep",
+  "schema_version": 1,
+  "status": "complete",
+  "summary": "Typed none: the exact Gemma 4 31B HPU path is source-complete and passed TP2 correctness on Gaudi2, but no admissible target-Gaudi3 c32 performance sample exists. IBM's current eight-Gaudi3 node is $60.60/hour in US regions; after conservative all-in charges it must sustain at least 187,505.8 total tokens/second, so measured phase and blended costs remain null rather than transferred."
+}

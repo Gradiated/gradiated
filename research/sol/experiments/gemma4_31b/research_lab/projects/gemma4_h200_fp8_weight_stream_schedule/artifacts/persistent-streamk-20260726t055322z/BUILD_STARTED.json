@@ -1,0 +1,7 @@
+{
+  "at_utc": "2026-07-26T05:53:28.824891+00:00",
+  "build_identity_sha256": "77167a8ec281a825c1a1fcce88c34ecc0f51d95ad6dd0ddfd30d1a913b037061",
+  "candidate_cuda_invocation_started": false,
+  "cutlass_root": "/usr/local/lib/python3.12/dist-packages/deep_gemm",
+  "source_sha256": "e5202455dc8b45c87d2bb2617e415b1c20681951772cbb0bdd325093f2b15e69"
+}

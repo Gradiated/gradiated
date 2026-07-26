@@ -199,3 +199,138 @@ syntax-checked only; it was neither built nor run on a GPU.
 **Next.** Director disposition only. Keep the consumed module closed and M384
 prohibited. Any future corrected build/consumer invocation requires a new
 content-addressed module and explicit re-admission.
+
+## 2026-07-26T04:41Z — reactivated SM90a include-build execution
+
+**Decision and scope.** The director re-admitted the retained warm H200 for
+exactly one fresh `sm_90a` module and one unchanged M32 gate. The prior
+failure was pre-CUDA. This execution changes only the pinned CUTLASS include
+root: it uses the complete in-image TileLang CUTLASS tree with the pinned
+SGLang dispatcher after the already-bound redundant-header removal. Tile,
+cluster, scales, ABI, output dtype, workload, and comparator are unchanged.
+
+**Execution.** Claimed `h200-dflash-adapter-e00vyqp7gxsr34wrtz` at
+`2026-07-26T04:41:12.322366Z`. The durable PID-owned controller is recorded
+in `STATUS.json.active_session`, heartbeats the claim through `05:12Z`, and
+has crossed `BUILD_STARTED.json` in
+`artifacts/sm90a-component-20260726t044127z/`. Its module identity hashes the
+source, builder, and include-root tuple, preventing any collision with the
+earlier `sm_90` or attempted `sm_90a` artifacts. No candidate CUDA call or
+new M32 sample had begun at this snapshot.
+
+**Budget.** The project starts this retained claim at `$0.40` cumulative
+exposure. A full 25-minute claim at `$2.45/hour` raises this conservatively
+to about `$1.421`, within the `$2.00` reservation. The controller records its
+actual elapsed claim cost before any terminal/release.
+
+## 2026-07-26T05:21Z — post-deadline SM90a readmission
+
+**Decision.** The director's fresh admission was consumed by an atomic claim
+of `h200-dflash-adapter-e00vyqp7gxsr34wrtz` at `05:21:44Z`. The expired
+attempt's raw Ninja record proves a pre-CUDA header integration defect: the
+SGLang scaled-MM epilogue needs the CUTLASS `Sm90EVT` and `Sm90Compute`
+definitions before the dispatcher is instantiated. The in-image DeepGEMM
+CUTLASS tree provides those definitions.
+
+**Amendment.** Restored only that pinned CUTLASS epilogue header before the
+unchanged dispatcher and bound `torch.cpp_extension`/Ninja to
+`/usr/local/lib/python3.12/dist-packages/deep_gemm`. The source, builder, and
+include-root form a fresh content address. No tile, cluster, schedule, scale,
+ABI, dtype, workload, or exactness rule changed.
+
+**Execution.** PID-owned durable controller `1575683` started at `05:23:01Z`,
+heartbeats the same claim through the absolute `05:55Z` release deadline, and
+will build one module then make the one admitted M32 call. M32/M384 remains
+conditional on a finite bitwise M32 pass. Starting cumulative exposure is
+`$1.6574523726527781`; the controller will persist the elapsed conservative
+total before any paid terminal.
+
+**Causal amendment.** The first replacement build stopped before producing a
+module because `cutlass/util/packed_stride.hpp` is supplied by TileLang's
+utility include tree, not DeepGEMM. The repair request remains preserved in
+its artifact. Its PID owner was stopped before release, the same claim was
+heartbeated, and one allowed immediate replacement owner (`1576708`) was
+started with DeepGEMM as the CUTLASS root and TileLang only as the utility
+include root. This is still the same pre-CUDA build operation, not another
+scientific sample.
+
+## 2026-07-25 — SM90a pre-discriminator build boundary
+
+**Action.** Atomically claimed the retained H200 at `23:42:34.393429Z`,
+materialized the admitted project-local source packet under
+`/home/glmrunner/gemma4-fp8-weight-stream-sm90a`, and launched the durable
+owner. Its first Docker invocation used `sudo -n docker` and compiled the new
+`compute_90a/sm_90a` module request.
+
+**Evidence.** Ninja returned nonzero before a module snapshot,
+`M32_SCIENCE_STARTED.json`, or `M32_RESULT.json` existed. The raw build
+stdout/stderr, staging manifest, heartbeat, and release records are retained
+at `artifacts/sm90a-component-20260725t234241z/`. The Torch wrapper did not
+include Ninja's compiler line in its captured stderr; recovering that line is
+the sole build-integration diagnostic still needed. A stale prior
+`REPAIR_REQUEST.json` rejected creation of the new handshake, so the owner
+released the bench to maintenance rather than silently changing or replaying
+the scientific operation.
+
+**Interpretation.** This is an ordinary pre-invocation integration failure,
+not a scientific result: no candidate CUDA/M32 consumer result was produced
+and no sample was consumed. The claim lasted 22.727651 seconds at $2.45/hour;
+the conservative cumulative project exposure is `$0.1309096898`.
+
+**Next.** Director re-admission of the retained maintenance bench is required.
+Under that new claim, retrieve the Ninja diagnostic, patch only the admitted
+SM90a build integration, and run the unchanged one-call M32 discriminator.
+
+**Amendment from retained stdout.** The compiler diagnostic is now recovered:
+the pinned CUTLASS tree lacks the explicitly included
+`sm90_callbacks_tma_warpspecialized.hpp`. Removed only that redundant include;
+the pinned SGLang FP8 dispatcher already provides the referenced schedule
+types. The repaired source hash is
+`6fbf494585aebb0453c4af9ac17481701e036e5e948e1edac7297d44e2999803`.
+This is a content-addressed pre-invocation integration amendment, not a change
+to shapes, scales, schedules, or the one-call M32 question.
+
+**2026-07-25T23:57Z terminal.** The re-admitted retained H200 claim tested only
+the image-local include/build graph. `/work/sgl-kernel` was absent; the paired
+FlashInfer CUTLASS tree then failed on SGLang's required `Sm90EVT`/`Sm90Compute`
+fusion ABI; DeepGEMM headers plus the only available packed-stride utility tree
+produced the same ABI failure. All three compiler records are hash-bound in
+`FP8_WEIGHT_STREAM_SM90A_H200_TERMINAL.json`. No module, candidate CUDA call,
+M32 gate, or M384 component was produced; the bench was released to
+maintenance. Conservative cumulative project exposure is `$0.40`.
+
+## 2026-07-26T05:59Z — persistent Stream-K scientific terminal
+
+**Offline model and arm.** Source inspection tied the prior M32/M384 reversal
+to output-tile widening inside H200's 132-SM persistent grid: the rejected arm
+halved independent output work and widened a residency-limited epilogue. The
+new arm therefore retained the pinned stock M32/M384 gate/up configs and
+introduced exactly one change: deterministic CUTLASS Stream-K decomposition
+for down `[M,21504] x [21504,5376]`. The preregistered physical prediction was
+a full M32 work queue instead of 84 output tiles and a smoother M384 tail.
+`PERSISTENT_GROUPED_PHYSICAL_MODEL.json` and
+`PERSISTENT_GROUPED_SOURCE.json` bind the model and source.
+
+**Invalid attempts.** Two ordinary pre-CUDA build defects were preserved and
+amended without consuming a sample. First, the immutable image dispatcher
+digest differed from an offline sibling snapshot. Second, that image
+dispatcher lacked the sibling's scheduler-parameterized helper. The final
+source reused the image's exact stock collective types and replaced only
+`GemmUniversal`'s scheduler tag project-locally. The corresponding artifacts
+and causal amendments are durable; neither attempt produced a module or
+science marker.
+
+**Measured result.** Module
+`281873ca05896e43453afe1154c2f6e69db7166f73b592c056bbfd77b7978c8c`
+compiled for `sm_90a` and entered the unchanged M32 consumer. Gate/up BF16,
+GELU product, down-input FP8, and down scale were finite and bitwise equal.
+Final BF16 was finite but not bitwise equal (`max |delta| 0.00225830078125`,
+relative L2 `0.1942131668329239`). The result is interpretable mechanism
+evidence: deterministic Stream-K changed down accumulation/reduction order.
+The exactness stop consumed the arm before timings, graph testing, or M384;
+none may be replayed.
+
+**Disposition and cost.** Reject the schedule and do not advance it to an
+endpoint. The named bench was claimed at `05:49:16Z` and released ready/warm
+with no worker at `05:58:51Z`. Conservative cumulative project exposure is
+`$2.32`, below the `$5.00` reservation.

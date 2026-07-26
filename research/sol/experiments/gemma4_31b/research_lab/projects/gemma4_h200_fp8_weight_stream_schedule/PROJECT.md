@@ -1,5 +1,65 @@
 # H200 FP8 weight-stream schedule
 
+## 2026-07-26 deterministic Stream-K terminal
+
+The one admitted materially distinct arm is closed. It retained the pinned
+stock gate/up tiles and grid and changed only the long-K down projection to a
+content-addressed deterministic CUTLASS Stream-K schedule. The SM90a module
+compiled successfully. At M32, gate/up BF16, GELU product, down-input FP8, and
+the down scale were all finite and bitwise identical to stock; final down BF16
+was finite but not bitwise identical (`max |delta| = 0.00225830078125`,
+relative L2 `0.1942131668329239`).
+
+This is a consumed scientific incompatibility. The preregistered stop rule
+forbids timing/graph continuation, M384, endpoint work, or replay of module
+`281873ca05896e43453afe1154c2f6e69db7166f73b592c056bbfd77b7978c8c`.
+The retained H200 was released ready and warm at `05:58:51Z`. Conservative
+cumulative project exposure is `$2.32`.
+
+## 2026-07-26 persistent/grouped schedule redesign
+
+The fresh SM90a output-channel-wide implementation is a valid negative result,
+not an integration failure. It is bitwise equal and CUDA-graph safe at both
+bound exact-consumer shapes, but its paired median is `34.064 us` slower at
+M32 (`155.696 us` candidate versus `121.488 us` stock) and `4831.760 us`
+slower at M384 (`5231.072 us` candidate versus `405.392 us` stock). Do not
+rebuild, tune, or replay module
+`b02a30c78f6983e6f0eeb5f03e1d65c9aebfc7615ba669b069d779c1536bbf3e`.
+
+Use `$kernel-research` to test one materially different mechanism: preserve
+stock-style CTA/K/N tensor-core parallelism and exact row geometry while
+amortizing weight traffic or launch overhead with a persistent or grouped
+schedule. Start offline from the measured source and exact model geometry.
+Before claiming the GPU, produce a causal source/accelerator model naming one
+predicted physical change, such as restored grid/SM residency with fewer
+weight reads or launches, and make exactly one source-complete,
+content-addressed implementation. Prefer a pinned runtime/library primitive
+when it implements the mechanism; do not disguise tile retuning of the rejected
+output-channel kernel as a new arm.
+
+The direct component is unchanged in scope:
+
+- H200 SM90a, dynamic FP8 scales and the exact existing consumer.
+- Gate/up: `[32, 43008, 5376]` and `[384, 43008, 5376]`.
+- Down: `[32, 5376, 21504]` and `[384, 5376, 21504]`.
+- Stock `_scaled_mm` is the strongest baseline.
+- Require finite bitwise equality, CUDA-graph safety, and alternating paired
+  timings at both M32 and M384.
+
+The campaign still needs to move the locked qualified denominator from
+`0.625149101968745` to `0.500119281574996` seconds per request, a 20% service
+reduction. Treat this component as mechanism evidence toward that gap, not as
+an endpoint win; only a positive lower confidence bound at both shapes may
+justify later endpoint integration.
+
+Claim only retained bench
+`h200-dflash-adapter-e00vyqp7gxsr34wrtz` after the offline artifact is
+source-complete. Claim by `2026-07-26T06:05:00Z`, use at most 70 minutes, and
+release warm by `07:20Z` under the verified `07:30Z` watchdog. Stop the arm if
+either shape is nonfinite or not bitwise equal. A timing result is
+decision-bearing even when negative; do not launch an endpoint, broaden the
+workload, or create/mutate provider resources.
+
 ## 2026-07-26 warm-H200 exact-consumer reactivation
 
 The graph-gap pair released

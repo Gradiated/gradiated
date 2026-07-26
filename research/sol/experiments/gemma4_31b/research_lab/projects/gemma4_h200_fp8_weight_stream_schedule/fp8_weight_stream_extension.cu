@@ -2,47 +2,96 @@
 
 #include <type_traits>
 
-#include "cutlass/epilogue/fusion/sm90_callbacks_tma_warpspecialized.hpp"
+// The SGLang scaled-MM epilogue aliases Sm90EVT/Sm90Compute from this pinned
+// CUTLASS header.  It must be visible before the dispatcher is instantiated.
+#include <cutlass/epilogue/fusion/sm90_callbacks_tma_warpspecialized.hpp>
+#include <cutlass/gemm/kernel/tile_scheduler_params.h>
 #include "cutlass_extensions/gemm/fp8_gemm_sm90_dispatch.cuh"
 
 namespace {
 
 using ElementInput = cutlass::float_e4m3_t;
 using ElementOutput = cutlass::bfloat16_t;
-using EpilogueSchedule = cutlass::epilogue::TmaWarpSpecialized;
+// Gate/up is intentionally identical to the pinned stock dispatcher.  The
+// intervention is only deterministic Stream-K decomposition for the long-K
+// down projection.  All three aliases come from the content-bound SGLang
+// v0.5.13 dispatcher, preserving its stock tensor-core tile and cluster/grid
+// parallelism instead of inventing another output-channel-wide kernel.
+using M32StockGemm =
+    typename sm90_fp8_config_M32_largeN<ElementInput, ElementOutput, false>::
+        Cutlass3xGemm;
+using M384StockGemm =
+    typename sm90_fp8_config_default<ElementInput, ElementOutput, false>::
+        Cutlass3xGemm;
 
-// The stock M=32 large-N path swaps A/B and covers 64 logical output
-// channels per scheduler tile with Shape<64, 32, 256>. Keep the exact
-// 32-row and K=256 reduction realization, but stream 128 output channels
-// through each scheduler/epilogue tile.
-using M32Tile = Shape<_128, _32, _256>;
-using M32Cluster = Shape<_1, _1, _1>;
-using M32Schedule = cutlass::gemm::KernelTmaWarpSpecializedFP8FastAccum;
-using M32Gemm = cutlass_3x_gemm_sm90_fp8<
+// The pinned image dispatcher exposes the stock persistent template but does
+// not parameterize its scheduler. Reuse its exact mainloop/epilogue types and
+// replace only GemmUniversal's scheduler tag with CUTLASS Stream-K.
+using DownPersistentBase = cutlass_3x_gemm_sm90_fp8<
     ElementInput,
     ElementOutput,
     c3x::ScaledEpilogue,
-    M32Tile,
-    M32Cluster,
-    M32Schedule,
-    EpilogueSchedule,
-    true>;
+    Shape<_128, _128, _128>,
+    Shape<_2, _1, _1>,
+    cutlass::gemm::KernelTmaWarpSpecializedCooperativeFP8FastAccum,
+    cutlass::epilogue::TmaWarpSpecializedCooperative>;
 
-// The stock M=384 path uses Shape<128, 128, 128>, Cluster<2, 1, 1>.
-// Retain the two-CTA M multicast cluster and K=128 reduction order while
-// doubling only the logical output-channel tile.
-using M384Tile = Shape<_128, _256, _128>;
-using M384Cluster = Shape<_2, _1, _1>;
-using M384Schedule =
-    cutlass::gemm::KernelTmaWarpSpecializedPingpongFP8FastAccum;
-using M384Gemm = cutlass_3x_gemm_sm90_fp8<
-    ElementInput,
-    ElementOutput,
-    c3x::ScaledEpilogue,
-    M384Tile,
-    M384Cluster,
-    M384Schedule,
-    EpilogueSchedule>;
+struct DownStreamKGemm : public DownPersistentBase {
+  using KernelType = enable_sm90_or_later<cutlass::gemm::kernel::GemmUniversal<
+      cute::Shape<int, int, int, int>,
+      typename DownPersistentBase::CollectiveMainloop,
+      typename DownPersistentBase::CollectiveEpilogue,
+      cutlass::gemm::StreamKScheduler>>;
+  struct GemmKernel : public KernelType {};
+};
+
+void call_down_streamk(
+    torch::Tensor& output,
+    const torch::Tensor& mat_a,
+    const torch::Tensor& mat_b,
+    const torch::Tensor& scales_a,
+    const torch::Tensor& scales_b) {
+  using GemmKernel = typename DownStreamKGemm::GemmKernel;
+  using StrideA = typename GemmKernel::StrideA;
+  using StrideB = typename GemmKernel::StrideB;
+  using StrideC = typename GemmKernel::StrideC;
+
+  const int32_t m = mat_a.size(0);
+  const int32_t n = mat_b.size(1);
+  const int32_t k = mat_a.size(1);
+  const auto problem_shape = cute::make_shape(m, n, k, 1);
+  const auto a_stride =
+      cutlass::make_cute_packed_stride(StrideA{}, cute::make_shape(m, k, 1));
+  const auto b_stride =
+      cutlass::make_cute_packed_stride(StrideB{}, cute::make_shape(n, k, 1));
+  const auto c_stride =
+      cutlass::make_cute_packed_stride(StrideC{}, cute::make_shape(m, n, 1));
+
+  typename GemmKernel::MainloopArguments mainloop_args{
+      static_cast<ElementInput*>(mat_a.data_ptr()),
+      a_stride,
+      static_cast<ElementInput*>(mat_b.data_ptr()),
+      b_stride};
+  auto* output_ptr = static_cast<ElementOutput*>(output.data_ptr());
+  typename GemmKernel::EpilogueArguments epilogue_args{
+      DownStreamKGemm::Epilogue::prepare_args(scales_a, scales_b),
+      output_ptr,
+      c_stride,
+      output_ptr,
+      c_stride};
+  typename GemmKernel::TileSchedulerArguments scheduler;
+  using SchedulerParams =
+      cutlass::gemm::kernel::detail::PersistentTileSchedulerSm90StreamKParams;
+  scheduler.decomposition_mode =
+      SchedulerParams::DecompositionMode::StreamK;
+  scheduler.reduction_mode = SchedulerParams::ReductionMode::Deterministic;
+  cutlass_gemm_caller<GemmKernel>(
+      mat_a.device(),
+      problem_shape,
+      mainloop_args,
+      epilogue_args,
+      scheduler);
+}
 
 void check_inputs(
     const torch::Tensor& mat_a,
@@ -89,11 +138,15 @@ torch::Tensor fp8_weight_stream(
   auto output = torch::empty(
       {mat_a.size(0), mat_b.size(1)},
       mat_a.options().dtype(torch::kBFloat16));
-  if (mat_a.size(0) == 32) {
-    cutlass_gemm_caller_sm90_fp8_scaled<M32Gemm>(
+  const bool is_down =
+      mat_a.size(1) == 21504 && mat_b.size(1) == 5376;
+  if (is_down) {
+    call_down_streamk(output, mat_a, mat_b, scales_a, scales_b);
+  } else if (mat_a.size(0) == 32) {
+    cutlass_gemm_caller_sm90_fp8_scaled<M32StockGemm>(
         output, mat_a, mat_b, scales_a, scales_b);
   } else {
-    cutlass_gemm_caller_sm90_fp8_scaled<M384Gemm>(
+    cutlass_gemm_caller_sm90_fp8_scaled<M384StockGemm>(
         output, mat_a, mat_b, scales_a, scales_b);
   }
   return output;
@@ -101,16 +154,26 @@ torch::Tensor fp8_weight_stream(
 
 pybind11::dict schedule_metadata() {
   pybind11::dict value;
-  value["m32_tile_mnk"] = pybind11::make_tuple(128, 32, 256);
-  value["m32_cluster_mnk"] = pybind11::make_tuple(1, 1, 1);
-  value["m32_swap_ab"] = true;
-  value["m32_shared_storage_bytes"] =
-      sizeof(typename M32Gemm::GemmKernel::SharedStorage);
-  value["m384_tile_mnk"] = pybind11::make_tuple(128, 256, 128);
-  value["m384_cluster_mnk"] = pybind11::make_tuple(2, 1, 1);
-  value["m384_swap_ab"] = false;
-  value["m384_shared_storage_bytes"] =
-      sizeof(typename M384Gemm::GemmKernel::SharedStorage);
+  value["arm"] = "stock_gate_up__deterministic_streamk_down";
+  value["gate_up_m32_tile_mnk"] = pybind11::make_tuple(64, 32, 256);
+  value["gate_up_m32_cluster_mnk"] = pybind11::make_tuple(1, 1, 1);
+  value["gate_up_m32_swap_ab"] = true;
+  value["gate_up_m384_tile_mnk"] = pybind11::make_tuple(128, 128, 128);
+  value["gate_up_m384_cluster_mnk"] = pybind11::make_tuple(2, 1, 1);
+  value["gate_up_m384_swap_ab"] = false;
+  value["down_tile_mnk"] = pybind11::make_tuple(128, 128, 128);
+  value["down_cluster_mnk"] = pybind11::make_tuple(2, 1, 1);
+  value["down_scheduler"] = "cutlass::gemm::StreamKScheduler";
+  value["down_decomposition"] = "StreamK";
+  value["down_reduction"] = "Deterministic";
+  value["down_kernel"] =
+      "KernelTmaWarpSpecializedCooperativeFP8FastAccum";
+  value["m32_gate_shared_storage_bytes"] =
+      sizeof(typename M32StockGemm::GemmKernel::SharedStorage);
+  value["m384_gate_shared_storage_bytes"] =
+      sizeof(typename M384StockGemm::GemmKernel::SharedStorage);
+  value["down_shared_storage_bytes"] =
+      sizeof(typename DownStreamKGemm::GemmKernel::SharedStorage);
   value["output_dtype"] = "bfloat16";
   value["accumulator_dtype"] = "float32";
   value["epilogue"] = "c3x::ScaledEpilogue";

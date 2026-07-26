@@ -1,0 +1,11 @@
+{
+  "artifacts": "artifacts/persistent-streamk-20260726t055322z",
+  "candidate_cuda_invocation_started": true,
+  "project": "gemma4_h200_fp8_weight_stream_schedule",
+  "release_condition": "ready",
+  "result": "m32_exactness_incompatibility",
+  "scientific_sample_consumed": true,
+  "m384_run": false,
+  "actual_spend_usd": 2.32,
+  "runtime": "Pinned SGLang v0.5.13 image; exact checkpoint, source/compiler/CUDA caches, and content-addressed persistent Stream-K module retained warm. No worker remains."
+}

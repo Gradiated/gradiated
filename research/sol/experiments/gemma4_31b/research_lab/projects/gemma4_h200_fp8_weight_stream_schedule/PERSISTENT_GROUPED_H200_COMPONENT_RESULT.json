@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "result": "m32_exactness_incompatibility",
+  "scientific_sample_consumed": true,
+  "arm": "stock_gate_up__deterministic_streamk_down",
+  "module": {
+    "path": "artifacts/persistent-streamk-20260726t055322z/gemma4_fp8_weight_stream-sm90a-77167a8ec281a825.so",
+    "sha256": "281873ca05896e43453afe1154c2f6e69db7166f73b592c056bbfd77b7978c8c",
+    "target": "sm_90a"
+  },
+  "m32": {
+    "consumer_invocation_began": true,
+    "finite": true,
+    "gate_up_bf16_bitwise_equal": true,
+    "gelu_product_bf16_bitwise_equal": true,
+    "down_input_fp8_bitwise_equal": true,
+    "down_scale_bitwise_equal": true,
+    "final_bf16_bitwise_equal": false,
+    "final_bf16_max_absolute_error": 0.00225830078125,
+    "final_bf16_relative_l2": 0.1942131668329239,
+    "reference_nonfinite": 0,
+    "candidate_nonfinite": 0,
+    "timing_consumed": false,
+    "graph_test_consumed": false,
+    "raw_stderr": {
+      "path": "artifacts/persistent-streamk-20260726t055322z/M32.stderr",
+      "sha256": "3155d1a20cae277143896cf89ea852a8dc92c57c5636e45c82ed6d1dea1a49d7"
+    }
+  },
+  "m384": {
+    "run": false,
+    "reason": "Preregistered bitwise-equality stop triggered at M32; replay or continuation would violate the quality contract."
+  },
+  "interpretation": "The new schedule preserved the complete pre-down chain but deterministic Stream-K changed down-projection FP32 accumulation/reduction order enough to alter BF16 output. This is a decision-bearing incompatibility, not a harness defect.",
+  "decision": "Reject this exact schedule and do not replay it or advance it to an endpoint test."
+}

@@ -1,0 +1,6 @@
+{
+  "arm": "stock_gate_up__deterministic_streamk_down",
+  "at_utc": "2026-07-26T05:56:09.547060+00:00",
+  "candidate_cuda_invocation_started": true,
+  "reason": "immediately before unchanged alternating exact-consumer M32/M384 comparison"
+}

@@ -25,9 +25,11 @@ def main() -> int:
     parser.add_argument("--project-root", type=pathlib.Path, required=True)
     parser.add_argument("--sgl-kernel-root", type=pathlib.Path, required=True)
     parser.add_argument("--cutlass-root", type=pathlib.Path, required=True)
+    parser.add_argument("--cutlass-util-root", type=pathlib.Path)
     parser.add_argument("--build-root", type=pathlib.Path, required=True)
     parser.add_argument("--snapshot", type=pathlib.Path, required=True)
     parser.add_argument("--output", type=pathlib.Path, required=True)
+    parser.add_argument("--expected-dispatch-sha256", required=True)
     args = parser.parse_args()
 
     import torch
@@ -38,6 +40,12 @@ def main() -> int:
         args.sgl_kernel_root
         / "csrc/cutlass_extensions/gemm/fp8_gemm_sm90_dispatch.cuh"
     ).resolve()
+    observed_dispatch_sha256 = sha256(dispatch)
+    if observed_dispatch_sha256 != args.expected_dispatch_sha256:
+        raise RuntimeError(
+            "pinned dispatcher mismatch: "
+            f"{observed_dispatch_sha256} != {args.expected_dispatch_sha256}"
+        )
     args.build_root.mkdir(parents=True, exist_ok=True)
     module = load(
         name="gemma4_fp8_weight_stream",
@@ -47,7 +55,7 @@ def main() -> int:
             str((args.sgl_kernel_root / "include").resolve()),
             str((args.sgl_kernel_root / "csrc").resolve()),
             str((args.cutlass_root / "include").resolve()),
-            str((args.cutlass_root / "tools/util/include").resolve()),
+            str(((args.cutlass_util_root or args.cutlass_root) / "tools/util/include").resolve()),
         ],
         extra_cflags=["-O3"],
         extra_cuda_cflags=[
@@ -93,7 +101,7 @@ def main() -> int:
             },
             "pinned_dispatch": {
                 "path": str(dispatch),
-                "sha256": sha256(dispatch),
+                "sha256": observed_dispatch_sha256,
             },
             "module": {
                 "path": str(module_path),

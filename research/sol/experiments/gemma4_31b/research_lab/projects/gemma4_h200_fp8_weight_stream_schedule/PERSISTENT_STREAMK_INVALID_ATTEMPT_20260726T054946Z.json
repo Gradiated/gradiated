@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "attempt_at_utc": "2026-07-26T05:49:46Z",
+  "result": "invalid_precompile_source_binding_attempt",
+  "scientific_sample_consumed": false,
+  "candidate_cuda_invocation_started": false,
+  "diagnostic": "The immutable image dispatcher was sha256 549d3c1c5c13d67e7309cf50610a51c9485eb181b3a17423247287abd1a0b038, while the offline sibling source snapshot was sha256 4fcb4321942f326761ba5b0a968086acbd458fb57c5429d2706653a94b199620.",
+  "causal_amendment": "Bind the content-addressed build to the observed immutable image dispatcher and retry only staging/compile plus the still-unstarted consumer under the retained claim.",
+  "preserved_artifact_root": "artifacts/persistent-streamk-20260726t054931z"
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "attempt_at_utc": "2026-07-26T05:51:16Z",
+  "result": "invalid_pre_cuda_compile_attempt",
+  "scientific_sample_consumed": false,
+  "candidate_cuda_invocation_started": false,
+  "diagnostic": "The pinned image dispatcher does not contain the later sm90_fp8_config_down_streamk template or scheduler-parameterized caller present in the offline sibling snapshot.",
+  "causal_amendment": "Keep the image's exact stock gate/up aliases and define the one Stream-K down kernel project-locally by reusing the stock mainloop/epilogue collective types and changing only GemmUniversal's scheduler tag.",
+  "preserved_artifact_root": "artifacts/persistent-streamk-20260726t055105z"
+}

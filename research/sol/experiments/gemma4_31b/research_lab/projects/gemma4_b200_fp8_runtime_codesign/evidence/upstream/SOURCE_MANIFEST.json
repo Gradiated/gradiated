@@ -1,0 +1,233 @@
+{
+  "cutlass/test/unit/gemm/device/sm100_tensorop_gemm/f8_f8_void_f32.cu": {
+    "bytes": 30620,
+    "repository": "https://github.com/NVIDIA/cutlass",
+    "revision": "e64a9136dd929639e5f7c969fe5af3bf7415cd4f",
+    "sha256": "9469015ec08581a1df791582abd81643f10c6ad61018753c6b6975b8e716645d",
+    "upstream_path": "test/unit/gemm/device/sm100_tensorop_gemm/f8_f8_void_f32.cu"
+  },
+  "flashinfer/csrc/fmha_cutlass_sm100.cu": {
+    "bytes": 8068,
+    "repository": "https://github.com/flashinfer-ai/flashinfer",
+    "revision": "290c091865dd07a3a6edcd87e2cde1982632cdfc",
+    "sha256": "9d5f5cf52db6f7045a80138985f6e75ef2af5229f9080cd327b5729e2d5e0f01",
+    "upstream_path": "csrc/fmha_cutlass_sm100.cu"
+  },
+  "flashinfer/flashinfer/decode.py": {
+    "bytes": 160698,
+    "repository": "https://github.com/flashinfer-ai/flashinfer",
+    "revision": "290c091865dd07a3a6edcd87e2cde1982632cdfc",
+    "sha256": "f6fd0546d22b9de51d1dfc882da581154dde0a2f8e178696083c18e97d6bd4f9",
+    "upstream_path": "flashinfer/decode.py"
+  },
+  "flashinfer/flashinfer/prefill.py": {
+    "bytes": 224770,
+    "repository": "https://github.com/flashinfer-ai/flashinfer",
+    "revision": "290c091865dd07a3a6edcd87e2cde1982632cdfc",
+    "sha256": "7b83362805dabf5d6da80738ab8910be4d0ce60b5dadcbbec2ebdc64594f6525",
+    "upstream_path": "flashinfer/prefill.py"
+  },
+  "flashinfer/tests/attention/test_trtllm_gen_attention_decode.py": {
+    "bytes": 58587,
+    "repository": "https://github.com/flashinfer-ai/flashinfer",
+    "revision": "290c091865dd07a3a6edcd87e2cde1982632cdfc",
+    "sha256": "7db575396896d1e287631b80c42b12f08a18cdcd65d93aa9c1af1afb392fce27",
+    "upstream_path": "tests/attention/test_trtllm_gen_attention_decode.py"
+  },
+  "flashinfer/tests/attention/test_trtllm_gen_attention_prefill.py": {
+    "bytes": 37600,
+    "repository": "https://github.com/flashinfer-ai/flashinfer",
+    "revision": "290c091865dd07a3a6edcd87e2cde1982632cdfc",
+    "sha256": "4d26dd681fce04ce124a4cd77b2a9f6f13774810395a14017d2fff67febeb60d",
+    "upstream_path": "tests/attention/test_trtllm_gen_attention_prefill.py"
+  },
+  "sglang/python/sglang/kernels/ops/attention/decode_attention.py": {
+    "bytes": 30615,
+    "repository": "https://github.com/sgl-project/sglang",
+    "revision": "61057bda6c4b8cda1117d74f100d0735645c0cfb",
+    "sha256": "7833f6d06115dfd54b384d9ce907a012fa2f568083d90fc0f259e9ef24bf5311",
+    "upstream_path": "python/sglang/kernels/ops/attention/decode_attention.py"
+  },
+  "sglang/python/sglang/kernels/ops/attention/extend_attention.py": {
+    "bytes": 42428,
+    "repository": "https://github.com/sgl-project/sglang",
+    "revision": "61057bda6c4b8cda1117d74f100d0735645c0cfb",
+    "sha256": "8c62dc969a6219baf4d43de41bb3ddd47f63f325a186d341b5c549249eb8555b",
+    "upstream_path": "python/sglang/kernels/ops/attention/extend_attention.py"
+  },
+  "sglang/python/sglang/kernels/ops/layernorm/gemma4_fused_ops.py": {
+    "bytes": 15974,
+    "repository": "https://github.com/sgl-project/sglang",
+    "revision": "61057bda6c4b8cda1117d74f100d0735645c0cfb",
+    "sha256": "f9d8c7c3ea71afc1341c2de02807b8fda94e418248bd9ee404b15b3337463ad3",
+    "upstream_path": "python/sglang/kernels/ops/layernorm/gemma4_fused_ops.py"
+  },
+  "sglang/python/sglang/srt/layers/attention/triton_backend.py": {
+    "bytes": 81752,
+    "repository": "https://github.com/sgl-project/sglang",
+    "revision": "61057bda6c4b8cda1117d74f100d0735645c0cfb",
+    "sha256": "ea609d53c9825687bec4dc2c48d200f0209af88350b3d53b61e8ebdf22cdf71a",
+    "upstream_path": "python/sglang/srt/layers/attention/triton_backend.py"
+  },
+  "sglang/python/sglang/srt/layers/quantization/fp8.py": {
+    "bytes": 110182,
+    "repository": "https://github.com/sgl-project/sglang",
+    "revision": "61057bda6c4b8cda1117d74f100d0735645c0cfb",
+    "sha256": "194e5c5890c6785facb66bc66d2d0f32f141afbe4adbdaa8c641e997a57a786f",
+    "upstream_path": "python/sglang/srt/layers/quantization/fp8.py"
+  },
+  "sglang/python/sglang/srt/layers/quantization/fp8_utils.py": {
+    "bytes": 72320,
+    "repository": "https://github.com/sgl-project/sglang",
+    "revision": "61057bda6c4b8cda1117d74f100d0735645c0cfb",
+    "sha256": "fb9115eb582dcb422633424805b3eecff5d415437d8e1c13f0fc2a6cb28573a2",
+    "upstream_path": "python/sglang/srt/layers/quantization/fp8_utils.py"
+  },
+  "sglang/python/sglang/srt/models/gemma4_causal.py": {
+    "bytes": 56697,
+    "repository": "https://github.com/sgl-project/sglang",
+    "revision": "61057bda6c4b8cda1117d74f100d0735645c0cfb",
+    "sha256": "9c5f5f5739cbec30284302f266fec1d797a86fb98fa1273a27c97fb5d869d001",
+    "upstream_path": "python/sglang/srt/models/gemma4_causal.py"
+  },
+  "sglang/sgl-kernel/csrc/gemm/fp8_gemm_kernel.cu": {
+    "bytes": 42787,
+    "repository": "https://github.com/sgl-project/sglang",
+    "revision": "61057bda6c4b8cda1117d74f100d0735645c0cfb",
+    "sha256": "be6f95bb0ef108ebf08b8b84336b6840726beb7fa5bbb90aa6eb4038ce778767",
+    "upstream_path": "sgl-kernel/csrc/gemm/fp8_gemm_kernel.cu"
+  },
+  "tensorrt_llm/cpp/fp8_rowwise_gemm_kernel_template_sm100.h": {
+    "bytes": 8653,
+    "repository": "https://github.com/NVIDIA/TensorRT-LLM",
+    "revision": "cf44a1ccee7dd3381a7b4c49a8318c0c3ae4426b",
+    "sha256": "d9dad289999c1e95d43875f1eed1dfa0c675b0d9faefd6a7dfe1b7bd8fdc9a19",
+    "upstream_path": "cpp/tensorrt_llm/kernels/cutlass_kernels/fp8_rowwise_gemm/fp8_rowwise_gemm_kernel_template_sm100.h"
+  },
+  "tensorrt_llm/tensorrt_llm/_torch/configs/gemma4_unified.py": {
+    "bytes": 5289,
+    "repository": "https://github.com/NVIDIA/TensorRT-LLM",
+    "revision": "cf44a1ccee7dd3381a7b4c49a8318c0c3ae4426b",
+    "sha256": "00e526739a7629b72f3313d7f03c9b9e64a30c9d6dd37e5fd203b7034a925589",
+    "upstream_path": "tensorrt_llm/_torch/configs/gemma4_unified.py"
+  },
+  "tensorrt_llm/tensorrt_llm/_torch/models/checkpoints/hf/gemma4_weight_mapper.py": {
+    "bytes": 16028,
+    "repository": "https://github.com/NVIDIA/TensorRT-LLM",
+    "revision": "cf44a1ccee7dd3381a7b4c49a8318c0c3ae4426b",
+    "sha256": "0af10784258c4f2da67f7be0391dc292467f5d31d8ec8bbbd6cd599a0aabfa9a",
+    "upstream_path": "tensorrt_llm/_torch/models/checkpoints/hf/gemma4_weight_mapper.py"
+  },
+  "tensorrt_llm/tensorrt_llm/_torch/modules/gemma4/fused_qkv.py": {
+    "bytes": 8231,
+    "repository": "https://github.com/NVIDIA/TensorRT-LLM",
+    "revision": "cf44a1ccee7dd3381a7b4c49a8318c0c3ae4426b",
+    "sha256": "942931a4d21c7ea68c1acd086d007999c85dde14535ce3d4b639dfe381158cc7",
+    "upstream_path": "tensorrt_llm/_torch/modules/gemma4/fused_qkv.py"
+  },
+  "transformers/src/transformers/models/gemma4/configuration_gemma4.py": {
+    "bytes": 16089,
+    "repository": "https://github.com/huggingface/transformers",
+    "revision": "b6d5084fb4a5dd11e44005a5fa009e7943271090",
+    "sha256": "6c84e46db9b22617f42397ce46f1799e82dcd27172a7882a3044d9f83fd4990f",
+    "upstream_path": "src/transformers/models/gemma4/configuration_gemma4.py"
+  },
+  "vllm/csrc/scaled_mm_sm100_fp8_dispatch.cuh": {
+    "bytes": 16878,
+    "repository": "https://github.com/vllm-project/vllm",
+    "revision": "8d28b48d01b2ba56e962c7c57b894c6b4fcf8a35",
+    "sha256": "96fc8b1bdfca58a6c3999711390385f94f2866b275573511ae7302e79122a355",
+    "upstream_path": "csrc/libtorch_stable/quantization/w8a8/cutlass/c3x/scaled_mm_sm100_fp8_dispatch.cuh"
+  },
+  "vllm/model_executor/kernels/linear/scaled_mm/cutlass.py": {
+    "bytes": 12149,
+    "repository": "https://github.com/vllm-project/vllm",
+    "revision": "8d28b48d01b2ba56e962c7c57b894c6b4fcf8a35",
+    "sha256": "d01b6fe09e3c3fa3991045f6ac7b469a58a550c56426ffd8900badbbe7e5355b",
+    "upstream_path": "vllm/model_executor/kernels/linear/scaled_mm/cutlass.py"
+  },
+  "vllm/model_executor/layers/layernorm.py": {
+    "bytes": 10489,
+    "repository": "https://github.com/vllm-project/vllm",
+    "revision": "8d28b48d01b2ba56e962c7c57b894c6b4fcf8a35",
+    "sha256": "3460eba01758849027bb59b8592626406e33ab25b23d2def729bb0ec42afce67",
+    "upstream_path": "vllm/model_executor/layers/layernorm.py"
+  },
+  "vllm/model_executor/layers/quantization/fp8.py": {
+    "bytes": 33746,
+    "repository": "https://github.com/vllm-project/vllm",
+    "revision": "8d28b48d01b2ba56e962c7c57b894c6b4fcf8a35",
+    "sha256": "26ede801aceeadea1e263b854424ed4fbd0bf5c081bf5beceaf4b877fb1d4fc0",
+    "upstream_path": "vllm/model_executor/layers/quantization/fp8.py"
+  },
+  "vllm/model_executor/layers/vocab_parallel_embedding.py": {
+    "bytes": 22117,
+    "repository": "https://github.com/vllm-project/vllm",
+    "revision": "8d28b48d01b2ba56e962c7c57b894c6b4fcf8a35",
+    "sha256": "60b116e260d5438513c9bb60370306eed5e9b0ce612bfbe0a3885e64fdf0587b",
+    "upstream_path": "vllm/model_executor/layers/vocab_parallel_embedding.py"
+  },
+  "vllm/model_executor/models/gemma4.py": {
+    "bytes": 68359,
+    "repository": "https://github.com/vllm-project/vllm",
+    "revision": "8d28b48d01b2ba56e962c7c57b894c6b4fcf8a35",
+    "sha256": "f101ae257cfe4c71e90ced922da04228468dbb84c01af00a0b48fa681f873a0f",
+    "upstream_path": "vllm/model_executor/models/gemma4.py"
+  },
+  "vllm/platforms/cuda.py": {
+    "bytes": 37768,
+    "repository": "https://github.com/vllm-project/vllm",
+    "revision": "8d28b48d01b2ba56e962c7c57b894c6b4fcf8a35",
+    "sha256": "ea6cade0bc560dcafea09bef8d30249b949e322ed8696ff02c6d20fa250640d2",
+    "upstream_path": "vllm/platforms/cuda.py"
+  },
+  "vllm/utils/flashinfer.py": {
+    "bytes": 34199,
+    "repository": "https://github.com/vllm-project/vllm",
+    "revision": "8d28b48d01b2ba56e962c7c57b894c6b4fcf8a35",
+    "sha256": "310b4670faf6c81cda01edd4bd30055e000d6cc2f2ce8b54a2ad2711d15317b7",
+    "upstream_path": "vllm/utils/flashinfer.py"
+  },
+  "vllm/v1/attention/backends/flash_attn.py": {
+    "bytes": 67363,
+    "repository": "https://github.com/vllm-project/vllm",
+    "revision": "8d28b48d01b2ba56e962c7c57b894c6b4fcf8a35",
+    "sha256": "7bcce2c20d361719fea3982c3b90bd13b466d6b4e3383192211e6741ec8147f2",
+    "upstream_path": "vllm/v1/attention/backends/flash_attn.py"
+  },
+  "vllm/v1/attention/backends/flashinfer.py": {
+    "bytes": 100991,
+    "repository": "https://github.com/vllm-project/vllm",
+    "revision": "8d28b48d01b2ba56e962c7c57b894c6b4fcf8a35",
+    "sha256": "e2448a6e8030cd658773e6b6abe9188981db9af0c9c70b8f28284bdc2a093b73",
+    "upstream_path": "vllm/v1/attention/backends/flashinfer.py"
+  },
+  "vllm/v1/attention/backends/triton_attn.py": {
+    "bytes": 33865,
+    "repository": "https://github.com/vllm-project/vllm",
+    "revision": "8d28b48d01b2ba56e962c7c57b894c6b4fcf8a35",
+    "sha256": "20b4dd5f8c15cd2d6f9598268368f5fc572f2c980eb75327c5992100c49ff3ed",
+    "upstream_path": "vllm/v1/attention/backends/triton_attn.py"
+  },
+  "vllm/v1/attention/ops/triton_decode_attention.py": {
+    "bytes": 23111,
+    "repository": "https://github.com/vllm-project/vllm",
+    "revision": "8d28b48d01b2ba56e962c7c57b894c6b4fcf8a35",
+    "sha256": "b9823c65eba22d76abf64dad7d7d16a950f67471c86d6cb5b3e983aaf14381ac",
+    "upstream_path": "vllm/v1/attention/ops/triton_decode_attention.py"
+  },
+  "vllm/v1/attention/ops/triton_prefill_attention.py": {
+    "bytes": 8057,
+    "repository": "https://github.com/vllm-project/vllm",
+    "revision": "8d28b48d01b2ba56e962c7c57b894c6b4fcf8a35",
+    "sha256": "799473a00984233ff1b659fffa4d67e02d985cd83a413281eba36ef7b8737e27",
+    "upstream_path": "vllm/v1/attention/ops/triton_prefill_attention.py"
+  },
+  "vllm/v1/attention/ops/triton_reshape_and_cache_flash.py": {
+    "bytes": 20737,
+    "repository": "https://github.com/vllm-project/vllm",
+    "revision": "8d28b48d01b2ba56e962c7c57b894c6b4fcf8a35",
+    "sha256": "6cac51475b8c656992a21b2d150acd3a16a95a7ab7d49aab151a3ef13c24b80d",
+    "upstream_path": "vllm/v1/attention/ops/triton_reshape_and_cache_flash.py"
+  }
+}

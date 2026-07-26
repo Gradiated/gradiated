@@ -1,0 +1,29 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "bench_need": {
+    "accelerator": "NVIDIA B200 SXM (SM100)",
+    "claim_allowed": false,
+    "future_provider_spend_usd_max": 2.5,
+    "reason": "The offline screen is complete. Its exact-shape falsifier requires a compatible shared bench plus a fresh positive director reservation; neither is authorized now."
+  },
+  "completed_at_utc": "2026-07-26T08:38:48.064586Z",
+  "compute_budget": "12 local CPU-hours; zero accelerator compute",
+  "decision": "source_complete_b200_candidate",
+  "next_action": "Preserve the unmeasured candidate. If the director later supplies a compatible shared B200 bench and positive spend reservation, run the single 25-minute exact-shape falsifier in B200_FP8_RUNTIME_SCREEN.json; otherwise take no provider or GPU action.",
+  "priority": 8770,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "execution",
+  "status": "complete",
+  "storage_budget": "4 GiB durable project artifacts",
+  "summary": "Current source reaches exact Gemma dynamic-E4M3 linears and d256/d512 FP8-KV attention on SM100. A discounted non-overlapping envelope is 0.2995608884905333 s/request versus the 0.315609255362861553 planning hurdle; 70% HBM clears and 65% fails. This is source-complete, not a B200 measurement.",
+  "terminal_artifact": {
+    "path": "B200_FP8_RUNTIME_SCREEN.json",
+    "sha256": "b6623bf5f4a81002fda5fbd9e34ac7f52af32083c32e8ff657c005850ccc4862",
+    "source_manifest_sha256": "1b24c77e87840238aef12d68ee46d19e5cd7a18e9e776379bcce4aad33aef52b",
+    "terminal": "source_complete_b200_candidate"
+  },
+  "wall_clock_budget_minutes": 180
+}

@@ -1,0 +1,15 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "compute_budget": "Local CPU only; no accelerator claim.",
+  "next_action": "Terminal in this zero-spend source lane. If the director later authorizes a distinct MI355X bench and spend, apply patches/vllm_aiter_ptpc_bridge.patch to vLLM 0164022c907014a27e81c514cd4dff6091904c2b and run mi355x_aiter_fp8_linear_bridge_bench.py once. Promote only if its fully charged output is pass at or below 0.5910500600431771 s/request; otherwise retain typed none. Do not infer MI355X throughput from this source-complete screen.",
+  "priority": 8780,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "deep",
+  "status": "complete",
+  "storage_budget": "At most 4 GiB of new project-local source, fixtures, and artifacts.",
+  "summary": "Source-complete measurement candidate emitted at zero spend. A pinned two-file vLLM patch selects the existing PTPC online producer on gfx950 and fails closed unless every Gemma transformer linear reaches AITER hipb_mm; 18 phase/shape layout and numerical fixtures pass, all memory and service costs are charged, and the finite MI355X runner binds a 0.5910500600431771 s/request terminal without crediting unmeasured target performance.",
+  "wall_clock_budget": "At most 75 minutes."
+}

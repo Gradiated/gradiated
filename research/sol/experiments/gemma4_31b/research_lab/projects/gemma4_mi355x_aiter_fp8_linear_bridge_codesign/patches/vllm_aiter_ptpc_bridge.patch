@@ -1,0 +1,62 @@
+diff --git a/vllm/model_executor/layers/quantization/fp8.py b/vllm/model_executor/layers/quantization/fp8.py
+index 626fc83cd..fcd6ea666 100644
+--- a/vllm/model_executor/layers/quantization/fp8.py
++++ b/vllm/model_executor/layers/quantization/fp8.py
+@@ -174,0 +175,10 @@ class Fp8Config(QuantizationConfig):
++    @staticmethod
++    def _use_aiter_hipbmm_ptpc_online_linear() -> bool:
++        if not current_platform.is_rocm():
++            return False
++
++        from vllm._aiter_ops import rocm_aiter_ops
++        from vllm.platforms.rocm import on_gfx950
++
++        return on_gfx950() and rocm_aiter_ops.is_linear_hipbmm_enabled()
++
+@@ -185,0 +196,9 @@ class Fp8Config(QuantizationConfig):
++                if self._use_aiter_hipbmm_ptpc_online_linear():
++                    from vllm.model_executor.layers.quantization.online.fp8 import (
++                        AiterFp8PtpcOnlineLinearMethod,
++                    )
++
++                    online_method = AiterFp8PtpcOnlineLinearMethod()
++                    online_method.marlin_input_dtype = get_marlin_input_dtype(prefix)
++                    return online_method
++
+diff --git a/vllm/model_executor/layers/quantization/online/fp8.py b/vllm/model_executor/layers/quantization/online/fp8.py
+index e63c285aa..26ca982a3 100644
+--- a/vllm/model_executor/layers/quantization/online/fp8.py
++++ b/vllm/model_executor/layers/quantization/online/fp8.py
+@@ -20 +20,4 @@ from vllm.config import get_current_vllm_config
+-from vllm.model_executor.kernels.linear import init_fp8_linear_kernel
++from vllm.model_executor.kernels.linear import (
++    AiterHipbMMPerTokenFp8ScaledMMLinearKernel,
++    init_fp8_linear_kernel,
++)
+@@ -366,0 +370,26 @@ class Fp8PtpcOnlineLinearMethod(_Fp8OnlineLinearBase):
++class AiterFp8PtpcOnlineLinearMethod(Fp8PtpcOnlineLinearMethod):
++    def create_weights(
++        self,
++        layer: torch.nn.Module,
++        input_size_per_partition: int,
++        output_partition_sizes: list[int],
++        input_size: int,
++        output_size: int,
++        params_dtype: torch.dtype,
++        **extra_weight_attrs,
++    ):
++        super().create_weights(
++            layer,
++            input_size_per_partition,
++            output_partition_sizes,
++            input_size,
++            output_size,
++            params_dtype,
++            **extra_weight_attrs,
++        )
++        if not isinstance(
++            self.fp8_linear, AiterHipbMMPerTokenFp8ScaledMMLinearKernel
++        ):
++            raise ValueError("AITER PTPC bridge requires the hipb_mm FP8 consumer")
++
++

@@ -1,0 +1,1160 @@
+{
+  "classification": "typed_none_semantic_contract_and_economic_floor",
+  "decision": {
+    "economic_gate_pass": false,
+    "fixture_counterexample_pass": true,
+    "measurement_candidate_emitted": false,
+    "result": "typed_none",
+    "semantic_gate_pass": false,
+    "typed_negative": "The exact all-layer tied-K/V projection-reuse mechanism is inadmissible, and its admissible ten-global-layer subset has an ideal 0.598732148102411 s/request floor, above 0.5910500600431771."
+  },
+  "evidence_labels": {
+    "checkpoint_layout": "measured from immutable local index metadata",
+    "economic_floor": "derived from bound baseline with optimistic zero overhead",
+    "fixtures": "measured local CPU synthetic counterexample",
+    "runtime_contract": "source_backed at pinned vLLM commit",
+    "target_hardware_timing": "not measured and not claimed"
+  },
+  "fixtures": {
+    "execution_type": "deterministic_dependency_free_cpu_semantic_fixture",
+    "global_all_match": true,
+    "global_pre_normalization_fork": [
+      {
+        "attention_input_v_max_abs": 0.0,
+        "attention_output_max_abs": 0.0,
+        "finite": true,
+        "fixture_geometry": {
+          "head_dim": 2,
+          "hidden": 4,
+          "kv_heads": 1,
+          "production_shape_bound_separately": true,
+          "q_heads": 2
+        },
+        "m": 5,
+        "phase": "prefill",
+        "post_transform_k_max_abs": 0.0,
+        "q_max_abs": 0.0,
+        "raw_v_max_abs": 0.0,
+        "semantic_match": true,
+        "tied_weight_fixture": true
+      },
+      {
+        "attention_input_v_max_abs": 0.0,
+        "attention_output_max_abs": 0.0,
+        "finite": true,
+        "fixture_geometry": {
+          "head_dim": 2,
+          "hidden": 4,
+          "kv_heads": 1,
+          "production_shape_bound_separately": true,
+          "q_heads": 2
+        },
+        "m": 32,
+        "phase": "ordinary_decode_m32",
+        "post_transform_k_max_abs": 0.0,
+        "q_max_abs": 0.0,
+        "raw_v_max_abs": 0.0,
+        "semantic_match": true,
+        "tied_weight_fixture": true
+      },
+      {
+        "attention_input_v_max_abs": 0.0,
+        "attention_output_max_abs": 0.0,
+        "finite": true,
+        "fixture_geometry": {
+          "head_dim": 2,
+          "hidden": 4,
+          "kv_heads": 1,
+          "production_shape_bound_separately": true,
+          "q_heads": 2
+        },
+        "m": 384,
+        "phase": "target_m384",
+        "post_transform_k_max_abs": 0.0,
+        "q_max_abs": 0.0,
+        "raw_v_max_abs": 0.0,
+        "semantic_match": true,
+        "tied_weight_fixture": true
+      }
+    ],
+    "scope_boundary": "The fixture executes the producer, separate K/V normalization and RoPE paths, GQA mapping, and attention input consumption at the three exact M values with reduced feature dimensions. It is a semantic discriminator, not a target-runtime or GPU measurement.",
+    "sliding_all_diverge": true,
+    "sliding_forced_alias_counterexample": [
+      {
+        "attention_input_v_max_abs": 2.6989286173434675,
+        "attention_output_max_abs": 2.431556439678639,
+        "finite": true,
+        "fixture_geometry": {
+          "head_dim": 2,
+          "hidden": 4,
+          "kv_heads": 1,
+          "production_shape_bound_separately": true,
+          "q_heads": 2
+        },
+        "m": 5,
+        "phase": "prefill",
+        "post_transform_k_max_abs": 0.0,
+        "q_max_abs": 0.0,
+        "raw_v_max_abs": 2.0,
+        "semantic_match": false,
+        "tied_weight_fixture": false
+      },
+      {
+        "attention_input_v_max_abs": 2.7673642846455726,
+        "attention_output_max_abs": 3.368876762483862,
+        "finite": true,
+        "fixture_geometry": {
+          "head_dim": 2,
+          "hidden": 4,
+          "kv_heads": 1,
+          "production_shape_bound_separately": true,
+          "q_heads": 2
+        },
+        "m": 32,
+        "phase": "ordinary_decode_m32",
+        "post_transform_k_max_abs": 0.0,
+        "q_max_abs": 0.0,
+        "raw_v_max_abs": 2.54820415879017,
+        "semantic_match": false,
+        "tied_weight_fixture": false
+      },
+      {
+        "attention_input_v_max_abs": 2.7673642846455726,
+        "attention_output_max_abs": 3.368876762483862,
+        "finite": true,
+        "fixture_geometry": {
+          "head_dim": 2,
+          "hidden": 4,
+          "kv_heads": 1,
+          "production_shape_bound_separately": true,
+          "q_heads": 2
+        },
+        "m": 384,
+        "phase": "target_m384",
+        "post_transform_k_max_abs": 0.0,
+        "q_max_abs": 0.0,
+        "raw_v_max_abs": 2.54820415879017,
+        "semantic_match": false,
+        "tied_weight_fixture": false
+      }
+    ]
+  },
+  "identity": {
+    "calculator": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_tied_kv_projection_reuse_codesign/run_tied_kv_projection_reuse_screen.py",
+      "sha256": "1e869251cc18c91e76a27d8155df268dbd2bb7ac2abe7a73bfcb08af06c6eb27"
+    },
+    "inputs": {
+      "baseline": {
+        "expected_sha256": "e1bad18d0d2e0d3e281c3502a3b4a25108d0841ac2da85e5fd0fadebe99cc500",
+        "observed_sha256": "e1bad18d0d2e0d3e281c3502a3b4a25108d0841ac2da85e5fd0fadebe99cc500",
+        "pass": true,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_fp8_runtime_codesign/MI355X_FP8_RUNTIME_SCREEN.json"
+      },
+      "checkpoint_index": {
+        "expected_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+        "observed_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+        "pass": true,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/model.safetensors.index.json"
+      },
+      "config": {
+        "expected_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+        "observed_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+        "pass": true,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/config.json"
+      },
+      "gemma_source": {
+        "expected_sha256": "f101ae257cfe4c71e90ced922da04228468dbb84c01af00a0b48fa681f873a0f",
+        "observed_sha256": "f101ae257cfe4c71e90ced922da04228468dbb84c01af00a0b48fa681f873a0f",
+        "pass": true,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_runtime_codesign/evidence/upstream/vllm/model_executor/models/gemma4.py"
+      },
+      "source_bindings": {
+        "expected_sha256": "c7f08b334a36e88009b273535dcbddb64c2c3307dfc7d7cd5a1ee946a04dd1bd",
+        "observed_sha256": "c7f08b334a36e88009b273535dcbddb64c2c3307dfc7d7cd5a1ee946a04dd1bd",
+        "pass": true,
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_fp8_runtime_codesign/SOURCE_BINDINGS.json"
+      }
+    }
+  },
+  "intervention": {
+    "global_only_source_feasibility": "Source and CPU fixtures support a pre-normalization fork in the ten full-attention layers, but this is not promoted.",
+    "preregistered_path": "Q plus one shared raw K/V projection, forked before K-only normalization/RoPE and V normalization, through prefill, M32, and M384 attention consumers.",
+    "reason": "Implementing the path in all 50 sliding layers would replace independent learned V projections with K and change model semantics. A global-only path cannot clear the economic target even under a zero-overhead lower bound.",
+    "source_complete_measurement_candidate": false,
+    "status": "not_implemented_invalid_preregistered_contract"
+  },
+  "physical_and_full_request_accounting": {
+    "baseline_seconds_per_request": 0.6000950932112802,
+    "exact_shapes": {
+      "global_q_plus_shared_kv": {
+        "k": 5376,
+        "m": [
+          "prefill_dynamic",
+          32,
+          384
+        ],
+        "m32_nominal_waves_over_256_cus": 0.5625,
+        "m384_nominal_waves_over_256_cus_at_m_tile_128": 1.6875,
+        "n": 18432,
+        "n_tiles_128": 144
+      },
+      "global_stock": {
+        "k": 5376,
+        "m": [
+          "prefill_dynamic",
+          32,
+          384
+        ],
+        "n": 20480,
+        "n_tiles_128": 160
+      },
+      "sliding_stock_and_required_semantic_shape": {
+        "k": 5376,
+        "m": [
+          "prefill_dynamic",
+          32,
+          384
+        ],
+        "n": 16384,
+        "reason": "Distinct checkpoint V prevents column removal."
+      }
+    },
+    "ideal_credit_seconds_per_request": 0.0013629451088691198,
+    "ideal_proportional_credits": [
+      {
+        "baseline_line_item": "prefill_fp8_transformer_linears",
+        "baseline_seconds_per_request": 0.21629139633045502,
+        "ideal_proportional_credit_seconds_per_request": 0.00081008013606912,
+        "rule": "Optimistically credit the proven global V parameter fraction at perfect proportionality with no shape penalty."
+      },
+      {
+        "baseline_line_item": "ordinary_decode_fp8_transformer_linears",
+        "baseline_seconds_per_request": 0.1370320896,
+        "ideal_proportional_credit_seconds_per_request": 0.0005132288,
+        "rule": "Optimistically credit the proven global V parameter fraction at perfect proportionality with no shape penalty."
+      },
+      {
+        "baseline_line_item": "target_verification_m384_transformer",
+        "baseline_seconds_per_request": 0.0105828581376,
+        "ideal_proportional_credit_seconds_per_request": 3.96361728e-05,
+        "rule": "Optimistically credit the proven global V parameter fraction at perfect proportionality with no shape penalty."
+      }
+    ],
+    "ideal_zero_overhead_floor_seconds_per_request": 0.598732148102411,
+    "interpretation": "Even perfect global-only reuse with zero packing, fork, layout, graph, fallback, memory, launch, or service penalty misses the required target. The all-layer credit needed to clear it is semantically forbidden by the checkpoint and pinned loader.",
+    "invalid_sliding_redundant_parameters": 1101004800,
+    "margin_to_target_seconds_per_request": -0.007682088059233982,
+    "new_cost_floor": {
+      "activation_memory_double_credit_bytes": 0,
+      "checkpoint_static_memory_credit_bytes": 0,
+      "line_items": [
+        {
+          "evidence_type": "optimistic_analytical_floor",
+          "name": "reduced_qk_kernel_shape_and_tile_efficiency",
+          "rule": "Set to zero to give the mechanism its strongest possible case; any real cost can only worsen the rejection.",
+          "seconds_per_request": 0.0
+        },
+        {
+          "evidence_type": "optimistic_analytical_floor",
+          "name": "raw_kv_fork_or_copy",
+          "rule": "Set to zero to give the mechanism its strongest possible case; any real cost can only worsen the rejection.",
+          "seconds_per_request": 0.0
+        },
+        {
+          "evidence_type": "optimistic_analytical_floor",
+          "name": "attention_layout_materialization",
+          "rule": "Set to zero to give the mechanism its strongest possible case; any real cost can only worsen the rejection.",
+          "seconds_per_request": 0.0
+        },
+        {
+          "evidence_type": "optimistic_analytical_floor",
+          "name": "separate_k_norm_v_norm_and_rope",
+          "rule": "Set to zero to give the mechanism its strongest possible case; any real cost can only worsen the rejection.",
+          "seconds_per_request": 0.0
+        },
+        {
+          "evidence_type": "optimistic_analytical_floor",
+          "name": "cuda_graph_metadata_and_capture",
+          "rule": "Set to zero to give the mechanism its strongest possible case; any real cost can only worsen the rejection.",
+          "seconds_per_request": 0.0
+        },
+        {
+          "evidence_type": "optimistic_analytical_floor",
+          "name": "fallback_dispatch",
+          "rule": "Set to zero to give the mechanism its strongest possible case; any real cost can only worsen the rejection.",
+          "seconds_per_request": 0.0
+        },
+        {
+          "evidence_type": "optimistic_analytical_floor",
+          "name": "additional_activation_or_workspace_memory",
+          "rule": "Set to zero to give the mechanism its strongest possible case; any real cost can only worsen the rejection.",
+          "seconds_per_request": 0.0
+        },
+        {
+          "evidence_type": "optimistic_analytical_floor",
+          "name": "additional_launches",
+          "rule": "Set to zero to give the mechanism its strongest possible case; any real cost can only worsen the rejection.",
+          "seconds_per_request": 0.0
+        }
+      ],
+      "normalization_rope_attention_kv_tied_head_launch_and_service": "All unchanged baseline line items remain fully charged.",
+      "rule": "The transformer-line-item credit already includes the only admissible global weight/FLOP reduction. No L2, graph, fusion, launch, service, or NVIDIA-transfer credit is taken.",
+      "runtime_fp8_global_v_weight_credit_bytes": 110100480
+    },
+    "passes_target_even_with_zero_new_cost": false,
+    "preregistered_claimed_redundant_parameters": 1211105280,
+    "source_proven_fraction_of_transformer_linears": 0.003745318352059925,
+    "source_proven_global_redundant_parameters": 110100480,
+    "target_seconds_per_request": 0.5910500600431771
+  },
+  "prohibited_actions_respected": [
+    "no checkpoint tensor bytes read, copied, or downloaded",
+    "no path sweep or gain stacking",
+    "no accelerator claim or GPU inventory mutation",
+    "no provider contact, paid API, or resource creation",
+    "no modification of the paid MI355X falsifier",
+    "zero provider spend"
+  ],
+  "raw_projection_contract": {
+    "all_60_layers_raw_k_equals_raw_v_contract": false,
+    "checkpoint_metadata": {
+      "checkpoint_bytes_read": 120246,
+      "checkpoint_copied_or_downloaded": false,
+      "checkpoint_tensor_bytes_read": 0,
+      "global_layers_with_distinct_v_entry": 0,
+      "metadata": {
+        "total_parameters": 32682372656,
+        "total_size": 62546177752
+      },
+      "projection_entry_count": 170,
+      "sliding_layers_with_distinct_v_entry": 50
+    },
+    "config": {
+      "attention_bias": false,
+      "attention_k_eq_v": true,
+      "global_layer_count": 10,
+      "layer_count": 60,
+      "sliding_layer_count": 50
+    },
+    "finding": "attention_k_eq_v is a ten-full-layer contract. The fifty sliding layers own checkpoint v_proj tensors and are not admissible for raw K/V projection reuse.",
+    "global_raw_k_equals_raw_v_contract": true,
+    "layer_rows": [
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 0,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 1,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 2,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 3,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 4,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": false,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight"
+        ],
+        "layer": 5,
+        "layer_type": "full_attention",
+        "runtime_k_eq_v_contract": true
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 6,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 7,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 8,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 9,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 10,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": false,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight"
+        ],
+        "layer": 11,
+        "layer_type": "full_attention",
+        "runtime_k_eq_v_contract": true
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 12,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 13,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 14,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 15,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 16,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": false,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight"
+        ],
+        "layer": 17,
+        "layer_type": "full_attention",
+        "runtime_k_eq_v_contract": true
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 18,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 19,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 20,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 21,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 22,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": false,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight"
+        ],
+        "layer": 23,
+        "layer_type": "full_attention",
+        "runtime_k_eq_v_contract": true
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 24,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 25,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 26,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 27,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 28,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": false,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight"
+        ],
+        "layer": 29,
+        "layer_type": "full_attention",
+        "runtime_k_eq_v_contract": true
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 30,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 31,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 32,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 33,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 34,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": false,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight"
+        ],
+        "layer": 35,
+        "layer_type": "full_attention",
+        "runtime_k_eq_v_contract": true
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 36,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 37,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 38,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 39,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 40,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": false,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight"
+        ],
+        "layer": 41,
+        "layer_type": "full_attention",
+        "runtime_k_eq_v_contract": true
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 42,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 43,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 44,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 45,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 46,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": false,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight"
+        ],
+        "layer": 47,
+        "layer_type": "full_attention",
+        "runtime_k_eq_v_contract": true
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 48,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 49,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 50,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 51,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 52,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": false,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight"
+        ],
+        "layer": 53,
+        "layer_type": "full_attention",
+        "runtime_k_eq_v_contract": true
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 54,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 55,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 56,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 57,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": true,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight",
+          "v_proj.weight"
+        ],
+        "layer": 58,
+        "layer_type": "sliding_attention",
+        "runtime_k_eq_v_contract": false
+      },
+      {
+        "checkpoint_has_k": true,
+        "checkpoint_has_q": true,
+        "checkpoint_has_v": false,
+        "checkpoint_projection_names": [
+          "k_proj.weight",
+          "q_proj.weight"
+        ],
+        "layer": 59,
+        "layer_type": "full_attention",
+        "runtime_k_eq_v_contract": true
+      }
+    ],
+    "sliding_raw_k_equals_raw_v_contract": false,
+    "source_checks": {
+      "decoder_scopes_k_eq_v_to_full_attention": {
+        "fragment": "use_k_eq_v = self.is_full_attention and getattr(",
+        "pass": true
+      },
+      "forward_splits_distinct_logical_outputs": {
+        "fragment": "q, k, v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)",
+        "pass": true
+      },
+      "k_and_v_take_separate_pre_attention_paths": {
+        "fragments": [
+          "k = self.k_norm(k)",
+          "v = self.v_norm(v)"
+        ],
+        "pass": true
+      },
+      "loader_builds_only_full_layer_set": {
+        "fragment": "if lt == \"full_attention\":\n                        k_eq_v_layer_indices.add(idx)",
+        "pass": true
+      },
+      "loader_clones_k_as_v": {
+        "fragment": "yield name.replace(\"k_proj\", \"v_proj\"), weight.clone()",
+        "pass": true
+      },
+      "loader_documents_sliding_real_v": {
+        "fragment": "# ONLY for full_attention layers \u2014 sliding layers have\n                # their own real v_proj weights.",
+        "pass": true
+      },
+      "real_attention_consumer": {
+        "fragment": "attn_output = self.attn(q, k, v)",
+        "pass": true
+      }
+    }
+  },
+  "schema_version": 1,
+  "scope": {
+    "baseline": "unstacked 0.6000950932112802 s/request analytical screen",
+    "execution_scope": "local CPU only; no accelerator or provider contact",
+    "hardware_scope": "one AMD MI355X/gfx950 TP1",
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "target_seconds_per_request": 0.5910500600431771,
+    "vllm_commit": "0164022c907014a27e81c514cd4dff6091904c2b"
+  },
+  "terminal": "typed_none"
+}

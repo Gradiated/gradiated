@@ -1,0 +1,26 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "compute_budget": "Local CPU only; no accelerator claim.",
+  "last_completed_at": "2026-07-26T15:32:25Z",
+  "last_result_classification": "typed_none_semantic_contract_and_economic_floor",
+  "next_action": null,
+  "priority": 8785,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "deep",
+  "status": "complete",
+  "storage_budget": "At most 4 GiB of new project-local source, fixtures, and artifacts.",
+  "summary": "Typed none. The pinned loader and checkpoint index prove attention_k_eq_v only for 10 full-attention layers; all 50 sliding layers have independent V weights. The admissible global-only subset has an ideal zero-overhead floor of 0.598732148102411 s/request, above the 0.5910500600431771 target.",
+  "terminal_artifact": {
+    "artifact": "MI355X_TIED_KV_PROJECTION_REUSE_SCREEN.json",
+    "artifact_sha256": "10b26c415fcf7754d3e9597a77fc5f93510d0a56487d42bf9746c1c1ccedc49c",
+    "calculator": "run_tied_kv_projection_reuse_screen.py",
+    "calculator_sha256": "1e869251cc18c91e76a27d8155df268dbd2bb7ac2abe7a73bfcb08af06c6eb27",
+    "classification": "typed_none_semantic_contract_and_economic_floor",
+    "ideal_zero_overhead_floor_seconds_per_request": 0.598732148102411,
+    "target_seconds_per_request": 0.5910500600431771
+  },
+  "wall_clock_budget": "At most 75 minutes."
+}

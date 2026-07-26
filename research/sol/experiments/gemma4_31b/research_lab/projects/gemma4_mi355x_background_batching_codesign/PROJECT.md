@@ -106,3 +106,56 @@ A passing candidate becomes a separate scheduling-aware target-MI355X
 falsifier to compare with the preserved c32 frontier when funding exists. A
 typed negative closes only c64/c96 cohort batching under this exact runtime,
 workload, and planning-latency contract.
+
+## Director iteration 2 — rolling slot admission
+
+`MI355X_BACKGROUND_BATCHING_SCREEN.json` is a preserved typed negative for
+the barriered policy that waits for three complete c32 cohorts. Do not
+overwrite, relabel, or replay it. Its c96 physical row remains useful:
+`0.47035474275794686 s/request` and memory fit pass, while the policy fails
+because waiting for 64 additional requests requires at least
+`30.102703536508603` seconds at stable c96 capacity.
+
+Test one materially different scheduling mechanism in this same project:
+source-real rolling sequence admission. Admit an individual request whenever
+a resident slot becomes free, continuously compact live sequence rows, and
+execute each step at its actual active width up to 96. Do not hold requests
+behind immutable c32 cohort boundaries.
+
+1. Bind the current runtime's request admission, prefill/decode interleave,
+   live-row compaction, per-request token/position/KV ownership, graph/eager
+   shape selection, sampling, completion, and slot-reuse consumers. A
+   steady-state queue formula without this path is invalid.
+2. Use one deterministic policy with maximum 96 live sequences and one
+   explicit prefill budget. Do not sweep widths, token budgets, arrival rates,
+   timeout values, or graph modes.
+3. Simulate a finite deterministic arrival stream long enough to include
+   bootstrap, steady state, and drain. Offer no more than 90% of the
+   conservative service capacity. Report bootstrap and drain separately but
+   charge their work in the all-request economic mean; do not preload 96
+   requests for free.
+4. At every event, recompute physical cost from the actual active M and exact
+   prompt/decode/target-verification geometry. Charge partially occupied
+   weight streams, compute, KV and attention, BF16 head, non-GEMM bytes,
+   launches, scheduler/service work, prefill interference, graph padding or
+   eager dispatch, compaction, fallback, memory, and idle time. Do not
+   interpolate ideal c96 throughput or divide its time by occupancy.
+5. Preserve all requests, 4,572 tokens/request, cache mixture, 60 layers,
+   widths, heads, parameters, KV rows, sampling, and feature semantics. Stack
+   no speculative, compression, attention-state, prompt-state, head, or other
+   survivor gain.
+6. Emit `MI355X_ROLLING_BATCHING_SCREEN.json` as:
+   - `source_complete_rolling_batching_candidate` only if the one current-
+     runtime policy is source-complete, every cost is charged, the finite-
+     horizon all-request mean is at most `0.500119281574996 s/request`,
+     memory fits, queue p95 is at most 10 seconds, completion p95 is at most
+     90 seconds, offered load is no more than 90% of conservative capacity,
+     starvation is zero, and one finite target-MI355X discriminator can
+     falsify the path; or
+   - `typed_none` if any source, semantic, physical, capacity, load, latency,
+     reliability, memory, or economic gate fails.
+
+Iteration-2 limits are 3 wall hours, 12 CPU-hours, 2 GiB new storage, and
+`$0`. Do not download or copy the checkpoint, claim hardware, contact a
+provider, use paid APIs, create resources, or alter the preserved c32 MI355X
+lifecycle.

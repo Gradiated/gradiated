@@ -1,0 +1,20 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "bench_need": {
+    "claim_allowed": false,
+    "reason": "This is an offline scheduling and economics discriminator with zero provider authority."
+  },
+  "compute_budget": "8 local CPU-hours; zero accelerator compute",
+  "decision": "typed_none_utilization_and_reliability_cannot_close_locked_20pct_cost_gap_without_service_time_gain",
+  "next_action": "Terminal: do not promote scheduling alone. A future candidate needs at least a 20% measured service-time reduction before all-in overhead; preserve the unmeasured H100, B200, and MI355X candidates separately.",
+  "priority": 8760,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "execution",
+  "status": "complete",
+  "storage_budget": "2 GiB durable project artifacts",
+  "summary": "Completed zero-spend discriminator. The locked 90%-utilization $0.109725/M baseline has a $0.0987525/M perfect-utilization GPU-only floor, above the $0.08778/M target; it would require impossible 112.5% utilization or a 20% measured service-time reduction. Deterministic Poisson and synthetic-burst c32 simulations also show p95 queueing of 19.74–98.74s across 5/15/30/60s deadlines, while a 2-active-plus-1-loss-reserve pool costs $0.371974–$0.380532/M all-in in the modeled offered-load case. See LATENCY_RELAXED_POOLING_SCREEN.json.",
+  "wall_clock_budget_minutes": 120
+}

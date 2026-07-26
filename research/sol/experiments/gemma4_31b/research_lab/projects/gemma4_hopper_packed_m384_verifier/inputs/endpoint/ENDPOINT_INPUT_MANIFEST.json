@@ -99,9 +99,9 @@
       "source": "inputs/endpoint/packed_m384_endpoint.py"
     },
     {
-      "bytes": 4803,
+      "bytes": 5202,
       "path": "input/sitecustomize.py",
-      "sha256": "595d60c06477ed82785deab4b35848d42e1a242a138b7e797123761288bb1f0e",
+      "sha256": "5c68c4bdedef67aaa7874fc7d94d3c8c31dd0c6af54519ef5cee1d4a78fabc15",
       "source": "inputs/endpoint/sitecustomize.py"
     },
     {

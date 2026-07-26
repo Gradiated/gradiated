@@ -74,6 +74,12 @@ class GraphCaptureRepairTests(unittest.TestCase):
         self.assertIn("tensor.stride(-1) == 1", source)
         self.assertIn("o_extend.stride(0)", source)
 
+    def test_non_c32_graph_capture_is_not_a_candidate_fallback(self) -> None:
+        source = (ENDPOINT / "sitecustomize.py").read_text()
+        self.assertIn("graph_capture_passthrough = batch != 32", source)
+        self.assertIn('"graph_capture_passthrough"', source)
+        self.assertIn("if not exact and not graph_capture_passthrough:", source)
+
     def test_candidate_only_consumer_uses_persisted_oracle_and_fails_closed(
         self,
     ) -> None:

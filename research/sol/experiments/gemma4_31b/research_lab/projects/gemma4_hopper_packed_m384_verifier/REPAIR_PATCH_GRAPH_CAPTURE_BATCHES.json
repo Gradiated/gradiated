@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "repair_id": "graph-repair-1-1785092154",
+  "classification": "recoverable_pre_submission_cuda_graph_capture_batch_geometry",
+  "evidence": {
+    "retrieved_archive": "artifacts/graph-repair/attempt-1/artifacts.tar.gz",
+    "route": {
+      "batch": 30,
+      "q_shape": [360, 32, 256],
+      "max_len_extend": 12,
+      "route": "rejected_no_fallback"
+    },
+    "invocation": {
+      "identity_validated": true,
+      "oracle_validated": true,
+      "candidate_graph_capture_passed": false,
+      "candidate_science_started": false,
+      "control_request_replayed": false
+    }
+  },
+  "repair": {
+    "path": "inputs/endpoint/sitecustomize.py",
+    "sha256": "5c68c4bdedef67aaa7874fc7d94d3c8c31dd0c6af54519ef5cee1d4a78fabc15",
+    "scope": "Route only non-c32 CUDA-graph capture batches through the original backend. Keep exact batch-32/M384 target verification on the packed candidate path and reject any nonexact batch-32 target verification.",
+    "full_manifest_sha256": "dd38642d954df86c269f18d6d5a916d587670787593a67beb3d75c01a65f3eb6",
+    "repair_manifest_sha256": "f7bdc6c7fea04824b2b3d26bba0bc67ade6bdac12b1e8c7c7e9e4e401307d7f6",
+    "ready_sha256": "7c0df10e156bbbc51ee45e9e68fb78aa878bf08603096dd48c399350390bc0b9"
+  },
+  "preserved": {
+    "control_request_replayed": false,
+    "component_replayed": false,
+    "candidate_request_submitted": false,
+    "measured_v2_kernel_asts_unchanged": true,
+    "partial_output_archived_by_owner": true
+  },
+  "validation": {
+    "command": "python3 -m unittest -v test_endpoint_integration.py test_graph_capture_repair.py",
+    "tests_passed": 8
+  }
+}

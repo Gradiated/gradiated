@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "issued_at_utc": "2026-07-26T19:04:45Z",
+  "decision": "localize_consumed_candidate_semantic_or_observer_divergence_offline",
+  "researcher_profile": "deep",
+  "evidence": {
+    "endpoint_terminal": "artifacts/graph-repair/attempt-2/ENDPOINT_TERMINAL.json",
+    "endpoint_terminal_sha256": "98d8643f5d563943c4f88cd24edaa52872fb20a5f95af9a8f6b5c87a57e50ed5",
+    "archive": "artifacts/graph-repair/attempt-2/artifacts.tar.gz",
+    "archive_sha256": "7b646b16e77121eda710b6b05b49fc8cfe139816c894fbe391f66a2ab257ca53",
+    "classification": "semantic_or_path_reject",
+    "candidate_service_seconds_per_request": 0.6881543015937552,
+    "control_service_seconds_per_request": 0.7142265493124995,
+    "service_reduction_fraction": 0.03650417048181831,
+    "complete_requests": 32,
+    "candidate_request_submitted": true,
+    "control_request_replayed": false,
+    "routing": {
+      "candidate_local_calls": 150,
+      "candidate_global_calls": 30,
+      "rejected_target_calls": 0
+    },
+    "passed_gates": [
+      "cache_accounting_exact",
+      "candidate_no_fallback_and_exact_50_10_routing",
+      "complete_finite_nonempty_rows",
+      "exact_request_hashes"
+    ],
+    "failed_gates": [
+      "exact_persisted_control_target_tokens",
+      "exact_target_to_emitted_trace"
+    ]
+  },
+  "immutable_contract": {
+    "candidate_request_submissions_remaining": 0,
+    "candidate_replay_allowed": false,
+    "control_replay_allowed": false,
+    "component_replay_allowed": false,
+    "gpu_claim_allowed": false,
+    "measured_v2_kernel_asts_must_remain_unchanged": true,
+    "checkpoint_runtime_workload_and_oracle_identities_must_remain_unchanged": true,
+    "raw_archive_must_not_be_modified": true
+  },
+  "required_work": [
+    "Use only the immutable attempt-2 archive, the bound control oracle, and project-local source to reconstruct each request's emitted token IDs and target-token events.",
+    "Join events by durable request identity and explicit event order, not row position or completion order; identify the first divergent token and the first inconsistent target-to-emitted transition for every affected request.",
+    "Determine whether the failed gates arise from the token-event observer, request-ID join, serialization/result construction, server emission path, or a genuine candidate computation divergence.",
+    "If the raw artifacts prove an observer or result-construction defect, build the corrected decision terminal offline from those same immutable bytes and report the measured timing without issuing any GPU request.",
+    "If the divergence is genuine or cannot be resolved from persisted evidence, mark this exact endpoint candidate semantic-unsafe while preserving the positive component result and name the smallest materially different future discriminator without scheduling it."
+  ],
+  "required_terminal": {
+    "path": "SEMANTIC_LOCALIZATION_RESULT.json",
+    "must_include": [
+      "source_artifact_hashes",
+      "request_join_method",
+      "first_divergence_by_request",
+      "target_to_emitted_trace_diagnosis",
+      "observer_or_computation_classification",
+      "endpoint_performance_disposition",
+      "candidate_replay_performed",
+      "control_replay_performed",
+      "gpu_claim_performed",
+      "next_portfolio_implication"
+    ]
+  },
+  "budgets": {
+    "gpu_seconds": 0,
+    "provider_create_usd": 0,
+    "offline_wall_clock_seconds": 1800,
+    "storage_bytes_added": 1000000000
+  },
+  "bench_disposition": {
+    "bench_id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+    "status": "maintenance",
+    "candidate_container_retained": true,
+    "retain_until_utc": "2026-07-26T20:00:00Z",
+    "claim_before_director_consumes_terminal": false,
+    "watchdog": "gemma4-h100-packed-m384-graph-repair-20260726t2000-watchdog.service"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "ENDPOINT_TERMINAL.json": {
+    "exit": 0,
+    "stderr": ""
+  },
+  "INVOCATION_STATE.json": {
+    "exit": 0,
+    "stderr": ""
+  },
+  "package_exit": 0,
+  "package_stderr": "",
+  "scp_exit": 0,
+  "scp_stderr": ""
+}

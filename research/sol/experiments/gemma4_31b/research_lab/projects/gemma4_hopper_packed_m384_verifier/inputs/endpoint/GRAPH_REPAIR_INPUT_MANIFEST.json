@@ -19,9 +19,9 @@
       "source": "inputs/endpoint/packed_m384_endpoint.py"
     },
     {
-      "bytes": 4803,
+      "bytes": 5202,
       "path": "input/sitecustomize.py",
-      "sha256": "595d60c06477ed82785deab4b35848d42e1a242a138b7e797123761288bb1f0e",
+      "sha256": "5c68c4bdedef67aaa7874fc7d94d3c8c31dd0c6af54519ef5cee1d4a78fabc15",
       "source": "inputs/endpoint/sitecustomize.py"
     },
     {
@@ -33,11 +33,11 @@
     {
       "bytes": 4574,
       "path": "input/ENDPOINT_INPUT_MANIFEST.json",
-      "sha256": "ff8c1c51a8593793a22163de107bc0c01349150141ac75d705800d82de242c6c",
+      "sha256": "dd38642d954df86c269f18d6d5a916d587670787593a67beb3d75c01a65f3eb6",
       "source": "inputs/endpoint/ENDPOINT_INPUT_MANIFEST.json"
     }
   ],
-  "full_manifest_sha256": "ff8c1c51a8593793a22163de107bc0c01349150141ac75d705800d82de242c6c",
+  "full_manifest_sha256": "dd38642d954df86c269f18d6d5a916d587670787593a67beb3d75c01a65f3eb6",
   "kind": "candidate_only_graph_capture_repair_delta",
   "project": "gemma4_hopper_packed_m384_verifier",
   "retained_files": [

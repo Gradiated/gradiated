@@ -93,6 +93,7 @@ def _install_packed_attention() -> None:
             and (local or global_attention)
         )
         if target_verify:
+            graph_capture_passthrough = batch != 32
             _append(
                 {
                     "batch": batch,
@@ -106,12 +107,22 @@ def _install_packed_attention() -> None:
                     "v_stride": list(v_extend.stride()),
                     "o_stride": list(o_extend.stride()),
                     "q_shape": list(q_extend.shape),
-                    "route": "candidate" if exact else "rejected_no_fallback",
+                    "route": (
+                        "candidate"
+                        if exact
+                        else "graph_capture_passthrough"
+                        if graph_capture_passthrough
+                        else "rejected_no_fallback"
+                    ),
                 }
             )
-            if not exact:
+            if not exact and not graph_capture_passthrough:
                 raise RuntimeError("packed_m384_target_verify_no_fallback")
-            implementation = candidate.extend_attention_fwd
+            implementation = (
+                original
+                if graph_capture_passthrough
+                else candidate.extend_attention_fwd
+            )
         else:
             implementation = original
         return implementation(

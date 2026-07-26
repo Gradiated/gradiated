@@ -1,0 +1,14 @@
+{
+  "ENDPOINT_TERMINAL.json": {
+    "exit": 1,
+    "stderr": "scp: /home/glmrunner/gemma4_hopper_packed_m384_endpoint/artifacts/ENDPOINT_TERMINAL.json: No such file or directory\n"
+  },
+  "INVOCATION_STATE.json": {
+    "exit": 0,
+    "stderr": ""
+  },
+  "package_exit": 0,
+  "package_stderr": "",
+  "scp_exit": 0,
+  "scp_stderr": ""
+}

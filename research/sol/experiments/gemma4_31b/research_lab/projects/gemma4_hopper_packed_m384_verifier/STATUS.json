@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
   "id": "gemma4_hopper_packed_m384_verifier",
-  "status": "active",
+  "status": "complete",
   "priority": 9770,
   "researcher_profile": "deep",
   "allocation_limit": 1,
   "authorized_spend_usd": 8.0,
-  "actual_spend_usd": 2.134908,
+  "actual_spend_usd": 2.716333,
   "active_session": null,
   "hypothesis": "A packed TMA and warp-specialized online-softmax decomposition can remove the measured Hopper register-residency and tail-wave penalty from Gemma target verification and save 8-10% of whole-request service time.",
-  "summary": "The graph-capture integration defect is repaired offline without changing the measured V2 kernels or scientific geometry. The pinned backend produces shaped Q/O views and contiguous K/V; the kernels already consume explicit token/head strides, so the wrapper now requires only rank-3 tensors with unit feature stride. The persisted raw SSE request IDs join unambiguously to token-event RIDs and ordered scheduler deltas, yielding a 32x358 control token oracle without replay. GRAPH_CAPTURE_REPAIR_READY.json binds the candidate-only resume, retained-state delta, and durable repair owner; the maintenance H100 remains unclaimed pending director consumption.",
-  "next_action": "Director must consume GRAPH_CAPTURE_REPAIR_READY.json (sha256 dccf35e742b0e645c271a5b2fe762817c9bf501d9d1861ba3b5a5ac31a4b7cdf) into GRAPH_CAPTURE_REPAIR_READMISSION.json before any claim. After readmission, launch the bound PID-managed run_graph_repair_owner.py, reuse the retained checkpoint/image, pass CUDA-graph capture as the discovery check, and submit at most the sole unconsumed candidate c32 request by 2026-07-26T19:55:00Z; never replay control or the settled component.",
+  "summary": "Offline identity-correct reconstruction proves a genuine candidate-path semantic divergence before detokenization: 17 of 32 hash-identical requests differ from the bound control oracle, 12 at token zero, while all scheduler counters, final emitted IDs, parser bytes, and complete SSE text are internally exact. The measured candidate remains 3.65% faster, but this endpoint is semantic-unsafe and not promotion-safe.",
+  "next_action": "Director consumes SEMANTIC_LOCALIZATION_RESULT.json. Close this exact endpoint candidate as semantic-unsafe while preserving the positive component as physical evidence. Any future discriminator requires a newly admitted non-replay capture of native-versus-packed logits, top-2 margins, and attention output at the first divergent target-verification step.",
   "bench_need": {
     "accelerator": "nvidia-h100-sxm",
     "claim_allowed": false,
     "provider_create_allowed": false,
-    "reason": "Offline graph-layout repair, 32x358 persisted control oracle, repair delta, and candidate-only durable owner are bound in GRAPH_CAPTURE_REPAIR_READY.json. The retained H100 remains maintenance-bound until the director consumes that exact artifact into GRAPH_CAPTURE_REPAIR_READMISSION.json."
+    "reason": "The sole candidate endpoint request is consumed. DIRECTOR_H100_PACKED_M384_SEMANTIC_LOCALIZATION_20260726T1904Z.json requires offline first-divergence and result-construction analysis before any new director decision."
   },
   "execution_binding": {
     "contract": "EXPERIMENT_CONTRACT.json",
@@ -48,7 +48,7 @@
     "sha256": "115347e35a1be52ed420bd4df282d28bcc7b8d6bc118d9d412e9eeb521f4ab17",
     "source_sha256": "88f29d980ec819c79fa110085b9e6ea2e272ac715127afc40fd8a955fbc49a18",
     "repair_artifact": "REMOTE_COMMAND_REPAIR.json",
-    "gpu_eligible": false,
+    "gpu_eligible": true,
     "next": "Component terminal consumed and bench released available; director may choose the admitted compatible endpoint continuation from the persisted result."
   },
   "result": {
@@ -63,7 +63,7 @@
       "2026-07-26T17:08:38.479850Z"
     ],
     "claim_exposure_usd": 0.02,
-    "interpretation": "Measured exact-consumer component positive on H100; endpoint integration remains unmeasured and requires director admission."
+    "interpretation": "Measured exact-consumer component remains positive on H100. The promoted endpoint is now measured but semantic-unsafe pending offline first-divergence localization."
   },
   "director_endpoint_promotion": {
     "path": "DIRECTOR_H100_PACKED_M384_ENDPOINT_PROMOTION_20260726T1712Z.json",
@@ -106,7 +106,7 @@
     "required_artifact": "GRAPH_CAPTURE_REPAIR_READY.json",
     "gpu_eligible": false,
     "control_request_replay_allowed": false,
-    "candidate_request_submissions_remaining": 1,
+    "candidate_request_submissions_remaining": 0,
     "candidate_release_deadline_utc": "2026-07-26T19:55:00Z",
     "lifecycle_deadline_utc": "2026-07-26T20:00:00Z",
     "retained_checkpoint_and_image": true
@@ -123,6 +123,67 @@
     "measured_v2_kernel_ast_unchanged": true,
     "control_request_replayed": false,
     "gpu_claimed": false,
-    "consumed_by_director": false
+    "consumed_by_director": true
+  },
+  "graph_capture_repair_readmission": {
+    "path": "GRAPH_CAPTURE_REPAIR_READMISSION.json",
+    "sha256": "c0c88c0678e88ad5bde4ac38f5eb87287c771daeebe78337091ecd765776861c",
+    "bench_id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+    "owner": "run_graph_repair_owner.py",
+    "owner_sha256": "a1437d951d9e93f7e2111c43480e06d54c0535ce15d3d99ad950d38a7400cec2",
+    "candidate_only_resume": true,
+    "control_request_replay_allowed": false,
+    "candidate_request_submissions_remaining": 0,
+    "candidate_release_deadline_utc": "2026-07-26T19:55:00Z",
+    "lifecycle_deadline_utc": "2026-07-26T20:00:00Z",
+    "consumed": true,
+    "endpoint_terminal": "artifacts/graph-repair/attempt-2/ENDPOINT_TERMINAL.json",
+    "endpoint_terminal_sha256": "98d8643f5d563943c4f88cd24edaa52872fb20a5f95af9a8f6b5c87a57e50ed5"
+  },
+  "endpoint_candidate_result": {
+    "kind": "semantic_unsafe_genuine_candidate_computation_divergence",
+    "terminal": "artifacts/graph-repair/attempt-2/ENDPOINT_TERMINAL.json",
+    "terminal_sha256": "98d8643f5d563943c4f88cd24edaa52872fb20a5f95af9a8f6b5c87a57e50ed5",
+    "archive": "artifacts/graph-repair/attempt-2/artifacts.tar.gz",
+    "archive_sha256": "7b646b16e77121eda710b6b05b49fc8cfe139816c894fbe391f66a2ab257ca53",
+    "candidate_service_seconds_per_request": 0.6881543015937552,
+    "control_service_seconds_per_request": 0.7142265493124995,
+    "service_reduction_fraction": 0.03650417048181831,
+    "candidate_request_consumed": true,
+    "control_request_replayed": false,
+    "exact_routing": true,
+    "exact_cache_accounting": true,
+    "exact_persisted_control_target_tokens": false,
+    "exact_target_to_emitted_trace": false
+  },
+  "director_semantic_localization": {
+    "path": "DIRECTOR_H100_PACKED_M384_SEMANTIC_LOCALIZATION_20260726T1904Z.json",
+    "sha256": "97a92eebf8cdf7aebe443ea03a75ce392ae9c5fd5f713717eec14bf5e0137914",
+    "required_terminal": "SEMANTIC_LOCALIZATION_RESULT.json",
+    "gpu_eligible": false,
+    "candidate_replay_allowed": false,
+    "control_replay_allowed": false,
+    "component_replay_allowed": false,
+    "offline_wall_clock_seconds": 1800,
+    "bench_retained_in_maintenance_until_utc": "2026-07-26T20:00:00Z",
+    "consumed_by_researcher": true
+  },
+  "semantic_localization_result": {
+    "path": "SEMANTIC_LOCALIZATION_RESULT.json",
+    "sha256": "7e59aab982b1f6c833a444d4635c1347db6995cfdcb749902d556eb57ab8a46b",
+    "classification": "genuine_candidate_computation_divergence_before_detokenization",
+    "exact_requests": 15,
+    "divergent_requests": 17,
+    "divergent_at_first_token": 12,
+    "observer_defect": false,
+    "request_identity_join_defect": false,
+    "serialization_or_result_construction_defect": false,
+    "server_emission_path_defect": false,
+    "offline_decision_terminal_rebuilt": false,
+    "candidate_replay_performed": false,
+    "control_replay_performed": false,
+    "component_replay_performed": false,
+    "gpu_claim_performed": false,
+    "promotion_safe": false
   }
 }

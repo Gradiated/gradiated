@@ -1,0 +1,10 @@
+{
+  "provider_started_at_utc": "2026-07-26T15:37:01.095093Z",
+  "deadline_utc": "2026-07-26T20:00:00Z",
+  "watchdog": {
+    "unit_manager": "user",
+    "unit": "gemma4-h100-packed-m384-graph-repair-20260726t2000-watchdog.service",
+    "main_pid": 1971919,
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-packed-m384-graph-repair-20260726t2000-watchdog.service"
+  }
+}

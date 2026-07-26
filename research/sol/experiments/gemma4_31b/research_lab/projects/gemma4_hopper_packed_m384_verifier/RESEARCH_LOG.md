@@ -287,3 +287,123 @@ Next move: director consumes the exact readiness digest into
 `GRAPH_CAPTURE_REPAIR_READMISSION.json`; only then launch the bound durable
 owner for CUDA-graph discovery and the sole unconsumed candidate c32 request,
 with release by 19:55Z.
+
+## 2026-07-26 — readmitted owner claimed; pre-submission staging repaired in place
+
+Question: can the admitted candidate-only CUDA-graph path reach its first
+real discovery call without replaying the persisted control or component?
+
+Action: launched the exact PID-managed command from
+`GRAPH_CAPTURE_REPAIR_READMISSION.json`. It claimed only
+`h100-paged-fp8-e00mkpyvykfak0bg1m` at `18:50:57Z`. Its first staging copy
+found that the temporary directory lacked `input/`; no guest scientific marker
+or candidate request existed. A durable replacement owner now loads the
+unchanged hash-bound owner and creates only each destination parent before the
+original delta-copy operation. It inherited the same pool claim and copied all
+six bound repair-delta files; the original waiting owner was stopped only after
+the replacement was live, heartbeating, and past the repaired copy boundary.
+
+Evidence: `GRAPH_REPAIR_OWNER_TERMINAL.json` preserves the failed pre-science
+SCP diagnostic. `REPAIR_PATCH_GRAPH_STAGE_INPUT.json` records that control and
+component remain unreplayed and candidate submission remains false. The live
+replacement is recorded in `STATUS.json.active_session` as PID `1987809`,
+`GRAPH_REPAIR_OWNER_STATE_REPAIR2.json`, `unit_manager: pid`; its progress
+reached repair-delta ordinal 6/6 and its heartbeat refreshed the original
+`18:50:57Z` claim.
+
+Interpretation: this is an ordinary staging-parent defect, not scientific
+evidence or a consumed candidate sample. The retained checkpoint, image, and
+one candidate authorization remain intact.
+
+Next move: the durable owner verifies/promotes the delta, runs CUDA-graph
+capture as discovery, then submits at most the sole candidate c32 request and
+retrieves its terminal before the fixed release deadline.
+
+## 2026-07-26 — replacement crossed CUDA-graph discovery boundary
+
+Action: inspected only the local replacement-owner state, its preserved
+generation-1 pre-submission diagnostic, and the owner retry entrypoint. The
+replacement PID `1987809` remains live with the original claim timestamp and
+a successful `18:54:55Z` heartbeat. Its durable progress is
+`candidate_graph_capture_started` at `18:53:30Z` after all six repair-delta
+rows copied.
+
+Evidence: the only pending `REPAIR_READY.json` is generation 1, created by
+the superseded PID `1986779`; its diagnostic proves the missing temporary
+`input/` directory and contains no invocation marker. The active replacement
+is already beyond that invalidated copy operation. No endpoint terminal is
+present and no local evidence authorizes inferring candidate consumption.
+
+Interpretation: issuing a request to the stopped generation would not resume
+the active owner and would be stale coordination, not an in-place repair. The
+correct disposition is to preserve the active owner and await its compact
+terminal or a fresh repair generation from that owner.
+
+Next move: the live owner completes CUDA-graph discovery, performs at most
+the one admitted candidate request, retrieves its terminal, and releases only
+on that terminal or the fixed deadline.
+
+## 2026-07-26 — non-c32 CUDA-graph capture repair requested
+
+Action: retrieved the compact failed attempt archive and found the server
+reached CUDA-graph capture after identity/oracle validation but failed at the
+capture scheduler's batch 30 (`q_shape=[360,32,256]`), before candidate
+science start. Patched only `sitecustomize.py`: batch-32 target verification
+still requires the packed exact path, while non-c32 graph-capture batches use
+the original backend and are recorded as `graph_capture_passthrough` rather
+than a candidate fallback. Regenerated the full/repair manifests and submitted
+the hash-bound request for live repair generation `graph-repair-1-1785092154`.
+
+Evidence: attempt-1’s `INVOCATION_STATE.json` has
+`identity_validated=true`, `oracle_validated=true`,
+`candidate_graph_capture_passed=false`, and
+`candidate_science_started=false`; its route audit contains the sole rejected
+batch-30 row. Eight focused consumer/graph-repair tests pass. The live owner
+accepted the request, archived the prior zero-request root, retains the same
+`18:50:57Z` claim, and crossed retry delta-copy ordinal 5/6.
+
+Interpretation: the failure is a CUDA-graph batch-geometry integration defect,
+not a kernel or endpoint measurement. Control and component remain preserved;
+the candidate arm remains unconsumed.
+
+Next move: owner finishes staging the narrow patch, repeats CUDA-graph
+discovery, and only then issues the sole c32 candidate request.
+
+## 2026-07-26 — immutable endpoint semantic localization terminal
+
+Question: did the consumed candidate fail token gates because of request
+joining, observation/result construction, emission, or upstream candidate
+computation?
+
+Action: streamed only the immutable attempt-2 archive members and joined each
+candidate response to token events by its unique SSE RID, then joined candidate
+to control by the 32 durable request SHA-256 identities. Reconstructed all
+scheduler token deltas in event order, checked every cumulative completion
+counter, decoded them with the bound project-local tokenizer, and compared the
+complete decoded stream with raw SSE text and the final tokenizer/parser event.
+No GPU was claimed and no candidate, control, or component arm was replayed.
+
+Evidence: `SEMANTIC_LOCALIZATION_RESULT.json`
+(`sha256:7e59aab982b1f6c833a444d4635c1347db6995cfdcb749902d556eb57ab8a46b`)
+binds the archive, endpoint terminal, oracle, tokenizer, observer, consumer,
+and packed endpoint sources. Fifteen requests are token-exact; 17 diverge and
+12 of those diverge at token zero. Across all 32 candidate requests, 1,272
+scheduler events have exact cumulative counters, all 32 final scheduler
+deltas equal tokenizer-emitted IDs, all final parser bytes decode exactly, and
+all complete SSE text equals the accumulated token decode. Every affected
+request therefore has a null first target-to-emitted inconsistency. The
+terminal spend is conservatively settled at `$2.716333`; offline localization
+added no provider exposure.
+
+Interpretation: this is a genuine candidate-path computation divergence before
+detokenization, not an observer, identity join, serialization/result
+construction, or server-emission defect. The valid 3.6504% timing reduction
+remains useful physical evidence, but the exact endpoint is semantic-unsafe
+and cannot promote. The original reject terminal is reproduced offline, so no
+corrected decision terminal is warranted.
+
+Next move: director consumes the localization terminal and closes this exact
+endpoint candidate. The smallest materially different future discriminator is
+a newly admitted non-replay capture of native-versus-packed logits, top-2
+token IDs/margins, and attention output at the first target-verification step
+for the earliest divergent request.

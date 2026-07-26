@@ -38,7 +38,7 @@
     "rejected_assumption": "full_tensor_contiguity",
     "required_layout": "rank-3 Q/K/V/O with unit feature stride; token and head strides are passed explicitly to the measured kernels",
     "route_path": "inputs/endpoint/sitecustomize.py",
-    "route_sha256": "595d60c06477ed82785deab4b35848d42e1a242a138b7e797123761288bb1f0e",
+    "route_sha256": "5c68c4bdedef67aaa7874fc7d94d3c8c31dd0c6af54519ef5cee1d4a78fabc15",
     "scientific_geometry_unchanged": {
       "batch": 32,
       "block_m": 16,
@@ -71,12 +71,12 @@
     "checkpoint_bytes": 62578655208,
     "full_manifest": {
       "path": "inputs/endpoint/ENDPOINT_INPUT_MANIFEST.json",
-      "sha256": "ff8c1c51a8593793a22163de107bc0c01349150141ac75d705800d82de242c6c"
+      "sha256": "dd38642d954df86c269f18d6d5a916d587670787593a67beb3d75c01a65f3eb6"
     },
     "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
     "repair_delta_manifest": {
       "path": "inputs/endpoint/GRAPH_REPAIR_INPUT_MANIFEST.json",
-      "sha256": "ac4218e5b63172bed8b10b740d390de1084e4fe7f2c882ad0e53037285578e64"
+      "sha256": "f7bdc6c7fea04824b2b3d26bba0bc67ade6bdac12b1e8c7c7e9e4e401307d7f6"
     },
     "retained_checkpoint_path": "/home/glmrunner/gemma4_hopper_packed_m384_endpoint/checkpoint"
   },

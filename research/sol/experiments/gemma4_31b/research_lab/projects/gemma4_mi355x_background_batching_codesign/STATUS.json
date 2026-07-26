@@ -1,0 +1,43 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "authorized_spend_usd": 0.0,
+  "bench_need": {
+    "claim_allowed": false,
+    "reason": "The project is terminal, zero-spend, and the offline queue-capacity contradiction is decision-bearing."
+  },
+  "decision": "typed_none_queue_gate",
+  "last_researcher_run": {
+    "artifact": "MI355X_BACKGROUND_BATCHING_SCREEN.json",
+    "artifact_sha256": "405dc2cea0ceed9d187a09b90857cab340d0b08ba8e247a9b3c2e162eaeae132",
+    "completed_at_utc": "2026-07-26T14:16:02Z",
+    "runner": "run_background_batching_screen.py",
+    "runner_sha256": "d4b23723afd8d1f5a4f057be5c1a1a609a0424322d5a45d5d52cab6596869f8d",
+    "source_bindings": "SOURCE_BINDINGS.json",
+    "source_bindings_sha256": "5e453dd948b2ccbd9671d3ac1d06feb581d2786042f3886b719a67c239a4574d",
+    "tests": "python3 -m unittest -v test_background_batching_screen.py"
+  },
+  "next_action": "Terminal typed none. Preserve MI355X_BACKGROUND_BATCHING_SCREEN.json and do not fund c64/c96 cohort batching under this exact current-runtime workload and planning-latency contract. Reopen only if the director materially changes the queue gate, arrival unit, workload geometry, or scheduling mechanism; do not alter the preserved c32 MI355X lifecycle.",
+  "priority": 8765,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "deep",
+  "result": {
+    "artifact": "MI355X_BACKGROUND_BATCHING_SCREEN.json",
+    "artifact_sha256": "405dc2cea0ceed9d187a09b90857cab340d0b08ba8e247a9b3c2e162eaeae132",
+    "c64_full_width_seconds_per_request": 0.5027645178712802,
+    "c96_full_width_seconds_per_request": 0.47035474275794686,
+    "classification": "typed_none",
+    "completion_p95_seconds": 79.73283557088871,
+    "fallback_request_fraction": 0.2285,
+    "maximum_c96_throughput_requests_per_second": 2.1260548881392234,
+    "memory_fit": true,
+    "minimum_queue_p95_seconds_at_stable_no_fallback_c96": 30.102703536508603,
+    "minimum_rate_for_10s_c96_fill_requests_per_second": 6.4,
+    "offered_requests_per_second": 2.0,
+    "queue_p95_seconds": 34.57878026612161,
+    "target_seconds_per_request": 0.500119281574996
+  },
+  "schema_version": 1,
+  "status": "complete",
+  "summary": "Typed none after a source-bound exact-workload screen. c64 costs 0.5027645178712802 s/request before fill or fallback and misses the target. c96 reaches 0.47035474275794686 and fits memory, but stable capacity is only 2.1260548881392234 req/s while the 10-second c96 fill gate requires 6.4 req/s; the charged 2.0 req/s timeout policy measured queue p95 34.57878026612161 seconds."
+}

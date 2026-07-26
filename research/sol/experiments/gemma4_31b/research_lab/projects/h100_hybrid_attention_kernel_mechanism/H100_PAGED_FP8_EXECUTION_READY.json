@@ -1,0 +1,109 @@
+{
+  "actual_spend_usd": 0.0,
+  "bound_inputs": {
+    "../h100_paged_fp8_actual_consumer_packet_v2/START_PACKET.json": {
+      "bytes": 4440,
+      "sha256": "9eaae8c05ec9d352ee1c7d16f70e3ab8e567dc280164e7f57a872ae4f436b4e5"
+    },
+    "../h100_paged_fp8_actual_consumer_packet_v2/paged_consumer_program.py": {
+      "bytes": 7248,
+      "sha256": "43efdf7af71cb1c388db45b735f5f6ec8517f75859e2652bb94491c1fc6d3ebf"
+    },
+    "../h100_paged_fp8_packet_v2_audit/AUDIT.json": {
+      "bytes": 9735,
+      "sha256": "a9e71dc522f6f2cbc2eddb3f32611718f80067c3bb2dd0ca8f74eeca3468eb0e"
+    },
+    "MECHANISM.json": {
+      "bytes": 15066,
+      "sha256": "3960c453e88b1a12e01351d2062dbaa7f8a800e63fe6674e997ddbbcfeebdda1"
+    }
+  },
+  "decision": "Source is ready for a later director-authorized H100 claim; this terminal does not authorize one.",
+  "evidence_boundary": "Static and CPU-mocked source-readiness evidence only. No H100 throughput, quality, counter, endpoint, or economic result is claimed.",
+  "generated_at_utc": "2026-07-26T05:11:07.220231Z",
+  "gpu_claim_allowed": false,
+  "gpu_seconds": 0,
+  "gpu_used": false,
+  "identity": {
+    "expected_source_hashes": {
+      "vllm/config/vllm.py": "58aebc9654b3d62c9707be62df47ac43254b52218d9ea38c43d3026485ff9e01",
+      "vllm/forward_context.py": "b3927fa778b1522c45b8a85e32be745c73ac5002a72d6b245f6d0cc028ddf57f",
+      "vllm/model_executor/layers/attention/attention.py": "2e45ac35100a1396bd03f9fe8d7f3e4dd41f3dc0a78b3bc7e5e118b536a0fe3c",
+      "vllm/v1/attention/backend.py": "2ac9b29dcc36ae643162f6e28f502081073cd97a6844e7d19fff2c10ee0d6810",
+      "vllm/v1/attention/backends/flash_attn.py": "38ae47c9eb4e6ab774ef4397015f45a2d05001f8b220a2347be86e57bbf54aa7",
+      "vllm/v1/attention/backends/triton_attn.py": "0881156d666e81642879a943dc14fda1186060bc24676280497428a8e3c079a3"
+    },
+    "immutable_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "observed_revision_required": "6d4a8e6d2",
+    "observed_runtime_required": "0.19.1.dev6+g6d4a8e6d2"
+  },
+  "implemented_gates": {
+    "50_10_layer_by_358_step_economic_aggregation": true,
+    "atomic_sentinel_before_sweep": true,
+    "concurrency_8_16_32": true,
+    "conditional_sweep_with_seven_minute_reserve": true,
+    "finite_nonzero_and_representation_oracles": true,
+    "full_context_local_16x256_and_global_4x512": true,
+    "independent_dense_reference": true,
+    "native_common_metadata_and_builder": true,
+    "native_kv_cache_spec": true,
+    "nvtx_scoped_fail_closed_ncu_counters": true,
+    "paired_bf16_fp8_e4m3_timing": true,
+    "registered_attention": true,
+    "transitive_runtime_and_source_binding": true
+  },
+  "later_execution": {
+    "conditional_stage": "c8/c16/c32 local1024 and global 4214/4393/4571 sweep",
+    "entrypoint": "python3 paged_fp8_execution.py run --readiness H100_PAGED_FP8_EXECUTION_READY.json --output-root <absolute-artifact-root> --absolute-deadline-utc <UTC> --image-digest docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "first_stage": "local1024 c8 and global4214 c8 sentinel",
+    "typed_terminal": "H100_PAGED_FP8_EXECUTION_TERMINAL.json"
+  },
+  "pass": true,
+  "project": "h100_hybrid_attention_kernel_mechanism",
+  "provider_create_allowed": false,
+  "provider_mutated": false,
+  "provider_queried": false,
+  "reachable_construction_trace": {
+    "evidence_test": "NativeConstructionTests.test_registered_attention_native_spec_and_builder_are_reachable",
+    "pass": true,
+    "path": [
+      "with set_current_vllm_config(config)",
+      "Attention(..., attn_backend=TritonAttentionBackend)",
+      "layer.get_kv_cache_spec(config)",
+      "builder_cls(spec, [layer_name], config, cuda_device)",
+      "CommonAttentionMetadata(...)",
+      "builder.build(common_prefix_len=0, common_attn_metadata=common, fast_build=False)",
+      "unified_kv_cache_update(full_context_k, full_context_v, layer_name)",
+      "unified_attention_with_output(..., layer_name, kv_cache_dummy_dep=dependency)"
+    ]
+  },
+  "result": "source_complete_start_ready",
+  "schema_version": 1,
+  "scientific_sample_consumed": false,
+  "source": {
+    "files": {
+      "build_readiness.py": "ca68730347fcdc536e40ee36ac7f72a6e5d590a2dae7717b7d78dad1768b2b59",
+      "paged_fp8_contract.py": "bc993832a5e5079bd0f7715b96af28ec1cec26dc5f63aaf07cd3f1303d2695d6",
+      "paged_fp8_execution.py": "fdafc7a2d20abddc4a82a6c7e34c98de9f7a75e7ecccfeab2152485613cc1918",
+      "test_paged_fp8_execution.py": "0769748d4aed1893c8f6397cb045820455cd3d79d5edcbd352420c60ff83179e"
+    },
+    "fresh_vs_rejected": true,
+    "test_log": {
+      "bytes": 2488,
+      "path": "READINESS_TESTS.txt",
+      "sha256": "80a76ecdf3fcbaaa5b7f02af813ba7e5820dcec8fd37cc8fe71c1b06690e8f21"
+    }
+  },
+  "test": {
+    "command": [
+      "/usr/bin/python3",
+      "-m",
+      "unittest",
+      "-v",
+      "test_paged_fp8_execution.py"
+    ],
+    "returncode": 0,
+    "test_count": 17
+  },
+  "type": "h100_paged_fp8_execution_readiness_terminal"
+}

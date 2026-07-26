@@ -1,0 +1,22 @@
+test_context_byte_reduction_must_increase (test_paged_fp8_execution.AcceptanceTests.test_context_byte_reduction_must_increase) ... ok
+test_missing_counter_fails_closed (test_paged_fp8_execution.AcceptanceTests.test_missing_counter_fails_closed) ... ok
+test_nonfinite_or_zero_oracle_fails_closed (test_paged_fp8_execution.AcceptanceTests.test_nonfinite_or_zero_oracle_fails_closed) ... ok
+test_partial_context_producer_fails_closed (test_paged_fp8_execution.AcceptanceTests.test_partial_context_producer_fails_closed) ... ok
+test_row_passes_all_semantic_counter_and_component_gates (test_paged_fp8_execution.AcceptanceTests.test_row_passes_all_semantic_counter_and_component_gates) ... ok
+test_sentinel_trigger_requires_both_rows_and_reserve (test_paged_fp8_execution.AcceptanceTests.test_sentinel_trigger_requires_both_rows_and_reserve) ... ok
+test_pinned_signature_check_fails_closed (test_paged_fp8_execution.BindingTests.test_pinned_signature_check_fails_closed) ... ok
+test_rejected_program_is_not_reused (test_paged_fp8_execution.BindingTests.test_rejected_program_is_not_reused) ... ok
+test_worker_command_has_no_provider_lifecycle_operation (test_paged_fp8_execution.BindingTests.test_worker_command_has_no_provider_lifecycle_operation) ... ok
+test_ncu_csv_missing_metric_fails_closed (test_paged_fp8_execution.CounterParserTests.test_ncu_csv_missing_metric_fails_closed) ... ok
+test_ncu_csv_normalizes_required_metrics_and_launches (test_paged_fp8_execution.CounterParserTests.test_ncu_csv_normalizes_required_metrics_and_launches) ... ok
+test_50_10_by_358_aggregation_is_exact (test_paged_fp8_execution.EconomicsTests.test_50_10_by_358_aggregation_is_exact) ... ok
+test_missing_sweep_row_fails_closed (test_paged_fp8_execution.EconomicsTests.test_missing_sweep_row_fails_closed) ... ok
+test_exact_local_and_global_kv_geometry (test_paged_fp8_execution.GeometryTests.test_exact_local_and_global_kv_geometry) ... ok
+test_full_context_slots_preserve_page_padding (test_paged_fp8_execution.GeometryTests.test_full_context_slots_preserve_page_padding) ... ok
+test_pair_order_is_balanced_and_deterministic (test_paged_fp8_execution.GeometryTests.test_pair_order_is_balanced_and_deterministic) ... ok
+test_registered_attention_native_spec_and_builder_are_reachable (test_paged_fp8_execution.NativeConstructionTests.test_registered_attention_native_spec_and_builder_are_reachable) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.004s
+
+OK

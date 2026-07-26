@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "h100_hybrid_attention_kernel_mechanism",
-  "status": "active",
+  "status": "complete",
   "priority": 8680,
   "researcher_profile": "deep",
   "allocation_limit": 1,
@@ -9,9 +9,9 @@
   "actual_spend_usd": 0.0,
   "active_session": null,
   "hypothesis": "A fresh execution-equivalent pinned-vLLM program can expose the actual H100 BF16-versus-E4M3 paged-KV mechanism while preserving matched full-context geometry, semantic oracles, fail-closed counters, and the 5% whole-request discriminator.",
-  "decision": "reactivate_for_zero_gpu_execution_equivalent_implementation",
-  "next_action": "Consume DIRECTOR_EXECUTION_EQUIVALENT_READMISSION_20260726.json and the rejected-packet audit. Implement fresh project-local source plus narrow tests for the registered Attention/native-metadata/unified-cache producer-consumer path, paired sentinel, counters, conditional sweep, and economic aggregation; publish H100_PAGED_FP8_EXECUTION_READY.json without querying or using a provider.",
-  "summary": "Reactivated as the independent deep lane after depth-1 adaptive MTP was causally falsified. The source-backed H100 FP8-KV bound is 58.446802 ms/request (10.67% of planning service), while the old packet remains rejected and immutable; this cycle must produce working execution-equivalent source or a typed source boundary at $0 and zero GPU seconds.",
+  "decision": "source_complete_start_ready_pending_director_h100_admission",
+  "next_action": "Director may review H100_PAGED_FP8_EXECUTION_READY.json and, only in a later decision, admit one H100 run. GPU claims and provider creation remain forbidden by this terminal.",
+  "summary": "Published a fresh execution-equivalent registered-Attention program with native KV-cache spec and CommonAttentionMetadata construction, deterministic full-context BF16/E4M3 arms, paired timing, independent oracle, NVTX-scoped fail-closed counters, atomic sentinel, conditional c8/c16/c32 sweep, and exact 50/10-layer by 358-step economic aggregation. All 17 narrow CPU-mocked/static tests pass. No provider was queried or mutated and no GPU sample was consumed.",
   "provider_mutation": "forbidden",
   "bench_need": {
     "accelerator": "nvidia-h100-sxm",
@@ -40,7 +40,24 @@
     "scientific_sample_consumed": false,
     "provider_spend_usd": 0.0
   },
-  "terminal_artifact": "H100_PAGED_FP8_EXECUTION_READY.json",
+  "terminal_artifact": {
+    "path": "H100_PAGED_FP8_EXECUTION_READY.json",
+    "sha256": "b26a26d28c6062b3bca58c8ae201f4471b1cfeeef82875576819e35a79fad379",
+    "result": "source_complete_start_ready",
+    "pass": true,
+    "generated_at_utc": "2026-07-26T05:11:07.220231Z"
+  },
+  "source_readiness": {
+    "fresh_execution_program": "paged_fp8_execution.py",
+    "program_sha256": "fdafc7a2d20abddc4a82a6c7e34c98de9f7a75e7ecccfeab2152485613cc1918",
+    "contract_sha256": "bc993832a5e5079bd0f7715b96af28ec1cec26dc5f63aaf07cd3f1303d2695d6",
+    "tests": 17,
+    "tests_pass": true,
+    "test_log_sha256": "80a76ecdf3fcbaaa5b7f02af813ba7e5820dcec8fd37cc8fe71c1b06690e8f21",
+    "provider_create_allowed": false,
+    "gpu_claim_allowed": false
+  },
+  "completed_at_utc": "2026-07-26T05:11:07.220231Z",
   "scientific_sample_consumed": false,
   "gpu_scientific_sample_consumed": false,
   "gpu_claimed": false

@@ -1,0 +1,20 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "authorized_spend_usd": 0.0,
+  "decision": "source_complete_physical_candidate",
+  "last_researcher_run": {
+    "completed_at_utc": "2026-07-26T10:22:41Z",
+    "profile": "deep",
+    "result": "source_complete_physical_candidate",
+    "target_margin_seconds_per_request": 0.00016116118928138912
+  },
+  "next_action": "Director disposition: the zero-spend screen is complete. If later admitted to a shared H200 bench with positive spend authority, compile and execution-check the fused one-tile consumer against the pinned producer/backend, then measure profiler-off component and exact c32 endpoint timing. Fail closed on more than 64 compact entries, fallback above 0.0012873226748728159, or service time above 0.500119281574996 s/request; do not stack prompt-state savings.",
+  "priority": 8760,
+  "researcher_profile": "execution",
+  "schema_version": 1,
+  "status": "complete",
+  "summary": "Zero-spend discriminator completed: exact trace joining separates 750 local calls (997,521.149 us) from 150 global calls (490,684.609 us). The source-complete 512-summary/8-recent/8-protected one-tile path preserves every token/layer/width and exact local windows and derives 0.4999581203857146 s/request after charged overhead, only 0.00016116118928138912 below target. It is uncompiled, unmeasured, quality-unqualified, and invalid if a second tile or >0.128732% fallback is required.",
+  "terminal_artifact": "MULTIRESOLUTION_GLOBAL_KV_PHYSICAL_SCREEN.json",
+  "terminal_artifact_sha256": "1d7d59a96a50f95b8cbadbb763ee072b5a4c462e1bb03f039dccda3905c84a30"
+}

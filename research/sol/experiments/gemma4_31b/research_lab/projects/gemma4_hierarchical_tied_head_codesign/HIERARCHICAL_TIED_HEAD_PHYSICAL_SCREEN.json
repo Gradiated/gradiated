@@ -1,0 +1,604 @@
+{
+  "bound_inputs": {
+    "checkpoint_identity": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "files": [
+      {
+        "expected_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+        "match": true,
+        "path": "gemma4_hybrid_attention_placement_codesign/inputs/bound/config.json",
+        "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+      },
+      {
+        "expected_sha256": "37e2c73a57e8e63bd7ec0a3465cc1edded8b9dc63507d97e85a767306a97a48b",
+        "match": true,
+        "path": "gemma4_h200_ngram_fixed_m384_executor_rewrite/inputs/trace/exact_c32_profile.trace.json.gz",
+        "sha256": "37e2c73a57e8e63bd7ec0a3465cc1edded8b9dc63507d97e85a767306a97a48b"
+      },
+      {
+        "expected_sha256": "a22e25b3e911891d75e1008f22a03ad2a7d160584e1c83e660b8a3238602304f",
+        "match": true,
+        "path": "gemma4_h200_ngram_verification_critical_path/artifacts/ngram-critical-20260724t115729Z/TRACE_ANALYSIS_REPAIR.json",
+        "sha256": "a22e25b3e911891d75e1008f22a03ad2a7d160584e1c83e660b8a3238602304f"
+      },
+      {
+        "expected_sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14",
+        "match": true,
+        "path": "gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/logits_processor.py",
+        "sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14"
+      },
+      {
+        "expected_sha256": "85541951e1cf50d10c54978178e403ff9d4aa6f223e629ea91965735ba882a8f",
+        "match": true,
+        "path": "gemma4_h200_fp8_tied_head_endpoint/iterations/graph-bound-endpoint-20260723t1930z/inputs/source/sampler.py",
+        "sha256": "85541951e1cf50d10c54978178e403ff9d4aa6f223e629ea91965735ba882a8f"
+      },
+      {
+        "expected_sha256": "ffa88c663e1893c306710ac801da0693d8248ebcfd1a5bc705c157f90657af1c",
+        "match": true,
+        "path": "gemma4_h200_ngram_verification_critical_path/inputs/source/ngram_info.py",
+        "sha256": "ffa88c663e1893c306710ac801da0693d8248ebcfd1a5bc705c157f90657af1c"
+      }
+    ],
+    "runtime_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2"
+  },
+  "classification": "typed_none",
+  "decision": {
+    "first_binding_failure": "The exact trace attributes only 5.614757996322584% of its window to every identified tied-head GEMM, BF16 materialization, softcap, and greedy argmax event. Even impossible zero-cost removal of that whole consumer gives 0.590048492777016 s/request, 0.089929211202020 above target.",
+    "impossible_zero_cost_output_consumer_seconds_per_request": 0.590048492777016,
+    "impossible_zero_cost_target_margin_seconds_per_request": -0.08992921120202002,
+    "locked_baseline_seconds_per_request": 0.625149101968745,
+    "required_reduction_fraction": 0.2,
+    "selected_explicit_gather_service_seconds_per_request": 0.6081462619749194,
+    "selected_explicit_gather_target_margin_seconds_per_request": -0.10802698039992342,
+    "target_reached": false,
+    "target_seconds_per_request": 0.500119281574996
+  },
+  "geometry": {
+    "concurrency": 32,
+    "draft_depth": 12,
+    "hidden_size": 5376,
+    "output_tokens_per_request": 358,
+    "softcap": 30.0,
+    "tied_rows_retained": 262144,
+    "tied_word_embeddings": true,
+    "verification_rows": 384,
+    "vocab_size": 262144
+  },
+  "implemented_mechanism": {
+    "cpu_consumer_fixture": {
+      "all_fixture_rows_reachable_once": true,
+      "candidate_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "coarse_route_ids": [
+        0,
+        1
+      ],
+      "expected_token": 0,
+      "fallback_dense_argmax": 0,
+      "greedy_sampler_token": 0,
+      "row_index_preserves_payload": true,
+      "softcapped_scores_finite": true
+    },
+    "graph_variants": "The exact M384 route has fixed [384,2048] coarse and [384,1024] candidate shapes; graph dispatch is charged. Unsupported shapes and consumers use the source-bound stock path.",
+    "production_consumers": [
+      "SGLang LogitsProcessor._get_logits",
+      "NgramVerifyInput._greedy_verify",
+      "NgramVerifyInput._sampling_verify stock fallback",
+      "Sampler.forward greedy compact consumer",
+      "Sampler.forward non-greedy/logprob/custom-processor stock fallback"
+    ],
+    "route": "Learned 2048x5376 coarse projection, stable top-8 route, 128 contiguous token rows per route, explicit per-hidden row gather, exact tied-row BF16 scoring, compact softcap and stable global-token argmax.",
+    "runner": "run_physical_screen.py",
+    "runner_sha256": "2ef2e0a3cc199c7e90a19f0375c5ea2daa322a8fd91cc0764528b647fdfc7310",
+    "scatter_index_semantics": "The compact payload carries global candidate token IDs beside scores; row slicing preserves both. Greedy consumers reduce scores and return the lowest global token ID on exact ties. Consumers requiring a dense distribution materialize the stock full tied head rather than scatter -inf proxy logits.",
+    "source": "hierarchical_tied_head.py",
+    "source_path_audit": {
+      "candidate_coarse_projection": true,
+      "candidate_explicit_fine_gather": true,
+      "candidate_fine_score": true,
+      "candidate_ngram_boundary": true,
+      "candidate_route_topk": true,
+      "candidate_runtime_install": true,
+      "candidate_sampler_boundary": true,
+      "candidate_softcap": true,
+      "candidate_stock_fallback": true,
+      "pinned_dense_head": true,
+      "pinned_ngram_argmax": true,
+      "pinned_ngram_sampling_softmax": true,
+      "pinned_sampler_argmax": true,
+      "pinned_sampler_softmax": true,
+      "pinned_softcap": true
+    },
+    "source_sha256": "77d63f1d15d2353aa4e89a7eff9ea3eea3e47fc841c28e353af9a44be02f56a3"
+  },
+  "limitations": [
+    "No checkpoint bytes, learned route weights, GPU component timing, or endpoint measurement were available or authorized.",
+    "Candidate cost rows are optimistic analytical floors, not transferable target-GPU measurements.",
+    "The target failure is independent of route quality and candidate cost because it grants zero cost to the entire attributed output consumer.",
+    "The mechanism must not be stacked with the separate prompt-state merge screen."
+  ],
+  "physical_accounting": {
+    "cost_labels": {
+      "charged_non_scaling_floors": [
+        "scatter_index_semantics_us",
+        "fixed_graph_variant_dispatch_us",
+        "synchronization_us"
+      ],
+      "optimistic_h200_physical_floors": [
+        "fine_row_explicit_gather_us",
+        "grouped_ragged_fine_score_us"
+      ],
+      "trace_scaled": [
+        "coarse_projection_us",
+        "route_topk_us",
+        "selected_row_softcap_us",
+        "compact_sampler_argmax_us"
+      ]
+    },
+    "fallback_charge": "Known unsupported requests dispatch directly to the measured stock consumer plus 35 us. A post-route incompatibility charges both the complete candidate route and the complete stock consumer.",
+    "fine_gather_charge": "Explicit advanced-index gather charges tied-row read plus materialized-row write at 1.5x the impossible peak-bandwidth floor; fine scoring separately rereads rows at a 2x ragged inefficiency floor.",
+    "h200_hbm_vendor_prior_bytes_per_second": 4800000000000.0,
+    "selected_design": {
+      "baseline_consumer_us_per_step": 8890.564666666667,
+      "clusters": 2048,
+      "costs": {
+        "coarse_projection_us": 64.929371875,
+        "compact_sampler_argmax_us": 15.0,
+        "fine_row_explicit_gather_us": 2642.41152,
+        "fixed_graph_variant_dispatch_us": 25.0,
+        "grouped_ragged_fine_score_us": 1761.60768,
+        "route_topk_us": 20.0,
+        "scatter_index_semantics_us": 20.0,
+        "selected_row_softcap_us": 15.0,
+        "synchronization_us": 20.0
+      },
+      "explicit_gather": true,
+      "fallback_rate": 0.0,
+      "fine_row_bytes_per_verification_step": 4227858432,
+      "post_route_fallback_total_us_per_step": 4583.948571875,
+      "pre_dispatch_fallback_total_us_per_step": 4583.948571875,
+      "routes_per_row": 8,
+      "rows_per_cluster": 128,
+      "selected_fraction": 0.00390625,
+      "selected_rows_per_hidden": 1024,
+      "supported_path_total_us_per_verification_step": 4583.948571875
+    },
+    "unrelated_savings_credited": []
+  },
+  "question": "Can a source-complete coarse-to-fine tied head preserve all 262144 rows and reach the locked 0.500119281574996 s/request target?",
+  "reachability_proof": {
+    "clusters": 2048,
+    "covered_rows": 262144,
+    "covered_token_interval": [
+      0,
+      262143
+    ],
+    "each_row_stored_once_in_unchanged_tied_weight": true,
+    "each_token_has_one_mechanical_coarse_route": true,
+    "partition": "token_id // 128",
+    "quality_or_dense_distribution_equivalence_claimed": false,
+    "routes_per_hidden": 8,
+    "rows_per_cluster": 128,
+    "vocabulary_deleted": false
+  },
+  "resource_use": {
+    "actual_spend_usd": 0.0,
+    "checkpoint_downloaded": false,
+    "gpu_claimed": false,
+    "provider_contacted": false
+  },
+  "schema_version": 1,
+  "semantics_and_quality": {
+    "checkpoint_downloaded": false,
+    "future_recovery_path": [
+      "recover the exact checkpoint only under later authority",
+      "learn or distill the coarse route while retaining the tied rows",
+      "measure route recall and target-GPU component behavior",
+      "run GPQA-Diamond, TauBench, tool-call, sampling, and logprob gates"
+    ],
+    "intervention_class": "intentional_model_semantics_change",
+    "learned_route_weights_available": false,
+    "quality_status": "unqualified",
+    "training_performed": false
+  },
+  "sensitivities": {
+    "cluster_route_and_gather": [
+      {
+        "baseline_consumer_us_per_step": 8890.564666666667,
+        "clusters": 512,
+        "costs": {
+          "coarse_projection_us": 25.0,
+          "compact_sampler_argmax_us": 15.0,
+          "fine_row_explicit_gather_us": 0.0,
+          "fixed_graph_variant_dispatch_us": 25.0,
+          "grouped_ragged_fine_score_us": 880.80384,
+          "route_topk_us": 20.0,
+          "scatter_index_semantics_us": 20.0,
+          "selected_row_softcap_us": 15.0,
+          "synchronization_us": 20.0
+        },
+        "derived_service_seconds_per_request": 0.5940787021048438,
+        "explicit_gather": false,
+        "fallback_rate": 0.0,
+        "fine_row_bytes_per_verification_step": 2113929216,
+        "post_route_fallback_total_us_per_step": 1020.80384,
+        "pre_dispatch_fallback_total_us_per_step": 1020.80384,
+        "routes_per_row": 1,
+        "rows_per_cluster": 512,
+        "selected_fraction": 0.001953125,
+        "selected_rows_per_hidden": 512,
+        "supported_path_total_us_per_verification_step": 1020.80384
+      },
+      {
+        "baseline_consumer_us_per_step": 8890.564666666667,
+        "clusters": 512,
+        "costs": {
+          "coarse_projection_us": 25.0,
+          "compact_sampler_argmax_us": 15.0,
+          "fine_row_explicit_gather_us": 1321.20576,
+          "fixed_graph_variant_dispatch_us": 25.0,
+          "grouped_ragged_fine_score_us": 880.80384,
+          "route_topk_us": 20.0,
+          "scatter_index_semantics_us": 20.0,
+          "selected_row_softcap_us": 15.0,
+          "synchronization_us": 20.0
+        },
+        "derived_service_seconds_per_request": 0.5992949205096765,
+        "explicit_gather": true,
+        "fallback_rate": 0.0,
+        "fine_row_bytes_per_verification_step": 2113929216,
+        "post_route_fallback_total_us_per_step": 2342.0096000000003,
+        "pre_dispatch_fallback_total_us_per_step": 2342.0096000000003,
+        "routes_per_row": 1,
+        "rows_per_cluster": 512,
+        "selected_fraction": 0.001953125,
+        "selected_rows_per_hidden": 512,
+        "supported_path_total_us_per_verification_step": 2342.0096000000003
+      },
+      {
+        "baseline_consumer_us_per_step": 8890.564666666667,
+        "clusters": 1024,
+        "costs": {
+          "coarse_projection_us": 32.4646859375,
+          "compact_sampler_argmax_us": 15.0,
+          "fine_row_explicit_gather_us": 0.0,
+          "fixed_graph_variant_dispatch_us": 25.0,
+          "grouped_ragged_fine_score_us": 880.80384,
+          "route_topk_us": 20.0,
+          "scatter_index_semantics_us": 20.0,
+          "selected_row_softcap_us": 15.0,
+          "synchronization_us": 20.0
+        },
+        "derived_service_seconds_per_request": 0.5941081732389792,
+        "explicit_gather": false,
+        "fallback_rate": 0.0,
+        "fine_row_bytes_per_verification_step": 2113929216,
+        "post_route_fallback_total_us_per_step": 1028.2685259375,
+        "pre_dispatch_fallback_total_us_per_step": 1028.2685259375,
+        "routes_per_row": 2,
+        "rows_per_cluster": 256,
+        "selected_fraction": 0.001953125,
+        "selected_rows_per_hidden": 512,
+        "supported_path_total_us_per_verification_step": 1028.2685259375
+      },
+      {
+        "baseline_consumer_us_per_step": 8890.564666666667,
+        "clusters": 1024,
+        "costs": {
+          "coarse_projection_us": 32.4646859375,
+          "compact_sampler_argmax_us": 15.0,
+          "fine_row_explicit_gather_us": 1321.20576,
+          "fixed_graph_variant_dispatch_us": 25.0,
+          "grouped_ragged_fine_score_us": 880.80384,
+          "route_topk_us": 20.0,
+          "scatter_index_semantics_us": 20.0,
+          "selected_row_softcap_us": 15.0,
+          "synchronization_us": 20.0
+        },
+        "derived_service_seconds_per_request": 0.5993243916438119,
+        "explicit_gather": true,
+        "fallback_rate": 0.0,
+        "fine_row_bytes_per_verification_step": 2113929216,
+        "post_route_fallback_total_us_per_step": 2349.4742859375,
+        "pre_dispatch_fallback_total_us_per_step": 2349.4742859375,
+        "routes_per_row": 2,
+        "rows_per_cluster": 256,
+        "selected_fraction": 0.001953125,
+        "selected_rows_per_hidden": 512,
+        "supported_path_total_us_per_verification_step": 2349.4742859375
+      },
+      {
+        "baseline_consumer_us_per_step": 8890.564666666667,
+        "clusters": 2048,
+        "costs": {
+          "coarse_projection_us": 64.929371875,
+          "compact_sampler_argmax_us": 15.0,
+          "fine_row_explicit_gather_us": 0.0,
+          "fixed_graph_variant_dispatch_us": 25.0,
+          "grouped_ragged_fine_score_us": 880.80384,
+          "route_topk_us": 20.0,
+          "scatter_index_semantics_us": 20.0,
+          "selected_row_softcap_us": 15.0,
+          "synchronization_us": 20.0
+        },
+        "derived_service_seconds_per_request": 0.5942363462286991,
+        "explicit_gather": false,
+        "fallback_rate": 0.0,
+        "fine_row_bytes_per_verification_step": 2113929216,
+        "post_route_fallback_total_us_per_step": 1060.733211875,
+        "pre_dispatch_fallback_total_us_per_step": 1060.733211875,
+        "routes_per_row": 4,
+        "rows_per_cluster": 128,
+        "selected_fraction": 0.001953125,
+        "selected_rows_per_hidden": 512,
+        "supported_path_total_us_per_verification_step": 1060.733211875
+      },
+      {
+        "baseline_consumer_us_per_step": 8890.564666666667,
+        "clusters": 2048,
+        "costs": {
+          "coarse_projection_us": 64.929371875,
+          "compact_sampler_argmax_us": 15.0,
+          "fine_row_explicit_gather_us": 1321.20576,
+          "fixed_graph_variant_dispatch_us": 25.0,
+          "grouped_ragged_fine_score_us": 880.80384,
+          "route_topk_us": 20.0,
+          "scatter_index_semantics_us": 20.0,
+          "selected_row_softcap_us": 15.0,
+          "synchronization_us": 20.0
+        },
+        "derived_service_seconds_per_request": 0.5994525646335317,
+        "explicit_gather": true,
+        "fallback_rate": 0.0,
+        "fine_row_bytes_per_verification_step": 2113929216,
+        "post_route_fallback_total_us_per_step": 2381.938971875,
+        "pre_dispatch_fallback_total_us_per_step": 2381.938971875,
+        "routes_per_row": 4,
+        "rows_per_cluster": 128,
+        "selected_fraction": 0.001953125,
+        "selected_rows_per_hidden": 512,
+        "supported_path_total_us_per_verification_step": 2381.938971875
+      },
+      {
+        "baseline_consumer_us_per_step": 8890.564666666667,
+        "clusters": 2048,
+        "costs": {
+          "coarse_projection_us": 64.929371875,
+          "compact_sampler_argmax_us": 15.0,
+          "fine_row_explicit_gather_us": 0.0,
+          "fixed_graph_variant_dispatch_us": 25.0,
+          "grouped_ragged_fine_score_us": 1761.60768,
+          "route_topk_us": 20.0,
+          "scatter_index_semantics_us": 20.0,
+          "selected_row_softcap_us": 15.0,
+          "synchronization_us": 20.0
+        },
+        "derived_service_seconds_per_request": 0.5977138251652542,
+        "explicit_gather": false,
+        "fallback_rate": 0.0,
+        "fine_row_bytes_per_verification_step": 4227858432,
+        "post_route_fallback_total_us_per_step": 1941.537051875,
+        "pre_dispatch_fallback_total_us_per_step": 1941.537051875,
+        "routes_per_row": 8,
+        "rows_per_cluster": 128,
+        "selected_fraction": 0.00390625,
+        "selected_rows_per_hidden": 1024,
+        "supported_path_total_us_per_verification_step": 1941.537051875
+      },
+      {
+        "baseline_consumer_us_per_step": 8890.564666666667,
+        "clusters": 2048,
+        "costs": {
+          "coarse_projection_us": 64.929371875,
+          "compact_sampler_argmax_us": 15.0,
+          "fine_row_explicit_gather_us": 2642.41152,
+          "fixed_graph_variant_dispatch_us": 25.0,
+          "grouped_ragged_fine_score_us": 1761.60768,
+          "route_topk_us": 20.0,
+          "scatter_index_semantics_us": 20.0,
+          "selected_row_softcap_us": 15.0,
+          "synchronization_us": 20.0
+        },
+        "derived_service_seconds_per_request": 0.6081462619749194,
+        "explicit_gather": true,
+        "fallback_rate": 0.0,
+        "fine_row_bytes_per_verification_step": 4227858432,
+        "post_route_fallback_total_us_per_step": 4583.948571875,
+        "pre_dispatch_fallback_total_us_per_step": 4583.948571875,
+        "routes_per_row": 8,
+        "rows_per_cluster": 128,
+        "selected_fraction": 0.00390625,
+        "selected_rows_per_hidden": 1024,
+        "supported_path_total_us_per_verification_step": 4583.948571875
+      },
+      {
+        "baseline_consumer_us_per_step": 8890.564666666667,
+        "clusters": 4096,
+        "costs": {
+          "coarse_projection_us": 129.85874375,
+          "compact_sampler_argmax_us": 15.0,
+          "fine_row_explicit_gather_us": 0.0,
+          "fixed_graph_variant_dispatch_us": 25.0,
+          "grouped_ragged_fine_score_us": 880.80384,
+          "route_topk_us": 20.0,
+          "scatter_index_semantics_us": 20.0,
+          "selected_row_softcap_us": 15.0,
+          "synchronization_us": 20.0
+        },
+        "derived_service_seconds_per_request": 0.5944926922081388,
+        "explicit_gather": false,
+        "fallback_rate": 0.0,
+        "fine_row_bytes_per_verification_step": 2113929216,
+        "post_route_fallback_total_us_per_step": 1125.66258375,
+        "pre_dispatch_fallback_total_us_per_step": 1125.66258375,
+        "routes_per_row": 8,
+        "rows_per_cluster": 64,
+        "selected_fraction": 0.001953125,
+        "selected_rows_per_hidden": 512,
+        "supported_path_total_us_per_verification_step": 1125.66258375
+      },
+      {
+        "baseline_consumer_us_per_step": 8890.564666666667,
+        "clusters": 4096,
+        "costs": {
+          "coarse_projection_us": 129.85874375,
+          "compact_sampler_argmax_us": 15.0,
+          "fine_row_explicit_gather_us": 1321.20576,
+          "fixed_graph_variant_dispatch_us": 25.0,
+          "grouped_ragged_fine_score_us": 880.80384,
+          "route_topk_us": 20.0,
+          "scatter_index_semantics_us": 20.0,
+          "selected_row_softcap_us": 15.0,
+          "synchronization_us": 20.0
+        },
+        "derived_service_seconds_per_request": 0.5997089106129715,
+        "explicit_gather": true,
+        "fallback_rate": 0.0,
+        "fine_row_bytes_per_verification_step": 2113929216,
+        "post_route_fallback_total_us_per_step": 2446.86834375,
+        "pre_dispatch_fallback_total_us_per_step": 2446.86834375,
+        "routes_per_row": 8,
+        "rows_per_cluster": 64,
+        "selected_fraction": 0.001953125,
+        "selected_rows_per_hidden": 512,
+        "supported_path_total_us_per_verification_step": 2446.86834375
+      },
+      {
+        "baseline_consumer_us_per_step": 8890.564666666667,
+        "clusters": 4096,
+        "costs": {
+          "coarse_projection_us": 129.85874375,
+          "compact_sampler_argmax_us": 15.0,
+          "fine_row_explicit_gather_us": 0.0,
+          "fixed_graph_variant_dispatch_us": 25.0,
+          "grouped_ragged_fine_score_us": 1761.60768,
+          "route_topk_us": 20.0,
+          "scatter_index_semantics_us": 20.0,
+          "selected_row_softcap_us": 15.0,
+          "synchronization_us": 20.0
+        },
+        "derived_service_seconds_per_request": 0.5979701711446939,
+        "explicit_gather": false,
+        "fallback_rate": 0.0,
+        "fine_row_bytes_per_verification_step": 4227858432,
+        "post_route_fallback_total_us_per_step": 2006.46642375,
+        "pre_dispatch_fallback_total_us_per_step": 2006.46642375,
+        "routes_per_row": 16,
+        "rows_per_cluster": 64,
+        "selected_fraction": 0.00390625,
+        "selected_rows_per_hidden": 1024,
+        "supported_path_total_us_per_verification_step": 2006.46642375
+      },
+      {
+        "baseline_consumer_us_per_step": 8890.564666666667,
+        "clusters": 4096,
+        "costs": {
+          "coarse_projection_us": 129.85874375,
+          "compact_sampler_argmax_us": 15.0,
+          "fine_row_explicit_gather_us": 2642.41152,
+          "fixed_graph_variant_dispatch_us": 25.0,
+          "grouped_ragged_fine_score_us": 1761.60768,
+          "route_topk_us": 20.0,
+          "scatter_index_semantics_us": 20.0,
+          "selected_row_softcap_us": 15.0,
+          "synchronization_us": 20.0
+        },
+        "derived_service_seconds_per_request": 0.6084026079543592,
+        "explicit_gather": true,
+        "fallback_rate": 0.0,
+        "fine_row_bytes_per_verification_step": 4227858432,
+        "post_route_fallback_total_us_per_step": 4648.87794375,
+        "pre_dispatch_fallback_total_us_per_step": 4648.87794375,
+        "routes_per_row": 16,
+        "rows_per_cluster": 64,
+        "selected_fraction": 0.00390625,
+        "selected_rows_per_hidden": 1024,
+        "supported_path_total_us_per_verification_step": 4648.87794375
+      }
+    ],
+    "fallback": [
+      {
+        "fallback_rate": 0.0,
+        "post_route_service_seconds_per_request": 0.6081462619749194,
+        "pre_dispatch_service_seconds_per_request": 0.6081462619749194
+      },
+      {
+        "fallback_rate": 0.01,
+        "post_route_service_seconds_per_request": 0.6084986498928149,
+        "pre_dispatch_service_seconds_per_request": 0.6083176722008359
+      },
+      {
+        "fallback_rate": 0.05,
+        "post_route_service_seconds_per_request": 0.6099082015643967,
+        "pre_dispatch_service_seconds_per_request": 0.6090033131045016
+      },
+      {
+        "fallback_rate": 0.1,
+        "post_route_service_seconds_per_request": 0.6116701411538742,
+        "pre_dispatch_service_seconds_per_request": 0.6098603642340839
+      },
+      {
+        "fallback_rate": 1.0,
+        "post_route_service_seconds_per_request": 0.6433850537644665,
+        "pre_dispatch_service_seconds_per_request": 0.6252872845665631
+      }
+    ],
+    "universal_zero_candidate_cost_floor": {
+      "candidate_component_us": 0.0,
+      "service_seconds_per_request": 0.590048492777016,
+      "target_reached": false
+    }
+  },
+  "trace_attribution": {
+    "all_identified_output_consumer_fraction_of_window": 0.056147579963225835,
+    "all_identified_output_consumer_interval_union_us": 133358.47021484375,
+    "all_identified_output_consumer_summed_us": 133358.47,
+    "attribution_method": "Direct exact-name CUDA event join in the hash-bound exact-c32 trace; 180 head/materialization/softcap calls equal 15 steps x 12 depths, and 15 full-vocabulary argmax reductions equal the 15 greedy verification steps. All 555 events execute on CUDA stream 0:37 without overlap; interval union, not an unexamined kernel sum, supplies the wall-time fraction.",
+    "conservative_transfer": "The measured steady-state fraction is applied to the entire locked service denominator, including prefill and unprofiled regions where no head credit is established. This deliberately overcredits the intervention.",
+    "events": {
+      "bf16_to_fp32_materialization": {
+        "calls": 180,
+        "pattern": "unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()()",
+        "streams": [
+          "0:37"
+        ],
+        "summed_us": 4201.835
+      },
+      "dense_tied_head_gemm": {
+        "calls": 180,
+        "pattern": "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT",
+        "streams": [
+          "0:37"
+        ],
+        "summed_us": 124664.394
+      },
+      "full_vocab_greedy_argmax": {
+        "calls": 15,
+        "pattern": "ReduceOp<float, at::native::ArgMaxOps<float>",
+        "streams": [
+          "0:37"
+        ],
+        "summed_us": 2017.731
+      },
+      "full_vocab_softcap": {
+        "calls": 180,
+        "pattern": "softcap_inplace_logits_kernel",
+        "streams": [
+          "0:37"
+        ],
+        "summed_us": 2474.5099999999998
+      }
+    },
+    "profile_window_us": 2375141.908203125,
+    "summed_equals_interval_union_within_us": 0.00021484374883584678
+  },
+  "typed_none_reason": "target_failure_after_complete_output_consumer_attribution"
+}

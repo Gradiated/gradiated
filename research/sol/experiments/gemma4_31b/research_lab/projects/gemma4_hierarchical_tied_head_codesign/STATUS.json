@@ -1,0 +1,41 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "bench_need": {
+    "claim_allowed": false,
+    "reason": "The project is terminal and had zero provider/GPU authority."
+  },
+  "compute_budget": "local CPU only; zero accelerator compute",
+  "decision": "typed_none_target_failure",
+  "last_researcher_run": {
+    "artifact": "HIERARCHICAL_TIED_HEAD_PHYSICAL_SCREEN.json",
+    "artifact_sha256": "40b00f5bd09dfbb02420ca4535f80d024a9f2df01e3cfecedaf9f24afb54f206",
+    "completed_at_utc": "2026-07-26T09:58:30Z",
+    "implementation": "hierarchical_tied_head.py",
+    "implementation_sha256": "77d63f1d15d2353aa4e89a7eff9ea3eea3e47fc841c28e353af9a44be02f56a3",
+    "runner": "run_physical_screen.py",
+    "runner_sha256": "2ef2e0a3cc199c7e90a19f0375c5ea2daa322a8fd91cc0764528b647fdfc7310"
+  },
+  "next_action": "Terminal typed none. Preserve HIERARCHICAL_TIED_HEAD_PHYSICAL_SCREEN.json and do not recover a checkpoint, train, claim a GPU, or measure this head-only route against the locked 20% target unless the director admits a materially different question.",
+  "priority": 8760,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "deep",
+  "result": {
+    "all_tied_rows_retained": true,
+    "artifact": "HIERARCHICAL_TIED_HEAD_PHYSICAL_SCREEN.json",
+    "artifact_sha256": "40b00f5bd09dfbb02420ca4535f80d024a9f2df01e3cfecedaf9f24afb54f206",
+    "classification": "typed_none",
+    "consumer_source_complete": true,
+    "impossible_zero_cost_output_consumer_seconds_per_request": 0.590048492777016,
+    "locked_target_seconds_per_request": 0.500119281574996,
+    "selected_explicit_gather_seconds_per_request": 0.6081462619749194,
+    "target_reached": false,
+    "trace_attributed_output_consumer_fraction": 0.056147579963225835
+  },
+  "schema_version": 1,
+  "status": "complete",
+  "storage_budget": "project-local source and compact JSON only",
+  "summary": "Typed none after a source-complete route: all 262,144 tied rows remain mechanically reachable through the logits, NGRAM greedy, and sampler boundaries, but every exact trace-attributed head/materialization/softcap/argmax event is only 5.6148% of the window. Even impossible zero-cost removal yields 0.590048492777016 s/request, well above the locked 0.500119281574996 target."
+}

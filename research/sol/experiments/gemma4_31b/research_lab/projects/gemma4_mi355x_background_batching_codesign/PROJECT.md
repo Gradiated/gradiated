@@ -159,3 +159,57 @@ Iteration-2 limits are 3 wall hours, 12 CPU-hours, 2 GiB new storage, and
 `$0`. Do not download or copy the checkpoint, claim hardware, contact a
 provider, use paid APIs, create resources, or alter the preserved c32 MI355X
 lifecycle.
+
+## Director iteration 3 — phase-aligned microcohorts
+
+`MI355X_ROLLING_BATCHING_SCREEN.json` is a preserved typed negative for
+immediate individual admission. Do not overwrite or relabel it. It fixes
+queueing but settles at mean live width `65.07434471225507`; more importantly,
+150,000 request-relative target cycles dephase into 52,127 small forwards,
+repeatedly charging transformer/head streams and launches.
+
+Test one preselected phase-aligned microcohort policy in this same project:
+
+- Form immutable FCFS microcohorts of exactly 16 requests. Six cohorts fill
+  the 96-sequence capacity. Sixteen is fixed because it divides 96 and its
+  conservative full-cohort arrival budget at iteration 2's 90%-capacity rate
+  is below the 10-second queue gate. Do not test another cohort size.
+- Admit a cohort only when all 16 requests are present, then keep its request
+  membership phase-aligned through prefill, 358 output rows, all 15 required
+  depth-12 target cycles, sampling, and completion. Admit later cohorts
+  independently as slots free; do not wait for all 96 requests.
+- Bind the current scheduler, token-budget, prefill/decode interleave,
+  cohort-local position/KV ownership, compaction, graph/eager dispatch,
+  target-verification consumer, sampling, and cohort release path. The
+  implementation may add one model-specific scheduler adapter but may not
+  change model or request semantics.
+- Use one deterministic 8,192-token prefill budget and eager exact-row
+  execution. Do not sweep token budget, cohort size, load, timeout, graph
+  mode, or policy.
+- Simulate a finite arrival stream with bootstrap, steady state, and drain at
+  no more than 90% of this policy's conservative capacity. Charge every
+  actual-width prompt, decode, and target event; FP8/BF16 weights, compute,
+  KV/attention, tied head, non-GEMM bytes, launches, synchronization,
+  microcohort fill/barrier, idle time, compaction, memory, fallback, bootstrap,
+  drain, and scheduler/service cost. Preserve partially filled final cohorts
+  with an explicitly charged exact fallback; do not discard them.
+- Preserve every request and 4,572 tokens/request, the exact cache mixture,
+  all layers, widths, heads, parameters, KV rows, sampling, and features.
+  Stack no speculative, compression, prompt-state, attention-state, head, or
+  other survivor gain.
+
+Emit `MI355X_MICROCOHORT_BATCHING_SCREEN.json` as:
+
+- `source_complete_microcohort_batching_candidate` only if the single
+  16-request policy is source-complete, the finite-horizon all-request mean is
+  at most `0.500119281574996 s/request`, offered load is no more than 90% of
+  conservative capacity, queue p95 is at most 10 seconds, completion p95 is
+  at most 90 seconds, memory fits, starvation is zero, all costs are charged,
+  and one finite target-MI355X discriminator can falsify it; or
+- `typed_none` if any source, semantic, physical, capacity, latency, load,
+  reliability, fallback, memory, or economic gate fails.
+
+Iteration-3 limits are 3 wall hours, 12 CPU-hours, 2 GiB new storage, and
+`$0`. Do not download or copy the checkpoint, claim hardware, contact a
+provider, use paid APIs, create resources, or alter the preserved c32 MI355X
+lifecycle.

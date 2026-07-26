@@ -1,0 +1,79 @@
+{
+  "binding": {
+    "prior_real_consumer_terminal_sha256": "a08190cc600cca336c5d0ebe04f4d9353797e01ed0fd026011da462ddb847d34",
+    "runtime_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "trace_sha256": "37e2c73a57e8e63bd7ec0a3465cc1edded8b9dc63507d97e85a767306a97a48b"
+  },
+  "candidate": {
+    "baseline": "GeluAndMul(BF16) -> per-token E4M3 quant -> fp8_scaled_mm down projection",
+    "consumer": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm",
+    "geometry": {
+      "down_weight": [
+        21504,
+        5376
+      ],
+      "gate_up_output": [
+        384,
+        43008
+      ],
+      "quantized_activation": [
+        384,
+        21504
+      ]
+    },
+    "implementation": "fused_swiglu_quant.cu",
+    "mechanism": "one CTA per row retains the once-rounded BF16 SwiGLU intermediate in 43,008 shared-memory bytes for row amax and E4M3 conversion, then feeds the unchanged column-major down GEMM",
+    "semantics_repair": "removed the prior extra BF16 rounding between GELU and multiply"
+  },
+  "decision": {
+    "reason_code": "measured_removable_wall_share_below_target",
+    "result": "typed_none",
+    "target_fraction": 0.1,
+    "target_us_in_trace_window": 237514.1908203125,
+    "upper_bound_fraction_of_target": 0.0753588771793263,
+    "whole_request_reduction_fraction_upper": 0.00753588771793263
+  },
+  "evidence_labels": {
+    "adjacency_and_time": "measured",
+    "candidate_dataflow": "implemented",
+    "consumer_compatibility": "measured_prior_exact_consumer",
+    "whole_request_bound": "derived_conservative_upper"
+  },
+  "materialization": {
+    "bf16_bytes_removed_per_invocation": 49545216,
+    "bf16_bytes_removed_trace": 44590694400,
+    "launches_removed_trace": 900,
+    "shared_memory_bytes_per_cta": 43008
+  },
+  "measured_trace": {
+    "activation_launches": 900,
+    "expected_layers_times_steps": "60*15",
+    "non_attention_selected_block_fraction": 0.1423063926352223,
+    "sums_us": {
+      "activation_us": 10693.864,
+      "down_gemm_us": 120516.488,
+      "down_quant_us": 6534.684,
+      "full_block_interval_us": 337997.876953125,
+      "gate_up_gemm_us": 191435.501,
+      "launch_gap_us": 670.29296875,
+      "removable_seam_upper_us": 17898.802734375,
+      "residual_us": 3746.462
+    },
+    "target_verification_window_us": 2375141.908203125
+  },
+  "prior_real_consumer": {
+    "classification": "component_negative",
+    "consumer_weight_shape": [
+      21504,
+      5376
+    ],
+    "consumer_weight_stride": [
+      1,
+      21504
+    ],
+    "old_candidate_m2048_component_ms": 0.3744960129261017,
+    "old_candidate_m32_component_ms": 0.04412800073623657,
+    "scope_note": "Used only as actual-consumer/path evidence; M32/M2048 timing and the extra-rounding numerical negative are not transferred to the corrected M384 candidate."
+  },
+  "schema_version": 1
+}

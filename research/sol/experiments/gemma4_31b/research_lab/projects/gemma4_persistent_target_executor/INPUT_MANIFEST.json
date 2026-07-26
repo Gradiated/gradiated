@@ -1,0 +1,26 @@
+{
+  "inputs": [
+    {
+      "path": "inputs/current_trace/config.json",
+      "role": "exact Gemma geometry",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    {
+      "path": "inputs/current_trace/target_verify.trace.json.gz",
+      "role": "current exact c32 target-verification CPU and CUDA trace",
+      "sha256": "37e2c73a57e8e63bd7ec0a3465cc1edded8b9dc63507d97e85a767306a97a48b"
+    },
+    {
+      "path": "inputs/prior_real_consumer/TERMINAL.json",
+      "role": "prior H200 actual fp8_scaled_mm consumer execution evidence",
+      "sha256": "a08190cc600cca336c5d0ebe04f4d9353797e01ed0fd026011da462ddb847d34"
+    },
+    {
+      "path": "inputs/prior_real_consumer/WEIGHT_METADATA.json",
+      "role": "real down-projection layout and scale metadata",
+      "sha256": "52a497c980a99dcc97504cab135229319adab6f59045c67edb9a3fcc8afc4a21"
+    }
+  ],
+  "materialization": "immutable project-local copies",
+  "schema_version": 1
+}

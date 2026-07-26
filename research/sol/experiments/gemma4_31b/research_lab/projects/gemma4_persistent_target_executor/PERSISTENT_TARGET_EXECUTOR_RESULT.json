@@ -1,0 +1,70 @@
+{
+  "actual_spend_usd": 0.0,
+  "artifacts": {
+    "boundary_measurement": {
+      "path": "artifacts/BOUNDARY_MEASUREMENT.json",
+      "sha256": "e6b297cadb30d6d3d3a9deddb9fb59675304168071a3f8fe4df2bd684c08a9cf"
+    },
+    "candidate_cuda": {
+      "path": "fused_swiglu_quant.cu",
+      "sha256": "b23a41e3bcb82ccc96ab832e20599d4ab050e828282c9c504fb9061dc8afbe28"
+    },
+    "exact_consumer_runner": {
+      "path": "exact_consumer_runner.py",
+      "sha256": "576e95c1c44d344f17d746057960845183ac4e2ee699a19bd2b5bd6f2a81c499"
+    },
+    "semantic_fixture": {
+      "path": "artifacts/SEMANTIC_FIXTURE.json",
+      "sha256": "abc3fca9453567e8c444b0ba3e4527a0e5de47c582bfa86c2c45c4b72548cfe7"
+    }
+  },
+  "candidate": {
+    "consumer": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm",
+    "down_weight_shape": [
+      21504,
+      5376
+    ],
+    "down_weight_stride": [
+      1,
+      21504
+    ],
+    "gate_up_output_shape": [
+      384,
+      43008
+    ],
+    "implementation": "one-CTA-per-row SwiGLU plus dynamic E4M3 producer feeding the unchanged column-major down GEMM",
+    "quantized_activation_shape": [
+      384,
+      21504
+    ],
+    "semantics": "preserves the single stock BF16 rounding after GELU-tanh times up; no intermediate BF16 rounding"
+  },
+  "decision": {
+    "explanation": "The selected full MLP block occupies 14.2306% of the exact verification window, but 92.2941% of that block is the two mathematically required FP8 GEMMs. The implemented cross-operator seam can remove only the SwiGLU materialization, the standalone down-input quantization launch, and their launch gaps. Even crediting all of that measured interval as zero-cost saves at most 0.753589% of the verification window. Since verification cannot exceed the whole request, this is also a conservative whole-request upper bound and is 13.2698 times smaller than the required 10% reduction.",
+    "reason_code": "measured_removable_wall_share_below_target",
+    "result": "typed_none"
+  },
+  "generated_at_utc": "2026-07-26T16:27:21Z",
+  "measurement": {
+    "activation_launches": 900,
+    "bf16_materialization_bytes_removed_trace": 44590694400,
+    "full_selected_block_fraction_of_trace": 0.1423063926352223,
+    "launches_removed_trace": 900,
+    "removable_seam_upper_fraction_of_trace": 0.00753588771793263,
+    "removable_seam_upper_us": 17898.802734375,
+    "target_fraction": 0.1,
+    "target_us_in_trace_window": 237514.1908203125,
+    "target_verification_window_us": 2375141.908203125
+  },
+  "provider_mutation": false,
+  "schema_version": 1,
+  "scientific_sample_consumed": false,
+  "semantic_fixture": {
+    "candidate_bf16_mismatches": 0,
+    "elements": 8257536,
+    "finite": true,
+    "nonzero": 8255605,
+    "old_extra_rounding_mismatches": 2053347
+  },
+  "target_gpu_invocation": false
+}

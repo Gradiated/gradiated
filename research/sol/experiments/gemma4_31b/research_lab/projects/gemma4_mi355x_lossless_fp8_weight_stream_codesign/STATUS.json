@@ -1,0 +1,29 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "authorized_spend_usd": 0.0,
+  "decision": "typed_none_entropy_and_economic_gate",
+  "last_researcher_run": {
+    "completed_at_utc": "2026-07-26T13:56:48Z",
+    "full_measurement": {
+      "artifact": "FULL_CHECKPOINT_STREAM_RESULT.json",
+      "artifact_sha256": "16950c9160918898b9f74f727335862a84c9a5f6f10ee3edad34fe2c2e6618f5",
+      "bitwise_decoded_bytes": 29396828160,
+      "block_count": 7176960,
+      "compression_ratio": 1.0676357239351908,
+      "runtime_modules": 240
+    },
+    "result": "typed_none",
+    "terminal": {
+      "artifact": "LOSSLESS_FP8_WEIGHT_STREAM_SCREEN.json",
+      "artifact_sha256": "dbd6f331cd869b3cf560b59a804f1e40da0f8c8f8083fb4578dabd0e693df64e",
+      "gate": "entropy_and_economic"
+    }
+  },
+  "next_action": "Director only: retain the typed none for the preregistered tensor_top31_u5_escape_v1 realization. Do not replay or change the consumed code in this project, claim a gfx950 bench, contact a provider, create a resource, or alter the preserved MI355X lifecycle.",
+  "priority": 8765,
+  "researcher_profile": "deep",
+  "schema_version": 1,
+  "status": "complete",
+  "summary": "Typed none at the entropy/economic gate. The preregistered 4096-byte top-31/5-bit/escape code decoded all 29,396,828,160 runtime FP8 bytes bitwise exactly, but every one of 7,176,960 blocks expanded and the metadata-inclusive stream ratio was 1.0676357239351908. Even a physically impossible zero-cost gfx950 decoder yields 0.6247081622369317 s/request, missing the 0.5910500600431771 target by 0.033658102193754647 s/request; real decode and resource costs can only worsen it. Spend remained $0 and no GPU/provider/resource/lifecycle mutation occurred."
+}

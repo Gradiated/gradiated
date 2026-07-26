@@ -1,0 +1,59 @@
+{
+  "block_bytes": 4096,
+  "code": "tensor_top31_u5_escape_v1",
+  "codebook": {
+    "entries": 31,
+    "selection": "For each fused runtime tensor, sort its exact E4M3FN byte histogram by descending count and then ascending byte value; entries 0..30 are fixed to that order.",
+    "stored_bytes_per_tensor": 32
+  },
+  "decision_rule": {
+    "candidate_requires": [
+      "all 29396828160 runtime transformer FP8 bytes are encoded and bitwise decoded",
+      "all header, dictionary, directory, token, literal, alignment, decode, LDS, synchronization, register, occupancy, cache, fallback, and endpoint costs are charged",
+      "a real gfx950 candidate-path measurement reaches the first matrix-core GEMM tile",
+      "the conservative service bound is at most 0.5910500600431771 seconds per request"
+    ],
+    "otherwise": "typed_none at the first decisive gate"
+  },
+  "directory": {
+    "entry": "uint32 little-endian literal-prefix byte offset",
+    "entries_per_tensor": "block_count + 1",
+    "random_access": "block b token bytes begin at token_base + b*2560; its literal bytes are literal_base + directory[b] through literal_base + directory[b+1]",
+    "stored_bytes_per_block": 4
+  },
+  "escape": {
+    "index": 31,
+    "literal_order": "source order within each block, blocks in ascending order",
+    "literal_width_bits": 8
+  },
+  "layout": {
+    "amended_at_utc": "2026-07-26T13:38:00Z",
+    "amendment_reason": "Before the full pass or any module quantization, bind each block to the first matrix-core consumer tile instead of an underspecified flat traversal; no codec, block size, dictionary, token, or escape rule changed.",
+    "block_mapping": "Deterministic K-major then N-major tiling of the post-quantization transposed KxN weight: each block is one row-major 32x128 KxN tile.",
+    "consumer": "post-quantization transposed KxN ROCmFP8ScaledMMLinearKernel weight layout, bijectively tiled into 32x128 matrix-core blocks",
+    "header_bytes": 64,
+    "segment_alignment_bytes": 256,
+    "segments": [
+      "header",
+      "32-byte dictionary",
+      "uint32 literal-prefix directory",
+      "packed 5-bit token stream",
+      "escape literal stream"
+    ]
+  },
+  "preregistered_at_utc": "2026-07-26T13:32:13Z",
+  "preregistered_before_full_checkpoint_pass": true,
+  "pre_science_amendments": 1,
+  "schema_version": 1,
+  "selection": {
+    "block_size_swept": false,
+    "codec_family_swept": false,
+    "format_swept": false,
+    "hardware_swept": false
+  },
+  "token_stream": {
+    "bit_order": "little-endian, eight 5-bit indices packed into five bytes",
+    "bytes_per_full_block": 2560,
+    "index_width_bits": 5
+  }
+}

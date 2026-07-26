@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "status": "closed",
+  "priority": 8510,
+  "researcher_profile": "deep",
+  "active_session": null,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.0,
+  "accelerator_requirement": "none; strictly local CPU analysis in this admission",
+  "bench_need": {
+    "claim_allowed": false,
+    "reason": "The immediate result is an offline recall, candidate-size, and H200 physical-bound falsifier over an existing exact hidden-state capture."
+  },
+  "scheduler_admission": {
+    "admitted": false,
+    "gpu_claim_allowed": false,
+    "provider_creation_allowed": false,
+    "reason": "The exact offline experiment is terminal. Its physical bound is positive, but the bound capture contains one unique hidden state and does not justify an H200 claim."
+  },
+  "decision": "do_not_admit_h200_from_degenerate_capture",
+  "result": "offline_capture_degenerate_positive_physical_bound_not_admissible",
+  "hypothesis": "A request-adaptive index over the tied 262144 x 5376 vocabulary weight can recover full-head top-1 on the exact 384-row capture while exact-scoring a small enough candidate set to reduce H200 weight traffic after routing and index costs.",
+  "next_action": "Closed without GPU work. A successor may hash-bind a capture with genuinely distinct verifier hidden states and rerun the same offline W8A8/coordinate retrieval consumer before any H200 claim.",
+  "summary": "Exact CPU experiment completed. Request-adaptive retrieval has a favorable analytical physical bound on the bound state, but the nominal 384-row capture is one identical hidden state repeated 384 times; close this admission rather than spend an H200 sample.",
+  "quality_claim_authorized": false,
+  "performance_claim_authorized": false,
+  "scientific_sample_consumed": true,
+  "closed_at": "2026-07-26T01:47:00Z",
+  "terminal_artifact": "ADAPTIVE_RETRIEVAL_VOCAB_OFFLINE_TERMINAL.json",
+  "terminal_sha256": "29644d701a38606f6a8f9230da753b2ecdccd969093ca80af75dfd9d6c3e54dd",
+  "runner": "adaptive_retrieval_vocab_offline.py",
+  "runner_sha256": "fd04d8bdb7341f98492b5252d5049da5c6e26953c667701b667012cec451205d",
+  "evidence": {
+    "input_identities_match": true,
+    "full_head_reference_top1_token_id": 240017,
+    "matches_prior_h200_control_ids_sha256": true,
+    "capture_rows": 384,
+    "unique_hidden_rows": 1,
+    "unique_proposal_ids": 1,
+    "best_native_method": "weight_variance_bf16_coordinates_256",
+    "best_native_candidate_rows": 8192,
+    "best_native_candidate_fraction": 0.03125,
+    "best_native_index_bytes": 134218240,
+    "best_native_materialized_bound_seconds": 0.001023255568299141,
+    "stock_component_median_seconds": 0.02480787181854248,
+    "physical_advantage_on_bound_state": true,
+    "capture_diversity_gate": false,
+    "gpu_claimed": false,
+    "ssh_used": false,
+    "paid_requests": 0
+  },
+  "wall_clock_budget": "At most 90 minutes of local analysis and implementation.",
+  "compute_budget": "CPU only; zero paid GPU minutes and $0 fresh spend.",
+  "storage_budget": "At most 2 GiB of new project-local index, metrics, source, and terminal artifacts.",
+  "artifact_contract": {
+    "terminal": "ADAPTIVE_RETRIEVAL_VOCAB_OFFLINE_TERMINAL.json",
+    "required_metrics": [
+      "full_head_reference_top1_identity",
+      "top1_recall_by_candidate_fraction",
+      "request_and_depth_stratification",
+      "candidate_rows",
+      "index_bytes",
+      "estimated_hbm_bytes_and_arithmetic_work",
+      "routing_overhead",
+      "h200_geometry_and_first_consumer_path"
+    ]
+  },
+  "stop_rules": [
+    "Stop without a GPU if either bound input identity differs.",
+    "Do not generalize beyond the 384-row capture or call approximate recall exact semantics.",
+    "Close this representation if high recall requires scoring most vocabulary rows or the lower-bound traffic cannot credibly beat the 24.808 ms stock component after routing and index costs."
+  ]
+}

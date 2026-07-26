@@ -8675,3 +8675,28 @@ projects had no active session, and the bench was available and unclaimed.
 No provider lifecycle mutation is needed. Defer optional replacement-lane
 admission to the next material director wake so this runnable window is not
 spent scouting.
+
+## 2026-07-26T04:37Z — close graph elision; switch H200 to FP8 and admit adaptive verify
+
+The graph-gap pair completed 32/32 per arm with a suggestive `0.769%`
+service-time movement, but 17/32 nonempty emitted-token trace rows diverged by
+multiset; its API token-ID comparison was vacuous because no token IDs were
+returned. Accept the correctness rejection, consume the pair, and close this
+redundant-sync intervention without replay.
+
+Reactivate `gemma4_h200_fp8_weight_stream_schedule` at `8710/execution` as the
+sole warm-H200 claimant. Its last attempt stopped before the repaired module or
+candidate CUDA because of one localized redundant CUTLASS include. Consume the
+existing hash-bound repair, compile one new `sm_90a` module, run the one-call
+M32 gate, and only on a bitwise pass run the bound M32/M384 exact consumer.
+Claim by `04:47Z`, release by `05:12Z`, retain the cumulative `$2.00` cap
+including `$0.40`, and keep the `05:20Z` watchdog.
+
+Admit `gemma4_mtp_tail_adaptive_verify_work` at `8660/deep`, `$0`, with no GPU
+claim. The prior exact MTP endpoint measured `25.976946` batch seconds in
+target verification and acceptance collapse in the shrinking tail; derive the
+oracle bound including fallback decode cost, then bind one request-local
+target-work intervention or falsify it. Nebius's authenticated platform
+catalog exposes no B200, so no B200 lifecycle action is available this turn.
+The retained H200 is available, warm, unclaimed, and compatible; no provider
+creation, teardown, or watchdog mutation is needed.

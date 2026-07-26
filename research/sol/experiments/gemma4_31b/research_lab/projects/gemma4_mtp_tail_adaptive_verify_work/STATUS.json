@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_mtp_tail_adaptive_verify_work",
+  "status": "active",
+  "priority": 8660,
+  "researcher_profile": "deep",
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.0,
+  "active_session": null,
+  "hypothesis": "A request-local continuation or draft-depth policy can eliminate low-acceptance target-verification work, especially in the shrinking tail, while preserving exact target semantics and recovering enough service time to beat the same-session stock control.",
+  "decision": "derive_oracle_bound_then_bind_one_target_verify_work_reduction",
+  "next_action": "Reconstruct the exact accepted-depth/timing event stream and pinned source, derive an oracle bound including fallback decode cost, then emit one source-complete adaptive target-work candidate or a typed mechanism falsification.",
+  "summary": "Independent zero-GPU deep lane: test whether changing target-verification work—not overlap—can reverse the measured 89.86% Frozen-KV MTP regression.",
+  "bench_need": {
+    "accelerator": "nvidia-h200-sxm",
+    "claim_allowed": false,
+    "claim_gate": "future_director_review_of_MTP_TAIL_ADAPTIVE_VERIFY_RESULT.json",
+    "maximum_claim_minutes": 0,
+    "preferred_bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz"
+  },
+  "compute_budget": "CPU/source/deterministic replay only; zero accelerator seconds.",
+  "storage_budget": "At most 2 GiB of new durable artifacts.",
+  "wall_clock_budget": "60 researcher minutes.",
+  "provider_mutation": "forbidden",
+  "terminal_artifact": "MTP_TAIL_ADAPTIVE_VERIFY_RESULT.json"
+}

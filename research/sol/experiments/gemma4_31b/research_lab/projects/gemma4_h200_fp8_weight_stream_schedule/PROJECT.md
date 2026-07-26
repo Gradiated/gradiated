@@ -1,5 +1,54 @@
 # H200 FP8 weight-stream schedule
 
+## 2026-07-26 warm-H200 exact-consumer reactivation
+
+The graph-gap pair released
+`h200-dflash-adapter-e00vyqp7gxsr34wrtz` warm and available. Resume the
+existing `DIRECTOR_SM90A_BUILD_INCLUDE_REPAIR.json` contract as the sole H200
+claimant. Repair only the already-localized redundant CUTLASS include, publish
+one new content-addressed `sm_90a` module, run the one-call M32 correctness
+discriminator, and proceed to the unchanged alternating M32/M384 consumer
+only on a finite bitwise pass.
+
+Claim by `2026-07-26T04:47:00Z`, stop and release by
+`2026-07-26T05:12:00Z`, under the existing `05:20Z` watchdog. The cumulative
+project cap remains `$2.00`, including the recorded `$0.40`. Do not run an
+endpoint, tune a schedule, change geometry/scales/ABI, replay the consumed
+`sm_90` module, or mutate provider lifecycle.
+
+## 2026-07-25 pre-CUDA SM90a include repair
+
+Consume `DIRECTOR_SM90A_BUILD_INCLUDE_REPAIR.json` and use
+`$kernel-research`. The retained image accepted the required
+`compute_90a/sm_90a` target, but compilation stopped before candidate CUDA
+because the bound source included a CUTLASS callback header absent from the
+retained include tree. Repair only that pinned include/build integration and
+publish a new content-addressed source/module identity.
+
+After the build passes, resume the unchanged one-call M32 discriminator. Only
+a finite, bitwise-equal M32 result may proceed to the already-bound alternating
+M32/M384 component. Do not change geometry, schedules, scales, ABI, output
+type, workload, exactness gates, or run an endpoint. The older `sm_90` module
+remains closed.
+
+## 2026-07-25 corrected SM90a H200 reactivation
+
+Consume `DIRECTOR_SM90A_H200_REACTIVATION.json` and use `$kernel-research`.
+The consumed `sm_90` module remains closed. Build a new content-addressed
+`compute_90a/sm_90a` module from the already-localized source and run exactly
+one stock/candidate M32 gate-up correctness discriminator. If and only if that
+output is finite and bitwise equal, use the same new module in the existing
+alternating M32/M384 exact-consumer correctness and timing component.
+
+This is the sole claimant for retained bench
+`h200-dflash-adapter-e00vyqp7gxsr34wrtz`. Reuse its pinned SGLang v0.5.13
+image, exact checkpoint, runtime source, and caches. Do not replay the old
+module, run an endpoint, tune the kernel, change precision or scales, change
+workload geometry, or mutate provider lifecycle. Stop with
+`FP8_WEIGHT_STREAM_SM90A_H200_TERMINAL.json` after the discriminator failure or
+the conditional component result.
+
+
 ## 2026-07-25 M32 exactness-localization phase
 
 The privileged retry consumed the M32 discriminator once. Candidate CUDA

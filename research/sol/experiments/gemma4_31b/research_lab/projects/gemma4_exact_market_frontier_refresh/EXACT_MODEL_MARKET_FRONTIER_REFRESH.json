@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "result_type": "typed_none",
+  "project": "gemma4_exact_market_frontier_refresh",
+  "generated_at_utc": "2026-07-26T09:08:11Z",
+  "decision": {
+    "claim_tested": "Current public exact-Gemma-4-31B serving evidence either lowers the locked $0.109725/M-total campaign target or supplies a source-scoped production placement/runtime lead that should outrank unmeasured H100, B200, and MI355X candidates.",
+    "outcome": "No target or placement revision candidate.",
+    "reason": "The closest fully normalized public retail observation is $0.118792651/M total tokens, 8.26% above the locked target. Faster and cheaper comparison-page observations are not comparable self-host placement evidence, and their checkpoint revision, serving representation, and campaign-workload throughput are not established."
+  },
+  "bound_scope": {
+    "campaign_model": "google/gemma-4-31B-it",
+    "campaign_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "mode": "text-only, default non-reasoning",
+    "workload": {"prompt_tokens": 4214, "cached_prefix_tokens": 535, "non_cached_prompt_tokens": 3679, "output_tokens": 358, "total_tokens": 4572},
+    "locked_service_target_s_per_request": 0.500119281574996,
+    "locked_economic_target_usd_per_m_total_tokens": 0.109725,
+    "qualified_service_evidence_s_per_request": 0.625149101968745
+  },
+  "sources": [
+    {
+      "id": "artificial_analysis_exact_provider_comparison",
+      "url": "https://artificialanalysis.ai/models/gemma-4-31b-non-reasoning/providers",
+      "retrieved_at_utc": "2026-07-26T09:08:11Z",
+      "evidence_type": "independent_benchmark_and_aggregator",
+      "model_identity": "Gemma 4 31B (Non-reasoning); no pinned Hugging Face revision exposed",
+      "observation_window": "P50 over the preceding 72 hours",
+      "published_workload": "10,000 input tokens; output speed after first streamed chunk; end-to-end metric is 500 output tokens",
+      "observations": {
+        "provider_count": 8,
+        "lowest_7_2_1_cache_input_output_blend_usd_per_m": 0.14,
+        "lowest_blend_provider": "Parasail",
+        "lowest_input_prices_usd_per_m": {"Parasail": 0.14, "DeepInfra_FP8": 0.13, "SiliconFlow_FP8": 0.13},
+        "lowest_output_prices_usd_per_m": {"DeepInfra_FP8": 0.38, "Parasail": 0.4, "FriendliAI": 0.4},
+        "fastest_output_tokens_per_s": {"Cerebras": 1853.3, "SambaNova": 199.4, "FriendliAI": 134.6},
+        "lowest_ttft_s": {"Cerebras": 0.62, "Together_AI_FP8": 1.15, "FriendliAI": 1.38}
+      },
+      "qualification": "Current frontier discovery only: it explicitly labels DeepInfra, Together, and SiliconFlow FP8 but exposes neither checkpoint revision nor campaign-workload/c32 throughput. Price blend uses 7:2:1 cache-input-output, not the campaign mix."
+    },
+    {
+      "id": "openrouter_coreweave_exact_named_endpoint",
+      "url": "https://openrouter.ai/google/gemma-4-31b-it/providers",
+      "retrieved_at_utc": "2026-07-26T09:08:11Z",
+      "evidence_type": "provider_reported_public_endpoint_metadata",
+      "model_identity": "OpenRouter slug google/gemma-4-31b-it; provider_model_id google/gemma-4-31B-it; endpoint marked BF16; no pinned checkpoint revision exposed",
+      "provider": "CoreWeave via OpenRouter",
+      "public_retail_pricing_usd_per_m": {"cache_read": 0.1, "input": 0.1, "output": 0.34},
+      "features": {"context_tokens": 262144, "function_calling": true, "json_mode": true, "tool_use": true, "streaming": true},
+      "qualification": "Sufficiently specified for price normalization only; no source-scoped campaign-workload throughput or latency and not self-host placement evidence."
+    },
+    {
+      "id": "deepinfra_public_models_exact_named",
+      "url": "https://api.deepinfra.com/v1/openai/models",
+      "retrieved_at_utc": "2026-07-26T09:08:11Z",
+      "evidence_type": "provider_reported_public_api_metadata",
+      "model_identity": "google/gemma-4-31B-it, 262144-token context; no pinned checkpoint revision exposed",
+      "public_retail_pricing_usd_per_m": {"input": 0.13, "output": 0.38, "cache_read": null},
+      "representation_note": "Artificial Analysis separately labels its DeepInfra comparison observation FP8.",
+      "qualification": "No cache-read price is published here, so no required cache-aware normalization; even the zero-cache-price lower bound is above target."
+    },
+    {
+      "id": "cerebras_public_models_exactness_mismatch",
+      "url": "https://api.cerebras.ai/public/v1/models",
+      "retrieved_at_utc": "2026-07-26T09:08:11Z",
+      "evidence_type": "provider_reported_public_api_metadata",
+      "model_identity": "gemma-4-31b with Hugging Face ID google/gemma-4-31B, not campaign -it identifier or revision",
+      "public_retail_pricing_usd_per_m": {"input": 0.99, "output": 1.49, "cache_read": null},
+      "qualification": "Excluded from exact-model economics because instruction/checkpoint identity is not demonstrated; retained to show speed leader is not automatic economic or placement lead."
+    }
+  ],
+  "normalization": {
+    "formula_usd_per_request": "(535 * cache_read_usd_per_m + 3679 * input_usd_per_m + 358 * output_usd_per_m) / 1000000",
+    "formula_usd_per_m_total": "usd_per_request * 1000000 / 4572",
+    "publisher_blend_formula": "0.7 * cache_read + 0.2 * input + 0.1 * output",
+    "observations": [
+      {"source_id": "openrouter_coreweave_exact_named_endpoint", "publisher_7_2_1_blend_usd_per_m": 0.124, "campaign_request_usd": 0.00054312, "campaign_usd_per_m_total_tokens": 0.118792651, "vs_locked_target_pct": 8.26, "decision_use": "Closest fully cache-aware retail comparison; above target."},
+      {"source_id": "deepinfra_public_models_exact_named", "publisher_7_2_1_blend_usd_per_m": null, "campaign_request_usd_lower_bound_with_zero_cache_price": 0.00061431, "campaign_usd_per_m_total_tokens_lower_bound": 0.134363517, "decision_use": "No cache price permits no exact normalization; nonnegative cache price cannot beat target."},
+      {"source_id": "artificial_analysis_exact_provider_comparison", "publisher_7_2_1_blend_usd_per_m": 0.14, "campaign_normalization": null, "decision_use": "Not normalized because cited comparison does not expose provider-specific cache rates."}
+    ]
+  },
+  "placement_and_latency_interpretation": {
+    "not_transferred": ["AA 10k-input single-stream TTFT/output rate to c32 campaign service time", "retail API output speed to self-hosted H100, B200, or MI355X capacity or cost", "FP8-labelled retail endpoints to campaign checkpoint or quality-qualified representation"],
+    "competitive_leads": ["Cerebras: 1853.3 output tokens/s and 0.62s TTFT in independent 10k-input P50 comparison, but only generic Gemma-4-31B metadata and no self-host placement comparability.", "OpenRouter/CoreWeave BF16: closest public cache-aware exact-named retail economics, but $0.118792651/M is above target and no campaign-workload latency/throughput is published."]
+  },
+  "uncertainty_and_falsifiers": ["No source tied a provider route to campaign revision b9ea41a2887d8607f594846523f94c6cc75ac8a4.", "A current first-party cache/input/output schedule for a low-blend provider could enable campaign-mix calculation; it must beat $0.109725/M with exact-model identity to change target.", "A source-bound exact endpoint measurement at campaign workload, or self-hosted matched endpoint measurement, could establish a placement/runtime lead."],
+  "spend": {"actual_spend_usd": 0.0, "provider_contact_or_mutation": false, "gpu_claimed": false, "shared_gpu_price_inventory_researched_again": false}
+}

@@ -1,0 +1,19 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "bench_need": {
+    "claim_allowed": false,
+    "reason": "This is a source-backed exact-model market/economics discriminator with zero provider authority."
+  },
+  "compute_budget": "4 local CPU-hours; zero accelerator compute",
+  "next_action": "Director review of EXACT_MODEL_MARKET_FRONTIER_REFRESH.json; typed_none found no source-scoped current public observation that revises the locked target or placement ranking.",
+  "priority": 8750,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "execution",
+  "status": "completed",
+  "storage_budget": "1 GiB durable project artifacts",
+  "summary": "Completed zero-spend frontier refresh: closest fully cache-aware exact-named retail route is $0.118792651/M total tokens on the campaign mix, 8.26% above the locked $0.109725/M target; public provider latency/throughput remains unmatched to c32 self-host placement.",
+  "wall_clock_budget_minutes": 90
+}

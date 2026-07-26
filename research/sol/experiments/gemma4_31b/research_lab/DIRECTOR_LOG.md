@@ -8717,3 +8717,20 @@ GPU and do not contend with compilation or scoring. The latest safety audit
 matches the sole running instance and ready disk to the registered bench, and
 the `05:20Z` watchdog remains valid; no provider lifecycle or portfolio
 mutation is warranted this turn.
+
+## 2026-07-26T04:44Z — protect the live FP8 owner; run adaptive verify independently
+
+The FP8 repair has now claimed the retained H200 under durable owner PID
+`1553056`/start ticks `115690499`; its claim heartbeat is current, the
+scientific deadline remains `05:12Z`, and the registered instance, disk, and
+`05:20Z` watchdog still match the supervisor's safety audit. Preserve the
+in-flight contract unchanged as the sole H200 mutation lane. Do not admit
+another GPU claimant or perform lifecycle work before its typed terminal or
+deadline.
+
+Keep `gemma4_mtp_tail_adaptive_verify_work` runnable in parallel at
+`8660/deep`, `$0`: reconstruct the accepted-depth/timing stream and fallback
+cost, then publish one source-complete adaptive target-work candidate or a
+typed mechanism falsification. These two lanes already satisfy the campaign's
+direct-consumer and independent-mechanism portfolio requirement, so defer
+optional admission until a material terminal changes the allocation.

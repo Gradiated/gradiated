@@ -8837,3 +8837,11 @@ Preserve the utility owner and unchanged discriminator contract. The claim
 heartbeat is current and the registered `06:00Z` watchdog remains active, so
 make no provider lifecycle change, admit no competing H200 work, and defer the
 ready H100 lane. The next director wake should consume the typed SM90a terminal.
+
+## 2026-07-26T05:27Z — let the live SM90a build finish
+
+The utility owner and exclusive H200 claim remain live with a `05:26:35Z`
+heartbeat; the fresh build is still running and has produced neither a science
+marker nor a terminal. Preserve the owner, `05:55Z` release deadline, and
+`06:00Z` watchdog unchanged. Make no portfolio or lifecycle mutation until the
+typed result arrives.

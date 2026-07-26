@@ -1,0 +1,18 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "authorized_spend_usd": 0.0,
+  "decision": "typed_none_missing_scope_matched_target_tpu_performance_measurement",
+  "last_researcher_run": {
+    "artifact": "TPU_RUNTIME_PLACEMENT_SCREEN.json",
+    "completed_at_utc": "2026-07-26T12:31:44Z",
+    "result": "typed_none",
+    "spend_usd": 0.0
+  },
+  "next_action": "Director review. Do not fund from this artifact. Reopen only when one current exact v6e lifecycle can load revision b9ea41a2887d8607f594846523f94c6cc75ac8a4 and measure the c32 4214/358 workload with cache/stage telemetry against the <=2.976630497 s/request one-year planning hurdle.",
+  "priority": 8760,
+  "researcher_profile": "deep",
+  "schema_version": 1,
+  "status": "complete",
+  "summary": "Zero-spend TPU v6e discriminator is terminal typed_none. Current JAX/vLLM TPU source binds the exact hybrid Gemma 4 producer/consumer and v6e-8 topology, but official release/nightly performance is explicitly not enough HBM, correctness stops below the target request length, and no public result binds the pinned c32 workload. The one-year all-in hurdle is 2.976630497 s/request or 49,150.877 total tokens/s."
+}

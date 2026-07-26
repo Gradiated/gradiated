@@ -1,0 +1,86 @@
+{
+  "executed_source": [
+    {
+      "bytes": 21033,
+      "packet_path": "executed_source/dflash_info.py",
+      "recovery": "pinned_commit",
+      "sha256": "f17c37c1d0047e75f3214ec67cf2b02dd52cfcec35cf0daaaee0407f892a0e53",
+      "source_path": "python/sglang/srt/speculative/dflash_info.py"
+    },
+    {
+      "bytes": 16388,
+      "packet_path": "executed_source/dflash_info_v2.py",
+      "recovery": "pinned_commit_plus_bound_relay_patch",
+      "sha256": "eb976179a5ec54d607bfaf66e087c04d1c39617f312c105081974a3a8aa9de08",
+      "source_path": "python/sglang/srt/speculative/dflash_info_v2.py"
+    },
+    {
+      "bytes": 29283,
+      "packet_path": "executed_source/dflash_utils.py",
+      "recovery": "pinned_commit",
+      "sha256": "f6935ff13d8b0c24ab2b443509ba8425918f8b4a6fafc520cd8a875f91891030",
+      "source_path": "python/sglang/srt/speculative/dflash_utils.py"
+    },
+    {
+      "bytes": 29116,
+      "packet_path": "executed_source/dflash_worker_v2.py",
+      "recovery": "pinned_commit",
+      "sha256": "8fbddb39f4b33b4ac55b1919bc58fa846acb60892886199251d3592a5223050f",
+      "source_path": "python/sglang/srt/speculative/dflash_worker_v2.py"
+    },
+    {
+      "bytes": 61591,
+      "packet_path": "executed_source/forward_batch_info.py",
+      "recovery": "pinned_commit",
+      "sha256": "c977296f3b90be69fff5312f2b3af7699a17b20af24614b139f69888e5776516",
+      "source_path": "python/sglang/srt/model_executor/forward_batch_info.py"
+    },
+    {
+      "bytes": 101589,
+      "packet_path": "executed_source/memory_pool.py",
+      "recovery": "pinned_commit",
+      "sha256": "26ce123db5991db93f5d93fa6ca28cb360a7402a7ef0ed0e7315a3d3b37bb363",
+      "source_path": "python/sglang/srt/mem_cache/memory_pool.py"
+    },
+    {
+      "bytes": 10658,
+      "packet_path": "executed_source/swa_memory_pool.py",
+      "recovery": "pinned_commit",
+      "sha256": "fefdcaf49b78b252f68cbddc21cd3f2640c9c50c28052d231116c1d1eec7bac1",
+      "source_path": "python/sglang/srt/mem_cache/swa_memory_pool.py"
+    },
+    {
+      "bytes": 22003,
+      "packet_path": "executed_source/tp_worker.py",
+      "recovery": "pinned_commit",
+      "sha256": "f2e00ea7d53b7250231d44b9d52415c6f6b5f936b0e7c6af4a13f5aff6c1e509",
+      "source_path": "python/sglang/srt/managers/tp_worker.py"
+    }
+  ],
+  "recovery": {
+    "executed_dflash_info_v2_observed_sha256": "eb976179a5ec54d607bfaf66e087c04d1c39617f312c105081974a3a8aa9de08",
+    "reconstruction_matches_observed": true,
+    "relay_patch_path": "contract/DFLASH_REQUEST_INDEXED_RELAY_REPAIR.patch",
+    "relay_patch_sha256": "f3bf201d733ae5ea944b16225b99571796b96a1852af1d655f77168007d88ede",
+    "upstream_repo": "https://github.com/sgl-project/sglang.git"
+  },
+  "request25": {
+    "index": 25,
+    "input_ids_sha256": "51a23cdfb44941cb799a80c7ca3fd7f859e8558405f70976d1f8508703f6b360",
+    "request_body_mutated": false,
+    "selector": "match exact Req.origin_input_ids digest once, then follow the existing runtime-generated Req.rid",
+    "semantic_request_sha256": "ee2edfa7a9ff571b0268966f506c4cb868868ab880ac87c2684b055d48a0e150"
+  },
+  "runtime_commit": "588d1f7bc9424201f89957e145f9d5af633a3eb8",
+  "runtime_image_lineage": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "schema_version": 1,
+  "source_binding_sha256": "cc49aa4192e737c90ddd5871c59efd4fc854c6a0ca094c557a0e78545bdb8c52",
+  "trace_anchors": {
+    "logit_adjustment_symbol": "apply_dflash_verify_logits_adjustments",
+    "packaging_symbol": "DFlashVerifyInput.prepare_for_v2_verify",
+    "post_adjustment_line": 544,
+    "pre_forward_line": 528,
+    "raw_pre_adjustment_line": 537,
+    "worker_sha256": "8fbddb39f4b33b4ac55b1919bc58fa846acb60892886199251d3592a5223050f"
+  }
+}

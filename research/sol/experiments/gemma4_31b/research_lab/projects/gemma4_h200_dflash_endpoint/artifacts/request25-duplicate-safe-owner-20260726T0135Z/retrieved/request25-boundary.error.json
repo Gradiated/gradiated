@@ -1,0 +1,6 @@
+{
+  "message": "'ForwardBatch' object has no attribute 'req_to_token_pool'",
+  "phase": "dflash_worker_v2.py:528",
+  "schema_version": 1,
+  "type": "AttributeError"
+}

@@ -1,5 +1,47 @@
 # Gemma 4 H200 DFlash endpoint
 
+## 2026-07-26 immutable request-25 result reconstruction
+
+Request 25 was submitted exactly once and its immutable 228,550-byte
+`REQUEST25_RESPONSE.json` is durable under
+`artifacts/request25-duplicate-safe-owner-20260726T0135Z`. The observer failed
+after response persistence at `dflash_worker_v2.py:528` because it expected
+the stale `ForwardBatch.req_to_token_pool` field. This is now a GPU-free
+causal-reconstruction task inside the same scientific project.
+
+Execute the bounded reconstruction against the pinned runtime source, the
+request-state ownership model, and the immutable response. Map current
+`ForwardBatch.rids` and `req_pool_indices` semantics to the stale consumer,
+build the smallest offline fixture/repair needed to interpret the already
+retrieved record, and emit
+`DFLASH_REQUEST25_OFFLINE_BOUNDARY_RESULT.json`. The typed result must either:
+
+- reconstruct the first target-verifier token and the accepted-prefix,
+  bonus/commit, and observer-validity boundary needed for a scientific
+  disposition; or
+- prove precisely which decision-bearing field was never persisted and is
+  unrecoverable from the immutable response and pinned source.
+
+Do not claim a GPU, contact an endpoint, launch a server, replay the AR producer,
+or resubmit request 25. Do not infer missing values. Preserve the immutable
+response and hash every input/output used by the reconstruction. Budget at most
+45 minutes of wall time, zero accelerator compute, and 1 GiB of new artifacts.
+
+## 2026-07-25 candidate-only request-state capture queue
+
+The offline ownership phase succeeded: `ForwardBatch.rids` is the
+authoritative logical identity, while request-pool slots are mutable physical
+rows and row 0 may be reserved padding. Consume
+`DIRECTOR_CANDIDATE_ONLY_REQUEST_STATE_CAPTURE.json` and its content-addressed,
+fixture-passing packet.
+
+This arm is queued behind the higher-priority SM90a component and is not yet
+claimable. After a later director reactivation, run only
+`dflash-depth4-c32`, observe actual rows by RID, and compare against the
+immutable completed AR terminal. Never rerun `ar-c32`, infer ownership from
+token markers or slot continuity, change requests or depth, or mutate provider
+lifecycle.
+
 ## 2026-07-25 request-level semantic localization
 
 The immutable one-cycle oracle now passes all 112 captured cycles and the tied

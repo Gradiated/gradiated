@@ -1,25 +1,49 @@
 {
-  "accelerator_requirement": "none_offline_request_ownership_analysis",
+  "accelerator_requirement": "none_offline_immutable_request25_result_reconstruction",
   "active_session": null,
-  "actual_spend_usd": 0.30443484876411114,
-  "allocation_limit": 0,
+  "actual_spend_usd": 1.2563342402918893,
+  "allocation_limit": 1,
   "authorized_spend_usd": 2.0,
   "bench_need": {
     "claim_allowed": false,
-    "reason": "The next cycle is source and immutable-artifact analysis; any corrected candidate-only capture requires a later director re-admission."
+    "reason": "This is an offline reconstruction from the immutable request-25 response and pinned source; no GPU claim, endpoint contact, or request replay is authorized."
   },
-  "compute_budget": "Existing source and retrieved immutable artifacts only; no CUDA, compilation, endpoint replay, GPU claim, or provider mutation.",
-  "continuation_authorized_new_spend_usd": 2.0,
-  "continuation_binding": "DIRECTOR_EXACT_REQUEST_STATE_CAPTURE_REBINDING.json",
-  "continuation_binding_sha256": "5fe29cf10a5c2c5590a542e6aa2d8fefb97d6026857770a14b03a4a5105c9701",
-  "continuation_remaining_spend_usd": 1.695565151235889,
+  "candidate_only": {
+    "ar_producer_replayed": false,
+    "ar_terminal_sha256": "45b8120b452452b3ffcdc5282138e984140aa96b5802eef3d3ce66603a141af4",
+    "arm": "dflash-depth4-c32",
+    "artifact_root": "artifacts/candidate-only-owner-20260726t001857Z",
+    "classification": "localized_first_target_verifier",
+    "complete_requests": 32,
+    "endpoint_exact_match": false,
+    "first_differing_captured_state": {
+      "ar_expected": 3496,
+      "candidate_observed": 759,
+      "field": "target_top1_first",
+      "phase": "first_target_step",
+      "request_index": 25
+    },
+    "invalid_attempt_artifacts": [
+      "artifacts/candidate-only-owner-20260726t000722Z",
+      "artifacts/candidate-only-owner-20260726t001354Z"
+    ],
+    "observer_coverage_pass": true,
+    "packet_identity_sha256": "3407231bdcc05a950d2f50cee02936a8f1f785ff32336b40b1760eb205539174",
+    "performance_claim_authorized": false
+  },
+  "candidate_scientific_sample_consumed": true,
+  "compute_budget": "Zero accelerator compute. Use only the immutable request-25 response, retained source, and bounded local fixtures; no GPU claim, endpoint launch, producer replay, or request replay.",
+  "continuation_authorized_new_spend_usd": 0.82,
+  "continuation_binding": "DIRECTOR_REQUEST25_DUPLICATE_SAFE_SOURCE_IDENTITY_REPAIR_20260726.json",
+  "continuation_binding_sha256": "11ded0cb1494b9a89704be366ad83b4db0fb3ba8a46a9ed1fcb0b63eb8659dff",
+  "continuation_remaining_spend_usd": 0.7436657597081107,
   "continuous_claim_accounting_reconciliation": {
     "actual_spend_usd_delta": 0.044236592264,
     "continuous_claim_seconds": 161.648609,
     "path": "DIRECTOR_CONTINUOUS_CLAIM_ACCOUNTING_RECONCILIATION.json",
     "project_actual_spend_usd": 0.110010858903
   },
-  "decision": "source_complete_candidate_only_observer_repair_ready_for_later_director_readmission",
+  "decision": "close_consumed_request25_as_unrecoverable_missing_decision_evidence",
   "depth4_endpoint_terminal": {
     "claim_exposure_usd": 0.2895852916666667,
     "claim_seconds": 425.512792,
@@ -104,6 +128,27 @@
     "resolved_at_utc": "2026-07-25T23:19:23.855202Z",
     "scientific_sample_consumed": false
   },
+  "first_target_verifier_causal_repair": {
+    "ar_target": 3496,
+    "archived_dflash_info_v2_sha256": "b17ff6a703e46173c415d649d47e8ff9f8b7b436f9eec8e1f67d55ef1b3908e6",
+    "classification": "capture_insufficient_for_cause",
+    "downstream_bonus_consumer_consistent_with_input": true,
+    "endpoint_arm_replayed": false,
+    "executed_dflash_info_v2_sha256": "eb976179a5ec54d607bfaf66e087c04d1c39617f312c105081974a3a8aa9de08",
+    "first_incorrect_observable_symbol": "DFlashWorkerV2.forward_batch_generation.target_predict",
+    "fixture_tests_passed": 15,
+    "fresh_spend_usd": 0.0,
+    "gpu_claimed": false,
+    "observed_value": 759,
+    "repair_candidate_emitted": false,
+    "source_complete": false,
+    "terminal": "DFLASH_FIRST_TARGET_VERIFIER_CAUSAL_REPAIR_TERMINAL.json",
+    "terminal_sha256": "0ef20830b2ee9058c03b7091ac2f746cc634e8f41ee9677bbce2d98dd95e271a",
+    "unarchived_transition_modules": [
+      "dflash_info.py",
+      "dflash_utils.py"
+    ]
+  },
   "historical_actual_spend_note": "All prior DFlash provider phases are settled historical exposure. Current-reservation actual_spend_usd includes the full continuous 2026-07-25T22:59:05.486523Z through 23:01:47.135132Z claim across replacement owners.",
   "historical_actual_spend_usd": 29.232353977180555,
   "historical_settled_spend_usd": 25.969,
@@ -121,7 +166,29 @@
       "settled_at": "2026-07-25T16:15:00.253046Z"
     }
   ],
-  "hypothesis": "Confirmed: ForwardBatch.rids is the authoritative logical identity for each actual row, while req_pool_indices is a reusable physical cache row and row 0 is reserved padding. Runtime events must retain rid and join it to candidate TERMINAL rows only after completion.",
+  "hypothesis": "The stale req_to_token_pool observer failed after the immutable response was persisted, but current ForwardBatch.rids and req_pool_indices semantics plus the pinned source may be sufficient to reconstruct request 25's first target-verifier and accepted-prefix/commit boundary without another model invocation.",
+  "id": "gemma4_h200_dflash_endpoint",
+  "immutable_request25_offline_boundary": {
+    "artifact_root": "artifacts/request25-offline-boundary-20260726",
+    "classification": "unrecoverable_missing_decision_evidence",
+    "decision_bearing_boundary": false,
+    "endpoint_contacted": false,
+    "fixture_passed": true,
+    "gpu_used": false,
+    "incremental_provider_spend_usd": 0.0,
+    "logical_to_physical_mapping": "Select the unique logical row by ForwardBatch.rids, then select the physical req_to_token_pool row with req_pool_indices[row].",
+    "raw_response_bytes_persisted": false,
+    "repaired_consumer": "worker.target_worker.model_runner.req_to_token_pool.req_to_token",
+    "reported_raw_response_bytes": 228550,
+    "reported_raw_response_sha256": "82855c7959f02213647e2efd8e68ad61b3b784b84667fb5cd72a99a1278ac741",
+    "request_replayed": false,
+    "response_manifest_bytes": 423,
+    "response_manifest_sha256": "75a2a93e21ec6198d6b7882de4c027a071a57e56c09bc54d71b7e55e91e71ebb",
+    "result": "DFLASH_REQUEST25_OFFLINE_BOUNDARY_RESULT.json",
+    "result_sha256": "dfca865f1e4c66b1698c92921d65dec3999c351aa83be64d9987a264d61bf711",
+    "scientific_sample_interpretable": false,
+    "unit_tests_passed": 6
+  },
   "input_packet": {
     "archive": "artifacts/tied-head-adapter-inputs-20260725.tar",
     "archive_sha256": "00efd6d5055e9bf00099a667d3ed65993e6a2062facd74fa3e0bcfec82147c68",
@@ -134,7 +201,15 @@
     "unit": "gemma4-dflash-capture-hook-owner.service",
     "unit_manager": "user"
   },
-  "next_action": "Director may evaluate a later candidate-only DFlash re-admission using packet 3407231bdcc05a950d2f50cee02936a8f1f785ff32336b40b1760eb205539174. The invocation must run only dflash-depth4-c32, retain the immutable AR terminal as the consumer reference, and never rerun ar-c32.",
+  "last_queue_check": {
+    "bench_inventory_status": "claimed_by_gemma4_h200_fp8_weight_stream_schedule",
+    "checked_at_utc": "2026-07-26T00:00:00Z",
+    "disposition": "remain_non_claimable; predecessor owner and live claim are active",
+    "predecessor": "gemma4_h200_fp8_weight_stream_schedule",
+    "predecessor_status": "active",
+    "predecessor_terminal_present": false
+  },
+  "next_action": "Terminal for this scheduled action: preserve request 25 as a consumed, uninterpretable sample and do not replay it. The fixture-validated request-pool owner repair may be reused only by a separately authorized future experiment; await director disposition.",
   "offline_adapter_gate": {
     "complete_logit_elements_compared": 1048576,
     "complete_logits_bit_exact": true,
@@ -165,7 +240,7 @@
     "result_sha256": "6f5c24ea6eeed136a060bb9c5787aeb4bfb8458833546f3f55e53d591e93692f",
     "status": "source_complete_unmeasured_repair_candidate"
   },
-  "portfolio_priority_reason": "The AR producer is complete and must not be replayed, while the DFlash candidate is unconsumed. Offline ownership localization can advance concurrently with the corrected SM90a direct H200 discriminator.",
+  "portfolio_priority_reason": "The source-complete packet closes the offline preparation phase and makes one request-25 boundary probe the highest-information next DFlash result. It is queued behind the time-bounded hybrid repair so the two projects cannot contend for the same warm H200.",
   "preclaim_verification": {
     "all_bound_local_hashes_match": true,
     "bench_claim_project": "gemma4_certified_lazy_vocab_head",
@@ -178,9 +253,77 @@
     "predecessor_terminal_present": false,
     "second_predecessor_status": "active_queued_after_certified_lazy"
   },
-  "priority": 8545,
+  "priority": 8700,
   "provider_mutation": "forbidden",
   "quality_claim_authorized": false,
+  "request25_boundary_probe_attempt": {
+    "artifact_root": "artifacts/request25-boundary-owner-20260726T0112Z",
+    "causal_amendment": "REQUEST25_BOUNDARY_PROBE_CAUSAL_AMENDMENT.json",
+    "classification": "infrastructure_terminal",
+    "in_run_repair": false,
+    "incremental_spend_usd": 0.005078686666666776,
+    "packet_identity_sha256": "4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b",
+    "request_submission_count": 0,
+    "science_started": false,
+    "scientific_sample_consumed": true,
+    "terminal": "DFLASH_REQUEST25_BOUNDARY_PROBE_H200_TERMINAL.json",
+    "terminal_sha256": "7428ec4e144de798e1d805249a67fa56cf79ce46a1434eb8c20fbf4bdf0beeac"
+  },
+  "request25_boundary_probe_preparation": {
+    "archive": "artifacts/request25-boundary-probe-preparation-20260726/4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b.tar",
+    "archive_sha256": "25d8a3cb20806a11560b372a238b8630c64d8035f51c2eb989a10b2070b438a8",
+    "bytecode_and_interpreter_cache_excluded": true,
+    "classification": "source_complete_boundary_probe_ready",
+    "cuda_invoked": false,
+    "endpoint_replayed": false,
+    "executed_dflash_info_v2_sha256": "eb976179a5ec54d607bfaf66e087c04d1c39617f312c105081974a3a8aa9de08",
+    "fixture_tests_passed": 7,
+    "fresh_spend_usd": 0.0,
+    "gpu_claimed": false,
+    "packet": "artifacts/request25-boundary-probe-preparation-20260726/packet/4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b",
+    "packet_bytes": 339566,
+    "packet_identity_sha256": "4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b",
+    "repair_emitted": false,
+    "request_body_mutated": false,
+    "request_input_ids_sha256": "51a23cdfb44941cb799a80c7ca3fd7f859e8558405f70976d1f8508703f6b360",
+    "request_semantic_sha256": "ee2edfa7a9ff571b0268966f506c4cb868868ab880ac87c2684b055d48a0e150",
+    "source_binding_sha256": "cc49aa4192e737c90ddd5871c59efd4fc854c6a0ca094c557a0e78545bdb8c52",
+    "superseded_packet_artifact": "/root/workspace/.agents/runtime/request25-boundary-probe-superseded-pyc-20260726T0100Z",
+    "superseded_reason": "Interpreter cache files were admitted by the first packaging attempt and changed under fixture import; the immutable failed archive and terminal are preserved at the superseded artifact path.",
+    "terminal": "DFLASH_REQUEST25_BOUNDARY_PROBE_PREPARATION_TERMINAL.json",
+    "terminal_sha256": "1d9bfe425f19a455948ddb2163738e3ad821cb9337eb3c9c3d52cf0787296a0f"
+  },
+  "request25_parser_gate": {
+    "artifact_root": "artifacts/request25-parser-gate-20260726T0122Z",
+    "bench_claimed": false,
+    "classification": "parser_gate_failed",
+    "failure": "duplicate checksum row unexpectedly accepted",
+    "hash_bound_source_sha256": "eaa11a5fea43451436557cfe8a7808bf50c0ce0752e6b7466ca00d87a709b81d",
+    "incremental_spend_usd": 0.0,
+    "parser_gate_sha256": "58e4ee88376e8602664543c8116fbf460b2815fb4dcc739a798a4309da8cab86",
+    "request_submission_count": 0,
+    "science_started": false,
+    "scientific_sample_consumed": false,
+    "terminal": "DFLASH_REQUEST25_BOUNDARY_PROBE_H200_RETRY1_TERMINAL.json",
+    "terminal_sha256": "aa850416a7502b8363f86f2ca8e967e8a742d8cd8128984dc214fd59c8c95609"
+  },
+  "request25_duplicate_safe_probe_attempt": {
+    "artifact_root": "artifacts/request25-duplicate-safe-owner-20260726T0135Z",
+    "boundary_record_persisted": false,
+    "classification": "infrastructure_terminal_after_single_submission",
+    "claim_seconds": 200.080159,
+    "incremental_spend_usd": 0.13616451158333343,
+    "observer_error": "AttributeError: 'ForwardBatch' object has no attribute 'req_to_token_pool' at dflash_worker_v2.py:528",
+    "parser_gate_sha256": "a5636fb0cb6f4f247103c63ff34c1dead7507c6816a3372289999e12ac3807d6",
+    "parser_source_sha256": "16fbbf3a8b9bc2a8e3925cd092bd0de128d1c8904fdf554e5d3c16b632a64f26",
+    "request_response_sha256": "82855c7959f02213647e2efd8e68ad61b3b784b84667fb5cd72a99a1278ac741",
+    "request_submission_count": 1,
+    "response_bytes": 228550,
+    "science_started": true,
+    "scientific_sample_consumed": false,
+    "terminal": "DFLASH_REQUEST25_BOUNDARY_PROBE_H200_RETRY2_TERMINAL.json",
+    "terminal_sha256": "137aac69530c52c58fa5ed16f2ff9c4f92b96e889fd6da274260dfbefbeb7fd9"
+  },
   "request_level_falsification": {
     "analysis_pass": true,
     "cache_accounting": {
@@ -235,26 +378,6 @@
     "result_sha256": "3b7d6879474b320c0c601c0bb48eeb3dd9fb9ffecfc4975005571fbe595b3ec2",
     "semantic_equivalence": false
   },
-  "researcher_profile": "deep",
-  "scheduler_admission": {
-    "admitted": false,
-    "bench": null,
-    "gpu_claim_allowed": false,
-    "provider_creation_allowed": false,
-    "reason": "The completed AR producer and typed ownership boundary require offline causal analysis before any candidate-only GPU continuation."
-  },
-  "request_state_capture_boundary": {
-    "classification": "typed_observer_request_ownership_integration_boundary",
-    "observer_errors": "mixed request markers and request-slot rebindings",
-    "producer_complete_requests": 32,
-    "producer_stage_consumed": true,
-    "producer_terminal_sha256": "45b8120b452452b3ffcdc5282138e984140aa96b5802eef3d3ce66603a141af4",
-    "producer_terminal": "artifacts/request-state-capture-owner-20260725T232227Z/retrieved-final/results/ar-c32/TERMINAL.json",
-    "request_state_sha256": "292786e69cb803aad8603a9c45324394017e9b1cd56f5df0d826e5325f130d94",
-    "request_state": "artifacts/request-state-capture-owner-20260725T232227Z/retrieved-final/states/ar-c32.jsonl",
-    "ar_producer_sample_consumed": true,
-    "dflash_candidate_sample_consumed": false
-  },
   "request_ownership_observer_repair": {
     "ar_producer_replayed": false,
     "authoritative_identity": "ForwardBatch.rids",
@@ -272,17 +395,41 @@
     "terminal": "DFLASH_REQUEST_OWNERSHIP_OBSERVER_REPAIR_TERMINAL.json",
     "terminal_sha256": "f13f08e4bfbd7ee614434eda7e67f51de7095e386e820b246d7e907c9028837a"
   },
-  "candidate_scientific_sample_consumed": false,
+  "request_state_capture_boundary": {
+    "ar_producer_sample_consumed": true,
+    "classification": "typed_observer_request_ownership_integration_boundary",
+    "dflash_candidate_sample_consumed": false,
+    "observer_errors": "mixed request markers and request-slot rebindings",
+    "producer_complete_requests": 32,
+    "producer_stage_consumed": true,
+    "producer_terminal": "artifacts/request-state-capture-owner-20260725T232227Z/retrieved-final/results/ar-c32/TERMINAL.json",
+    "producer_terminal_sha256": "45b8120b452452b3ffcdc5282138e984140aa96b5802eef3d3ce66603a141af4",
+    "request_state": "artifacts/request-state-capture-owner-20260725T232227Z/retrieved-final/states/ar-c32.jsonl",
+    "request_state_sha256": "292786e69cb803aad8603a9c45324394017e9b1cd56f5df0d826e5325f130d94"
+  },
+  "researcher_profile": "deep",
+  "result": "unrecoverable_missing_decision_evidence",
+  "result_artifact": "DFLASH_REQUEST25_OFFLINE_BOUNDARY_RESULT.json",
+  "result_sha256": "dfca865f1e4c66b1698c92921d65dec3999c351aa83be64d9987a264d61bf711",
+  "scheduler_admission": {
+    "admitted": true,
+    "bench": null,
+    "gpu_claim_allowed": false,
+    "provider_creation_allowed": false,
+    "reason": "Independent GPU-free deep reconstruction is admitted from the already-consumed immutable response; GPU claims and endpoint requests remain forbidden."
+  },
   "scientific_sample_consumed": true,
-  "status": "active",
+  "status": "terminal",
   "stop_rules": [
-    "Stop after one typed request-ownership causal artifact and source-complete candidate-only observer packet or typed limit.",
-    "Do not rerun the completed AR producer, claim a GPU, compile, launch an endpoint, or mutate provider lifecycle in this cycle.",
-    "Do not weaken target-token equivalence, reinterpret unequal cache accounting as valid, reopen the tied-head or cycle-oracle stages, or admit the rejected relay patch."
+    "Never claim a GPU, contact an endpoint, launch a server, replay the AR producer, or resubmit request 25.",
+    "Treat the durable REQUEST25_RESPONSE.json and pinned source as immutable inputs and hash every reconstruction input and output.",
+    "Do not infer a missing decision field; emit a typed unrecoverable-evidence result if source and artifacts cannot determine it.",
+    "Stop after one bounded offline consumer repair/fixture and one DFLASH_REQUEST25_OFFLINE_BOUNDARY_RESULT.json."
   ],
-  "storage_budget": "At most 2 GiB of new durable artifacts.",
-  "summary": "Offline localization is complete. The old observer conflated token markers and reusable request-pool rows; the repaired candidate-only observer records ForwardBatch.rids, excludes padded rows by len(rids), treats slots as telemetry, and joins RID to candidate terminal index offline. Eight CPU fixtures pass; AR remains consumed exactly once and DFlash remains unconsumed.",
-  "terminal_artifact": "DFLASH_REQUEST_OWNERSHIP_OBSERVER_REPAIR_TERMINAL.json",
-  "terminal_artifact_sha256": "f13f08e4bfbd7ee614434eda7e67f51de7095e386e820b246d7e907c9028837a",
-  "wall_clock_budget": "At most 120 minutes."
+  "storage_budget": "At most 1 GiB of new durable offline repair artifacts.",
+  "summary": "The stale ForwardBatch consumer is locally repairable: request identity is rids[row], while req_pool_indices[row] selects the target worker's physical req_to_token_pool row, and the smallest reordered-row fixture passes. The consumed request-25 boundary is nevertheless unrecoverable: the 423-byte response artifact stores only the reported 228,550-byte stream's length and SHA-256, the raw bytes were never persisted, and the observer failed before target forward/logit/acceptance capture. No endpoint, GPU, replay, or provider spend was used.",
+  "terminal_artifact": "DFLASH_REQUEST25_OFFLINE_BOUNDARY_RESULT.json",
+  "terminal_artifact_sha256": "dfca865f1e4c66b1698c92921d65dec3999c351aa83be64d9987a264d61bf711",
+  "terminal_sha256": "dfca865f1e4c66b1698c92921d65dec3999c351aa83be64d9987a264d61bf711",
+  "wall_clock_budget": "At most 45 minutes of offline researcher wall time; no accelerator or provider time."
 }

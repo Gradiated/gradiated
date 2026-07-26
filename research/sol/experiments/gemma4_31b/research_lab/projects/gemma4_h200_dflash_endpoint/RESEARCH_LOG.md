@@ -459,3 +459,196 @@ Terminal: `DFLASH_REQUEST_OWNERSHIP_OBSERVER_REPAIR_TERMINAL.json`
 No GPU was claimed, no endpoint was launched, no request body was changed,
 and provider spend remains `$0.30443484876411114`. DFlash candidate sampling
 is still unconsumed and requires a later director re-admission.
+
+## 2026-07-26 — queue boundary rechecked
+
+Checked the named predecessor and shared pool once. `gemma4_h200_fp8_weight_stream_schedule`
+remains `active`, admitted as the sole claimant, and has no terminal artifact;
+the lazy-vocab predecessor is closed. The H200 pool record is currently
+`claimed` by FP8 with a fresh non-stale lease and active durable owner, so this
+project remains non-claimable. No claim, provider mutation, CUDA call, AR replay, or DFlash
+sample occurred. The next action remains exactly one `dflash-depth4-c32` run
+after later director reactivation, using the immutable AR reference and
+content-addressed RID observer packet `3407231bdcc05a950d2f50cee02936a8f1f785ff32336b40b1760eb205539174`.
+
+## 2026-07-26T00:23Z — candidate-only DFlash capture terminal
+
+Claimed retained H200 `h200-dflash-adapter-e00vyqp7gxsr34wrtz` and consumed
+packet `3407231bdcc05a950d2f50cee02936a8f1f785ff32336b40b1760eb205539174`
+against immutable AR terminal `45b8120b…141af4`; AR was never replayed.
+Two observer-only integration attempts were preserved as invalid
+(`ForwardBatch.rids` unavailable; then `ScheduleBatch.rids` absent in the
+extend-length hook). After the narrow RID/sizing repair, the sole
+`dflash-depth4-c32` candidate completed 32/32 requests with exact observer
+coverage. Offline comparison terminalized as
+`localized_first_target_verifier`: request index 25 first differed at
+`target_top1_first` (AR 3496, candidate 759). This is a valid scientific
+request-state capture, not a performance claim; `endpoint_exact_match=false`
+and `performance_claim_authorized=false`. The bench was released available.
+Project cumulative exposure is `$1.1150910420418891`.
+
+## 2026-07-26 — first target-verifier causal repair terminal
+
+Consumed the hash-bound candidate capture offline without a GPU claim or
+endpoint replay. Request 25 enters verification with emitted/prefill token
+`236814`; `DFlashWorkerV2.forward_batch_generation.target_predict` is the
+first incorrect observable symbol, with row `[759, 236814, 236761, 87096]`
+instead of AR next token `3496`. Since draft token `174501` does not equal
+that first top-1, the zero-accept bonus path consistently selects and emits
+`759`; the accept/bonus consumer is downstream of the fault.
+
+No repair candidate was emitted. The immutable capture does not retain the
+pre-call verifier positions, CPU/GPU length views, complete four-slot KV
+mapping and pre-forward KV state, or raw logits before versus after adjustment.
+The source archive also binds executed `dflash_info_v2.py` as `eb976…` but
+contains `b17ff…`, and omits imported `dflash_info.py` and `dflash_utils.py`.
+Patching those non-executed/incomplete bytes could not satisfy the offline
+`3496` replay gate. The typed terminal is
+`DFLASH_FIRST_TARGET_VERIFIER_CAUSAL_REPAIR_TERMINAL.json`
+(`0ef20830…e271a`), classified `capture_insufficient_for_cause`. All 15
+project-local deterministic cycle, ownership/observer, depth-cost, and new
+captured-transition fixtures pass. Fresh spend remains `$0`; cumulative
+project exposure remains `$1.1150910420418891`.
+
+## 2026-07-26T00:53Z — source-complete request-25 boundary probe ready
+
+Question: recover the exact verifier-packaging/logit-adjustment source and
+prepare one deterministic request-25 pre-forward/KV/pre-post-logit probe
+without touching the claimed H200 or replaying either endpoint.
+
+Measured source result: SGLang commit
+`588d1f7bc9424201f89957e145f9d5af633a3eb8` reproduces the executed
+`dflash_info.py` (`f17c37c1…a0e53`), `dflash_utils.py`
+(`f6935ff1…91030`), worker, ForwardBatch, TP worker, and memory-pool bytes.
+Applying only the already-bound three-line request-indexed relay patch
+reproduces the observed executed `dflash_info_v2.py` digest exactly:
+`eb976179…9de08`. The earlier archived/executed mismatch is therefore closed,
+and all eight transition modules are materialized in the packet.
+
+The observer matches exact request 25 by its unchanged full input-ID digest
+`51a23cdf…6b360` at `ScheduleBatch.reqs`, then follows the existing opaque RID
+through padding and slot rebinding. At exact worker lines 528/537/544 it records
+the request-owned verifier `input_ids`, positions, device/host lengths,
+`out_cache_loc`, full request-to-token prefix, one-coordinate-per-K/V-layer
+pre-forward KV digest, and first-position top-1 before and after
+`apply_dflash_verify_logits_adjustments`. It performs one bounded host transfer
+only when the target RID reaches its first verify boundary.
+
+Seven CPU fixtures pass from inside the packet: unchanged exact request body,
+request-25-only logical selection, padding exclusion, slot-rebinding safety,
+row/position/length alignment, pre/post label ordering, exact source hashes,
+and digest coverage. The first packaging attempt admitted Python interpreter
+caches; importing the packet changed those cache bytes, so that invalid
+attempt and its immutable archive are preserved at
+`.agents/runtime/request25-boundary-probe-superseded-pyc-20260726T0100Z`.
+The packaging amendment disables bytecode writes and excludes `__pycache__`
+and `.pyc` files. The canonical packet identity is
+`4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b`;
+archive SHA-256 is `25d8a3cb…b438a8`. The terminal is
+`DFLASH_REQUEST25_BOUNDARY_PROBE_PREPARATION_TERMINAL.json`
+(`1d9bfe42…96a0f`), classified `source_complete_boundary_probe_ready`.
+No GPU was claimed, CUDA was not invoked, no endpoint was replayed, no repair
+was emitted, provider state was untouched, fresh spend is `$0`, and cumulative
+project exposure remains `$1.1150910420418891`. A later director decision is
+required before any GPU re-entry.
+
+## 2026-07-26T01:13Z — request-25 H200 probe infrastructure terminal
+
+Claimed only `h200-dflash-adapter-e00vyqp7gxsr34wrtz` under
+`DIRECTOR_REQUEST25_BOUNDARY_PROBE_H200_20260726.json`, staged immutable packet
+`4ae9a81b…f7f4b`, and retrieved the complete pre-science failure evidence.
+The remote source-identity command produced the eight exact bound digest rows,
+but its parser also consumed the NVIDIA container banner and failed on the
+first blank line. This is an ordinary harness defect, not scientific evidence:
+`science_started=false`, `request_submission_count=0`, no endpoint was
+replayed, and no boundary record exists.
+
+The owner stopped at the first typed infrastructure terminal as preregistered,
+did not repair or resubmit, stopped/confirmed absence of its experiment
+container, and released the bench to maintenance. Incremental exposure was
+`$0.005078686666666776`; cumulative project exposure is
+`$1.120169728708556`. The retained terminal is
+`DFLASH_REQUEST25_BOUNDARY_PROBE_H200_TERMINAL.json` (`7428ec4e…eeac`);
+raw artifacts are under `artifacts/request25-boundary-owner-20260726T0112Z`.
+`REQUEST25_BOUNDARY_PROBE_CAUSAL_AMENDMENT.json` records the unexecuted narrow
+parser fix (ignore non-digest banner lines). A later director re-admission is
+required before the single scientific request may be submitted.
+
+## 2026-07-26T01:22Z — repaired-parser preclaim gate failed
+
+Executed the exact local gate required by
+`DIRECTOR_REQUEST25_SOURCE_IDENTITY_PARSER_REPAIR_20260726.json` against the
+hash-bound repaired source (`eaa11a5f…9b81d`) and the observed Docker-banner
+fixture. The positive fixture and missing, altered, and unexpected negative
+cases behaved correctly, but an identical duplicate digest row was accepted:
+the parser's dictionary assignment overwrites the first record. This violates
+the directive's explicit duplicate-rejection requirement.
+
+The preregistered stop rule therefore fired before claim. The named H200
+remained available and unclaimed, no CUDA or request invocation began, no
+endpoint was replayed, and incremental/cumulative spend remained
+`$0`/`$1.120169728708556`. The predecessor terminal remains byte-identical at
+`7428ec4e…eeac`. Evidence is under
+`artifacts/request25-parser-gate-20260726T0122Z`; the retry terminal is
+`DFLASH_REQUEST25_BOUNDARY_PROBE_H200_RETRY1_TERMINAL.json`. A new director
+binding is required because repairing duplicate detection necessarily changes
+the hash that this directive requires to remain `eaa11a5f…9b81d`.
+
+## 2026-07-26T01:39Z — duplicate-safe request-25 submission retrieved
+
+Executed `DIRECTOR_REQUEST25_DUPLICATE_SAFE_SOURCE_IDENTITY_REPAIR_20260726.json`.
+The narrow parser repair rejects both identical and conflicting duplicate
+normalized paths; the complete local gate passed with launcher SHA-256
+`16fbbf3a…a64f26` (gate SHA-256 `a5636fb0…807d6`). The durable owner claimed
+the named H200 at `01:35:41Z`, before the `01:36Z` cutoff, and released it to
+maintenance at `01:39:01Z` after compact-terminal and raw-diagnostic
+retrieval.
+
+Request 25 was submitted exactly once (`science_started=true`) and persisted
+`REQUEST25_RESPONSE.json` (228,550 bytes; SHA-256 `82855c79…8ac741`). The
+server log confirms target and DFlash CUDA setup, a successful `/generate`
+response, prefill, and decode. The observer consumer then raised
+`AttributeError: 'ForwardBatch' object has no attribute 'req_to_token_pool'`
+at `dflash_worker_v2.py:528`, leaving no decision-bearing boundary record.
+This is an infrastructure terminal, not a scientific sample; the request must
+not be replayed because its one allowed submission has occurred. The retrieved
+terminal is `DFLASH_REQUEST25_BOUNDARY_PROBE_H200_RETRY2_TERMINAL.json`
+(`137aac69…b7fd9`), with raw response, terminal, error, server log, source
+manifest, and container inspection retained under
+`artifacts/request25-duplicate-safe-owner-20260726T0135Z`.
+
+Claim exposure was 200.080159 seconds (`$0.13616451158333343`); cumulative
+project exposure is `$1.2563342402918893` of the `$2.00` reservation. No
+further claim, endpoint run, or consumer retry is authorized without a new
+director disposition that accounts for the already-consumed submission.
+
+## 2026-07-26T05:48Z — offline request-25 boundary is unrecoverable
+
+Hash inspection corrects the prior handoff: the local
+`REQUEST25_RESPONSE.json` is a 423-byte manifest (`75a2a93e…e71ebb`), not the
+reported 228,550-byte response stream (`82855c79…8ac741`). The exact request
+driver (`ac1f26ed…4257d`) accumulates the HTTP stream only in a process-local
+`bytearray`, then persists `len(raw)` and `sha256(raw)`; it never writes the
+raw bytes. No 228,550-byte file exists under the immutable consumed-run
+artifact. The digest cannot reconstruct emitted tokens.
+
+The pinned SGLang source hashes all match packet
+`4ae9a81b…f7f4b`. `ForwardBatch.rids[row]` supplies logical identity and
+`req_pool_indices[row]` supplies the current physical row in
+`target_worker.model_runner.req_to_token_pool.req_to_token`; `ForwardBatch`
+itself has no `req_to_token_pool`. A two-case reordered-row fixture validates
+that mapping, and the minimal repaired observer compiles. All six unit tests
+pass.
+
+That repair cannot recover this consumed invocation. The observer failed in
+`_capture_pre` at pinned worker line 528 before target forward, then set
+`CAPTURED=True`, so no raw/post-adjustment top-1, accepted prefix, bonus,
+commit length, request-token prefix, or KV digest was retained. The two server
+acceptance lines are time-window aggregates and cannot supply those
+request-level fields; c32 evidence from another batch/state is non-transferable.
+`DFLASH_REQUEST25_OFFLINE_BOUNDARY_RESULT.json`
+(`dfca865f…bf711`) therefore records
+`unrecoverable_missing_decision_evidence`: preserve request 25 as consumed and
+uninterpretable, and do not replay it. Work was strictly offline—no GPU,
+endpoint contact, request replay, provider mutation, or fresh spend; cumulative
+project exposure remains `$1.2563342402918893`.

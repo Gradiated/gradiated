@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
   "id": "gemma4_hopper_packed_m384_verifier",
-  "status": "active",
+  "status": "complete",
   "priority": 9775,
   "researcher_profile": "deep",
   "allocation_limit": 1,
   "authorized_spend_usd": 0.0,
   "actual_spend_usd": 2.716333,
   "active_session": null,
-  "hypothesis": "Rejected for the implemented representation: FP32 persisted scores and FP32 partition numerators recover the numerical target, but their global compulsory-HBM traffic cannot retain 80% of the prior component time saved.",
-  "summary": "The FP32 score-workspace/partition-numerator representation is closed: it improves the sampled numerical proxy by 16-17x versus V2 but its global compulsory-HBM lower bound exceeds the admissible loss by 12.8x. The project is reactivated for a materially different SM90 on-chip streaming or bounded-recompute reduction with no persisted score or numerator workspace.",
-  "next_action": "Under DIRECTOR_HOPPER_PACKED_STREAMING_ACCURACY_20260726T2006Z.json, use $kernel-research to implement and physically analyze an SM90-legal on-chip producer/consumer, cluster, persistent, bounded-recompute, or hybrid local/global reduction through the real shuffled FP8 paged-KV producer and unchanged o_extend consumer. Produce PACKED_M384_STREAMING_ACCURACY_READY.json only if complete exact-geometry FP64/A-A evidence improves V2 error by at least 10x, the design eliminates both forbidden HBM workspaces, and global plus weighted physical bounds pass. Otherwise return PACKED_M384_STREAMING_ACCURACY_RESULT.json. Remain GPU-ineligible and never replay V2.",
+  "hypothesis": "Offline-supported: a local single-CTA/global two-CTA SM90 streaming cluster can preserve FP32 online-softmax/value accuracy while eliminating both forbidden HBM workspaces and retaining a credible component-time bound.",
+  "summary": "PACKED_M384_STREAMING_ACCURACY_READY.json binds a source-complete on-chip streaming cluster and lifecycle-pure runner. Complete 32-sequence/32-head/12-row FP64 evidence improves measured V2 relative L2 by 16.24x local and 17.48x global across 9,437,184 consumed outputs. Both forbidden HBM workspaces are absent; the global 1.657 ms and weighted 26.636 ms analytical floors fit their 2.982 ms and 63.419 ms ceilings. No GPU was claimed or V2 replayed.",
+  "next_action": "Director consumes PACKED_M384_STREAMING_ACCURACY_READY.json and may admit exactly one new stock-versus-streaming H100 component discovery/measurement. The future target-hardware run must compile at <=64 registers/thread with zero stack/local-memory traffic and clear the exact GPU numerical, CUDA-graph, and warm-p50 gates before any endpoint promotion.",
   "bench_need": {
     "accelerator": "nvidia-h100-sxm",
     "claim_allowed": false,
     "provider_create_allowed": false,
-    "reason": "The V2 component and endpoint are consumed, this redesign failed its offline physical gate, no READY artifact exists, and the project has no spend or claim authority."
+    "reason": "A READY artifact now exists, but this cycle authorizes no GPU claim or provider spend. The director must separately admit the single new stock-versus-streaming component measurement."
   },
   "execution_binding": {
     "contract": "EXPERIMENT_CONTRACT.json",
@@ -213,6 +213,39 @@
     "new_candidate_gpu_samples_consumed": 0,
     "gpu_claim_performed": false,
     "provider_mutation_performed": false,
+    "new_provider_exposure_usd": 0.0
+  },
+  "director_streaming_accuracy": {
+    "path": "DIRECTOR_HOPPER_PACKED_STREAMING_ACCURACY_20260726T2006Z.json",
+    "sha256": "cfb216485dce6f213d22b8df099f6d9c64b0fa6aa52eea58e3b2b5d45dacb9db",
+    "consumed_result": "PACKED_M384_ACCURACY_REDESIGN_RESULT.json",
+    "required_ready_artifact": "PACKED_M384_STREAMING_ACCURACY_READY.json",
+    "alternate_terminal": "PACKED_M384_STREAMING_ACCURACY_RESULT.json",
+    "authorized_spend_usd": 0.0,
+    "provider_create_allowed": false,
+    "gpu_claim_allowed": false,
+    "v2_component_replay_allowed": false,
+    "v2_endpoint_replay_allowed": false,
+    "consumed_by_researcher": true
+  },
+  "streaming_accuracy_ready": {
+    "path": "PACKED_M384_STREAMING_ACCURACY_READY.json",
+    "sha256": "5c794d0227dd189d8657c666542248539442262314dfe76dc857b065483ca483",
+    "candidate": "packed_m384_streaming_cluster.cu",
+    "candidate_sha256": "2262a4a20e9438671f795eeb8aad7f5db9cbe65ae446a94758e3d4c1cce78656",
+    "runner": "streaming_accuracy_component_runner.py",
+    "runner_sha256": "c79612b4bd03fa14bcff5aa14cf1e59582aaa9531f1d388ca6e0d2f1edb58cb0",
+    "offline_analysis": "artifacts/streaming-accuracy/OFFLINE_STREAMING_ACCURACY_ANALYSIS.json",
+    "offline_analysis_sha256": "275dd5c6888ac296c6b37f461f4c6f176b8b51173b06c1d8bc69782a07c3928e",
+    "complete_exact_geometry": true,
+    "ten_x_v2_error_gate": true,
+    "forbidden_hbm_workspaces_eliminated": true,
+    "global_physical_bound_pass": true,
+    "weighted_physical_bound_pass": true,
+    "target_compile_pending": true,
+    "gpu_claim_performed": false,
+    "new_candidate_gpu_samples_consumed": 0,
+    "v2_replay_performed": false,
     "new_provider_exposure_usd": 0.0
   }
 }

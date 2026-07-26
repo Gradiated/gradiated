@@ -1,0 +1,255 @@
+{
+  "candidate": {
+    "mechanism": "rank-0 staged FP8 K plus FP32 online-softmax producer; one or two CTAs retain disjoint FP32 output slices; global rank 1 reads FP32 probabilities through distributed shared memory; BF16 cast occurs only at o_extend",
+    "sha256": "2262a4a20e9438671f795eeb8aad7f5db9cbe65ae446a94758e3d4c1cce78656",
+    "source": "packed_m384_streaming_cluster.cu"
+  },
+  "correctness": {
+    "cases": [
+      {
+        "candidate_vs_fp64": {
+          "elements": 3145728,
+          "max_abs": 3.0518961121734495e-05,
+          "mean_abs": 2.8136776082557535e-06,
+          "relative_l2": 0.0016582197974405236
+        },
+        "closed_v2_measured": {
+          "max_abs": 0.00927734375,
+          "relative_l2": 0.026936529204249382
+        },
+        "coverage": {
+          "complete_output": true,
+          "dimensions": 256,
+          "partial_final_tile_tokens": 0,
+          "query_heads": 32,
+          "rows": 12,
+          "sequences": 32,
+          "shuffled_page_permutations": 32
+        },
+        "cpu_elapsed_seconds": 12.83918001013808,
+        "evidence_class": "measured_synthetic_cpu_complete_exact_geometry",
+        "gate": {
+          "aa_calibrated_relative_l2_limit": 0.002693652920424938,
+          "max_abs_limit": 0.000927734375,
+          "pass": true,
+          "relative_l2_limit": 0.002693652920424938
+        },
+        "geometry": {
+          "batch": 32,
+          "gqa_group": 2,
+          "head_dim": 256,
+          "kv_heads": 16,
+          "output_elements": 3145728,
+          "page_size": 1,
+          "prefix_tokens": 1024,
+          "query_heads": 32,
+          "query_rows_per_sequence": 12,
+          "query_rows_total": 384,
+          "sliding_window": 1024
+        },
+        "improvement_factor": {
+          "max_abs": 303.9862239410572,
+          "relative_l2": 16.244245332148456
+        },
+        "name": "local",
+        "reference": "FP64 stable softmax/value over BF16 extend and E4M3 shuffled page-size-one cache producer bytes",
+        "stock_aa": {
+          "comparison": "full-row FP32 versus 64-token online FP32",
+          "elements": 3145728,
+          "max_abs": 9.313225746154785e-09,
+          "mean_abs": 7.26166218833252e-10,
+          "relative_l2": 3.8253198041538364e-07
+        },
+        "unchanged_output_consumer_square_sum": 19.71464853243031
+      },
+      {
+        "candidate_vs_fp64": {
+          "elements": 6291456,
+          "max_abs": 1.5257951891449635e-05,
+          "mean_abs": 1.3835595101911523e-06,
+          "relative_l2": 0.0016591401547540168
+        },
+        "closed_v2_measured": {
+          "max_abs": 0.0047607421875,
+          "relative_l2": 0.029003974050283432
+        },
+        "coverage": {
+          "complete_output": true,
+          "dimensions": 512,
+          "partial_final_tile_tokens": 54,
+          "query_heads": 32,
+          "rows": 12,
+          "sequences": 32,
+          "shuffled_page_permutations": 32
+        },
+        "cpu_elapsed_seconds": 33.86737448209897,
+        "evidence_class": "measured_synthetic_cpu_complete_exact_geometry",
+        "gate": {
+          "aa_calibrated_relative_l2_limit": 0.002900397405028343,
+          "max_abs_limit": 0.00047607421875,
+          "pass": true,
+          "relative_l2_limit": 0.002900397405028343
+        },
+        "geometry": {
+          "batch": 32,
+          "gqa_group": 8,
+          "head_dim": 512,
+          "kv_heads": 4,
+          "output_elements": 6291456,
+          "page_size": 1,
+          "prefix_tokens": 4214,
+          "query_heads": 32,
+          "query_rows_per_sequence": 12,
+          "query_rows_total": 384,
+          "sliding_window": -1
+        },
+        "improvement_factor": {
+          "max_abs": 312.0171187699091,
+          "relative_l2": 17.481328486431302
+        },
+        "name": "global",
+        "reference": "FP64 stable softmax/value over BF16 extend and E4M3 shuffled page-size-one cache producer bytes",
+        "stock_aa": {
+          "comparison": "full-row FP32 versus 64-token online FP32",
+          "elements": 6291456,
+          "max_abs": 4.190951585769653e-09,
+          "mean_abs": 4.2712416257899306e-10,
+          "relative_l2": 4.448245667810609e-07
+        },
+        "unchanged_output_consumer_square_sum": 9.546390755220632
+      }
+    ],
+    "complete_exact_geometry": true,
+    "ten_x_v2_error_gate": true
+  },
+  "evidence_labels": {
+    "correctness": "measured synthetic CPU complete exact geometry",
+    "hardware": "vendor inventory plus explicitly labeled FP32/shared priors",
+    "physical": "analytical peak lower bounds and source-live-state model",
+    "prior_timings": "measured closed H100 evidence"
+  },
+  "limitations": [
+    "No SM90 compilation or GPU execution is authorized in this cycle.",
+    "Peak roofline values are necessary lower bounds, not latency predictions.",
+    "The A/A envelope is a complete CPU emulation of two FP32 reduction orders, not a fresh stock-GPU replay.",
+    "Register and spill claims remain explicit future compile falsifiers."
+  ],
+  "physical": {
+    "both_forbidden_hbm_workspaces_eliminated": true,
+    "cases": [
+      {
+        "algorithm": "single-CTA on-chip streaming",
+        "compulsory_hbm_bytes_no_gqa_l2_credit": 562036736,
+        "cross_cta_dsm_handoff_bytes": 0,
+        "falsifiable_prediction": "The streaming candidate emits no HBM score/numerator traffic; global compiles at <=64 registers/thread with zero local-memory transactions, launches 2,048 CTAs in 15.52 cluster waves, and its warm p50 remains <= the maximum candidate time.",
+        "forbidden_partition_numerator_bytes": 0,
+        "forbidden_score_workspace_bytes": 0,
+        "gate": {
+          "closed_v2_candidate_ms": 0.4918079972267151,
+          "dsm_handoff_within_incremental_loss_budget": true,
+          "global_or_local_floor_pass": true,
+          "maximum_candidate_ms": 0.6719424009323121
+        },
+        "grid": {
+          "cluster_size": 1,
+          "cluster_syncs_per_cluster": 34,
+          "cluster_waves": 7.757575757575758,
+          "clusters": 1024,
+          "concurrent_clusters_at_one_cta_per_sm": 132,
+          "ctas": 1024,
+          "prefix_tiles": 16
+        },
+        "name": "local",
+        "roofline": {
+          "combined_roofline_floor_ms": 0.201326592,
+          "compute_floor_ms": 0.19485645488789238,
+          "dsm_floor_at_conservative_hbm_bandwidth_ms": 0.0,
+          "expected_regime": "shared-memory issue-bandwidth limited at the stated prior lower bound, narrowly above the FP32-FMA floor",
+          "fp32_peak_prior_flops_per_second": 66900000000000,
+          "hbm_floor_ms": 0.16777216,
+          "hbm_peak_bytes_per_second": 3350000000000,
+          "shared_bandwidth_prior_bytes_per_second": 20000000000000,
+          "shared_floor_ms": 0.201326592
+        },
+        "shared_and_l1_bytes": 4026531840,
+        "sm90_legality": {
+          "cluster_distributed_shared_bytes": 42128,
+          "cluster_size": 1,
+          "cluster_size_legal": true,
+          "dynamic_shared_bytes_per_cta": 42128,
+          "expected_spills": 0,
+          "fp32_accumulators_per_thread": 12,
+          "future_compiler_falsifier": "reject if registers/thread exceeds 64 or any local-memory load/store is emitted",
+          "h100_shared_limit_bytes_per_cta": 227328,
+          "portable_cluster_size_limit": 8,
+          "shared_legal": true,
+          "sm90_register_limit_per_thread": 255,
+          "source_live_register_upper_model": 64,
+          "threads_per_cta": 256
+        },
+        "useful_flops": 13035896832
+      },
+      {
+        "algorithm": "two-CTA cluster with rank-0 FP32 probability DSM handoff",
+        "compulsory_hbm_bytes_no_gqa_l2_credit": 4469030912,
+        "cross_cta_dsm_handoff_bytes": 214106112,
+        "falsifiable_prediction": "The streaming candidate emits no HBM score/numerator traffic; global compiles at <=64 registers/thread with zero local-memory transactions, launches 2,048 CTAs in 15.52 cluster waves, and its warm p50 remains <= the maximum candidate time.",
+        "forbidden_partition_numerator_bytes": 0,
+        "forbidden_score_workspace_bytes": 0,
+        "gate": {
+          "closed_v2_candidate_ms": 2.910111904144287,
+          "dsm_handoff_within_incremental_loss_budget": true,
+          "global_or_local_floor_pass": true,
+          "maximum_candidate_ms": 2.982163143157959
+        },
+        "grid": {
+          "cluster_size": 2,
+          "cluster_syncs_per_cluster": 134,
+          "cluster_waves": 15.515151515151516,
+          "clusters": 1024,
+          "concurrent_clusters_at_one_cta_per_sm": 66,
+          "ctas": 2048,
+          "prefix_tiles": 66
+        },
+        "name": "global",
+        "roofline": {
+          "combined_roofline_floor_ms": 1.657012224,
+          "compute_floor_ms": 1.5896976416143498,
+          "dsm_floor_at_conservative_hbm_bandwidth_ms": 0.06391227223880597,
+          "expected_regime": "shared-memory issue-bandwidth limited at the stated prior lower bound, narrowly above the FP32-FMA floor",
+          "fp32_peak_prior_flops_per_second": 66900000000000,
+          "hbm_floor_ms": 1.334039078208955,
+          "hbm_peak_bytes_per_second": 3350000000000,
+          "shared_bandwidth_prior_bytes_per_second": 20000000000000,
+          "shared_floor_ms": 1.657012224
+        },
+        "shared_and_l1_bytes": 33140244480,
+        "sm90_legality": {
+          "cluster_distributed_shared_bytes": 129312,
+          "cluster_size": 2,
+          "cluster_size_legal": true,
+          "dynamic_shared_bytes_per_cta": 64656,
+          "expected_spills": 0,
+          "fp32_accumulators_per_thread": 12,
+          "future_compiler_falsifier": "reject if registers/thread exceeds 64 or any local-memory load/store is emitted",
+          "h100_shared_limit_bytes_per_cta": 227328,
+          "portable_cluster_size_limit": 8,
+          "shared_legal": true,
+          "sm90_register_limit_per_thread": 255,
+          "source_live_register_upper_model": 64,
+          "threads_per_cta": 256
+        },
+        "useful_flops": 106350772224
+      }
+    ],
+    "global_gate_pass": true,
+    "weighted_50_local_10_global": {
+      "maximum_candidate_ms": 63.41875147819519,
+      "pass": true,
+      "roofline_floor_ms": 26.63645184
+    }
+  },
+  "ready_gates_pass": true,
+  "schema_version": 1,
+  "type": "packed_m384_streaming_accuracy_offline_analysis"
+}

@@ -446,3 +446,41 @@ adds `$0` provider exposure.
 Next move: close this representation. Any new lineage must eliminate global
 score rereads and the numerator HBM round trip before compiler/GPU admission,
 and bind a newly admitted target-logit margin oracle.
+
+## 2026-07-26 — on-chip streaming cluster clears offline gates
+
+Question: can exact FP32 online-softmax/value state remain on chip while
+removing both HBM intermediates that closed the prior representation?
+
+Action: implemented `packed_m384_streaming_cluster.cu`. One 256-thread CTA
+owns each local sequence/head. Global uses a portable two-CTA SM90 cluster:
+rank 0 stages shuffled page-size-one FP8 K, produces FP32 probabilities, and
+hands them to rank 1 through distributed shared memory; both ranks stage one
+D256 V slice and retain twelve FP32 output accumulators per thread. No scores
+or partition numerators are persisted to HBM. Added a lifecycle-pure future
+component runner with fresh stock A/A, complete FP64 consumption, graph
+replay, alternating timing, and cuobjdump resource gates. No GPU was claimed
+and V2 was not invoked.
+
+Evidence: the deterministic complete CPU experiment consumes every output for
+32 sequences, 32 heads, 12 rows, and D256/D512—9,437,184 elements. Relative
+L2 is `0.00165822` local and `0.00165914` global, improving measured V2 by
+16.24x and 17.48x; max error improves by 304x and 312x. Full-row versus
+64-token online FP32 A/A relative L2 is below `4.45e-7`. The global design is
+SM90-legal at cluster size 2 and 64,656 dynamic-shared bytes/CTA, with twelve
+source-visible FP32 accumulators/thread. Its conservative 214,106,112-byte DSM
+handoff floor is `0.06391 ms`, inside the `0.07205 ms` incremental allowance.
+Global and 50-local/10-global roofline floors are `1.657 ms` and `26.636 ms`,
+inside `2.982 ms` and `63.419 ms` ceilings. Twelve focused tests pass.
+
+Interpretation: all director-defined offline READY gates pass. This is an
+admission result, not an accelerator measurement or endpoint-safety claim.
+The decisive future falsifier is an SM90 compile/run: at most 64
+registers/thread, zero stack/local-memory traffic, exact GPU error within the
+bound gates, and warm p50 no slower than `0.67194 ms` local / `2.98216 ms`
+global.
+
+Next move: director may admit one new stock-versus-streaming H100 component
+measurement using the hash-bound lifecycle-pure runner. Repair ordinary
+compile/API defects in the retained session; never replay V2 or promote before
+the new component terminal.

@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "hidden_size": 5376,
+    "layers": 60,
+    "vocab_size": 262144,
+    "tie_word_embeddings": true,
+    "dtype": "bfloat16"
+  },
+  "producer": {
+    "source": "inputs/source/gemma4_causal.py",
+    "sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+    "symbols": [
+      "Gemma4TextModel.forward",
+      "Gemma4ForCausalLM.forward"
+    ],
+    "tap_contract": "Gemma4TextModel.layers_to_capture appends the pre-layer hidden state at indices 45 and 54 and the post-layer-60, pre-final-norm state at index 60. Gemma4ForCausalLM.capture_aux_hidden_states passes those tensors unchanged into LogitsProcessor.forward.",
+    "selected_layers": [
+      45,
+      54,
+      60
+    ],
+    "shape_each": [
+      "live_batch",
+      5376
+    ],
+    "layout": "contiguous BF16 row-major after project capture copy"
+  },
+  "draft_head": {
+    "source": "causal_parallel_offset_head.py",
+    "symbol": "SharedCausalOffsetHead returned by build_torch_module",
+    "input": "three request-owned BF16 target taps",
+    "offset_conditioning": "learned [16,256] embedding",
+    "causal_mixer": "one shared rank-256, 8-head causal SDPA block with a 4x MLP",
+    "output_shape": [
+      "batch",
+      16,
+      5376
+    ],
+    "row_order": "request-major, offset-minor",
+    "semantic_scope": "proposal generation only"
+  },
+  "tied_consumer": {
+    "source": "inputs/source/logits_processor.py",
+    "sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14",
+    "symbol": "LogitsProcessor._get_logits -> _compute_lm_head",
+    "weight_key": "model.language_model.embed_tokens.weight",
+    "weight_shape": [
+      262144,
+      5376
+    ],
+    "weight_dtype": "BF16",
+    "c32_d16_input_shape": [
+      512,
+      5376
+    ],
+    "full_output_shape": [
+      512,
+      262144
+    ],
+    "full_output_dtype": "FP32 after the stock BF16 projection boundary",
+    "softcap": 30.0,
+    "draft_decision": "stable greedy top-1; chunked projection is allowed only when it preserves the full batched consumer's argmax"
+  },
+  "acceptance": {
+    "source": "inputs/source/ngram_info.py",
+    "sha256": "ffa88c663e1893c306710ac801da0693d8248ebcfd1a5bc705c157f90657af1c",
+    "symbol": "NgramVerifyInput.verify",
+    "greedy_boundary": "verify_tree_greedy consumes target logits and draft candidates",
+    "accepted_target_tokens": "num_accept_tokens = num_correct_drafts + 1",
+    "bonus_token": "the +1 target token remains target-authoritative",
+    "sampling_boundary": "non-greedy verification requires the unchanged full target distribution and RNG path"
+  },
+  "kv_commit": {
+    "source": "inputs/source/ngram_info.py",
+    "symbols": [
+      "NgramVerifyInput._free_cache",
+      "NgramVerifyInput.verify"
+    ],
+    "contract": "Rejected speculative cache slots are freed; out_cache_loc is compacted to accepted indices; only then do seq_lens, seq_lens_cpu, and seq_lens_sum advance by bonus-inclusive num_accept_tokens.",
+    "unchanged_authority": true
+  },
+  "baseline": {
+    "current_drafter_depth": 4,
+    "mean_accepted_target_tokens": 3.006315789473684,
+    "accepted_target_tokens_per_cuda_event_second": 521.9159530781905,
+    "paired_endpoint_improvement_fraction": 0.011349460841934111,
+    "source": "inputs/evidence/PARALLEL_DRAFT_FRONTIER.json",
+    "sha256": "59e35a96d00f370ad7eb6eb9721195a939265091f47094cff9947b62577c4f8b"
+  }
+}

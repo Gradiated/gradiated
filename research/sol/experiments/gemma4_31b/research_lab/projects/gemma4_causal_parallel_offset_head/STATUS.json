@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_causal_parallel_offset_head",
+  "status": "complete",
+  "priority": 9765,
+  "researcher_profile": "deep",
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.0,
+  "active_session": null,
+  "hypothesis": "A shared causal block that emits Gemma draft offsets 1-16 in one forward can increase accepted target tokens faster than draft plus verification cost and support a lossless 20%-class endpoint reduction.",
+  "summary": "Typed offline mechanism result, not READY. The shared 6.301M-parameter causal head, request-owned one-pass tap capture, deterministic trainer/evaluator, exact [32,16,5376] -> [512,262144] PyTorch meta fixture, and immutable request-disjoint 4096/512 split are complete. The optimistic full-cost model requires 16.054 accepted target tokens per verification (94.0875% of the maximum draft prefix); no real-tap disjoint holdout or trained checkpoint exists under the project's zero-dollar authority.",
+  "next_action": "Director consumes CAUSAL_PARALLEL_OFFSET_HEAD_RESULT.json sha256 4d476303bec2aa89fc29e0300245778a94c760ae062f4a3253985ca84088c891. Reopen only with positive spend and a compatible H200 for the single bound capture/train/holdout cycle in EXPERIMENT_CONTRACT.json. Do not write READY or claim a matched GPU command before the holdout reaches 16.054 accepted target tokens per verification.",
+  "bench_need": {
+    "claim_allowed": false,
+    "provider_create_allowed": false,
+    "reason": "The project has zero provider spend authority. The offline packet is complete, but the remaining producer capture, head training, and holdout scoring require a newly authorized compatible H200. It may not claim the retired packed-M384 H100 or replay any consumed arm."
+  },
+  "baseline": {
+    "source_project": "gemma4_lossless_parallel_draft_frontier",
+    "source_artifact": "../gemma4_lossless_parallel_draft_frontier/PARALLEL_DRAFT_FRONTIER.json",
+    "selected_depth": 4,
+    "mean_accepted_target_tokens_per_verification": 3.006315789473684,
+    "accepted_target_tokens_per_cuda_event_second": 521.9159530781905,
+    "paired_endpoint_improvement_fraction": 0.011349460841934111
+  },
+  "campaign_gate": {
+    "qualified_control_seconds_per_request": 0.625149101968745,
+    "target_seconds_per_request": 0.500119281574996,
+    "required_reduction_fraction": 0.2,
+    "holdout_examples": 512,
+    "training_examples": 4096
+  },
+  "scientific_samples_consumed": 0,
+  "provider_mutation": false,
+  "decision": {
+    "classification": "typed_mechanism_result",
+    "result": "offline_cost_path_requires_unmeasured_near_perfect_prefix_survival",
+    "ready": false,
+    "ready_artifact_written": false,
+    "terminal_path": "CAUSAL_PARALLEL_OFFSET_HEAD_RESULT.json",
+    "terminal_sha256": "4d476303bec2aa89fc29e0300245778a94c760ae062f4a3253985ca84088c891"
+  },
+  "offline_evidence": {
+    "exact_shape_fixture_pass": true,
+    "capture_ownership_fixture_pass": true,
+    "train_examples": 4096,
+    "holdout_examples": 512,
+    "request_disjoint": true,
+    "required_mean_accepted_target_tokens": 16.054,
+    "perfect_acceptance_projected_seconds_per_request": 0.4745997473668282,
+    "real_tap_holdout_measured": false
+  },
+  "binding_defect": {
+    "classification": "cross_project_binding_digest_mismatch",
+    "path": "../gemma4_hopper_packed_m384_verifier/SEMANTIC_LOCALIZATION_RESULT.json",
+    "director_expected_sha256": "7fef9d24407d7cc9bb78a76b7caa7ceea32ba6a6460670f6d0fb30eca57c34f2",
+    "observed_sha256": "7e59aab982b1f6c833a444d4635c1347db6995cfdcb749902d556eb57ab8a46b",
+    "consumed": false
+  }
+}

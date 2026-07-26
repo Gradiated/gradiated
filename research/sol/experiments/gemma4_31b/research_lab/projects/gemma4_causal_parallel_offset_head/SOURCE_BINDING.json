@@ -1,0 +1,80 @@
+{
+  "classification": "immutable_project_local_source_and_evidence_binding",
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+  },
+  "rows": [
+    {
+      "bytes": 56461,
+      "path": "inputs/source/gemma4_causal.py",
+      "sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+      "source": "projects/gemma4_h200_ngram_verification_critical_path/inputs/source/gemma4_causal.py"
+    },
+    {
+      "bytes": 47157,
+      "path": "inputs/source/logits_processor.py",
+      "sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14",
+      "source": "projects/gemma4_h200_ngram_verification_critical_path/inputs/source/logits_processor.py"
+    },
+    {
+      "bytes": 18614,
+      "path": "inputs/source/ngram_info.py",
+      "sha256": "ffa88c663e1893c306710ac801da0693d8248ebcfd1a5bc705c157f90657af1c",
+      "source": "projects/gemma4_h200_ngram_verification_critical_path/inputs/source/ngram_info.py"
+    },
+    {
+      "bytes": 15402,
+      "path": "inputs/source/ngram_worker.py",
+      "sha256": "27721b777cae08657ec9854ec0137a0db50afd49d84809503312fa43e399b554",
+      "source": "projects/gemma4_h200_ngram_verification_critical_path/inputs/source/ngram_worker.py"
+    },
+    {
+      "bytes": 4621,
+      "path": "inputs/source/config.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "source": "projects/gemma4_h200_ngram_verification_critical_path/inputs/checkpoint/config.json"
+    },
+    {
+      "bytes": 19880,
+      "path": "inputs/evidence/DFLASH_C32_DEPTH_COST_TERMINAL.json",
+      "sha256": "c2cdc9bedbe4de8120ef9641ec7c9d745657e21352c3d388291ef5020ecdf637",
+      "source": "projects/gemma4_h200_dflash_endpoint/DFLASH_C32_DEPTH_COST_TERMINAL.json"
+    },
+    {
+      "bytes": 3937,
+      "path": "inputs/evidence/GROUPED_LM_HEAD_H200_GRAPH_REPLAY_TERMINAL.json",
+      "sha256": "d6ce199adc0debcc5e10380e71b219009858c160efc60be56c81d571f240bda1",
+      "source": "projects/gemma4_h200_ngram_persistent_grouped_lm_head/GROUPED_LM_HEAD_H200_GRAPH_REPLAY_TERMINAL.json"
+    },
+    {
+      "bytes": 372899,
+      "path": "inputs/evidence/CONTROL_PRODUCER_STAGE.json",
+      "sha256": "de7512df1428a77810902df196c228df9328f33ecdb5ffcdef72b754365d641d",
+      "source": "projects/gemma4_h200_ngram_persistent_grouped_lm_head/artifacts/graph-safe-endpoint-20260725t210418z/retrieved/CONTROL_PRODUCER_STAGE.json"
+    },
+    {
+      "bytes": 16299,
+      "path": "inputs/evidence/TRACE_ANALYSIS_REPAIR.json",
+      "sha256": "a22e25b3e911891d75e1008f22a03ad2a7d160584e1c83e660b8a3238602304f",
+      "source": "projects/gemma4_h200_ngram_verification_critical_path/artifacts/ngram-critical-20260724t115729Z/TRACE_ANALYSIS_REPAIR.json"
+    },
+    {
+      "bytes": 12805,
+      "path": "inputs/evidence/PARALLEL_DRAFT_FRONTIER.json",
+      "sha256": "59e35a96d00f370ad7eb6eb9721195a939265091f47094cff9947b62577c4f8b",
+      "source": "projects/gemma4_lossless_parallel_draft_frontier/PARALLEL_DRAFT_FRONTIER.json"
+    }
+  ],
+  "runtime": {
+    "commit": "588d1f7bc9424201f89957e145f9d5af633a3eb8",
+    "name": "SGLang"
+  },
+  "schema_version": 1,
+  "semantic_localization_binding": {
+    "classification": "cross_project_binding_digest_mismatch",
+    "consumed": false,
+    "director_expected_sha256": "7fef9d24407d7cc9bb78a76b7caa7ceea32ba6a6460670f6d0fb30eca57c34f2",
+    "observed_sha256": "7e59aab982b1f6c833a444d4635c1347db6995cfdcb749902d556eb57ab8a46b"
+  }
+}

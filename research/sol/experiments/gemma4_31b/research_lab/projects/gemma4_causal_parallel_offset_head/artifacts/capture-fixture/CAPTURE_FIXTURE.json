@@ -1,0 +1,67 @@
+{
+  "capture_terminal_sha256": "518a583b278674281c8397a4860f716df504d9e2be2ae4be0798f9ed9dbb4fb0",
+  "checks": {
+    "decode_reordering_preserves_request_identity": true,
+    "first_decode_label_offset_one": true,
+    "prefill_label_offset_zero": true,
+    "prefill_marker_maps_request_identity": true
+  },
+  "chunk_hashes": [
+    {
+      "path": "tap-chunk-00000.pt",
+      "sha256": "12e95ec3fdf365a8a759c8cdfc1671596f611753eec3db28ba4190b24cf1a9cd"
+    },
+    {
+      "path": "tap-chunk-00001.pt",
+      "sha256": "a537590ad1e13d7b5cb62355b4b28a13fccffd7bd241ba20cd46a983bbb12e39"
+    }
+  ],
+  "classification": "capture_request_ownership_fixture",
+  "evidence_label": "executed CPU ownership fixture; no model or CUDA claim",
+  "expected": [
+    [
+      7,
+      0,
+      "rid-seven"
+    ],
+    [
+      21,
+      0,
+      "rid-twenty-one"
+    ],
+    [
+      21,
+      1,
+      "rid-twenty-one"
+    ],
+    [
+      7,
+      1,
+      "rid-seven"
+    ]
+  ],
+  "observed": [
+    [
+      7,
+      0,
+      "rid-seven"
+    ],
+    [
+      21,
+      0,
+      "rid-twenty-one"
+    ],
+    [
+      21,
+      1,
+      "rid-twenty-one"
+    ],
+    [
+      7,
+      1,
+      "rid-seven"
+    ]
+  ],
+  "pass": true,
+  "schema_version": 1
+}

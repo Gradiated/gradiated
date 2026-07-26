@@ -1,0 +1,16 @@
+{
+  "chunks": 2,
+  "classification": "one_pass_target_tap_capture",
+  "completed_unix_s": 1785094825.8469083,
+  "hidden_size": 5376,
+  "observer_error": null,
+  "pass": true,
+  "request_mapping_count": 2,
+  "rows": 4,
+  "schema_version": 1,
+  "tap_layers": [
+    45,
+    54,
+    60
+  ]
+}

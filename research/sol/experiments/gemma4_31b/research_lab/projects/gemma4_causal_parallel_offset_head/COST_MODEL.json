@@ -1,0 +1,188 @@
+{
+  "classification": "full_draft_plus_verify_cost_discriminator",
+  "complete_head_accounting": {
+    "bytes": {
+      "draft_token_ids_int64": 4096,
+      "full_logits_fp32_materialization": 536870912,
+      "head_parameters_bf16": 12602880,
+      "offset_hidden_bf16": 5505024,
+      "tap_inputs_bf16": 1032192,
+      "tied_weight_bf16_compulsory": 2818572288
+    },
+    "causal_block_and_launch_allowance_ms": 0.5,
+    "derived_grouped_d16_ms": 5.577301025390625,
+    "flops": {
+      "causal_attention": 8388608,
+      "mlp": 536870912,
+      "qkvo": 268435456,
+      "tap_projection": 264241152,
+      "tied_projection": 1443109011456,
+      "total": 1445596233728,
+      "up_projection": 1409286144
+    },
+    "head_ms_per_verification_call": 6.077301025390625,
+    "launches": {
+      "attention_out": 1,
+      "batched_tied_head": 1,
+      "causal_sdpa": 1,
+      "hidden_up_residual": 1,
+      "mlp_down": 1,
+      "mlp_norm": 1,
+      "mlp_up_activation": 1,
+      "qkv": 1,
+      "tap_down_projections": 3,
+      "tap_rmsnorm": 1,
+      "top1_reduction": 1,
+      "total_unfused_upper_bound": 13
+    },
+    "measured_grouped_d12_ms": 4.182975769042969
+  },
+  "decision": {
+    "holdout_evidence_present": false,
+    "ready": false,
+    "ready_path_exists_analytically": true,
+    "reason": "The optimistic cost path exists only at near-perfect prefix survival, but no request-disjoint target-layer-tap holdout or trained checkpoint exists."
+  },
+  "evidence_labels": {
+    "depth16_projection": "derived linear extrapolation from exact D12",
+    "dflash_verifier_cost": "measured H200 CUDA events",
+    "grouped_head_timing": "measured H200 CUDA graph replay",
+    "service_projection": "analytical optimistic lower-bound model",
+    "trace_fraction": "measured non-overlapping GPU interval union"
+  },
+  "inputs": {
+    "control_stage": "de7512df1428a77810902df196c228df9328f33ecdb5ffcdef72b754365d641d",
+    "dflash_cost": "c2cdc9bedbe4de8120ef9641ec7c9d745657e21352c3d388291ef5020ecdf637",
+    "grouped_head": "d6ce199adc0debcc5e10380e71b219009858c160efc60be56c81d571f240bda1",
+    "trace_analysis": "a22e25b3e911891d75e1008f22a03ad2a7d160584e1c83e660b8a3238602304f"
+  },
+  "production_geometry": {
+    "batch": 32,
+    "consumer_output": [
+      512,
+      262144
+    ],
+    "consumer_output_dtype": "FP32",
+    "depth": 16,
+    "offset_hidden": [
+      32,
+      16,
+      5376
+    ],
+    "row_order": "request_major_offset_minor",
+    "tap_layers": [
+      45,
+      54,
+      60
+    ],
+    "tap_shape_each": [
+      32,
+      5376
+    ],
+    "tied_weight": [
+      262144,
+      5376
+    ],
+    "tied_weight_dtype": "BF16"
+  },
+  "schema_version": 1,
+  "service_model": {
+    "optimism": [
+      "every GPU-union interval is treated as verification-sensitive",
+      "verification calls scale inversely with mean accepted target tokens",
+      "no loss is charged for c32 tail effects, lower live batch, or depth-16 padding",
+      "the measured depth-12 grouped head scales only linearly to depth 16"
+    ],
+    "qualified_baseline_seconds_per_request": 0.625149101968745,
+    "same_distribution_current_accepted_target_tokens": 10.664799253034547,
+    "sensitivity": [
+      {
+        "mean_accepted_draft_tokens": 11.0,
+        "mean_accepted_target_tokens": 12.0,
+        "meets_target": false,
+        "projected_seconds_per_request": 0.6550376806613472
+      },
+      {
+        "mean_accepted_draft_tokens": 13.0,
+        "mean_accepted_target_tokens": 14.0,
+        "meets_target": false,
+        "projected_seconds_per_request": 0.5673963987754378
+      },
+      {
+        "mean_accepted_draft_tokens": 14.0,
+        "mean_accepted_target_tokens": 15.0,
+        "meets_target": false,
+        "projected_seconds_per_request": 0.5323398860210742
+      },
+      {
+        "mean_accepted_draft_tokens": 15.0,
+        "mean_accepted_target_tokens": 16.0,
+        "meets_target": false,
+        "projected_seconds_per_request": 0.501665437361006
+      },
+      {
+        "mean_accepted_draft_tokens": 15.05,
+        "mean_accepted_target_tokens": 16.05,
+        "meets_target": false,
+        "projected_seconds_per_request": 0.5002320519096008
+      },
+      {
+        "mean_accepted_draft_tokens": 15.059999999999999,
+        "mean_accepted_target_tokens": 16.06,
+        "meets_target": true,
+        "projected_seconds_per_request": 0.4999464458420731
+      },
+      {
+        "mean_accepted_draft_tokens": 15.5,
+        "mean_accepted_target_tokens": 16.5,
+        "meets_target": true,
+        "projected_seconds_per_request": 0.4877225061518841
+      },
+      {
+        "mean_accepted_draft_tokens": 16.0,
+        "mean_accepted_target_tokens": 17.0,
+        "meets_target": true,
+        "projected_seconds_per_request": 0.4745997473668282
+      }
+    ],
+    "target_seconds_per_request": 0.500119281574996,
+    "threshold": {
+      "draft_prefix_fraction_of_maximum": 0.9408749999999999,
+      "mean_accepted_draft_tokens": 15.053999999999998,
+      "mean_accepted_target_tokens": 16.054,
+      "projected_seconds_per_request": 0.5001177667857815
+    },
+    "trace_gpu_interval_union_fraction": 0.9335379234663608,
+    "trace_target_forward_calls": 15,
+    "trace_window_ms": 2375.141908203125
+  },
+  "training_offset_weights": {
+    "derivation": "Geometric prefix survival fitted to the measured DFlash depth-16 mean accepted draft prefix, multiplied by the measured depth-16 verifier cost per request-verification.",
+    "fitted_conditional_token_match_probability": 0.7017942661965151,
+    "measured_depth16_mean_accepted_draft_tokens": 2.3452415812591507,
+    "normalized_offsets_1_through_16": [
+      0.2992417803797102,
+      0.21000616567691746,
+      0.14738112293797606,
+      0.1034312270234753,
+      0.07258744207074501,
+      0.050941450643120535,
+      0.035750417973074766,
+      0.025089438347632713,
+      0.017607623974459603,
+      0.012356929546620045,
+      0.00867202230361225,
+      0.006085975529003372,
+      0.004271102730466868,
+      0.002997435406577928,
+      0.0021035829816308097,
+      0.0014762824749770713
+    ]
+  },
+  "verifier": {
+    "acceptance_and_bonus_boundary": "NgramVerifyInput.num_accept_tokens = num_correct_drafts + 1; accepted cache rows are compacted before seq_lens and seq_lens_sum advance",
+    "d16_over_d12_cost_ratio": 1.141709833927408,
+    "measured_d12_per_request_verification_ms": 6.137358572139549,
+    "measured_d16_per_request_verification_ms": 7.0070826361503995
+  }
+}

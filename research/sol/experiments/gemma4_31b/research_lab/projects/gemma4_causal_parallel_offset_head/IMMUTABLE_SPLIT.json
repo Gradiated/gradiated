@@ -1,0 +1,76 @@
+{
+  "classification": "immutable_request_disjoint_target_generated_split",
+  "holdout": {
+    "examples": 512,
+    "path": "inputs/holdout_512.jsonl",
+    "request_count": 4,
+    "requests": [
+      30,
+      18,
+      28,
+      29
+    ],
+    "sha256": "9109a99e7d2b8e326593415e72a1937f25618d8496bf2f00ba7dac32e8cf46ef"
+  },
+  "input_snapshots": {
+    "exact_runner.py": {
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    "qualified_c32_token_trace.json": {
+      "sha256": "d30fdf18fc95549b0c5037b190ad3e6446a053db8e380690c70b45eb82c14caa"
+    },
+    "qualified_c32_workload.json": {
+      "sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
+    }
+  },
+  "limitation": "The split binds target-generated token windows and request identity. Matching layer-tap tensors must be produced by the bound one-pass capture before training or holdout scoring.",
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+  },
+  "request_disjoint": true,
+  "schema_version": 1,
+  "seed_domain": "sha256 domain-separated deterministic ranking",
+  "train": {
+    "examples": 4096,
+    "path": "inputs/train_4096.jsonl",
+    "request_count": 28,
+    "requests": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      31
+    ],
+    "sha256": "5d4639e473a01a5e14fff96693e53f566ddebd005c5180b573ad1b1cd5a516c4"
+  },
+  "workload": {
+    "concurrency": 32,
+    "output_tokens": 358,
+    "prompt_tokens": 4214,
+    "shared_prefix_tokens": 535
+  }
+}

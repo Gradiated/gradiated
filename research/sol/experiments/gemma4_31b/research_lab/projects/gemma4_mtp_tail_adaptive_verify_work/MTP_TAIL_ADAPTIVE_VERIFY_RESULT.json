@@ -1,0 +1,101 @@
+{
+  "artifacts": {
+    "event_stream": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_mtp_tail_adaptive_verify_work/artifacts/adaptive-verify-oracle-v1/RECONSTRUCTED_EVENT_STREAM.jsonl",
+    "event_stream_sha256": "6196a2aab66dc1979db4731a281221322a6dd0b7788ab3c92fe23a0730b6b608",
+    "inputs": [
+      {
+        "bytes": 4129,
+        "name": "boundary",
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/MTP_OVERLAP_REOPENING.json",
+        "sha256": "7fe983448c88632d7f036da8d3ad8e23a58b821f7b1a5f2bff79dab9d4c550f6"
+      },
+      {
+        "bytes": 210777,
+        "name": "accepted_depth",
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/mtp-candidate-repair-20260723t0658z/retrieved/mtp-audit/accepted-depth.jsonl",
+        "sha256": "b8e51f929b1766fd33362c851059ea03f01cfcdd7fbf607fb2693590839f19e0"
+      },
+      {
+        "bytes": 22940,
+        "name": "control_terminal",
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/mtp-candidate-repair-20260723t0658z/retrieved/control/TERMINAL.json",
+        "sha256": "a6e69ac9534ae433fc45d3b5d3ea241fe63321d33423cdd52d17128d8072d278"
+      },
+      {
+        "bytes": 22926,
+        "name": "mtp_terminal",
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/mtp-candidate-repair-20260723t0658z/retrieved/mtp/TERMINAL.json",
+        "sha256": "80f3fc810ce4d9d5943d7387c7b3b6fb9e0097dfae9b7bf466f143303402f44b"
+      },
+      {
+        "bytes": 2974,
+        "name": "source_binding",
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/ACCEPTED_DEPTH_SOURCE_BINDING.json",
+        "sha256": "4b8e5edeb276b02317a85dd71a136a4002535467f08134edd3d77ce6de1300ce"
+      },
+      {
+        "bytes": 32343,
+        "name": "worker_source",
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/inputs/accepted_depth/runtime_source/sglang_srt_speculative_frozen_kv_mtp_worker.py",
+        "sha256": "ffd537efe8c28cecdbef1f5984f5f90f81f655ec3c1a65dca68f25d2b9a24d99"
+      },
+      {
+        "bytes": 43429,
+        "name": "verify_source",
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/inputs/accepted_depth/runtime_source/sglang_srt_speculative_eagle_info.py",
+        "sha256": "2948d3a52dd1915f7efc9f175c8b0d65f50b803fc4028647c91564cda597e82f"
+      },
+      {
+        "bytes": 173876,
+        "name": "scheduler_source",
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/inputs/accepted_depth/runtime_source/sglang_srt_managers_scheduler.py",
+        "sha256": "3a26deea85f43d61c27b94013288ad95d6ee75111fe40134893541777c9c8cd4"
+      },
+      {
+        "bytes": 38394,
+        "name": "result_processor_source",
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/inputs/accepted_depth/runtime_source/sglang_srt_managers_scheduler_components_batch_result_processor.py",
+        "sha256": "9c764afffb106e966fde110851de73bb6a3d0f2415343a574a255e91f86851de"
+      }
+    ],
+    "oracle": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_mtp_tail_adaptive_verify_work/artifacts/adaptive-verify-oracle-v1/ADAPTIVE_VERIFY_ORACLE.json",
+    "oracle_sha256": "52f71c5f02556eaa710c079a04ec0e58a16538e5289177b430027dbb965c42cc",
+    "replay_script": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_mtp_tail_adaptive_verify_work/replay_oracle.py",
+    "replay_script_sha256": "958c09fdbac7455265bbf9e0d3e8574bd1cdc6b33c5be0df6da08eb6c452d334"
+  },
+  "consumption": {
+    "gpu_scientific_sample_consumed": false,
+    "offline_oracle_result_consumed": true,
+    "replay_allowed": false
+  },
+  "decision": "do_not_implement_or_claim_gpu",
+  "mechanism": "request-local depth-1 MTP target-work adaptation",
+  "oracle_key_results": {
+    "best_cutoff_iterations": 0,
+    "best_speculative_cutoff_iterations": 1,
+    "best_speculative_optimistic_s": 21.94543671735046,
+    "clairvoyant_target_positions_saved": 0,
+    "full_mtp_excess_target_positions": 1664,
+    "same_session_control_s": 21.578427489002934,
+    "tail_cutoff_optimistic_s": 38.62457060317665
+  },
+  "quality": {
+    "all_requests_finished_at_358_tokens": true,
+    "exact_trace_replay": true,
+    "target_semantics": "unchanged; analysis only"
+  },
+  "reason": "The exact cutoff oracle selects zero MTP iterations. The best speculative cutoff is slower than the same-session control even after omitting switching/endpoint overhead. More fundamentally, a clairvoyant request-local policy saves zero target positions at depth 1 and still requires positive assistant work.",
+  "result_type": "mechanism_falsified",
+  "schema_version": 1,
+  "source_semantics": {
+    "commit": "accepted tokens append to output_ids and advance kv_committed_len",
+    "scheduler": "finished requests are filtered after speculative result processing",
+    "verify_width": "speculative_num_steps + 1 = 2 target positions/request",
+    "worker": "batch-wide draft -> target verify -> accepted KV commit -> next seed"
+  },
+  "spend": {
+    "actual_spend_usd": 0.0,
+    "gpu_seconds": 0,
+    "provider_mutation": false
+  }
+}

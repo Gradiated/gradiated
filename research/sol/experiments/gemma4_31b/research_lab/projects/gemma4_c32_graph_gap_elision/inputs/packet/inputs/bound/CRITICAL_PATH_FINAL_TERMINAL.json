@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "kind": "gemma4_h200_ngram_verification_critical_path",
+  "status": "complete",
+  "result": "intervention_rejected",
+  "provider": {
+    "bench_id": "h200-ngram-critical-e00bwcwgsxawx1jmgw",
+    "provider_started_at_utc": "2026-07-24T11:20:18Z",
+    "claim_started_at_utc": "2026-07-24T11:25:30.815361Z",
+    "released_at_utc": "2026-07-24T12:20:00.322790Z",
+    "actual_spend_usd": 2.4478860696166667,
+    "released_ready": true
+  },
+  "integration_amendments": [
+    {
+      "classification": "pre_invocation_launcher_redirection_defect",
+      "sample_consumed": false,
+      "artifact": "artifacts/ngram-critical-20260724t112530Z/OWNER_EXCEPTION.json",
+      "repair": "Created the remote artifact directory and attached a repaired owner to the retained claim; all 32 staged packet files and the image were reused."
+    },
+    {
+      "classification": "profile_trace_suffix_observer_defect",
+      "sample_consumed": false,
+      "artifact": "artifacts/ngram-critical-20260724t115729Z/retrieved/artifacts/profile/torch/1784894502.7420864-TP-0.trace.json.gz",
+      "repair": "Accepted the profiler's .trace.json.gz output and atomically materialized an uncompressed retrieval view."
+    },
+    {
+      "classification": "profile_window_harness_defect",
+      "sample_consumed": false,
+      "artifact": "artifacts/ngram-critical-20260724t115729Z/TRACE_ANALYSIS.json",
+      "diagnostic": "The first 16-step window contained 15 prefill calls and zero target-verification calls.",
+      "repair": "Preserved the completed c32/trace artifact and reran only profiling after a 32-stream first-token admission barrier."
+    }
+  ],
+  "profile": {
+    "artifact": "artifacts/ngram-critical-20260724t115729Z/retrieved/artifacts/profile-repair/PROFILE_TERMINAL.json",
+    "trace": "artifacts/ngram-critical-20260724t115729Z/retrieved/artifacts/profile-repair/torch/1784895017.9256246-TP-0.trace.json.gz",
+    "trace_sha256": "37e2c73a57e8e63bd7ec0a3465cc1edded8b9dc63507d97e85a767306a97a48b",
+    "analysis": "artifacts/ngram-critical-20260724t115729Z/TRACE_ANALYSIS_REPAIR.json",
+    "complete_requests": 32,
+    "target_verification_steps": 15,
+    "service_seconds_per_request_with_profiler": 0.6402588403749974,
+    "dominant_non_overlapping_boundary": {
+      "name": "acceptance_first_sync_while_queued_target_verification_finishes",
+      "union_us": 2241954.343017578,
+      "fraction_of_window": 0.9439243757496967
+    },
+    "source_attribution": {
+      "decode_shaped_lm_head_gemm_calls": 180,
+      "decode_shaped_lm_head_gemm_sum_us": 124664.39399999999,
+      "per_depth_bf16_materialization_calls": 180,
+      "per_depth_bf16_materialization_sum_us": 4201.834999999999
+    }
+  },
+  "intervention": {
+    "candidate": "candidate_source.py",
+    "candidate_sha256": "cf14f4ee20258f1cd7b14bdf47dff5e78f386253f65d1ec4ba224a4f0d1eec01",
+    "request": "INTERVENTION_REQUEST.json",
+    "mount_target": "decode_equivalent_lm_head.py",
+    "change": "Replace 12 per-depth contiguous materializations with one depth-major materialization and 12 contiguous views; projection count, shapes, row values, and NGRAM settings remain fixed."
+  },
+  "matched_pair": {
+    "artifact": "artifacts/ngram-critical-20260724t115729Z/retrieved/artifacts/pair/PAIR_TERMINAL.json",
+    "complete_32_control": true,
+    "complete_32_candidate": true,
+    "server_stable": true,
+    "request_hashes_match": true,
+    "semantics_match": false,
+    "text_mismatch_rows": 22,
+    "finish_reason_mismatch_rows": 0,
+    "usage_mismatch_rows": 0,
+    "control_seconds_per_request": 0.6156447256562387,
+    "candidate_seconds_per_request": 0.6369304755312584,
+    "service_time_delta_fraction": 0.03457472952818752,
+    "control_p95_completion_seconds": 19.44236494500001,
+    "candidate_p95_completion_seconds": 19.919522611000048,
+    "p95_delta_fraction": 0.024542161786894612,
+    "decision": "Reject: the intervention is semantically non-equivalent and slower. The valid pair is consumed and must not be replayed."
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "classification": "post_terminal_immutable_raw_retrieval",
+  "retrieved_at_utc": "2026-07-26T04:36:00Z",
+  "source": "/home/glmrunner/gemma4-persistent-grouped-lm-head/artifacts/c32-graph-gap-20260726t042557z/pair",
+  "destination": "artifacts/c32-graph-gap-20260726t042557z/raw/pair",
+  "bytes_scope": "3.3 MiB existing completed pair artifacts",
+  "gpu_claimed": false,
+  "endpoint_requests_submitted": 0,
+  "provider_mutation": false,
+  "sha256_manifest": {
+    "path": "artifacts/c32-graph-gap-20260726t042557z/raw/RAW_SHA256SUMS.txt",
+    "sha256": "3b3f21e2ec12a7336ae81ec4a1a4ab85f27540ea92c9ccfc14b8db07f0f113e6"
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "artifact_root": "artifacts/c32-graph-gap-20260726t042557z",
+  "classification": "scientific_terminal",
+  "pair": {
+    "candidate_audit": [
+      {
+        "candidate_path": "cpu_seq_len_delta_accept_count",
+        "consumer": "NGRAMWorker.forward_batch_generation",
+        "producer": "NgramVerifyInput.verify"
+      }
+    ],
+    "candidate_ngram_telemetry": {
+      "sglang:prompt_tokens_histogram_sum": {
+        "after": 139062.0,
+        "before": 4214.0,
+        "delta": 134848.0
+      },
+      "sglang:spec_accept_length": {
+        "after": 10.462825278810408,
+        "before": 0.0,
+        "delta": 10.462825278810408
+      },
+      "sglang:spec_accept_rate": {
+        "after": 0.860256843528219,
+        "before": 0.0,
+        "delta": 0.860256843528219
+      },
+      "sglang:spec_num_draft_tokens": {
+        "after": 12.0,
+        "before": 0.0,
+        "delta": 12.0
+      },
+      "sglang:spec_verify_calls_total": {
+        "after": 1108.0,
+        "before": null,
+        "delta": null
+      },
+      "sglang:uncached_prompt_tokens_histogram_sum": {
+        "after": 121942.0,
+        "before": 4214.0,
+        "delta": 117728.0
+      }
+    },
+    "candidate_p95_completion_seconds": 19.35557098699792,
+    "candidate_path_present": true,
+    "candidate_service_seconds_per_request": 0.6135780843437715,
+    "classification": "matched_exact_c32_graph_gap_elision_endpoint_pair",
+    "clean_shutdown": {
+      "candidate": true,
+      "control": true
+    },
+    "control_ngram_telemetry": {
+      "sglang:prompt_tokens_histogram_sum": {
+        "after": 139062.0,
+        "before": 4214.0,
+        "delta": 134848.0
+      },
+      "sglang:spec_accept_length": {
+        "after": 10.139598540145986,
+        "before": 0.0,
+        "delta": 10.139598540145986
+      },
+      "sglang:spec_accept_rate": {
+        "after": 0.830872594558726,
+        "before": 0.0,
+        "delta": 0.830872594558726
+      },
+      "sglang:spec_num_draft_tokens": {
+        "after": 12.0,
+        "before": 0.0,
+        "delta": 12.0
+      },
+      "sglang:spec_verify_calls_total": {
+        "after": 1154.0,
+        "before": null,
+        "delta": null
+      },
+      "sglang:uncached_prompt_tokens_histogram_sum": {
+        "after": 121942.0,
+        "before": 4214.0,
+        "delta": 117728.0
+      }
+    },
+    "control_p95_completion_seconds": 19.442130690003978,
+    "control_service_seconds_per_request": 0.6183353098438147,
+    "failures_per_arm": {
+      "candidate": 0,
+      "control": 0
+    },
+    "ngram_telemetry_present": true,
+    "p95_delta_fraction": -0.004452171646524561,
+    "request_hashes_exact": true,
+    "requests_per_arm": 32,
+    "schema_version": 1,
+    "service_time_delta_fraction": -0.007693601552925755,
+    "sse_token_ids_exact": true,
+    "target_and_emitted_trace_exact": false,
+    "usage_and_cache_accounting_valid": true,
+    "valid": false
+  },
+  "provider": {
+    "actual_spend_usd": 0.19688220552777783,
+    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "claimed_at_utc": "2026-07-26T04:25:58.018361+00:00",
+    "completed_at_utc": "2026-07-26T04:30:47.314744+00:00",
+    "hourly_rate_usd": 2.45,
+    "release": {
+      "at_utc": "2026-07-26T04:30:47.374987+00:00",
+      "condition": "ready",
+      "released": true,
+      "returncode": 0
+    }
+  },
+  "result": "quality_or_observer_reject",
+  "schema_version": 1,
+  "science_consumed": true,
+  "weight_materialization": {
+    "method": "verified_hardlink",
+    "project": "/home/glmrunner/gemma4-persistent-grouped-lm-head/immutable/eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa/model-00001-of-00002.safetensors",
+    "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+    "source": "/home/glmrunner/gemma4-fixed-m384-executor/checkpoint/model-00001-of-00002.safetensors",
+    "stat": [
+      "64769:5575965:49784788364",
+      "64769:5575965:49784788364"
+    ]
+  }
+}

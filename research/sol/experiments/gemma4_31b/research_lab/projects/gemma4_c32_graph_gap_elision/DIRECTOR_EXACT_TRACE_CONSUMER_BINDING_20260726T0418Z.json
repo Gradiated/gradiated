@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_c32_graph_gap_elision",
+  "created_at_utc": "2026-07-26T04:18:30Z",
+  "decision": "correct_authoritative_packet_path_and_bind_trace_to_exact_consumer",
+  "supersedes_for_input_and_consumer_binding": "DIRECTOR_BINDING.json",
+  "reason": "The original project text pointed at a nonexistent hybrid-attention inputs/bound directory. The retained bench source manifest binds the same hashes to the grouped-LM-head packet.",
+  "authoritative_inputs": {
+    "config": {
+      "path": "../gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/config.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    "discovery_trace_analysis": {
+      "path": "../gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/TRACE_ANALYSIS_REPAIR.json",
+      "sha256": "a22e25b3e911891d75e1008f22a03ad2a7d160584e1c83e660b8a3238602304f",
+      "window_us": 2375141.908203125,
+      "gpu_interval_union_fraction": 0.9335379234663608,
+      "gpu_idle_or_host_gap_proxy_us": 157856.86328125,
+      "evidence_label": "measured discovery proxy",
+      "transfer_limit": "Asynchronous n-gram-instrumented trace; do not treat proxy ranges as additive or claim exact-endpoint gain from them."
+    },
+    "qualified_denominator": {
+      "path": "../gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/QUALIFIED_LATEST_TERMINAL.json",
+      "sha256": "b02d02c2283f5a018384cacf6522e123ce8e603ad0cfa2cd2c61ed6cb9eda363",
+      "service_seconds_per_request": 0.625149101968745
+    },
+    "workload_packet_identity_sha256": "4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b",
+    "resident_source_identity_sha256": "24ab206cd853d9344bc74adc7cd4c68e7fa9234caa38ea4ca061a4b9445ee976"
+  },
+  "exact_consumer_contract": {
+    "phase": "Exact mixed prefill/decode endpoint at concurrency 32; attribute the selected gap to its exact runtime phase before implementation.",
+    "accelerator": "nvidia-h200-sxm",
+    "launcher_call_chain": [
+      "endpoint_pair.py:arm",
+      "endpoint_pair.py:run_c32",
+      "inputs/bound/exact_runner.py:main"
+    ],
+    "request_geometry": {
+      "concurrency": 32,
+      "prompt_tokens_per_request": 4214,
+      "output_tokens_per_request": 358,
+      "shared_prefix_tokens": 535
+    },
+    "source_ready_required_fields": [
+      "exact producer symbol",
+      "exact consumer symbol",
+      "phase and batch/sequence geometry",
+      "boundary tensor shapes, strides/layouts, dtypes and scales when tensors cross it",
+      "CUDA-graph mode and dynamic/padded batch behavior",
+      "one causal limiter",
+      "source and launcher hashes",
+      "predicted physical change and named gap/launch-count movement",
+      "unchanged fallback/control path",
+      "output, ownership and cache-accounting invariants"
+    ],
+    "intervention_count": 1,
+    "profiler_timing": "Profiler disabled for the matched exact-c32 pair. Collect only the smallest counter set after a valid pair if it is needed to interpret the result."
+  },
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "claim_gate": "SOURCE_READY.json",
+    "claim_not_after_utc": "2026-07-26T04:40:00Z",
+    "release_not_after_utc": "2026-07-26T05:10:00Z",
+    "watchdog_deadline_utc": "2026-07-26T05:20:00Z"
+  },
+  "unchanged": {
+    "researcher_profile": "deep",
+    "priority": 8720,
+    "authorized_spend_usd": 3.0,
+    "maximum_claim_minutes": 30,
+    "terminal": "C32_GRAPH_GAP_ELISION_TERMINAL.json"
+  }
+}

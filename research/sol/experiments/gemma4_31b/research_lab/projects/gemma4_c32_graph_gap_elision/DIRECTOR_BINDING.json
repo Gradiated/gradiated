@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_c32_graph_gap_elision",
+  "decision": "admit_one_source_level_graph_gap_intervention_and_matched_exact_c32_pair",
+  "created_at_utc": "2026-07-26T04:11:10Z",
+  "objective": {
+    "qualified_denominator_s_per_request": 0.625149101968745,
+    "campaign_target_s_per_request": 0.500119281574996,
+    "quality_requirement": "Preserve exact target/emitted-token equivalence, complete request ownership, and prompt/completion/cache accounting.",
+    "latency_tradeoff": "Retain any valid positive exact endpoint change; do not impose a per-project percentage gate."
+  },
+  "identities": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "packet_identity_sha256": "4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b",
+    "resident_source_identity_sha256": "24ab206cd853d9344bc74adc7cd4c68e7fa9234caa38ea4ca061a4b9445ee976",
+    "config_path": "../gemma4_hybrid_attention_placement_codesign/inputs/bound/config.json",
+    "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+  },
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "accelerator": "nvidia-h200-sxm",
+    "hourly_cost_usd": 2.45,
+    "claim_allowed_after": "SOURCE_READY.json",
+    "claim_not_after_utc": "2026-07-26T04:40:00Z",
+    "release_not_after_utc": "2026-07-26T05:10:00Z",
+    "watchdog_deadline_utc": "2026-07-26T05:20:00Z",
+    "connection_identity_source": "../../runtime/gpus.json",
+    "resident_state": "Exact checkpoint, pinned image, source and CUDA caches warm; no server or experiment process resident."
+  },
+  "first_scientific_arms": [
+    "One exact stock c32 endpoint control with 32 complete requests and output length 358.",
+    "One exact candidate c32 endpoint using only the hash-bound scheduler/graph-gap source intervention."
+  ],
+  "mutable_checks": [
+    "Source/build/import/path/permission and process-local attachment defects before request submission.",
+    "One cached server replacement when needed to install the same hash-bound source."
+  ],
+  "prohibited": [
+    "Generic flag or concurrency sweep.",
+    "Changing model, checkpoint, image, workload packet, output length, or request ownership.",
+    "Claiming before SOURCE_READY.json.",
+    "Replaying a scientifically submitted arm.",
+    "Provider lifecycle mutation."
+  ],
+  "budgets": {
+    "authorized_spend_usd": 3.0,
+    "maximum_claim_minutes": 30,
+    "researcher_wall_clock_minutes": 55,
+    "storage_gib": 4
+  },
+  "terminal": "C32_GRAPH_GAP_ELISION_TERMINAL.json"
+}

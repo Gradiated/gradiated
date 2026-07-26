@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "classification": "semantic_divergence_reject",
+  "result": "candidate_performance_claim_forbidden",
+  "science_consumed": true,
+  "replay_authorized": false,
+  "pair": {
+    "control_complete_requests": 32,
+    "candidate_complete_requests": 32,
+    "request_hashes_exact": true,
+    "usage_and_cache_accounting_valid": true,
+    "candidate_path_present": true,
+    "control_service_seconds_per_request": 0.6183353098438147,
+    "candidate_service_seconds_per_request": 0.6135780843437715,
+    "observed_service_time_delta_fraction": -0.007693601552925755,
+    "control_p95_completion_seconds": 19.442130690003978,
+    "candidate_p95_completion_seconds": 19.35557098699792,
+    "observed_p95_delta_fraction": -0.004452171646524561
+  },
+  "correctness_evidence": {
+    "target_and_emitted_trace_exact": false,
+    "trace_rows_per_arm": 32,
+    "trace_token_ids_per_row": 358,
+    "control_only_token_trace_multiset_rows": 17,
+    "candidate_only_token_trace_multiset_rows": 17,
+    "response_hash_equal_indices": 0,
+    "response_hash_indices": 32,
+    "finish_reason_exact": true,
+    "prompt_tokens_exact": true,
+    "completion_tokens_exact": true
+  },
+  "observer_caveat": {
+    "field": "sse_token_ids_exact",
+    "reported_value": true,
+    "usable": false,
+    "reason": "The pinned completion stream returned no token_ids field: returned_token_ids is zero for all 64 rows, so equality of 32 empty SSE token-id lists is vacuous. The nonempty scheduler-to-detokenizer trace is the decision-bearing token identity evidence."
+  },
+  "interpretation": "Raw SSE-to-trace reconstruction proves an API-visible semantic mismatch, not a join defect: 18 request-indexed streamed texts differ. The first divergence is request 0 token position 0, during initial prefill before any NGRAM TARGET_VERIFY call or candidate count derivation, so it cannot be causally attributed to cpu_seq_len_delta_accept_count. The preregistered exact output invariant nevertheless failed; no performance gain is claimed and the pair is not replayed.",
+  "localization": {
+    "path": "TRACE_DIVERGENCE_LOCALIZATION.json",
+    "sha256": "dd322d16e71b5eda35f46f87fd824d02b3c82de82812a53627b2687ec45a1d08",
+    "result": "semantic_divergence_reject",
+    "first_divergence_precedes_intervention": true
+  },
+  "artifacts": {
+    "pair_terminal": {
+      "path": "artifacts/c32-graph-gap-20260726t042557z/retrieved/PAIR_TERMINAL.json",
+      "sha256": "ecc377584e32dd207ccbd2bdba26d56efd2f7a0d899f8da032efd945fffdd4df"
+    },
+    "control_producer": {
+      "path": "artifacts/c32-graph-gap-20260726t042557z/retrieved/CONTROL_PRODUCER_STAGE.json",
+      "sha256": "ee0fcc81be4af371b1ca29f359e03e2c37ee72bea603201a62f4488e1e80610d"
+    },
+    "candidate_producer": {
+      "path": "artifacts/c32-graph-gap-20260726t042557z/retrieved/CANDIDATE_PRODUCER_STAGE.json",
+      "sha256": "c1af68f7484523c62d7be527728d250f159ec3d7d816f7afb439628813485971"
+    }
+  },
+  "provider": {
+    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "claimed_at_utc": "2026-07-26T04:25:58.018361+00:00",
+    "released_at_utc": "2026-07-26T04:30:47.374987+00:00",
+    "released_ready": true,
+    "actual_spend_usd": 0.19688220552777783
+  }
+}

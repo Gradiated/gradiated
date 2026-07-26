@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_c32_graph_gap_elision/run_pair_owner.py"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_c32_graph_gap_elision",
+  "launched_at_utc": "2026-07-26T04:25:57.918326Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_c32_graph_gap_elision/artifacts/c32-graph-gap-owner.log",
+  "pid": 1542192,
+  "start_ticks": 115597532,
+  "unit_manager": "pid"
+}

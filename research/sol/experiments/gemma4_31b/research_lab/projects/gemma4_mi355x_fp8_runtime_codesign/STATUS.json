@@ -1,0 +1,36 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "bench_need": {
+    "claim_allowed": false,
+    "reason": "The scheduled zero-spend source and physical-cost discriminator is complete. Any later MI355X exact-shape falsifier requires a new director authorization and compatible shared bench."
+  },
+  "compute_budget": "12 local CPU-hours; zero accelerator compute",
+  "decision": "preserve_source_complete_mi355x_candidate_for_one_later_exact_shape_falsifier",
+  "last_completed_at": "2026-07-26T07:57:11Z",
+  "last_result_classification": "source_complete_mi355x_candidate",
+  "next_action": "Director only: if spend and a compatible shared MI355X bench are later authorized, run the artifact's single 20-minute exact-shape falsifier. Until then, do not claim a GPU, contact a provider, replay this completed source screen, or infer measured throughput.",
+  "priority": 8760,
+  "provider_mutation": "forbidden",
+  "researcher_profile": "execution",
+  "source_terminal": {
+    "artifact": "MI355X_FP8_RUNTIME_SCREEN.json",
+    "artifact_sha256": "e1bad18d0d2e0d3e281c3502a3b4a25108d0841ac2da85e5fd0fadebe99cc500",
+    "base_hurdle_seconds_per_request": 0.625149101968745,
+    "base_margin_seconds_per_request": 0.025054008757464774,
+    "calculator": "run_mi355x_runtime_screen.py",
+    "calculator_sha256": "2b3898c7a54e3daa5ea38d133a9ef8a838e78c528288a6f28c796212918d132a",
+    "classification": "source_complete_mi355x_candidate",
+    "gpu_claimed": false,
+    "provider_contacted": false,
+    "screen_seconds_per_request": 0.6000950932112802,
+    "source_bindings": "SOURCE_BINDINGS.json",
+    "source_bindings_sha256": "c7f08b334a36e88009b273535dcbddb64c2c3307dfc7d7cd5a1ee946a04dd1bd"
+  },
+  "status": "complete",
+  "storage_budget": "4 GiB durable project artifacts",
+  "summary": "Pinned current vLLM and AITER source binds exact Gemma 4 transformer FP8 linears to ROCm torch._scaled_mm, hybrid attention to AITER flash/unified attention, and the tied head to BF16 unquantized GEMM. The conservative zero-L2 analytical screen is 0.6000950932112802 s/request, clearing the $2.60/hour hurdle by 0.025054008757464774 seconds but not the $2.75 or $2.95 sensitivities. This is executable source evidence, not MI355X measurement or deployability evidence.",
+  "wall_clock_budget_minutes": 180
+}

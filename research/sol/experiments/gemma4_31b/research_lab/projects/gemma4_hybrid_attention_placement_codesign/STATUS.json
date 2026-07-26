@@ -1,52 +1,306 @@
 {
   "schema_version": 1,
   "id": "gemma4_hybrid_attention_placement_codesign",
-  "status": "completed",
-  "priority": 8540,
-  "researcher_profile": "deep",
-  "authorized_spend_usd": 0.0,
-  "actual_spend_usd": 0.0,
-  "historical_actual_spend_usd": 0.19,
+  "status": "paused",
+  "priority": 8460,
+  "researcher_profile": "execution",
+  "authorized_spend_usd": 6.75,
+  "actual_spend_usd": 4.97,
   "active_session": null,
-  "allocation_limit": 1,
-  "summary": "A source-complete phase dispatcher isolates the five local proxies to TARGET_VERIFY while retaining stock attention elsewhere. Safe fallback requires mirrored stock/proxy KV allocation, writes, moves, and frees. The zero-ordinary-decode model predicts 10.644-13.558 ms/request net savings (1.703-2.169%) with 1.342 GB extra c32 KV residency.",
-  "next_action": "Only under a new director binding, run the single exact-c32 no-endpoint falsification in PHASE_SELECTIVE_HYBRID_RESULT.json: populate both cache banks, verify stock equivalence before the first target phase, replay one depth-12 TARGET_VERIFY graph, mirror one accept/move/free pattern, and compare the next stock-operator decode with an eager dual-cache reference plus positive net component timing.",
-  "decision": "retain_dual_cache_phase_candidate_for_component_falsification",
-  "hypothesis": "A target-verification-only 55-local/5-global substitution can retain useful attention savings while limiting the intervention surface relative to permanent layer conversion.",
+  "last_execution_terminal": {
+    "path": "SEQLENS_CPU_TENSOR_CORRECTED_COMPONENT_TERMINAL_20260726T0403Z.json",
+    "sha256": "c459e3ee6ce21baf759aa453be03d1d64a92f04858509f4e12ebf8a87173a3f7",
+    "classification": "infrastructure_terminal",
+    "failure_kind": "proxy_allocator_overlap_before_target_verify",
+    "science_started": false,
+    "candidate_cuda_invocation_started": false,
+    "scientific_component_consumed": false,
+    "exact_c32_started": false,
+    "claim_released_at_utc": "2026-07-26T04:03:28.496863Z"
+  },
+  "offline_allocator_distinctness_terminal": {
+    "path": "PROXY_ALLOCATOR_DISTINCTNESS_OFFLINE_TERMINAL.json",
+    "sha256": "79fc040389cfa008e7827f6571d41c6a868d0100c431264ce8b83c99796aba4b",
+    "classification": "offline_logical_slot_representation_contract_pass",
+    "gpu_claimed": false,
+    "requests_submitted": 0,
+    "additional_provider_spend_usd": 0.0,
+    "scientific_sample_consumed": false
+  },
+  "last_durable_session": {
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/source-proven-consumer-20260726t0320z",
+    "deadline_utc": "2026-07-26T03:55:00Z",
+    "expected_terminal": "PHASE_SELECTIVE_FULL_MODEL_H200_COMPONENT_TERMINAL.json",
+    "pid": 1503897,
+    "start_ticks": 115208451,
+    "unit": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/source-proven-consumer-20260726t0320z/DETACHED_OWNER_STATE.json",
+    "unit_manager": "pid"
+  },
+  "historical_actual_spend_usd": 0.399,
+  "allocation_limit": 0,
+  "director_pause": {
+    "path": "DIRECTOR_OFFLINE_ALLOCATOR_DISPOSITION_20260726T0427Z.json",
+    "sha256": "a330fb606b41331dca2fc589fac6fac85c9a8f32b19767c55cf3d56f04cee5b6",
+    "reason": "The offline allocator contract passed, but the amended discovery submission remains consumed and the graph-gap project is the sole near-term H200 claimant."
+  },
+  "summary": "The native-vector and batch-tree allocator repair passes the 8,192-row EXTEND, padded TARGET_VERIFY, reuse/free, and DECODE contracts. This is useful offline localization, not target-GPU placement evidence; the project is paused without replay authority while graph-gap elision owns the next H200 itinerary.",
+  "next_action": "Paused. After the graph-gap terminal or missed-claim disposition, a later director may compare the repaired hybrid mechanism's 1.7026%-2.1688% source bound with current alternatives and issue a materially new hash-bound component contract. Until then, do not claim a GPU, submit a request, reset accounting, or open exact-c32.",
+  "decision": "offline_allocator_contract_pass_paused_without_replay",
+  "director_live_claim_ratification": {
+    "path": "DIRECTOR_LIVE_READINESS_CLAIM_RATIFICATION_20260726T0346Z.json",
+    "sha256": "9fc9749d2b861e078e89415c91a31abead077b12bdbbada8bb441f1d47e3834d",
+    "prior_binding_path": "DIRECTOR_READINESS_GATED_COMPONENT_READMISSION_20260726T0338Z.json",
+    "prior_binding_sha256": "703497c90b7ef5d07826d49ab0863dfae348d71bc82c539ebdda312d1a7bad03",
+    "observed_at_utc": "2026-07-26T03:46:19Z",
+    "claim_started_at_utc": "2026-07-26T03:44:32.036125Z",
+    "owner_pid": 1517533,
+    "scientific_contract_changed": false
+  },
+  "director_tensor_contract_readmission": {
+    "path": "DIRECTOR_SEQLENS_CPU_TENSOR_CONTRACT_READMISSION_20260726T0355Z.json",
+    "sha256": "cb6e3923c2af25b26b4619421018806e0ea3b308b813a2b0ae7ecee95f12bfc6",
+    "prior_path": "DIRECTOR_READINESS_GATED_COMPONENT_READMISSION_20260726T0338Z.json",
+    "prior_sha256": "703497c90b7ef5d07826d49ab0863dfae348d71bc82c539ebdda312d1a7bad03",
+    "scientific_contract_changed": false,
+    "science_started": true,
+    "component_consumed": true,
+    "canonical_sample_consumed": false,
+    "superseded_accounting_by": "DIRECTOR_DISCOVERY_INVOCATION_ACCOUNTING_AMENDMENT_20260726T0400Z.json",
+    "claim_not_after_utc": "2026-07-26T04:05:00Z",
+    "release_not_after_utc": "2026-07-26T04:25:00Z",
+    "watchdog_deadline_utc": "2026-07-26T04:30:00Z"
+  },
+  "director_discovery_accounting_amendment": {
+    "path": "DIRECTOR_DISCOVERY_INVOCATION_ACCOUNTING_AMENDMENT_20260726T0400Z.json",
+    "sha256": "9f71a22b1b5304638fa9ba0d05326236facc049af88bb328d435ccc24128cb35",
+    "prior_path": "DIRECTOR_SEQLENS_CPU_TENSOR_CONTRACT_READMISSION_20260726T0355Z.json",
+    "prior_sha256": "cb6e3923c2af25b26b4619421018806e0ea3b308b813a2b0ae7ecee95f12bfc6",
+    "scientific_contract_changed": false,
+    "science_started": true,
+    "discovery_invocation_consumed": true,
+    "canonical_sample_consumed": false,
+    "interpretable_candidate_result": false,
+    "candidate_cuda_invocation_started": false,
+    "component_submissions_authorized": 1,
+    "additional_accounting_reset_retries_authorized": 0
+  },
+  "director_readmission": {
+    "path": "DIRECTOR_READINESS_GATED_COMPONENT_READMISSION_20260726T0338Z.json",
+    "sha256": "703497c90b7ef5d07826d49ab0863dfae348d71bc82c539ebdda312d1a7bad03",
+    "prior_path": "DIRECTOR_SEQLENS_CPU_PRE_SCIENCE_REPAIR_READMISSION_20260726T0327Z.json",
+    "prior_sha256": "edae00e4b2006cf0064831b65995e0ea07261343970750138c10d3e8517b69fe",
+    "repair_id": "readiness-gated-component-readmission-20260726t0338z",
+    "predecessor_repair_id": "seqlens-cpu-pre-science-repair-readmission-20260726t0327z",
+    "scientific_contract_changed": false,
+    "science_started": false,
+    "component_consumed": false,
+    "claim_not_after_utc": "2026-07-26T03:47:00Z",
+    "release_not_after_utc": "2026-07-26T04:10:00Z",
+    "watchdog_deadline_utc": "2026-07-26T04:15:00Z",
+    "preclaim_proof_required": false,
+    "preclaim_proof_artifact": "PINNED_RUNTIME_VERIFICATION_CONSUMER_PROOF.json"
+  },
+  "r4_repair_request": {
+    "repair_id": "ngram-readmission-20260726t0218z-r4-cached-restart",
+    "predecessor_repair_id": "ngram-readmission-20260726t0159z-r3-readiness",
+    "requested_at_utc": "2026-07-26T02:42:05.874795Z",
+    "ready_sha256": "ac4ed1651b0ca343a8be2aad0bade48e5cdedf312b3c1b6f4be5961c8ff732d3",
+    "request_sha256": "265c5c4cd16ba8794bc0a5b00fe15ffa6fc8c8af1665252f79783f1acc87f9bb",
+    "failure": "pinned_runtime_prepare_for_v2_verify_abi_mismatch",
+    "science_started": false,
+    "scientific_component_consumed": false,
+    "scientific_contract_changed": false,
+    "deadline_utc": "2026-07-26T03:05:00Z",
+    "release_not_after_utc": "2026-07-26T03:10:00Z",
+    "watchdog_deadline_utc": "2026-07-26T03:15:00Z"
+  },
+  "r5_repair_request": {
+    "repair_id": "ngram-readmission-20260726t0248z-r5-v2-verify",
+    "predecessor_repair_id": "ngram-readmission-20260726t0218z-r4-cached-restart",
+    "requested_at_utc": "2026-07-26T03:03:00Z",
+    "ready_sha256": "1dba27d638503191e6768aa76c32ef8a6fbc9aa38c52fbd674cd41315bd2692b",
+    "request_sha256": "4611b2749c2031377184ab94d9a900dc458522c4ed81646a585b49cadbcc5687",
+    "failure": "pinned_runtime_ngram_verify_consumer_abi_mismatch",
+    "science_started": false,
+    "scientific_component_consumed": false,
+    "scientific_contract_changed": false,
+    "deadline_utc": "2026-07-26T03:05:00Z",
+    "release_not_after_utc": "2026-07-26T03:10:00Z",
+    "watchdog_deadline_utc": "2026-07-26T03:15:00Z"
+  },
+  "retained_repair": {
+    "repair_id": "ngram-readmission-20260726t0159z-r3-readiness",
+    "predecessor_repair_id": "ngram-readmission-20260726t0159z",
+    "observed_at_utc": "2026-07-26T02:13:06Z",
+    "deadline_utc": "2026-07-26T02:20:00Z",
+    "watchdog_deadline_utc": "2026-07-26T02:25:00Z",
+    "controller_state_path": "NGRAM_READMISSION_CONTROLLER_STATE.json",
+    "controller_state": "resident_unavailable_released",
+    "science_started": false,
+    "failed_probe_complete_requests": 0,
+    "resident_scheduler_memory_mib": 123040,
+    "endpoint_health": "connection_refused_at_02_16_31z",
+    "scientific_contract_changed": false
+  },
+  "r3_readiness_terminal": {
+    "path": "R3_READINESS_DEADLINE_INFRASTRUCTURE_TERMINAL_20260726.json",
+    "repair_id": "ngram-readmission-20260726t0159z-r3-readiness",
+    "classification": "typed_external_readiness_boundary",
+    "observed_at_utc": "2026-07-26T02:16:31Z",
+    "science_started": false,
+    "candidate_cuda_invocation_started": false,
+    "scientific_component_consumed": false,
+    "exact_c32_started": false,
+    "claim_released_at_utc": "2026-07-26T02:16:56Z",
+    "claim_incremental_spend_usd": 0.7454861418055557,
+    "cumulative_actual_spend_usd": 2.5054861418055557
+  },
+  "hypothesis": "Target-verification-only proxy attention with mirrored stock/proxy KV banks remains exact at the stock boundaries and net-positive when exercised through the pinned full Gemma forward path.",
+  "launch_recovery": {
+    "classification": "researcher_context_window_exhausted_before_project_or_gpu_action",
+    "trace": "runtime/traces/20260725T213045Z-1785015045067769743-researcher-gemma4_hybrid_attention_placement_codesign.jsonl",
+    "trace_sha256": "33ad591aacdb257c0c9198d3fb57d487e193236eabd28d5a360a8f82f51c92f7",
+    "duration_seconds": 5.725,
+    "scientific_arm_consumed": false,
+    "gpu_claim_started": false,
+    "harness_thread_rotated": true
+  },
   "current_binding": {
-    "path": "DIRECTOR_PHASE_SELECTIVE_HYBRID_CONTINUATION.json",
-    "sha256": "bfbbf25a6597e48a0fbeb193837a79a9a41b3b10a510e18dfd88303d57c05cbc"
+    "path": "DIRECTOR_PROXY_ALLOCATOR_OFFLINE_LOCALIZATION_20260726T0411Z.json",
+    "sha256": "bf4609d078c912ae61865006a522916b5336820c2b637eb70577af1c27f24352",
+    "prior_tensor_contract_path": "DIRECTOR_SEQLENS_CPU_TENSOR_CONTRACT_READMISSION_20260726T0355Z.json",
+    "prior_tensor_contract_sha256": "cb6e3923c2af25b26b4619421018806e0ea3b308b813a2b0ae7ecee95f12bfc6",
+    "prior_readiness_gated_path": "DIRECTOR_READINESS_GATED_COMPONENT_READMISSION_20260726T0338Z.json",
+    "prior_readiness_gated_sha256": "703497c90b7ef5d07826d49ab0863dfae348d71bc82c539ebdda312d1a7bad03",
+    "prior_seqlens_repair_path": "DIRECTOR_SEQLENS_CPU_PRE_SCIENCE_REPAIR_READMISSION_20260726T0327Z.json",
+    "prior_seqlens_repair_sha256": "edae00e4b2006cf0064831b65995e0ea07261343970750138c10d3e8517b69fe",
+    "prior_source_proof_dispatch_path": "DIRECTOR_SOURCE_PROOF_DISPATCH_WINDOW_AMENDMENT_20260726T0317Z.json",
+    "prior_source_proof_dispatch_sha256": "c9f9b341907a69a3d29879abe1128d457605b533a943189d99079523249d84ae",
+    "prior_source_proven_readmission_path": "DIRECTOR_SOURCE_PROVEN_CONSUMER_READMISSION_20260726T0313Z.json",
+    "prior_source_proven_readmission_sha256": "20bed3be7c2c8f0b747ba8d1530cc44ac452206a0af7ce524612c7b2e6730275",
+    "prior_readmission_path": "DIRECTOR_HYBRID_COMPONENT_READMISSION_20260726T0218Z.json",
+    "prior_readmission_sha256": "e84517a3c29930baf8d372901b35ce8e0e070d0236f3533749630f9178bcae2d",
+    "prior_admission_path": "DIRECTOR_HYBRID_NGRAM_TARGET_RUNTIME_ADMISSION_20260726.json",
+    "prior_admission_sha256": "8a8abc546126747b5c4030b476bec5cd971ff81815833f1cbe0070f174437af3",
+    "scientific_binding_path": "DIRECTOR_PHASE_SELECTIVE_FULL_MODEL_H200_BINDING.json",
+    "scientific_binding_sha256": "f09e4188f4b997fe3a0fc4b2fd6303616c043b6c360d500c8d80b0ac4ad800dc",
+    "implementation_terminal_path": "HYBRID_NGRAM_DUAL_CACHE_OFFLINE_IMPLEMENTATION_TERMINAL.json",
+    "implementation_terminal_sha256": "4fd67e23763197624c1bc045719cbe851f9a8ce2975658ad568c44b82da813a0"
   },
-  "prior_result": {
-    "path": "HYBRID_55L5G_H200_EXECUTION_TERMINAL.json",
-    "sha256": "3a705235485720575c7695e184b4a47b6602c360ec49b4752f284e758b62bdfb",
-    "classification": "measured_component_execution",
-    "weighted_attention_reduction_fraction": 0.20334496337472074,
-    "candidate_is_deployable": false
+  "recovered_terminal": {
+    "path": "PHASE_SELECTIVE_FULL_MODEL_H200_COMPONENT_TERMINAL.json",
+    "sha256": "710405914ab3f6ceac8bc64fc609a9cbac1a1b909595fe2e24ee15a48766edbe",
+    "classification": "infrastructure_terminal",
+    "failure_kind": "full_model_producer_construction_failed",
+    "scientific_component_consumed": false,
+    "candidate_cuda_invocation_started": false,
+    "peak_allocated_gib": 138.71,
+    "failed_allocation_mib": 168.0
   },
-  "bench_need": null,
-  "compute_budget": "CPU/source analysis only; no accelerator claim and no paid provider work.",
-  "storage_budget": "At most 1 GiB new source, simulation, and typed evidence artifacts.",
-  "wall_clock_budget": "At most 75 wall-clock minutes for this bounded offline continuation.",
-  "provider_mutation": "forbidden",
-  "terminal_artifact": "PHASE_SELECTIVE_HYBRID_RESULT.json",
-  "result": {
+  "offline_repair_terminal": {
+    "path": "FULL_MODEL_MEMORY_ADAPTER_READY_TERMINAL.json",
+    "sha256": "3a02677fbc0cc0b1a486927747191e4b68d80b13b400d3751b9c87566cb5d363",
+    "classification": "source_complete_operational_repair",
+    "scientific_component_consumed": false,
+    "candidate_cuda_invocation_started": false,
+    "gpu_claimed": false,
+    "expected_peak_gib": 130.8515625,
+    "memory_margin_gib": 8.948437500000011,
+    "construction": "one pinned SGLang launch_server target model at --mem-fraction-static 0.85; no standalone ModelRunner or eager duplicate model"
+  },
+  "queue_observation": {
+    "observed_at_utc": "2026-07-25T22:24:23Z",
+    "method": "one-time read of the named predecessor STATUS.json files plus the current director decision",
+    "certified_lazy": "active; its next action is project-local exact c32 hidden/proposal capture staging, with scientific sample unconsumed",
+    "fp8_weight_stream": "active at priority 8530 and admitted by the director for the next retained-H200 M32/M384 component comparison",
+    "disposition": "This project remains unre-admitted. Do not claim the H200; retain the already verified single-model adapter path unchanged."
+  },
+  "prior_terminal": {
+    "path": "PHASE_SELECTIVE_HYBRID_H200_COMPONENT_TERMINAL.json",
+    "sha256": "a32e56409c8814de61d4a9a686ecddaf77034ecaf206614a6d51c54e31a8e671",
+    "classification": "infrastructure_terminal",
+    "scientific_component_unconsumed": true,
+    "conservative_cumulative_exposure_usd": 0.399
+  },
+  "source_result": {
     "path": "PHASE_SELECTIVE_HYBRID_RESULT.json",
     "sha256": "125f2411ea951e2958d373910713829a13e0a571e469738412772d38d62a0cca",
     "classification": "source_complete_candidate",
-    "net_savings_seconds_per_request_range": [
-      0.010643762990254182,
-      0.01355809001813069
-    ],
     "net_reduction_fraction_range": [
       0.017025959017991726,
       0.021687770126251484
-    ],
-    "extra_shadow_kv_bytes": 1342177280
+    ]
   },
+  "bench_need": {
+    "accelerator": null,
+    "preferred_bench_id": null,
+    "claim_allowed": false,
+    "purpose": "Offline-only proxy allocator logical-slot localization; the amended discovery replay is consumed."
+  },
+  "claim_gate": {
+    "bench_id": null,
+    "claim_allowed_now": false,
+    "admission_satisfied": false,
+    "admission_satisfied_at_utc": null,
+    "claim_not_after_utc": null,
+    "release_not_after_utc": null,
+    "blocked_by": [
+      "amended_discovery_replay_consumed",
+      "offline_localization_only"
+    ],
+    "disposition": "no_additional_gpu_or_request_submission_authorized"
+  },
+  "preclaim_proof": {
+    "path": "PINNED_RUNTIME_VERIFICATION_CONSUMER_PROOF.json",
+    "sha256": "cda7dfecf5c2925bc9d9eee556e86ee7fd21878c8cdfec64be50abc60f86fbde",
+    "pass": true,
+    "classification": "source_proven_preclaim_admission",
+    "consumer": "NgramVerifyInput.sample inherited from EagleVerifyInputV2Mixin.sample",
+    "signature": "sample(self, batch, logits_output, vocab_mask=None)",
+    "created_at_utc": "2026-07-26T03:19:47Z"
+  },
+  "compute_budget": "CPU and synthetic target-runtime contract tests only; $0 additional GPU spend and no request submission.",
+  "storage_budget": "At most 1 GiB of new non-checkpoint artifacts.",
+  "wall_clock_budget": "At most 45 researcher minutes for the offline allocator localization.",
+  "provider_mutation": "Forbidden. The warm H200 is allocated to the independent c32 graph-gap lane.",
+  "terminal_artifact": "PROXY_ALLOCATOR_DISTINCTNESS_OFFLINE_TERMINAL.json",
+  "forward_batch_driver_attempt": {
+    "classification": "recoverable_integration_boundary",
+    "component_consumed": false,
+    "candidate_cuda_invocation_started": false,
+    "health_sha256": "d11b6df9ff227d6808478184b08697664fbbcfe0d9b0b6e481ae9f14c4fbe1ce",
+    "probe_sha256": "b64f254350aeb74c8f29f031640367fa81015ecc1142eb9894e4780cefbf21e5",
+    "repair_ready_sha256": "d72c74ab2751db8c14305a706227d540cebe1e07acdc8101410dcb22b566a9ad"
+  },
+  "target_runtime_import_repair": {
+    "terminal": "TARGET_RUNTIME_NGRAM_IMPORT_INFRASTRUCTURE_TERMINAL_20260726.json",
+    "terminal_sha256": "feb638b0cb2ad345b960bf0df281bd16c65e3b804d15d56d2088a66755b5c748",
+    "classification": "infrastructure_terminal",
+    "scientific_component_consumed": false,
+    "candidate_cuda_invocation_started": false,
+    "source_repair": "forward_batch_dual_cache_driver.py now imports NGRAMWorker from sglang.srt.speculative.ngram_worker",
+    "source_repair_sha256": "cb23f7c6a2cb5dd125f3d8c7d007fdf559f8edec6e3e3e7268cd17e7c17bc08c",
+    "local_behavioral_tests": "5 passed"
+  },
+  "offline_implementation_terminal": {
+    "path": "HYBRID_NGRAM_DUAL_CACHE_OFFLINE_IMPLEMENTATION_TERMINAL.json",
+    "classification": "actual_consumer_implementation_ready",
+    "scientific_component_consumed": false,
+    "candidate_cuda_invocation_started": false,
+    "gpu_claimed": false,
+    "actual_spend_usd": 1.61,
+    "incremental_spend_usd": 0.0
+  },
+  "conditional_endpoint_artifact": "PHASE_SELECTIVE_FULL_MODEL_H200_ENDPOINT_TERMINAL.json",
   "stop_rules": [
-    "Return typed none if the pinned runtime cannot isolate target-verification rows safely or the derived whole-request bound cannot justify later H200 time.",
-    "Do not claim quality preservation or deployability.",
-    "Do not reopen the completed permanent 55-local/5-global comparison."
+    "Change only absent seq_lens_cpu materialization to a CPU tensor-compatible mirror that preserves native indexing, len(), and .sum(); preserve any stock mirror verbatim.",
+    "Claim only the named same-project cached H200 by 04:05Z.",
+    "Launch one cached replacement with the corrected seq_lens_cpu tensor contract and persist its installed source identity.",
+    "Do not start the component until CUDA graph capture has ended, the server-ready marker is present, the process and container are live, and localhost:30000 accepts TCP.",
+    "Do not use a generation request as a readiness probe; persist science_started=true immediately before request-pool submission and preserve it independently of response success.",
+    "The predecessor consumed one discovery invocation but no canonical sample; submit the single amended retry at most once and grant no further accounting-reset retry.",
+    "Keep candidate CUDA, usable-response, exactness, cache-lifecycle, and timing evidence false until directly observed; exact-c32 remains conditional on every existing gate.",
+    "Release by 04:25Z under the verified 04:30Z watchdog.",
+    "Do not claim quality preservation or deployability, train, alter checkpoint values, or replay the completed placement comparison."
   ]
 }

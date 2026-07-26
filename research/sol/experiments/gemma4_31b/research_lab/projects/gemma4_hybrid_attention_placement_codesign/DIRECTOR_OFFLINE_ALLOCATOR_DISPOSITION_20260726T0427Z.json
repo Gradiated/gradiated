@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "created_at_utc": "2026-07-26T04:27:00Z",
+  "decision": "pause_after_offline_allocator_contract_pass",
+  "evidence": {
+    "path": "PROXY_ALLOCATOR_DISTINCTNESS_OFFLINE_TERMINAL.json",
+    "sha256": "79fc040389cfa008e7827f6571d41c6a868d0100c431264ce8b83c99796aba4b",
+    "classification": "offline_logical_slot_representation_contract_pass",
+    "scope": "CPU synthetic target-runtime allocator contract; no GPU claim or request submission",
+    "requests_submitted": 0,
+    "additional_provider_spend_usd": 0.0
+  },
+  "interpretation": "The repaired native-vector and batch-tree allocator ownership contract removes the localized proxy-slot aliasing defect, but it is not target-GPU placement evidence and does not reset the already consumed amended discovery submission.",
+  "scheduler_disposition": {
+    "status": "paused",
+    "allocation_limit": 0,
+    "researcher_profile": "execution",
+    "gpu_claim_allowed": false,
+    "request_submission_allowed": false,
+    "exact_c32_allowed": false
+  },
+  "serial_bench_disposition": {
+    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "next_claimant": "gemma4_c32_graph_gap_elision",
+    "hybrid_may_not_compete_for_claim": true,
+    "graph_claim_not_after_utc": "2026-07-26T04:40:00Z",
+    "graph_release_not_after_utc": "2026-07-26T05:10:00Z",
+    "watchdog_deadline_utc": "2026-07-26T05:20:00Z"
+  },
+  "reactivation_condition": "A later director turn, after the graph-gap terminal or missed-claim disposition, must compare the repaired hybrid mechanism's 1.7026%-2.1688% source bound with current alternatives and issue a materially new hash-bound paid component contract. The present decision does not authorize replay.",
+  "provider_lifecycle_mutation": "none"
+}

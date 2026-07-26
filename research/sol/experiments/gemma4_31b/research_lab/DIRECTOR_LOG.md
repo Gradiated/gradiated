@@ -8700,3 +8700,20 @@ target-work intervention or falsify it. Nebius's authenticated platform
 catalog exposes no B200, so no B200 lifecycle action is available this turn.
 The retained H200 is available, warm, unclaimed, and compatible; no provider
 creation, teardown, or watchdog mutation is needed.
+
+## 2026-07-26T04:40Z — dispatch the reserved FP8 repair; preserve adaptive verify
+
+The `$2.00` FP8 reservation is now durable, both active contracts remain
+unchanged, and the retained H200 is still available and unclaimed with 32
+minutes to the `05:12Z` release boundary. Dispatch
+`gemma4_h200_fp8_weight_stream_schedule` immediately as the sole H200 lane:
+remove only the hash-bound redundant CUTLASS include, publish one new
+content-addressed `sm_90a` module, consume the unchanged one-call M32 gate
+once, and permit M32/M384 only after a finite bitwise pass.
+
+Keep `gemma4_mtp_tail_adaptive_verify_work` active at `8660/deep`, `$0`, in
+parallel because its accepted-depth oracle and fallback-cost derivation need no
+GPU and do not contend with compilation or scoring. The latest safety audit
+matches the sole running instance and ready disk to the registered bench, and
+the `05:20Z` watchdog remains valid; no provider lifecycle or portfolio
+mutation is warranted this turn.

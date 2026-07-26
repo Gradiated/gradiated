@@ -1,38 +1,40 @@
 {
   "schema_version": 1,
-  "status": "closed",
-  "priority": 8650,
+  "status": "paused",
+  "priority": 9770,
   "researcher_profile": "deep",
   "active_session": null,
   "allocation_limit": 1,
   "authorized_spend_usd": 0.0,
   "actual_spend_usd": 0.0,
-  "accelerator_requirement": "none; strictly local source and fixture work in this iteration",
+  "accelerator_requirement": "A later director admission requires one compatible nvidia-h200-sxm bench, a positive project spend reservation, and enough registered lifecycle for the bounded 45-minute capture owner.",
   "bench_need": {
     "claim_allowed": false,
-    "reason": "The immediate result is a source-complete exact verifier hidden-state capture hook and a genuinely diverse synthetic producer-to-consumer fixture; no bench claim is allowed."
+    "reason": "The exact packet is locally complete. Pause until the director explicitly admits the later H200 capture; do not claim the currently occupied bench."
   },
   "scheduler_admission": {
     "admitted": false,
     "gpu_claim_allowed": false,
     "provider_creation_allowed": false,
-    "reason": "The zero-GPU diverse-capture producer iteration is terminal. A later exact capture requires a new director admission and project-local materialization of the pinned runtime inputs."
+    "reason": "The admitted zero-GPU materialization is complete. The single exact eager c32 capture remains spend- and bench-gated."
   },
-  "decision": "exact_diverse_capture_hook_ready_for_later_bound_capture",
-  "result": "diverse_capture_hook_fixture_pass",
+  "decision": "exact_diverse_c32_capture_packet_ready_for_director_admission",
+  "result": "exact_diverse_c32_capture_packet_hash_bound",
   "hypothesis": "A request-adaptive index over the tied 262144 x 5376 vocabulary weight can recover full-head top-1 on a future exact diverse verifier capture while exact-scoring a small enough candidate set to reduce H200 weight traffic after routing and index costs.",
-  "next_action": "Closed without a bench claim. If the director later admits an exact c32 capture, first materialize the pinned endpoint and workload bytes under this project, then use the exact eager capture command in DIVERSE_HIDDEN_CAPTURE_HOOK_TERMINAL.json; do not rerun retrieval until that capture passes the diversity gate.",
-  "summary": "The exact pinned NGRAM producer-to-tied-head boundary now has an ownership-preserving capture hook. A 3-request x 4-depth CPU fixture produced 12/12 unique hidden rows and preserved logits and greedy acceptance bit-for-bit, including observer-failure isolation.",
+  "next_action": "Director admission only: authorize positive spend and a compatible released H200, then launch one bounded durable claim owner from EXACT_DIVERSE_C32_CAPTURE_READY.json. Stage this immutable packet and a separately verified exact checkpoint inside that owner, execute the single eager c32 producer, retrieve and validate the capture, and do not run retrieval in the capture admission.",
+  "summary": "The exact eager capture packet is content-addressed and self-contained: pinned endpoint entrypoint, exact c32 producer, ownership-preserving hook, bootstrap, and manifest only. Its canonical workload identity regenerates from the copied producer, and the deterministic packet archive is ready for a future bounded H200 owner. No checkpoint, GPU claim, SSH, provider contact, endpoint request, or retrieval was used.",
   "quality_claim_authorized": false,
   "performance_claim_authorized": false,
   "scientific_sample_consumed": true,
   "prior_terminal_artifact": "ADAPTIVE_RETRIEVAL_VOCAB_OFFLINE_TERMINAL.json",
   "prior_terminal_sha256": "29644d701a38606f6a8f9230da753b2ecdccd969093ca80af75dfd9d6c3e54dd",
-  "terminal_artifact": "DIVERSE_HIDDEN_CAPTURE_HOOK_TERMINAL.json",
-  "terminal_sha256": "dbaa9ef8705091f05de4b5843663c65e437b397591cf5940be2c43a6b99cb303",
-  "closed_at": "2026-07-26T06:34:27Z",
-  "runner": "diverse_hidden_capture_fixture.py",
-  "runner_sha256": "5e6726472749cf87c7b0ec7ec2054f0ab9dc897cc4c58359293a277e48e58382",
+  "prior_capture_hook_terminal_artifact": "DIVERSE_HIDDEN_CAPTURE_HOOK_TERMINAL.json",
+  "prior_capture_hook_terminal_sha256": "dbaa9ef8705091f05de4b5843663c65e437b397591cf5940be2c43a6b99cb303",
+  "terminal_artifact": "EXACT_DIVERSE_C32_CAPTURE_READY.json",
+  "terminal_sha256": "e4e9f0c2e89a0d5d14bb57d854b7bac2cf03b0eff272627482b657e893d15c38",
+  "closed_at": null,
+  "runner": "research/factory/tools/manifest-pack",
+  "runner_sha256": "33a4f58299265b16642e7014942149412f2cc5cee8a5f4c943e69bc7da8305b8",
   "evidence": {
     "input_identities_match": true,
     "full_head_reference_top1_token_id": 240017,
@@ -65,33 +67,51 @@
     "logits_bitwise_equal": true,
     "acceptance_bitwise_equal": true,
     "observer_failure_isolated": true,
-    "later_capture_uses_eager_target_verify": true
+    "later_capture_uses_eager_target_verify": true,
+    "packet_identity_sha256": "e606f47a04c0374692e5aa66ae30821b35f8a79196916582cacc904ed568bc54",
+    "packet_manifest_sha256": "dbb8bec0010e268ea0ffa283fdd6b5b0ccd23f4e79492b98ea77dd6757ad4fd2",
+    "packet_archive_sha256": "92f9cfd862da2a275082884c4c0b8fe6a0a14b8dfd4f0844aa29662e144c0144",
+    "endpoint_entrypoint_sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc",
+    "exact_c32_producer_sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+    "capture_hook_sha256": "74edc518057263816cadc01144a48436014f872e79818dfec980ad0a0a405515",
+    "capture_bootstrap_sha256": "013014484ba8f248de2e07883631e2736bbb27c2ea6319f02b5af06167b81a42",
+    "workload_identity_sha256": "7f66b10e04467f174b9d94782ee906670c0efdb365f6756aeac15f0419f20935",
+    "request_sha256_list_sha256": "474ade195799249af8bdcc3e800bd532945ccc90da4d1e3127d8ac6bf2b36a23",
+    "prompt_token_ids_sha256": "dad77c4038826ec058d2cc70935a6534b5c69d224f01eaa684d5b496fe16f1fc",
+    "packet_file_count_including_manifest": 5,
+    "checkpoint_materialized": false,
+    "current_capture_scientific_sample_consumed": false,
+    "capture_producer_run": false,
+    "retrieval_run": false,
+    "provider_contacted": false,
+    "launcher_contract_uses_container_local_paths": true,
+    "endpoint_required_audit_destinations_bound": true
   },
   "wall_clock_budget": "At most 75 minutes of local source inspection, implementation, and fixture execution.",
   "compute_budget": "CPU only; zero paid GPU minutes and $0 fresh spend.",
   "storage_budget": "At most 1 GiB of source, fixtures, and typed terminal artifacts; do not materialize a checkpoint.",
   "artifact_contract": {
-    "terminal": "DIVERSE_HIDDEN_CAPTURE_HOOK_TERMINAL.json",
+    "terminal": "EXACT_DIVERSE_C32_CAPTURE_READY.json",
     "required_metrics": [
-      "exact_pinned_producer_and_consumer_symbols",
-      "capture_source_sha256",
-      "request_depth_row_ownership_schema",
-      "synthetic_unique_hidden_row_count",
-      "logits_and_acceptance_noninterference",
-      "exact_later_capture_command"
+      "content_addressed_packet_and_archive",
+      "direct_endpoint_producer_hook_bootstrap_hashes",
+      "canonical_c32_workload_hashes",
+      "bounded_owner_destination",
+      "expected_capture_identities",
+      "later_h200_claim_and_release_contract"
     ]
   },
   "stop_rules": [
-    "Do not claim a GPU, contact a provider, use SSH, or issue an endpoint request.",
+    "Pause now; do not claim a GPU, contact a provider, use SSH, or issue an endpoint request without a new director admission.",
     "Do not rerun or promote retrieval from the one-unique-row historical capture.",
-    "Do not alter logits, tied-head inputs, sampling, acceptance, request routing, checkpoint values, or runtime identities.",
-    "Stop at a typed source boundary if the exact producer cannot expose request/depth ownership without semantic mutation."
+    "Do not materialize checkpoint bytes before the future bounded claim owner starts.",
+    "Do not alter the packet, workload, logits, tied-head inputs, sampling, acceptance, request routing, checkpoint values, or runtime identities after admission; any amendment requires a new packet identity."
   ],
   "director_reactivation": {
-    "created_at_utc": "2026-07-26T06:23:07Z",
+    "created_at_utc": "2026-07-26T22:27:00Z",
     "prior_terminal_sha256": "29644d701a38606f6a8f9230da753b2ecdccd969093ca80af75dfd9d6c3e54dd",
     "scientific_question_changed": false,
     "gpu_claim_allowed": false,
-    "reason": "Prepare the missing diverse exact-path evidence independently while the hybrid lane repairs its allocator."
+    "reason": "Replace the closed packed-streaming H100 candidate with a materially independent sublinear-head mechanism while the causal H200 owner continues; prepare exact capture inputs offline and do not compete for its bench."
   }
 }

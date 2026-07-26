@@ -109,3 +109,45 @@ a later diverse exact c32 capture interpretable.
 materialize the pinned endpoint and workload runner under this project before
 claiming a bench, execute the terminal's eager capture command, and require a
 real diversity gate before reusing the offline retrieval consumer.
+
+## 2026-07-26T22:40:15Z — Exact diverse c32 capture packet
+
+**Question.** Can the already-proven capture hook be admitted later without
+resolving mutable sibling-project sources or opening a claim clock during
+offline preparation?
+
+**Action.** Consumed `DIVERSE_HIDDEN_CAPTURE_HOOK_TERMINAL.json` and copied only
+the pinned endpoint entrypoint, exact c32 request producer, capture hook, and
+bootstrap into content-addressed packet
+`e606f47a04c0374692e5aa66ae30821b35f8a79196916582cacc904ed568bc54`.
+Added a direct-hash manifest and built a deterministic five-member archive.
+The terminal's coordinator-local `PYTHONPATH` and missing required FP8 audit
+destinations were ordinary launcher defects; the packet contract binds
+container-local `/work/input` and `/work/output` paths instead.
+
+**Evidence.**
+
+- Measured locally: regenerating the producer yields all 32 recorded request
+  hashes, request-list digest
+  `474ade195799249af8bdcc3e800bd532945ccc90da4d1e3127d8ac6bf2b36a23`,
+  prompt-token digest
+  `dad77c4038826ec058d2cc70935a6534b5c69d224f01eaa684d5b496fe16f1fc`,
+  and canonical `WORKLOAD.json` digest
+  `7f66b10e04467f174b9d94782ee906670c0efdb365f6756aeac15f0419f20935`.
+- Measured locally: manifest
+  `dbb8bec0010e268ea0ffa283fdd6b5b0ccd23f4e79492b98ea77dd6757ad4fd2`
+  reproduces archive
+  `92f9cfd862da2a275082884c4c0b8fe6a0a14b8dfd4f0844aa29662e144c0144`;
+  all member sizes and hashes match.
+- No checkpoint was materialized. No GPU was claimed, no SSH or provider
+  contact occurred, no endpoint request was issued, and no retrieval ran.
+
+**Interpretation.** The later capture now has a self-contained immutable input
+packet, explicit workload identity, bounded owner destination, predeclared
+capture schema/diversity gate, and same-claim repair/release contract. This is
+offline admission evidence only; the exact c32 producer remains unconsumed.
+
+**Next move.** Pause for director admission. A future turn needs positive spend
+authority and a compatible released H200, then must stage this packet and the
+separately verified checkpoint inside one durable claim owner and execute the
+single eager capture without running retrieval.

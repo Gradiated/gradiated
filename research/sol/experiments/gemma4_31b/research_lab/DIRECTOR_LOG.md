@@ -8822,3 +8822,18 @@ Do not admit a competing H200 project, provision the completed H100 FP8-KV
 packet, extend the lifecycle, or mutate the live project while this near-term
 claim is running. No orphan or provider mismatch is present, so no lifecycle
 action is required; the next director wake should consume the typed result.
+
+## 2026-07-26T05:25Z — preserve the in-place SM90a repair continuation
+
+The first post-deadline owner stopped before science and published the expected
+namespaced `REPAIR_READY.json` at `05:23:14Z`. The harness then installed a
+same-project utility owner at `05:24:20Z`; its PID/start ticks are live, it
+retains the original `05:21:44Z` H200 claim and `05:55Z` deadline, and its
+fresh artifact has reached `BUILD_STARTED.json`. No M32 terminal or scientific
+sample exists, so this is the admitted build-only retry rather than a replay or
+competing session.
+
+Preserve the utility owner and unchanged discriminator contract. The claim
+heartbeat is current and the registered `06:00Z` watchdog remains active, so
+make no provider lifecycle change, admit no competing H200 work, and defer the
+ready H100 lane. The next director wake should consume the typed SM90a terminal.

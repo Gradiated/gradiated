@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_lossless_parallel_draft_frontier",
+  "status": "terminal",
+  "priority": 9780,
+  "researcher_profile": "deep",
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.0,
+  "active_session": null,
+  "hypothesis": "A corrected target-verified parallel draft path with hardware-aware adaptive depth can remove at least 20% of qualified Gemma request service time without changing accepted target semantics.",
+  "summary": "A/A-controlled replay localized a request-ownership defect in DFlash overlap direct carry and the exact pinned-runtime FutureMap patch applies to the later repaired source hash. Retained c32 measurements nevertheless select depth 4 at 521.916 accepted target tokens/CUDA-event-second and show only 1.135% paired endpoint improvement, far below the required 20%; the current drafter/runtime is typed none.",
+  "decision": "typed_none",
+  "decision_artifact": "PARALLEL_DRAFT_FRONTIER.json",
+  "decision_artifact_sha256": "59e35a96d00f370ad7eb6eb9721195a939265091f47094cff9947b62577c4f8b",
+  "reproducer_source": "parallel_draft_frontier.py",
+  "reproducer_source_sha256": "349ea37b1d79e41bd74177e9370640a76334c6c31c41a185abc94bc15d3fdbbc",
+  "repair_source": "DFLASH_FUTUREMAP_REPAIR.patch",
+  "repair_source_sha256": "f3bf201d733ae5ea944b16225b99571796b96a1852af1d655f77168007d88ede",
+  "measured_frontier": {
+    "selected_depth": 4,
+    "accepted_target_tokens_per_cuda_event_second": 521.9159530781905,
+    "mean_accepted_target_tokens_per_verification": 3.006315789473684,
+    "paired_endpoint_improvement_fraction": 0.011349460841934111,
+    "required_endpoint_improvement_fraction": 0.2
+  },
+  "next_action": "Director may close the current DFlash drafter lineage. If lossless speculation remains valuable, admit the separate Gemma causal parallel-offset head intervention described in PARALLEL_DRAFT_FRONTIER.json with positive training/GPU authority; do not replay these consumed endpoint or depth artifacts.",
+  "bench_need": {
+    "claim_allowed": false,
+    "provider_create_allowed": false,
+    "reason": "The current drafter is a measured typed none and this project has zero spend authority. No GPU replay is decision-relevant."
+  },
+  "reproducer": {
+    "pass": true,
+    "observer_aa_pass": true,
+    "runtime_aa_exact_request_matches": 23,
+    "runtime_aa_total_requests": 32,
+    "repair_reorder_pass": true,
+    "invalid_consumer_attempts_preserved": [
+      "REPRODUCER_ATTEMPT_1.json",
+      "REPRODUCER_ATTEMPT_2.json"
+    ]
+  }
+}

@@ -1,0 +1,322 @@
+{
+  "aa_controls": {
+    "observer_same_bytes_twice": {
+      "canonical_sha256": "0bc3ae6f4e707d19b446065b5b849ce5f6a91391faacd7b787fb06206726af5a",
+      "pass": true
+    },
+    "runtime_same_source_same_workload": {
+      "exact_request_token_matches": 23,
+      "first_difference": {
+        "left_prefix": [
+          4602,
+          4602,
+          4602
+        ],
+        "left_token": 4602,
+        "output_index": 0,
+        "request_index": 2,
+        "request_sha256": "7ba40610fed2d6d6f7b9186097bc7b9b9dfa2b8a1c0405b714383dd15fe577d7",
+        "right_prefix": [
+          2791,
+          2791,
+          2791
+        ],
+        "right_token": 2791
+      },
+      "pass": false,
+      "source_sha256_equal": true,
+      "total_requests": 32
+    }
+  },
+  "causal_reproducer": {
+    "aa_identity_control": {
+      "arms_equal": true,
+      "direct_carry": [
+        {
+          "received_state": {
+            "kv_locations": [
+              71603
+            ],
+            "new_seq_len": 4215,
+            "request_id": "077dff09d0bc4ec1ad3af6ec056651b2",
+            "verified_id": 759
+          },
+          "request_id": "077dff09d0bc4ec1ad3af6ec056651b2"
+        },
+        {
+          "received_state": {
+            "kv_locations": [
+              71579
+            ],
+            "new_seq_len": 4215,
+            "request_id": "632076e7a13b4636bd590bda9f00f3eb",
+            "verified_id": 147343
+          },
+          "request_id": "632076e7a13b4636bd590bda9f00f3eb"
+        }
+      ],
+      "direct_carry_pass": true,
+      "future_map": [
+        {
+          "received_state": {
+            "kv_locations": [
+              71603
+            ],
+            "new_seq_len": 4215,
+            "request_id": "077dff09d0bc4ec1ad3af6ec056651b2",
+            "verified_id": 759
+          },
+          "request_id": "077dff09d0bc4ec1ad3af6ec056651b2"
+        },
+        {
+          "received_state": {
+            "kv_locations": [
+              71579
+            ],
+            "new_seq_len": 4215,
+            "request_id": "632076e7a13b4636bd590bda9f00f3eb",
+            "verified_id": 147343
+          },
+          "request_id": "632076e7a13b4636bd590bda9f00f3eb"
+        }
+      ],
+      "future_map_pass": true
+    },
+    "input_evidence": "real_persisted_first_target_step_state",
+    "reorder_discriminator": {
+      "direct_carry": [
+        {
+          "received_state": {
+            "kv_locations": [
+              71603
+            ],
+            "new_seq_len": 4215,
+            "request_id": "077dff09d0bc4ec1ad3af6ec056651b2",
+            "verified_id": 759
+          },
+          "request_id": "632076e7a13b4636bd590bda9f00f3eb"
+        },
+        {
+          "received_state": {
+            "kv_locations": [
+              71579
+            ],
+            "new_seq_len": 4215,
+            "request_id": "632076e7a13b4636bd590bda9f00f3eb",
+            "verified_id": 147343
+          },
+          "request_id": "077dff09d0bc4ec1ad3af6ec056651b2"
+        }
+      ],
+      "direct_carry_pass": false,
+      "first_divergent_field": "verified_id",
+      "future_map": [
+        {
+          "received_state": {
+            "kv_locations": [
+              71579
+            ],
+            "new_seq_len": 4215,
+            "request_id": "632076e7a13b4636bd590bda9f00f3eb",
+            "verified_id": 147343
+          },
+          "request_id": "632076e7a13b4636bd590bda9f00f3eb"
+        },
+        {
+          "received_state": {
+            "kv_locations": [
+              71603
+            ],
+            "new_seq_len": 4215,
+            "request_id": "077dff09d0bc4ec1ad3af6ec056651b2",
+            "verified_id": 759
+          },
+          "request_id": "077dff09d0bc4ec1ad3af6ec056651b2"
+        }
+      ],
+      "future_map_pass": true,
+      "next_order": [
+        "632076e7a13b4636bd590bda9f00f3eb",
+        "077dff09d0bc4ec1ad3af6ec056651b2"
+      ]
+    },
+    "schedule_geometry": "deterministic_source_exercising_reorder"
+  },
+  "claims": {
+    "new_gpu_sample_consumed": false,
+    "production_eligible": false,
+    "provider_spend_usd": 0.0,
+    "repair_executed_on_gpu": false,
+    "working_runtime_repair_source": true
+  },
+  "classification": "measured_acceptance_and_service_frontier_below_20_percent_route",
+  "decision": "typed_none",
+  "decision_basis": {
+    "best_accepted_target_tokens_per_cuda_event_second": 521.9159530781905,
+    "best_depth_by_required_objective": 4,
+    "depth4_paired_service_improvement_fraction": 0.011349460841934111,
+    "reason": "The current drafter's best measured acceptance/cost depth is retained, but its completed paired endpoint improved service by only 1.135%; this is far below 20%, and the measured candidate was also semantically divergent. Repairing request ownership does not create the missing accepted work.",
+    "required_service_improvement_fraction": 0.2
+  },
+  "input_integrity": {
+    "DFLASH_C32_DEPTH_COST_TERMINAL.json": "c2cdc9bedbe4de8120ef9641ec7c9d745657e21352c3d388291ef5020ecdf637",
+    "DFLASH_DEPTH4_ENDPOINT_TERMINAL.json": "02a59aae4d6bc30c531b1765f70783ccdd7b622f277ff071073b59144c975015",
+    "artifacts/candidate-only-owner-20260726t000722Z/retrieved/results/dflash-depth4-c32/TERMINAL.json": "86c91222bf867666cf00b8cf03e818321eae386248e035e9512f0960a73fdf9a",
+    "artifacts/candidate-only-owner-20260726t001354Z/retrieved/results/dflash-depth4-c32/TERMINAL.json": "2a6a0ea48db65f1eb0808dba22a30ec247f2c76cd6b981e9fbd2d2148dd3be07",
+    "artifacts/candidate-only-owner-20260726t001857Z/DFLASH_CANDIDATE_ONLY_REQUEST_STATE_CAPTURE_RESULT.json": "cca4968e360d8969b96dae34e1186f8d655784db84a8d0a06540b3df06212913",
+    "artifacts/candidate-only-owner-20260726t001857Z/retrieved/inputs/bound/dflash_info_v2.py": "b17ff6a703e46173c415d649d47e8ff9f8b7b436f9eec8e1f67d55ef1b3908e6",
+    "artifacts/candidate-only-owner-20260726t001857Z/retrieved/results/dflash-depth4-c32/TERMINAL.json": "ea966215f852cb291f3cb5adee5e7376cbf36318450f7a014e17ab2583a33aa8",
+    "artifacts/request-state-capture-owner-20260725T232227Z/retrieved-final/results/ar-c32/TERMINAL.json": "45b8120b452452b3ffcdc5282138e984140aa96b5802eef3d3ce66603a141af4",
+    "artifacts/request25-boundary-probe-preparation-20260726/packet/4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b/executed_source/dflash_info_v2.py": "eb976179a5ec54d607bfaf66e087c04d1c39617f312c105081974a3a8aa9de08"
+  },
+  "measured_depth_frontier": [
+    {
+      "accepted_draft_tokens": 7624,
+      "accepted_target_tokens_per_cuda_event_second": 521.9159530781905,
+      "depth": 4,
+      "draft_plus_verifier_cuda_event_ms": 21888.58173930645,
+      "draft_slot_survival_fraction": 0.6687719298245614,
+      "final_output_tokens": 11456,
+      "mean_accepted_draft_tokens_per_verification": 2.006315789473684,
+      "mean_accepted_target_tokens_per_verification": 3.006315789473684,
+      "requests": 32,
+      "source_cost_controller_tokens_per_second": 523.3779025265886,
+      "target_tokens_committed_after_prefill": 11424,
+      "target_verifications": 3800
+    },
+    {
+      "accepted_draft_tokens": 7919,
+      "accepted_target_tokens_per_cuda_event_second": 518.5590232332585,
+      "depth": 12,
+      "draft_plus_verifier_cuda_event_ms": 22030.279077529907,
+      "draft_slot_survival_fraction": 0.20539489041628842,
+      "final_output_tokens": 11456,
+      "mean_accepted_draft_tokens_per_verification": 2.2593437945791726,
+      "mean_accepted_target_tokens_per_verification": 3.2593437945791726,
+      "requests": 32,
+      "source_cost_controller_tokens_per_second": 520.011569516825,
+      "target_tokens_committed_after_prefill": 11424,
+      "target_verifications": 3505
+    },
+    {
+      "accepted_draft_tokens": 7759,
+      "accepted_target_tokens_per_cuda_event_second": 494.927384184121,
+      "depth": 8,
+      "draft_plus_verifier_cuda_event_ms": 23082.174001812935,
+      "draft_slot_survival_fraction": 0.3024361722861041,
+      "final_output_tokens": 11456,
+      "mean_accepted_draft_tokens_per_verification": 2.1170532060027285,
+      "mean_accepted_target_tokens_per_verification": 3.1170532060027285,
+      "requests": 32,
+      "source_cost_controller_tokens_per_second": 496.313735400323,
+      "target_tokens_committed_after_prefill": 11424,
+      "target_verifications": 3665
+    },
+    {
+      "accepted_draft_tokens": 8009,
+      "accepted_target_tokens_per_cuda_event_second": 464.592119466365,
+      "depth": 16,
+      "draft_plus_verifier_cuda_event_ms": 24589.310755252838,
+      "draft_slot_survival_fraction": 0.15634943875061005,
+      "final_output_tokens": 11456,
+      "mean_accepted_draft_tokens_per_verification": 2.3452415812591507,
+      "mean_accepted_target_tokens_per_verification": 3.3452415812591507,
+      "requests": 32,
+      "source_cost_controller_tokens_per_second": 465.89349795226514,
+      "target_tokens_committed_after_prefill": 11424,
+      "target_verifications": 3415
+    }
+  ],
+  "measured_endpoint": {
+    "campaign_target_s_per_request": 0.500119281574996,
+    "candidate_excess_over_target_fraction": 2.0218435774149106,
+    "dflash_depth4_s_per_request": 1.5112822389687608,
+    "paired_ar_s_per_request": 1.5286313809688181,
+    "paired_improvement_fraction": 0.011349460841934111,
+    "semantic_equivalence": false
+  },
+  "next_intervention": {
+    "mechanism": "Freeze Gemma 4 and train one small shared causal block head over target layer taps plus learned offsets 1..16. One head forward emits all offset logits through the tied vocabulary projection; the unchanged target verifier remains the lossless authority.",
+    "name": "gemma4_causal_parallel_offset_head",
+    "smallest_falsifier": {
+      "depths": [
+        4,
+        8,
+        12,
+        16
+      ],
+      "examples": 4096,
+      "gate": "On a disjoint 512-example holdout, exact target verification must raise accepted-target-tokens/(draft+verify CUDA seconds) enough for a conservative c32 service projection <=0.500119281574996 s/request.",
+      "gpu_command_bound": false,
+      "hardware": "one director-authorized H200 or equivalent",
+      "reason": "No trained head checkpoint or positive spend authority exists in this project; this typed-none result closes only the current drafter.",
+      "trainable_parameters": "head only; target frozen"
+    },
+    "training_data": "Teacher-forced and target-generated continuations from the exact campaign request distribution; label offsets 1..16 with target tokens and weight loss by prefix survival and measured depth cost."
+  },
+  "question": "Can the repaired current DFlash path plausibly reduce 0.625149101968745 s/request to 0.500119281574996 s/request losslessly?",
+  "real_first_divergence": {
+    "accepted_draft_count": 0,
+    "accepted_prefix": [],
+    "bonus_token": 759,
+    "committed_sequence_length_after": 4215,
+    "committed_sequence_length_before": 4214,
+    "draft_tokens": [
+      236814,
+      174501,
+      74443,
+      104105
+    ],
+    "first_difference": {
+      "autoregressive": 3496,
+      "dflash": 759,
+      "output_index": 1
+    },
+    "first_subsequent_autoregressive_token": 3496,
+    "kv_content_sha256": "919ebdc8397adad8360900fbe00ece99d0a9fa2126c19d55469633d7f30b557d",
+    "kv_write_locations": [
+      71603
+    ],
+    "request_id": "077dff09d0bc4ec1ad3af6ec056651b2",
+    "request_index": 25,
+    "request_sha256": "ee2edfa7a9ff571b0268966f506c4cb868868ab880ac87c2684b055d48a0e150",
+    "target_autoregressive_tokens": [
+      236814,
+      3496,
+      3496
+    ],
+    "target_prefill_argmax": 236814,
+    "target_verifier_argmax": [
+      759,
+      236814,
+      236761,
+      87096
+    ],
+    "target_verifier_logits": {
+      "persisted": false,
+      "reason": "raw verifier logits were not retained"
+    },
+    "verified_id": 236814
+  },
+  "repair": {
+    "aa_pass": true,
+    "bug_reproduced": true,
+    "buggy_source_sha256": "b17ff6a703e46173c415d649d47e8ff9f8b7b436f9eec8e1f67d55ef1b3908e6",
+    "mechanism": "Disable DFlash positional direct carry so FutureMap gathers verified_id and new_seq_lens by request identity on every overlap iteration.",
+    "patch": "DFLASH_FUTUREMAP_REPAIR.patch",
+    "patch_sha256": "f3bf201d733ae5ea944b16225b99571796b96a1852af1d655f77168007d88ede",
+    "repair_pass": true,
+    "repaired_source_sha256": "eb976179a5ec54d607bfaf66e087c04d1c39617f312c105081974a3a8aa9de08",
+    "source_transition_bound": true,
+    "upstream_corroboration": {
+      "change": "removed DFlash direct-carry early returns from overlap_utils",
+      "merged_at_utc": "2026-06-28T07:02:32Z",
+      "merged_commit": "593f5ba68f4c27d5ea5644cd46c938644b5ef61a",
+      "sglang_pr": 29232,
+      "url": "https://github.com/sgl-project/sglang/pull/29232"
+    }
+  },
+  "reproducer_pass": true,
+  "schema_version": 1,
+  "scope": "current_gemma4_dflash_drafter_and_pinned_sglang_runtime"
+}

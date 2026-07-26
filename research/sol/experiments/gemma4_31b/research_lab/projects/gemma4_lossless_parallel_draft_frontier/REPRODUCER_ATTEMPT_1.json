@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "classification": "invalid_consumer_attempt",
+  "candidate_sample_consumed": false,
+  "operation": "offline first-divergence reproducer",
+  "exit_code": 1,
+  "error": "KeyError: request_sha256",
+  "cause": "The persisted capture event is keyed by request_id; request_sha256 is persisted in the same run's endpoint terminal row.",
+  "causal_amendment": "Join the capture event to the immutable candidate terminal by request index and request_id, then compare that terminal's request_sha256 with the AR terminal.",
+  "retry_scope": "identity join only"
+}

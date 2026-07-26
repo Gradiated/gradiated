@@ -1,0 +1,20 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "authorized_spend_usd": 0.0,
+  "decision": "typed_none_current_runtime_source_incomplete",
+  "last_researcher_run": {
+    "action": "Ran the exact-model Trainium2/Neuron runtime and placement discriminator.",
+    "artifact": "TRAINIUM2_RUNTIME_PLACEMENT_SCREEN.json",
+    "classification": "typed_none",
+    "completed_at_utc": "2026-07-26T11:05:11Z",
+    "spend_usd": 0.0,
+    "type": "current_runtime_source_incomplete"
+  },
+  "next_action": "Director disposition. Reopen only for a later official Neuron Gemma 4 path or a source-complete custom adapter that can compile the exact bound geometry and measure the c32 workload on Trainium2; retain the source-current economic hurdle and all producer/consumer gates.",
+  "priority": 8760,
+  "researcher_profile": "deep",
+  "schema_version": 1,
+  "status": "complete",
+  "summary": "Typed none: current official Neuron source lacks an exact Gemma 4 producer/consumer path. One-chip TP4 and 16-way trn2.48xl packing are only mechanically plausible; the current planning rate requires <=0.731442 s/request, but conservative cost remains null without an exact compile and workload result."
+}

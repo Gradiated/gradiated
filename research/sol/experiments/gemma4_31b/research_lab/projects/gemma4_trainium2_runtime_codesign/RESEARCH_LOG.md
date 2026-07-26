@@ -1,0 +1,13 @@
+# Research log
+
+## 2026-07-26T11:05:11Z — exact-model Trainium2 runtime and placement screen
+
+**Decision.** Emit typed `none` with type `current_runtime_source_incomplete`. The current official Neuron stack has no model producer/consumer path that jointly implements the bound Gemma 4 heterogeneous local/global attention geometry, `attention_k_eq_v`, mechanically tied output head with final softcap, heterogeneous cache, FP8/cFP8, and sampler consumers.
+
+**Measured evidence.** Retrieved and hashed current official Neuron 2.31 hardware documentation, EC2 and Savings Plan price data, vLLM Neuron `v0.21.0.1.0.0`, Neuronx Distributed Inference commit `d5784fb`, and Hugging Face Transformers Gemma 4 reference commit `b6d5084`. The current vLLM Neuron registry contains no Gemma model. NxDI contains a Gemma 3 adapter, but its uniform head geometry, every-sixth-layer sliding-window rule, cloned output head, and missing Gemma 4 softcap/`attention_k_eq_v` consumers do not admit the bound model. The current Ohio EC2 bulk offer exposes Trainium2 Capacity Block records, not an ordinary On-Demand Trainium2 rate.
+
+**Derived discriminator.** Exact text parameter accounting is 30,697,345,280 parameters. The bound c32 cache is 18.0811 GiB in FP8 and 36.1621 GiB in BF16. FP8 linears plus BF16 tied embedding and norms, FP8 cache, and a labeled inferred 10 GiB runtime reserve total 57.9839 GiB, making a one-chip TP4 placement mechanically plausible but not compiler-admitted. At the current official 3-year EC2 Instance Savings Plan all-upfront rate of $32.32246/hour, provisional packing of sixteen replicas, 90% utilization, and a conservative 10% all-in surcharge, the target requires at most 0.731442 seconds/request or at least 6,250.67 total tokens/s per replica. No exact-model service result exists, so conservative cost remains null rather than borrowing the vendor Llama 70B prior.
+
+**Attempt amendment.** The first local generator invocation exited before emitting a candidate because JSON booleans were entered as Python lowercase literals. This was an ordinary harness defect with no scientific sample; it was patched and only the invalidated generator operation was repeated. A later inspection-only `jq` selector also used the wrong key and did not affect the persisted, independently JSON-validated artifact.
+
+**Resources and reopen condition.** Spend was $0. No checkpoint was downloaded, no bench was claimed, no provider was contacted, and no resource was created. Reopen only when an official Neuron release or a source-complete custom adapter can compile the exact bound geometry and execute the c32 workload on Trainium2; then require service time at or below the applicable source-current break-even hurdle.

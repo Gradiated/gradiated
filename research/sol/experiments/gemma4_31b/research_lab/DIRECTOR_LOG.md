@@ -8734,3 +8734,17 @@ cost, then publish one source-complete adaptive target-work candidate or a
 typed mechanism falsification. These two lanes already satisfy the campaign's
 direct-consumer and independent-mechanism portfolio requirement, so defer
 optional admission until a material terminal changes the allocation.
+
+## 2026-07-26T04:45Z — released headroom does not change the live allocation
+
+The graph-gap reservation has settled, leaving `$13.886849` available, but the
+named FP8 artifact contains only build, staging, and heartbeat evidence and no
+typed terminal. Preserve `gemma4_h200_fp8_weight_stream_schedule` unchanged as
+the sole H200 mutation lane through its `05:12Z` scientific deadline, and keep
+`gemma4_mtp_tail_adaptive_verify_work` runnable independently at `8660/deep`,
+`$0`.
+
+Do not spend the newly released accounting headroom on another GPU claimant
+before the FP8 terminal. The latest safety audit identifies no unmatched
+provider resource or expired lifecycle bound, so no provider lifecycle action
+is required.

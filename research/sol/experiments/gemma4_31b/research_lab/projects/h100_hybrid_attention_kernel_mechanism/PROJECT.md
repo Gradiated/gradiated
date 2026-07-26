@@ -26,3 +26,14 @@ Reject dense-varlen stand-ins, scalar-window mistakes, global 358x aggregation, 
 - Spend: `$0`; no provider, image pull, checkpoint, compilation, or external mutation.
 
 Write concise `MECHANISM.json`, update log/status, and terminalize.
+
+## Director readmission — 2026-07-26
+
+The analytical mechanism remains retained, but the separate v2 execution
+packet was correctly rejected before spend. Consume
+`DIRECTOR_EXECUTION_EQUIVALENT_READMISSION_20260726.json` and its hash-bound
+audit. Implement one fresh project-local, execution-equivalent program and
+fail-closed evaluator for the pinned native paged-KV producer/consumer path.
+This cycle ends at a typed source-readiness terminal; it must not query,
+create, claim, or use a provider GPU. Working source and narrow tests are the
+decision evidence—another plan or audit-only successor is not.

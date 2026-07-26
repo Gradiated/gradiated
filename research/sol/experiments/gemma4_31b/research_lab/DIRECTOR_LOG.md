@@ -8748,3 +8748,21 @@ Do not spend the newly released accounting headroom on another GPU claimant
 before the FP8 terminal. The latest safety audit identifies no unmatched
 provider resource or expired lifecycle bound, so no provider lifecycle action
 is required.
+
+## 2026-07-26T04:57Z — replace falsified depth-1 MTP with source-gated H100 FP8 KV
+
+`gemma4_mtp_tail_adaptive_verify_work` is terminal: its exact 354-iteration
+replay conserves all 11,456 output tokens, but a clairvoyant depth-1 policy
+saves zero target positions and the optimistic best speculative cutoff remains
+slower than the same-session control. Close that realization and do not spend
+GPU time on it.
+
+Preserve the live H200 FP8 weight-stream owner and its `05:12Z` contract
+unchanged. Reactivate `h100_hybrid_attention_kernel_mechanism` at
+`8680/deep`, `$0`, as the independent lane: its exact-geometry H100 FP8-KV
+bound is 58.446802 ms/request, while the old execution packet was rejected
+before spend. Require fresh execution-equivalent source, narrow fail-closed
+tests, and `H100_PAGED_FP8_EXECUTION_READY.json`. GPU claims and provider
+creation remain forbidden until a later director accepts that terminal. The
+sole registered H200 claim and watchdog remain current; no lifecycle action is
+required.

@@ -1,26 +1,47 @@
 {
-  "status": "complete",
-  "priority": 195,
+  "schema_version": 1,
+  "id": "h100_hybrid_attention_kernel_mechanism",
+  "status": "active",
+  "priority": 8680,
   "researcher_profile": "deep",
-  "summary": "Pinned-source trace rejects cross-layer hybrid fusion and retains FP8 paged KV: corrected exact BF16 reads are 429.133 GB/request, and the conservative H100 peak-HBM saving bound is 58.447 ms/request (10.67% of planning service time).",
-  "next_action": "Director may admit the content-bound actual paged producer/consumer BF16-vs-FP8 H100 falsifier in MECHANISM.json; first bind one immutable image to the pinned source revision.",
-  "provider_mutation": "forbidden",
+  "allocation_limit": 1,
   "authorized_spend_usd": 0.0,
-  "wall_clock_budget_minutes": 30,
-  "compute_budget": "3 local CPU-hours; no GPU",
-  "storage_budget": "512 MiB retained plus 256 MiB temporary",
+  "actual_spend_usd": 0.0,
   "active_session": null,
-  "last_result_classification": "content_bound_exact_shape_fp8_kv_falsifier",
-  "terminal_artifact": {
+  "hypothesis": "A fresh execution-equivalent pinned-vLLM program can expose the actual H100 BF16-versus-E4M3 paged-KV mechanism while preserving matched full-context geometry, semantic oracles, fail-closed counters, and the 5% whole-request discriminator.",
+  "decision": "reactivate_for_zero_gpu_execution_equivalent_implementation",
+  "next_action": "Consume DIRECTOR_EXECUTION_EQUIVALENT_READMISSION_20260726.json and the rejected-packet audit. Implement fresh project-local source plus narrow tests for the registered Attention/native-metadata/unified-cache producer-consumer path, paired sentinel, counters, conditional sweep, and economic aggregation; publish H100_PAGED_FP8_EXECUTION_READY.json without querying or using a provider.",
+  "summary": "Reactivated as the independent deep lane after depth-1 adaptive MTP was causally falsified. The source-backed H100 FP8-KV bound is 58.446802 ms/request (10.67% of planning service), while the old packet remains rejected and immutable; this cycle must produce working execution-equivalent source or a typed source boundary at $0 and zero GPU seconds.",
+  "provider_mutation": "forbidden",
+  "bench_need": {
+    "accelerator": "nvidia-h100-sxm",
+    "claim_allowed": false,
+    "provider_create_allowed": false,
+    "claim_gate": "future_director_review_of_H100_PAGED_FP8_EXECUTION_READY.json"
+  },
+  "compute_budget": "At most 4 local CPU-hours; zero accelerator seconds.",
+  "storage_budget": "At most 1 GiB of new project-local source, fixtures, tests, and terminal artifacts.",
+  "wall_clock_budget": "90 researcher minutes.",
+  "current_binding": {
+    "path": "DIRECTOR_EXECUTION_EQUIVALENT_READMISSION_20260726.json",
+    "issued_at_utc": "2026-07-26T04:57:00Z"
+  },
+  "prior_terminal": {
     "path": "MECHANISM.json",
-    "sha256": "3960c453e88b1a12e01351d2062dbaa7f8a800e63fe6674e997ddbbcfeebdda1"
+    "sha256": "3960c453e88b1a12e01351d2062dbaa7f8a800e63fe6674e997ddbbcfeebdda1",
+    "classification": "content_bound_exact_shape_fp8_kv_falsifier",
+    "conservative_bound_seconds_per_request": 0.05844680214925373,
+    "bound_fraction_of_planning_service": 0.10665956924217314
   },
-  "resources_used": {
-    "provider_queries": 0,
-    "provider_mutations": 0,
-    "gpu_seconds": 0,
-    "spend_usd": 0.0,
-    "retained_storage_bytes": 33847
+  "rejected_packet_audit": {
+    "path": "../h100_paged_fp8_packet_v2_audit/AUDIT.json",
+    "sha256": "a9e71dc522f6f2cbc2eddb3f32611718f80067c3bb2dd0ca8f74eeca3468eb0e",
+    "verdict": "fail_not_start_ready",
+    "scientific_sample_consumed": false,
+    "provider_spend_usd": 0.0
   },
-  "evidence_boundary": "Source-backed and exact-geometry analytical H100 peak bound only; no achieved H100 timing, endpoint throughput, quality, or economic acceptance claim."
+  "terminal_artifact": "H100_PAGED_FP8_EXECUTION_READY.json",
+  "scientific_sample_consumed": false,
+  "gpu_scientific_sample_consumed": false,
+  "gpu_claimed": false
 }

@@ -1,0 +1,10 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/REPAIR_PATCH.json",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/REPAIR_PATCH.json",
+  "ready_sha256": "f7d83a1f1e371293e8046a801da85a0d70f5eb059ad076c2ffd6597212ebc4b3",
+  "repair_id": "initial",
+  "requested_at_utc": "2026-07-26T16:50:32.046059Z",
+  "retry_scope": "repair only the failed staging, launcher, compile, API, or retrieval operation; preserve packet and unconsumed science contract",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "classification": "offline compiler evidence; not a consumed GPU sample",
+  "container_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+  "torch": "2.10.0+cu129",
+  "triton": "3.6.0",
+  "target": "cuda sm90 warp32",
+  "rejected_v1": {
+    "source": "packed_m384_attention.py",
+    "sha256": "25f9d082df26e3d4b1e61c68004dbcb7f884dde526bf4f4f53624d814d5f81e2",
+    "reason": "Context partitioning retained the full-D output accumulator and did not remove the register ceiling.",
+    "local_stage1": {
+      "registers_per_thread": 254,
+      "dynamic_shared_bytes": 40960,
+      "stack_bytes": 0
+    },
+    "global_stage1": {
+      "registers_per_thread": 255,
+      "dynamic_shared_bytes": 81920,
+      "stack_bytes": 272
+    }
+  },
+  "candidate_v2": {
+    "source": "packed_m384_attention_v2.py",
+    "sha256": "640065a20745b5e8ffcfdbcee05687fa195506fd261848c1e8c6d54ef2744b55",
+    "kernels": [
+      {
+        "case": "local",
+        "kernel": "score_producer",
+        "registers_per_thread": 128,
+        "stack_bytes": 0,
+        "local_bytes": 0,
+        "dynamic_shared_bytes": 40960,
+        "cubin_bytes": 144120,
+        "cubin_sha256": "5a1b3ae69515f6afa701fbf3a2a3cce0523a44749ab516c75824f2f2f62c0202",
+        "ptx_sha256": "97594481444cb551103fa0154bfe6696c9ea6795e7ab35d0a5db8406fafac2fc"
+      },
+      {
+        "case": "local",
+        "kernel": "state_merge",
+        "registers_per_thread": 24,
+        "stack_bytes": 0,
+        "local_bytes": 0,
+        "dynamic_shared_bytes": 0,
+        "cubin_bytes": 8480,
+        "cubin_sha256": "145d9287f7e9473f88a2be9ca8212ba00bd45a853a878d98aed4e03129f1f9a3",
+        "ptx_sha256": "5764100c6e4c9d0feda2f2ee4aac3111173e42aa4bf99114d38f1ebdc95e1205"
+      },
+      {
+        "case": "local",
+        "kernel": "value_consumer",
+        "registers_per_thread": 168,
+        "stack_bytes": 0,
+        "local_bytes": 0,
+        "dynamic_shared_bytes": 10240,
+        "cubin_bytes": 89184,
+        "cubin_sha256": "7566d241f398da4024c92258825dc4f178a09533ad16896db7b034a7e2331828",
+        "ptx_sha256": "5c469d398c41f41d107cb1f5d2048d0571161149000925c0ccd160ea706a9aa4"
+      },
+      {
+        "case": "global",
+        "kernel": "score_producer",
+        "registers_per_thread": 239,
+        "stack_bytes": 0,
+        "local_bytes": 0,
+        "dynamic_shared_bytes": 81920,
+        "cubin_bytes": 205688,
+        "cubin_sha256": "23547bb1fdae350c9988d77992e76b8bf7c03e517831a7847e6f6529933ebbe5",
+        "ptx_sha256": "813770cddaa93572c8348607f6e0383b1db1f8c63091d04c1456f8d5f319d31a"
+      },
+      {
+        "case": "global",
+        "kernel": "state_merge",
+        "registers_per_thread": 32,
+        "stack_bytes": 0,
+        "local_bytes": 0,
+        "dynamic_shared_bytes": 0,
+        "cubin_bytes": 17440,
+        "cubin_sha256": "77a731d329a1165246c0feff3f3539992e44acff3305b6b63e4b3719ef00eded",
+        "ptx_sha256": "bcea76c78c577d74e56b18e0f22964631d7c28e92bce68b02a0cba47179db82d"
+      },
+      {
+        "case": "global",
+        "kernel": "value_consumer",
+        "registers_per_thread": 168,
+        "stack_bytes": 0,
+        "local_bytes": 0,
+        "dynamic_shared_bytes": 10240,
+        "cubin_bytes": 90080,
+        "cubin_sha256": "a0357ecc8e27f2c0fff7e9fa5fdcf462b509999f3be0f790cd7057f6cb26ccdb",
+        "ptx_sha256": "f66bdbd3b0dd69e91371b57f0a2086c6e25046555814b339a6d506dc0f1e50b0"
+      }
+    ]
+  }
+}

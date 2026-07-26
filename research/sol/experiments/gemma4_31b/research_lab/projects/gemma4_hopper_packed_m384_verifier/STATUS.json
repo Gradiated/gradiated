@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_hopper_packed_m384_verifier",
+  "status": "active",
+  "priority": 9770,
+  "researcher_profile": "deep",
+  "allocation_limit": 1,
+  "authorized_spend_usd": 8.0,
+  "actual_spend_usd": 0.34,
+  "active_session": null,
+  "hypothesis": "A packed TMA and warp-specialized online-softmax decomposition can remove the measured Hopper register-residency and tail-wave penalty from Gemma target verification and save 8-10% of whole-request service time.",
+  "summary": "ENDPOINT_READY.json now binds the measured V2 kernels unchanged through the pinned SGLang v0.5.13 production paged-KV attention boundary, the exact decode-equivalent NGRAM c32 control/candidate pair, a project-local immutable 62,578,655,208-byte checkpoint snapshot, and fail-closed token/cache/target/no-fallback gates. The settled positive component remains consumed exactly once; no endpoint arm or new GPU claim occurred.",
+  "next_action": "Remain GPU-ineligible until the director consumes ENDPOINT_READY.json sha256:64c738f61a7a031a3b28fbcabee3a9fa8ebfb3e88541426ee8e1c70cdfe0a8d3 and issues an exact endpoint readmission. Then claim only the retained H100, stage from the project-local ENDPOINT_INPUT_MANIFEST.json without resolving shared paths, and run the single bound matched profiler-off c32 pair by the director deadline. Do not replay the settled component.",
+  "bench_need": {
+    "accelerator": "nvidia-h100-sxm",
+    "claim_allowed": false,
+    "provider_create_allowed": false,
+      "reason": "The endpoint integration and exact matched start command are bound in ENDPOINT_READY.json, but the retained H100 remains durably non-claimable until the director consumes that artifact and issues readmission."
+  },
+  "execution_binding": {
+    "contract": "EXPERIMENT_CONTRACT.json",
+    "input_manifest": "INPUT_MANIFEST.json",
+    "exact_start_command": "EXACT_START_COMMAND.json",
+    "candidate": "packed_m384_attention_v2.py",
+    "consumer": "component_benchmark.py",
+    "control_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
+    "candidate_sha256": "640065a20745b5e8ffcfdbcee05687fa195506fd261848c1e8c6d54ef2744b55",
+    "scientific_samples_consumed": 1
+  },
+  "director_release_superseded_pending_rebind": {
+    "path": "DIRECTOR_H100_PACKED_M384_RELEASE_20260726T1637Z.json",
+    "issued_at_utc": "2026-07-26T16:37:18Z",
+    "bench_id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+    "release_deadline_utc": "2026-07-26T17:32:01.095093Z",
+    "rebind_request": "DIRECTOR_REBIND_REQUEST.json"
+  },
+  "blocker": {
+    "kind": "endpoint_ready_awaiting_director_readmission",
+    "bench_id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+    "claim_interval_utc": ["2026-07-26T16:57:14.227379Z", "2026-07-26T16:59:15.537760Z"],
+    "candidate_cuda_started": true,
+    "scientific_samples_consumed": 1,
+    "evidence": ["artifacts/h100-component/PACKED_M384_VERIFIER_RESULT.json", "OWNER_TERMINAL.json"],
+      "cause": "The exact endpoint packet is ready, but DIRECTOR_H100_PACKED_M384_ENDPOINT_PROMOTION_20260726T1712Z.json explicitly forbids a GPU claim until the director consumes ENDPOINT_READY.json.",
+      "next": "Director consumes ENDPOINT_READY.json sha256:64c738f61a7a031a3b28fbcabee3a9fa8ebfb3e88541426ee8e1c70cdfe0a8d3 and either readmits the exact command or changes disposition."
+  },
+  "director_recovery": {
+    "path": "DIRECTOR_H100_REMOTE_COMMAND_RECOVERY_20260726T1700Z.json",
+    "issued_at_utc": "2026-07-26T17:00:55Z",
+    "bench_id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+    "release_deadline_utc": "2026-07-26T17:32:01.095093Z",
+    "repair_before_claim": true,
+    "repair_satisfied": true
+  },
+  "director_remote_command_recovery": {
+    "path": "DIRECTOR_H100_REMOTE_COMMAND_RECOVERY_20260726T1700Z.json",
+    "sha256": "115347e35a1be52ed420bd4df282d28bcc7b8d6bc118d9d412e9eeb521f4ab17",
+    "source_sha256": "88f29d980ec819c79fa110085b9e6ea2e272ac715127afc40fd8a955fbc49a18",
+    "repair_artifact": "REMOTE_COMMAND_REPAIR.json",
+    "gpu_eligible": false,
+    "next": "Component terminal consumed and bench released available; director may choose the admitted compatible endpoint continuation from the persisted result."
+  },
+  "result": {
+    "kind": "component_positive",
+    "terminal": "artifacts/h100-component/PACKED_M384_VERIFIER_RESULT.json",
+    "terminal_sha256": "5b32a5c28ada71d88ed4e30201ef43ad91432c0597a1872772ede9c8e99e9e88",
+    "weighted_attention_p50_reduction_fraction": 0.4752981991883123,
+    "projected_target_boundary_reduction_fraction": 0.319075333399402,
+    "projected_seconds_saved_per_qualified_request": 0.05058891319144423,
+    "claim_interval_utc": ["2026-07-26T17:08:17.572241Z", "2026-07-26T17:08:38.479850Z"],
+    "claim_exposure_usd": 0.02,
+    "interpretation": "Measured exact-consumer component positive on H100; endpoint integration remains unmeasured and requires director admission."
+  },
+  "director_endpoint_promotion": {
+    "path": "DIRECTOR_H100_PACKED_M384_ENDPOINT_PROMOTION_20260726T1712Z.json",
+    "sha256": "977d6f9cad3bf72974f95fa5ff6d60251eb01c5f2c6dcd36391195e16fdc0ee4",
+    "component_terminal_sha256": "5b32a5c28ada71d88ed4e30201ef43ad91432c0597a1872772ede9c8e99e9e88",
+    "required_artifact": "ENDPOINT_READY.json",
+    "gpu_eligible": false,
+    "endpoint_release_deadline_utc": "2026-07-26T19:00:00Z",
+    "endpoint_ready_sha256": "64c738f61a7a031a3b28fbcabee3a9fa8ebfb3e88541426ee8e1c70cdfe0a8d3",
+    "consumed_by_director": false
+  },
+  "endpoint_ready": {
+    "path": "ENDPOINT_READY.json",
+    "sha256": "64c738f61a7a031a3b28fbcabee3a9fa8ebfb3e88541426ee8e1c70cdfe0a8d3",
+    "input_manifest": "inputs/endpoint/ENDPOINT_INPUT_MANIFEST.json",
+    "input_manifest_sha256": "c368088b8c8bdb88fa44a564fc8d36e87dafb4984b29718c12c209d49912e44e",
+    "checkpoint_bytes": 62578655208,
+    "checkpoint_materialization": "project_local_read_only_hardlinks",
+    "measured_kernel_ast_unchanged": true,
+    "offline_tests_passed": 6,
+    "gpu_claimed": false,
+    "endpoint_scientific_sample_consumed": false
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "issued_at_utc": "2026-07-26T17:12:02Z",
+  "decision": "promote_component_positive_to_scope_matched_endpoint",
+  "component_evidence": {
+    "path": "artifacts/h100-component/PACKED_M384_VERIFIER_RESULT.json",
+    "sha256": "5b32a5c28ada71d88ed4e30201ef43ad91432c0597a1872772ede9c8e99e9e88",
+    "owner_terminal_sha256": "e3d473cb5b59a54c30dcf8b565d0d84555c52621649659a90bc637ebee08999d",
+    "result": "component_positive",
+    "correct": true,
+    "weighted_attention_p50_reduction_fraction": 0.4752981991883123,
+    "projected_target_boundary_reduction_fraction": 0.319075333399402,
+    "projected_seconds_saved_per_qualified_request": 0.05058891319144423,
+    "qualified_endpoint_seconds_per_request": 0.625149101968745,
+    "projected_endpoint_seconds_per_request": 0.5745601887773007
+  },
+  "immutable_science": {
+    "candidate": "packed_m384_attention_v2.py",
+    "candidate_sha256": "640065a20745b5e8ffcfdbcee05687fa195506fd261848c1e8c6d54ef2744b55",
+    "control_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
+    "workload": "campaign qualified c32 target-verification endpoint",
+    "local_geometry": "50 layers, d256, GQA2, window 1024, direct E4M3 paged KV",
+    "global_geometry": "10 layers, d512, GQA8, campaign contexts, direct E4M3 paged KV",
+    "component_replay_allowed": false
+  },
+  "offline_gate": {
+    "gpu_claim_allowed": false,
+    "required_artifact": "ENDPOINT_READY.json",
+    "action": "Use $kernel-research to integrate the measured V2 local/global consumers into the pinned qualified endpoint stack from production input through the first output-consuming attention boundary. Bind the exact matched c32 control/candidate command, runtime source patch, checkpoint/image/workload identities, expected terminal, and source hashes. Do not add another component, readiness, or transport project.",
+    "mutable_scope": [
+      "production runtime custom-op registration and dispatch",
+      "local/global layer routing",
+      "paged-KV metadata adapter",
+      "endpoint launcher, result consumer, and retrieval"
+    ],
+    "quality_gate": "finite outputs, exact request/token/cache accounting, target-token semantic sanity, and no fallback; broad GPQA-Diamond and TauBench remain deferred",
+    "measurement": "one matched profiler-off c32 control/candidate endpoint pair; persist service time, throughput, exact workload identities, and all-in metered exposure"
+  },
+  "bench": {
+    "id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+    "state_until_gate": "unclaimed_available_with_project_claim_disallowed",
+    "retained_state": "pinned vLLM image, compiler cache, verified V2 packet and component artifacts",
+    "lifecycle_deadline_utc": "2026-07-26T19:05:00Z",
+    "endpoint_release_deadline_utc": "2026-07-26T19:00:00Z",
+    "authorized_cumulative_spend_usd": 8.0,
+    "provider_create_allowed": false,
+    "provider_delete_allowed": false
+  }
+}

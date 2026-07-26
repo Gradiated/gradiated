@@ -1,0 +1,8 @@
+{
+  "at_utc": "2026-07-26T17:08:25.468829+00:00",
+  "manifest_sha256": "48f9491f32d698f97bd64df84bf5426a68f0f34fae96d3efb7c5058292429c11",
+  "packet_sha256": "a9cfc6e250d86b7e5b5b06e92b1bb9498b21dfe2230795e7670b13252feede35",
+  "remote_root": "/home/glmrunner/gemma4_hopper_packed_m384_verifier",
+  "remote_state": "matched_packet",
+  "verified": true
+}

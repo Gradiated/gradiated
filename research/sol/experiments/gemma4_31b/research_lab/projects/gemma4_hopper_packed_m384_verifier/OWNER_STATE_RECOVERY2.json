@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "run_h100_owner.py"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier",
+  "launched_at_utc": "2026-07-26T16:57:23.139264Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/OWNER_CONTROLLER_RECOVERY2.log",
+  "pid": 1929902,
+  "start_ticks": 120106054,
+  "unit_manager": "pid"
+}

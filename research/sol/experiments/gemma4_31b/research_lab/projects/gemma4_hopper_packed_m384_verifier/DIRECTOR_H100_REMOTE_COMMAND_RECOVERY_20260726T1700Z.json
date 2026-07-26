@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "type": "director_h100_remote_command_recovery",
+  "issued_at_utc": "2026-07-26T17:00:55Z",
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "bench_id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+  "reservation": {
+    "authorized_usd": 8.0,
+    "durable": true,
+    "reserved_at": "2026-07-26T16:18:43.896446Z"
+  },
+  "persisted_stage": {
+    "artifact": "STAGING.json",
+    "artifact_sha256": "861872ef004ac24c603ae0ab56279312b69f3e9816323d8a6d87a26339fb4919",
+    "manifest_sha256": "48f9491f32d698f97bd64df84bf5426a68f0f34fae96d3efb7c5058292429c11",
+    "packet_sha256": "a9cfc6e250d86b7e5b5b06e92b1bb9498b21dfe2230795e7670b13252feede35",
+    "remote_state": "reused_packet_tmp",
+    "verified": true,
+    "must_not_restage": true
+  },
+  "predecessor": {
+    "owner_terminal": "OWNER_TERMINAL.json",
+    "owner_terminal_sha256": "f9195cf65367af82bfa16530ad1012f1dbd6ea016fbe2b4d88f40ee23e5d3a5b",
+    "claim_interval_utc": [
+      "2026-07-26T16:57:14.227379Z",
+      "2026-07-26T16:59:15.537760Z"
+    ],
+    "candidate_cuda_started": false,
+    "scientific_samples_consumed": 0,
+    "result": "recoverable_remote_command_framing_failure"
+  },
+  "scientific_contract": {
+    "release": "DIRECTOR_H100_PACKED_M384_RELEASE_20260726T1637Z.json",
+    "release_sha256": "1e470a4397dfc25aad93a864ed60ff8e378077191f3c04e4dfdf113f839e0a3f",
+    "immutable": true,
+    "preserve": [
+      "exact local and global M384 consumers",
+      "M16 and 512-context-partition geometry",
+      "direct E4M3 paged-KV path",
+      "control",
+      "quality gates",
+      "one unconsumed paired component sample"
+    ]
+  },
+  "mutable_repair": {
+    "source": "run_h100_owner.py",
+    "observed_source_sha256": "c5294f2c4d81c5811cfc2646217ec80ed252fda31d4322aa76622d64db3e645d",
+    "cause": "The remote output directory was absent and the SSH client concatenated separate bash, -lc, and payload arguments without preserving the payload as one command string.",
+    "required_change": "Keep the pre-redirection mkdir and pass the complete bash -lc invocation as one shell-quoted remote command argument. Persist the final run_h100_owner.py sha256 in REMOTE_COMMAND_REPAIR.json before any claim.",
+    "forbidden": [
+      "restage or alter the verified resident packet",
+      "change the exact component command",
+      "change geometry, dtype, consumer, control, or quality gates",
+      "submit more than the one unconsumed paired component sample"
+    ]
+  },
+  "execution_gate": {
+    "claim_allowed_before_repair_hash": false,
+    "start_command_after_gate": "python3 run_h100_owner.py",
+    "durable_owner_required": true,
+    "expected_terminal": "PACKED_M384_VERIFIER_RESULT.json",
+    "release_deadline_utc": "2026-07-26T17:32:01.095093Z",
+    "watchdog_deadline_utc": "2026-07-26T17:37:01.095093Z",
+    "provider_create_allowed": false,
+    "provider_delete_allowed": false
+  }
+}

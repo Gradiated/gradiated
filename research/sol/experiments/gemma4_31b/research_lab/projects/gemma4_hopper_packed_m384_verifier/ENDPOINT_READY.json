@@ -1,0 +1,188 @@
+{
+  "component_binding": {
+    "path": "artifacts/h100-component/PACKED_M384_VERIFIER_RESULT.json",
+    "replay_allowed": false,
+    "scientific_sample_consumed": true,
+    "sha256": "5b32a5c28ada71d88ed4e30201ef43ad91432c0597a1872772ede9c8e99e9e88"
+  },
+  "decision": "exact_matched_control_candidate_endpoint_command_bound",
+  "director_binding": {
+    "path": "DIRECTOR_H100_PACKED_M384_ENDPOINT_PROMOTION_20260726T1712Z.json",
+    "sha256": "977d6f9cad3bf72974f95fa5ff6d60251eb01c5f2c6dcd36391195e16fdc0ee4"
+  },
+  "director_must_consume_before_claim": true,
+  "expected_terminal": {
+    "candidate_server_disposition": "Retain healthy candidate container and release the occupied bench to maintenance unless the director names a compatible successor.",
+    "invalid_classification": "semantic_or_path_reject",
+    "path": "artifacts/ENDPOINT_TERMINAL.json",
+    "required_measurements": [
+      "control_service_seconds_per_request",
+      "candidate_service_seconds_per_request",
+      "service_reduction_fraction",
+      "complete_request_throughput",
+      "routing",
+      "gates"
+    ],
+    "type": "packed_m384_matched_c32_endpoint_terminal",
+    "valid_classifications": [
+      "endpoint_positive",
+      "endpoint_nonpositive"
+    ]
+  },
+  "gates": {
+    "cache": {
+      "cached_prompt_tokens_delta": 17120,
+      "uncached_prompt_tokens_delta": 117728
+    },
+    "finite_nonempty_complete": "32/32 rows, 358 returned tokens each",
+    "global_capacity": {
+      "bound_capacity": 4608,
+      "required_max": 4584
+    },
+    "no_fallback": "Every custom-mask max_len_extend=12 call must route candidate or fail immediately; local/global audit counts must be 5:1, multiples of 50/10, and equal V2 dispatch counts.",
+    "request_identity": "all 32 request SHA-256 values identical by arm",
+    "target_semantics": "Exact raw SSE token IDs and cumulative scheduler-to-emitted token traces match control for every request."
+  },
+  "gpu_claim_allowed": false,
+  "identity": {
+    "accelerator": "nvidia-h100-sxm",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "checkpoint_total_bytes": 62578655208,
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "input_manifest": {
+      "path": "inputs/endpoint/ENDPOINT_INPUT_MANIFEST.json",
+      "sha256": "c368088b8c8bdb88fa44a564fc8d36e87dafb4984b29718c12c209d49912e44e"
+    },
+    "model": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "runtime_release": "SGLang v0.5.13",
+    "runtime_source": {
+      "extend_attention_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
+      "triton_backend_sha256": "7bc3ae9ef1be59ec07734df442c077a07fb54c28007747f53a552bb81e8e8e2d"
+    }
+  },
+  "matched_command": {
+    "absolute_release_deadline_utc": "2026-07-26T19:00:00Z",
+    "candidate": {
+      "arm_environment": "PACKED_M384_ENDPOINT_ARM=candidate",
+      "container": "gemma4-packed-m384-candidate",
+      "request_command": "sudo -n docker exec gemma4-packed-m384-candidate python3 /work/input/exact_runner.py --output /work/artifacts/candidate --arm candidate --concurrency 32",
+      "server_args_symbol": "endpoint_pair.BASE_ARGS"
+    },
+    "control": {
+      "arm_environment": "PACKED_M384_ENDPOINT_ARM=control",
+      "container": "gemma4-packed-m384-control",
+      "request_command": "sudo -n docker exec gemma4-packed-m384-control python3 /work/input/exact_runner.py --output /work/artifacts/control --arm control --concurrency 32",
+      "server_args_symbol": "endpoint_pair.BASE_ARGS"
+    },
+    "only_difference": "PACKED_M384_ENDPOINT_ARM selects the hash-bound attention route; all image, checkpoint, server arguments, workload bytes, decode-equivalent target head, and token observer bytes match.",
+    "outer": [
+      "python3",
+      "/home/glmrunner/gemma4_hopper_packed_m384_endpoint/input/endpoint_pair.py",
+      "--root",
+      "/home/glmrunner/gemma4_hopper_packed_m384_endpoint",
+      "--manifest",
+      "/home/glmrunner/gemma4_hopper_packed_m384_endpoint/input/ENDPOINT_INPUT_MANIFEST.json",
+      "--absolute-deadline-epoch",
+      "1785092400"
+    ],
+    "profiler": "off"
+  },
+  "offline_validation": {
+    "boundary": "Consumer/gate behavior and immutable identities only; the first candidate CUDA call remains due after director readmission.",
+    "command": "python3 -m unittest -v test_endpoint_integration.py",
+    "pass": true,
+    "tests": 4
+  },
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "runtime_integration": {
+    "adapter_delta": "The three measured V2 Triton kernels are AST-identical. The endpoint wrapper replaces per-step prefix specialization with fixed 1024-local and 4608-global capacities; the pinned backend already provides window-trimmed local paged-KV indices.",
+    "endpoint_path": "inputs/endpoint/packed_m384_endpoint.py",
+    "endpoint_sha256": "861060f77e4dfe8dadd687878f4c34874aa31fbf5398d5f7083635ed3d9a8e39",
+    "kernel_ast_identity": {
+      "_merge_state_kernel": {
+        "endpoint_ast_sha256": "6ad763afdf491e5d930dadb305250cee24f8f47ad6f932a18be3cb0118687339",
+        "measured_v2_ast_sha256": "6ad763afdf491e5d930dadb305250cee24f8f47ad6f932a18be3cb0118687339"
+      },
+      "_score_partition_kernel": {
+        "endpoint_ast_sha256": "39dfe22a86620671a4453bcdcf5046ad96a6983ae2575ee250e3456e8a63ee21",
+        "measured_v2_ast_sha256": "39dfe22a86620671a4453bcdcf5046ad96a6983ae2575ee250e3456e8a63ee21"
+      },
+      "_value_consumer_kernel": {
+        "endpoint_ast_sha256": "81f30f052a3353f1432c63c8d381847925bb37218642e6fe3ddfb23c62b9cf8a",
+        "measured_v2_ast_sha256": "81f30f052a3353f1432c63c8d381847925bb37218642e6fe3ddfb23c62b9cf8a"
+      }
+    },
+    "measured_v2_path": "packed_m384_attention_v2.py",
+    "measured_v2_sha256": "640065a20745b5e8ffcfdbcee05687fa195506fd261848c1e8c6d54ef2744b55",
+    "production_path": [
+      "TritonAttnBackend.forward_extend",
+      "window_kv_indptr/window_kv_indices or full kv_indptr/kv_indices",
+      "sitecustomize.routed",
+      "packed_m384_endpoint.extend_attention_fwd",
+      "_score_partition_kernel",
+      "_merge_state_kernel",
+      "_value_consumer_kernel",
+      "o_extend",
+      "unchanged residual/model consumer",
+      "decode-equivalent target LM head",
+      "NGRAM target acceptance and emitted tokens"
+    ],
+    "route_patch": "inputs/endpoint/sitecustomize.py",
+    "route_patch_sha256": "f9756b8e0abb616ccfeeab719f01dbc301bf007458cfee990be8385190759776"
+  },
+  "schema_version": 1,
+  "spend": {
+    "actual_before_endpoint_usd": 0.34,
+    "authorized_cumulative_usd": 8.0,
+    "maximum_additional_usd": 7.66,
+    "provider_create_allowed": false
+  },
+  "type": "packed_m384_c32_endpoint_execution_ready",
+  "workload": {
+    "concurrency": 32,
+    "id": "gemma4-background-exact-mix-c32-20260718",
+    "output_tokens_per_request": 358,
+    "prompt_tokens_per_request": 4214,
+    "qualified_denominator_seconds_per_request": 0.625149101968745,
+    "request_sha256": [
+      "f8558dbfd3cca6d46239961b85967f18960a19c1bace8cb9302cdcbb2edd3c95",
+      "a4032cd38401a2d9214786ebbc4fb8f2cb5475baaab6e476b193b930b3b942be",
+      "9849f0f4bb1251977c16a1fd8fe5d16289171d23ff75d593e9dd6960f2123b22",
+      "9368a13c21460cc7e763de23a038a6255ba6e8e7f16ff936aa82ef357f49a711",
+      "a63234c300583bdeb80e7f46c5a41e2b4ff153a6482e8d0f3316634837dc34f8",
+      "24b5028c17a69c3ceb75bc752a8097c7fa2c8a98ab7d13d1bc8eed07eef07734",
+      "bc3a161cb38e133641354e2858b2c3853d3b0024e4e9b12b17450f6f27c2a233",
+      "f991659f42e7a8a895f5326f0c935b9b4f17979f9b74a3a1dec80b5d767ee9ea",
+      "d09828104b9aec17052f04eb13477cf4e2d9e9207fd21cee925017c8fb9a5057",
+      "06bf572b5bda1b7f6cb5dec7cc554b4da49223fd9f9dd92dd56fa36e1671f65b",
+      "643ea12c54b28bc8d242f9732e0d28e7d692f32e6984d4e31db614a3d6a4c05e",
+      "2c761f0c6561d9f885e13836abb9780c9397acbc31268f969693d7f47e9ff944",
+      "83a336e26c712a9517fb2a49cf89cac8e5ec20a129b6af61936c10f5211c9e56",
+      "76c7e5e7c1b54246e0a4e9113d3bf230e812abaa0e5e9af85efb92625c9737a4",
+      "f0bb892fb30c97a133b275573e3eca72b8bb912b9054db162e8cf94e435116b7",
+      "c1d453c2d78e056d82992f54c20913921215afb3af5e45943a26af3c23b6db00",
+      "9ac1769f0c1133d894e438ae692d353f381404171cd5d828c23c9155c8ebfd18",
+      "032e50554e2750c9c498c7a9d949d896cf0a37f75190333db37369bf8f3c58df",
+      "5457c967e64443966ca1535e446306094c0c432cb016fb802df802c0c05b95f8",
+      "94f81b0ced0ea451b29f4dcd735bf25a27e28ccc150c67497b0033ae1d1e45c6",
+      "e08b76ab6ff9f48668f94795e333070d894c08575288f4b8448831546ac393f7",
+      "f4c163c50aa33e9d4236ec273ca2c2e68d7c31817f31d1f2179516e345fe0fd5",
+      "240968e336e1d4ed6c3bc1c6f250c40f9219b96baa384f0f24f964e9c479493a",
+      "08b5cd09b9467192dc8551576b39926e93e53a85651a97ddfba1af60f6e19013",
+      "82162b1d0263c17961e210b15ea5cd15d7eb395b53036b0d96ec7c7efb6ed186",
+      "7d6e6314cb99138d0ba22709fee96a94315b986dddd05f91fddb7e9da004f40e",
+      "7576a7e7f4bf1ef75f604ec2ff6893c72ed89a9828f828a189ad49013aab4e90",
+      "b9af32e48e65eda3781d8461f9b88cccb5edd8b79544b3eb82c0441e1a07f7a0",
+      "9734b4f7a11ebbc40f77e448a2979587ca8871707b6c01aa670c5c53b1fa77a1",
+      "a873bf7ecc59dd1cd5c921eb115c0c34fc5ea763d8d9185c95f4a70904367a83",
+      "0cb19962097e8c4c5b0d5ebdf17729d6f61175fbfa0dac209b80d951d282bb52",
+      "dacbc499ee142b171b05573e842acf6df6873a047423b63db7c64d0259318b58"
+    ],
+    "runner_sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+    "seed": 20260718,
+    "shared_prefix_tokens": 535,
+    "temperature": 0
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "type": "director_h100_packet_stage_recovery",
+  "issued_at_utc": "2026-07-26T16:52:55Z",
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "bench_id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+  "reservation": {
+    "authorized_usd": 8.0,
+    "durable": true,
+    "reserved_at": "2026-07-26T16:18:43.896446Z"
+  },
+  "predecessor": {
+    "claim_interval_utc": [
+      "2026-07-26T16:47:27.120040Z",
+      "2026-07-26T16:51:54.414503Z"
+    ],
+    "owner_terminal": "OWNER_TERMINAL.json",
+    "owner_terminal_sha256": "7b259295e9ca1e44d61fa65212efff4451a81e247b9db86a449e0648c467e350",
+    "remote_retrieval": "REMOTE_PRE_SCIENCE_RETRIEVAL.json",
+    "remote_retrieval_sha256": "0ddb5705df297d61bc110f8bc0b267befcfcbdd7ed619a478a3f32585ca497b2",
+    "result": "recoverable_packet_stage_hash_check_failure",
+    "candidate_cuda_started": false,
+    "scientific_samples_consumed": 0
+  },
+  "scientific_contract": {
+    "release": "DIRECTOR_H100_PACKED_M384_RELEASE_20260726T1637Z.json",
+    "release_sha256": "1e470a4397dfc25aad93a864ed60ff8e378077191f3c04e4dfdf113f839e0a3f",
+    "immutable": true,
+    "preserve": [
+      "exact local and global M384 consumers",
+      "M16 and 512-context-partition geometry",
+      "direct E4M3 paged-KV path",
+      "control",
+      "quality gates",
+      "unconsumed scientific sample"
+    ]
+  },
+  "mutable_repair": {
+    "source": "run_h100_owner.py",
+    "cause": "The remote shell hash-check used a word-splitting test expression and failed with 'test: too many arguments'.",
+    "required_change": "Before claiming, replace only the remote staged-manifest verification with an argument-safe per-file hash comparison, preserve packet.tmp when its bytes match, and write the completed repair source sha256 to REPAIR_PATCH.json.",
+    "forbidden": [
+      "change scientific packet bytes",
+      "change exact start command",
+      "change geometry, dtype, consumer, control, or quality gates",
+      "submit more than the one unconsumed paired component sample"
+    ]
+  },
+  "execution": {
+    "repair_before_claim": true,
+    "start_command": "python3 run_h100_owner.py",
+    "durable_owner_required": true,
+    "owner_must_remain_live_across_recoverable_child_exits": true,
+    "expected_terminal": "PACKED_M384_VERIFIER_RESULT.json",
+    "release_deadline_utc": "2026-07-26T17:32:01.095093Z",
+    "watchdog_deadline_utc": "2026-07-26T17:37:01.095093Z",
+    "provider_create_allowed": false,
+    "provider_delete_allowed": false
+  }
+}

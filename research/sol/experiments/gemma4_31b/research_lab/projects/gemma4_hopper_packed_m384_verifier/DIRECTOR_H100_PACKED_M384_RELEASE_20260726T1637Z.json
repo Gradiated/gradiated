@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "type": "director_h100_packed_m384_release",
+  "issued_at_utc": "2026-07-26T16:37:18Z",
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "bench_id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+  "accelerator": "nvidia-h100-sxm",
+  "reservation": {
+    "authorized_usd": 8.0,
+    "reserved_at": "2026-07-26T16:18:43.896446Z",
+    "durable": true
+  },
+  "predecessor_disposition": {
+    "project": "h100_hybrid_attention_kernel_mechanism",
+    "latest_result": "integration_error_missing_ncu",
+    "scientific_sample_consumed": false,
+    "owner_live": false,
+    "reservation_required_usd": 9.0,
+    "reservation_durable_usd": 6.0,
+    "disposition": "pause_without_retry_and_release_ownerless_claim"
+  },
+  "immutable_inputs": {
+    "manifest": "INPUT_MANIFEST.json",
+    "manifest_sha256": "48f9491f32d698f97bd64df84bf5426a68f0f34fae96d3efb7c5058292429c11",
+    "start_command": "EXACT_START_COMMAND.json",
+    "start_command_sha256": "aa6412b8c020308bd90ceced41b743549d03f76cb21081ea126582999d736aa0",
+    "container_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "candidate_sha256": "640065a20745b5e8ffcfdbcee05687fa195506fd261848c1e8c6d54ef2744b55",
+    "consumer_sha256": "8e8f2bb99441317ffd790b158545217936e457680084227b0f066f72a2a9c38d",
+    "control_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1"
+  },
+  "execution": {
+    "start_command_source": "EXACT_START_COMMAND.json",
+    "expected_terminal": "PACKED_M384_VERIFIER_RESULT.json",
+    "release_deadline_utc": "2026-07-26T17:32:01.095093Z",
+    "watchdog_deadline_utc": "2026-07-26T17:37:01.095093Z",
+    "durable_owner_required": true,
+    "owner_contract": "One PID-managed owner must claim, heartbeat, stage and hash-verify the immutable packet, execute the paired component benchmark, retrieve the typed terminal, and release. It remains live across recoverable compile or API child exits and repairs them in the retained claim.",
+    "provider_create_allowed": false,
+    "provider_delete_allowed": false
+  },
+  "scientific_contract": {
+    "intervention": "Direct-E4M3 packed paged-KV M16/512-context-partition candidate through exact local and global M384 output consumers.",
+    "control": "Pinned exact-consumer extend_attention.py",
+    "samples_consumed_before_release": 0,
+    "result_class": "paired_component_measurement_or_typed_physical_negative"
+  }
+}

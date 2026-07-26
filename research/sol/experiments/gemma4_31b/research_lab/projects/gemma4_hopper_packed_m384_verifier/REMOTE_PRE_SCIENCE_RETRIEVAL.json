@@ -1,0 +1,15 @@
+{
+  "retrieved_at_utc": "2026-07-26T16:51:44.833354Z",
+  "remote_root": "/home/glmrunner/gemma4_hopper_packed_m384_verifier",
+  "invocation_marker": "absent",
+  "scientific_terminal": "absent",
+  "candidate_cuda_started": false,
+  "remote_files": [
+    "packet.tar",
+    "packet.tmp/INPUT_MANIFEST.json",
+    "packet.tmp/component_benchmark.py",
+    "packet.tmp/packed_m384_attention.py",
+    "packet.tmp/packed_m384_attention_v2.py",
+    "packet.tmp/test_online_softmax.py"
+  ]
+}

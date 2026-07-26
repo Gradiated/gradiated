@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "question": "Does a 512-token context-partitioned M16 score-producer/value-consumer decomposition reduce Hopper register residency and tail-wave waste for the exact c32 M384 verifier attention consumer?",
+  "hypothesis": {
+    "causal_change": "Separate M16 QK/online-softmax score producers from striped V/output consumers: producers persist BF16 scores plus exact partition max/normalizer state, a small merge forms the global state, and 64-feature consumers read direct paged FP8 V without retaining full-D output accumulators.",
+    "predicted_movement": {
+      "registers_per_thread": "offline SM90 CUBIN: local/global score producers 128/239, state merge 24/32, value consumers 168, versus stock 255",
+      "score_producer_grid": {
+        "local_ctas": 2048,
+        "global_ctas": 9216
+      },
+      "value_consumer_grid": {
+        "local_ctas": 4096,
+        "global_ctas": 8192
+      },
+      "active_warps": "increase if the local 128-register producer admits two CTAs and the four-warp 168-register consumers admit more resident work",
+      "l2_hbm_traffic": "increase analytically by about 24.9% local and 21.4% global from BF16 score write/read; direct KV bytes remain unchanged",
+      "interval_time": "decrease only if shorter live ranges and extra grid supply outweigh score traffic and two extra launches"
+    },
+    "falsifier": "A valid exact-consumer row is numerically invalid or candidate p50 is nonpositive after weighted 50-local/10-global aggregation."
+  },
+  "scope": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_source": "SGLang extend_attention.py sha256:1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
+    "phase": "c32 NGRAM target verification",
+    "query_rows": 384,
+    "batch": 32,
+    "query_tokens_per_request": 12,
+    "local": {
+      "layers": 50,
+      "query_heads": 32,
+      "kv_heads": 16,
+      "head_dim": 256,
+      "gqa": 2,
+      "prefix_tokens": 1024,
+      "partitions": 2
+    },
+    "global": {
+      "layers": 10,
+      "query_heads": 32,
+      "kv_heads": 4,
+      "head_dim": 512,
+      "gqa": 8,
+      "prefix_tokens": 4214,
+      "partitions": 9
+    },
+    "activation_dtype": "bfloat16",
+    "kv_dtype": "float8_e4m3fn",
+    "kv_layout": "page-size-1 shuffled physical slots addressed through kv_indices",
+    "output_consumer": "complete attention output square-sum plus comparison with the unchanged stock SGLang consumer",
+    "target_gpu": "nvidia-h100-sxm sm90"
+  },
+  "physical_model": {
+    "local_useful_flops_per_layer": 12884901888,
+    "local_direct_fp8_kv_bytes_per_layer": 536870912,
+    "local_bf16_score_write_read_bytes_per_layer": 133693440,
+    "global_useful_flops_per_layer": 106048782336,
+    "global_direct_fp8_kv_bytes_per_layer": 4418699264,
+    "global_bf16_score_write_read_bytes_per_layer": 946225152,
+    "useful_arithmetic_intensity_flops_per_direct_kv_byte": 24.0,
+    "roofline_prior": "memory/latency limited rather than tensor-compute limited; target execution must decide",
+    "tma_boundary": "The exact page-size-1 shuffled KV consumer requires gather loads and cannot use a contiguous TMA KV transaction. TMA of the small contiguous Q tile cannot offset the dominant gather bytes, so the candidate keeps direct FP8 paged reads and separates score production from striped value consumption."
+  },
+  "quality_gate": {
+    "all_finite": true,
+    "nonzero_complete_output": true,
+    "allclose": {
+      "atol": 0.02,
+      "rtol": 0.005
+    },
+    "cuda_graph_replay_bitwise": true,
+    "no_fallback": true,
+    "exact_dispatch": {
+      "local_partitions": 2,
+      "global_partitions": 9
+    }
+  },
+  "measurement": {
+    "warmups": 5,
+    "paired_alternating_repetitions": 25,
+    "primary": "50*local_p50 + 10*global_p50",
+    "secondary": [
+      "local/global p95",
+      "max_abs_error",
+      "relative_l2",
+      "candidate-path dispatch proof"
+    ],
+    "conditional_profiler": [
+      "registers/thread",
+      "dynamic shared memory",
+      "active warps",
+      "L2/HBM bytes",
+      "grid waves",
+      "interval time"
+    ]
+  },
+  "resource_contract": {
+    "authorized_cumulative_usd": 8.0,
+    "actual_spend_before_run_usd": 0.0,
+    "gpu_exposure_limit_minutes": 90,
+    "provider_create_allowed": false,
+    "bench_queue_predecessor": "h100_hybrid_attention_kernel_mechanism",
+    "current_external_boundary": "The sole registered H100 is maintenance-bound to predecessor recovery and is not claimable by this project."
+  },
+  "artifact_contract": {
+    "terminal": "artifacts/h100-component/PACKED_M384_VERIFIER_RESULT.json",
+    "invocation_state": "artifacts/h100-component/INVOCATION_STATE.json",
+    "candidate_path": "artifacts/h100-component/CANDIDATE_PATH.jsonl",
+    "raw_stdout": "artifacts/h100-component/stdout.log",
+    "raw_stderr": "artifacts/h100-component/stderr.log"
+  }
+}

@@ -1,5 +1,23 @@
 # Adaptive retrieval vocabulary head
 
+## 2026-07-26 diverse-capture continuation
+
+The first offline terminal is a valid negative only for its degenerate input:
+all 384 nominal verifier rows were one identical hidden state. Continue the
+same scientific question without a GPU claim by implementing the smallest
+exact-path capture hook at the pinned NGRAM `TARGET_VERIFY` hidden-state
+producer immediately before the tied LM head. The capture must preserve
+request, depth, and row ownership and must be demonstrably non-interfering
+with logits and acceptance on a genuinely diverse synthetic multi-request,
+multi-depth fixture.
+
+Emit `DIVERSE_HIDDEN_CAPTURE_HOOK_TERMINAL.json` with the exact producer and
+consumer symbols, source hashes, ownership schema, fixture diversity,
+non-interference evidence, and the single later capture command. Do not use
+SSH, claim a GPU, issue an endpoint request, or rerun retrieval on the
+degenerate historical capture. A later director decision will decide whether
+the bound capture command merits a short H200 capture.
+
 ## Question
 
 Can a request-adaptive retrieval index over Gemma 4's tied

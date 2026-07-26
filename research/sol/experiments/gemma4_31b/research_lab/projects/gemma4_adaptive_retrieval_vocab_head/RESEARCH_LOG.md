@@ -53,3 +53,59 @@ decisions.
 **Next move.** Close this admission without an H200 claim. A successor may
 capture genuinely distinct verifier hidden states, bind their hashes, and run
 the same W8A8/coordinate retrieval consumer before any GPU measurement.
+
+## 2026-07-26T06:34:27Z — Exact diverse hidden-state capture hook
+
+**Question.** Can the pinned NGRAM `TARGET_VERIFY` producer expose live,
+request-owned hidden rows immediately before the tied LM head without changing
+the logits or greedy acceptance consumed by verification?
+
+**Action.** Implemented `diverse_hidden_capture_hook.py` at the
+`Gemma4TextModel.forward` → `Gemma4ForCausalLM.forward` →
+`LogitsProcessor.forward` boundary. The hook validates the pinned Gemma and
+logits-processor source hashes, records request ID, request-pool slot, capture
+row, request-major depth, proposal, position, and an owned CPU clone of each
+hidden row, while passing the original hidden tensor into the original
+consumer. The bootstrap is fail-open and audits observer faults. The later
+one-shot command explicitly disables CUDA graphs: a Python observer installed
+during graph construction otherwise sees synthetic graph-capture rows rather
+than live replay rows, which is the causal defect behind the prior degenerate
+capture.
+
+Ran the synthetic producer-to-consumer fixture once, then amended the fixture
+to directly exercise observer-failure isolation and re-executed only that
+local contract. This was fixture validation, not a retrieval replay or an
+independent model sample. No GPU was claimed, no SSH or provider action was
+used, and no endpoint request was issued.
+
+**Evidence.**
+
+- Measured: three distinct request identities at four request-major depths
+  produced 12 rows and 12 unique hidden states.
+- Measured: hook-off and hook-on logits are bitwise equal; greedy acceptance
+  is bitwise equal with eight accepted and four rejected rows.
+- Measured: the downstream consumer received the original hidden tensor
+  storage, the serialized hidden/proposal rows reproduced the same logits and
+  acceptance, non-target rows were ignored, ownership matched all 12 expected
+  request/depth/row tuples, and an intentionally failing observer did not
+  change or skip the original consumer.
+- Bound source hashes: Gemma
+  `bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989`,
+  logits processor
+  `e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14`,
+  and forward-batch ownership
+  `c977296f3b90be69fff5312f2b3af7699a17b20af24614b139f69888e5776516`.
+
+The complete ownership schema, fixture hashes, non-interference checks, source
+hashes, graph-policy rationale, and exact later server command are in
+`DIVERSE_HIDDEN_CAPTURE_HOOK_TERMINAL.json`
+(`dbaa9ef8705091f05de4b5843663c65e437b397591cf5940be2c43a6b99cb303`).
+
+**Interpretation.** The missing capture mechanism is now source-complete and
+execution-tested. This does not validate retrieval or model quality; it makes
+a later diverse exact c32 capture interpretable.
+
+**Next move.** Close this zero-GPU iteration. A later director admission must
+materialize the pinned endpoint and workload runner under this project before
+claiming a bench, execute the terminal's eager capture command, and require a
+real diversity gate before reusing the offline retrieval consumer.

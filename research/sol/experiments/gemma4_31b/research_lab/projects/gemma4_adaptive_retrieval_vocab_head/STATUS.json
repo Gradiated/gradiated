@@ -1,36 +1,38 @@
 {
   "schema_version": 1,
   "status": "closed",
-  "priority": 8510,
+  "priority": 8650,
   "researcher_profile": "deep",
   "active_session": null,
   "allocation_limit": 1,
   "authorized_spend_usd": 0.0,
   "actual_spend_usd": 0.0,
-  "accelerator_requirement": "none; strictly local CPU analysis in this admission",
+  "accelerator_requirement": "none; strictly local source and fixture work in this iteration",
   "bench_need": {
     "claim_allowed": false,
-    "reason": "The immediate result is an offline recall, candidate-size, and H200 physical-bound falsifier over an existing exact hidden-state capture."
+    "reason": "The immediate result is a source-complete exact verifier hidden-state capture hook and a genuinely diverse synthetic producer-to-consumer fixture; no bench claim is allowed."
   },
   "scheduler_admission": {
     "admitted": false,
     "gpu_claim_allowed": false,
     "provider_creation_allowed": false,
-    "reason": "The exact offline experiment is terminal. Its physical bound is positive, but the bound capture contains one unique hidden state and does not justify an H200 claim."
+    "reason": "The zero-GPU diverse-capture producer iteration is terminal. A later exact capture requires a new director admission and project-local materialization of the pinned runtime inputs."
   },
-  "decision": "do_not_admit_h200_from_degenerate_capture",
-  "result": "offline_capture_degenerate_positive_physical_bound_not_admissible",
-  "hypothesis": "A request-adaptive index over the tied 262144 x 5376 vocabulary weight can recover full-head top-1 on the exact 384-row capture while exact-scoring a small enough candidate set to reduce H200 weight traffic after routing and index costs.",
-  "next_action": "Closed without GPU work. A successor may hash-bind a capture with genuinely distinct verifier hidden states and rerun the same offline W8A8/coordinate retrieval consumer before any H200 claim.",
-  "summary": "Exact CPU experiment completed. Request-adaptive retrieval has a favorable analytical physical bound on the bound state, but the nominal 384-row capture is one identical hidden state repeated 384 times; close this admission rather than spend an H200 sample.",
+  "decision": "exact_diverse_capture_hook_ready_for_later_bound_capture",
+  "result": "diverse_capture_hook_fixture_pass",
+  "hypothesis": "A request-adaptive index over the tied 262144 x 5376 vocabulary weight can recover full-head top-1 on a future exact diverse verifier capture while exact-scoring a small enough candidate set to reduce H200 weight traffic after routing and index costs.",
+  "next_action": "Closed without a bench claim. If the director later admits an exact c32 capture, first materialize the pinned endpoint and workload bytes under this project, then use the exact eager capture command in DIVERSE_HIDDEN_CAPTURE_HOOK_TERMINAL.json; do not rerun retrieval until that capture passes the diversity gate.",
+  "summary": "The exact pinned NGRAM producer-to-tied-head boundary now has an ownership-preserving capture hook. A 3-request x 4-depth CPU fixture produced 12/12 unique hidden rows and preserved logits and greedy acceptance bit-for-bit, including observer-failure isolation.",
   "quality_claim_authorized": false,
   "performance_claim_authorized": false,
   "scientific_sample_consumed": true,
-  "closed_at": "2026-07-26T01:47:00Z",
-  "terminal_artifact": "ADAPTIVE_RETRIEVAL_VOCAB_OFFLINE_TERMINAL.json",
-  "terminal_sha256": "29644d701a38606f6a8f9230da753b2ecdccd969093ca80af75dfd9d6c3e54dd",
-  "runner": "adaptive_retrieval_vocab_offline.py",
-  "runner_sha256": "fd04d8bdb7341f98492b5252d5049da5c6e26953c667701b667012cec451205d",
+  "prior_terminal_artifact": "ADAPTIVE_RETRIEVAL_VOCAB_OFFLINE_TERMINAL.json",
+  "prior_terminal_sha256": "29644d701a38606f6a8f9230da753b2ecdccd969093ca80af75dfd9d6c3e54dd",
+  "terminal_artifact": "DIVERSE_HIDDEN_CAPTURE_HOOK_TERMINAL.json",
+  "terminal_sha256": "dbaa9ef8705091f05de4b5843663c65e437b397591cf5940be2c43a6b99cb303",
+  "closed_at": "2026-07-26T06:34:27Z",
+  "runner": "diverse_hidden_capture_fixture.py",
+  "runner_sha256": "5e6726472749cf87c7b0ec7ec2054f0ab9dc897cc4c58359293a277e48e58382",
   "evidence": {
     "input_identities_match": true,
     "full_head_reference_top1_token_id": 240017,
@@ -45,30 +47,51 @@
     "best_native_materialized_bound_seconds": 0.001023255568299141,
     "stock_component_median_seconds": 0.02480787181854248,
     "physical_advantage_on_bound_state": true,
-    "capture_diversity_gate": false,
+    "historical_capture_diversity_gate": false,
     "gpu_claimed": false,
     "ssh_used": false,
-    "paid_requests": 0
+    "paid_requests": 0,
+    "exact_producer": "sglang.srt.models.gemma4_causal.Gemma4TextModel.forward",
+    "exact_hook_boundary": "sglang.srt.layers.logits_processor.LogitsProcessor.forward entry",
+    "pinned_gemma4_causal_sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+    "pinned_logits_processor_sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14",
+    "pinned_forward_batch_info_sha256": "c977296f3b90be69fff5312f2b3af7699a17b20af24614b139f69888e5776516",
+    "fixture_requests": 3,
+    "fixture_depths_per_request": 4,
+    "fixture_rows": 12,
+    "fixture_unique_hidden_rows": 12,
+    "fixture_diversity_gate": true,
+    "ownership_exact": true,
+    "logits_bitwise_equal": true,
+    "acceptance_bitwise_equal": true,
+    "observer_failure_isolated": true,
+    "later_capture_uses_eager_target_verify": true
   },
-  "wall_clock_budget": "At most 90 minutes of local analysis and implementation.",
+  "wall_clock_budget": "At most 75 minutes of local source inspection, implementation, and fixture execution.",
   "compute_budget": "CPU only; zero paid GPU minutes and $0 fresh spend.",
-  "storage_budget": "At most 2 GiB of new project-local index, metrics, source, and terminal artifacts.",
+  "storage_budget": "At most 1 GiB of source, fixtures, and typed terminal artifacts; do not materialize a checkpoint.",
   "artifact_contract": {
-    "terminal": "ADAPTIVE_RETRIEVAL_VOCAB_OFFLINE_TERMINAL.json",
+    "terminal": "DIVERSE_HIDDEN_CAPTURE_HOOK_TERMINAL.json",
     "required_metrics": [
-      "full_head_reference_top1_identity",
-      "top1_recall_by_candidate_fraction",
-      "request_and_depth_stratification",
-      "candidate_rows",
-      "index_bytes",
-      "estimated_hbm_bytes_and_arithmetic_work",
-      "routing_overhead",
-      "h200_geometry_and_first_consumer_path"
+      "exact_pinned_producer_and_consumer_symbols",
+      "capture_source_sha256",
+      "request_depth_row_ownership_schema",
+      "synthetic_unique_hidden_row_count",
+      "logits_and_acceptance_noninterference",
+      "exact_later_capture_command"
     ]
   },
   "stop_rules": [
-    "Stop without a GPU if either bound input identity differs.",
-    "Do not generalize beyond the 384-row capture or call approximate recall exact semantics.",
-    "Close this representation if high recall requires scoring most vocabulary rows or the lower-bound traffic cannot credibly beat the 24.808 ms stock component after routing and index costs."
-  ]
+    "Do not claim a GPU, contact a provider, use SSH, or issue an endpoint request.",
+    "Do not rerun or promote retrieval from the one-unique-row historical capture.",
+    "Do not alter logits, tied-head inputs, sampling, acceptance, request routing, checkpoint values, or runtime identities.",
+    "Stop at a typed source boundary if the exact producer cannot expose request/depth ownership without semantic mutation."
+  ],
+  "director_reactivation": {
+    "created_at_utc": "2026-07-26T06:23:07Z",
+    "prior_terminal_sha256": "29644d701a38606f6a8f9230da753b2ecdccd969093ca80af75dfd9d6c3e54dd",
+    "scientific_question_changed": false,
+    "gpu_claim_allowed": false,
+    "reason": "Prepare the missing diverse exact-path evidence independently while the hybrid lane repairs its allocator."
+  }
 }

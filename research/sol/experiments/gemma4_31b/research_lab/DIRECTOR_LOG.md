@@ -8766,3 +8766,22 @@ tests, and `H100_PAGED_FP8_EXECUTION_READY.json`. GPU claims and provider
 creation remain forbidden until a later director accepts that terminal. The
 sole registered H200 claim and watchdog remain current; no lifecycle action is
 required.
+
+## 2026-07-26T05:01Z — keep the repaired handshake on the existing deadline
+
+The supervisor's namespaced-handshake discovery fix removes the scheduler path
+defect but does not extend the in-flight scientific contract. At `05:00Z` the
+live FP8 owner still matched PID `1553056`/start ticks `115690499`, its claim
+heartbeat was current, and only the hash-bound `REPAIR_READY.json` existed.
+With less than 12 minutes remaining against the project's measured 25-minute
+compile/discriminator allowance, do not widen the attempt or the `05:12Z`
+deadline. A request already admitted in time may complete under the unchanged
+owner; otherwise require a typed pre-science terminal and release to
+maintenance, then prepare the same localized include repair offline for fresh
+director re-admission. Do not replay any valid M32 result.
+
+Keep `h100_hybrid_attention_kernel_mechanism` active at `8680/deep`, `$0`,
+with its source-and-tests-only `H100_PAGED_FP8_EXECUTION_READY.json` gate.
+The H200 claim remains exclusive, and the matching `05:20Z` watchdog remains
+valid, so no provider lifecycle action or additional project admission is
+required.

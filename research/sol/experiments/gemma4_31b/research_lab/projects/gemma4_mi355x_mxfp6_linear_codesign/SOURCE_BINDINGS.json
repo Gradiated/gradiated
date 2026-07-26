@@ -1,0 +1,42 @@
+{
+  "observed_at_utc": "2026-07-26T13:10:00Z",
+  "repositories": {
+    "quark": {
+      "commit": "1b229f781a1974cc742884e42d8eefc1eebb4f0a",
+      "commit_time": "2026-07-10T02:24:25Z",
+      "files": {
+        "quark/torch/kernel/hw_emulation/hw_emulation_interface.py": "7ee36882a09d7fbb0cee16696454b4ee74cf9ea6221e47c2e6a550b43a6157b2",
+        "quark/torch/utils/pack.py": "1c6e49abdb4b9929e4611a4579ebae95611e0b9c22651454673e60134b92499a"
+      },
+      "url": "https://github.com/amd/Quark.git"
+    },
+    "rocm_libraries": {
+      "commit": "1eb022d06b7e2a1b0031d74e96d85a2e9e150c99",
+      "commit_time": "2026-07-26T12:17:43Z",
+      "files": {
+        "projects/hipblaslt/clients/bench/src/client.cpp": "b7c21947f2c9134f6513ad1a19e1ac71d7bee5acef366309b7b7ade90d26d8ee",
+        "projects/hipblaslt/clients/common/include/testing_matmul.hpp": "3a6073b87e255019555c65e35d28c820b9dbf9477133aad1c8040da996bcabc4",
+        "projects/hipblaslt/clients/common/src/mxDataGen.cpp": "ac1c2e39d6afab9116e8fc4d6451456eb3c41861a0f7b45194f9d84342a3995a",
+        "projects/hipblaslt/library/include/hipblaslt/hipblaslt-types.h": "6aa27f00cdbfdd0f8758cce0832d037181ccd36f300ad55d3e29a3c1dd1850a5",
+        "projects/hipblaslt/library/src/amd_detail/include/auxiliary.hpp": "02cac45ce5759630fd92dacd1c5e3a8b237c40a61820ae6b35c97de4cd82d656",
+        "projects/hipblaslt/library/src/amd_detail/rocblaslt/src/rocroller/rocroller_host.cpp": "31593f1b4574591b64638580f3c74d017d5368f7a97457b786c4a9b7e4edfbe9",
+        "shared/mxdatagenerator/lib/include/mxDataGenerator/ocp_e3m2_mxfp6.hpp": "f7c5a2a0d674b008996264f01fdff109b7afd2ea2e8e36cbb573f620476ba438",
+        "shared/mxdatagenerator/lib/include/mxDataGenerator/ocp_e3m2_mxfp6_impl.hpp": "b583ebe79da0d8c484f50ed5c13f7f55528292696c16ecca9705f465e908f95a"
+      },
+      "url": "https://github.com/ROCm/rocm-libraries.git"
+    },
+    "vllm": {
+      "commit": "0da6e7f3d6ed50fe1262cc2cf44066989a6b4cdd",
+      "commit_time": "2026-07-26T12:42:14Z",
+      "files": {
+        "vllm/model_executor/layers/quantization/quark/quark.py": "80099b0b5874264ea51d17422cfcf50633f8698f8bd8e50b4aeef4eb02d5408e",
+        "vllm/model_executor/layers/quantization/quark/schemes/quark_ocp_mx.py": "004b6faaab1f6172f5652cc6d40b384848b1896ea1dc399b391e3c4ec7525039",
+        "vllm/model_executor/layers/quantization/utils/mxfp6_utils.py": "ddc710d009a3883315b48c99f86e5667befc40329ba5b46a8eff2f7cd13dbb92",
+        "vllm/model_executor/layers/quantization/utils/ocp_mx_utils.py": "c242907cbaf2fe3b553b9b033410c90da8c03943f6623462c51ad863ff24aa96",
+        "vllm/model_executor/models/gemma4.py": "f101ae257cfe4c71e90ced922da04228468dbb84c01af00a0b48fa681f873a0f"
+      },
+      "url": "https://github.com/vllm-project/vllm.git"
+    }
+  },
+  "schema_version": 1
+}

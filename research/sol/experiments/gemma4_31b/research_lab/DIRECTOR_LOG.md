@@ -8807,3 +8807,18 @@ pass, and release warm by `05:55Z`.
 The H100 FP8-KV lane has published its source-and-tests terminal and is complete
 without spend. Its later provider admission is a separate decision; do not
 delay this near-term warm-H200 claim to review or provision it now.
+
+## 2026-07-26T05:23Z — preserve the claimed SM90a launch
+
+The `$4.00` reservation is durable, the execution researcher started at
+`05:19:56Z`, and it atomically claimed the named H200 at `05:21:44Z`, before
+the `05:27Z` gate. The registered `06:00Z` watchdog is active with the recorded
+PID and control group, while fresh edits remain confined to the admitted
+CUDA/build integration. Preserve this in-flight scientific contract unchanged:
+one fresh content-addressed `sm_90a` module, one unchanged M32 discriminator,
+and M32/M384 only after a finite bitwise pass.
+
+Do not admit a competing H200 project, provision the completed H100 FP8-KV
+packet, extend the lifecycle, or mutate the live project while this near-term
+claim is running. No orphan or provider mismatch is present, so no lifecycle
+action is required; the next director wake should consume the typed result.

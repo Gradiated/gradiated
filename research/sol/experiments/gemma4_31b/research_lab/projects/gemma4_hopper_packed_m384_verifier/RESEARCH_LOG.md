@@ -407,3 +407,42 @@ endpoint candidate. The smallest materially different future discriminator is
 a newly admitted non-replay capture of native-versus-packed logits, top-2
 token IDs/margins, and attention output at the first target-verification step
 for the earliest divergent request.
+
+## 2026-07-26 — FP32 partition redesign closed by global HBM bound
+
+Question: can a materially new partitioned reduction retain at least 80% of
+the measured V2 time saved while cutting its numerical error by an order of
+magnitude?
+
+Action: implemented `packed_m384_attention_fp32_partitioned.py` against the
+real page-size-one FP8 paged-KV/extend producer and unchanged output boundary.
+It persists scores, max/sum state, and per-partition numerators in FP32; value
+CTAs own one 512-token partition and a 16x32 tile, followed by an FP32
+rescaled merge. Added a lifecycle-pure, new-candidate-only component runner,
+but did not admit or execute it. Ran a deterministic CPU proxy over exact
+D256/P1024 and D512/P4214 geometry, including all 12 rows for four
+representative heads, shuffled pages, the 118-token global tail, masks, padded
+score strides, and an extreme-Q fixture. No GPU was claimed and no V2
+component or endpoint arm replayed.
+
+Evidence: the sampled FP64 proxy reports redesign relative L2 of `0.001671`
+local and `0.001668` global, respectively 16.1x and 17.4x below the measured
+V2 errors; max error improves by more than 300x. The stock partitioned-FP32
+A/A proxy envelope is about `3.1e-7`. However, exact compulsory traffic adds
+397,934,592 bytes local and 3,081,388,032 bytes global over V2. Even at the
+inventory H100's unattainable 3.35 TB/s peak, the global lower bound is
+`0.9198 ms`, 12.77x the `0.07205 ms` admitted regression; the 50-local/
+10-global lower bound is 1.56x its allowance. Five source, quantizer, runner,
+and terminal tests pass.
+
+Interpretation: accuracy recovery is plausible, but this exact FP32
+score-workspace plus partition-numerator representation is physically closed.
+Compiler resource measurements cannot reverse a failed compulsory-byte lower
+bound. Complete 32-head H100 correctness, actual stock A/A, and endpoint
+target-logit margins also remain unavailable, so no READY artifact is honest.
+`PACKED_M384_ACCURACY_REDESIGN_RESULT.json` is the scientific terminal and
+adds `$0` provider exposure.
+
+Next move: close this representation. Any new lineage must eliminate global
+score rereads and the numerator HBM round trip before compiler/GPU admission,
+and bind a newly admitted target-logit margin oracle.

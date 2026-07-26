@@ -1,0 +1,266 @@
+{
+  "candidate": {
+    "algorithm": "FP32 persisted scores and online state; one FP32 numerator per 512-token partition and 32-value tile; FP32 rescaled merge; BF16 only at unchanged output boundary",
+    "source": "packed_m384_attention_fp32_partitioned.py",
+    "source_sha256": "23e45610a799fc083df8ec95317e3206aa2a3de66506910bbe4b43fafa542214"
+  },
+  "evidence_class": {
+    "accelerator_specs": "vendor_inventory",
+    "numerical": "measured_synthetic_cpu",
+    "physical": "analytical_lower_bound",
+    "prior_timings": "measured_h100_closed_v2_evidence"
+  },
+  "fixtures": [
+    {
+      "coverage": {
+        "complete_head_coverage": false,
+        "complete_rows_for_sampled_heads": true,
+        "last_partition_tokens": 0,
+        "padded_score_stride": 1088,
+        "physical_page_permutation_gathered": true
+      },
+      "geometry": {
+        "batch": 32,
+        "extreme_q_scale": 1.0,
+        "head_dim": 256,
+        "kv_heads": 16,
+        "page_size": 1,
+        "partition_tokens": 512,
+        "prefix_tokens": 1024,
+        "query_heads": 32,
+        "query_rows_per_sequence": 12,
+        "query_rows_total": 384,
+        "sampled_query_heads": 4,
+        "sliding_window": 1024
+      },
+      "name": "production_local_page_boundary",
+      "redesign_vs_fp64": {
+        "max_abs": 2.9397021227088246e-05,
+        "mean_abs": 2.705056618862016e-06,
+        "relative_l2": 0.0016709484149274665
+      },
+      "redesign_vs_stock_aa": {
+        "max_abs": 2.939533442258835e-05,
+        "mean_abs": 2.705061783528362e-06,
+        "relative_l2": 0.0016709502729094047
+      },
+      "stock_aa_vs_fp64": {
+        "max_abs": 4.62998277737936e-09,
+        "mean_abs": 5.696859051575074e-10,
+        "relative_l2": 3.108448629441689e-07
+      },
+      "v2_proxy_vs_fp64": {
+        "max_abs": 0.00020801813909101814,
+        "mean_abs": 4.1442589233094995e-05,
+        "relative_l2": 0.02174948878746227
+      }
+    },
+    {
+      "coverage": {
+        "complete_head_coverage": false,
+        "complete_rows_for_sampled_heads": true,
+        "last_partition_tokens": 118,
+        "padded_score_stride": 4278,
+        "physical_page_permutation_gathered": true
+      },
+      "geometry": {
+        "batch": 32,
+        "extreme_q_scale": 1.0,
+        "head_dim": 512,
+        "kv_heads": 4,
+        "page_size": 1,
+        "partition_tokens": 512,
+        "prefix_tokens": 4214,
+        "query_heads": 32,
+        "query_rows_per_sequence": 12,
+        "query_rows_total": 384,
+        "sampled_query_heads": 4,
+        "sliding_window": -1
+      },
+      "name": "production_global_padded_partition_page_boundary",
+      "redesign_vs_fp64": {
+        "max_abs": 1.5257760336817236e-05,
+        "mean_abs": 1.38074241552181e-06,
+        "relative_l2": 0.0016680939416835276
+      },
+      "redesign_vs_stock_aa": {
+        "max_abs": 1.5257392078638077e-05,
+        "mean_abs": 1.3807441595736335e-06,
+        "relative_l2": 0.001668091943830019
+      },
+      "stock_aa_vs_fp64": {
+        "max_abs": 1.671754929150407e-09,
+        "mean_abs": 2.971242931913525e-10,
+        "relative_l2": 3.074311591494148e-07
+      },
+      "v2_proxy_vs_fp64": {
+        "max_abs": 0.00012917267668883462,
+        "mean_abs": 2.3051519514316403e-05,
+        "relative_l2": 0.023634910380512096
+      }
+    },
+    {
+      "coverage": {
+        "complete_head_coverage": false,
+        "complete_rows_for_sampled_heads": true,
+        "last_partition_tokens": 0,
+        "padded_score_stride": 1088,
+        "physical_page_permutation_gathered": true
+      },
+      "geometry": {
+        "batch": 32,
+        "extreme_q_scale": 8.0,
+        "head_dim": 256,
+        "kv_heads": 16,
+        "page_size": 1,
+        "partition_tokens": 512,
+        "prefix_tokens": 1024,
+        "query_heads": 32,
+        "query_rows_per_sequence": 12,
+        "query_rows_total": 384,
+        "sampled_query_heads": 4,
+        "sliding_window": 1024
+      },
+      "name": "extreme_local_q8",
+      "redesign_vs_fp64": {
+        "max_abs": 2.9557251418788066e-05,
+        "mean_abs": 2.7663929887105356e-06,
+        "relative_l2": 0.001651739600050991
+      },
+      "redesign_vs_stock_aa": {
+        "max_abs": 2.955365926027298e-05,
+        "mean_abs": 2.766396098146292e-06,
+        "relative_l2": 0.0016517423418406845
+      },
+      "stock_aa_vs_fp64": {
+        "max_abs": 4.006304075597142e-09,
+        "mean_abs": 5.703882227199731e-10,
+        "relative_l2": 3.0215350538516997e-07
+      },
+      "v2_proxy_vs_fp64": {
+        "max_abs": 0.0002109707291381858,
+        "mean_abs": 4.284063406441147e-05,
+        "relative_l2": 0.021768402733443833
+      }
+    }
+  ],
+  "limitations": [
+    "Four representative query heads, not all 32 heads, were evaluated.",
+    "The CPU proxy does not reproduce Hopper dot/exp instruction rounding.",
+    "No endpoint archive contains downstream target-logit margins.",
+    "No SM90 compile or GPU sample was authorized."
+  ],
+  "numerical_gate": {
+    "definition": "redesign relative-L2 <= max(10x stock-A/A proxy envelope, one tenth closed-V2 relative-L2), plus endpoint token-margin clearance on every request",
+    "endpoint_margin_gate_evaluable": false,
+    "fixture_results": [
+      {
+        "fixture": "production_local_page_boundary",
+        "observed_relative_l2": 0.0016709484149274665,
+        "relative_l2_limit": 0.002693652920424938
+      },
+      {
+        "fixture": "production_global_padded_partition_page_boundary",
+        "observed_relative_l2": 0.0016680939416835276,
+        "relative_l2_limit": 0.002900397405028343
+      },
+      {
+        "fixture": "extreme_local_q8",
+        "observed_relative_l2": 0.001651739600050991,
+        "relative_l2_limit": 0.002693652920424938
+      }
+    ],
+    "reason": "The immutable consumed endpoint archive persists tokens and timings but not target-logit vectors or winner margins.",
+    "sampled_proxy_pass": true
+  },
+  "physical": {
+    "cases": [
+      {
+        "compile_dependent": {
+          "reason": "No GPU claim or SM90 compiler was authorized.",
+          "registers_per_thread": null,
+          "shared_memory_bytes": null,
+          "source_live_value_tile": [
+            16,
+            32
+          ],
+          "spill_bytes": null,
+          "v2_source_live_value_tile": [
+            16,
+            64
+          ]
+        },
+        "compulsory_bytes": {
+          "additional_over_v2": 397934592,
+          "new_fp32_score_workspace_write_plus_reads": 481296384,
+          "new_partial_numerator_write_plus_read": 50331648,
+          "v2_score_workspace_write_plus_reads": 133693440
+        },
+        "flops_attention_score_plus_value": 13035896832,
+        "grid": {
+          "partition_value_ctas": 16384,
+          "partition_value_waves_at_132_sm": 124.12121212121212,
+          "score_ctas": 2048,
+          "score_waves_at_132_sm": 15.515151515151516,
+          "value_merge_ctas": 8192,
+          "value_merge_waves_at_132_sm": 62.06060606060606
+        },
+        "h100_hbm_peak_lower_bound_additional_ms": 0.11878644537313432,
+        "lower_bound_over_admitted_loss": 0.6594323068194858,
+        "maximum_admitted_loss_ms": 0.18013440370559694,
+        "name": "local",
+        "partitions": 2,
+        "physically_credible_from_nonoverlapping_bound": true,
+        "value_splits": 8
+      },
+      {
+        "compile_dependent": {
+          "reason": "No GPU claim or SM90 compiler was authorized.",
+          "registers_per_thread": null,
+          "shared_memory_bytes": null,
+          "source_live_value_tile": [
+            16,
+            32
+          ],
+          "spill_bytes": null,
+          "v2_source_live_value_tile": [
+            16,
+            64
+          ]
+        },
+        "compulsory_bytes": {
+          "additional_over_v2": 3081388032,
+          "new_fp32_score_workspace_write_plus_reads": 3574628352,
+          "new_partial_numerator_write_plus_read": 452984832,
+          "v2_score_workspace_write_plus_reads": 946225152
+        },
+        "flops_attention_score_plus_value": 106350772224,
+        "grid": {
+          "partition_value_ctas": 147456,
+          "partition_value_waves_at_132_sm": 1117.090909090909,
+          "score_ctas": 9216,
+          "score_waves_at_132_sm": 69.81818181818181,
+          "value_merge_ctas": 16384,
+          "value_merge_waves_at_132_sm": 124.12121212121212
+        },
+        "h100_hbm_peak_lower_bound_additional_ms": 0.9198173229850747,
+        "lower_bound_over_admitted_loss": 12.766155524550209,
+        "maximum_admitted_loss_ms": 0.07205123901367187,
+        "name": "global",
+        "partitions": 9,
+        "physically_credible_from_nonoverlapping_bound": false,
+        "value_splits": 16
+      }
+    ],
+    "h100_sxm": {
+      "peak_hbm_bytes_per_second": 3350000000000,
+      "sms": 132
+    },
+    "weighted_50_local_10_global": {
+      "additional_hbm_lower_bound_ms": 15.137495498507462,
+      "maximum_admitted_loss_ms": 9.727232575416565
+    }
+  },
+  "schema_version": 1,
+  "type": "packed_m384_accuracy_redesign_offline_analysis"
+}

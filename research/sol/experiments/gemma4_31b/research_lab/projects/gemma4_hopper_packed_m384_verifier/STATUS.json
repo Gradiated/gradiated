@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
   "id": "gemma4_hopper_packed_m384_verifier",
-  "status": "complete",
-  "priority": 9770,
+  "status": "active",
+  "priority": 9775,
   "researcher_profile": "deep",
   "allocation_limit": 1,
-  "authorized_spend_usd": 8.0,
+  "authorized_spend_usd": 0.0,
   "actual_spend_usd": 2.716333,
   "active_session": null,
-  "hypothesis": "A packed TMA and warp-specialized online-softmax decomposition can remove the measured Hopper register-residency and tail-wave penalty from Gemma target verification and save 8-10% of whole-request service time.",
-  "summary": "Offline identity-correct reconstruction proves a genuine candidate-path semantic divergence before detokenization: 17 of 32 hash-identical requests differ from the bound control oracle, 12 at token zero, while all scheduler counters, final emitted IDs, parser bytes, and complete SSE text are internally exact. The measured candidate remains 3.65% faster, but this endpoint is semantic-unsafe and not promotion-safe.",
-  "next_action": "Director consumes SEMANTIC_LOCALIZATION_RESULT.json. Close this exact endpoint candidate as semantic-unsafe while preserving the positive component as physical evidence. Any future discriminator requires a newly admitted non-replay capture of native-versus-packed logits, top-2 margins, and attention output at the first divergent target-verification step.",
+  "hypothesis": "Rejected for the implemented representation: FP32 persisted scores and FP32 partition numerators recover the numerical target, but their global compulsory-HBM traffic cannot retain 80% of the prior component time saved.",
+  "summary": "The FP32 score-workspace/partition-numerator representation is closed: it improves the sampled numerical proxy by 16-17x versus V2 but its global compulsory-HBM lower bound exceeds the admissible loss by 12.8x. The project is reactivated for a materially different SM90 on-chip streaming or bounded-recompute reduction with no persisted score or numerator workspace.",
+  "next_action": "Under DIRECTOR_HOPPER_PACKED_STREAMING_ACCURACY_20260726T2006Z.json, use $kernel-research to implement and physically analyze an SM90-legal on-chip producer/consumer, cluster, persistent, bounded-recompute, or hybrid local/global reduction through the real shuffled FP8 paged-KV producer and unchanged o_extend consumer. Produce PACKED_M384_STREAMING_ACCURACY_READY.json only if complete exact-geometry FP64/A-A evidence improves V2 error by at least 10x, the design eliminates both forbidden HBM workspaces, and global plus weighted physical bounds pass. Otherwise return PACKED_M384_STREAMING_ACCURACY_RESULT.json. Remain GPU-ineligible and never replay V2.",
   "bench_need": {
     "accelerator": "nvidia-h100-sxm",
     "claim_allowed": false,
     "provider_create_allowed": false,
-    "reason": "The sole candidate endpoint request is consumed. DIRECTOR_H100_PACKED_M384_SEMANTIC_LOCALIZATION_20260726T1904Z.json requires offline first-divergence and result-construction analysis before any new director decision."
+    "reason": "The V2 component and endpoint are consumed, this redesign failed its offline physical gate, no READY artifact exists, and the project has no spend or claim authority."
   },
   "execution_binding": {
     "contract": "EXPERIMENT_CONTRACT.json",
@@ -185,5 +185,34 @@
     "component_replay_performed": false,
     "gpu_claim_performed": false,
     "promotion_safe": false
+  },
+  "director_accuracy_redesign": {
+    "path": "DIRECTOR_HOPPER_PACKED_ACCURACY_REDESIGN_20260726T1945Z.json",
+    "sha256": "3d9fd937954ae1d65bd77cd9f77bd015b0cee41eece2255d3d90d4c9dbeee33f",
+    "required_ready_artifact": "PACKED_M384_ACCURACY_REDESIGN_READY.json",
+    "alternate_terminal": "PACKED_M384_ACCURACY_REDESIGN_RESULT.json",
+    "new_candidate_gpu_samples_allowed": 0,
+    "v2_component_replay_allowed": false,
+    "v2_endpoint_replay_allowed": false,
+    "provider_create_allowed": false,
+    "gpu_claim_allowed": false,
+    "consumed_by_researcher": true
+  },
+  "accuracy_redesign_result": {
+    "path": "PACKED_M384_ACCURACY_REDESIGN_RESULT.json",
+    "sha256": "7eeb2895e136d3c07a0c65a38d6880faafaadd8015af61dbda0cf9e6dc412452",
+    "classification": "accuracy_improves_but_fp32_workspace_partition_closed_by_global_hbm_lower_bound",
+    "candidate": "packed_m384_attention_fp32_partitioned.py",
+    "candidate_sha256": "23e45610a799fc083df8ec95317e3206aa2a3de66506910bbe4b43fafa542214",
+    "offline_analysis": "artifacts/accuracy-redesign/OFFLINE_ACCURACY_ANALYSIS.json",
+    "offline_analysis_sha256": "9553199fc1c18a3144b2e212db6ae1d967eb6f79fe3d2ee6f36397f428fe4203",
+    "sampled_numerical_proxy_pass": true,
+    "global_physical_bound_pass": false,
+    "weighted_physical_bound_pass": false,
+    "ready_artifact_written": false,
+    "new_candidate_gpu_samples_consumed": 0,
+    "gpu_claim_performed": false,
+    "provider_mutation_performed": false,
+    "new_provider_exposure_usd": 0.0
   }
 }

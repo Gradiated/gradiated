@@ -1,0 +1,19 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "authorized_spend_usd": 0.0,
+  "decision": "ranked_validation_frontier: fund the MI355X exact-shape compile/component falsifier first when new authority and a compatible registered lab bench exist",
+  "last_researcher_run": {
+    "action": "offline_survivor_validation_discriminator",
+    "artifact": "SURVIVOR_VALIDATION_FRONTIER.json",
+    "completed_at_utc": "2026-07-26T11:18:57Z",
+    "outcome": "ranked_validation_frontier",
+    "tests": "python3 -m unittest -v test_survivor_validation_frontier.py; 4 passed"
+  },
+  "next_action": "Director handoff only. Do not create or claim resources under this zero-spend project. With new positive authority, reserve <=$0.9833333333333333 before provider mutation and schedule exactly the bound 20-minute MI355X/gfx950 exact-shape compile/component falsifier on a registered compatible lab bench. A pass funds later exact-checkpoint endpoint and quality work; it does not promote production.",
+  "priority": 8770,
+  "researcher_profile": "deep",
+  "schema_version": 1,
+  "status": "completed",
+  "summary": "Zero-spend ranked frontier: all nine bindings verified; MI355X is the sole next funded lifecycle at <=20 minutes, 0.333333 accelerator-hours, 8 GiB, and <=$0.983333. B200 remains second and more physically robust; H100 is uncosted; model changes remain separate and training/quality gated; Trainium2 remains typed none."
+}

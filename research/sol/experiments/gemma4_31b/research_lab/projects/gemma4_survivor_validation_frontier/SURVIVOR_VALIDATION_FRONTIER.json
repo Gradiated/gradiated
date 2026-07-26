@@ -1,0 +1,539 @@
+{
+  "accounting_rules": {
+    "capacity_deletion_credit": false,
+    "cross_accelerator_seconds_compared": false,
+    "placement_and_model_changes_separate": true,
+    "placement_seconds_tied_to_own_price_hurdle": true,
+    "source_complete_is_not_measured_throughput": true,
+    "stacked_gains_forbidden": true
+  },
+  "binding_verification": {
+    "all_verified": true,
+    "artifacts": {
+      "b200": {
+        "evidence_labels": [
+          "source-complete",
+          "analytical",
+          "vendor-reported",
+          "inferred"
+        ],
+        "path": "projects/gemma4_b200_fp8_runtime_codesign/B200_FP8_RUNTIME_SCREEN.json",
+        "role": "direct-placement survivor",
+        "sha256": "b6623bf5f4a81002fda5fbd9e34ac7f52af32083c32e8ff657c005850ccc4862",
+        "verified": true
+      },
+      "c32_trace": {
+        "evidence_labels": [
+          "measured"
+        ],
+        "path": "projects/gemma4_h200_ngram_fixed_m384_executor_rewrite/inputs/trace/exact_c32_profile.trace.json.gz",
+        "role": "exact c32 workload and telemetry binding",
+        "sha256": "37e2c73a57e8e63bd7ec0a3465cc1edded8b9dc63507d97e85a767306a97a48b",
+        "verified": true
+      },
+      "h100": {
+        "evidence_labels": [
+          "source-complete",
+          "measured"
+        ],
+        "path": "projects/h100_hybrid_attention_kernel_mechanism/H100_PINNED_VLLM_CONFIG_REPAIR.json",
+        "role": "direct-placement survivor",
+        "sha256": "4ebee66bc22f7c88914fa9886175271ccdd822f6ce0d83ea2d6ff51418d9f4c3",
+        "verified": true
+      },
+      "mi355x": {
+        "evidence_labels": [
+          "source-complete",
+          "measured",
+          "analytical",
+          "vendor-reported",
+          "inferred"
+        ],
+        "path": "projects/gemma4_mi355x_fp8_runtime_codesign/MI355X_FP8_RUNTIME_SCREEN.json",
+        "role": "direct-placement survivor",
+        "sha256": "e1bad18d0d2e0d3e281c3502a3b4a25108d0841ac2da85e5fd0fadebe99cc500",
+        "verified": true
+      },
+      "model_config": {
+        "evidence_labels": [
+          "measured"
+        ],
+        "path": "projects/gemma4_hybrid_attention_placement_codesign/inputs/bound/config.json",
+        "role": "exact model geometry binding",
+        "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+        "verified": true
+      },
+      "multi_resolution_global_kv": {
+        "evidence_labels": [
+          "source-complete",
+          "measured",
+          "analytical",
+          "synthetic",
+          "inferred"
+        ],
+        "path": "projects/gemma4_multiresolution_global_kv_codesign/MULTIRESOLUTION_GLOBAL_KV_PHYSICAL_SCREEN.json",
+        "role": "model/runtime-change survivor",
+        "sha256": "1d7d59a96a50f95b8cbadbb763ee072b5a4c462e1bb03f039dccda3905c84a30",
+        "verified": true
+      },
+      "prompt_state_merge": {
+        "evidence_labels": [
+          "source-complete",
+          "measured",
+          "analytical",
+          "inferred"
+        ],
+        "path": "projects/gemma4_prompt_token_compaction_codesign/PROMPT_STATE_MERGE_PHYSICAL_SCREEN.json",
+        "role": "model/runtime-change survivor",
+        "sha256": "fc87cbfcb3380d4d039f553687e58d5967ace2dd8e4ecc76f97cbe0a2cedbec8",
+        "verified": true
+      },
+      "recurrent_local_attention": {
+        "evidence_labels": [
+          "source-complete",
+          "measured",
+          "analytical",
+          "synthetic",
+          "inferred"
+        ],
+        "path": "projects/gemma4_recurrent_local_attention_codesign/RECURRENT_LOCAL_ATTENTION_PHYSICAL_SCREEN.json",
+        "role": "model/runtime-change survivor",
+        "sha256": "708761c17bc605702d16058331493c01eab65417d7dc45fdea4a6ea4411fcf87",
+        "verified": true
+      },
+      "trainium2": {
+        "evidence_labels": [
+          "measured",
+          "analytical",
+          "vendor-reported",
+          "inferred"
+        ],
+        "path": "projects/gemma4_trainium2_runtime_codesign/TRAINIUM2_RUNTIME_PLACEMENT_SCREEN.json",
+        "role": "typed negative; excluded from ranking",
+        "sha256": "46a81e09e0a052842e9998dcd662c6ac0a7ce6673f4d391f4525d906b226cf3d",
+        "verified": true
+      }
+    },
+    "source_contract_checks": {
+      "b200_source_complete": true,
+      "global_kv_source_complete": true,
+      "global_target_bound": true,
+      "h100_science_unconsumed": true,
+      "mi355x_source_complete": true,
+      "prompt_state_source_complete": true,
+      "prompt_target_bound": true,
+      "recurrent_local_source_complete": true,
+      "recurrent_target_bound": true,
+      "trainium2_typed_none": true
+    }
+  },
+  "campaign_targets": {
+    "locked_physical_target_seconds_per_request": 0.500119281574996,
+    "locked_sustainable_usd_per_million_total_tokens": 0.109725,
+    "qualified_denominator_seconds_per_request": 0.625149101968745,
+    "quality_requirements": [
+      "exact served model",
+      "GPQA-Diamond",
+      "TauBench",
+      "tool-call/request path",
+      "production representation and required behavior"
+    ]
+  },
+  "classification": "ranked_validation_frontier",
+  "decision": "Fund the MI355X exact-shape compile/component falsifier first when new authority and a compatible lab bench exist.",
+  "direct_placement_ledger": [
+    {
+      "decision_value": "Highest next-dollar discriminator: the finite falsifier is 60.7% cheaper and 20% shorter than B200, while directly testing the source screen's highest uncertainty, global d512 compile/resource behavior.",
+      "evidence_boundary": "Analytical/inferred screening envelope. Vendor peaks are denominators only; no NVIDIA throughput, MI355X endpoint, quality, reliability, power, or deployability is claimed.",
+      "exact_consumer_reached": "Local CPU source discriminator reached ROCmFP8ScaledMMLinearKernel -> torch._scaled_mm/hipBLASLt and AITER flash/unified hybrid-attention dispatch; target GPU remains unexecuted.",
+      "gates": {
+        "checkpoint": "Not required for the synthetic exact-shape falsifier; a later endpoint requires the exact checkpoint.",
+        "compilation": "Compile exact gfx950 scaled-mm and local d256/global d512 AITER calls.",
+        "production": "A pass is conditional on a scope-matched production rate no higher than $2.60/hour under this artifact's accounting.",
+        "quality": "Component numerical gates first; exact served checkpoint GPQA-Diamond, TauBench, tool-call and reliability gates remain before promotion.",
+        "target_hardware": "One MI355X/gfx950 TP1.",
+        "training": "None for placement."
+      },
+      "minimum_credible_falsifier": {
+        "accelerator_hours_max": 0.3333333333333333,
+        "action": "Run the bound online-quantized exact transformer shapes at M32/M384, local d256 and global d512 FP8-KV attention, and BF16 tied-head baseline on one MI355X.",
+        "envelope_status": "finite_bound_artifact",
+        "invalidation_rule": "Close or demote on any fallback, global d512 compile/resource failure, numerical failure, component aggregate above 0.545847226968745 s/request, or whole-request reconstruction above 0.625149101968745 s/request.",
+        "setup_and_cleanup_included": true,
+        "spend_usd_max": 0.9833333333333333,
+        "storage_gib_max": 8.0,
+        "wall_clock_minutes_max": 20
+      },
+      "own_price_normalized_accounting": {
+        "analytical_seconds_per_request": 0.6000950932112802,
+        "hurdle_seconds_per_request": 0.625149101968745,
+        "margin_fraction_of_hurdle": 0.04007685315161402,
+        "margin_seconds_per_request": 0.025054008757464774,
+        "planning_rate_usd_per_accelerator_hour": 2.6,
+        "sensitivity": {
+          "fails_at_usd_per_hour": [
+            2.75,
+            2.95
+          ],
+          "minimum_fp8_math_efficiency": 0.18011020404246023,
+          "minimum_hbm_efficiency": 0.2745702350583038,
+          "passes_at_usd_per_hour": [
+            2.4,
+            2.6
+          ]
+        },
+        "stacked_gain_credit": false
+      },
+      "rank": 1,
+      "scope": "single MI355X/gfx950 TP1; online per-tensor OCP E4M3FN transformer linears, FP8 KV, BF16 tied head",
+      "survivor": "mi355x"
+    },
+    {
+      "decision_value": "More robust analytical placement than MI355X, but its falsifier costs 2.54x more and is five minutes longer; fund after MI355X unless a B200 bench is already warm at zero incremental lifecycle cost.",
+      "evidence_boundary": "Source-bound and analytically derived at zero spend. No B200, CUDA, compilation, checkpoint, achieved timing, endpoint, quality, service, or deployment claim.",
+      "exact_consumer_reached": "Pinned source maps the exact production input to CUTLASS SM100 FP8 linears and FlashInfer TRTLLM-generation d256/d512 FP8-KV attention.",
+      "gates": {
+        "checkpoint": "Not required for the synthetic exact-shape falsifier; exact checkpoint is required later for endpoint and quality.",
+        "compilation": "Resolve immutable SM100 CUTLASS and FlashInfer TRTLLM-generation cubins before scientific entry.",
+        "production": "Require <=0.31560925536286155 s/request at the artifact's $5.15/hour planning rate.",
+        "quality": "Component FP32-oracle gates first; exact served checkpoint GPQA-Diamond, TauBench and feature gates remain.",
+        "target_hardware": "One full B200 SXM/SM100.",
+        "training": "None for placement."
+      },
+      "minimum_credible_falsifier": {
+        "accelerator_hours_max": 0.4166666666666667,
+        "action": "current vLLM dynamic-E4M3 CUTLASS SM100 linear plus FlashInfer TRTLLM-generation E4M3-KV attention",
+        "envelope_status": "finite_bound_artifact",
+        "invalidation_rule": "Any source/image/cubin identity failure is repaired before scientific entry. After an interpretable exact-shape sample, do not replay. Fail candidate on numerical gate, aggregate hurdle, <75% streaming HBM, d512 spills/fallback, or missing candidate-path proof.",
+        "setup_and_cleanup_included": true,
+        "spend_usd_max": 2.5,
+        "storage_gib_max": 8.0,
+        "wall_clock_minutes_max": 25
+      },
+      "own_price_normalized_accounting": {
+        "analytical_seconds_per_request": 0.2995608884905333,
+        "hurdle_seconds_per_request": 0.31560925536286155,
+        "margin_fraction_of_hurdle": 0.05084884742647092,
+        "margin_seconds_per_request": 0.016048366872328246,
+        "planning_rate_usd_per_accelerator_hour": 5.15,
+        "sensitivity": {
+          "fails_at_hbm_fraction": [
+            0.65
+          ],
+          "minimum_prefill_dense_fp8_fraction": 0.65,
+          "minimum_streaming_hbm_fraction": 0.75,
+          "passes_at_hbm_fraction": [
+            0.75,
+            0.7
+          ]
+        },
+        "stacked_gain_credit": false
+      },
+      "rank": 2,
+      "scope": "single NVIDIA B200 SXM/SM100; dynamic E4M3 transformer linears and E4M3 KV with BF16 tied head",
+      "survivor": "b200"
+    },
+    {
+      "decision_value": "Not fundable from the admitted evidence because a reservation cannot be conservatively sized.",
+      "evidence_boundary": "Measured adapter repair only. The bound artifact contains no price-normalized hurdle, target timing, provider envelope, or numerical sample.",
+      "exact_consumer_reached": "The repaired ModelConfig proxy passed 17 local unit tests and can be passed to VllmConfig; no scientific replay or target-H100 result exists.",
+      "gates": {
+        "checkpoint": "Not established by the bound repair artifact.",
+        "compilation": "Open on the pinned runtime.",
+        "production": "Open; no bound hurdle.",
+        "quality": "Open.",
+        "target_hardware": "Open; exact H100 registered-Attention arm remains unconsumed.",
+        "training": "None implied by the adapter repair."
+      },
+      "minimum_credible_falsifier": {
+        "accelerator_hours_max": null,
+        "action": "Execute the repaired pinned VllmConfig through the exact registered-Attention component and persist one numerical/timing result.",
+        "envelope_status": "unpriced_external_input",
+        "fundable_as_next_lifecycle": false,
+        "invalidation_rule": "Demote if the repaired config cannot reach the exact consumer or fails its as-yet-unbound numerical/economic gate.",
+        "known_storage_requirement": "Pinned runtime plus exact component inputs; quantity unbound.",
+        "reason": "The only admitted H100 artifact is a config repair and does not bind a rate, hurdle, runtime duration, or storage plan.",
+        "spend_usd_max": null,
+        "storage_gib_max": null,
+        "wall_clock_minutes_max": null
+      },
+      "own_price_normalized_accounting": {
+        "analytical_seconds_per_request": null,
+        "hurdle_seconds_per_request": null,
+        "margin_seconds_per_request": null,
+        "planning_rate_usd_per_accelerator_hour": null,
+        "stacked_gain_credit": false,
+        "typed_missing_evidence": "No H100 economic or performance row is present in the bound artifact."
+      },
+      "rank": 3,
+      "scope": "ModelConfig-typed exact-geometry proxy without model download; unchanged BF16/E4M3 consumer and gates",
+      "survivor": "h100_registered_attention"
+    }
+  ],
+  "excluded_evidence": {
+    "conditional_depth": {
+      "classification": "out_of_scope_preserved_evidence",
+      "ranking_eligible": false,
+      "reason": "The project contract excludes conditional-depth and capacity-deletion credit; no gain is transferred to a survivor."
+    },
+    "trainium2": {
+      "classification": "typed_none",
+      "committed_rate_hurdle_seconds_per_request": 0.7314416934849637,
+      "ranking_eligible": false,
+      "reason": "Current official source has no exact Gemma 4 producer/consumer path; hypothetical cost rows are not placement evidence.",
+      "typed_boundary": {
+        "not_a_hardware_claim": true,
+        "primary_boundary": "No current official Neuron model class reaches exact Gemma4 heterogeneous attention, attention_k_eq_v, tied-head softcap, FP8/cFP8, cache, and sampler consumers.",
+        "reopen_condition": "A later official Neuron release or source-complete custom adapter must compile exact revision geometry and measure the bound c32 workload on Trn2.",
+        "secondary_boundary": "Without that producer/consumer path there is no exact-model compile or scope-matched service-time prior, so a conservative all-in cost cannot be asserted below the target.",
+        "type": "current_runtime_source_incomplete"
+      }
+    }
+  },
+  "generated_at_utc": "2026-07-26T11:18:42.293110+00:00",
+  "lower_ranked_next_dollar_reasons": [
+    {
+      "reason": "Its finite falsifier is 2.54x more expensive and five minutes longer than MI355X; retain it second because its analytical margin is more robust.",
+      "survivor": "b200"
+    },
+    {
+      "reason": "The bound repair proves adapter integration only and does not contain a conservative rate, hurdle, duration, storage, or spend envelope.",
+      "survivor": "h100_registered_attention"
+    },
+    {
+      "reason": "The physical margin is useful, but learned projections, checkpoint access, training, and quality recovery have no finite bound.",
+      "survivor": "recurrent_local_attention"
+    },
+    {
+      "reason": "Its 1.418 ms analytical margin is fragile and it needs representative prompt capture, training, and broad semantic recovery.",
+      "survivor": "prompt_state_merge"
+    },
+    {
+      "reason": "Its 0.161 ms margin, <0.129% fallback tolerance, one-tile dependency, and unexecuted consumer make it a poor next-dollar bet.",
+      "survivor": "multi_resolution_global_kv"
+    },
+    {
+      "reason": "Typed current-runtime-source-incomplete; excluded from the survivor ranking.",
+      "survivor": "trainium2"
+    }
+  ],
+  "model_runtime_change_ledger": [
+    {
+      "decision_value": "Best model-change margin, but it cannot precede a finite placement falsifier because learned projections and quality recovery are uncosted.",
+      "exact_consumer_reached": "Source-complete one-pass Triton consumer and pure-Python FP64 information-path fixture; target CUDA compilation and timing are absent.",
+      "gates": {
+        "checkpoint": "Exact checkpoint required for projection training and endpoint.",
+        "compilation": "Exact c32 one-pass target-H200 compile open.",
+        "production": "Only after standalone locked endpoint <=0.500119281574996 s/request without other survivor credit.",
+        "quality": "GPQA-Diamond, TauBench, tool calls, long-context retrieval and fallback calibration open.",
+        "target_hardware": "Component correctness and profiler-off timing open.",
+        "training": "Per-layer positive feature projections are untrained; distillation/training required."
+      },
+      "minimum_credible_falsifier": {
+        "accelerator_hours_max": null,
+        "action": "Train or distill rank-64 projections, then compile and measure the one-pass exact-c32 component before endpoint quality.",
+        "envelope_status": "unpriced_external_input",
+        "fundable_as_next_lifecycle": false,
+        "invalidation_rule": "Close on rank >64 requirement, second consumer pass, fallback >15.508%, fixed overhead above the sensitivity boundary, failed component numerical result, or unrecoverable quality loss.",
+        "known_storage_requirement": "Exact checkpoint, training corpus, optimizer state, distilled checkpoint, and component logs.",
+        "reason": "The bound artifact specifies training but contains no dataset, training-compute, checkpoint-storage, or provider-rate envelope.",
+        "spend_usd_max": null,
+        "storage_gib_max": null,
+        "wall_clock_minutes_max": null
+      },
+      "rank": 1,
+      "scope": "Intentional replacement of 50 local softmax-attention layers with rank-64 positive-feature recurrence; no placement transfer.",
+      "survivor": "recurrent_local_attention",
+      "target_accounting": {
+        "analytical_seconds_per_request": 0.47717037100432264,
+        "margin_seconds_per_request": 0.02294891057067333,
+        "qualified_seconds_per_request": 0.625149101968745,
+        "sensitivity": {
+          "fixed_overhead_9ms_fails": true,
+          "maximum_fallback_rate": 0.15508249341718414,
+          "rank_64_one_pass_required": true,
+          "rank_96_fails": true,
+          "second_consumer_pass_fails": true
+        },
+        "stacked_gain_credit": false,
+        "target_seconds_per_request": 0.500119281574996
+      }
+    },
+    {
+      "decision_value": "Only 1.418 ms analytical margin and broad semantic recovery make it lower value than recurrent local attention.",
+      "exact_consumer_reached": "Source-complete split runtime through late layers and rebuilt attention metadata; hidden-state quality and target-GPU execution are absent.",
+      "gates": {
+        "checkpoint": "Exact checkpoint and representative prompt bytes required.",
+        "compilation": "One 134,848-token exact-c32 prefill cohort and compact late-layer graph open on H200.",
+        "production": "Standalone endpoint must remain <=0.500119281574996 s/request with no capacity credit.",
+        "quality": "GPQA-Diamond, TauBench, retrieval, tools, formatting, multimodal, and fallback calibration open.",
+        "target_hardware": "15 ms overhead envelope and fit unmeasured.",
+        "training": "Layer-5 scorer and boundary adapter distillation required."
+      },
+      "minimum_credible_falsifier": {
+        "accelerator_hours_max": null,
+        "action": "Materialize the exact checkpoint and representative prompts, measure protected-state overflow and scorer/merge semantics, then train the minimum boundary adapter before endpoint timing.",
+        "envelope_status": "unpriced_external_input",
+        "fundable_as_next_lifecycle": false,
+        "invalidation_rule": "Demote immediately if >1,184 states are needed, total added overhead exceeds 16.417816 ms/request, the c32 cohort does not fit, or semantic recovery fails.",
+        "known_storage_requirement": "Exact checkpoint, prompts/hidden states, trained adapter, and endpoint artifacts.",
+        "reason": "The bound artifact does not cost checkpoint access, training, representative prompt capture, or H200 endpoint time.",
+        "spend_usd_max": null,
+        "storage_gib_max": null,
+        "wall_clock_minutes_max": null
+      },
+      "rank": 2,
+      "scope": "Intentional two-tier prompt semantics change after layer 5 to 1,152 protected or merged states; no placement transfer.",
+      "survivor": "prompt_state_merge",
+      "target_accounting": {
+        "analytical_seconds_per_request": 0.49870146543245547,
+        "margin_seconds_per_request": 0.0014178161425404956,
+        "qualified_seconds_per_request": 0.625149101968745,
+        "sensitivity": {
+          "first_failing_output_states": 1200,
+          "maximum_passing_output_states": 1184,
+          "maximum_total_incremental_overhead_seconds": 0.01641781614254051,
+          "protected_overflow_credit": false
+        },
+        "stacked_gain_credit": false,
+        "target_seconds_per_request": 0.500119281574996
+      }
+    },
+    {
+      "decision_value": "A 0.161 ms analytical margin, sub-0.129% fallback tolerance, and unexecuted consumer make it the lowest-ranked survivor.",
+      "exact_consumer_reached": "Source-complete fused grouped-query consumer audit; its information-path fixture records consumer execution unavailable on the coordinator.",
+      "gates": {
+        "checkpoint": "Exact checkpoint required for distillation and endpoint.",
+        "compilation": "Fused global kernel target-H200 compile open.",
+        "production": "Standalone endpoint must clear the locked target with one tile and fallback below 0.129%.",
+        "quality": "GPQA-Diamond, TauBench, tools, long-context retrieval and exact fallback open.",
+        "target_hardware": "Component correctness, tile count and profiler-off timing open.",
+        "training": "Per-layer summary K/V distillation required."
+      },
+      "minimum_credible_falsifier": {
+        "accelerator_hours_max": null,
+        "action": "Execute the real fused consumer at exact geometry, calibrate protected spans/fallback, and distill summary K/V before any endpoint claim.",
+        "envelope_status": "unpriced_external_input",
+        "fundable_as_next_lifecycle": false,
+        "invalidation_rule": "Close or demote on a second compact tile, fallback >=0.128733%, consumer numerical failure, or target-H200 overhead above the 0.161 ms margin.",
+        "known_storage_requirement": "Exact checkpoint, distilled summary parameters, component and quality artifacts.",
+        "reason": "The bound artifact leaves target execution, checkpoint access, distillation, and quality unpriced.",
+        "spend_usd_max": null,
+        "storage_gib_max": null,
+        "wall_clock_minutes_max": null
+      },
+      "rank": 3,
+      "scope": "Intentional global-attention summary representation; local attention remains stock and no other survivor savings are credited.",
+      "survivor": "multi_resolution_global_kv",
+      "target_accounting": {
+        "analytical_seconds_per_request": 0.4999581203857146,
+        "margin_seconds_per_request": 0.00016116118928138912,
+        "qualified_seconds_per_request": 0.625149101968745,
+        "sensitivity": {
+          "maximum_fallback_rate": 0.0012873226748728159,
+          "one_64_key_tile_required": true,
+          "second_tile_fails": true
+        },
+        "stacked_gain_credit": false,
+        "target_seconds_per_request": 0.500119281574996
+      }
+    }
+  ],
+  "offline_prerequisite": null,
+  "question": "Which one preserved source-complete survivor should receive the next newly authorized lifecycle?",
+  "ranking_method": {
+    "placement_and_model_runtime_rankings_are_not_cross-normalized": true,
+    "primary_order": [
+      "scope admissibility and exact consumer path",
+      "finite reservation and terminal envelope",
+      "decision value per newly authorized dollar and wall-clock hour",
+      "margin robustness and fallback/precision sensitivity",
+      "checkpoint, training, quality, and recovery burden"
+    ]
+  },
+  "recommended_next_lifecycle": {
+    "authorization_state": "not_authorized; handoff only",
+    "cleanup": {
+      "minutes_max": 2,
+      "steps": [
+        "Retrieve compact terminal, raw stdout/stderr, science-start and per-arm result markers before release.",
+        "Preserve compiled artifacts and caches and update the bench contents.",
+        "Release an unoccupied healthy bench available; release maintenance if useful resident state cannot safely be inherited. Do not tear down the provider."
+      ]
+    },
+    "lifecycle_id": "mi355x_exact_shape_compile_and_component_falsifier",
+    "measurement": {
+      "arms": [
+        "Online-quantize BF16 synthetic weights through Fp8PerTensorOnlineLinearMethod and run every exact transformer shape at M32 and M384 through the selected ROCm consumer.",
+        "Run local head256/GQA2/window1024 and global head512/GQA8/context4571 AITER FP8-KV attention at decode M32 and verification M384.",
+        "Run the BF16 [32,5376]x[5376,262144] tied-head baseline, preserving 12 independent calls for each target cycle."
+      ],
+      "economic_gate": {
+        "component_seconds_per_request_max": 0.545847226968745,
+        "launch_plus_service_reserve_seconds_per_request": 0.07930187499999997,
+        "whole_request_hurdle_seconds_per_request": 0.625149101968745
+      },
+      "minutes_max": 7,
+      "no_stacked_gains": true,
+      "numerical_gate": "BF16 torch reference; finite complete output, argmax identity for head fixtures, relative-L2 <=0.02 and cosine >=0.995 for FP8 linears/attention; no fallback.",
+      "timing": "warm profiler-off p50/p95 with compilation excluded; aggregate exact counts from this artifact"
+    },
+    "reservation_before_create": {
+      "current_authorized_spend_usd": 0.0,
+      "required": true,
+      "required_reservation_usd": 0.9833333333333333,
+      "rule": "The director must reserve the full amount within campaign authority before any provider creation or paid bench use; a researcher may only claim a registered compatible lab bench."
+    },
+    "resource_envelope": {
+      "accelerator_hours_max": 0.3333333333333333,
+      "checkpoint_download": false,
+      "hardware": "one MI355X/gfx950 TP1",
+      "provider_spend_usd_max": 0.9833333333333333,
+      "storage_gib_max": 8.0,
+      "wall_clock_minutes_max": 20
+    },
+    "sentinel": {
+      "calls": [
+        "First exact M32 online-quantized scaled-mm call through the selected ROCm consumer.",
+        "First exact global head512 AITER FP8-KV call, persisting compile/resource diagnostics and raw output."
+      ],
+      "interpretation": "A complete numerical sentinel is a consumed component sample and is not replayed; launcher or observer defects without an interpretable result are repaired in place under the same claim.",
+      "minutes_max": 4,
+      "science_start_rule": "Write science_started only after identity/runtime validation and immediately before the first scaled-mm or AITER submission."
+    },
+    "setup": {
+      "minutes_max": 5,
+      "steps": [
+        "Claim one compatible registered MI355X bench only after the positive reservation.",
+        "Materialize and hash-bind the admitted runner/source bytes under this project before scientific entry; do not re-resolve mutable shared paths after claim.",
+        "Bind vLLM 0164022c907014a27e81c514cd4dff6091904c2b and AITER 6c48c5fa0e7c299adcf1987c8f4817720ceab311.",
+        "Prepare synthetic exact-shape BF16 weights/inputs; do not download the checkpoint."
+      ]
+    },
+    "stop_rules": [
+      "Do not create or claim anything without a positive director reservation and compatible registered bench.",
+      "Do not continue past the 20-minute or $0.9833333333333333 bound.",
+      "After an interpretable exact-shape sample, do not replay that arm.",
+      "Stop scientific promotion on fallback, global d512 compile/resource failure, numerical failure, component aggregate above 0.545847226968745 s/request, or reconstructed service time above 0.625149101968745 s/request.",
+      "A pass funds later exact-checkpoint endpoint and quality work; it is not itself a production or quality claim."
+    ],
+    "survivor": "mi355x",
+    "terminal": {
+      "fail": "Persist an interpretable component result that violates any numerical, fallback, compile/resource, component-time, or whole-request gate.",
+      "invalid_attempt": "Persist diagnostics and repair only the invalidated launcher/observer/consumer operation under the same claim; do not count or replay a complete result.",
+      "minutes_max": 2,
+      "pass": "All exact consumers execute without fallback, numerical gates pass, component aggregate <=0.545847226968745 s/request, and reconstructed whole request <=0.625149101968745 s/request."
+    },
+    "why_exactly_one": "It is the smallest finite target-hardware discriminator and does not require checkpoint download, training, or stacked gains."
+  },
+  "resource_use_this_turn": {
+    "actual_spend_usd": 0.0,
+    "benchmarks_rerun": false,
+    "checkpoint_downloaded": false,
+    "gpu_or_accelerator_claimed": false,
+    "prices_browsed": false,
+    "provider_contacted": false,
+    "provider_resources_created": false
+  },
+  "schema_version": 1
+}

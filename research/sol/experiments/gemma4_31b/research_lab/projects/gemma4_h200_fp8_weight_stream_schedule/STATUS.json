@@ -1,33 +1,42 @@
 {
   "accelerator_requirement": "one_retained_h200_sm90a_exact_consumer_component",
   "active_session": null,
-  "actual_spend_usd": 0.4,
+  "actual_spend_usd": 1.6574523726527781,
   "allocation_limit": 1,
-  "authorized_spend_usd": 2.0,
+  "authorized_spend_usd": 4.0,
   "bench_need": {
     "maximum_claim_minutes": 25,
     "minimum_lifecycle_remaining_minutes": 33,
     "preferred_bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz"
   },
+  "build_repair_reactivation": {
+    "bench": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "bench_ready_at_utc": "2026-07-25T23:48:53.042113Z",
+    "bench_state_after_lifecycle_handoff": "available_with_null_claim",
+    "bench_state_at_commit": "maintenance_with_null_claim_and_active_watchdog",
+    "binding": "DIRECTOR_SM90A_BUILD_INCLUDE_REPAIR.json",
+    "binding_sha256": "d1ac49614def6053b22d42364a7e4b7236b670a12e0b8d6a6102214134aeb138",
+    "disposition": "sole_immediate_same_bench_claimant"
+  },
   "claim_gate": {
     "admission_satisfied": true,
     "blocked_by": [],
-    "claim_not_after_utc": "2026-07-26T04:47:00Z",
-    "release_not_after_utc": "2026-07-26T05:12:00Z",
-    "watchdog_deadline_utc": "2026-07-26T05:20:00Z"
+    "claim_not_after_utc": "2026-07-26T05:27:00Z",
+    "release_not_after_utc": "2026-07-26T05:55:00Z",
+    "watchdog_deadline_utc": "2026-07-26T06:00:00Z"
   },
   "compute_budget": "One retained-H200 claim for at most 25 minutes: build one new sm_90a module, run one M32 correctness discriminator, and only on pass run the existing alternating M32/M384 exact-consumer component.",
   "decision": "compile_new_sm90a_module_then_run_exact_consumer_discriminator_and_conditional_component",
   "dependency": {
     "bench": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
     "durable": true,
-    "evidence": "The sole admitted claim ran from 2026-07-25T23:42:34.393429Z to 2026-07-25T23:42:57.121080Z. nvcc accepted compute_90a/sm_90a, then stopped at the first source include because the retained CUTLASS tree lacks cutlass/epilogue/fusion/sm90_callbacks_tma_warpspecialized.hpp. Raw build/staging/release artifacts are durable at artifacts/sm90a-component-20260725t234241z; no candidate CUDA or M32 marker exists.",
+    "evidence": "The latest owner terminalized at 2026-07-26T05:12:00.007499Z after its namespaced repair handshake expired. REPAIR_TERMINAL.json and artifacts/sm90a-component-20260726t044127z prove candidate_cuda_invocation_started=false and scientific_sample_consumed=false. The bench released with no experiment process and retained the exact checkpoint, image, source, compiler, and CUDA caches.",
     "kind": "repairable_pre_cuda_build_include_boundary_on_retained_bench",
-    "observed_at_utc": "2026-07-25T23:42:57.121080Z",
+    "observed_at_utc": "2026-07-26T05:12:00.007499Z",
     "project": "gemma4_h200_fp8_weight_stream_schedule"
   },
-  "director_binding": "DIRECTOR_SM90A_BUILD_INCLUDE_REPAIR.json",
-  "director_binding_sha256": "d1ac49614def6053b22d42364a7e4b7236b670a12e0b8d6a6102214134aeb138",
+  "director_binding": "DIRECTOR_SM90A_POST_DEADLINE_READMISSION.json",
+  "director_binding_sha256": "3e5fed4f29d1420bd5c124991ed6e3ffa3b1df62628ba1a1dff089a5169e0449",
   "director_reactivation": {
     "bench": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
     "bench_ready_at_utc": "2026-07-25T23:34:54.055444Z",
@@ -38,15 +47,6 @@
     "predecessor_disposition": "DFlash completed the AR producer and released at a typed request-ownership boundary before its candidate arm",
     "reactivated_at_utc": "2026-07-25T23:32:22Z"
   },
-  "build_repair_reactivation": {
-    "bench": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
-    "bench_ready_at_utc": "2026-07-25T23:48:53.042113Z",
-    "bench_state_at_commit": "maintenance_with_null_claim_and_active_watchdog",
-    "bench_state_after_lifecycle_handoff": "available_with_null_claim",
-    "binding": "DIRECTOR_SM90A_BUILD_INCLUDE_REPAIR.json",
-    "binding_sha256": "d1ac49614def6053b22d42364a7e4b7236b670a12e0b8d6a6102214134aeb138",
-    "disposition": "sole_immediate_same_bench_claimant"
-  },
   "gpu_invocation_started": true,
   "h200_claimed": false,
   "historical_actual_spend_usd": 0.11543988757775839,
@@ -56,13 +56,13 @@
     "path": "artifacts/immutable/gemma4_fp8_weight_stream-sm90.so",
     "sha256": "4664d3a6c0ff32bb845bd4d766a549398ecd653191ad1f2f7bfb3da77233b43c"
   },
-  "last_completed_at": "2026-07-25T23:03:03Z",
+  "last_completed_at": "2026-07-26T05:12:00.007499Z",
   "latest_claim_boundary": {
     "bench": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
     "candidate_cuda_invocation_started": false,
     "classification": "pre_cuda_build_include_integration_defect",
     "first_failure": "cutlass/epilogue/fusion/sm90_callbacks_tma_warpspecialized.hpp not found in retained include tree",
-    "path": "artifacts/sm90a-component-20260725t234241z/build.stdout",
+    "path": "REPAIR_TERMINAL.json",
     "scientific_sample_consumed": false
   },
   "localization": {
@@ -80,6 +80,7 @@
     "first_source_boundary": "build_candidate.py selected compute_90/sm_90 for architecture-conditional Hopper GMMA"
   },
   "new_arm_gpu_invocation_started": false,
+  "next_action": "Consume DIRECTOR_SM90A_POST_DEADLINE_READMISSION.json and atomically claim the named available H200 by 05:27Z. Repair only the pinned CUTLASS/torch cpp_extension/Ninja include-build integration, publish one fresh content-addressed sm_90a module, and run the unchanged one-call M32 discriminator exactly once; only a finite bitwise pass may proceed to the bound M32/M384 component. Release warm by 05:55Z.",
   "preinvocation_integration_amendment": {
     "evidence": "artifacts/sm90a-component-20260725t234241z/build.stdout",
     "finding": "Pinned CUTLASS lacks cutlass/epilogue/fusion/sm90_callbacks_tma_warpspecialized.hpp; the included SGLang fp8_gemm_sm90_dispatch.cuh supplies the schedule types used by this source.",
@@ -87,7 +88,6 @@
     "prior_source_sha256": "a202e2a265eda05f1d6fd4cc05b7bbc4db1ec6740d70e9dc1dc2f9881356082d",
     "scope": "remove only the unavailable redundant include; retain all Gemma shapes, scales, schedules, and the exact M32 consumer question"
   },
-  "next_action": "Atomically claim the retained ready H200, consume DIRECTOR_SM90A_BUILD_INCLUDE_REPAIR.json, and repair only the pinned CUTLASS include/build integration that caused the missing sm90_callbacks_tma_warpspecialized.hpp failure. Publish a new content-addressed sm_90a module, then run the unchanged one-call M32 discriminator exactly once; only a finite bitwise pass may proceed to the bound M32/M384 component.",
   "prepared_execution": {
     "binding_sha256": "9e2a798cc2c5910216b757d342d2af210f2ae19d2f25fac544c0a3eb5c1b45a1",
     "candidate_invoked": true,
@@ -116,14 +116,14 @@
   "provider_mutation": "forbidden",
   "repair_ready_path": "REPAIR_READY.json",
   "researcher_profile": "execution",
-  "result": "typed_pinned_cutlass_sglang_build_incompatibility",
+  "result": "fresh_post_deadline_readmission_for_unconsumed_sm90a_discriminator",
   "scheduler_admission": {
     "admitted": true,
     "bench": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
     "exclusive": true,
     "gpu_claim_allowed": true,
     "provider_creation_allowed": false,
-    "reason": "The failed claim consumed no candidate CUDA sample, the exact missing-header boundary is durable, the graph-gap pair has terminalized and released, and the retained warm H200 is the shortest path to the unchanged M32 discriminator. This is the sole admitted GPU claimant."
+    "reason": "The expired owner produced a typed pre-science terminal, the exact missing-header/build boundary is durable, the replacement watchdog is verified through 06:00Z, and the retained warm H200 is available with a null claim. This is the sole admitted GPU claimant."
   },
   "schema_version": 1,
   "source_result": {
@@ -139,8 +139,24 @@
     "Do not create, destroy, or mutate provider resources; release the retained bench warm after the typed terminal."
   ],
   "storage_budget": "At most 4 GiB of new durable artifacts.",
-  "summary": "Reactivated as the sole warm-H200 claimant after graph-gap release: repair the localized redundant CUTLASS include, compile one new sm_90a module, and run the unchanged M32 gate plus conditional M32/M384 exact consumer. No sample from this repaired module has been consumed; cumulative exposure remains $0.40.",
+  "summary": "Freshly re-admitted after the typed pre-science 05:12Z release. The retained H200 is available under a verified 06:00Z replacement watchdog; cumulative authority is $4.00 and the unchanged localized build repair plus one M32 discriminator must release by 05:55Z.",
+  "terminal": {
+    "actual_spend_usd": 1.6574523726527781,
+    "candidate_cuda_invocation_started": false,
+    "completed_at_utc": "2026-07-26T05:12:00.007499+00:00",
+    "error": "RuntimeError('build_failure:it status 4.\\n\\nThe above exception was the direct cause of the following exception:\\n\\nTraceback (most recent call last):\\n  File \"/work/project/build_candidate.py\", line 116, in <module>\\n    raise SystemExit(main())\\n                     ^^^^^^\\n  File \"/work/project/build_candidate.py\", line 43, in main\\n    module = load(\\n             ^^^^^\\n  File \"/usr/local/lib/python3.12/dist-packages/torch/utils/cpp_extension.py\", line 1818, in load\\n    return _jit_compile(\\n           ^^^^^^^^^^^^^\\n  File \"/usr/local/lib/python3.12/dist-packages/torch/utils/cpp_extension.py\", line 2268, in _jit_compile\\n    _write_ninja_file_and_build_library(\\n  File \"/usr/local/lib/python3.12/dist-packages/torch/utils/cpp_extension.py\", line 2429, in _write_ninja_file_and_build_library\\n    _run_ninja_build(\\n  File \"/usr/local/lib/python3.12/dist-packages/torch/utils/cpp_extension.py\", line 2791, in _run_ninja_build\\n    raise RuntimeError(message) from e\\nRuntimeError: Error building extension \\'gemma4_fp8_weight_stream\\'\\n')",
+    "raw_evidence_root": "artifacts/sm90a-component-20260726t044127z",
+    "repair_handshake": {
+      "ready_returncode": 0,
+      "wait_returncode": 3,
+      "wait_stderr": "",
+      "wait_stdout": "{\"ready_path\": \"/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_weight_stream_schedule/artifacts/sm90a-component-20260726t044127z/repair/.repair-handshakes/sm90a-sm90a-component-20260726t044127z/REPAIR_READY.json\", \"ready_sha256\": \"80483882eba01a5ed8e66c50aa3e0b85398010e550da43aecc3318dbf6ff8859\", \"repair_deadline_epoch\": 1785042720.0, \"state\": \"expired\"}\n"
+    },
+    "result": "typed_integration_or_retrieval_boundary",
+    "schema_version": 1,
+    "scientific_sample_consumed": false
+  },
   "terminal_artifact": "FP8_WEIGHT_STREAM_SM90A_H200_TERMINAL.json",
   "terminal_artifact_sha256": "68d76bb808f170cf60e22a18aca85931eea8d8a7692a3c72463754a1a42b33cf",
-  "wall_clock_budget": "At most 35 minutes of researcher wall time; claim by 04:47Z and release by 05:12Z."
+  "wall_clock_budget": "At most 38 minutes of researcher wall time; claim by 05:27Z and release by 05:55Z under the verified 06:00Z watchdog."
 }

@@ -8785,3 +8785,25 @@ with its source-and-tests-only `H100_PAGED_FP8_EXECUTION_READY.json` gate.
 The H200 claim remains exclusive, and the matching `05:20Z` watchdog remains
 valid, so no provider lifecycle action or additional project admission is
 required.
+
+## 2026-07-26T05:18Z — re-admit the unconsumed SM90a discriminator on the retained H200
+
+The `05:12Z` owner terminal is a typed pre-science boundary:
+`candidate_cuda_invocation_started=false`, `scientific_sample_consumed=false`,
+and the namespaced repair handshake expired before a request arrived. The H200
+released to maintenance with no experiment process and retained the exact
+checkpoint, image, source, compiler, and CUDA caches. This rejects only the
+expired attempt, not the FP8 weight-stream hypothesis.
+
+Retain and re-admit `gemma4_h200_fp8_weight_stream_schedule` as the sole H200
+claimant at `8710/execution`. A verified replacement watchdog now protects the
+bench through `06:00Z`; the old `05:20Z` watchdog is stopped and the bench is
+available with a null claim. Raise cumulative project authority from `$2.00`
+to `$4.00`, claim by `05:27Z`, repair only the pinned
+CUTLASS/`torch.cpp_extension`/Ninja include-build integration, run the unchanged
+one-call M32 discriminator once, permit M32/M384 only after a finite bitwise
+pass, and release warm by `05:55Z`.
+
+The H100 FP8-KV lane has published its source-and-tests terminal and is complete
+without spend. Its later provider admission is a separate decision; do not
+delay this near-term warm-H200 claim to review or provision it now.

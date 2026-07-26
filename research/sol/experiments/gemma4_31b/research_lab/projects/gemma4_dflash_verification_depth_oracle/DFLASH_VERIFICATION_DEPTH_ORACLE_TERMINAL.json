@@ -1,0 +1,153 @@
+{
+  "classification": "dflash_verification_depth_oracle_typed_none",
+  "competitiveness": {
+    "campaign_target_seconds_per_request": 0.500119281574996,
+    "conservative_physical_ceiling_beats_campaign_target": false,
+    "conservative_physical_ceiling_beats_qualified_denominator": false,
+    "even_whole_service_scaling_beats_qualified_denominator": false,
+    "qualified_denominator_seconds_per_request": 0.625149101968745
+  },
+  "cost_translation": {
+    "classification": "analytical_bound_from_exact_depth4_c32_h200_cuda_events",
+    "conservative_row_proportional_batch_seconds_floor": 43.1766183998067,
+    "conservative_row_proportional_service_seconds_per_request_floor": 1.3492693249939594,
+    "cost_terminal_sha256": "c2cdc9bedbe4de8120ef9641ec7c9d745657e21352c3d388291ef5020ecdf637",
+    "endpoint_terminal_sha256": "02a59aae4d6bc30c531b1765f70783ccdd7b622f277ff071073b59144c975015",
+    "even_more_generous_whole_service_scaling_floor": 1.1533279524245483,
+    "fixed_endpoint_batch_seconds": 48.361031647000345,
+    "fixed_endpoint_service_seconds_per_request": 1.5112822389687608,
+    "interpretation": "The conservative physical ceiling subtracts the row-proportional verifier CUDA-event saving from the exact c32 endpoint batch wall. It is not an observed endpoint delta. The whole-service scaling cross-check is deliberately more generous and also noncompetitive.",
+    "measured_admitted_combined_ms": 21888.58173930645,
+    "measured_admitted_draft_ms": 489.2692469358444,
+    "measured_admitted_verifier_ms": 21399.312492370605,
+    "padding_and_launch_guaranteed_service_seconds_per_request_floor": 1.5112822389687608,
+    "perfect_oracle_component_ms_floor": 16704.168492112804,
+    "perfect_oracle_component_reduction_fraction_ceiling": 0.23685469021886088,
+    "row_proportional_avoided_verifier_ms_ceiling": 5184.413247193645
+  },
+  "decision": "close_request_adaptive_verification_depth_for_this_exact_c32_distribution",
+  "evidence_label": "derived perfect-information oracle over measured real acceptance telemetry",
+  "fixed_depth_four": {
+    "accepted_draft_tokens": 7685,
+    "admitted_paired_launches_after_warmup": 277,
+    "paired_batched_draft_and_target_launches_including_cold": 278,
+    "proposed_draft_rows": 11352,
+    "request_cycle_draft_invocations": 3784,
+    "verified_target_rows": 15136
+  },
+  "input_binding": {
+    "analysis_input_hash_verified_before_parse": true,
+    "bytes": 10103,
+    "excluded_source": "The later request-25 boundary probe with unrecoverable response bytes was neither read nor reconstructed.",
+    "manifest_classification": "exact_depth4_c32_distinct_request_acceptance_input",
+    "request_count": 32,
+    "sha256": "4eb1865ca7890eb268a4016931cf5fbfb48c021de89a39288123629ca4db026d",
+    "source_endpoint_terminal_sha256": "02a59aae4d6bc30c531b1765f70783ccdd7b622f277ff071073b59144c975015",
+    "source_response_count": 32,
+    "source_response_sha256s": [
+      "fbfafc89026dd545c073d921eeab670a6e2995725875f9569f87800dc1ef111f",
+      "006c7c67d8b6829a6c87b47333c28615cc49c6bc6b2ae7dce3a699c0ddaac025",
+      "19e6d5634d258aef7bf1563aeedb94bef03992076da22c3955047454b3204914",
+      "692156e755eaad5df6e0ad60dacedbaa34db9033d390e376eee4bfc028695251",
+      "279db25c957a3335477b3cda551fb087e9ce6a9efbf41b68c108b78b1228fed9",
+      "3ed475fb14fcf35ebbc72482bb0e9dc6ea8c4a170822464b81fb643d4259e003",
+      "8392e600e913e6575c86389e3c35e140ef8cccc9bcaef8237cba3f3582aeea29",
+      "99517ca2ef8fb1e6b8f58e5ee7badaacfa9c86277030a5d9fa003a507cf3893c",
+      "30710c5f5e4ac78c93261bfefd837ddd1a1568438a49fe1585c4da7bb1f94c7a",
+      "789ea7ae6f6c60683bce5e9333fe0848dc64ab8c5c3637c087f8efcb134b93f4",
+      "c98201d3936417316ea7b234f4ac6f1a673eba2ffa5832703e6928716d4c234b",
+      "6ea187b7a24a52b5afbcd18e1c09d9da315a459d24c5b2aedd02e298d5ef8a6c",
+      "6cf3c5684abc3b4b68351df9d229f105e06e820061a7fa30ab0f020a23e1d43e",
+      "e90bc714940a2e54b9997c6ac0b4d716f93b71bf79c12a0e30714018816465ac",
+      "a61e8b20ddd9e52ef70f6655206c74b87c6f18d186b422a40f87601c90dd1962",
+      "312e4e68b955bfbf246a21c99b39932a83942ac6534d54a464bb1b69b2ceb9fa",
+      "816504e00588d329c7fc69028ca1355df35668a41d6353d72bcc2b099ba800b3",
+      "2eff47fbb8a9e7fb1e18373d5da7e301a670f669501e12fe0291b3e8028f6492",
+      "d5d50af31f54048b8128fd4e98aeaa70e307b406adb3de5b831f80e137ba2541",
+      "bb822e107a099594a32de30f52052b635aff88ea5ff5892a124bd2a9fc1358a9",
+      "9fa008a4f38aca72063b43c8b0a0686c6d688a9d6c8b2287425e7e82028fce62",
+      "eaa3622903cc8887fec5553b5182c2a3821435f0f61f80f41f0d1f4f5e5604b7",
+      "fb0cacd9947537c02330f1825faf11ce39378a4559500bf7909912b2464332c0",
+      "fbd35cc00be122197f66bc2d3a6fa7a9d1720931e05927d89b9fcd66d2d2e46a",
+      "a1ed3ed16467893be304e97934c361ede7ee0e4d90724dd3ed86788aff24e98c",
+      "4b9978b3c123e72c3a9db9a547b1948ce6538cb85eb5a3568ad89026d3c14c9a",
+      "e078b5b018eae22f6718b07f2c17bc19a3d8eaadc65f8acdc121b129e0c8bc3e",
+      "697805e108ecf5a2bf0d054f90db5042dcf7415c5916aa6cb14e84fcb00c4f61",
+      "05f0a208ef4e78ea6056718c6ba5619bce43b6a73e2bc89414fb39eff502e65f",
+      "2f18ad4b624fdf824a050e10a2596423776a7da8cf16df4cc7e5db3a78ee6d0e",
+      "f0904831a5d3b554bae9c7896e1bbc7350e7f49dded5f16c9a2672e277dc123f",
+      "be8d30c98d49c89b280b4ec9783558c5de14263d8f115490551c985a5d3e6b71"
+    ]
+  },
+  "none_reasons": [
+    "The perfect oracle saves 24% of logical verifier rows but no target forward launches or draft invocations.",
+    "Per-launch batch membership and padding are absent, so the guaranteed physical row saving is zero.",
+    "Even the optimistic row-proportional H200 service floor misses both the qualified denominator and campaign target.",
+    "Only post-verification acceptance outcomes are retained; no realizable predecision controller state can be fitted or evaluated."
+  ],
+  "observed_distribution": {
+    "accept_histogram_for_accepted_drafts_0_through_3": [
+      469,
+      788,
+      684,
+      1843
+    ],
+    "accepted_drafts": 7685,
+    "accepted_plus_one_target_bonus_tokens": 11469,
+    "all_requests_complete_at_358_returned_tokens": true,
+    "completion_cap_surplus_tokens": 13,
+    "proposed_drafts": 11352,
+    "returned_completion_tokens": 11456,
+    "verify_cycles": 3784
+  },
+  "pass": true,
+  "perfect_predecision_oracle": {
+    "accepted_draft_tokens": 7685,
+    "admitted_paired_launches_after_warmup": 277,
+    "avoided_unpadded_verified_target_rows": 3667,
+    "depth_histogram_1_through_4": [
+      469,
+      788,
+      684,
+      1843
+    ],
+    "guaranteed_padding_aware_verified_row_reduction": 0,
+    "launch_reduction": 0,
+    "logical_verified_row_reduction_fraction": 0.24227008456659618,
+    "paired_batched_draft_and_target_launches_including_cold": 278,
+    "policy": "For an event with k accepted drafts, choose verification depth k+1. This preserves the accepted prefix and one target bonus while avoiding only rows strictly after the first rejected draft.",
+    "proposed_draft_rows_held_fixed": 11352,
+    "request_completion_preserved": true,
+    "request_cycle_draft_invocations": 3784,
+    "unpadded_verified_target_rows": 11469
+  },
+  "promotion": false,
+  "realizability": {
+    "additional_scheduler_state_needed": [
+      "request slot and sequence position",
+      "active batch membership",
+      "CUDA-graph bucket and padding layout"
+    ],
+    "present_in_bound_telemetry": false,
+    "smallest_missing_predecision_observable": "A calibrated per-request upper bound on accepted draft-prefix length available before TARGET_VERIFY row scheduling.",
+    "source_level_candidate": {
+      "intervention": "Predict a depth vector from draft-side confidence, then bucket or compact requests by chosen depth before constructing TARGET_VERIFY rows.",
+      "location": "DFlashWorkerV2.forward_batch_generation before target_worker.forward",
+      "reason": "The perfect-information ceiling is already noncompetitive, and the retained telemetry contains no predecision predictor features.",
+      "status": "not_admitted"
+    }
+  },
+  "result": "none",
+  "schema_version": 1,
+  "scope": {
+    "accelerator": "nvidia-h200-sxm",
+    "arm": "dflash-depth4-c32",
+    "concurrency": 32,
+    "draft_model": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+    "gpu_claimed": false,
+    "network_or_endpoint_contacted": false,
+    "paid_provider_mutation": false,
+    "request_25_replayed": false,
+    "target_model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+  }
+}

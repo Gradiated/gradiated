@@ -1,0 +1,43 @@
+{
+  "candidate_sha256": "e5ee42dee9793df30ebe62683231da65efd9e8398fbaf935c026af35c3369708",
+  "gap_signature": {
+    "decode_end_ns": 23955636925,
+    "decode_scheduler_gap_ns": 766971497,
+    "decode_start_ns": 8009089081,
+    "signature": {
+      "consumer": {
+        "block_x": 128,
+        "grid_x": 1,
+        "short_name": "vectorized_elementwise_kernel"
+      },
+      "count": 714,
+      "mapping": "Source-backed and geometry-correlated: overlap-mode ScheduleBatch.prepare_for_decode emits two c32 length-vector adds after req_to_token publication once per steady decode step.",
+      "median_capped_overlap_ns": 15284380,
+      "median_ns": 26814,
+      "predecessor": {
+        "block_x": 128,
+        "grid_x": 1,
+        "short_name": "vectorized_elementwise_kernel"
+      },
+      "raw_overlap_ns": 616051878,
+      "uncertainty": "Kernel short names are not source symbols. The raw overlap has long cross-stream outliers, so the bound uses per-gap median capping and then a 50% realization haircut."
+    },
+    "signature_stream": 37
+  },
+  "installation": {
+    "candidate_copy_sha256": "e5ee42dee9793df30ebe62683231da65efd9e8398fbaf935c026af35c3369708",
+    "claims": {
+      "allocator_decision_retained": true,
+      "candidate_imported": true,
+      "candidate_module_materialized": true,
+      "publication_deferred_only_on_candidate": true,
+      "stock_fallback_retained": true
+    },
+    "passed": true,
+    "patched_common_sha256": "56a704c57cdd019893efcb962eb6f5bca806f16a3ac6fea5459d4febf68d6a2c",
+    "patched_schedule_batch_sha256": "3eafc5d63b82086f6ac39968b1f872eb97656a14d5f8ff6b55df287e509f9062"
+  },
+  "passed": true,
+  "schema_version": 1,
+  "terminal_sha256": "13cd63fa2937ea1fdd3af741a63ea18c5517bdb0d922a7df786e0d0d8fbafd83"
+}

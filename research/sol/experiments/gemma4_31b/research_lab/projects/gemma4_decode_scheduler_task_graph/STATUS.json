@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_decode_scheduler_task_graph",
+  "status": "complete",
+  "priority": 9765,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.0,
+  "active_session": null,
+  "summary": "Offline terminal complete. The selected one-step decode metadata task keeps host KV-slot allocation authoritative and fuses req_to_token publication plus int64/int32 length advances into one c32 Triton CTA. Source installation passed against the observed retained v0.5.13 source. The conservative locked-request bound is only 0.038202%, and even ideal removal of the full measured decode scheduler gap cannot reach 0.500119282 s/request. No GPU, SSH, endpoint, checkpoint, or provider action occurred.",
+  "next_action": "Do not claim the hybrid bench. If the director later admits this stackable small-bound component after the current owner releases, materialize these exact project bytes and run only the hash-bound H200 command in DECODE_SCHEDULER_TASK_GRAPH_OFFLINE_TERMINAL.json. Require exact 1/31/32-row mapping, length, immediate-consumer, and ownership checks plus a positive 32x358 warm component median before any endpoint integration.",
+  "result": {
+    "classification": "source_complete_positive_small_bound_requires_exact_h200_component",
+    "terminal": "DECODE_SCHEDULER_TASK_GRAPH_OFFLINE_TERMINAL.json",
+    "terminal_sha256": "13cd63fa2937ea1fdd3af741a63ea18c5517bdb0d922a7df786e0d0d8fbafd83",
+    "candidate_source_sha256": "e5ee42dee9793df30ebe62683231da65efd9e8398fbaf935c026af35c3369708",
+    "predicted_absolute_reduction_seconds_per_request": 0.0002388184375,
+    "locked_reanchored_candidate_bound_seconds_per_request": 0.624910283531245,
+    "locked_target_seconds_per_request": 0.500119281574996,
+    "target_reached_by_candidate_alone": false,
+    "h200_consumer_type": "command",
+    "gpu_used": false,
+    "provider_or_remote_access_used": false,
+    "checkpoint_shards_read_or_copied": false
+  }
+}

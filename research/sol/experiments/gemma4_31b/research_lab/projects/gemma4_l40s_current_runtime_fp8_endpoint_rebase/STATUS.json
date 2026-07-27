@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_l40s_current_runtime_fp8_endpoint_rebase",
+  "status": "complete",
+  "priority": 9790,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 0.59,
+  "actual_spend_usd": 0.0,
+  "active_session": null,
+  "summary": "Typed none: current official SGLang commit c6a6200a supports the exact SM89 dynamic-FP8/E5M2 producer/consumer path, but an optimistic exact-c32 lower bound already needs 47.450096 GiB versus 44.988281 GiB exposed on L40S before scales, norms, multimodal weights, graphs, workspace, CUDA context, fragmentation, or allocator reserve.",
+  "next_action": "Close this direct L40S dynamic-FP8/E5M2 c32 lane. Do not create or claim a provider resource, do not spend the reserved $0.59, and do not reopen the prior L40S, W4, AWQ, or QServe arms.",
+  "terminal_artifact": "L40S_CURRENT_RUNTIME_FP8_REBASE_OFFLINE_TERMINAL.json",
+  "terminal_sha256": "f7a7960ae8f07f22eea2eaa2e6e77d96692351c18542e471a6cf46e07bb076f5",
+  "wall_clock_budget": "90 minutes for the offline cycle; any later provider lifecycle is hard-capped at 40 minutes",
+  "local_cpu_budget": "3 CPU-hours",
+  "storage_budget": "3 GiB of new non-checkpoint artifacts",
+  "provider_mutation": "prohibited_until_later_director_observes_exact_reservation_and_positive_terminal",
+  "gpu_claim_allowed": false,
+  "completed_at_utc": "2026-07-27T05:11:33Z",
+  "decision": "none",
+  "terminal_classification": "offline_structural_negative_exact_c32_single_l40s_memory_fit"
+}

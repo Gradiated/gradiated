@@ -66,3 +66,12 @@ complete bound, and one real H200 consumer command or typed `none`. A
 source-complete candidate with a positive bound becomes eligible for one
 later exact component measurement; otherwise this task-graph realization
 closes and the next independent mechanism must change abstraction level.
+
+## Director H200 continuation — 2026-07-27
+
+The source-complete positive terminal is admitted for one checkpoint-free H200
+component measurement under
+`DIRECTOR_DECODE_SCHEDULER_H200_COMPONENT_REQUEST_20260727T0323Z.json`.
+Implement only the cold-bench durable owner named there; do not claim, contact
+the provider, or run CUDA until the exact reservation and a later live-bench
+binding are durable. The component remains the same scientific question.

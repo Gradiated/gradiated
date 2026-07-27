@@ -36,3 +36,22 @@ is `DECODE_SCHEDULER_TASK_GRAPH_OFFLINE_TERMINAL.json`; no GPU, SSH, endpoint,
 checkpoint shard, or provider action occurred. A later authorized H200
 component should run only the terminal's hash-bound command and reject on any
 mapping/length/ownership mismatch or non-positive warm median.
+
+## 2026-07-27 — cold H200 component owner
+
+Action: Implemented `run_h200_decode_scheduler_component_owner.py` and bound
+it to the admitted request, offline terminal, pinned SGLang image, and the
+terminal's exact H200 command. It atomically claims only a later director-bound
+bench, heartbeats the same claim, stages a small read-only project packet,
+pulls the pinned image, retrieves `TERMINAL.json` and `INVOCATION_STATE.json`,
+releases with `--expected-claimed-at`, and retains ordinary pre-science defects
+through the shared hash-bound repair handshake.
+
+Evidence: `--offline-check` passed Python compilation, AST parsing, request and
+source digests, exact-command binding, no-checkpoint policy, image digest, and
+the shared durable-owner/repair tools. `DECODE_SCHEDULER_H200_OWNER_READY.json`
+records all direct hashes and command graph. No inventory mutation, SSH,
+provider API, CUDA, endpoint, or checkpoint action occurred.
+
+Next: Wait for a director-created, registered live H200 binding; this readiness
+artifact is not a scientific result and does not authorize a claim.

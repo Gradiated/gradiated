@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_attained_service_graph_batching",
+  "status": "complete",
+  "priority": 9770,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.0,
+  "active_session": null,
+  "summary": "Zero-spend typed negative. A source-complete least-attained-service policy is wired from SGLang SchedulePolicy through CudaGraphRunner.replay_prepare with an exact FIFO comparator and fixed graph observer. All 32 bound arrivals are simultaneous, every request has 4,214 prompt tokens and a forced 358-token completion, and all attained-service keys are tied, so candidate order equals FIFO and the causal deltas are exactly zero padded row-steps, graph transitions, and scheduler/graph operations removed.",
+  "next_action": "Terminal: close observable attained-service graph batching for this exact c32 trace. Reopen only for a new content-addressed workload with heterogeneous admissible arrivals or realized completions; do not run an H200 consumer for the current symmetry-proven negative.",
+  "decision": "typed_negative_simultaneous_homogeneous_c32_fifo_parity_no_causal_graph_change",
+  "terminal_artifact": "ATTAINED_SERVICE_GRAPH_BATCHING_OFFLINE_TERMINAL.json",
+  "terminal_sha256": "e9564f7fe8ad570a706f150e645885984117adee42b43742096a6baf2df0b0e4"
+}

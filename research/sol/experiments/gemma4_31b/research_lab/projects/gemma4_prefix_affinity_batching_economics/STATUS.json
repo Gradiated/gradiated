@@ -1,0 +1,26 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "decision": "typed_negative_no_additional_exact_prefix_reuse",
+  "id": "gemma4_prefix_affinity_batching_economics",
+  "next_action": "Terminal: close prefix-affinity batching for this exact c32 workload and redirect the independent lane. Reopen only with a new content-addressed workload containing additional repeated prefix identity; do not run an exact-runtime arm for the current trace.",
+  "priority": 9770,
+  "researcher_profile": "deep",
+  "result": {
+    "additional_reusable_tokens_under_reordering": 0,
+    "all_request_token_lcp_tokens": 535,
+    "exact_runtime_consumer_type": "none",
+    "fifo_parity": true,
+    "gpu_or_provider_used": false,
+    "oracle_cost_reduction_fraction": 0.0,
+    "qualified_cached_prompt_tokens": 17120,
+    "qualified_fresh_prompt_tokens": 117728,
+    "terminal": "PREFIX_AFFINITY_BATCHING_OFFLINE_TERMINAL.json",
+    "terminal_sha256": "9c074b1b482ab55b1c2814fc3d98e86ecbf7efc42bde5323e8144aa3d1f4f9bb"
+  },
+  "schema_version": 1,
+  "status": "complete",
+  "summary": "Zero-spend typed negative. All 32 exact prompts share only the already-realized 535-token prefix and diverge immediately into unique branches; measured cache tokens equal the 17,120-token warm-state oracle. The deterministic 50 ms affinity policy has FIFO parity, zero incremental hits, zero cost reduction, and no finite within-window break-even rate."
+}

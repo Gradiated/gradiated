@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_l40s_local_kv4_outlier_codesign",
+  "status": "complete",
+  "priority": 9790,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 0.59,
+  "actual_spend_usd": 0.0,
+  "active_session": null,
+  "summary": "Typed none on complete memory fit. The source-complete local D256 G64 KV4+4xE5M2 producer/fused consumer is numerically promising in the checkpoint-free oracle (complete-output relative L2 0.707343 base-only to 0.056208 corrected; cosine 0.998419), but the unchanged 0.85 static-memory contract is short by at least 4,017,448,756 bytes before omitted checkpoint tensors or FP8 scales.",
+  "next_action": "Close this representation and release the unspent reservation intent; request no L40S component or provider mutation. A successor requires an explicit director-approved memory-reserve contract change or another independent resident-byte reduction; do not replay this packet.",
+  "terminal_artifact": "L40S_LOCAL_KV4_OUTLIER_OFFLINE_TERMINAL.json",
+  "terminal_sha256": "c0a732ef5cf42cb5744a19afab0fe2734ad37cbd5d720ebcc4a16e02a856cfc2",
+  "wall_clock_budget": "90 minutes",
+  "local_cpu_budget": "4 CPU-hours",
+  "storage_budget": "3 GiB of new non-checkpoint artifacts",
+  "provider_mutation": "prohibited",
+  "gpu_claim_allowed": false,
+  "completed_at_utc": "2026-07-27T05:42:18Z",
+  "decision": "none",
+  "terminal_classification": "typed_none_complete_memory_fit"
+}

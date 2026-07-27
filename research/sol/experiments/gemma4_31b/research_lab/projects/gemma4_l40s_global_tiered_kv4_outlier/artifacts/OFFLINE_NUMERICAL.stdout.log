@@ -1,0 +1,277 @@
+{
+  "evidence_label": "measured deterministic synthetic CPU oracle and analytical exact-shape bounds; no checkpoint, CUDA, GPU, provider, or D256 numerical evidence",
+  "full_history": {
+    "complete_output": {
+      "candidate_nonfinite": 0,
+      "cosine": 0.9997437779401068,
+      "max_absolute": 0.009815722703933716,
+      "reference_nonfinite": 0,
+      "relative_l2": 0.0229652493617804
+    },
+    "current_e5m2_comparator": {
+      "candidate_nonfinite": 0,
+      "cosine": 0.9997222233100366,
+      "max_absolute": 0.004937618970870972,
+      "reference_nonfinite": 0,
+      "relative_l2": 0.02356864208968842
+    },
+    "producer": {
+      "k_saturation_count": 120850,
+      "transition_source": "positions 3191 onward pack old rows from decoded E5M2; only positions 3191..3547 are consumed as transitioned old rows at q=4571",
+      "v_saturation_count": 119872,
+      "vectors_per_k_or_v": 18288
+    },
+    "rows": [
+      {
+        "base_only_vs_high_precision": {
+          "candidate_nonfinite": 0,
+          "cosine": 0.97433812575286,
+          "max_absolute": 0.15524891391396523,
+          "reference_nonfinite": 0,
+          "relative_l2": 0.3829291420417066
+        },
+        "corrected_vs_current_e5m2": {
+          "candidate_nonfinite": 0,
+          "cosine": 0.9997128278473585,
+          "max_absolute": 0.00471046706661582,
+          "reference_nonfinite": 0,
+          "relative_l2": 0.023965548996757003
+        },
+        "corrected_vs_high_precision": {
+          "candidate_nonfinite": 0,
+          "cosine": 0.9997398462548659,
+          "max_absolute": 0.00942106544971466,
+          "reference_nonfinite": 0,
+          "relative_l2": 0.023082358389998822
+        },
+        "old_tokens": 3191,
+        "output_elements_consumed": 16384,
+        "query_position": 4214,
+        "recent_tokens": 1024,
+        "transitioned_old_tokens": 0
+      },
+      {
+        "base_only_vs_high_precision": {
+          "candidate_nonfinite": 0,
+          "cosine": 0.9724576188436258,
+          "max_absolute": 0.15781613811850548,
+          "reference_nonfinite": 0,
+          "relative_l2": 0.3909114974002398
+        },
+        "corrected_vs_current_e5m2": {
+          "candidate_nonfinite": 0,
+          "cosine": 0.9997317714180762,
+          "max_absolute": 0.004937618970870972,
+          "reference_nonfinite": 0,
+          "relative_l2": 0.02316399271003029
+        },
+        "corrected_vs_high_precision": {
+          "candidate_nonfinite": 0,
+          "cosine": 0.9997478311278584,
+          "max_absolute": 0.009815722703933716,
+          "reference_nonfinite": 0,
+          "relative_l2": 0.02284725658927566
+        },
+        "old_tokens": 3548,
+        "output_elements_consumed": 16384,
+        "query_position": 4571,
+        "recent_tokens": 1024,
+        "transitioned_old_tokens": 357
+      }
+    ],
+    "shape": {
+      "batch_executed": 1,
+      "full_history_tokens": 4572,
+      "gqa_group": 8,
+      "head_dim": 512,
+      "kv_heads": 4,
+      "page_size": 1,
+      "production_batch": 32,
+      "query_heads": 32
+    }
+  },
+  "memory": {
+    "baseline_global_e5m2_bytes": 5312020480,
+    "bytes_saved_exact_before_rounding": 1589350756,
+    "capacities": {
+      "allocated_recent_rows": 34816,
+      "canonical_physical_rows_with_sentinel": 129688,
+      "old_rows": 96919,
+      "peak_live_physical_rows": 129687,
+      "prefill_spill_rows": 2048,
+      "steady_recent_rows": 32768
+    },
+    "complete_fit": false,
+    "complete_required_interval_bytes": {
+      "lower": 50733917648,
+      "upper": 51701421224
+    },
+    "components_bytes": {
+      "allocator_rounding_interval": {
+        "basis": "four contiguous ten-layer payload allocations plus four metadata allocations, each charged a candidate-adverse 2 MiB",
+        "lower": 0,
+        "upper": 16777216
+      },
+      "candidate_exact_semantic_bytes": 3722669724,
+      "old_and_recent_int32_free_stacks": 526940,
+      "old_kv_payload": 2295041920,
+      "recent_e5m2_kv_payload": 1426063360,
+      "two_int32_physical_directories": 1037504
+    },
+    "evidence": "derived exact representation/geometry bytes plus an explicitly one-sided eight-allocation rounding envelope; inherited non-KV interval is direct-bound",
+    "locked_request_implications": {
+      "maximum_live_requests": 32,
+      "overflow": "fail closed before producer submission if >32 live requests, >2048 current extend tokens, or the exact old/recent free stacks are exhausted",
+      "prefill": "the recent arena reserves the frozen chunked-prefill-size=2048 in addition to 32 locked 1024-token tails",
+      "recycling": "a physical id and its compact old/recent locations remain leased until the existing full allocator releases that id; directory generation must be cleared before reuse",
+      "request_rows": "canonical ReqToTokenPool ownership is unchanged; the tier directories are indexed only by canonical full physical ids"
+    },
+    "lower_deficit_reduction_bytes": 1589330276,
+    "lower_deficit_reduction_fraction": 0.39560685711954857,
+    "physical_bytes": 48305799168,
+    "physical_deficit_interval_bytes": {
+      "lower": 2428118480,
+      "upper": 3395622056
+    },
+    "prior_complete_lower_deficit_bytes": 4017448756,
+    "saving_fraction": 0.2991989134800926,
+    "static_allocator_deficit_interval_bytes": {
+      "lower": 2428118480,
+      "upper": 3395622056
+    },
+    "static_allocator_limit_bytes": 41059929292,
+    "static_required_interval_bytes": {
+      "lower": 43488047772,
+      "upper": 44455551348
+    }
+  },
+  "ownership_and_transitions": {
+    "empty_old_tier": true,
+    "first_old_token": true,
+    "padded_negative_page_noop": true,
+    "page_boundary_positions": [
+      0,
+      63,
+      64,
+      1023,
+      1024,
+      4214,
+      4571
+    ],
+    "request_isolation": {
+      "canonical_owner_mismatch_rejected": true,
+      "two_request_output_finite": true
+    },
+    "transition_rows": [
+      {
+        "finite": true,
+        "length": 1023,
+        "old_tokens": 0,
+        "recent_tokens": 1023
+      },
+      {
+        "finite": true,
+        "length": 1024,
+        "old_tokens": 0,
+        "recent_tokens": 1024
+      },
+      {
+        "finite": true,
+        "length": 1025,
+        "old_tokens": 1,
+        "recent_tokens": 1024
+      }
+    ]
+  },
+  "physical": {
+    "decode_c32_one_global_layer_at_peak": {
+      "arithmetic_intensity_useful_flop_per_unique_kv_byte": {
+        "candidate": 26.355524000313206,
+        "current_e5m2": 18.046157286389537
+      },
+      "cta_issued_kv_load_byte_upper": {
+        "candidate": 3223961600,
+        "current_e5m2": 4793040896,
+        "semantics": "source-level upper assuming every query-head CTA reloads its GQA K/V rows from below L2"
+      },
+      "grid_ctas": 1024,
+      "grid_waves_one_cta_per_sm": 7.211267605633803,
+      "old_tokens_per_request": 3547,
+      "outlier_channel_comparisons_upper": 29754392576,
+      "recent_tokens_per_request": 1024,
+      "sequence_tokens_per_request": 4571,
+      "sm89_sms": 142,
+      "unique_physical_kv_read_bytes": {
+        "candidate": 363721920,
+        "current_e5m2": 531197952,
+        "reduction": 167476032,
+        "reduction_fraction": 0.31527989023572134
+      },
+      "useful_attention_flops": 9586081792
+    },
+    "decode_producer_per_layer_per_forward": {
+      "deterministic_residual_selections_per_retiring_vector": 8,
+      "group64_second_max_reductions_per_retiring_vector": 8,
+      "new_recent_e5m2_write_bytes": 131072,
+      "retiring_old_kv4_write_bytes": 75776,
+      "retiring_recent_e5m2_read_bytes": 131072,
+      "retiring_vectors": 256
+    },
+    "physical_hypothesis": {
+      "falsifier": "the real current-runtime E5M2 comparator is no slower than the full candidate producer plus mixed consumer, or compiler metadata shows decision-bearing spills/resource collapse",
+      "hypothesis": "the one-pass mixed consumer trades nibble/outlier instructions for 29.9% fewer unique peak global K/V read bytes and no dequantized intermediate; the exact D512 grid still supplies 7.21 CTA waves",
+      "prediction": "SM89 DRAM bytes fall materially while integer/conversion instructions rise; producer-plus-consumer wins only if 512-thread register pressure does not force spills that erase the byte reduction"
+    },
+    "source_resource_bounds": {
+      "compiled_registers_spills_occupancy": "unmeasured_until_real_sm89_component",
+      "consumer_static_shared_bytes": 2060,
+      "consumer_threads_per_cta": 512,
+      "producer_static_shared_bytes": 7208,
+      "producer_threads_per_cta": 512,
+      "register_thresholds": {
+        "evidence": "analytical from 65536 32-bit registers/SM and 512 threads/CTA; compiled registers and spills are unmeasured",
+        "one_block_per_sm_if_at_most_registers_per_thread": 128,
+        "three_blocks_per_sm_if_at_most_registers_per_thread": 42,
+        "two_blocks_per_sm_if_at_most_registers_per_thread": 64
+      },
+      "shared_memory_limiting": false,
+      "thread_limit_blocks_per_sm_upper": 3
+    }
+  },
+  "schema_version": 1,
+  "seed": 20260727,
+  "vector": {
+    "base_only": {
+      "candidate_nonfinite": 0,
+      "cosine": 0.9999996770310547,
+      "max_absolute": 14.576171875,
+      "reference_nonfinite": 0,
+      "relative_l2": 0.0008037025812580621
+    },
+    "deterministic_bytes": true,
+    "fixture": {
+      "elements": 1048576,
+      "includes": [
+        "zero",
+        "tiny",
+        "alternating_e5m2_extreme",
+        "eight_group_distributed_outliers"
+      ],
+      "kind": "fresh_synthetic_checkpoint_free_bf16_d512",
+      "seed": 20260727,
+      "vectors": 2048
+    },
+    "int4_saturation_count": 16323,
+    "int4_saturation_fraction": 0.015566825866699219,
+    "outlier_indices_unique": true,
+    "outlier_selection_max_channel_count": 257,
+    "outlier_selection_min_channel_count": 0,
+    "residual_corrected": {
+      "candidate_nonfinite": 0,
+      "cosine": 0.9999999964128331,
+      "max_absolute": 1.0,
+      "reference_nonfinite": 0,
+      "relative_l2": 8.470166246986803e-05
+    }
+  }
+}

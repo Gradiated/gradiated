@@ -1,0 +1,47 @@
+{
+  "decision": "ready_for_later_director_binding",
+  "direct_hashes": {
+    "LAUNCH.json": "a48f6910df002c422543089685476fb9af845f957184f326ba0807b58029c1de",
+    "MODEL_CONFIG.json": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "WORKLOAD.json": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d",
+    "exact_c32_consumer.py": "37f6d5be144a909557de6caca6c70c5db1706987a115a6e428fe7acb9e736e6d",
+    "local_kv4_outlier_bindings.cpp": "903ccfd27fb74e21d498aa5c98ce7c179f20e315c4963ab3be1162983aaaebd6",
+    "local_kv4_outlier_cuda.cu": "6d8a84bd5ef5a1fbacbd95a99e1aa7c180b8d39e590ee1fd657d2da51e4e3944",
+    "sglang_local_kv4_outlier.py": "16bd6477f1be675bbae83492f057fcb37496026ebf1d7ab9c43e9193d66b8163"
+  },
+  "fixed_contract": {
+    "concurrency": 32,
+    "lifecycle_seconds": 2400,
+    "mem_fraction_static": "0.953",
+    "model": "google/gemma-4-31B-it",
+    "output_tokens": 358,
+    "prompt_tokens": 4214,
+    "runtime_commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+    "shared_prefix_tokens": 535
+  },
+  "focused_checks": [
+    "owner_and_audit_py_compile",
+    "direct_hashes_match_current_sources",
+    "inherited_c32_launch_is_rewritten_only_to_0.953",
+    "owner_requires_named_bench_project_local_checkpoint_and_explicit_ssh_identity",
+    "owner_contains_expected_claim_heartbeat_release_and_science_marker_paths"
+  ],
+  "kind": "l40s_kv4_outlier_endpoint_owner_ready",
+  "next_action": "A later director may bind a registered identity-verified L40S and project-local checkpoint snapshot, then launch this outer controller through detached-owner --unit-manager pid; no provider mutation is authorized by this artifact.",
+  "owner": {
+    "controller": "/root/workspace/research/factory/tools/detached-owner",
+    "path": "l40s_kv4_endpoint_owner.py",
+    "required_start": "detached-owner start --unit-manager pid --state ABS_OWNER_STATE --log ABS_OWNER_LOG -- python3 ABS_OWNER --bench DIRECTOR_BOUND_BENCH ...",
+    "sha256": "b70597afab14a83448d61cd7fcf3a19040d63d3e7122baa815512ce73290d208",
+    "unit_manager": "pid"
+  },
+  "schema_version": 1,
+  "scope": {
+    "actual_spend_usd": 0.0,
+    "checkpoint_staged": false,
+    "cuda_or_endpoint_invoked": false,
+    "gpu_pool_claimed": false,
+    "provider_api_used": false,
+    "ssh_used": false
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "status": "active",
+  "priority": 9790,
+  "researcher_profile": "execution",
+  "authorized_spend_usd": 0.59,
+  "actual_spend_usd": 0.0,
+  "active_session": null,
+  "summary": "Cold execution owner is ready for the source-complete local KV4-plus-four-outlier representation on one L40S under the sole preregistered 0.953 allocator split. Direct hashes bind the CUDA producer, adapter, exact c32 consumer, workload, model configuration, and rewritten launch; no provider, SSH, checkpoint staging, CUDA, or endpoint operation occurred.",
+  "next_action": "Director must first observe this durable reservation, create and identity-verify one registered L40S bench, and bind an explicit SSH identity plus a project-local immutable checkpoint snapshot. Then launch l40s_kv4_endpoint_owner.py through the shared detached-owner --unit-manager pid controller, recording its emitted unit, pid, and start_ticks in active_session. Do not sweep or change the representation, runtime, exact c32 workload, or --mem-fraction-static 0.953.",
+  "owner_ready_artifact": "L40S_KV4_OUTLIER_ENDPOINT_OWNER_READY.json",
+  "owner_ready_sha256": "7089601a91a1bf1daf28bc87349840ef0d6c718664e28e5e668d018fd4886a3b",
+  "offline_checks": {
+    "owner_and_audit_py_compile": true,
+    "direct_hashes_match_current_sources": true,
+    "fixed_c32_contract": true,
+    "provider_mutation": "prohibited_until_later_director_binding"
+  }
+}

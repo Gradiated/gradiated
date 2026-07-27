@@ -1,0 +1,42 @@
+{
+  "files": {
+    "LAUNCH.json": {
+      "bytes": 1114,
+      "sha256": "826028849c9087b431e8e192df1097c0f68cbac8259521ef7feb0563846a1bce",
+      "source": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_prefill_cuda_graph_padding_rebase/inputs/workload/LAUNCH.json"
+    },
+    "MODEL_CONFIG.json": {
+      "bytes": 4621,
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "source": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_prefill_cuda_graph_padding_rebase/inputs/workload/MODEL_CONFIG.json"
+    },
+    "WORKLOAD.json": {
+      "bytes": 2491,
+      "sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d",
+      "source": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_prefill_cuda_graph_padding_rebase/inputs/workload/WORKLOAD.json"
+    },
+    "exact_c32_consumer.py": {
+      "bytes": 11431,
+      "sha256": "37f6d5be144a909557de6caca6c70c5db1706987a115a6e428fe7acb9e736e6d",
+      "source": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_current_runtime_fp8_endpoint_rebase/exact_c32_consumer.py"
+    },
+    "local_kv4_outlier_bindings.cpp": {
+      "bytes": 608,
+      "sha256": "903ccfd27fb74e21d498aa5c98ce7c179f20e315c4963ab3be1162983aaaebd6",
+      "source": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_local_kv4_outlier_codesign/local_kv4_outlier_bindings.cpp"
+    },
+    "local_kv4_outlier_cuda.cu": {
+      "bytes": 12761,
+      "sha256": "6d8a84bd5ef5a1fbacbd95a99e1aa7c180b8d39e590ee1fd657d2da51e4e3944",
+      "source": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_local_kv4_outlier_codesign/local_kv4_outlier_cuda.cu"
+    },
+    "sglang_local_kv4_outlier.py": {
+      "bytes": 10985,
+      "sha256": "16bd6477f1be675bbae83492f057fcb37496026ebf1d7ab9c43e9193d66b8163",
+      "source": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_local_kv4_outlier_codesign/sglang_local_kv4_outlier.py"
+    }
+  },
+  "fixed_mem_fraction_static": "0.953",
+  "runtime_commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+  "schema_version": 1
+}

@@ -1,0 +1,21 @@
+{
+  "candidate_sample_consumed": false,
+  "classification": "offline_coordinator_dependency_boundary",
+  "cuda_invoked": false,
+  "first_attempt": {
+    "cause": "coordinator Python lacked torch, then numpy",
+    "stage": "fresh selected-source import"
+  },
+  "project_local_cache_cleanup": {
+    "bytes_retained": 0,
+    "measured_size_before_cleanup": "4.5G",
+    "reason": "bounded project-local uv cache exceeded the 2 GiB artifact budget"
+  },
+  "result": "typed_not_executable",
+  "scientific_interpretation": "none",
+  "second_attempt": {
+    "cause": "the selected clean SGLang source snapshot contains the directly bound files but not sglang.srt.utils",
+    "stage": "fresh import with shared cached torch and numpy"
+  },
+  "target_execution_environment": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+}

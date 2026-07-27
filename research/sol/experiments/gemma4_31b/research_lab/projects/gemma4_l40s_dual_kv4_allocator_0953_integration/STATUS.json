@@ -1,0 +1,31 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "authorized_spend_usd": 0.0,
+  "candidate_sample_consumed": false,
+  "complete_physical_margin_interval_bytes": {
+    "lower": 1579875259,
+    "upper": 2547378835
+  },
+  "complete_source_path": true,
+  "conditional_latency_only": true,
+  "dynamic_margin_interval_bytes": {
+    "lower": 0,
+    "upper": 180737540
+  },
+  "gpu_execution_required": false,
+  "id": "gemma4_l40s_dual_kv4_allocator_0953_integration",
+  "memory_fit": true,
+  "next_action": "Import the in-flight local component terminal without replay, run one exact global complete producer-plus-consumer component on SM89, and launch the terminal's single project-local fixed-0.953 c32 command only if the complete symbolic inequality is supported; otherwise record typed none.",
+  "priority": 9765,
+  "researcher_profile": "deep",
+  "static_margin_interval_bytes": {
+    "lower": 1579875259,
+    "upper": 2547378835
+  },
+  "status": "completed",
+  "summary": "Offline terminal: the fixed local/global KV4 composition is source-complete and fits the exact c32 L40S 0.953 split with 1,579,875,259..2,547,378,835 bytes of conservative physical/static margin. Dynamic margin is 0..180,737,540 after adversarially charging all unitemized scheduler/fragmentation state inside the reserve. Eight ownership/reuse checks pass. No latency, endpoint, CUDA, quality, or GPU claim is transferred.",
+  "terminal": "L40S_DUAL_KV4_ALLOCATOR_0953_OFFLINE_TERMINAL.json",
+  "terminal_sha256": "e98777580a46ef458e1ea704ceea6fc827030150fe4efa8e67ef380e99fd0090",
+  "updated_at_utc": "2026-07-27T07:16:50Z"
+}

@@ -1,0 +1,24 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "authorized_spend_usd": 0.0,
+  "decision": {
+    "complete_locked_request_bound_positive": true,
+    "maximum_admissible_rank": 512,
+    "output_error_reduction_fraction": 0.08486876320808967,
+    "projection": "model.language_model.layers.29.mlp.down_proj.weight",
+    "result": "typed_none_insufficient_residual_recovery",
+    "weight_error_reduction_fraction": 0.08435385523598493
+  },
+  "schema_version": 1,
+  "id": "gemma4_h200_2to4_lowrank_residual_recovery",
+  "status": "complete",
+  "priority": 9790,
+  "researcher_profile": "deep",
+  "summary": "Typed none at $0: the closed-form complete H200 boundary admits rank 512 and remains nominally positive (+0.992 us M32, +6.494 us M384; +0.0292% locked-request bound), but the single exact layer-29 down projection recovers only 8.44% of weight error and 8.49% of synthetic M32 output error, failing the pre-payload 25% material-recovery gate. The qualified SGLang image also has no maintained exact sparse-E4M3 plus two-dense-GEMM consumer.",
+  "next_action": "Close this sparse-plus-low-rank residual mechanism. Do not sweep ranks, layers, tensor families, groupings, kernels, or thresholds and do not spend GPU time; choose a materially different recovery information path if the campaign continues.",
+  "terminal_artifact": {
+    "path": "SPARSE_LOWRANK_RESIDUAL_OFFLINE_TERMINAL.json",
+    "sha256": "2d401fd3f6257165b91bf351188266d6a3bd1377ba6f54122c8e4c4d485e6d2b"
+  }
+}

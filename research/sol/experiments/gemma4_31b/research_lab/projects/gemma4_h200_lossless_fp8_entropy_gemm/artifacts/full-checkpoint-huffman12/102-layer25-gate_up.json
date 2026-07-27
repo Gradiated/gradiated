@@ -1,0 +1,66 @@
+{
+  "absmax_bf16_promoted_fp32": 0.435546875,
+  "code": {
+    "code_lengths_sha256": "46c462a680a4fc4c035184c4155f896949f49cdad867c632424af79b03e91211",
+    "decode_table_sha256": "84eeff0771d40787ced7580e729fb62f874cac2e5b2882c23128737d887a8160",
+    "length_histogram": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      2,
+      34,
+      30,
+      20,
+      20,
+      18,
+      20,
+      112
+    ],
+    "maximum_length": 12,
+    "minimum_length": 5,
+    "weighted_payload_bits": 1524056532,
+    "weighted_payload_bits_per_byte": 6.5916261737849435
+  },
+  "consumer_shape_k_n": [
+    5376,
+    43008
+  ],
+  "decode": {
+    "bitwise_equal": true,
+    "decoded_bytes": 231211008,
+    "mismatched_bytes": 0
+  },
+  "elapsed_seconds": 3.3155169379897416,
+  "hashes": {
+    "directory_sha256": "23bc99cb1d0f22cb75e82372233a8f6e10297366d10be7326dbe24c48fb5cb5d",
+    "encoded_module_sha256": "aabf735145cc303501a5d878790a79f03274482c3ee50ef5efa60c4b0c011ec6",
+    "runtime_fp8_sha256": "13ec1b3e48b82fb6251e3c385e980536a9814832481c66dee7278911892e6c56",
+    "tile_order_fp8_sha256": "a3dcb2f92276bfcf992e72b69f88ce5537ab8d7e650ef7aad9dbf29e592d03e2",
+    "tile_storage_sha256": "1be6879dcfa23138f9376ae565dbb4c5a8984e92c705813ecf4ec1f9349501f9"
+  },
+  "kind": "gate_up",
+  "layer": 25,
+  "runtime_fp8_bytes": 231211008,
+  "scale_fp32": 0.0009722028626129031,
+  "source_tensors": [
+    "model.language_model.layers.25.mlp.gate_proj.weight",
+    "model.language_model.layers.25.mlp.up_proj.weight"
+  ],
+  "storage": {
+    "code_lengths_bytes": 256,
+    "compression_ratio": 0.8380277118985615,
+    "decode_table_bytes": 8192,
+    "directory_bytes": 225796,
+    "encoded_bytes": 193761232,
+    "header_bytes": 256,
+    "row_byte_rounding_bits": 6320108,
+    "row_length_bytes": 1806336,
+    "row_payload_bytes": 191297080,
+    "segment_alignment_padding_bytes": 252,
+    "tile_alignment_padding_bytes": 423064,
+    "tile_storage_bytes": 193526480
+  },
+  "tile_count": 56448
+}

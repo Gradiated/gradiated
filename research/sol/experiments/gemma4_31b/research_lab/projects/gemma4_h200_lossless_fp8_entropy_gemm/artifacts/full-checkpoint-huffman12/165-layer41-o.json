@@ -1,0 +1,65 @@
+{
+  "absmax_bf16_promoted_fp32": 0.34375,
+  "code": {
+    "code_lengths_sha256": "31642e66e122128dcd4f51dddd18fdb2b5b1e37c0dd21317d15bc4d53fa0c84d",
+    "decode_table_sha256": "535a086eec79155740e828f88384f0c3afcd788c8a187c93f66549158772606b",
+    "length_histogram": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      2,
+      33,
+      33,
+      18,
+      20,
+      18,
+      20,
+      112
+    ],
+    "maximum_length": 12,
+    "minimum_length": 5,
+    "weighted_payload_bits": 585696936,
+    "weighted_payload_bits_per_byte": 6.649572917393276
+  },
+  "consumer_shape_k_n": [
+    16384,
+    5376
+  ],
+  "decode": {
+    "bitwise_equal": true,
+    "decoded_bytes": 88080384,
+    "mismatched_bytes": 0
+  },
+  "elapsed_seconds": 1.7084971820004284,
+  "hashes": {
+    "directory_sha256": "b54397ff70b7e72546038d597ad947231669e4f4488cc79f890ae809ebf81296",
+    "encoded_module_sha256": "18bbaffeb4c754ee7f14b9fec6f8ebfc24c1a0953fcbeca02b0fbc88bfce94cf",
+    "runtime_fp8_sha256": "bd063df6d83e2b226f100627584ce046565dfa589788dc5f84c7e33e2de5617e",
+    "tile_order_fp8_sha256": "6334e2b5920f7ce294b4d065da965d71d3e2f9d5e6716e8a7bc7afdd2618f8f6",
+    "tile_storage_sha256": "fb8cfe6dfb7132d00a3261dce2ac11f62101774a30646c56fbd815efb11c7fbf"
+  },
+  "kind": "o",
+  "layer": 41,
+  "runtime_fp8_bytes": 88080384,
+  "scale_fp32": 0.0007672990905120969,
+  "source_tensors": [
+    "model.language_model.layers.41.self_attn.o_proj.weight"
+  ],
+  "storage": {
+    "code_lengths_bytes": 256,
+    "compression_ratio": 0.845328376406715,
+    "decode_table_bytes": 8192,
+    "directory_bytes": 86020,
+    "encoded_bytes": 74456848,
+    "header_bytes": 256,
+    "row_byte_rounding_bits": 2407200,
+    "row_length_bytes": 688128,
+    "row_payload_bytes": 73513017,
+    "segment_alignment_padding_bytes": 252,
+    "tile_alignment_padding_bytes": 160727,
+    "tile_storage_bytes": 74361872
+  },
+  "tile_count": 21504
+}

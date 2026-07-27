@@ -1,0 +1,67 @@
+{
+  "absmax_bf16_promoted_fp32": 0.400390625,
+  "code": {
+    "code_lengths_sha256": "621e0c4e45bc23d96bb31a3b47a7aa780d501687bf1fa168d1147cb2cada5f3c",
+    "decode_table_sha256": "6a77dcb7f983428ccb2d3ef420760a6ab3f2c2c11f7d83a11995f50a884894ef",
+    "length_histogram": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      2,
+      36,
+      25,
+      23,
+      17,
+      20,
+      19,
+      114
+    ],
+    "maximum_length": 12,
+    "minimum_length": 5,
+    "weighted_payload_bits": 578120798,
+    "weighted_payload_bits_per_byte": 6.5635590099153065
+  },
+  "consumer_shape_k_n": [
+    5376,
+    16384
+  ],
+  "decode": {
+    "bitwise_equal": true,
+    "decoded_bytes": 88080384,
+    "mismatched_bytes": 0
+  },
+  "elapsed_seconds": 1.6081773350015283,
+  "hashes": {
+    "directory_sha256": "40f7f003a12778bb76f0b5525755a9333ed1ac31a572c67ec17efb2e047be363",
+    "encoded_module_sha256": "c58a37d5d64aff6843e1a9f686a94d30166698fb7ea28d1948dfd572c172f28d",
+    "runtime_fp8_sha256": "ac0040bc8d3a17d7085cb9bbbccfcd946626341ab3f209346f85e2ee3dee7d56",
+    "tile_order_fp8_sha256": "a48b6010af217bd19b95ff8f8ae11832adbefeac20627acc15824215a9a1435e",
+    "tile_storage_sha256": "edff387604a992e1dcdb520c7b1d7dfbeab941d558303e6a2cf8eabb18efa9c1"
+  },
+  "kind": "qkv",
+  "layer": 2,
+  "runtime_fp8_bytes": 88080384,
+  "scale_fp32": 0.0008937290986068547,
+  "source_tensors": [
+    "model.language_model.layers.2.self_attn.q_proj.weight",
+    "model.language_model.layers.2.self_attn.k_proj.weight",
+    "model.language_model.layers.2.self_attn.v_proj.weight"
+  ],
+  "storage": {
+    "code_lengths_bytes": 256,
+    "compression_ratio": 0.8345765613374256,
+    "decode_table_bytes": 8192,
+    "directory_bytes": 86020,
+    "encoded_bytes": 73509824,
+    "header_bytes": 256,
+    "row_byte_rounding_bits": 2408786,
+    "row_length_bytes": 688128,
+    "row_payload_bytes": 72566198,
+    "segment_alignment_padding_bytes": 252,
+    "tile_alignment_padding_bytes": 160522,
+    "tile_storage_bytes": 73414848
+  },
+  "tile_count": 21504
+}

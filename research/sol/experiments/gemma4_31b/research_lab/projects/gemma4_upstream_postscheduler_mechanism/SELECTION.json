@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-27T04:09:00Z",
+  "decision": "select_one_for_exact_offline_activation_falsifier",
+  "selected_candidate": {
+    "name": "prefill_cuda_graph_excess_padding_guard",
+    "primary_source": "https://github.com/sgl-project/sglang/pull/31487",
+    "merge_commit": "6c6175fabd8eac2ac7a66eea36e6b21fc0893a75",
+    "reason": "Unlike the other two candidates, the guard is model-independent and could in principle touch the exact 4,214-token prompt path. Its first decision-bearing consumer is PrefillCudaGraphRunner.can_run_graph; the focused falsifier is whether the locked v0.5.13 runtime and exact launch can enter that consumer."
+  },
+  "rejected_before_implementation": [
+    {
+      "name": "trait_driven_per_token_group_quant",
+      "primary_source": "https://github.com/sgl-project/sglang/pull/30924",
+      "merge_commit": "8bb0d8d005004060cbaa843ae6d6378ea46a9c98",
+      "reason": "The upstream call-site explicitly routes whole-row group quant to the existing sglang_per_token_quant_fp8 kernel. Gemma 4's dense dynamic-FP8 activation path is whole-row, so the new grouped kernel is not its producer."
+    },
+    {
+      "name": "hpc_ops_attention_backend",
+      "primary_source": "https://github.com/sgl-project/sglang/pull/30540",
+      "merge_commit": "0a6d1930c36079dc08aeee6df41be5ebef195f39",
+      "reason": "The backend requires head_dim 128 and rejects sliding-window layers. Exact Gemma 4 uses d256 local, d512 global, 50 sliding-window layers, and 10 full-attention layers."
+    }
+  ],
+  "implementation_boundary": {
+    "producer": "The current-runtime prefill runner derives raw num_tokens from len(forward_batch.input_ids) and pads it to the next configured capture bucket.",
+    "decision_bearing_consumer": "PrefillCudaGraphRunner.can_run_graph compares padded_num_tokens with two times raw num_tokens and selects graph replay or eager forward.",
+    "falsifier": "If the locked SGLang v0.5.13 tree lacks the prefill graph runner/config or the exact launch cannot enable a prefill capture, the selected mechanism removes zero exact-workload work and the project returns typed none."
+  },
+  "constraints": {
+    "candidate_count": 3,
+    "candidate_limit": 3,
+    "gpu_or_cuda_authorized": false,
+    "spend_usd": 0.0
+  }
+}

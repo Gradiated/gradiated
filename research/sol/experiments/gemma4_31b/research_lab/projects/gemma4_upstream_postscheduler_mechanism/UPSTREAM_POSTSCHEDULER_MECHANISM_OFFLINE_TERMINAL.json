@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_upstream_postscheduler_mechanism",
+  "created_at_utc": "2026-07-27T04:13:19Z",
+  "status": "complete",
+  "terminal_type": "typed_none_no_nonduplicate_exact_workload_mechanism",
+  "answer": "No. Exactly three current official SGLang candidates were inspected. The grouped-quant kernel bypasses Gemma 4's whole-row dynamic-FP8 path, HPC-Ops attention rejects Gemma 4's d256/d512 sliding-window geometry, and the selected prefill-graph padding guard is absent from the locked v0.5.13 runtime and exact launch. The selected upstream consumer was executed offline from its exact AST, but it can remove zero work from the locked request.",
+  "scope": {
+    "model": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.13",
+    "sglang_revision": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "target_accelerator": "NVIDIA H200 SXM",
+    "requests": 32,
+    "prompt_tokens_per_request": 4214,
+    "completion_tokens_per_request": 358,
+    "concurrency": 32,
+    "authorized_spend_usd": 0.0,
+    "actual_spend_usd": 0.0,
+    "gpu_claimed_or_used": false,
+    "cuda_run": false,
+    "ssh_provider_or_endpoint_used": false,
+    "checkpoint_shards_read_or_copied": false
+  },
+  "decision_contract": {
+    "claim_tested": "A current official runtime or kernel change exposes one nonduplicate source-complete mechanism that can remove work from the locked Gemma 4 31B c32 producer-to-consumer path without a generic runtime replacement.",
+    "falsifier": "All three bounded candidates either fail the exact producer/geometry contract or require a runtime path absent from the locked source and launch, making their exact activated work zero.",
+    "candidate_limit": 3,
+    "candidates_inspected": 3,
+    "single_candidate_selected_before_implementation": true,
+    "selection_artifact": {
+      "path": "SELECTION.json",
+      "bytes": 2296,
+      "sha256": "ac7f778540e90a29e8a739077a3c62fe008ac6d0b196c1e0d0604a1eec62be9f"
+    }
+  },
+  "primary_sources": [
+    {
+      "candidate": "trait_driven_per_token_group_quant",
+      "scope_label": "current_official_sglang_kernel",
+      "evidence_type": "source_backed_plus_vendor_reported_b200_measurement",
+      "pull_request_url": "https://github.com/sgl-project/sglang/pull/30924",
+      "commit_url": "https://github.com/sgl-project/sglang/commit/8bb0d8d005004060cbaa843ae6d6378ea46a9c98",
+      "revision": "8bb0d8d005004060cbaa843ae6d6378ea46a9c98",
+      "revision_time": "2026-07-22T08:46:52+08:00",
+      "retrieved_at_utc": "2026-07-27T04:06:00Z",
+      "direct_source": {
+        "path": "python/sglang/kernels/ops/quantization/fp8_kernel.py",
+        "bytes": 73503,
+        "sha256": "01c7cb8d085e9137e38b8af5d218aac854028a084cd4ab25dc941678a1bb42e4"
+      },
+      "disposition": "rejected_exact_producer_bypass",
+      "reason": "The merged source routes group_size == x.shape[-1] directly to sglang_per_token_quant_fp8. The exact dense Gemma 4 dynamic-FP8 activation path is whole-row, so the new group kernel is not invoked. The PR's reported B200 grouped/EP-MoE gains do not transfer to H200 or this producer."
+    },
+    {
+      "candidate": "hpc_ops_attention_backend",
+      "scope_label": "current_official_sglang_attention_backend",
+      "evidence_type": "source_backed_plus_vendor_reported_h200_measurement",
+      "pull_request_url": "https://github.com/sgl-project/sglang/pull/30540",
+      "commit_url": "https://github.com/sgl-project/sglang/commit/0a6d1930c36079dc08aeee6df41be5ebef195f39",
+      "revision": "0a6d1930c36079dc08aeee6df41be5ebef195f39",
+      "revision_time": "2026-07-22T22:06:22+08:00",
+      "retrieved_at_utc": "2026-07-27T04:06:00Z",
+      "direct_source": {
+        "path": "python/sglang/srt/layers/attention/hpc_ops_backend.py",
+        "bytes": 27118,
+        "sha256": "18a45f49e25fcdeb86cd9e172b1ca555cc9cf5fae4d2cac9c47c83167059df01"
+      },
+      "disposition": "rejected_exact_geometry_and_semantics",
+      "reason": "The backend requires head_dim 128, page size 64, and no sliding window. Exact Gemma 4 uses d256 local attention, d512 global attention, page size 1, and 50 sliding-window layers. Its FP8 fused producer is wired only for Hunyuan V3. The PR also reports H200 regressions for 4K Qwen c32 and does not support Gemma's geometry."
+    },
+    {
+      "candidate": "prefill_cuda_graph_excess_padding_guard",
+      "scope_label": "current_official_sglang_runtime",
+      "evidence_type": "source_backed_plus_vendor_reported_h200_measurement_plus_synthetic_exact_method_execution",
+      "pull_request_url": "https://github.com/sgl-project/sglang/pull/31487",
+      "commit_url": "https://github.com/sgl-project/sglang/commit/6c6175fabd8eac2ac7a66eea36e6b21fc0893a75",
+      "revision": "6c6175fabd8eac2ac7a66eea36e6b21fc0893a75",
+      "revision_time": "2026-07-18T16:25:30+08:00",
+      "retrieved_at_utc": "2026-07-27T04:06:00Z",
+      "direct_source": {
+        "path": "python/sglang/srt/model_executor/runner/prefill_cuda_graph_runner.py",
+        "bytes": 55257,
+        "sha256": "498711e4b2607c4256d051ce4c9ed2ba5bdf04f6ee91d55c46734ee572876f1e"
+      },
+      "disposition": "selected_then_rejected_absent_locked_consumer",
+      "reason": "The exact upstream can_run_graph method was compiled from the selected source AST and reproduced the 2x padding decision. The locked v0.5.13 tree has neither this runner nor cuda_graph_config.py, and the exact launch has only the legacy decode --cuda-graph-max-bs argument. Activating it would require the excluded generic runtime replacement."
+    }
+  ],
+  "selected_mechanism": {
+    "name": "prefill_cuda_graph_excess_padding_guard",
+    "selection_time_utc": "2026-07-27T04:09:00Z",
+    "producer": {
+      "owner": "PrefillCudaGraphRunner",
+      "symbol": "len(forward_batch.input_ids) followed by _pad_to_bucket(num_tokens, capture_num_tokens)",
+      "output": "raw and padded prefill token counts"
+    },
+    "first_decision_bearing_consumer": {
+      "owner": "PrefillCudaGraphRunner",
+      "symbol": "can_run_graph",
+      "decision": "Reject graph replay when padded_num_tokens > 2 * num_tokens; otherwise allow graph replay."
+    },
+    "correctness_contract": {
+      "semantics": "execution-route preserving",
+      "requirements": [
+        "The eager fallback consumes the same raw ForwardBatch and produces the same logits semantics as graph replay.",
+        "The guard changes only graph eligibility; it does not change token IDs, positions, KV ownership, attention geometry, quantization, or model weights.",
+        "At the 2x boundary graph replay remains eligible; above 2x it is rejected.",
+        "A locked-runtime claim requires the real pinned producer to call this consumer; a source method present only after a runtime rebase receives zero credit."
+      ]
+    },
+    "source_complete_offline_reproducer": {
+      "path": "run_offline_consumer.py",
+      "bytes": 12673,
+      "sha256": "fae79aa6fd61728472f3d6a4e32827167cc8bfe094ac994cb6c399b965b0592b",
+      "execution": "Compiled and invoked the exact selected can_run_graph method body from the merge commit AST, then traced activation against the pinned git tree and exact launch artifact.",
+      "classification": "complete_reproducer_for_typed_inactivation_not_a_locked_runtime_intervention"
+    }
+  },
+  "offline_checks": {
+    "artifact": {
+      "path": "artifacts/OFFLINE_CHECKS.json",
+      "bytes": 4180,
+      "sha256": "1a35a2f465ff9308e4b9df43a0835f3edf57568d71b39cd1448cb8e82c8aed5a"
+    },
+    "passed": true,
+    "checks": {
+      "upstream_reported_3208_to_8192_rejected": true,
+      "boundary_4096_to_8192_accepted": true,
+      "exact_prompt_4214_to_8192_accepted": true,
+      "exact_chunk_2048_to_2048_accepted": true,
+      "group_quant_whole_row_routes_to_existing_per_token_kernel": true,
+      "hpc_ops_rejects_non_128_and_sliding_window": true,
+      "pinned_runtime_has_prefill_consumer": false,
+      "pinned_runtime_has_cuda_graph_config": false,
+      "exact_launch_has_current_cuda_graph_config_arg": false,
+      "exact_activation_possible_without_runtime_replacement": false
+    },
+    "focused_tests": {
+      "command": "python3 -m unittest -v test_offline_consumer.py",
+      "tests_run": 2,
+      "failures": 0,
+      "errors": 0,
+      "test_source": {
+        "path": "test_offline_consumer.py",
+        "bytes": 2350,
+        "sha256": "a6495ae77e025388547537252045fa740b65d32ca3b906dbdb658aa8a209235e"
+      }
+    },
+    "invalid_attempt": {
+      "classification": "local_annotation_binding_defect_no_candidate_sample",
+      "diagnostic": "The first extractor invocation evaluated the upstream ForwardBatch annotation without a binding and exited before the method call.",
+      "causal_amendment": "Bound ForwardBatch to an inert object in the extraction namespace and reran only the invalid offline consumer.",
+      "scientific_result_before_repair": false
+    }
+  },
+  "physical_model": {
+    "upstream_hypothesis": "Avoiding a sparse prefill capture bucket saves the padded-minus-raw full-model token rows when the selected bucket exceeds 2x useful tokens, trading graph launch overhead for exact-shape eager work.",
+    "predicted_counter": "For an activated case, graph replay token rows fall from the selected bucket size to the raw token count and graph replay count decreases by one while eager forward count increases by one.",
+    "exact_locked_activation": false,
+    "exact_locked_changed_token_rows": 0,
+    "exact_locked_changed_device_tasks": 0,
+    "exact_locked_changed_compulsory_bytes": 0,
+    "falsifier_result": "The selected consumer does not exist in the locked runtime and is not enabled by the exact launch, so it cannot change any physical counter on the locked request."
+  },
+  "complete_bound": {
+    "evidence_type": "analytical_structural_zero_with_measured_profile_context",
+    "locked_qualified_seconds_per_request": 0.625149101968745,
+    "locked_target_seconds_per_request": 0.500119281574996,
+    "required_reduction_seconds_per_request": 0.125029820393749,
+    "exact_activated_work_seconds_per_request": 0.0,
+    "exact_reduction_lower_seconds_per_request": 0.0,
+    "exact_reduction_upper_seconds_per_request": 0.0,
+    "exact_candidate_seconds_per_request": 0.625149101968745,
+    "exact_reduction_fraction": 0.0,
+    "target_reached": false,
+    "measured_profile_context": {
+      "prefill_total_seconds_per_32_request_window": 7.092052611,
+      "prefill_total_ceiling_seconds_per_request": 0.22162664409375,
+      "prefill_attention_seconds_per_32_request_window": 3.328239544,
+      "credit_to_candidate_seconds_per_request": 0.0
+    },
+    "uncertainty": "The structural zero is exact for the pinned source and launch. A future current-main endpoint could expose prefill graph padding, but that is a generic runtime-rebase question outside this project and requires fresh source-, workload-, and H200-matched evidence. Vendor measurements from B200, Hunyuan, Qwen, and Kimi do not transfer."
+  },
+  "direct_inputs": {
+    "project": {
+      "path": "PROJECT.md",
+      "bytes": 3548,
+      "sha256": "4b74067cd591362e6eaf100f10d636f4c924fe192e6ee69c817a5f19a29a28f3"
+    },
+    "campaign": {
+      "path": "../../CAMPAIGN.md",
+      "bytes": 27592,
+      "sha256": "8029d46b12cdc994b14dbd20dc8b0fd12ac95ca6b8926324820e4c9d5a8d065b"
+    },
+    "exact_config": {
+      "path": "../gemma4_c32_graph_gap_elision/inputs/bound/config.json",
+      "bytes": 4621,
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    "exact_launch": {
+      "path": "../gemma4_h200_ngram_decode_equivalent_verifier/artifacts/h200-verifier-20260724t103131Z/retrieved/artifacts/control-full-launch.json",
+      "bytes": 1113,
+      "sha256": "a48f6910df002c422543089685476fb9af845f957184f326ba0807b58029c1de"
+    },
+    "qualified_terminal": {
+      "path": "../gemma4_h200_ngram_decode_equivalent_verifier/artifacts/h200-verifier-20260724t103131Z/retrieved/artifacts/candidate-full-c32/TERMINAL.json",
+      "bytes": 22835,
+      "sha256": "7090c0ebb733f5021c464bc55d82fcd68e2abb52b820408c89724d95c03fd9dd"
+    },
+    "attribution": {
+      "path": "../gemma4_h200_dense_fp8_linear_schedule/inputs/evidence/ATTRIBUTION.json",
+      "bytes": 4728,
+      "sha256": "f841db590dbe6f2e6b4fb91048e8132c3807f0321310e1e0b70a3957ac99ab48"
+    }
+  },
+  "h200_consumer": {
+    "type": "none",
+    "command": null,
+    "reason": "No source-compatible H200 command exists for the locked runtime: the selected consumer and its configuration type are absent at v0.5.13. Supplying a current-main command would silently turn this scoped mechanism test into the explicitly excluded generic runtime replacement and would not be a real consumer of the locked source."
+  },
+  "decision": {
+    "positive_terminal": false,
+    "classification": "typed_none_after_three_primary_sources_and_exact_selected_consumer_falsifier",
+    "portfolio_action": "close_this_exact_upstream_postscheduler_screen",
+    "reopen_conditions": [
+      "A new official source revision adds a Gemma-compatible d256/d512 sliding-window H200 operator with a producer present in the locked or explicitly re-admitted runtime.",
+      "The director explicitly admits a current-runtime rebase with a scope-matched H200 endpoint, making prefill graph execution part of the scientific question.",
+      "A new dynamic-FP8 kernel changes the whole-row per-token producer actually used by the dense Gemma path rather than a grouped or MoE-only path."
+    ]
+  }
+}

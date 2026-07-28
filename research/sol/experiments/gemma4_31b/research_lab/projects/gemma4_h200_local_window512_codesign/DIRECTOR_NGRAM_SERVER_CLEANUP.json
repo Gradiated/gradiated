@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "classification": "director_terminal_cross_project_server_cleanup_verified",
+  "completed_at_utc": "2026-07-23T09:00:08Z",
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "provider_instance_id": "computeinstance-e00vhh6h29fj68x91g",
+  "ownership_evidence": {
+    "gpu_pool_claim_before_cleanup": null,
+    "source_project": "gemma4_h200_ngram_production_validation",
+    "source_project_status": "operationally_inconclusive",
+    "ngram_quality_status": "quality_unqualified",
+    "compatible_queued_owner": false,
+    "blocked_project": "gemma4_h200_local_window512_codesign"
+  },
+  "containers": [
+    {
+      "name": "gemma-ngram-pair",
+      "state_before": "running",
+      "image": "lmsysorg/sglang",
+      "gpu_pid_before": 162184,
+      "gpu_memory_mib_before": 124510,
+      "removed": true
+    },
+    {
+      "name": "gemma-ngram-control",
+      "state_before": "exited",
+      "image": "lmsysorg/sglang",
+      "removed": true
+    }
+  ],
+  "verification": {
+    "containers_absent": true,
+    "gpu_compute_processes": 0,
+    "gpu_memory_used_mib": 0,
+    "gpu_utilization_sample_percent": 100,
+    "gpu_utilization_interpretation": "One immediate post-removal utilization sample remained high despite zero compute processes and zero used memory; no waiting or polling was performed.",
+    "resident_checkpoint_preserved": true,
+    "provider_resource_deleted": false
+  },
+  "next_owner": "gemma4_h200_local_window512_codesign"
+}

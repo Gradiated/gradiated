@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_ngram_qlen_mask_target_verify",
+  "result": "repair_v2_frozen_after_measured_v1_consumer_mismatch",
+  "artifacts": "Measured-v1 terminal and valid control are under artifacts/qlen-mask-20260724t161647z/retrieved; frozen repair is FROZEN_PACKET.repair-v2.tar at SHA-256 977d5b5cf7b7d8bdb317beaa2ab67d0b69bcb1e61b499545e8d5a5d0db3a57be.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "runtime": "Pinned SGLang v0.5.13 FP8 plus FP8-E5M2 page-1 KV and NGRAM; image, checkpoint, CUDA graph, JIT, tokenizer, and runtime caches retained.",
+  "conditional_gate": "Measured-v1 eager component and malformed full pair are consumed. Run repair-v2 unified component once; only an exact positive result admits the invalidated candidate endpoint against the persisted control.",
+  "residual_bottleneck": "The actual production extend_attention_fwd_unified suffix-mask addressing is frozen in repair-v2 but has not reached the target GPU.",
+  "gpu_processes": "none",
+  "error": null,
+  "expected_first_arms": "Run only the frozen repair-v2 exact extend_attention_fwd_unified sliding/full component. On an exact positive component, run only the repaired candidate endpoint against the persisted measured-v1 control; do not replay that control or the malformed pair.",
+  "server_state": "Director read-only inspection at 2026-07-24T16:31Z found no running Docker container, no GPU compute process, 0 MiB GPU memory use, 0% utilization, and no REPAIR_READY sentinel. Accelerator is unoccupied and safe to claim."
+}

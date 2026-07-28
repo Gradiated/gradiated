@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "project": "h100_hybrid_attention_kernel_mechanism",
+  "result": "empty_h100_after_unconsumed_runtime_adapter_attempts",
+  "model": "No checkpoint resident or required.",
+  "checkpoint": "None.",
+  "image": "Pinned vLLM Gemma 4 image remains cached.",
+  "runtime": "Pinned vLLM 0.19.1.dev6+g6d4a8e6d2.",
+  "caches": "Container image and staged component source remain on the boot disk.",
+  "server_state": "The latest owner exited, released the claim, and left no experiment container or scientific process.",
+  "scientific_sample_consumed": false,
+  "latest_terminal": "artifacts/h100-paged-fp8-vllm-config-repair-20260726t0749z/H100_PAGED_FP8_EXECUTION_TERMINAL.json",
+  "latest_terminal_sha256": "683e34f9185a103abc6c2f8cb7b117f32fe2f4e4707bd4c3b505d2018ea6657f",
+  "next": "Do not claim or launch this lifecycle again. Complete the pinned runtime adapter offline in the same project and require a new director lifecycle/spend decision before any later GPU measurement."
+}

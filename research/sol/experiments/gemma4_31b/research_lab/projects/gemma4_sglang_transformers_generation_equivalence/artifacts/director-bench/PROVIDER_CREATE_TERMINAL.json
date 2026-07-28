@@ -1,0 +1,23 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "bench_id": "h200-generation-equivalence-e00ms57nn1c4k1cx0k",
+  "classification": "director_owned_h200_bench_created",
+  "deadline_epoch": 1784389542.3939276,
+  "deadline_utc": "2026-07-18T15:45:42.393928Z",
+  "disk_gib": 250,
+  "disk_id": "computedisk-e00z6arpjjmr7vpetr",
+  "disk_name": "gemma-generation-equivalence-h200-20260718t131542z-boot",
+  "hourly_cost_usd": 2.46,
+  "instance_id": "computeinstance-e00ms57nn1c4k1cx0k",
+  "instance_name": "gemma-generation-equivalence-h200-20260718t131542z",
+  "pass": true,
+  "precreate_terminal_sha256": "cfacfe4face877aee54d90bb5a540f71da773a2fea1e8ca0ade16e4cdbc6c94a",
+  "provider": "nebius",
+  "runner_sha256": "80d8b2180bdcae68c16aabf21eef64bbf72b0933964d52ccfc54457b87e800d0",
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-generation-equivalence-h200-20260718t131542z-watchdog.service",
+    "main_pid": 2445112,
+    "unit": "gemma-generation-equivalence-h200-20260718t131542z-watchdog.service",
+    "unit_manager": "user"
+  }
+}

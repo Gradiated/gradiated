@@ -1,0 +1,13 @@
+{
+  "classification": "coherence_negative",
+  "owner_terminal": {
+    "classification": "coherence_negative",
+    "message": "coherence_gate_failed",
+    "schema_version": 1,
+    "status": "terminal",
+    "timestamp_utc": "2026-07-20T01:07:34.971993Z"
+  },
+  "pass": false,
+  "schema_version": 1,
+  "status": "terminal"
+}

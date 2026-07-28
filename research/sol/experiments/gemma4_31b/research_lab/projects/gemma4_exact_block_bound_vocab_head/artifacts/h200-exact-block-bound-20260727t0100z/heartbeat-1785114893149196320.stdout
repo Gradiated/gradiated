@@ -1,0 +1,68 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-27T01:10:22.676483Z",
+    "heartbeat_at": "2026-07-27T01:14:53.196887Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-27T01:32:34.490529Z",
+    "project": "gemma4_exact_block_bound_vocab_head",
+    "stale": false
+  },
+  "contents": {
+    "artifacts": "projects/gemma4_adaptive_retrieval_vocab_head/artifacts/{h200-exact-diverse-c32-capture-owner-e606f47a/EXACT_CAPTURE_TERMINAL.json,h200-diverse-retrieval-score-20260727t0045z/H200_DIVERSE_RETRIEVAL_SCORE_TERMINAL.json}; projects/gemma4_exact_block_bound_vocab_head/DIRECTOR_EXACT_BLOCK_BOUND_VOCAB_HEAD_ADMISSION_20260727T0055Z.json",
+    "caches": "Preserve checkpoint, pinned image, stopped capture container, frozen 1536-row capture, and scorer artifacts.",
+    "capture": {
+      "capture_rows": 1536,
+      "compact_bundle_sha256": "2aaf188879cdd510aa5b449b5ab9b92a9df3169fddc99484afd7e26b994d5759",
+      "complete_requests": 32,
+      "hidden_states_sha256": "ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54",
+      "hidden_width": 5376,
+      "state": "producer_complete_terminalized"
+    },
+    "checkpoint": "Bench-owned exact eight-file checkpoint at /home/glmrunner/causal-offset-head/checkpoint, normalized manifest digest 864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f.",
+    "director_binding": "gemma4_exact_block_bound_vocab_head/DIRECTOR_EXACT_BLOCK_BOUND_H200_CLAIM_20260727T0100Z.json",
+    "image": "Pinned docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6 is resident.",
+    "model": "google/gemma-4-31B-it revision b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Sole claimant is gemma4_exact_block_bound_vocab_head under the 01:00Z claim binding. Implement the two named files, claim by 01:10Z, run one exact-consumer component invocation, retain across pre-science repair, and release by 01:29Z.",
+    "project": "gemma4_exact_block_bound_vocab_head",
+    "resident_checkpoint": {
+      "absolute_remote_path": "/home/glmrunner/causal-offset-head/checkpoint",
+      "identity": "same eight names, byte counts, and sha256 digests as the active successor manifest",
+      "normalized_manifest_digest": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+      "reuse_policy": "Bind read-only or link/reflink across compatible warm claims; never retransmit matching bytes.",
+      "verified_at_utc": "2026-07-26T23:35:01Z"
+    },
+    "runtime": "Warm Nebius Ubuntu 24.04 CUDA 13 H200; no live server or GPU process.",
+    "schema_version": 1,
+    "scientific_terminal": "One exact block-bound vocabulary-head component remains unconsumed. Approximate coordinate retrieval and capture are consumed; endpoints and checkpoint retransmission are closed.",
+    "server_state": "No live model server or GPU process; stopped capture container retained for provenance and port 30000 is closed."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.4597222,
+  "id": "h200-causal-head-e00b9qw8d6qd7wrjj1",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-27T01:32:34.490529Z",
+    "provider_started_at_utc": "2026-07-26T20:32:34.490529Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-causal-head-h200-20260726t2032z-watchdog.service",
+      "main_pid": 2052617,
+      "unit": "gemma4-causal-head-h200-20260726t2032z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-26T20:38:14.858439Z",
+  "resource": {
+    "disk_id": "computedisk-e00y3ezqfpp4fdnz7h",
+    "disk_name": "gemma4-causal-head-h200-20260726t2032z-boot",
+    "instance_id": "computeinstance-e00b9qw8d6qd7wrjj1",
+    "instance_name": "gemma4-causal-head-h200-20260726t2032z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.112.211",
+    "ssh_ed25519_fingerprint": "SHA256:VmKxKpmKi3uGZuSVw4dM6G/p6vG0xKfk2IiQkxZrFE0",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-27T01:14:53.196887Z"
+}

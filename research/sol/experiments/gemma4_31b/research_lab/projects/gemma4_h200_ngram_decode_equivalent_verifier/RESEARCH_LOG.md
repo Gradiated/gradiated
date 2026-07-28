@@ -58,6 +58,22 @@ The director did not wait for guest readiness or begin setup, CUDA, or a
 scientific arm. Claim this exact bench once and retain the claim through
 ordinary setup, API, runtime, and retrieval repairs; release by `16:45Z`.
 
+## 2026-07-24 — director corrects cumulative token aggregation
+
+The retrieved event streams disprove the apparent c32 token divergence. The
+terminal retained only each request's last scheduler delta: control used
+`50+50+50+50+50+50+50+8` chunks and candidate used `100+258`. Concatenation
+produces 358 identical token IDs; all four rows also have exact normalized
+responses, finish reasons, usage, and request bytes. All 54 target-verification
+events with a defined native shadow are argmax-exact, and four audit records
+prove the candidate path.
+
+Reactivate this same project as `execution` under renewed cumulative `$18`
+authority. Consume `DIRECTOR_TRACE_AGGREGATION_CORRECTION.json`, repair only
+the accumulator, and do not replay the discriminator. On the resident H200,
+run the unconsumed ten-row exact suite and one matched c32 pair with the
+unchanged intervention and original exactness/latency gates.
+
 ## 2026-07-24 — measured discriminator rejects decode-equivalent LM head
 
 Question: does request-major, draft-depth-sliced tied-LM-head projection make
@@ -93,3 +109,34 @@ argmax-equivalent projection and lies elsewhere in the bound verifier path;
 project-specific provider interval `09:27:00Z`–`10:10:11.413128Z`, including
 provisioning, setup, the non-scientific integration repair, execution,
 retrieval, and resident-metadata handoff.
+
+## 2026-07-24 — corrected exact suite and matched c32 pair reject the candidate
+
+Question: after reconstructing every scheduler-to-detokenizer delta, does the
+unchanged decode-equivalent verifier pass the unconsumed ten-row token/tool
+suite and matched c32 pair?
+
+Action: consumed `DIRECTOR_TRACE_AGGREGATION_CORRECTION.json` without
+replaying the four-row discriminator. The consumer now concatenates each
+request's scheduler deltas. A control c32 producer completed and was persisted
+before a consumer filter mistakenly included its one-token warmup; the repair
+imported that durable producer and ran only the unstarted candidate. The full
+candidate path emitted five decode-equivalent audit records. Both c32 arms
+completed 32/32; cumulative SSE token IDs, finish reasons, and accounting were
+exact. Control service was `0.8461756136 s/request`; candidate service was
+`0.6251491020 s/request`, below the `0.6381105231` gate.
+
+Evidence: the terminal at
+`artifacts/h200-verifier-20260724t103131Z/TERMINAL.json` has SHA-256
+`ccb15cd9ef5d85ce0791bf3aab417fd5d976e3bda7b5f78c13a6039e90d72e71`.
+The ten-row suite is not exact: `single_tool` has 24 control IDs versus 41
+candidate IDs and different completion usage, even though its normalized
+tool-call semantics match. The c32 trace's final parser field reflects final
+transport chunking; cumulative scheduler/emitted IDs and SSE content remain
+exact.
+
+Decision: reject this one LM-head decode-shape intervention. The candidate arm
+is consumed; do not replay it. The bench was released ready at `10:35:03Z`
+with its checkpoint and image resident. Conservative total assigned exposure,
+including all earlier attempts, the repaired continuation, and final resident
+metadata handoff, is `$2.93`.

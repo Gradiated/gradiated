@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/ngram_readmission_controller.py"
+  ],
+  "cwd": "/root/workspace",
+  "launched_at_utc": "2026-07-26T02:24:29.318068Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/ngram-readmission-20260726t0218z-r4-cached-restart/controller.log",
+  "pid": 1473608,
+  "start_ticks": 114868672,
+  "unit_manager": "pid"
+}

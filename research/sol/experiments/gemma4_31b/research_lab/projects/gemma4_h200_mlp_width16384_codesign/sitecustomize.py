@@ -7,6 +7,7 @@ import pathlib
 
 
 SOURCE = pathlib.Path("/sgl-workspace/sglang/python/sglang/srt/models/gemma4_causal.py")
+MM_SOURCE = pathlib.Path("/sgl-workspace/sglang/python/sglang/srt/models/gemma4_mm.py")
 PRISTINE_SHA256 = "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989"
 WIDTH_OLD = """        layer_intermediate_size = config.intermediate_size * (
             2 if use_double_wide_mlp else 1
@@ -55,6 +56,48 @@ LOADER_NEW = """        loaded_params: Set[str] = set()
                     }, sort_keys=True) + "\\n")
                     width_audit.flush()
 """
+MM_LOADER_OLD = """        loaded_params: Set[str] = set()
+
+        for name, loaded_weight in weights:
+"""
+MM_LOADER_NEW = """        loaded_params: Set[str] = set()
+        width_selection = None
+        width_audit = None
+        import os
+        if os.environ.get("MLP_WIDTH16384_ARM") == "candidate":
+            import json
+            selection_path = os.environ["MLP_WIDTH16384_SELECTION"]
+            width_selection = {
+                int(row["layer"]): torch.tensor(row["indices"], dtype=torch.long)
+                for row in json.load(open(selection_path))["layers"]
+            }
+            if len(width_selection) != 60:
+                raise RuntimeError("frozen MLP selection layer count mismatch")
+            width_audit = open(os.environ["MLP_WIDTH16384_AUDIT"], "a")
+
+        for name, loaded_weight in weights:
+"""
+MM_NAME_OLD = """            name = re.sub(r"^model\\.", "", name)
+"""
+MM_NAME_NEW = """            name = re.sub(r"^model\\.", "", name)
+            if width_selection is not None:
+                width_match = re.search(r"^language_model\\.layers\\.(\\d+)\\.mlp\\.(gate_proj|up_proj|down_proj)\\.weight$", name)
+                if width_match:
+                    width_layer = int(width_match.group(1))
+                    width_projection = width_match.group(2)
+                    width_indices = width_selection[width_layer]
+                    width_source_shape = list(loaded_weight.shape)
+                    width_dim = 1 if width_projection == "down_proj" else 0
+                    loaded_weight = loaded_weight.index_select(width_dim, width_indices)
+                    width_audit.write(json.dumps({
+                        "layer": width_layer,
+                        "projection": width_projection,
+                        "source_shape": width_source_shape,
+                        "candidate_shape": list(loaded_weight.shape),
+                        "indices_count": int(width_indices.numel()),
+                    }, sort_keys=True) + "\\n")
+                    width_audit.flush()
+"""
 
 
 def install_qkv_and_frontier() -> None:
@@ -87,12 +130,18 @@ def install_qkv_and_frontier() -> None:
 
 def install_width() -> None:
     text = SOURCE.read_text()
-    if text.count(WIDTH_OLD) != 1 or text.count(LOADER_OLD) != 1:
-        raise RuntimeError("frozen MLP patch target is not unique")
-    text = text.replace(WIDTH_OLD, WIDTH_NEW).replace(LOADER_OLD, LOADER_NEW)
-    if "import os" not in text.splitlines()[:30]:
-        text = text.replace("import logging\n", "import logging\nimport os\n")
-    SOURCE.write_text(text)
+    if WIDTH_NEW not in text or LOADER_NEW not in text:
+        if text.count(WIDTH_OLD) != 1 or text.count(LOADER_OLD) != 1:
+            raise RuntimeError("frozen MLP text loader target is not unique")
+        text = text.replace(WIDTH_OLD, WIDTH_NEW).replace(LOADER_OLD, LOADER_NEW)
+        if "import os" not in text.splitlines()[:30]:
+            text = text.replace("import logging\n", "import logging\nimport os\n")
+        SOURCE.write_text(text)
+    mm_text = MM_SOURCE.read_text()
+    if MM_LOADER_NEW not in mm_text or MM_NAME_NEW not in mm_text:
+        if mm_text.count(MM_LOADER_OLD) != 1 or mm_text.count(MM_NAME_OLD) != 1:
+            raise RuntimeError("frozen MLP multimodal loader target is not unique")
+        MM_SOURCE.write_text(mm_text.replace(MM_LOADER_OLD, MM_LOADER_NEW).replace(MM_NAME_OLD, MM_NAME_NEW))
 
 
 if os.environ.get("STACKED_FRONTIER_ARM") == "candidate":

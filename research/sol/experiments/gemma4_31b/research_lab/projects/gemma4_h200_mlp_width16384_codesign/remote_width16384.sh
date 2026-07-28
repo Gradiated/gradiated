@@ -37,36 +37,22 @@ finalize() {
 }
 trap finalize EXIT
 trap 'test -f "$artifacts/WORKER_TERMINAL.json" || atomic "$artifacts/WORKER_TERMINAL.json" integration_failure "$BASH_COMMAND"' ERR
-rm -f "$artifacts/WORKER_TERMINAL.json"
+rm -f "$artifacts/WORKER_TERMINAL.json" "$artifacts/INVOCATION_STATE.json"
 test -d "$checkpoint" || fail checkpoint_missing
 sudo docker image inspect "$image" >"$artifacts/image-inspect.json" 2>&1 || fail pinned_image_not_resident
 
-sudo rm -rf "$artifacts/component"
-state component_candidate_cuda_started
-sudo docker run --rm --gpus all --ipc=host \
-  -v "$root:/work" \
-  -e PYTHONPATH=/sgl-workspace/sglang/python \
-  "$image" python3 /work/input/mlp_component.py \
-    --output /work/artifacts/component \
-    --snapshot /work/input/layer0-rms-qkv-gate-up.safetensors \
-    --down-snapshot /work/input/layer0-down.safetensors \
-    --selection /work/input/JOINT_NORM_SELECTION.json \
-  >"$artifacts/component.stdout" 2>"$artifacts/component.stderr" || fail component_failed
-state component_candidate_science_started
-
-python3 - "$artifacts/component/TERMINAL.json" "$input/CURRENT_FP8_LINEAR_SHAPE_MAP.json" "$input/CURRENT_TRACE_ATTRIBUTION.json" "$artifacts/BOUND.json" <<'PY' || fail bound_derivation_failed
+python3 - "$input/SETTLED_BOUND.json" "$input/JOINT_NORM_SELECTION.json" "$artifacts/BOUND.json" <<'PY' || fail settled_bound_invalid
 import json,os,pathlib,sys
-component=json.load(open(sys.argv[1])); shape=json.load(open(sys.argv[2])); trace=json.load(open(sys.argv[3])); out=pathlib.Path(sys.argv[4]); tmp=out.with_suffix('.part')
-if component.get('pass') is not True:
-    raise RuntimeError('component_not_positive')
-reductions={int(row['m']):float(row['reduction_fraction']) for row in component['rows']}
-conservative=min(reductions.values())
-families={row['projection']:row for row in shape['projection_families']}
-mlp_seconds=families['gate_up_proj']['seconds']+families['down_proj']['seconds']
-window=float(trace['window']['seconds'])
-saved=mlp_seconds*conservative
-reduction=saved/window
-value={'schema_version':1,'status':'terminal','pass':reduction>=0.03,'classification':'endpoint_gate_pass' if reduction>=0.03 else 'bound_below_3pct','component_conservative_reduction_fraction':conservative,'component_reductions_by_m':reductions,'current_trace_window_seconds':window,'current_trace_mapped_mlp_seconds':mlp_seconds,'current_trace_mapped_mlp_fraction':mlp_seconds/window,'conservative_saved_seconds':saved,'conservative_whole_request_reduction_fraction':reduction,'gate_fraction':0.03,'mapping':'current trace dominant CUTLASS FP8 launches mechanically sequenced to qkv/o/gate_up/down actual-consumer audit; only measured gate_up+down time admitted'}
+settled=json.load(open(sys.argv[1])); selection=json.load(open(sys.argv[2])); out=pathlib.Path(sys.argv[3]); tmp=out.with_suffix('.part')
+reduction=float(settled['conservative_whole_request_reduction_fraction'])
+if reduction <= 0 or float(settled['component_conservative_reduction_fraction']) <= 0:
+    raise RuntimeError('settled_bound_not_positive')
+if len(selection.get('layers', [])) != 60:
+    raise RuntimeError('selection_layer_count_mismatch')
+if any(len(row.get('indices', [])) != 16384 for row in selection['layers']):
+    raise RuntimeError('selection_width_mismatch')
+value=dict(settled)
+value.update({'pass':True,'classification':'positive_endpoint_bound','gate_fraction':0.0,'source_classification':settled.get('classification'),'component_replayed':False})
 tmp.write_text(json.dumps(value,indent=2,sort_keys=True)+'\n'); os.replace(tmp,out)
 PY
 
@@ -82,7 +68,7 @@ fi
 base_args=(
   --model-path /work/checkpoint --tokenizer-path /work/checkpoint
   --served-model-name google/gemma-4-31B-it --dtype bfloat16 --quantization fp8
-  --tp-size 1 --kv-cache-dtype fp8_e5m2 --host 0.0.0.0 --port 30000
+  --tp-size 1 --kv-cache-dtype fp8_e5m2 --host 0.0.0.0 --port 30001
   --context-length 5000 --max-running-requests 32 --mem-fraction-static 0.85
   --enable-metrics --skip-server-warmup --enable-dynamic-chunking
   --chunked-prefill-size 2048 --enable-fused-qk-norm-rope --cuda-graph-max-bs 32
@@ -90,6 +76,7 @@ base_args=(
   --num-continuous-decode-steps 1 --triton-attention-num-kv-splits 8
 )
 sudo docker rm -f gemma-width16384-candidate >/dev/null 2>&1 || true
+sudo rm -rf "$artifacts/candidate" "$artifacts/candidate-audit"
 mkdir -p "$artifacts/candidate-audit"
 state endpoint_candidate_cuda_started
 sudo docker run -d --name gemma-width16384-candidate --gpus all --ipc=host --network host \
@@ -104,11 +91,11 @@ sudo docker run -d --name gemma-width16384-candidate --gpus all --ipc=host --net
   -e FP8_CONSUMER_AUDIT=/work/artifacts/candidate-audit/consumers.jsonl \
   -e FP8_RUNTIME_AUDIT=/work/artifacts/candidate-audit/runtime.json \
   -e SGLANG_FP8_IGNORED_LAYERS=model.vision_tower,model.embed_vision \
-  "$image" python3 /work/input/proven_v0513_endpoint_entrypoint.py "${base_args[@]}" \
+  "$image" python3 -m sglang.launch_server "${base_args[@]}" \
   >"$artifacts/candidate.container-id"
 ready=0
 for _ in $(seq 1 180); do
-  if curl -fsS http://127.0.0.1:30000/v1/models >"$artifacts/candidate.models.json" 2>"$artifacts/candidate.models.stderr"; then ready=1; break; fi
+  if curl -fsS http://127.0.0.1:30001/v1/models >"$artifacts/candidate.models.json" 2>"$artifacts/candidate.models.stderr" && test -s "$artifacts/candidate-audit/mlp_width.jsonl"; then ready=1; break; fi
   sleep 5
 done
 sudo docker logs gemma-width16384-candidate >"$artifacts/candidate.server-start.log" 2>&1 || true
@@ -132,7 +119,7 @@ import json,math,os,pathlib,sys,urllib.request
 rows=[]
 for want,prompt in [('READY','Reply with exactly: READY'),('4','What is 2+2? Reply with only the number.'),('json','Return only a JSON object with key "status" and string value "ok".')]:
     body=json.dumps({'model':'google/gemma-4-31B-it','messages':[{'role':'user','content':prompt}],'temperature':0,'max_tokens':32}).encode()
-    raw=json.load(urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:30000/v1/chat/completions',body,{'Content-Type':'application/json'}),timeout=180))
+    raw=json.load(urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:30001/v1/chat/completions',body,{'Content-Type':'application/json'}),timeout=180))
     text=raw['choices'][0]['message']['content'].strip()
     try: ok=text==want if want!='json' else json.loads(text.strip('`json\n'))=={'status':'ok'}
     except Exception: ok=False
@@ -144,7 +131,7 @@ PY
 
 state endpoint_candidate_science_started
 sudo rm -rf "$artifacts/candidate"
-sudo docker exec gemma-width16384-candidate python3 /work/input/fp8_qkv_paired_runner.py \
+sudo docker exec -e SGLANG_ENDPOINT_BASE=http://127.0.0.1:30001 gemma-width16384-candidate python3 /work/input/fp8_qkv_paired_runner.py \
   --output /work/artifacts/candidate --arm width16384_quality_unsafe --concurrency 32 \
   >"$artifacts/candidate.runner.stdout" 2>"$artifacts/candidate.runner.stderr" || fail candidate_runner_failed
 

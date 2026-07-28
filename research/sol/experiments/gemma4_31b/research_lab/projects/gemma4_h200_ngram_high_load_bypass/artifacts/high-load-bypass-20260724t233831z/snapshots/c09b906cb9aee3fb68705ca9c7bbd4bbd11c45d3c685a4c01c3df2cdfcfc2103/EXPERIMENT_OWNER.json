@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "remote_experiment.py"
+  ],
+  "cwd": "/home/glmrunner/gemma4-h200-ngram-high-load-bypass",
+  "launched_at_utc": "2026-07-24T23:38:36.333130Z",
+  "log": "/home/glmrunner/gemma4-h200-ngram-high-load-bypass/EXPERIMENT_OWNER.log",
+  "pid": 198861,
+  "start_ticks": 5102704,
+  "unit_manager": "pid"
+}

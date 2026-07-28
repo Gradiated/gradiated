@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/forward_batch_replacement_owner.py"
+  ],
+  "cwd": "/root/workspace",
+  "launched_at_utc": "2026-07-26T00:55:00.514478Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/forward-batch-replacement-20260726t0054z/controller.log",
+  "pid": 1409548,
+  "start_ticks": 114331791,
+  "unit_manager": "pid"
+}

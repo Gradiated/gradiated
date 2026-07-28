@@ -597,10 +597,12 @@ class ModelConfig:
                 "swa_head_dim": 256,
                 "swa_v_head_dim": 256,
                 "num_key_value_heads": 4,
-                "swa_num_key_value_heads": 16,
             }
-            if observed["head_dim"] not in {256, 512} or observed["v_head_dim"] not in {256, 512} or any(
-                observed[key] != value for key, value in fixed_geometry.items()
+            if (
+                observed["head_dim"] not in {256, 512}
+                or observed["v_head_dim"] not in {256, 512}
+                or any(observed[key] != value for key, value in fixed_geometry.items())
+                or observed["swa_num_key_value_heads"] not in {8, 16}
             ):
                 raise ValueError(f"unbound Gemma 4 global/local attention geometry: {observed}")
             self.hf_text_config.swa_num_key_value_heads = 8

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h100_v0515_ngram_semantic_divergence",
+  "result": "available_for_bound_new_request_native_ngram_sentinel_aa",
+  "boot_disk_gib": 200,
+  "boot_disk_semantics": "Director-selected risk-reduction geometry; not a measured minimum.",
+  "model": "google/gemma-4-31B-it exact endpoint checkpoint and geometry",
+  "checkpoint": "The exact immutable endpoint checkpoint remains resident; re-hash and reuse it without restaging.",
+  "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+  "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with native NGRAM depth 12.",
+  "caches": "Preserve resident image/CUDA caches, canonical checkpoint and packet, and prior packed-mask evidence. The packed-mask implementation is out of scope for this stock semantic A/A.",
+  "server_state": "The bench is director-verified clean with no endpoint server or material GPU owner. Start only the bound instrumented stock native-NGRAM server and stop or release it according to the typed terminal.",
+  "semantic_result": {
+    "path": "gemma4_h100_v0515_ngram_semantic_divergence/SEMANTIC_DIVERGENCE_RESULT.json",
+    "sha256": "53134acac306b25dcd52fdf7defa5f2c2b929890bf3f23dcd234f532883367d1",
+    "classification": "indeterminate_missing_actual_artifact"
+  },
+  "packed_mask": "single_packed_cpu_full_mask_staging is a measured exact component pass but is forbidden in this semantic-isolation experiment.",
+  "endpoint": "All historical requests 0..790 and the 171-request discriminator are consumed and forbidden to replay. Only new synthetic indices 60000 and 60001 may be submitted.",
+  "filesystem": "After endpoint cleanup /dev/vda1 reported 123387284 KiB available.",
+  "ssh_identity": "Use only /root/.config/nebius/glm-campaign/ssh_ed25519 with glmrunner and the registered known-hosts namespace.",
+  "director_binding": "gemma4_h100_v0515_ngram_semantic_divergence/DIRECTOR_SENTINEL_AA_BINDING.json",
+  "director_binding_sha256": "b87193c961cf1fa5e27d3237a0e326b735a059daab8b890d07e2b8a81944d72c",
+  "next": "Priority-8490 may claim once, verify the binding and current identity, prove sentinel novelty before launch, then run only the isolated/co-batched stock native-NGRAM sentinel A/A with full per-rid conservation capture. Persist a typed terminal and release by 2026-07-25T13:20:00Z."
+}

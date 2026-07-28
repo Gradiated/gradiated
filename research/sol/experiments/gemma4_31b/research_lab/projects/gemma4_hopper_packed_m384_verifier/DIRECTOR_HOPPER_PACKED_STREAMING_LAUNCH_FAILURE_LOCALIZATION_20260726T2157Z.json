@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "type": "director_hopper_packed_streaming_launch_failure_localization",
+  "issued_at_utc": "2026-07-26T21:57:09Z",
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "decision": "Accept the preserved CUDA launch failure as an uninterpretable invalid attempt, not a component result. Retain the H100 owner and claim for deep offline source localization only; no CUDA or endpoint replay is authorized.",
+  "bench_id": "h100-packed-streaming-e00nycjajm7wvs1zkd",
+  "claimed_at": "2026-07-26T21:18:39.254129Z",
+  "owner_pid": 2081506,
+  "owner_start_ticks": 121673671,
+  "deadline_utc": "2026-07-26T22:59:10Z",
+  "evidence": {
+    "invalid_attempt_terminal": {
+      "path": "artifacts/h100-streaming-component/RUNTIME_INCOMPATIBILITY.json",
+      "sha256": "e7dc8374e8e10ff113e02d244bca66d2c7ebe001dfdb8e606e8674f236e6bed5",
+      "classification": "candidate_cuda_launch_failure_after_submission",
+      "scientific_result": false,
+      "replay_permitted": false
+    },
+    "repair_ready": {
+      "path": ".repair-handshakes/streaming-h100-1785102961465033086/REPAIR_READY.json",
+      "sha256": "193422096338679a56ecead7720947af75eb55d7d30512b31cc8cabc857b49c9",
+      "repair_id": "streaming-h100-1785102961465033086"
+    },
+    "candidate_source": {
+      "path": "packed_m384_streaming_cluster.cu",
+      "sha256": "2262a4a20e9438671f795eeb8aad7f5db9cbe65ae446a94758e3d4c1cce78656"
+    },
+    "compiled_resource_usage": {
+      "path": "artifacts/h100-streaming-component/cuobjdump-resource-usage.txt",
+      "sha256": "60e618d2125e9402010862053b218302a6f57332c68ec88677b695a95cf75d5a"
+    },
+    "stderr": {
+      "path": "artifacts/h100-streaming-component/stderr.log",
+      "sha256": "7a9837fae99c705420c782ea35fc3efb3125e3de3a5b9dc1c6e97c9673a51bff",
+      "exception": "CUDA unspecified launch failure at torch.cuda.synchronize()"
+    }
+  },
+  "authorized_action": {
+    "scope": "offline_result_construction",
+    "requirements": [
+      "inspect the immutable candidate source, generated Ninja launch configuration, compiled SM90a resource metadata, exact fixture geometry, pointer/index bounds, mask layout, shared-memory layout, and cluster-dimension contract",
+      "persist one typed localization terminal that identifies the first source-level invalid launch invariant or records that the preserved evidence is insufficient",
+      "hash-bind every source and artifact used by that terminal"
+    ]
+  },
+  "forbidden": [
+    "any CUDA invocation",
+    "replay of the stock-versus-streaming component cycle",
+    "any V2 component replay",
+    "any endpoint action",
+    "promotion or negative performance interpretation from this launch failure"
+  ],
+  "later_retry_gate": "A corrected invalid-attempt retry requires a later director binding after a concrete narrow source defect is durable and the measured relaunch plus terminal/release margin fits the remaining lifecycle.",
+  "claim_disposition": "Retain PID 2081506, its heartbeat, exclusive H100 claim, compiled module, and build cache through the localization terminal or absolute deadline.",
+  "researcher_profile": "deep"
+}

@@ -39,5 +39,13 @@
   },
   "source_fixture_manifest": "DFLASH_FP8_TIED_HEAD_STACK_MANIFEST.json",
   "terminal_artifact": "DFLASH_FP8_TIED_HEAD_STACK_CORRECTED_RESULT.json",
-  "completed_at_utc": "2026-07-25T16:07:33Z"
+  "completed_at_utc": "2026-07-25T16:07:33Z",
+  "director_disposition": {
+    "status": "not_nominated_predecessor_semantic_gate_failed",
+    "accepted_result_sha256": "323a0b710a84ed45a03f4d4ebdccac6ab47a40f862c33e145affd7f3a891710f",
+    "gpu_nominated": false,
+    "reservation_authorized": false,
+    "required_predecessor_evidence": "Not satisfied: the real DFlash diagnostic completed four requests and reached drafting and target verification, but 2 of 4 requests violated deterministic target-token semantics.",
+    "selection_after_predecessor": "Do not execute the dependent head stack on this rejected DFlash lineage. The independent fixed-M384 executor receives the released H200."
+  }
 }

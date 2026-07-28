@@ -81,3 +81,20 @@ objective without the endpoint.
 - Artifacts: bound identities, critical-path union, exact shape register,
   source/build manifest, correctness fixtures, warm timing distributions,
   decisive counters, endpoint pair if admitted, economics, and concise log.
+
+## Deep exactness continuation after the mixed-M8 terminal
+
+`MIXED_LOCAL_M384_TERMINAL.json` closes the exact local-M8 implementation, not
+the measured local-attention opportunity. Its mixed dispatch and component
+were valid and positive, but the completed 32/32 target-decision guard failed
+semantic equality. Do not replay that endpoint or reopen its operational
+repairs.
+
+Work offline from the persisted guard, component outputs, NCU counters, and
+pinned Triton sources. Localize the earliest divergent target decision or
+accumulation boundary and implement at most one materially different schedule
+that preserves stock reduction order—or provides an exact target-decision
+equivalence argument—while retaining a credible reduction in accumulator,
+register, or shared-memory pressure. Return source plus an exact-consumer GPU
+falsifier or a typed `none`. This continuation has `$0` spend and may not claim
+or mutate a provider bench.

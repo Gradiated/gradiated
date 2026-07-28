@@ -1,0 +1,10 @@
+{
+  "candidate_cuda_invocation_started": true,
+  "classification": "component_failure",
+  "component_terminal_present": true,
+  "exit_code": 2,
+  "schema_version": 1,
+  "scientific_invocation_started": true,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-23T09:04:50.310436Z"
+}

@@ -1,0 +1,9 @@
+{
+  "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/artifacts/h200-decode-scheduler-20260727t034029z",
+  "bench_id": "h200-decode-scheduler-computeinstance-e00ex7q2tseebq29jg",
+  "claimed_at": "2026-07-27T03:40:29.794879Z",
+  "deadline_utc": "2026-07-27T04:04:30Z",
+  "diagnostic": "exact_component_exit=125; terminal_retrieved=False; invocation_retrieved=False",
+  "handshake_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/artifacts/h200-decode-scheduler-20260727t034029z/repair",
+  "repair_id": "decode-scheduler-h200-decode-scheduler-20260727t034029z-1785124175851299016"
+}

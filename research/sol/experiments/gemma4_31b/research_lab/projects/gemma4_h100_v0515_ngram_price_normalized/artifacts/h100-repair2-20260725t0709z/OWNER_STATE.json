@@ -1,0 +1,23 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/h100_execution_owner.py",
+    "--ip",
+    "195.242.29.133",
+    "--key",
+    "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "--artifact-root",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/artifacts/h100-repair2-20260725t0709z",
+    "--deadline-epoch",
+    "1784964900",
+    "--reuse-staged",
+    "--stage-packet",
+    "--reuse-server"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized",
+  "launched_at_utc": "2026-07-25T07:09:55.447606Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/artifacts/h100-repair2-20260725t0709z/OWNER_CONTROLLER.log",
+  "pid": 473021,
+  "start_ticks": 107941285,
+  "unit_manager": "pid"
+}

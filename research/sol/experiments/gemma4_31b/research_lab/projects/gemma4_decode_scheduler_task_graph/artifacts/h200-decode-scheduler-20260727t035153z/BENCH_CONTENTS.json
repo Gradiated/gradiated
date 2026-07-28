@@ -1,0 +1,10 @@
+{
+  "artifacts": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/artifacts/h200-decode-scheduler-20260727t035153z",
+  "candidate_cuda_invocation_started": true,
+  "checkpoint": "none; this component is checkpoint-free",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "project": "gemma4_decode_scheduler_task_graph",
+  "release_reason": "typed terminal retrieved",
+  "result": "decode_scheduler_task_graph_h200_component",
+  "server_state": "No resident endpoint; pinned image and project packet retained."
+}

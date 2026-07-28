@@ -1,0 +1,30 @@
+{
+  "id": "h200-fp8-frontier-e00hjag28j32gvydxv",
+  "provider": "nebius",
+  "accelerator": "nvidia-h200-sxm",
+  "resource": {
+    "instance_id": "computeinstance-e00hjag28j32gvydxv",
+    "instance_name": "gemma-fp8-frontier-h200-20260718155659",
+    "disk_id": "computedisk-e00qr0gw9t3s234wmb",
+    "disk_name": "gemma-fp8-frontier-h200-20260718155659-boot"
+  },
+  "contents": {
+    "project": "gemma4_precision_hardware_frontier",
+    "model": "google/gemma-4-31B-it exact critical-path shapes",
+    "checkpoint": "Not required; the falsifier uses synthetic exact-shape tensors.",
+    "image": "Nebius ubuntu24.04-cuda13.0 base; no experiment image has been pulled.",
+    "runtime": "Checkpoint-free H200 BF16/FP8 _scaled_mm, SDPA, and KV-write falsifier; not started.",
+    "caches": "None; newly created bounded development bench.",
+    "server_state": "No server; provider allocation only."
+  },
+  "lifecycle": {
+    "watchdog": {
+      "unit": "gemma-fp8-frontier-h200-20260718155659-watchdog.service",
+      "unit_manager": "user",
+      "main_pid": "2518646",
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-fp8-frontier-h200-20260718155659-watchdog.service"
+    },
+    "deadline_utc": "2026-07-18T16:26:59Z"
+  },
+  "hourly_cost_usd": 2.46
+}

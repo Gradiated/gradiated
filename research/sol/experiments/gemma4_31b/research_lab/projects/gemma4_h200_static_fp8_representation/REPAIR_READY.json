@@ -1,0 +1,23 @@
+{
+  "absolute_repair_deadline_utc": "2026-07-22T16:18:27.979082Z",
+  "classification": "integration_failure",
+  "diagnostic": {
+    "candidate_cuda_invocation_started": true,
+    "classification": "integration_failure",
+    "completed_rows": [],
+    "message": "consumer_rc=1",
+    "schema_version": 1,
+    "scientific_invocation_started": true,
+    "status": "terminal",
+    "timestamp_utc": "2026-07-22T15:42:04.319606Z"
+  },
+  "intervention_unchanged": true,
+  "invocation_state": {
+    "candidate_cuda_invocation_started": true,
+    "completed_rows": [],
+    "schema_version": 1,
+    "scientific_invocation_started": true
+  },
+  "schema_version": 1,
+  "status": "repair_ready"
+}

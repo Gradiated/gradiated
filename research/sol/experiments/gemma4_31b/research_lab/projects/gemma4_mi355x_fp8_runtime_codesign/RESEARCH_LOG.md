@@ -40,3 +40,28 @@ quality, endpoint behavior, or deployability.
 
 Boundary: no GPU was claimed, no provider was contacted or mutated, the H100
 owner was not waited on, and cumulative provider spend remains `$0.00`.
+
+## 2026-07-26T15:25Z — runner hash-bound; bench dependency remains
+
+Question: can the admitted single MI355X exact-shape suite be made executable
+without advancing a paid sample before the lab has supplied a compatible bench?
+
+Action: created and hash-bound `run_mi355x_exact_shape_falsifier.py` in
+`GPU_INPUT_MANIFEST.json`. It verifies the source-screen and pinned vLLM/AITER
+bytes, writes `science_started` immediately before its first GPU consumer, and
+drives the actual `torch._scaled_mm`, AITER `unified_attention`, and vLLM BF16
+tied-head consumer at the required M32/M384 shapes. It emits per-shape warm
+timings, numerical metrics, no-fallback path proof, and the charged component
+plus service-reserve aggregate. Python compilation and CLI help passed; the
+coordinator intentionally has no Torch/ROCm runtime, so the first target-GPU
+call remains the execution-equivalent smoke test under a retained claim.
+
+Evidence: `runtime/spend_cap.json` now records the exact
+`$0.9833333333333333` reservation for this project at `2026-07-26T15:25:28Z`.
+The atomic GPU-pool listing still returns `benches: []`; no compatible
+MI355X/gfx950 bench is registered.
+
+Interpretation and next move: reservation is no longer the boundary. The
+director must create and register one MI355X/gfx950 TP1 bench; then claim it
+and run exactly the bound packet once. No provider contact, claim, or spend
+occurred here; `actual_spend_usd` remains `$0.00`.

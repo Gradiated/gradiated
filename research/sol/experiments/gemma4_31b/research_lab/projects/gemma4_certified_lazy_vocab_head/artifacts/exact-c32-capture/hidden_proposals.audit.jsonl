@@ -1,0 +1,2 @@
+{"dtype": "torch.bfloat16", "event": "target_verify_observed", "input_shape": [384], "shape": [384, 5376], "time_unix_s": 1785018725.759951}
+{"event": "exact_capture_committed", "hidden_dtype": "torch.bfloat16", "hidden_shape": [384, 5376], "path": "/work/artifacts/certified-lazy-capture/hidden_proposals.pt", "proposal_dtype": "torch.int32", "proposal_shape": [384], "sha256": "80625b878e7479cd626250396f4be1a319e781245335600cd285037ce00fc66d"}

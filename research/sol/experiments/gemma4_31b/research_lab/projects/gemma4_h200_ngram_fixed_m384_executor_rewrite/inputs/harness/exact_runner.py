@@ -140,8 +140,10 @@ def main() -> int:
     parser.add_argument("--output", type=pathlib.Path, required=True)
     parser.add_argument("--arm", required=True)
     parser.add_argument("--concurrency", type=int, default=32)
+    parser.add_argument("--output-tokens", type=int, default=OUTPUT_TOKENS)
     args = parser.parse_args()
     concurrency = args.concurrency
+    output_tokens = args.output_tokens
     root = args.output
     root.mkdir(parents=True, exist_ok=False)
     prefix = tokens("common-prefix", COMMON_TOKENS)
@@ -149,8 +151,8 @@ def main() -> int:
     for index in range(concurrency):
         suffix = tokens(f"suffix-{index}", PROMPT_TOKENS - COMMON_TOKENS)
         suffix[0] = 200000 + index
-        bodies.append({"model": MODEL, "prompt": prefix + suffix, "max_tokens": OUTPUT_TOKENS, "min_tokens": OUTPUT_TOKENS, "ignore_eos": True, "temperature": 0, "seed": 20260718, "stream": True, "stream_options": {"include_usage": True}, "return_token_ids": True, "add_special_tokens": False})
-    atomic(root / "WORKLOAD.json", {"prompt_tokens": PROMPT_TOKENS, "output_tokens": OUTPUT_TOKENS, "concurrency": concurrency, "shared_prefix_tokens": COMMON_TOKENS, "intended_shared_prefix_fraction": COMMON_TOKENS / PROMPT_TOKENS, "request_sha256": [hashlib.sha256(canonical(x)).hexdigest() for x in bodies]})
+        bodies.append({"model": MODEL, "prompt": prefix + suffix, "max_tokens": output_tokens, "min_tokens": output_tokens, "ignore_eos": True, "temperature": 0, "seed": 20260718, "stream": True, "stream_options": {"include_usage": True}, "return_token_ids": True, "add_special_tokens": False})
+    atomic(root / "WORKLOAD.json", {"prompt_tokens": PROMPT_TOKENS, "output_tokens": output_tokens, "concurrency": concurrency, "shared_prefix_tokens": COMMON_TOKENS, "intended_shared_prefix_fraction": COMMON_TOKENS / PROMPT_TOKENS, "request_sha256": [hashlib.sha256(canonical(x)).hexdigest() for x in bodies]})
     get("/v1/models")
     try:
         urllib.request.urlopen(urllib.request.Request(BASE + "/flush_cache", b"{}", {"Content-Type": "application/json"}), timeout=30).read()
@@ -181,8 +183,8 @@ def main() -> int:
     prompt_delta = None if prompt_before is None or prompt_after is None else prompt_after - prompt_before
     uncached_delta = None if uncached_before is None or uncached_after is None else uncached_after - uncached_before
     cached_delta = None if prompt_delta is None or uncached_delta is None else prompt_delta - uncached_delta
-    valid = all(row["error"] is None and row["prompt_tokens"] == PROMPT_TOKENS and row["completion_tokens"] == OUTPUT_TOKENS and row["text_nonempty"] and row["text_finite"] for row in rows)
-    terminal = {"schema_version": 1, "kind": "gemma4_sglang_v0512_exact_mix", "arm": args.arm, "pass": valid, "concurrency": concurrency, "complete_requests": sum(row["error"] is None for row in rows), "batch_seconds": batch_seconds, "service_seconds_per_request": batch_seconds / concurrency, "complete_request_throughput": concurrency / batch_seconds, "output_tokens_per_second": concurrency * OUTPUT_TOKENS / batch_seconds, "cache": {"prompt_tokens_delta": prompt_delta, "uncached_prompt_tokens_delta": uncached_delta, "cached_prompt_tokens_delta": cached_delta, "cached_fraction": None if cached_delta is None or not prompt_delta else cached_delta / prompt_delta, "fresh_tokens_per_request": None if uncached_delta is None else uncached_delta / concurrency}, "phases": {"ttft": finite_summary([row["ttft_seconds"] for row in rows]), "decode": finite_summary([row["decode_seconds"] for row in rows]), "end_to_end": finite_summary([row["wall_seconds"] for row in rows])}, "rows": rows}
+    valid = all(row["error"] is None and row["prompt_tokens"] == PROMPT_TOKENS and row["completion_tokens"] == output_tokens and row["text_nonempty"] and row["text_finite"] for row in rows)
+    terminal = {"schema_version": 1, "kind": "gemma4_sglang_v0512_exact_mix", "arm": args.arm, "pass": valid, "concurrency": concurrency, "complete_requests": sum(row["error"] is None for row in rows), "batch_seconds": batch_seconds, "service_seconds_per_request": batch_seconds / concurrency, "complete_request_throughput": concurrency / batch_seconds, "output_tokens_per_second": concurrency * output_tokens / batch_seconds, "cache": {"prompt_tokens_delta": prompt_delta, "uncached_prompt_tokens_delta": uncached_delta, "cached_prompt_tokens_delta": cached_delta, "cached_fraction": None if cached_delta is None or not prompt_delta else cached_delta / prompt_delta, "fresh_tokens_per_request": None if uncached_delta is None else uncached_delta / concurrency}, "phases": {"ttft": finite_summary([row["ttft_seconds"] for row in rows]), "decode": finite_summary([row["decode_seconds"] for row in rows]), "end_to_end": finite_summary([row["wall_seconds"] for row in rows])}, "rows": rows}
     atomic(root / "TERMINAL.json", terminal)
     return 0 if valid else 72
 

@@ -1,0 +1,16 @@
+REMOTE_PACKET_RECONCILE=PASS
+CHECKPOINT_MANIFEST.json 1577
+candidate-v0.5.15/CANDIDATE_RUNTIME.json 10974
+candidate-v0.5.15/SHA256SUMS.json 3130
+candidate-v0.5.15/inputs/INPUT_MANIFEST.json 561
+candidate-v0.5.15/inputs/TRACE_PACKET.json 3159811
+candidate-v0.5.15/inputs/exact_semantic_rows.jsonl 3126546
+candidate-v0.5.15/inputs/ngram-launch.json 1090
+candidate-v0.5.15/inputs/requests.jsonl 506544
+config.json 4621
+h100_matched_runner.py 18433
+model.safetensors.index.json 120246
+source-support/UPSTREAM_COMMIT 41
+source-support/fp8.py 93330
+source-support/fused_qk_rmsnorm_rope_gate.py 6594
+source-support/model_runner.py 144369

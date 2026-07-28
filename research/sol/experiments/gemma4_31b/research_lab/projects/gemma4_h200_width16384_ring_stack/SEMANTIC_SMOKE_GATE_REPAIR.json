@@ -1,0 +1,47 @@
+{
+  "active_owner": {
+    "claim_project": "gemma4_h200_width16384_ring_stack",
+    "preserve": true,
+    "unit": "gemma4-width16384-ring-stack-owner-repair1.service",
+    "unit_manager": "user"
+  },
+  "authorized_change": {
+    "file": "remote_combined_candidate.sh",
+    "from": "require expected semantic answers before candidate science",
+    "required_checks": [
+      "preserve every raw smoke response",
+      "require successful finite nonempty transport for all smoke rows",
+      "require the arithmetic smoke response to equal the persisted width proxy arithmetic response",
+      "record that semantic correctness remains failed and quality_unsafe remains true"
+    ],
+    "to": "accept only the already-declared width incoherence as a liveness and no-new-obvious-failure discriminator"
+  },
+  "evidence": {
+    "candidate_path_audits_pass": true,
+    "candidate_science_started": false,
+    "candidate_smoke_arithmetic_text": "T_L1 single la l l l l l l l l l l l l l l l l l l l l l l l l l l",
+    "invocation_state_path": "artifacts/remote-endpoint/endpoint-artifacts__INVOCATION_STATE.json",
+    "invocation_state_sha256": "397ecdd394dcdb5d43f7f7fb94f62e0b9dc58a3ba198efecb290c33ab591d5fc",
+    "persisted_width_arithmetic_text": "T_L1 single la l l l l l l l l l l l l l l l l l l l l l l l l l l",
+    "persisted_width_terminal_path": "inputs/width/PERSISTED_WIDTH_ENDPOINT_TERMINAL.json",
+    "persisted_width_terminal_sha256": "803ce9d8ecc1a4341e3d492f4c8600d10657c663924d1dff384fd061ead98ca6",
+    "retrieved_compact_path": "artifacts/remote-endpoint/endpoint-compact.tar.gz",
+    "retrieved_compact_sha256": "ac1e63be45e3a6356f6c7affd4dd142cbb1757c7b6ac4df464e47e31af909352",
+    "worker_classification": "integration_failure",
+    "worker_message": "semantic_smoke_failed",
+    "worker_terminal_path": "artifacts/remote-endpoint/endpoint-artifacts__WORKER_TERMINAL.json",
+    "worker_terminal_sha256": "09d7a310a68be193f07e652260a9dea5f2cf564f697b561272b1e5d203d46317"
+  },
+  "immutable_science": {
+    "candidate_science_replay": "not_applicable_science_unstarted",
+    "component_replay": "forbidden",
+    "control_replay": "forbidden",
+    "quality_claim_authorized": false,
+    "standalone_endpoint_replay": "forbidden"
+  },
+  "owner_resume": {
+    "mechanism": "After reconciling the changed script through GPU_INPUT_MANIFEST.json, atomically create REPAIR_REQUEST.json for the already-waiting durable owner.",
+    "restart_owner": false
+  },
+  "schema_version": 1
+}

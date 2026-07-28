@@ -9,6 +9,7 @@ checks = [
     ("checkpoint", "manifest_path", "manifest_sha256"),
     ("historical_exact_shape_evidence", "path", "sha256"),
     ("qualified_ring_comparator", "path", "sha256"),
+    ("settled_graph_topology", "path", "sha256"),
     ("workload_runner", "path", "sha256"),
 ]
 for section, path_key, hash_key in checks:

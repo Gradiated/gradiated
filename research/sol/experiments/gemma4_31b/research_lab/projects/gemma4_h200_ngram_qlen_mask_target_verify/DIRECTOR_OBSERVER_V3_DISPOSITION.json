@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_ngram_qlen_mask_target_verify",
+  "classification": "same_project_observer_repair",
+  "priority": 7310,
+  "researcher_profile": "execution",
+  "evidence": {
+    "repair_v2_candidate_sha256": "68149643e3579b24804df9b98b048b1076be5b9e98b03363bd423510ae1ec6e7",
+    "repair_v2_terminal": "artifacts/qlen-mask-20260724t163813z/retrieved-final/artifacts/FINAL_TERMINAL.json",
+    "persisted_control_service_seconds_per_request": 0.6049806232813353,
+    "full_attention_exact": true,
+    "sliding_observer_invalid": true,
+    "observed_sliding_control_layout": {
+      "keys_visible_to_unified_consumer": 1036,
+      "row_stride_supplied": 4226,
+      "mask_indptr_stride_supplied": 50712
+    },
+    "required_sliding_control_layout": {
+      "prefix_keys": 1024,
+      "suffix_keys": 12,
+      "row_stride": 1036,
+      "mask_indptr_stride": 12432
+    },
+    "cause": "The repair-v2 sliding control passed global 12x4226 rows to a unified local consumer that indexes each row with cur_seq_kv_len=1036. It therefore read all-prefix booleans at the wrong row boundaries instead of the stock window-sliced 1024-prefix plus 12-tree view. The QLEN candidate read the intended 12x12 suffix tree. Full attention matched because its 4226-key consumer stride matched the supplied global rows."
+  },
+  "intervention": {
+    "candidate_source_change": "forbidden",
+    "observer_change": "Construct the sliding control as 12 rows of 1024 allowed prefix keys followed by the unchanged 12-key adversarial tree, with per-request mask indptr stride 12*(1024+12). Leave the repair-v2 QLEN candidate, M64 tile, KV indices, FP8-E5M2 pages, and all runtime settings unchanged.",
+    "first_arm": "Run only the corrected exact extend_attention_fwd_unified sliding component and recompute the whole-request bound using the persisted exact full-attention row and mask-preparation evidence.",
+    "conditional_arm": "Only if the corrected sliding component is exact and the recomputed bound remains positive, run only the unconsumed repair-v2 candidate c32 endpoint against the persisted measured-v1 control.",
+    "close_rule": "If the corrected sliding component remains inexact, close this QLEN-only realization. If the candidate endpoint changes task semantics or is nonpositive, close the endpoint realization."
+  },
+  "forbidden": [
+    "repair-v2 candidate source changes",
+    "fresh control endpoint",
+    "measured-v1 pair replay",
+    "repair-v2 malformed sliding observer replay",
+    "full-attention component replay",
+    "mask, backend, tile, row, KV, NGRAM, wave-size, arrival-rate, quality, or 10K sweep"
+  ],
+  "bench": {
+    "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+    "watchdog_deadline_utc": "2026-07-24T19:00:00Z",
+    "release_deadline_utc": "2026-07-24T18:50:00Z"
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T16:42:09Z",
+  "project": "gemma4_h200_ngram_fixed_m384_executor_rewrite",
+  "decision": "reactivate_same_project_for_mixed_local_only_m384_exactness_localization_and_conditional_endpoint",
+  "researcher_profile": "deep",
+  "priority": 8490,
+  "scientific_interpretation": {
+    "closed_candidate": "Uniform BLOCK_M=8 for both local head_dim=256 and global head_dim=512 attention.",
+    "measured_local_result": {
+      "control_median_ms": 1.343168020248413,
+      "candidate_median_ms": 0.9356799721717834,
+      "latency_reduction_fraction": 0.3033783130134877,
+      "max_abs_error": 0.0107421875,
+      "relative_l2_error": 0.0072446889244019985,
+      "bit_exact": false
+    },
+    "measured_global_result": {
+      "control_median_ms": 3.272576093673706,
+      "candidate_median_ms": 4.706560134887695,
+      "latency_reduction_fraction": -0.43818203157630387,
+      "bit_exact": true
+    },
+    "measured_endpoint_result": {
+      "control_seconds_per_request": 0.6107998772500025,
+      "candidate_seconds_per_request": 0.6086134632187452,
+      "service_time_delta_fraction": -0.0035795914712707377,
+      "semantics_match": false,
+      "valid": false
+    },
+    "inference": "The uniform specialization paid a severe global-attention penalty and doubled launches from 60 to 120. A mixed dispatch can retain the measured local speedup while restoring the stock, bit-exact global path, but the local numerical drift must be causally localized before another endpoint claim."
+  },
+  "bound_inputs": [
+    {
+      "path": "FIXED_M384_EXECUTOR_TERMINAL.json",
+      "sha256": "7068a4ee8a3f724b1ae4004bcbb92589f1506311ee1b9e637e3827cf56ebe0a1"
+    },
+    {
+      "path": "artifacts/fixed-m384-20260725t162212Z/retrieved/artifacts/component/COMPONENT_TERMINAL.json",
+      "sha256": "f58df0515687a746771442964b38d690c3f38f04d12a8d07ee09090c9995b5b8"
+    },
+    {
+      "path": "artifacts/fixed-m384-20260725t162212Z/retrieved/artifacts/pair/PAIR_TERMINAL.json",
+      "sha256": "e71efd906ed2607ee8cd91702fbf514aeb8926de571923d5e867ec297c5e48e4"
+    },
+    {
+      "path": "intervention/extend_attention_fixed_m384.py",
+      "sha256": "3086f691c3574900a24907c1273fb9dc1cdf5191e8e217e7b98fe36f3b394877"
+    },
+    {
+      "path": "exact_consumer_oracle.py",
+      "sha256": "7a8722084244263232f1159af533aa5a276bf786d7099c543e347d508e29bb61"
+    },
+    {
+      "path": "endpoint_pair.py",
+      "sha256": "777894b1e344737b1348d9fec6b330439ef0ccb2db355e27ab32f728b3d5d413"
+    }
+  ],
+  "authorized_intervention": {
+    "causal_question": "Can H200 M384 target verification use BLOCK_M=8 only for sliding-window head_dim=256 layers while leaving full-attention head_dim=512 on the exact stock geometry, and can the local path meet deterministic endpoint semantics?",
+    "source_scope": "Modify only the same-project fixed-M384 dispatch and the minimum oracle/telemetry needed to distinguish local numerical-order drift from integration error.",
+    "candidate": "For the exact batch-32, M384, max-extend-12 target-verification shape, use BLOCK_M=8 only when sliding_window_size is positive and Lq=Lv=256; retain the official stock block selection for global head_dim=512 and every other shape.",
+    "forbidden": [
+      "Do not replay or report the rejected uniform BLOCK_M=8 endpoint result as valid.",
+      "Do not alter model weights, workload semantics, draft depth, acceptance rules, FP8 format, or global-attention geometry.",
+      "Do not stage or download another target checkpoint.",
+      "Do not promote a tolerance-only component into an endpoint run without deterministic semantic localization."
+    ]
+  },
+  "gates": [
+    "Use the kernel-research procedure for source, geometry, accumulator-order, and accelerator-level causal reasoning.",
+    "First reproduce and localize the local head_dim=256 output drift against stock, including the first differing output coordinates and whether BLOCK_M changes reduction order or masking.",
+    "Require bit-exact local output when feasible; otherwise require a preregistered deterministic token-level guard showing identical target decisions across the bound exact consumer before any full endpoint pair.",
+    "Require mixed dispatch telemetry proving BLOCK_M=8 only for local layers and stock geometry for every global layer.",
+    "Require a correct, reproducible mixed component with a positive weighted attention result before endpoint execution.",
+    "Only after all prior gates pass, run one profiler-off matched c32 control/candidate endpoint pair with complete raw outputs, exact request hashes, deterministic semantic equality, service time, p95, launch telemetry, and clean server shutdown.",
+    "If any correctness, identity, or dispatch gate fails, persist a typed terminal and release without the endpoint pair."
+  ],
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "accelerator": "nvidia-h200-sxm",
+    "reuse": "Reuse the exact 62,578,655,208-byte hash-verified project-local checkpoint snapshot, pinned SGLang v0.5.13 image, Triton cache, source, and prior artifacts in place.",
+    "maximum_claim_hours": 2,
+    "release_deadline_utc": "2026-07-25T21:15:00Z",
+    "watchdog_deadline_utc": "2026-07-25T22:00:00Z"
+  },
+  "budgets": {
+    "authorized_spend_usd": 5.0,
+    "compute": "At most two claimed H200 hours at $2.45/hour, inclusive of localization, component, conditional endpoint, retrieval, and release.",
+    "storage": "At most 6 GiB new artifacts; reuse checkpoint and image bytes in place.",
+    "wall_clock": "Release by 2026-07-25T21:15:00Z and leave at least 45 minutes before the provider watchdog."
+  },
+  "terminal": "Persist MIXED_LOCAL_M384_TERMINAL.json with hashes of the final source, localization evidence, component, optional endpoint pair, measured spend, process cleanup, and bench release state."
+}

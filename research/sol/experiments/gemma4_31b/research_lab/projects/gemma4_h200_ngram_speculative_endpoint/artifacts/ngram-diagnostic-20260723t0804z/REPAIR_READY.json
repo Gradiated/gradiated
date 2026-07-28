@@ -1,0 +1,8 @@
+{
+  "classification": "pre_invocation_manifest_path_defect",
+  "diagnostic": "The director-bound checksum file carries coordinator-relative checkpoint paths; sha256sum was run from the resident directory without normalizing those paths.",
+  "candidate_cuda_started": false,
+  "scientific_invocation_started": false,
+  "repair_deadline_utc": "2026-07-23T10:00:00Z",
+  "allowed_repair": "Derive a filename-only consumer manifest from the hash-verified director manifest, validate the same eight resident bytes, then resume the frozen diagnostic unchanged."
+}

@@ -1,0 +1,10 @@
+{
+  "artifacts": "Exact profile SQLite, attention subtype map, valid paired terminal, and intervention bytes retained project-locally.",
+  "caches": "SGLang v0.5.13 dynamic-FP8, QKV, Triton, CUTLASS, Nsight, and CUDA graph caches retained.",
+  "checkpoint": "Exact immutable eight-file checkpoint retained at /home/glmrunner/gemma4-h200-v0513-fp8-qkv-residual-profile/checkpoint.",
+  "image": "Pinned SGLang v0.5.13 linux/amd64 digest sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6 retained.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_h200_v0513_fp8_qkv_residual_profile",
+  "runtime": "FP8+QKV plus deferred local FP8-KV commit retained as a valid 0.26599% incremental improvement; next arm targets FP8 linear realization.",
+  "server_state": "Final attention candidate server retained if healthy; immutable checkpoint, image, intervention, and caches are authoritative otherwise."
+}

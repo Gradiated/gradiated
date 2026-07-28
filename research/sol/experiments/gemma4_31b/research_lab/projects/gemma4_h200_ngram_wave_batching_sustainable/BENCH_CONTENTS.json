@@ -1,0 +1,9 @@
+{
+  "artifacts": "artifacts/wave-adoption-20260724t155535z",
+  "caches": "Image, checkpoint, CUDA graph, JIT, tokenizer, and runtime caches retained.",
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "gpu_processes": "gemma4-ngram-wave-admission",
+  "project": "gemma4_h200_ngram_wave_batching_sustainable",
+  "result": "measured_ngram_wave_admission",
+  "server_state": "Stock wave-admission container removed after terminal retrieval; accelerator is unoccupied."
+}

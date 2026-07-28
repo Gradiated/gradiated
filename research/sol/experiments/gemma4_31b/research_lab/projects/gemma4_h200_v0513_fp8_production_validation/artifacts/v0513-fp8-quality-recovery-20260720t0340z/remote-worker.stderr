@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/home/glmrunner/gemma-v0513-quality-recovery/quality-input/production_quality_remote.py", line 209, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/glmrunner/gemma-v0513-quality-recovery/quality-input/production_quality_remote.py", line 198, in main
+    control = run_arm("bf16", root, gpqa, tau)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/glmrunner/gemma-v0513-quality-recovery/quality-input/production_quality_remote.py", line 186, in run_arm
+    result = {"arm": arm, "feature": score_feature(features), "nll_tokens": len(nll), "nll_mean": (-sum(x["logprob"] for x in nll) / len(nll)) if nll else math.inf, "gpqa": score_gpqa(gpqa_rows, gpqa), "taubench": score_tau(tau_rows, tau), "raw_hashes": {"feature": sha_bytes(feature_path.read_bytes()), "gpqa": sha_bytes(gpqa_path.read_bytes()), "tau": sha_bytes(tau_path.read_bytes())}, "fp8_audit": {"modules": str(audit / "fp8-modules.jsonl"), "consumers": str(audit / "fp8-consumers.jsonl"), "runtime": str(audit / "fp8-runtime.json")}}
+                                                                                                                                                                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/glmrunner/gemma-v0513-quality-recovery/quality-input/production_quality_remote.py", line 168, in score_tau
+    names = [x.get("function", {}).get("name") for x in msg.get("tool_calls", [])]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'NoneType' object is not iterable

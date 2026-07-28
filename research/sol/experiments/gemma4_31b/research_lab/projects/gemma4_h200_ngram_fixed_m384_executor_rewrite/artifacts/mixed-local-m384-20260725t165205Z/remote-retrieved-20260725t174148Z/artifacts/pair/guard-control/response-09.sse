@@ -1,0 +1,16 @@
+data: {"id":"bcf520fbb6194b25a9e80072aef68dc1","object":"text_completion","created":1784999169,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" cheap","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bcf520fbb6194b25a9e80072aef68dc1","object":"text_completion","created":1784999169,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"WebView","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bcf520fbb6194b25a9e80072aef68dc1","object":"text_completion","created":1784999169,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" cheapWebView cheap","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bcf520fbb6194b25a9e80072aef68dc1","object":"text_completion","created":1784999169,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"WebView cheapWebView cheapWebView","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bcf520fbb6194b25a9e80072aef68dc1","object":"text_completion","created":1784999169,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" cheapWebView cheapWebView cheapWebView cheapWebView cheapWebView cheap","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bcf520fbb6194b25a9e80072aef68dc1","object":"text_completion","created":1784999169,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"WebView cheapWebView","logprobs":null,"finish_reason":"length","matched_stop":null}],"usage":null}
+
+data: {"id":"bcf520fbb6194b25a9e80072aef68dc1","object":"text_completion","created":1784999169,"model":"google/gemma-4-31B-it","choices":[],"usage":{"prompt_tokens":4214,"total_tokens":4238,"completion_tokens":24,"reasoning_tokens":0}}
+
+data: [DONE]
+

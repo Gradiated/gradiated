@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "result": "typed_provider_stopped_unrecoverable_retrieval",
+  "classification": "external_retrieval_boundary",
+  "project": "gemma4_v0515_demand_multiplexing_sustainable",
+  "candidate_sample_consumed": true,
+  "conditional_endpoint_sample_consumed": false,
+  "scientific_terminal_retrieved": false,
+  "replay": "forbidden",
+  "conditional_endpoint": "not_admitted",
+  "evidence": {
+    "invocation_state": "The repaired 139-request discriminator persisted science_started=true before its local owner lost SSH access.",
+    "provider_audit": "Authenticated Nebius inventory confirmed the exact H200 instance STOPPED while its managed disk remained READY.",
+    "retrieval_owner": "PID 572761 at start ticks 108593712 produced only SSH connection timeouts; it was fenced before provider cleanup.",
+    "provider_instance_id": "computeinstance-e00kcm9nfhwt7e7gbc",
+    "provider_disk_id": "computedisk-e00yvdxaa48q0t115t"
+  },
+  "cleanup": {
+    "watchdog_stopped": true,
+    "instance_absent": true,
+    "disk_absent": true,
+    "inventory_bench": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+    "inventory_status": "retired",
+    "verified_at_utc": "2026-07-25T09:12:15Z"
+  },
+  "actual_spend_usd": 2.459,
+  "decision": "Close only this unretrievable stock-multiplex sample. Do not infer scientific pass or reject from the missing terminal, replay the discriminator, or launch its conditional endpoint."
+}

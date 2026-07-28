@@ -1,0 +1,51 @@
+{
+  "bench": {
+    "disk_id": "computedisk-e00yvdxaa48q0t115t",
+    "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+    "instance_id": "computeinstance-e00kcm9nfhwt7e7gbc",
+    "retrieval_release_deadline_utc": "2026-07-25T09:25:00Z",
+    "watchdog_deadline_utc": "2026-07-25T09:30:00Z"
+  },
+  "failed_scientific_owner": {
+    "artifact_root": "artifacts/stock-multiplex-packet-id-repair-20260725t084123z",
+    "expected_terminal": "out/FINAL_TERMINAL.json",
+    "expected_terminal_present": false,
+    "owner_exception": "artifacts/stock-multiplex-packet-id-repair-20260725t084123z/OWNER_EXCEPTION.json",
+    "owner_exception_sha256": "5915a56bc3e3267d518d467906d6dd4342f2820c128f3538080a2e9ae4729507",
+    "owner_pid": 554828,
+    "owner_start_ticks": 108490102
+  },
+  "next_execution": {
+    "first_action": "Preserve the live retrieval-repair owner and retrieve the existing remote terminal and bound artifacts; launch no workload.",
+    "result_contract": "Persist the existing scientific terminal if recoverable. Otherwise persist a typed incomplete or external terminal stating exactly which request submissions or results are evidenced.",
+    "researcher_profile": "execution"
+  },
+  "parent_binding": "DIRECTOR_STOCK_PACKET_ID_REPAIR_BINDING.json",
+  "parent_binding_sha256": "e99a07e25566cfd891e7c76b8be3530d67c6c0edfa646dfefa689e7c7f2ff615",
+  "prohibitions": [
+    "Do not launch or replay the 139-request discriminator.",
+    "Do not launch the conditional 759-request endpoint unless the recovered terminal proves every original discriminator gate passed and the endpoint safely fits the absolute lifecycle deadline.",
+    "Do not restart, replace, or modify the scientific invocation while retrieval remains possible.",
+    "Do not change the checkpoint, image, runtime, workload, economics, or parent binding.",
+    "Do not mutate the independent H100 endpoint bench or owner."
+  ],
+  "project": "gemma4_v0515_demand_multiplexing_sustainable",
+  "remote_invocation": {
+    "artifact_root": "artifacts/stock-multiplex-packet-id-repair-20260725t084123z",
+    "phase": "stock_139_control_and_candidate",
+    "remote_state": "artifacts/stock-multiplex-packet-id-repair-20260725t084123z/remote_state.log",
+    "remote_state_sha256": "35dbeb4124d4bc984472251ab301a13091e3b4625f1703f0275d0934eadec405",
+    "science_started": true
+  },
+  "retrieval_owner": {
+    "owner_state": "OWNER_STATE_STOCK_RETRIEVAL_REPAIR.json",
+    "owner_state_sha256": "eea9d20629f6822296bf865b2e74e31468008555136336460335a1a1a2e89f51",
+    "pid": 572761,
+    "start_ticks": 108593712
+  },
+  "sample_state": {
+    "conditional_endpoint": "not_admitted_pending_discriminator_terminal",
+    "stock_139_discriminator": "consumed_pending_retrieval"
+  },
+  "schema_version": 1
+}

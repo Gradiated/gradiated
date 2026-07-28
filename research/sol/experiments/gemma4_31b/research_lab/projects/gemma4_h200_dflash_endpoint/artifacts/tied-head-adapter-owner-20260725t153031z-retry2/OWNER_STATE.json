@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/run_tied_head_adapter_owner.sh",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-owner-20260725t153031z-retry2",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-inputs-20260725.tar",
+    "1785015900"
+  ],
+  "cwd": "/root/workspace",
+  "launched_at_utc": "2026-07-25T15:30:31.375479Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-owner-20260725t153031z-retry2/OWNER_CONTROLLER.log",
+  "pid": 841139,
+  "start_ticks": 110944877,
+  "unit_manager": "pid"
+}

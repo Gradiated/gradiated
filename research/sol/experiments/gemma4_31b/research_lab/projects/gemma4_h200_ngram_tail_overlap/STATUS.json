@@ -1,0 +1,32 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.6008901786210986,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 3.0,
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "compute_budget": "One retained H200 claim for exactly one candidate-only fixed 1,036-request tail-overlap trajectory.",
+  "next_action": "Closed. Preserve the exact terminal and do not replay the warmup, final-tail overlap, comparator, or fixed trajectory.",
+  "priority": 8300,
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "researcher_profile": "execution",
+  "reservation": {
+    "authorized_usd": 3.0,
+    "reserved_at_utc": "2026-07-25T02:04:55Z",
+    "source": "director_campaign_cap"
+  },
+  "reservation_gate": "Do not claim until the $3 reservation is durable and every identity and SHA-256 in DIRECTOR_BINDING.json matches.",
+  "status": "completed",
+  "storage_budget": "At most 6 GiB of new project-local artifacts.",
+  "summary": "Measured final-tail overlap: exact normalized semantics and planned overlap succeeded, but 30 queued requests exceeded the 12-request bound and $0.140084601/M exceeded the $0.14/M gate; reject this scheduling geometry.",
+  "terminal": {
+    "artifact_root": "artifacts/tail-overlap-20260725t021502z",
+    "candidate_science_consumed": true,
+    "classification": "measured_ngram_tail_overlap_reject",
+    "final_terminal_sha256": "ea83796c0ad6f5e366fc42b910db81a96f16ead3db921c830d0cfef91358f3b5",
+    "elapsed_seconds": 734.979990111,
+    "planning_cost_usd_per_million_total_tokens": 0.1400846013723668,
+    "max_server_queue_requests": 30,
+    "decision": "reject: queue bound and economics gate failed; do not replay this arm"
+  },
+  "wall_clock_budget": "Release by 2026-07-25T02:50:00Z under the verified 2026-07-25T03:00:00Z lifecycle watchdog."
+}

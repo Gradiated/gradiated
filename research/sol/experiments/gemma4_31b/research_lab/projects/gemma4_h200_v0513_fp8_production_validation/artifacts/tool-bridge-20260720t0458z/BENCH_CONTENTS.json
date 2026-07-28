@@ -1,0 +1,10 @@
+{
+  "artifacts": "Sentinel raw/normalized responses and existing TauBench rescoring retrieved project-locally.",
+  "caches": "SGLang v0.5.13 and CUDA graph caches retained.",
+  "checkpoint": "Exact immutable checkpoint retained at /home/glmrunner/gemma-v0513-quality-recovery/checkpoint.",
+  "image": "SGLang v0.5.13 image docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6.",
+  "model": "google/gemma-4-31B-it",
+  "project": "gemma4_h200_v0513_fp8_production_validation",
+  "runtime": "Final Gemma tool-consumer sentinel terminal retrieved project-locally.",
+  "server_state": "No tool-gate server retained; checkpoint/image/caches retained."
+}

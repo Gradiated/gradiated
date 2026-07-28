@@ -1,0 +1,9 @@
+{
+  "artifacts": "artifacts/qlen-mask-20260724t165142z",
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "project": "gemma4_h200_ngram_qlen_mask_target_verify",
+  "result": "nonpositive_or_invalid",
+  "runtime": "Pinned SGLang v0.5.13 image and compilation caches retained; accelerator unoccupied.",
+  "schema_version": 1,
+  "server_state": "Component/endpoint containers removed; accelerator unoccupied."
+}

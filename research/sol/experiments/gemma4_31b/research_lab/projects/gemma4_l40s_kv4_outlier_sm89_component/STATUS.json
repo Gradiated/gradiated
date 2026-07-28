@@ -1,17 +1,25 @@
 {
   "active_session": null,
-  "actual_spend_usd": 0.0,
+  "actual_spend_usd": 0.43589503667130497,
   "authorized_spend_usd": 0.4,
   "candidate_sample_consumed": false,
   "gpu_execution_required": true,
   "id": "gemma4_l40s_kv4_outlier_sm89_component",
-  "next_action": "Offline readiness is positive and monotonic. A later director may register one cold NVIDIA L40S SM89 whose resource record includes public_ipv4, ssh_user=glmrunner, identity_file, and known_hosts_namespace; substitute only DIRECTOR_REGISTERED_L40S_BENCH and one collision-free DIRECTOR_BOUND_UTC token in ready_artifact.owner.exact_later_command, launch it through detached-owner --unit-manager pid, and record the emitted unit, pid, start_ticks, unit_manager=pid, deadline, and artifact_root here. The owner has a 1620-second/$0.388342485 maximum and stages no checkpoint or model server.",
+  "next_action": "Closed. Exact provider resources are absent, the watchdog is inactive, and the bench is retired with cleanup verified. Do not relaunch this pre-science component attempt or claim scientific evidence from it.",
   "priority": 9790,
   "ready_artifact": "L40S_KV4_OUTLIER_SM89_COMPONENT_READY.json",
   "ready_artifact_sha256": "ac9ea0118c943f33b55cd4f99ce858f70eacba21e3f80f5e7f4d93be59a4043c",
   "ready_classification": "offline_ready_lifecycle_pure_exact_component",
-  "researcher_profile": "deep",
-  "status": "active",
-  "summary": "Positive offline readiness: the project-local exact c32 runner now compares pinned current-runtime E5M2 pack+attention with unchanged KV4 pack+corrected fused attention, preserves a producer snapshot for consumer-only repair, and is owned by one bounded cold-L40S lifecycle. Target-GPU science remains unconsumed.",
-  "updated_at_utc": "2026-07-27T06:38:55Z"
+  "researcher_profile": "execution",
+  "provider_exposure": {
+    "basis": "provider_start_to_cleanup_verification",
+    "cleanup_verified_at_utc": "2026-07-27T07:12:41.177991Z",
+    "cost_usd": 0.43589503667130497,
+    "covers_pre_registration": true,
+    "seconds": 1818.36906,
+    "started_at_utc": "2026-07-27T06:42:22.808931Z"
+  },
+  "status": "complete",
+  "summary": "Pre-science lifecycle terminal: two resumable preparation generations exhausted the owner window and released as absolute_repair_deadline after 751.924 claim seconds. No producer, CUDA arm, model server, or scientific sample is durable. Exact instance and managed disk absence is verified, the watchdog is inactive, and the bench is retired. Full provider exposure was 1818.369060 seconds and $0.435895037, exceeding the $0.40 project authority by $0.035895037.",
+  "updated_at_utc": "2026-07-27T07:12:41.177991Z"
 }

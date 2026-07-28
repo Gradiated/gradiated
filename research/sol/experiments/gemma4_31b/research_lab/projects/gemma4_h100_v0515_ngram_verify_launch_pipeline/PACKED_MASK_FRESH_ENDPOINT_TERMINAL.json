@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "classification": "external_identity_blocker_pre_science",
+  "result_path": "PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+  "scientific_terminal": false,
+  "candidate_sample_consumed": false,
+  "stock_sample_consumed": false,
+  "actual_spend_usd": 0.28,
+  "bench_disposition": "maintenance",
+  "next_move": "Verify the provider instance host key through an authenticated control-plane path; do not weaken strict host-key checking or recreate the resource."
+}

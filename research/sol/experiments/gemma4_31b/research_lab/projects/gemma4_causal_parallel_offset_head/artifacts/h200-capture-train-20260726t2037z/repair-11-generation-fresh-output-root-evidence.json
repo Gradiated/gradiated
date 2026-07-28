@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "repair_id": "repair-11",
+  "classification": "generation_reused_mutable_capture_root",
+  "observed": {
+    "diagnostic": "RuntimeError:capture_terminal_or_manifest_retrieval_failed",
+    "exact_runner_exclusive_create": "inputs/exact_runner.py creates the requests directory with exist_ok=false",
+    "latest_launch_science_started": false,
+    "prior_capture_terminal_current": false,
+    "training_or_holdout_started": false
+  },
+  "localized_defect": "A prior incomplete capture root can retain the exclusive requests directory, causing the unchanged request producer to fail before a new request batch and leaving controller-local terminal retrieval stale.",
+  "repair": "The server observer atomically archives every nonempty prior capture root before launch while the request-process observer leaves that root alone; the exact request producer independently archives any surviving requests directory before its exclusive create. Both archival manifests hash the preserved bytes.",
+  "scope": "generation_fresh_capture_root_only"
+}

@@ -1,0 +1,23 @@
+{
+  "bench": "h100-v0515-endpoint-200g-r2-e00yfnrrfczsdjevms",
+  "candidate_sample_consumed": false,
+  "classification": "typed_external_or_recoverable_failure",
+  "endpoint_sample_consumed": false,
+  "error": "RuntimeError('remote_preflight_failed')",
+  "finished_at": "2026-07-25T11:26:29.569795Z",
+  "heartbeat_events": [
+    {
+      "at": "2026-07-25T11:25:35.899435Z",
+      "kind": "heartbeat",
+      "returncode": 0
+    },
+    {
+      "at": "2026-07-25T11:26:20.947505Z",
+      "kind": "heartbeat",
+      "returncode": 0
+    }
+  ],
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "schema_version": 1,
+  "started_at": "2026-07-25T11:24:50.850598Z"
+}

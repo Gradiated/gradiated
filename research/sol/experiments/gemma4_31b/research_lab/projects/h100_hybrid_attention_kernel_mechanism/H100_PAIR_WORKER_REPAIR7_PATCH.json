@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "type": "h100_pair_worker_repair_patch",
+  "repair_id": "repair7-triton-scale-diagnostic-first",
+  "causal_boundary": "Triton cache-update scale pointers were observed as CPU tensors.",
+  "patch": "Normalize _k_scale and _v_scale to CUDA tensors before unified_kv_cache_update.",
+  "program_sha256": "0c17b8e5a213903f417e83d8fa8aa1cace72867b73771dbce4b58d1b5cabd6bb",
+  "controller_sha256": "986fa68b1c31890d8178db74d429c601322468c15cff6dc9ccd839934c4340a5",
+  "readiness_sha256": "79366ab6f6be36fd313b71ed37f0b46ec6a6e9e02917586ab2e13e84deadf3e1",
+  "predecessor_diagnostic": "artifacts/h100-paged-fp8-execution-20260726t1551z/guest-retrieved-repair5.json",
+  "retry_diagnostic": "artifacts/h100-paged-fp8-execution-20260726t1551z/recovery7-retrieved/local1024-c8.timing.json",
+  "retry_diagnostic_sha256": "b65af20d622f9c6d4e6e745c77b3c4c4b401c4f795d39888672218b621abd6b9",
+  "retry_result": "integration_error",
+  "scientific_sample_consumed": false,
+  "retry_scope": "No further blind relaunch; only a new director-authorized same-claim diagnostic repair may revisit local1024 concurrency 8.",
+  "geometry_and_gates_unchanged": true,
+  "provider_mutation": false
+}

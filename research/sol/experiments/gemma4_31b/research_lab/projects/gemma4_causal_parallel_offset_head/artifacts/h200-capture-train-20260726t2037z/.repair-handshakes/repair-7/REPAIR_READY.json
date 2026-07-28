@@ -1,0 +1,11 @@
+{
+  "absolute_repair_deadline_utc": "2026-07-27T01:32:34.490529Z",
+  "created_at_utc": "2026-07-26T22:05:01.818641Z",
+  "diagnostic": "RuntimeError:capture_terminal_or_manifest_retrieval_failed",
+  "failure_kind": "capture_or_launch_failure",
+  "repair_deadline_epoch": 1785115954.490529,
+  "repair_id": "repair-7",
+  "retry_scope": "capture_pre_science_or_unclassified_retrieval",
+  "schema_version": 1,
+  "state": "repair_ready"
+}

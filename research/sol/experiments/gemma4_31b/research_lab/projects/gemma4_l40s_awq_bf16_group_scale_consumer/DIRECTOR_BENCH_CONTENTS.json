@@ -1,0 +1,32 @@
+{
+  "action": "admitted immutable exact-AWQ BF16-group-scale consumer after KV4 deadline closure",
+  "artifacts": "projects/gemma4_l40s_awq_bf16_group_scale_consumer",
+  "blocker": "none",
+  "caches": "Pinned SGLang image, exact Gemma checkpoint, compiled SM89 extension, immutable exact-AWQ packets, and prior project caches remain resident on the 150-GiB disk.",
+  "candidate_cuda_started": false,
+  "checkpoint": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 remains resident at /home/glmrunner/gemma4-qserve-endpoint/checkpoint.",
+  "classification": "ready_for_exact_awq_bf16_group_scale_consumer",
+  "compatible_successor": {
+    "manifest_sha256": "d314db7affe5bca4e6ccf37da826b898a3e08533a0edfbdc8158a9f68edd0060",
+    "packet_sha256": "e3bc8fe9fef4efcca329fa82eb475cef086238ba012cee3e233171b583c49061",
+    "project": "gemma4_l40s_awq_bf16_group_scale_consumer"
+  },
+  "diagnostic": "none",
+  "expected_first_arms": "One immutable exact-consumer correctness/timing component, the fixed minimum causal counters, then only the conditional new-coherence/c32 sequence.",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 with exact group-128 AWQ tensors and BF16 group scales.",
+  "next_action": "Project gemma4_l40s_awq_bf16_group_scale_consumer may claim once and execute packet e3bc8fe9fef4efcca329fa82eb475cef086238ba012cee3e233171b583c49061 with data a98b0ca99d8e4f2d335dffb546931f072dc17d269d3d1b46723ac9eb17254753.",
+  "next_need": "One atomic claim by gemma4_l40s_awq_bf16_group_scale_consumer; no KV4 replay remains queued.",
+  "packet_sha256": "e3bc8fe9fef4efcca329fa82eb475cef086238ba012cee3e233171b583c49061",
+  "data_sha256": "a98b0ca99d8e4f2d335dffb546931f072dc17d269d3d1b46723ac9eb17254753",
+  "project": "gemma4_l40s_awq_bf16_group_scale_consumer",
+  "runtime": "Pinned SGLang v0.5.13 image with the fixed SM89 exact-AWQ BF16-group-scale consumer packet.",
+  "scientific_invocation_started": false,
+  "scientific_terminal": "none for the admitted AWQ exact-consumer project",
+  "server_state": "No container or accelerator compute process; retained image, checkpoint, compiled caches, and immutable packet are ready for one atomic claim.",
+  "status": "ready",
+  "watchdog": {
+    "deadline_utc": "2026-07-24T14:00:00Z",
+    "unit": "gemma4-awq-exact-l40s-20260724t1400-watchdog.service"
+  }
+}

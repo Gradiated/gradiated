@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/work/input/exact_block_bound_vocab_head.py", line 393, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/work/input/exact_block_bound_vocab_head.py", line 225, in main
+    index = build_index(weight, args.block_size)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/input/exact_block_bound_vocab_head.py", line 60, in build_index
+    if not bool((lower <= reshaped).all() and (reshaped <= upper).all()):
+                 ^^^^^^^^^^^^^^^^^
+RuntimeError: The size of tensor a (2048) must match the size of tensor b (128) at non-singleton dimension 1

@@ -1,0 +1,11 @@
+{
+  "candidate": "The canonical official-stock 139-request control/candidate invocation started and is conservatively consumed pending retrieval. The conditional endpoint is forbidden.",
+  "candidate_sample_consumed": true,
+  "conditional_endpoint_sample_consumed": false,
+  "director_binding": "gemma4_v0515_demand_multiplexing_sustainable/DIRECTOR_STOCK_RETRIEVAL_BINDING.json",
+  "director_binding_sha256": "45f5646e31afd399344ce9c54054224378fb30d9097f2b82fef05949be328639",
+  "next": "Priority-8500 may attach one bounded retrieval-only owner to existing container 60f39554b5b75b0c9f0f577b4705eeba1c8bbf3d326db3e7f032851470e91233, retrieve the existing terminal and artifacts or persist a typed incomplete/external terminal, and release by 2026-07-25T08:45:00Z. Launch no workload.",
+  "project": "gemma4_v0515_demand_multiplexing_sustainable",
+  "result": "claimed_for_bound_stock_invocation_retrieval",
+  "server_state": "The local owner exited after remote INVOCATION_STATE recorded science_started=true in phase stock_139_control_and_candidate. Preserve the existing container and invocation; do not restart or replay."
+}

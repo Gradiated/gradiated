@@ -1,0 +1,5 @@
+{
+  "candidate_science_consumed": false,
+  "classification": "recoverable_or_typed_remote_failure",
+  "error": "RemoteDisconnected('Remote end closed connection without response')"
+}

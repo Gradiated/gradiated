@@ -1,0 +1,36 @@
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"ई","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"어","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"이","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"어","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"이","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"이","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"이","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"이","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"이","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"이","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"이","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"이","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"이","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"이","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"이","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"이","logprobs":null,"finish_reason":"length","matched_stop":null}],"usage":null}
+
+data: {"id":"c538948062fc4d049918f182f94ac577","object":"text_completion","created":1784814976,"model":"google/gemma-4-31B-it","choices":[],"usage":{"prompt_tokens":4214,"total_tokens":4230,"completion_tokens":16,"reasoning_tokens":0}}
+
+data: [DONE]
+

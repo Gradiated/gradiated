@@ -35,8 +35,8 @@ if _is_cuda:
 _is_hip = is_hip()
 
 _fixed_m384_dispatches = {
-    "local_qk256_v256": 0,
-    "global_qk512_v512": 0,
+    "local_m8_qk256_v256": 0,
+    "global_stock_m32_qk512_v512": 0,
 }
 _fixed_m384_audited = set()
 
@@ -45,7 +45,9 @@ def fixed_m384_dispatch_audit():
     return dict(_fixed_m384_dispatches)
 
 
-def _audit_fixed_m384_dispatch(subtype, q_rows, batch_size, max_len_extend):
+def _audit_fixed_m384_dispatch(
+    subtype, q_rows, batch_size, max_len_extend, block_m
+):
     path = os.environ.get("FIXED_M384_AUDIT")
     if not path or subtype in _fixed_m384_audited:
         return
@@ -53,12 +55,12 @@ def _audit_fixed_m384_dispatch(subtype, q_rows, batch_size, max_len_extend):
         handle.write(
             json.dumps(
                 {
-                    "candidate": "fixed_m384_q12_block_m8",
+                    "candidate": "mixed_local_only_m384",
                     "subtype": subtype,
                     "q_rows": q_rows,
                     "batch_size": batch_size,
                     "max_len_extend": max_len_extend,
-                    "block_m": 8,
+                    "block_m": block_m,
                 },
                 sort_keys=True,
             )
@@ -636,21 +638,28 @@ def extend_attention_fwd(
     sm_scale = sm_scale or 1.0 / (Lq**0.5)
     batch_size, head_num = qo_indptr.shape[0] - 1, q_extend.shape[1]
     kv_group_num = q_extend.shape[1] // k_extend.shape[1]
-    fixed_m384 = (
+    exact_m384 = (
         _is_cuda
         and CUDA_CAPABILITY[0] == 9
         and q_extend.shape[0] == 384
         and batch_size == 32
         and max_len_extend == 12
         and Lq == Lv
-        and Lq in (256, 512)
     )
-    if fixed_m384:
+    local_m384 = exact_m384 and sliding_window_size > 0 and Lq == 256
+    global_m384 = exact_m384 and sliding_window_size <= 0 and Lq == 512
+    if local_m384:
         BLOCK_M = 8
-        subtype = "local_qk256_v256" if Lq == 256 else "global_qk512_v512"
+        subtype = "local_m8_qk256_v256"
         _fixed_m384_dispatches[subtype] += 1
         _audit_fixed_m384_dispatch(
-            subtype, q_extend.shape[0], batch_size, max_len_extend
+            subtype, q_extend.shape[0], batch_size, max_len_extend, BLOCK_M
+        )
+    elif global_m384:
+        subtype = "global_stock_m32_qk512_v512"
+        _fixed_m384_dispatches[subtype] += 1
+        _audit_fixed_m384_dispatch(
+            subtype, q_extend.shape[0], batch_size, max_len_extend, BLOCK_M
         )
 
     USE_CUSTOM_MASK = custom_mask is not None

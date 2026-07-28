@@ -1,0 +1,1 @@
+sftp> put -a /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/inputs/checkpoint/chat_template.jinja /home/glmrunner/gemma4-h100-fp8-qkv/checkpoint/.chat_template.jinja.ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4.part

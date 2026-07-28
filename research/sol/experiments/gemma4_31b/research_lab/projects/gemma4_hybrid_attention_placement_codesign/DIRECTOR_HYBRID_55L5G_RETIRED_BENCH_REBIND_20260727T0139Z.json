@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-27T01:39:00Z",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "decision": "repair_owner_for_future_live_bench_offline",
+  "amends": "DIRECTOR_HYBRID_55L5G_CURRENT_WARM_READMISSION_20260727T0121Z.json",
+  "scientific_contract_changed": false,
+  "retired_bench": {
+    "bench_id": "h200-causal-head-e00b9qw8d6qd7wrjj1",
+    "instance_id": "computeinstance-e00b9qw8d6qd7wrjj1",
+    "disk_id": "computedisk-e00y3ezqfpp4fdnz7h",
+    "provider_listing_verified_empty": true,
+    "inventory_retired_at_utc": "2026-07-27T01:38:50.322776Z",
+    "provider_exposure_usd": 12.555400700394937
+  },
+  "source_repair": {
+    "deadline": "20 wall-clock minutes",
+    "owner": "run_h200_55l5g_endpoint_owner.py",
+    "pair": "run_h200_55l5g_endpoint_pair.py",
+    "required_changes": [
+      "Remove the hard-coded retired bench ID and retired current-warm admission as launch authority.",
+      "Read bench ID, provider resource identity, SSH fields, checkpoint path, image, claim generation, and lifecycle only from a later director binding plus the matching live non-retired inventory record.",
+      "Fail before claim if the binding and live inventory differ or if the bench is not available.",
+      "Preserve the immutable model revision, exact c32 workload, permanent 55-local/5-global intervention, stock-then-candidate order, complete raw evidence, retained repair, and expected-claimed-at release.",
+      "Keep cold checkpoint staging and image preparation outside the scientific submission count and mutable under the retained claim."
+    ],
+    "verification": [
+      "python_compile",
+      "no-binding fail-closed",
+      "retired-bench binding rejected",
+      "synthetic live-bench binding reaches the atomic-claim boundary without provider access"
+    ]
+  },
+  "budget": {
+    "cumulative_authorized_spend_usd": 8.5,
+    "prior_actual_spend_usd": 6.3140021221,
+    "remaining_project_authority_usd": 2.1859978779,
+    "provider_spend_this_repair_usd": 0.0
+  },
+  "future_provider_gate": {
+    "exact_reservation_durable": true,
+    "create_allowed_in_this_turn": false,
+    "create_blocked_by": [
+      "owner still hash-binds the retired bench",
+      "replacement lifecycle and exact claim binding are not durable"
+    ]
+  },
+  "forbidden": [
+    "Do not use the retired instance, disk, IP address, fingerprint, or remote checkpoint path as current authority.",
+    "Do not claim or create a GPU during this repair.",
+    "Do not replay the settled component, phase-selective HTTP-500 consumer, DFlash, or any historical endpoint.",
+    "Do not weaken the quality-unsafe non-deployable label."
+  ]
+}

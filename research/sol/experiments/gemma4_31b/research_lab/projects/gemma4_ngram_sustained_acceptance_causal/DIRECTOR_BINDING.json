@@ -1,0 +1,78 @@
+{
+  "bench": {
+    "accelerator": "nvidia-h200-sxm",
+    "deadline_utc": "2026-07-25T06:15:00Z",
+    "disk_id": "computedisk-e00yvdxaa48q0t115t",
+    "hourly_cost_usd": 2.46,
+    "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+    "instance_id": "computeinstance-e00kcm9nfhwt7e7gbc",
+    "provider": "nebius",
+    "watchdog_main_pid": 344296,
+    "watchdog_unit": "gemma4-ngram-verifier-h200-20260725t0615-watchdog.service"
+  },
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint",
+  "created_at_utc": "2026-07-25T03:17:49Z",
+  "lifecycle_rebound_at_utc": "2026-07-25T04:16:32Z",
+  "decision_gate": {
+    "failures": 0,
+    "final_server_queue": 0,
+    "max_elapsed_seconds": 734.536113231,
+    "max_server_queue_requests": 30,
+    "no_growing_release_drift": true,
+    "normalized_semantics_exact": true,
+    "planning_cost_usd_per_million_total_tokens_max": 0.14,
+    "target_verify_rounds_decrease": true,
+    "unaffected_requests_retain_long_verified_trunks": true
+  },
+  "evidence": {
+    "candidate_arm": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_sustained_acceptance_causal/artifacts/causal-source-probe/CANDIDATE_ARM.json",
+      "sha256": "a692dfce9ddbcf8594394fb3675e67231e2d44c57856fdf7933a3cbd4e4b282f"
+    },
+    "canonical_launch": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_wave_frontier_stack/inputs/bound/ngram-launch.json",
+      "sha256": "8349853a7eac9e73211f5d3081c834c05f78e0fd292ddbe5acb921b1824a523d"
+    },
+    "causal_result": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_sustained_acceptance_causal/artifacts/causal-source-probe/RESULT.json",
+      "sha256": "44e631b769d53127ca98907e0205132afa0fd3530595d6dd9962a999d3c3b396"
+    },
+    "exact_semantic_rows": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_tail_overlap/artifacts/tail-overlap-20260725t021502z/out/requests.jsonl",
+      "sha256": "630d05bd860d1dd22c3e35ba2d8f792afc5051f0c68e0a74a9deda8140a02b36"
+    },
+    "full_arrival_rows": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_full_arrival_stream/artifacts/full-arrival-20260725t030310z/out/requests.jsonl",
+      "sha256": "2aed80ae9474e4f00757a9fbc9677537a3eb7e57f58c0327a224a045941ec45c"
+    },
+    "full_arrival_terminal": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_full_arrival_stream/artifacts/full-arrival-20260725t030310z/out/FINAL_TERMINAL.json",
+      "sha256": "cc24f1c62ab1cdc4c7c49d80df94dddd535c4254be266b5467fd1eafc987f2d8"
+    }
+  },
+  "frozen_intervention": {
+    "client_release_policy": "release requests 0 through 1035 individually at their bound arrival_s values",
+    "control_replay": false,
+    "global_fallback": "unchanged BFS recency trie",
+    "ngram": "native_depth_12_every_load",
+    "overlay": "request_local_verified_trunk",
+    "request_local_state_source": "target_verified_tokens_only",
+    "target_rows_per_request": 12
+  },
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_ngram_sustained_acceptance_causal",
+  "schema_version": 1,
+  "source_identity": {
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "ngram_info.py": "ffa88c663e1893c306710ac801da0693d8248ebcfd1a5bc705c157f90657af1c",
+    "ngram_worker.py": "27721b777cae08657ec9854ec0137a0db50afd49d84809503312fa43e399b554",
+    "param.h": "e0a4c0899655d322f21421a62ab58b7cca4e2874150756388f9ed143f4c62233",
+    "result.cpp": "d675ffef9de8cbfb37c5b6534836634474eab0b404ff43a87facb0ab85365bc1",
+    "trie.cpp": "9f14f2d05521427a0782db8c6058bbda1191dd09baf535e202c7412f82496ac9"
+  },
+  "workload": {
+    "requests": 1036,
+    "total_tokens": 4736592
+  }
+}

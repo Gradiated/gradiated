@@ -1,0 +1,10 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_exact_block_bound_vocab_head/exact_block_bound_vocab_head.py",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_exact_block_bound_vocab_head/exact_block_bound_vocab_head.py",
+  "ready_sha256": "469fb5458bd74dd59eb614334fbf6aca8fcc63747936688f45fd3f4f49812acc",
+  "repair_id": "exact-block-bound-repair-0-1785114677497887655",
+  "requested_at_utc": "2026-07-27T01:12:20.149313Z",
+  "retry_scope": "exact_block_bound_component_consumer_only",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

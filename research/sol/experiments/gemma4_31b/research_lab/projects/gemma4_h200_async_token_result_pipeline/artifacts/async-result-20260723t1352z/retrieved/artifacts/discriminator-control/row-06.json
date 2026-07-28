@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 9.81588107299467,
+  "ended_monotonic_s": 55697.640117175,
+  "error": null,
+  "first_token_monotonic_s": 55687.824236102,
+  "index": 6,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": "\u0908",
+      "token_ids": [
+        237040
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\uc5b4",
+      "token_ids": [
+        237430
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\uc774",
+      "token_ids": [
+        237077
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\uc5b4",
+      "token_ids": [
+        237430
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\uc774",
+      "token_ids": [
+        237077
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\uc774",
+      "token_ids": [
+        237077
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\uc774",
+      "token_ids": [
+        237077
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\uc774",
+      "token_ids": [
+        237077
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\uc774",
+      "token_ids": [
+        237077
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\uc774",
+      "token_ids": [
+        237077
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\uc774",
+      "token_ids": [
+        237077
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\uc774",
+      "token_ids": [
+        237077
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\uc774",
+      "token_ids": [
+        237077
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\uc774",
+      "token_ids": [
+        237077
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\uc774",
+      "token_ids": [
+        237077
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": "\uc774",
+      "token_ids": [
+        237077
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    237040,
+    237430,
+    237077,
+    237430,
+    237077,
+    237077,
+    237077,
+    237077,
+    237077,
+    237077,
+    237077,
+    237077,
+    237077,
+    237077,
+    237077,
+    237077
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "2a29878961abdf9a1bca42b873ca2a9c17bafa1f275301b628f9ff267589ba58",
+  "request_sha256": "a370a84f501ef00f5ab62c34900d84d989e96a7435011a71011076c7f06a4d7a",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 55684.404152396,
+  "text": "\u0908\uc5b4\uc774\uc5b4\uc774\uc774\uc774\uc774\uc774\uc774\uc774\uc774\uc774\uc774\uc774\uc774",
+  "ttft_seconds": 3.4200837060052436,
+  "wall_seconds": 13.235964778999914
+}

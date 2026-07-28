@@ -73,3 +73,20 @@ fixed-tree realization.
 - Wall clock: release by `2026-07-24T14:20:00Z`
 - Storage: at most 10 GiB of new project-local artifacts
 - Provider mutation: forbidden
+
+## Director continuation — one numerical repair
+
+The exact `BLOCK_M=16` component is consumed and rejected: it reduced both
+sliding and full-attention medians by about 57.5%, but its sliding-window row
+missed the fixed oracle at `max_abs=0.010742` while the full-attention row
+passed. The source diff changed only `BLOCK_M`, so this is reduction-geometry
+localization rather than evidence of a tree-mask or paged-index defect.
+
+Admit exactly one `BLOCK_M=32`, `BLOCK_N=64` numerical repair. It keeps the
+same producer, consumer, grid, dtypes, scales, masks, and KV bytes; compared
+with the stock 64-row tile, it raises useful query-lane fraction from 18.75%
+to 37.5% and halves live output-accumulator elements while moving closer to
+the control reduction geometry. Run the same exact sliding/full component and
+fixed oracle first. Only a correct, positive component may admit one fresh
+matched profiler-off c32 pair. Do not run `BLOCK_M=16` again, try another
+tile, relax the oracle, or replay quality.

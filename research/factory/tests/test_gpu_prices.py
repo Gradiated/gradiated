@@ -20,24 +20,35 @@ class GpuPriceInventoryTests(unittest.TestCase):
     def test_shared_inventory_is_fresh_and_uses_committed_production_rates(self) -> None:
         report = load_gpu_price_inventory(
             INVENTORY,
-            now=self.inventory_refreshed_at() + timedelta(days=6),
+            now=self.inventory_refreshed_at() + timedelta(days=2),
         )
 
         self.assertTrue(report["fresh"])
-        self.assertEqual(report["refresh_interval_days"], 7)
+        self.assertEqual(report["refresh_interval_days"], 3)
         self.assertEqual(report["production_pricing_policy"]["term_months"], [12, 24])
         self.assertEqual(report["production_pricing_policy"]["capacity_type"], "committed_non_preemptible")
         self.assertEqual(report["accelerators"]["amd-mi355x"]["production_planning_usd_per_gpu_hour"], 2.6)
         self.assertEqual(report["accelerators"]["nvidia-h200-sxm"]["production_planning_usd_per_gpu_hour"], 3.25)
+        self.assertGreaterEqual(len(report["accelerators"]), 15)
+        b200_rates = report["accelerators"]["nvidia-b200-sxm"]["experimental_reference_rates"]
+        self.assertIn(
+            {
+                "usd_per_gpu_hour": 3.95,
+                "capacity_type": "public_preemptible_compute",
+                "source_id": "nebius_compute_2026_07_28",
+            },
+            b200_rates,
+        )
+        self.assertEqual(report["accelerators"]["nvidia-b300-sxm"]["production_planning_usd_per_gpu_hour"], 5.8)
 
-    def test_inventory_becomes_stale_after_weekly_window(self) -> None:
+    def test_inventory_becomes_stale_after_three_day_window(self) -> None:
         report = load_gpu_price_inventory(
             INVENTORY,
-            now=self.inventory_refreshed_at() + timedelta(days=8),
+            now=self.inventory_refreshed_at() + timedelta(days=4),
         )
 
         self.assertFalse(report["fresh"])
-        self.assertGreater(report["age_days"], 7)
+        self.assertGreater(report["age_days"], 3)
 
     def test_planning_rate_must_be_inside_evidence_range(self) -> None:
         value = json.loads(INVENTORY.read_text())

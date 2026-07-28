@@ -1,0 +1,11 @@
+{
+  "hostkey_reconciliation": {
+    "path": "gemma4_h100_v0515_ngram_adaptive_depth6_cuda_graph/DIRECTOR_H100_STOCK_ASSERT_SSH_RECONCILIATION.json",
+    "presented_ed25519_fingerprint": "SHA256:pg4+qI6gH5fvI1Uzj3g57ookkGfXPXC2zphhy0PxKjY",
+    "result": "Authenticated provider identity and disk attachment matched; strict SSH passed against the campaign known-hosts namespace."
+  },
+  "next": "Priority-8500 execution claims once and continues only the bound request-62128 synchronous stock diagnostic, exact 62127..62129 A/A guard, and conditional novel 63000..63790 endpoint pair.",
+  "project": "gemma4_h100_v0515_ngram_adaptive_depth6_cuda_graph",
+  "result": "warm_h100_available_after_strict_ssh_identity_reconciliation",
+  "server_state": "No server or scientific diagnostic is resident; checkpoint, image, packet, workload tooling, and caches remain warm."
+}

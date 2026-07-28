@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_certified_lazy_vocab_head",
+  "decision": "authorize_exact_real_weight_h200_component_only",
+  "source_terminal": {
+    "path": "CERTIFIED_LAZY_VOCAB_RESULT.json",
+    "sha256": "c4918e00be2225eb326786e3b7975cc8d23a98c5bc0c0c16585b75a742e82210",
+    "result": "source_complete_candidate"
+  },
+  "candidate": {
+    "path": "certified_lazy_vocab_discriminator.py",
+    "sha256": "74ca37c0cf39523981b46a83183a3df41493ba55af7010fcc070bcef2a66e104"
+  },
+  "raw_discriminator": {
+    "path": "DISCRIMINATOR_RESULT.json",
+    "sha256": "abde4d8668581f6f581544448a84ff925587e9f68f5bfa9c1f87fc0bc3f9f7d9"
+  },
+  "immutable_inputs": {
+    "model": "google/gemma-4-31B-it",
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "tied_weight_dtype": "bf16",
+    "tied_weight_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+    "consumer": "scope-matched target verifier",
+    "rows": 384,
+    "workload": "exact c32 hidden states and draft proposals"
+  },
+  "runtime": {
+    "accelerator": "nvidia-h200-sxm",
+    "preferred_bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "lifecycle_deadline_utc": "2026-07-26T01:30:00Z",
+    "reuse_resident_model_image_compiler_and_cuda_caches": true
+  },
+  "claim_gate": {
+    "current_owner_must_release_first": "gemma4_hybrid_attention_placement_codesign",
+    "minimum_lifecycle_remaining_minutes": 60,
+    "maximum_claim_minutes": 45,
+    "wait_or_poll_for_bench": false,
+    "new_provider_resource_allowed": false
+  },
+  "measurement": {
+    "baseline_component_median_ms": 4.182975769042969,
+    "break_even_real_row_certificate_rate": 0.4733361287714464,
+    "required_telemetry": [
+      "raw stock and candidate CUDA-event rows",
+      "median and p95 milliseconds",
+      "real-row certificate and fallback rates",
+      "token, accepted-prefix, row-order, tie, and RNG equivalence",
+      "immutable index and workspace residency bytes",
+      "CUDA-graph and launch behavior"
+    ],
+    "result_artifact": "LAZY_VOCAB_H200_COMPONENT_RESULT.json",
+    "terminal_artifact": "LAZY_VOCAB_H200_COMPONENT_TERMINAL.json"
+  },
+  "positive_gate": {
+    "semantic_mismatches": 0,
+    "rng_mismatches": 0,
+    "certificate_rate_relation": "strictly_greater_than_break_even",
+    "candidate_median_relation": "strictly_less_than_baseline",
+    "resident_state_fits": true
+  },
+  "forbidden": [
+    "endpoint execution",
+    "approximate top-k",
+    "sampling-distribution changes",
+    "quality waiver",
+    "provider lifecycle mutation",
+    "claiming while another project owns the bench"
+  ]
+}

@@ -51,7 +51,30 @@ After this path proof, run the cheap semantic smoke and the one previously unsta
 
 - Authorized spend: `$10`.
 - Compute: one retained H200, at most two claimed GPU-hours.
-- Wall deadline: `2026-07-24T00:45:00Z`.
+- Wall deadline: `2026-07-23T23:30:00Z`.
 - Storage: at most 8 GiB; no checkpoint duplication.
-- Prepare offline while the higher-priority late-layer candidate owns the shared bench.
+- Claim the currently available retained H200 after the renewed reservation is durable.
 - Provider mutation is forbidden to the researcher.
+
+## Director reactivation — use the graph topology actually measured
+
+The continuation falsified the assumed post-replay boundary, but it also proved the
+candidate is already inside the pinned CUDA graph. `model.forward` captured the
+E4M3 head at `M=1,2,4,8,12,16,24,32`, replay returned the captured
+`LogitsProcessorOutput`, BF16 head fallback remained zero, and the semantic smoke
+passed. The missing post-graph Python event was therefore an impossible validator,
+not an integration failure.
+
+Preserve the settled real-row component and every prior iteration. In a new
+iteration, require the bound topology decision to rehash, prove the E4M3 head is
+present in each required graph capture and that candidate requests replay those
+graphs, retain zero BF16 fallback plus the BF16 embedding and logits/sampling
+contracts, and run the one previously unstarted exact c32 endpoint against
+`0.6556567115001144 s/request`. Do not require a post-replay head call, replay the
+component, change the representation, tune a kernel, or move the head outside
+`model.forward`.
+
+The endpoint must complete 32/32 finite rows with exactly 358 output tokens each,
+`17,120` cached and `117,728` fresh prompt tokens, and the existing path and
+semantic gates. A positive result is retained as an incremental candidate but
+does not make a campaign quality claim.

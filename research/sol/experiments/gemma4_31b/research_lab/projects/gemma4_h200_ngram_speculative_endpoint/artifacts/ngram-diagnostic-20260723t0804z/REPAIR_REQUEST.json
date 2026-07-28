@@ -1,0 +1,6 @@
+{
+  "request": "normalize_director_manifest_paths_and_resume_invalidated_staging_consumer",
+  "intervention_unchanged": true,
+  "workload_unchanged": true,
+  "candidate_arm_unconsumed": true
+}

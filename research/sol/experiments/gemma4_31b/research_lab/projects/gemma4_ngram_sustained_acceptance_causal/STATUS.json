@@ -1,23 +1,51 @@
 {
   "active_session": null,
-  "actual_spend_usd": 0.0,
+  "actual_spend_usd": 1.9313543586132855,
   "allocation_limit": 1,
-  "authorized_spend_usd": 0.0,
-  "compute_budget": "Local CPU/source analysis only; no GPU claim or provider mutation.",
-  "next_action": "If the director admits a measured follow-on, implement only the hash-bound request_local_verified_trunk overlay and run exactly one candidate-only 1036-request full-arrival endpoint. Do not replay a control, threshold-8 bypass, frequency mode, global breadth-one, or any settled scheduler/source arm.",
-  "priority": 8450,
-  "provider_mutation": "forbidden",
-  "researcher_profile": "execution",
-  "status": "complete",
-  "storage_budget": "At most 1 GiB of project-local artifacts.",
-  "summary": "Pinned-source probe exactly reproduced the c32 acceptance length 5.0 from one rare request contaminating the global recency trie. Promoted request_local_verified_trunk with a predicted 58.3% reduction in target rounds/rows and one no-control full-arrival endpoint contract.",
-  "terminal": {
+  "authorized_spend_usd": 3.0,
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "causal_result": {
     "artifact": "artifacts/causal-source-probe/RESULT.json",
     "candidate": "request_local_verified_trunk",
-    "candidate_endpoint_consumed": false,
-    "classification": "source_bound_causal_candidate_ready",
-    "gpu_science_consumed": false,
+    "candidate_endpoint_consumed": true,
+    "classification": "invalid_candidate_path_localization_admitted",
+    "gpu_science_consumed": true,
     "result_sha256": "44e631b769d53127ca98907e0205132afa0fd3530595d6dd9962a999d3c3b396"
   },
-  "wall_clock_budget": "Finish by 2026-07-25T03:15:00Z."
+  "compute_budget": "Within the existing $3 total authority: one smallest candidate-only sustained-load discriminator through request 790, then at most one repaired 1,036-request full-arrival endpoint only if activation is proved and the discriminator is exact.",
+  "director_repair": {
+    "artifact": "DIRECTOR_REPAIR.json",
+    "sha256": "f4d9674332773661f4332975b01be7205b9c3ef5ea4c98d6f90d7f6ea4e77cd0"
+  },
+  "next_action": "Do not replay the consumed 791-request discriminator or run the conditional full endpoint: its positive activation proof is retained, but request 170 diverged at output token 38 and the semantic, queue, and cost gates failed. Preserve the compact terminal and maintenance bench state for director disposition.",
+  "priority": 8600,
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "researcher_profile": "execution",
+  "reservation": {
+    "authorized_usd": 3.0,
+    "reserved_at": "2026-07-25T03:20:51.576255Z",
+    "source": "campaign_cap_director_authority",
+    "updated_at": "2026-07-25T03:24:57Z"
+  },
+  "reservation_gate": "Do not claim until the $3 reservation is durable and every identity and SHA-256 in DIRECTOR_BINDING.json matches.",
+  "status": "complete",
+  "storage_budget": "At most 6 GiB of project-local artifacts total.",
+  "summary": "The completed 791-request activation-localization discriminator positively proved the repaired overlay, but failed normalized semantics, queue, and planning-cost gates; the conditional full endpoint is not admitted.",
+  "terminal": {
+    "artifact_root": "artifacts/repair-localization-20260725t042028z/out-discriminator-0-790-repair-localization-20260725t042028z",
+    "classification": "measured_discriminator_semantic_reject",
+    "discriminator": {
+      "activation_proved": true,
+      "first_semantic_divergence": {
+        "output_token_index": 38,
+        "request": 170
+      },
+      "normalized_semantics_exact": false,
+      "requests": 791,
+      "terminal_sha256": "a5046174d747bfd8efca9d7c9e10a41d4b77ceb49045f9d727c206ef5430de6c"
+    },
+    "full_endpoint": null,
+    "repair_candidate_sample_consumed": true
+  },
+  "wall_clock_budget": "Release by 2026-07-25T05:03:00Z under the verified 2026-07-25T06:15:00Z lifecycle watchdog; cumulative project spend remains capped at $3."
 }

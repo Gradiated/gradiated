@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-07-20T02:45:00Z",
+  "dependency_project": "gemma4_h200_qkv_epilogue_fusion",
+  "required_state": "typed terminal and ready bench release",
+  "observed_status": "active",
+  "observed_terminal": null,
+  "observed_next_action": "Claim the retained H200 and stack the persisted QKV epilogue onto the exact v0.5.13 FP8 frontier control without replaying the component.",
+  "bench_inventory_status": "available",
+  "decision": "typed_external_dependency_not_released",
+  "scientific_invocation_started_in_this_project": false,
+  "provider_spend_usd_in_this_project": 0.0,
+  "note": "An available pool entry does not substitute for the required QKV terminal-and-release evidence. The discovered fp8-qkv-stack-20260720t0140z directory contains only bench contents/claim metadata and empty worker output, not a typed terminal."
+}

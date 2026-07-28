@@ -1,0 +1,35 @@
+{
+  "admitted_at_utc": "2026-07-25T02:10:00Z",
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "candidate_science_consumed": false,
+  "classification": "invalid_pre_science_warmup_type",
+  "deadline_utc": "2026-07-25T02:50:00Z",
+  "diagnostic": {
+    "exception": "TypeError(\"unsupported operand type(s) for +: 'int' and 'str'\")",
+    "failing_call": "body(template, \"warmup\")",
+    "failing_expression": "200000 + index",
+    "science_start_marker_reached": false
+  },
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T03:00:00Z",
+    "override": "DIRECTOR_LIFECYCLE_0300.json"
+  },
+  "project": "gemma4_h200_ngram_tail_overlap",
+  "repair_scope": [
+    "Keep the existing DIRECTOR_BINDING.json and every scientific intervention and gate unchanged.",
+    "Replace only the warmup string index with a deterministic integer sentinel and prove the warmup body constructs before remote launch.",
+    "After claiming the bench, verify the recorded running gemma4-ngram-tail-overlap container still serves the bound model and reuse it without docker run, reload, or removal.",
+    "Set candidate science consumed only immediately before the first fixed-trace request.",
+    "Run only the still-unconsumed 1,036-request tail-overlap trajectory and release by 2026-07-25T02:50:00Z."
+  ],
+  "resident_state": {
+    "container": "gemma4-ngram-tail-overlap",
+    "container_pid": 27082,
+    "gpu_process_pid": 27211,
+    "gpu_used_memory_mib": 122796,
+    "model_endpoint_http_status": 200,
+    "model_id": "google/gemma-4-31B-it",
+    "remote_owner_live": false
+  },
+  "schema_version": 1
+}

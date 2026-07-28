@@ -1,0 +1,24 @@
+{
+  "created_at_utc": "2026-07-25T16:51:23Z",
+  "diagnostic": {
+    "cuda_launch_blocking": true,
+    "request": 62128,
+    "returncode": 0
+  },
+  "guard": {
+    "indices": [
+      62127,
+      62128,
+      62129
+    ],
+    "passed": true,
+    "returncode": 0
+  },
+  "repair": {
+    "applied_to_stock_and_candidate_scope": true,
+    "kind": "triton_attention_num_kv_splits_1",
+    "semantic_scope_unchanged": true
+  },
+  "schema_version": 1,
+  "server_stopped": true
+}

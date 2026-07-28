@@ -1,0 +1,23 @@
+{
+  "files": [
+    {
+      "bytes": 337920,
+      "path": "/home/glmrunner/gemma4-ngram-qlen-two-stage/FROZEN_PACKET.production-two-stage.tar",
+      "reused": false,
+      "sha256": "80a0a8b3878a10c600ba48678dd091f25758385389b148caf5c022bb1b5ae0ce"
+    },
+    {
+      "bytes": 28314,
+      "path": "/home/glmrunner/gemma4-ngram-qlen-two-stage/repair-v2-control-reference.tar.gz",
+      "reused": true,
+      "sha256": "39db2ed169c9ecede649ab07e994fd824a1934f6600df3cc64d7b29875d3bccf"
+    },
+    {
+      "bytes": 4780,
+      "path": "/home/glmrunner/gemma4-ngram-qlen-two-stage/detached-owner",
+      "reused": true,
+      "sha256": "a2c7b59af7de411cf465288d106b75a940fa3668461b98b6a74dfa1c4973a456"
+    }
+  ],
+  "remote_root": "/home/glmrunner/gemma4-ngram-qlen-two-stage"
+}

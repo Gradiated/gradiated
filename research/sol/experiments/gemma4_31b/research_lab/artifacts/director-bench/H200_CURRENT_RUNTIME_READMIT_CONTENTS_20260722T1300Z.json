@@ -1,0 +1,9 @@
+{
+  "project": "gemma4_current_runtime_frontier",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "checkpoint": "Cold 250-GiB bench; the 59-GiB immutable project-local snapshot is materialized but no checkpoint byte has reached the guest.",
+  "image": "Current vLLM digest sha256:f0b9a0dc75a9fca3b6811e3279367b2d6a448055a000bfd13859587d74cef268 is bound but not pulled.",
+  "runtime": "Independent current-vLLM H200 environment; provider instance RUNNING, disk READY, and glmrunner cloud-init identity verified with authorized fingerprint SHA256:g5df+MD3rnTnW0lmqaEvI+esJ+H14qj/g7NeeJgDBXg.",
+  "caches": "Cold; retain checkpoint, image, compilation, and CUDA graph caches for bounded in-place repair.",
+  "server_state": "No server, CUDA call, or endpoint request has started; only the project launcher's local SSH key path remains to be corrected."
+}

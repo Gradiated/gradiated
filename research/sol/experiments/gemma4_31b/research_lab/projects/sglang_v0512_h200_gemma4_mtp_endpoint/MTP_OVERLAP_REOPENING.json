@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "admitted_at_utc": "2026-07-23T07:12:00Z",
+  "classification": "new_mtp_scheduler_mechanism_after_consumed_endpoint_negative",
+  "scientific_question": "Can one overlap-safe Frozen-KV MTP scheduling intervention remove enough assistant/verify serialization and low-acceptance tail cost to make the exact stacked c32 endpoint cross 0.6381105231 seconds per request?",
+  "evidence": {
+    "artifact_root": "artifacts/mtp-candidate-repair-20260723t0658z",
+    "control": {
+      "path": "artifacts/mtp-endpoint-pair-20260723t0603z/retrieved/control/TERMINAL.json",
+      "complete_requests": 32,
+      "service_seconds_per_request": 0.6743258590313417,
+      "fresh_prompt_tokens": 117728,
+      "cached_prompt_tokens": 17120
+    },
+    "candidate": {
+      "path": "artifacts/mtp-candidate-repair-20260723t0658z/retrieved/mtp/TERMINAL.json",
+      "complete_requests": 32,
+      "service_seconds_per_request": 1.2802698384061841,
+      "fresh_prompt_tokens": 117760,
+      "cached_prompt_tokens": 17088,
+      "regression_fraction": 0.8985922329083913,
+      "cache_split_delta_tokens": 32,
+      "cache_split_delta_fraction_of_prompt_tokens": 0.00023730422401518748
+    },
+    "path_proof": {
+      "invocation_state": "artifacts/mtp-candidate-repair-20260723t0658z/INVOCATION_STATE.json",
+      "mtp_science_started": true,
+      "accepted_depth_audit": "artifacts/mtp-candidate-repair-20260723t0658z/retrieved/mtp-audit/accepted-depth.jsonl",
+      "assistant_forward_events": 354,
+      "target_verify_events": 354,
+      "accepted_drafts_total": 4880,
+      "assistant_elapsed_ms": 1830.576429,
+      "target_verify_elapsed_ms": 25976.945748,
+      "qkv_audit": "artifacts/mtp-candidate-repair-20260723t0658z/retrieved/mtp-audit/qkv.jsonl",
+      "qkv_rows": 8898
+    },
+    "source_runtime_signal": {
+      "path": "artifacts/mtp-candidate-repair-20260723t0658z/retrieved/mtp.server-start.log",
+      "message": "Overlap scheduler is disabled when using Frozen-KV MTP speculative decoding (spec v2 is not supported yet).",
+      "decode_cuda_graph_observed": true,
+      "tail_observation": "The exact server log falls from 32 running requests with accept rate 0.70-0.86 to four running requests with accept rate 0.04-0.13."
+    }
+  },
+  "immutable": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.13 commit 28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "workload": "32 requests at c32, 4214 prompt and 358 completion tokens, 117728 fresh plus 17120 cached prompt tokens",
+    "target_consumer": "dynamic FP8 plus fused QKV on target layers",
+    "assistant_consumer": "stock QKV on KV-shared assistant layers",
+    "proposal_geometry": "speculative_num_steps=1, speculative_num_draft_tokens=2, speculative_eagle_topk=1"
+  },
+  "method_gate": {
+    "profile": "deep",
+    "candidate_limit": 1,
+    "required_before_gpu": [
+      "exact pinned source path for the overlap-disable decision and assistant/verify serialization",
+      "one concrete intervention with a causal event or counter prediction",
+      "oracle or analytical bound showing a plausible endpoint at or below 0.6381105231 seconds per request"
+    ],
+    "endpoint_gate": {
+      "complete_requests_per_arm": 32,
+      "fresh_prompt_tokens": 117728,
+      "cached_prompt_tokens": 17120,
+      "maximum_candidate_seconds_per_request": 0.6381105231,
+      "required_path_proof": "target, assistant, QKV, accepted-depth, and new overlap/serialization intervention"
+    }
+  },
+  "forbidden": [
+    "unchanged MTP replay",
+    "proposal-depth, draft-token, top-k, cache, concurrency, or workload sweep",
+    "fallback-threshold sweep",
+    "repair or normalization of the consumed cache-mismatched candidate",
+    "BF16 fallback",
+    "provider creation or lifecycle mutation by the researcher"
+  ],
+  "bench": {
+    "id": "h200-sync-linear-e00vhh6h29fj68x91g",
+    "accelerator": "nvidia-h200-sxm",
+    "lifecycle_deadline_utc": "2026-07-23T08:27:53Z"
+  }
+}

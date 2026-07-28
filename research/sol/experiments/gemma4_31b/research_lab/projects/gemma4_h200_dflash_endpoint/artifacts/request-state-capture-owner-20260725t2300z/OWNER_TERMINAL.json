@@ -1,0 +1,8 @@
+{
+  "actual_spend_usd": 0.0657742666388889,
+  "claim_seconds": 96.649062,
+  "classification": "owner_nonrecoverable_boundary",
+  "error": "KeyError: 'packet_archive'",
+  "remote_run": "/home/glmrunner/gemma4-dflash/request-state-capture/runs/request-state-capture-owner-20260725t2300z-c8f8759e499d",
+  "schema_version": 1
+}

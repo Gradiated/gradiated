@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "type": "packed_m384_streaming_h100_component_ready",
+  "generation": 2,
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "supersedes": {"sha256": "14d179bf4c065d7aefe3f3d73f60caf3f30a1939a630ba89401b8b5374964d68", "reason": "generation 1 waited without consuming or applying repair requests and did not protect ambiguous CUDA replay"},
+  "director_repair": {"path": "DIRECTOR_HOPPER_PACKED_STREAMING_H100_READY_REPAIR_20260726T2051Z.json", "sha256": "a7ef50510598dafd25ba94e7597b20fb8f81cc4d61a52c651001ade54a842b0b"},
+  "director_admission": {"path": "DIRECTOR_HOPPER_PACKED_STREAMING_H100_ADMISSION_20260726T2042Z.json", "sha256": "b23d80e326bbf0789104e887d5afa1753789ba56fc5b92da6c1a920499c3847d"},
+  "consumed_streaming_ready": {"path": "PACKED_M384_STREAMING_ACCURACY_READY.json", "sha256": "5c794d0227dd189d8657c666542248539442262314dfe76dc857b065483ca483"},
+  "owner": {"path": "run_streaming_h100_component_owner.py", "sha256": "c4fdbba4d6a860c07e63f6b92738f733d2c3f8249b34d2bb8c274016c2944efc"},
+  "input_manifest": {"path": "STREAMING_H100_COMPONENT_INPUT_MANIFEST.json", "sha256": "5189f2beab6cd7def9fa6d7ee3a1e8297c5076f6a533b949814246f8ad595583"},
+  "lifecycle": {"controller": "/root/workspace/research/factory/tools/detached-owner", "unit_manager": "pid", "requires_atomic_h100_claim": true, "remote_staging": "content-addressed packet with size-and-sha256 reconciliation, temporary transfer, verification, and atomic finalization", "repair_policy": "each fresh repair generation verifies and records its request under the live heartbeat, resumes only its permitted stage, and never releases for a recoverable defect"},
+  "replay_protection": {"pre_science": ["stage", "run_unsubmitted_cycle", "retrieve"], "science_started_or_terminal_marker": ["retrieve", "offline_result_construction"], "rule": "A missing result after candidate_cuda_invocation_started cannot rerun the component cycle without evidence that no candidate sample was consumed."},
+  "scientific_contract": {"one_new_stock_vs_streaming_component_cycle": true, "v2_component_replay_allowed": false, "v2_endpoint_replay_allowed": false, "endpoint_pairs_remaining": 0, "runner": "streaming_accuracy_component_runner.py", "source_sha256": "2262a4a20e9438671f795eeb8aad7f5db9cbe65ae446a94758e3d4c1cce78656"},
+  "gpu_claim_allowed": false,
+  "provider_create_allowed": false,
+  "reservation_required_usd": 7.0,
+  "next_action": "Director must record the exact $7 reservation and issue a readmission JSON containing project, ready_sha256, bench_id, deadline_utc, reservation_usd: 7.0, and gpu_claim_allowed: true. Only then atomically claim the bench and launch this owner through detached-owner with unit_manager pid and --readmission."
+}

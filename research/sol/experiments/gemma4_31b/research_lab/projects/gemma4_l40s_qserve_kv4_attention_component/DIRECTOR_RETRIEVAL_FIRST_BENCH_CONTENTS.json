@@ -1,0 +1,13 @@
+{
+  "project": "gemma4_l40s_qserve_kv4_attention_component",
+  "classification": "retrieval_first_pointer_repair_continuation",
+  "artifacts": "projects/gemma4_l40s_qserve_kv4_attention_component/artifacts/kv4-l40s-pointer-repair-20260724t0710z",
+  "packet_sha256": "45472047380028df34f8d702c3101dab326154bdfb919bfb835c12ff7761de8f",
+  "model": "Exact checkpoint-free Gemma 4 D256-local/D512-global KV4 component; the retained Gemma checkpoint is not consumed by this arm.",
+  "checkpoint": "Exact google/gemma-4-31B-it checkpoint remains resident at /home/glmrunner/gemma4-qserve-endpoint/checkpoint for compatible later work.",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "runtime": "Pinned SGLang v0.5.13 with the verified pointer-only KV4 packet and corrected atomic compact-retrieval owner.",
+  "caches": "Pinned image, checkpoint, compiled SM89 extension, immutable packet, and resident remote output retained.",
+  "server_state": "No container or compute process; zero GPU memory and utilization at supervisor capture. Retrieve resident output before any conditional rerun.",
+  "next_action": "The same project must claim once, atomically retrieve resident worker evidence first, and rerun only after a typed pre-science boundary; a decision-bearing COMPONENT_TERMINAL closes replay."
+}

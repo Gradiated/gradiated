@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "classification": "typed_repair_deadline_boundary",
+  "observed_at_utc": "2026-07-26T03:07:08Z",
+  "repair_id": "ngram-readmission-20260726t0248z-r5-v2-verify",
+  "deadline_utc": "2026-07-26T03:05:00Z",
+  "release_not_after_utc": "2026-07-26T03:10:00Z",
+  "reason": "The sole permitted r5 replacement could not complete the pinned full-model load and comparator inside the elapsed absolute repair deadline. The r5 request prohibits another repair after that deadline.",
+  "prior_attempt": {
+    "owner_pid": 1486385,
+    "owner_absent_at_terminal": true,
+    "failure_kind": "ordinary_integration",
+    "failure": "pinned runtime has no class-level NgramVerifyInput.verify",
+    "model_load_and_cuda_graphs_completed": true,
+    "science_started": false,
+    "candidate_cuda_invocation_started": false,
+    "full_model_component_consumed": false,
+    "exact_c32_started": false
+  },
+  "evidence": {
+    "repair_request": ".repair-handshakes/ngram-readmission-20260726t0248z-r5-v2-verify/REPAIR_REQUEST.json",
+    "repair_ready": ".repair-handshakes/ngram-readmission-20260726t0248z-r5-v2-verify/REPAIR_READY.json",
+    "raw_server_stdout": "server_raw.stdout.log",
+    "raw_server_stdout_sha256": "captured with the retained r4 artifact; server shutdown is recorded at 02:49:36Z",
+    "owner_state": "DETACHED_OWNER_REPAIR2_STATE.json"
+  },
+  "disposition": "release claimed H200 to maintenance after this terminal; exact-c32 remains unconsumed"
+}

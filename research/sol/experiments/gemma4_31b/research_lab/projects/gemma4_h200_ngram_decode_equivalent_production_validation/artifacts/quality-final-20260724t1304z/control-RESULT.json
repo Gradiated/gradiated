@@ -1,0 +1,20 @@
+{
+  "arm": "control",
+  "economics": {
+    "completion_tokens": 9387,
+    "latency_seconds": 150.4196406339779,
+    "total_tokens": 96813
+  },
+  "gpqa": {
+    "accuracy": 0.2777777777777778,
+    "count": 198
+  },
+  "raw_hashes": {
+    "gpqa": "64054a6d40df534f21c3108088e04968d0e9a562fe3c90f47ed199f12c3708b5",
+    "tau": "b852c8787b6a46a091343a5f56583724de66acc33d5838764ae7b45e5028a9e2"
+  },
+  "taubench": {
+    "count": 165,
+    "task_success": 0.06060606060606061
+  }
+}

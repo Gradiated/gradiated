@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "classification": "e4m3_head_inside_captured_model_forward",
+  "decision": "The E4M3 head is part of pinned Gemma4ForCausalLM.forward, is captured at every required padded decode shape, and is replayed with that model-forward graph. A post-replay Python head event is neither required nor possible without an out-of-scope topology change.",
+  "source_evidence": {
+    "path": "../graph-bound-endpoint-20260723t1930z/artifacts/PINNED_TOPOLOGY_DECISION.json",
+    "sha256": "56fc4918f642738c8676bbc6b7e117b9124ec7117d839b1d4d705e10637be2b9"
+  },
+  "settled_facts": {
+    "required_padded_capture_m": [1, 2, 4, 8, 12, 16, 24, 32],
+    "replay_output_type": "LogitsProcessorOutput",
+    "bf16_head_fallback_count": 0,
+    "bf16_embedding_preserved": true,
+    "semantic_smoke_pass": true,
+    "component_replayed": false,
+    "endpoint_science_started": false
+  }
+}

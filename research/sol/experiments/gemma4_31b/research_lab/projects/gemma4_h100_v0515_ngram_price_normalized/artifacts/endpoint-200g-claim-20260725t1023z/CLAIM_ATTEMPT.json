@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "bench": "h100-v0515-endpoint-200g-e00wthpm1fp735xd44",
+  "action": "atomic_gpu_pool_claim",
+  "result": "typed_external_pool_boundary",
+  "pool_status_observed": "draining",
+  "error": "no available GPU bench matches this project",
+  "provider_mutated": false,
+  "claim_succeeded": false,
+  "ssh_started": false,
+  "checkpoint_staged": false,
+  "server_started": false,
+  "candidate_cuda_started": false,
+  "endpoint_sample_consumed": false,
+  "new_provider_spend_usd": 0.0,
+  "required_director_action": "Make the registered bench claimable or persist a director-selected typed terminal; researcher must not bypass draining state."
+}

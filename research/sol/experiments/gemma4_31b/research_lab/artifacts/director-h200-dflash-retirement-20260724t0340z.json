@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "bench": "h200-dflash-e00q45wf04571cb67n",
+  "provider": "nebius",
+  "resource": {
+    "instance_id": "computeinstance-e00q45wf04571cb67n",
+    "disk_id": "computedisk-e00a75b8406tsvjg5d"
+  },
+  "decision": "retire_no_compatible_queued_successor",
+  "guest_cleanup": {
+    "removed_container": "gemma4-dflash",
+    "compute_process_count_after": 0,
+    "gpu_memory_used_mib_after": 0,
+    "gpu_utilization_percent_after": 0
+  },
+  "provider_cleanup": {
+    "operation_id": "computeoperation-e00hp5vye0dtba6asa",
+    "operation_finished_at_utc": "2026-07-24T03:41:56.280383Z",
+    "instance_after": "absent",
+    "disk_after": "absent"
+  },
+  "watchdog": {
+    "unit": "gemma4-dflash-h200-20260723t2337z-watchdog.service",
+    "state_after": "inactive"
+  },
+  "inventory_after": "retired"
+}

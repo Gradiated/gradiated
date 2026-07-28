@@ -1,0 +1,7 @@
+{
+  "classification": "integration_failure",
+  "message": "candidate_path_invalid",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-23T14:17:31.930703Z"
+}

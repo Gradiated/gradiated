@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "decision": "same_project_offline_manifest_size_parser_repair_after_invalid_unknown_observation",
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "prior_binding": "DIRECTOR_ENDPOINT_DISK_REPAIR_EXTENSION_BINDING.json",
+  "prior_binding_sha256": "18c060e8b7d0b3d1bbd0a338f87ce0bf108a02964ed6dc48721d4b86ad47c56b",
+  "geometry_terminal": "DIRECTOR_100GIB_GEOMETRY_TERMINAL.json",
+  "geometry_terminal_sha256": "8a1a3621c85ed92ca7eee62afa3f3b79e88acd0cffc020905b2b6c11bba0e792",
+  "interpretation_correction": "DIRECTOR_PARSER_BOUNDARY_CORRECTION.json",
+  "interpretation_correction_sha256": "0994817aac66ac83f8f8baafd767eb57147d5bb87b0b9b4a0ce7d679d54cb325",
+  "failed_attempt": {
+    "artifact_root": "artifacts/h100-endpoint-diskrepair-20260725t0955z",
+    "terminal": "artifacts/h100-endpoint-diskrepair-20260725t0955z/TERMINAL.json",
+    "terminal_sha256": "11ee200be8a1b455b4e4d6e8a3a55a2b2b2f2fc4aab527cc1f10406552fe9a95",
+    "classification": "typed_external_or_recoverable_failure",
+    "error": "disk_repair_failed:image_manifest_size_unavailable",
+    "physical_100gib_fit": "unknown",
+    "endpoint_sample_consumed": false,
+    "candidate_sample_consumed": false
+  },
+  "authorized_offline_repair": {
+    "scope": "Repair only the local pinned-image manifest-size parser. Accept the registry schema variants returned for the exact digest, sum every referenced compressed layer size without trusting mutable tags, and fail closed on a missing, malformed, duplicate, negative, or non-integer size.",
+    "positive_fixture": "A content-bound exact-digest manifest with config and layer descriptors must yield a deterministic total byte count and sufficient-space decision.",
+    "negative_fixtures": "Missing size, schema mismatch, digest mismatch, duplicate descriptor, and malformed numeric values must fail closed before any provider creation.",
+    "terminal": "Persist REPAIR_READY.json with the repaired source hash, exact positive/negative fixture hashes and results, original endpoint identities, and provider_mutated=false."
+  },
+  "provider_gate": {
+    "provider_creation_before_repair_ready": "forbidden",
+    "researcher_provider_mutation": "forbidden",
+    "replacement_accelerator": "nvidia-h100-sxm",
+    "replacement_hbm_gb": 80,
+    "selected_replacement_boot_disk_gib": 200,
+    "selected_replacement_is_measured_minimum": false,
+    "replacement_geometry": "A fresh provider resource with a director-selected 200-GiB risk-reduction geometry may be created and registered only after REPAIR_READY.json passes. The failed parser did not establish a physical minimum.",
+    "old_instance_id": "computeinstance-e00jjdbxgvxwbzbfsr",
+    "old_disk_id": "computedisk-e00hf9gkq3ee80yhvp",
+    "old_provider_objects_absent": true
+  },
+  "unchanged_scientific_contract": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "runtime": "SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "endpoint": "The sole 791-request endpoint remains unconsumed.",
+    "forbidden": [
+      "replaying the consumed 171-request discriminator",
+      "changing the image, model, runtime, workload, or scientific contract",
+      "marking endpoint consumption before the first endpoint request is submitted"
+    ]
+  },
+  "budgets": {
+    "cumulative_authorized_spend_usd": 15.5,
+    "conservative_actual_spend_usd": 7.9,
+    "offline_repair_deadline_utc": "2026-07-25T10:25:00Z",
+    "future_provider_deadline": "Director must choose an absolute deadline after the offline gate passes and keep total exposure within the cumulative authorization."
+  }
+}

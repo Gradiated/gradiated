@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "repair_id": "repair-12",
+  "classification": "concurrent_server_bootstrap_root_archive_race",
+  "observed": {
+    "generation": 12,
+    "science_started": true,
+    "completed_requests": 32,
+    "observer_error": "RuntimeError:aux_tap_contract",
+    "server_bootstrap_error": "FileNotFoundError: /project-local/artifacts/offset-capture -> ...invalid-1785105779",
+    "training_or_holdout_started": false
+  },
+  "localized_defect": "Multiple SGLang Python processes run sitecustomize concurrently. More than one process selected the same nonempty capture root for rename; one lost the atomic rename race and skipped hook installation. The model process then retained the default auxiliary-capture state.",
+  "repair": "Archive only evidence-bearing prior roots, use a nanosecond archive identity, tolerate a competing completed rename, and leave a fresh prior-archive manifest alone for concurrent bootstrap peers.",
+  "scope": "fresh_capture_only_with_concurrent_root_archive_repair"
+}

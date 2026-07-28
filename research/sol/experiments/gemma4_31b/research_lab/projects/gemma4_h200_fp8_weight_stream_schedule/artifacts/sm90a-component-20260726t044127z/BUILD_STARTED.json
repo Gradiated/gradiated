@@ -1,0 +1,7 @@
+{
+  "at_utc": "2026-07-26T04:41:32.328144+00:00",
+  "build_identity_sha256": "54919d0e8cb5ae992e5165b0e497b1418399b1ba9b31ba42edf80df4efeeafdb",
+  "candidate_cuda_invocation_started": false,
+  "cutlass_root": "/usr/local/lib/python3.12/dist-packages/tilelang/3rdparty/cutlass",
+  "source_sha256": "6fbf494585aebb0453c4af9ac17481701e036e5e948e1edac7297d44e2999803"
+}

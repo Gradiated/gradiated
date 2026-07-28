@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "decision": "provision_one_changed_storage_h100_after_manifest_parser_gate",
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "repair_gate": {
+    "artifact": "REPAIR_READY.json",
+    "sha256": "458dbc61a9b0fe8721f3dd93d39f6c491cf2ae90b73748f0eafb53b178871a70",
+    "decision": "manifest_size_parser_repaired_offline",
+    "parser_source": "manifest_size.py",
+    "parser_source_sha256": "e8b3db6aee01466d8d66180cf101df10616d85b8d8cb4adbe5c933c7fcfdf083",
+    "owner_integration_sha256": "145f286f942cb62b1b6c00ddacafc05e921280ffd4ce57356aa685137bc3d222",
+    "positive_fixture_sha256": "e5994c5f861e65441c6b9eb9fe33dd44fd1534935b7ef2c0f0e583b72cb2a2f2",
+    "negative_fixture_results_sha256": "ebfe5c4104b2f5ccdafec9098350139e86fc413adc4d6120669058d4fde17638"
+  },
+  "provider_resource": {
+    "provider": "nebius",
+    "accelerator": "nvidia-h100-sxm",
+    "hbm_gb": 80,
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry; not a measured physical minimum.",
+    "instance_id": "computeinstance-e00wthpm1fp735xd44",
+    "instance_name": "gemma4-h100-v0515-endpoint-200g-20260725t1015z",
+    "disk_id": "computedisk-e00d0aezed6d804hmp",
+    "disk_name": "gemma4-h100-v0515-endpoint-200g-20260725t1015z-boot",
+    "public_ipv4": "89.169.126.81",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts"
+  },
+  "lifecycle": {
+    "release_deadline_utc": "2026-07-25T12:15:00Z",
+    "watchdog_deadline_utc": "2026-07-25T12:20:00Z",
+    "watchdog_unit": "gemma4-h100-v0515-endpoint-20260725t1220-watchdog.service",
+    "watchdog_main_pid": 625957,
+    "hourly_compute_cost_usd": 2.95,
+    "maximum_new_compute_exposure_usd": 6.15,
+    "cumulative_project_authorization_usd": 15.5,
+    "conservative_prior_actual_spend_usd": 7.9
+  },
+  "unchanged_scientific_contract": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "runtime": "SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "workload": "The sole unconsumed 791-request endpoint from the exact manifest-bound packet.",
+    "economic_reference": "The settled 171-request H100 discriminator measured 0.7073339939181298 seconds/request and approximately $0.13369997616805754 per million total tokens at 90% utilization."
+  },
+  "researcher_contract": {
+    "claim": "Claim only the registered 200-GiB H100 bench and read its current connection identity from runtime/gpus.json.",
+    "first_scientific_arm": "Run only the sole unconsumed 791-request endpoint after checkpoint, packet, exact image digest, repaired manifest-size parser, runtime, GPU, and server gates pass.",
+    "failure": "Persist a typed pre-science terminal if any gate fails; record endpoint consumption only from per-request submission evidence.",
+    "forbidden": [
+      "replaying the consumed 171-request discriminator",
+      "changing the model, image, runtime, workload, or scientific contract",
+      "researcher provider mutation",
+      "deleting or resizing the provider resource"
+    ]
+  }
+}

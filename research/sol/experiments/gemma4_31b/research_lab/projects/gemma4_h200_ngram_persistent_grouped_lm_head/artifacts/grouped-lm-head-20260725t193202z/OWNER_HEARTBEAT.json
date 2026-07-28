@@ -1,0 +1,6 @@
+{
+  "at_utc": "2026-07-25T19:38:02.914298Z",
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "ince\": null,\n  \"lifecycle\": {\n    \"deadline_utc\": \"2026-07-25T22:00:00Z\",\n    \"watchdog\": {\n      \"control_group\": \"/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service\",\n      \"main_pid\": 828601,\n      \"unit\": \"gemma4-dflash-h200-adapter-20260725t2200-watchdog.service\",\n      \"unit_manager\": \"user\"\n    }\n  },\n  \"provider\": \"nebius\",\n  \"registered_at\": \"2026-07-25T15:16:31.474656Z\",\n  \"resource\": {\n    \"disk_id\": \"computedisk-e00dryj6tbensjs413\",\n    \"disk_name\": \"gemma4-dflash-h200-adapter-20260725t1512z-boot\",\n    \"instance_id\": \"computeinstance-e00vyqp7gxsr34wrtz\",\n    \"instance_name\": \"gemma4-dflash-h200-adapter-20260725t1512z\",\n    \"known_hosts_namespace\": \"/root/.config/nebius/glm-campaign/known_hosts\",\n    \"public_ipv4\": \"89.169.109.132\",\n    \"ssh_ed25519_fingerprint\": \"SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g\",\n    \"ssh_user\": \"glmrunner\"\n  },\n  \"status\": \"claimed\",\n  \"updated_at\": \"2026-07-25T19:38:02.906213Z\"\n}\n"
+}

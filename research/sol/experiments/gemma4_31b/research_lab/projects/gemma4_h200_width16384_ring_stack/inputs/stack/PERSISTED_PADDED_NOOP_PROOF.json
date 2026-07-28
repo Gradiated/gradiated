@@ -1,0 +1,13 @@
+{
+  "classification": "padded_row_noop_pass",
+  "consumer_negative_row_zero": true,
+  "pass": true,
+  "producer_negative_row_noop": true,
+  "request_rows": [
+    0,
+    -1
+  ],
+  "schema_version": 1,
+  "status": "terminal",
+  "valid_row_finite": true
+}

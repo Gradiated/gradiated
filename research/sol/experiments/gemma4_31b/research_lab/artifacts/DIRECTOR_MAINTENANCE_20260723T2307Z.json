@@ -1,0 +1,36 @@
+{
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "compatible_successor": "gemma4_h200_ngram_production_validation",
+  "completed_at_utc": "2026-07-23T23:07:36Z",
+  "maintenance": {
+    "action": "removed completed static-c32 direct-model server for sequential NGRAM production validation",
+    "after_compute_memory_mib": 0,
+    "after_compute_processes": 0,
+    "after_gpu_memory_used_mib": 0,
+    "after_gpu_utilization_percent": 0,
+    "before_compute_memory_mib": 123610,
+    "before_compute_processes": 1,
+    "before_container": "gemma-static-c32-supergraph",
+    "before_container_state": "running",
+    "container_after": "absent"
+  },
+  "predecessor": {
+    "artifact_root": "projects/gemma4_h200_static_c32_multitoken_decode_engine/artifacts/static-c32-direct-model-20260723t2242z",
+    "project": "gemma4_h200_static_c32_multitoken_decode_engine",
+    "result": "component_numerical_semantic_or_bound_reject",
+    "terminal_sha256": "51f7ba58f9222658c4a7356cf4705a95151eccd37442dd859bb8f7e46dbe13eb"
+  },
+  "provider_verification": {
+    "attached_disk_id": "computedisk-e00x25hxd1pnnxjn8b",
+    "instance_id": "computeinstance-e00vhh6h29fj68x91g",
+    "instance_state": "RUNNING"
+  },
+  "retained": {
+    "checkpoint": "Exact immutable checkpoint at /home/glmrunner/gemma4-async-result-pipeline/checkpoint",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "runtime": "Pinned SGLang v0.5.13 image, checkpoint, CUDA graph, Triton ring, dynamic-FP8, and compiled caches",
+    "watchdog": "gemma4-sync-linear-h200-20260723t1750-watchdog-v5.service",
+    "watchdog_deadline_utc": "2026-07-24T01:30:00Z"
+  },
+  "server_state": "No accelerator-resident server or compute process; ready only for the named sequential NGRAM validation successor."
+}

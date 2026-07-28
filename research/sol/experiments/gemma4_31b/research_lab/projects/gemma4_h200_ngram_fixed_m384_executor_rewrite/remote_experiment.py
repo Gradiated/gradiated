@@ -13,7 +13,12 @@ from typing import Any
 
 ROOT = pathlib.Path("/home/glmrunner/gemma4-fixed-m384-executor")
 PROJECT = ROOT / "project"
-ARTIFACTS = ROOT / "artifacts"
+ARTIFACTS = pathlib.Path(
+    os.environ.get(
+        "FIXED_M384_ARTIFACT_ROOT",
+        str(ROOT / "artifacts/mixed-local-m384"),
+    )
+)
 IMAGE = (
     "docker.io/lmsysorg/sglang@sha256:"
     "6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
@@ -55,21 +60,54 @@ def container_prefix() -> list[str]:
     ]
 
 
+def container_path(path: pathlib.Path) -> str:
+    return str(pathlib.PurePosixPath("/work") / path.relative_to(ROOT))
+
+
 def component() -> dict[str, Any]:
     root = ARTIFACTS / "component"
+    terminal = root / "COMPONENT_TERMINAL.json"
+    legacy_root = ROOT / "artifacts/component"
+    legacy_terminal = legacy_root / "COMPONENT_TERMINAL.json"
+    legacy_invocation = legacy_root / "INVOCATION_STATE.json"
+    if not terminal.exists() and legacy_terminal.exists() and legacy_invocation.exists():
+        value = json.loads(legacy_terminal.read_text())
+        invocation = json.loads(legacy_invocation.read_text())
+        expected_candidate = sha256(
+            PROJECT / "intervention/extend_attention_fixed_m384.py"
+        )
+        complete = (
+            value.get("identity", {}).get("candidate_sha256") == expected_candidate
+            and value.get("component_pass") is True
+            and invocation.get("scientific_terminal_recorded") is True
+        )
+        if complete:
+            atomic(terminal, value)
+            atomic(root / "INVOCATION_STATE.json", invocation)
+            atomic(
+                root / "LEGACY_PATH_IMPORT.json",
+                {
+                    "schema_version": 1,
+                    "classification": "completed_producer_imported_without_replay",
+                    "source_terminal": str(legacy_terminal),
+                    "source_terminal_sha256": sha256(legacy_terminal),
+                    "source_invocation_sha256": sha256(legacy_invocation),
+                },
+            )
+            atomic(ARTIFACTS / "COMPONENT_PERSISTED.json", value)
+            return value
     command = [
         *container_prefix(),
         "python3",
         "/work/project/exact_consumer_oracle.py",
         "--artifact-root",
-        "/work/artifacts/component",
+        container_path(root),
         "--candidate",
         "/work/project/intervention/extend_attention_fixed_m384.py",
     ]
     result = run(command, 1800)
     (ARTIFACTS / "component.stdout").write_text(result.stdout)
     (ARTIFACTS / "component.stderr").write_text(result.stderr)
-    terminal = root / "COMPONENT_TERMINAL.json"
     if result.returncode not in (0, 2) or not terminal.exists():
         raise RuntimeError(f"component_harness_invalid:{result.returncode}")
     value = json.loads(terminal.read_text())
@@ -141,11 +179,11 @@ def counters() -> dict[str, Any]:
         "--metrics",
         metrics,
         "--export",
-        "/work/artifacts/counters/fixed-m384-attention",
+        container_path(counter_root / "fixed-m384-attention"),
         "python3",
         "/work/project/exact_consumer_oracle.py",
         "--artifact-root",
-        "/work/artifacts/counters/invocation",
+        container_path(counter_root / "invocation"),
         "--candidate",
         "/work/project/intervention/extend_attention_fixed_m384.py",
         "--counter-only",
@@ -167,7 +205,7 @@ def counters() -> dict[str, Any]:
             IMAGE,
             ncu,
             "--import",
-            "/work/artifacts/counters/fixed-m384-attention.ncu-rep",
+            container_path(report),
             "--csv",
             "--page",
             "raw",
@@ -196,7 +234,10 @@ def counters() -> dict[str, Any]:
 
 
 def endpoint() -> dict[str, Any]:
-    result = run(["/usr/bin/python3", str(PROJECT / "endpoint_pair.py")], 6000)
+    result = run(
+        ["/usr/bin/python3", str(PROJECT / "endpoint_pair.py")],
+        6000,
+    )
     (ARTIFACTS / "endpoint-pair.stdout").write_text(result.stdout)
     (ARTIFACTS / "endpoint-pair.stderr").write_text(result.stderr)
     terminal = ARTIFACTS / "pair/PAIR_TERMINAL.json"
@@ -228,12 +269,37 @@ def repair_wait(error: Exception, stage: str) -> None:
         },
     )
     while dt.datetime.now(dt.timezone.utc) < DEADLINE:
-        time.sleep(20)
+        request = ROOT / "REPAIR_REQUEST.json"
+        if request.exists():
+            value = json.loads(request.read_text())
+            if value.get("stage") not in (None, stage):
+                raise RuntimeError(f"repair_request_stage_mismatch:{stage}")
+            request.unlink()
+            (ROOT / "REPAIR_READY.json").unlink(missing_ok=True)
+            return
+        time.sleep(10)
     raise RuntimeError("repair_deadline_expired")
+
+
+def repairable(stage: str, operation):
+    for attempt in range(2):
+        try:
+            return operation()
+        except Exception as error:
+            if attempt:
+                raise
+            repair_wait(error, stage)
+    raise AssertionError("unreachable")
+
+
+def persist_terminal(value: dict[str, Any]) -> None:
+    atomic(ARTIFACTS / "MIXED_LOCAL_M384_TERMINAL.json", value)
+    atomic(ARTIFACTS / "FINAL_TERMINAL.json", value)
 
 
 def main() -> int:
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    os.environ["FIXED_M384_PAIR_ROOT"] = str(ARTIFACTS / "pair")
     atomic(
         ROOT / "INVOCATION_STATE.json",
         {
@@ -242,11 +308,7 @@ def main() -> int:
             "scientific_invocation_started": False,
         },
     )
-    try:
-        component_value = component()
-    except Exception as error:
-        repair_wait(error, "component")
-        return 74
+    component_value = repairable("component", component)
     if not component_value.get("component_pass"):
         terminal = {
             "schema_version": 1,
@@ -255,18 +317,10 @@ def main() -> int:
             "component": component_value,
             "endpoint_executed": False,
         }
-        atomic(ARTIFACTS / "FINAL_TERMINAL.json", terminal)
+        persist_terminal(terminal)
         return 2
-    try:
-        counter_value = counters()
-    except Exception as error:
-        repair_wait(error, "counter_consumer")
-        return 74
-    try:
-        pair_value = endpoint()
-    except Exception as error:
-        repair_wait(error, "endpoint_consumer")
-        return 74
+    counter_value = repairable("counter_consumer", counters)
+    pair_value = repairable("endpoint_consumer", endpoint)
     result = (
         "positive"
         if pair_value.get("valid")
@@ -283,7 +337,7 @@ def main() -> int:
         "pair": pair_value,
         "endpoint_executed": True,
     }
-    atomic(ARTIFACTS / "FINAL_TERMINAL.json", terminal)
+    persist_terminal(terminal)
     return 0 if result == "positive" else 2
 
 

@@ -1,0 +1,3 @@
+{"candidate_path": "TritonAttnBackend.forward_extend.local_fp8_deferred_cache_commit", "layer_id": 0, "phase": "runtime_invocation", "qk_head_dim": 256, "removed_operations": ["k.clone", "v.clone"], "sliding_window_size": 1024, "v_head_dim": 256}
+{"batch_size": 1, "candidate_path": "ScheduleBatch.prepare_for_decode.pinned_async_penalty_tokens", "dtype": "torch.int64", "non_blocking": true, "phase": "runtime_invocation", "pin_memory": true}
+{"batch_size": 32, "candidate_path": "ScheduleBatch.prepare_for_decode.pinned_async_penalty_tokens", "dtype": "torch.int64", "non_blocking": true, "phase": "runtime_invocation", "pin_memory": true}

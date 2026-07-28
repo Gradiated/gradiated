@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h100_v0515_ngram_semantic_divergence",
+  "result": "available_for_bound_fresh_sentinel_observer_repair",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "checkpoint": "The exact immutable endpoint checkpoint remains resident; re-hash and reuse it without restaging.",
+  "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+  "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with stock native NGRAM depth 12.",
+  "caches": "Preserve the resident image, CUDA caches, canonical checkpoint and packet, packed-mask component evidence, and invalid sentinel artifacts.",
+  "candidate": "Observer-only repair of flattened draft-token row capture; no semantic producer or consumer change.",
+  "endpoint": "Indices 0..1035, 60000, and 60001 are consumed and forbidden. Only fresh indices 60002 and 60003 may be submitted.",
+  "contents_artifact": "gemma4_h100_v0515_ngram_semantic_divergence/H100_SENTINEL_AA_OBSERVER_REPAIR_CONTENTS.json",
+  "contents_artifact_sha256": "afd66e5043ae3baf8ae0bcbd9c37f1c35603a971e342aa989b6da5598ae0bfd8",
+  "director_binding": "gemma4_h100_v0515_ngram_semantic_divergence/DIRECTOR_SENTINEL_AA_OBSERVER_REPAIR_BINDING.json",
+  "director_binding_sha256": "02732087ffb9e6f96406ac03c11561c0d2774e7f339347b5009c37d458aa12d8",
+  "filesystem": "Resident checkpoint and image fit; the repair adds at most 1 GiB of traces.",
+  "server_state": "Director removed the invalid sentinel container and verified no NVIDIA compute process, SGLang process, or listener on ports 30000, 8000, or 8001.",
+  "ssh_identity": "Use only the current runtime/gpus.json host, glmrunner user and known-hosts namespace with /root/.config/nebius/glm-campaign/ssh_ed25519.",
+  "next": "Priority-8490 may verify the binding, fixture and repair only the observer, claim once, run fresh indices 60002 and 60003, stop its container, verify clean release, and release by 2026-07-25T13:20:00Z.",
+  "packed_mask": "The measured packed-mask component remains out of scope."
+}

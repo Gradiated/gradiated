@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 4.684813712003233,
+  "ended_monotonic_s": 56159.669490556,
+  "error": null,
+  "first_token_monotonic_s": 56154.984676844,
+  "index": 3,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": " walking",
+      "token_ids": [
+        9378
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    9378,
+    9378,
+    9378,
+    9378,
+    9378,
+    9378,
+    9378,
+    9378,
+    9378,
+    9378,
+    9378,
+    9378,
+    9378,
+    9378,
+    9378,
+    9378
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "660aeb4000c5c735e4e677b637926f86dd71039cd8d99c3bbc9b50bbd83e8933",
+  "request_sha256": "53f0b0f8065db472b0e2e2d17badb4e4e2b561bff624ddc367bbc61142cca464",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 56146.432790688,
+  "text": " walking walking walking walking walking walking walking walking walking walking walking walking walking walking walking walking",
+  "ttft_seconds": 8.551886155997636,
+  "wall_seconds": 13.23669986800087
+}

@@ -1,6 +1,6 @@
 {
   "active_session": null,
-  "actual_spend_usd": 1.0574816349999998,
+  "actual_spend_usd": 1.3676444565333332,
   "allocation_limit": 1,
   "authorized_spend_usd": 10.0,
   "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
@@ -11,15 +11,15 @@
   "economic_ceiling_seconds_per_request": 0.6381105231,
   "immutable_binding": "DIRECTOR_BINDING.json",
   "immutable_binding_verifier": "verify_director_binding.py",
-  "next_action": "Return to the director with PINNED_TOPOLOGY_DECISION.json. The endpoint arm remains unstarted: moving the logits head after replay would require an unadmitted decode-topology intervention.",
-  "priority": 4300,
+  "next_action": "Director may schedule the campaign quality suite; no quality claim was made.",
+  "priority": 4500,
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
   "quality_claim_authorized": false,
-  "researcher_profile": "deep",
-  "reservation_gate": "Do not claim until the renewed $10 reservation is durable and DIRECTOR_BINDING.json verifies.",
+  "researcher_profile": "execution",
+  "reservation_gate": "Do not claim until the renewed $10 reservation is durable and the updated DIRECTOR_BINDING.json verifies.",
   "status": "completed",
   "storage_budget": "At most 8 GiB; no checkpoint duplication.",
-  "summary": "pinned_runtime_graph_boundary_incompatible: model.forward captures the logits processor and replays a LogitsProcessorOutput, so the required post-graph E4M3 head boundary does not exist; smoke and settled representation passed, component was not replayed, and endpoint remained unstarted.",
-  "terminal_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_tied_head_endpoint/iterations/graph-bound-endpoint-20260723t1930z/artifacts/FINAL_TERMINAL.json",
-  "wall_deadline_utc": "2026-07-23T22:15:00Z"
+  "summary": "endpoint_positive",
+  "terminal_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_tied_head_endpoint/iterations/c32-topology-settled-resume-20260723t2110z/resident-consumer-repair-artifacts/FINAL_TERMINAL.json",
+  "wall_deadline_utc": "2026-07-23T23:30:00Z"
 }

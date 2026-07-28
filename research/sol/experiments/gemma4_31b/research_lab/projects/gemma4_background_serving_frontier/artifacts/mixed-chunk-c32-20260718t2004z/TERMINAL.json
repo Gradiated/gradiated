@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "status": "terminal",
+  "classification": "negative",
+  "pass": false,
+  "decision": "Do not promote or retain mixed chunking: the one permitted exact-mix candidate is materially slower than the frozen canonical c32 control.",
+  "candidate": {
+    "arm": "mixed_chunk",
+    "service_seconds_per_request": 2.6995599147187477,
+    "batch_seconds": 86.38591727099993,
+    "complete_requests": 32,
+    "complete_request_throughput": 0.3704307485630244,
+    "output_tokens_per_second": 132.61420798556273,
+    "valid_rows": 32,
+    "prompt_tokens_per_request": 4214,
+    "output_tokens_per_request": 358,
+    "cache": {
+      "cached_prompt_tokens": 17120,
+      "fresh_prompt_tokens": 117728,
+      "cached_fraction": 0.1269577598481253
+    },
+    "phases_seconds": {
+      "ttft_mean": 29.137547841625008,
+      "decode_mean": 56.494808567156326,
+      "end_to_end_mean": 85.63235640878133
+    },
+    "gpu": {
+      "utilization_mean_pct": 98.92138364779875,
+      "memory_peak_mib": 124792,
+      "power_mean_w": 457.7060062893082,
+      "power_peak_w": 658.58
+    }
+  },
+  "comparator": {
+    "terminal_sha256": "1a7e778eff080bf2eec27da939ea85a894ea9884036bdebd562af371405e78c3",
+    "service_seconds_per_request": 0.9194573941250042,
+    "promotion_ceiling_seconds_per_request": 0.873484524419
+  },
+  "service_reduction_fraction": -1.9360358967886347,
+  "validity": {
+    "runner_sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+    "all_rows_nonempty_finite": true,
+    "exact_4214_358_rows": true,
+    "exact_cache_accounting": true,
+    "preflight_zero_running_and_queue": true,
+    "cache_flush_http_status": 200,
+    "resolved_enable_mixed_chunk": true,
+    "frozen_runtime_identity": "TP1 bfloat16 weights; fp8_e5m2 KV; dynamic chunking 2048; fused QK/RoPE; Triton prefill/decode; page size 1; continuous decode steps 1; CUDA graphs through bs32"
+  },
+  "raw_runner_terminal": "mixed-chunk-c32-20260718t2004z/TERMINAL.json",
+  "raw_artifacts": "artifacts.tar.gz",
+  "aggregation_note": "The durable owner returned after a local path lookup error while assembling this outer terminal. The exact one-time runner had already completed and all raw outputs, metrics, GPU samples, flush proof, and server logs were retrieved. This terminal is derived solely from those immutable retrieved artifacts; no retry occurred."
+}

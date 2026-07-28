@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "classification": "director_cross_project_stale_server_cleanup_verified",
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "provider_instance_id": "computeinstance-e00vhh6h29fj68x91g",
+  "container": {
+    "name": "mtp-depth-candidate",
+    "source_project": "sglang_v0512_h200_gemma4_mtp_endpoint",
+    "state_before": "running",
+    "started_at": "2026-07-23T07:05:18.41732244Z",
+    "runtime_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "checkpoint_mount": "/home/glmrunner/gemma4-h200-flashinfer-metadata-scalar-elimination/checkpoint",
+    "checkpoint_mount_read_only": true,
+    "gpu_pid": 150609,
+    "gpu_memory_mib_before": 123320
+  },
+  "ownership_evidence": {
+    "gpu_pool_claim": null,
+    "source_project_status": "terminal",
+    "compatible_queued_consumer": false,
+    "blocked_projects": [
+      "gemma4_h200_ngram_speculative_endpoint",
+      "gemma4_h200_local_window512_codesign"
+    ]
+  },
+  "action": {
+    "container_stopped": true,
+    "container_removed": true,
+    "provider_resource_deleted": false,
+    "checkpoint_mutated": false
+  },
+  "verification": {
+    "container_absent": true,
+    "gpu_compute_processes": 0,
+    "gpu_memory_used_mib": 0,
+    "gpu_utilization_percent": 0
+  },
+  "completed_at_utc": "2026-07-23T08:13:00Z"
+}

@@ -1,0 +1,13 @@
+{
+  "command": [
+    "env",
+    "UPSTREAM_REBASE_ROOT=/home/glmrunner/gemma4-upstream-ngram-v0515",
+    "./remote_v0515_worker.sh"
+  ],
+  "cwd": "/home/glmrunner/gemma4-upstream-ngram-v0515",
+  "launched_at_utc": "2026-07-25T06:07:44.792220Z",
+  "log": "/home/glmrunner/gemma4-upstream-ngram-v0515/GUEST_OWNER.log",
+  "pid": 71634,
+  "start_ticks": 2066949,
+  "unit_manager": "remote-shell"
+}

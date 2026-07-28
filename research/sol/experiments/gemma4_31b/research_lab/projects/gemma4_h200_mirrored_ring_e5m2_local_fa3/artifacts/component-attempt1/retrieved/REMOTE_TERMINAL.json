@@ -1,0 +1,11 @@
+{
+  "candidate_cuda_invocation_started": false,
+  "candidate_scientific_invocation_started": false,
+  "classification": "integration_failure",
+  "component_exit_code": 99,
+  "component_terminal_recorded": false,
+  "profile_exit_code": 99,
+  "schema_version": 1,
+  "smoke_exit_code": 1,
+  "timestamp_utc": "2026-07-23T17:44:43.581941Z"
+}

@@ -1,0 +1,6 @@
+{
+  "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/phase-selective-20260725t2116z",
+  "phase": "terminal",
+  "terminal": "exact_positive_net_component",
+  "worker_exit": 0
+}

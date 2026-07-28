@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_dflash_endpoint",
+  "decision": "queue_one_candidate_only_exact_c32_capture_after_the_higher_priority_sm90a_claim",
+  "created_at_utc": "2026-07-25T23:46:00Z",
+  "source_result": {
+    "path": "DFLASH_REQUEST_OWNERSHIP_OBSERVER_REPAIR_TERMINAL.json",
+    "sha256": "f13f08e4bfbd7ee614434eda7e67f51de7095e386e820b246d7e907c9028837a",
+    "classification": "source_complete_candidate_only_observer_repair",
+    "authoritative_identity": "ForwardBatch.rids",
+    "causal_artifact": "artifacts/request-ownership-observer-repair-20260725T234315Z/REQUEST_TO_SLOT_LIFETIME.json",
+    "causal_artifact_sha256": "7facdd28e554a1ef7bc75106da8e9fc3e71fc3d540d2d61add5fd7006f5a5afd"
+  },
+  "packet": {
+    "path": "artifacts/request-ownership-observer-repair-20260725T234315Z/packet/3407231bdcc05a950d2f50cee02936a8f1f785ff32336b40b1760eb205539174",
+    "identity_sha256": "3407231bdcc05a950d2f50cee02936a8f1f785ff32336b40b1760eb205539174",
+    "cpu_fixtures_passed": true
+  },
+  "execution": {
+    "arm": "dflash-depth4-c32",
+    "candidate_only": true,
+    "immutable_control": {
+      "path": "artifacts/request-state-capture-owner-20260725T232227Z/retrieved-final/results/ar-c32/TERMINAL.json",
+      "sha256": "45b8120b452452b3ffcdc5282138e984140aa96b5802eef3d3ce66603a141af4",
+      "complete_requests": 32
+    },
+    "required_observation": "Record current ForwardBatch.rids and same-row req_pool_indices only for rows below len(rids), then join RID to the candidate terminal request_id/index offline.",
+    "prohibited": [
+      "Rerun ar-c32 or modify the immutable AR terminal.",
+      "Infer durable ownership from token markers, slot continuity, padded rows, or reserved row 0.",
+      "Change the request bodies, depth-4 DFlash intervention, workload, checkpoint, runtime image, or semantic criteria.",
+      "Claim a GPU before the higher-priority FP8 weight-stream project terminalizes and a later director marks the bench claimable for this project."
+    ]
+  },
+  "scheduling": {
+    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "priority": 8545,
+    "researcher_profile": "execution",
+    "allocation_limit_until_reactivated": 0,
+    "predecessor": "gemma4_h200_fp8_weight_stream_schedule"
+  },
+  "budgets": {
+    "authorized_spend_usd": 2.0,
+    "actual_spend_usd_at_binding": 0.30443484876411114,
+    "maximum_claim_minutes": 45,
+    "wall_clock_minutes": 90,
+    "storage_gib": 4
+  },
+  "terminal": "DFLASH_CANDIDATE_ONLY_REQUEST_STATE_CAPTURE_TERMINAL.json"
+}

@@ -1,0 +1,280 @@
+docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd: Pulling from lmsysorg/sglang
+32f112e3802c: Pulling fs layer
+644e9b203583: Pulling fs layer
+02559cd4bc8d: Pulling fs layer
+2cd52cbb1ebe: Pulling fs layer
+6e8af4fd0a07: Pulling fs layer
+15a17189b2df: Pulling fs layer
+02cb0e091e33: Pulling fs layer
+9c3d619183d2: Pulling fs layer
+7f7602a82106: Pulling fs layer
+5a2aba542b08: Pulling fs layer
+6cb9b761b877: Pulling fs layer
+bc94a9448b8d: Pulling fs layer
+9c3d619183d2: Waiting
+4f4fb700ef54: Pulling fs layer
+6e8af4fd0a07: Waiting
+32111863dbe9: Pulling fs layer
+602b3dfada3f: Pulling fs layer
+2cd52cbb1ebe: Waiting
+7f7602a82106: Waiting
+5a2aba542b08: Waiting
+6cb9b761b877: Waiting
+523c11d201d0: Pulling fs layer
+e38f972990ac: Pulling fs layer
+32111863dbe9: Waiting
+9d4453a40685: Pulling fs layer
+170040c7a5de: Pulling fs layer
+15a17189b2df: Waiting
+d85ea4ca203e: Pulling fs layer
+26cd7a802e4d: Pulling fs layer
+644621ef04b7: Pulling fs layer
+e38f972990ac: Waiting
+bc94a9448b8d: Waiting
+e35f3e27c4da: Pulling fs layer
+4f4fb700ef54: Waiting
+391b433e1f51: Pulling fs layer
+4c4431689abf: Pulling fs layer
+02cb0e091e33: Waiting
+500e186834f1: Pulling fs layer
+a51806d0d317: Pulling fs layer
+2ea3c3ae8d43: Pulling fs layer
+2b29f1e6a0eb: Pulling fs layer
+daa81c72fcb0: Pulling fs layer
+6aaa4d851212: Pulling fs layer
+2e209802991a: Pulling fs layer
+0cc187a47479: Pulling fs layer
+950fa84b3575: Pulling fs layer
+2619c9a046cf: Pulling fs layer
+9a74bf5bbf6d: Pulling fs layer
+56a780ae23b7: Pulling fs layer
+c0fa0a671522: Pulling fs layer
+810435db929b: Pulling fs layer
+ad4ed71d9c11: Pulling fs layer
+3028e82ad9d8: Pulling fs layer
+ec4ea6cd0aa4: Pulling fs layer
+a143d4c20fbf: Pulling fs layer
+202e7b13c38a: Pulling fs layer
+e36503bf18d3: Pulling fs layer
+92b09cee86ec: Pulling fs layer
+d8f330ca8b0c: Pulling fs layer
+362403bc9b4c: Pulling fs layer
+cff030f48543: Pulling fs layer
+6750b799c5ad: Pulling fs layer
+ed11fcbebb75: Pulling fs layer
+d0a0254b0883: Pulling fs layer
+f9f6783f61fd: Pulling fs layer
+0ebbac81d4e5: Pulling fs layer
+dc72d718a128: Pulling fs layer
+fafa467e32a9: Pulling fs layer
+824819c83369: Pulling fs layer
+bfcdf669f2d3: Pulling fs layer
+202e7b13c38a: Waiting
+602b3dfada3f: Waiting
+523c11d201d0: Waiting
+9d4453a40685: Waiting
+26cd7a802e4d: Waiting
+170040c7a5de: Waiting
+2b29f1e6a0eb: Waiting
+d85ea4ca203e: Waiting
+4c4431689abf: Waiting
+6aaa4d851212: Waiting
+56a780ae23b7: Waiting
+644621ef04b7: Waiting
+2e209802991a: Waiting
+810435db929b: Waiting
+9a74bf5bbf6d: Waiting
+ad4ed71d9c11: Waiting
+c0fa0a671522: Waiting
+3028e82ad9d8: Waiting
+500e186834f1: Waiting
+391b433e1f51: Waiting
+92b09cee86ec: Waiting
+bfcdf669f2d3: Waiting
+cff030f48543: Waiting
+e35f3e27c4da: Waiting
+2ea3c3ae8d43: Waiting
+950fa84b3575: Waiting
+ec4ea6cd0aa4: Waiting
+a143d4c20fbf: Waiting
+824819c83369: Waiting
+d8f330ca8b0c: Waiting
+6750b799c5ad: Waiting
+0cc187a47479: Waiting
+dc72d718a128: Waiting
+362403bc9b4c: Waiting
+ed11fcbebb75: Waiting
+f9f6783f61fd: Waiting
+a51806d0d317: Waiting
+daa81c72fcb0: Waiting
+fafa467e32a9: Waiting
+e36503bf18d3: Waiting
+2619c9a046cf: Waiting
+32f112e3802c: Verifying Checksum
+32f112e3802c: Download complete
+644e9b203583: Verifying Checksum
+644e9b203583: Download complete
+2cd52cbb1ebe: Download complete
+6e8af4fd0a07: Verifying Checksum
+6e8af4fd0a07: Download complete
+02cb0e091e33: Verifying Checksum
+02cb0e091e33: Download complete
+9c3d619183d2: Verifying Checksum
+9c3d619183d2: Download complete
+02559cd4bc8d: Verifying Checksum
+02559cd4bc8d: Download complete
+7f7602a82106: Verifying Checksum
+7f7602a82106: Download complete
+6cb9b761b877: Download complete
+32f112e3802c: Pull complete
+644e9b203583: Pull complete
+02559cd4bc8d: Pull complete
+2cd52cbb1ebe: Pull complete
+6e8af4fd0a07: Pull complete
+bc94a9448b8d: Verifying Checksum
+bc94a9448b8d: Download complete
+4f4fb700ef54: Download complete
+32111863dbe9: Verifying Checksum
+32111863dbe9: Download complete
+602b3dfada3f: Download complete
+523c11d201d0: Verifying Checksum
+523c11d201d0: Download complete
+e38f972990ac: Verifying Checksum
+e38f972990ac: Download complete
+9d4453a40685: Verifying Checksum
+9d4453a40685: Download complete
+170040c7a5de: Download complete
+d85ea4ca203e: Verifying Checksum
+d85ea4ca203e: Download complete
+15a17189b2df: Verifying Checksum
+15a17189b2df: Download complete
+644621ef04b7: Download complete
+e35f3e27c4da: Download complete
+391b433e1f51: Verifying Checksum
+391b433e1f51: Download complete
+26cd7a802e4d: Verifying Checksum
+26cd7a802e4d: Download complete
+500e186834f1: Verifying Checksum
+500e186834f1: Download complete
+a51806d0d317: Verifying Checksum
+a51806d0d317: Download complete
+2ea3c3ae8d43: Verifying Checksum
+2ea3c3ae8d43: Download complete
+5a2aba542b08: Verifying Checksum
+5a2aba542b08: Download complete
+daa81c72fcb0: Download complete
+6aaa4d851212: Download complete
+2e209802991a: Verifying Checksum
+2e209802991a: Download complete
+0cc187a47479: Download complete
+950fa84b3575: Verifying Checksum
+950fa84b3575: Download complete
+2619c9a046cf: Verifying Checksum
+2619c9a046cf: Download complete
+9a74bf5bbf6d: Verifying Checksum
+9a74bf5bbf6d: Download complete
+56a780ae23b7: Verifying Checksum
+56a780ae23b7: Download complete
+c0fa0a671522: Verifying Checksum
+c0fa0a671522: Download complete
+810435db929b: Verifying Checksum
+810435db929b: Download complete
+ad4ed71d9c11: Verifying Checksum
+ad4ed71d9c11: Download complete
+3028e82ad9d8: Verifying Checksum
+3028e82ad9d8: Download complete
+ec4ea6cd0aa4: Verifying Checksum
+ec4ea6cd0aa4: Download complete
+a143d4c20fbf: Verifying Checksum
+a143d4c20fbf: Download complete
+202e7b13c38a: Verifying Checksum
+202e7b13c38a: Download complete
+e36503bf18d3: Verifying Checksum
+e36503bf18d3: Download complete
+92b09cee86ec: Verifying Checksum
+92b09cee86ec: Download complete
+d8f330ca8b0c: Download complete
+362403bc9b4c: Verifying Checksum
+362403bc9b4c: Download complete
+cff030f48543: Verifying Checksum
+cff030f48543: Download complete
+6750b799c5ad: Verifying Checksum
+6750b799c5ad: Download complete
+ed11fcbebb75: Verifying Checksum
+ed11fcbebb75: Download complete
+d0a0254b0883: Verifying Checksum
+d0a0254b0883: Download complete
+2b29f1e6a0eb: Verifying Checksum
+2b29f1e6a0eb: Download complete
+0ebbac81d4e5: Verifying Checksum
+0ebbac81d4e5: Download complete
+f9f6783f61fd: Verifying Checksum
+f9f6783f61fd: Download complete
+fafa467e32a9: Verifying Checksum
+fafa467e32a9: Download complete
+824819c83369: Verifying Checksum
+824819c83369: Download complete
+bfcdf669f2d3: Verifying Checksum
+bfcdf669f2d3: Download complete
+dc72d718a128: Verifying Checksum
+dc72d718a128: Download complete
+15a17189b2df: Pull complete
+02cb0e091e33: Pull complete
+9c3d619183d2: Pull complete
+7f7602a82106: Pull complete
+4c4431689abf: Verifying Checksum
+4c4431689abf: Download complete
+5a2aba542b08: Pull complete
+6cb9b761b877: Pull complete
+bc94a9448b8d: Pull complete
+4f4fb700ef54: Pull complete
+32111863dbe9: Pull complete
+602b3dfada3f: Pull complete
+523c11d201d0: Pull complete
+e38f972990ac: Pull complete
+9d4453a40685: Pull complete
+170040c7a5de: Pull complete
+d85ea4ca203e: Pull complete
+26cd7a802e4d: Pull complete
+644621ef04b7: Pull complete
+e35f3e27c4da: Pull complete
+391b433e1f51: Pull complete
+4c4431689abf: Pull complete
+500e186834f1: Pull complete
+a51806d0d317: Pull complete
+2ea3c3ae8d43: Pull complete
+2b29f1e6a0eb: Pull complete
+daa81c72fcb0: Pull complete
+6aaa4d851212: Pull complete
+2e209802991a: Pull complete
+0cc187a47479: Pull complete
+950fa84b3575: Pull complete
+2619c9a046cf: Pull complete
+9a74bf5bbf6d: Pull complete
+56a780ae23b7: Pull complete
+c0fa0a671522: Pull complete
+810435db929b: Pull complete
+ad4ed71d9c11: Pull complete
+3028e82ad9d8: Pull complete
+ec4ea6cd0aa4: Pull complete
+a143d4c20fbf: Pull complete
+202e7b13c38a: Pull complete
+e36503bf18d3: Pull complete
+92b09cee86ec: Pull complete
+d8f330ca8b0c: Pull complete
+362403bc9b4c: Pull complete
+cff030f48543: Pull complete
+6750b799c5ad: Pull complete
+ed11fcbebb75: Pull complete
+d0a0254b0883: Pull complete
+f9f6783f61fd: Pull complete
+0ebbac81d4e5: Pull complete
+dc72d718a128: Pull complete
+fafa467e32a9: Pull complete
+824819c83369: Pull complete
+bfcdf669f2d3: Pull complete
+Digest: sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd
+Status: Downloaded newer image for lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd
+docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd
+023ff2332ce8340f59ae51c419b5f5e081f18afa4dc75da8648e9befea3840b3
+{"Hostname":"gemma4-h100-v0515-endpoint-200g-20260725t1026z","Domainname":"","User":"","AttachStdin":false,"AttachStdout":false,"AttachStderr":false,"Tty":false,"OpenStdin":false,"StdinOnce":false,"Env":["PATH=/root/.cargo/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/nvidia/bin","NVARCH=x86_64","NVIDIA_REQUIRE_CUDA=cuda>=12.9 brand=unknown,driver>=535,driver<536 brand=grid,driver>=535,driver<536 brand=tesla,driver>=535,driver<536 brand=nvidia,driver>=535,driver<536 brand=quadro,driver>=535,driver<536 brand=quadrortx,driver>=535,driver<536 brand=nvidiartx,driver>=535,driver<536 brand=vapps,driver>=535,driver<536 brand=vpc,driver>=535,driver<536 brand=vcs,driver>=535,driver<536 brand=vws,driver>=535,driver<536 brand=cloudgaming,driver>=535,driver<536 brand=unknown,driver>=550,driver<551 brand=grid,driver>=550,driver<551 brand=tesla,driver>=550,driver<551 brand=nvidia,driver>=550,driver<551 brand=quadro,driver>=550,driver<551 brand=quadrortx,driver>=550,driver<551 brand=nvidiartx,driver>=550,driver<551 brand=vapps,driver>=550,driver<551 brand=vpc,driver>=550,driver<551 brand=vcs,driver>=550,driver<551 brand=vws,driver>=550,driver<551 brand=cloudgaming,driver>=550,driver<551 brand=unknown,driver>=560,driver<561 brand=grid,driver>=560,driver<561 brand=tesla,driver>=560,driver<561 brand=nvidia,driver>=560,driver<561 brand=quadro,driver>=560,driver<561 brand=quadrortx,driver>=560,driver<561 brand=nvidiartx,driver>=560,driver<561 brand=vapps,driver>=560,driver<561 brand=vpc,driver>=560,driver<561 brand=vcs,driver>=560,driver<561 brand=vws,driver>=560,driver<561 brand=cloudgaming,driver>=560,driver<561 brand=unknown,driver>=565,driver<566 brand=grid,driver>=565,driver<566 brand=tesla,driver>=565,driver<566 brand=nvidia,driver>=565,driver<566 brand=quadro,driver>=565,driver<566 brand=quadrortx,driver>=565,driver<566 brand=nvidiartx,driver>=565,driver<566 brand=vapps,driver>=565,driver<566 brand=vpc,driver>=565,driver<566 brand=vcs,driver>=565,driver<566 brand=vws,driver>=565,driver<566 brand=cloudgaming,driver>=565,driver<566 brand=unknown,driver>=570,driver<571 brand=grid,driver>=570,driver<571 brand=tesla,driver>=570,driver<571 brand=nvidia,driver>=570,driver<571 brand=quadro,driver>=570,driver<571 brand=quadrortx,driver>=570,driver<571 brand=nvidiartx,driver>=570,driver<571 brand=vapps,driver>=570,driver<571 brand=vpc,driver>=570,driver<571 brand=vcs,driver>=570,driver<571 brand=vws,driver>=570,driver<571 brand=cloudgaming,driver>=570,driver<571","NV_CUDA_CUDART_VERSION=12.9.79-1","CUDA_VERSION=12.9.1","LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/local/nvidia/lib:/usr/local/nvidia/lib64","NVIDIA_VISIBLE_DEVICES=all","NVIDIA_DRIVER_CAPABILITIES=compute,utility","NV_CUDA_LIB_VERSION=12.9.1-1","NV_NVTX_VERSION=12.9.79-1","NV_LIBNPP_VERSION=12.4.1.87-1","NV_LIBNPP_PACKAGE=libnpp-12-9=12.4.1.87-1","NV_LIBCUSPARSE_VERSION=12.5.10.65-1","NV_LIBCUBLAS_PACKAGE_NAME=libcublas-12-9","NV_LIBCUBLAS_VERSION=12.9.1.4-1","NV_LIBCUBLAS_PACKAGE=libcublas-12-9=12.9.1.4-1","NV_LIBNCCL_PACKAGE_NAME=libnccl2","NV_LIBNCCL_PACKAGE_VERSION=2.27.3-1","NCCL_VERSION=2.27.3-1","NV_LIBNCCL_PACKAGE=libnccl2=2.27.3-1+cuda12.9","NVIDIA_PRODUCT_NAME=CUDA","NV_CUDA_CUDART_DEV_VERSION=12.9.79-1","NV_NVML_DEV_VERSION=12.9.79-1","NV_LIBCUSPARSE_DEV_VERSION=12.5.10.65-1","NV_LIBNPP_DEV_VERSION=12.4.1.87-1","NV_LIBNPP_DEV_PACKAGE=libnpp-dev-12-9=12.4.1.87-1","NV_LIBCUBLAS_DEV_VERSION=12.9.1.4-1","NV_LIBCUBLAS_DEV_PACKAGE_NAME=libcublas-dev-12-9","NV_LIBCUBLAS_DEV_PACKAGE=libcublas-dev-12-9=12.9.1.4-1","NV_CUDA_NSIGHT_COMPUTE_VERSION=12.9.1-1","NV_CUDA_NSIGHT_COMPUTE_DEV_PACKAGE=cuda-nsight-compute-12-9=12.9.1-1","NV_NVPROF_VERSION=12.9.79-1","NV_NVPROF_DEV_PACKAGE=cuda-nvprof-12-9=12.9.79-1","NV_LIBNCCL_DEV_PACKAGE_NAME=libnccl-dev","NV_LIBNCCL_DEV_PACKAGE_VERSION=2.27.3-1","NV_LIBNCCL_DEV_PACKAGE=libnccl-dev=2.27.3-1+cuda12.9","LIBRARY_PATH=/usr/local/cuda/lib64/stubs","NV_CUDNN_VERSION=9.10.2.21-1","NV_CUDNN_PACKAGE_NAME=libcudnn9-cuda-12","NV_CUDNN_PACKAGE=libcudnn9-cuda-12=9.10.2.21-1","NV_CUDNN_PACKAGE_DEV=libcudnn9-dev-cuda-12=9.10.2.21-1","NV_CUDNN_PACKAGE_DEV_HEADERS=libcudnn9-headers-cuda-12=9.10.2.21-1","DEBIAN_FRONTEND=noninteractive","CUDA_HOME=/usr/local/cuda","GDRCOPY_HOME=/usr/src/gdrdrv-2.5.1/","FLASHINFER_VERSION=0.6.12","LANG=en_US.UTF-8","LANGUAGE=en_US:en","LC_ALL=en_US.UTF-8","SGLANG_BUILD_COMMIT=f63458b5beaceabbd9d749b9fc956370e1b649e6","SGLANG_BUILD_URL=https://github.com/sgl-project/sglang/actions/runs/29079581202","SGLANG_IMAGE_TAG=lmsysorg/sglang:v0.5.15-cu129"],"Cmd":["python3","-m","sglang.launch_server","--model-path","/work/checkpoint","--tokenizer-path","/work/checkpoint","--served-model-name","google/gemma-4-31B-it","--dtype","bfloat16","--quantization","fp8","--tp-size","1","--kv-cache-dtype","fp8_e5m2","--host","0.0.0.0","--port","30000","--context-length","5000","--max-running-requests","32","--mem-fraction-static","0.85","--enable-metrics","--skip-server-warmup","--enable-dynamic-chunking","--chunked-prefill-size","2048","--enable-fused-qk-norm-rope","--cuda-graph-max-bs","32","--prefill-attention-backend","triton","--decode-attention-backend","triton","--page-size","1","--num-continuous-decode-steps","1","--triton-attention-num-kv-splits","8","--tool-call-parser","gemma4","--speculative-algorithm","NGRAM"],"Image":"docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd","Volumes":null,"WorkingDir":"/sgl-workspace/sglang","Entrypoint":["/opt/nvidia/nvidia_entrypoint.sh"],"Labels":{"ai.sglang.build.commit":"f63458b5beaceabbd9d749b9fc956370e1b649e6","ai.sglang.build.url":"https://github.com/sgl-project/sglang/actions/runs/29079581202","ai.sglang.image.tag":"lmsysorg/sglang:v0.5.15-cu129","com.nvidia.cudnn.version":"9.10.2.21-1","maintainer":"NVIDIA CORPORATION <cudatools@nvidia.com>","org.opencontainers.image.ref.name":"ubuntu","org.opencontainers.image.revision":"f63458b5beaceabbd9d749b9fc956370e1b649e6","org.opencontainers.image.source":"https://github.com/sgl-project/sglang","org.opencontainers.image.url":"https://github.com/sgl-project/sglang/actions/runs/29079581202","org.opencontainers.image.version":"lmsysorg/sglang:v0.5.15-cu129"}}

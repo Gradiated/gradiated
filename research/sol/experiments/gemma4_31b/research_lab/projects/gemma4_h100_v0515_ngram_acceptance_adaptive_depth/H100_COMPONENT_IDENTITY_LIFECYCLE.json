@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T13:47:00Z",
+  "provider": "nebius",
+  "instance": {
+    "id": "computeinstance-e00gbzwff2ty4wznzj",
+    "name": "gemma4-h100-adaptive-depth-component-20260725t1345z",
+    "state": "RUNNING"
+  },
+  "disk": {
+    "id": "computedisk-e00yf0ya37hnnrxhk3",
+    "name": "gemma4-h100-adaptive-depth-component-20260725t1345z-boot",
+    "size_gib": 100
+  },
+  "connection_identity": {
+    "public_ipv4": "89.169.124.46",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "identity_file": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "ed25519_fingerprint_sha256": "SHA256:B2WGdX81Hi6uIpZ8DS1H9ycSe4xOb+18F9THcbAgKjs",
+    "strict_ssh_probe": "H100_ADAPTIVE_DEPTH_IDENTITY_OK"
+  },
+  "cloud_init": {
+    "path": "H100_COMPONENT_CLOUD_INIT.yaml",
+    "sha256": "d880fccf22218dbbd0f6b82aeb2a36b252ce9c3c4e9216f54e097735a69df61f"
+  },
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T16:00:00Z",
+    "watchdog": {
+      "unit": "gemma4-h100-adaptive-depth-component-20260725t1600-watchdog.service",
+      "unit_manager": "user",
+      "main_pid": 759441,
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-adaptive-depth-component-20260725t1600-watchdog.service",
+      "verified_state": "active/running"
+    }
+  },
+  "result": "provider_created_identity_reconciled_strict_ssh_verified_watchdog_active"
+}

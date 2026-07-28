@@ -1,0 +1,12 @@
+{
+  "classification": "owner_failure",
+  "error": {
+    "message": "component_runtime_failure",
+    "type": "RuntimeError"
+  },
+  "pass": false,
+  "provider_exposure_seconds": 179.25204300880432,
+  "provider_spend_usd_conservative": 0.12248889670769372,
+  "schema_version": 1,
+  "status": "terminal"
+}

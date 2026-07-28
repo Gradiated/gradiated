@@ -1,0 +1,18 @@
+[1/3] /usr/local/cuda/bin/nvcc -MD -MF local_kv4_outlier_cuda.cuda.o.d -DTORCH_EXTENSION_NAME=dual_kv4_local_sm89 -DTORCH_API_INCLUDE_EXTENSION_H -isystem /usr/local/lib/python3.12/dist-packages/torch/include -isystem /usr/local/lib/python3.12/dist-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options '-fPIC' -O3 --use_fast_math --ptxas-options=-v -gencode=arch=compute_89,code=sm_89 -std=c++17 -c /work/state/packet/local_kv4_outlier_cuda.cu -o local_kv4_outlier_cuda.cuda.o 
+FAILED: [code=2] local_kv4_outlier_cuda.cuda.o 
+/usr/local/cuda/bin/nvcc -MD -MF local_kv4_outlier_cuda.cuda.o.d -DTORCH_EXTENSION_NAME=dual_kv4_local_sm89 -DTORCH_API_INCLUDE_EXTENSION_H -isystem /usr/local/lib/python3.12/dist-packages/torch/include -isystem /usr/local/lib/python3.12/dist-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options '-fPIC' -O3 --use_fast_math --ptxas-options=-v -gencode=arch=compute_89,code=sm_89 -std=c++17 -c /work/state/packet/local_kv4_outlier_cuda.cu -o local_kv4_outlier_cuda.cuda.o 
+/work/state/packet/local_kv4_outlier_cuda.cu(74): error: no suitable conversion function from "const __nv_bfloat16" to "float" exists
+    float value = static_cast<float>(scales[channel / kGroupSize]) *
+                                     ^
+
+/work/state/packet/local_kv4_outlier_cuda.cu(145): error: no suitable conversion function from "__nv_bfloat16" to "float" exists
+    const float scale = static_cast<float>(scales[channel / kGroupSize]);
+                                           ^
+
+/work/state/packet/local_kv4_outlier_cuda.cu(217): error: identifier "CUDART_INF_F" is undefined
+    float running_max = -CUDART_INF_F;
+                         ^
+
+3 errors detected in the compilation of "/work/state/packet/local_kv4_outlier_cuda.cu".
+[2/3] c++ -MMD -MF local_kv4_outlier_bindings.o.d -DTORCH_EXTENSION_NAME=dual_kv4_local_sm89 -DTORCH_API_INCLUDE_EXTENSION_H -isystem /usr/local/lib/python3.12/dist-packages/torch/include -isystem /usr/local/lib/python3.12/dist-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -fPIC -std=c++17 -O3 -c /work/state/packet/local_kv4_outlier_bindings.cpp -o local_kv4_outlier_bindings.o 
+ninja: build stopped: subcommand failed.

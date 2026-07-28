@@ -1,0 +1,15 @@
+{
+  "artifacts": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_tied_head_endpoint/iterations/c32-topology-settled-resume-20260723t2110z/artifacts",
+  "compatible_successor": "gemma4_h200_fp8_tied_head_endpoint",
+  "maintenance": {
+    "action": "reuse resident server for its exact owning project",
+    "container": "gemma-fp8-tied-head-topology-settled",
+    "gpu_memory_used_mib": 122176,
+    "gpu_process": "sglang::scheduler",
+    "port": 30001,
+    "verified_healthy": true
+  },
+  "project": "gemma4_h200_fp8_tied_head_endpoint",
+  "runtime": "Resident topology-settled E4M3 tied-head server; component and semantic smoke retained.",
+  "server_state": "Healthy gemma-fp8-tied-head-topology-settled on port 30001, reserved for the exact tied-head endpoint continuation."
+}

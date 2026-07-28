@@ -1,0 +1,38 @@
+{
+  "id": "h200-hybrid-55l5g-e00dam5825ffjyxd8b",
+  "provider": "nebius",
+  "accelerator": "nvidia-h200-sxm",
+  "resource": {
+    "instance_id": "computeinstance-e00dam5825ffjyxd8b",
+    "instance_name": "gemma4-hybrid-55l5g-h200-20260727t0149z",
+    "disk_id": "computedisk-e00syfz2dr5znq5kg7",
+    "disk_name": "gemma4-hybrid-55l5g-h200-20260727t0149z-boot",
+    "public_ipv4": "89.169.120.201",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "ssh_ed25519_fingerprint": "SHA256:JHbxua8r+igrDIicuOb66wRcTXJqdjqvcFWehGv5eN8"
+  },
+  "contents": {
+    "project": "gemma4_hybrid_attention_placement_codesign",
+    "model": "google/gemma-4-31B-it revision b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint": "Cold 250-GiB boot disk; exact checkpoint is not yet staged. A later verified binding must supply the immutable checkpoint identity and path.",
+    "image": "Pinned endpoint image is not yet pulled; the later claim binding must preserve the settled runtime image identity.",
+    "runtime": "Nebius Ubuntu 24.04 CUDA 13 H200 is provider-RUNNING but guest SSH identity and NVIDIA H200 telemetry remain unverified.",
+    "caches": "None verified; newly created cold bench.",
+    "server_state": "No server or scientific invocation. The first strict SSH probe timed out.",
+    "artifacts": "projects/gemma4_hybrid_attention_placement_codesign/{DIRECTOR_HYBRID_55L5G_H200_PROVIDER_CREATE_20260727T0149Z.json,HYBRID_55L5G_RETIRED_BENCH_REBIND_TERMINAL.json}",
+    "scientific_terminal": "The settled positive attention component is consumed; the single matched stock/candidate c32 endpoint pair remains unconsumed.",
+    "next": "Remain non-claimable in maintenance. A later director turn must establish the strict host key, verify H200 telemetry, refresh contents, mark ready, and issue an exact claim binding."
+  },
+  "lifecycle": {
+    "provider_started_at_utc": "2026-07-27T01:49:55.411237Z",
+    "watchdog": {
+      "unit": "gemma4-hybrid-55l5g-h200-20260727t0149z-watchdog.service",
+      "unit_manager": "user",
+      "main_pid": 2258131,
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-hybrid-55l5g-h200-20260727t0149z-watchdog.service"
+    },
+    "deadline_utc": "2026-07-27T02:39:55.411237Z"
+  },
+  "hourly_cost_usd": 2.4597222
+}

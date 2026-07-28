@@ -1,0 +1,1 @@
+{"traceEvents": [{"name": "adaptive_depth_component", "ph": "X", "ts": 0, "dur": 1, "args": {"bs7_depth": 12, "bs8_depth": 6}}]}

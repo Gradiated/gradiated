@@ -1,0 +1,14 @@
+{
+  "pid": 115,
+  "process_role": "scheduler",
+  "sglang_commit": "127b9e3283f7c2a43234b852ff5c9f1796d53624",
+  "source_sha256": {
+    "DefaultModelLoader.load_weights_and_postprocess": "f023f35ac4ce273a166f337170fd4afe8e4082d1c1caf68bddc023b02be2ce31",
+    "Engine._launch_scheduler_processes": "5463dd9831c7c00012ae4d4429eebf31db3b4312e17a7ae0e432a49643b961bd",
+    "Fp8Config.get_quant_method": "74f5590f9ff54a7db3e2beb442935f72001ad224f7ee177868d04e2ae118569e",
+    "Fp8LinearMethod.apply": "9163cb8585ee8d4b829de020705070be91110101e3406192fb95ab5d665a7ed8",
+    "Fp8LinearMethod.process_weights_after_loading": "2164102004837af5ea082f3fd8c451c49ca84487f56501e3f4f9525c41e06fa8",
+    "apply_fp8_linear": "066ab1eb420dd8d06b693398385a842721155900bdeedbe024408b185364b436",
+    "http_server.launch_server": "ac093a2e50625b7b11ba4b716dfdd8cc43b84161f5e1175bf6c3771a823ebd41"
+  }
+}

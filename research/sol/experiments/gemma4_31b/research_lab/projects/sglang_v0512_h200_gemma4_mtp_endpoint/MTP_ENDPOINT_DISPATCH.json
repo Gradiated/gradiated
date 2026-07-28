@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "admitted_at_utc": "2026-07-23T05:57:59Z",
+  "classification": "accepted_depth_gate_pass_endpoint_pair_admitted",
+  "source": {
+    "terminal": "artifacts/accepted-depth-target-only-repair-20260723t0510z/retrieved/ACCEPTED_DEPTH_TERMINAL.json",
+    "terminal_sha256": "8c4d8103ef13b960baa4589080576c78ac39771f36f774881b79f394ed55e955",
+    "accepted_depth_events": "artifacts/accepted-depth-target-only-repair-20260723t0510z/retrieved/diagnostic-audit/accepted-depth.jsonl",
+    "accepted_depth_events_sha256": "d34997432c372f15ec2242d5f285df9fa0d14e519319f838c2819307e7ecc129",
+    "qkv_audit": "artifacts/accepted-depth-target-only-repair-20260723t0510z/retrieved/diagnostic-audit/qkv.jsonl",
+    "qkv_audit_sha256": "071a1bd7504c6864f2a29e5961c2d557cecfc6b0224a5af1d9df4c15c563b5aa"
+  },
+  "accounting_correction": {
+    "original_classification": "invalid_accepted_depth_diagnostic",
+    "original_failed_equality": "verify_calls + accepted_drafts == completion_tokens",
+    "reason": "The first generated token precedes speculative verify events. Request usage reports 358 completion tokens, while the 196 verify events account for the remaining 357 generated tokens through 161 accepted drafts plus 196 target tokens.",
+    "completion_tokens": 358,
+    "first_unverified_token": 1,
+    "verify_calls": 196,
+    "accepted_drafts": 161,
+    "accounted_tokens_after_first": 357,
+    "corrected_pass": true
+  },
+  "measured": {
+    "assistant_forward_events": 196,
+    "target_verify_events": 196,
+    "accepted_drafts": 161,
+    "mean_accepted_depth": 1.8214285714285714,
+    "target_forward_reduction_fraction": 0.4509803921568627,
+    "decode_gain_after_assistant_verify_overhead": 0.3547389195928172,
+    "measured_decode_wall_fraction": 0.6862838061096259,
+    "whole_request_gain_bound": 0.24345157591337516,
+    "promotion_gate_fraction": 0.03
+  },
+  "endpoint_contract": {
+    "pair_limit": 1,
+    "control": "exact producer-fused current frontier without MTP",
+    "candidate": "same stack with target-only fused QKV, stock QKV on KV-shared assistant layers, and unchanged native FrozenKVMTPWorker proposal geometry",
+    "required": [
+      "32 of 32 sane rows in both arms",
+      "117728 fresh and 17120 cached prompt-token deltas",
+      "target, assistant, QKV, and accepted-depth path proof",
+      "no proposal-depth, draft-token, top-k, cache, or workload change"
+    ]
+  }
+}

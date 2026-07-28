@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "type": "h100_primitive_traceback_diagnostic_patch",
+  "project": "h100_hybrid_attention_kernel_mechanism",
+  "director_binding": "DIRECTOR_H100_PRIMITIVE_TRACEBACK_RECOVERY_20260726T1626Z.json",
+  "director_binding_sha256": "7a5b9b6bd22c9766167df49672c868f13d6945faaf53edf438e0ae25a4167b68",
+  "bench": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+  "scope": "diagnostic_capture_only_then_unstarted_local1024_c8",
+  "scientific_inputs_unchanged": true,
+  "scientific_sample_consumed_before_patch": false,
+  "causal_predecessor": {
+    "timing_artifact": "artifacts/h100-paged-fp8-execution-20260726t1551z/recovery7-retrieved/local1024-c8.timing.json",
+    "sha256": "b65af20d622f9c6d4e6e745c77b3c4c4b401c4f795d39888672218b621abd6b9",
+    "classification": "integration_error_without_primitive_stdout_stderr_traceback"
+  },
+  "patch": {
+    "files": ["paged_fp8_execution.py", "run_h100_controller.py"],
+    "primitive_command": "worker_command(script, pair-worker, local1024, 8, primitive timing artifact, seed, image digest)",
+    "persisted_fields": ["command", "returncode", "stdout", "stderr", "full traceback"],
+    "atomic_artifacts": ["primitive-pair-worker.capture.json", "local1024-c8.primitive.timing.json", "recovery-worker-terminal.json"],
+    "retrieval": "controller retrieves all primitive artifacts before classification/release"
+  },
+  "source_hashes": {
+    "paged_fp8_execution.py": "0b29906dbf474a3b437176d0a032a99ee4647157aa53837e5c7942fbc5bf5a1b",
+    "run_h100_controller.py": "712bdeaf05bafe0424144ac325ad724695455ee8b9c3d14181b160adef71f344",
+    "H100_PAGED_FP8_EXECUTION_READY.json": "f8c6bc7d39d7123d880ee228ccb15677d6252cfc46833246f9dd1ccbf6e317d6",
+    "H100_PAIR_WORKER_RECOVERY_BINDING.json": "ba0af5534b469a4ad28e549f287259283c9d9cf6dd175c24f49455a83c39d6ea"
+  },
+  "retry_rule": "No full replay and no second decision-bearing sample; only repair the revealed mutable boundary and run local1024 c8 if no science marker or complete row exists.",
+  "provider_create_allowed": false
+}

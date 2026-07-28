@@ -1,0 +1,17 @@
+packet/CHECKPOINT_MANIFEST.json 1577
+packet/config.json 4621
+packet/model.safetensors.index.json 120246
+packet/h100_matched_runner.py 18433
+checkpoint/processor_config.json 1689
+checkpoint/tokenizer.json 32169626
+checkpoint/model-00001-of-00002.safetensors 49784788364
+checkpoint/config.json 4621
+checkpoint/chat_template.jinja 18683
+checkpoint/tokenizer_config.json 2095
+checkpoint/model.safetensors.index.json 120246
+checkpoint/model-00002-of-00002.safetensors 12761549884
+candidate-v0.5.15/remote_runtime_discriminator.py 13149
+candidate-v0.5.15/CANDIDATE_RUNTIME.json 10974
+candidate-v0.5.15/SOURCE_PATH_CAUSAL_MAP.json 3022
+candidate-v0.5.15/UPSTREAM_AUDIT.json 1259
+candidate-v0.5.15/SHA256SUMS.json 3130

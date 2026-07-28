@@ -1,0 +1,180 @@
+[2026-07-25 04:08:37] SWAKVPool mem usage: 84.99 GB, swa size: 198032, full size: 247541
+[2026-07-25 04:08:37] Memory pool end. avail mem=20.83 GB
+[2026-07-25 04:08:37] Capture cuda graph begin. This can take up to several minutes. avail mem=20.76 GB
+[2026-07-25 04:08:37] Capture cuda graph bs [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32]
+  0%|          | 0/20 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=20.29 GB):   0%|          | 0/20 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=20.29 GB):   5%|▌         | 1/20 [00:01<00:25,  1.37s/it]Capturing batches (bs=30 avail_mem=19.98 GB):   5%|▌         | 1/20 [00:01<00:25,  1.37s/it]Capturing batches (bs=30 avail_mem=19.98 GB):  10%|█         | 2/20 [00:01<00:11,  1.55it/s]Capturing batches (bs=28 avail_mem=19.98 GB):  10%|█         | 2/20 [00:01<00:11,  1.55it/s]Capturing batches (bs=28 avail_mem=19.98 GB):  15%|█▌        | 3/20 [00:01<00:07,  2.40it/s]Capturing batches (bs=26 avail_mem=19.97 GB):  15%|█▌        | 3/20 [00:01<00:07,  2.40it/s]Capturing batches (bs=26 avail_mem=19.97 GB):  20%|██        | 4/20 [00:01<00:04,  3.27it/s]Capturing batches (bs=24 avail_mem=19.97 GB):  20%|██        | 4/20 [00:01<00:04,  3.27it/s]Capturing batches (bs=24 avail_mem=19.97 GB):  25%|██▌       | 5/20 [00:01<00:03,  4.08it/s]Capturing batches (bs=22 avail_mem=19.96 GB):  25%|██▌       | 5/20 [00:01<00:03,  4.08it/s]Capturing batches (bs=22 avail_mem=19.96 GB):  30%|███       | 6/20 [00:02<00:02,  4.75it/s]Capturing batches (bs=20 avail_mem=19.95 GB):  30%|███       | 6/20 [00:02<00:02,  4.75it/s]Capturing batches (bs=20 avail_mem=19.95 GB):  35%|███▌      | 7/20 [00:02<00:02,  5.59it/s]Capturing batches (bs=18 avail_mem=19.95 GB):  35%|███▌      | 7/20 [00:02<00:02,  5.59it/s]Capturing batches (bs=18 avail_mem=19.95 GB):  40%|████      | 8/20 [00:02<00:01,  6.37it/s]Capturing batches (bs=16 avail_mem=19.94 GB):  40%|████      | 8/20 [00:02<00:01,  6.37it/s]Capturing batches (bs=16 avail_mem=19.94 GB):  45%|████▌     | 9/20 [00:02<00:01,  7.06it/s]Capturing batches (bs=14 avail_mem=19.93 GB):  45%|████▌     | 9/20 [00:02<00:01,  7.06it/s]Capturing batches (bs=14 avail_mem=19.93 GB):  50%|█████     | 10/20 [00:02<00:01,  7.59it/s]Capturing batches (bs=12 avail_mem=19.93 GB):  50%|█████     | 10/20 [00:02<00:01,  7.59it/s]Capturing batches (bs=12 avail_mem=19.93 GB):  55%|█████▌    | 11/20 [00:02<00:01,  8.01it/s]Capturing batches (bs=10 avail_mem=19.92 GB):  55%|█████▌    | 11/20 [00:02<00:01,  8.01it/s]Capturing batches (bs=10 avail_mem=19.92 GB):  60%|██████    | 12/20 [00:02<00:00,  8.31it/s]Capturing batches (bs=8 avail_mem=19.92 GB):  60%|██████    | 12/20 [00:02<00:00,  8.31it/s] Capturing batches (bs=8 avail_mem=19.92 GB):  65%|██████▌   | 13/20 [00:02<00:00,  8.51it/s]Capturing batches (bs=7 avail_mem=19.91 GB):  65%|██████▌   | 13/20 [00:02<00:00,  8.51it/s]Capturing batches (bs=7 avail_mem=19.91 GB):  70%|███████   | 14/20 [00:02<00:00,  8.65it/s]Capturing batches (bs=6 avail_mem=19.90 GB):  70%|███████   | 14/20 [00:02<00:00,  8.65it/s]Capturing batches (bs=6 avail_mem=19.90 GB):  75%|███████▌  | 15/20 [00:03<00:00,  8.79it/s]Capturing batches (bs=5 avail_mem=19.90 GB):  75%|███████▌  | 15/20 [00:03<00:00,  8.79it/s]Capturing batches (bs=5 avail_mem=19.90 GB):  80%|████████  | 16/20 [00:03<00:00,  8.91it/s]Capturing batches (bs=4 avail_mem=19.89 GB):  80%|████████  | 16/20 [00:03<00:00,  8.91it/s]Capturing batches (bs=4 avail_mem=19.89 GB):  85%|████████▌ | 17/20 [00:03<00:00,  9.02it/s]Capturing batches (bs=3 avail_mem=19.89 GB):  85%|████████▌ | 17/20 [00:03<00:00,  9.02it/s]Capturing batches (bs=3 avail_mem=19.89 GB):  90%|█████████ | 18/20 [00:03<00:00,  9.11it/s]Capturing batches (bs=2 avail_mem=19.88 GB):  90%|█████████ | 18/20 [00:03<00:00,  9.11it/s]Capturing batches (bs=2 avail_mem=19.88 GB):  95%|█████████▌| 19/20 [00:03<00:00,  9.16it/s]Capturing batches (bs=1 avail_mem=19.88 GB):  95%|█████████▌| 19/20 [00:03<00:00,  9.16it/s]Capturing batches (bs=1 avail_mem=19.88 GB): 100%|██████████| 20/20 [00:03<00:00,  9.21it/s]Capturing batches (bs=1 avail_mem=19.88 GB): 100%|██████████| 20/20 [00:03<00:00,  5.56it/s]
+[2026-07-25 04:08:41] Capture cuda graph end. Time elapsed: 4.22 s. mem usage=0.89 GB. avail mem=19.87 GB.
+[2026-07-25 04:08:41] Disable piecewise CUDA graph because --disable-piecewise-cuda-graph is set
+[2026-07-25 04:08:44] max_total_num_tokens=247541, chunked_prefill_size=2048, max_prefill_tokens=16384, max_running_requests=32, context_len=5000, available_gpu_mem=19.87 GB
+[2026-07-25 04:08:44] Tree cache initialized: source=default impl=SWARadixCache hybrid_swa=True hybrid_ssm=False hierarchical=False streaming_wrapped=False
+[2026-07-25 04:08:44] INFO:     Started server process [1]
+[2026-07-25 04:08:44] INFO:     Waiting for application startup.
+[2026-07-25 04:08:44] The server is fired up and ready to roll!
+[2026-07-25 04:08:44] INFO:     Application startup complete.
+[2026-07-25 04:08:44] INFO:     Uvicorn running on http://0.0.0.0:30000 (Press CTRL+C to quit)
+/usr/local/lib/python3.12/dist-packages/fastapi/routing.py:120: FastAPIDeprecationWarning: ORJSONResponse is deprecated, FastAPI now serializes data directly to JSON bytes via Pydantic when a return type or response model is set, which is faster and doesn't need a custom response class. Read more in the FastAPI docs: https://fastapi.tiangolo.com/advanced/custom-response/#orjson-or-response-model and https://fastapi.tiangolo.com/tutorial/response-model/
+  response = await f(request)
+[2026-07-25 04:08:46] INFO:     127.0.0.1:46070 - "GET /v1/models HTTP/1.1" 200 OK
+[2026-07-25 04:08:47] INFO:     127.0.0.1:46078 - "GET /v1/models HTTP/1.1" 200 OK
+[2026-07-25 04:08:47] INFO:     127.0.0.1:46094 - "GET /v1/models HTTP/1.1" 200 OK
+[2026-07-25 04:08:47] INFO:     127.0.0.1:46098 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-25 04:08:47] INFO:     127.0.0.1:46100 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-25 04:08:47] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, full token usage: 0.01, swa token usage: 0.01, #running-req: 0, #queue-req: 0, #pending-token: 2166, cuda graph: False, input throughput (token/s): 640.90
+[2026-07-25 04:08:47] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, full token usage: 0.02, swa token usage: 0.02, #running-req: 0, #queue-req: 0, #pending-token: 118, cuda graph: False, input throughput (token/s): 8981.50
+[2026-07-25 04:08:47] Prefill batch, #new-seq: 1, #new-token: 118, #cached-token: 0, full token usage: 0.02, swa token usage: 0.01, #running-req: 0, #queue-req: 0, #pending-token: 0, cuda graph: False, input throughput (token/s): 3179.16
+[2026-07-25 04:08:47] INFO:     127.0.0.1:46108 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-25 04:08:48] Scheduler hit an exception: Traceback (most recent call last):
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler.py", line 4062, in run_scheduler_process
+    scheduler.run_event_loop()
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler.py", line 1418, in run_event_loop
+    dispatch_event_loop(self)
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler.py", line 3929, in dispatch_event_loop
+    scheduler.event_loop_normal()
+  File "/usr/local/lib/python3.12/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler.py", line 1436, in event_loop_normal
+    result = self.run_batch(batch)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler.py", line 3110, in run_batch
+    batch_result = self.model_worker.forward_batch_generation(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/sitecustomize.py", line 132, in patched_forward
+    result=ORIG_FORWARD(self,*a,**kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_worker.py", line 266, in forward_batch_generation
+    self._prepare_for_speculative_decoding(batch)
+  File "/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_worker.py", line 205, in _prepare_for_speculative_decoding
+    req_drafts, mask = self._prepare_draft_tokens(batch)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/sitecustomize.py", line 97, in patched_prepare
+    mt,mm,depth=merge(lt,lm,gt[i*n:(i+1)*n],gm[i*n*n:(i+1)*n*n],n)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/sitecustomize.py", line 59, in merge
+    if len(order)!=n: raise RuntimeError(f"request_local_tree_underfilled:{len(order)}")
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: request_local_tree_underfilled:3
+
+[2026-07-25 04:08:48] SIGQUIT received. signum=None, frame=None. It usually means one child failed.
+[2026-07-25 04:08:48] Sleeping 5 seconds before crash diagnostics to let GPU activity settle.
+[rank0]:[W725 04:08:48.618942646 ProcessGroupNCCL.cpp:1575] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[2026-07-25 04:08:53] No live scheduler processes found; skipping py-spy and CUDA coredump.
+[2026-07-25 04:08:53] kill_process_tree called: parent_pid=1, include_parent=True, pid=1
+[2026-07-25 04:08:53] ERROR:    Traceback (most recent call last):
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1512, in uvloop.loop.Loop.run_until_complete
+  File "uvloop/loop.pyx", line 1505, in uvloop.loop.Loop.run_until_complete
+  File "uvloop/loop.pyx", line 1379, in uvloop.loop.Loop.run_forever
+  File "uvloop/loop.pyx", line 557, in uvloop.loop.Loop._run
+  File "uvloop/loop.pyx", line 476, in uvloop.loop.Loop._on_idle
+  File "uvloop/cbhandles.pyx", line 83, in uvloop.loop.Handle._run
+  File "uvloop/cbhandles.pyx", line 61, in uvloop.loop.Handle._run
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/tokenizer_manager.py", line 3026, in running_phase_sigquit_handler
+    kill_process_tree(os.getpid())
+  File "/sgl-workspace/sglang/python/sglang/srt/utils/common.py", line 1272, in kill_process_tree
+    sys.exit(0)
+SystemExit: 0
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/starlette/routing.py", line 645, in lifespan
+    await receive()
+  File "/usr/local/lib/python3.12/dist-packages/uvicorn/lifespan/on.py", line 137, in receive
+    return await self.receive_queue.get()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/queues.py", line 158, in get
+    await getter
+asyncio.exceptions.CancelledError
+
+[2026-07-25 04:08:53] ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/locks.py", line 212, in wait
+    await fut
+asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/tokenizer_manager.py", line 1403, in _wait_one_response
+    await asyncio.wait_for(
+  File "/usr/lib/python3.12/asyncio/tasks.py", line 519, in wait_for
+    async with timeouts.timeout(timeout):
+  File "/usr/lib/python3.12/asyncio/timeouts.py", line 115, in __aexit__
+    raise TimeoutError from exc_val
+TimeoutError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/uvicorn/protocols/http/h11_impl.py", line 415, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/uvicorn/middleware/proxy_headers.py", line 62, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/fastapi/applications.py", line 1159, in __call__
+    await super().__call__(scope, receive, send)
+  File "/usr/local/lib/python3.12/dist-packages/starlette/applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/usr/local/lib/python3.12/dist-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/sgl-workspace/sglang/python/sglang/srt/utils/http_middleware_patch.py", line 50, in __call__
+    await self.dispatch(request, call_next)
+  File "/sgl-workspace/sglang/python/sglang/srt/utils/common.py", line 1633, in track_http_status_code
+--
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/fastapi/routing.py", line 674, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/fastapi/routing.py", line 328, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/entrypoints/http_server.py", line 755, in generate_request
+    ret = await _global_state.tokenizer_manager.generate_request(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/tokenizer_manager.py", line 619, in generate_request
+    async for response in self._wait_one_response(obj, request):
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/tokenizer_manager.py", line 1410, in _wait_one_response
+    and await request.is_disconnected()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/starlette/requests.py", line 325, in is_disconnected
+    message = await self._receive()
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/uvicorn/protocols/http/h11_impl.py", line 536, in receive
+    await self.message_event.wait()
+  File "/usr/lib/python3.12/asyncio/locks.py", line 212, in wait
+    await fut
+asyncio.exceptions.CancelledError
+[2026-07-25 04:08:53] ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/locks.py", line 212, in wait
+    await fut
+asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/tokenizer_manager.py", line 1403, in _wait_one_response
+    await asyncio.wait_for(
+  File "/usr/lib/python3.12/asyncio/tasks.py", line 519, in wait_for
+    async with timeouts.timeout(timeout):
+  File "/usr/lib/python3.12/asyncio/timeouts.py", line 115, in __aexit__
+    raise TimeoutError from exc_val
+TimeoutError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):

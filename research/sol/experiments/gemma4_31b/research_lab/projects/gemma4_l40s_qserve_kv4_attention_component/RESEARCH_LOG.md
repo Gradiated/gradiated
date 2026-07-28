@@ -162,3 +162,15 @@
   `gemma4-kv4-l40s-resident-retrieve-20260724t0722z.service` (PID `4014840`).
   Initial grouped snapshot is pre-claim with the bench available; no second
   owner or CUDA replay has been started.
+
+## 2026-07-24 — director closes the expired pre-science repair path
+
+- Resident retrieval recovered `ERROR_TERMINAL.json` and
+  `INVOCATION_STATE.json`: Triton rejected module-global `MIN_BLOCK_KV`
+  because it was not a compile-time constant inside the JIT function. The
+  producer did not complete and no scientific terminal exists.
+- The project deadline passed at `08:15Z` before the admitted in-place repair
+  was applied. This is durable integration evidence, not a KV4 result, and it
+  does not authorize another replay.
+- Cumulative project claim exposure is `$0.6502067251583727`. The stale owner
+  metadata is cleared and the project is terminal.

@@ -1,0 +1,21 @@
+{
+  "completed_at_utc": "2026-07-26T16:32:59.691605Z",
+  "error": {
+    "message": "worker_command() missing 1 required positional argument: 'image_digest'",
+    "traceback": "Traceback (most recent call last):\n  File \"/home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m/paged_fp8_execution.py\", line 843, in recovery_worker\n    primitive_command = worker_command(\n                        ^^^^^^^^^^^^^^^\nTypeError: worker_command() missing 1 required positional argument: 'image_digest'\n",
+    "type": "TypeError"
+  },
+  "identity_contract": "/home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m/H100_PAGED_FP8_EXECUTION_READY.json",
+  "identity_contract_sha256": "f8c6bc7d39d7123d880ee228ccb15677d6252cfc46833246f9dd1ccbf6e317d6",
+  "pass": false,
+  "provider_create_allowed": false,
+  "result": "integration_error",
+  "schema_version": 1,
+  "scientific_sample_consumed": false,
+  "scope": {
+    "case": "local1024",
+    "concurrency": 8
+  },
+  "started_at_utc": "2026-07-26T16:32:48.912397Z",
+  "type": "h100_paged_fp8_recovery_terminal"
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_ngram_wave_batching_sustainable",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "runtime": "Pinned SGLang v0.5.13 FP8 plus FP8-E5M2 KV and NGRAM; exact stock launch is hash-bound in the successor project.",
+  "caches": "Checkpoint, image, CUDA graph, JIT, tokenizer, and runtime caches are retained on the existing 250-GiB disk.",
+  "server_state": "Healthy state-aging instrumented server PID 58735 is loaded on port 30000 and must be stopped by the successor before one clean stock launch.",
+  "artifacts": "Corpus-lifetime terminal and counters are retrieved under artifacts/state-aging-20260724t145451z.",
+  "result": "Corpus lifetime falsified; ready for one fixed 32-request wave-admission sustainable arm.",
+  "expected_first_arms": "One immutable 1036-request wave-admission stream using the persisted rolling arm and qualified c32 terminal as controls; no stock or quality replay."
+}

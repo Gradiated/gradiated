@@ -8,13 +8,14 @@
     "reason": "This is an offline exact-geometry physical discriminator with zero provider authority."
   },
   "compute_budget": "12 local CPU-hours; zero accelerator compute",
-    "next_action": "Terminal source-complete physical candidate. Preserve DYNAMIC_DEPTH_PHYSICAL_SCREEN.json. Reopen only with separate checkpoint-recovery, quality-evaluation, and target-GPU measurement authority; do not download the checkpoint, claim a GPU, or contact a provider under this project.",
+    "decision": "out_of_scope_blunt_layer_capacity_reduction",
+    "next_action": "Terminal out-of-scope evidence. Preserve DYNAMIC_DEPTH_PHYSICAL_SCREEN.json as a physical bound only; do not promote, recover, measure, or reopen this blunt depth-reduction route under the campaign.",
   "priority": 8760,
   "provider_mutation": "forbidden",
     "researcher_profile": "deep",
     "result": {
         "candidate_service_seconds_per_request": 0.46362999049058895,
-        "classification": "source_complete_physical_candidate",
+        "classification": "out_of_scope_source_complete_physical_bound",
         "full_depth_fallback_fraction_ceiling_at_frozen_overhead": 0.21028975294747632,
         "incremental_overhead_seconds_per_request": 0.012,
         "locked_target_seconds_per_request": 0.500119281574996,
@@ -26,6 +27,6 @@
     },
     "status": "complete",
   "storage_budget": "4 GiB durable project artifacts",
-    "summary": "Source-complete quality-unsafe physical proxy: exact pinned SGLang skips before Gemma4DecoderLayer.forward, using 30/60 prefill and 20/60 verification layers. The conservative trace-backed bound is 0.46362999049058895 s/request after a 12 ms overhead envelope, below the locked 0.500119281574996 target; no checkpoint, GPU, provider, or quality evidence was used.",
+    "summary": "Out-of-scope physical evidence: the 0.46362999049058895 s/request bound comes from bluntly executing only 30/60 prefill and 20/60 verification layers, so its gain tracks excluded model-capacity removal. Preserve the source and accounting, but it is not a campaign frontier candidate.",
   "wall_clock_budget_minutes": 150
 }

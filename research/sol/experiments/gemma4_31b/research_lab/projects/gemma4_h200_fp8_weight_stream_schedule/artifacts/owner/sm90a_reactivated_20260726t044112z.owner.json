@@ -1,0 +1,16 @@
+{
+  "command": [
+    "env",
+    "PYTHONPATH=/root/workspace/research/factory/src",
+    "CLAIM_STARTED_UTC=2026-07-26T04:41:12.322366Z",
+    "OWNER_DEADLINE_UTC=2026-07-26T05:12:00Z",
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_weight_stream_schedule/run_h200_component_owner.py"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_weight_stream_schedule",
+  "launched_at_utc": "2026-07-26T04:41:27.594601Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_weight_stream_schedule/artifacts/owner/sm90a_reactivated_20260726t044112z.owner.log",
+  "pid": 1553056,
+  "start_ticks": 115690499,
+  "unit_manager": "pid"
+}

@@ -37,3 +37,12 @@ fail-closed evaluator for the pinned native paged-KV producer/consumer path.
 This cycle ends at a typed source-readiness terminal; it must not query,
 create, claim, or use a provider GPU. Working source and narrow tests are the
 decision evidence—another plan or audit-only successor is not.
+
+## Director H100 execution admission — 2026-07-26T07:06Z
+
+Consume `DIRECTOR_H100_EXECUTION_ADMISSION_20260726T0706Z.json`. The source
+terminal passed and the exact H100 component is admitted once its campaign
+reservation and director-created registered bench are durable. Do not add
+another readiness, audit, repair, or successor seam. The researcher must not
+create or mutate provider resources and must not touch the concurrently
+claimed H200.

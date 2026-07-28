@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_ngram_qlen_mask_target_verify",
+  "result": "corrected_real_two_stage_component_ready",
+  "error": null,
+  "artifacts": "The invalid CUDA-graph dummy capture is retained under artifacts/qlen-mask-20260724t185313z; corrected frozen packet SHA-256 is 80a0a8b3878a10c600ba48678dd091f25758385389b148caf5c022bb1b5ae0ce.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "runtime": "Pinned SGLang v0.5.13 FP8 plus FP8-E5M2 page-1 KV and NGRAM; checkpoint, image, CUDA graph, JIT, tokenizer, and runtime caches retained.",
+  "caches": "Image, checkpoint, CUDA graph, JIT, tokenizer, and runtime caches retained.",
+  "expected_first_arms": "Run corrected frozen packet 80a0a8b3878a10c600ba48678dd091f25758385389b148caf5c022bb1b5ae0ce once for the real c32/Q12 component, then conditionally one candidate-only c32 endpoint. No control, dummy capture, or prior component replay.",
+  "conditional_gate": "Reject CUDA-graph setup rows with mask stride below 4000; require the real approximately 4214-token c32/Q12 production call, nonzero two-stage rows, exact output/first-logit semantics, and a positive bound before the endpoint.",
+  "gpu_processes": "none",
+  "server_state": "Director inspection found the remote owner dead, no container, no GPU compute process, and the accelerator unoccupied.",
+  "residual_bottleneck": "The first hook captured CUDA-graph dummy geometry with row stride 13 and one KV index per request. The corrected packet rejects dummy rows and disables CUDA graph only for the component trigger.",
+  "next": "Claim only for priority-7540 corrected QLEN real-call component and release by 19:50Z under the verified 20:00Z watchdog."
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "repair_id": "staged-g1",
+  "predecessor_repair_id": null,
+  "retry_scope": "staged_consumer_or_retrieval_only",
+  "diagnostic": "container ran as numeric uid 1001 absent from passwd; torchvision import reached getpass and failed before science_started",
+  "invalidated_boundary": "container process launch/runtime import only; no producer replay and no scientific request",
+  "old_owner_sha256": "41062aada76624ecfbac38b686d365c48f2d203b2e6573e55f05022dc664af94",
+  "new_owner_sha256": "640e45ea35c0b029837fd488fd29179a3671af25e028346a735f4aa26ef194fc",
+  "change": "run the unchanged packet consumer container as uid 0:0 so the pinned image has a resolvable passwd entry; representation, workload, runtime image, allocator, and scientific command unchanged",
+  "ready_sha256": "425df061f317e81827a40f4e4c8f5280894edbdc0593e6144e5288246860286f",
+  "created_at_utc": "2026-07-28T09:50:31Z"
+}

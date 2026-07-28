@@ -1,0 +1,6 @@
+{
+  "type": "h100_controller_started",
+  "bench": "h100-paged-fp8-e00vpenjwp83n0nxmr",
+  "started_monotonic": 1168874.360907183,
+  "deadline": "2026-07-26T08:04:14Z"
+}

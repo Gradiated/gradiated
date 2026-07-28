@@ -1,0 +1,44 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-20T01:57:15.144677Z",
+    "heartbeat_at": "2026-07-20T01:57:15.144677Z",
+    "lease_seconds": 2400,
+    "lease_until_utc": "2026-07-20T02:37:15.144677Z",
+    "project": "gemma4_h200_qkv_epilogue_fusion",
+    "stale": false
+  },
+  "contents": {
+    "artifacts": "Compact terminal and raw endpoint artifacts retrieved project-locally when available.",
+    "caches": "Any completed SGLang FP8/CUDA graph compilation caches are retained.",
+    "checkpoint": "Exact immutable eight-file checkpoint retained at /home/glmrunner/gemma-kernel-frontier/checkpoint.",
+    "image": "Pinned SGLang v0.5.12 image retained if the remote worker reached image staging.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_h200_inmemory_fp8_endpoint",
+    "runtime": "Single in-memory FP8 endpoint schedule terminal: useful_pass.",
+    "server_state": "In-memory FP8 server retained if healthy; otherwise image, checkpoint, and caches retained."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-kernel-frontier-e00pfvrckjvwn7bhet",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-20T03:30:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-kernel-frontier-202607192225-watchdog-v2.service",
+      "main_pid": 2849518,
+      "unit": "gemma4-kernel-frontier-202607192225-watchdog-v2.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-19T22:24:41.686177Z",
+  "resource": {
+    "disk_id": "computedisk-e00hnms4mwjf6crmcb",
+    "disk_name": "gemma4-kernel-frontier-202607192225-boot",
+    "instance_id": "computeinstance-e00pfvrckjvwn7bhet",
+    "instance_name": "gemma4-kernel-frontier-202607192225"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-20T01:57:15.144677Z"
+}

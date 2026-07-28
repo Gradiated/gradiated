@@ -1,0 +1,12 @@
+DFLASH_REQUEST_INDEXED_RELAY_REPAIR.patch: FAILED open or read
+dflash_cycle_oracle.py: FAILED open or read
+dflash_endpoint_runner.py: FAILED open or read
+cycle_oracle_sitecustomize.py: FAILED open or read
+remote_cycle_oracle.sh: FAILED open or read
+sha256sum: DFLASH_REQUEST_INDEXED_RELAY_REPAIR.patch: No such file or directory
+sha256sum: dflash_cycle_oracle.py: No such file or directory
+sha256sum: dflash_endpoint_runner.py: No such file or directory
+sha256sum: cycle_oracle_sitecustomize.py: No such file or directory
+sha256sum: remote_cycle_oracle.sh: No such file or directory
+sha256sum: WARNING: 5 listed files could not be read
+scp: download /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/./: not a regular file

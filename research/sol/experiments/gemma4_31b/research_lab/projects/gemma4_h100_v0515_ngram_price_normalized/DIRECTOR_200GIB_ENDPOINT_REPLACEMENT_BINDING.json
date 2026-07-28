@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "decision": "replace_provider_deleted_200gib_h100_without_consuming_endpoint",
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "prior_binding": "DIRECTOR_200GIB_ENDPOINT_BINDING.json",
+  "prior_binding_sha256": "9e39c7705391708fcaa43360d961478e5b57014e06db2bc79e9adcfd5f9e6b2d",
+  "prior_cleanup": "H100_200GIB_R1_CLEANUP_VERIFICATION.json",
+  "prior_cleanup_sha256": "dd04c98bf3d936e9b0b60738198e0d99a80cdc71175b95f2075c5bedb6bc421a",
+  "failure_boundary": {
+    "classification": "provider_lifecycle_failure_before_researcher_claim",
+    "cause": "An obsolete 10:20Z watchdog deleted the replacement instance; the corrected watchdog then removed the disk.",
+    "server_started": false,
+    "endpoint_sample_consumed": false,
+    "scientific_contract_changed": false
+  },
+  "repair_gate": {
+    "artifact": "REPAIR_READY.json",
+    "sha256": "458dbc61a9b0fe8721f3dd93d39f6c491cf2ae90b73748f0eafb53b178871a70",
+    "parser_source_sha256": "e8b3db6aee01466d8d66180cf101df10616d85b8d8cb4adbe5c933c7fcfdf083",
+    "owner_integration_sha256": "145f286f942cb62b1b6c00ddacafc05e921280ffd4ce57356aa685137bc3d222"
+  },
+  "provider_resource": {
+    "provider": "nebius",
+    "accelerator": "nvidia-h100-sxm",
+    "hbm_gb": 80,
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry; not a measured physical minimum.",
+    "instance_id": "computeinstance-e00yfnrrfczsdjevms",
+    "instance_name": "gemma4-h100-v0515-endpoint-200g-20260725t1026z",
+    "disk_id": "computedisk-e00cjpqvtz8x59514m",
+    "disk_name": "gemma4-h100-v0515-endpoint-200g-20260725t1026z-boot",
+    "public_ipv4": "89.169.124.194",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts"
+  },
+  "lifecycle": {
+    "release_deadline_utc": "2026-07-25T12:25:00Z",
+    "watchdog_deadline_utc": "2026-07-25T12:30:00Z",
+    "watchdog_epoch": 1784982600,
+    "watchdog_unit": "gemma4-h100-v0515-endpoint-20260725t1230-watchdog.service",
+    "watchdog_main_pid": 634670,
+    "watchdog_exact_resource_owner_count": 1,
+    "hourly_compute_cost_usd": 2.95,
+    "maximum_new_compute_exposure_usd": 6.15,
+    "cumulative_project_authorization_usd": 15.5,
+    "conservative_actual_spend_before_replacement_usd": 8.2
+  },
+  "unchanged_scientific_contract": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "runtime": "SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "workload": "The sole unconsumed 791-request endpoint from the exact manifest-bound packet.",
+    "forbidden": [
+      "replaying the consumed 171-request discriminator",
+      "changing the model, image, runtime, workload, or scientific contract",
+      "researcher provider mutation",
+      "launching a second watchdog for the same exact provider resource"
+    ]
+  },
+  "researcher_contract": {
+    "claim": "Claim only the newly registered replacement bench and read its current connection identity from runtime/gpus.json.",
+    "first_scientific_arm": "Run only the sole unconsumed 791-request endpoint after every original identity, repaired parser, disk, runtime, GPU, and server gate passes.",
+    "failure": "Persist a typed pre-science terminal if a gate fails; endpoint consumption requires per-request submission evidence.",
+    "release": "Release by 2026-07-25T12:25:00Z."
+  }
+}

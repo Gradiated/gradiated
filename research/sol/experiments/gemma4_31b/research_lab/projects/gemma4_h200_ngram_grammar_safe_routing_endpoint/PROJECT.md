@@ -80,3 +80,13 @@ routing hypothesis.
 The active DFlash project and its independent H200 are out of scope. Do not
 wait for, inspect, restart, or modify that owner.
 
+## Director disposition — 2026-07-24
+
+The routed candidate is terminal. The tool-route guard did not observe native
+tool requests at `Req.grammar`, but that integration defect is no longer worth
+repairing: the persisted post-generation traces prove that the ordinary
+no-grammar c32 candidate differs from its matched target-only control on 31 of
+32 complete generated-token sequences, including when compared as unordered
+multisets after excluding warmup. This violates the project's exact-token gate
+independently of tool routing. `DIRECTOR_C32_TRACE_DISPOSITION.json` binds the
+trace hashes and comparison. Do not reopen native NGRAM.

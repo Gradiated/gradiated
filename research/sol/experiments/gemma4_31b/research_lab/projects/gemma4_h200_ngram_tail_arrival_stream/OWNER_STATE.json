@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_tail_arrival_stream/run_owner.py"
+  ],
+  "cwd": "/root/workspace",
+  "launched_at_utc": "2026-07-25T02:39:25.253369Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_tail_arrival_stream/artifacts/controller/owner.log",
+  "pid": 286612,
+  "start_ticks": 106318265,
+  "unit_manager": "pid"
+}

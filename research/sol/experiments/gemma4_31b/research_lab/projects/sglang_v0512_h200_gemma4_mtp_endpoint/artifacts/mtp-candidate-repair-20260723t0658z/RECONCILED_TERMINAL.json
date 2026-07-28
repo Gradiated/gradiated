@@ -1,0 +1,16 @@
+{
+  "classification": "typed_external_or_owner_boundary",
+  "error": "RuntimeError: typed_worker_boundary:mtp.terminal_invalid",
+  "pass": false,
+  "provider": {
+    "authorized_cumulative_spend_usd": 8.0,
+    "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+    "cumulative_project_spend_usd": 3.847567199209622,
+    "exposure_seconds": 196.6062047481537,
+    "historical_settled_spend_usd": 3.71321962596505,
+    "hourly_cost_usd": 2.46,
+    "new_iteration_spend_usd": 0.13434757324457167
+  },
+  "schema_version": 1,
+  "status": "terminal"
+}

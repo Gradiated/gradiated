@@ -1,0 +1,157 @@
+[
+  {
+    "bytes": 5571,
+    "path": "ADMITTED_INPUT_MANIFEST.json",
+    "sha256": "af647e22480fc2c3b56d210a1c4aa26245e0572118520eb6826c5a86b1598894"
+  },
+  {
+    "bytes": 8635,
+    "path": "analyze_discriminator.py",
+    "sha256": "75b0792abeadc41ee80a8db49f0bfecd2d471be78aa48b1be4df58c57d4e161b"
+  },
+  {
+    "bytes": 2332,
+    "path": "analyze_endpoint_pair.py",
+    "sha256": "ec2a0fe93dd674a38dfea9b0c3f3861d8172dc1e6c0c6e51f6514be98f502684"
+  },
+  {
+    "bytes": 8810,
+    "path": "async_result_sitecustomize.py",
+    "sha256": "726283cd65eb331bd140f2ca80e39c1bcf78a89fe7abfea2bc0d5111689faf39"
+  },
+  {
+    "bytes": 2965,
+    "path": "freeze_live_sources.py",
+    "sha256": "1d7083596bc5bfb5e5dafc946db6616bcd696b099c9105050796905e51c8b2b3"
+  },
+  {
+    "bytes": 64753,
+    "path": "inputs/admitted_upstream/layers/attention/triton_backend.py",
+    "sha256": "7bc3ae9ef1be59ec07734df442c077a07fb54c28007747f53a552bb81e8e8e2d"
+  },
+  {
+    "bytes": 32466,
+    "path": "inputs/admitted_upstream/layers/sampler.py",
+    "sha256": "85541951e1cf50d10c54978178e403ff9d4aa6f223e629ea91965735ba882a8f"
+  },
+  {
+    "bytes": 117509,
+    "path": "inputs/admitted_upstream/managers/schedule_batch.py",
+    "sha256": "eea77dac02f593da24e953f0a0ea03237f2874d0ef27522044e8fd6397fcb874"
+  },
+  {
+    "bytes": 173876,
+    "path": "inputs/admitted_upstream/managers/scheduler.py",
+    "sha256": "3a26deea85f43d61c27b94013288ad95d6ee75111fe40134893541777c9c8cd4"
+  },
+  {
+    "bytes": 38394,
+    "path": "inputs/admitted_upstream/managers/scheduler_components/batch_result_processor.py",
+    "sha256": "9c764afffb106e966fde110851de73bb6a3d0f2415343a574a255e91f86851de"
+  },
+  {
+    "bytes": 22003,
+    "path": "inputs/admitted_upstream/managers/tp_worker.py",
+    "sha256": "f2e00ea7d53b7250231d44b9d52415c6f6b5f936b0e7c6af4a13f5aff6c1e509"
+  },
+  {
+    "bytes": 53078,
+    "path": "inputs/admitted_upstream/model_executor/cuda_graph_runner.py",
+    "sha256": "7d1898247e80ff6a446eb42e4968d2eea0df30b109ee2d089a9ad78791bc079e"
+  },
+  {
+    "bytes": 61591,
+    "path": "inputs/admitted_upstream/model_executor/forward_batch_info.py",
+    "sha256": "c977296f3b90be69fff5312f2b3af7699a17b20af24614b139f69888e5776516"
+  },
+  {
+    "bytes": 156397,
+    "path": "inputs/admitted_upstream/model_executor/model_runner.py",
+    "sha256": "f4dad073eb9f89afd4cda0439b97dee63f8de131d0ed10078b817dba1f978f59"
+  },
+  {
+    "bytes": 9565,
+    "path": "inputs/admitted_upstream/sampling/penaltylib/orchestrator.py",
+    "sha256": "88d9a4c04866a8b2dad0efe6f010f28f7e7dfa0e65708920f7845d760e833192"
+  },
+  {
+    "bytes": 17103,
+    "path": "inputs/admitted_upstream/sampling/sampling_batch_info.py",
+    "sha256": "e7903417a4cab05294975d069555987e2720557dd9fd0b8d79a6f934f3fbb0db"
+  },
+  {
+    "bytes": 51033,
+    "path": "inputs/current_stack/AUTHORITATIVE_QKV_TERMINAL.json",
+    "sha256": "1b563ea1dd933d097a337b33fb17dc13601ded1689597071c8f6fd9e74f17912"
+  },
+  {
+    "bytes": 3132,
+    "path": "inputs/current_stack/FP8_QKV_INPUT_MANIFEST.json",
+    "sha256": "d999420ebd05dacd0e15cf08aad34f6a68b657367bf6dc28c4738df0d0663586"
+  },
+  {
+    "bytes": 4606,
+    "path": "inputs/current_stack/attention_intervention.py",
+    "sha256": "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8"
+  },
+  {
+    "bytes": 8672,
+    "path": "inputs/current_stack/bound_remote_fp8_stack.sh",
+    "sha256": "f6c80216e29b426811badea59e6e148629d0f5b951efa0e314b04ae19c5b5ffc"
+  },
+  {
+    "bytes": 2192,
+    "path": "inputs/current_stack/bound_stack_sitecustomize.py",
+    "sha256": "5791f6718b90b1ac555f7cb53179b18fd523ffb9f469d02582482431623d39fa"
+  },
+  {
+    "bytes": 9494,
+    "path": "inputs/current_stack/fp8_qkv_paired_runner.py",
+    "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+  },
+  {
+    "bytes": 6024,
+    "path": "inputs/current_stack/host_min_new_tokens_gate.py",
+    "sha256": "2779aae2c51c63ef3119edff9b57e39f09576975ec6e15fb66928e6069405c2a"
+  },
+  {
+    "bytes": 6370,
+    "path": "inputs/current_stack/install_endpoint_patch.py",
+    "sha256": "71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588"
+  },
+  {
+    "bytes": 2929,
+    "path": "inputs/current_stack/pinned_async_penalty_tokens.py",
+    "sha256": "58f4c65846af62ad21aeb765d7764686c364335d29fff45eac65da86ab296197"
+  },
+  {
+    "bytes": 6062,
+    "path": "inputs/current_stack/proven_v0513_endpoint_entrypoint.py",
+    "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc"
+  },
+  {
+    "bytes": 12417,
+    "path": "inputs/current_stack/proven_v0513_paired_endpoint_runner.py",
+    "sha256": "df65b1e49c941c27a975ecb1f2d34041a0e63695c2e3515cf950406204f614f3"
+  },
+  {
+    "bytes": 26612,
+    "path": "inputs/current_stack/qkv_epilogue_discriminator.py",
+    "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"
+  },
+  {
+    "bytes": 4653,
+    "path": "inputs/current_stack/residual_intervention.py",
+    "sha256": "9b5a51284ac313014988f426c35b818ae2590cb7d4a72ec604a6ad80a63336b3"
+  },
+  {
+    "bytes": 8061,
+    "path": "remote_async_result_pipeline.sh",
+    "sha256": "83cbdd21111ece9c491f2c4d1629ebde85a1de4c44d01bd94050e288f97d809e"
+  },
+  {
+    "bytes": 10242,
+    "path": "streaming_discriminator.py",
+    "sha256": "17d4e6243f7fa3d30e9d434e08cdd150a0fa7adb991e69b0cd5625cd10aa02bf"
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/.repair-handshakes/streaming-h100-1785102961465033086/persist_launch_localization.py",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/.repair-handshakes/streaming-h100-1785102961465033086/persist_launch_localization.py",
+  "ready_sha256": "193422096338679a56ecead7720947af75eb55d7d30512b31cc8cabc857b49c9",
+  "repair_id": "streaming-h100-1785102961465033086",
+  "requested_at_utc": "2026-07-26T22:06:01.441341Z",
+  "retry_scope": "offline_result_construction",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

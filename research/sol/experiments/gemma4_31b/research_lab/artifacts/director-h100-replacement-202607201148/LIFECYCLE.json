@@ -1,0 +1,13 @@
+{
+  "bench_id": "h100-v0513-fp8qkv-r2-e00nmpn5czcb44jqm1",
+  "disk_id": "computedisk-e00rd32znm10exgyy3",
+  "instance_id": "computeinstance-e00nmpn5czcb44jqm1",
+  "maximum_replacement_exposure_usd": 4.983595265977913,
+  "owner_deadline_utc": "2026-07-20T13:59:17Z",
+  "owner_pid": 3099968,
+  "owner_unit": "gemma4-h100-r2-owner.service",
+  "status": "active",
+  "watchdog_deadline_utc": "2026-07-20T14:09:17Z",
+  "watchdog_pid": 3099664,
+  "watchdog_unit": "gemma4-h100-r2-watchdog.service"
+}

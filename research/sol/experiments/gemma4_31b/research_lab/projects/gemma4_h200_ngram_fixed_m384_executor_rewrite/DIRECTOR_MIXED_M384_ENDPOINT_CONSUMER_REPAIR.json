@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T17:39:37Z",
+  "project": "gemma4_h200_ngram_fixed_m384_executor_rewrite",
+  "decision": "repair_only_the_invalidated_endpoint_consumer_under_the_retained_owner",
+  "classification": "recoverable_stale_pair_directory_and_pre_binding_endpoint_consumer_defect",
+  "current_ready": {
+    "path": "REPAIR_READY.json",
+    "sha256": "ae1a960e0c63a5bb2f688d3352e40bb142746aba8e1af8fe4093286317643793",
+    "stage": "endpoint_consumer",
+    "error": "RuntimeError: endpoint_pair_harness_invalid:1",
+    "repair_deadline_utc": "2026-07-25T18:38:22.595730+00:00"
+  },
+  "observer_caveat": {
+    "fact": "remote_experiment.py repair_wait reads artifacts/component/INVOCATION_STATE.json for every repair stage.",
+    "consequence": "The current ready marker's candidate_cuda_invocation_started and scientific_invocation_started booleans describe the preserved component invocation, not necessarily an endpoint arm.",
+    "decision_rule": "Determine endpoint-arm consumption only from the pair directory, per-arm persisted summaries, runner terminals, raw responses, server logs, and PAIR_TERMINAL.json."
+  },
+  "classified_endpoint_attempt": {
+    "retrieved_root": "artifacts/mixed-local-m384-20260725t165205Z/remote-retrieved-20260725t174148Z/artifacts/pair",
+    "current_attempt_consumed_arms": 0,
+    "evidence": [
+      {
+        "artifact": "PAIR_TERMINAL.json",
+        "sha256": "e71efd906ed2607ee8cd91702fbf514aeb8926de571923d5e867ec297c5e48e4",
+        "matches_closed_uniform_m8_artifact": "artifacts/fixed-m384-20260725t162212Z/retrieved/artifacts/pair/PAIR_TERMINAL.json"
+      },
+      {
+        "artifact": "control-PERSISTED.json",
+        "sha256": "98f1ec684f597494d6fba722ce0b6dafd80991f07fece5fdf39dd0ba10a9eee0",
+        "matches_closed_uniform_m8_artifact": "artifacts/fixed-m384-20260725t162212Z/retrieved/artifacts/pair/control-PERSISTED.json"
+      },
+      {
+        "artifact": "candidate-PERSISTED.json",
+        "sha256": "b93848978398c6bf2f87ed9f0f428e9dc6b98d6598a00b677395545b8417ed0f",
+        "matches_closed_uniform_m8_artifact": "artifacts/fixed-m384-20260725t162212Z/retrieved/artifacts/pair/candidate-PERSISTED.json"
+      }
+    ],
+    "binding_proof": {
+      "retrieved_candidate_source_sha256": "3086f691c3574900a24907c1273fb9dc1cdf5191e8e217e7b98fe36f3b394877",
+      "current_mixed_candidate_source_sha256": "33d6bec04ab04e006b5e96d95dce56444edb59c519f242a0b6690a5f6e5bcfed",
+      "retrieved_binding_mtime_matches_closed_uniform_pair": true,
+      "inference": "The current endpoint process failed before atomically replacing PAIR_BINDING.json. Every retrieved full-pair artifact predates this mixed-local run and is non-transferable historical evidence."
+    }
+  },
+  "preserved_science": {
+    "component_terminal": {
+      "path": "artifacts/mixed-local-m384-20260725t165205Z/preserved-component-attempt-1/COMPONENT_TERMINAL.json",
+      "sha256": "12fb8457e1b54c82de43506e72ef159b40ccf9379eb2f0f84607aef85417b115"
+    },
+    "ncu_report": {
+      "path": "artifacts/mixed-local-m384-20260725t165205Z/preserved-counter-attempt-1/fixed-m384-attention.ncu-rep",
+      "sha256": "5bb0ef1d4f449ef8931ebf62006b86a572a970058d4a945732959c3322f8bc1c"
+    },
+    "counter_invocation": {
+      "path": "artifacts/mixed-local-m384-20260725t165205Z/preserved-counter-attempt-1/COUNTER_INVOCATION.json",
+      "sha256": "a1f7214a5081d404717d5742b4c2c3d18f68f1f5abdbfbb7f4e1e99ae2a17a1d"
+    },
+    "rule": "Do not rerun the exact-consumer component or NCU producer."
+  },
+  "scientific_contract": {
+    "path": "DIRECTOR_H200_MIXED_LOCAL_M384_BINDING.json",
+    "sha256": "a084bd2cb9007138c5e54b3f2ab7f64baa90bcfab66fea9778491338cfc8d8d1",
+    "unchanged": true
+  },
+  "consumer": {
+    "path": "endpoint_pair.py",
+    "current_sha256": "ae7eefaf3ec8eae0935426dd753c5bd65bd093e853f25664a42458664ccdd23c",
+    "failure_semantics": "remote_experiment.py accepted only endpoint_pair.py return codes 0 or 75 with a durable pair/PAIR_TERMINAL.json; return code 1 without that terminal is an invalid consumer attempt, not a scientific terminal."
+  },
+  "repair_contract": {
+    "first_action": "Preserve the retrieved stale pair directory and archive the exact remote pair root before mutation. Inspect the current endpoint-pair stderr or reproduce only the pre-binding call needed to identify why endpoint_pair.py returned 1 before replacing PAIR_BINDING.json.",
+    "source_gate": "Before requesting repair, require current remote intervention/extend_attention_fixed_m384.py sha256 33d6bec04ab04e006b5e96d95dce56444edb59c519f242a0b6690a5f6e5bcfed and endpoint_pair.py sha256 ae7eefaf3ec8eae0935426dd753c5bd65bd093e853f25664a42458664ccdd23c, or persist the exact source amendment and its hash if the narrow pre-binding defect requires one.",
+    "clean_root": "After the stale directory is content-preserved, create a clean empty pair root so no historical terminal, arm, response, dispatch audit, or binding can satisfy the mixed-local consumer.",
+    "unconsumed_case": "Patch only the pre-binding return-1 defect, then run the already-authorized exact c32 target-decision guard and its conditional matched mixed-local endpoint pair once against resident model, image, checkpoint, and caches.",
+    "request_generation": "After the repair is local and source-identified, write REPAIR_REQUEST.json for stage endpoint_consumer with ready_sha256 ae1a960e0c63a5bb2f688d3352e40bb142746aba8e1af8fe4093286317643793.",
+    "terminal": "Persist MIXED_LOCAL_M384_TERMINAL.json from the repaired consumer or a typed nonrecoverable/deadline boundary, then stop processes and release the bench."
+  },
+  "limits": {
+    "claim": "Retain the existing h200-dflash-adapter-e00vyqp7gxsr34wrtz claim and PID-managed owner.",
+    "spend": "No increase beyond the existing 5 USD reservation.",
+    "deadline_utc": "2026-07-25T18:38:22.595730+00:00",
+    "provider_mutation": "none",
+    "forbidden": [
+      "Do not restart checkpoint staging, model image setup, the component, or NCU.",
+      "Do not infer endpoint consumption from the stage-ambiguous ready booleans.",
+      "Do not treat or report the closed uniform-M8 pair as a mixed-local result.",
+      "Do not reuse any stale pair artifact in the new terminal.",
+      "Do not alter the mixed local-only M384 intervention, workload, comparator, quality gate, or endpoint order.",
+      "Do not release before pair artifacts are retrieved unless the guest becomes unsafe or the absolute deadline requires handoff."
+    ]
+  }
+}

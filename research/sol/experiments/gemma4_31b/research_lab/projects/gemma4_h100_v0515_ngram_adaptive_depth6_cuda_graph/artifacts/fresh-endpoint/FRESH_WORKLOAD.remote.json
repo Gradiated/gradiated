@@ -1,0 +1,15 @@
+{
+  "arrival_rows_sha256": "630d05bd860d1dd22c3e35ba2d8f792afc5051f0c68e0a74a9deda8140a02b36",
+  "construction_identity": "15810d8b040ca8523524a883e8895c98e2d4a30f0b1590c7454713bdedd70f26",
+  "index_interval": [
+    63000,
+    63790
+  ],
+  "prompt_hash_set_sha256": "3fcc44a1883f2a4fd842099b582025251d629cbde05a584c019ba1c2da1033ca",
+  "request_hash_set_sha256": "bfeb2d9ac701ca55e4e35ec01f7d7d00a255afa2e535c9e0037540d726fc44e4",
+  "row_count": 791,
+  "schema_version": 1,
+  "status": "complete",
+  "trace_packet_sha256": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68",
+  "workload_sha256": "1ca8296c4199e4748814e7e13afc1755523bcba958a1d596a4a9ab64ad13ad37"
+}

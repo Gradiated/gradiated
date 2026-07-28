@@ -1,0 +1,28 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "bench_id": "h200-kernel-frontier-e00pfvrckjvwn7bhet",
+  "created_at_utc": "2026-07-19T22:23:19.088211Z",
+  "disk_gib": 250,
+  "disk_name": "gemma4-kernel-frontier-202607192225-boot",
+  "hourly_cost_usd": 2.46,
+  "instance_id": "computeinstance-e00pfvrckjvwn7bhet",
+  "instance_name": "gemma4-kernel-frontier-202607192225",
+  "lifecycle_deadline_utc": "2026-07-20T03:30:00Z",
+  "platform": "gpu-h200-sxm",
+  "preemptible": true,
+  "preset": "1gpu-16vcpu-200gb",
+  "provider_boundary": {
+    "disk_id": null,
+    "disk_listing_count": 0,
+    "instance_state": "STOPPED",
+    "reconciling": true
+  },
+  "registered_status": "draining",
+  "schema_version": 1,
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-kernel-frontier-202607192225-watchdog-v2.service",
+    "main_pid": 2849518,
+    "unit": "gemma4-kernel-frontier-202607192225-watchdog-v2.service",
+    "unit_manager": "user"
+  }
+}

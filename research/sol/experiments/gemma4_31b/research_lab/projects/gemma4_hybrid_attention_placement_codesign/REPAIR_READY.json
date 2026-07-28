@@ -1,0 +1,20 @@
+{
+  "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/target-only-proxy-allocator-readmission-20260726t0648z",
+  "binding": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/DIRECTOR_TARGET_ONLY_PROXY_ALLOCATOR_READMISSION_20260726T0648Z.json",
+  "deadline_utc": "2026-07-26T07:24:00Z",
+  "outcome": {
+    "candidate_cuda_invocation_started": false,
+    "classification": "infrastructure_terminal",
+    "failure_kind": "target_verify_consumer_failed",
+    "guest_unsafe": false,
+    "interpretable_component_result": false,
+    "returncode": 72,
+    "schema_version": 1,
+    "scientific_component_consumed": false,
+    "stage": "target_verify_consumer"
+  },
+  "phase": "retained_repair",
+  "schema_version": 1,
+  "science_started": false,
+  "scientific_component_consumed": false
+}

@@ -1,0 +1,33 @@
+{
+  "classification": "positive_endpoint_bound",
+  "component_conservative_reduction_fraction": 0.16868546244981653,
+  "component_reductions_by_m": {
+    "118": 0.20210728586469184,
+    "1409": 0.25800758274825086,
+    "1631": 0.21940813482022148,
+    "2048": 0.2141262344164736,
+    "32": 0.16868546244981653
+  },
+  "component_replayed": false,
+  "conservative_saved_seconds": 0.5917234117991069,
+  "conservative_whole_request_reduction_fraction": 0.026481396921388567,
+  "cumulative_provider_spend_usd": 0.31525187188386916,
+  "current_trace_mapped_mlp_fraction": 0.15698683536091151,
+  "current_trace_mapped_mlp_seconds": 3.5078506660000004,
+  "current_trace_window_seconds": 22.344871517,
+  "gate_fraction": 0.0,
+  "invocation_state": {
+    "component_candidate_cuda_started": false,
+    "component_candidate_science_started": false,
+    "endpoint_candidate_cuda_started": true,
+    "endpoint_candidate_science_started": false,
+    "updated_unix_s": 1784816715.8205214
+  },
+  "mapping": "current trace dominant CUTLASS FP8 launches mechanically sequenced to qkv/o/gate_up/down actual-consumer audit; only measured gate_up+down time admitted",
+  "pass": true,
+  "provider_exposure_seconds": 274.60759234428406,
+  "provider_spend_usd": 0.18764852143526076,
+  "schema_version": 1,
+  "source_classification": "bound_below_3pct",
+  "status": "terminal"
+}

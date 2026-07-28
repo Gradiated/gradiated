@@ -1,0 +1,67 @@
+{
+  "candidate_runtime": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+  "causal_commits": [
+    {
+      "commit": "111009ea542e3430d8eed6e8e99dd8558982699f",
+      "patch_sha256": "85732f305aae032a24578aecd34921ecccb5976e27e6b217a86ab2a335f0b733",
+      "role": "NGRAM spec-v2 migration"
+    },
+    {
+      "commit": "854c688121ed29f49bc862fe19357eecd6c72b30",
+      "patch_sha256": "b90b46695384f17ef58a1d4d5f30e6bce8009d4b2d709e1c8f69450f0b4c4cbe",
+      "role": "single-owner accepted-KV settlement"
+    }
+  ],
+  "evidence_label": "source-derived",
+  "falsifier": "The candidate is rejected if requests 0..170 at bound arrivals are not exact, native NGRAM activation is not observed, or source/image identity does not match. Passing admits one unmodified 791-request endpoint only; it does not transfer pinned-runtime economics.",
+  "mechanism": "The pinned release uses NGRAM spec-v1: NgramVerifyInput._free_cache selects and moves accepted KV, mutates req.kv_committed_len and req.kv_allocated_len, and rewrites req_to_token before the next verify. v0.5.15 uses the upstream NGRAM spec-v2 producer/consumer path: target verification moves accepted KV, publishes seq_lens + accept_lens, and the scheduler is the sole owner of req.kv_committed_len. This replaces the entire cache-position state transition that feeds the next Gemma sliding/global attention verification.",
+  "paths": [
+    {
+      "path": "python/sglang/srt/speculative/cpp_ngram/ngram_corpus.py",
+      "stage": "proposal",
+      "symbol": "NgramCorpus.batch_get"
+    },
+    {
+      "path": "python/sglang/srt/speculative/ngram_worker.py",
+      "stage": "tree_and_positions",
+      "symbol": "reconstruct_indices_from_tree_mask"
+    },
+    {
+      "path": "python/sglang/srt/speculative/ngram_worker.py",
+      "stage": "target_verification",
+      "symbol": "NGRAMWorker.forward_batch_generation"
+    },
+    {
+      "path": "python/sglang/srt/speculative/ngram_worker.py",
+      "stage": "accepted_kv_move",
+      "symbol": "move_accept_tokens_to_target_kvcache"
+    },
+    {
+      "path": "python/sglang/srt/managers/scheduler_components/batch_result_processor.py",
+      "stage": "accepted_kv_commit_owner",
+      "symbol": "SchedulerBatchResultProcessor._resolve_spec_v2_tokens"
+    },
+    {
+      "path": "python/sglang/srt/speculative/ngram_worker.py",
+      "stage": "request_cleanup",
+      "symbol": "_prev_decode_rids/erase_match_state"
+    },
+    {
+      "path": "python/sglang/srt/models/gemma4_causal.py",
+      "stage": "gemma_hybrid_attention",
+      "symbol": "Gemma4Attention"
+    },
+    {
+      "path": "python/sglang/srt/layers/attention/triton_backend.py",
+      "stage": "triton_tree_verify",
+      "symbol": "TritonAttnBackend target_verify metadata"
+    },
+    {
+      "path": "python/sglang/srt/model_executor/runner/decode_cuda_graph_runner.py",
+      "stage": "cuda_graph_geometry",
+      "symbol": "NgramVerifyInput capture"
+    }
+  ],
+  "pinned_runtime": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+  "schema_version": 1
+}

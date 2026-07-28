@@ -1,0 +1,12 @@
+{
+  "overlay": {
+    "depth": 12,
+    "global_fallback": "unchanged_BFS_recency",
+    "overlay": "request_local_verified_trunk",
+    "overlay_sha256": "d06d420337e6b86e072e3b3f3bd97399c783204ecff7e5c2612e2f7d5519190e",
+    "source": "target_verified_tokens_only"
+  },
+  "overlay_path": "/home/glmrunner/gemma4-ngram-tail-overlap/out/OVERLAY_STATE.json",
+  "trace_path": "/home/glmrunner/gemma4-ngram-tail-overlap/out/request-local-ngram.jsonl",
+  "worker_initialized": true
+}

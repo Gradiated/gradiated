@@ -426,6 +426,35 @@ def validate_scientific_owner(scientific_mode: str, environment: dict[str, str] 
         raise VllmSmokeError(f"{scientific_mode} provider mutation requires durable service ownership")
 
 
+def active_watchdogs_for_resource(
+    instance_id: str,
+    disk_name: str,
+    *,
+    proc_root: Path = Path("/proc"),
+) -> list[int]:
+    """Return live shared-watchdog PIDs that already own this provider resource."""
+    matches: list[int] = []
+    for process_dir in proc_root.iterdir():
+        if not process_dir.name.isdigit():
+            continue
+        try:
+            argv = [
+                value.decode(errors="replace")
+                for value in (process_dir / "cmdline").read_bytes().split(b"\0")
+                if value
+            ]
+        except (FileNotFoundError, PermissionError, ProcessLookupError):
+            continue
+        if not any(Path(value).name == "placement_control.py" for value in argv):
+            continue
+        if any(
+            argv[index : index + 3] == ["watchdog", instance_id, disk_name]
+            for index in range(max(0, len(argv) - 2))
+        ):
+            matches.append(int(process_dir.name))
+    return sorted(matches)
+
+
 def start_independent_watchdog(
     instance_id: str,
     disk_name: str,
@@ -439,6 +468,13 @@ def start_independent_watchdog(
     )
     if unit_manager not in {"system", "user"}:
         raise VllmSmokeError("cleanup watchdog unit manager must be system or user")
+    existing_watchdogs = active_watchdogs_for_resource(instance_id, disk_name)
+    if existing_watchdogs:
+        raise VllmSmokeError(
+            "provider resource already has an active cleanup watchdog; "
+            "stop and verify the old watchdog before launching its replacement "
+            f"(pids={existing_watchdogs})"
+        )
     manager_flag = f"--{unit_manager}"
     command = [
         "systemd-run", manager_flag, "--no-block", "--collect", f"--unit={unit_name}",

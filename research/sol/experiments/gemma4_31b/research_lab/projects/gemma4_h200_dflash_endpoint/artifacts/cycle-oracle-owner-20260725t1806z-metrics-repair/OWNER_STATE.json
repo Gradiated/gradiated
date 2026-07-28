@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/run_cycle_oracle_repair.sh",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/cycle-oracle-owner-20260725t1806z-metrics-repair"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint",
+  "launched_at_utc": "2026-07-25T18:06:31.503100Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/cycle-oracle-owner-20260725t1806z-metrics-repair/OWNER_CONTROLLER.log",
+  "pid": 989614,
+  "start_ticks": 111880890,
+  "unit_manager": "pid"
+}

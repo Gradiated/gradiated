@@ -1,0 +1,16 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/run_h200_decode_scheduler_component_owner.py",
+    "--binding",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/DIRECTOR_DECODE_SCHEDULER_LIVE_H200_BINDING_20260727T0338Z.json",
+    "--owner-state",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/artifacts/h200-decode-scheduler-live-repair-owner-20260727t0351z/OWNER.json"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph",
+  "launched_at_utc": "2026-07-27T03:51:53.787410Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/artifacts/h200-decode-scheduler-live-repair-owner-20260727t0351z/OWNER.log",
+  "pid": 2327701,
+  "start_ticks": 124033119,
+  "unit_manager": "pid"
+}

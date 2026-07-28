@@ -1,0 +1,11 @@
+{
+  "artifacts": "Recovered PHASE_SELECTIVE_FULL_MODEL_H200_COMPONENT_TERMINAL.json (SHA256 710405914ab3f6ceac8bc64fc609a9cbac1a1b909595fe2e24ee15a48766edbe): standalone ModelRunner construction reached 138.71 GiB allocated and failed pre-science on a 168-MiB allocation.",
+  "endpoint": false,
+  "model": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 bytes remain intact in /home/glmrunner/phase-selective-full-model-v2/checkpoint; inspected workspace size is 62,578,663,098 bytes.",
+  "next": "Available first to gemma4_certified_lazy_vocab_head, then gemma4_h200_fp8_weight_stream_schedule. The phase-selective project must complete DIRECTOR_FULL_MODEL_OOM_RECOVERY.json offline and receive a later director re-admission before another claim.",
+  "processes_stopped": true,
+  "project": "gemma4_certified_lazy_vocab_head",
+  "result": "ownerless_claim_recovered_to_warm_ready",
+  "server_state": "At 2026-07-25T21:55:57Z strict SSH found no phase-selective/full-model worker, no GPU compute process, and no experiment container visible to the unprivileged account; the completed container had exited.",
+  "terminal": "gemma4_hybrid_attention_placement_codesign/PHASE_SELECTIVE_FULL_MODEL_H200_COMPONENT_TERMINAL.json"
+}

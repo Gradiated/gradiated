@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "type": "director_causal_head_server_readiness_repair",
+  "issued_at_utc": "2026-07-26T22:00:17Z",
+  "project": "gemma4_causal_parallel_offset_head",
+  "decision": "Repair-5 did not produce another observer sample: every capture connection was refused and the owner retrieved a zero-row terminal from the prior remote output path. Treat this as a pre-science server-readiness and artifact-provenance failure. Retain the H200 claim and bind repair-6 to restore verified server health and a generation-fresh capture root before submitting the unchanged request batch.",
+  "bench_id": "h200-causal-head-e00b9qw8d6qd7wrjj1",
+  "claimed_at": "2026-07-26T20:41:17.874349Z",
+  "owner_pid": 2056931,
+  "owner_start_ticks": 121449519,
+  "deadline_utc": "2026-07-27T01:32:34.490529Z",
+  "classification": "pre_science_server_unreachable_with_stale_capture_terminal",
+  "evidence": {
+    "capture_stderr": {
+      "path": "artifacts/h200-capture-train-20260726t2037z/capture.stdout.stderr",
+      "sha256": "a361dd19d9ad627d6586877512a25d42f1d1f045f3744aa1d02843c40410a6e7",
+      "fact": "All attempted curl connections to 127.0.0.1:30000 were refused."
+    },
+    "retrieved_terminal": {
+      "path": "artifacts/h200-capture-train-20260726t2037z/CAPTURE_TERMINAL.json",
+      "sha256": "cbb04f81df79784207aaed7e4786ca1b42ef61dbddd835431df9d60806059ba7",
+      "rows": 0,
+      "chunks": 0,
+      "request_mapping_count": 0,
+      "disposition": "invalid_stale_or_unprovenanced_terminal"
+    },
+    "repair_ready": {
+      "path": "artifacts/h200-capture-train-20260726t2037z/.repair-handshakes/repair-6/REPAIR_READY.json",
+      "sha256": "88407edc998924c81b42a18fff5f4ff02a866877cf740ff0cb8c3d7a706c6de7",
+      "repair_id": "repair-6"
+    },
+    "launch_attempt": {
+      "path": "artifacts/h200-capture-train-20260726t2037z/launch_attempted.json",
+      "sha256": "8c00172242e7033534f1a36d5f4601bc56adcfbddc3745933397a4ccfa507752",
+      "generation": 6,
+      "science_started": false
+    },
+    "command_graph": {
+      "path": "artifacts/h200-capture-train-20260726t2037z/COMMAND_GRAPH.json",
+      "sha256": "5da4fbfbafaa05bd685699afaa366737c4b027136282a9e67c4ac2e96a4a9ea7"
+    },
+    "preserved_observer_repair": {
+      "path": "artifacts/h200-capture-train-20260726t2037z/repair-5-forward-batch-rid-patch.json",
+      "sha256": "dfe4f250264c541bc9a84435beb57ba6a7ce2355f4890a115e4c1e562882a6bf"
+    }
+  },
+  "authorized_repair": {
+    "repair_id": "repair-6",
+    "mutable_scope": [
+      "server process or container launch and health-check glue",
+      "remote capture-output archival and generation-specific atomic output-root creation",
+      "retrieval provenance checks that reject terminals predating the current healthy server generation"
+    ],
+    "required_sequence": [
+      "retrieve and preserve the failed server launch/process evidence once",
+      "archive the prior remote capture root without deleting controller evidence",
+      "restart only the mutable server or container under the same claim and repair-5 observer bytes",
+      "require a strict successful health probe, live server process identity, and H200 telemetry before capture submission",
+      "create a generation-fresh capture root and only then submit the unchanged 32-request batch once",
+      "accept capture only when its terminal provenance postdates the healthy launch and its manifest contains nonzero request-mapped tap rows"
+    ]
+  },
+  "forbidden": [
+    "counting the refused connections or retrieved zero-row terminal as a capture sample",
+    "another request submission before strict server health",
+    "changing prompts, checkpoint, tap layers, hidden size, observer repair-5 semantics, training, holdout, or endpoint contract"
+  ],
+  "scientific_state": {
+    "repair_5_request_batch_consumed": false,
+    "interpretable_capture_samples_consumed": 0,
+    "training_started": false,
+    "holdout_started": false,
+    "endpoint_pairs_remaining": 0
+  },
+  "claim_disposition": "Retain PID 2056931, its heartbeat, checkpoint, image, caches, and exclusive H200 claim across repair-6; the measured restart and capture path fits the remaining lifecycle.",
+  "researcher_profile": "execution"
+}

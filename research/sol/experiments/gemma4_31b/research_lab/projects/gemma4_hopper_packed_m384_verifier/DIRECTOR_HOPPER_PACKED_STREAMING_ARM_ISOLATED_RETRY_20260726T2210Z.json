@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "type": "director_hopper_packed_streaming_arm_isolated_retry",
+  "issued_at_utc": "2026-07-26T22:10:41Z",
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "decision": "Admit exactly one materially better arm-isolated discriminator after the current owner records and releases the ambiguous shared-synchronization attempt.",
+  "consumes": {
+    "localization_terminal": {
+      "path": "artifacts/h100-streaming-component/PACKED_M384_STREAMING_LAUNCH_LOCALIZATION_TERMINAL.json",
+      "sha256": "cbebfdcc5e7c95342bd5619031dce5bf0cac025568c5593bc6aa1813e4369033",
+      "classification": "preserved_evidence_insufficient_for_unique_source_level_fault_localization",
+      "scientific_result": false
+    }
+  },
+  "current_owner": {
+    "pid": 2081506,
+    "start_ticks": 121673671,
+    "bench_id": "h100-packed-streaming-e00nycjajm7wvs1zkd",
+    "claimed_at_utc": "2026-07-26T21:18:39.254129Z",
+    "repair_id": "streaming-h100-1785103561963304790",
+    "allowed_scope": "offline_result_construction",
+    "cuda_permitted": false
+  },
+  "current_attempt_disposition": {
+    "classification": "invalid_attempt_shared_synchronization_ambiguity",
+    "scientific_result": false,
+    "performance_interpretation_permitted": false,
+    "required_offline_patch_destination": "construct_streaming_shared_sync_invalid_terminal.py",
+    "required_result": "Atomically persist PACKED_M384_STREAMING_COMPONENT_RESULT.json from the immutable localization evidence with an invalid-attempt classification, no correctness or timing claim, and no CUDA action. The live owner must then retrieve that typed result, persist STREAMING_H100_COMPONENT_OWNER_TERMINAL.json, and release its exact claim.",
+    "forbidden": [
+      "CUDA invocation from the offline patch",
+      "component replay under PID 2081506",
+      "V2 replay",
+      "endpoint action"
+    ]
+  },
+  "retry": {
+    "classification": "one_materially_better_invalid_attempt_retry",
+    "interpretation": "The preceding candidate submission was not an interpretable sample because two stock calls and the candidate shared the only asynchronous completion boundary.",
+    "bench_id": "h100-packed-streaming-e00nycjajm7wvs1zkd",
+    "deadline_utc": "2026-07-26T22:59:10Z",
+    "claim_before_utc": "2026-07-26T22:38:00Z",
+    "latest_safe_science_start_utc": "2026-07-26T22:43:00Z",
+    "closest_measured_launch_to_failure_seconds": 339,
+    "terminal_and_release_margin_seconds": 600,
+    "artifact_root": "artifacts/streaming-h100-arm-isolated-20260726t2210z",
+    "owner_destination": "run_streaming_h100_arm_isolated_owner.py",
+    "runner_destination": "arm_isolated_accuracy_component_runner.py",
+    "ready_destination": "PACKED_M384_STREAMING_ARM_ISOLATED_H100_READY.json",
+    "protocol": [
+      "Use a generation-fresh process and artifact root.",
+      "Invoke stock A, synchronize immediately, and atomically persist its completion or typed CUDA fault before continuing.",
+      "Invoke stock B, synchronize immediately, and atomically persist its completion or typed CUDA fault before continuing.",
+      "Only after both stock completions, invoke the unchanged candidate once, synchronize immediately, and atomically persist its completion or typed CUDA fault.",
+      "Stop at the first failing arm. Run the unchanged correctness consumer and the bound 25-repetition timing only if all three first calls complete."
+    ],
+    "immutable": [
+      "packed_m384_streaming_cluster.cu sha256 2262a4a20e9438671f795eeb8aad7f5db9cbe65ae446a94758e3d4c1cce78656",
+      "STREAMING_H100_COMPONENT_INPUT_MANIFEST.json sha256 618ce17579ca30632c11926e4f5738bffc90c4de30d316df800ff6decf2c320a",
+      "stock control semantics",
+      "local d256/window-1024 and global d512 geometry",
+      "int32 manifest-bound fixture",
+      "seed 20260726",
+      "25 timing repetitions",
+      "token-margin oracle and exact output consumer",
+      "pinned image and SM90a target"
+    ],
+    "mutable": [
+      "per-arm synchronization and atomic completion markers",
+      "fresh artifact paths",
+      "new retained owner and packet manifest needed to bind those bytes"
+    ],
+    "submission_limit": "At most one arm-isolated stock-A/stock-B/candidate component attempt. Never replay V2 and never run an endpoint.",
+    "late_disposition": "If the ready packet and new claim are not durable by claim_before_utc, do not launch; release the H100 by the absolute deadline and preserve the source packet for offline redesign."
+  },
+  "launch": {
+    "controller": "/root/workspace/research/factory/tools/detached-owner",
+    "unit_manager": "pid",
+    "command": "python3 /root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/artifacts/streaming-h100-arm-isolated-20260726t2210z/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/artifacts/streaming-h100-arm-isolated-20260726t2210z/owner.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier -- python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/run_streaming_h100_arm_isolated_owner.py --bench h100-packed-streaming-e00nycjajm7wvs1zkd --authorization /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/DIRECTOR_HOPPER_PACKED_STREAMING_ARM_ISOLATED_RETRY_20260726T2210Z.json --deadline-utc 2026-07-26T22:59:10Z --output-dir /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/artifacts/streaming-h100-arm-isolated-20260726t2210z"
+  },
+  "profile": "execution",
+  "provider_create_allowed": false,
+  "endpoint_allowed": false,
+  "v2_replay_allowed": false
+}

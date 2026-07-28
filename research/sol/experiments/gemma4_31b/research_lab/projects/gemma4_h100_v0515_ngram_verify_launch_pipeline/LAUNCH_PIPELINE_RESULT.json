@@ -1,0 +1,299 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T12:00:00Z",
+  "classification": "source_complete_candidate_nominate_pending_checkpoint_free_h100_falsifier",
+  "provider_mutation": "none",
+  "actual_spend_usd": 0.0,
+  "director_binding": {
+    "path": "DIRECTOR_BINDING.json",
+    "expected_sha256": "db7ba5111865313e23b15980249a835fbd9bdf3e4304f157cb6f4a1612419dd4",
+    "actual_sha256": "db7ba5111865313e23b15980249a835fbd9bdf3e4304f157cb6f4a1612419dd4",
+    "match": true
+  },
+  "bound_input_verification": [
+    {
+      "name": "ngram_worker",
+      "sha256": "63b79c73c7615b07f61a4c21f3483a6542ffa5a2bbfb7f891a366294a4a9214e",
+      "match": true
+    },
+    {
+      "name": "decode_cuda_graph_runner",
+      "sha256": "f5fb4b20c60dfca0ceb439da2137f545f89d3536cf70b2c776f0edeb28c093ce",
+      "match": true
+    },
+    {
+      "name": "batch_result_processor",
+      "sha256": "d6274912963ab21acc4a4462bc9cda9e8d938a6e7e9dd808f9c42bb85165cdb0",
+      "match": true
+    },
+    {
+      "name": "hybrid_attention_backend",
+      "sha256": "9ed86790c5f00ce6b156aa7eccbe716f03fe49f6eacda805f47f3d277ea4ff04",
+      "match": true
+    },
+    {
+      "name": "source_path_map",
+      "sha256": "8fb0df64eb46b23c6b76fdaf764a962e98c2c4c899c75b514616ed61ad8c1097",
+      "match": true
+    },
+    {
+      "name": "settled_h100_discriminator",
+      "sha256": "c068fdcfb82ce5ed3e892827f93de5ece36c47064044616e0b71d871768951bf",
+      "match": true
+    },
+    {
+      "name": "background_overflow_result",
+      "sha256": "3595db3ca917782de12dada3dc48f6d28ccb364a9a120853164a290b63482a82",
+      "match": true
+    }
+  ],
+  "source_identity": {
+    "runtime_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "additional_source_hashes": {
+      "speculative/ngram_info.py": "48ee9b9e6880fa4ec11e2dbe491fcd24490b05d871660d713bf9092c9c4ea95b",
+      "speculative/spec_utils.py": "017b0a92a3f66382a1bf7212b96fc073d1f8748714764ca6090cd4e46b19e3cc",
+      "layers/attention/triton_backend.py": "c09161c77e4586064c0d70c5dda4f943378510a4facb187590ac31e17b0e6e73",
+      "models/gemma4_causal.py": "9b7fccf2f35a57aa16de0fbc3abc0ca84b5fe34431535e26eea13a27b2cfda2e"
+    }
+  },
+  "production_geometry": {
+    "phase": "decode_target_verify",
+    "draft_tokens_per_live_request": 12,
+    "target_verify_tokens": "live_batch_size * 12",
+    "model": "Gemma 4 31B text",
+    "hidden_size": 5376,
+    "query_heads": 32,
+    "kv_heads": 16,
+    "head_dim": 256,
+    "sliding_window": 1024,
+    "attention_pattern": "hybrid sliding/global; target verify uses the speculative prefill backend by source default unless explicitly overridden",
+    "cuda_graph_padding_seq_len": 1
+  },
+  "event_chain": [
+    {
+      "order": 1,
+      "producer": "prior NgramVerifyInput.accept_tokens and accept_lens",
+      "consumer": "NGRAMWorker._prepare_draft_tokens",
+      "stream_or_owner": "host plus prior CUDA result",
+      "event": "device result becomes host-visible when necessary; tolist feeds CPU corpus",
+      "classification": "compulsory_host_dependency",
+      "source": "ngram_worker.py:209"
+    },
+    {
+      "order": 2,
+      "producer": "request histories and prior accepted tokens",
+      "consumer": "NgramCorpus.batch_get",
+      "stream_or_owner": "CPU corpus",
+      "event": "corpus synchronize and depth-12 proposal",
+      "classification": "compulsory_cpu_proposal",
+      "source": "ngram_worker.py:229"
+    },
+    {
+      "order": 3,
+      "producer": "NumPy draft tokens and 12x12 tree mask",
+      "consumer": "persistent CUDA draft/tree buffers",
+      "stream_or_owner": "forward stream",
+      "event": "two H2D copies",
+      "classification": "compulsory_transfer",
+      "source": "ngram_worker.py:284"
+    },
+    {
+      "order": 4,
+      "producer": "tree mask and seq_lens",
+      "consumer": "positions and retrieve index/next/sibling tensors",
+      "stream_or_owner": "forward stream",
+      "event": "reconstruct_indices_from_tree_mask kernel",
+      "classification": "compulsory_tree_reconstruction",
+      "source": "ngram_worker.py:288"
+    },
+    {
+      "order": 5,
+      "producer": "per-row prefix lengths and 12x12 tree masks",
+      "consumer": "ragged flattened attention custom_mask",
+      "stream_or_owner": "Python eager CUDA outside target graph",
+      "event": "for every live row: device ones allocation/fill, a small H2D, cat, dtype cast; then final cat",
+      "classification": "avoidable_launch_and_transfer_fanout",
+      "source": "ngram_worker.py:300"
+    },
+    {
+      "order": 6,
+      "producer": "request slots, seq_lens and depth",
+      "consumer": "req_to_token and out_cache_loc",
+      "stream_or_owner": "forward stream",
+      "event": "assign_extend_cache_locs_func",
+      "classification": "compulsory_verify_kv_allocation",
+      "source": "ngram_worker.py:324"
+    },
+    {
+      "order": 7,
+      "producer": "TARGET_VERIFY ScheduleBatch",
+      "consumer": "DecodeCudaGraphRunner",
+      "stream_or_owner": "forward stream",
+      "event": "NGRAM graph admission requires input_ids.numel == batch_size * num_tokens_per_bs; capture mode is TARGET_VERIFY and num_tokens_per_bs is 12",
+      "classification": "compulsory_graph_admission",
+      "source": "decode_cuda_graph_runner.py:240,408"
+    },
+    {
+      "order": 8,
+      "producer": "live dynamic batch",
+      "consumer": "capture-stable input and Triton attention metadata buffers",
+      "stream_or_owner": "forward stream before graph replay",
+      "event": "fill static inputs, qo/kv/mask indptr and indices, copy custom mask, prepare sliding-window metadata",
+      "classification": "compulsory_dynamic_metadata_but_outside_graph",
+      "source": "decode_cuda_graph_runner.py:907; triton_backend.py:438"
+    },
+    {
+      "order": 9,
+      "producer": "graph static buffers and HybridAttnBackend",
+      "consumer": "Gemma4Attention and Triton extend attention",
+      "stream_or_owner": "captured CUDA graph on forward stream",
+      "event": "hybrid backend selects speculative prefill backend by default; captured model executes global and 1024-window layers using custom mask",
+      "classification": "compulsory_model_and_attention_compute",
+      "source": "hybrid_attn_backend.py:28; decode_cuda_graph_runner.py:785; triton_backend.py:1286"
+    },
+    {
+      "order": 10,
+      "producer": "target logits and retrieve tensors",
+      "consumer": "predict, accept_lens and accept_index",
+      "stream_or_owner": "forward stream after graph replay",
+      "event": "eagle_sample plus accepted-token gather",
+      "classification": "compulsory_verification_and_sampling",
+      "source": "ngram_worker.py:422"
+    },
+    {
+      "order": 11,
+      "producer": "accept_index and accept_lens",
+      "consumer": "target KV cache and req_to_token",
+      "stream_or_owner": "forward stream",
+      "event": "assign accepted target locations, gather source locations, move KV",
+      "classification": "compulsory_acceptance_state_move",
+      "source": "ngram_worker.py:445; spec_utils.py:527"
+    },
+    {
+      "order": 12,
+      "producer": "new_seq_lens and accepted token payload",
+      "consumer": "future_map, next NGRAM proposal and result processor",
+      "stream_or_owner": "forward owner then scheduler copy stream",
+      "event": "publish next lengths; copy next_token_ids/accept_lens to CPU; record copy_done",
+      "classification": "compulsory_result_transfer",
+      "source": "ngram_worker.py:469; scheduler.py:3277"
+    },
+    {
+      "order": 13,
+      "producer": "CPU accepted tokens and lengths",
+      "consumer": "request output, kv_committed_len, finish state, metrics and streamer",
+      "stream_or_owner": "scheduler host",
+      "event": "copy_done synchronize, resolve padded rows, commit accepted run once, emit and finish",
+      "classification": "compulsory_host_settlement",
+      "source": "batch_result_processor.py:531,629"
+    }
+  ],
+  "candidate": {
+    "name": "single_packed_cpu_full_mask_staging",
+    "semantic_class": "semantics_preserving",
+    "causal_hypothesis": "The depth-12 mask expansion is launch-latency and submission dominated: the current Python loop creates multiple tiny eager CUDA operations and one H2D per live row outside the captured model graph. Packing the identical ragged bool layout into one pinned CPU buffer and issuing one H2D removes the row-wise GPU fanout without changing attention math.",
+    "source_complete_change": [
+      "In NGRAMWorker._init_preallocated_tensors add geometrically growable pinned-CPU bool and CUDA-bool full-mask staging buffers owned by the worker.",
+      "Add NGRAMWorker._ensure_full_mask_capacity(required_numel), growing both buffers only when the high-water mark increases and retaining the old CUDA buffer until its forward stream is safe.",
+      "Add NGRAMWorker._pack_full_mask_cpu(mask, seq_lens_cpu): for row i and query q, write True for seq_lens_cpu[i] prefix positions followed by mask[i,q,:] in the exact existing ragged row-major order.",
+      "Replace only the USE_FULL_MASK per-request torch.ones/from_numpy/to/cat/to(bool) loop and final torch.cat with one CPU pack into the pinned slice and one non_blocking CUDA copy into the staging slice.",
+      "Keep reconstruct_indices_from_tree_mask, draft-token transfer, assign_extend_cache_locs_func, NgramVerifyInput fields, graph padding, HybridAttnBackend selection, Triton metadata, graph replay, sampling, KV move, result copy and scheduler settlement unchanged.",
+      "Expose exactly the live-mask-length device slice as NgramVerifyInput.custom_mask; the existing graph buffer fill and all-True padded-row behavior remain unchanged."
+    ],
+    "state_and_ownership": {
+      "owner": "one NGRAMWorker per target worker",
+      "mutation_order": "wait for prior accepted result as today; CPU corpus proposal; fill pinned mask; enqueue one mask H2D on current forward stream; reconstruct indices; create NgramVerifyInput; unchanged graph path",
+      "dynamic_batch": "required elements are sum_i 12 * (seq_len_i + 12); only the live prefix is exposed",
+      "padded_graph_rows": "unchanged backend padding uses seq_len fill 1 and all-True mask tail",
+      "request_slot_reuse": "candidate owns no request state and does not alter rid, slot, generation, acceptance or KV ownership"
+    },
+    "source_level_avoided_work_per_verify_step": {
+      "baseline_live_row_fanout": "B device ones/fills + B small mask H2Ds + B cats + B bool casts + one final cat, with transient allocations",
+      "candidate": "one packed full-mask H2D after CPU memory fill",
+      "not_credited": [
+        "target model or attention compute",
+        "tree reconstruction",
+        "KV metadata or KV move",
+        "sampling",
+        "copy_done synchronization",
+        "scheduler processing"
+      ]
+    }
+  },
+  "oracle": {
+    "path": "launch_pipeline_oracle.py",
+    "sha256": "8424f3214ff4b090b34cfb040a946e6edd7b91cf2d9d722ceb5be4d56762b60e",
+    "result": "pass",
+    "evidence_type": "synthetic_deterministic_cpu",
+    "covered": [
+      "zero correct drafts with compulsory bonus",
+      "partial acceptance",
+      "full depth-12 acceptance",
+      "mixed batch rows",
+      "all-True padded graph rows",
+      "request completion and suppression of later settlement",
+      "request-slot reuse generation isolation",
+      "baseline/candidate event classification"
+    ]
+  },
+  "smallest_checkpoint_free_h100_falsifier": {
+    "status": "specified_not_run_no_bench_authority",
+    "accelerator": "nvidia-h100-sxm",
+    "runtime": "exact f63458b5beaceabbd9d749b9fc956370e1b649e6 source and pinned image",
+    "single_case": "fresh process, depth 12, live batch 32 with mixed seq_lens spanning short, 1023/1024/1025 and long rows plus the next CUDA-graph bucket's padded rows",
+    "execution": [
+      "Patch only the source-complete helper above into a project-local immutable source snapshot.",
+      "Generate one deterministic NgramCorpus-style 12x12 tree mask per live row and execute stock and candidate _prepare_for_speculative_decoding paths after capacity warmup.",
+      "Consume both masks through the actual NgramVerifyInput -> TritonAttnBackend target-verify metadata -> one Gemma-shape sliding layer and one global layer extend_attention_fwd call using synthetic BF16 Q/K/V and KV cache; no checkpoint is needed.",
+      "Assert byte-identical custom_mask, positions, retrieve_index/next/sibling, mask_indptr and KV indices; assert bit-identical attention outputs for identical inputs.",
+      "Benchmark profiler-off with CUDA events for at least 200 alternating warm repetitions, synchronizing after the unchanged consumer.",
+      "Capture one shortest Nsight Systems trace and count CUDA kernels, H2Ds, allocator calls, graph replays and host synchronization over the preparation range."
+    ],
+    "falsifies_if": [
+      "any producer or unchanged attention consumer differs",
+      "padded rows are not all True or a request row crosses its mask_indptr",
+      "candidate does not reduce row-wise H2D count to one",
+      "candidate does not reduce preparation-range kernel/operation count",
+      "candidate median or p90 preparation-plus-consumer time is not lower outside noise",
+      "a new host synchronization or graph break appears"
+    ],
+    "promotion_gate": "Only if the component passes, measure one unchanged c32 NGRAM endpoint pair; component timing is not an endpoint gain."
+  },
+  "whole_request_interpretation": {
+    "settled_h100_seconds_per_request": 0.7073339939181298,
+    "average_rate_stability_ceiling_seconds_per_request": 0.693939640216271,
+    "strict_90pct_headroom_ceiling_seconds_per_request": 0.6245456761946439,
+    "required_reduction_for_stability_seconds_per_request": 0.013394353701858819,
+    "required_reduction_for_stability_percent": 1.8936391884212405,
+    "required_reduction_for_headroom_seconds_per_request": 0.08278831772348594,
+    "required_reduction_for_headroom_percent": 11.70427526957912,
+    "source_only_candidate_reduction_interval_seconds_per_request": [
+      0.0,
+      null
+    ],
+    "interval_reason": "Source proves avoidable operation fanout but supplies neither H100 operation durations nor verify-step count per request. A finite positive endpoint bound would manufacture timing. Crossing either fleet threshold is therefore unresolved, not claimed.",
+    "decision": "candidate merits the smallest checkpoint-free H100 falsifier; it is not yet endpoint- or fleet-qualified"
+  },
+  "evidence_labels": {
+    "measured": [
+      "bound H100 discriminator: 171 requests, 0.7073339939181298 seconds/request, max accepted length 12"
+    ],
+    "source_backed": [
+      "event/ownership chain",
+      "CUDA graph boundary",
+      "row-wise full-mask operation fanout",
+      "acceptance and scheduler mutation order"
+    ],
+    "analytical": [
+      "13.394353701858819 ms/request stability gap",
+      "82.78831772348594 ms/request strict-headroom gap"
+    ],
+    "synthetic": [
+      "CPU mask, acceptance, completion, padding and slot-reuse oracle"
+    ],
+    "inferred": [
+      "launch-latency hypothesis",
+      "candidate value pending H100 measurement"
+    ]
+  }
+}

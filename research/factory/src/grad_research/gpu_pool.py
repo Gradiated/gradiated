@@ -19,6 +19,14 @@ class GpuPoolError(ValueError):
 class GpuPool:
     def __init__(self, lab_dir: Path, *, now: Callable[[], str] = utc_now):
         self.lab_dir = Path(lab_dir).resolve()
+        if self.lab_dir.is_file() or (
+            self.lab_dir.name == "runtime"
+            and (self.lab_dir / "gpus.json").is_file()
+        ):
+            raise GpuPoolError(
+                f"{self.lab_dir} is a GPU inventory path; "
+                "pass the lab root that contains runtime/gpus.json"
+            )
         self.runtime_dir = self.lab_dir / "runtime"
         self.inventory_path = self.runtime_dir / "gpus.json"
         self.events_path = self.runtime_dir / "gpu_events.jsonl"
@@ -89,6 +97,23 @@ class GpuPool:
     def snapshot(self, *, include_retired: bool = False) -> dict[str, Any]:
         with self._locked():
             value = self._read()
+            timestamp = self.now()
+            expired = []
+            for bench in value["benches"].values():
+                if bench.get("status") not in {"available", "maintenance"}:
+                    continue
+                if parse_utc(
+                    bench["lifecycle"]["deadline_utc"], "lifecycle.deadline_utc"
+                ) > parse_utc(timestamp, "current time"):
+                    continue
+                bench["status"] = "draining"
+                bench["idle_since"] = None
+                bench["updated_at"] = timestamp
+                expired.append(bench["id"])
+            if expired:
+                self._write(value)
+                for bench_id in expired:
+                    self._event("bench_lifecycle_expired", bench_id=bench_id)
         benches = [
             self._with_staleness(bench)
             for _, bench in sorted(value["benches"].items())
@@ -101,6 +126,13 @@ class GpuPool:
             "benches": benches,
         }
 
+    def show(self, bench_id: str) -> dict[str, Any]:
+        snapshot = self.snapshot(include_retired=True)
+        for bench in snapshot["benches"]:
+            if bench["id"] == bench_id:
+                return bench
+        raise GpuPoolError(f"unknown GPU bench: {bench_id}")
+
     @staticmethod
     def _validated_lifecycle(lifecycle: Any) -> dict[str, Any]:
         if not isinstance(lifecycle, dict):
@@ -110,6 +142,11 @@ class GpuPool:
             raise GpuPoolError("lifecycle.watchdog.unit is required")
         try:
             parse_utc(lifecycle.get("deadline_utc"), "lifecycle.deadline_utc")
+            if lifecycle.get("provider_started_at_utc") is not None:
+                parse_utc(
+                    lifecycle["provider_started_at_utc"],
+                    "lifecycle.provider_started_at_utc",
+                )
         except ValueError as error:
             raise GpuPoolError(str(error)) from error
         return json.loads(json.dumps(lifecycle))
@@ -185,25 +222,46 @@ class GpuPool:
             )
             return self._with_staleness(bench)
 
-    def register(self, spec: dict[str, Any]) -> dict[str, Any]:
+    def register(
+        self, spec: dict[str, Any], *, condition: str = "ready"
+    ) -> dict[str, Any]:
+        if condition not in {"ready", "maintenance"}:
+            raise GpuPoolError("condition must be ready or maintenance")
         normalized = self._validated_spec(spec)
         with self._locked():
             value = self._read()
             if normalized["id"] in value["benches"]:
                 raise GpuPoolError(f"GPU bench already exists: {normalized['id']}")
             timestamp = self.now()
+            provider_started_at = normalized["lifecycle"].get(
+                "provider_started_at_utc"
+            )
+            if (
+                provider_started_at is not None
+                and parse_utc(
+                    provider_started_at, "lifecycle.provider_started_at_utc"
+                )
+                > parse_utc(timestamp, "registration time")
+            ):
+                raise GpuPoolError(
+                    "lifecycle.provider_started_at_utc cannot be after registration"
+                )
             bench = {
                 **normalized,
-                "status": "available",
+                "status": "available" if condition == "ready" else "maintenance",
                 "claim": None,
                 "drain_after_release": False,
                 "registered_at": timestamp,
                 "updated_at": timestamp,
-                "idle_since": timestamp,
+                "idle_since": timestamp if condition == "ready" else None,
             }
             value["benches"][bench["id"]] = bench
             self._write(value)
-            self._event("bench_registered", bench_id=bench["id"])
+            self._event(
+                "bench_registered",
+                bench_id=bench["id"],
+                resulting_status=bench["status"],
+            )
             return self._with_staleness(bench)
 
     def claim(
@@ -268,17 +326,28 @@ class GpuPool:
             self._event("bench_claimed", bench_id=bench["id"], project=project)
             return self._with_staleness(bench)
 
-    def _claimed(self, value: dict[str, Any], project: str) -> dict[str, Any]:
+    def _claimed(
+        self,
+        value: dict[str, Any],
+        project: str,
+        bench_id: str | None = None,
+    ) -> dict[str, Any]:
         for bench in value["benches"].values():
             claim = bench.get("claim")
             if isinstance(claim, dict) and claim.get("project") == project:
+                if bench_id is not None and bench.get("id") != bench_id:
+                    raise GpuPoolError(
+                        f"project {project} owns {bench.get('id')}, not {bench_id}"
+                    )
                 return bench
         raise GpuPoolError(f"project does not own a GPU bench: {project}")
 
-    def heartbeat(self, project: str) -> dict[str, Any]:
+    def heartbeat(
+        self, project: str, *, bench_id: str | None = None
+    ) -> dict[str, Any]:
         with self._locked():
             value = self._read()
-            bench = self._claimed(value, project)
+            bench = self._claimed(value, project, bench_id)
             timestamp = self.now()
             seconds = int(bench["claim"].get("lease_seconds", 3600))
             lease_until = self._lease_until(bench, timestamp, seconds)
@@ -309,6 +378,8 @@ class GpuPool:
         self,
         project: str,
         *,
+        bench_id: str | None = None,
+        expected_claimed_at: str | None = None,
         contents: dict[str, Any] | None = None,
         condition: str = "ready",
     ) -> dict[str, Any]:
@@ -318,7 +389,16 @@ class GpuPool:
             raise GpuPoolError("contents update must be an object")
         with self._locked():
             value = self._read()
-            bench = self._claimed(value, project)
+            bench = self._claimed(value, project, bench_id)
+            claimed_at = bench["claim"].get("claimed_at")
+            if (
+                expected_claimed_at is not None
+                and claimed_at != expected_claimed_at
+            ):
+                raise GpuPoolError(
+                    "GPU claim generation changed: "
+                    f"expected claimed_at {expected_claimed_at}, found {claimed_at}"
+                )
             if contents:
                 bench["contents"].update(contents)
             timestamp = self.now()
@@ -393,6 +473,8 @@ class GpuPool:
             bench = self._bench(value, bench_id)
             if bench.get("status") in {"claimed", "retired"}:
                 raise GpuPoolError("claimed or retired GPU bench cannot be made ready")
+            was_available = bench.get("status") == "available"
+            previous_idle_since = bench.get("idle_since")
             timestamp = self.now()
             if parse_utc(
                 bench["lifecycle"]["deadline_utc"], "lifecycle.deadline_utc"
@@ -402,7 +484,11 @@ class GpuPool:
                 bench["contents"].update(contents)
             bench["status"] = "available"
             bench["drain_after_release"] = False
-            bench["idle_since"] = timestamp
+            bench["idle_since"] = (
+                previous_idle_since
+                if was_available and previous_idle_since is not None
+                else timestamp
+            )
             bench["updated_at"] = timestamp
             self._write(value)
             self._event("bench_ready", bench_id=bench_id)
@@ -416,20 +502,59 @@ class GpuPool:
             bench = self._bench(value, bench_id)
             if bench.get("status") == "claimed":
                 raise GpuPoolError("claimed GPU bench must be drained and released first")
+            if bench.get("status") == "retired":
+                return self._with_staleness(bench)
+            timestamp = self.now()
+            provider_started_at = bench["lifecycle"].get("provider_started_at_utc")
+            exposure_started_at = provider_started_at or bench["registered_at"]
+            exposure_seconds = max(
+                0.0,
+                (
+                    parse_utc(timestamp, "cleanup verification time")
+                    - parse_utc(exposure_started_at, "provider exposure start")
+                ).total_seconds(),
+            )
+            provider_exposure = {
+                "basis": (
+                    "provider_start_to_cleanup_verification"
+                    if provider_started_at is not None
+                    else "inventory_registration_to_cleanup_verification_partial"
+                ),
+                "started_at_utc": exposure_started_at,
+                "cleanup_verified_at_utc": timestamp,
+                "seconds": exposure_seconds,
+                "cost_usd": exposure_seconds
+                * float(bench["hourly_cost_usd"])
+                / 3600.0,
+                "covers_pre_registration": provider_started_at is not None,
+            }
+            bench["provider_exposure"] = provider_exposure
             bench["status"] = "retired"
             bench["claim"] = None
             bench["idle_since"] = None
-            bench["updated_at"] = self.now()
+            bench["updated_at"] = timestamp
             self._write(value)
-            self._event("bench_retired", bench_id=bench_id, cleanup_verified=True)
+            self._event(
+                "bench_retired",
+                bench_id=bench_id,
+                cleanup_verified=True,
+                provider_exposure=provider_exposure,
+            )
             return self._with_staleness(bench)
 
 
-def _load_object(path: Path) -> dict[str, Any]:
+def _load_object(source: Path | str) -> dict[str, Any]:
+    encoded = str(source).strip()
     try:
-        value = json.loads(path.read_text())
+        value = (
+            json.loads(encoded)
+            if encoded.startswith("{")
+            else json.loads(Path(source).read_text())
+        )
     except (OSError, json.JSONDecodeError) as error:
-        raise GpuPoolError(f"cannot read JSON object: {error}") from error
+        raise GpuPoolError(
+            f"cannot read JSON object from a file or inline object: {error}"
+        ) from error
     if not isinstance(value, dict):
         raise GpuPoolError("JSON input must be an object")
     return value
@@ -442,8 +567,13 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     list_command = commands.add_parser("list")
     list_command.add_argument("--all", action="store_true")
+    show = commands.add_parser("show")
+    show.add_argument("--bench", required=True)
     register = commands.add_parser("register")
     register.add_argument("--spec", type=Path, required=True)
+    register.add_argument(
+        "--condition", choices=("ready", "maintenance"), default="ready"
+    )
     claim = commands.add_parser("claim")
     claim.add_argument("--project", required=True)
     claim.add_argument("--bench")
@@ -452,12 +582,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     claim.add_argument("--lease-seconds", type=int, default=3600)
     heartbeat = commands.add_parser("heartbeat")
     heartbeat.add_argument("--project", required=True)
+    heartbeat.add_argument("--bench")
     update = commands.add_parser("update")
     update.add_argument("--project", required=True)
-    update.add_argument("--contents", type=Path, required=True)
+    update.add_argument(
+        "--contents", type=Path, required=True, metavar="JSON_OBJECT_OR_PATH"
+    )
     release = commands.add_parser("release")
     release.add_argument("--project", required=True)
-    release.add_argument("--contents", type=Path)
+    release.add_argument("--bench")
+    release.add_argument("--expected-claimed-at")
+    release.add_argument("--contents", type=Path, metavar="JSON_OBJECT_OR_PATH")
     release.add_argument("--condition", choices=("ready", "maintenance"), default="ready")
     drain = commands.add_parser("drain")
     drain.add_argument("--bench", required=True)
@@ -466,7 +601,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     reclaim.add_argument("--reason", required=True)
     ready = commands.add_parser("ready")
     ready.add_argument("--bench", required=True)
-    ready.add_argument("--contents", type=Path)
+    ready.add_argument("--contents", type=Path, metavar="JSON_OBJECT_OR_PATH")
     replace_watchdog = commands.add_parser("replace-watchdog")
     replace_watchdog.add_argument("--bench", required=True)
     replace_watchdog.add_argument("--lifecycle", type=Path, required=True)
@@ -479,8 +614,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         if args.command == "list":
             result = pool.snapshot(include_retired=args.all)
+        elif args.command == "show":
+            result = pool.show(args.bench)
         elif args.command == "register":
-            result = pool.register(_load_object(args.spec))
+            result = pool.register(
+                _load_object(args.spec), condition=args.condition
+            )
         elif args.command == "claim":
             result = pool.claim(
                 args.project,
@@ -490,12 +629,18 @@ def main(argv: Sequence[str] | None = None) -> int:
                 lease_seconds=args.lease_seconds,
             )
         elif args.command == "heartbeat":
-            result = pool.heartbeat(args.project)
+            result = pool.heartbeat(args.project, bench_id=args.bench)
         elif args.command == "update":
             result = pool.update(args.project, _load_object(args.contents))
         elif args.command == "release":
             contents = _load_object(args.contents) if args.contents else None
-            result = pool.release(args.project, contents=contents, condition=args.condition)
+            result = pool.release(
+                args.project,
+                bench_id=args.bench,
+                expected_claimed_at=args.expected_claimed_at,
+                contents=contents,
+                condition=args.condition,
+            )
         elif args.command == "drain":
             result = pool.drain(args.bench)
         elif args.command == "reclaim":

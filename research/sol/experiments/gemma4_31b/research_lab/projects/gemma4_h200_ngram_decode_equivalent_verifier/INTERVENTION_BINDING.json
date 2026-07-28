@@ -46,7 +46,8 @@
     },
     "remote_experiment": {
       "path": "remote_experiment.py",
-      "sha256": "239e56eb09059aa1cbb40b9c4bd1dd84cbdb0ca6156aa76771021cec173ef17b"
+      "sha256": "e057df8e9bef51426b16027c2c981a193a730aa182b1bdfbd37ab1c811abf471",
+      "measurement_only_change": "Cumulative token-event consumer concatenates every scheduler_to_detokenizer delta per request; the consumed discriminator is not replayed."
     },
     "checkpoint_manifest": {
       "path": "CHECKPOINT_MANIFEST.json",

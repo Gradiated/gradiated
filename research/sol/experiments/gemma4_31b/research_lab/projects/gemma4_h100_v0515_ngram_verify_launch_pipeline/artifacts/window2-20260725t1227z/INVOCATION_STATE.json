@@ -1,0 +1,11 @@
+{
+  "candidate_cuda_submitted": true,
+  "ngram_verify_input_fields": [
+    "custom_mask",
+    "positions",
+    "retrieve_index",
+    "retrieve_next_token",
+    "retrieve_next_sibling"
+  ],
+  "science_started": true
+}

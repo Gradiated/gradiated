@@ -1,0 +1,41 @@
+{
+  "bf16_embedding_preserved": true,
+  "bf16_head_fallback_count": 0,
+  "candidate_head_count_lower_bound": 25,
+  "captured_padded_m": [
+    1,
+    2,
+    4,
+    8,
+    12,
+    16,
+    24,
+    32
+  ],
+  "e4m3_capture_m": [
+    1,
+    2,
+    4,
+    8,
+    12,
+    16,
+    24,
+    32
+  ],
+  "logits_dtype": "torch.bfloat16",
+  "pass": true,
+  "post_replay_python_head_required": false,
+  "replayed_logits_processor_output": true,
+  "required_padded_m": [
+    1,
+    2,
+    4,
+    8,
+    12,
+    16,
+    24,
+    32
+  ],
+  "sampling_contract": "unchanged_pinned_sampler",
+  "schema_version": 1
+}

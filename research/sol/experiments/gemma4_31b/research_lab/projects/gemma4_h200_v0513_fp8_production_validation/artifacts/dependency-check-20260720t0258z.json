@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-07-20T02:58:56Z",
+  "dependency_project": "gemma4_h200_qkv_epilogue_fusion",
+  "required_state": "typed terminal and ready bench release",
+  "observed_status": "active",
+  "observed_terminal": null,
+  "observed_active_session": null,
+  "qkv_next_action": "Implement the missing v0.5.13 stack outer and correct the stale v0.5.12 worker binding before claiming and running QKV.",
+  "pool": {
+    "bench_id": "h200-kernel-frontier-e00pfvrckjvwn7bhet",
+    "status": "available",
+    "claim": null
+  },
+  "decision": "typed_external_dependency_not_released",
+  "scientific_invocation_started_in_this_project": false,
+  "provider_spend_usd_in_this_project": 0.0
+}

@@ -1,0 +1,77 @@
+{
+  "absolute_deadline_utc": "2026-07-28T10:10:00Z",
+  "claim": {
+    "bench": "l40s-dual-kv4-sm89-computeinstance-e00nczqf2p0x2y51wt",
+    "claimed_at": "2026-07-28T10:03:21.468835Z"
+  },
+  "classification": "absolute_deadline_after_retained_repair",
+  "events": [
+    {
+      "at": "2026-07-28T10:03:30.289666Z",
+      "claimed_at": "2026-07-28T10:03:21.468835Z",
+      "event": "claim"
+    },
+    {
+      "at": "2026-07-28T10:03:50.346026Z",
+      "event": "heartbeat",
+      "lease": "2026-07-28T10:12:02.551113Z"
+    },
+    {
+      "at": "2026-07-28T10:04:10.404175Z",
+      "event": "heartbeat",
+      "lease": "2026-07-28T10:12:02.551113Z"
+    },
+    {
+      "at": "2026-07-28T10:04:30.469628Z",
+      "event": "heartbeat",
+      "lease": "2026-07-28T10:12:02.551113Z"
+    },
+    {
+      "at": "2026-07-28T10:04:50.540415Z",
+      "event": "heartbeat",
+      "lease": "2026-07-28T10:12:02.551113Z"
+    },
+    {
+      "at": "2026-07-28T10:05:10.608512Z",
+      "event": "heartbeat",
+      "lease": "2026-07-28T10:12:02.551113Z"
+    },
+    {
+      "at": "2026-07-28T10:05:30.668889Z",
+      "event": "heartbeat",
+      "lease": "2026-07-28T10:12:02.551113Z"
+    },
+    {
+      "at": "2026-07-28T10:05:50.723575Z",
+      "event": "heartbeat",
+      "lease": "2026-07-28T10:12:02.551113Z"
+    },
+    {
+      "at": "2026-07-28T10:06:10.780388Z",
+      "event": "heartbeat",
+      "lease": "2026-07-28T10:12:02.551113Z"
+    },
+    {
+      "at": "2026-07-28T10:06:30.841014Z",
+      "event": "heartbeat",
+      "lease": "2026-07-28T10:12:02.551113Z"
+    },
+    {
+      "at": "2026-07-28T10:06:50.899765Z",
+      "event": "heartbeat",
+      "lease": "2026-07-28T10:12:02.551113Z"
+    },
+    {
+      "at": "2026-07-28T10:07:10.988899Z",
+      "event": "heartbeat",
+      "lease": "2026-07-28T10:12:02.551113Z"
+    },
+    {
+      "at": "2026-07-28T10:07:30.164069Z",
+      "error": "RuntimeError('release_guard_rejected_nonterminal')",
+      "event": "owner_error"
+    }
+  ],
+  "release": null,
+  "schema_version": 1
+}

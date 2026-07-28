@@ -1,0 +1,15 @@
+{
+  "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_GPU_CONSUMER_REPAIR_CONTENTS.json",
+  "contents_artifact_sha256": "3eaeb506e4c627009857eeb7333a7113a19b01b21ec708a48b0eb546ad03fdc8",
+  "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_GPU_CONSUMER_REPAIR_BINDING.json",
+  "director_binding_sha256": "9d4d9432ae10556f95d22e3ac866f0bd6bf81f353ef8f1e3a2562b917726d6ee",
+  "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+  "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+  "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+  "filesystem": "Retain the verified checkpoint, packet, exact runtime source, constructed fresh workload, and runtime caches on the existing 200-GiB disk.",
+  "caches": "Preserve all verified resident inputs and any image or CUDA caches.",
+  "endpoint": "The fresh 791-request workload at indices 61000..61790 is constructed and unconsumed. Run only the unchanged bound stock/candidate pair.",
+  "server_state": "The stopped inert owner launched no scientific server or arm. The replacement owner must cross directly into the bound endpoint consumer while retaining this claim.",
+  "next": "Priority-8500 must retain this project claim, verify the GPU-consumer-repair binding and resident hashes, and launch one bounded replacement owner whose graph reaches server launch, both endpoint arms, measurement, typed terminal, and cleanup by 2026-07-25T17:30:00Z.",
+  "result": "claimed_awaiting_bound_gpu_consumer_replacement_owner"
+}

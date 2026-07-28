@@ -1,0 +1,123 @@
+[
+  {
+    "client_queue_max_seconds": 0.002057020999927772,
+    "client_queue_mean_seconds": 0.0008325882290389452,
+    "completed": 100,
+    "exact_semantics_matches_control": 100,
+    "latency_max_seconds": 2.7859627369998634,
+    "latency_mean_seconds": 2.1204156321100047,
+    "latency_median_seconds": 2.0984209765000514,
+    "request_index_begin": 0,
+    "request_index_end_exclusive": 100
+  },
+  {
+    "client_queue_max_seconds": 0.0009129571747621412,
+    "client_queue_mean_seconds": 0.0007704083485070612,
+    "completed": 100,
+    "exact_semantics_matches_control": 100,
+    "latency_max_seconds": 2.1087728239999706,
+    "latency_mean_seconds": 2.099872332359996,
+    "latency_median_seconds": 2.09882919949996,
+    "request_index_begin": 100,
+    "request_index_end_exclusive": 200
+  },
+  {
+    "client_queue_max_seconds": 0.0009931433970677972,
+    "client_queue_mean_seconds": 0.0008254582079516126,
+    "completed": 100,
+    "exact_semantics_matches_control": 100,
+    "latency_max_seconds": 2.1095931310001106,
+    "latency_mean_seconds": 2.097968546640011,
+    "latency_median_seconds": 2.097810242000037,
+    "request_index_begin": 200,
+    "request_index_end_exclusive": 300
+  },
+  {
+    "client_queue_max_seconds": 0.001039717849266708,
+    "client_queue_mean_seconds": 0.0007933758874139585,
+    "completed": 100,
+    "exact_semantics_matches_control": 100,
+    "latency_max_seconds": 2.5221292709998124,
+    "latency_mean_seconds": 2.113337849139957,
+    "latency_median_seconds": 2.1047971254999993,
+    "request_index_begin": 300,
+    "request_index_end_exclusive": 400
+  },
+  {
+    "client_queue_max_seconds": 0.001395257863975985,
+    "client_queue_mean_seconds": 0.0008048876168817288,
+    "completed": 100,
+    "exact_semantics_matches_control": 100,
+    "latency_max_seconds": 2.1144706919999408,
+    "latency_mean_seconds": 2.103278316180008,
+    "latency_median_seconds": 2.10142759449991,
+    "request_index_begin": 400,
+    "request_index_end_exclusive": 500
+  },
+  {
+    "client_queue_max_seconds": 0.0010059796628070217,
+    "client_queue_mean_seconds": 0.0007858704263054506,
+    "completed": 100,
+    "exact_semantics_matches_control": 100,
+    "latency_max_seconds": 2.1153317800003606,
+    "latency_mean_seconds": 2.107743772790045,
+    "latency_median_seconds": 2.1074815905001287,
+    "request_index_begin": 500,
+    "request_index_end_exclusive": 600
+  },
+  {
+    "client_queue_max_seconds": 0.0008891893092481951,
+    "client_queue_mean_seconds": 0.0007522415957561179,
+    "completed": 100,
+    "exact_semantics_matches_control": 100,
+    "latency_max_seconds": 2.520466015999773,
+    "latency_mean_seconds": 2.116075755740003,
+    "latency_median_seconds": 2.1079517094999574,
+    "request_index_begin": 600,
+    "request_index_end_exclusive": 700
+  },
+  {
+    "client_queue_max_seconds": 0.0010654070113105263,
+    "client_queue_mean_seconds": 0.0007608885852170033,
+    "completed": 100,
+    "exact_semantics_matches_control": 100,
+    "latency_max_seconds": 31.581408778999958,
+    "latency_mean_seconds": 4.547383746550008,
+    "latency_median_seconds": 2.111321410500068,
+    "request_index_begin": 700,
+    "request_index_end_exclusive": 800
+  },
+  {
+    "client_queue_max_seconds": 15.802326952046656,
+    "client_queue_mean_seconds": 4.871372590994695,
+    "completed": 100,
+    "exact_semantics_matches_control": 99,
+    "latency_max_seconds": 30.23715801599974,
+    "latency_mean_seconds": 24.847417317679998,
+    "latency_median_seconds": 25.448022683499858,
+    "request_index_begin": 800,
+    "request_index_end_exclusive": 900
+  },
+  {
+    "client_queue_max_seconds": 25.53196857438047,
+    "client_queue_mean_seconds": 14.231288829014149,
+    "completed": 100,
+    "exact_semantics_matches_control": 99,
+    "latency_max_seconds": 25.529194753999946,
+    "latency_mean_seconds": 25.47593389662997,
+    "latency_median_seconds": 25.480617843499886,
+    "request_index_begin": 900,
+    "request_index_end_exclusive": 1000
+  },
+  {
+    "client_queue_max_seconds": 28.8026068078251,
+    "client_queue_mean_seconds": 20.894364003446764,
+    "completed": 36,
+    "exact_semantics_matches_control": 36,
+    "latency_max_seconds": 25.497577979000198,
+    "latency_mean_seconds": 21.196807669666693,
+    "latency_median_seconds": 19.968952972000125,
+    "request_index_begin": 1000,
+    "request_index_end_exclusive": 1036
+  }
+]

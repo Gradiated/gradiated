@@ -1,0 +1,9 @@
+{
+  "project": "gemma4_h200_local_window512_codesign",
+  "artifacts": "NGRAM production-validation terminal and director cleanup evidence are project-local; local-window inputs and historical bound are retained.",
+  "checkpoint": "Exact resident checkpoint remains read-only and verified at /home/glmrunner/gemma4-h200-flashinfer-metadata-scalar-elimination/checkpoint.",
+  "image": "Pinned SGLang v0.5.13 digest 6113665a retained.",
+  "runtime": "NGRAM remains a quality-unqualified 0.5967508053 s/request result; local-window resumes on the original non-speculative FP8+QKV+simple-gain stack.",
+  "caches": "Existing CUDA/Triton/graph caches retained.",
+  "server_state": "Terminal gemma-ngram-pair and gemma-ngram-control containers removed; zero GPU compute processes and zero MiB used verified once after cleanup."
+}

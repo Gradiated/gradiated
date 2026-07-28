@@ -1,0 +1,9 @@
+{
+  "checkpoint_rehash": false,
+  "checkpoint_transfer_bytes": 0,
+  "claim_started_at_utc": "2026-07-27T00:51:20.960873Z",
+  "owner_sha256": "cd0b9e3e922a86a14dd588b6f3a8df6b8c72dc5d25941a0f78989b5abebd495f",
+  "pass": true,
+  "scorer_sha256": "8238e2ba830120587c0d56417c80d29c39f4958e9e6d2055c39d8a30b7de5207",
+  "terminal_sha256": "e424ed4c1775545ece50270d4099ceff4c64ccc6db0f08106c9aea6ee028d611"
+}

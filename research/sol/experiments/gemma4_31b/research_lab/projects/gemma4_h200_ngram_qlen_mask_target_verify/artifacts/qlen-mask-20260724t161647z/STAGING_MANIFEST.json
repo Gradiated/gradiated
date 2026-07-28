@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "bytes": 604160,
+      "path": "/home/glmrunner/gemma4-ngram-qlen-mask/FROZEN_PACKET.tar",
+      "reused": false,
+      "sha256": "94e86462d9fac871c81080ae6df097a765c532cee80d5c3d4801a23ca0db3772"
+    },
+    {
+      "bytes": 4780,
+      "path": "/home/glmrunner/gemma4-ngram-qlen-mask/detached-owner",
+      "reused": false,
+      "sha256": "a2c7b59af7de411cf465288d106b75a940fa3668461b98b6a74dfa1c4973a456"
+    }
+  ],
+  "remote_root": "/home/glmrunner/gemma4-ngram-qlen-mask"
+}

@@ -1,0 +1,10 @@
+{
+  "absolute_repair_deadline_utc": "2026-07-25T07:25:00Z",
+  "created_at_utc": "2026-07-25T07:24:17.431118Z",
+  "diagnostic": "observer_repair_pass;runner_sha256=56bcd0aff2e85533f360e0fd58af87edc0bfcc79c1b0f16ed164587f964fabc4;packet_manifest_sha256=8127631191fe1afc47e718502ff61980b1e51adb8ac43c2f28e140ff506173bd;observer_test_sha256=cfa974d48c05e01cae398bb2ea6f4412323def99208eea046e7c4381263be629;negative_fixture_sha256=dd5716944807bb26e90e33375f225ac7515589320a6689cc2bfa656b6a7dcd34;positive_server_log_sha256=04c6a96209102bc8a50a31553298600f0c82a738da75e3b3e85147b7c41c9109",
+  "failure_kind": "fit_log_field_missing:post_graph_available_gib",
+  "repair_deadline_epoch": 1784964300.0,
+  "retry_scope": "offline observer parser repair only; director may bind one fresh H100 consumer retry after verifying hashes; no endpoint replay or GPU claim by researcher",
+  "schema_version": 1,
+  "state": "repair_ready"
+}

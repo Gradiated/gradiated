@@ -24,3 +24,19 @@ reproducible target-verified difference cannot be separated.
 Next: if separately authorized, apply the single
 `per_rid_target_accept_settlement_conservation` invariant in the result. Do
 not replay the consumed endpoint under this project.
+
+## 2026-07-25 — offline sentinel reconstruction
+
+Question: do the immutable fresh-sentinel artifacts exclude divergence without
+inventing a co-batched logical rid assignment?
+
+Action: re-hashed every bound input, recomputed all 128 target/accept/KV/
+scheduler rows directly from the 256-row trace, and enumerated both co-batch
+rid-to-logical-label permutations. No GPU, provider, or request was used.
+
+Evidence: 128/128 conservation rows pass; all four responses are complete,
+identical 358-token arrays. The two permissible co-batched assignments have
+the same serialized-output hash sequence.
+
+Interpretation: `sentinel_exact_equivalence_class`. This narrows the fresh
+sentinel mechanisms only; request 277 remains unresolved and non-replayable.

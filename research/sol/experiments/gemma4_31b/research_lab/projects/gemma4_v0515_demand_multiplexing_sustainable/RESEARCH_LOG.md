@@ -70,3 +70,73 @@ trajectory with exact normalized semantics supersedes the dependency reject,
 or a new director binding admits a runtime semantic repair plus a
 scope-matched multiplex discriminator. Never replay the consumed H200
 endpoint.
+
+## 2026-07-25 — stock multiplexing execution dispatched
+
+Question: does the admitted official v0.5.15 stock (no-NGRAM, no-speculation)
+two-stream geometry improve service time beyond measured timing noise while
+preserving the bound request and semantic invariants?
+
+Action: mechanically verified the director binding and six bound evidence
+digests; generated `stock_packet/` (manifest SHA-256
+`bb0cb24d390ab3ab619300045b7ad364468fdd2210e60b7067a916e3bf1bd9d1`) whose
+launch argument list contains neither NGRAM nor speculative flags, and packed
+the exact manifest members (`artifacts/stock_packet.tar`, SHA-256
+`7ee71e84d1f1b9157f58543720f1adc236d81a9486208814e2769cc416597380`). Claimed
+the retained H200 and dispatched durable local owner PID 518373 (start ticks
+108231360) through `detached-owner`; its absolute state file and 08:25Z fence
+are in `STATUS.json.active_session`.
+
+Evidence: the owner staged hash-verified packet and worker bytes, stopped only
+containers named `gemma4-ngram*`, and recorded remote phase
+`stock_identity_and_launch`. The next persisted phase is the 139-request
+control/candidate discriminator. The owner heartbeats, retrieves raw output,
+computes the paired service-time delta and 95% noise bound, runs the 759-request
+endpoint only if every discriminator gate passes, records actual spend, and
+releases the H200 by the binding fence.
+
+Repair: the first remote worker stopped before candidate CUDA or request
+submission because the manifest archive was extracted at the remote root while
+the worker correctly required `stock_packet/STOCK_LAUNCH.json`. `WORKER.log`,
+`INVOCATION_STATE.json`, and Docker inspection proved no stock container had
+started. Preserved this invalid integration artifact, opened and requested the
+hash-bound repair handshake, extracted the already-verified archive under
+`stock_packet/`, and restarted only the remote worker in the same claimed
+session. The repaired worker has persisted `science_started=true`, phase
+`stock_139_control_and_candidate`, and stock container
+`gemma4-stock-multiplex` is running. No scientific sample was replayed.
+
+## 2026-07-25 — retrieval-only terminal
+
+Action: verified `DIRECTOR_STOCK_RETRIEVAL_BINDING.json` plus its failed-owner,
+container-id, and invocation-state hashes; claimed the retained H200 only to
+retrieve the existing remote invocation. No container, server, discriminator,
+or endpoint was launched or modified.
+
+Evidence: `artifacts/stock-retrieval-20260725t083312z/` contains the container
+inspect/logs, invocation marker, and worker logs. The sole worker error is a
+missing `stock_packet/PACKET_ID.json` during packet validation, before it could
+construct request bodies, submit `/generate`, or persist request rows. No
+scientific terminal exists. The director's conservative consumed status is
+preserved; the conditional endpoint was not started.
+
+Interpretation: typed incomplete remote runner/manifest boundary, not an
+acceptance or rejection result. Conservative project exposure through this
+retrieval release is $1.49, within the $4.00 ceiling. The loaded stock server
+is released to maintenance for director disposition.
+
+## 2026-07-25 — packet-ID repair dispatch
+
+Action: verified `DIRECTOR_STOCK_PACKET_ID_REPAIR_BINDING.json`; created an
+archive-only manifest that declares the immutable existing `PACKET_ID.json`
+plus all original members. `manifest-pack` built
+`artifacts/packet-id-repair/stock_packet_complete.tar` (SHA-256
+`6481ff8ba2353ab1ffd33d6caf5c1eb92113ae4401fd26a164ec5c404c9d1fe9`). The
+complete packet validates and the otherwise identical missing-ID fixture fails
+closed before claim.
+
+Dispatch: claimed the retained H200 and started durable owner PID 554828,
+start ticks 108490102, with the 09:25Z release fence recorded in
+`STATUS.json.active_session`. The remote worker performs a pre-science packet
+validation before recording the first-request marker, then runs the admitted
+139-request discriminator once; the endpoint remains strictly conditional.

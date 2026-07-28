@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 11.101044025999727,
+  "ended_monotonic_s": 56159.661017697,
+  "error": null,
+  "first_token_monotonic_s": 56148.559973671,
+  "index": 11,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": "\ubbfc",
+      "token_ids": [
+        239217
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    239217,
+    239217,
+    239217,
+    239217,
+    239217,
+    239217,
+    239217,
+    239217,
+    239217,
+    239217,
+    239217,
+    239217,
+    239217,
+    239217,
+    239217,
+    239217
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "28aa61b36269fd84ee685fa15e0c038232c83c0a56f3453736b7b753331b98f3",
+  "request_sha256": "96faad6c0c4cc50994f7a9c8deeb475421f78aac7c90206757b949427361202b",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 56146.425497389,
+  "text": "\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc",
+  "ttft_seconds": 2.1344762820008327,
+  "wall_seconds": 13.23552030800056
+}

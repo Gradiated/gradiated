@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "bound_at_utc": "2026-07-25T19:42:05Z",
+  "project": "gemma4_h200_dflash_endpoint",
+  "decision": "authorize_one_depth_4_matched_endpoint_pair",
+  "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "immutable_inputs": {
+    "parent_binding": {
+      "path": "DIRECTOR_DFLASH_CYCLE_ORACLE_BINDING.json",
+      "sha256": "c580bf63c2e78c26ef53af6d22af7a02456302b3258b7e966c7efe0a9a637c80"
+    },
+    "target": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime": "SGLang 588d1f7bc9424201f89957e145f9d5af633a3eb8",
+    "runtime_binding": {
+      "path": "DRAFT_RUNTIME_BINDING.json",
+      "sha256": "f9845ea6b80a39ba99486842d15e64eabc84713a63daf16470453b395c13c16e"
+    },
+    "resident_contents": {
+      "path": "H200_DFLASH_ADAPTER_FINAL_CONTENTS.json",
+      "sha256": "b09af6016935a2372a49371a84b3427abde54edae1b03eb4d550ec79432bec83"
+    },
+    "endpoint_runner_before_parser_repair": {
+      "path": "dflash_endpoint_runner.py",
+      "sha256": "a55212019304020aaf3ff24244da40cb5bb86e44774ec14660017fa7582cf961"
+    }
+  },
+  "evidence": {
+    "cycle_oracle": {
+      "path": "DFLASH_CYCLE_ORACLE_TERMINAL.json",
+      "sha256": "0a4a51ad2df17b92ff839c7adb51cb089594d2d83b808d621b3e9f7a0b3322fd",
+      "pass": true,
+      "cycles": 112
+    },
+    "depth_cost_terminal": {
+      "path": "DFLASH_C32_DEPTH_COST_TERMINAL.json",
+      "sha256": "c2cdc9bedbe4de8120ef9641ec7c9d745657e21352c3d388291ef5020ecdf637",
+      "pass": true,
+      "selected_depth": 4,
+      "runner_up_depth": 12,
+      "winner_cost_margin_fraction": 0.006473573295477708
+    }
+  },
+  "offline_parser_gate": {
+    "input_root": "artifacts/cycle-depth-owner-20260725t1810z/retrieved",
+    "requirements": [
+      "decode the existing SSE framing without a GPU request",
+      "recover complete request identity, raw token IDs, finish reason, and usage fields",
+      "fail closed before claim if the immutable fixture cannot prove the production parser"
+    ]
+  },
+  "experiment": {
+    "candidate": "DFlash depth 4",
+    "control": "same-runtime ordinary autoregressive target",
+    "workload": "campaign exact c32: 32 requests, 4214 prompt tokens, 358 forced output tokens, fixed cache accounting",
+    "required_equivalence": [
+      "32/32 complete requests",
+      "exact request ownership",
+      "exact target and emitted token IDs",
+      "exact usage and cache accounting",
+      "finite acceptance and verification telemetry"
+    ],
+    "comparators_seconds_per_request": {
+      "qualified_denominator": 0.625149101968745,
+      "campaign_target": 0.500119281574996
+    }
+  },
+  "forbidden": [
+    "replay of the 112-cycle oracle",
+    "replay of the four-request diagnostic",
+    "another depth sweep",
+    "endpoint or quality inference from the failed prior stream consumer"
+  ],
+  "budget": {
+    "authorized_total_usd": 4.0,
+    "actual_so_far_usd": 2.9737686855138894,
+    "remaining_usd": 1.0262313144861106,
+    "maximum_claimed_h200_minutes": 25,
+    "release_deadline_utc": "2026-07-25T20:35:00Z"
+  },
+  "expected_terminal": "DFLASH_DEPTH4_ENDPOINT_TERMINAL.json"
+}

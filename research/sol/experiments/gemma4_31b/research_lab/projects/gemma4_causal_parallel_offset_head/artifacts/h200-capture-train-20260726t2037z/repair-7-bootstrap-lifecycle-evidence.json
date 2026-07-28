@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "classification": "sitecustomize_pre_module_argv_and_runner_atexit_boundary",
+  "observed": {
+    "generation": 7,
+    "launch_attempted_science_started": false,
+    "generation_science_marker_unix_s": 1785103499.9030228,
+    "visible_capture_terminal_completed_unix_s": 1785103076.8832052,
+    "diagnostic": "capture_terminal_or_manifest_retrieval_failed"
+  },
+  "execution_path": [
+    {
+      "file": "capture_bootstrap/sitecustomize.py",
+      "fact": "sitecustomize executes during Python startup, before the -m target establishes the final launch_server argv[0]."
+    },
+    {
+      "file": "run_h200_capture_train_owner.py",
+      "fact": "The same PYTHONPATH applies to both the SGLang server and the later exact_runner docker exec process."
+    },
+    {
+      "file": "capture_offset_taps.py",
+      "fact": "A process without a logits boundary is not an observer producer and must not write CAPTURE_TERMINAL.json over the server producer's root."
+    }
+  ],
+  "localized_defect": "The argv-gated bootstrap did not install in the server, so generation 7 left the prior terminal visible. The original unconditional bootstrap was also unsafe because a no-forward request runner could close a shared root. Both are lifecycle seams in the bootstrap/terminal producer boundary.",
+  "repair": "Restore unconditional bootstrap installation, count real logits boundaries, and emit a terminal only from a process that has crossed at least one boundary. The server archives the stale terminal before capture; the request runner has zero boundaries and emits no terminal."
+}

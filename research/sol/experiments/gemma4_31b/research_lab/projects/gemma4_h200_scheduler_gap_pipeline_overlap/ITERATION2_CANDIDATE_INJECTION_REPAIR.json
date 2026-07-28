@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "status": "director_authorized",
+  "authorized_at_utc": "2026-07-23T03:21:05Z",
+  "classification": "worker_local_injection_repair_for_zero_candidate_execution",
+  "same_project_reason": "The scientific question, frozen intervention, exact source binding, workload, comparator, and decision gate are unchanged. Mechanical evidence proves the candidate code was wholly absent from the candidate-labeled endpoint.",
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+  "identity_binding": {
+    "evidence_binding": "EVIDENCE_BINDING.json",
+    "evidence_binding_sha256": "7edf0aedb6d447d95dc19a5bd409d367502f3344b5643ffacf67b0ae351fbc27",
+    "model_id": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "runtime_release": "sglang v0.5.13",
+    "runtime_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "requests": 32,
+    "concurrency": 32,
+    "prompt_tokens_per_request": 4214,
+    "completion_tokens_per_request": 358,
+    "fresh_prompt_tokens_total": 117728,
+    "cached_prompt_tokens_total": 17120
+  },
+  "frozen_scientific_intervention": {
+    "description": "Observed-source schedule-stream forward penalty snapshot",
+    "binding": "OBSERVED_SOURCE_INTERVENTION.json",
+    "binding_sha256": "3d0ea76359c06494577aec1e1fb2ac0258e451822ac33a42232ed23a33c23ab5",
+    "implementation": "intervention/observed_source_schedule_stream_forward_penalty_snapshot.py",
+    "implementation_sha256": "3b5aa497985a400c16189db8359a458d981adff66d8465c26a92ed54394414e6",
+    "mutable": false
+  },
+  "mechanical_absence_proof": {
+    "decision_terminal": "artifacts/scheduler-gap-observed-v2-20260723t0305z/DECISION_TERMINAL.json",
+    "decision_terminal_sha256": "cc3cd514a26a89abac01af966501b85494374629607305dad314f3dd56381669",
+    "control_audit": "artifacts/scheduler-gap-observed-v2-20260723t0305z/scheduler_pair_v2/control-audit/residual.jsonl",
+    "candidate_audit": "artifacts/scheduler-gap-observed-v2-20260723t0305z/scheduler_pair_v2/candidate-audit/residual.jsonl",
+    "control_audit_sha256": "93312a0ba2895ed972a18901a2a444817f4eab9e5ee6e1a5d18e976f07382afc",
+    "candidate_audit_sha256": "93312a0ba2895ed972a18901a2a444817f4eab9e5ee6e1a5d18e976f07382afc",
+    "audits_byte_identical": true,
+    "required_runtime_event_absent": "Scheduler.run_batch.observed_source_schedule_stream_forward_penalty_snapshot",
+    "candidate_bytes_partially_executed": false,
+    "ambiguity": false
+  },
+  "repair_scope": {
+    "allowed": [
+      "Make the retained predecessor installer idempotent under SGLang multiprocess startup.",
+      "Order the unchanged scheduler installer after the retained predecessor in every serving worker.",
+      "Add a worker-local installation-complete audit that does not change serving semantics.",
+      "Repair an ordinary pre-request injection failure in the same retained claim if mechanical proof still shows zero candidate execution."
+    ],
+    "forbidden": [
+      "Changing the scientific intervention or its SHA256.",
+      "Changing checkpoint, runtime image, workload, concurrency, stacked predecessor, or decision gates.",
+      "Replaying the control endpoint.",
+      "Using the candidate-labeled no-op result as scheduler evidence.",
+      "A second scheduler candidate or flag sweep.",
+      "Repair after partial or ambiguous candidate execution."
+    ]
+  },
+  "measurement_contract": {
+    "artifact_namespace": "fresh candidate-repair directory only",
+    "pre_request_gate": "The actual serving worker must emit installation-complete proof for the unchanged scheduler implementation after the retained predecessor installer.",
+    "endpoint": "Rerun only the invalidated candidate endpoint once after the pre-request gate passes.",
+    "comparator": {
+      "terminal": "artifacts/scheduler-gap-observed-v2-20260723t0305z/scheduler_pair_v2/control/TERMINAL.json",
+      "terminal_sha256": "9a485501fb050a38d6efa923a11ce3bb855c0511b8144d7d15c67a9482f9d55e",
+      "service_seconds_per_request": 0.6745249759062517,
+      "complete_requests": 32
+    },
+    "candidate_requirements": [
+      "32/32 sane outputs",
+      "117728 uncached and 17120 cached prompt-token deltas",
+      "runtime event Scheduler.run_batch.observed_source_schedule_stream_forward_penalty_snapshot",
+      "source, ordering-edge, and lifetime audit match the frozen intervention"
+    ],
+    "trace": "Run one minimum candidate trace only after endpoint completion and runtime candidate-path proof.",
+    "decision": "Compare the repaired candidate with the retained valid control; retain a clean endpoint gain and close on semantic failure, non-positive result, or unchanged measured gap."
+  },
+  "spend_and_time": {
+    "authorized_spend_usd": 6.0,
+    "prior_conservative_cumulative_spend_usd": 1.08,
+    "maximum_claimed_gpu_minutes": 90,
+    "maximum_wall_clock_hours": 2
+  }
+}

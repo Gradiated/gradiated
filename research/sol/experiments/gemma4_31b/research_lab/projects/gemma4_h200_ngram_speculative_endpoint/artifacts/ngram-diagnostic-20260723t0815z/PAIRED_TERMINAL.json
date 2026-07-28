@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "classification": "promote_ceiling",
+  "pass": true,
+  "control_service_seconds_per_request": 0.7022385984687389,
+  "candidate_service_seconds_per_request": 0.5967508053124675,
+  "reduction_fraction": 0.15021645547010953,
+  "economic_ceiling_seconds_per_request": 0.6381105231,
+  "ceiling_pass": true,
+  "accounting": {
+    "fresh_prompt_tokens": 117728,
+    "cached_prompt_tokens": 17120,
+    "complete_requests_each_arm": 32
+  },
+  "candidate_path": "native SGLang v0.5.13 NGRAM, default 12 draft tokens",
+  "assistant_model_absent": true
+}

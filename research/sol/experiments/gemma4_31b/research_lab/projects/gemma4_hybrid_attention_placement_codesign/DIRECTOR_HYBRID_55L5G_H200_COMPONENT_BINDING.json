@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T17:55:57Z",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "decision": "promote_source_complete_55_local_5_global_candidate_to_one_quality_unsafe_h200_component",
+  "researcher_profile": "execution",
+  "priority": 8550,
+  "campaign": {
+    "qualified_service_seconds_per_request": 0.625149101968745,
+    "target_service_seconds_per_request": 0.500119281574996
+  },
+  "bound_inputs": [
+    {
+      "path": "PLACEMENT_SIMULATION_RESULT.json",
+      "sha256": "2af53085953393785204eafb2c2dd0e9d335805f8a8e5963ae46fb57ed99e40b"
+    },
+    {
+      "path": "simulate_placements.py",
+      "sha256": "4e2aaa4f039ca67fe425c8f4ddd3faccf630592035d2858d90e873ae69b9f2df"
+    },
+    {
+      "path": "test_simulate_placements.py",
+      "sha256": "d3cc9eeec233643b050feb3413a9579e87e3d9b122f340e20b03ab3c55bab641"
+    },
+    {
+      "path": "../gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/config.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    {
+      "path": "../gemma4_h200_ngram_fixed_m384_executor_rewrite/MIXED_LOCAL_M384_TERMINAL.json",
+      "sha256": "7c7ad41fd74bbada3f7a6db34caeaf8d6e4166fecf3c031e2c0a8ac0e809ec78"
+    }
+  ],
+  "candidate": {
+    "baseline_full_layer_indices": [5, 11, 17, 23, 29, 35, 41, 47, 53, 59],
+    "candidate_full_layer_indices": [5, 17, 29, 41, 53],
+    "converted_to_sliding_layer_indices": [11, 23, 35, 47, 59],
+    "initialization": "For the five converted modules, use the nearest compatible sliding-attention module as the explicit quality-unsafe weight-copy source; preserve every MLP and normalization weight.",
+    "predicted_service_seconds_per_request_range": [0.591857911423119, 0.5936235407282918],
+    "predicted_reduction_fraction_range": [0.05042886751524008, 0.05325320062171391],
+    "predicted_c32_kv_fraction_saved": 0.07492735574927356,
+    "deployable": false
+  },
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "accelerator": "nvidia-h200-sxm",
+    "hourly_cost_usd": 2.45,
+    "checkpoint": "Exact 62,578,655,208-byte hash-verified snapshot at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "runtime": "Pinned SGLang v0.5.13",
+    "connection_identity": "Read the current host, glmrunner user, ED25519 fingerprint, and known-hosts namespace from runtime/gpus.json at claim time.",
+    "claim_predecessor": "gemma4_h200_dflash_endpoint",
+    "claim_not_after_utc": "2026-07-25T19:55:00Z",
+    "minimum_remaining_lifecycle_minutes_at_claim": 125,
+    "release_deadline_utc": "2026-07-25T20:40:00Z",
+    "watchdog_deadline_utc": "2026-07-25T22:00:00Z"
+  },
+  "experiment": {
+    "first_call": "Materialize the exact 55-local/5-global proxy and run one profiler-off exact-c32 target-forward control/candidate component through the real runtime consumer.",
+    "required_evidence": [
+      "candidate source and transformed-weight manifest",
+      "exact baseline and candidate layer-type dispatch",
+      "complete target-forward latency distributions",
+      "peak HBM and KV residency",
+      "candidate replay determinism and finite outputs",
+      "control and candidate kernel-family time, register, shared-memory, and traffic evidence sufficient to test the predicted physical effect"
+    ],
+    "forbidden": [
+      "No endpoint pair.",
+      "No quality or deployability claim.",
+      "No post-training or broad evaluation.",
+      "Do not replay the rejected local-M8 endpoint or alter the live DFlash owner.",
+      "Do not claim if the time or lifecycle gate is closed; persist the typed terminal and yield the bench to grouped LM-head."
+    ]
+  },
+  "budgets": {
+    "authorized_spend_usd": 2.0,
+    "compute": "At most 45 claimed H200 minutes at 2.45 USD/hour, including materialization, component, retrieval, cleanup, and release.",
+    "storage": "At most 4 GiB new artifacts; reuse resident checkpoint, image, source, and caches.",
+    "wall_clock": "Release by 2026-07-25T20:40:00Z."
+  },
+  "terminal": "HYBRID_55L5G_H200_COMPONENT_TERMINAL.json"
+}

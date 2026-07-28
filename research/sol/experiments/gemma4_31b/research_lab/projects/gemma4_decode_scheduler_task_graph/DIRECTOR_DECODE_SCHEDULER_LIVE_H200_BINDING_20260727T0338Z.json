@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_decode_scheduler_task_graph",
+  "accelerator": "nvidia-h200-sxm",
+  "bench_id": "h200-decode-scheduler-computeinstance-e00ex7q2tseebq29jg",
+  "host": "89.169.109.102",
+  "ssh_user": "glmrunner",
+  "identity_file": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+  "known_hosts_file": "/root/.config/nebius/glm-campaign/known_hosts",
+  "ssh_ed25519_fingerprint": "SHA256:awOrEmudZ0BZklk5iOLtnG9ubFwSXSfn/3UC13Y/hxU",
+  "verified_h200": {
+    "count": 1,
+    "name": "NVIDIA H200",
+    "driver_version": "580.159.04",
+    "memory_total_mib": 143771
+  },
+  "provider_resource": {
+    "provider": "nebius",
+    "instance_id": "computeinstance-e00ex7q2tseebq29jg",
+    "disk_id": "computedisk-e00bgt1bcs6d4jhv51"
+  },
+  "lifecycle": {
+    "provider_started_at_utc": "2026-07-27T03:32:52.182604Z",
+    "watchdog_deadline_utc": "2026-07-27T04:06:52.182600Z",
+    "watchdog_unit": "gemma4-decode-scheduler-h200-20260727t033252z-watchdog.service",
+    "watchdog_main_pid": 2315302,
+    "hourly_cost_usd": 2.4597222,
+    "maximum_provider_spend_usd": 1.39384258
+  },
+  "claim_not_after_utc": "2026-07-27T03:40:30Z",
+  "deadline_utc": "2026-07-27T04:04:30Z",
+  "scientific_contract": {
+    "checkpoint_required": false,
+    "maximum_component_invocations": 1,
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "owner_ready_sha256": "1911a93849945f7dc5cb74600438a212e7e92e2b271d7f5b9968cd5e4ef93a0e",
+    "owner_source_sha256": "e4765db06e8f70c8df49563f47332aa7f37bfea16bc767c0ed0b10f5396ca810",
+    "offline_terminal_sha256": "13cd63fa2937ea1fdd3af741a63ea18c5517bdb0d922a7df786e0d0d8fbafd83",
+    "candidate_source_sha256": "e5ee42dee9793df30ebe62683231da65efd9e8398fbaf935c026af35c3369708",
+    "consumer_sha256": "e85f2d192eacb6543d1107862416032d7ff8bfbb8a014562e8caf038979391a4",
+    "exact_command_sha256": "21328630b1abfe6dd94e9b3c1a99aba2e0accd0047584463ee27718167956a6c",
+    "terminal": "H200_COMPONENT_TERMINAL.json"
+  },
+  "exact_launch": {
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/artifacts/h200-decode-scheduler-live-owner-20260727t0338z",
+    "command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/artifacts/h200-decode-scheduler-live-owner-20260727t0338z/OWNER.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/artifacts/h200-decode-scheduler-live-owner-20260727t0338z/OWNER.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph -- python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/run_h200_decode_scheduler_component_owner.py --binding /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/DIRECTOR_DECODE_SCHEDULER_LIVE_H200_BINDING_20260727T0338Z.json --owner-state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/artifacts/h200-decode-scheduler-live-owner-20260727t0338z/OWNER.json"
+  }
+}

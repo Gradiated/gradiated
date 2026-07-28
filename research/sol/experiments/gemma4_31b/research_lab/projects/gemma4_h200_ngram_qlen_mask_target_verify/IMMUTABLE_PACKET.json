@@ -1,0 +1,95 @@
+{
+  "director_binding_sha256": "a8ce4c26fdc4ce15a2262473f097e7446f78e91c413958d33151f75586b6cf76",
+  "files": [
+    {
+      "bytes": 15656,
+      "path": "component_benchmark.py",
+      "sha256": "05969e03048621d3ef5a4d29efe5838e7fa0890ca2d16d7a73f0db7b7cf9f10a"
+    },
+    {
+      "bytes": 10603,
+      "path": "endpoint_pair.py",
+      "sha256": "3b22cc2da99897635357c8f80bd29e3f6118ca7d0f2777a92afcb5e0e3bf30a6"
+    },
+    {
+      "bytes": 8910,
+      "path": "remote_experiment.py",
+      "sha256": "40ce708d1735210d84796767b1795030710f26619d1149fb6cbad7aeeaaed2e0"
+    },
+    {
+      "bytes": 15403,
+      "path": "inputs/bound/candidate_ngram_worker.py",
+      "sha256": "eb514b8d67ac663cc4c94cf7c20a01bd09c886335bb7d8b18afd7e20c962be93"
+    },
+    {
+      "bytes": 64784,
+      "path": "inputs/bound/candidate_triton_backend.py",
+      "sha256": "2b8185bd7d39ff571bc1f1d4f83352cd95c6ea596fd15f8299a6ef1f5da109fc"
+    },
+    {
+      "bytes": 34126,
+      "path": "inputs/bound/candidate_extend_attention.py",
+      "sha256": "68149643e3579b24804df9b98b048b1076be5b9e98b03363bd423510ae1ec6e7"
+    },
+    {
+      "bytes": 5043,
+      "path": "inputs/bound/decode_equivalent_lm_head.py",
+      "sha256": "4d99a94e97d0ef01fbfdaa9f7a25742f07f9fb4236d93d07900626f5ff9b53f9"
+    },
+    {
+      "bytes": 6179,
+      "path": "inputs/bound/endpoint_entrypoint.py",
+      "sha256": "cb82df3a9e3772390b628de6bacbe0131645ff12c2264200858c14b7c738d1b2"
+    },
+    {
+      "bytes": 9494,
+      "path": "inputs/bound/exact_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    {
+      "bytes": 568,
+      "path": "inputs/bound/sitecustomize.py",
+      "sha256": "7b3a50bca0e2ee1ee866fdbc3c0a87fd9fbf16fc57bfd01706a4e32119122119"
+    },
+    {
+      "bytes": 1156,
+      "path": "inputs/evidence/candidate-full-launch.json",
+      "sha256": "7de2ef335f8d42deb7c36eca0153b2a06fd168a3fd74812c1618217348905970"
+    },
+    {
+      "bytes": 33963,
+      "path": "inputs/source/extend_attention.v0.5.13.py",
+      "sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1"
+    },
+    {
+      "bytes": 18614,
+      "path": "inputs/source/ngram_info.py",
+      "sha256": "ffa88c663e1893c306710ac801da0693d8248ebcfd1a5bc705c157f90657af1c"
+    },
+    {
+      "bytes": 15402,
+      "path": "inputs/source/ngram_worker.py",
+      "sha256": "27721b777cae08657ec9854ec0137a0db50afd49d84809503312fa43e399b554"
+    },
+    {
+      "bytes": 64753,
+      "path": "inputs/source/triton_backend.v0.5.13.py",
+      "sha256": "7bc3ae9ef1be59ec07734df442c077a07fb54c28007747f53a552bb81e8e8e2d"
+    }
+  ],
+  "hypothesis": {
+    "causal_change": "replace full-prefix target-verify masks with exact 12x12 QLEN suffix masks",
+    "prediction": "remove 1,618,176 mask booleans and their allocations/copies per c32 verify step while preserving M64 attention outputs",
+    "unchanged": [
+      "stock BLOCK_M=64",
+      "32 requests x 12 query rows",
+      "page-1 FP8-E5M2 KV",
+      "BF16 query/output",
+      "50 sliding and 10 full layers",
+      "NGRAM settings, scheduler, and wave policy"
+    ]
+  },
+  "kind": "gemma4_h200_ngram_qlen_mask_target_verify",
+  "offline_construction_pass": true,
+  "schema_version": 1
+}

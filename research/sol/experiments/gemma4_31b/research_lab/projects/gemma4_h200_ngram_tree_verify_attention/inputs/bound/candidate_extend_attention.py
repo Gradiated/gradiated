@@ -614,7 +614,7 @@ def extend_attention_fwd(
         and Lq == 256
         and Lv == 256
     ):
-        BLOCK_M = 16
+        BLOCK_M = 32
         if not _fixed_tree_audited and os.environ.get("NGRAM_TREE_ATTN_AUDIT"):
             audit = pathlib.Path(os.environ["NGRAM_TREE_ATTN_AUDIT"])
             audit.parent.mkdir(parents=True, exist_ok=True)
@@ -623,7 +623,7 @@ def extend_attention_fwd(
                     json.dumps(
                         {
                             "symbol": "extend_attention_fwd",
-                            "candidate": "fixed_tree_block_m16",
+                            "candidate": "fixed_tree_block_m32",
                             "query_tokens": int(q_extend.shape[0]),
                             "query_heads": int(q_extend.shape[1]),
                             "kv_heads": int(k_extend.shape[1]),

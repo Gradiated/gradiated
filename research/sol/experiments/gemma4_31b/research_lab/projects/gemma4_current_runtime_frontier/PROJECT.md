@@ -16,6 +16,10 @@ Prepare a content-addressed runtime/image and go directly to a same-H200 exact e
 
 Record runtime/source identities, representation, complete-request throughput, prefill/decode timing, memory, utilization, power, exact cache accounting, semantic smoke, useful GPU time, and cost. Promote a valid result that beats `0.6892200126 s/request`; the economic target remains `0.6381105231 s/request`.
 
+## Continuation after current vLLM
+
+The measured vLLM 0.25.1 BF16-weight/FP8-E4M3-KV endpoint at `0.939163366 s/request` closes only that runtime/representation. Continue with current SGLang first, porting the retained dynamic-FP8, QKV, and deferred-local-KV stack where supported; if current SGLang cannot execute, move within this same project to current TensorRT-LLM or another production runtime with exact Gemma 4 support. Do not infer that one vLLM result exhausts the runtime frontier.
+
 ## Resources
 
 - Reuse a director-registered H200 when compatible; a second H200 may run concurrently if the director judges wall-clock gain worth the spend.

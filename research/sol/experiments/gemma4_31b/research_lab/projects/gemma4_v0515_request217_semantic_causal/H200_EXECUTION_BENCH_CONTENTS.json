@@ -1,0 +1,31 @@
+{
+  "caches": "Digest-pinned image, exact checkpoint, CUDA/JIT/tokenizer caches, and prior official v0.5.15 state are retained.",
+  "candidate": "Official v0.5.15 --speculative-attention-mode decode target-verification candidate; requests 0 through 217 are unconsumed.",
+  "candidate_sample_consumed": false,
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "director_binding": "gemma4_v0515_request217_semantic_causal/DIRECTOR_EXECUTION_BINDING.json",
+  "first_attempt": {
+    "artifact_root": "gemma4_v0515_request217_semantic_causal/artifacts/request217-decode-20260725t071138z",
+    "candidate_cuda_started": false,
+    "claimed_seconds": 7.531670093536377,
+    "conservative_provider_spend_usd": 0.005146642045180003,
+    "error": "typed_staging_boundary:extract_or_verify",
+    "result": "invalid_pre_sample_staging_attempt"
+  },
+  "second_attempt": {
+    "artifact_root": "gemma4_v0515_request217_semantic_causal/artifacts/request217-decode-20260725t072124z",
+    "candidate_cuda_started": false,
+    "claimed_seconds": 5.927115201950073,
+    "conservative_provider_spend_usd": 0.004050196202596028,
+    "error": "typed_staging_boundary:extract_or_verify",
+    "result": "invalid_pre_sample_incomplete_manifest_attempt"
+  },
+  "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "next": "Priority-8440 may claim for one final in-project staging retry after verifying all 18 PACKET_MANIFEST.json hashes and the complete manifest coverage of the packet member list. Restart only the official container with the exact decode-attention launch and run requests 0 through 217 once before 2026-07-25T07:40:00Z. Never replay the rejected 791-request endpoint.",
+  "project": "gemma4_v0515_request217_semantic_causal",
+  "repair": "run_request217_outer.py now stages DIRECTOR_BINDING.json, analyze_localization.py, inputs/, and source/; all 18 manifest hashes match and every manifest path is covered by the packet member roots.",
+  "result": "available_for_manifest_complete_request217_retry",
+  "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6.",
+  "server_state": "Both prior attempts failed during packet verification before candidate CUDA or container restart. Prior official v0.5.15 state and caches remain resident; one exact candidate container restart remains authorized after claim."
+}

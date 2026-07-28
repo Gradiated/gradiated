@@ -1,0 +1,45 @@
+{
+  "bench": {
+    "disk_id": "computedisk-e00yvdxaa48q0t115t",
+    "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+    "instance_id": "computeinstance-e00kcm9nfhwt7e7gbc",
+    "retrieval_release_deadline_utc": "2026-07-25T08:45:00Z",
+    "watchdog_deadline_utc": "2026-07-25T08:50:00Z"
+  },
+  "failed_owner": {
+    "artifact_root": "artifacts/stock-multiplex-20260725t075816z",
+    "expected_terminal": "out/FINAL_TERMINAL.json",
+    "expected_terminal_present": false,
+    "owner_exception": "artifacts/stock-multiplex-20260725t075816z/OWNER_EXCEPTION.json",
+    "owner_exception_sha256": "06beec9d11c26379be43f355d8d9d28aa513d4d9f588e2ac9fc30870b4868d87",
+    "owner_pid": 518373,
+    "owner_start_ticks": 108231360,
+    "owner_state": "exited",
+    "scientific_deadline_utc": "2026-07-25T08:25:00Z"
+  },
+  "remote_invocation": {
+    "container_id": "60f39554b5b75b0c9f0f577b4705eeba1c8bbf3d326db3e7f032851470e91233",
+    "container_id_file": "artifacts/stock-multiplex-20260725t075816z/retrieved/container_id.txt",
+    "container_id_file_sha256": "a8dcfa039cdf72e7b92c9eecd13ea5c81acfa677a34d1e67f83b548b0de8b040",
+    "invocation_state": "artifacts/stock-multiplex-20260725t075816z/retrieved/INVOCATION_STATE.json",
+    "invocation_state_sha256": "35dbeb4124d4bc984472251ab301a13091e3b4625f1703f0275d0934eadec405",
+    "phase": "stock_139_control_and_candidate",
+    "science_started": true
+  },
+  "next_execution": {
+    "first_action": "Attach one bounded retrieval-only owner to the existing container and invocation; launch no workload.",
+    "result_contract": "Retrieve the existing scientific terminal and bound artifacts if present. Otherwise persist a typed incomplete/external terminal that states exactly which arms were invoked or completed.",
+    "researcher_profile": "execution"
+  },
+  "parent_binding": "DIRECTOR_STOCK_MULTIPLEX_BINDING.json",
+  "parent_binding_sha256": "82c91cf2ae5c3993ecac31a37fddc59684a8df83fef2b84fa322912d5bde9e70",
+  "prohibitions": [
+    "Do not launch or replay the 139-request discriminator.",
+    "Do not launch the conditional 759-request endpoint.",
+    "Do not restart, replace, or modify the stock server or container.",
+    "Do not change the checkpoint, image, runtime, workload, economics, or parent binding.",
+    "Do not mutate the independent H100 endpoint bench or owner."
+  ],
+  "project": "gemma4_v0515_demand_multiplexing_sustainable",
+  "schema_version": 1
+}

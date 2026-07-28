@@ -1,0 +1,8 @@
+{
+  "cuda_invoked": false,
+  "endpoint_replayed": false,
+  "gpu_claimed": false,
+  "schema_version": 1,
+  "status": "pass",
+  "tests": 7
+}

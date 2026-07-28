@@ -314,7 +314,10 @@ def run_owner(binding_path: Path, owner_state_path: Path) -> int:
         exact = exact_command()
         remote_command = (
             f"sudo -n docker run --rm --gpus all --network none --ipc=host "
-            f"-v {shlex.quote(remote_project)}:{shlex.quote(REMOTE_PROJECT)}:ro "
+            # Docker must create the nested exact-command output mount beneath
+            # this absolute project path.  A read-only parent mount prevents
+            # runc from creating that mountpoint before Python starts.
+            f"-v {shlex.quote(remote_project)}:{shlex.quote(REMOTE_PROJECT)} "
             f"-v {shlex.quote(output)}:{shlex.quote(REMOTE_PROJECT + '/artifacts/h200_exact_consumer')} "
             f"-w {shlex.quote(REMOTE_PROJECT)} {shlex.quote(IMAGE)} /bin/bash -lc {shlex.quote(exact)}"
         )

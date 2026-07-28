@@ -1,0 +1,7 @@
+{
+  "bindings_sha256": "98bf28ca29a937861bddf1812317b0751c526e53a1983331b4434b95bf488a92",
+  "bf16_tau_raw_sha256": "86a04466f9864ebfd5ee9415378c106a0a73f282ffaaaab1da087f5fb335cd30",
+  "fp8_tau_raw_sha256": "68b41767219fc44fa29907c64f9ee07a5611b450d8104b9609fe622b1b281341",
+  "tau_request_sha256": "7f3e61e28c18dfd1c95b8516be29072eb9a09bdb736ffbb5312c24c57ef49cfc",
+  "expected_counts": {"bf16": 165, "fp8": 165}
+}

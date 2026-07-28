@@ -1,0 +1,32 @@
+d458b283bad1ef4b6584921d160b3c1d868815418fcfe721f739e9fafd4a19a2
+/usr/local/lib/python3.12/dist-packages/torchao/quantization/quant_api.py:1731: SyntaxWarning: invalid escape sequence '\.'
+  """Configuration class for applying different quantization configs to modules or parameters based on their fully qualified names (FQNs).
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_worker.py", line 6, in <module>
+    from sgl_kernel.speculative import reconstruct_indices_from_tree_mask
+  File "/usr/local/lib/python3.12/dist-packages/sgl_kernel/__init__.py", line 19, in <module>
+    common_ops = _load_architecture_specific_ops()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/sgl_kernel/load_utils.py", line 197, in _load_architecture_specific_ops
+    raise ImportError(error_msg)
+ImportError: 
+[sgl_kernel] CRITICAL: Could not load any common_ops library!
+
+Attempted locations:
+1. Architecture-specific pattern: /usr/local/lib/python3.12/dist-packages/sgl_kernel/sm100/common_ops.* - found files: ['/usr/local/lib/python3.12/dist-packages/sgl_kernel/sm100/common_ops.abi3.so']
+2. Fallback pattern: /usr/local/lib/python3.12/dist-packages/sgl_kernel/common_ops.* - found files: []
+3. Standard Python import: common_ops - failed
+
+GPU Info:
+- Compute capability: None
+- Expected variant: CPU/No GPU detected (using precise math)
+- CUDA version: 12.9
+
+Please ensure sgl_kernel is properly installed with:
+pip install sglang-kernel --index-url https://docs.sglang.ai/whl/cu129/
+
+Error details from previous import attempts:
+- ImportError: libcuda.so.1: cannot open shared object file: No such file or directory
+- ModuleNotFoundError: No module named 'common_ops'
+

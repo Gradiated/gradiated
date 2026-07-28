@@ -1,0 +1,9 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/BINDING_METADATA_DEFECT_REPAIR_REQUEST.json",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/BINDING_METADATA_DEFECT_REPAIR_REQUEST.json",
+  "ready_sha256": "847dacf00932e66bc4cdaa07245b97df11470667b4c87bb9498dd32f905b7cb6",
+  "requested_at_utc": "2026-07-25T23:01:43.036243Z",
+  "retry_scope": "binding_metadata_defect",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

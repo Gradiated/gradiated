@@ -1,0 +1,29 @@
+{
+  "bf16_embedding_preserved": true,
+  "bf16_head_fallback_count": 0,
+  "captured_padded_m": [
+    1,
+    2,
+    4,
+    8,
+    12,
+    16,
+    24,
+    32
+  ],
+  "e4m3_capture_m": [],
+  "logits_dtype": "torch.bfloat16",
+  "pass": false,
+  "required_padded_m": [
+    1,
+    2,
+    4,
+    8,
+    12,
+    16,
+    24,
+    32
+  ],
+  "sampling_contract": "unchanged_pinned_sampler",
+  "schema_version": 1
+}

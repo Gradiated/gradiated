@@ -1,0 +1,15 @@
+{
+  "type": "h100_current_record_controller_binding",
+  "project": "h100_hybrid_attention_kernel_mechanism",
+  "bench_id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+  "host": "89.169.109.0",
+  "ssh_user": "glmrunner",
+  "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+  "ssh_ed25519_fingerprint": "SHA256:QmMzoOOoCH6C4OBDN/EWgbVtH3QpZpjAvfoanqLUqoE",
+  "remote_root": "/home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m",
+  "remote_output_root": "/home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m/artifacts/h100-paged-fp8-h100-paged-fp8-e00mkpyvykfak0bg1m",
+  "exact_start_command": "cd /home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m && sudo -n docker run --rm --gpus all --ipc=host -v /home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m:/home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m --workdir /home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m --entrypoint python3 docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f2f77c32e0a732a79 paged_fp8_execution.py run --readiness H100_PAGED_FP8_EXECUTION_READY.json --output-root /home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m/artifacts/h100-paged-fp8-h100-paged-fp8-e00mkpyvykfak0bg1m --absolute-deadline-utc 2026-07-26T17:32:01.095093Z --image-digest docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f2f77c32e0a732a79",
+  "scientific_program": "paged_fp8_execution.py",
+  "scientific_inputs_unchanged": true,
+  "provider_mutation_by_this_turn": false
+}

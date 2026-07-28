@@ -1,0 +1,10 @@
+{
+  "actual_spend_usd": 0.2,
+  "artifacts": "artifacts/tree-verify-20260724t130710Z",
+  "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-ngram-tree-verify/checkpoint.",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "project": "gemma4_h200_ngram_tree_verify_attention",
+  "result": "fixed_tree_block_m32_component_nonpositive_or_incorrect",
+  "runtime": "Pinned SGLang v0.5.13; M32 exact tree-attention component completed and failed the unchanged sliding oracle; no endpoint or profiler arm.",
+  "server_state": "No experiment server or worker remains; image, checkpoint, Triton cache, and artifacts retained."
+}

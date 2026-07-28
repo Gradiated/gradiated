@@ -31,7 +31,7 @@ DEPENDENCY = "gemma4_h200_ngram_speculative_endpoint"
 BENCH = "h200-sync-linear-e00vhh6h29fj68x91g"
 REMOTE = "/home/glmrunner/gemma4-local-window512-codesign"
 RATE_USD_PER_HOUR = 2.46
-WATCHDOG_DEADLINE = dt.datetime(2026, 7, 23, 8, 27, 53, tzinfo=dt.timezone.utc)
+WATCHDOG_DEADLINE = dt.datetime(2026, 7, 23, 12, 30, 0, tzinfo=dt.timezone.utc)
 MINIMUM_CLAIM_SECONDS = 1500
 RELEASE_RESERVE_SECONDS = 240
 WAIT_DEADLINE = WATCHDOG_DEADLINE - dt.timedelta(
@@ -103,29 +103,69 @@ def admitted_inputs() -> list[dict[str, Any]]:
                 "sha256": sha256(path),
             }
         )
-    for path in sorted((HERE / "inputs" / "checkpoint").iterdir()):
-        if path.is_file():
-            rows.append(
-                {
-                    "path": str(path.relative_to(HERE)),
-                    "name": path.name,
-                    "remote": f"checkpoint/{path.name}",
-                    "bytes": path.stat().st_size,
-                    "sha256": sha256(path),
-                }
-            )
     return rows
+
+
+def bound_checkpoint_rows() -> list[tuple[str, str]]:
+    rows = []
+    for line in (HERE / "CHECKPOINT_SHA256SUMS.txt").read_text().splitlines():
+        digest, path = line.split(maxsplit=1)
+        rows.append((digest, Path(path).name))
+    return rows
+
+
+def validate_shared_checkpoint(ip: str) -> None:
+    resident = "/home/glmrunner/gemma4-h200-flashinfer-metadata-scalar-elimination/checkpoint"
+    checks = " ".join(
+        f"{shlex.quote(digest)}:{shlex.quote(name)}"
+        for digest, name in bound_checkpoint_rows()
+    )
+    command = (
+        "set -e; resident=" + shlex.quote(resident) + "; "
+        "test -d \"$resident\"; "
+        "for item in " + checks + "; do hash=${item%%:*}; name=${item#*:}; "
+        "test -f \"$resident/$name\"; "
+        "printf '%s  %s\\n' \"$hash\" \"$resident/$name\" | sha256sum -c -; "
+        "done; "
+        "test \"$(find \"$resident\" -maxdepth 1 -type f | wc -l)\" -ge 8"
+    )
+    result = remote(ip, command, 900)
+    (ARTIFACTS / "shared-checkpoint-validation.stdout").write_text(result.stdout)
+    (ARTIFACTS / "shared-checkpoint-validation.stderr").write_text(result.stderr)
+    if result.returncode:
+        raise RuntimeError("shared_checkpoint_full_manifest_failed")
+    append_event(
+        "shared_checkpoint_validated",
+        resident=resident,
+        manifest=str(HERE / "CHECKPOINT_SHA256SUMS.txt"),
+        manifest_sha256=sha256(HERE / "CHECKPOINT_SHA256SUMS.txt"),
+        files=len(bound_checkpoint_rows()),
+    )
 
 
 def dependency_released() -> bool:
     status = read_json(LAB / "projects" / DEPENDENCY / "STATUS.json")
     inventory = read_json(LAB / "runtime" / "gpus.json")
     bench = inventory.get("benches", {}).get(BENCH, {})
+    spend = read_json(LAB / "runtime" / "spend_cap.json")
+    settled = any(
+        key.startswith(DEPENDENCY + ":")
+        for key in spend.get("settlements", {})
+    )
     return (
-        status.get("status") != "active"
+        (status.get("status") != "active" or settled)
         and status.get("active_session") is None
-        and bench.get("status") == "available"
-        and bench.get("claim") is None
+        and (
+            bench.get("status") == "available"
+            or (
+                bench.get("status") == "claimed"
+                and bench.get("claim", {}).get("project") == PROJECT
+            )
+        )
+        and (
+            bench.get("claim") is None
+            or bench.get("claim", {}).get("project") == PROJECT
+        )
     )
 
 
@@ -337,10 +377,11 @@ def main() -> int:
         heartbeat.start()
         instance = get_instance(bench["resource"]["instance_id"])
         ip = extract_public_ipv4(instance)
+        validate_shared_checkpoint(ip)
         stage(ip, rows)
         identity = remote(
             ip,
-            f"test -f {shlex.quote(REMOTE + '/checkpoint/model-00001-of-00002.safetensors')} "
+            "test -f /home/glmrunner/gemma4-h200-flashinfer-metadata-scalar-elimination/checkpoint/model-00001-of-00002.safetensors "
             "&& nvidia-smi --query-gpu=name,uuid --format=csv,noheader",
             60,
         )
@@ -516,7 +557,7 @@ def main() -> int:
                 "artifacts": str(ARTIFACTS),
                 "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
                 "image": "Pinned SGLang v0.5.13 digest 6113665a retained.",
-                "checkpoint": f"Exact project-local immutable checkpoint retained at {REMOTE}/checkpoint.",
+                "checkpoint": "Exact lab-owned resident checkpoint validated against the bound full manifest and exposed read-only; no project copy staged.",
                 "server_state": (
                     "Healthy window512-candidate server retained if endpoint candidate reached "
                     "a server terminal; otherwise immutable image/checkpoint and caches retained."

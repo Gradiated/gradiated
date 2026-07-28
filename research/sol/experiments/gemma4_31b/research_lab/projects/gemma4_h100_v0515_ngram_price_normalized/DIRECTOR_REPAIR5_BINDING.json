@@ -1,0 +1,20 @@
+{
+  "authorized_action": {
+    "after_local_gate": "Atomically claim h100-v0515-ngram-e00mfea030cdngg54z and run only the unconsumed 171-request discriminator. The endpoint remains conditional on every existing gate.",
+    "local_gate": "Remove only the accidental indentation before raise SystemExit(bool(bad)) in remote_hash_script; execute the generated script against one matching and one mismatching local fixture before claiming.",
+    "mutation_boundary": "h100_execution_owner.py remote_hash_script indentation only",
+    "replay_forbidden": "Do not run a second discriminator after any candidate request starts, and do not run the endpoint unless the original discriminator gates pass."
+  },
+  "bench": "h100-v0515-ngram-e00mfea030cdngg54z",
+  "campaign_sha256": "3e50947f77d586e7d0bf6da40a47e879601233f3fdb5ff558abda8461ef89626",
+  "deadline_utc": "2026-07-25T07:55:00Z",
+  "evidence": {
+    "broken_owner_sha256": "abe5751af8cc40d53c14eb541fb79beb13e29451993829663d6796a10a64e479",
+    "packet_manifest_sha256": "8127631191fe1afc47e718502ff61980b1e51adb8ac43c2f28e140ff506173bd",
+    "repair4_terminal_sha256": "d8caba563eab9d30f8874f87eab768a5cab8fb750fbdc8c57ecffdb0d83d008a",
+    "runner_sha256": "56bcd0aff2e85533f360e0fd58af87edc0bfcc79c1b0f16ed164587f964fabc4"
+  },
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "result": "authorized_same_project_remote_hash_indentation_repair",
+  "schema_version": 1
+}

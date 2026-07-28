@@ -1,0 +1,4 @@
+{
+  "action": "retry_remote_worker",
+  "reason": "valid warmup preserves the bound trace; previous HTTP 500 occurred before science_started"
+}

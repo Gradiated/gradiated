@@ -1,0 +1,387 @@
+{"arm": "control", "event": "async_result_pipeline_installed", "monotonic_s": 56063.945635844, "pid": 1}
+{"arm": "control", "event": "async_result_pipeline_installed", "monotonic_s": 56072.321725687, "pid": 117}
+{"arm": "control", "event": "async_result_pipeline_installed", "monotonic_s": 56072.322766629, "pid": 115}
+{"arm": "control", "event": "async_result_pipeline_installed", "monotonic_s": 56072.324768745, "pid": 116}
+{"arm": "control", "event": "async_result_pipeline_installed", "monotonic_s": 56127.319744688, "pid": 445}
+{"arm": "control", "event": "async_result_pipeline_installed", "monotonic_s": 56138.480165101, "pid": 504}
+{"after_generation": null, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56138.644418862, "pid": 116}
+{"arm": "candidate", "dtype": "torch.int64", "elements_per_slot": 32, "event": "ring_allocated", "monotonic_s": 56141.592916314, "pid": 116, "pinned": true, "slots": 2}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56141.593047135, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 479.196, "elements": 1, "event": "copy_to_cpu", "generation": 1, "monotonic_s": 56141.593230618, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 1, "monotonic_s": 56141.593316634, "pid": 116}
+{"after_generation": 1, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56141.59503155, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56141.650431861, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 208.512, "elements": 1, "event": "copy_to_cpu", "generation": 2, "monotonic_s": 56141.650618869, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 2, "monotonic_s": 56141.650699358, "pid": 116}
+{"after_generation": 2, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56141.817365331, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56141.857226549, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 182.378, "elements": 1, "event": "copy_to_cpu", "generation": 3, "monotonic_s": 56141.857386375, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 3, "monotonic_s": 56141.857459584, "pid": 116}
+{"after_generation": 3, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56141.859106806, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56146.40136852, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 234.621, "elements": 1, "event": "copy_to_cpu", "generation": 4, "monotonic_s": 56146.401574953, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "2", "generation": 4, "monotonic_s": 56146.401653933, "pid": 116}
+{"arm": "candidate", "batch_size": 1, "event": "process_decode_entry", "generation": 4, "monotonic_s": 56146.403726769, "pid": 116}
+{"arm": "candidate", "elapsed_us": 10030.329, "event": "copy_event_synchronize", "generation": 4, "monotonic_s": 56146.413846264, "pid": 116}
+{"arm": "candidate", "elapsed_us": 17.453, "event": "normalize_decode_outputs", "generation": 4, "monotonic_s": 56146.413926205, "pid": 116}
+{"arm": "candidate", "batch_size": 1, "elapsed_us": 10444.337, "event": "process_decode_return", "generation": 4, "monotonic_s": 56146.41425415, "pid": 116}
+{"after_generation": 4, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56146.524738373, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56146.573132871, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 216.318, "elements": 1, "event": "copy_to_cpu", "generation": 5, "monotonic_s": 56146.573326762, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 5, "monotonic_s": 56146.573402784, "pid": 116}
+{"after_generation": 5, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56146.721658865, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56146.778241803, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 183.256, "elements": 2, "event": "copy_to_cpu", "generation": 6, "monotonic_s": 56146.778413836, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 6, "monotonic_s": 56146.778493872, "pid": 116}
+{"after_generation": 6, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56146.95216319, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56147.002413456, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 161.681, "elements": 1, "event": "copy_to_cpu", "generation": 7, "monotonic_s": 56147.002560948, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 7, "monotonic_s": 56147.00262639, "pid": 116}
+{"after_generation": 7, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56147.155918059, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56147.209316084, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 147.129, "elements": 2, "event": "copy_to_cpu", "generation": 8, "monotonic_s": 56147.209450227, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 8, "monotonic_s": 56147.209511918, "pid": 116}
+{"after_generation": 8, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56147.373579346, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56147.425171018, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 141.911, "elements": 1, "event": "copy_to_cpu", "generation": 9, "monotonic_s": 56147.425301791, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 9, "monotonic_s": 56147.42536334, "pid": 116}
+{"after_generation": 9, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56147.58495113, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56147.639889433, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 144.847, "elements": 2, "event": "copy_to_cpu", "generation": 10, "monotonic_s": 56147.640034568, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 10, "monotonic_s": 56147.640103464, "pid": 116}
+{"after_generation": 10, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56147.809524039, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56147.862281432, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 167.639, "elements": 1, "event": "copy_to_cpu", "generation": 11, "monotonic_s": 56147.862440152, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 11, "monotonic_s": 56147.862506551, "pid": 116}
+{"after_generation": 11, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56148.026776944, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56148.086213702, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 251.739, "elements": 2, "event": "copy_to_cpu", "generation": 12, "monotonic_s": 56148.086440719, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 12, "monotonic_s": 56148.08651854, "pid": 116}
+{"after_generation": 12, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56148.272418484, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56148.329975699, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 204.429, "elements": 2, "event": "copy_to_cpu", "generation": 13, "monotonic_s": 56148.330161024, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 13, "monotonic_s": 56148.330230441, "pid": 116}
+{"after_generation": 13, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56148.508662114, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56148.557184743, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 174.089, "elements": 1, "event": "copy_to_cpu", "generation": 14, "monotonic_s": 56148.557339296, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 14, "monotonic_s": 56148.557407977, "pid": 116}
+{"after_generation": 14, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56148.705373797, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56148.762505611, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 222.834, "elements": 2, "event": "copy_to_cpu", "generation": 15, "monotonic_s": 56148.762702389, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 15, "monotonic_s": 56148.762778939, "pid": 116}
+{"after_generation": 15, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56148.93626327, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56148.98705546, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 169.493, "elements": 1, "event": "copy_to_cpu", "generation": 16, "monotonic_s": 56148.987201216, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 16, "monotonic_s": 56148.987269953, "pid": 116}
+{"after_generation": 16, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56149.142983242, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56149.196779765, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 149.476, "elements": 2, "event": "copy_to_cpu", "generation": 17, "monotonic_s": 56149.196917139, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 17, "monotonic_s": 56149.196984782, "pid": 116}
+{"after_generation": 17, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56149.36051926, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56149.412305439, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 144.528, "elements": 1, "event": "copy_to_cpu", "generation": 18, "monotonic_s": 56149.412438009, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 18, "monotonic_s": 56149.412509959, "pid": 116}
+{"after_generation": 18, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56149.572443004, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56149.627449379, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 142.121, "elements": 2, "event": "copy_to_cpu", "generation": 19, "monotonic_s": 56149.627580859, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 19, "monotonic_s": 56149.627643398, "pid": 116}
+{"after_generation": 19, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56149.798217813, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56149.851262768, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 147.888, "elements": 1, "event": "copy_to_cpu", "generation": 20, "monotonic_s": 56149.851398472, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 20, "monotonic_s": 56149.851461266, "pid": 116}
+{"after_generation": 20, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56150.015609428, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56150.074766678, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 147.343, "elements": 2, "event": "copy_to_cpu", "generation": 21, "monotonic_s": 56150.07490104, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 21, "monotonic_s": 56150.074966099, "pid": 116}
+{"after_generation": 21, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56150.262730105, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56150.320161892, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 251.441, "elements": 2, "event": "copy_to_cpu", "generation": 22, "monotonic_s": 56150.320386481, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 22, "monotonic_s": 56150.320473279, "pid": 116}
+{"after_generation": 22, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56150.498842774, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56150.547939527, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 216.311, "elements": 1, "event": "copy_to_cpu", "generation": 23, "monotonic_s": 56150.548134208, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 23, "monotonic_s": 56150.548210737, "pid": 116}
+{"after_generation": 23, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56150.699046919, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56150.756054591, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 186.673, "elements": 2, "event": "copy_to_cpu", "generation": 24, "monotonic_s": 56150.756215456, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 24, "monotonic_s": 56150.75628579, "pid": 116}
+{"after_generation": 24, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56150.929563165, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56150.980632771, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 198.306, "elements": 1, "event": "copy_to_cpu", "generation": 25, "monotonic_s": 56150.980812225, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 25, "monotonic_s": 56150.980887476, "pid": 116}
+{"after_generation": 25, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56151.136647857, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56151.190021986, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 195.459, "elements": 2, "event": "copy_to_cpu", "generation": 26, "monotonic_s": 56151.190193253, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 26, "monotonic_s": 56151.190269002, "pid": 116}
+{"after_generation": 26, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56151.35260166, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56151.404549438, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 157.549, "elements": 1, "event": "copy_to_cpu", "generation": 27, "monotonic_s": 56151.404692974, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 27, "monotonic_s": 56151.404758719, "pid": 116}
+{"after_generation": 27, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56151.565592991, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56151.621148618, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 145.171, "elements": 2, "event": "copy_to_cpu", "generation": 28, "monotonic_s": 56151.621282319, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 28, "monotonic_s": 56151.621345617, "pid": 116}
+{"after_generation": 28, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56151.793609639, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56151.846777721, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 144.752, "elements": 1, "event": "copy_to_cpu", "generation": 29, "monotonic_s": 56151.846911359, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 29, "monotonic_s": 56151.846975709, "pid": 116}
+{"after_generation": 29, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56152.013643825, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56152.073596698, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 174.217, "elements": 2, "event": "copy_to_cpu", "generation": 30, "monotonic_s": 56152.073754141, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 30, "monotonic_s": 56152.073820955, "pid": 116}
+{"after_generation": 30, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56152.262129788, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56152.31919051, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 156.696, "elements": 2, "event": "copy_to_cpu", "generation": 31, "monotonic_s": 56152.319334671, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 31, "monotonic_s": 56152.319411725, "pid": 116}
+{"after_generation": 31, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56152.497362001, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56152.546929162, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 252.12, "elements": 1, "event": "copy_to_cpu", "generation": 32, "monotonic_s": 56152.547159503, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 32, "monotonic_s": 56152.547242578, "pid": 116}
+{"after_generation": 32, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56152.698265419, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56152.754844313, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 242.108, "elements": 2, "event": "copy_to_cpu", "generation": 33, "monotonic_s": 56152.755067349, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 33, "monotonic_s": 56152.755147219, "pid": 116}
+{"after_generation": 33, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56152.92831741, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56152.979580502, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 199.454, "elements": 1, "event": "copy_to_cpu", "generation": 34, "monotonic_s": 56152.979757563, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 34, "monotonic_s": 56152.97983063, "pid": 116}
+{"after_generation": 34, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56153.135625035, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56153.188523233, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 197.453, "elements": 2, "event": "copy_to_cpu", "generation": 35, "monotonic_s": 56153.18870164, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 35, "monotonic_s": 56153.188775574, "pid": 116}
+{"after_generation": 35, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56153.350580008, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56153.403132025, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 175.783, "elements": 1, "event": "copy_to_cpu", "generation": 36, "monotonic_s": 56153.403289017, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 36, "monotonic_s": 56153.403358812, "pid": 116}
+{"after_generation": 36, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56153.564511505, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56153.620804995, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 165.6, "elements": 2, "event": "copy_to_cpu", "generation": 37, "monotonic_s": 56153.6209563, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 37, "monotonic_s": 56153.621041006, "pid": 116}
+{"after_generation": 37, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56153.794977418, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56153.848405044, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 156.565, "elements": 1, "event": "copy_to_cpu", "generation": 38, "monotonic_s": 56153.848549784, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 38, "monotonic_s": 56153.848612298, "pid": 116}
+{"after_generation": 38, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56154.01445431, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56154.074480997, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 191.597, "elements": 2, "event": "copy_to_cpu", "generation": 39, "monotonic_s": 56154.074655843, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 39, "monotonic_s": 56154.074735158, "pid": 116}
+{"after_generation": 39, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56154.263897423, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56154.320753019, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 151.601, "elements": 2, "event": "copy_to_cpu", "generation": 40, "monotonic_s": 56154.32089299, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 40, "monotonic_s": 56154.320959595, "pid": 116}
+{"after_generation": 40, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56154.498812164, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56154.547792648, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 148.221, "elements": 1, "event": "copy_to_cpu", "generation": 41, "monotonic_s": 56154.547928095, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 41, "monotonic_s": 56154.547993252, "pid": 116}
+{"after_generation": 41, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56154.700171286, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56154.757013345, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 252.307, "elements": 2, "event": "copy_to_cpu", "generation": 42, "monotonic_s": 56154.757229461, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 42, "monotonic_s": 56154.757311794, "pid": 116}
+{"after_generation": 42, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56154.929631263, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56154.981167527, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 243.701, "elements": 1, "event": "copy_to_cpu", "generation": 43, "monotonic_s": 56154.981384491, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 43, "monotonic_s": 56154.981458315, "pid": 116}
+{"after_generation": 43, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56155.138234367, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56155.191019121, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 244.797, "elements": 2, "event": "copy_to_cpu", "generation": 44, "monotonic_s": 56155.191229944, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 44, "monotonic_s": 56155.191305583, "pid": 116}
+{"after_generation": 44, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56155.351811028, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56155.404343463, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 195.606, "elements": 1, "event": "copy_to_cpu", "generation": 45, "monotonic_s": 56155.404518899, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 45, "monotonic_s": 56155.40459135, "pid": 116}
+{"after_generation": 45, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56155.56637147, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56155.62335154, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 194.65, "elements": 2, "event": "copy_to_cpu", "generation": 46, "monotonic_s": 56155.623523771, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 46, "monotonic_s": 56155.623594401, "pid": 116}
+{"after_generation": 46, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56155.79855818, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56155.852328556, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 169.767, "elements": 1, "event": "copy_to_cpu", "generation": 47, "monotonic_s": 56155.852484059, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 47, "monotonic_s": 56155.852558565, "pid": 116}
+{"after_generation": 47, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56156.018912263, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56156.079046201, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 171.462, "elements": 2, "event": "copy_to_cpu", "generation": 48, "monotonic_s": 56156.079194105, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 48, "monotonic_s": 56156.079264441, "pid": 116}
+{"after_generation": 48, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56156.269738809, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56156.326338235, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 170.211, "elements": 2, "event": "copy_to_cpu", "generation": 49, "monotonic_s": 56156.326485506, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 49, "monotonic_s": 56156.326552144, "pid": 116}
+{"after_generation": 49, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56156.502888659, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56156.552121999, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 145.879, "elements": 1, "event": "copy_to_cpu", "generation": 50, "monotonic_s": 56156.552255663, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 50, "monotonic_s": 56156.552318953, "pid": 116}
+{"after_generation": 50, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56156.703578904, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56156.759215476, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 148.09, "elements": 2, "event": "copy_to_cpu", "generation": 51, "monotonic_s": 56156.759351066, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 51, "monotonic_s": 56156.759424567, "pid": 116}
+{"after_generation": 51, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56156.93108747, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56156.982478558, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 232.813, "elements": 1, "event": "copy_to_cpu", "generation": 52, "monotonic_s": 56156.98268414, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 52, "monotonic_s": 56156.982760346, "pid": 116}
+{"after_generation": 52, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56157.139177214, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56157.191730723, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 182.117, "elements": 2, "event": "copy_to_cpu", "generation": 53, "monotonic_s": 56157.191894842, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 53, "monotonic_s": 56157.191968217, "pid": 116}
+{"after_generation": 53, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56157.351266224, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56157.404135421, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 221.374, "elements": 1, "event": "copy_to_cpu", "generation": 54, "monotonic_s": 56157.404330646, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 54, "monotonic_s": 56157.404404336, "pid": 116}
+{"after_generation": 54, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56157.566672953, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56157.62362052, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 180.185, "elements": 2, "event": "copy_to_cpu", "generation": 55, "monotonic_s": 56157.623781851, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 55, "monotonic_s": 56157.623854266, "pid": 116}
+{"after_generation": 55, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56157.800545764, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56157.854555274, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 189.102, "elements": 1, "event": "copy_to_cpu", "generation": 56, "monotonic_s": 56157.854725432, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 56, "monotonic_s": 56157.854804101, "pid": 116}
+{"after_generation": 56, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56158.020823035, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56158.081360149, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 153.782, "elements": 2, "event": "copy_to_cpu", "generation": 57, "monotonic_s": 56158.081502123, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 57, "monotonic_s": 56158.081569555, "pid": 116}
+{"after_generation": 57, "arm": "candidate", "batch_size": 2, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56158.273210178, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56158.329990502, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 164.043, "elements": 2, "event": "copy_to_cpu", "generation": 58, "monotonic_s": 56158.330143024, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 2, "event": "run_batch_return", "forward_mode": "1", "generation": 58, "monotonic_s": 56158.3302121, "pid": 116}
+{"after_generation": 58, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56158.507074714, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56158.556523369, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 150.983, "elements": 1, "event": "copy_to_cpu", "generation": 59, "monotonic_s": 56158.55666017, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 59, "monotonic_s": 56158.556723346, "pid": 116}
+{"after_generation": 59, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56158.709061837, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56158.752861961, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 145.417, "elements": 1, "event": "copy_to_cpu", "generation": 60, "monotonic_s": 56158.7529961, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 60, "monotonic_s": 56158.75307697, "pid": 116}
+{"after_generation": 60, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56158.887950053, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56158.936260994, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 149.84, "elements": 1, "event": "copy_to_cpu", "generation": 61, "monotonic_s": 56158.936398045, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 61, "monotonic_s": 56158.936461273, "pid": 116}
+{"after_generation": 61, "arm": "candidate", "batch_size": 1, "event": "run_batch_entry", "forward_mode": "1", "monotonic_s": 56159.085990265, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.135079249, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 149.161, "elements": 1, "event": "copy_to_cpu", "generation": 62, "monotonic_s": 56159.135214077, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 1, "event": "run_batch_return", "forward_mode": "1", "generation": 62, "monotonic_s": 56159.135276926, "pid": 116}
+{"after_generation": 62, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.136912992, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.152581294, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 144.485, "elements": 32, "event": "copy_to_cpu", "generation": 63, "monotonic_s": 56159.15271059, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 63, "monotonic_s": 56159.152770215, "pid": 116}
+{"after_generation": 63, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.287489252, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.288814713, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 146.027, "elements": 32, "event": "copy_to_cpu", "generation": 64, "monotonic_s": 56159.288946549, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 64, "monotonic_s": 56159.289045716, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 63, "monotonic_s": 56159.289120181, "pid": 116}
+{"arm": "candidate", "elapsed_us": 20512.451, "event": "copy_event_synchronize", "generation": 63, "monotonic_s": 56159.309691537, "pid": 116}
+{"arm": "candidate", "elapsed_us": 20.125, "event": "normalize_decode_outputs", "generation": 63, "monotonic_s": 56159.309762892, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 21323.326, "event": "process_decode_return", "generation": 63, "monotonic_s": 56159.310506238, "pid": 116}
+{"after_generation": 64, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.311052559, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.312257499, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 144.793, "elements": 32, "event": "copy_to_cpu", "generation": 65, "monotonic_s": 56159.312388513, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 65, "monotonic_s": 56159.312450561, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 64, "monotonic_s": 56159.312511427, "pid": 116}
+{"arm": "candidate", "elapsed_us": 21627.705, "event": "copy_event_synchronize", "generation": 64, "monotonic_s": 56159.334197686, "pid": 116}
+{"arm": "candidate", "elapsed_us": 14.336, "event": "normalize_decode_outputs", "generation": 64, "monotonic_s": 56159.334260252, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 22359.236, "event": "process_decode_return", "generation": 64, "monotonic_s": 56159.334926824, "pid": 116}
+{"after_generation": 65, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.335465513, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.336645129, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 145.679, "elements": 32, "event": "copy_to_cpu", "generation": 66, "monotonic_s": 56159.336777317, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 66, "monotonic_s": 56159.33684425, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 65, "monotonic_s": 56159.336909813, "pid": 116}
+{"arm": "candidate", "elapsed_us": 21495.145, "event": "copy_event_synchronize", "generation": 65, "monotonic_s": 56159.358482364, "pid": 116}
+{"arm": "candidate", "elapsed_us": 15.883, "event": "normalize_decode_outputs", "generation": 65, "monotonic_s": 56159.358564649, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 22251.129, "event": "process_decode_return", "generation": 65, "monotonic_s": 56159.359220535, "pid": 116}
+{"after_generation": 66, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.359755535, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.36091708, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 159.96, "elements": 32, "event": "copy_to_cpu", "generation": 67, "monotonic_s": 56159.361064911, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 67, "monotonic_s": 56159.361140935, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 66, "monotonic_s": 56159.361225645, "pid": 116}
+{"arm": "candidate", "elapsed_us": 21541.187, "event": "copy_event_synchronize", "generation": 66, "monotonic_s": 56159.382827361, "pid": 116}
+{"arm": "candidate", "elapsed_us": 13.676, "event": "normalize_decode_outputs", "generation": 66, "monotonic_s": 56159.382905306, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 22239.586, "event": "process_decode_return", "generation": 66, "monotonic_s": 56159.383534049, "pid": 116}
+{"after_generation": 67, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.384073159, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.385194035, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 153.454, "elements": 32, "event": "copy_to_cpu", "generation": 68, "monotonic_s": 56159.385331682, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 68, "monotonic_s": 56159.385402123, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 67, "monotonic_s": 56159.38547897, "pid": 116}
+{"arm": "candidate", "elapsed_us": 21583.533, "event": "copy_event_synchronize", "generation": 67, "monotonic_s": 56159.407118403, "pid": 116}
+{"arm": "candidate", "elapsed_us": 11.601, "event": "normalize_decode_outputs", "generation": 67, "monotonic_s": 56159.407180695, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 22153.031, "event": "process_decode_return", "generation": 67, "monotonic_s": 56159.407687218, "pid": 116}
+{"after_generation": 68, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.408206903, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.409266296, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 161.89, "elements": 32, "event": "copy_to_cpu", "generation": 69, "monotonic_s": 56159.409415258, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 69, "monotonic_s": 56159.409486391, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 68, "monotonic_s": 56159.409553582, "pid": 116}
+{"arm": "candidate", "elapsed_us": 21987.351, "event": "copy_event_synchronize", "generation": 68, "monotonic_s": 56159.431609721, "pid": 116}
+{"arm": "candidate", "elapsed_us": 11.096, "event": "normalize_decode_outputs", "generation": 68, "monotonic_s": 56159.431679646, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 22589.995, "event": "process_decode_return", "generation": 68, "monotonic_s": 56159.43221307, "pid": 116}
+{"after_generation": 69, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.43428313, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.435412231, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 147.663, "elements": 32, "event": "copy_to_cpu", "generation": 70, "monotonic_s": 56159.435545281, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 70, "monotonic_s": 56159.435611039, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 69, "monotonic_s": 56159.435674833, "pid": 116}
+{"arm": "candidate", "elapsed_us": 20085.958, "event": "copy_event_synchronize", "generation": 69, "monotonic_s": 56159.455849619, "pid": 116}
+{"arm": "candidate", "elapsed_us": 15.456, "event": "normalize_decode_outputs", "generation": 69, "monotonic_s": 56159.455931773, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 20908.175, "event": "process_decode_return", "generation": 69, "monotonic_s": 56159.456645868, "pid": 116}
+{"after_generation": 70, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.457226571, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.458379336, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 179.671, "elements": 32, "event": "copy_to_cpu", "generation": 71, "monotonic_s": 56159.458530073, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 71, "monotonic_s": 56159.458596085, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 70, "monotonic_s": 56159.458658685, "pid": 116}
+{"arm": "candidate", "elapsed_us": 21423.673, "event": "copy_event_synchronize", "generation": 70, "monotonic_s": 56159.480166717, "pid": 116}
+{"arm": "candidate", "elapsed_us": 17.525, "event": "normalize_decode_outputs", "generation": 70, "monotonic_s": 56159.480250637, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 22221.835, "event": "process_decode_return", "generation": 70, "monotonic_s": 56159.480943061, "pid": 116}
+{"after_generation": 71, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.481505595, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.482628026, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 140.479, "elements": 32, "event": "copy_to_cpu", "generation": 72, "monotonic_s": 56159.482752363, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 72, "monotonic_s": 56159.482814653, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 71, "monotonic_s": 56159.482874157, "pid": 116}
+{"arm": "candidate", "elapsed_us": 21444.789, "event": "copy_event_synchronize", "generation": 71, "monotonic_s": 56159.504380893, "pid": 116}
+{"arm": "candidate", "elapsed_us": 12.828, "event": "normalize_decode_outputs", "generation": 71, "monotonic_s": 56159.504450152, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 22150.255, "event": "process_decode_return", "generation": 71, "monotonic_s": 56159.505086888, "pid": 116}
+{"after_generation": 72, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.505570741, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.50664771, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 151.413, "elements": 32, "event": "copy_to_cpu", "generation": 73, "monotonic_s": 56159.506784146, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 73, "monotonic_s": 56159.50685144, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 72, "monotonic_s": 56159.506916976, "pid": 116}
+{"arm": "candidate", "elapsed_us": 21828.298, "event": "copy_event_synchronize", "generation": 72, "monotonic_s": 56159.52880359, "pid": 116}
+{"arm": "candidate", "elapsed_us": 10.732, "event": "normalize_decode_outputs", "generation": 72, "monotonic_s": 56159.528867709, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 22440.567, "event": "process_decode_return", "generation": 72, "monotonic_s": 56159.529421085, "pid": 116}
+{"after_generation": 73, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.529905888, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.530969117, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 166.251, "elements": 32, "event": "copy_to_cpu", "generation": 74, "monotonic_s": 56159.53113627, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 74, "monotonic_s": 56159.531228486, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 73, "monotonic_s": 56159.53129888, "pid": 116}
+{"arm": "candidate", "elapsed_us": 21700.514, "event": "copy_event_synchronize", "generation": 73, "monotonic_s": 56159.553065911, "pid": 116}
+{"arm": "candidate", "elapsed_us": 10.976, "event": "normalize_decode_outputs", "generation": 73, "monotonic_s": 56159.553129932, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 22242.873, "event": "process_decode_return", "generation": 73, "monotonic_s": 56159.553604294, "pid": 116}
+{"after_generation": 74, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.554073606, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.555045475, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 170.216, "elements": 32, "event": "copy_to_cpu", "generation": 75, "monotonic_s": 56159.555178397, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 75, "monotonic_s": 56159.555239941, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 74, "monotonic_s": 56159.555299216, "pid": 116}
+{"arm": "candidate", "elapsed_us": 22044.528, "event": "copy_event_synchronize", "generation": 74, "monotonic_s": 56159.577400709, "pid": 116}
+{"arm": "candidate", "elapsed_us": 11.088, "event": "normalize_decode_outputs", "generation": 74, "monotonic_s": 56159.577465299, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 22613.125, "event": "process_decode_return", "generation": 74, "monotonic_s": 56159.577963982, "pid": 116}
+{"after_generation": 75, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.578449623, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.57939917, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 135.312, "elements": 32, "event": "copy_to_cpu", "generation": 76, "monotonic_s": 56159.57952012, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 76, "monotonic_s": 56159.579578488, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 75, "monotonic_s": 56159.579635586, "pid": 116}
+{"arm": "candidate", "elapsed_us": 21931.484, "event": "copy_event_synchronize", "generation": 75, "monotonic_s": 56159.601656182, "pid": 116}
+{"arm": "candidate", "elapsed_us": 14.555, "event": "normalize_decode_outputs", "generation": 75, "monotonic_s": 56159.601744407, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 22578.287, "event": "process_decode_return", "generation": 75, "monotonic_s": 56159.602269414, "pid": 116}
+{"after_generation": 76, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.602759306, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.603760595, "pid": 116, "safe": true, "slot": 0}
+{"arm": "candidate", "elapsed_us": 141.123, "elements": 32, "event": "copy_to_cpu", "generation": 77, "monotonic_s": 56159.60388713, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 0}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 77, "monotonic_s": 56159.603964449, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 76, "monotonic_s": 56159.604044614, "pid": 116}
+{"arm": "candidate", "elapsed_us": 22014.075, "event": "copy_event_synchronize", "generation": 76, "monotonic_s": 56159.626132263, "pid": 116}
+{"arm": "candidate", "elapsed_us": 12.19, "event": "normalize_decode_outputs", "generation": 76, "monotonic_s": 56159.626199698, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 22636.496, "event": "process_decode_return", "generation": 76, "monotonic_s": 56159.626744295, "pid": 116}
+{"after_generation": 77, "arm": "candidate", "batch_size": 32, "event": "run_batch_entry", "forward_mode": "2", "monotonic_s": 56159.627468074, "pid": 116}
+{"arm": "candidate", "event": "slot_reuse_check", "monotonic_s": 56159.628447717, "pid": 116, "safe": true, "slot": 1}
+{"arm": "candidate", "elapsed_us": 136.27, "elements": 32, "event": "copy_to_cpu", "generation": 78, "monotonic_s": 56159.628569161, "path": "two_slot_pinned", "pid": 116, "pinned": true, "slot": 1}
+{"arm": "candidate", "batch_size": 32, "event": "run_batch_return", "forward_mode": "2", "generation": 78, "monotonic_s": 56159.628644987, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 77, "monotonic_s": 56159.628876945, "pid": 116}
+{"arm": "candidate", "elapsed_us": 21417.073, "event": "copy_event_synchronize", "generation": 77, "monotonic_s": 56159.6503652, "pid": 116}
+{"arm": "candidate", "elapsed_us": 12.491, "event": "normalize_decode_outputs", "generation": 77, "monotonic_s": 56159.650435181, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 25955.83, "event": "process_decode_return", "generation": 77, "monotonic_s": 56159.654923247, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "event": "process_decode_entry", "generation": 78, "monotonic_s": 56159.655131555, "pid": 116}
+{"arm": "candidate", "elapsed_us": 19566.003, "event": "copy_event_synchronize", "generation": 78, "monotonic_s": 56159.67478649, "pid": 116}
+{"arm": "candidate", "elapsed_us": 15.344, "event": "normalize_decode_outputs", "generation": 78, "monotonic_s": 56159.674871371, "pid": 116}
+{"arm": "candidate", "batch_size": 32, "elapsed_us": 19917.203, "event": "process_decode_return", "generation": 78, "monotonic_s": 56159.675114862, "pid": 116}

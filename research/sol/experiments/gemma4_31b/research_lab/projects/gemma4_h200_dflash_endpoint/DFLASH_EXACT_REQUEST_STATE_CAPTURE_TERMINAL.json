@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "classification": "binding_metadata_defect",
+  "decision": "fail_closed_before_exact_c32_capture",
+  "created_at_utc": "2026-07-25T23:01:47.128916Z",
+  "scientific_sample_consumed": false,
+  "candidate_cuda_invocation_started": false,
+  "science_started": false,
+  "request_state_capture_result": null,
+  "causal_question": "Does the first lossless-semantic divergence originate in target-prefill state construction, prefill-to-verify KV/length commitment, or the first target-verifier result under the exact c32 schedule?",
+  "bound_scope": {
+    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "packet_sha256": "c8f8759e499d38ee2356becacbb04c95822de1b45d4392805f04f4798d11da36"
+  },
+  "evidence": {
+    "remote_terminal": "artifacts/request-state-capture-owner-20260725t2300z/retrieved-final/REMOTE_TERMINAL.json",
+    "remote_terminal_stage": "preflight",
+    "remote_terminal_active_arm": "none",
+    "remote_terminal_science_started": false,
+    "installed_source_sha256": "artifacts/request-state-capture-owner-20260725t2300z/retrieved-final/installed-source.sha256",
+    "matched_paths": ["dflash_worker_v2.py", "tp_worker.py", "forward_batch_info.py"],
+    "mismatched_paths": [
+      {"path": "dflash_info_v2.py", "bound_sha256": "b17ff6a703e46173c415d649d47e8ff9f8b7b436f9eec8e1f67d55ef1b3908e6", "observed_sha256": "eb976179a5ec54d607bfaf66e087c04d1c39617f312c105081974a3a8aa9de08"},
+      {"path": "memory_pool.py", "bound_sha256": "37f9915a2945c7bb389212eed65eb770cb9e3fa6976d0778b6831d2ac29d7bdd", "observed_sha256": "26ce123db5991db93f5d93fa6ca28cb360a7402a7ef0ed0e7315a3d3b37bb363"},
+      {"path": "swa_memory_pool.py", "bound_sha256": "36830cdb84cc344ffb7bac9ff30ba9a41b488d67893a5015ecbba584e95a9858", "observed_sha256": "fefdcaf49b78b252f68cbddc21cd3f2640c9c50c28052d231116c1d1eec7bac1"}
+    ]
+  },
+  "causal_amendments": [
+    "The first owner preflight used a legacy inventory list assumption and did not claim or invoke the bench.",
+    "The second owner initially lacked the remote staging parent directory; it was an invalid pre-science transfer attempt.",
+    "The final owner retrieved the compact remote terminal and installed-source hashes before release. The repair handshake finalized this defect only; it did not alter the scientific question or source bytes."
+  ],
+  "actual_spend_usd": 0.0657742666388889,
+  "bench_release": {"condition": "maintenance", "released_at_utc": "2026-07-25T23:01:47.128916Z", "claim_seconds": 96.649062},
+  "next_action": "Director must issue a new immutable binding whose materialized source hashes match the retained pinned image before a new exact-c32 request-state capture may be claimed. Do not replay this invalid preflight as a sample."
+}

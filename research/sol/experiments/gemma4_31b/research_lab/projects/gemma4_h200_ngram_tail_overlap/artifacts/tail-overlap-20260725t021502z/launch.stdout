@@ -1,0 +1,1 @@
+{"command": ["env", "TAIL_OVERLAP_ROOT=/home/glmrunner/gemma4-ngram-tail-overlap", "python3", "remote_tail_overlap.py"], "cwd": "/home/glmrunner/gemma4-ngram-tail-overlap", "launched_at_utc": "2026-07-25T02:15:09.331299Z", "live": true, "log": "/home/glmrunner/gemma4-ngram-tail-overlap/OWNER.log", "pid": 28996, "start_ticks": 671403, "unit_manager": "remote-shell"}

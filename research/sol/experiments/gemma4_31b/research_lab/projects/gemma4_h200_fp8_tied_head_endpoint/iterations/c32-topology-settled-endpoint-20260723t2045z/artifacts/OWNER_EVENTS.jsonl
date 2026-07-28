@@ -1,0 +1,27 @@
+{"attempt": 1, "event": "retrieval", "name": "WORKER_TERMINAL.json", "success": true, "timestamp_utc": "2026-07-23T20:40:57.804382Z"}
+{"attempt": 1, "event": "retrieval", "name": "INVOCATION_STATE.json", "success": true, "timestamp_utc": "2026-07-23T20:40:58.800923Z"}
+{"attempt": 1, "event": "retrieval", "name": "fp8-graph-endpoint-compact.tar.gz", "success": true, "timestamp_utc": "2026-07-23T20:40:59.763165Z"}
+{"attempt": 1, "event": "retrieval", "name": "fp8-graph-endpoint-compact.tar.gz.sha256", "success": true, "timestamp_utc": "2026-07-23T20:41:00.660305Z"}
+{"attempt": 1, "diagnostic": {"classification": "integration_failure", "message": "candidate_representation_absent", "schema_version": 1, "status": "terminal", "timestamp_utc": "2026-07-23T20:40:56.740953Z"}, "event": "repair_ready", "timestamp_utc": "2026-07-23T20:41:00.665901Z"}
+{"event": "heartbeat", "timestamp_utc": "2026-07-23T20:41:30.822385Z"}
+{"event": "heartbeat", "timestamp_utc": "2026-07-23T20:42:15.824019Z"}
+{"event": "heartbeat", "timestamp_utc": "2026-07-23T20:43:00.825599Z"}
+{"event": "heartbeat", "timestamp_utc": "2026-07-23T20:43:45.827213Z"}
+{"event": "heartbeat", "timestamp_utc": "2026-07-23T20:44:30.828996Z"}
+{"attempt": 2, "event": "retrieval", "name": "WORKER_TERMINAL.json", "success": true, "timestamp_utc": "2026-07-23T20:45:06.853179Z"}
+{"attempt": 2, "event": "retrieval", "name": "INVOCATION_STATE.json", "success": true, "timestamp_utc": "2026-07-23T20:45:07.732938Z"}
+{"attempt": 2, "event": "retrieval", "name": "fp8-graph-endpoint-compact.tar.gz", "success": true, "timestamp_utc": "2026-07-23T20:45:08.728017Z"}
+{"attempt": 2, "event": "retrieval", "name": "fp8-graph-endpoint-compact.tar.gz.sha256", "success": true, "timestamp_utc": "2026-07-23T20:45:09.602225Z"}
+{"attempt": 2, "diagnostic": {"classification": "integration_failure", "message": "candidate_representation_absent", "schema_version": 1, "status": "terminal", "timestamp_utc": "2026-07-23T20:45:05.258958Z"}, "event": "repair_ready", "timestamp_utc": "2026-07-23T20:45:09.607728Z"}
+{"event": "heartbeat", "timestamp_utc": "2026-07-23T20:45:15.830667Z"}
+{"attempt": 3, "event": "retrieval", "name": "WORKER_TERMINAL.json", "success": true, "timestamp_utc": "2026-07-23T20:45:30.824500Z"}
+{"attempt": 3, "event": "retrieval_retry", "name": "INVOCATION_STATE.json", "timestamp_utc": "2026-07-23T20:45:31.656973Z"}
+{"attempt": 3, "event": "retrieval_retry", "name": "INVOCATION_STATE.json", "timestamp_utc": "2026-07-23T20:45:35.479666Z"}
+{"attempt": 3, "event": "retrieval_retry", "name": "INVOCATION_STATE.json", "timestamp_utc": "2026-07-23T20:45:39.170921Z"}
+{"attempt": 3, "event": "retrieval_retry", "name": "INVOCATION_STATE.json", "timestamp_utc": "2026-07-23T20:45:43.018531Z"}
+{"attempt": 3, "event": "retrieval_retry", "name": "INVOCATION_STATE.json", "timestamp_utc": "2026-07-23T20:45:46.847935Z"}
+{"attempt": 3, "event": "retrieval_retry", "name": "INVOCATION_STATE.json", "timestamp_utc": "2026-07-23T20:45:50.616758Z"}
+{"attempt": 3, "event": "retrieval_retry", "name": "INVOCATION_STATE.json", "timestamp_utc": "2026-07-23T20:45:54.378385Z"}
+{"attempt": 3, "event": "retrieval", "name": "INVOCATION_STATE.json", "success": true, "timestamp_utc": "2026-07-23T20:45:58.261279Z"}
+{"attempt": 3, "event": "retrieval", "name": "fp8-graph-endpoint-compact.tar.gz", "success": true, "timestamp_utc": "2026-07-23T20:45:59.145667Z"}
+{"attempt": 3, "event": "retrieval", "name": "fp8-graph-endpoint-compact.tar.gz.sha256", "success": true, "timestamp_utc": "2026-07-23T20:46:00.030901Z"}

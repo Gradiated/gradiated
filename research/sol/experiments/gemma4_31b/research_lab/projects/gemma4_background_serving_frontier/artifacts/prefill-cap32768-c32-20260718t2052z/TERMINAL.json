@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "status": "terminal",
+  "classification": "negative_preflight_execution_failure",
+  "pass": false,
+  "decision": "Do not retry or promote. The one allowed run did not invoke the immutable workload because the preflight capacity-guard regular expression rejected the observed 170792-token pool despite that pool satisfying the numeric >=146304 requirement.",
+  "runner": {
+    "snapshot": "../../inputs/exact_mix_runner-143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7.py",
+    "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+    "invocations": 0
+  },
+  "preflight": {
+    "model_ready": true,
+    "cache_flush_http_status": 200,
+    "running_requests": 0,
+    "queued_requests": 0,
+    "token_pool": 170792,
+    "minimum_token_pool": 146304,
+    "retractions_observed": false,
+    "oom_observed": false,
+    "resolved_identity": {
+      "max_prefill_tokens": 32768,
+      "stream_interval": 1,
+      "dtype": "bfloat16",
+      "kv_cache_dtype": "fp8_e5m2",
+      "dynamic_chunking": true,
+      "chunked_prefill_size": 2048,
+      "fused_qk_norm_rope": true,
+      "prefill_attention_backend": "triton",
+      "decode_attention_backend": "triton",
+      "page_size": 1,
+      "continuous_decode_steps": 1,
+      "mixed_chunk": false,
+      "triton_attention_num_kv_splits": 8,
+      "cuda_graph_max_bs": 32,
+      "sampling_backend": "flashinfer"
+    }
+  },
+  "failure": {
+    "stage": "preflight capacity-guard regex",
+    "observed": "max_total_num_tokens=170792",
+    "cause": "The launcher pattern required the third decimal digit to be 6-9, so it did not match 170792. Numeric capacity is sufficient; the failure occurred before workload dispatch.",
+    "diagnostic_tar_sha256": "e9eacd174ea2b682928af14c2e1d43a1b660aba6bfa88244d87582457b2a5ae0"
+  },
+  "comparator": {
+    "terminal_sha256": "1a7e778eff080bf2eec27da939ea85a894ea9884036bdebd562af371405e78c3",
+    "service_seconds_per_request": 0.9194573941250042,
+    "promotion_ceiling_seconds_per_request": 0.8734845244187539
+  },
+  "artifacts": {
+    "preflight_tar": "preflight.tar.gz",
+    "server_start_log": "prefill-cap32768-c32-20260718t2052z-server-start.log",
+    "server_log": "prefill-cap32768-c32-20260718t2052z-server.log",
+    "metrics_preflight": "prefill-cap32768-c32-20260718t2052z-metrics-preflight.prom",
+    "flush_headers": "prefill-cap32768-c32-20260718t2052z-flush.headers"
+  }
+}

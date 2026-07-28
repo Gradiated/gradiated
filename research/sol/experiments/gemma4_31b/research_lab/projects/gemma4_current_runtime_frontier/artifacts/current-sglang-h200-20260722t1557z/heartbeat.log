@@ -1,0 +1,188 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T16:22:04.424548Z",
+    "heartbeat_at": "2026-07-22T16:22:18.645615Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T17:22:18.645615Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "attention_claim_cost_usd": 0.235311,
+    "attention_result": "component_reject",
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "project-local layer-0 BF16 and static-FP8 snapshots remain staged under /home/glmrunner/gemma4-static-fp8/input",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: higher-priority current-runtime and partitioned-attention lanes remain next",
+    "runtime": "pinned SGLang v0.5.13 static-FP8 exact component active",
+    "server_state": "No server; image and exact component artifacts retained.",
+    "static_fp8_claim_cost_usd": 1.517177,
+    "static_fp8_result": "owner_or_integration_failure"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T16:22:18.645615Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T16:22:04.424548Z",
+    "heartbeat_at": "2026-07-22T16:23:03.699185Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T17:23:03.699185Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "attention_claim_cost_usd": 0.235311,
+    "attention_result": "component_reject",
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "project-local layer-0 BF16 and static-FP8 snapshots remain staged under /home/glmrunner/gemma4-static-fp8/input",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: higher-priority current-runtime and partitioned-attention lanes remain next",
+    "runtime": "pinned SGLang v0.5.13 static-FP8 exact component active",
+    "server_state": "No server; image and exact component artifacts retained.",
+    "static_fp8_claim_cost_usd": 1.517177,
+    "static_fp8_result": "owner_or_integration_failure"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T16:23:03.699185Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T16:22:04.424548Z",
+    "heartbeat_at": "2026-07-22T16:23:48.749730Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T17:23:48.749730Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "attention_claim_cost_usd": 0.235311,
+    "attention_result": "component_reject",
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "project-local layer-0 BF16 and static-FP8 snapshots remain staged under /home/glmrunner/gemma4-static-fp8/input",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: higher-priority current-runtime and partitioned-attention lanes remain next",
+    "runtime": "pinned SGLang v0.5.13 static-FP8 exact component active",
+    "server_state": "No server; image and exact component artifacts retained.",
+    "static_fp8_claim_cost_usd": 1.517177,
+    "static_fp8_result": "owner_or_integration_failure"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T16:23:48.749730Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T16:22:04.424548Z",
+    "heartbeat_at": "2026-07-22T16:24:33.802868Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T17:24:33.802868Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "attention_claim_cost_usd": 0.235311,
+    "attention_result": "component_reject",
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "project-local layer-0 BF16 and static-FP8 snapshots remain staged under /home/glmrunner/gemma4-static-fp8/input",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: higher-priority current-runtime and partitioned-attention lanes remain next",
+    "runtime": "pinned SGLang v0.5.13 static-FP8 exact component active",
+    "server_state": "No server; image and exact component artifacts retained.",
+    "static_fp8_claim_cost_usd": 1.517177,
+    "static_fp8_result": "owner_or_integration_failure"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T16:24:33.802868Z"
+}

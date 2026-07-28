@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "classification": "typed_infrastructure_terminal",
+  "observed_at_utc": "2026-07-26T03:24:14Z",
+  "reason": "The single source-proven cached server reached adapter and ForwardBatch preload, but its HTTP health request returned 500 and caused SGLang's tokenizer-manager SIGQUIT path to terminate the child before the component invocation.",
+  "science_started": false,
+  "candidate_cuda_invocation_started": false,
+  "scientific_component_consumed": false,
+  "server_launches": 1,
+  "repair_authorized": false,
+  "evidence": {
+    "source_proof": "PINNED_RUNTIME_VERIFICATION_CONSUMER_PROOF.json",
+    "preload_proof": "artifacts/source-proven-consumer-20260726t0320z/preload_proof.stdout.log",
+    "raw_server_log": "artifacts/source-proven-consumer-20260726t0320z/preclaim_server_raw.log",
+    "container_inspect": "artifacts/source-proven-consumer-20260726t0320z/preclaim_container_inspect.json",
+    "container_status": "artifacts/source-proven-consumer-20260726t0320z/preclaim_container_status.txt"
+  },
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "claimed_at_utc": "2026-07-26T03:19:16Z",
+    "released_at_utc": "2026-07-26T03:24:14Z",
+    "release_condition": "maintenance"
+  },
+  "actual_spend_usd": 4.56
+}

@@ -1,0 +1,30 @@
+data: {"id":"3f98a3288cf8469e9f134f4b79b2ef9f","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" 자세","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"3f98a3288cf8469e9f134f4b79b2ef9f","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"3f98a3288cf8469e9f134f4b79b2ef9f","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"3f98a3288cf8469e9f134f4b79b2ef9f","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"3f98a3288cf8469e9f134f4b79b2ef9f","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"3f98a3288cf8469e9f134f4b79b2ef9f","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"3f98a3288cf8469e9f134f4b79b2ef9f","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"3f98a3288cf8469e9f134f4b79b2ef9f","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"3f98a3288cf8469e9f134f4b79b2ef9f","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"3f98a3288cf8469e9f134f4b79b2ef9f","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"3f98a3288cf8469e9f134f4b79b2ef9f","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"3f98a3288cf8469e9f134f4b79b2ef9f","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く深く","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"3f98a3288cf8469e9f134f4b79b2ef9f","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"深く深く深く深く深く","logprobs":null,"finish_reason":"length","matched_stop":null}],"usage":null}
+
+data: {"id":"3f98a3288cf8469e9f134f4b79b2ef9f","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[],"usage":{"prompt_tokens":4214,"total_tokens":4572,"completion_tokens":358,"reasoning_tokens":0}}
+
+data: [DONE]
+

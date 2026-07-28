@@ -1,0 +1,16 @@
+{
+  "overlay": {
+    "depth": 12,
+    "eviction": "deterministic_fifo",
+    "gate_sha256": "d9e56396885659629d718f6ae3abf1acce6fe42c65c3a0d7f26ce0bd90eb2c0c",
+    "max_probation_entries": 16384,
+    "overlay": "distinct_request_support_two_write_promotion",
+    "overlay_sha256": "9fdd5227380c922e921be1b32e77716254f496219ddb9672e1b47bc6b4595e94",
+    "read_path": "unchanged",
+    "source_delta": "_update_ngram_corpus_write_admission_only",
+    "support": 2
+  },
+  "overlay_path": "/home/glmrunner/gemma4-ngram-tail-overlap/out/OVERLAY_STATE.json",
+  "trace_path": "/home/glmrunner/gemma4-ngram-tail-overlap/out/distinct-request-ngram.jsonl",
+  "worker_initialized": true
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_fp8_weight_stream_schedule",
+  "decision": "compile_new_sm90a_module_then_run_exact_consumer_discriminator_and_conditional_component",
+  "created_at_utc": "2026-07-25T23:28:00Z",
+  "campaign": {
+    "checkpoint": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "qualified_denominator_s_per_request": 0.625149101968745,
+    "target_s_per_request": 0.500119281574996,
+    "workload": "exact OpenRouter-mix c32 geometry"
+  },
+  "runtime": {
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "accelerator": "nvidia-h200-sxm",
+    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "config_path": "../gemma4_hybrid_attention_placement_codesign/inputs/bound/config.json",
+    "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+  },
+  "source": {
+    "kernel_path": "fp8_weight_stream_extension.cu",
+    "kernel_sha256": "a202e2a265eda05f1d6fd4cc05b7bbc4db1ec6740d70e9dc1dc2f9881356082d",
+    "builder_path": "build_candidate.py",
+    "builder_sha256": "f8c39593fd2948b7a45ac20f22226951112d45069dc24ed407c8384960aa6454",
+    "target": "compute_90a/sm_90a",
+    "discriminator_path": "m32_sm90a_exact_consumer_discriminator.py",
+    "discriminator_sha256": "a4e7f13f6704735c18ebacb71b3e8355baaa7531f1138f0f59754d5a18b90f24",
+    "component_runner_path": "exact_shape_runner.py",
+    "component_runner_sha256": "f206a108c76e019b2a75915785bd79271b661221a0b8f17d8cfc1343586ae837"
+  },
+  "execution": {
+    "first_arm": "Build a new content-addressed sm_90a module and run exactly one stock/candidate M32 gate-up correctness discriminator.",
+    "conditional_arm": "Only if M32 is finite and bitwise equal, run the existing alternating M32/M384 exact-consumer correctness and timing component with the new module.",
+    "prohibited": [
+      "Replay or relabel the consumed sm_90 module",
+      "Run an endpoint",
+      "Tune tiles, scales, formats, or workload geometry",
+      "Create, destroy, or otherwise mutate provider resources"
+    ]
+  },
+  "budgets": {
+    "authorized_spend_usd": 2.0,
+    "maximum_claim_minutes": 45,
+    "wall_clock_minutes": 90,
+    "storage_gib": 4
+  },
+  "terminal": "FP8_WEIGHT_STREAM_SM90A_H200_TERMINAL.json"
+}

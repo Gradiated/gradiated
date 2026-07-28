@@ -1,0 +1,25 @@
+{
+  "manifest": {
+    "item.bin": {
+      "bytes": 12,
+      "sha256": "16b86eff29f39cd47a5a28a1bf362259e0383adc9fdcbb431453e01dfd8e0962"
+    }
+  },
+  "matching_pass": true,
+  "mismatching_rejected": true,
+  "owner_sha256": "6a85fd8f1de344b30825d21c60e4dacd7b07182dc25219bdffad968865bf7702",
+  "result": "pass",
+  "results": {
+    "matching": {
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "item.bin 12 16b86eff29f39cd47a5a28a1bf362259e0383adc9fdcbb431453e01dfd8e0962\nREMOTE_HASH_RESULT=PASS\n"
+    },
+    "mismatching": {
+      "returncode": 1,
+      "stderr": "",
+      "stdout": "item.bin 12 e00051cdcab9617c8b5b72e77ae46c4be7681bc0d17951c2ec9112ba20871597\nREMOTE_HASH_RESULT=FAIL\n"
+    }
+  },
+  "schema_version": 1
+}

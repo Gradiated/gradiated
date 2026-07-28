@@ -35,10 +35,28 @@ def read_jsonl(path: pathlib.Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text().splitlines() if line]
 
 
+def prompt_tail_token(request_index: int) -> int:
+    label = f"suffix-{request_index}"
+    position = 4214 - 535 - 1
+    digest = hashlib.sha256(f"gemma4-background-exact-mix-c32-20260718|{label}|{position // 8}".encode()).digest()
+    offset = (position % 8) * 4
+    return 1000 + int.from_bytes(digest[offset : offset + 4], "big") % 249000
+
+
+def split_data_path(project: pathlib.Path, spec: dict) -> pathlib.Path:
+    relative = pathlib.Path(spec["path"])
+    local = project / relative
+    recovered = pathlib.Path("/project-local/artifacts/offset-head-train-inputs") / relative.name
+    path = local if local.is_file() else recovered
+    if not path.is_file() or sha256(path) != spec["sha256"]:
+        raise RuntimeError(f"split_data_identity:{relative}")
+    return path
+
+
 def load_capture(capture_root: pathlib.Path):
     import torch
 
-    mapping = {}
+    grouped_rows = {}
     manifest_rows = []
     for path in sorted(capture_root.glob("tap-chunk-*.pt")):
         payload = torch.load(path, map_location="cpu", weights_only=True)
@@ -48,14 +66,24 @@ def load_capture(capture_root: pathlib.Path):
             raise RuntimeError(f"hidden_size_mismatch:{path}")
         for row_index, row in enumerate(payload["rows"]):
             key = (row["request_index"], row["target_offset"])
-            if key in mapping:
-                raise RuntimeError(f"duplicate_capture_row:{key}")
-            mapping[key] = tuple(
-                tap[row_index] for tap in payload["taps"]
+            grouped_rows.setdefault(key, []).append(
+                (row, tuple(tap[row_index] for tap in payload["taps"]))
             )
         manifest_rows.append(
             {"path": path.name, "sha256": sha256(path), "rows": len(payload["rows"])}
         )
+    mapping = {}
+    for key, candidates in grouped_rows.items():
+        if len(candidates) == 1:
+            mapping[key] = candidates[0][1]
+            continue
+        if key[1] != 0:
+            raise RuntimeError(f"duplicate_capture_row:{key}")
+        expected_input_id = prompt_tail_token(key[0])
+        matches = [taps for row, taps in candidates if row["input_id"] == expected_input_id]
+        if len(matches) != 1:
+            raise RuntimeError(f"duplicate_capture_row_unresolved:{key}")
+        mapping[key] = matches[0]
     return mapping, manifest_rows
 
 
@@ -98,6 +126,23 @@ def load_tied_weight(path: pathlib.Path, key: str, device):
     return weight.to(device=device, dtype=__import__("torch").bfloat16).contiguous()
 
 
+def existing_result_is_bound(args) -> bool:
+    result_path = args.artifact_root / "HOLDOUT_RESULT.json"
+    checkpoint = args.artifact_root / "head_checkpoint.pt"
+    if not result_path.is_file() or not checkpoint.is_file():
+        return False
+    try:
+        result = json.loads(result_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return False
+    return (
+        result.get("classification") == "disjoint_holdout_head_result"
+        and result.get("split_sha256") == sha256(args.split)
+        and result.get("cost_model_sha256") == sha256(args.cost_model)
+        and result.get("checkpoint", {}).get("sha256") == sha256(checkpoint)
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--capture-root", required=True, type=pathlib.Path)
@@ -114,6 +159,8 @@ def main() -> int:
     parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument("--seed", type=int, default=20260726)
     args = parser.parse_args()
+    if existing_result_is_bound(args):
+        return 0
     import torch
 
     torch.manual_seed(args.seed)
@@ -121,8 +168,8 @@ def main() -> int:
     torch.use_deterministic_algorithms(True)
     split = json.loads(args.split.read_text())
     project = args.split.parent
-    train_rows = read_jsonl(project / split["train"]["path"])
-    holdout_rows = read_jsonl(project / split["holdout"]["path"])
+    train_rows = read_jsonl(split_data_path(project, split["train"]))
+    holdout_rows = read_jsonl(split_data_path(project, split["holdout"]))
     capture, capture_manifest = load_capture(args.capture_root)
     required = {
         (row["request_index"], row["target_start_offset"])

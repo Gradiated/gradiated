@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "classification": "ordinary_pre_capture_path_defect",
+  "scientific_invocation_began": false,
+  "diagnostic": "production_quality_remote.py resolved staged quality inputs relative to the artifact root instead of the immutable remote quality-input directory.",
+  "invalidated_operation": "input_path_resolution",
+  "repair_scope": "patch only the input path; preserve all model, runtime, request, arm, and gate identities",
+  "repair_deadline_utc": "2026-07-20T05:00:00Z",
+  "original_terminal": "TERMINAL.json",
+  "original_provider_exposure_seconds": 9.924078464508057,
+  "original_provider_spend_usd": 0.006781453617413839
+}

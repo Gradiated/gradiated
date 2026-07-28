@@ -1,0 +1,9 @@
+{
+  "classification": "consumer_terminal_missing",
+  "pass": false,
+  "project_cumulative_spend_usd": 1.8287707817145764,
+  "provider_exposure_seconds": 109.57081604003906,
+  "provider_spend_usd": 0.07487339096069336,
+  "schema_version": 1,
+  "scientific_invocation_started": true
+}

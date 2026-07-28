@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T11:12:00Z",
+  "decision": "retain_staged_h100_and_repair_exact_manifest_descriptor_schema_in_place",
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "failed_attempt": {
+    "artifact_root": "artifacts/h100-endpoint-200g-r2-freshstage-20260725t1045z",
+    "terminal": "artifacts/h100-endpoint-200g-r2-freshstage-20260725t1045z/TERMINAL.json",
+    "terminal_sha256": "c6285b154f4accb94999043d403926d86b50740a45789ea5fbfc4eda62c504a7",
+    "disk_repair_stdout": "artifacts/h100-endpoint-200g-r2-freshstage-20260725t1045z/DISK_REPAIR.stdout",
+    "disk_repair_stdout_sha256": "c251be69f25cec84efd5e7c6d18811a7ad7806a9a2f22686f1ff11481e73d628",
+    "disk_repair_stderr": "artifacts/h100-endpoint-200g-r2-freshstage-20260725t1045z/DISK_REPAIR.stderr",
+    "disk_repair_stderr_sha256": "30b2beae3b5e96229e9077e7fffd56d9ce27683a3205122844bbcde6c88eb014",
+    "remote_checkpoint_hash": "artifacts/h100-endpoint-200g-r2-freshstage-20260725t1045z/REMOTE_CHECKPOINT_HASH.stdout",
+    "remote_checkpoint_hash_sha256": "f5c230fbed8b360bb3a79ffb9a8e7187df7405cfd99614991e563ff90fbc8b58",
+    "remote_packet_hash": "artifacts/h100-endpoint-200g-r2-freshstage-20260725t1045z/REMOTE_PACKET_HASH.stdout",
+    "remote_packet_hash_sha256": "0a26879da5d54f42e6833d0788edfed871d28bf253e5c277836c9b30bb697a5f",
+    "classification": "typed_external_or_recoverable_failure",
+    "error": "disk_repair_failed:image_manifest_descriptor_invalid",
+    "candidate_sample_consumed": false,
+    "endpoint_sample_consumed": false,
+    "server_started": false,
+    "workload_started": false
+  },
+  "diagnosis": {
+    "checkpoint": "All eight exact checkpoint files were atomically staged and passed the bound remote size and SHA-256 audit.",
+    "packet": "The exact packet and candidate were atomically staged and passed the bound remote size and SHA-256 audit.",
+    "filesystem": "After zero-byte Docker cleanup, /dev/vda1 reported 123387284 KiB available; this is positive space evidence, not yet the required image-fit proof.",
+    "docker_state": "No image, container, volume, or build cache was resident after cleanup.",
+    "failure_boundary": "The inline owner parser rejected the Descriptor object returned by docker manifest inspect --verbose before it could measure config or layer bytes.",
+    "scientific_boundary": "This is an unconsumed manifest-observer schema integration defect. It is not evidence against H100 performance, the 200-GiB geometry, the checkpoint, or the endpoint."
+  },
+  "source_bindings": {
+    "fresh_stage_binding": "DIRECTOR_R2_FRESH_STAGE_REPAIR_BINDING.json",
+    "fresh_stage_binding_sha256": "0d4fe97cb1b033ca2ec351fbea02b4456b34dca9427983566ad1e1c4649096cf",
+    "manifest_parser": "manifest_size.py",
+    "manifest_parser_sha256": "e8b3db6aee01466d8d66180cf101df10616d85b8d8cb4adbe5c933c7fcfdf083",
+    "owner": "h100_execution_owner.py",
+    "owner_sha256": "145f286f942cb62b1b6c00ddacafc05e921280ffd4ce57356aa685137bc3d222",
+    "checkpoint_manifest": "packet/CHECKPOINT_MANIFEST.json",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "packet_manifest": "PACKET_MANIFEST.json",
+    "packet_manifest_sha256": "8127631191fe1afc47e718502ff61980b1e51adb8ac43c2f28e140ff506173bd",
+    "fleet_economics_interpretation": "DIRECTOR_FLEET_ECONOMICS_INTERPRETATION.json",
+    "fleet_economics_interpretation_sha256": "d5638a5c422e891e2b177a3698cdafb177c3458a0180f8e9bedba7f3d3d84075"
+  },
+  "immutable_identities": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "checkpoint_files": 8,
+    "checkpoint_total_bytes": 62578655208,
+    "endpoint": "sole unconsumed 791-request endpoint"
+  },
+  "bench": {
+    "id": "h100-v0515-endpoint-200g-r2-e00yfnrrfczsdjevms",
+    "required_status": "available_with_no_claim",
+    "accelerator": "nvidia-h100-sxm",
+    "boot_disk_gib": 200,
+    "instance_id": "computeinstance-e00yfnrrfczsdjevms",
+    "disk_id": "computedisk-e00cjpqvtz8x59514m",
+    "public_ipv4": "89.169.124.194",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "watchdog_unit": "gemma4-h100-v0515-endpoint-20260725t1230-watchdog.service",
+    "watchdog_deadline_utc": "2026-07-25T12:30:00Z"
+  },
+  "repair_contract": {
+    "claim": "Atomically claim the same registered bench once using its current runtime/gpus.json connection identity.",
+    "exact_fixture": "Before changing parser semantics, persist and SHA-256 hash the exact raw docker manifest inspect --verbose response for the digest-pinned image. This registry-metadata capture is not a scientific sample.",
+    "schema_localization": "Identify the exact descriptor-key casing, manifest/list shape, and linux/amd64 selection path in that capture. Accept only the observed content-addressed schema variants needed to resolve the exact pinned digest and platform without ambiguity.",
+    "single_parser": "Eliminate the divergent inline descriptor parser in h100_execution_owner.py. Make the owner use one tested manifest_size.py implementation for digest validation, platform selection, duplicate detection, positive integer compressed-byte summation, and fail-closed errors.",
+    "fixtures": "The exact captured positive fixture must produce the same deterministic compressed-byte total twice. Missing or malformed descriptor, ambiguous platform, digest mismatch, duplicate digest, missing size, non-integer size, negative size, and schema mismatch mutations must fail closed.",
+    "resident_reuse": "Use --reuse-staged only after re-hashing the complete canonical remote checkpoint, packet, and candidate against the bound manifests. Do not restage or delete valid canonical files.",
+    "server": "After the repaired exact image-space proof, pinned image, runtime, checkpoint, packet, and server gates pass, start only the exact official server.",
+    "workload": "Run only the sole unconsumed 791-request endpoint and preserve the already-bound pooled/discrete telemetry.",
+    "release_deadline_utc": "2026-07-25T12:25:00Z"
+  },
+  "prohibitions": [
+    "Do not replay the consumed 171-request discriminator.",
+    "Do not change the image, model, runtime, checkpoint, packet, workload, or economics interpretation.",
+    "Do not create, resize, stop, delete, or otherwise mutate the provider resource.",
+    "Do not delete or restage canonical remote checkpoint, packet, or candidate files whose bound size and SHA-256 pass.",
+    "Do not pull the image or start a server until the repaired exact manifest-space proof passes.",
+    "Do not treat another missing parser field as a negative disk-fit result.",
+    "Do not mark endpoint consumption before the first endpoint request is submitted."
+  ],
+  "terminal_contract": {
+    "artifact_root_prefix": "artifacts/h100-endpoint-200g-r2-descriptor-repair-",
+    "expected_terminal": "TERMINAL.json",
+    "persist_raw_manifest_capture_and_fixture_results": true,
+    "typed_pre_science_failure_if_any_gate_fails": true,
+    "endpoint_sample_consumed_only_after_first_endpoint_request": true,
+    "release_bench": true
+  },
+  "budgets": {
+    "cumulative_authorized_spend_usd": 15.5,
+    "conservative_actual_spend_usd_before_repair": 9.75,
+    "provider_rate_usd_per_hour": 2.95,
+    "release_deadline_utc": "2026-07-25T12:25:00Z",
+    "watchdog_deadline_utc": "2026-07-25T12:30:00Z",
+    "local_storage": "At most 64 MiB new parser fixtures and metadata; reuse resident checkpoint and packet."
+  }
+}

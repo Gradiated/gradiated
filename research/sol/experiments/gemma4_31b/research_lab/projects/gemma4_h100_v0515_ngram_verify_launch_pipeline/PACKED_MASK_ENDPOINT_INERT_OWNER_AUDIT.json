@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "audited_at_utc": "2026-07-25T14:07:52Z",
+  "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+  "owner": {
+    "path": "staged_continuation_owner.sh",
+    "sha256": "bc0e6b74f8225f6b10319661f210f61ce4d49d6f1cf78f7d00bba6f530c460b2",
+    "pid": 773066,
+    "start_ticks": 110417472,
+    "identity_verified": true
+  },
+  "implemented_steps": [
+    "Heartbeat the existing project claim.",
+    "Pull the bound image.",
+    "Construct fresh_workload.jsonl and its hash record from indices 61000..61790."
+  ],
+  "missing_steps": [
+    "Bound server launch.",
+    "Stock endpoint arm.",
+    "single_packed_cpu_full_mask_staging endpoint arm.",
+    "Verify-frequency, acceptance, semantic, service-time, and economic telemetry.",
+    "Typed result and terminal.",
+    "Repair handshake."
+  ],
+  "terminal_behavior": "After preparation the owner sleeps in 30-second intervals until 17:30Z.",
+  "science_consumed": false,
+  "classification": "inert_pre_science_execution_owner",
+  "required_action": "Stop only the identity-matched inert local owner, retain the project claim and resident provider state, and dispatch one bounded replacement owner whose graph crosses directly into the bound endpoint consumer."
+}

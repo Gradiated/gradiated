@@ -1,0 +1,25 @@
+{
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "candidate": {
+    "commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "release": "v0.5.15"
+  },
+  "files": {
+    "artifacts/candidate-v0.5.15/CANDIDATE_RUNTIME.json": "7f9dae66869a7fcfed9a150e84db4f59d6c6e27aec5efc272dd5f453c77705b9",
+    "artifacts/candidate-v0.5.15/SHA256SUMS.json": "2265be26b69d1d2ee1733a71d0a76f804ae088d7d56f23a872aadebdaf9833dc",
+    "artifacts/candidate-v0.5.15/inputs/exact_semantic_rows.jsonl": "630d05bd860d1dd22c3e35ba2d8f792afc5051f0c68e0a74a9deda8140a02b36",
+    "artifacts/candidate-v0.5.15/inputs/requests.jsonl": "10e7edacaa194fd0f43b3a3c38f7d91cec0ceba22df8e08e3b5897b174346135",
+    "artifacts/candidate-v0.5.15/remote_runtime_discriminator.py": "513ce600c7918cc08b9a02bdf9e02edeb5c66a7957a74b73517bc96ad413d333"
+  },
+  "gates": {
+    "conditional_endpoint": "Only after exact normalized semantics for requests 0-170, zero failures, observed native NGRAM acceptance, and stable release timing.",
+    "endpoint_planning_cost_usd_per_million_total_tokens_max": 0.14,
+    "endpoint_requests": 791,
+    "first_requests_begin": 0,
+    "first_requests_end_exclusive": 171,
+    "max_claimed_minutes": 45,
+    "release_deadline_utc": "2026-07-25T07:00:00Z"
+  },
+  "schema_version": 1
+}

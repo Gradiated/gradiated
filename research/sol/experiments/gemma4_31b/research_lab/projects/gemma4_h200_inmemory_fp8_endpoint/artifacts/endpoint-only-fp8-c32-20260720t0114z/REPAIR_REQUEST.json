@@ -1,0 +1,5 @@
+{
+  "repair": "Install project-local repair_sitecustomize.py under remote /home/glmrunner to make frozen Prometheus queue parser accept labeled gauge lines; no scientific invocation began; same immutable endpoint workload and claim.",
+  "retry": true,
+  "schema_version": 1
+}

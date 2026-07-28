@@ -1,0 +1,8 @@
+{
+  "at_utc": "2026-07-26T18:10:23.819131Z",
+  "checkpoint_bytes": 62578655208,
+  "files": 16,
+  "manifest_sha256": "c368088b8c8bdb88fa44a564fc8d36e87dafb4984b29718c12c209d49912e44e",
+  "remote_root": "/home/glmrunner/gemma4_hopper_packed_m384_endpoint",
+  "state": "atomically_promoted"
+}

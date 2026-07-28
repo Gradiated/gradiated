@@ -1,0 +1,11 @@
+{
+  "absolute_repair_deadline_utc": "2026-07-27T01:27:34.490529Z",
+  "created_at_utc": "2026-07-27T00:21:09.154583Z",
+  "diagnostic": "RuntimeError:compact_terminal_retrieval_failed",
+  "failure_kind": "capture_integration_or_retrieval_failure",
+  "repair_deadline_epoch": 1785115654.490529,
+  "repair_id": "capture-repair-1785111669116539429",
+  "retry_scope": "capture_or_observer_consumer_only",
+  "schema_version": 1,
+  "state": "repair_ready"
+}

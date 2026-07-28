@@ -1,0 +1,11 @@
+{
+  "baseline_source_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
+  "candidate_source_sha256": "33d6bec04ab04e006b5e96d95dce56444edb59c519f242a0b6690a5f6e5bcfed",
+  "fixed_baseline": "decode_equivalent_lm_head@4d99a94e",
+  "mount_target": "sglang.srt.layers.attention.triton_ops.extend_attention",
+  "order": [
+    "control",
+    "candidate"
+  ],
+  "schema_version": 1
+}

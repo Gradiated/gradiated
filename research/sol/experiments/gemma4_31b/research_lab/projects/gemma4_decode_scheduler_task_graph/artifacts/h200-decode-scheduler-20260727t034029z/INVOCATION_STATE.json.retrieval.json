@@ -1,0 +1,6 @@
+{
+  "remote_path": "/home/glmrunner/gemma4-decode-scheduler-task-graph/runs/h200-decode-scheduler-20260727t034029z/INVOCATION_STATE.json",
+  "returncode": 1,
+  "stderr": "scp: /home/glmrunner/gemma4-decode-scheduler-task-graph/runs/h200-decode-scheduler-20260727t034029z/INVOCATION_STATE.json: No such file or directory\n",
+  "stdout": ""
+}

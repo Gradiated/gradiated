@@ -1,0 +1,7 @@
+{
+  "actual_spend_usd": 0.59462287495,
+  "deadline_reached": false,
+  "remote_owner_live_at_retrieval": false,
+  "snapshot": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_high_load_bypass/artifacts/threshold-transition-20260725t005226z/snapshots/00f7848d415c8938653373561c30de2a78cc8cc8cefa7bf9253a65cf68793018",
+  "terminal_present": true
+}

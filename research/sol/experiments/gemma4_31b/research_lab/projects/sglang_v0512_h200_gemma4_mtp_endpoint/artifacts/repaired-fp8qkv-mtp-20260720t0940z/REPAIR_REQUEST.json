@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "retry": false,
+  "reason": "Candidate scientific invocation completed 32 request files; do not replay consumed arm. Retrieve compact artifacts and finalize from persisted telemetry."
+}

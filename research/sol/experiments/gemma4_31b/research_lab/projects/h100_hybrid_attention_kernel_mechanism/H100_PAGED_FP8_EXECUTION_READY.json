@@ -18,8 +18,8 @@
       "sha256": "3960c453e88b1a12e01351d2062dbaa7f8a800e63fe6674e997ddbbcfeebdda1"
     }
   },
-  "decision": "Source is ready for a later director-authorized H100 claim; this terminal does not authorize one.",
-  "evidence_boundary": "Static and CPU-mocked source-readiness evidence only. No H100 throughput, quality, counter, endpoint, or economic result is claimed.",
+  "decision": "Offline source-justified consumer-contract adapter is ready for a later director-authorized H100 lifecycle; this terminal does not authorize one.",
+  "evidence_boundary": "Static and CPU-mocked adapter evidence only. No H100 throughput, quality, counter, endpoint, or economic result is claimed.",
   "generated_at_utc": "2026-07-26T05:11:07.220231Z",
   "gpu_claim_allowed": false,
   "gpu_seconds": 0,
@@ -77,15 +77,15 @@
       "unified_attention_with_output(..., layer_name, kv_cache_dummy_dep=dependency)"
     ]
   },
-  "result": "source_complete_start_ready",
+  "result": "offline_consumer_contract_adapter_ready",
   "schema_version": 1,
   "scientific_sample_consumed": false,
   "source": {
     "files": {
       "build_readiness.py": "ca68730347fcdc536e40ee36ac7f72a6e5d590a2dae7717b7d78dad1768b2b59",
       "paged_fp8_contract.py": "bc993832a5e5079bd0f7715b96af28ec1cec26dc5f63aaf07cd3f1303d2695d6",
-      "paged_fp8_execution.py": "fdafc7a2d20abddc4a82a6c7e34c98de9f7a75e7ecccfeab2152485613cc1918",
-      "test_paged_fp8_execution.py": "0769748d4aed1893c8f6397cb045820455cd3d79d5edcbd352420c60ff83179e"
+      "paged_fp8_execution.py": "0b29906dbf474a3b437176d0a032a99ee4647157aa53837e5c7942fbc5bf5a1b",
+      "test_paged_fp8_execution.py": "ab92acafcd4c416b47ec757e2fae4a5c0a47700c63cab30611063b9c7616ffe0"
     },
     "fresh_vs_rejected": true,
     "test_log": {

@@ -1,0 +1,10 @@
+{
+  "artifacts": "Compact worker terminal, logs, arm rows, telemetry, and invocation markers retrieved project-locally.",
+  "caches": "SGLang FP8, QKV, and CUDA graph caches retained.",
+  "checkpoint": "Exact immutable eight-file checkpoint retained at /home/glmrunner/gemma-kernel-frontier/checkpoint.",
+  "image": "SGLang v0.5.13 linux/amd64 digest 6113665a retained if pull completed.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_h200_qkv_epilogue_fusion",
+  "runtime": "Same-session current-runtime FP8/QKV terminal: owner_failure.",
+  "server_state": "Final QKV server retained when healthy; otherwise image/checkpoint/caches retained."
+}

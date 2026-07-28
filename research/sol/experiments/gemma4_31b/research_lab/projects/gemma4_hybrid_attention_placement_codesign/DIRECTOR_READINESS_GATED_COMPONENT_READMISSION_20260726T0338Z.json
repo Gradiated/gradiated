@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "created_at_utc": "2026-07-26T03:38:00Z",
+  "decision": "readmit_one_readiness_gated_cached_replacement_and_unconsumed_component",
+  "researcher_profile": "execution",
+  "scientific_contract_changed": false,
+  "hypothesis": "The source-proven full-model dual-cache comparator remains exact and net-positive after the installed seq_lens_cpu support repair, once its only component invocation is held until the cached server has completed CUDA-graph capture and is actually accepting requests.",
+  "predecessor": {
+    "terminal": "PHASE_SELECTIVE_FULL_MODEL_H200_COMPONENT_TERMINAL.json",
+    "classification": "infrastructure_terminal",
+    "failure_kind": "server_readiness_race_during_cuda_graph_capture",
+    "science_started": false,
+    "candidate_cuda_invocation_started": false,
+    "scientific_component_consumed": false,
+    "exact_c32_started": false,
+    "server_launches": 1,
+    "claimed_at_utc": "2026-07-26T03:31:41.637267Z",
+    "released_at_utc": "2026-07-26T03:34:17.184934Z"
+  },
+  "evidence": {
+    "server_log": "artifacts/ngram-seqlens-repair-20260726t0332z/retrieved.stdout.log",
+    "capture_began_at_utc": "2026-07-26T03:34:06Z",
+    "component_attempt": "artifacts/ngram-seqlens-repair-20260726t0332z/target_verify_consumer.stdout.log",
+    "component_complete_requests": 0,
+    "request_failures": 32,
+    "request_failure": "ConnectionRefusedError(111)",
+    "interpretation": "The controller treated adapter attachment plus a live container as readiness. Every connection was refused before server request entry, NGRAM execution, or candidate CUDA, so this is an invalid infrastructure attempt and the scientific component remains unconsumed.",
+    "marker_correction": "The component-side activation preamble wrote science_started=true before making a network request. The durable execution terminal and bench ledger correctly supersede that local preamble: science_started=false and candidate_cuda_invocation_started=false."
+  },
+  "binding": {
+    "prior_path": "DIRECTOR_SEQLENS_CPU_PRE_SCIENCE_REPAIR_READMISSION_20260726T0327Z.json",
+    "prior_sha256": "edae00e4b2006cf0064831b65995e0ea07261343970750138c10d3e8517b69fe",
+    "scientific_binding_path": "DIRECTOR_PHASE_SELECTIVE_FULL_MODEL_H200_BINDING.json",
+    "scientific_binding_sha256": "f09e4188f4b997fe3a0fc4b2fd6303616c043b6c360d500c8d80b0ac4ad800dc",
+    "installed_repair_path": "forward_batch_dual_cache_driver.py",
+    "installed_repair_sha256": "1e87b837691bfc9b680ee5e52ad2cbceba1028c78352b438dc1eb26b84d1b0c3",
+    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "claim_not_after_utc": "2026-07-26T03:47:00Z",
+    "release_not_after_utc": "2026-07-26T04:10:00Z",
+    "watchdog_deadline_utc": "2026-07-26T04:15:00Z"
+  },
+  "immediate_experiment": {
+    "server_launches_authorized": 1,
+    "readiness_gate": [
+      "Start the cached server with the already-installed seq_lens_cpu repair and persist the exact installed source identity.",
+      "Keep the component process absent until the server log contains both 'Capture cuda graph end' and 'The server is fired up and ready to roll!'.",
+      "Require the server process and container to remain live and localhost:30000 to accept a TCP connection after those log markers.",
+      "Do not use a generation request as a readiness probe."
+    ],
+    "component": "After every readiness gate passes, run the still-unconsumed pinned full-model dual-cache comparator through the exact NGRAM verification consumer once.",
+    "science_marker": "Set science_started only after the server accepts the component request and request entry is durably observed; a client-side activation preamble or attempted socket connection is not science.",
+    "conditional_exact_c32": "Run only if every existing component exactness, cache-lifecycle, and positive-net-timing gate passes.",
+    "mutable_environment": "Reuse the named warm H200, exact cached image, checkpoint, source, compiler caches, and single-model launch path."
+  },
+  "window_fit": {
+    "claim_to_release_minutes": 23,
+    "closest_measured_same_lineage_setup_minutes": 11,
+    "terminal_and_safe_release_margin_minutes": 10,
+    "unallocated_margin_minutes": 2,
+    "fit": true
+  },
+  "budget": {
+    "authorized_project_spend_usd": 6.75,
+    "actual_project_spend_before_readmission_usd": 4.67,
+    "maximum_additional_provider_exposure_usd_from_decision_through_watchdog": 1.51,
+    "maximum_project_spend_at_watchdog_usd": 6.18,
+    "maximum_new_artifacts_gib": 5
+  },
+  "stop_rules": [
+    "Do not launch the component until every non-generating readiness gate passes.",
+    "Launch at most one cached replacement server and submit the still-unconsumed component at most once under this binding.",
+    "Do not count client preamble, connection attempts, or refused requests as science_started or candidate CUDA.",
+    "If a recoverable pre-science support failure occurs with enough time for one material correction, retain the claim and make that correction under this same project; a server-count limit must not force premature release.",
+    "Do not run exact c32 unless the full-model component is exact and net-positive under all prior gates.",
+    "Release the bench by 2026-07-26T04:10:00Z.",
+    "Do not claim quality preservation or deployability, train, alter checkpoint values, or replay the completed placement comparison."
+  ],
+  "portfolio": {
+    "priority": 8700,
+    "second_lane": "deferred_until_this_near_term_typed_boundary",
+    "provider_mutation": false,
+    "bench_disposition": "retain_warm_and_available_for_same_project_claim"
+  }
+}

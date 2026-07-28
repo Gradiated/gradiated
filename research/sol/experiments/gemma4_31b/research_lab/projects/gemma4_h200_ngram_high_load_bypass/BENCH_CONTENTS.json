@@ -1,0 +1,20 @@
+{
+  "artifacts": "Content-addressed compact terminal, server log, request rows, events, and source identities retrieved project-locally.",
+  "caches": "Image, checkpoint, CUDA graph, JIT, tokenizer, and runtime caches retained.",
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "component_result": "exact_positive_threshold_component",
+  "component_science_consumed": true,
+  "full_result": "full-1036",
+  "full_science_consumed": true,
+  "gpu_processes": "present in remote_inspection",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_h200_ngram_high_load_bypass",
+  "remote_inspection": "{\"Status\":\"running\",\"Running\":true,\"Paused\":false,\"Restarting\":false,\"OOMKilled\":false,\"Dead\":false,\"Pid\":9598,\"ExitCode\":0,\"Error\":\"\",\"StartedAt\":\"2026-07-25T00:52:32.642790907Z\",\"FinishedAt\":\"0001-01-01T00:00:00Z\"}\n9823, 123454\n",
+  "result": "full_trajectory_reject",
+  "runtime": "Pinned SGLang v0.5.13 FP8, page-1 E5M2 KV, threshold-8 repaired NGRAM bypass.",
+  "schema_version": 1,
+  "server_state": "Candidate or GPU process remains after owner terminal; director inspection required before reuse.",
+  "suffix_result": "exact_suffix",
+  "suffix_science_consumed": true
+}

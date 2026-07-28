@@ -107,3 +107,36 @@ Otherwise return typed `none`; do not substitute a second runtime.
 - Required artifacts: `RESEARCH_LOG.md`, verified binding, source-path causal
   map, selected commit/diff and reproducible build packet or typed `none`, and
   updated `STATUS.json`.
+
+## Paid execution authorization — 2026-07-25
+
+The offline phase nominated exactly official SGLang v0.5.15 at commit
+`f63458b5beaceabbd9d749b9fc956370e1b649e6` and image
+`docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd`.
+The director authorizes the existing same-project execution packet under `$3`
+and at most 45 claimed H200 minutes.
+
+Mechanically verify `DIRECTOR_EXECUTION_BINDING.json` and all 27 files against
+the bound `SHA256SUMS.json` before claiming. Claim only the retained registered
+H200 after it is available, replace the resident server with the digest-pinned
+unmodified v0.5.15 image, and run requests 0–170 once. Only exact semantics,
+zero failures, native NGRAM acceptance, and stable release admit the single
+unmodified 791-request endpoint under the existing queue, trunk, and
+`$0.14/M` gates. Release by the earlier of 45 claimed minutes or 07:00Z. No
+runtime sweep, overlay, settled-arm replay, provider creation, or second
+candidate is authorized.
+
+## Endpoint promotion — 2026-07-25
+
+The recovered discriminator terminal is valid and admits the endpoint: all
+171 requests completed, normalized semantics were exact, failures were zero,
+native depth-12 NGRAM activation was observed, and release drift was bounded.
+Mechanically verify `DIRECTOR_ENDPOINT_BINDING.json`, claim the retained H200,
+and reuse the resident official v0.5.15 server without reload. Run exactly the
+first 791 bound requests once and apply the existing semantic, failure, queue,
+release, unaffected-trunk, and `$0.14/M` gates. Release by the earlier of 31
+additional claimed minutes or 07:00Z. This distinct endpoint owner is
+authorized after the recovery owner's typed orchestration boundary; it is not
+a chained recovery owner. Do not replay requests 0–170 as a discriminator,
+change the runtime or workload, launch a replacement server, or run a second
+endpoint.

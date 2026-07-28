@@ -1,0 +1,18 @@
+{
+  "command": [
+    "env",
+    "PYTHONPATH=/root/workspace/research/factory/src",
+    "python3",
+    "run_h200_55l5g_endpoint_owner.py",
+    "--later-binding",
+    "DIRECTOR_HYBRID_55L5G_OWNER_LAYOUT_REPAIR_20260727T0225Z.json",
+    "--artifact-root",
+    "artifacts/h200-55l5g-extended-20260727t0225z"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign",
+  "launched_at_utc": "2026-07-27T02:27:43.782943Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/h200-55l5g-owner-20260727t0225z/OWNER.log",
+  "pid": 2279528,
+  "start_ticks": 123528118,
+  "unit_manager": "pid"
+}

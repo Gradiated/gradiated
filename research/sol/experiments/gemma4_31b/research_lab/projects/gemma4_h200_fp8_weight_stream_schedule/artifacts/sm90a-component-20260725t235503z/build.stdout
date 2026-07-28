@@ -1,0 +1,428 @@
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.0.1
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+[1/2] /usr/local/cuda/bin/nvcc -MD -MF fp8_weight_stream_extension.cuda.o.d -DTORCH_EXTENSION_NAME=gemma4_fp8_weight_stream -DTORCH_API_INCLUDE_EXTENSION_H -I/sgl-workspace/sglang/sgl-kernel/include -I/sgl-workspace/sglang/sgl-kernel/csrc -I/usr/local/lib/python3.12/dist-packages/flashinfer/data/cutlass/include -I/usr/local/lib/python3.12/dist-packages/flashinfer/data/cutlass/tools/util/include -isystem /usr/local/lib/python3.12/dist-packages/torch/include -isystem /usr/local/lib/python3.12/dist-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options '-fPIC' -O3 -gencode=arch=compute_90a,code=sm_90a -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 --expt-relaxed-constexpr --expt-extended-lambda --ptxas-options=--verbose -std=c++17 -c /work/project/fp8_weight_stream_extension.cu -o fp8_weight_stream_extension.cuda.o 
+FAILED: [code=4] fp8_weight_stream_extension.cuda.o 
+/usr/local/cuda/bin/nvcc -MD -MF fp8_weight_stream_extension.cuda.o.d -DTORCH_EXTENSION_NAME=gemma4_fp8_weight_stream -DTORCH_API_INCLUDE_EXTENSION_H -I/sgl-workspace/sglang/sgl-kernel/include -I/sgl-workspace/sglang/sgl-kernel/csrc -I/usr/local/lib/python3.12/dist-packages/flashinfer/data/cutlass/include -I/usr/local/lib/python3.12/dist-packages/flashinfer/data/cutlass/tools/util/include -isystem /usr/local/lib/python3.12/dist-packages/torch/include -isystem /usr/local/lib/python3.12/dist-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options '-fPIC' -O3 -gencode=arch=compute_90a,code=sm_90a -DCUTE_USE_PACKED_TUPLE=1 -DCUTLASS_ENABLE_TENSOR_CORE_MMA=1 --expt-relaxed-constexpr --expt-extended-lambda --ptxas-options=--verbose -std=c++17 -c /work/project/fp8_weight_stream_extension.cu -o fp8_weight_stream_extension.cuda.o 
+/usr/local/lib/python3.12/dist-packages/flashinfer/data/cutlass/include/cutlass/epilogue/fusion/sm90_visitor_tma_warpspecialized.hpp(710): error: NumericArrayConverter is not a template
+                using ConvertOutput = NumericArrayConverter<ElementCompute, ElementOutput, FragmentSize>;
+                                      ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(33): error: namespace "cutlass::epilogue::fusion" has no member "Sm90AccFetch"
+    using Accum = cutlass::epilogue::fusion::Sm90AccFetch;
+                                             ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(34): error: namespace "cutlass::epilogue::fusion" has no member "Sm90Compute"
+    using Compute = cutlass::epilogue::fusion::Sm90Compute<
+                                               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(34): error: expected a ";"
+    using Compute = cutlass::epilogue::fusion::Sm90Compute<
+                                                          ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(38): warning #12-D: parsing restarts here after previous syntax error
+        cutlass::FloatRoundStyle::round_to_nearest>;
+                                                   ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(41): error: namespace "cutlass::epilogue::fusion" has no member "Sm90EVT"
+    using EVTCompute = cutlass::epilogue::fusion::Sm90EVT<Compute, Accum>;
+                                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(41): error: expected a ";"
+    using EVTCompute = cutlass::epilogue::fusion::Sm90EVT<Compute, Accum>;
+                                                         ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(42): error: a class or namespace qualified name is required
+    using ArgumentType = typename EVTCompute::Arguments;
+                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(42): error: expected a ";"
+    using ArgumentType = typename EVTCompute::Arguments;
+                                            ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(57): error: namespace "cutlass::epilogue::fusion" has no member "Sm90AccFetch"
+    using Accum = cutlass::epilogue::fusion::Sm90AccFetch;
+                                             ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(69): error: namespace "cutlass::epilogue::fusion" has no member "Sm90ColBroadcast"
+    using ColLoad = cutlass::epilogue::fusion::Sm90ColBroadcast<
+                                               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(69): error: expected a ";"
+    using ColLoad = cutlass::epilogue::fusion::Sm90ColBroadcast<
+                                                               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(80): error: namespace "cutlass::epilogue::fusion" has no member "Sm90RowBroadcast"
+    using RowLoad = cutlass::epilogue::fusion::Sm90RowBroadcast<
+                                               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(80): error: expected a ";"
+    using RowLoad = cutlass::epilogue::fusion::Sm90RowBroadcast<
+                                                               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(140): error: namespace "cutlass::epilogue::fusion" has no member "Sm90Compute"
+        Sm90Compute<cutlass::multiplies, float, float, cutlass::FloatRoundStyle::round_to_nearest>;
+        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(140): error: expected a ";"
+        Sm90Compute<cutlass::multiplies, float, float, cutlass::FloatRoundStyle::round_to_nearest>;
+                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(142): error: namespace "cutlass::epilogue::fusion" has no member "Sm90EVT"
+    using EVTCompute0 = cutlass::epilogue::fusion::Sm90EVT<Compute0, ScaleB, Accum>;
+                                                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(142): error: expected a ";"
+    using EVTCompute0 = cutlass::epilogue::fusion::Sm90EVT<Compute0, ScaleB, Accum>;
+                                                          ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(145): error: namespace "cutlass::epilogue::fusion" has no member "Sm90Compute"
+        Sm90Compute<cutlass::multiplies, ElementD, float, cutlass::FloatRoundStyle::round_to_nearest>;
+        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(145): error: expected a ";"
+        Sm90Compute<cutlass::multiplies, ElementD, float, cutlass::FloatRoundStyle::round_to_nearest>;
+                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(148): error: namespace "cutlass::epilogue::fusion" has no member "Sm90EVT"
+    using EVTCompute = cutlass::epilogue::fusion::Sm90EVT<Compute1, ScaleA, EVTCompute0>;
+                                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(148): error: expected a ";"
+    using EVTCompute = cutlass::epilogue::fusion::Sm90EVT<Compute1, ScaleA, EVTCompute0>;
+                                                         ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(149): error: a class or namespace qualified name is required
+    using ArgumentType = typename EVTCompute::Arguments;
+                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(149): error: expected a ";"
+    using ArgumentType = typename EVTCompute::Arguments;
+                                            ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(155): error: name followed by "::" must be a class or namespace name
+      typename EVTCompute0::Arguments evt0_args{b_args, {}, {}};
+               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(155): error: a class or namespace qualified name is required
+      typename EVTCompute0::Arguments evt0_args{b_args, {}, {}};
+               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(155): error: global-scope qualifier (leading "::") is not allowed
+      typename EVTCompute0::Arguments evt0_args{b_args, {}, {}};
+                          ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(155): error: expected a ";"
+      typename EVTCompute0::Arguments evt0_args{b_args, {}, {}};
+                                      ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(156): error: identifier "evt0_args" is undefined
+      return ArgumentType{a_args, evt0_args, {}};
+                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(156): error: too many initializer values
+      return ArgumentType{a_args, evt0_args, {}};
+                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(179): error: namespace "cutlass::epilogue::fusion" has no member "Sm90Compute"
+        Sm90Compute<cutlass::multiplies, float, float, cutlass::FloatRoundStyle::round_to_nearest>;
+        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(179): error: expected a ";"
+        Sm90Compute<cutlass::multiplies, float, float, cutlass::FloatRoundStyle::round_to_nearest>;
+                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(181): error: namespace "cutlass::epilogue::fusion" has no member "Sm90EVT"
+    using EVTCompute0 = cutlass::epilogue::fusion::Sm90EVT<Compute0, ScaleB, Accum>;
+                                                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(181): error: expected a ";"
+    using EVTCompute0 = cutlass::epilogue::fusion::Sm90EVT<Compute0, ScaleB, Accum>;
+                                                          ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(184): error: namespace "cutlass::epilogue::fusion" has no member "Sm90Compute"
+        Sm90Compute<cutlass::homogeneous_multiply_add, ElementD, float, cutlass::FloatRoundStyle::round_to_nearest>;
+        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(184): error: expected a ";"
+        Sm90Compute<cutlass::homogeneous_multiply_add, ElementD, float, cutlass::FloatRoundStyle::round_to_nearest>;
+                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(187): error: namespace "cutlass::epilogue::fusion" has no member "Sm90EVT"
+    using EVTCompute = cutlass::epilogue::fusion::Sm90EVT<Compute1, ScaleA, EVTCompute0, Bias>;
+                                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(187): error: expected a ";"
+    using EVTCompute = cutlass::epilogue::fusion::Sm90EVT<Compute1, ScaleA, EVTCompute0, Bias>;
+                                                         ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(189): error: a class or namespace qualified name is required
+    using ArgumentType = typename EVTCompute::Arguments;
+                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(189): error: expected a ";"
+    using ArgumentType = typename EVTCompute::Arguments;
+                                            ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(196): error: name followed by "::" must be a class or namespace name
+      typename EVTCompute0::Arguments evt0_args{b_args, {}, {}};
+               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(196): error: a class or namespace qualified name is required
+      typename EVTCompute0::Arguments evt0_args{b_args, {}, {}};
+               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(196): error: global-scope qualifier (leading "::") is not allowed
+      typename EVTCompute0::Arguments evt0_args{b_args, {}, {}};
+                          ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(196): error: expected a ";"
+      typename EVTCompute0::Arguments evt0_args{b_args, {}, {}};
+                                      ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(197): error: identifier "evt0_args" is undefined
+      return ArgumentType{a_args, evt0_args, bias_args, {}};
+                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(197): error: too many initializer values
+      return ArgumentType{a_args, evt0_args, bias_args, {}};
+                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(216): error: namespace "cutlass::epilogue::fusion" has no member "Sm90Compute"
+        Sm90Compute<cutlass::multiplies, float, float, cutlass::FloatRoundStyle::round_to_nearest>;
+        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(216): error: expected a ";"
+        Sm90Compute<cutlass::multiplies, float, float, cutlass::FloatRoundStyle::round_to_nearest>;
+                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(218): error: namespace "cutlass::epilogue::fusion" has no member "Sm90EVT"
+    using EVTCompute0 = cutlass::epilogue::fusion::Sm90EVT<Compute0, ScaleB, Accum>;
+                                                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(218): error: expected a ";"
+    using EVTCompute0 = cutlass::epilogue::fusion::Sm90EVT<Compute0, ScaleB, Accum>;
+                                                          ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(221): error: namespace "cutlass::epilogue::fusion" has no member "Sm90Compute"
+        Sm90Compute<cutlass::homogeneous_multiply_add, ElementD, float, cutlass::FloatRoundStyle::round_to_nearest>;
+        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(221): error: expected a ";"
+        Sm90Compute<cutlass::homogeneous_multiply_add, ElementD, float, cutlass::FloatRoundStyle::round_to_nearest>;
+                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(224): error: namespace "cutlass::epilogue::fusion" has no member "Sm90EVT"
+    using EVTCompute = cutlass::epilogue::fusion::Sm90EVT<Compute1, ScaleA, EVTCompute0, Bias>;
+                                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(224): error: expected a ";"
+    using EVTCompute = cutlass::epilogue::fusion::Sm90EVT<Compute1, ScaleA, EVTCompute0, Bias>;
+                                                         ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(226): error: a class or namespace qualified name is required
+    using ArgumentType = typename EVTCompute::Arguments;
+                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(226): error: expected a ";"
+    using ArgumentType = typename EVTCompute::Arguments;
+                                            ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(233): error: name followed by "::" must be a class or namespace name
+      typename EVTCompute0::Arguments evt0_args{b_args, {}, {}};
+               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(233): error: a class or namespace qualified name is required
+      typename EVTCompute0::Arguments evt0_args{b_args, {}, {}};
+               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(233): error: global-scope qualifier (leading "::") is not allowed
+      typename EVTCompute0::Arguments evt0_args{b_args, {}, {}};
+                          ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(233): error: expected a ";"
+      typename EVTCompute0::Arguments evt0_args{b_args, {}, {}};
+                                      ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(234): error: identifier "evt0_args" is undefined
+      return ArgumentType{a_args, evt0_args, bias_args, {}};
+                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(234): error: too many initializer values
+      return ArgumentType{a_args, evt0_args, bias_args, {}};
+                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(260): error: namespace "cutlass::epilogue::fusion" has no member "Sm90Compute"
+        Sm90Compute<cutlass::minus, float, int32_t, cutlass::FloatRoundStyle::round_to_nearest>;
+        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(260): error: expected a ";"
+        Sm90Compute<cutlass::minus, float, int32_t, cutlass::FloatRoundStyle::round_to_nearest>;
+                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(262): error: namespace "cutlass::epilogue::fusion" has no member "Sm90EVT"
+    using EVTComputeAzp = cutlass::epilogue::fusion::Sm90EVT<ComputeAzp, Accum, AzpWithAdj>;
+                                                     ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(262): error: expected a ";"
+    using EVTComputeAzp = cutlass::epilogue::fusion::Sm90EVT<ComputeAzp, Accum, AzpWithAdj>;
+                                                            ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(265): error: namespace "cutlass::epilogue::fusion" has no member "Sm90Compute"
+        Sm90Compute<cutlass::multiplies, float, float, cutlass::FloatRoundStyle::round_to_nearest>;
+        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(265): error: expected a ";"
+        Sm90Compute<cutlass::multiplies, float, float, cutlass::FloatRoundStyle::round_to_nearest>;
+                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(267): error: namespace "cutlass::epilogue::fusion" has no member "Sm90EVT"
+    using EVTComputeScaleB = cutlass::epilogue::fusion::Sm90EVT<ComputeScaleB, ScaleB, EVTComputeAzp>;
+                                                        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(267): error: expected a ";"
+    using EVTComputeScaleB = cutlass::epilogue::fusion::Sm90EVT<ComputeScaleB, ScaleB, EVTComputeAzp>;
+                                                               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(270): error: namespace "cutlass::epilogue::fusion" has no member "Sm90Compute"
+        Sm90Compute<cutlass::homogeneous_multiply_add, ElementD, float, cutlass::FloatRoundStyle::round_to_nearest>;
+        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(270): error: expected a ";"
+        Sm90Compute<cutlass::homogeneous_multiply_add, ElementD, float, cutlass::FloatRoundStyle::round_to_nearest>;
+                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(273): error: namespace "cutlass::epilogue::fusion" has no member "Sm90EVT"
+    using EVTCompute = cutlass::epilogue::fusion::Sm90EVT<ComputeScaleBiasA, ScaleA, EVTComputeScaleB, Bias>;
+                                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(273): error: expected a ";"
+    using EVTCompute = cutlass::epilogue::fusion::Sm90EVT<ComputeScaleBiasA, ScaleA, EVTComputeScaleB, Bias>;
+                                                         ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(274): error: a class or namespace qualified name is required
+    using ArgumentType = typename EVTCompute::Arguments;
+                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(274): error: expected a ";"
+    using ArgumentType = typename EVTCompute::Arguments;
+                                            ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(286): error: name followed by "::" must be a class or namespace name
+      typename EVTComputeAzp::Arguments evt_azp_args{{}, azp_adj_args, {}};
+               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(286): error: a class or namespace qualified name is required
+      typename EVTComputeAzp::Arguments evt_azp_args{{}, azp_adj_args, {}};
+               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(286): error: global-scope qualifier (leading "::") is not allowed
+      typename EVTComputeAzp::Arguments evt_azp_args{{}, azp_adj_args, {}};
+                            ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(286): error: expected a ";"
+      typename EVTComputeAzp::Arguments evt_azp_args{{}, azp_adj_args, {}};
+                                        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(287): error: name followed by "::" must be a class or namespace name
+      typename EVTComputeScaleB::Arguments evt_scale_b_args{b_args, evt_azp_args, {}};
+               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(287): error: a class or namespace qualified name is required
+      typename EVTComputeScaleB::Arguments evt_scale_b_args{b_args, evt_azp_args, {}};
+               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(287): error: global-scope qualifier (leading "::") is not allowed
+      typename EVTComputeScaleB::Arguments evt_scale_b_args{b_args, evt_azp_args, {}};
+                               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(287): error: expected a ";"
+      typename EVTComputeScaleB::Arguments evt_scale_b_args{b_args, evt_azp_args, {}};
+                                           ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(288): error: identifier "evt_scale_b_args" is undefined
+      return ArgumentType{a_args, evt_scale_b_args, bias_args, {}};
+                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(288): error: too many initializer values
+      return ArgumentType{a_args, evt_scale_b_args, bias_args, {}};
+                                  ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(319): error: namespace "cutlass::epilogue::fusion" has no member "Sm90Compute"
+        Sm90Compute<cutlass::multiplies, int32_t, int32_t, cutlass::FloatRoundStyle::round_to_nearest>;
+        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(319): error: expected a ";"
+        Sm90Compute<cutlass::multiplies, int32_t, int32_t, cutlass::FloatRoundStyle::round_to_nearest>;
+                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(321): error: namespace "cutlass::epilogue::fusion" has no member "Sm90EVT"
+    using EVTComputeAzp = cutlass::epilogue::fusion::Sm90EVT<ComputeAzp, Azp, AzpAdj>;
+                                                     ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(321): error: expected a ";"
+    using EVTComputeAzp = cutlass::epilogue::fusion::Sm90EVT<ComputeAzp, Azp, AzpAdj>;
+                                                            ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(325): error: namespace "cutlass::epilogue::fusion" has no member "Sm90Compute"
+        Sm90Compute<cutlass::minus, float, int32_t, cutlass::FloatRoundStyle::round_to_nearest>;
+        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(325): error: expected a ";"
+        Sm90Compute<cutlass::minus, float, int32_t, cutlass::FloatRoundStyle::round_to_nearest>;
+                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(327): error: namespace "cutlass::epilogue::fusion" has no member "Sm90EVT"
+    using EVTComputeAcc = cutlass::epilogue::fusion::Sm90EVT<ComputeAcc, Accum, EVTComputeAzp>;
+                                                     ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(327): error: expected a ";"
+    using EVTComputeAcc = cutlass::epilogue::fusion::Sm90EVT<ComputeAcc, Accum, EVTComputeAzp>;
+                                                            ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(330): error: namespace "cutlass::epilogue::fusion" has no member "Sm90Compute"
+        Sm90Compute<cutlass::multiplies, float, float, cutlass::FloatRoundStyle::round_to_nearest>;
+        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(330): error: expected a ";"
+        Sm90Compute<cutlass::multiplies, float, float, cutlass::FloatRoundStyle::round_to_nearest>;
+                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(332): error: namespace "cutlass::epilogue::fusion" has no member "Sm90EVT"
+    using EVTComputeScaleB = cutlass::epilogue::fusion::Sm90EVT<ComputeScaleB, ScaleB, EVTComputeAcc>;
+                                                        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(332): error: expected a ";"
+    using EVTComputeScaleB = cutlass::epilogue::fusion::Sm90EVT<ComputeScaleB, ScaleB, EVTComputeAcc>;
+                                                               ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(335): error: namespace "cutlass::epilogue::fusion" has no member "Sm90Compute"
+        Sm90Compute<cutlass::homogeneous_multiply_add, ElementD, float, cutlass::FloatRoundStyle::round_to_nearest>;
+        ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(335): error: expected a ";"
+        Sm90Compute<cutlass::homogeneous_multiply_add, ElementD, float, cutlass::FloatRoundStyle::round_to_nearest>;
+                   ^
+
+/sgl-workspace/sglang/sgl-kernel/csrc/cutlass_extensions/epilogue/scaled_mm_epilogues_c3x.hpp(338): error: namespace "cutlass::epilogue::fusion" has no member "Sm90EVT"
+    using EVTCompute = cutlass::epilogue::fusion::Sm90EVT<ComputeScaleBiasA, ScaleA, EVTComputeScaleB, Bias>;
+                                                  ^
+
+Error limit reached.
+100 errors detected in the compilation of "/work/project/fp8_weight_stream_extension.cu".
+Compilation terminated.
+ninja: build stopped: subcommand failed.

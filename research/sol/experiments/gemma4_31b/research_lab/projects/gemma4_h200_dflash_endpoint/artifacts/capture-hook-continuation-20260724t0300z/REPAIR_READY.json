@@ -1,0 +1,7 @@
+{
+  "claim_retained": true,
+  "classification": "recoverable_pre_science_integration_failure",
+  "diagnostic": "remote exit 1 at stage image_overlay",
+  "repair_deadline_utc": "2026-07-24T06:45:00Z",
+  "schema_version": 1
+}

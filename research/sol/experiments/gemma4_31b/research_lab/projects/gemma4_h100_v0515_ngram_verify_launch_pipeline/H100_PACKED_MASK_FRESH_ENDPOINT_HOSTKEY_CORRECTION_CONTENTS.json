@@ -1,0 +1,42 @@
+{
+  "boot_disk_gib": 200,
+  "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+  "caches": "Fresh provider resource; no checkpoint, packet, request, stock arm, or candidate arm was consumed before the host-key correction.",
+  "candidate": "single_packed_cpu_full_mask_staging passed its exact H100 preparation-plus-attention consumer with byte/bit identity and 13.4605% lower median interval.",
+  "checkpoint": "Fresh 200-GiB guest; no checkpoint is resident. Stage and hash-verify the exact immutable checkpoint bound by the incorporated original packet manifest.",
+  "component_result": {
+    "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+    "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+  },
+  "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_FRESH_ENDPOINT_HOSTKEY_CORRECTION_CONTENTS.json",
+  "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_HOSTKEY_CORRECTION_BINDING.json",
+  "director_binding_sha256": "c8a9689bf6367756550ec4c31b41a0f3f1a6f2c4546bfd2d5e610cf7290f26b9",
+  "endpoint": "Run one new content-addressed 791-request stock/candidate pair using indices 61000..61790. Historical indices 0..1035 and sentinel indices 60000..60003 are forbidden.",
+  "filesystem": "Fresh 200-GiB network-SSD boot disk selected to fit the exact checkpoint, pinned image, runtime caches, and endpoint artifacts.",
+  "hostkey_reconciliation": {
+    "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+    "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b",
+    "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry"
+  },
+  "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "next": "Priority-8500 may verify the correction and incorporated original binding, claim once, start one durable owner, establish the guest, stage exact inputs, and run only the unchanged fresh stock/candidate endpoint pair. Persist the correction result and typed terminal and release by 2026-07-25T17:30:00Z.",
+  "original_binding": {
+    "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+    "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+  },
+  "prior_attempt": {
+    "classification": "external_identity_blocker_pre_science",
+    "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+    "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+    "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+    "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b",
+    "science_consumed": false
+  },
+  "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+  "result": "available_for_unchanged_fresh_endpoint_after_hostkey_correction",
+  "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6; guest readiness, image, checkpoint, and server are not yet established.",
+  "schema_version": 1,
+  "server_state": "Provider reports the registered instance RUNNING. Strict SSH now succeeds. Guest readiness, exact staging, candidate integration, server load, and both endpoint arms remain delegated.",
+  "ssh_identity": "Use only /root/.config/nebius/glm-campaign/ssh_ed25519 with glmrunner, the current runtime/gpus.json address, and the registered known-hosts namespace."
+}

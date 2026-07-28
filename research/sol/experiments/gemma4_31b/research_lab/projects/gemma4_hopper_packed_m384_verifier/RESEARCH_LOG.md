@@ -484,3 +484,308 @@ Next move: director may admit one new stock-versus-streaming H100 component
 measurement using the hash-bound lifecycle-pure runner. Repair ordinary
 compile/API defects in the retained session; never replay V2 or promote before
 the new component terminal.
+
+## 2026-07-26 — cold-H100 streaming component owner bound
+
+Question: can the director safely admit the one new streaming stock-versus-
+candidate H100 component cycle without reusing the retired V2 lifecycle?
+
+Action: added `run_streaming_h100_component_owner.py` and the immutable
+`STREAMING_H100_COMPONENT_INPUT_MANIFEST.json`. The owner verifies the
+admission, a future readmission's exact `$7` reservation, H100 claim, deadline,
+runner/source hashes, and SSH identity; it then reconciles a content-addressed
+remote packet, pulls the pinned image, invokes the exact lifecycle-pure runner,
+retrieves compact raw artifacts, and releases only after a typed scientific
+terminal. Pre-science staging, launcher, compile, runtime-API, and retrieval
+failures retain the claim with a repair handshake.
+
+Evidence: `PACKED_M384_STREAMING_H100_COMPONENT_READY.json`
+(`sha256:14d179bf4c065d7aefe3f3d73f60caf3f30a1939a630ba89401b8b5374964d68`)
+binds the owner (`7ac55b0a3ac3f8ec6035b32f9a8902ddb011dcdd0197141f852cc2870aec02f4`),
+the four-file packet manifest (`5189f2beab6cd7def9fa6d7ee3a1e8297c5076f6a533b949814246f8ad595583`),
+and the admitted streaming-ready predecessor. Local `py_compile` and static
+contract checks pass; `manifest-pack` produced the five-member packet with
+SHA-256 `917eee09ef74f7e38bb7ea8c1844aa0c396641e4db936f5353f09f56e0f62b9b`.
+The pre-existing numpy-based offline test cannot import `numpy` on this
+coordinator; no GPU attempt occurred.
+
+Interpretation: this is executable launch preparation, not a measurement. The
+project remains provider- and GPU-ineligible, has no active session, retains
+`actual_spend_usd: 2.716333`, and has consumed no new candidate sample.
+
+Next move: director records the exact $7 reservation, consumes READY, and
+issues a bench/deadline readmission. The researcher then atomically claims the
+named H100 and launches this owner through `detached-owner --unit-manager pid`.
+
+## 2026-07-26 — retained-owner repair loop corrected
+
+Question: can a recoverable H100 component failure resume under one continuous
+claim without replaying an ambiguous CUDA submission?
+
+Action: replaced READY generation 1 atomically with generation 2 and amended
+the same owner. Every repair generation now waits for, hash-verifies, records,
+and consumes `REPAIR_REQUEST.json` before resuming only its permitted stage.
+Pre-science states may restage, retry the unsubmitted component, or retrieve;
+`science_started` and terminal-marker states permit retrieval or an explicitly
+hash-recorded offline result-construction patch only. The owner loops through
+fresh nanosecond repair IDs while the heartbeat remains live and only releases
+after a scientific terminal.
+
+Evidence: generation 2 READY is
+`23ad5ea6b5a7e2dd42b26fa39358566aefe19bf72f316df77596e09eb27de749`,
+binding owner `c4fdbba4d6a860c07e63f6b92738f733d2c3f8249b34d2bb8c274016c2944efc`
+and the director repair binding. A local execution of the shared handshake
+created a ready/request pair, exercised owner request consumption, and proved
+that `REPAIR_APPLIED.json` is written; its invocation gate allows retry for
+`pre_science` but denies component replay for `science_started`.
+
+Interpretation: the prior failure was an owner-control defect, not scientific
+evidence. No H100 was created or claimed, no CUDA work ran, and actual spend
+remains `$2.716333`.
+
+Next move: director consumes generation 2 and supplies the H100 readmission.
+
+## 2026-07-26 — registered H100 blocked by cumulative spend cap
+
+Question: may the project claim the director-registered two-hour H100 lifecycle
+under the restored cumulative `$7.00` reservation?
+
+Action: reconciled the current status spend with the registered H100's fixed
+provider-start-to-cleanup interval before the atomic claim. No owner, SSH,
+container, CUDA, V2, or endpoint operation was started.
+
+Evidence: `STATUS.json` records prior `actual_spend_usd: 2.716333`, leaving
+`$4.283667` of the explicit cumulative `$7.00` cap. The registered H100 rate
+is `$2.9597222/hour` and its fixed lifecycle is 7,200 seconds, for
+`$5.9194444` exposure. The resulting minimum project exposure is `$8.6357774`,
+which exceeds the authorized ceiling by `$1.6357774`.
+
+Interpretation: this is a typed external budget boundary, not an experiment or
+scientific result. Claiming would violate the user's cumulative-spend rule even
+though the readmission and resource are otherwise technically ready.
+
+Next move: director must increase the cumulative reservation or explicitly
+reassign a smaller verified lifecycle exposure; only then claim the named H100
+and launch the exact detached owner.
+
+## 2026-07-26 — retained H100 pre-science compiler repair
+
+Question: can the admitted streaming component reach its sole exact consumer
+without changing its hash-bound runner or CUDA source?
+
+Action: preserved the live owner, claim, packet, and image. Archived each
+zero-request pre-science output root with SHA-256 manifests, then submitted
+hash-recorded `run_unsubmitted_cycle` requests. The final repair patches only
+the generated, root-owned Ninja `cuda_cflags` with the pinned image's bundled
+NVIDIA development-header roots; it does not alter the frozen runner, source,
+control, or component contract.
+
+Evidence: the first missing `cusparse.h` and then `cublas_v2.h` diagnostics
+were both pre-science (`INVOCATION_STATE.json` records no candidate CUDA
+submission). The final repair helper emitted `patched .../build/build.ninja`,
+and owner state advanced to `launch_attempted` at `21:31:12Z`. PID `2081506`
+remains live with matching start ticks and the pool heartbeat is non-stale.
+
+Interpretation: no scientific sample has been consumed; the owner is now
+executing the one admitted component cycle under its original deadline.
+
+Next move: let the durable owner retrieve a typed terminal or expose another
+bounded repair handshake; do not poll or replay V2/endpoint work.
+
+## 2026-07-26 — CUDA math-constants retained repair
+
+Question: can the same pre-science component compile progress without changing
+the admitted CUDA source or runner?
+
+Action: retrieved the failed compile output once, archived its zero-request
+root and hash manifest, then submitted a hash-bound `run_unsubmitted_cycle`
+request. The repair adds only `-include /usr/local/cuda/include/math_constants.h`
+to the generated Ninja CUDA flags alongside the already-required pinned-image
+development headers.
+
+Evidence: the prior invocation remained `pre_science` with no candidate CUDA
+submission; its sole compiler error was `CUDART_INF_F` undefined. The pinned
+image contains `math_constants.h` and defines `CUDART_INF_F`. The repair helper
+recorded `patched .../build/build.ninja`; live owner state crossed back to
+`launch_attempted` at `21:35:12Z`, with a non-stale pool claim.
+
+Interpretation: the component cycle remains unconsumed and is executing under
+the original controller, claim timestamp, budget, and deadline.
+
+Next move: await the owner terminal or a subsequent bounded repair request;
+do not replay V2 or run endpoint work.
+
+## 2026-07-26 — CUDA 12.9 cluster-launch compatibility repair
+
+Question: can the hash-bound CUDA source compile against the pinned image's
+newer anonymous `cudaLaunchAttributeValue::clusterDim` ABI without altering
+the scientific program?
+
+Action: archived the unsubmitted compiler output with hashes and added a
+compiler-only compatibility header to the generated Ninja flags. The header
+rewrites `dim3(x,y,z)` as a braced initializer, which is valid both for the
+ordinary launch dimensions and CUDA 12.9's anonymous cluster-dimension struct.
+
+Evidence: the prior failure was pre-science and isolated to assignment of
+`dim3` into `clusterDim`. An exact pinned-image `nvcc` compilation of the
+unchanged source with the compatibility header succeeded. The hash-bound
+repair request was consumed and owner state advanced to `launch_attempted` at
+`21:38:29Z`.
+
+Interpretation: this remains a same-claim integration continuation; no
+candidate sample, V2 replay, or endpoint action has occurred.
+
+Next move: let the durable owner finish the sole component cycle or expose a
+new typed repair handoff.
+
+## 2026-07-26 — fixture-dtype binding boundary
+
+Question: did the compiled candidate consume a CUDA sample before the
+fixture's index dtype failed?
+
+Action: retrieved the raw stdout/stderr and compiled extension artifacts,
+then used the owner's allowed offline-result-construction path to record a
+hash-bound classifier repair. It atomically preserved the raw-log hashes and
+reclassified the event as a host-side pre-science dtype guard; the owner then
+opened fresh repair ID `streaming-h100-1785102152052403190` while retaining
+the original claim and heartbeat.
+
+Evidence: the extension compiled and loaded, but its `kv_indices` type guard
+raised `packed_m384_streaming_int32_indices_required` before a kernel launch.
+The manifest-bound fixture explicitly produces `pages` as `torch.int64`, while
+the same manifest-bound CUDA source requires `at::kInt` and `int32_t*`.
+`REPAIR_TERMINAL.json` records the raw stdout/stderr SHA-256 values.
+
+Interpretation: no candidate CUDA sample was consumed despite the runner's
+premature `science_started` marker. Mutating the fixture would change an
+admitted manifest file, so it is a binding-rebind boundary rather than a safe
+in-place replay.
+
+Next move: director must bind the corrected int32 fixture and an updated
+manifest/readmission; until then keep PID 2081506 and its warm claim retained
+at the fresh repair handshake without requesting a component replay.
+
+## 2026-07-26 — director-authorized fixture-dtype rebind
+
+Question: can the unsubmitted component resume with the required int32 page
+indices while preserving every scientific identity and the same warm owner?
+
+Action: consumed `DIRECTOR_HOPPER_PACKED_STREAMING_FIXTURE_DTYPE_REPAIR_20260726T2146Z.json` and changed only the fixture's `torch.randperm` dtype from
+int64 to int32. Regenerated the input manifest, recorded a repair-local rebind
+packet, atomically replaced only those two verified members in the retained
+remote packet, archived the zero-request output root, and requested only
+`run_unsubmitted_cycle` under repair ID `streaming-h100-1785102152052403190`.
+
+Evidence: corrected fixture SHA-256 is
+`95e904aa1d196ec230d4be62c2e9a7bae83931f399592cd21a9adb978b7ef637`;
+corrected manifest SHA-256 is
+`618ce17579ca30632c11926e4f5738bffc90c4de30d316df800ff6decf2c320a`.
+The request is hash-bound to the director repair plus unchanged candidate,
+control, and runner identities. Owner state crossed `launch_attempted` at
+`21:51:30Z` under the original PID and claim.
+
+Interpretation: the binding defect is resolved and the sole component cycle is
+in flight; no V2 or endpoint operation was requested.
+
+Next move: consume the durable owner terminal or a future typed repair
+diagnostic without replaying any completed scientific stage.
+
+## 2026-07-26 — post-submission CUDA launch incompatibility
+
+Question: did the corrected component produce an interpretable candidate row?
+
+Action: retrieved the remote stdout/stderr, compiled extension and invocation
+marker. The corrected fixture passed the int32 guard and the candidate was
+submitted, but `torch.cuda.synchronize()` returned an unspecified CUDA launch
+failure before a numerical or timing row persisted. Used the allowed offline
+construction path only to persist `RUNTIME_INCOMPATIBILITY.json` and its raw
+log hashes; no result terminal was synthesized and no replay was requested.
+
+Evidence: `INVOCATION_STATE.json` records `candidate_cuda_invocation_started:
+true`; the compiled shared object and resource report are present; stderr
+records the CUDA launch failure. The incompatibility artifact hashes stdout as
+`ab9d857927e8aee78e4aedf7408cbbb62cffc68fd5f548723cd6b61aa1d94117` and
+stderr as `7a9837fae99c705420c782ea35fc3efb3125e3de3a5b9dc1c6e97c9673a51bff`.
+
+Interpretation: this is not a valid positive/negative scientific component
+measurement, but it is a post-submission runtime incompatibility and cannot
+be replayed under the admitted contract. PID `2081506` remains live and
+heartbeating under non-replay repair ID `streaming-h100-1785102961465033086`.
+
+Next move: director must choose a source-level candidate repair or terminal
+disposition; retain the warm claim and do not replay V2, endpoint, or this
+component cycle.
+
+## 2026-07-26 — deep offline launch-failure localization
+
+Question: does the immutable launch packet identify a first invalid
+source-level invariant without replaying CUDA?
+
+Action: hash-bound the source, corrected fixture, runner, generated Ninja
+configuration, compiled object/module, SM90a resource report, invocation
+marker, incompatibility record, and raw logs. Derived every local/global
+pointer bound and launch/shared-memory quantity offline, then used only the
+owner's `offline_result_construction` path to persist the typed localization
+terminal.
+
+Evidence: all frozen local d256 bounds are in range; its 1,024-CTA grid is
+cluster-size-1 divisible and uses 42,128 dynamic plus 1,024 compiled static
+shared bytes, 96 registers/thread, and zero stack bytes. The runner, however,
+records `science_started` before two stock calls and the candidate call and
+has only one synchronization afterward. The unspecified asynchronous error
+therefore has neither arm identity nor a device fault PC. Terminal
+`cbebfdcc5e7c95342bd5619031dce5bf0cac025568c5593bc6aa1813e4369033`
+records
+`preserved_evidence_insufficient_for_unique_source_level_fault_localization`;
+no CUDA, component replay, V2 replay, or endpoint action occurred.
+
+Interpretation: the local candidate is suspect by execution order, but naming
+a defective source line would exceed the preserved evidence. This remains an
+uninterpretable invalid attempt, not a performance or correctness result.
+
+Next move: PID `2081506` retains the original claim under fresh repair ID
+`streaming-h100-1785103561963304790`. Director must either bind a later
+arm-isolated discriminator or issue terminal release disposition before
+`2026-07-26T22:59:10Z`; no replay is currently authorized.
+
+## 2026-07-26 — arm-isolated discriminator launched
+
+Action: the retained owner constructed the required offline invalid-attempt
+terminal and released. A fresh H100 claim at `22:17:31Z` then launched the
+director-bound arm-isolated controller. Two pre-science staging defects
+(missing remote parent and then missing build directory) were preserved in
+the owner logs and repaired in place; neither reached CUDA. The fourth owner
+generation is live with the corrected CUDA development-header and CUDA-12.9
+cluster-dimension compatibility inputs hash-bound in its packet.
+
+Evidence: detached PID `2137024` (start ticks `122058439`) crossed
+`runner_launch_attempted` at `22:22:49Z` against the fresh packet digest
+`6d4507f3c9a6ede3431a3bbddb3195ab47c31709c319142ea73e57bd3ed30223`.
+No per-arm completion marker exists yet, so no stock or candidate result has
+been interpreted or replayed.
+
+Next move: allow this owner to persist the first per-arm completion/fault or
+the bound terminal, retrieve it, and release by the absolute deadline.
+
+## 2026-07-26 — arm-isolated terminal
+
+Action: reconciled the detached owner terminal and preserved the supervisor
+drain-after-release fence. No candidate, V2, or endpoint replay was issued.
+
+Evidence: local d256 stock A, stock B, and candidate all completed at separate
+synchronization boundaries; its stock A/A delta was zero and the candidate
+reached the FP64 consumer (`relative_l2=0.00165834`) plus the bound 25-rep
+timing (candidate p50 `17.2093 ms`, control p50 `1.48038 ms`). Global d512
+stock A and B also completed independently, but the candidate's own marker
+records `cudaErrorLaunchFailure`. The terminal is
+`artifacts/streaming-h100-arm-isolated-20260726t2210z/PACKED_M384_STREAMING_ARM_ISOLATED_RESULT.json`
+(`c63c5ce8…`). Full registered provider exposure from `20:59:09Z` through
+release at `22:25:14Z` is `$4.245923`.
+
+Interpretation: this isolates the unspecified launch failure to the unchanged
+global d512 candidate rather than either stock arm. The local timing is not a
+promotion result because the exact global geometry fails; the admitted one
+shot is consumed and the project must not replay it.
+
+Next move: await director disposition with the drained bench and immutable
+terminal preserved.

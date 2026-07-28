@@ -1,0 +1,777 @@
+usage: gpu_pool.py [-h] --lab LAB
+                   {list,register,claim,heartbeat,update,release,drain,reclaim,ready,replace-watchdog,retire} ...
+gpu_pool.py: error: project does not own a GPU bench: gemma4_h200_dflash_endpoint
+usage: gpu_pool.py [-h] --lab LAB
+                   {list,register,claim,heartbeat,update,release,drain,reclaim,ready,replace-watchdog,retire} ...
+gpu_pool.py: error: project does not own a GPU bench: gemma4_h200_dflash_endpoint
+usage: gpu_pool.py [-h] --lab LAB
+                   {list,register,claim,heartbeat,update,release,drain,reclaim,ready,replace-watchdog,retire} ...
+gpu_pool.py: error: project does not own a GPU bench: gemma4_h200_dflash_endpoint
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T18:11:54.434310Z",
+    "heartbeat_at": "2026-07-25T18:12:34.012458Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T19:12:34.012458Z",
+    "project": "gemma4_h200_dflash_endpoint",
+    "stale": false
+  },
+  "contents": {
+    "actual_spend_usd": 2.9737686855138894,
+    "artifacts": "Remote /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/oracle-cycles.jsonl is 151122 bytes; oracle-cycles.observer-error and DFLASH_CYCLE_ORACLE_TERMINAL.json are absent.",
+    "c32_pair_started": false,
+    "caches": "Fresh disk; preserve all exact model, source, image, and CUDA caches after staging.",
+    "candidate": "TP=1 tied-head adapter and adapted four-request DFlash diagnostic; conditional matched c32 pair only on gate pass.",
+    "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "contents_artifact": "gemma4_h200_dflash_endpoint/H200_DFLASH_ADAPTER_PRIORITY_8490_CONTENTS.json",
+    "contents_artifact_sha256": "45c806b49f93d1220bb42e8025054f4314cbc78a3aa6f9bf305e4e008f3ae121",
+    "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1; exact one-time materialization authorized but not yet staged",
+    "filesystem": "250-GiB network SSD boot disk.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; exact one-time materialization authorized but not yet staged",
+    "next": "Priority 8600 claims once, retrieves the existing raw cycle file without another request, constructs the oracle terminal offline, conditionally measures c32 depths only on pass, then stops processes and releases by 19:45Z.",
+    "priority": 8490,
+    "priority_reason": "The available protected H200 is independent of the claimed H100 and its direct endpoint consumer outranks the H100-dependent component.",
+    "project": "gemma4_h200_dflash_endpoint",
+    "result": "dflash_oracle_raw_complete_pending_offline_terminal",
+    "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
+    "schema_version": 1,
+    "server_state": "Healthy gemma4-dflash container remains resident with exact target, draft, patched source, and CUDA graphs; no local owner is active.",
+    "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint.",
+    "terminal": "gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.45,
+  "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T22:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "main_pid": 828601,
+      "unit": "gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T15:16:31.474656Z",
+  "resource": {
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "disk_name": "gemma4-dflash-h200-adapter-20260725t1512z-boot",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "instance_name": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.109.132",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T18:12:34.012458Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T18:11:54.434310Z",
+    "heartbeat_at": "2026-07-25T18:13:19.064106Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T19:13:19.064106Z",
+    "project": "gemma4_h200_dflash_endpoint",
+    "stale": false
+  },
+  "contents": {
+    "actual_spend_usd": 2.9737686855138894,
+    "artifacts": "Remote /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/oracle-cycles.jsonl is 151122 bytes; oracle-cycles.observer-error and DFLASH_CYCLE_ORACLE_TERMINAL.json are absent.",
+    "c32_pair_started": false,
+    "caches": "Fresh disk; preserve all exact model, source, image, and CUDA caches after staging.",
+    "candidate": "TP=1 tied-head adapter and adapted four-request DFlash diagnostic; conditional matched c32 pair only on gate pass.",
+    "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "contents_artifact": "gemma4_h200_dflash_endpoint/H200_DFLASH_ADAPTER_PRIORITY_8490_CONTENTS.json",
+    "contents_artifact_sha256": "45c806b49f93d1220bb42e8025054f4314cbc78a3aa6f9bf305e4e008f3ae121",
+    "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1; exact one-time materialization authorized but not yet staged",
+    "filesystem": "250-GiB network SSD boot disk.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; exact one-time materialization authorized but not yet staged",
+    "next": "Priority 8600 claims once, retrieves the existing raw cycle file without another request, constructs the oracle terminal offline, conditionally measures c32 depths only on pass, then stops processes and releases by 19:45Z.",
+    "priority": 8490,
+    "priority_reason": "The available protected H200 is independent of the claimed H100 and its direct endpoint consumer outranks the H100-dependent component.",
+    "project": "gemma4_h200_dflash_endpoint",
+    "result": "dflash_oracle_raw_complete_pending_offline_terminal",
+    "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
+    "schema_version": 1,
+    "server_state": "Healthy gemma4-dflash container remains resident with exact target, draft, patched source, and CUDA graphs; no local owner is active.",
+    "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint.",
+    "terminal": "gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.45,
+  "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T22:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "main_pid": 828601,
+      "unit": "gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T15:16:31.474656Z",
+  "resource": {
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "disk_name": "gemma4-dflash-h200-adapter-20260725t1512z-boot",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "instance_name": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.109.132",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T18:13:19.064106Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T18:11:54.434310Z",
+    "heartbeat_at": "2026-07-25T18:14:04.124346Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T19:14:04.124346Z",
+    "project": "gemma4_h200_dflash_endpoint",
+    "stale": false
+  },
+  "contents": {
+    "actual_spend_usd": 2.9737686855138894,
+    "artifacts": "Remote /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/oracle-cycles.jsonl is 151122 bytes; oracle-cycles.observer-error and DFLASH_CYCLE_ORACLE_TERMINAL.json are absent.",
+    "c32_pair_started": false,
+    "caches": "Fresh disk; preserve all exact model, source, image, and CUDA caches after staging.",
+    "candidate": "TP=1 tied-head adapter and adapted four-request DFlash diagnostic; conditional matched c32 pair only on gate pass.",
+    "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "contents_artifact": "gemma4_h200_dflash_endpoint/H200_DFLASH_ADAPTER_PRIORITY_8490_CONTENTS.json",
+    "contents_artifact_sha256": "45c806b49f93d1220bb42e8025054f4314cbc78a3aa6f9bf305e4e008f3ae121",
+    "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1; exact one-time materialization authorized but not yet staged",
+    "filesystem": "250-GiB network SSD boot disk.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; exact one-time materialization authorized but not yet staged",
+    "next": "Priority 8600 claims once, retrieves the existing raw cycle file without another request, constructs the oracle terminal offline, conditionally measures c32 depths only on pass, then stops processes and releases by 19:45Z.",
+    "priority": 8490,
+    "priority_reason": "The available protected H200 is independent of the claimed H100 and its direct endpoint consumer outranks the H100-dependent component.",
+    "project": "gemma4_h200_dflash_endpoint",
+    "result": "dflash_oracle_raw_complete_pending_offline_terminal",
+    "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
+    "schema_version": 1,
+    "server_state": "Healthy gemma4-dflash container remains resident with exact target, draft, patched source, and CUDA graphs; no local owner is active.",
+    "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint.",
+    "terminal": "gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.45,
+  "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T22:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "main_pid": 828601,
+      "unit": "gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T15:16:31.474656Z",
+  "resource": {
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "disk_name": "gemma4-dflash-h200-adapter-20260725t1512z-boot",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "instance_name": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.109.132",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T18:14:04.124346Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T18:11:54.434310Z",
+    "heartbeat_at": "2026-07-25T18:14:49.192796Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T19:14:49.192796Z",
+    "project": "gemma4_h200_dflash_endpoint",
+    "stale": false
+  },
+  "contents": {
+    "actual_spend_usd": 2.9737686855138894,
+    "artifacts": "Remote /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/oracle-cycles.jsonl is 151122 bytes; oracle-cycles.observer-error and DFLASH_CYCLE_ORACLE_TERMINAL.json are absent.",
+    "c32_pair_started": false,
+    "caches": "Fresh disk; preserve all exact model, source, image, and CUDA caches after staging.",
+    "candidate": "TP=1 tied-head adapter and adapted four-request DFlash diagnostic; conditional matched c32 pair only on gate pass.",
+    "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "contents_artifact": "gemma4_h200_dflash_endpoint/H200_DFLASH_ADAPTER_PRIORITY_8490_CONTENTS.json",
+    "contents_artifact_sha256": "45c806b49f93d1220bb42e8025054f4314cbc78a3aa6f9bf305e4e008f3ae121",
+    "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1; exact one-time materialization authorized but not yet staged",
+    "filesystem": "250-GiB network SSD boot disk.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; exact one-time materialization authorized but not yet staged",
+    "next": "Priority 8600 claims once, retrieves the existing raw cycle file without another request, constructs the oracle terminal offline, conditionally measures c32 depths only on pass, then stops processes and releases by 19:45Z.",
+    "priority": 8490,
+    "priority_reason": "The available protected H200 is independent of the claimed H100 and its direct endpoint consumer outranks the H100-dependent component.",
+    "project": "gemma4_h200_dflash_endpoint",
+    "result": "dflash_oracle_raw_complete_pending_offline_terminal",
+    "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
+    "schema_version": 1,
+    "server_state": "Healthy gemma4-dflash container remains resident with exact target, draft, patched source, and CUDA graphs; no local owner is active.",
+    "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint.",
+    "terminal": "gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.45,
+  "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T22:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "main_pid": 828601,
+      "unit": "gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T15:16:31.474656Z",
+  "resource": {
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "disk_name": "gemma4-dflash-h200-adapter-20260725t1512z-boot",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "instance_name": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.109.132",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T18:14:49.192796Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T18:11:54.434310Z",
+    "heartbeat_at": "2026-07-25T18:15:34.241744Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T19:15:34.241744Z",
+    "project": "gemma4_h200_dflash_endpoint",
+    "stale": false
+  },
+  "contents": {
+    "actual_spend_usd": 2.9737686855138894,
+    "artifacts": "Remote /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/oracle-cycles.jsonl is 151122 bytes; oracle-cycles.observer-error and DFLASH_CYCLE_ORACLE_TERMINAL.json are absent.",
+    "c32_pair_started": false,
+    "caches": "Fresh disk; preserve all exact model, source, image, and CUDA caches after staging.",
+    "candidate": "TP=1 tied-head adapter and adapted four-request DFlash diagnostic; conditional matched c32 pair only on gate pass.",
+    "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "contents_artifact": "gemma4_h200_dflash_endpoint/H200_DFLASH_ADAPTER_PRIORITY_8490_CONTENTS.json",
+    "contents_artifact_sha256": "45c806b49f93d1220bb42e8025054f4314cbc78a3aa6f9bf305e4e008f3ae121",
+    "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1; exact one-time materialization authorized but not yet staged",
+    "filesystem": "250-GiB network SSD boot disk.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; exact one-time materialization authorized but not yet staged",
+    "next": "Priority 8600 claims once, retrieves the existing raw cycle file without another request, constructs the oracle terminal offline, conditionally measures c32 depths only on pass, then stops processes and releases by 19:45Z.",
+    "priority": 8490,
+    "priority_reason": "The available protected H200 is independent of the claimed H100 and its direct endpoint consumer outranks the H100-dependent component.",
+    "project": "gemma4_h200_dflash_endpoint",
+    "result": "dflash_oracle_raw_complete_pending_offline_terminal",
+    "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
+    "schema_version": 1,
+    "server_state": "Healthy gemma4-dflash container remains resident with exact target, draft, patched source, and CUDA graphs; no local owner is active.",
+    "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint.",
+    "terminal": "gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.45,
+  "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T22:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "main_pid": 828601,
+      "unit": "gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T15:16:31.474656Z",
+  "resource": {
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "disk_name": "gemma4-dflash-h200-adapter-20260725t1512z-boot",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "instance_name": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.109.132",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T18:15:34.241744Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T18:11:54.434310Z",
+    "heartbeat_at": "2026-07-25T18:16:19.291437Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T19:16:19.291437Z",
+    "project": "gemma4_h200_dflash_endpoint",
+    "stale": false
+  },
+  "contents": {
+    "actual_spend_usd": 2.9737686855138894,
+    "artifacts": "Remote /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/oracle-cycles.jsonl is 151122 bytes; oracle-cycles.observer-error and DFLASH_CYCLE_ORACLE_TERMINAL.json are absent.",
+    "c32_pair_started": false,
+    "caches": "Fresh disk; preserve all exact model, source, image, and CUDA caches after staging.",
+    "candidate": "TP=1 tied-head adapter and adapted four-request DFlash diagnostic; conditional matched c32 pair only on gate pass.",
+    "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "contents_artifact": "gemma4_h200_dflash_endpoint/H200_DFLASH_ADAPTER_PRIORITY_8490_CONTENTS.json",
+    "contents_artifact_sha256": "45c806b49f93d1220bb42e8025054f4314cbc78a3aa6f9bf305e4e008f3ae121",
+    "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1; exact one-time materialization authorized but not yet staged",
+    "filesystem": "250-GiB network SSD boot disk.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; exact one-time materialization authorized but not yet staged",
+    "next": "Priority 8600 claims once, retrieves the existing raw cycle file without another request, constructs the oracle terminal offline, conditionally measures c32 depths only on pass, then stops processes and releases by 19:45Z.",
+    "priority": 8490,
+    "priority_reason": "The available protected H200 is independent of the claimed H100 and its direct endpoint consumer outranks the H100-dependent component.",
+    "project": "gemma4_h200_dflash_endpoint",
+    "result": "dflash_oracle_raw_complete_pending_offline_terminal",
+    "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
+    "schema_version": 1,
+    "server_state": "Healthy gemma4-dflash container remains resident with exact target, draft, patched source, and CUDA graphs; no local owner is active.",
+    "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint.",
+    "terminal": "gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.45,
+  "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T22:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "main_pid": 828601,
+      "unit": "gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T15:16:31.474656Z",
+  "resource": {
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "disk_name": "gemma4-dflash-h200-adapter-20260725t1512z-boot",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "instance_name": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.109.132",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T18:16:19.291437Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T18:11:54.434310Z",
+    "heartbeat_at": "2026-07-25T18:17:04.342409Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T19:17:04.342409Z",
+    "project": "gemma4_h200_dflash_endpoint",
+    "stale": false
+  },
+  "contents": {
+    "actual_spend_usd": 2.9737686855138894,
+    "artifacts": "Remote /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/oracle-cycles.jsonl is 151122 bytes; oracle-cycles.observer-error and DFLASH_CYCLE_ORACLE_TERMINAL.json are absent.",
+    "c32_pair_started": false,
+    "caches": "Fresh disk; preserve all exact model, source, image, and CUDA caches after staging.",
+    "candidate": "TP=1 tied-head adapter and adapted four-request DFlash diagnostic; conditional matched c32 pair only on gate pass.",
+    "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "contents_artifact": "gemma4_h200_dflash_endpoint/H200_DFLASH_ADAPTER_PRIORITY_8490_CONTENTS.json",
+    "contents_artifact_sha256": "45c806b49f93d1220bb42e8025054f4314cbc78a3aa6f9bf305e4e008f3ae121",
+    "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1; exact one-time materialization authorized but not yet staged",
+    "filesystem": "250-GiB network SSD boot disk.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; exact one-time materialization authorized but not yet staged",
+    "next": "Priority 8600 claims once, retrieves the existing raw cycle file without another request, constructs the oracle terminal offline, conditionally measures c32 depths only on pass, then stops processes and releases by 19:45Z.",
+    "priority": 8490,
+    "priority_reason": "The available protected H200 is independent of the claimed H100 and its direct endpoint consumer outranks the H100-dependent component.",
+    "project": "gemma4_h200_dflash_endpoint",
+    "result": "dflash_oracle_raw_complete_pending_offline_terminal",
+    "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
+    "schema_version": 1,
+    "server_state": "Healthy gemma4-dflash container remains resident with exact target, draft, patched source, and CUDA graphs; no local owner is active.",
+    "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint.",
+    "terminal": "gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.45,
+  "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T22:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "main_pid": 828601,
+      "unit": "gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T15:16:31.474656Z",
+  "resource": {
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "disk_name": "gemma4-dflash-h200-adapter-20260725t1512z-boot",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "instance_name": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.109.132",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T18:17:04.342409Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T18:11:54.434310Z",
+    "heartbeat_at": "2026-07-25T18:17:49.391616Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T19:17:49.391616Z",
+    "project": "gemma4_h200_dflash_endpoint",
+    "stale": false
+  },
+  "contents": {
+    "actual_spend_usd": 2.9737686855138894,
+    "artifacts": "Remote /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/oracle-cycles.jsonl is 151122 bytes; oracle-cycles.observer-error and DFLASH_CYCLE_ORACLE_TERMINAL.json are absent.",
+    "c32_pair_started": false,
+    "caches": "Fresh disk; preserve all exact model, source, image, and CUDA caches after staging.",
+    "candidate": "TP=1 tied-head adapter and adapted four-request DFlash diagnostic; conditional matched c32 pair only on gate pass.",
+    "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "contents_artifact": "gemma4_h200_dflash_endpoint/H200_DFLASH_ADAPTER_PRIORITY_8490_CONTENTS.json",
+    "contents_artifact_sha256": "45c806b49f93d1220bb42e8025054f4314cbc78a3aa6f9bf305e4e008f3ae121",
+    "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1; exact one-time materialization authorized but not yet staged",
+    "filesystem": "250-GiB network SSD boot disk.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; exact one-time materialization authorized but not yet staged",
+    "next": "Priority 8600 claims once, retrieves the existing raw cycle file without another request, constructs the oracle terminal offline, conditionally measures c32 depths only on pass, then stops processes and releases by 19:45Z.",
+    "priority": 8490,
+    "priority_reason": "The available protected H200 is independent of the claimed H100 and its direct endpoint consumer outranks the H100-dependent component.",
+    "project": "gemma4_h200_dflash_endpoint",
+    "result": "dflash_oracle_raw_complete_pending_offline_terminal",
+    "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
+    "schema_version": 1,
+    "server_state": "Healthy gemma4-dflash container remains resident with exact target, draft, patched source, and CUDA graphs; no local owner is active.",
+    "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint.",
+    "terminal": "gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.45,
+  "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T22:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "main_pid": 828601,
+      "unit": "gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T15:16:31.474656Z",
+  "resource": {
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "disk_name": "gemma4-dflash-h200-adapter-20260725t1512z-boot",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "instance_name": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.109.132",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T18:17:49.391616Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T18:11:54.434310Z",
+    "heartbeat_at": "2026-07-25T18:18:34.442769Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T19:18:34.442769Z",
+    "project": "gemma4_h200_dflash_endpoint",
+    "stale": false
+  },
+  "contents": {
+    "actual_spend_usd": 2.9737686855138894,
+    "artifacts": "Remote /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/oracle-cycles.jsonl is 151122 bytes; oracle-cycles.observer-error and DFLASH_CYCLE_ORACLE_TERMINAL.json are absent.",
+    "c32_pair_started": false,
+    "caches": "Fresh disk; preserve all exact model, source, image, and CUDA caches after staging.",
+    "candidate": "TP=1 tied-head adapter and adapted four-request DFlash diagnostic; conditional matched c32 pair only on gate pass.",
+    "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "contents_artifact": "gemma4_h200_dflash_endpoint/H200_DFLASH_ADAPTER_PRIORITY_8490_CONTENTS.json",
+    "contents_artifact_sha256": "45c806b49f93d1220bb42e8025054f4314cbc78a3aa6f9bf305e4e008f3ae121",
+    "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1; exact one-time materialization authorized but not yet staged",
+    "filesystem": "250-GiB network SSD boot disk.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; exact one-time materialization authorized but not yet staged",
+    "next": "Priority 8600 claims once, retrieves the existing raw cycle file without another request, constructs the oracle terminal offline, conditionally measures c32 depths only on pass, then stops processes and releases by 19:45Z.",
+    "priority": 8490,
+    "priority_reason": "The available protected H200 is independent of the claimed H100 and its direct endpoint consumer outranks the H100-dependent component.",
+    "project": "gemma4_h200_dflash_endpoint",
+    "result": "dflash_oracle_raw_complete_pending_offline_terminal",
+    "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
+    "schema_version": 1,
+    "server_state": "Healthy gemma4-dflash container remains resident with exact target, draft, patched source, and CUDA graphs; no local owner is active.",
+    "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint.",
+    "terminal": "gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.45,
+  "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T22:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "main_pid": 828601,
+      "unit": "gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T15:16:31.474656Z",
+  "resource": {
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "disk_name": "gemma4-dflash-h200-adapter-20260725t1512z-boot",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "instance_name": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.109.132",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T18:18:34.442769Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T18:11:54.434310Z",
+    "heartbeat_at": "2026-07-25T18:19:19.489858Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T19:19:19.489858Z",
+    "project": "gemma4_h200_dflash_endpoint",
+    "stale": false
+  },
+  "contents": {
+    "actual_spend_usd": 2.9737686855138894,
+    "artifacts": "Remote /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/oracle-cycles.jsonl is 151122 bytes; oracle-cycles.observer-error and DFLASH_CYCLE_ORACLE_TERMINAL.json are absent.",
+    "c32_pair_started": false,
+    "caches": "Fresh disk; preserve all exact model, source, image, and CUDA caches after staging.",
+    "candidate": "TP=1 tied-head adapter and adapted four-request DFlash diagnostic; conditional matched c32 pair only on gate pass.",
+    "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "contents_artifact": "gemma4_h200_dflash_endpoint/H200_DFLASH_ADAPTER_PRIORITY_8490_CONTENTS.json",
+    "contents_artifact_sha256": "45c806b49f93d1220bb42e8025054f4314cbc78a3aa6f9bf305e4e008f3ae121",
+    "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1; exact one-time materialization authorized but not yet staged",
+    "filesystem": "250-GiB network SSD boot disk.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; exact one-time materialization authorized but not yet staged",
+    "next": "Priority 8600 claims once, retrieves the existing raw cycle file without another request, constructs the oracle terminal offline, conditionally measures c32 depths only on pass, then stops processes and releases by 19:45Z.",
+    "priority": 8490,
+    "priority_reason": "The available protected H200 is independent of the claimed H100 and its direct endpoint consumer outranks the H100-dependent component.",
+    "project": "gemma4_h200_dflash_endpoint",
+    "result": "dflash_oracle_raw_complete_pending_offline_terminal",
+    "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
+    "schema_version": 1,
+    "server_state": "Healthy gemma4-dflash container remains resident with exact target, draft, patched source, and CUDA graphs; no local owner is active.",
+    "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint.",
+    "terminal": "gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.45,
+  "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T22:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "main_pid": 828601,
+      "unit": "gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T15:16:31.474656Z",
+  "resource": {
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "disk_name": "gemma4-dflash-h200-adapter-20260725t1512z-boot",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "instance_name": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.109.132",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T18:19:19.489858Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T18:11:54.434310Z",
+    "heartbeat_at": "2026-07-25T18:20:04.536344Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T19:20:04.536344Z",
+    "project": "gemma4_h200_dflash_endpoint",
+    "stale": false
+  },
+  "contents": {
+    "actual_spend_usd": 2.9737686855138894,
+    "artifacts": "Remote /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/oracle-cycles.jsonl is 151122 bytes; oracle-cycles.observer-error and DFLASH_CYCLE_ORACLE_TERMINAL.json are absent.",
+    "c32_pair_started": false,
+    "caches": "Fresh disk; preserve all exact model, source, image, and CUDA caches after staging.",
+    "candidate": "TP=1 tied-head adapter and adapted four-request DFlash diagnostic; conditional matched c32 pair only on gate pass.",
+    "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "contents_artifact": "gemma4_h200_dflash_endpoint/H200_DFLASH_ADAPTER_PRIORITY_8490_CONTENTS.json",
+    "contents_artifact_sha256": "45c806b49f93d1220bb42e8025054f4314cbc78a3aa6f9bf305e4e008f3ae121",
+    "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1; exact one-time materialization authorized but not yet staged",
+    "filesystem": "250-GiB network SSD boot disk.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; exact one-time materialization authorized but not yet staged",
+    "next": "Priority 8600 claims once, retrieves the existing raw cycle file without another request, constructs the oracle terminal offline, conditionally measures c32 depths only on pass, then stops processes and releases by 19:45Z.",
+    "priority": 8490,
+    "priority_reason": "The available protected H200 is independent of the claimed H100 and its direct endpoint consumer outranks the H100-dependent component.",
+    "project": "gemma4_h200_dflash_endpoint",
+    "result": "dflash_oracle_raw_complete_pending_offline_terminal",
+    "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
+    "schema_version": 1,
+    "server_state": "Healthy gemma4-dflash container remains resident with exact target, draft, patched source, and CUDA graphs; no local owner is active.",
+    "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint.",
+    "terminal": "gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.45,
+  "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T22:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "main_pid": 828601,
+      "unit": "gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T15:16:31.474656Z",
+  "resource": {
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "disk_name": "gemma4-dflash-h200-adapter-20260725t1512z-boot",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "instance_name": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.109.132",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T18:20:04.536344Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T18:11:54.434310Z",
+    "heartbeat_at": "2026-07-25T18:20:49.586476Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T19:20:49.586476Z",
+    "project": "gemma4_h200_dflash_endpoint",
+    "stale": false
+  },
+  "contents": {
+    "actual_spend_usd": 2.9737686855138894,
+    "artifacts": "Remote /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/oracle-cycles.jsonl is 151122 bytes; oracle-cycles.observer-error and DFLASH_CYCLE_ORACLE_TERMINAL.json are absent.",
+    "c32_pair_started": false,
+    "caches": "Fresh disk; preserve all exact model, source, image, and CUDA caches after staging.",
+    "candidate": "TP=1 tied-head adapter and adapted four-request DFlash diagnostic; conditional matched c32 pair only on gate pass.",
+    "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "contents_artifact": "gemma4_h200_dflash_endpoint/H200_DFLASH_ADAPTER_PRIORITY_8490_CONTENTS.json",
+    "contents_artifact_sha256": "45c806b49f93d1220bb42e8025054f4314cbc78a3aa6f9bf305e4e008f3ae121",
+    "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1; exact one-time materialization authorized but not yet staged",
+    "filesystem": "250-GiB network SSD boot disk.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; exact one-time materialization authorized but not yet staged",
+    "next": "Priority 8600 claims once, retrieves the existing raw cycle file without another request, constructs the oracle terminal offline, conditionally measures c32 depths only on pass, then stops processes and releases by 19:45Z.",
+    "priority": 8490,
+    "priority_reason": "The available protected H200 is independent of the claimed H100 and its direct endpoint consumer outranks the H100-dependent component.",
+    "project": "gemma4_h200_dflash_endpoint",
+    "result": "dflash_oracle_raw_complete_pending_offline_terminal",
+    "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
+    "schema_version": 1,
+    "server_state": "Healthy gemma4-dflash container remains resident with exact target, draft, patched source, and CUDA graphs; no local owner is active.",
+    "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint.",
+    "terminal": "gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.45,
+  "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T22:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "main_pid": 828601,
+      "unit": "gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T15:16:31.474656Z",
+  "resource": {
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "disk_name": "gemma4-dflash-h200-adapter-20260725t1512z-boot",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "instance_name": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.109.132",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T18:20:49.586476Z"
+}

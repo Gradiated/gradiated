@@ -1,0 +1,18 @@
+{
+  "capture_path": "/work/input/exact_runner.py",
+  "endpoint_pairs": 0,
+  "generation": 20,
+  "packet": {
+    "COST_MODEL.json": "4ee31dd7c0f6d407e1e61b148b7d41e54f8bda674e7b953d905d8a816a00ab72",
+    "EXPERIMENT_CONTRACT.json": "31b8fc130859d25a9dc138042254edb60457614056e841b1fdcbb24416622c23",
+    "IMMUTABLE_SPLIT.json": "2386521bbff340bba2569bb6c0328edcc84e22f308b52c0a0191cfd7123400ee",
+    "capture_bootstrap/sitecustomize.py": "17bbb2e32d540554dc8dbea2a46b8cb083ea3a11a0a10b629830ad6bfc86ae46",
+    "capture_offset_taps.py": "fc12a3b7ff517a016edf690a9b8af5bc91a6a8c9a1dfa153bd0f9f0981d4a002",
+    "causal_parallel_offset_head.py": "52425f282378a7ec5cc9d6a2793d3e5be194d56d272ed3ac20251ca2287a99a6",
+    "exact_runner.py": "f1795d572410f7a26cd4b1fb79d2b765225402ede8c43d3bcd9da4899757ec07",
+    "train_and_evaluate.py": "2457e53928f17bcebe5793608f0c9693412a38efee5af7a6f56c2f03651303c0"
+  },
+  "packet_sha256": "c6150fad8dbd7c0a4eee4f54859b2b4e428f4c256ef5a08ff51b58010ead994a",
+  "predecessor_repair_id": "repair-19",
+  "server_entrypoint": "python3 -m sglang.launch_server"
+}

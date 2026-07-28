@@ -1,0 +1,7 @@
+{
+  "classification": "remote_terminal_retrieved",
+  "message": "current SGLang worker terminal retrieved",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-22T15:35:29.685779+00:00"
+}

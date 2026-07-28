@@ -101,11 +101,11 @@ def heartbeat(stop, bench, events):
 
 def main():
     p = argparse.ArgumentParser(); p.add_argument("--bench", required=True); p.add_argument("--ssh-host", required=True); p.add_argument("--ssh-user", required=True); p.add_argument("--identity", type=Path, required=True); p.add_argument("--known-hosts", type=Path, required=True); p.add_argument("--checkpoint", type=Path, required=True); p.add_argument("--checkpoint-manifest", type=Path, required=True); p.add_argument("--image", required=True); p.add_argument("--artifact-root", type=Path, required=True); p.add_argument("--deadline-seconds", type=int, default=LIFECYCLE_SECONDS); args = p.parse_args()
-    if args.deadline_seconds != LIFECYCLE_SECONDS or args.ssh_user != "glmrunner" or args.artifact_root.exists() or not args.identity.is_file() or not args.known_hosts.is_file(): raise SystemExit("director_bound_owner_precondition_failed")
+    if not 0 < args.deadline_seconds <= LIFECYCLE_SECONDS or args.ssh_user != "glmrunner" or args.artifact_root.exists() or not args.identity.is_file() or not args.known_hosts.is_file(): raise SystemExit("director_bound_owner_precondition_failed")
     packet, packet_manifest = freeze_packet(); checkpoints = checkpoint_manifest(args.checkpoint, args.checkpoint_manifest)
     started, deadline = time.time(), time.time() + args.deadline_seconds; args.artifact_root.mkdir(parents=True); events=[]; claim=None; stop=threading.Event(); classification="pre_science_failure"; consumed=False
     try:
-        claim = pool("claim", "--project", PROJECT_ID, "--bench", args.bench, "--model", MODEL, "--lease-seconds", str(args.deadline_seconds)); bench, claimed_at = claim["id"], claim["claim"]["claimed_at"]
+        claim = pool("claim", "--project", PROJECT_ID, "--bench", args.bench, "--accelerator", "nvidia-l40s", "--lease-seconds", str(args.deadline_seconds)); bench, claimed_at = claim["id"], claim["claim"]["claimed_at"]
         if bench != args.bench or claim.get("accelerator") != "nvidia-l40s": raise RuntimeError("director_bound_l40s_mismatch")
         events.append({"at":now(),"kind":"claim","bench":bench,"claimed_at":claimed_at}); t=threading.Thread(target=heartbeat,args=(stop,bench,events),daemon=True); t.start()
         pre = remote(args, "set -eu; nvidia-smi --query-gpu=name,compute_cap,memory.total --format=csv,noheader,nounits; sudo -n docker version --format '{{.Server.Version}}'", 120); (args.artifact_root/"preflight.stdout").write_text(pre.stdout); (args.artifact_root/"preflight.stderr").write_text(pre.stderr)

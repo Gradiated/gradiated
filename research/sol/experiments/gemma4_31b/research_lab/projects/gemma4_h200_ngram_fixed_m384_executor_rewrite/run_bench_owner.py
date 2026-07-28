@@ -26,7 +26,10 @@ BENCH = "h200-dflash-adapter-e00vyqp7gxsr34wrtz"
 REMOTE = "/home/glmrunner/gemma4-fixed-m384-executor"
 RESIDENT = "/home/glmrunner/gemma4-dflash/work/models/target"
 RATE = 2.45
-PROJECT_DEADLINE = dt.datetime(2026, 7, 26, 4, 0, tzinfo=dt.timezone.utc)
+BASE_SPEND_USD = 0.42713400518055566
+AUTHORIZED_SPEND_USD = 5.0
+PROJECT_DEADLINE = dt.datetime(2026, 7, 25, 21, 15, tzinfo=dt.timezone.utc)
+MAX_CLAIM_SECONDS = 2 * 60 * 60
 IMAGE = (
     "docker.io/lmsysorg/sglang@sha256:"
     "6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
@@ -195,12 +198,13 @@ def stage_checkpoint(ip: str, item: dict[str, Any]) -> dict[str, Any]:
         raise RuntimeError(f"resident_checkpoint_integrity_mismatch:{name}")
     partial = f"{target}.{digest}.part"
     command = (
-        f"install -d {shlex.quote(str(pathlib.PurePosixPath(target).parent))}; "
-        f"rm -f {shlex.quote(partial)}; "
-        f"ln {shlex.quote(source)} {shlex.quote(partial)}; "
-        f"test \"$(stat -c %s {shlex.quote(partial)})\" = {size}; "
-        f"test \"$(sha256sum {shlex.quote(partial)} | cut -d' ' -f1)\" = {digest}; "
-        f"chmod 0444 {shlex.quote(partial)}; mv {shlex.quote(partial)} {shlex.quote(target)}"
+        f"sudo install -d {shlex.quote(str(pathlib.PurePosixPath(target).parent))}; "
+        f"sudo rm -f {shlex.quote(partial)}; "
+        f"sudo ln {shlex.quote(source)} {shlex.quote(partial)}; "
+        f"sudo test \"$(stat -c %s {shlex.quote(partial)})\" = {size}; "
+        f"sudo test \"$(sha256sum {shlex.quote(partial)} | cut -d' ' -f1)\" = {digest}; "
+        f"sudo chmod 0444 {shlex.quote(partial)}; "
+        f"sudo mv {shlex.quote(partial)} {shlex.quote(target)}"
     )
     result = ssh(ip, command, max(120, size // 35_000_000 + 120))
     if result.returncode:
@@ -215,13 +219,17 @@ def update_status(active_session: dict[str, Any] | None, **updates: Any) -> None
     atomic(PROJECT / "STATUS.json", value)
 
 
-def retrieve(ip: str, artifact: pathlib.Path) -> pathlib.Path:
+def retrieve(
+    ip: str, artifact: pathlib.Path, remote_artifact_name: str
+) -> pathlib.Path:
     pack = ssh(
         ip,
         f"cd {REMOTE} && rm -f result.tar.gz.part result.tar.gz && "
-        "tar -czf result.tar.gz.part artifacts OWNER.json OWNER.log "
+        f"tar -czf result.tar.gz.part artifacts/{shlex.quote(remote_artifact_name)} "
+        "OWNER_MIXED.json OWNER_MIXED.log "
         "INVOCATION_STATE.json REPAIR_READY.json 2>/dev/null || "
-        "tar -czf result.tar.gz.part artifacts OWNER.json OWNER.log INVOCATION_STATE.json; "
+        f"tar -czf result.tar.gz.part artifacts/{shlex.quote(remote_artifact_name)} "
+        "OWNER_MIXED.json OWNER_MIXED.log INVOCATION_STATE.json; "
         "mv result.tar.gz.part result.tar.gz; sha256sum result.tar.gz",
         1800,
     )
@@ -275,7 +283,18 @@ def main() -> int:
     lifecycle_deadline = dt.datetime.fromisoformat(
         bench["lifecycle"]["deadline_utc"].replace("Z", "+00:00")
     )
-    deadline = min(PROJECT_DEADLINE, lifecycle_deadline - dt.timedelta(minutes=10))
+    claim_value = bench.get("claim") or {}
+    claimed_at = dt.datetime.fromisoformat(
+        str(claim_value["claimed_at"]).replace("Z", "+00:00")
+    )
+    budget_seconds = int(
+        (AUTHORIZED_SPEND_USD - BASE_SPEND_USD) / RATE * 3600
+    )
+    deadline = min(
+        PROJECT_DEADLINE,
+        lifecycle_deadline - dt.timedelta(minutes=10),
+        claimed_at + dt.timedelta(seconds=min(MAX_CLAIM_SECONDS, budget_seconds)),
+    )
     remaining_seconds = (deadline - dt.datetime.now(dt.timezone.utc)).total_seconds()
     if remaining_seconds < 5400:
         raise RuntimeError("typed_pool_boundary:insufficient_retained_h200_lifecycle")
@@ -287,24 +306,17 @@ def main() -> int:
     )
     if not attached and (bench.get("status") != "available" or bench.get("claim")):
         raise RuntimeError("typed_pool_boundary:assigned_bench_unavailable")
+    artifact_stamp = time.strftime("%Y%m%dt%H%M%SZ", time.gmtime())
+    remote_artifact_name = "mixed-local-m384-" + artifact_stamp
     artifact = PROJECT / "artifacts" / (
-        "fixed-m384-" + time.strftime("%Y%m%dt%H%M%SZ", time.gmtime())
+        remote_artifact_name
     )
     artifact.mkdir(parents=True, exist_ok=False)
-    claim = pool(
-        "claim",
-        "--project",
-        NAME,
-        "--bench",
-        BENCH,
-        "--lease-seconds",
-        str(min(21600, int(remaining_seconds))),
-    )
-    (artifact / "claim.stdout").write_text(claim.stdout)
-    (artifact / "claim.stderr").write_text(claim.stderr)
-    if claim.returncode:
-        return 75
-    claimed_at = dt.datetime.now(dt.timezone.utc)
+    if attached:
+        (artifact / "claim.stdout").write_text("reused existing atomic project claim\n")
+        (artifact / "claim.stderr").write_text("")
+    else:
+        raise RuntimeError("typed_pool_boundary:project_claim_missing")
     stop = threading.Event()
 
     def heartbeat() -> None:
@@ -377,14 +389,19 @@ def main() -> int:
             (artifact / "image-pull.stderr").write_text(pull.stderr)
             if pull.returncode:
                 raise RuntimeError("typed_image_boundary:pinned_pull_failed")
-        active = {
-            "unit": f"{REMOTE}/OWNER.json",
-            "unit_manager": "remote-shell",
-            "deadline_utc": deadline.isoformat(),
-            "artifact_root": str(artifact.relative_to(PROJECT)),
-            "bench_id": BENCH,
-            "forward_progress": "immutable packet and checkpoint snapshot staged; remote owner launching",
-        }
+        active = json.loads((PROJECT / "STATUS.json").read_text()).get(
+            "active_session"
+        )
+        if not isinstance(active, dict) or active.get("unit_manager") != "pid":
+            raise RuntimeError("typed_owner_boundary:durable_controller_session_missing")
+        active.update(
+            {
+                "deadline_utc": deadline.isoformat(),
+                "artifact_root": str(artifact.relative_to(PROJECT)),
+                "bench_id": BENCH,
+                "forward_progress": "immutable packet and checkpoint snapshot staged; remote worker launching",
+            }
+        )
         update_status(
             active,
             summary="Claimed the post-DFlash H200 and staged the immutable fixed-M384 packet; the remote experiment is launching.",
@@ -393,10 +410,12 @@ def main() -> int:
         launch = ssh(
             ip,
             f"chmod 0555 {REMOTE}/project/detached-owner; "
+            f"rm -f {REMOTE}/REPAIR_READY.json {REMOTE}/REPAIR_REQUEST.json; "
             f"python3 {REMOTE}/project/detached-owner start "
-            f"--state {REMOTE}/OWNER.json --log {REMOTE}/OWNER.log --cwd {REMOTE} -- "
+            f"--state {REMOTE}/OWNER_MIXED.json --log {REMOTE}/OWNER_MIXED.log --cwd {REMOTE} -- "
             f"/usr/bin/timeout --signal=TERM {int(remaining_seconds - 300)} "
             f"/usr/bin/env FIXED_M384_DEADLINE_UTC={shlex.quote(deadline.isoformat())} "
+            f"FIXED_M384_ARTIFACT_ROOT={shlex.quote(f'{REMOTE}/artifacts/{remote_artifact_name}')} "
             f"/usr/bin/python3 {REMOTE}/project/remote_experiment.py",
             90,
         )
@@ -404,15 +423,17 @@ def main() -> int:
         (artifact / "remote-owner-launch.stderr").write_text(launch.stderr)
         if launch.returncode:
             raise RuntimeError("typed_launcher_boundary:detached_remote_owner")
-        terminal_remote = f"{REMOTE}/artifacts/FINAL_TERMINAL.json"
-        repair_seen = False
+        terminal_remote = (
+            f"{REMOTE}/artifacts/{remote_artifact_name}/FINAL_TERMINAL.json"
+        )
+        repair_seen_sha256: str | None = None
         while dt.datetime.now(dt.timezone.utc) < deadline - dt.timedelta(minutes=3):
             state = ssh(
                 ip,
                 f"if test -s {terminal_remote}; then echo terminal; "
                 f"elif test -s {REMOTE}/REPAIR_READY.json; then echo repair; "
                 f"else python3 {REMOTE}/project/detached-owner status "
-                f"--state {REMOTE}/OWNER.json 2>/dev/null || true; fi",
+                f"--state {REMOTE}/OWNER_MIXED.json 2>/dev/null || true; fi",
                 60,
             )
             atomic(
@@ -421,17 +442,26 @@ def main() -> int:
             )
             if state.stdout.startswith("terminal"):
                 break
-            if state.stdout.startswith("repair") and not repair_seen:
-                repair_seen = True
-                marker = ssh(ip, f"cat {REMOTE}/REPAIR_READY.json; tail -n 200 {REMOTE}/OWNER.log", 60)
+            if state.stdout.startswith("repair"):
+                remote_ready = ssh(ip, f"cat {REMOTE}/REPAIR_READY.json", 60)
+                if remote_ready.returncode:
+                    time.sleep(20)
+                    continue
+                ready = json.loads(remote_ready.stdout)
+                ready_sha256 = hashlib.sha256(
+                    (json.dumps(ready, indent=2, sort_keys=True) + "\n").encode()
+                ).hexdigest()
+                if ready_sha256 == repair_seen_sha256:
+                    time.sleep(20)
+                    continue
+                repair_seen_sha256 = ready_sha256
+                marker = ssh(ip, f"cat {REMOTE}/REPAIR_READY.json; tail -n 200 {REMOTE}/OWNER_MIXED.log", 60)
                 (artifact / "repair-diagnostic.txt").write_text(
                     marker.stdout + marker.stderr
                 )
-                remote_ready = ssh(ip, f"cat {REMOTE}/REPAIR_READY.json", 60)
-                if remote_ready.returncode == 0:
-                    atomic(PROJECT / "REPAIR_READY.json", json.loads(remote_ready.stdout))
+                atomic(PROJECT / "REPAIR_READY.json", ready)
                 active["forward_progress"] = (
-                    "remote ordinary defect preserved; claim heartbeating through repair deadline"
+                    "remote ordinary defect generation preserved; claim heartbeating through repair deadline"
                 )
                 update_status(
                     active,
@@ -439,16 +469,18 @@ def main() -> int:
                     next_action="Inspect REPAIR_READY.json, patch only the invalidated operation, and write REPAIR_REQUEST.json before the absolute deadline.",
                 )
             time.sleep(20)
-        retrieved = retrieve(ip, artifact)
-        final_path = retrieved / "artifacts/FINAL_TERMINAL.json"
+        retrieved = retrieve(ip, artifact, remote_artifact_name)
+        final_path = (
+            retrieved / "artifacts" / remote_artifact_name / "FINAL_TERMINAL.json"
+        )
         elapsed = (dt.datetime.now(dt.timezone.utc) - claimed_at).total_seconds()
-        spend = elapsed / 3600 * RATE
+        spend = BASE_SPEND_USD + elapsed / 3600 * RATE
         if not final_path.exists():
             raise RuntimeError("typed_deadline_boundary:scientific_terminal_missing")
         final = json.loads(final_path.read_text())
         atomic(artifact / "FINAL_TERMINAL.json", final)
         atomic(
-            PROJECT / "FIXED_M384_EXECUTOR_TERMINAL.json",
+            PROJECT / "MIXED_LOCAL_M384_TERMINAL.json",
             {
                 **final,
                 "actual_spend_usd": spend,
@@ -465,7 +497,7 @@ def main() -> int:
                 f"at {REMOTE}/checkpoint."
             ),
             "image": IMAGE,
-            "runtime": "Pinned SGLang v0.5.13; exact fixed-M384 attention component, counters, and conditional endpoint complete.",
+            "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
             "server_state": "No experiment server or worker remains; image, checkpoint, Triton cache, and artifacts retained.",
             "actual_spend_usd": spend,
         }
@@ -494,7 +526,7 @@ def main() -> int:
         return 0
     except Exception as error:
         elapsed = (dt.datetime.now(dt.timezone.utc) - claimed_at).total_seconds()
-        spend = elapsed / 3600 * RATE
+        spend = BASE_SPEND_USD + elapsed / 3600 * RATE
         atomic(
             artifact / "OWNER_EXCEPTION.json",
             {"classification": "owner_exception", "error": f"{type(error).__name__}: {error}"},

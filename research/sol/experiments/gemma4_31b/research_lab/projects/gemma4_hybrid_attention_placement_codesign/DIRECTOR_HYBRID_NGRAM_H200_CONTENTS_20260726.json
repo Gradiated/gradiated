@@ -1,0 +1,6 @@
+{
+  "last_result": "dflash_request25_infrastructure_terminal_after_one_submission",
+  "next": "gemma4_hybrid_attention_placement_codesign target-runtime dual-cache component and conditional exact-c32 endpoint",
+  "processes_stopped": true,
+  "server_state": "Strict SSH at 2026-07-26T01:43Z found zero GPU compute applications, zero running containers, and no request25, phase-selective, dual-cache, or SGLang server process."
+}

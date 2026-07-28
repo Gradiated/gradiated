@@ -5,7 +5,7 @@ root=${WINDOW512_REMOTE_ROOT:?}
 input="$root/input"
 artifacts="$root/endpoint-artifacts"
 image=docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6
-checkpoint="$root/checkpoint"
+checkpoint="/home/glmrunner/gemma4-h200-flashinfer-metadata-scalar-elimination/checkpoint"
 mkdir -p "$artifacts"
 
 atomic_terminal() {

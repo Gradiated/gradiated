@@ -1,0 +1,15 @@
+{
+  "files": [
+    {
+      "bytes": 1331441,
+      "path": "train_4096.jsonl",
+      "sha256": "5d4639e473a01a5e14fff96693e53f566ddebd005c5180b573ad1b1cd5a516c4"
+    },
+    {
+      "bytes": 156922,
+      "path": "holdout_512.jsonl",
+      "sha256": "9109a99e7d2b8e326593415e72a1937f25618d8496bf2f00ba7dac32e8cf46ef"
+    }
+  ],
+  "schema_version": 1
+}

@@ -1,0 +1,1 @@
+{"command": ["python3", "remote_wave_admission.py"], "cwd": "/home/glmrunner/gemma4-ngram-wave-admission", "launched_at_utc": "2026-07-24T15:34:36.967778Z", "live": true, "log": "/home/glmrunner/gemma4-ngram-wave-admission/OWNER.log", "pid": 69062, "start_ticks": 2198768, "unit_manager": "remote-shell"}

@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T11:47:00Z",
+  "decision": "prepare_one_source_complete_ngram_verification_launch_or_sync_reduction",
+  "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+  "question": "Does the exact SGLang v0.5.15 native depth-12 NGRAM verification path contain a semantics-preserving per-step launch, host synchronization, or graph-boundary cost that can be removed or captured on H100?",
+  "why_now": "The direct H100 endpoint is in flight on a warm exact-runtime bench. Persistent local-KV residency and page-transaction coalescing are already closed, while the completed overflow analysis makes endpoint service time decisive at 0.693940 and 0.624546 seconds/request. A source-complete launch/synchronization candidate can be prepared offline without disturbing the endpoint and, if credible, becomes a compatible warm-bench follow-up.",
+  "bound_inputs": {
+    "ngram_worker": {
+      "path": "../gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/source/python/sglang/srt/speculative/ngram_worker.py",
+      "sha256": "63b79c73c7615b07f61a4c21f3483a6542ffa5a2bbfb7f891a366294a4a9214e"
+    },
+    "decode_cuda_graph_runner": {
+      "path": "../gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/source/python/sglang/srt/model_executor/runner/decode_cuda_graph_runner.py",
+      "sha256": "f5fb4b20c60dfca0ceb439da2137f545f89d3536cf70b2c776f0edeb28c093ce"
+    },
+    "batch_result_processor": {
+      "path": "../gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/source/python/sglang/srt/managers/scheduler_components/batch_result_processor.py",
+      "sha256": "d6274912963ab21acc4a4462bc9cda9e8d938a6e7e9dd808f9c42bb85165cdb0"
+    },
+    "hybrid_attention_backend": {
+      "path": "../gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/source/python/sglang/srt/layers/attention/hybrid_attn_backend.py",
+      "sha256": "9ed86790c5f00ce6b156aa7eccbe716f03fe49f6eacda805f47f3d277ea4ff04"
+    },
+    "source_path_map": {
+      "path": "../gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/SOURCE_PATH_CAUSAL_MAP.json",
+      "sha256": "8fb0df64eb46b23c6b76fdaf764a962e98c2c4c899c75b514616ed61ad8c1097"
+    },
+    "settled_h100_discriminator": {
+      "path": "../gemma4_h100_v0515_ngram_price_normalized/artifacts/h100-repair5-20260725t0746z/FINAL_TERMINAL.json",
+      "sha256": "c068fdcfb82ce5ed3e892827f93de5ece36c47064044616e0b71d871768951bf",
+      "requests": 171,
+      "service_seconds_per_request": 0.7073339939181298,
+      "max_spec_accept_length": 12.0
+    },
+    "background_overflow_result": {
+      "path": "../gemma4_h100_sustainable_replica_headroom/BACKGROUND_OVERFLOW_RESULT.json",
+      "sha256": "3595db3ca917782de12dada3dc48f6d28ccb364a9a120853164a290b63482a82",
+      "one_replica_average_rate_stability_ceiling_seconds_per_request": 0.693939640216271,
+      "one_replica_90pct_headroom_ceiling_seconds_per_request": 0.6245456761946439
+    }
+  },
+  "research_contract": {
+    "skill": "Use $kernel-research for exact source, graph, stream, launch, and accelerator-boundary reasoning.",
+    "event_chain": "Reconstruct the exact depth-12 NGRAM proposal, model/verification, hybrid-attention, CUDA-graph, result-transfer, acceptance, and scheduler update sequence. Name every relevant producer, consumer, stream/event, graph capture boundary, and host-visible synchronization in the bound sources.",
+    "launch_model": "Build a deterministic per-decode-step event and launch-count model for the settled H100 geometry. Separate compulsory model and attention launches from avoidable host synchronization, scalar/index materialization, graph breaks, and postprocess launches. Label time bounds analytical or synthetic; do not manufacture measured microseconds.",
+    "candidate": "Nominate at most one semantics-preserving source-complete change, such as capture-safe device-side acceptance/result processing or removal of a proven redundant synchronization. Specify exact symbols, state ownership, mutation order, padding/dynamic-batch behavior, and why accepted-token semantics remain unchanged.",
+    "cpu_oracle": "Provide a CPU event/state oracle covering zero acceptance, partial acceptance, full depth-12 acceptance, mixed batch rows, padded graph rows, request completion, and request-slot reuse.",
+    "whole_request_bound": "Translate only source-proven avoided events into a conservative endpoint service-time interval and state whether it could cross either 0.693940 or 0.624546 seconds/request. Do not credit speculative overlap or compulsory compute.",
+    "falsifier": "Specify the smallest future checkpoint-free H100 Nsight Systems or exact-consumer test that can falsify the predicted launch/synchronization change before any endpoint run.",
+    "typed_none": "Return typed_none if the exact path contains no removable boundary with a credible whole-request consequence, if the boundary is already graph-captured, or if semantics require the synchronization."
+  },
+  "artifact_contract": {
+    "result": "LAUNCH_PIPELINE_RESULT.json",
+    "decision": "LAUNCH_PIPELINE_DECISION.md",
+    "oracle": "launch_pipeline_oracle.py",
+    "deadline_utc": "2026-07-25T12:15:00Z",
+    "required_outputs": [
+      "hash verification of every bound input",
+      "source-complete event and ownership chain",
+      "compulsory versus avoidable launch and synchronization accounting",
+      "one candidate plus CPU oracle and smallest H100 falsifier, or typed_none",
+      "conservative whole-request and fleet-threshold interpretation",
+      "measured, analytical, inferred, and synthetic evidence labels"
+    ]
+  },
+  "budgets": {
+    "provider_spend_usd": 0.0,
+    "wall_clock_seconds": 1680,
+    "local_compute": "At most 25 CPU-minutes and 2 GiB RAM; no CUDA.",
+    "storage": "At most 128 MiB."
+  },
+  "prohibitions": [
+    "Do not create, claim, inspect, SSH to, or mutate a provider resource or GPU bench.",
+    "Do not read, poll, signal, or modify the in-flight endpoint owner or its artifact directory.",
+    "Do not modify any file in gemma4_h100_v0515_ngram_price_normalized.",
+    "Do not replay the consumed discriminator or invoke the 791-request endpoint.",
+    "Do not reopen persistent L2 residency or request-owned KV transaction coalescing.",
+    "Do not present static launch counts or synthetic timing as measured H100 improvement.",
+    "Do not implement a production patch or broaden into a flag sweep."
+  ]
+}

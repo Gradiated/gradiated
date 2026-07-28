@@ -1,0 +1,2 @@
+Error in sitecustomize; set PYTHONVERBOSE for traceback:
+KeyError: 'FP8_STACK_MODULE_AUDIT'

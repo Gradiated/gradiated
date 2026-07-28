@@ -1,0 +1,27 @@
+{
+  "pass": false,
+  "rows": [
+    {
+      "label": "instruction",
+      "prompt": "Reply with exactly: READY",
+      "raw_response": "{\"id\":\"2f877d620ed946619ae864d0e906ce63\",\"object\":\"chat.completion\",\"created\":1784509654,\"model\":\"google/gemma-4-31B-it\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"READY\",\"reasoning_content\":null,\"tool_calls\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"matched_stop\":106}],\"usage\":{\"prompt_tokens\":18,\"total_tokens\":20,\"completion_tokens\":2,\"prompt_tokens_details\":null,\"reasoning_tokens\":0},\"metadata\":{\"weight_version\":\"default\"}}",
+      "rule_pass": true,
+      "text": "READY"
+    },
+    {
+      "label": "arithmetic",
+      "prompt": "What is 2+2? Reply with only the number.",
+      "raw_response": "{\"id\":\"00ca07d03b4b45278c057d7d07c741ab\",\"object\":\"chat.completion\",\"created\":1784509654,\"model\":\"google/gemma-4-31B-it\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"4\",\"reasoning_content\":null,\"tool_calls\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"matched_stop\":106}],\"usage\":{\"prompt_tokens\":26,\"total_tokens\":28,\"completion_tokens\":2,\"prompt_tokens_details\":null,\"reasoning_tokens\":0},\"metadata\":{\"weight_version\":\"default\"}}",
+      "rule_pass": true,
+      "text": "4"
+    },
+    {
+      "label": "structured",
+      "prompt": "Return only a JSON object with key \"status\" and string value \"ok\".",
+      "raw_response": "{\"id\":\"66a93ee7ae474b428d6672b103c78171\",\"object\":\"chat.completion\",\"created\":1784509654,\"model\":\"google/gemma-4-31B-it\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"```json\\n{\\n  \\\"status\\\": \\\"ok\\\"\\n}\\n```\",\"reasoning_content\":null,\"tool_calls\":null},\"logprobs\":null,\"finish_reason\":\"stop\",\"matched_stop\":106}],\"usage\":{\"prompt_tokens\":29,\"total_tokens\":46,\"completion_tokens\":17,\"prompt_tokens_details\":null,\"reasoning_tokens\":0},\"metadata\":{\"weight_version\":\"default\"}}",
+      "rule_pass": false,
+      "text": "```json\n{\n  \"status\": \"ok\"\n}\n```"
+    }
+  ],
+  "schema_version": 1
+}

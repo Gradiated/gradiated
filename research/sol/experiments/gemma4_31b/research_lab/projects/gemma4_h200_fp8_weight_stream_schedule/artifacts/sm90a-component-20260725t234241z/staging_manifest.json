@@ -1,0 +1,30 @@
+{
+  "files": [
+    {
+      "bytes": 4508,
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_weight_stream_schedule/fp8_weight_stream_extension.cu",
+      "sha256": "a202e2a265eda05f1d6fd4cc05b7bbc4db1ec6740d70e9dc1dc2f9881356082d"
+    },
+    {
+      "bytes": 4025,
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_weight_stream_schedule/build_candidate.py",
+      "sha256": "f8c39593fd2948b7a45ac20f22226951112d45069dc24ed407c8384960aa6454"
+    },
+    {
+      "bytes": 6522,
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_weight_stream_schedule/m32_sm90a_exact_consumer_discriminator.py",
+      "sha256": "a4e7f13f6704735c18ebacb71b3e8355baaa7531f1138f0f59754d5a18b90f24"
+    },
+    {
+      "bytes": 11637,
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_weight_stream_schedule/exact_shape_runner.py",
+      "sha256": "f206a108c76e019b2a75915785bd79271b661221a0b8f17d8cfc1343586ae837"
+    },
+    {
+      "bytes": 2315,
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_weight_stream_schedule/DIRECTOR_SM90A_H200_REACTIVATION.json",
+      "sha256": "d7e52532e08bdc30a2d107d75599c7bd0e33ae8de897f1c7394dd99049f319a0"
+    }
+  ],
+  "remote_root": "/home/glmrunner/gemma4-fp8-weight-stream-sm90a"
+}

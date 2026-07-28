@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "repair_id": "repair-5",
+  "classification": "forward_batch_runtime_rid_boundary_repair",
+  "source_evidence": "repair-5-source-evidence.json",
+  "mutable_files": {
+    "capture_offset_taps.py": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/capture_offset_taps.py",
+      "sha256": "833b94a5ad69d353369576aabd1e8905aac062aa0d1314249543da4ab2de0200"
+    }
+  },
+  "retry": {
+    "scope": "fresh_capture_only_with_forward_batch_runtime_rid_registration",
+    "capture_stage_consumed": false,
+    "training_or_holdout_started": false,
+    "endpoint_pairs": 0
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "artifacts": "gemma4_ngram_completed_request_commit_gate/artifacts/completed-request-20260725t050358z",
+  "caches": "Image, checkpoint, CUDA graph, JIT, tokenizer, and runtime caches retained.",
+  "candidate": "Completed-request commit is consumed and rejected; calibrated immutable-corpus discriminator and its conditional endpoint are unconsumed.",
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "conditional_full_endpoint_consumed": false,
+  "conditional_gate": "Require positive freeze activation, exact normalized semantics, zero failures, long unaffected trunks, peak queue at most 30, final queue zero, stable release timing, and at most $0.14/M.",
+  "expected_first_arms": "Priority-8475 may replace only the bound completed-request overlay, calibrate stock corpus on requests 0-31, freeze all later writes, and run one candidate-only requests-32-through-790 discriminator followed by a full endpoint only if every gate passes.",
+  "gpu_processes": "Healthy completed-request-patched SGLang server remains loaded; no experiment owner or bench claim is live at this handoff.",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "next": "Claim only for priority-8475 gemma4_ngram_calibration_freeze after its reservation is durable; release by the earlier of 35 claimed minutes or 2026-07-25T06:00:00Z.",
+  "project": "gemma4_ngram_calibration_freeze",
+  "result": "warm_h200_ready_for_calibrated_immutable_corpus",
+  "runtime": "Pinned SGLang v0.5.13 FP8, page-1 E5M2 KV, native depth-12 NGRAM.",
+  "schema_version": 1,
+  "server_state": "Healthy completed-request-patched server remains loaded on the compatible checkpoint/image/runtime. Priority-8475 must claim before replacing only its bound write policy and reloading in place."
+}

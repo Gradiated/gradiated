@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_l40s_dual_kv4_allocator_0953_integration",
+  "artifacts": "projects/gemma4_l40s_dual_kv4_allocator_0953_integration/{L40S_DUAL_KV4_SM89_COMPONENT_READY.json,DIRECTOR_DUAL_KV4_SM89_REPAIR_OWNER_BINDING_20260728T0900Z.json,L40S_DUAL_KV4_SM89_REPAIR_OWNER_READY.json,DIRECTOR_DUAL_KV4_SM89_G2_LIVE_BINDING_20260728T0905Z.json}",
+  "model": "No checkpoint; exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 c32 local-D256/global-D512 decode geometry only.",
+  "checkpoint": "none",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "runtime": "Strict ED25519 identity verified on the unchanged guest; one NVIDIA L40S SM89, driver 580.159.04.",
+  "state": "ready only for the bound g2 continuous-claim replacement owner",
+  "result": "attempts 0 and 1 are invalid pre-science compile failures; no arm marker, interpretable terminal, or consumed sample",
+  "scientific_terminal": "One unchanged checkpoint-free paired c32 dual-KV component remains unconsumed.",
+  "next": "Sole claimant gemma4_l40s_dual_kv4_allocator_0953_integration must launch DIRECTOR_DUAL_KV4_SM89_G2_LIVE_BINDING_20260728T0905Z.json by 2026-07-28T09:08:00Z and release by 2026-07-28T09:56:30Z.",
+  "caches": "Resident immutable image, predecessor remote packet, invalid attempts, diagnostics, and extension build state retained."
+}

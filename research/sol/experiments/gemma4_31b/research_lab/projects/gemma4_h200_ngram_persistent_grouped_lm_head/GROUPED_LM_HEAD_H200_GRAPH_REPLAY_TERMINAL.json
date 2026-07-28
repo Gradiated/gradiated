@@ -1,0 +1,114 @@
+{
+  "artifact_root": "artifacts/graph-safe-buffer-h200-20260725t204653z",
+  "buffer_contract": {
+    "captured_return_same_object": true,
+    "control_return_same_object": true,
+    "data_ptr": 137750976135168,
+    "dtype": "torch.float32",
+    "returned_same_object": true,
+    "shape": [
+      384,
+      262144
+    ],
+    "stride": [
+      262144,
+      1
+    ]
+  },
+  "classification": "correct_faster",
+  "cuda": "13.0",
+  "geometry": {
+    "batch": 32,
+    "buffer_dtype": "torch.float32",
+    "depths": 12,
+    "hidden": 5376,
+    "hidden_dtype": "torch.bfloat16",
+    "row_order": "request_major_depth_minor",
+    "vocab": 262144,
+    "weight_dtype": "torch.bfloat16"
+  },
+  "hardware": "NVIDIA H200",
+  "hashes": {
+    "candidate_top_two_ids": "7f2f0dc0d8c8448947036794562f1fae9a4ab594b01bf71a390df4ed7f63a6f9",
+    "candidate_top_two_values": "032d248102fc60b3cdd07eecf79d195095aeb76f262a5551431dabd94caa0289",
+    "control_top_two_ids": "7f2f0dc0d8c8448947036794562f1fae9a4ab594b01bf71a390df4ed7f63a6f9",
+    "control_top_two_values": "032d248102fc60b3cdd07eecf79d195095aeb76f262a5551431dabd94caa0289",
+    "replay_top_two_values": "032d248102fc60b3cdd07eecf79d195095aeb76f262a5551431dabd94caa0289"
+  },
+  "numerical": {
+    "accepted_target_decisions_exact": true,
+    "candidate_replay_exact": true,
+    "max_abs": 0.0,
+    "relative_l2": 0.0,
+    "target_ids_exact": true,
+    "top_two_ids_exact": true,
+    "top_two_values_exact": true
+  },
+  "pass": true,
+  "provider": {
+    "actual_spend_usd": 0.06624049211111112,
+    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "claimed_at_utc": "2026-07-25T20:46:53.639219+00:00",
+    "completed_at_utc": "2026-07-25T20:48:27.096877+00:00",
+    "hourly_rate_usd": 2.45,
+    "release": {
+      "at_utc": "2026-07-25T20:48:27.163380+00:00",
+      "condition": "ready",
+      "released": true,
+      "returncode": 0
+    }
+  },
+  "schema_version": 1,
+  "science_consumed": true,
+  "source": {
+    "candidate_path": "/project/grouped_lm_head.py",
+    "candidate_sha256": "184635396953ccc1cf0c5674e7e573228ef1b5829649b6b9c30e39f3bb6fed5e",
+    "candidate_symbol": "grouped_get_logits_buffer_direct",
+    "consumer_path": "/sgl-workspace/sglang/python/sglang/srt/layers/logits_processor.py",
+    "consumer_sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14",
+    "consumer_symbol": "sglang.srt.layers.logits_processor.LogitsProcessor._get_logits",
+    "kernel_symbol": "depth_interleaved_grouped_lm_head",
+    "weight_key": "model.language_model.embed_tokens.weight",
+    "weight_path": "/weight",
+    "weight_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+  },
+  "timing_ms": {
+    "candidate_graph_replay_samples": [
+      4.051968097686768,
+      4.183167934417725,
+      4.183455944061279,
+      4.179232120513916,
+      4.182528018951416,
+      4.181183815002441,
+      4.183807849884033,
+      4.182975769042969,
+      4.183104038238525
+    ],
+    "candidate_median": 4.182975769042969,
+    "control_graph_replay_samples": [
+      9.193568229675293,
+      9.209440231323242,
+      9.194304466247559,
+      9.193920135498047,
+      9.207103729248047,
+      9.200736045837402,
+      9.201120376586914,
+      9.202943801879883,
+      9.214431762695312
+    ],
+    "control_median": 9.201120376586914,
+    "fractional_change": -0.5453840839114625
+  },
+  "torch": "2.11.0+cu130",
+  "triton": "3.6.0",
+  "weight_materialization": {
+    "method": "verified_hardlink",
+    "project": "/home/glmrunner/gemma4-persistent-grouped-lm-head/immutable/eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa/model-00001-of-00002.safetensors",
+    "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+    "source": "/home/glmrunner/gemma4-fixed-m384-executor/checkpoint/model-00001-of-00002.safetensors",
+    "stat": [
+      "64769:5575965:49784788364",
+      "64769:5575965:49784788364"
+    ]
+  }
+}

@@ -1,0 +1,346 @@
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.0.1
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+/usr/local/lib/python3.12/dist-packages/torchao/quantization/quant_api.py:1731: SyntaxWarning: invalid escape sequence '\.'
+  """Configuration class for applying different quantization configs to modules or parameters based on their fully qualified names (FQNs).
+/sgl-workspace/sglang/python/sglang/launch_server.py:54: UserWarning: 'python -m sglang.launch_server' is still supported, but 'sglang serve' is the recommended entrypoint.
+  Example: sglang serve --model-path <model> [options]
+  warnings.warn(
+[2026-07-25 23:24:40] Hybrid swa model: self.hf_config.architectures=['Gemma4ForConditionalGeneration']
+[2026-07-25 23:24:45] server_args=ServerArgs(model_path='/models/target', tokenizer_path='/models/target', tokenizer_mode='auto', tokenizer_backend='huggingface', tokenizer_worker_num=1, detokenizer_worker_num=1, skip_tokenizer_init=False, load_format='auto', model_loader_extra_config='{}', trust_remote_code=False, context_length=5000, is_embedding=False, prefill_only_disable_kv_cache=False, enable_multimodal=None, revision='b9ea41a2887d8607f594846523f94c6cc75ac8a4', model_impl='auto', model_config_parser='auto', host='0.0.0.0', port=30000, fastapi_root_path='', grpc_mode=False, skip_server_warmup=True, warmups=None, nccl_port=None, checkpoint_engine_wait_weights_before_ready=False, ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_keyfile_password=None, enable_ssl_refresh=False, enable_http2=False, dtype='bfloat16', quantization=None, quantization_param_path=None, kv_cache_dtype='auto', enable_fp32_lm_head=False, modelopt_quant=None, modelopt_checkpoint_restore_path=None, modelopt_checkpoint_save_path=None, modelopt_export_path=None, quantize_and_serve=False, rl_quant_profile=None, mem_fraction_static=0.85, max_running_requests=32, max_queued_requests=None, max_total_tokens=None, chunked_prefill_size=8192, enable_dynamic_chunking=False, max_prefill_tokens=16384, prefill_max_requests=None, schedule_policy='fcfs', enable_priority_scheduling=False, disable_priority_preemption=False, default_priority_value=None, abort_on_priority_when_disabled=False, schedule_low_priority_values_first=False, priority_scheduling_preemption_threshold=10, schedule_conservativeness=1.0, page_size=1, swa_full_tokens_ratio=0.8, disable_hybrid_swa_memory=False, radix_eviction_policy='lru', enable_prefill_delayer=False, prefill_delayer_max_delay_passes=30, prefill_delayer_token_usage_low_watermark=None, prefill_delayer_forward_passes_buckets=None, prefill_delayer_wait_seconds_buckets=None, prefill_delayer_queue_min_ratio=None, prefill_delayer_max_delay_ms=None, device='cuda', tp_size=1, pp_size=1, pp_max_micro_batch_size=None, pp_async_batch_depth=0, stream_interval=1, batch_notify_size=16, stream_response_default_include_usage=False, incremental_streaming_output=False, enable_streaming_session=False, random_seed=577767192, constrained_json_whitespace_pattern=None, constrained_json_disable_any_whitespace=False, watchdog_timeout=300, soft_watchdog_timeout=None, dist_timeout=None, download_dir=None, model_checksum=None, base_gpu_id=0, gpu_id_step=1, sleep_on_idle=False, load_snapshot_publish_interval=15, use_ray=False, custom_sigquit_handler=None, log_level='info', log_level_http=None, log_requests=False, log_requests_level=2, log_requests_format='text', log_requests_target=None, uvicorn_access_log_exclude_prefixes=[], crash_dump_folder=None, show_time_cost=False, enable_metrics=False, grpc_http_sidecar_port=None, enable_mfu_metrics=False, enable_metrics_for_all_schedulers=False, tokenizer_metrics_custom_labels_header='x-custom-labels', tokenizer_metrics_allowed_custom_labels=None, extra_metric_labels=None, bucket_time_to_first_token=None, bucket_inter_token_latency=None, bucket_e2e_request_latency=None, prompt_tokens_buckets=None, generation_tokens_buckets=None, gc_warning_threshold_secs=0.0, decode_log_interval=40, enable_request_time_stats_logging=False, kv_events_config=None, enable_forward_pass_metrics=False, forward_pass_metrics_worker_id='', forward_pass_metrics_ipc_name=None, enable_trace=False, trace_modules='request', otlp_traces_endpoint='localhost:4317', export_metrics_to_file=False, export_metrics_to_file_dir=None, stat_loggers=None, api_key=None, admin_api_key=None, served_model_name='/models/target', weight_version='default', chat_template=None, hf_chat_template_name=None, completion_template=None, file_storage_path='sglang_storage', enable_cache_report=False, reasoning_parser=None, strip_thinking_cache=False, enable_strict_thinking=False, tool_call_parser=None, tool_server=None, sampling_defaults='model', asr_max_buffer_seconds=60, asr_max_concurrent_sessions=32, dp_size=1, load_balance_method='round_robin', attn_cp_size=1, moe_dp_size=1, dist_init_addr=None, nnodes=1, node_rank=0, json_model_override_args='{}', preferred_sampling_params=None, enable_lora=None, enable_lora_overlap_loading=None, max_lora_rank=None, lora_target_modules=None, lora_paths=None, max_loaded_loras=None, max_loras_per_batch=8, lora_eviction_policy='lru', lora_backend='csgmv', max_lora_chunk_size=16, experts_shared_outer_loras=None, lora_use_virtual_experts=False, lora_strict_loading=False, lora_drain_wait_threshold=0.0, attention_backend='triton', decode_attention_backend=None, prefill_attention_backend=None, sampling_backend='flashinfer', grammar_backend='xgrammar', radix_cache_backend=None, mm_attention_backend=None, fp8_gemm_runner_backend='auto', fp4_gemm_runner_backend='auto', dsa_prefill_backend=None, dsa_decode_backend=None, dsa_topk_backend='sgl-kernel', disable_flashinfer_autotune=False, mamba_backend='triton', speculative_algorithm=None, speculative_draft_model_path=None, speculative_draft_model_revision=None, speculative_draft_load_format=None, speculative_num_steps=None, speculative_eagle_topk=None, speculative_num_draft_tokens=None, speculative_dflash_block_size=None, speculative_accept_threshold_single=1.0, speculative_accept_threshold_acc=1.0, speculative_token_map=None, speculative_attention_mode='prefill', speculative_draft_attention_backend=None, speculative_draft_window_size=None, speculative_moe_runner_backend='auto', speculative_moe_a2a_backend=None, speculative_draft_model_quantization=None, speculative_skip_dp_mlp_sync=False, speculative_ngram_min_bfs_breadth=1, speculative_ngram_max_bfs_breadth=10, speculative_ngram_match_type='BFS', speculative_ngram_max_trie_depth=18, speculative_ngram_capacity=10000000, speculative_ngram_external_corpus_path=None, speculative_ngram_external_sam_budget=0, speculative_ngram_external_corpus_max_tokens=10000000, enable_multi_layer_eagle=False, speculative_adaptive=False, speculative_adaptive_config=None, ep_size=1, moe_a2a_backend='none', moe_runner_backend='auto', flashinfer_mxfp4_moe_precision='default', enable_flashinfer_allreduce_fusion=False, enforce_disable_flashinfer_allreduce_fusion=False, enable_aiter_allreduce_fusion=False, deepep_mode='auto', deepep_dispatcher_output_dtype='auto', ep_num_redundant_experts=0, ep_dispatch_algorithm=None, init_expert_location='trivial', enable_eplb=False, eplb_algorithm='auto', eplb_rebalance_num_iterations=1000, eplb_rebalance_layers_per_chunk=None, eplb_min_rebalancing_utilization_threshold=1.0, expert_distribution_recorder_mode=None, expert_distribution_recorder_buffer_size=1000, enable_expert_distribution_metrics=False, deepep_config=None, moe_dense_tp_size=None, elastic_ep_backend=None, enable_elastic_expert_backup=False, mooncake_ib_device=None, enable_deepep_waterfill=False, elastic_ep_rejoin=False, max_mamba_cache_size=None, mamba_ssm_dtype=None, mamba_full_memory_ratio=0.9, mamba_scheduler_strategy='no_buffer', mamba_track_interval=256, linear_attn_backend='triton', linear_attn_decode_backend=None, linear_attn_prefill_backend=None, enable_hierarchical_cache=False, hicache_ratio=2.0, hicache_size=0, hicache_write_policy='write_through', hicache_io_backend='kernel', hicache_mem_layout='layer_first', hicache_storage_backend=None, hicache_storage_prefetch_policy='timeout', hicache_storage_backend_extra_config=None, enable_hisparse=False, hisparse_config=None, enable_lmcache=False, lmcache_config_file=None, kt_weight_path=None, kt_method='AMXINT4', kt_cpuinfer=None, kt_threadpool_count=2, kt_num_gpu_experts=None, kt_max_deferred_experts_per_token=None, dllm_algorithm=None, dllm_algorithm_config=None, cpu_offload_gb=0, offload_group_size=-1, offload_num_in_group=1, offload_prefetch_step=1, offload_mode='cpu', enable_mis=False, disable_radix_cache=False, disable_cuda_graph_padding=False, enable_profile_cuda_graph=False, enable_cudagraph_gc=False, debug_cuda_graph=False, cuda_graph_config=CudaGraphConfig(decode=PhaseConfig(backend='full', max_bs=256, bs=[1, 2, 4, 8, 12, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256], tc_compiler='eager'), prefill=PhaseConfig(backend='disabled', max_bs=5000, bs=[4, 8, 12, 16, 20, 24, 28, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240, 256, 288, 320, 352, 384, 416, 448, 480, 512, 576, 640, 704, 768, 832, 896, 960, 1024, 1280, 1536, 1792, 2048, 2304, 2560, 2816, 3072, 3328, 3584, 3840, 4096, 4608], tc_compiler='eager')), cuda_graph_backend_decode=None, cuda_graph_backend_prefill=None, cuda_graph_max_bs_decode=None, cuda_graph_max_bs_prefill=None, cuda_graph_bs_decode=None, cuda_graph_bs_prefill=None, cuda_graph_tc_compiler=None, disable_cuda_graph=False, disable_prefill_cuda_graph=False, disable_decode_cuda_graph=False, prefill_cuda_graph_backend=None, decode_cuda_graph_backend=None, enable_layerwise_nvtx_marker=False, enable_nccl_nvls=False, enable_symm_mem=False, disable_flashinfer_cutlass_moe_fp4_allgather=False, enable_tokenizer_batch_encode=False, disable_tokenizer_batch_decode=False, disable_outlines_disk_cache=False, disable_custom_all_reduce=False, enable_mscclpp=False, enable_torch_symm_mem=False, pre_warm_nccl=False, disable_overlap_schedule=False, enable_mixed_chunk=False, enable_dp_attention=False, enable_dp_attention_local_control_broadcast=False, enable_dp_lm_head=False, enable_two_batch_overlap=False, enable_single_batch_overlap=False, tbo_token_distribution_threshold=0.48, enable_torch_compile=False, enable_torch_compile_debug_mode=False, torch_compile_max_bs=32, torchao_config='', enable_p2p_check=False, triton_attention_reduce_in_fp32=False, triton_attention_num_kv_splits=8, triton_attention_split_tile_size=None, num_continuous_decode_steps=1, delete_ckpt_after_loading=False, enable_memory_saver=False, enable_weights_cpu_backup=False, enable_draft_weights_cpu_backup=False, allow_auto_truncate=False, enable_custom_logit_processor=False, flashinfer_mla_disable_ragged=False, disable_shared_experts_fusion=False, enforce_shared_experts_fusion=False, disable_chunked_prefix_cache=False, disable_fast_image_processor=False, keep_mm_feature_on_device=False, enable_return_hidden_states=False, enable_return_routed_experts=False, enable_return_indexer_topk=False, enable_deepseek_v4_fp4_indexer=False, scheduler_recv_interval=1, numa_node=None, enable_deterministic_inference=False, rl_on_policy_target=None, enable_attn_tp_input_scattered=False, disable_attn_tp_gather=False, gc_threshold=None, kv_canary='none', kv_canary_real_data='none', kv_canary_sweep_interval=0, enable_fused_qk_norm_rope=False, enable_precise_embedding_interpolation=False, enable_fused_moe_sum_all_reduce=False, enable_prefill_cp=False, cp_strategy=None, enable_dsa_prefill_context_parallel=False, dsa_prefill_cp_mode='round-robin-split', enable_prefill_context_parallel=False, prefill_cp_mode='in-seq-split', enable_dynamic_batch_tokenizer=False, dynamic_batch_tokenizer_batch_size=32, dynamic_batch_tokenizer_batch_timeout=0.002, debug_tensor_dump_output_folder=None, debug_tensor_dump_layers=None, debug_tensor_dump_input_file=None, debug_tensor_dump_inject=False, disaggregation_mode='null', disaggregation_transfer_backend='mooncake', disaggregation_bootstrap_port=8998, disaggregation_ib_device=None, disaggregation_decode_enable_radix_cache=False, disaggregation_decode_enable_offload_kvcache=False, num_reserved_decode_tokens=512, disaggregation_decode_polling_interval=1, optimistic_prefill_retries=0, encoder_only=False, language_only=False, encoder_transfer_backend='zmq_to_scheduler', encoder_urls=[], encoder_bootstrap_port=8997, encoder_register_urls=[], enable_adaptive_dispatch_to_encoder=False, custom_weight_loader=[], weight_loader_disable_mmap=False, weight_loader_prefetch_checkpoints=False, weight_loader_prefetch_num_threads=4, weight_loader_drop_cache_after_load=False, remote_instance_weight_loader_seed_instance_ip=None, remote_instance_weight_loader_seed_instance_service_port=None, remote_instance_weight_loader_send_weights_group_ports=None, remote_instance_weight_loader_backend='nccl', remote_instance_weight_loader_start_seed_via_transfer_engine=False, engine_info_bootstrap_port=6789, modelexpress_config=None, enable_pdmux=False, pdmux_config_path=None, sm_group_num=8, enable_broadcast_mm_inputs_process=False, enable_prefix_mm_cache=False, mm_enable_dp_encoder=False, mm_process_config={}, limit_mm_data_per_request=None, enable_mm_global_cache=False, decrypted_config_file=None, decrypted_draft_config_file=None, forward_hooks=None, enable_quant_communications=False, msprobe_dump_config=None)
+[2026-07-25 23:24:45] Hybrid swa model: self.hf_config.architectures=['Gemma4ForConditionalGeneration']
+[2026-07-25 23:24:47] Ignore import error when loading sglang.srt.multimodal.processors.mimo_v2: Could not load libtorchcodec. Likely causes:
+          1. FFmpeg is not properly installed in your environment. We support
+             versions 4, 5, 6, 7, and 8, and we attempt to load libtorchcodec
+             for each of those versions. Errors for versions not installed on
+             your system are expected; only the error for your installed FFmpeg
+             version is relevant. On Windows, ensure you've installed the
+             "full-shared" version which ships DLLs.
+          2. The PyTorch version (2.11.0+cu130) is not compatible with
+             this version of TorchCodec. Refer to the version compatibility
+             table:
+             https://github.com/pytorch/torchcodec?tab=readme-ov-file#installing-torchcodec.
+          3. Another runtime dependency; see exceptions below.
+
+        The following exceptions were raised as we tried to load libtorchcodec:
+        
+[start of libtorchcodec loading traceback]
+FFmpeg version 8:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.60: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /usr/local/lib/python3.12/dist-packages/torchcodec/libtorchcodec_core8.so
+
+FFmpeg version 7:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.59: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /usr/local/lib/python3.12/dist-packages/torchcodec/libtorchcodec_core7.so
+
+FFmpeg version 6:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.58: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /usr/local/lib/python3.12/dist-packages/torchcodec/libtorchcodec_core6.so
+
+FFmpeg version 5:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.57: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /usr/local/lib/python3.12/dist-packages/torchcodec/libtorchcodec_core5.so
+
+FFmpeg version 4:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.56: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /usr/local/lib/python3.12/dist-packages/torchcodec/libtorchcodec_core4.so
+[end of libtorchcodec loading traceback].
+[transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+[2026-07-25 23:24:53] Using default HuggingFace chat template with detected content format: openai
+[2026-07-25 23:24:53] Auto-detected template features: reasoning_parser=gemma4, tool_call_parser=gemma4
+[2026-07-25 23:25:05] Hybrid swa model: self.hf_config.architectures=['Gemma4ForConditionalGeneration']
+[transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+[2026-07-25 23:25:07] Restoring add_bos_token=True for /models/target (was False after v5 loading)
+[2026-07-25 23:25:08] Ignore import error when loading sglang.srt.multimodal.processors.mimo_v2: Could not load libtorchcodec. Likely causes:
+          1. FFmpeg is not properly installed in your environment. We support
+             versions 4, 5, 6, 7, and 8, and we attempt to load libtorchcodec
+             for each of those versions. Errors for versions not installed on
+             your system are expected; only the error for your installed FFmpeg
+             version is relevant. On Windows, ensure you've installed the
+             "full-shared" version which ships DLLs.
+          2. The PyTorch version (2.11.0+cu130) is not compatible with
+             this version of TorchCodec. Refer to the version compatibility
+             table:
+             https://github.com/pytorch/torchcodec?tab=readme-ov-file#installing-torchcodec.
+          3. Another runtime dependency; see exceptions below.
+
+        The following exceptions were raised as we tried to load libtorchcodec:
+        
+[start of libtorchcodec loading traceback]
+FFmpeg version 8:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.60: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /usr/local/lib/python3.12/dist-packages/torchcodec/libtorchcodec_core8.so
+
+FFmpeg version 7:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.59: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /usr/local/lib/python3.12/dist-packages/torchcodec/libtorchcodec_core7.so
+
+FFmpeg version 6:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.58: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /usr/local/lib/python3.12/dist-packages/torchcodec/libtorchcodec_core6.so
+
+FFmpeg version 5:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.57: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /usr/local/lib/python3.12/dist-packages/torchcodec/libtorchcodec_core5.so
+
+FFmpeg version 4:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.56: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /usr/local/lib/python3.12/dist-packages/torchcodec/libtorchcodec_core4.so
+[end of libtorchcodec loading traceback].
+[2026-07-25 23:25:08] Hybrid swa model: self.hf_config.architectures=['Gemma4ForConditionalGeneration']
+[2026-07-25 23:25:08] Init torch distributed begin.
+[2026-07-25 23:25:09] Init torch distributed ends. elapsed=0.18 s, mem usage=0.09 GB
+[2026-07-25 23:25:11] Load weight begin. avail mem=139.13 GB
+Multi-thread loading shards:   0% Completed | 0/2 [00:00<?, ?it/s]Multi-thread loading shards:  50% Completed | 1/2 [00:06<00:06,  6.78s/it]Multi-thread loading shards: 100% Completed | 2/2 [00:09<00:00,  4.21s/it]Multi-thread loading shards: 100% Completed | 2/2 [00:09<00:00,  4.59s/it]
+[2026-07-25 23:25:20] Persistent buffers not in checkpoint (using default init): ['vision_tower.encoder.layers.0.layer_scalar', 'vision_tower.encoder.layers.1.layer_scalar', 'vision_tower.encoder.layers.10.layer_scalar', 'vision_tower.encoder.layers.11.layer_scalar', 'vision_tower.encoder.layers.12.layer_scalar', 'vision_tower.encoder.layers.13.layer_scalar', 'vision_tower.encoder.layers.14.layer_scalar', 'vision_tower.encoder.layers.15.layer_scalar', 'vision_tower.encoder.layers.16.layer_scalar', 'vision_tower.encoder.layers.17.layer_scalar', 'vision_tower.encoder.layers.18.layer_scalar', 'vision_tower.encoder.layers.19.layer_scalar', 'vision_tower.encoder.layers.2.layer_scalar', 'vision_tower.encoder.layers.20.layer_scalar', 'vision_tower.encoder.layers.21.layer_scalar', 'vision_tower.encoder.layers.22.layer_scalar', 'vision_tower.encoder.layers.23.layer_scalar', 'vision_tower.encoder.layers.24.layer_scalar', 'vision_tower.encoder.layers.25.layer_scalar', 'vision_tower.encoder.layers.26.layer_scalar', 'vision_tower.encoder.layers.3.layer_scalar', 'vision_tower.encoder.layers.4.layer_scalar', 'vision_tower.encoder.layers.5.layer_scalar', 'vision_tower.encoder.layers.6.layer_scalar', 'vision_tower.encoder.layers.7.layer_scalar', 'vision_tower.encoder.layers.8.layer_scalar', 'vision_tower.encoder.layers.9.layer_scalar']
+[2026-07-25 23:25:20] Load weight end. elapsed=9.84 s, type=Gemma4ForConditionalGeneration, avail mem=79.52 GB, mem usage=59.61 GB.
+[2026-07-25 23:25:20] Use sliding window memory pool. full_layer_tokens=85396, swa_layer_tokens=68316
+[2026-07-25 23:25:20] Max concurrent requests (per dp worker) from the finalized token capacity: max_num_reqs=32.
+[2026-07-25 23:25:20] KV Cache is allocated. dtype: torch.bfloat16, #tokens: 68316, K size: 26.06 GB, V size: 26.06 GB
+[2026-07-25 23:25:20] KV Cache is allocated. dtype: torch.bfloat16, #tokens: 85396, K size: 3.26 GB, V size: 3.26 GB
+[2026-07-25 23:25:20] SWAKVPool mem usage: 58.64 GB, swa size: 68316, full size: 85396
+[2026-07-25 23:25:20] Memory pool end. avail mem=20.84 GB
+[2026-07-25 23:25:21] Capture cuda graph begin. This can take up to several minutes. avail mem=20.78 GB
+[2026-07-25 23:25:21] Capture cuda graph bs [1, 2, 4, 8, 12, 16, 24, 32]
+  0%|          | 0/8 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=20.78 GB):   0%|          | 0/8 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=20.78 GB):  12%|█▎        | 1/8 [00:31<03:39, 31.35s/it]Capturing batches (bs=24 avail_mem=20.72 GB):  12%|█▎        | 1/8 [00:31<03:39, 31.35s/it]Capturing batches (bs=24 avail_mem=20.72 GB):  25%|██▌       | 2/8 [00:31<01:18, 13.09s/it]Capturing batches (bs=16 avail_mem=20.71 GB):  25%|██▌       | 2/8 [00:31<01:18, 13.09s/it]Capturing batches (bs=16 avail_mem=20.71 GB):  38%|███▊      | 3/8 [00:31<00:35,  7.20s/it]Capturing batches (bs=12 avail_mem=20.71 GB):  38%|███▊      | 3/8 [00:31<00:35,  7.20s/it]Capturing batches (bs=12 avail_mem=20.71 GB):  50%|█████     | 4/8 [00:32<00:17,  4.43s/it]Capturing batches (bs=8 avail_mem=20.71 GB):  50%|█████     | 4/8 [00:32<00:17,  4.43s/it] Capturing batches (bs=8 avail_mem=20.71 GB):  62%|██████▎   | 5/8 [00:32<00:08,  2.90s/it]Capturing batches (bs=4 avail_mem=20.71 GB):  62%|██████▎   | 5/8 [00:32<00:08,  2.90s/it]Capturing batches (bs=4 avail_mem=20.71 GB):  75%|███████▌  | 6/8 [00:32<00:03,  1.98s/it]Capturing batches (bs=2 avail_mem=20.71 GB):  75%|███████▌  | 6/8 [00:32<00:03,  1.98s/it]Capturing batches (bs=2 avail_mem=20.71 GB):  88%|████████▊ | 7/8 [00:32<00:01,  1.39s/it]Capturing batches (bs=1 avail_mem=20.70 GB):  88%|████████▊ | 7/8 [00:32<00:01,  1.39s/it]Capturing batches (bs=1 avail_mem=20.70 GB): 100%|██████████| 8/8 [00:33<00:00,  1.09s/it]Capturing batches (bs=1 avail_mem=20.70 GB): 100%|██████████| 8/8 [00:33<00:00,  4.13s/it]
+[2026-07-25 23:25:54] Capture cuda graph end. Time elapsed: 33.68 s. mem usage=0.08 GB. avail mem=20.70 GB.
+[2026-07-25 23:25:54] Disable prefill CUDA graph because cuda_graph_config resolved prefill.backend='disabled' (e.g. via --cuda-graph-backend-prefill=disabled or auto-disable rules).
+[2026-07-25 23:25:57] max_total_num_tokens=85396, chunked_prefill_size=8192, max_prefill_tokens=16384, max_running_requests=32, context_len=5000, available_gpu_mem=20.70 GB
+[2026-07-25 23:25:57] Tree cache initialized: source=default impl=SWARadixCache hybrid_swa=True hybrid_ssm=False hierarchical=False streaming_wrapped=False
+[2026-07-25 23:25:57] INFO:     Started server process [1]
+[2026-07-25 23:25:57] INFO:     Waiting for application startup.
+[2026-07-25 23:25:57] Using default chat sampling params from model generation config: {'temperature': 1.0, 'top_k': 64, 'top_p': 0.95}
+[2026-07-25 23:25:57] The server is fired up and ready to roll!
+[2026-07-25 23:25:57] INFO:     Application startup complete.
+[2026-07-25 23:25:57] INFO:     Uvicorn running on http://0.0.0.0:30000 (Press CTRL+C to quit)
+/usr/local/lib/python3.12/dist-packages/fastapi/routing.py:142: FastAPIDeprecationWarning: ORJSONResponse is deprecated, FastAPI now serializes data directly to JSON bytes via Pydantic when a return type or response model is set, which is faster and doesn't need a custom response class. Read more in the FastAPI docs: https://fastapi.tiangolo.com/advanced/custom-response/#orjson-or-response-model and https://fastapi.tiangolo.com/tutorial/response-model/
+  response = await f(request)
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35790 - "GET /v1/models HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35802 - "GET /v1/models HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] Cache flushed successfully!
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35810 - "POST /flush_cache HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35824 - "GET /metrics HTTP/1.1" 404 Not Found
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35876 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35880 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35872 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35978 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35840 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35848 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35954 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35944 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35852 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35946 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35916 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35910 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35968 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35868 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35928 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35972 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35896 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35980 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35990 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:35998 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:36000 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:36014 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:36026 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:36032 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:36044 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:36046 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:36054 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:36070 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:36072 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:36074 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:36078 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:25:58] INFO:     127.0.0.1:36088 - "POST /generate HTTP/1.1" 200 OK
+[2026-07-25 23:26:06] Prefill batch, #new-seq: 1, #new-token: 4214, #cached-token: 0, full token usage: 0.15, swa token usage: 0.18, #running-req: 0, #queue-req: 29, #pending-token: 0, cuda graph: False, input throughput (token/s): 441.76
+[2026-07-25 23:26:08] Prefill batch, #new-seq: 2, #new-token: 8192, #cached-token: 0, full token usage: 0.23, swa token usage: 0.29, #running-req: 1, #queue-req: 26, #pending-token: 122442, cuda graph: False, input throughput (token/s): 5535.90
+[2026-07-25 23:26:09] Prefill batch, #new-seq: 4, #new-token: 8192, #cached-token: 1605, full token usage: 0.32, swa token usage: 0.41, #running-req: 2, #queue-req: 24, #pending-token: 112645, cuda graph: False, input throughput (token/s): 6087.70
+[2026-07-25 23:26:10] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.42, swa token usage: 0.52, #running-req: 5, #queue-req: 22, #pending-token: 103383, cuda graph: False, input throughput (token/s): 5821.34
+[2026-07-25 23:26:12] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.52, swa token usage: 0.62, #running-req: 7, #queue-req: 20, #pending-token: 94121, cuda graph: False, input throughput (token/s): 5801.22
+[2026-07-25 23:26:13] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.61, swa token usage: 0.70, #running-req: 9, #queue-req: 17, #pending-token: 84859, cuda graph: False, input throughput (token/s): 5607.69
+[2026-07-25 23:26:14] Prefill batch, #new-seq: 4, #new-token: 8192, #cached-token: 1605, full token usage: 0.71, swa token usage: 0.82, #running-req: 11, #queue-req: 15, #pending-token: 75062, cuda graph: False, input throughput (token/s): 6245.04
+[2026-07-25 23:26:16] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.80, swa token usage: 0.94, #running-req: 14, #queue-req: 13, #pending-token: 65800, cuda graph: False, input throughput (token/s): 5945.78
+[2026-07-25 23:26:16] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.82, swa token usage: 0.95, #running-req: 16, #queue-req: 13, #pending-token: 56538, cuda graph: False, input throughput (token/s): 28247.36
+[2026-07-25 23:26:21] Prefill batch, #new-seq: 1, #new-token: 1756, #cached-token: 0, full token usage: 0.83, swa token usage: 0.92, #running-req: 18, #queue-req: 13, #pending-token: 54782, cuda graph: False, input throughput (token/s): 398.71
+[2026-07-25 23:26:21] Prefill batch, #new-seq: 1, #new-token: 3679, #cached-token: 535, full token usage: 0.87, swa token usage: 0.97, #running-req: 19, #queue-req: 12, #pending-token: 50568, cuda graph: False, input throughput (token/s): 5391.12
+[2026-07-25 23:26:22] Decode batch, #running-req: 20, #full token: 74934, full token usage: 0.88, #swa token: 67371, swa token usage: 0.99, cuda graph: True, gen throughput (token/s): 30.89, #queue-req: 12
+[2026-07-25 23:26:24] Decode batch, #running-req: 20, #full token: 75734, full token usage: 0.89, #swa token: 68171, swa token usage: 1.00, cuda graph: True, gen throughput (token/s): 676.38, #queue-req: 12
+[2026-07-25 23:26:24] KV cache pool is full. Retract requests. #retracted_reqs: 1, #new_tokens_gained: 3766, #new_token_ratio: 0.6117 -> 0.3016
+[2026-07-25 23:26:24] Prefill batch, #new-seq: 1, #new-token: 3679, #cached-token: 535, full token usage: 0.89, swa token usage: 1.00, #running-req: 19, #queue-req: 12, #pending-token: 50655, cuda graph: False, input throughput (token/s): 1167.45
+[2026-07-25 23:26:24] KV cache pool is full. Retract requests. #retracted_reqs: 1, #new_tokens_gained: 3682, #new_token_ratio: 0.2986 -> 0.3128
+[2026-07-25 23:26:25] Decode batch, #running-req: 19, #full token: 72735, full token usage: 0.85, #swa token: 65172, swa token usage: 0.95, cuda graph: True, gen throughput (token/s): 445.79, #queue-req: 13
+[2026-07-25 23:26:26] Decode batch, #running-req: 19, #full token: 73495, full token usage: 0.86, #swa token: 65932, swa token usage: 0.97, cuda graph: True, gen throughput (token/s): 644.56, #queue-req: 13
+[2026-07-25 23:26:28] Decode batch, #running-req: 19, #full token: 74255, full token usage: 0.87, #swa token: 66692, swa token usage: 0.98, cuda graph: True, gen throughput (token/s): 643.80, #queue-req: 13
+[2026-07-25 23:26:29] Decode batch, #running-req: 19, #full token: 75015, full token usage: 0.88, #swa token: 67452, swa token usage: 0.99, cuda graph: True, gen throughput (token/s): 643.19, #queue-req: 13
+[2026-07-25 23:26:30] Decode batch, #running-req: 19, #full token: 75775, full token usage: 0.89, #swa token: 68212, swa token usage: 1.00, cuda graph: True, gen throughput (token/s): 643.09, #queue-req: 13
+[2026-07-25 23:26:30] KV cache pool is full. Retract requests. #retracted_reqs: 1, #new_tokens_gained: 2042, #new_token_ratio: 0.1192 -> 0.8546
+[2026-07-25 23:26:31] Decode batch, #running-req: 18, #full token: 72535, full token usage: 0.85, #swa token: 66895, swa token usage: 0.98, cuda graph: True, gen throughput (token/s): 619.27, #queue-req: 14
+[2026-07-25 23:26:35] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1605, full token usage: 0.20, swa token usage: 0.25, #running-req: 18, #queue-req: 9, #pending-token: 49575, cuda graph: False, input throughput (token/s): 776.26
+[2026-07-25 23:26:36] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.29, swa token usage: 0.36, #running-req: 20, #queue-req: 7, #pending-token: 40313, cuda graph: False, input throughput (token/s): 5859.58
+[2026-07-25 23:26:38] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.39, swa token usage: 0.45, #running-req: 22, #queue-req: 5, #pending-token: 31051, cuda graph: False, input throughput (token/s): 5837.13
+[2026-07-25 23:26:39] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.49, swa token usage: 0.53, #running-req: 24, #queue-req: 2, #pending-token: 21789, cuda graph: False, input throughput (token/s): 5564.49
+[2026-07-25 23:26:41] Prefill batch, #new-seq: 4, #new-token: 8192, #cached-token: 1605, full token usage: 0.58, swa token usage: 0.65, #running-req: 26, #queue-req: 0, #pending-token: 11992, cuda graph: False, input throughput (token/s): 6068.68
+[2026-07-25 23:26:41] Prefill batch, #new-seq: 3, #new-token: 8192, #cached-token: 1070, full token usage: 0.61, swa token usage: 0.68, #running-req: 29, #queue-req: 0, #pending-token: 2730, cuda graph: False, input throughput (token/s): 19027.81
+[2026-07-25 23:26:41] Prefill batch, #new-seq: 1, #new-token: 2730, #cached-token: 0, full token usage: 0.61, swa token usage: 0.66, #running-req: 31, #queue-req: 0, #pending-token: 0, cuda graph: False, input throughput (token/s): 84515.45
+[2026-07-25 23:26:41] Decode batch, #running-req: 14, #full token: 52459, full token usage: 0.61, #swa token: 45194, swa token usage: 0.66, cuda graph: True, gen throughput (token/s): 72.03, #queue-req: 0
+[2026-07-25 23:26:42] Decode batch, #running-req: 14, #full token: 53019, full token usage: 0.62, #swa token: 45754, swa token usage: 0.67, cuda graph: True, gen throughput (token/s): 528.64, #queue-req: 0
+[2026-07-25 23:26:43] Decode batch, #running-req: 13, #full token: 49531, full token usage: 0.58, #swa token: 43501, swa token usage: 0.64, cuda graph: True, gen throughput (token/s): 518.94, #queue-req: 0
+[2026-07-25 23:26:44] Decode batch, #running-req: 13, #full token: 50051, full token usage: 0.59, #swa token: 44021, swa token usage: 0.64, cuda graph: True, gen throughput (token/s): 493.19, #queue-req: 0
+[2026-07-25 23:26:45] Decode batch, #running-req: 13, #full token: 50571, full token usage: 0.59, #swa token: 44541, swa token usage: 0.65, cuda graph: True, gen throughput (token/s): 493.55, #queue-req: 0
+[2026-07-25 23:26:46] Decode batch, #running-req: 13, #full token: 51091, full token usage: 0.60, #swa token: 45061, swa token usage: 0.66, cuda graph: True, gen throughput (token/s): 492.63, #queue-req: 0
+[2026-07-25 23:26:47] Decode batch, #running-req: 13, #full token: 51611, full token usage: 0.60, #swa token: 45581, swa token usage: 0.67, cuda graph: True, gen throughput (token/s): 494.14, #queue-req: 0
+[2026-07-25 23:26:48] Decode batch, #running-req: 12, #full token: 48082, full token usage: 0.56, #swa token: 42543, swa token usage: 0.62, cuda graph: True, gen throughput (token/s): 485.47, #queue-req: 0
+[2026-07-25 23:26:49] Decode batch, #running-req: 12, #full token: 48562, full token usage: 0.57, #swa token: 43023, swa token usage: 0.63, cuda graph: True, gen throughput (token/s): 467.45, #queue-req: 0
+[2026-07-25 23:26:51] INFO:     127.0.0.1:43502 - "GET /metrics HTTP/1.1" 404 Not Found

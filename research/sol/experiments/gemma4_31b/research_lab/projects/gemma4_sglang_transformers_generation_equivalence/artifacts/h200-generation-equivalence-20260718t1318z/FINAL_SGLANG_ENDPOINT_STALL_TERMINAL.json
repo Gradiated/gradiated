@@ -1,0 +1,34 @@
+{
+  "classification": "typed_sglang_endpoint_stall_closes_runtime_quality_route",
+  "timestamp_utc": "2026-07-18T15:28:45Z",
+  "scope": "final SGLang-only consumer attempt; direct Transformers was not rerun",
+  "configuration": {
+    "image": "docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a",
+    "context_length": 5000,
+    "max_total_tokens": 1024,
+    "max_running_requests": 1,
+    "mem_fraction_static": 0.85,
+    "skip_server_warmup": true,
+    "cuda_graphs_enabled": true
+  },
+  "evidence": {
+    "server_ready": "GET /v1/models returned HTTP 200 at 2026-07-18T15:26:10Z",
+    "first_generate": "The frozen first input_ids /generate request was dispatched, remained in flight without an endpoint response or sglang row artifact, and was cancelled at 2026-07-18T15:28:45Z.",
+    "server_diagnostic": "[http_server] Error: Request is disconnected from the client side; Abort request",
+    "transformers_raw_sha256": "6a067250a61e6ca38561e03148f67bf1dfdcefac5e9913ea03489c07d2e62dd3",
+    "server_log_sha256": "67b534d95957f5a55c99cac9243f463420c77dab5fff316e0fcc9be40e9531c9"
+  },
+  "preserved_transformers_rows": {
+    "count": 5,
+    "scores": {
+      "heldout_ordering": 0,
+      "python": 1,
+      "heldout_aggregation": 1,
+      "heldout_indexing": 1,
+      "heldout_branching": 1
+    }
+  },
+  "sglang_rows_completed": 0,
+  "decision": "close_runtime_quality_route_without_model_quality_inference",
+  "bench_release_state": "ready_requested_without_teardown"
+}

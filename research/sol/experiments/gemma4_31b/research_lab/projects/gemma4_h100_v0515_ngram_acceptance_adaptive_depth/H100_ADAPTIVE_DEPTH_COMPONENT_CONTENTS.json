@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h100_v0515_ngram_acceptance_adaptive_depth",
+  "result": "registered_identity_verified_h100_for_bound_checkpoint_free_adaptive_depth_component",
+  "model": "Gemma 4 31B exact v0.5.15 NGRAM geometry; no checkpoint",
+  "checkpoint": "Forbidden and unnecessary. The component uses exact-geometry synthetic paged KV and native NGRAM producers.",
+  "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+  "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6; guest is identity-verified, image and component source are not yet staged.",
+  "caches": "Fresh 100-GiB guest; assume no image, CUDA, source, or compilation cache.",
+  "candidate": "dual_exact_depth_producers_ragged_prior_result_carrier_dynamic_eager_metadata with depth-12 graph admission and depth-6 eager fallback.",
+  "component": "Batch-7 depth-12 and batch-8 depth-6 native producers into real eager Triton target verification, greedy acceptance, KV movement, scheduler settlement, and strict graph fallback; at least 200 alternating repetitions.",
+  "source_result": {
+    "path": "gemma4_h100_v0515_ngram_acceptance_adaptive_depth/ADAPTIVE_DEPTH_H100_RESULT.json",
+    "sha256": "86a167b26b4ab759328e9ddf353d949dbabc02bdcca60cae5c77e32213b48635",
+    "classification": "source_complete_h100_component_ready"
+  },
+  "director_binding": "gemma4_h100_v0515_ngram_acceptance_adaptive_depth/DIRECTOR_H100_COMPONENT_BINDING.json",
+  "director_binding_sha256": "eabe3263d34e0220a197e9ac1dd17fa0eb6951809bc4bcb65d347b8f585abe09",
+  "identity_lifecycle": {
+    "path": "gemma4_h100_v0515_ngram_acceptance_adaptive_depth/H100_COMPONENT_IDENTITY_LIFECYCLE.json",
+    "sha256": "850ae3deaaf4bd98dc73f7f01eab80f557e445227b2c3339d21eff4898058eb3",
+    "fingerprint": "SHA256:B2WGdX81Hi6uIpZ8DS1H9ycSe4xOb+18F9THcbAgKjs"
+  },
+  "filesystem": "Fresh 100-GiB network-SSD boot disk; at most 20 GiB may be used and no checkpoint may be staged.",
+  "server_state": "Provider reports RUNNING; strict SSH returned H100_ADAPTIVE_DEPTH_IDENTITY_OK. No experiment image, source, server, or CUDA component has been started.",
+  "ssh_identity": "Read host 89.169.124.46, glmrunner user, and known-hosts namespace from runtime/gpus.json; use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+  "next": "Priority-8490 may verify the component binding, claim once, implement the bound project-local source, run only the checkpoint-free exact component, persist typed result and terminal, and release by 2026-07-25T15:45:00Z."
+}

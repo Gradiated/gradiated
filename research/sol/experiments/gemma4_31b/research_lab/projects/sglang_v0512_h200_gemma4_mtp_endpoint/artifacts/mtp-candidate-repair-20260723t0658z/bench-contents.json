@@ -1,0 +1,11 @@
+{
+  "artifacts": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/mtp-candidate-repair-20260723t0658z",
+  "checkpoint": "Exact immutable checkpoint retained at /home/glmrunner/gemma4-h200-flashinfer-metadata-scalar-elimination/checkpoint.",
+  "image": "Pinned SGLang v0.5.13 digest 6113665a retained.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "mtp_claim_cost_usd": 0.13434757324457167,
+  "mtp_cumulative_project_cost_usd": 3.847567199209622,
+  "project": "sglang_v0512_h200_gemma4_mtp_endpoint",
+  "runtime": "Accepted-depth terminal: typed_external_or_owner_boundary",
+  "server_state": "Healthy final MTP server retained when scientific execution reached a server terminal; image/checkpoint/assistant and compiled caches retained otherwise."
+}

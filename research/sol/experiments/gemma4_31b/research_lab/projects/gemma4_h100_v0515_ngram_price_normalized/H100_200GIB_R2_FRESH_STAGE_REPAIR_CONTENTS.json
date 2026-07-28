@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "result": "available_for_bound_fresh_atomic_stage_repair",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "checkpoint": "The exact immutable checkpoint is project-local and passed its eight-file audit. The canonical remote checkpoint is incomplete or absent because the failed owner incorrectly used --reuse-staged; stage it atomically before any server work.",
+  "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+  "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6; not yet loaded.",
+  "caches": "Only incomplete .checkpoint.staging, .candidate.staging, or .packet.staging state may be reconciled. Preserve canonical immutable files only when their bound sizes and SHA-256 values match.",
+  "server_state": "Remote preflight passed H100 identity, Docker, and the 193-GiB filesystem with 177 GiB free. No server or workload started; the sole endpoint remains unconsumed.",
+  "candidate": "The valid 171-request discriminator is consumed and forbidden to replay. Only the sole 791-request endpoint remains unconsumed.",
+  "director_binding": "gemma4_h100_v0515_ngram_price_normalized/DIRECTOR_R2_FRESH_STAGE_REPAIR_BINDING.json",
+  "director_binding_sha256": "0d4fe97cb1b033ca2ec351fbea02b4456b34dca9427983566ad1e1c4649096cf",
+  "next": "Priority-8490 may claim once, verify the fresh-stage repair binding and current identity, launch endpoint-only with --stage-packet and without --reuse-staged, atomically stage and hash all exact inputs, then run only the sole endpoint if every original gate passes. Persist a typed terminal and release by 2026-07-25T12:25:00Z."
+}

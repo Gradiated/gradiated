@@ -1,0 +1,8 @@
+{
+  "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/ngram-readmission-20260726t0159z",
+  "deadline_utc": "2026-07-26T02:20:00Z",
+  "diagnostic": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/ngram-readmission-20260726t0159z/retrieved.stdout.log",
+  "failure": "target_verify_consumer_failed",
+  "phase": "repair_ready",
+  "science_started": false
+}

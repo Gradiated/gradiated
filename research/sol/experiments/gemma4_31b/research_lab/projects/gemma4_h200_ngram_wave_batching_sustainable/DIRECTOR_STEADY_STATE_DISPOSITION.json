@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "decided_at_utc": "2026-07-24T16:05:43Z",
+  "classification": "steady_state_wave_survivor_with_finite_tail_close",
+  "terminal_path": "artifacts/wave-adoption-20260724t155535z/retrieved/out/FINAL_TERMINAL.json",
+  "terminal_sha256": "54ebd37d48d2bc4508aaf3ecc89c08ddf8bc6731719b7443b356cee0939a4f63",
+  "steady_state": {
+    "full_waves": 32,
+    "requests_per_wave": 32,
+    "release_period_seconds": 22.227523626,
+    "release_drift_max_seconds": 0.00015077263924467843,
+    "server_span_min_seconds": 17.383966674002295,
+    "server_span_median_seconds": 17.645687948997875,
+    "server_span_max_seconds": 17.684530305999942,
+    "minimum_headroom_seconds": 4.542993320000058,
+    "failures": 0,
+    "upstream_queue_depth": 0,
+    "planning_cost_usd_per_million_total_tokens_at_fixed_rate": 0.137156293636251
+  },
+  "finite_tail": {
+    "requests": 12,
+    "release_drift_seconds": 9.306847870945376,
+    "server_span_seconds": 6.947052585997881,
+    "interpretation": "The finite 1036-request trace ended 12 requests into the next 32-request cohort. Its fill/drain delay and $0.14012183965773806/M finite-run cost do not describe steady-state cross-wave queue growth."
+  },
+  "semantics": {
+    "request_semantics_matches": 1036,
+    "usage_matches": 1036,
+    "finish_reason_matches_independent_state_run": 1036,
+    "output_id_matches_independent_state_run": 1035,
+    "single_divergent_request_index": 790,
+    "single_divergent_first_token_offset": 26,
+    "raw_response_hash_comparator_valid": false,
+    "product_quality_terminal": "../gemma4_h200_ngram_decode_equivalent_production_validation/artifacts/quality-final-20260724t1304z/TERMINAL.json",
+    "product_quality_terminal_sha256": "b4e52f2471444db7386979029932f528cbf988660a1db1af0ba98d3c3b33cbe7",
+    "interpretation": "The raw-response hashes include cross-run representation differences and are not an exact semantic comparator. One synthetic token-stream divergence remains localization evidence and is not used as a new quality claim; fresh GPQA/TauBench non-inferiority remains authoritative."
+  },
+  "decision": {
+    "retain_full_wave_policy": true,
+    "replay_wave_trajectory": false,
+    "next_bottleneck": "Increase the exact c32 service and economic margin without changing the retained 32-request background admission geometry."
+  }
+}
+

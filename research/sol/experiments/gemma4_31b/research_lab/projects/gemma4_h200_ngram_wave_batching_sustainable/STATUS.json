@@ -1,0 +1,30 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 1.1066202279333335,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 6.0,
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "compute_budget": "One retained H200, at most 90 claimed GPU-minutes.",
+  "next_action": "Closed: preserve the measured terminal for director choice between a lower admitted rate and a source-level prefill/decode scheduling intervention; do not replay this fixed wave arm.",
+  "priority": 7200,
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "researcher_profile": "execution",
+  "reservation_gate": "Before claim, mechanically verify DIRECTOR_BINDING identities and freeze one immutable wave-consumer packet. No provider creation is permitted.",
+  "status": "complete",
+  "storage_budget": "At most 10 GiB of new project-local artifacts.",
+  "summary": "Valid negative fixed-wave result: all 1,036 requests completed with matched usage and no failures, but the 12-request tail released 9.307 seconds late (one arrival spacing allowed 0.695 seconds) and planning cost was $0.140122/M, above the $0.14/M gate. The clean H200 was released ready after terminal retrieval.",
+  "terminal": {
+    "classification": "measured_wave_admission",
+    "path": "artifacts/wave-adoption-20260724t155535z/retrieved/out/FINAL_TERMINAL.json",
+    "planning_cost_usd_per_million_total_tokens": 0.14012183965773806,
+    "requests": 1036,
+    "retain_wave_admission": false,
+    "failures": 0,
+    "usage_matches": 1036,
+    "tail_release_drift_seconds": 9.306847870945376,
+    "allowed_release_drift_seconds": 0.6946101132986054,
+    "final_server_queue_depth": 0.0,
+    "artifact_sha256": "54ebd37d48d2bc4508aaf3ecc89c08ddf8bc6731719b7443b356cee0939a4f63"
+  },
+  "wall_clock_budget": "Complete and release by 2026-07-24T16:45:00Z."
+}

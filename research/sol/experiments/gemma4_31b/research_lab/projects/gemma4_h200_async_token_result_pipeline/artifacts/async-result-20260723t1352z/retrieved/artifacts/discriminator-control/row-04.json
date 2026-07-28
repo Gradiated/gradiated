@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 5.121186846001365,
+  "ended_monotonic_s": 55697.643350263,
+  "error": null,
+  "first_token_monotonic_s": 55692.522163417,
+  "index": 4,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": "gn",
+      "token_ids": [
+        5440
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "v",
+      "token_ids": [
+        236766
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "gn",
+      "token_ids": [
+        5440
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "v",
+      "token_ids": [
+        236766
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "gn",
+      "token_ids": [
+        5440
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "v",
+      "token_ids": [
+        236766
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "gn",
+      "token_ids": [
+        5440
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "v",
+      "token_ids": [
+        236766
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "gn",
+      "token_ids": [
+        5440
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "v",
+      "token_ids": [
+        236766
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "gn",
+      "token_ids": [
+        5440
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "v",
+      "token_ids": [
+        236766
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "gn",
+      "token_ids": [
+        5440
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "v",
+      "token_ids": [
+        236766
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "gn",
+      "token_ids": [
+        5440
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": "v",
+      "token_ids": [
+        236766
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    5440,
+    236766,
+    5440,
+    236766,
+    5440,
+    236766,
+    5440,
+    236766,
+    5440,
+    236766,
+    5440,
+    236766,
+    5440,
+    236766,
+    5440,
+    236766
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "c6e0fdeb2b88b333fc4cb6ab468297cd0d6f0008e313e20215680057c6f6bf4d",
+  "request_sha256": "78fda25dc7a0bff86bbca9bc5df67e83ebe17322a977fde76074a1e4f5aab507",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 55684.407034801,
+  "text": "gnvgnvgnvgnvgnvgnvgnvgnv",
+  "ttft_seconds": 8.115128616002039,
+  "wall_seconds": 13.236315462003404
+}

@@ -1,0 +1,12 @@
+test_exact_source_hashes_and_trace_anchors (__main__.Request25BoundaryProbeTest.test_exact_source_hashes_and_trace_anchors) ... ok
+test_plane_digest_covers_every_plane_for_selected_segment (__main__.Request25BoundaryProbeTest.test_plane_digest_covers_every_plane_for_selected_segment) ... ok
+test_pre_post_labels_are_not_swapped (__main__.Request25BoundaryProbeTest.test_pre_post_labels_are_not_swapped) ... ok
+test_request25_identity_preserves_exact_body (__main__.Request25BoundaryProbeTest.test_request25_identity_preserves_exact_body) ... ok
+test_request25_only_logical_rid_selection_excludes_padding (__main__.Request25BoundaryProbeTest.test_request25_only_logical_rid_selection_excludes_padding) ... ok
+test_row_position_length_and_output_location_alignment (__main__.Request25BoundaryProbeTest.test_row_position_length_and_output_location_alignment) ... ok
+test_slot_rebinding_cannot_replace_logical_identity (__main__.Request25BoundaryProbeTest.test_slot_rebinding_cannot_replace_logical_identity) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.028s
+
+OK

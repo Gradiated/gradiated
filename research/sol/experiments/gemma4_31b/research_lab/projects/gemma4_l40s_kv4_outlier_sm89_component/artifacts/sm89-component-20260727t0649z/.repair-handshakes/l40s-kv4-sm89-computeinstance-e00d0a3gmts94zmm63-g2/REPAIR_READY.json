@@ -1,0 +1,11 @@
+{
+  "absolute_repair_deadline_utc": "2026-07-27T07:06:04.887220Z",
+  "created_at_utc": "2026-07-27T07:03:57.151073Z",
+  "diagnostic": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_sm89_component/artifacts/sm89-component-20260727t0649z/OWNER_ERROR_g2.json",
+  "failure_kind": "ordinary_component_launcher_api_consumer_or_retrieval_defect",
+  "repair_deadline_epoch": 1785135964.88722,
+  "repair_id": "l40s-kv4-sm89-computeinstance-e00d0a3gmts94zmm63-g2",
+  "retry_scope": "full_unconsumed_attempt",
+  "schema_version": 1,
+  "state": "repair_ready"
+}

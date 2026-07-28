@@ -1,0 +1,10 @@
+/usr/local/lib/python3.12/dist-packages/torchao/quantization/quant_api.py:1731: SyntaxWarning: invalid escape sequence '\.'
+  """Configuration class for applying different quantization configs to modules or parameters based on their fully qualified names (FQNs).
+Traceback (most recent call last):
+  File "/work/payload/h100_component_runner.py", line 109, in <module>
+    result = run(Path(ap.parse_args().out), ap.parse_args().repetitions)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/work/payload/h100_component_runner.py", line 75, in run
+    assert torch.allclose(got.float(), ref, atol=2e-2, rtol=2e-2)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

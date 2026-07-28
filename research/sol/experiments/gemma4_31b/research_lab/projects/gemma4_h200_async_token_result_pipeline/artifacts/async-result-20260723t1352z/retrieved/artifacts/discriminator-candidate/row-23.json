@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 8.253670971003885,
+  "ended_monotonic_s": 56159.660902217,
+  "error": null,
+  "first_token_monotonic_s": 56151.407231246,
+  "index": 23,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": "Parm",
+      "token_ids": [
+        223541
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    223541,
+    223541,
+    223541,
+    223541,
+    223541,
+    223541,
+    223541,
+    223541,
+    223541,
+    223541,
+    223541,
+    223541,
+    223541,
+    223541,
+    223541,
+    223541
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "c5a927b1da7586f9e7f2e982c1a55bb5bf5cf80fee3cc3037e1def1f63b99525",
+  "request_sha256": "edc73adac992872c3aa7a2dae568ad61871a521c3120c20845ad918d5d49eb52",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 56146.432119469,
+  "text": "ParmParmParmParmParmParmParmParmParmParmParmParmParmParmParmParm",
+  "ttft_seconds": 4.975111776999256,
+  "wall_seconds": 13.228782748003141
+}

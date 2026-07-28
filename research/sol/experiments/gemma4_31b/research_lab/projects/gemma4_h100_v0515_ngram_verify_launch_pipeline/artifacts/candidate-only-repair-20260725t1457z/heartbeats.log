@@ -1,0 +1,1867 @@
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T14:57:43.128272Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T15:57:43.128272Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_REPLACEMENT_OWNER_DISPATCH_CONTENTS.json",
+    "contents_artifact_sha256": "baf51b286f393777a3ff183fa9dc51abb8dcafd64e67d516aceb2d71600ed393",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_REPAIR_BINDING.json",
+    "director_binding_sha256": "4c9f532ac3cee3873997e573e88ba671414a66449b36b60e5023a2b10fe5bf75",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of workload, telemetry, and results.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Immediate priority-8500 harness dispatch: verify the binding and owner-transfer artifact, assume heartbeat on the retained claim, launch one bounded replacement owner, and execute workload construction directly through both endpoint arms, typed terminal, cleanup, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "c43b3fcdfad124dc1b11725312e3e2fb37f788d2eb2872c3577d65388518e2af",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_workload_repair_replacement_owner",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No scientific server or request has run. The acknowledgement-only boundary owner is terminated; no durable project session remains, while the project claim and lease are live.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "workload": "The fresh workload is absent and its corrected atomic producer is bound from the authoritative TRACE_PACKET request template plus exact_semantic_rows arrivals."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T14:57:43.128272Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:08:50.202204Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:08:50.202204Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:08:50.202204Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:09:35.252996Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:09:35.252996Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:09:35.252996Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:10:20.303960Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:10:20.303960Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:10:20.303960Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:11:05.365638Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:11:05.365638Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:11:05.365638Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:11:50.420830Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:11:50.420830Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:11:50.420830Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:12:35.471101Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:12:35.471101Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:12:35.471101Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:13:20.521922Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:13:20.521922Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:13:20.521922Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:14:05.575076Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:14:05.575076Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:14:05.575076Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:14:50.628813Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:14:50.628813Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:14:50.628813Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:15:35.687961Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:15:35.687961Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:15:35.687961Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:16:20.743227Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:16:20.743227Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:16:20.743227Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:17:05.794859Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:17:05.794859Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:17:05.794859Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:17:50.843443Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:17:50.843443Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:17:50.843443Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:18:35.900054Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:18:35.900054Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:18:35.900054Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:19:20.947119Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:19:20.947119Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:19:20.947119Z"
+}
+{
+  "accelerator": "nvidia-h100-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T14:01:55.682524Z",
+    "heartbeat_at": "2026-07-25T15:20:06.001797Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T16:20:06.001797Z",
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "stale": false
+  },
+  "contents": {
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry, not a measured minimum.",
+    "boundary_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_BOUNDARY.json",
+    "boundary_artifact_sha256": "15ebbca5f671132a4dcc65a2fda2d7b7c8e077e6310078a8fecff261c587d5b3",
+    "caches": "Preserve checkpoint, packet, exact source, image, and runtime/CUDA caches.",
+    "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+    "candidate_arm": {
+      "repair": "Filter one explicit __SGLANG_MODULE_PATH__ marker from the GPU-enabled container stdout, validate the absolute single-line ngram_worker.py path, and use only that value for the source mount.",
+      "requests_submitted": 0,
+      "server_started": false,
+      "state": "unstarted"
+    },
+    "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+    "component_result": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e"
+    },
+    "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_CANDIDATE_MODULE_PATH_REPAIR_CONTENTS.json",
+    "contents_artifact_sha256": "667684d36a044b572255bd7ee7fd1abc342205eeef16bea360f7528ee74b703a",
+    "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_CANDIDATE_MODULE_PATH_STDOUT_REPAIR_BINDING.json",
+    "director_binding_sha256": "f10735ebd3e627928f04ac1ad487744705cfeb2d68d4cccff85330867dc911f7",
+    "endpoint": "Run only the one contemporaneous stock/candidate pair at fresh indices 61000..61790 after the atomic workload completion and novelty gates.",
+    "filesystem": "Retain the 200-GiB disk; add at most 5 GiB of candidate telemetry and result artifacts.",
+    "hostkey_reconciliation": {
+      "path": "artifacts/H100_PACKED_ENDPOINT_HOSTKEY_RECONCILIATION_20260725.json",
+      "result": "provider identity matched and strict SSH verified after replacing only the stale IP-scoped ED25519 known-hosts entry",
+      "sha256": "10d8b1ab749bf8bc0df97ddd15826573f274aa7e82aa800f0bcd1bcd0b08a40b"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+    "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+    "lifecycle_inspection": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_ENDPOINT_STAGED_CONTINUATION_LIFECYCLE.json",
+    "lifecycle_inspection_sha256": "0f2b30095a72232b6da7aeb56adaa39a70b5e05b33a1e917dadfc9a148f9e181",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Priority-8500 must verify the binding and transfer hashes, assume heartbeat without release or reclaim, prove the exact marker parser in the launch path, run only the candidate arm, retrieve telemetry, persist the typed terminal, stop the server, and release by 17:30Z.",
+    "original_binding": {
+      "path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_FRESH_ENDPOINT_BINDING.json",
+      "sha256": "97513c4f615b41721173bfbe521b7ae8573361b4db89a27bb851a7e32005cad9"
+    },
+    "owner_transfer": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_CANDIDATE_REPAIR_OWNER_TRANSFER.json",
+    "owner_transfer_sha256": "00eefead7f69911793337f69c363e8268a812e657a2c38a7584e47f4239682ae",
+    "prior_attempt": {
+      "classification": "external_identity_blocker_pre_science",
+      "result_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_RESULT.json",
+      "result_sha256": "23d87d3dd9ca3734770d3010a0160de1eb60331d7694598b490fd25f508af49e",
+      "science_consumed": false,
+      "terminal_path": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_TERMINAL.json",
+      "terminal_sha256": "8a972d6ba09b7c073b807f08731ad94feadb5466ae7cc19a8e27e001435cf89b"
+    },
+    "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+    "repair_request": "gemma4_h100_v0515_ngram_verify_launch_pipeline/REPAIR_REQUEST.json",
+    "repair_request_sha256": "aad37417652d5b873cb70ca93c46fee4d23be488bb00ea1a8c02843c6c6c0cb5",
+    "result": "claimed_live_lease_ready_for_candidate_module_path_stdout_repair",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+    "schema_version": 1,
+    "server_state": "No server is resident. Stock is complete; candidate failed before server launch because the CUDA banner contaminated command-substitution stdout.",
+    "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+    "stock_arm": {
+      "completed": 791,
+      "failures": 0,
+      "result": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/arm_stock/ARM_RESULT.json",
+      "result_sha256": "ae5d22afcc48f75611fc94e90bc7493a06e51bba767817c7b8aec15b79957128",
+      "service_time_seconds_per_request": 0.7239557313463967,
+      "state": "valid_complete_immutable_do_not_replay"
+    },
+    "workload": {
+      "indices": "61000..61790",
+      "marker": "artifacts/workload-schema-repair-20260725t1436z/retrieved-pre-candidate-20260725t1456z/FRESH_WORKLOAD.json",
+      "marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01",
+      "request_count": 791,
+      "state": "atomically_persisted_immutable_and_reusable"
+    }
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T18:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "main_pid": 730607,
+      "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T13:01:27.058240Z",
+  "resource": {
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T15:20:06.001797Z"
+}

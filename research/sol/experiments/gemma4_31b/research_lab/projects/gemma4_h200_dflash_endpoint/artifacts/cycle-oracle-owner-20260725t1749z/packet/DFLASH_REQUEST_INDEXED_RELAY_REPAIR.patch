@@ -1,0 +1,24 @@
+diff --git a/python/sglang/srt/speculative/dflash_info_v2.py b/python/sglang/srt/speculative/dflash_info_v2.py
+index 9eaa467ff..9939837b0 100644
+--- a/python/sglang/srt/speculative/dflash_info_v2.py
++++ b/python/sglang/srt/speculative/dflash_info_v2.py
+@@ -42,8 +42,8 @@ class DFlashDraftInputV2(SpecInput):
+     """Draft-side state carried across overlap iterations (spec-v2)."""
+ 
+     # Legacy Eagle-shaped fields kept only for dataclass compatibility. DFLASH
+-    # overlap carries new_seq_lens / verified_id directly in the common
+-    # no-shape-change path; FutureMap remains the fallback for filter/merge.
++    # uses FutureMap's request-indexed relay for new_seq_lens / verified_id.
++    # This keeps the next seed and committed length under stable request ownership.
+     topk_p: torch.Tensor
+     topk_index: torch.Tensor
+     verified_id: torch.Tensor
+@@ -56,7 +56,7 @@ class DFlashDraftInputV2(SpecInput):
+     planning_seq_lens_sum: Optional[int] = None
+     reserved_seq_lens_cpu: Optional[torch.Tensor] = None
+     reserved_seq_lens_sum: Optional[int] = None
+-    direct_carry_valid: bool = True
++    direct_carry_valid: bool = False
+     _prepare_committed_kv_lens_cpu_buf: Optional[torch.Tensor] = None
+     _prepare_planning_kv_lens_cpu_buf: Optional[torch.Tensor] = None
+     _prepare_batch_seq_lens_cpu_buf: Optional[torch.Tensor] = None

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "type": "director_h100_registered_execution_binding",
+  "issued_at_utc": "2026-07-26T07:24:21Z",
+  "project": "h100_hybrid_attention_kernel_mechanism",
+  "decision": "strict_identity_verified_bench_registered_reactivate_exact_component",
+  "reservation_gate": {
+    "authorized_usd": 3.25,
+    "current_unreserved_campaign_authority_usd": 3.632807,
+    "required_before_researcher_schedule": "The harness must durably reacquire this project's full $3.25 reservation before scheduling; project activation is the reservation trigger, not permission to bypass the campaign ledger."
+  },
+  "bench": {
+    "id": "h100-paged-fp8-e00vpenjwp83n0nxmr",
+    "status_at_binding": "available",
+    "provider": "nebius",
+    "accelerator": "nvidia-h100-sxm",
+    "instance_id": "computeinstance-e00vpenjwp83n0nxmr",
+    "public_ipv4": "89.169.123.239",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "ssh_ed25519_fingerprint": "SHA256:BrXUq2kDe5SowV9fxsZCUVGcwNNZVEjAPJ0bkd/mwG8",
+    "strict_batchmode_ssh_passed": true,
+    "guest_probe": "cloud-init ready; NVIDIA H100 80GB HBM3, 81559 MiB, MIG disabled",
+    "registered_once_at_utc": "2026-07-26T07:23:14.228256Z"
+  },
+  "lifecycle": {
+    "watchdog_deadline_utc": "2026-07-26T08:14:14.550073Z",
+    "watchdog_unit": "gemma4-h100-paged-fp8-20260726t0814-watchdog.service",
+    "watchdog_main_pid": 1642730,
+    "watchdog_active_at_binding": true,
+    "execution_deadline_utc": "2026-07-26T08:04:14Z",
+    "release_deadline_utc": "2026-07-26T08:09:14Z"
+  },
+  "immutable_execution": {
+    "readiness_path": "H100_PAGED_FP8_EXECUTION_READY.json",
+    "readiness_sha256": "b26a26d28c6062b3bca58c8ae201f4471b1cfeeef82875576819e35a79fad379",
+    "program_path": "paged_fp8_execution.py",
+    "program_sha256": "fdafc7a2d20abddc4a82a6c7e34c98de9f7a75e7ecccfeab2152485613cc1918",
+    "contract_path": "paged_fp8_contract.py",
+    "contract_sha256": "bc993832a5e5079bd0f7715b96af28ec1cec26dc5f63aaf07cd3f1303d2695d6",
+    "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "runtime": "vLLM 0.19.1.dev6+g6d4a8e6d2",
+    "first_stage": "local1024 c8 and global4214 c8 sentinel",
+    "conditional_stage": "c8/c16/c32 local1024 and global 4214/4393/4571 sweep",
+    "typed_terminal": "H100_PAGED_FP8_EXECUTION_TERMINAL.json"
+  },
+  "researcher_action": {
+    "profile": "execution",
+    "claim_command": "PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/sol/experiments/gemma4_31b/research_lab claim --project h100_hybrid_attention_kernel_mechanism --bench h100-paged-fp8-e00vpenjwp83n0nxmr --lease-seconds 2700",
+    "entrypoint": "python3 paged_fp8_execution.py run --readiness H100_PAGED_FP8_EXECUTION_READY.json --output-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_hybrid_attention_kernel_mechanism/artifacts/h100-paged-fp8-execution-20260726t0724z --absolute-deadline-utc 2026-07-26T08:04:14Z --image-digest docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "required_terminal": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_hybrid_attention_kernel_mechanism/artifacts/h100-paged-fp8-execution-20260726t0724z/H100_PAGED_FP8_EXECUTION_TERMINAL.json",
+    "release_requirement": "Persist the typed terminal and release this bench no later than 2026-07-26T08:09:14Z. Do not create, delete, drain, or retire provider resources."
+  },
+  "h200_disposition": "The independent retained H200 owner and its scientific contract are unchanged. Its owner deadline passed while this lifecycle handoff was being committed; do not rewrite, replay, or release it from this binding."
+}

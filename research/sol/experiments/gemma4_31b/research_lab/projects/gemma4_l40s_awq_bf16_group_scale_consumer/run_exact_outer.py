@@ -406,17 +406,20 @@ def main() -> int:
                 },
             )
 
-        remote_archive = f"{remote_output}/retrieval.tar.gz"
+        remote_archive = f"{remote_output}.retrieval.tar.gz"
+        remote_archive_part = f"{remote_archive}.part"
         packed = run_ssh(
             ip,
             KEY,
-            f"sudo tar -czf {shlex.quote(remote_archive)} -C "
-            f"{shlex.quote(remote_output)} --exclude=retrieval.tar.gz . && "
-            f"sudo chown glmrunner:glmrunner {shlex.quote(remote_archive)}",
+            f"sudo tar -czf {shlex.quote(remote_archive_part)} -C "
+            f"{shlex.quote(remote_output)} . && "
+            f"sudo chown glmrunner:glmrunner {shlex.quote(remote_archive_part)} "
+            f"&& mv -f {shlex.quote(remote_archive_part)} "
+            f"{shlex.quote(remote_archive)}",
             timeout=120,
         )
         if packed.returncode:
-            raise RuntimeError("typed_retrieval_boundary:remote_pack_failed")
+            raise RuntimeError("recoverable_retrieval_failure:remote_pack")
         retrieved = run(
             [
                 "scp",
@@ -435,7 +438,7 @@ def main() -> int:
             timeout=300,
         )
         if retrieved.returncode:
-            raise RuntimeError("typed_retrieval_boundary:archive_scp_failed")
+            raise RuntimeError("recoverable_retrieval_failure:archive_scp")
         with tarfile.open(
             args.artifact_root / "remote-output.tar.gz", "r:gz"
         ) as archive:

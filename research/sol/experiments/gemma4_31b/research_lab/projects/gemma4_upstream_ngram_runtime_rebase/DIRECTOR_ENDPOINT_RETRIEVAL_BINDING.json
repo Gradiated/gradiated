@@ -1,0 +1,47 @@
+{
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "existing_guest": {
+    "artifact_root": "artifacts/v0515-endpoint-20260725t062540z",
+    "launched_at_utc": "2026-07-25T06:25:43.389532Z",
+    "owner_json_path": "artifacts/v0515-endpoint-20260725t062540z/retrieved/ENDPOINT_OWNER.json",
+    "owner_json_sha256": "864b865c0c724388d047d71ba95195acf9c66ad394174ed1e3c1f0abefe0c833",
+    "pid": 74086,
+    "remote_root": "/home/glmrunner/gemma4-upstream-ngram-v0515",
+    "start_ticks": 2174809,
+    "verified_live_at_utc": "2026-07-25T06:28:09Z"
+  },
+  "limits": {
+    "release_deadline_utc": "2026-07-25T07:00:00Z",
+    "total_project_spend_usd_max": 3.0
+  },
+  "project": "gemma4_upstream_ngram_runtime_rebase",
+  "required_actions": [
+    "atomically claim h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+    "verify the existing guest PID and start ticks, or accept only its already-persisted terminal if it has exited",
+    "launch one bounded local retrieval owner that keeps the bench claim heartbeat active",
+    "retrieve and verify the existing endpoint terminal and compact evidence",
+    "apply the original semantic, activation, failure, queue, release, trunk, and $0.14/M gates",
+    "release the bench by 2026-07-25T07:00:00Z"
+  ],
+  "schema_version": 1,
+  "scientific_state": {
+    "candidate_sample_consumed": true,
+    "conditional_full_endpoint_consumed": true,
+    "endpoint_requests": 791,
+    "invocation_started_at_utc": "2026-07-25T06:25:43.389532Z",
+    "terminal_present_at_verification": false
+  },
+  "source_endpoint_binding": {
+    "path": "DIRECTOR_ENDPOINT_BINDING.json",
+    "sha256": "432bc3efad5771fec37165d51df2ce850de288f8e8be61d5de8bfe827d102602"
+  },
+  "strictly_forbidden": [
+    "launch any remote endpoint worker",
+    "send any new request",
+    "replay the 171-request discriminator or the 791-request endpoint",
+    "reload, replace, stop, or mutate the resident server",
+    "alter the guest output while it is live",
+    "create or destroy a provider resource",
+    "launch a chained replacement retrieval owner"
+  ]
+}

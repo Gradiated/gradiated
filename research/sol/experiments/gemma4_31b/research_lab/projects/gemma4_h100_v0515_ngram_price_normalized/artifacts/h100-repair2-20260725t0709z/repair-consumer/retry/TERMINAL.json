@@ -1,0 +1,27 @@
+{
+  "bench": "h100-v0515-ngram-e00mfea030cdngg54z",
+  "candidate_sample_consumed": false,
+  "classification": "typed_external_or_recoverable_failure",
+  "error": "FileNotFoundError(2, 'No such file or directory')",
+  "finished_at": "2026-07-25T07:16:20.978433Z",
+  "heartbeat_events": [
+    {
+      "at": "2026-07-25T07:14:46.249194Z",
+      "kind": "heartbeat",
+      "returncode": 0
+    },
+    {
+      "at": "2026-07-25T07:15:31.294362Z",
+      "kind": "heartbeat",
+      "returncode": 0
+    },
+    {
+      "at": "2026-07-25T07:16:16.342705Z",
+      "kind": "heartbeat",
+      "returncode": 0
+    }
+  ],
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "schema_version": 1,
+  "started_at": "2026-07-25T07:14:01.199752Z"
+}

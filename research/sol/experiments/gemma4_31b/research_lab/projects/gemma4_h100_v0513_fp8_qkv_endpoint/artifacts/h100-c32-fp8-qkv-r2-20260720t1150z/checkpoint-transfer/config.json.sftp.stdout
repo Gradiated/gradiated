@@ -1,0 +1,1 @@
+sftp> put -a /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/inputs/checkpoint/config.json /home/glmrunner/gemma4-h100-fp8-qkv/checkpoint/.config.json.e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1.part

@@ -1,0 +1,147 @@
+commit 854c688121ed29f49bc862fe19357eecd6c72b30
+Author:     Liangsheng Yin <hnyls2002@gmail.com>
+AuthorDate: Tue Jun 23 00:53:05 2026 -0700
+Commit:     GitHub <noreply@github.com>
+CommitDate: Tue Jun 23 00:53:05 2026 -0700
+
+    [Spec] Unify decode KV-commit bookkeeping across spec-v2 workers (#28754)
+
+diff --git a/python/sglang/srt/managers/scheduler_components/batch_result_processor.py b/python/sglang/srt/managers/scheduler_components/batch_result_processor.py
+index a9d5f0c28..ec6827ddf 100644
+--- a/python/sglang/srt/managers/scheduler_components/batch_result_processor.py
++++ b/python/sglang/srt/managers/scheduler_components/batch_result_processor.py
+@@ -558,13 +558,10 @@ class SchedulerBatchResultProcessor:
+         for i, req in enumerate(batch.reqs):
+             accept_tokens = next_token_ids[i * stride : i * stride + accept_lens[i]]
+ 
+-            if req.is_retracted:
+-                # reset_for_retract() already zeroes committed/allocated KV.
++            if req.is_retracted or req.finished():
++                # Nothing to settle: no worker pre-claims the bonus, so
++                # kv_committed_len already holds the committed prefix.
+                 pass
+-            elif req.finished():
+-                if not batch.spec_algorithm.is_dflash():
+-                    # EAGLE prepare_for_decode pre-claimed the bonus slot.
+-                    req.kv_committed_len -= 1
+             else:
+                 if req.grammar is not None:
+                     # Stop accepting once the grammar terminates, so the
+@@ -573,13 +570,9 @@ class SchedulerBatchResultProcessor:
+                     # grammar.finished.
+                     accept_tokens = self._accept_grammar_tokens(req, accept_tokens)
+ 
++                # Commit the full accepted run (drafts + bonus).
+                 num_accept_tokens = len(accept_tokens)
+-                if batch.spec_algorithm.is_dflash():
+-                    # DFLASH materialized accepted draft tokens plus the bonus token.
+-                    req.kv_committed_len += num_accept_tokens
+-                else:
+-                    # EAGLE prepare_for_decode pre-claimed the bonus slot.
+-                    req.kv_committed_len += num_accept_tokens - 1
++                req.kv_committed_len += num_accept_tokens
+                 req.spec_verify_ct += 1
+ 
+                 num_correct_drafts = result.num_correct_drafts_per_req_cpu[i]
+diff --git a/python/sglang/srt/session/streaming_session.py b/python/sglang/srt/session/streaming_session.py
+index d2a7dc33d..4b86ee310 100644
+--- a/python/sglang/srt/session/streaming_session.py
++++ b/python/sglang/srt/session/streaming_session.py
+@@ -331,9 +331,15 @@ class StreamingSession(BasePrefixCache):
+         finished_len = (
+             req.finished_len if req.finished_len is not None else len(req.output_ids)
+         )
++        target = len(req.origin_input_ids) + finished_len
+         self._trim_overshoot(req, finished_len)
+ 
+         slot.save_from_req(req, is_first=is_first)
++        # Inherit the authoritative finished length on the slot, not the lagging
++        # req clock (under overlap + honest committed the clock lags the in-flight
++        # verify by ~1, which would short-change inheritance). Clamp to allocated
++        # to keep committed <= allocated for prepare_for_decode.
++        slot.kv_committed_len = min(target, slot.kv_allocated_len)
+ 
+         # Update req_nodes to this successfully finished request.
+         req.session.finish_req(req)
+diff --git a/python/sglang/srt/speculative/eagle_info_v2.py b/python/sglang/srt/speculative/eagle_info_v2.py
+index 3723a5673..37137c503 100644
+--- a/python/sglang/srt/speculative/eagle_info_v2.py
++++ b/python/sglang/srt/speculative/eagle_info_v2.py
+@@ -47,19 +47,15 @@ class EagleDraftInputV2Mixin:
+         num_needed_tokens = 0
+         for i, r in enumerate(batch.reqs):
+             cur = r.kv_allocated_len
+-            # max(cur, ...) clamps so adaptive downswitch (smaller alloc_len_per_decode)
+-            # cannot make nxt < cur and corrupt allocator state. kv_committed_len lags
+-            # batch.seq_lens by ~1 verify in overlap mode, so we react to adaptive
+-            # switches one batch later than a seq_lens-based baseline; the 2*alloc
+-            # over-allocation buffer absorbs that lag.
++            # max(cur, ...) clamps so adaptive downswitch cannot make nxt < cur.
++            # kv_committed_len is honest (bonus committed in resolve, not here),
++            # so it lags batch.seq_lens by ~1 verify in overlap; 2*alloc absorbs.
+             nxt = max(cur, r.kv_committed_len + double_alloc)
+             cur_kv_lens[i] = cur
+             nxt_kv_lens[i] = nxt
+             num_needed_tokens += nxt - cur
+             r.kv_allocated_len = nxt
+             r.decode_batch_idx += 1
+-            # Pre-claim bonus slot here (like normal decode); resolve subtracts 1.
+-            r.kv_committed_len += 1
+ 
+         cur_kv_lens_cpu = torch.tensor(cur_kv_lens, dtype=torch.int32, device="cpu")
+         nxt_kv_lens_cpu = torch.tensor(nxt_kv_lens, dtype=torch.int32, device="cpu")
+diff --git a/test/registered/unit/managers/test_batch_result_processor_spec_grammar.py b/test/registered/unit/managers/test_batch_result_processor_spec_grammar.py
+index 131d33b0e..b13cd3519 100644
+--- a/test/registered/unit/managers/test_batch_result_processor_spec_grammar.py
++++ b/test/registered/unit/managers/test_batch_result_processor_spec_grammar.py
+@@ -106,9 +106,8 @@ class TestSpecV2GrammarTruncation(CustomTestCase):
+         predict_tokens = proc._resolve_spec_v2_tokens(result, _FakeBatch([req]))
+ 
+         self.assertEqual(predict_tokens, [[101, 102]])
+-        # EAGLE commits (retained - 1): prepare_for_decode pre-claimed the bonus
+-        # slot, and the dropped suffix is never committed.
+-        self.assertEqual(req.kv_committed_len, 2 - 1)
++        # No pre-claim: commit the full retained run (no -1 refund).
++        self.assertEqual(req.kv_committed_len, 2)
+ 
+     def test_resolve_keeps_all_when_grammar_not_terminated(self):
+         req = _make_req(terminate_after=99)
+@@ -118,7 +117,7 @@ class TestSpecV2GrammarTruncation(CustomTestCase):
+         predict_tokens = proc._resolve_spec_v2_tokens(result, _FakeBatch([req]))
+ 
+         self.assertEqual(predict_tokens, [[201, 202, 203]])
+-        self.assertEqual(req.kv_committed_len, 3 - 1)
++        self.assertEqual(req.kv_committed_len, 3)
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/test/registered/unit/spec/test_decode_bookkeeping_ownership.py b/test/registered/unit/spec/test_decode_bookkeeping_ownership.py
+index b17b191ad..c69166b8a 100644
+--- a/test/registered/unit/spec/test_decode_bookkeeping_ownership.py
++++ b/test/registered/unit/spec/test_decode_bookkeeping_ownership.py
+@@ -55,16 +55,11 @@ _OWNER_SITES = {
+     (_SB, "ScheduleBatch.prepare_for_extend", "kv_allocated_len"): 1,
+     ("mem_cache/common.py", "alloc_for_extend", "evict"): 1,
+     ("mem_cache/common.py", "alloc_for_decode", "evict"): 1,
+-    # spec v2: pre-claim in the scheduler-driven mixin, settle in resolve
++    # spec v2: no pre-claim; resolve commits the full accepted run uniformly.
+     (*_MIXIN, "decode_batch_idx"): 1,
+     (*_MIXIN, "evict"): 1,
+-    (*_MIXIN, "kv_committed_len"): 1,
+     (*_MIXIN, "kv_allocated_len"): 1,
+-    # 3rd resolve mutation: DFLASH settles its full commit_lens here (no
+-    # pre-claim in prepare_for_decode, unlike the EAGLE mixin).
+-    # Spec grammar truncation commits only the retained (pre-termination) length
+-    # here, so the dropped suffix is never over-committed (no later rollback).
+-    (*_RESOLVE, "kv_committed_len"): 3,
++    (*_RESOLVE, "kv_committed_len"): 1,
+     (*_RESOLVE, "spec_verify_ct"): 1,
+     (
+         "speculative/dflash_info_v2.py",
+@@ -92,6 +87,8 @@ _OWNER_SITES = {
+     (_SS, "StreamingSession._trim_overshoot", "kv_committed_len"): 1,
+     (_SS, "StreamingSession._trim_overshoot", "kv_allocated_len"): 1,
+     (_SS, "StreamingSession.try_cache_finished_req", "kv_allocated_len"): 1,
++    # Inherit the authoritative finished length (not the lagging req clock).
++    (_SS, "StreamingSession.try_cache_finished_req", "kv_committed_len"): 1,
+ }

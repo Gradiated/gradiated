@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h100_v0515_ngram_acceptance_adaptive_depth",
+  "bench": "h100-v0515-adaptive-depth-component-e00gbzwff2ty4wznzj",
+  "result": "valid_component_measurement",
+  "candidate_sample_consumed": true,
+  "checkpoint_loaded": false,
+  "result_artifact": "ADAPTIVE_DEPTH_H100_COMPONENT_RESULT.json",
+  "raw_result_artifact": "artifacts/h100-component-20260725t1354z/RESULT.json",
+  "raw_result_sha256": "37fa8049fd556b0818a80aa755ad1033b50bdd12fc589d6c1a05e06e5cc942cf",
+  "attempts": [
+    {"kind": "invalid_pre_science", "cause": "Docker digest resolver hung before container creation"},
+    {"kind": "invalid_pre_measurement", "cause": "Triton non-power-of-two block and mask type defects; repaired in place"},
+    {"kind": "valid", "repetitions_total": 200}
+  ],
+  "actual_spend_usd": 1.25,
+  "released_condition": "ready",
+  "finished_at_utc": "2026-07-25T14:12:00Z"
+}

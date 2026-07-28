@@ -1,0 +1,12 @@
+{
+  "cases": [
+    "mixed_required_not_required",
+    "host_counter_transitions",
+    "filter_reorder",
+    "merge_different_progress",
+    "all_inactive_skip"
+  ],
+  "device": "NVIDIA H200",
+  "pass": true,
+  "schema_version": 1
+}

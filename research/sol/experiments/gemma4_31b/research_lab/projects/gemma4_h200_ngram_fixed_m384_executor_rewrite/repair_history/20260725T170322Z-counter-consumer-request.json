@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "state": "repair_requested",
+  "stage": "counter_consumer",
+  "requested_at_utc": "2026-07-25T17:03:22Z",
+  "ready_sha256": "3b71c2a43ad526321a369fb7fecfc5f9efc38b531cc93f9cc6e79775b5e24e54",
+  "patch_artifact": "MIXED_LOCAL_M384_COUNTER_LOG_REPAIR.json",
+  "patch_artifact_sha256": "2a4a18c904c11c0147f4f27a0c594c354242dc7cae6d6ae5659f6626db58c8f2",
+  "retry_scope": "Suppress replay of the exact hash-matched completed NCU capture, then run only its unstarted export/parser and terminal writer before continuing to the unstarted target-decision gate.",
+  "completed_producer": {
+    "report_sha256": "5bb0ef1d4f449ef8931ebf62006b86a572a970058d4a945732959c3322f8bc1c",
+    "counter_invocation_sha256": "a1f7214a5081d404717d5742b4c2c3d18f68f1f5abdbfbb7f4e1e99ae2a17a1d",
+    "disposition": "consumed_once_do_not_replay"
+  },
+  "entrypoint_smoke": {
+    "returncode": 0,
+    "capture_replay_suppressed": true,
+    "report_hash_preserved": true,
+    "guard_sha256": "ed30443bd05b97a6526a216628a437fe1368c913343584688be0784eec765e5e"
+  }
+}

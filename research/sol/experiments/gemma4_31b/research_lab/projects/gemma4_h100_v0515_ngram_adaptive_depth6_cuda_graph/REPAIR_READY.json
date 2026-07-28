@@ -1,0 +1,10 @@
+{
+  "absolute_repair_deadline_utc": "2026-07-25T17:40:00Z",
+  "created_at_utc": "2026-07-25T16:27:25.180803Z",
+  "diagnostic": "ADAPTIVE_DEPTH6_FRESH_ENDPOINT_ATTEMPT1_INVALID.json and ADAPTIVE_DEPTH6_FRESH_ENDPOINT_ATTEMPT2_INVALID.json; second retry again submitted 791, completed 128, first loss 62128; server log sha256 410ce3467a3e666e57ee4d70f87e6705c296d5a9218037dc71ac84f306493eaf; no complete control and candidate unstarted",
+  "failure_kind": "stock_fp8_server_internal_error_after_one_repair_retry",
+  "repair_deadline_epoch": 1785001200.0,
+  "retry_scope": "Director-authorized repair only: diagnose or replace the stock server/runtime failure in place, preserve frozen workload/checkpoint/claim, then rerun the interrupted control once only if a new explicit repair authorization is issued; do not run candidate without complete control.",
+  "schema_version": 1,
+  "state": "repair_ready"
+}

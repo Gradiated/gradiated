@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "classification": "typed_external_input_boundary",
+  "stage": "claim_time_exact_input_discovery",
+  "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "claim_project": "gemma4_certified_lazy_vocab_head",
+  "candidate_cuda_invocation_started": false,
+  "scientific_invocation_started": false,
+  "required_input": {
+    "path": "hidden_proposals.pt",
+    "contract": {
+      "hidden_states": "torch.bfloat16 [384,5376]",
+      "proposals": "torch.int32 or torch.int64 [384]"
+    }
+  },
+  "resident_weight": {
+    "path": "/home/glmrunner/gemma4-persistent-grouped-lm-head/immutable/eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa/model-00001-of-00002.safetensors",
+    "bytes": 49784788364,
+    "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+  },
+  "discovery_evidence": {
+    "remote_host": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "searched_roots": "/home/glmrunner",
+    "searched_patterns": ["*.pt", "*.pth", "*.safetensors", "*hidden*", "*proposal*"],
+    "result": "no hidden_proposals.pt or equivalent hidden-state capture found",
+    "available_archives": "endpoint/component archives contain request, response, telemetry, and terminal JSON only; no hidden-state tensor capture"
+  },
+  "interpretation": "The exact real-weight comparison could not enter CUDA because its bound 384-row input was absent. This is an input-staging boundary, not a mechanism result and not a consumed scientific sample.",
+  "next_admissible_action": "Stage an immutable project-local hidden_proposals.pt capture from the exact c32 verifier path, then reclaim a compatible H200 for the single bound comparison."
+}

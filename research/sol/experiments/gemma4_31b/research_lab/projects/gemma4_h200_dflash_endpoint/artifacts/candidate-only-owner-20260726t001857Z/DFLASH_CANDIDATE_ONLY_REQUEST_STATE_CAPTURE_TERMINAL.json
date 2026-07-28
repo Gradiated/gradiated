@@ -1,0 +1,32 @@
+{
+  "ar_producer_replayed": false,
+  "candidate_endpoint_complete": true,
+  "candidate_only_packet_identity_sha256": "3407231bdcc05a950d2f50cee02936a8f1f785ff32336b40b1760eb205539174",
+  "classification": "localized_first_target_verifier",
+  "endpoint_exact_match": false,
+  "first_differing_captured_state": {
+    "difference": {
+      "ar_expected": 3496,
+      "candidate_observed": 759,
+      "field": "target_top1_first"
+    },
+    "phase": "first_target_step",
+    "request_id": "077dff09d0bc4ec1ad3af6ec056651b2",
+    "request_index": 25
+  },
+  "inputs": {
+    "ar_terminal": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/request-state-capture-owner-20260725T232227Z/retrieved-final/results/ar-c32/TERMINAL.json",
+    "ar_terminal_sha256": "45b8120b452452b3ffcdc5282138e984140aa96b5802eef3d3ce66603a141af4",
+    "candidate_states_sha256": "b00e778bc03e218bb98d97817831438b304ae64ca21d4e945be22209ce68f694",
+    "candidate_terminal_sha256": "ea966215f852cb291f3cb5adee5e7376cbf36318450f7a014e17ab2583a33aa8"
+  },
+  "observer_coverage_pass": true,
+  "performance_claim_authorized": false,
+  "result": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/candidate-only-owner-20260726t001857Z/DFLASH_CANDIDATE_ONLY_REQUEST_STATE_CAPTURE_RESULT.json",
+  "result_sha256": "cca4968e360d8969b96dae34e1186f8d655784db84a8d0a06540b3df06212913",
+  "retrieve_exit_code": 0,
+  "schema_version": 1,
+  "summarize_exit_code": 0,
+  "valid_scientific_capture": true,
+  "worker_exit_code": 0
+}

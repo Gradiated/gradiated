@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "repair_id": "ngram-readmission-20260726t0159z-r3-readiness",
+  "predecessor_repair_id": "ngram-readmission-20260726t0159z",
+  "classification": "typed_external_readiness_boundary",
+  "observed_at_utc": "2026-07-26T02:16:31Z",
+  "deadline_utc": "2026-07-26T02:20:00Z",
+  "live_server_check": {
+    "docker_ps": "empty",
+    "gpu_compute_applications": "empty",
+    "http_health": "connection_refused",
+    "endpoint": "http://127.0.0.1:30000/health"
+  },
+  "science_started": false,
+  "candidate_cuda_invocation_started": false,
+  "scientific_component_consumed": false,
+  "exact_c32_started": false,
+  "endpoint_started": false,
+  "disposition": "released_to_maintenance",
+  "claim_released_at_utc": "2026-07-26T02:16:56Z",
+  "actual_spend_usd": 2.5054861418055557,
+  "spend_method": "1.76 prior cumulative plus 1095.846559 seconds at 2.45 USD/hour from claim at 01:58:40.356441Z through release at 02:16:56.203000Z"
+}

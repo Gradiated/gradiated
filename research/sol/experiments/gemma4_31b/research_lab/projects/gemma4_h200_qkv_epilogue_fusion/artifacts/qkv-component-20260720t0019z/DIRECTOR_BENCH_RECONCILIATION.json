@@ -1,0 +1,10 @@
+{
+  "artifacts": "Latest QKV owner_failure artifacts prove both retries ended before SCIENTIFIC_STARTED; compact terminal/result remain absent.",
+  "caches": "Retained Triton, FP8, and CUDA-graph caches remain reusable.",
+  "checkpoint": "Exact immutable eight-file checkpoint retained at /home/glmrunner/gemma-kernel-frontier/checkpoint.",
+  "image": "Pinned SGLang v0.5.12 image retained.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_h200_qkv_epilogue_fusion",
+  "runtime": "Maintenance reconciled: timeout/env ordering and missing run-ID propagation both preceded remote QKV execution; corrected env-prefixed outer is re-admitted for the unchanged first arm.",
+  "server_state": "No QKV endpoint server; prior retained runtime state must be isolated by the claimant."
+}

@@ -1,0 +1,53 @@
+{
+  "create_evidence": {
+    "returncode": 0,
+    "stderr_sha256": "db9dd7449730510deb242cded9cebb70480e73d7d49e54ccaee3b76df6aee834",
+    "stdout_sha256": "6812c8ce7d4cdb9d21dcc259fe833c23b9d1c98327b726b4eaaafcb7cf39dcb7"
+  },
+  "created_at_utc": "2026-07-27T03:32:52.182604Z",
+  "decision": "create_and_register_checkpoint_free_h200_in_maintenance",
+  "identity_gate": {
+    "claim_allowed": false,
+    "gpu_telemetry_verified": false,
+    "registered_condition": "maintenance",
+    "strict_ssh_probe_attempted": false
+  },
+  "lifecycle": {
+    "deadline_utc": "2026-07-27T04:06:52.182600Z",
+    "hourly_cost_usd": 2.4597222,
+    "maximum_compute_cost_usd": 1.39384258,
+    "maximum_seconds": 2040,
+    "provider_started_at_utc": "2026-07-27T03:32:52.182604Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-decode-scheduler-h200-20260727t033252z-watchdog.service",
+      "main_pid": 2315302,
+      "unit": "gemma4-decode-scheduler-h200-20260727t033252z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "owner_ready": {
+    "path": "DECODE_SCHEDULER_H200_OWNER_READY.json",
+    "sha256": "1911a93849945f7dc5cb74600438a212e7e92e2b271d7f5b9968cd5e4ef93a0e"
+  },
+  "project": "gemma4_decode_scheduler_task_graph",
+  "provider_resource": {
+    "accelerator": "nvidia-h200-sxm",
+    "bench_id": "h200-decode-scheduler-computeinstance-e00ex7q2tseebq29jg",
+    "disk_id": "computedisk-e00bgt1bcs6d4jhv51",
+    "disk_name": "gemma4-decode-scheduler-h200-20260727t033252z-boot",
+    "instance_id": "computeinstance-e00ex7q2tseebq29jg",
+    "instance_name": "gemma4-decode-scheduler-h200-20260727t033252z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "provider": "nebius",
+    "provider_state_at_create": "RUNNING",
+    "public_ipv4": "89.169.109.102",
+    "ssh_identity_file": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "ssh_user": "glmrunner"
+  },
+  "reservation": {
+    "authorized_usd": 1.45,
+    "prior_actual_usd": 0.0,
+    "reserved_at": "2026-07-27T03:25:35.986499Z"
+  },
+  "schema_version": 1
+}

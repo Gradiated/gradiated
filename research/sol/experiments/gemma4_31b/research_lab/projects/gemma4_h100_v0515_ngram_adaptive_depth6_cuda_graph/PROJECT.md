@@ -76,3 +76,17 @@ The result changes the portfolio by either nominating one short exact H100
 graph-versus-eager component after the current endpoint consumer releases the
 warm bench, or removing dual-depth graph capture from the adaptive endpoint
 candidate.
+
+## Fresh endpoint continuation
+
+The exact H100 component subsequently passed 200 alternating samples per arm,
+zero capture/replay error, complete native-producer-to-settlement correctness,
+and the 7→8→7 guard. Exact depth-6 graph replay measured `0.016064 ms` median
+versus `0.061648 ms` eager at the same batch-8/depth-6 geometry.
+
+`DIRECTOR_ADAPTIVE_DEPTH6_FRESH_ENDPOINT_BINDING.json` now authorizes one
+fresh 791-request matched endpoint pair on the released warm H100. The control
+is fixed depth-12 native NGRAM; the candidate is the frozen depth-12-below-8,
+depth-6-at-8-or-more rule with exact separate CUDA graphs. Normalized outputs
+must match for every request. This continuation may claim the existing bench
+once, must not restage the resident checkpoint, and must release by 17:40Z.

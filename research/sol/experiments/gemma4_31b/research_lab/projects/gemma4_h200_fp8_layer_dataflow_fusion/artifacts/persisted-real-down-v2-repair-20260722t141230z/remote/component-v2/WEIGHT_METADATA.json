@@ -1,0 +1,26 @@
+{
+  "checkpoint_key": "model.language_model.layers.0.mlp.down_proj.weight",
+  "checkpoint_shard": "model-00001-of-00002.safetensors",
+  "column_major": true,
+  "consumer_weight_dtype": "torch.float8_e4m3fn",
+  "consumer_weight_shape": [
+    21504,
+    5376
+  ],
+  "consumer_weight_stride": [
+    1,
+    21504
+  ],
+  "source_dtype": "torch.bfloat16",
+  "source_shape": [
+    5376,
+    21504
+  ],
+  "weight_scale_dtype": "torch.float32",
+  "weight_scale_shape": [
+    5376
+  ],
+  "weight_scale_stride": [
+    1
+  ]
+}

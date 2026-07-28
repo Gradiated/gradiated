@@ -1,12 +1,12 @@
 {
-  "status": "active",
+  "status": "completed",
   "priority": 9790,
   "researcher_profile": "execution",
   "authorized_spend_usd": 0.59,
-  "actual_spend_usd": 0.0,
+  "actual_spend_usd": 0.18557880736074067,
   "active_session": null,
-  "summary": "Cold execution owner is ready for the source-complete local KV4-plus-four-outlier representation on one L40S under the sole preregistered 0.953 allocator split. Direct hashes bind the CUDA producer, adapter, exact c32 consumer, workload, model configuration, and rewritten launch; no provider, SSH, checkpoint staging, CUDA, or endpoint operation occurred.",
-  "next_action": "Director must first observe this durable reservation, create and identity-verify one registered L40S bench, and bind an explicit SSH identity plus a project-local immutable checkpoint snapshot. Then launch l40s_kv4_endpoint_owner.py through the shared detached-owner --unit-manager pid controller, recording its emitted unit, pid, and start_ticks in active_session. Do not sweep or change the representation, runtime, exact c32 workload, or --mem-fraction-static 0.953.",
+  "summary": "Pre-science lifecycle terminal: two owner attempts failed before atomic claim on accelerator/model selector integration, and a later relaunch missed the binding's start fence while its relative deadline exceeded the authorized release and provider-watchdog windows. No checkpoint staging, image pull, CUDA, endpoint request, or scientific sample occurred. Exact provider cleanup is verified.",
+  "next_action": "Closed. Preserve the source-complete local KV4-plus-four-outlier fixed-0.953 packet and its unconsumed exact-c32 arm as historical evidence only. Do not recreate hardware or relaunch the owner without new campaign authority and a freshly bounded lifecycle.",
   "owner_ready_artifact": "L40S_KV4_OUTLIER_ENDPOINT_OWNER_READY.json",
   "owner_ready_sha256": "7089601a91a1bf1daf28bc87349840ef0d6c718664e28e5e668d018fd4886a3b",
   "offline_checks": {

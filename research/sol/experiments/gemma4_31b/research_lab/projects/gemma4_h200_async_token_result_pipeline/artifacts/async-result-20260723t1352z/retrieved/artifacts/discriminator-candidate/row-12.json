@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 10.246382020995952,
+  "ended_monotonic_s": 56159.661074956,
+  "error": null,
+  "first_token_monotonic_s": 56149.414692935,
+  "index": 12,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": " l",
+      "token_ids": [
+        537
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "9e7268ae62c74d4772b567666a7b887f00e2201fefee4d85f53aec01feefb1e8",
+  "request_sha256": "68a169d1fdf31275bae4938a9f9fd1d75812e170f696b413615a430f5ed6802c",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 56146.425110932,
+  "text": " l l l l l l l l l l l l l l l l",
+  "ttft_seconds": 2.9895820029996685,
+  "wall_seconds": 13.23596402399562
+}

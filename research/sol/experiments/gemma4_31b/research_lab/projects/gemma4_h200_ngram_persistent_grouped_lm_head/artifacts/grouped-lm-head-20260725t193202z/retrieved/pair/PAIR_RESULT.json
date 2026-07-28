@@ -1,0 +1,152 @@
+{
+  "candidate_audit": [
+    {
+      "block_k": 64,
+      "block_n": 256,
+      "candidate_symbol": "depth_interleaved_grouped_lm_head[vocab_block_major,depth_minor]",
+      "production_shape": [
+        32,
+        12,
+        5376,
+        262144
+      ],
+      "source_sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14"
+    },
+    {
+      "block_k": 64,
+      "block_n": 256,
+      "candidate_symbol": "depth_interleaved_grouped_lm_head[vocab_block_major,depth_minor]",
+      "production_shape": [
+        32,
+        12,
+        5376,
+        262144
+      ],
+      "source_sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14"
+    },
+    {
+      "block_k": 64,
+      "block_n": 256,
+      "candidate_symbol": "depth_interleaved_grouped_lm_head[vocab_block_major,depth_minor]",
+      "production_shape": [
+        32,
+        12,
+        5376,
+        262144
+      ],
+      "source_sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14"
+    },
+    {
+      "block_k": 64,
+      "block_n": 256,
+      "candidate_symbol": "depth_interleaved_grouped_lm_head[vocab_block_major,depth_minor]",
+      "production_shape": [
+        32,
+        12,
+        5376,
+        262144
+      ],
+      "source_sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14"
+    },
+    {
+      "block_k": 64,
+      "block_n": 256,
+      "candidate_symbol": "depth_interleaved_grouped_lm_head[vocab_block_major,depth_minor]",
+      "production_shape": [
+        32,
+        12,
+        5376,
+        262144
+      ],
+      "source_sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14"
+    }
+  ],
+  "candidate_ngram_telemetry": {
+    "sglang:prompt_tokens_histogram_sum": {
+      "after": 139062.0,
+      "before": 4214.0,
+      "delta": 134848.0
+    },
+    "sglang:spec_accept_length": {
+      "after": 1.05,
+      "before": 0.0,
+      "delta": 1.05
+    },
+    "sglang:spec_accept_rate": {
+      "after": 0.004545454545454545,
+      "before": 0.0,
+      "delta": 0.004545454545454545
+    },
+    "sglang:spec_num_draft_tokens": {
+      "after": 12.0,
+      "before": 0.0,
+      "delta": 12.0
+    },
+    "sglang:spec_verify_calls_total": {
+      "after": 1259.0,
+      "before": null,
+      "delta": null
+    },
+    "sglang:uncached_prompt_tokens_histogram_sum": {
+      "after": 121942.0,
+      "before": 4214.0,
+      "delta": 117728.0
+    }
+  },
+  "candidate_p95_completion_seconds": 19.540074750000713,
+  "candidate_path_present": true,
+  "candidate_service_seconds_per_request": 0.6996004903124913,
+  "classification": "matched_c32_grouped_lm_head_endpoint_pair",
+  "clean_shutdown": {
+    "candidate": true,
+    "control": true
+  },
+  "control_ngram_telemetry": {
+    "sglang:prompt_tokens_histogram_sum": {
+      "after": 139062.0,
+      "before": 4214.0,
+      "delta": 134848.0
+    },
+    "sglang:spec_accept_length": {
+      "after": 9.619429590017825,
+      "before": 0.0,
+      "delta": 9.619429590017825
+    },
+    "sglang:spec_accept_rate": {
+      "after": 0.7835845081834386,
+      "before": 0.0,
+      "delta": 0.7835845081834386
+    },
+    "sglang:spec_num_draft_tokens": {
+      "after": 12.0,
+      "before": 0.0,
+      "delta": 12.0
+    },
+    "sglang:spec_verify_calls_total": {
+      "after": 1233.0,
+      "before": null,
+      "delta": null
+    },
+    "sglang:uncached_prompt_tokens_histogram_sum": {
+      "after": 121942.0,
+      "before": 4214.0,
+      "delta": 117728.0
+    }
+  },
+  "control_p95_completion_seconds": 19.951671609000186,
+  "control_service_seconds_per_request": 0.6239856248437263,
+  "failures_per_arm": {
+    "candidate": 0,
+    "control": 0
+  },
+  "ngram_telemetry_present": true,
+  "p95_delta_fraction": -0.020629692943312183,
+  "request_hashes_exact": true,
+  "requests_per_arm": 32,
+  "schema_version": 1,
+  "service_time_delta_fraction": 0.12118046066798782,
+  "sse_token_ids_exact": true,
+  "target_and_emitted_trace_exact": false,
+  "usage_and_cache_accounting_valid": true,
+  "valid": false
+}

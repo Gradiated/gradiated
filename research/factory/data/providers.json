@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "reviewed_at_utc": "2026-07-15T00:00:00Z",
+  "reviewed_at_utc": "2026-07-28T10:20:00Z",
   "scope": "Candidate infrastructure for repeatable model-serving experiments and bare-metal GPU profiling. This registry records interfaces and verified capability, not prices or credentials.",
   "providers": [
     {
@@ -11,6 +11,13 @@
       "credentials": [
         {"env": "NEBIUS_IAM_TOKEN", "purpose": "API authentication", "required": false}
       ],
+      "inventory": {
+        "command": "research/factory/tools/lab-nebius-placement --accelerator <name> --gpu-count <count> --allocation auto",
+        "reviewed_at_utc": "2026-07-28T10:20:00Z",
+        "projects": ["eu-north1", "eu-west1", "uk-south1", "me-west1", "us-central1"],
+        "current_capacity_summary": "Authenticated read-only resource advice found an 8-GPU preemptible B200 candidate in us-central1 and an 8-GPU preemptible H200 candidate in eu-west1. No matching 8-GPU B300, H100, L40S, or RTX PRO 6000 candidate was returned. Re-check immediately before allocation.",
+        "provisioning": "not performed by the placement command"
+      },
       "profiling": {
         "hardware_counters": "restricted",
         "verified_profile": "gpu_vm",
@@ -25,6 +32,12 @@
       "credentials": [
         {"env": "RUNPOD_API_KEY", "purpose": "API authentication", "required": true}
       ],
+      "inventory": {
+        "public_pricing_url": "https://www.runpod.io/pricing",
+        "reviewed_at_utc": "2026-07-28T10:20:00Z",
+        "current_capacity_summary": "Public Pod and cluster catalogs were refreshed. Reserved cluster rates remain quote-only; no reliable authenticated capacity snapshot was obtained during this refresh.",
+        "provisioning": "campaign-owned"
+      },
       "profiling": {
         "hardware_counters": "unverified",
         "verified_profile": null,
@@ -62,9 +75,11 @@
         {"env": "GCORE_SSH_PRIVATE_KEY_PATH", "purpose": "external local path to the SSH private key; never store in this repository", "required": false}
       ],
       "inventory": {
-        "command": "grad-profile providers --provider gcore",
+        "command": "research/factory/tools/grad-profile providers --provider gcore",
         "snapshot_path": "research/factory/docs/GCORE.md",
         "refresh_interval_hours": 24,
+        "reviewed_at_utc": "2026-07-28T10:00:28Z",
+        "current_capacity_summary": "Authenticated catalog refresh found one 8x H100 on-demand node in Sines-2; all other discovered L40S, A100, H100, and H200 flavors reported capacity 0. This project reported a zero one-server H100 quota, so the visible node is not currently allocatable without a quota change.",
         "read_only_endpoints": ["GPU regions", "GPU bare-metal flavors with capacity and prices", "GPU images", "user-managed clusters", "one-server quota check"],
         "provisioning": "not performed by grad-profile"
       },

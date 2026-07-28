@@ -1,0 +1,5 @@
+{
+  "reason": "The first component worker failed before remote script execution because timeout interpreted its explicit environment assignment as an executable. A same-claim retry shim supplies the identical fresh attempt-2 QKV_COMPONENT_RUN_ID; program, workload, gates, and all bound input bytes are unchanged.",
+  "retry": true,
+  "stage": "component-worker"
+}

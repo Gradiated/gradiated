@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "repair_id": "repair-14",
+  "classification": "terminal_layer_capture_index_off_by_one",
+  "observed": {
+    "generation": 14,
+    "science_started": true,
+    "observer_error": "RuntimeError:aux_tap_contract",
+    "text_trace": {
+      "layers_to_capture": [46, 55, 61],
+      "aux_count": 2
+    },
+    "multimodal_trace": {
+      "capture_aux_hidden_states": true,
+      "language_model_layers_to_capture": [46, 55, 61]
+    },
+    "logits_trace": {
+      "aux_type": "list",
+      "aux_count": 2
+    },
+    "text_config_num_hidden_layers": 60,
+    "training_or_holdout_started": false
+  },
+  "localized_defect": "Gemma4TextModel records the last-layer output when layers_to_capture contains num_hidden_layers. The generic +1 translation turned requested physical layer 60 into 61, so only layers 45 and 54 were returned.",
+  "repair": "Translate nonterminal physical layers by +1 and leave the terminal physical layer equal to num_hidden_layers, yielding [46, 55, 60].",
+  "scope": "fresh_capture_only_with_terminal_layer_index_repair"
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h100_v0515_ngram_acceptance_adaptive_depth",
+  "result": "valid_component_measurement",
+  "component_result": "ADAPTIVE_DEPTH_H100_COMPONENT_RESULT.json",
+  "terminal": "ADAPTIVE_DEPTH_H100_COMPONENT_TERMINAL.json",
+  "checkpoint": "none; forbidden and not staged",
+  "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+  "image_local_identity": "adaptive-depth-sglang:bound-v0515",
+  "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6",
+  "server_state": "No container/server resident; H100 component exited after result",
+  "caches": "Pinned image and CUDA compilation cache retained; no checkpoint",
+  "repetitions_total": 200,
+  "repetitions_per_arm": 100,
+  "release_reason": "valid scientific terminal persisted"
+}

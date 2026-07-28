@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "admitted_at_utc": "2026-07-23T04:48:43Z",
+  "question": "Can the exact current stacked target keep its measured QKV epilogue while KV-shared Gemma4 assistant layers use the stock QKV consumer, thereby enabling native accepted-depth evidence and a bounded MTP endpoint gain?",
+  "evidence": {
+    "consumed_candidate_terminal": "artifacts/accepted-depth-20260723t0353z/RECONCILED_TERMINAL.json",
+    "consumed_candidate_terminal_sha256": "b4bd3202bcf8687e4a430a2d5fc262420ea7d0bcde2fd5e9181ed6c7cb8a838e",
+    "observed_path": "FrozenKVMTPWorker.draft_forward reached Gemma4Attention.forward in a KV-shared assistant layer before the QKV candidate guard raised.",
+    "interpretation": "Assistant entry is proven, but accepted depth is unmeasured. The new candidate changes the consumer contract: target layers retain fused QKV and only KV-shared assistant layers fall back to their stock supported path."
+  },
+  "immutable_identity": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "assistant_model": "google/gemma-4-31B-it-assistant",
+    "assistant_revision": "627c5ec1458b9086b841a91e0512fd31fd2fbbf1",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "checkpoint_bytes": 62578655208,
+    "runtime_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "workload": "32 requests, concurrency 32, 4214 prompt tokens and 358 completion tokens per request, 117728 fresh plus 17120 cached prompt tokens",
+    "source_binding": "ACCEPTED_DEPTH_REOPENING.json",
+    "current_frontier_source_sha256": "7edf0aedb6d447d95dc19a5bd409d367502f3344b5643ffacf67b0ae351fbc27"
+  },
+  "single_candidate": {
+    "name": "target_fused_qkv_stock_kv_shared_assistant",
+    "required_path_proof": [
+      "native FrozenKVMTPWorker draft path executes",
+      "target layers retain the exact fused QKV candidate",
+      "KV-shared assistant layers execute the stock QKV path",
+      "accepted-draft and target-verify telemetry is nonempty"
+    ],
+    "forbidden_changes": [
+      "assistant or target weights",
+      "speculation step, draft-token, or top-k sweep",
+      "workload, cache, sampling, or endpoint identities",
+      "BF16 control",
+      "replay of the consumed guard-raising candidate"
+    ]
+  },
+  "promotion_gate": {
+    "diagnostic_first": true,
+    "minimum_predicted_whole_request_gain_fraction": 0.03,
+    "endpoint_pair_limit": 1,
+    "quality": "All diagnostic and endpoint rows must be finite and sane; an endpoint pair requires 32/32 rows and exact prompt/cache accounting.",
+    "terminal_on_failure": "Close without endpoint promotion if assistant fallback, accepted-depth telemetry, or the 3% bound fails."
+  },
+  "budgets": {
+    "authorized_spend_usd": 8.0,
+    "claimed_h200_minutes": 45,
+    "wall_clock_hours": 2,
+    "storage_gib": 6
+  }
+}

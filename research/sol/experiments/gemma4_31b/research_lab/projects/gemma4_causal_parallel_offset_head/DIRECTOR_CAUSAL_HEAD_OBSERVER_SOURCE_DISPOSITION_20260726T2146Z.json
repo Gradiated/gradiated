@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "type": "director_causal_head_observer_source_disposition",
+  "issued_at_utc": "2026-07-26T21:46:12Z",
+  "project": "gemma4_causal_parallel_offset_head",
+  "decision": "Repair-4 is another observer-invalid capture, not a causal-head sample. Retain the live H200 owner and claim, but authorize no fifth request batch until pinned-runtime source evidence identifies the missing request-to-tap ownership boundary and a narrow repair is hash-bound to repair-5.",
+  "bench_id": "h200-causal-head-e00b9qw8d6qd7wrjj1",
+  "claimed_at": "2026-07-26T20:41:17.874349Z",
+  "owner_pid": 2056931,
+  "owner_start_ticks": 121449519,
+  "deadline_utc": "2026-07-27T01:32:34.490529Z",
+  "evidence": {
+    "capture_terminal": {
+      "path": "artifacts/h200-capture-train-20260726t2037z/CAPTURE_TERMINAL.json",
+      "sha256": "74c025c260a91ce0801177511d3885f11ce31b8cbaab19eeea611442f88b124c",
+      "rows": 0,
+      "chunks": 0,
+      "request_mapping_count": 0
+    },
+    "repair_ready": {
+      "path": "artifacts/h200-capture-train-20260726t2037z/.repair-handshakes/repair-5/REPAIR_READY.json",
+      "sha256": "18dbdc5acb077cc2ae6be532673866f558ac2ccc390e2acd1fd43eb82b58f85d",
+      "repair_id": "repair-5"
+    }
+  },
+  "required_disposition": {
+    "before_another_request_batch": [
+      "inspect the pinned SGLang request scheduling, cached-prefix extend, forward-batch, and tap-hook source path using the preserved repair-4 runtime evidence",
+      "identify one concrete runtime field or execution boundary that carries the stable production request IDs at the tapped layers",
+      "bind only the smallest observer, capture launcher, or runtime adapter diff needed to map those IDs, together with the exact source evidence and amended-byte hashes, in repair-5"
+    ],
+    "forbidden": [
+      "another unchanged or heuristic request batch",
+      "training or holdout without a valid manifest containing nonzero request-mapped tap rows",
+      "any endpoint pair"
+    ],
+    "claim_disposition": "Retain PID 2056931, its heartbeat, model state, checkpoint, raw invalid roots, and exclusive H200 claim while the bounded source localization and repair binding are prepared."
+  },
+  "scientific_state": {
+    "interpretable_capture_samples_consumed": 0,
+    "training_started": false,
+    "holdout_started": false,
+    "endpoint_pairs_remaining": 0
+  },
+  "researcher_profile": "execution"
+}

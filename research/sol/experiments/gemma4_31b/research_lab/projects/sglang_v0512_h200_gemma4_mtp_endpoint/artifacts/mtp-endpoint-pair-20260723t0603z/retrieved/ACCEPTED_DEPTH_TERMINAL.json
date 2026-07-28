@@ -1,0 +1,32 @@
+{
+  "accepted_drafts": 161,
+  "accepted_tokens": 357,
+  "assistant_elapsed_ms": 870.584486,
+  "assistant_equivalent_target_calls": 34.35820570536426,
+  "assistant_forward_events": 196,
+  "classification": "invalid_accepted_depth_diagnostic",
+  "decode_gain_after_assistant_verify_overhead": 0.3547389195928172,
+  "endpoint_pair_admitted": false,
+  "gate_fraction": 0.03,
+  "mean_accepted_depth": 1.8214285714285714,
+  "measured_decode_wall_fraction": 0.6862838061096259,
+  "pass": false,
+  "request_sha256": "91891345da568431460bcbe06563051dea7e93a15845d537e2130dde7c62f09d",
+  "response_sha256": "897ac3e0f9774ec961ec037677cafebc26a9ebb18fd1a14201618748e22ec265",
+  "schema_version": 1,
+  "service_seconds": 6.555381030997523,
+  "source_installation": [],
+  "status": "terminal",
+  "target_forward_reduction_fraction": 0.4509803921568627,
+  "target_verify_elapsed_ms": 4966.340813,
+  "target_verify_events": 196,
+  "usage": {
+    "completion_tokens": 358,
+    "prompt_tokens": 4214,
+    "prompt_tokens_details": null,
+    "reasoning_tokens": 0,
+    "total_tokens": 4572
+  },
+  "verify_calls": 196,
+  "whole_request_gain_bound": 0.24345157591337516
+}

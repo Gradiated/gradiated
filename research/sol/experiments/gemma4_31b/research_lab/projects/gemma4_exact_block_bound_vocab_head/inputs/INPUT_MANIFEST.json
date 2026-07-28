@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "materialized_at_utc": "2026-07-27T01:07:48Z",
+  "source_project": "gemma4_adaptive_retrieval_vocab_head",
+  "files": [
+    {
+      "name": "hidden_states.pt",
+      "bytes": 16600643,
+      "sha256": "ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54"
+    },
+    {
+      "name": "EXACT_CAPTURE_TERMINAL.json",
+      "bytes": 745,
+      "sha256": "fc7297d3bf51e9118e0cf5bde4eec7c2bd22dc2d07a6608c3b19f8b55d55a9bc"
+    }
+  ],
+  "policy": "Immutable project-local snapshot; the claimed owner never resolves the predecessor path."
+}

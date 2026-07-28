@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_high_load_bypass/run_threshold_owner.py", line 319, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_high_load_bypass/run_threshold_owner.py", line 136, in main
+    ip = base.instance_ip()
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_high_load_bypass/run_bench_owner.py", line 153, in instance_ip
+    raise RuntimeError("typed_provider_boundary:no_public_ip")
+RuntimeError: typed_provider_boundary:no_public_ip

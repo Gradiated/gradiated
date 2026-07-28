@@ -1,0 +1,20 @@
+{
+  "caches": "Checkpoint, digest-pinned image, official v0.5.15 server, CUDA graph, tokenizer, and runtime caches are retained.",
+  "candidate": "Official unmodified SGLang v0.5.15 H100 171-request discriminator and strictly conditional endpoint remain unconsumed.",
+  "candidate_sample_consumed": false,
+  "checkpoint": "/home/glmrunner/gemma4-h100-v0515-ngram-price-normalized/checkpoint remains staged and hash-verified.",
+  "director_binding": "gemma4_h100_v0515_ngram_price_normalized/DIRECTOR_REPAIR3_BINDING.json",
+  "fit_observer": {
+    "graph_gib": 1.06,
+    "negative_fixture_fail_closed": true,
+    "post_graph_available_gib": 10.63,
+    "result": "fixture_backed_repair_pass"
+  },
+  "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "next": "Priority-8430 may claim for one bound observer repair: verify DIRECTOR_REPAIR3_BINDING.json and all packet hashes, stage the updated packet, reuse the healthy server, and run only the unconsumed 171-request discriminator before 2026-07-25T07:35:00Z. The endpoint remains strictly conditional.",
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "result": "available_for_bound_h100_fit_observer_repair",
+  "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6.",
+  "server_state": "The server is healthy and the candidate sample has not started. The updated observer matches the captured official target-verify CUDA-graph wording while failing closed on the negative fixture."
+}

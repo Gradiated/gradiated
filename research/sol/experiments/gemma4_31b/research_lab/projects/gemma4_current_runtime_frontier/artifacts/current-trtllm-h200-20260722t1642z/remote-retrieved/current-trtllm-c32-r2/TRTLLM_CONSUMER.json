@@ -1,0 +1,7 @@
+{
+  "help_sha256": "ae2b90a6f79c0756052a88083a231eee742f2621b7bb41bf8a654240a1a7469b  /home/glmrunner/gemma4-current-trtllm/artifacts/current-trtllm-c32-r2/trtllm-serve-help.txt",
+  "image_inspect_sha256": "d7a977e5c69f54cc64d4abf2b1a4ea3cc75024939e76622c5785eebd77f66df7",
+  "models_sha256": "afc7a0548a34a8f30abfbe7c265d0530c454d10a90ec7adce6ebe9d63ed80def",
+  "runtime": "standalone TensorRT-LLM",
+  "server_command": "trtllm-serve"
+}

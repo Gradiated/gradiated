@@ -1,0 +1,9 @@
+{
+  "consumer_audit_present": true,
+  "consumer_rows": 1,
+  "module_audit_present": true,
+  "module_rows": 240,
+  "post_timing_capture": true,
+  "runtime_audit_present": true,
+  "schema_version": 1
+}

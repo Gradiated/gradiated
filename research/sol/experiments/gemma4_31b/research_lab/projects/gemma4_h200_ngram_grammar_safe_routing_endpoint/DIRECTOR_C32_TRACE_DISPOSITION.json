@@ -1,0 +1,26 @@
+{
+  "classification": "terminal_exact_c32_token_reject",
+  "decided_at_utc": "2026-07-24T01:42:02Z",
+  "evidence": {
+    "candidate_trace": {
+      "path": "artifacts/grammar-safe-20260724t012615Z/retrieved/artifacts/candidate-trace-events.jsonl",
+      "sha256": "e569b8af4e64c06e267ac4099296558bd69e298594dce57e490b18bdc3917b9a"
+    },
+    "control_trace": {
+      "path": "artifacts/grammar-safe-20260724t012615Z/retrieved/artifacts/control-trace-events.jsonl",
+      "sha256": "af777e64553df10dd8a2ce35572703ecad738cc9b34686f49b379a384005a317"
+    },
+    "final_terminal_sha256": "e226d78cbdede8d94a9892f2ef72505f5d946b0db3404ffa3cc6d7d6b4e64f1a"
+  },
+  "method": {
+    "candidate_rows": 32,
+    "control_rows": 32,
+    "excluded_rows": "one warmup row per arm",
+    "filter": "stage=post_generation_pre_parser_final and prompt_tokens=4214",
+    "matching": "unordered multiset equality over complete emitted_token_ids and scheduler_output_ids",
+    "matching_candidate_rows": 1,
+    "multiset_exact": false
+  },
+  "reason": "The campaign requires exact c32 generated tokens. The routed candidate's ordinary no-grammar c32 path differs from its matched target-only control independently of the missed tool-routing marker, so repairing only the API-to-scheduler marker cannot qualify this endpoint.",
+  "result": "Close grammar-safe native NGRAM without another repair or performance replay."
+}

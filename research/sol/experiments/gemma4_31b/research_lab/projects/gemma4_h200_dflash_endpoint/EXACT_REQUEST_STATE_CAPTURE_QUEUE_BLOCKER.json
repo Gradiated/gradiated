@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "classification": "external_queue_dependency_active",
+  "scientific_terminal": false,
+  "checked_at_utc": "2026-07-25T22:15:26Z",
+  "inventory_updated_at_utc": "2026-07-25T22:14:53.532976Z",
+  "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "bench_status": "claimed",
+  "bench_claim_project": "gemma4_certified_lazy_vocab_head",
+  "bench_claimed_at_utc": "2026-07-25T22:14:53.532962Z",
+  "lifecycle_deadline_utc": "2026-07-26T01:30:00Z",
+  "lifecycle_remaining_minutes_at_check": 194.56666666666666,
+  "predecessors": {
+    "gemma4_certified_lazy_vocab_head": {
+      "status": "active",
+      "terminal_artifact": "LAZY_VOCAB_H200_COMPONENT_TERMINAL.json",
+      "terminal_present": false,
+      "claim_released": false
+    },
+    "gemma4_h200_fp8_weight_stream_schedule": {
+      "status": "active",
+      "terminal_artifact": "FP8_WEIGHT_STREAM_H200_COMPONENT_TERMINAL.json",
+      "terminal_present": false,
+      "claim_released": true,
+      "queue_position": "after gemma4_certified_lazy_vocab_head and before this project"
+    }
+  },
+  "offline_gate": {
+    "path": "REQUEST_STATE_CAPTURE_READY.json",
+    "sha256": "49a4fafbe1b10e96e3827eda9261f7194fef6b184c18797f38f37864248c7d5a",
+    "pass": true,
+    "cuda_used": false,
+    "serialized_fixture_tests": 6
+  },
+  "packet": {
+    "path": "artifacts/request-state-capture-ready-20260725/REQUEST_STATE_CAPTURE_PACKET.tar",
+    "sha256": "c8f8759e499d38ee2356becacbb04c95822de1b45d4392805f04f4798d11da36",
+    "bytes": 327680
+  },
+  "gpu_claim_attempted": false,
+  "provider_mutation": false,
+  "actual_spend_usd": 0.0,
+  "disposition": "Do not wait, poll, or race the named predecessors. On the next admitted turn, check their typed terminals and the inventory once; launch the durable bounded owner only if both released and at least 50 lifecycle minutes remain."
+}

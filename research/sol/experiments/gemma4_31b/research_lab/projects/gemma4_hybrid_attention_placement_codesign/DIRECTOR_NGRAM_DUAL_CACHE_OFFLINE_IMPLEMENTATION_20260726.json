@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-26T01:11:00Z",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "decision": "reactivate_the_same_project_for_zero_gpu_production_consumer_implementation_while_dflash_owns_the_h200",
+  "researcher_profile": "execution",
+  "hypothesis": "The phase-selective 55-local/5-global proxy can remain exact at stock boundaries and save target-verification work if the NGRAM production path owns real proxy-local and stock-shadow KV state through the scheduler's allocation, write, accepted-index move, and rejected-row free operations.",
+  "predecessor": {
+    "terminal": "PHASE_SELECTIVE_FULL_MODEL_H200_COMPONENT_TERMINAL.json",
+    "terminal_sha256": "bddf9e10ea75c4fc07acab26c536360b0ff3bf8665fcc249b6a065c17c16c109",
+    "classification": "infrastructure_terminal",
+    "scientific_component_consumed": false,
+    "endpoint_pair_started": false,
+    "observed_failure": "The first NGRAM forward has num_token_non_padded=None; forward_batch_dual_cache_driver.py calls int(None), kills the scheduler, and returns 32 HTTP 500 responses before a TARGET_VERIFY observation."
+  },
+  "scientific_binding": {
+    "path": "DIRECTOR_PHASE_SELECTIVE_FULL_MODEL_H200_BINDING.json",
+    "sha256": "f09e4188f4b997fe3a0fc4b2fd6303616c043b6c360d500c8d80b0ac4ad800dc"
+  },
+  "starting_source": {
+    "path": "forward_batch_dual_cache_driver.py",
+    "sha256": "42f13b9aaa00990c6e5571d6f5c5b7b2ef46e75fff8bf2423247a8573bd9cc25",
+    "known_limit": "The current hook records a production_pool_mirror_alloc_write_move_free label but does not implement a proxy-local cache bank, a stock-shadow bank, their lifecycle operations, or a proxy output consumed by target verification."
+  },
+  "scope": {
+    "allowed": [
+      "Use the pinned project source, retrieved server traceback, exact ForwardBatch definitions or fixtures, and existing phase-selective adapter code to repair the None-valued NGRAM batch fields without assuming every production forward is TARGET_VERIFY.",
+      "Implement the intervention from the real NGRAM ForwardBatch input through the first decision-bearing target-verification consumer: converted layers must read proxy-local KV while the stock path receives mirrored shadow writes and scheduler-owned allocation, accepted-index move, rejected-row free, and request reuse semantics.",
+      "Add deterministic CPU/source fixtures for ordinary prefill, ordinary decode, TARGET_VERIFY, padding, accepted-row movement, rejected-row release, and request-slot reuse.",
+      "Persist the exact production symbols still requiring target-runtime integration when a faithful consumer cannot be completed from the retained local source."
+    ],
+    "forbidden": [
+      "Claiming any GPU bench, using SSH, starting a remote server or container, mutating provider resources, or issuing a paid model request.",
+      "Calling an observer, metadata label, attach proof, launcher, or fixture-only validator an implemented dual-cache consumer.",
+      "Changing model weights, attention placement, workload, NGRAM depth, checkpoint, runtime image, or the settled scientific and endpoint gates.",
+      "Creating a repair or successor project; this is an iteration of the existing scientific project."
+    ]
+  },
+  "acceptance": {
+    "failure_repair": "The NGRAM ForwardBatch fixture with num_token_non_padded=None is handled from authoritative production geometry and cannot kill the scheduler.",
+    "consumer": "Repository source contains an explicit production data path for proxy-local and stock-shadow KV ownership through the first target-verification consumer; policy strings and observation records do not satisfy this gate.",
+    "semantics": "Ordinary prefill/decode remain on stock behavior, only logical TARGET_VERIFY rows use the proxy, padded rows own no cache slot, and accepted/rejected/request-reuse lifecycle operations are deterministic.",
+    "tests": "The narrow deterministic suite passes locally and rejects missing or metadata-only cache operations.",
+    "handoff": "The terminal records source hashes, exact production symbols, tests, remaining target-runtime work, and whether the code is an actual consumer implementation or is blocked on a named production boundary."
+  },
+  "budgets": {
+    "owner_wall_minutes": 40,
+    "gpu_minutes": 0,
+    "incremental_spend_usd": 0.0,
+    "storage_gib": 0.5
+  },
+  "artifact_contract": {
+    "terminal": "HYBRID_NGRAM_DUAL_CACHE_OFFLINE_IMPLEMENTATION_TERMINAL.json",
+    "classifications": [
+      "actual_consumer_implementation_ready",
+      "implementation_blocked_on_named_production_boundary",
+      "mechanism_reject"
+    ],
+    "status_after_terminal": "paused",
+    "claim_allowed_after_terminal": false,
+    "next_gate": "Await a durable DFLASH_REQUEST25_BOUNDARY_PROBE_H200_TERMINAL.json, bench release, and a fresh director admission before any target-GPU integration or measurement."
+  }
+}

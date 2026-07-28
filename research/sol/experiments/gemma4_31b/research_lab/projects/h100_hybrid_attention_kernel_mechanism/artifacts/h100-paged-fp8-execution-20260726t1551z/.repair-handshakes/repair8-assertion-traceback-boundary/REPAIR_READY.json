@@ -1,0 +1,11 @@
+{
+  "absolute_repair_deadline_utc": "2026-07-26T17:32:01.095093Z",
+  "created_at_utc": "2026-07-26T16:25:30.799407Z",
+  "diagnostic": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_hybrid_attention_kernel_mechanism/artifacts/h100-paged-fp8-execution-20260726t1551z/recovery7-retrieved/local1024-c8.timing.json",
+  "failure_kind": "recoverable_pre_science_assertion_missing_traceback",
+  "repair_deadline_epoch": 1785087121.095093,
+  "repair_id": "repair8-assertion-traceback-boundary",
+  "retry_scope": "no blind relaunch; diagnose AssertionError/traceback retrieval offline, then only the invalidated local1024 concurrency-8 operation under a new director-authorized same-claim owner; no full replay or second decision-bearing sample",
+  "schema_version": 1,
+  "state": "repair_ready"
+}

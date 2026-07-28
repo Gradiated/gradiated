@@ -1,0 +1,9 @@
+{
+  "classification": "ordinary_integration_or_consumer_defect",
+  "component_persisted": true,
+  "error": "RuntimeError('candidate_endpoint_harness_invalid:1')",
+  "repair_deadline_utc": "2026-07-24T19:40:00Z",
+  "retry_scope": "candidate_endpoint_only",
+  "schema_version": 1,
+  "traceback": "Traceback (most recent call last):\n  File \"/home/glmrunner/gemma4-ngram-qlen-two-stage-qlen-mask-20260724t1911z-real-c32/project/production_remote_experiment.py\", line 246, in entrypoint\n    return main()\n           ^^^^^^\n  File \"/home/glmrunner/gemma4-ngram-qlen-two-stage-qlen-mask-20260724t1911z-real-c32/project/production_remote_experiment.py\", line 222, in main\n    raise RuntimeError(f\"candidate_endpoint_harness_invalid:{endpoint.returncode}\")\nRuntimeError: candidate_endpoint_harness_invalid:1\n"
+}

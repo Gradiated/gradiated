@@ -220,7 +220,7 @@ def main() -> int:
         default=Path("research/factory/data/gpu_prices.json"),
     )
     gpu_prices.add_argument("--accelerator", help="return one accelerator id")
-    gpu_prices.add_argument("--require-fresh", action="store_true", help="return exit 2 when the weekly refresh is overdue")
+    gpu_prices.add_argument("--require-fresh", action="store_true", help="return exit 2 when the three-day refresh is overdue")
     gpu_prices.add_argument("--now", help="RFC3339 UTC timestamp; defaults to current UTC")
 
     accelerators = commands.add_parser(

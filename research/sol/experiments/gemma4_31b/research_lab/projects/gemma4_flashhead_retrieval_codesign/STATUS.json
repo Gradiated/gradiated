@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "id": "gemma4_flashhead_retrieval_codesign",
-  "status": "active",
+  "status": "blocked",
   "priority": 8550,
   "researcher_profile": "deep",
   "authorized_spend_usd": 0.0,
   "actual_spend_usd": 0.0,
   "active_session": null,
-  "summary": "A working leakage-free balanced clustered-retrieval simulator consumed the exact tied embedding and exposed a degenerate one-unique-row capture. Two deterministic diverse structural proxies falsified the static centroid route: no 32-D or 128-D geometry met top-1/top-10 recall while beating the ideal grouped-exact H200 floor.",
-  "next_action": "Do not claim a GPU for this static index. Capture one unseen 384-row target-verification step with proposed draft IDs, dense top-10, request/depth mapping, and accepted-prefix decisions only when an existing admitted endpoint can emit it. Resume architecture work only with a learned or frequency-aware router that clears 31/32 top-1 and 90% top-10 offline below the 1093.817 us grouped-exact floor.",
+  "summary": "The static balanced-centroid realization is closed: every tested 32-D and 128-D geometry missed the recall gate before beating grouped exact, while the only prior real capture contained one unique row. The new 112-cycle DFlash oracle was screened but has one request and verifier top-1 only, so learned or frequency-aware routing still lacks the required representative dense top-10 target-verification trace.",
+  "next_action": "Remain blocked without a GPU claim. Reactivate only when an already-admitted consumer durably emits one unseen 384-row target-verification step with draft IDs, dense top-10 IDs and values, request/depth mapping, and accepted-prefix decisions; then require a learned or frequency-aware router to clear 31/32 top-1 and 90% top-10 recall below the 1093.817 us grouped-exact floor.",
   "decision": "close_static_balanced_centroid_retrieval_realization",
   "result": {
     "decision_artifact": "artifacts/offline-clustered-retrieval-20260725/DECISION.json",
@@ -33,5 +33,24 @@
     "exact_need": "384 post-final-norm BF16 hidden rows, 384 proposed draft token IDs, dense top-10 IDs/values, request/depth mapping, and dense accepted-prefix decisions from one unseen target-verification step",
     "approximate_bytes": 4200000,
     "effect": "Synthetic results can close this static realization but cannot establish production recall, accepted-prefix fidelity, model quality, or sampling support."
+  },
+  "latest_trace_screen": {
+    "artifact": "../gemma4_h200_dflash_endpoint/artifacts/cycle-oracle-owner-20260725t1806z-metrics-repair/retrieved/oracle-cycles.jsonl",
+    "records": 112,
+    "unique_request_ids": 1,
+    "available_fields": [
+      "draft_tokens",
+      "accepted_prefix",
+      "verifier_top1_ids",
+      "verifier_top1_logits",
+      "request_id"
+    ],
+    "missing_required_fields": [
+      "post_final_norm_hidden_rows",
+      "dense_top10_ids",
+      "dense_top10_values",
+      "representative_multi_request_mapping"
+    ],
+    "disposition": "insufficient_do_not_reactivate_or_add_capture_to_grouped_head"
   }
 }

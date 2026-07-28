@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "bound_at_utc": "2026-07-25T20:22:00Z",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "decision": "promote_positive_hybrid_component_to_one_quality_unsafe_matched_endpoint_pair",
+  "priority": 8530,
+  "researcher_profile": "execution",
+  "evidence": {
+    "component_terminal": {
+      "path": "HYBRID_55L5G_H200_EXECUTION_TERMINAL.json",
+      "sha256": "3a705235485720575c7695e184b4a47b6602c360ec49b4752f284e758b62bdfb"
+    },
+    "result": "component_positive_attention_boundary",
+    "weighted_attention_reduction_fraction": 0.20334496337472074,
+    "local_attention_reduction_fraction": 0.30281536384293817,
+    "global_attention_reduction_fraction": -0.000398380705140422,
+    "candidate_replay_bitwise": true,
+    "bound_input_hashes_verified": true
+  },
+  "campaign": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "qualified_service_seconds_per_request": 0.625149101968745,
+    "target_service_seconds_per_request": 0.500119281574996,
+    "decision_scope": "economic performance upper bound only"
+  },
+  "candidate": {
+    "kind": "five_layer_nearest_compatible_local_weight_copy",
+    "spec_sha256": "db73234fc14970c1f463673e61412b5d639653bb3561ea0ef681c067a69afad1",
+    "candidate_full_attention_layers": [
+      5,
+      17,
+      29,
+      41,
+      53
+    ],
+    "nearest_compatible_local_weight_sources": [
+      11,
+      23,
+      35,
+      47,
+      59
+    ],
+    "preserve_exactly": [
+      "every MLP weight",
+      "every normalization weight",
+      "embedding weights",
+      "LM-head weights",
+      "all other checkpoint bytes"
+    ],
+    "quality_label": "quality_unsafe_non_deployable_proxy"
+  },
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "accelerator": "nvidia-h200-sxm",
+    "hourly_cost_usd": 2.45,
+    "required_state": "available_unfenced_with_retained_exact_checkpoint_image_runtime_source_and_caches",
+    "checkpoint": "Exact 62,578,655,208-byte hash-verified snapshot at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "runtime": "Pinned SGLang v0.5.13",
+    "claim_not_after_utc": "2026-07-25T20:30:00Z",
+    "minimum_remaining_lifecycle_minutes_at_claim": 90,
+    "release_by_utc": "2026-07-25T21:05:00Z",
+    "watchdog_deadline_utc": "2026-07-25T22:00:00Z"
+  },
+  "experiment": {
+    "hypothesis": "The measured 20.3345% weighted attention reduction from the exact five-layer proxy lowers complete-request service time enough to justify a later quality-recovery program.",
+    "first_call": "Claim the retained H200 and run one matched profiler-off stock-control/candidate exact-c32 endpoint pair through the real request, cache, scheduler, model-forward, sampling, and response path.",
+    "workload": {
+      "concurrency": 32,
+      "prompt_tokens_per_request": 4214,
+      "output_tokens_per_request": 358,
+      "cache_read_fraction_of_prompt_tokens": 0.127,
+      "request_ownership": "Use one immutable exact 32-request fixture for both arms, preserving request-major ownership, raw token IDs, seeds, sampling parameters, cache accounting, and arm order in the terminal."
+    },
+    "required_evidence": [
+      "source-complete candidate materialization and transformed-weight manifest tied to the component spec",
+      "exact checkpoint, image, runtime, request-fixture, control, candidate, and intervention content hashes",
+      "32 complete requests per arm with zero failures, finite nonempty text, raw token IDs, usage fields, finish reasons, and exact prompt/output/cache accounting",
+      "batch wall time, service seconds per request, output tokens per second, TTFT and decode distributions for both arms",
+      "candidate/control service-time reduction and each arm normalized against both the qualified denominator and campaign target",
+      "CUDA invocation, peak HBM, and proof that the candidate endpoint path—not stock fallback—executed",
+      "all server and worker processes stopped and the bench released"
+    ],
+    "classification": {
+      "positive": "Candidate complete-request service seconds per request is lower than the matched control with all validity fields passing.",
+      "negative": "A valid matched pair shows no service-time reduction.",
+      "invalid": "Either arm lacks 32 complete requests, exact ownership/accounting, candidate-path execution, or cleanup/release evidence."
+    },
+    "typed_failure": "If integration cannot reach a valid pair inside the budget, persist the first irreducible source, runtime, model-load, candidate-activation, request, or consumer field with exact logs and hashes in the same terminal; do not create a repair project."
+  },
+  "budgets": {
+    "project_authorized_spend_usd": 2.0,
+    "project_spend_already_settled_usd": 0.19,
+    "maximum_incremental_spend_usd": 1.81,
+    "maximum_claimed_h200_minutes": 35,
+    "storage_gib": 4,
+    "wall_clock": "Claim no later than 2026-07-25T20:30:00Z and release no later than 2026-07-25T21:05:00Z."
+  },
+  "forbidden": [
+    "No training, distillation, broad quality evaluation, or deployability claim.",
+    "Do not interpret output agreement or disagreement as a quality result.",
+    "Do not replay or modify any DFlash oracle, sweep, endpoint, request, or artifact.",
+    "Do not replay the completed hybrid component.",
+    "Do not mutate predecessor checkpoint bytes or any component outside the five bound attention modules.",
+    "Do not create, extend, drain, clean, or retire provider resources.",
+    "Do not claim after the time or lifecycle gate closes."
+  ],
+  "terminal": "HYBRID_55L5G_H200_ENDPOINT_TERMINAL.json"
+}

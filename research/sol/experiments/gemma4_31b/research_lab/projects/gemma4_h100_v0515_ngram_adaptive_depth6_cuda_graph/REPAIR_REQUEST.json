@@ -1,0 +1,9 @@
+{
+  "packet_path": null,
+  "patch_artifact": null,
+  "ready_sha256": "5bfb47c7eb7df1665dec41da72d21fbea8b2f5ff17a89eaf57a9c900f3fdcf6a",
+  "requested_at_utc": "2026-07-25T16:54:16.706633Z",
+  "retry_scope": "Retrieval-only repair: retrieve and hash completed remote diagnostic_62128.json, stock_aa_guard.json, server_diagnostic.log, and server_guard.log; do not rerun diagnostic, guard, workload construction, or any endpoint arm. After retrieval, continue at the guard decision and conditional fresh workload only if the guard artifact is complete and exact.",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

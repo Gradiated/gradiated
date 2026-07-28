@@ -1,0 +1,30 @@
+data: {"id":"bb2332fc1c87409b84a69c63d4df4160","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"Ar","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bb2332fc1c87409b84a69c63d4df4160","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"ArArArAr la la la la la l la l la l la l la l la l la l la l la l la l la l la l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bb2332fc1c87409b84a69c63d4df4160","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" la l la l la l la l la l la l la l la l la l la l la l la l la l la l la l la l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bb2332fc1c87409b84a69c63d4df4160","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" la l la l la l la l la l la l la l la l la l la l la l la l la l la l la l la l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bb2332fc1c87409b84a69c63d4df4160","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" la l la l la l la l la l la l la l la l la l la l la l la l la l la l la l la l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bb2332fc1c87409b84a69c63d4df4160","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" la l la l la l la l la l la l la l la l la l la l la l la l la l la l la l la l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bb2332fc1c87409b84a69c63d4df4160","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" la l la l la l la l la l la l la l la l la l la l la l la l la l la l l la l la","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bb2332fc1c87409b84a69c63d4df4160","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l la l la l la l la l la l la l la l la l la l la l la l la l la l la l la l la","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bb2332fc1c87409b84a69c63d4df4160","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l la l la l la l la l la l la l la l l la l la l la l la l la l la l la l la l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bb2332fc1c87409b84a69c63d4df4160","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" la l la l la l la l la l la l la l la l la l la l la l la l la l la l la l la l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bb2332fc1c87409b84a69c63d4df4160","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" la l la l la l la l la l la l la l la l la l la l la l la l la l la l la l la l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bb2332fc1c87409b84a69c63d4df4160","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" la l la l la l la l la l la l la l la l la l la l la l la l l la l la l la l la","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"bb2332fc1c87409b84a69c63d4df4160","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l la l la l","logprobs":null,"finish_reason":"length","matched_stop":null}],"usage":null}
+
+data: {"id":"bb2332fc1c87409b84a69c63d4df4160","object":"text_completion","created":1784540393,"model":"google/gemma-4-31B-it","choices":[],"usage":{"prompt_tokens":4214,"total_tokens":4572,"completion_tokens":358,"reasoning_tokens":0}}
+
+data: [DONE]
+

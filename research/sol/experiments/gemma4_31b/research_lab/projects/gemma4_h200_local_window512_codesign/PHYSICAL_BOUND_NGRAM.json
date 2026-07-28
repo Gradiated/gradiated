@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "classification": "analytical_ngram_interaction_bound_not_admitted_for_execution",
+  "disposition": "inapplicable_as_execution_comparator_because_ngram_production_validation_closed_operationally_inconclusive",
+  "quality_classification": "quality_unsafe_until_separately_validated_or_trained",
+  "comparator": {
+    "project": "gemma4_h200_ngram_speculative_endpoint",
+    "quality_status": "quality_unqualified",
+    "control_terminal": "../gemma4_h200_ngram_speculative_endpoint/artifacts/ngram-diagnostic-20260723t0815z/pair/control/TERMINAL.json",
+    "control_terminal_sha256": "d253c07cbc7b36a1e25fd10df2212466cc005886487af984b00909cbe7ba5e63",
+    "service_seconds_per_request": 0.5967508053124675,
+    "complete_requests": 32,
+    "cache_accounting": {
+      "cached_prompt_tokens_delta": 17120.0,
+      "uncached_prompt_tokens_delta": 117728.0
+    },
+    "contract": "Frozen native NGRAM, 12 draft tokens, breadth 1..10, trie depth 18, capacity 10000000, overlap and mixed chunking disabled"
+  },
+  "intervention": {
+    "local_layers": 50,
+    "global_layers": 10,
+    "control_window_tokens": 1024,
+    "candidate_window_tokens": 512,
+    "all_other_geometry": "immutable"
+  },
+  "bound": {
+    "conservative_active_tile_reduction_fraction": 0.4285714285714286,
+    "historical_local_kernel_wall_fraction": 0.1531203203096733,
+    "whole_request_reduction_fraction": 0.06562299441843142,
+    "comparator_control_seconds_per_request": 0.5967508053124675,
+    "analytical_candidate_seconds_per_request": 0.557590230546253,
+    "five_percent_threshold_seconds_per_request": 0.5669132650468441,
+    "economic_ceiling_seconds_per_request": 0.6381105231,
+    "five_percent_gate_pass": true,
+    "economic_ceiling_gate_pass": true
+  },
+  "method": "Apply the already bound conservative non-skipped QK/V tile reduction to the persisted quality-unqualified NGRAM c32 result. This remains interaction evidence only and is not the admitted comparator. The executable project uses its original non-speculative contemporaneous control and PHYSICAL_BOUND.json.",
+  "source_evidence": {
+    "historical_physical_bound_sha256": "187498dad2a7629d08f9531077d91a50d87c6f4fd2b403b64124794f5a90d69a",
+    "kernel_source_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1"
+  }
+}

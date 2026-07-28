@@ -1,0 +1,8 @@
+remote_setup_files
+-rw-r--r-- 1 root root   1096 Jul 25 16:02 /home/glmrunner/gemma4-dflash/work/models/draft/config.json
+-rw-r--r-- 1 root root   4621 Jul 25 15:53 /home/glmrunner/gemma4-dflash/work/models/target/config.json
+-rw-r--r-- 1 root root 120246 Jul 25 15:53 /home/glmrunner/gemma4-dflash/work/models/target/model.safetensors.index.json
+source_commit
+588d1f7bc9424201f89957e145f9d5af633a3eb8
+image
+sha256:f5c79962e750064d94704dfae33f2205035d43d6012025e5327bf1f8b91a6305

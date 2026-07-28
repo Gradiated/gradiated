@@ -1,0 +1,9 @@
+{
+  "artifacts": "Retrieved under projects/exact_vllm_h200_c16_c32_endpoint/artifacts/vllm-c32-warm-bench-20260718t1912z/.",
+  "checkpoint": "Exact eight-file BF16 checkpoint remains at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
+  "image": "Pinned vLLM Gemma4 image pulled if absent.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "exact_vllm_h200_c16_c32_endpoint",
+  "runtime": "vLLM c32 terminal startup_failure",
+  "server_state": "inspect terminal"
+}

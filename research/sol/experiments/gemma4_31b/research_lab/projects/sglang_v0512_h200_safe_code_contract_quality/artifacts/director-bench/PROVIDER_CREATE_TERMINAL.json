@@ -1,0 +1,23 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "bench_id": "h200-safe-code-e00b98a5fh80nwj2jj",
+  "classification": "director_owned_h200_bench_created",
+  "created_at_utc": "2026-07-18T12:13:48Z",
+  "deadline_epoch": 1784381928.7098293,
+  "deadline_utc": "2026-07-18T13:38:48.709829Z",
+  "disk_gib": 250,
+  "disk_id": "computedisk-e00hy5j34p0ktssb7v",
+  "disk_name": "gemma-safe-code-h200-20260718t121348z-boot",
+  "hourly_cost_usd": 2.46,
+  "instance_id": "computeinstance-e00b98a5fh80nwj2jj",
+  "instance_name": "gemma-safe-code-h200-20260718t121348z",
+  "pass": true,
+  "precreate_terminal_sha256": "4ea82eaafa23dde2996ebe5a43628dc7b4c28431d15cc98cd5e1d182a1f8f427",
+  "provider": "nebius",
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-safe-code-h200-20260718t121348z-watchdog.service",
+    "main_pid": 2421065,
+    "unit": "gemma-safe-code-h200-20260718t121348z-watchdog.service",
+    "unit_manager": "user"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "decision": "ratify_live_readiness_gated_claim",
+  "created_at_utc": "2026-07-26T03:46:19Z",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "researcher_profile": "execution",
+  "priority": 8700,
+  "scientific_contract_changed": false,
+  "prior_binding": {
+    "path": "DIRECTOR_READINESS_GATED_COMPONENT_READMISSION_20260726T0338Z.json",
+    "sha256": "703497c90b7ef5d07826d49ab0863dfae348d71bc82c539ebdda312d1a7bad03"
+  },
+  "live_claim": {
+    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "claimed_at_utc": "2026-07-26T03:44:32.036125Z",
+    "claim_cutoff_utc": "2026-07-26T03:47:00Z",
+    "owner_pid": 1517533,
+    "owner_started_at_utc": "2026-07-26T03:44:43.424377Z",
+    "owner_unit": "NGRAM_READINESS_GATED_OWNER_UNIT.json",
+    "release_not_after_utc": "2026-07-26T04:10:00Z",
+    "watchdog_deadline_utc": "2026-07-26T04:15:00Z"
+  },
+  "controller": {
+    "path": "ngram_readmission_controller.py",
+    "sha256": "39a146a9ffc1ed597531cfe27185d5404cc07c9fcd3154d942aaa2157b2144f0",
+    "test_path": "test_ngram_readmission_controller.py",
+    "test_sha256": "c91065da4d2886049f4484faf81f752222b9202d42b6de9d1d5b776135c872e3",
+    "supervisor_reported_verification": [
+      "graph-capture output rejected",
+      "native post-graph server-ready marker accepted only with a running container",
+      "stopped container rejected",
+      "focused tests passed",
+      "Python compilation passed",
+      "repository DevEx check passed",
+      "diff check passed"
+    ]
+  },
+  "readiness_interpretation": {
+    "authoritative_boundary": "The server is fired up and ready to roll!",
+    "required_before_component": [
+      "adapter attached",
+      "seq_lens_cpu repair installed",
+      "container running",
+      "native post-CUDA-graph server-ready marker present"
+    ],
+    "tcp_evidence": "For this already-live discovery claim, a successful socket acceptance and request entry after the native ready marker establishes the listener boundary. Any refused connection, missing request entry, or component terminal without candidate entry remains an invalid infrastructure attempt and consumes no scientific sample.",
+    "generation_readiness_probe_forbidden": true
+  },
+  "execution": {
+    "component_consumed_before_claim": false,
+    "science_started_before_claim": false,
+    "allowed_component_submissions": 1,
+    "exact_c32": "conditional on every existing exactness, cache-lifecycle, and positive-net-timing gate",
+    "recoverable_pre_science_failure": "retain the claim for one material same-project correction when it fits the release window",
+    "provider_lifecycle_mutation": false
+  },
+  "budget": {
+    "authorized_spend_usd": 6.75,
+    "actual_spend_usd_before_claim": 4.67,
+    "hourly_cost_usd": 2.45
+  }
+}

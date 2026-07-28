@@ -1,0 +1,4 @@
+CONTAINER_RUNNING=true
+[2026-07-26 03:46:07] Capture cuda graph end. Time elapsed: 36.30 s. mem usage=1.14 GB. avail mem=19.64 GB.
+[2026-07-26 03:46:15] The server is fired up and ready to roll!
+TCP_LISTENER=True

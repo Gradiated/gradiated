@@ -1,0 +1,10 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/forward_batch_dual_cache_driver.py",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/forward_batch_dual_cache_driver.py",
+  "ready_sha256": "b2eb90961bef53e0bd697f351ad9698e8b9f5c5f103c4df08b0f2414a1ff3411",
+  "repair_id": "ngram-readmission-20260726t0159z",
+  "requested_at_utc": "2026-07-26T02:10:36Z",
+  "retry_scope": "defer allocator/pool binding from ModelRunner.load_model to the first real ForwardBatch consumer; preserve the same NGRAM server/consumer question and unchanged claim",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

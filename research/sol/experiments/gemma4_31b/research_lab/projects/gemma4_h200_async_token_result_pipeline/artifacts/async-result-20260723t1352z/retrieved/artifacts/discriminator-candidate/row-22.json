@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 2.256849808996776,
+  "ended_monotonic_s": 56159.66377052,
+  "error": null,
+  "first_token_monotonic_s": 56157.406920711,
+  "index": 22,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": "\u611f\u53d7\u5230",
+      "token_ids": [
+        135651
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    135651,
+    135651,
+    135651,
+    135651,
+    135651,
+    135651,
+    135651,
+    135651,
+    135651,
+    135651,
+    135651,
+    135651,
+    135651,
+    135651,
+    135651,
+    135651
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "edd438bbe0226859b7ed4beb3c50153e852040b3e2d6bd867afc1296fd3afb68",
+  "request_sha256": "18abae1a772b8e17a21a75efb9fc897ef8b857376b994bd2fb13ee2bfd586c5c",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 56146.429555771,
+  "text": "\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230",
+  "ttft_seconds": 10.97736494000128,
+  "wall_seconds": 13.234214748998056
+}

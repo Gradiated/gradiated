@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-24T15:44:42Z",
+  "classification": "recoverable_outer_owner_loss_with_live_remote_science",
+  "project": "gemma4_h200_ngram_wave_batching_sustainable",
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "expired_claim": {
+    "claimed_at_utc": "2026-07-24T15:28:41.321043Z",
+    "last_heartbeat_utc": "2026-07-24T15:38:57.753046Z",
+    "lease_until_utc": "2026-07-24T15:43:57.753046Z",
+    "dead_controller_pid": 4167142,
+    "unit_manager": "foreground-controller"
+  },
+  "remote_science": {
+    "remote_root": "/home/glmrunner/gemma4-ngram-wave-admission",
+    "last_confirmed_live_utc": "2026-07-24T15:43:43Z",
+    "phase": "wave_admission_primary",
+    "terminal_present": false,
+    "replay_allowed": false
+  },
+  "director_action": {
+    "reclaim_stale_claim_to_maintenance": true,
+    "return_same_bench_ready_for_same_project": true,
+    "drain": false,
+    "provider_cleanup": false,
+    "replacement_owner": "One controller-host detached owner recorded with unit_manager pid; it must claim, heartbeat, adopt the existing remote worker, retrieve the terminal, and release without launching science."
+  }
+}

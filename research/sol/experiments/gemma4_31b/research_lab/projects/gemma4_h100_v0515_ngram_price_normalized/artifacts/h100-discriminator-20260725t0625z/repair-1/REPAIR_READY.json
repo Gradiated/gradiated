@@ -1,0 +1,10 @@
+{
+  "absolute_repair_deadline_utc": "2026-07-25T07:10:00Z",
+  "created_at_utc": "2026-07-25T06:51:49.907992Z",
+  "diagnostic": "../TERMINAL.json,../OWNER_CONTROLLER.log,../SERVER_START.stderr",
+  "failure_kind": "ordinary_harness_and_guest_docker_permission",
+  "repair_deadline_epoch": 1784963400.0,
+  "retry_scope": "Patch gpu_pool heartbeat syntax and invoke docker through sudo -n; preserve staged checkpoint/candidate and retry only server startup plus the unstarted 171-request discriminator under the same claimed bench.",
+  "schema_version": 1,
+  "state": "repair_ready"
+}

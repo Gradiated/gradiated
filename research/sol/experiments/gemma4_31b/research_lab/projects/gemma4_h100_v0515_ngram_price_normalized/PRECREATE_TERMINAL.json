@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "created_at": "2026-07-25T08:13:00Z",
+  "classification": "director_authorized_h100_precreate_materialization",
+  "decision": "nominate_one",
+  "provider_mutated": false,
+  "provider_resource_created": false,
+  "provider_resource_claimed": false,
+  "gpu_claimed": false,
+  "reservation": {
+    "authorized_usd": 5.0,
+    "reserved_at": "2026-07-25T06:05:30.367822Z",
+    "updated_at": "2026-07-25T06:05:30.367826Z",
+    "durable": true,
+    "actual_project_spend_usd": 0.0
+  },
+  "binding": {
+    "path": "DIRECTOR_EXECUTION_BINDING.json",
+    "sha256": "935be040cb48a9aef641ae84132ad9eb214e56cab44a4cd0aa9fdfc5b5f36385",
+    "packet_manifest_path": "PACKET_MANIFEST.json",
+    "packet_manifest_sha256": "6bcc848dfc3d44d9248bcb79e62fdcb2eeed5cb56a6be8bb45d4dfcff3c26cd7",
+    "packet_manifest_entries_verified": 20
+  },
+  "checkpoint": {
+    "manifest_path": "packet/CHECKPOINT_MANIFEST.json",
+    "manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "destination": "inputs/checkpoint",
+    "total_bytes": 62578655208,
+    "files_verified": 8,
+    "verification": "every declared byte count and SHA-256 matched",
+    "immutable_destination_files": true,
+    "files": [
+      {"name":"chat_template.jinja","bytes":18683,"sha256":"ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"},
+      {"name":"config.json","bytes":4621,"sha256":"e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"},
+      {"name":"model-00001-of-00002.safetensors","bytes":49784788364,"sha256":"eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"},
+      {"name":"model-00002-of-00002.safetensors","bytes":12761549884,"sha256":"018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"},
+      {"name":"model.safetensors.index.json","bytes":120246,"sha256":"d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"},
+      {"name":"processor_config.json","bytes":1689,"sha256":"32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"},
+      {"name":"tokenizer.json","bytes":32169626,"sha256":"cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"},
+      {"name":"tokenizer_config.json","bytes":2095,"sha256":"90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"}
+    ]
+  },
+  "future_execution": {
+    "accelerator": "nvidia-h100-sxm",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "runtime_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "first_arm": "activation_fit_semantic_discriminator",
+    "first_arm_requests": 171,
+    "conditional_arm": "conditional_matched_endpoint",
+    "conditional_arm_requests": 791,
+    "conditional_rule": "run only after every first-arm gate passes, in a fresh identical container",
+    "max_claimed_minutes": 45,
+    "provider_mutation_authority": "director_only"
+  }
+}

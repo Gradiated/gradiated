@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-26T01:04:00Z",
+  "project": "gemma4_h200_dflash_endpoint",
+  "decision": "run_exactly_one_source_complete_request25_boundary_probe_on_the_released_warm_h200",
+  "researcher_profile": "deep",
+  "hypothesis": "The first target-verifier divergence for request 25 is introduced at one of three now-observable boundaries: the request-owned pre-forward row or KV ownership, the target forward result, or apply_dflash_verify_logits_adjustments. One exact source-complete capture will distinguish those mechanisms without replaying either completed endpoint.",
+  "source_terminal": {
+    "path": "DFLASH_REQUEST25_BOUNDARY_PROBE_PREPARATION_TERMINAL.json",
+    "sha256": "1d9bfe425f19a455948ddb2163738e3ad821cb9337eb3c9c3d52cf0787296a0f",
+    "classification": "source_complete_boundary_probe_ready"
+  },
+  "packet": {
+    "path": "artifacts/request25-boundary-probe-preparation-20260726/packet/4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b",
+    "identity_sha256": "4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b",
+    "archive": "artifacts/request25-boundary-probe-preparation-20260726/4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b.tar",
+    "archive_sha256": "25d8a3cb20806a11560b372a238b8630c64d8035f51c2eb989a10b2070b438a8",
+    "manifest": "artifacts/request25-boundary-probe-preparation-20260726/PACKET_MANIFEST.json",
+    "manifest_sha256": "5d100d97e0e228c62ad5161b647ac3f624355d793b76cb3ade654e04192602a5",
+    "source_binding_sha256": "cc49aa4192e737c90ddd5871c59efd4fc854c6a0ca094c557a0e78545bdb8c52"
+  },
+  "immutable_inputs": {
+    "target_checkpoint": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft_checkpoint": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "prior_runtime_binding": "DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "prior_runtime_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "workload": "The immutable completed candidate-only c32 capture, restricted to logical request index 25 and its first target-verifier transition; no endpoint arm is replayed."
+  },
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "accelerator": "nvidia-h200-sxm",
+    "provider": "nebius",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "hourly_cost_usd": 2.45,
+    "claim_lease_seconds": 960,
+    "release_deadline_utc": "2026-07-26T01:20:00Z",
+    "watchdog_deadline_utc": "2026-07-26T01:30:00Z",
+    "preclaim_state": "The hybrid owner released to maintenance after an infrastructure terminal. Strict SSH at 2026-07-26T01:01:55Z found no GPU compute process; the exact checkpoints, image, and caches remain on disk."
+  },
+  "scope": {
+    "allowed": [
+      "Atomically claim only the named warm H200 bench and stage the exact hash-bound packet.",
+      "Start only the process or container required to observe the already-captured request-25 first target-verifier transition.",
+      "Capture the request-25 pre-forward row, KV ownership digest, target-forward raw top-1, and pre/post-adjustment top-1 exactly once.",
+      "Persist one typed terminal, retrieve its bounded artifacts, account actual spend, stop experiment processes, and release the bench to maintenance by the release deadline."
+    ],
+    "forbidden": [
+      "Replaying either completed AR or DFlash endpoint arm, issuing a second scientific request, or broadening beyond request 25.",
+      "Changing draft depth, target semantics, request order, cache geometry, checkpoint, runtime image, source packet, or token tie-breaking.",
+      "Applying a causal repair, reporting endpoint performance, or claiming quality preservation or deployability from this observer.",
+      "Creating, draining, deleting, or otherwise mutating provider resources."
+    ]
+  },
+  "quality_gate": {
+    "attach": "The running process must persist the packet identity and observer attach proof before the request is submitted.",
+    "ownership": "The record must name logical request 25 and persist aligned input_ids, positions, sequence lengths, output-cache locations, and request-to-token prefix ownership.",
+    "boundary": "Persist raw pre-adjustment and post-adjustment target top-1 labels plus the pre-forward KV digest; missing or ambiguous labels classify the probe as inconclusive.",
+    "integrity": "The packet archive, manifest, executed transition source, checkpoints, image, and request identity must match this binding."
+  },
+  "budgets": {
+    "wall_clock_minutes": 16,
+    "gpu_minutes": 16,
+    "incremental_spend_usd": 0.8,
+    "storage_gib": 1.0,
+    "absolute_release_deadline_utc": "2026-07-26T01:20:00Z"
+  },
+  "stop_rules": [
+    "Stop after the first complete request-25 boundary record or the first typed infrastructure/inconclusive terminal.",
+    "Do not repair or resubmit inside this binding.",
+    "Release the bench by 2026-07-26T01:20:00Z regardless of classification."
+  ],
+  "artifact_contract": {
+    "terminal": "DFLASH_REQUEST25_BOUNDARY_PROBE_H200_TERMINAL.json",
+    "classifications": [
+      "pre_forward_or_kv_divergence",
+      "target_forward_divergence",
+      "logit_adjustment_divergence",
+      "boundary_matches",
+      "probe_inconclusive",
+      "infrastructure_terminal"
+    ]
+  }
+}

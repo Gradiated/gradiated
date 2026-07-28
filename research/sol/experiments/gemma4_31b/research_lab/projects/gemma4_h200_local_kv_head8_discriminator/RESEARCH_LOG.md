@@ -19,3 +19,17 @@ Interpretation and next move: measured attention time fell 33.92% and dominates 
 Bound the passing discriminator terminal/result and exact checkpoint identity, then materialized an independent, read-only eight-file checkpoint snapshot under this project (`62,578,655,208` bytes; large-shard link count 1). Froze one adjacent-pair-mean 16→8 schedule: 24/8 canonical split, 1,024-token samples, 24 AdamW updates, all 50 local-attention block outputs plus final hidden-state teacher loss, and exactly 100 local K/V tensors trainable. Implemented the narrow SGLang load-time representation, fidelity runner, 3/3 coherence, deterministic 10K retrieval, conditional exact-c32 consumer, immutable transfer manifests, telemetry, and one bounded durable claim/heartbeat/release owner.
 
 The retained H200 preflight measured only `50,650,841,088` free bytes on its sole 100-GiB boot filesystem. The immutable checkpoint alone requires `62,578,655,208` bytes, while the owner conservatively requires `66,500,000,000`; shortfall is `15,849,158,912` bytes. The owner stopped before transfer, model load, optimizer update, server start, or scientific marker, charged 1.775 seconds of claim exposure (`$0.001213`), and released the bench under maintenance. This is a typed external lab-storage blocker, not a candidate result: the exact frozen schedule remains unconsumed. Resume only after director disposition supplies at least the declared free capacity on a lab-owned filesystem and marks the retained bench ready.
+
+## 2026-07-19 — phase-two frozen owner resumed after storage repair
+
+Question: can the admitted one-schedule 16→8 local-KV conversion now reach its fidelity and conditional quality/endpoint terminal on the repaired retained H200?
+
+Action: launched the existing bounded phase-two outer owner as `gemma-local-kv8-phase2-202607191402.service` (user systemd) with its `16:45Z` absolute deadline. It atomically claimed `h200-local-kv8-e00tnyt66qqx2n7qqg` at `14:03:23Z`, after freezing `phase2-bound-attempt-1.tar` (`7b09ec8e…`) and independently recording the exact eight-file project-local checkpoint identity/size in `artifacts/local-kv8-conversion-20260719t1402z/LOCAL_ADMISSION.json`. Remote identity, pinned image, and expanded-disk preparation passed; immutable checkpoint transfer is in progress.
+
+Interpretation and next move: this is a durable execution session, not a scientific result. The same owner retains claim/heartbeat/release across staging and any pre-invocation repair, then persists the first typed fidelity, quality, endpoint, or external-boundary terminal under the artifact root.
+
+## 2026-07-19 — local-KV8 closed; overlay retrieval completed
+
+The sole 24-update producer passed held-out block and final-hidden fidelity, but the repaired mixed global-KV4/local-KV8 consumer produced repetitive gibberish on all three frozen coherence prompts. This is the terminal quality failure; deterministic 10K retrieval and c32 were not invoked.
+
+The requested read-only recovery resumed the existing `585,953,280`-byte local partial without claiming the H200. `artifacts/local-kv8-overlay-retrieval-20260719t1507z/RETRIEVAL_TERMINAL.json` passes: the final local overlay is exactly `2,202,022,184` bytes and SHA-256 `e29faa6768d22aa6cae56bb15253d02f6af0aca2abdd6d4f0092a436cea05780`. The project is terminal for director cleanup; no local-KV8 retry or successor is admissible.

@@ -1,0 +1,10 @@
+{
+  "packet_path": null,
+  "patch_artifact": null,
+  "ready_sha256": "58acacfa98ae7bf11c31cadf9d1a05353c0fa3aac391e87aa03b768877627b3c",
+  "repair_id": "r1",
+  "requested_at_utc": "2026-07-26T20:56:12.612985Z",
+  "retry_scope": "retrieve",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

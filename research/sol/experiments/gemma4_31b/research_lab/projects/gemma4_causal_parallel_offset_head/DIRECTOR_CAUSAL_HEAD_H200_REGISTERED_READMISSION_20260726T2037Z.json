@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "type": "director_causal_head_h200_registered_readmission",
+  "issued_at_utc": "2026-07-26T20:37:22Z",
+  "project": "gemma4_causal_parallel_offset_head",
+  "reserved_usd": 14.0,
+  "ready_consumed": true,
+  "decision": "Register the authenticated H200 and reactivate the sole bound capture/train/holdout owner.",
+  "consumes": {
+    "ready": {
+      "path": "H200_CAPTURE_TRAIN_READY.json",
+      "sha256": "ef05a7d05211f954d60fc57550475b804e8f18a411096f8c5ec6d8d9348745c6"
+    },
+    "owner": {
+      "path": "run_h200_capture_train_owner.py",
+      "sha256": "dd3b7a53e264167bf7ad68dbd3a18f4c87ed2b2d502887391c9e174a566607ea"
+    },
+    "provider_create": {
+      "path": "DIRECTOR_CAUSAL_HEAD_H200_PROVIDER_CREATE_20260726T2032Z.json",
+      "sha256": "93ea148f7d426d9a7f102df1fac13aaaaa9d78cabfb7a40c397c199959b226ea"
+    },
+    "readmission": {
+      "path": "DIRECTOR_CAUSAL_HEAD_H200_READMISSION_20260726T2032Z.json",
+      "sha256": "b67ce25243416978c3f7bffdc14d1b470a245e9167879224c8f332f64d9b6189"
+    }
+  },
+  "bench": {
+    "id": "h200-causal-head-e00b9qw8d6qd7wrjj1",
+    "spec": "H200_CAUSAL_HEAD_BENCH_SPEC.json",
+    "provider_state": "RUNNING",
+    "disk_state": "READY",
+    "gpu": "NVIDIA H200",
+    "memory_mib": 143771,
+    "mig_mode": "Disabled",
+    "driver_version": "580.159.04",
+    "ssh_ed25519_fingerprint": "SHA256:VmKxKpmKi3uGZuSVw4dM6G/p6vG0xKfk2IiQkxZrFE0",
+    "deadline_utc": "2026-07-27T01:32:34.490529Z"
+  },
+  "checkpoint_source": {
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/inputs/checkpoint",
+    "manifest": "CHECKPOINT_MANIFEST.json",
+    "manifest_sha256": "6ea47a70ea0a3bcf4e764b3fb6f9e6ef061e4063d8b3b1fb66d0d50b6aa7105f",
+    "all_eight_rows_verified": true
+  },
+  "launch": {
+    "artifact_root": "artifacts/h200-capture-train-20260726t2037z",
+    "owner_state": "artifacts/h200-capture-train-20260726t2037z/OWNER_STATE.json",
+    "command": "python3 /root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/artifacts/h200-capture-train-20260726t2037z/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/artifacts/h200-capture-train-20260726t2037z/owner.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head -- python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/run_h200_capture_train_owner.py --bench h200-causal-head-e00b9qw8d6qd7wrjj1 --authorization /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/DIRECTOR_CAUSAL_HEAD_H200_REGISTERED_READMISSION_20260726T2037Z.json --checkpoint-source /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/inputs/checkpoint --deadline-epoch 1785115954.490529 --output-dir /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/artifacts/h200-capture-train-20260726t2037z",
+    "submission_limit": "Exactly one capture/train/request-disjoint holdout cycle; no endpoint pair.",
+    "repair_disposition": "Keep the claim and controller heartbeat live across recoverable pre-science or later-consumer repairs; preserve completed capture before training repair."
+  }
+}

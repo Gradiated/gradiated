@@ -1,0 +1,7 @@
+{
+  "classification": "integration_failure",
+  "message": "semantic_smoke_failed",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-23T16:39:49.121932Z"
+}

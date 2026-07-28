@@ -1,0 +1,74 @@
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"Phone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"Phone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone l","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"Phone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone lPhone lPhone lPhone lPhone lPhone","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" lPhone","logprobs":null,"finish_reason":"length","matched_stop":null}],"usage":null}
+
+data: {"id":"b64a4bf3982043b983ba41550693884c","object":"text_completion","created":1784889265,"model":"google/gemma-4-31B-it","choices":[],"usage":{"prompt_tokens":4214,"total_tokens":4572,"completion_tokens":358,"reasoning_tokens":0}}
+
+data: [DONE]
+

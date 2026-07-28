@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "created_at_utc": "2026-07-26T03:55:00Z",
+  "decision": "readmit_one_tensor_contract_correction_and_the_unconsumed_component",
+  "researcher_profile": "execution",
+  "scientific_contract_changed": false,
+  "hypothesis": "The source-proven full-model dual-cache comparator remains exact and net-positive when the missing seq_lens_cpu mirror is supplied in the tensor-compatible host representation consumed by the pinned target worker.",
+  "evidence": {
+    "predecessor_terminal_path": "PHASE_SELECTIVE_FULL_MODEL_H200_COMPONENT_TERMINAL.json",
+    "predecessor_terminal_sha256": "9c9e1d154fab06ba7d428290b07922f4efbdce788688aac9e6de9a2c036fa4c9",
+    "predecessor_classification": "infrastructure_terminal",
+    "server_log": "artifacts/ngram-readiness-gated-20260726t0343z/retrieved.stdout.log",
+    "scheduler_exception_lines": [
+      331,
+      357
+    ],
+    "observed_failure": "forward_batch_dual_cache_driver.py materialized batch.seq_lens_cpu as a Python list, then pinned ForwardBatch.init_new called seq_lens_cpu.sum() and raised AttributeError before target verification.",
+    "secondary_effect": "The scheduler process exit caused all 32 accepted HTTP requests to time out and return 500; the request-manager errors are consequences, not the root cause.",
+    "scientific_component_consumed": false,
+    "science_started": false,
+    "candidate_cuda_invocation_started": false,
+    "exact_c32_started": false
+  },
+  "binding": {
+    "prior_path": "DIRECTOR_READINESS_GATED_COMPONENT_READMISSION_20260726T0338Z.json",
+    "prior_sha256": "703497c90b7ef5d07826d49ab0863dfae348d71bc82c539ebdda312d1a7bad03",
+    "scientific_binding_path": "DIRECTOR_PHASE_SELECTIVE_FULL_MODEL_H200_BINDING.json",
+    "scientific_binding_sha256": "f09e4188f4b997fe3a0fc4b2fd6303616c043b6c360d500c8d80b0ac4ad800dc",
+    "repair_source_path": "forward_batch_dual_cache_driver.py",
+    "failed_repair_source_sha256": "1e87b837691bfc9b680ee5e52ad2cbceba1028c78352b438dc1eb26b84d1b0c3",
+    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "claim_not_after_utc": "2026-07-26T04:05:00Z",
+    "release_not_after_utc": "2026-07-26T04:25:00Z",
+    "watchdog_deadline_utc": "2026-07-26T04:30:00Z"
+  },
+  "immediate_experiment": {
+    "correction": "Change only the absent seq_lens_cpu materialization so it preserves the integer lengths in a CPU tensor-compatible object that supports both native indexing and .sum(); preserve an already-present stock mirror verbatim.",
+    "local_check": "Exercise the exact producer contract for indexing, len(), and .sum() and retain the existing focused driver tests. This check is part of the implementation, not a new admission project or support gate.",
+    "server_launches_authorized": 1,
+    "readiness_gate": [
+      "Start one corrected cached server and persist the installed repair source identity.",
+      "Keep the component absent until the server log contains both 'Capture cuda graph end' and 'The server is fired up and ready to roll!'.",
+      "Require the server process and container to remain live and localhost:30000 to accept TCP after both markers.",
+      "Do not use a generation request as a readiness probe."
+    ],
+    "component": "Run the still-unconsumed pinned c32-shaped full-model dual-cache verification component once through the actual NGRAM target consumer.",
+    "science_marker": "Set science_started and candidate_cuda_invocation_started only at the first decision-bearing TARGET_VERIFY consumer, not at request submission, prefill, or support materialization.",
+    "conditional_exact_c32": "Run the endpoint pair only if the component persists complete exactness, cache-lifecycle, target-emitted-token, and positive-net-timing evidence under every existing gate.",
+    "mutable_environment": "Reuse the named warm H200 and exact cached image, checkpoint, source, compiler caches, workload, and single-model launch path."
+  },
+  "window_fit": {
+    "claim_to_release_minutes": 20,
+    "closest_measured_same_lineage_claim_minutes": 4.072,
+    "terminal_and_safe_release_margin_minutes": 10,
+    "unallocated_margin_minutes": 5.928,
+    "claim_dispatch_minutes_from_decision": 10,
+    "observed_recent_researcher_startup_minutes": 4.37,
+    "fit": true
+  },
+  "budget": {
+    "authorized_project_spend_usd": 6.75,
+    "actual_project_spend_before_readmission_usd": 4.84,
+    "maximum_additional_provider_exposure_usd_from_0352_through_watchdog": 1.552,
+    "maximum_project_spend_at_watchdog_usd": 6.392,
+    "maximum_new_artifacts_gib": 5
+  },
+  "lifecycle": {
+    "replacement_watchdog_unit": "gemma4-hybrid-seqlens-repair-20260726t0430-watchdog.service",
+    "replacement_watchdog_main_pid": 1522791,
+    "replacement_watchdog_control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-hybrid-seqlens-repair-20260726t0430-watchdog.service",
+    "replacement_verified_active": true,
+    "old_watchdog_unit": "gemma4-hybrid-seqlens-repair-20260726t0415-watchdog.service",
+    "old_watchdog_verified_stopped_after_atomic_inventory_replacement": true,
+    "provider_mutation": "watchdog extension only; do not create, drain, clean, or retire the compatible warm bench"
+  },
+  "stop_rules": [
+    "Do not alter checkpoint values, runtime image, workload bytes, scientific arm, comparator, or target gates.",
+    "Do not treat the failed list materialization, prefill batches, or downstream HTTP 500 responses as a consumed scientific component.",
+    "Submit the corrected still-unconsumed component at most once; exact-c32 remains closed unless every prior conditional gate passes.",
+    "Release the bench by 2026-07-26T04:25:00Z and leave provider lifecycle to the director-owned 04:30Z watchdog.",
+    "Do not claim quality preservation or deployability, train, replay the completed placement comparison, or open a repair/successor project for this same question."
+  ],
+  "portfolio": {
+    "priority": 8700,
+    "second_lane": "deferred_until_this_near_term_typed_boundary",
+    "bench_disposition": "retain_warm_available_for_this_same_project_claim",
+    "profile_reason": "The failure is a routine typed runtime handoff correction with a direct exact-consumer check; it does not require new mechanism-level causal research."
+  }
+}

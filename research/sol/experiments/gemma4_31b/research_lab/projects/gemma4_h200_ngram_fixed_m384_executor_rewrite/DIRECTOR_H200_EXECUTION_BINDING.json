@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T16:15:00Z",
+  "project": "gemma4_h200_ngram_fixed_m384_executor_rewrite",
+  "decision": "authorize_fixed_m384_exact_consumer_and_conditional_endpoint_on_released_resident_h200",
+  "question": "Does the guarded eight-row exact-c32 M384 attention schedule preserve the pinned target-verification consumer and reduce component and matched endpoint time on H200?",
+  "why_now": "The DFlash predecessor produced a typed semantic rejection and released the H200 with the exact target checkpoint, source, image, and caches resident. The fixed-M384 lane is independent of DFlash acceptance semantics, its offline implementation and exact-consumer oracle are complete, and measured trace evidence assigns 25.36% to 28.93% of qualified request time to complete target verification.",
+  "bound_inputs": {
+    "dflash_terminal": {
+      "path": "../gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json",
+      "sha256": "2e0fa5d416480be8b8a1d7cc5eb870b0f510aa0a7f5c759633ddb24a398cb389",
+      "classification": "adapted_dflash_diagnostic_reject_target_token_mismatch",
+      "bench_released": true,
+      "resident_target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+    },
+    "offline_result": {
+      "path": "FIXED_M384_EXECUTOR_OFFLINE_RESULT.json",
+      "sha256": "87199d4f35a3d4131e1b11cf619547a28ffc1d7d06467237b80cc320efdb67a4"
+    },
+    "immutable_packet": {
+      "path": "IMMUTABLE_PACKET.json",
+      "sha256": "1d378986313a4637e60537698a8bd5bfd35fa0ca0125e152017ad726ddb5e89e"
+    },
+    "experiment_contract": {
+      "path": "EXPERIMENT_CONTRACT.json",
+      "sha256": "8db063331379ff0749abbed473ac25370baf316efad3da555650fd96cdda6c04"
+    },
+    "evidence_binding": {
+      "path": "EVIDENCE_BINDING.json",
+      "sha256": "ff113cee36d0d03a36700d1da5436e5b70d7f98e5942c720ebc044f732159507"
+    },
+    "candidate": {
+      "path": "intervention/extend_attention_fixed_m384.py",
+      "sha256": "3086f691c3574900a24907c1273fb9dc1cdf5191e8e217e7b98fe36f3b394877"
+    },
+    "exact_consumer_oracle": {
+      "path": "exact_consumer_oracle.py",
+      "sha256": "7a8722084244263232f1159af533aa5a276bf786d7099c543e347d508e29bb61"
+    }
+  },
+  "runtime_identity": {
+    "model": "google/gemma-4-31B-it",
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "hardware": "nvidia-h200-sxm",
+    "shape": "c32, NGRAM depth 12, q_len 12, M384 target verification, FP8-E5M2 paged KV, BF16 query and output"
+  },
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "provider": "nebius",
+    "accelerator": "nvidia-h200-sxm",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "hourly_cost_usd": 2.45,
+    "connection_identity_source": "runtime/gpus.json",
+    "state_at_binding": "available",
+    "watchdog_deadline_utc": "2026-07-25T22:00:00Z",
+    "release_deadline_utc": "2026-07-25T21:30:00Z"
+  },
+  "execution": {
+    "claim": "Verify this binding and every bound hash, read the current bench identity from runtime/gpus.json, require the exact available instance and disk above with at least 90 lifecycle minutes remaining, then claim once.",
+    "checkpoint": "Hash-reconcile the resident target against every checkpoint file in IMMUTABLE_PACKET.json and hard-link only exact matching bytes into the immutable experiment path. If the completion manifest is unavailable, hash the resident files once; absence of a manifest is not a mismatch. Do not download, reconstruct, overwrite, or restage checkpoint bytes.",
+    "staging": "Stage only the immutable project packet and pinned SGLang image. Preserve the released DFlash target, draft, source, image, and CUDA caches.",
+    "component": "Run the actual pinned stock and candidate exact-consumer CUDA-graph A/B with deterministic replay, finite numerical equivalence, request ownership, KV, mask, and graph-key gates. Repair only a localized invalid launcher or observer boundary under the retained claim.",
+    "counters": "If the candidate is correct and reproducibly faster, collect only four decisive NCU launches for registers, shared memory, grid waves, HBM bytes, and L2 bytes.",
+    "endpoint": "If the correct warm component remains positively bounded without a pathological resource regression, run one profiler-off matched c32 control/candidate endpoint pair. Retain any reproducible exact positive effect; claim the campaign objective only from this endpoint.",
+    "terminal": "Retrieve all typed component, counter, and conditional pair artifacts; persist FIXED_M384_EXECUTOR_TERMINAL.json with cumulative exposure; stop all experiment processes and release the bench available by 2026-07-25T21:30:00Z."
+  },
+  "budgets": {
+    "authorized_spend_usd_cumulative": 8.0,
+    "maximum_claimed_h200_hours": 3,
+    "provider_rate_usd_per_hour": 2.45,
+    "storage": "At most 12 GiB of new project artifacts; reuse checkpoint bytes in place.",
+    "release_deadline_utc": "2026-07-25T21:30:00Z"
+  },
+  "prohibitions": [
+    "Do not replay or repair the rejected DFlash diagnostic or its unstarted c32 pair.",
+    "Do not run the dependent DFlash FP8-head stack.",
+    "Do not restage the target checkpoint.",
+    "Do not replay rejected BLOCK_M=16, BLOCK_M=32, 1x2x1 cluster, mask, penalty, or allocator candidates.",
+    "Do not weaken exact-consumer correctness, graph replay, endpoint semantics, token accounting, or failure gates.",
+    "Do not create, resize, reboot, drain, delete, or otherwise mutate provider resources."
+  ]
+}

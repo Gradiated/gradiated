@@ -1,0 +1,10 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/artifacts/h200-capture-train-20260726t2037z/repair-14-terminal-layer-index-patch.json",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/artifacts/h200-capture-train-20260726t2037z/repair-14-terminal-layer-index-patch.json",
+  "ready_sha256": "405f4d469ce46442f9ca61cb6a27212d051f656b8b251b4e23b5a7e16cef4799",
+  "repair_id": "repair-14",
+  "requested_at_utc": "2026-07-26T23:01:48.760623Z",
+  "retry_scope": "fresh_capture_only_with_terminal_layer_index_repair",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "classification": "measured_component_pass",
+  "evidence_label": "measured",
+  "binding_sha256": "819810594483ece99e280c7329ff1a0f01d9acee4f8c2a6cf51292040abb725d",
+  "candidate": "single_packed_cpu_full_mask_staging",
+  "correctness": {
+    "custom_mask_byte_identical": true,
+    "ngram_verify_metadata_byte_identical": true,
+    "attention_outputs_bit_identical": true,
+    "all_true_padded_rows": true
+  },
+  "timing": {
+    "alternating_cuda_event_repetitions_per_arm": 200,
+    "stock_median_ms": 4.7143518924713135,
+    "stock_p90_ms": 4.791903972625732,
+    "candidate_median_ms": 4.079776048660278,
+    "candidate_p90_ms": 4.204351902008057,
+    "median_reduction_fraction": 0.13460523162239373
+  },
+  "consumer": "NgramVerifyInput plus pinned SGLang Triton extend_attention_fwd for one sliding and one global Gemma-shape layer; deterministic BF16 Q/K/V and FP8-E5M2 KV",
+  "raw_result": "artifacts/window2-20260725t1227z/H100_FALSIFIER_WINDOW2_RESULT.json",
+  "trace": {
+    "path": "artifacts/window2-20260725t1227z/window2_trace.nsys-rep",
+    "sha256": "926195285c94462185b94f7c8ccd34e52bc969d91ddb071b3d44965f18ae048f",
+    "status": "captured; local summary parser version was older than report producer, so no kernel-count inference is made"
+  },
+  "endpoint_replayed": false,
+  "production_eligibility": false
+}

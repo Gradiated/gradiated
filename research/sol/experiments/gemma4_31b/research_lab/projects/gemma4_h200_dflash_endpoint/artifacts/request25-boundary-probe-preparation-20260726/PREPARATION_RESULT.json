@@ -1,0 +1,28 @@
+{
+  "actual_spend_usd": 0.0,
+  "classification": "source_complete_boundary_probe_ready",
+  "created_at_utc": "2026-07-26T00:59:21.031444Z",
+  "next": "Await a later director turn; GPU re-entry and endpoint replay remain forbidden by this preparation terminal.",
+  "packet": {
+    "archive": "artifacts/request25-boundary-probe-preparation-20260726/4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b.tar",
+    "archive_sha256": "25d8a3cb20806a11560b372a238b8630c64d8035f51c2eb989a10b2070b438a8",
+    "bytes": 339566,
+    "identity_sha256": "4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b",
+    "manifest": "artifacts/request25-boundary-probe-preparation-20260726/PACKET_MANIFEST.json",
+    "path": "artifacts/request25-boundary-probe-preparation-20260726/packet/4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b",
+    "source_binding_sha256": "cc49aa4192e737c90ddd5871c59efd4fc854c6a0ca094c557a0e78545bdb8c52"
+  },
+  "quality_gate": {
+    "cuda_invoked": false,
+    "endpoint_replayed": false,
+    "exact_executed_transition_source_complete": true,
+    "executed_dflash_info_v2_matches_observed": true,
+    "gpu_claimed": false,
+    "pre_post_logit_labels_fixture": true,
+    "request25_only_logical_rid_fixture": true,
+    "row_position_length_alignment_fixture": true
+  },
+  "repair_emitted": false,
+  "schema_version": 1,
+  "scientific_result": null
+}

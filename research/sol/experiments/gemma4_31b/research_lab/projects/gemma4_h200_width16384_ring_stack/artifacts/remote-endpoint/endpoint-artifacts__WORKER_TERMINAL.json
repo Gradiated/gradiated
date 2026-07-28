@@ -1,0 +1,7 @@
+{
+  "classification": "integration_failure",
+  "message": "endpoint_evaluation_failed",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-23T17:38:37.966878Z"
+}

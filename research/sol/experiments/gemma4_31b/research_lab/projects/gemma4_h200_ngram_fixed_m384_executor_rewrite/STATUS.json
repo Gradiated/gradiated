@@ -1,70 +1,45 @@
 {
   "active_session": null,
   "actual_spend_usd": 0.0,
-  "allocation_limit": 1,
-  "authorized_spend_usd": 8.0,
+  "allocation_limit": 0,
+  "authorized_spend_usd": 0.0,
   "bench_need": {
-    "accelerator": "nvidia-h200-sxm",
-    "preferred_bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
-    "minimum_remaining_lifecycle_minutes_at_claim": 90,
-    "purpose": "Reuse the post-DFlash exact target checkpoint for one fixed-M384 attention executor component, minimal counters, and conditional exact c32 endpoint pair.",
-    "resident_state": "Reuse /home/glmrunner/gemma4-dflash/work/models/target only after its immutable manifest reconciles; stage the pinned SGLang v0.5.13 image and immutable project packet without resolving another shared path after claim."
+    "accelerator": null,
+    "purpose": "None for this offline stock-order-preserving exactness continuation."
   },
-  "compute_budget": "At most $8 cumulative new H200 exposure and three claimed H200 hours at $2.45/hour, including retrieval and release. The wall-clock project deadline does not authorize six paid claim hours.",
+  "compute_budget": "Zero provider/GPU spend; at most 3 CPU-hours for source analysis, fixtures, compilation, and the typed result.",
   "critical_path": {
-    "artifact": "artifacts/BOUND_CRITICAL_PATH.json",
-    "sha256": "5431905756e8a05b4f3191f1d8b9ee9788724a3cf8d8e2e7ff4f0a97a58867e7",
     "all_evidence_binding_hashes_match": true,
+    "artifact": "artifacts/BOUND_CRITICAL_PATH.json",
+    "attention_fraction_of_target_gpu_union": 0.6713160999648242,
+    "attention_maximum_whole_request_fraction_range": [
+      0.17025723221600086,
+      0.19421462886928428
+    ],
     "captured_exact_m384_cycles": 15,
+    "complete_executor_20_percent_ceiling_open": true,
     "conservative_target_fraction_of_qualified_request": 0.25361708474580313,
     "graph_count_target_fraction_of_qualified_request": 0.28930429179258593,
     "required_target_boundary_speedup_fraction_range": [
       0.691313629537816,
       0.7885904066772836
     ],
-    "attention_fraction_of_target_gpu_union": 0.6713160999648242,
-    "attention_maximum_whole_request_fraction_range": [
-      0.17025723221600086,
-      0.19421462886928428
-    ],
-    "complete_executor_20_percent_ceiling_open": true,
-    "selected_attention_candidate_20_percent_ceiling_open": false
+    "selected_attention_candidate_20_percent_ceiling_open": false,
+    "sha256": "5431905756e8a05b4f3191f1d8b9ee9788724a3cf8d8e2e7ff4f0a97a58867e7"
   },
-  "decision": "offline_result_complete_gpu_phase_requires_director_rebind",
-  "evidence_binding": "EVIDENCE_BINDING.json",
-  "experiment_contract": "EXPERIMENT_CONTRACT.json",
-  "implementation": {
-    "candidate": "intervention/extend_attention_fixed_m384.py",
-    "candidate_sha256": "3086f691c3574900a24907c1273fb9dc1cdf5191e8e217e7b98fe36f3b394877",
-    "change": "For only H200 batch-32, M384, max-extend-12 local/global target verification, use BLOCK_M=8 with unchanged BLOCK_N=64 and stock fallback.",
-    "exact_consumer_oracle": "exact_consumer_oracle.py",
-    "exact_consumer_oracle_sha256": "7a8722084244263232f1159af533aa5a276bf786d7099c543e347d508e29bb61",
-    "immutable_packet": "IMMUTABLE_PACKET.json",
-    "immutable_packet_sha256": "1d378986313a4637e60537698a8bd5bfd35fa0ca0125e152017ad726ddb5e89e",
-    "offline_validation": "Python compilation passed and a Triton 3.6.0 SM90 M8xK dot probe compiled successfully; actual candidate correctness and resource use remain CUDA-only gates."
+  "decision": "typed_none_stock_order_preserving_low_pressure_local_attention",
+  "decision_evidence": {
+    "artifact": "STOCK_ORDER_PRESERVING_ATTENTION_OFFLINE_RESULT.json",
+    "artifact_sha256": "5169dcf3976dbf7d9dbfc83adbac6a766854390ec67460fddd7c55012735ef49",
+    "evidence_type": "persisted 32/32 guard localization, measured H200 NCU counters, deterministic CPU operation-order fixture, and pinned Triton 3.6.0 SM90 compilation"
   },
-  "offline_terminal_artifact": "FIXED_M384_EXECUTOR_OFFLINE_RESULT.json",
-  "offline_terminal_sha256": "87199d4f35a3d4131e1b11cf619547a28ffc1d7d06467237b80cc320efdb67a4",
-  "next_action": "Remain waiting without a reservation or claim while gemma4_h200_dflash_endpoint owns h200-dflash-adapter-e00vyqp7gxsr34wrtz. After its scientific terminal and clean release, return to the director: authorize execution only if the released resident manifest is compatible, the offline 25.36-28.93% request-share bound remains decision-relevant, and the registered lifecycle leaves at least 90 minutes through cleanup or has been safely extended. A later director binding may then permit one claim, the frozen exact-consumer graph A/B, four decisive NCU launches, and a conditional profiler-off c32 pair within at most three H200 claim hours. Do not claim automatically on predecessor release.",
-  "priority": 8475,
-  "provider_mutation": "forbidden_researcher_reuse_director_registered_h200_after_dflash",
-  "queue_blocker": {
-    "classification": "typed_director_execution_authorization_and_shared_bench_predecessor_boundary",
-    "observed_inventory_updated_at_utc": "2026-07-25T15:49:18.246797Z",
-    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
-    "current_owner": "gemma4_h200_dflash_endpoint",
-    "claim_heartbeat_at_utc": "2026-07-25T15:49:18.246721Z",
-    "owner_pid": 841139,
-    "owner_start_ticks": 110944877,
-    "owner_state": "live",
-    "bench_lifecycle_deadline_utc": "2026-07-25T22:00:00Z",
-    "predecessor_deadline_utc": "2026-07-25T21:45:00Z"
+  "director_execution_binding": {
+    "artifact": "DIRECTOR_H200_EXECUTION_BINDING.json",
+    "sha256": "7981a96b90e8574ae754153d1adff38e74f6672ace2c51193b1c8c8713bcc125"
   },
   "director_execution_gate": {
-    "status": "required_after_predecessor_terminal",
-    "reservation_now": false,
     "automatic_claim_after_release": false,
-    "maximum_claim_hours": 3,
+    "maximum_claim_hours": 2,
     "minimum_remaining_lifecycle_minutes_at_claim": 90,
     "required_checks": [
       "DFlash terminal and clean H200 release",
@@ -72,12 +47,68 @@
       "current runtime/gpus.json identity and watchdog",
       "remaining campaign authority",
       "offline physical bound still competitive with newer terminals"
+    ],
+    "reservation_now": false,
+    "status": "historical_complete_not_current_gate"
+  },
+  "endpoint_consumer_repair": {
+    "artifact": "DIRECTOR_MIXED_M384_ENDPOINT_CONSUMER_REPAIR.json",
+    "ready_sha256": "ae1a960e0c63a5bb2f688d3352e40bb142746aba8e1af8fe4093286317643793",
+    "sha256": "7cf2b3aa676cf888d18fd36c28cc25ca36f88f0961cb1a23af1b5745e57bd58a",
+    "stage": "endpoint_consumer"
+  },
+  "evidence_binding": "EVIDENCE_BINDING.json",
+  "experiment_contract": "EXPERIMENT_CONTRACT.json",
+  "historical_attempt_spend_usd": 0.42713400518055566,
+  "implementation": {
+    "candidate": "intervention/extend_attention_stock_order_dv64.py",
+    "candidate_sha256": "d4ee7f3b6ead75e1cc86c8832827e7d9d2c36ddd375d33c0015ea91018eeef10",
+    "change": "Keep stock local M64/N64 QK and online-softmax order while partitioning Lv=256 into four independent DV64 programs.",
+    "decision": "rejected_offline; compiled shared memory remains 80 KiB and predicted waves rise to 31.03/SM",
+    "exact_consumer_oracle": "exact_consumer_oracle.py",
+    "exact_consumer_oracle_sha256": "7a8722084244263232f1159af533aa5a276bf786d7099c543e347d508e29bb61",
+    "offline_validation": "Pinned Triton 3.6.0 compiled the full stock, rejected M8, and one stock-order value-stripe kernel for SM90; deterministic float32 online-softmax fixture was bitwise equal.",
+    "localization_artifact": "artifacts/STOCK_ORDER_LOCALIZATION_AND_FIXTURE.json",
+    "localization_artifact_sha256": "121cb15e0246c4e82d1b4e4f93f181d4c27cdd4ad3ead77f41d56266cc183ded",
+    "compile_artifact": "artifacts/SM90_STOCK_ORDER_DV64_COMPILE_RESULT.json",
+    "compile_artifact_sha256": "fb4898fc030728ac03dcd44cee392ce2cab079d66ac471fe58a59694a9e74815"
+  },
+  "mixed_local_m384_binding": {
+    "artifact": "DIRECTOR_H200_MIXED_LOCAL_M384_BINDING.json",
+    "sha256": "a084bd2cb9007138c5e54b3f2ab7f64baa90bcfab66fea9778491338cfc8d8d1"
+  },
+  "next_action": "Director should consume the typed none and select a materially different project. Do not nominate the rejected value-stripe schedule for H200: it restores stock QK lowering but fails the required shared-memory and grid-pressure mechanism.",
+  "offline_terminal_artifact": "FIXED_M384_EXECUTOR_OFFLINE_RESULT.json",
+  "offline_terminal_sha256": "87199d4f35a3d4131e1b11cf619547a28ffc1d7d06467237b80cc320efdb67a4",
+  "priority": 8530,
+  "provider_mutation": "forbidden_no_claim_or_provision",
+  "queue_blocker": {
+    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "bench_lifecycle_deadline_utc": "2026-07-25T22:00:00Z",
+    "classification": "resolved_prior_terminal_released_warm",
+    "current_owner": null,
+    "observed_inventory_updated_at_utc": "2026-07-25T16:32:39.789243Z",
+    "owner_state": "available_for_same_project_mixed_local_followup",
+    "predecessor_terminal": "../gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json",
+    "predecessor_terminal_sha256": "2e0fa5d416480be8b8a1d7cc5eb870b0f510aa0a7f5c759633ddb24a398cb389"
+  },
+  "repair_boundary": {
+    "classification": "recoverable_pre_science_checkpoint_link_permission_defect",
+    "first_attempt_actual_spend_usd": 0.027903122819444445,
+    "immutable_packet_reused": true,
+    "scientific_arms_consumed": false,
+    "settled_checkpoint_files_after_repair": [
+      "chat_template.jinja",
+      "config.json"
     ]
   },
   "researcher_profile": "deep",
-  "status": "offline_complete_awaiting_director_gpu_binding",
-  "storage_budget": "At most 12 GiB new project artifacts; reuse checkpoint bytes in place.",
-  "summary": "The required offline scientific terminal is complete at $0. All nine evidence bindings verify. The persisted exact-c32 trace keeps the complete target-forward 20% ceiling open at a 25.36-28.93% request share, but the selected attention family can contribute at most 17.03-19.42% of a qualified request and is stackable-only. A guarded legal eight-row attention schedule, exact consumer/graph oracle, minimal counter consumer, endpoint pair, immutable packet, and durable owner are source-complete. The current director binding forbids GPU and remote-bench access; after DFlash releases, the director must decide whether this stackable candidate remains competitive and explicitly bind any paid execution.",
-  "terminal_artifact": "FIXED_M384_EXECUTOR_TERMINAL.json",
-  "wall_clock_budget": "Complete by 2026-07-26T04:00:00Z and leave ten minutes for release before the applicable bench watchdog."
+  "status": "complete",
+  "storage_budget": "At most 2 GiB new local source, fixtures, compilation outputs, and evidence.",
+  "summary": "Typed none: M8 first changes arithmetic at layer-0 local prefix-QK by replacing stock FP8 WGMMA with an FP16 M8 dot, and 10/32 guard requests diverge at the first reconstructed token. The sole stock-order value-stripe schedule restores stock QK and passes a bitwise CPU fixture, but compiles at 80 KiB shared memory and 31.03 waves/SM, so it does not reduce the measured M8 pressure and is not nominated for GPU execution.",
+  "historical_actual_spend_usd": 2.9737686855138894,
+  "historical_actual_spend_note": "The completed mixed-M384 phase is already settled. actual_spend_usd is reset to zero for this offline continuation to prevent duplicate settlement.",
+  "terminal_artifact": "STOCK_ORDER_PRESERVING_ATTENTION_OFFLINE_RESULT.json",
+  "terminal_sha256": "5169dcf3976dbf7d9dbfc83adbac6a766854390ec67460fddd7c55012735ef49",
+  "wall_clock_budget": "At most 90 wall minutes and no later than 2026-07-25T20:30:00Z."
 }

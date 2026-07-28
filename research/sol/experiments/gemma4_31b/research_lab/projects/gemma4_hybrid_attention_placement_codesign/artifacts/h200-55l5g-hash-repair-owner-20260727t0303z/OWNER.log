@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/run_h200_55l5g_retained_claim_owner.py", line 34, in <module>
+    if __name__=='__main__': raise SystemExit(main())
+                                              ~~~~^^
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/run_h200_55l5g_retained_claim_owner.py", line 30, in main
+    r=subprocess.run([sys.executable,'run_h200_55l5g_endpoint_runtime.py','--authority',str(n.authority),'--phase','run-pair-and-retrieve','--artifact-root',str(art)],cwd=ROOT,text=True,capture_output=True,timeout=min(600,remaining));(art/'runtime.stdout.log').write_text(r.stdout);(art/'runtime.stderr.log').write_text(r.stderr);t=load(art/'retrieved'/TERM)
+                                                                                                                                                                                                                                                                                                                                            ~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/run_h200_55l5g_retained_claim_owner.py", line 7, in load
+    def load(p): return json.loads(Path(p).read_text())
+                                   ~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/pathlib/_local.py", line 548, in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/pathlib/_abc.py", line 632, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/pathlib/_local.py", line 539, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/h200-55l5g-hash-repair-20260727t0303z/retrieved/HYBRID_55L5G_CURRENT_H200_ENDPOINT_TERMINAL.json'

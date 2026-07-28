@@ -1,0 +1,16 @@
+{
+  "caches": "Digest-pinned image, exact checkpoint, CUDA/JIT/tokenizer caches, and official v0.5.15 state are retained.",
+  "candidate": "One unconsumed official-stock single-stream versus two-stream demand-multiplexing discriminator and strictly conditional 759-request endpoint.",
+  "candidate_sample_consumed": false,
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint is resident and read-only.",
+  "director_binding": "gemma4_v0515_demand_multiplexing_sustainable/DIRECTOR_STOCK_MULTIPLEX_BINDING.json",
+  "director_binding_sha256": "82c91cf2ae5c3993ecac31a37fddc59684a8df83fef2b84fa322912d5bde9e70",
+  "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "next": "Priority-8455 may verify the stock-multiplex binding, derive a fresh manifest-complete non-speculative packet, claim this H200, restart only the official container with every NGRAM/speculative flag absent, and run the bound discriminator plus conditional endpoint before 2026-07-25T08:25:00Z.",
+  "prior_result": "The consumed decode-attention NGRAM sample is rejected and must not be replayed; its deep residual analysis returned typed none.",
+  "project": "gemma4_v0515_demand_multiplexing_sustainable",
+  "result": "available_for_bound_stock_demand_multiplexing",
+  "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6.",
+  "server_state": "Consumed NGRAM decode-attention server is loaded on port 30000. The admitted project must stop only that container after claim and start the exact stock server without speculative flags."
+}

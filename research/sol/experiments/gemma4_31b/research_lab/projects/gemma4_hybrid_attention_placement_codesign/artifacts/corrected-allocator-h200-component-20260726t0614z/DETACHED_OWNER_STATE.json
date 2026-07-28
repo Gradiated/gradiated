@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/corrected_allocator_component_owner.py"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign",
+  "launched_at_utc": "2026-07-26T06:15:58.866549Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/corrected-allocator-h200-component-20260726t0614z/controller.log",
+  "pid": 1608316,
+  "start_ticks": 116257626,
+  "unit_manager": "pid"
+}

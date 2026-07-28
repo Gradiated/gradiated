@@ -1,0 +1,17 @@
+{
+  "bench": "h100-v0515-ngram-e00mfea030cdngg54z",
+  "candidate_sample_consumed": false,
+  "classification": "typed_external_or_recoverable_failure",
+  "error": "RuntimeError('remote_checkpoint_hash_failed')",
+  "finished_at": "2026-07-25T07:40:42.231146Z",
+  "heartbeat_events": [
+    {
+      "at": "2026-07-25T07:39:59.488653Z",
+      "kind": "heartbeat",
+      "returncode": 0
+    }
+  ],
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "schema_version": 1,
+  "started_at": "2026-07-25T07:39:14.444505Z"
+}

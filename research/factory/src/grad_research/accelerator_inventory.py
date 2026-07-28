@@ -62,8 +62,8 @@ def load_accelerator_inventory(
 
     reviewed_at = _timestamp("reviewed_at_utc", value.get("reviewed_at_utc"))
     review_interval = value.get("review_interval_days")
-    if isinstance(review_interval, bool) or not isinstance(review_interval, int) or not 30 <= review_interval <= 366:
-        raise AcceleratorInventoryError("review_interval_days must be an integer in [30,366]")
+    if isinstance(review_interval, bool) or not isinstance(review_interval, int) or not 7 <= review_interval <= 366:
+        raise AcceleratorInventoryError("review_interval_days must be an integer in [7,366]")
     current_time = now or datetime.now(timezone.utc)
     if current_time.tzinfo is None:
         raise AcceleratorInventoryError("now must be timezone-aware")

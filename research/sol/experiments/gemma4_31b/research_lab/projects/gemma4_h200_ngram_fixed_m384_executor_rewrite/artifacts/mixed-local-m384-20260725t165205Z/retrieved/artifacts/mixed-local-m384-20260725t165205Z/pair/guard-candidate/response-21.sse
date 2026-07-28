@@ -1,0 +1,20 @@
+data: {"id":"618c7576ab4d44aea065ad0686d34444","object":"text_completion","created":1785001704,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"Ar","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"618c7576ab4d44aea065ad0686d34444","object":"text_completion","created":1785001704,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"Ar","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"618c7576ab4d44aea065ad0686d34444","object":"text_completion","created":1785001704,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"ArAr","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"618c7576ab4d44aea065ad0686d34444","object":"text_completion","created":1785001704,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"ArC","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"618c7576ab4d44aea065ad0686d34444","object":"text_completion","created":1785001704,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"Ar","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"618c7576ab4d44aea065ad0686d34444","object":"text_completion","created":1785001704,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"CArC","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"618c7576ab4d44aea065ad0686d34444","object":"text_completion","created":1785001704,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"ArCArCAr","logprobs":null,"finish_reason":null,"matched_stop":null}],"usage":null}
+
+data: {"id":"618c7576ab4d44aea065ad0686d34444","object":"text_completion","created":1785001704,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":"CArCArCArCArC","logprobs":null,"finish_reason":"length","matched_stop":null}],"usage":null}
+
+data: {"id":"618c7576ab4d44aea065ad0686d34444","object":"text_completion","created":1785001704,"model":"google/gemma-4-31B-it","choices":[],"usage":{"prompt_tokens":4214,"total_tokens":4238,"completion_tokens":24,"reasoning_tokens":0}}
+
+data: [DONE]
+

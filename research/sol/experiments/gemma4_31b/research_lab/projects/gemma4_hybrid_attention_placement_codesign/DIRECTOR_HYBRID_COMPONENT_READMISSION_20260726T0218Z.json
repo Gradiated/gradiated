@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-26T02:18:00Z",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "decision": "restart_the_cached_target_runtime_and_run_only_the_unconsumed_full_model_component",
+  "classification": "same_project_pre_science_readmission",
+  "researcher_profile": "execution",
+  "scientific_contract": {
+    "disposition": "unchanged",
+    "scientific_binding": {
+      "path": "DIRECTOR_PHASE_SELECTIVE_FULL_MODEL_H200_BINDING.json",
+      "sha256": "f09e4188f4b997fe3a0fc4b2fd6303616c043b6c360d500c8d80b0ac4ad800dc"
+    },
+    "prior_readmission": {
+      "path": "DIRECTOR_HYBRID_NGRAM_TARGET_RUNTIME_READMISSION_20260726T0156Z.json",
+      "sha256": "1cc5145311ec0adcd10e1e35603f794fa14b60868bbc277f421b1f051a12e934"
+    },
+    "hypothesis": "The implemented phase-selective stock/proxy KV consumer can execute through the pinned full Gemma target-verification path, remain exact at stock boundaries, and retain positive net target-cycle savings after all shadow maintenance costs.",
+    "workload_and_quality_gates": "Use the exact workload, exactness gates, cache-lifecycle gates, economic denominator, and conditional endpoint gate from the scientific binding without amendment."
+  },
+  "readmission_evidence": {
+    "terminal": {
+      "path": "R3_READINESS_DEADLINE_INFRASTRUCTURE_TERMINAL_20260726.json",
+      "classification": "typed_external_readiness_boundary",
+      "science_started": false,
+      "candidate_cuda_invocation_started": false,
+      "scientific_component_consumed": false,
+      "exact_c32_started": false
+    },
+    "repair": "The prior controller omitted an HTTP readiness barrier after CUDA-graph capture. Start activation only after bounded HTTP health succeeds; connection refusal is readiness failure, not a scientific row.",
+    "repair_id": "ngram-readmission-20260726t0218z-r4-cached-restart",
+    "predecessor_repair_id": "ngram-readmission-20260726t0159z-r3-readiness",
+    "bench_safety": "At 02:16:31Z a strict SSH check found Docker empty, no GPU compute application, and localhost health refused. At 02:18Z authenticated provider listing matched the sole RUNNING instance and READY disk exactly to the inventory record."
+  },
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "accelerator": "nvidia-h200-sxm",
+    "hourly_cost_usd": 2.45,
+    "claim_not_after_utc": "2026-07-26T02:25:00Z",
+    "release_not_after_utc": "2026-07-26T03:10:00Z",
+    "lifecycle_deadline_utc": "2026-07-26T03:15:00Z",
+    "reuse_contract": "Atomically claim the named ready bench, reuse the exact checkpoint, pinned image/source, and CUDA/compiler caches, and make no provider lifecycle mutation."
+  },
+  "execution": {
+    "first_action": "Claim immediately and start one cached target-model server. Use a bounded HTTP readiness barrier through CUDA-graph completion before activation; do not add another offline gate.",
+    "component": "Run only the still-unconsumed full-model dual-cache component comparator and persist its typed terminal.",
+    "server_replacement": "One same-project cached server restart is authorized because the prior server disappeared before science and all scientific inputs remain fixed.",
+    "conditional_endpoint": "Run the already-bound exact-c32 stock/candidate endpoint pair only if every component exactness, cache-lifecycle, CUDA-graph, and positive-net gate passes."
+  },
+  "budgets": {
+    "authorized_spend_usd": 5.0,
+    "actual_spend_before_readmission_usd": 2.5054861418055557,
+    "maximum_added_provider_exposure_usd": 2.45,
+    "compute": "At most 45 claimed H200 minutes at $2.45/hour.",
+    "wall_clock": "Claim by 2026-07-26T02:25:00Z and release by 2026-07-26T03:10:00Z under the verified 03:15Z cleanup watchdog.",
+    "storage_gib": 5.0,
+    "provider_mutation": "forbidden"
+  },
+  "stop_rules": [
+    "Do not consume more than the one incomplete component.",
+    "Do not send activation traffic before bounded HTTP readiness succeeds.",
+    "Do not run the endpoint unless the component is exact and net-positive.",
+    "Return a typed semantic, cache, graph, or nonpositive-net result when a scientific gate fails; infrastructure failure is not a physical reject.",
+    "Stop project processes and release the bench by 2026-07-26T03:10:00Z.",
+    "Do not train, alter checkpoint values, weaken stock-boundary gates, replay completed placement evidence, or claim quality preservation or deployability."
+  ],
+  "artifact_contract": {
+    "component_terminal": "PHASE_SELECTIVE_FULL_MODEL_H200_COMPONENT_TERMINAL.json",
+    "conditional_endpoint_terminal": "PHASE_SELECTIVE_FULL_MODEL_H200_ENDPOINT_TERMINAL.json",
+    "cleanup": "Stop project processes and release with reusable state preserved."
+  }
+}

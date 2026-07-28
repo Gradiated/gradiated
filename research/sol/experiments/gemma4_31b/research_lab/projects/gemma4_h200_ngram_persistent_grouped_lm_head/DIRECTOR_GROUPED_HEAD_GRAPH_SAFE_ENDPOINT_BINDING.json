@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "bound_at_utc": "2026-07-25T20:57:00Z",
+  "project": "gemma4_h200_ngram_persistent_grouped_lm_head",
+  "decision": "promote_correct_graph_replay_to_one_matched_endpoint_pair",
+  "hypothesis": "Replacing only the exact live 384x5376 BF16 LM-head input consumer with the graph-safe grouped implementation preserves the exact c32 target decisions and emitted tokens while reducing qualified whole-request service time.",
+  "campaign_lock": {
+    "model": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.13",
+    "runtime_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "accelerator": "nvidia-h200-sxm",
+    "concurrency": 32,
+    "draft_depth": 12,
+    "output_tokens": 358,
+    "qualified_denominator_s_per_request": 0.625149101968745,
+    "campaign_target_s_per_request": 0.500119281574996
+  },
+  "immutable_inputs": {
+    "checkpoint_manifest": {
+      "path": "inputs/bound/CHECKPOINT_MANIFEST.json",
+      "sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6"
+    },
+    "qualified_terminal": {
+      "path": "inputs/bound/QUALIFIED_LATEST_TERMINAL.json",
+      "sha256": "b02d02c2283f5a018384cacf6522e123ce8e603ad0cfa2cd2c61ed6cb9eda363"
+    },
+    "exact_runner": {
+      "path": "inputs/bound/exact_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    "endpoint_outer": {
+      "path": "endpoint_pair.py",
+      "sha256": "e7ba62b4ad41791c53fd7939fc3aad9af6967b1fc8ae212cf077fbfc773e128f"
+    },
+    "candidate_source": {
+      "path": "grouped_lm_head.py",
+      "sha256": "184635396953ccc1cf0c5674e7e573228ef1b5829649b6b9c30e39f3bb6fed5e"
+    },
+    "promoting_terminal": {
+      "path": "GROUPED_LM_HEAD_H200_GRAPH_REPLAY_TERMINAL.json",
+      "sha256": "d6ce199adc0debcc5e10380e71b219009858c160efc60be56c81d571f240bda1",
+      "classification": "correct_faster",
+      "control_median_ms": 9.201120376586914,
+      "candidate_median_ms": 4.182975769042969,
+      "component_reduction_fraction": 0.5453840839114625,
+      "target_decisions_exact": true
+    }
+  },
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "provider": "nebius",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "hourly_cost_usd": 2.45,
+    "watchdog_deadline_utc": "2026-07-25T22:00:00Z",
+    "reuse_only": true,
+    "provider_mutation": "forbidden"
+  },
+  "budget": {
+    "authorized_spend_usd": 1.5,
+    "maximum_claim_minutes": 35,
+    "maximum_metered_claim_cost_usd": 1.4291666666666667,
+    "claim_not_after_utc": "2026-07-25T21:12:00Z",
+    "release_not_after_utc": "2026-07-25T21:47:00Z",
+    "storage_limit_gib": 3
+  },
+  "execution_contract": {
+    "arms": [
+      "qualified_stock_control",
+      "graph_safe_grouped_lm_head_candidate"
+    ],
+    "matched_pair_count": 1,
+    "profiler": "off",
+    "endpoint_required": true,
+    "complete_requests_per_arm": 32,
+    "repair_policy": "Repair ordinary import, path, permission, source-integration, runtime-context, API, and telemetry defects in place on the retained claim. Do not create a repair project or weaken the exact contract.",
+    "candidate_integration": "Integrate the promoted graph-safe buffer-direct source into the pinned endpoint source path. Do not replay the historical graph-unsafe candidate.",
+    "required_equivalence": [
+      "all 32 requests complete in both arms",
+      "raw token IDs are present",
+      "target decisions are exact",
+      "emitted token IDs are exact",
+      "finish reasons and usage fields are present",
+      "request ownership and cache accounting equality hold"
+    ],
+    "required_performance": [
+      "batch seconds",
+      "service seconds per request",
+      "output tokens per second",
+      "TTFT and decode phase distributions"
+    ],
+    "forbidden": [
+      "component replay",
+      "DFlash replay",
+      "hybrid-attention intervention",
+      "training",
+      "quality claims beyond exact endpoint token equivalence",
+      "provider lifecycle mutation"
+    ]
+  },
+  "analytical_bound": {
+    "measured_lm_head_profile_window_fraction": 0.05248713500841422,
+    "component_reduction_fraction": 0.5453840839114625,
+    "conservative_whole_request_reduction_fraction": 0.028625648043701244,
+    "interpretation": "The bound is below the campaign target but the exact-semantics endpoint pair is cheap and resolves whether the component gain survives the live graph boundary."
+  },
+  "terminal_artifact": "GROUPED_LM_HEAD_GRAPH_SAFE_ENDPOINT_TERMINAL.json"
+}

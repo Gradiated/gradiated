@@ -205,8 +205,28 @@ def row(
     candidate_first = candidate_output.clone()
     candidate_replay()
     torch.cuda.synchronize()
+    different = candidate_output != control_output
+    different_flat = torch.nonzero(different.flatten(), as_tuple=False).flatten()
+    first_differences = []
+    for flat_index in different_flat[:16].tolist():
+        token_head = Q_HEADS * head_dim
+        token = flat_index // token_head
+        remainder = flat_index % token_head
+        head = remainder // head_dim
+        feature = remainder % head_dim
+        first_differences.append(
+            {
+                "coordinate": [token, head, feature],
+                "control": float(control_output[token, head, feature]),
+                "candidate": float(candidate_output[token, head, feature]),
+                "absolute_error": float(delta[token, head, feature].abs()),
+            }
+        )
     oracle = {
         "all_finite": bool(torch.isfinite(candidate_output).all().item()),
+        "bit_exact": bool(torch.equal(candidate_output, control_output)),
+        "differing_elements": int(different.sum().item()),
+        "first_differences": first_differences,
         "allclose_atol_0_02_rtol_0_005": bool(
             torch.allclose(
                 candidate_output.float(),
@@ -243,6 +263,11 @@ def row(
             values.append(timed_ms(replay))
     control_dist = distribution(control_values)
     candidate_dist = distribution(candidate_values)
+    split_reductions = []
+    for parity in (0, 1):
+        split_control = statistics.median(control_values[parity::2])
+        split_candidate = statistics.median(candidate_values[parity::2])
+        split_reductions.append(1 - split_candidate / split_control)
     return {
         "layer_type": "sliding_window_1024" if local else "full_attention",
         "head_dim": head_dim,
@@ -255,6 +280,7 @@ def row(
         "latency_reduction_fraction": (
             1 - candidate_dist["median_ms"] / control_dist["median_ms"]
         ),
+        "split_latency_reduction_fractions": split_reductions,
         "oracle": oracle,
     }
 
@@ -270,6 +296,19 @@ def main() -> int:
     args = parser.parse_args()
     args.artifact_root.mkdir(parents=True, exist_ok=True)
     invocation = args.artifact_root / "INVOCATION_STATE.json"
+    terminal = args.artifact_root / "COMPONENT_TERMINAL.json"
+    if not args.counter_only and terminal.exists() and invocation.exists():
+        existing_terminal = json.loads(terminal.read_text())
+        existing_invocation = json.loads(invocation.read_text())
+        completed_candidate_matches = (
+            existing_terminal.get("identity", {}).get("candidate_sha256")
+            == digest(args.candidate)
+            and existing_terminal.get("component_pass") is True
+            and existing_invocation.get("scientific_terminal_recorded") is True
+        )
+        if completed_candidate_matches:
+            print(json.dumps(existing_terminal, indent=2, sort_keys=True))
+            return 0
     atomic(
         invocation,
         {
@@ -369,6 +408,17 @@ def main() -> int:
     weighted_control = rows[0]["control"]["median_ms"] * 50 + rows[1]["control"]["median_ms"] * 10
     weighted_candidate = rows[0]["candidate"]["median_ms"] * 50 + rows[1]["candidate"]["median_ms"] * 10
     attention_reduction = 1 - weighted_candidate / weighted_control
+    weighted_split_reductions = []
+    for parity in (0, 1):
+        split_control = sum(
+            statistics.median(item["control"]["samples_ms"][parity::2]) * weight
+            for item, weight in zip(rows, (50, 10), strict=True)
+        )
+        split_candidate = sum(
+            statistics.median(item["candidate"]["samples_ms"][parity::2]) * weight
+            for item, weight in zip(rows, (50, 10), strict=True)
+        )
+        weighted_split_reductions.append(1 - split_candidate / split_control)
     target_boundary_bound = attention_reduction * ATTENTION_US / TARGET_GPU_UNION_US
     correct = all(
         item["oracle"]["all_finite"]
@@ -378,31 +428,57 @@ def main() -> int:
         and item["oracle"]["candidate_output_l1"] > 0
         for item in rows
     )
+    dispatch = candidate.fixed_m384_dispatch_audit()
+    mixed_dispatch_pass = (
+        dispatch.get("local_m8_qk256_v256", 0) > 0
+        and dispatch.get("global_stock_m32_qk512_v512", 0) > 0
+        and rows[1]["oracle"]["bit_exact"]
+    )
+    reproducible_positive = (
+        rows[0]["latency_reduction_fraction"] > 0
+        and all(value > 0 for value in rows[0]["split_latency_reduction_fractions"])
+        and attention_reduction > 0
+        and all(value > 0 for value in weighted_split_reductions)
+    )
     terminal = {
         "schema_version": 1,
         "kind": "exact_c32_ngram_tree_verify_attention_component",
         "correct": correct,
-        "component_pass": correct and attention_reduction > 0 and target_boundary_bound > 0,
+        "component_pass": (
+            correct
+            and mixed_dispatch_pass
+            and reproducible_positive
+            and target_boundary_bound > 0
+        ),
+        "mixed_dispatch_pass": mixed_dispatch_pass,
+        "reproducible_positive": reproducible_positive,
         "rows": rows,
         "weighted_attention_reduction_fraction": attention_reduction,
+        "weighted_split_reduction_fractions": weighted_split_reductions,
         "positive_target_boundary_bound_fraction": target_boundary_bound,
         "trace_attention_fraction": ATTENTION_US / TARGET_GPU_UNION_US,
-        "launches_per_verify_step": {"control": 60, "candidate": 120},
-        "launch_grid_per_layer": {"control": [32, 32, 1], "candidate": [32, 32, 2]},
+        "launches_per_verify_step": {"control": 60, "candidate": 110},
+        "launch_grid_per_layer": {
+            "control_local": [32, 32, 1],
+            "control_global": [32, 32, 1],
+            "candidate_local": [32, 32, 2],
+            "candidate_global": [32, 32, 1],
+        },
         "physical": {
             "control_block_m": {"local": 64, "global": 32},
-            "candidate_block_m": 8,
+            "candidate_block_m": {"local": 8, "global": 32},
             "block_n": 64,
             "padded_query_rows": {
                 "control_local": 64,
                 "control_global": 32,
-                "candidate": 16
+                "candidate_local": 16,
+                "candidate_global": 32,
             },
             "live_accumulator_elements": {
                 "control_local": 64 * 256,
                 "control_global": 32 * 512,
                 "candidate_local": 8 * 256,
-                "candidate_global": 8 * 512
+                "candidate_global": 32 * 512,
             },
             "compulsory_kv_bytes_change": 0,
             "new_sync_boundaries": 0,
@@ -425,7 +501,7 @@ def main() -> int:
             "installed_control_source": str(control_path),
             "control_sha256": digest(control_path),
             "candidate_sha256": digest(args.candidate),
-            "candidate_dispatch_audit": candidate.fixed_m384_dispatch_audit(),
+            "candidate_dispatch_audit": dispatch,
             "torch": torch.__version__,
             "triton": importlib.import_module("triton").__version__,
         },

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_dflash_endpoint",
+  "result": "fresh_h200_available_for_priority_8490_exact_dflash_consumer",
+  "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+  "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; exact one-time materialization authorized but not yet staged",
+  "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1; exact one-time materialization authorized but not yet staged",
+  "checkpoint": "Fresh 250-GiB boot disk; exact target/draft staging is bound because the prior checkpoint-bearing disk was deleted.",
+  "image": "Nebius ubuntu24.04-cuda13.0 base; reconstruct only the bound SGLang image and tied-head adapter overlay.",
+  "runtime": "SGLang 588d1f7bc9424201f89957e145f9d5af633a3eb8 is bound but not yet materialized.",
+  "caches": "Fresh disk; preserve all exact model, source, image, and CUDA caches after staging.",
+  "filesystem": "250-GiB network SSD boot disk.",
+  "server_state": "Strict SSH and H200 identity passed; no server or scientific invocation is resident.",
+  "candidate": "TP=1 tied-head adapter and adapted four-request DFlash diagnostic; conditional matched c32 pair only on gate pass.",
+  "priority": 8490,
+  "priority_reason": "The available protected H200 is independent of the claimed H100 and its direct endpoint consumer outranks the H100-dependent component.",
+  "next": "Priority-8490 execution claims once, stages and hashes only the exact bound target, draft, runtime, and base image, persists a resident manifest, then proceeds directly to the adapted diagnostic and conditional c32 pair. Release by 21:45Z.",
+  "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint."
+}

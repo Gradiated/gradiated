@@ -1,0 +1,42 @@
+{
+  "bench": {
+    "accelerator": "nvidia-h100-sxm",
+    "disk_id": "computedisk-e00hf9gkq3ee80yhvp",
+    "id": "h100-v0515-endpoint-e00jjdbxgvxwbzbfsr",
+    "instance_id": "computeinstance-e00jjdbxgvxwbzbfsr",
+    "provider_state": "RUNNING",
+    "public_ipv4": "89.169.112.211",
+    "release_deadline_utc": "2026-07-25T09:10:00Z",
+    "watchdog_deadline_utc": "2026-07-25T09:15:00Z"
+  },
+  "failed_attempt": {
+    "artifact_root": "artifacts/h100-endpoint-20260725t0816z",
+    "classification": "typed_external_or_recoverable_failure",
+    "endpoint_sample_consumed": false,
+    "error": "RuntimeError('remote_preflight_failed')",
+    "local_audit": "artifacts/h100-endpoint-20260725t0816z/LOCAL_AUDIT.json",
+    "local_audit_pass": true,
+    "local_audit_sha256": "09294a3afc77274ba7b6a43414fe998b978e5c04482f1ed7af859671b8d604b3",
+    "remote_preflight_stderr": "artifacts/h100-endpoint-20260725t0816z/REMOTE_PREFLIGHT.stderr",
+    "remote_preflight_stderr_sha256": "dd85393291875736ea9e13979537d005b4f2585b047cd55da55260d8974076a1",
+    "stale_public_ipv4": "195.242.29.133",
+    "terminal": "artifacts/h100-endpoint-20260725t0816z/TERMINAL.json",
+    "terminal_sha256": "1f9d9862bdc505910902e1c9ea41859493c85b6632ad216762d05b8c2a238ddc"
+  },
+  "next_execution": {
+    "first_action": "Resolve the exact registered instance public IPv4 from the provider and require 89.169.112.211; never reuse 195.242.29.133.",
+    "first_scientific_arm": "Run only the admitted unconsumed 791-request endpoint.",
+    "readiness": "After claiming the same retained H100, use one bounded durable owner for SSH/cloud-init readiness, exact staging, server startup, endpoint execution, retrieval, and release.",
+    "researcher_profile": "execution"
+  },
+  "parent_binding": "DIRECTOR_ENDPOINT_RECOVERY_BINDING.json",
+  "parent_binding_sha256": "285cc9e485b567b0c34625ae849567bfbb469c506f70f510dcafa2cdd47df6a1",
+  "prohibitions": [
+    "Do not replay the consumed 171-request discriminator.",
+    "Do not change the checkpoint, image, runtime, packet, workload, endpoint gates, or economics.",
+    "Do not create another provider resource.",
+    "Do not mutate the live H200 stock-multiplex claim."
+  ],
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "schema_version": 1
+}

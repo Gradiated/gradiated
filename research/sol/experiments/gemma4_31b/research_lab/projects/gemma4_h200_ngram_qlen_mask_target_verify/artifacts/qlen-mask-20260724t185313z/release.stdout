@@ -1,0 +1,46 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": null,
+  "contents": {
+    "artifacts": "artifacts/qlen-mask-20260724t185313z",
+    "caches": "Image, checkpoint, CUDA graph, JIT, tokenizer, and runtime caches retained.",
+    "candidate": "M384-only CUTLASS 1x2x1 cluster extension retained under /home/glmrunner/gemma4-h200-ngram-m384-cluster.",
+    "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+    "conditional_gate": "Require nonzero two-stage production audit rows, exact output/first-logit semantics and positive bound before the candidate-only endpoint.",
+    "error": "FileExistsError(17, 'File exists')",
+    "expected_first_arms": "One first-real-c32-Q12 stock-two-stage extend_attention_fwd exact component, then conditionally one candidate-only c32 endpoint against the persisted control. No control or unified-component replay.",
+    "gpu_processes": "Healthy retained gemma4-ngram-ring-live-suffix server currently occupies the accelerator.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Claim only for priority-7520 QLEN production-branch repair and release by 19:50Z under the verified 20:00Z watchdog.",
+    "project": "gemma4_h200_ngram_qlen_mask_target_verify",
+    "residual_bottleneck": "Observer-v3 proved the unified QLEN branch exact and positive, but its endpoint launch exercised the stock normal two-stage branch without a branch-matched component.",
+    "result": "typed_boundary",
+    "runtime": "Pinned SGLang v0.5.13 FP8 plus FP8-E5M2 page-1 KV and NGRAM; checkpoint, image, CUDA graph, JIT, tokenizer, and runtime caches retained.",
+    "schema_version": 1,
+    "server_state": "Director inspection required after compact retrieval attempt."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-24T20:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-ngram-verifier-h200-20260724t2000-watchdog.service",
+      "main_pid": 36681,
+      "unit": "gemma4-ngram-verifier-h200-20260724t2000-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-24T09:29:46.678511Z",
+  "resource": {
+    "disk_id": "computedisk-e00yvdxaa48q0t115t",
+    "disk_name": "gemma4-ngram-verifier-h200-20260724t0927z-boot",
+    "instance_id": "computeinstance-e00kcm9nfhwt7e7gbc",
+    "instance_name": "gemma4-ngram-verifier-h200-20260724t0927z"
+  },
+  "status": "maintenance",
+  "updated_at": "2026-07-24T18:59:35.248550Z"
+}

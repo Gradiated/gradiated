@@ -21,11 +21,29 @@ Projects default to the fast execution researcher pool. A director may set `rese
 
 `grad_research.lab_harness` uses the installed `codex` CLI and saved ChatGPT/Codex login. It explicitly removes API-key environment variables from child Codex processes. It:
 
-- runs one Sol director turn;
-- discovers active project directories and runs several researchers in parallel;
+- runs one serialized Sol director turn at startup and after each material
+  researcher result;
+- keeps up to `max_parallel_researchers` projects running continuously and
+  refills a freed slot without waiting for unrelated researchers;
 - preserves one Codex thread per role/project across restarts;
-- periodically runs the research-process supervisor;
+- periodically runs the research-process supervisor independently, so a slow
+  supervisor never blocks results, director decisions, or researcher slots;
 - records JSONL scheduling events, raw Codex traces, timings, and a compact `STATUS.md`.
+
+Continuous mode is completion-driven. Director wake requests are coalesced
+while a director is already running, and unchanged durable work is deferred by
+the existing observation hash. `cycle_interval_seconds` is only the liveness
+fallback; its next deadline is measured from the end of the latest director
+turn, and it is not a batch barrier. `supervisor_every_cycles` multiplies that
+interval for the independent supervisor cadence. `director_wake_requested`,
+`director_wake_dispatched`, and `researcher_slot_filled` events make
+result-to-decision and slot-refill latency directly measurable.
+
+An agent turn that leaves its project and material artifacts unchanged cannot
+hot-loop: its last outcome is shown to the director, and the same project waits
+one fallback interval unless the director changes its contract. Source reloads
+also remain fail-safe: the service stops admitting new turns, lets already
+running agent turns reach their boundary, and then exits for systemd restart.
 
 The lab directory is the durable interface:
 
@@ -95,20 +113,21 @@ The director can return an inspected maintenance bench to service with `ready --
 
 [`data/gpu_prices.json`](data/gpu_prices.json) is the single reusable price source for research economics. It separates actual experimental rates from the base production rate: a reasonable 12–24 month, 8–64 GPU, non-preemptible commitment rather than on-demand, spot, promotional, or hyperscale-floor pricing. A current matching written quote supersedes the planning estimate.
 
-The director owns one refresh when the seven-day window expires. Ordinary researchers consume the fresh inventory and do not repeat market searches unless their project is the refresh owner or needs an accelerator/topology that is absent. Validate it or inspect one accelerator with:
+The director owns one refresh when the three-day window expires. Ordinary researchers consume the fresh inventory and do not repeat market searches unless their project is the refresh owner or needs an accelerator/topology that is absent. Validate it or inspect one accelerator with:
 
 ```bash
 PYTHONPATH=research/factory/src python3 -m grad_research gpu-prices --require-fresh
 PYTHONPATH=research/factory/src python3 -m grad_research gpu-prices --accelerator amd-mi355x
 ```
 
-During a weekly refresh, update source retrieval timestamps, public/quoted reference rates, the evidence range, and the derived planning rate together. Preserve prior rates in version history; do not silently substitute an experimental preemptible rate into production economics.
+During each three-day refresh, update source retrieval timestamps, public/quoted reference rates, the evidence range, and the derived planning rate together. Preserve prior rates in version history; do not silently substitute an experimental preemptible rate into production economics.
 
 ## Shared accelerator capability inventory
 
 [`data/accelerator_inventory.json`](data/accelerator_inventory.json) is the reusable hardware source for model–chip co-design. It covers practically obtainable NVIDIA, AMD, Intel, Google, and AWS inference/training accelerators, with separate architecture profiles for execution geometry shared by several SKUs. The fields include compute-unit geometry, concurrency limits, local/shared memory, cache, HBM capacity and bandwidth, numeric formats, peak vendor math, links, partitioning, power, software, availability, and concrete co-design implications.
+The latest source audit, additions, live provider checks, and uncertainty notes are in [`docs/GPU_INVENTORY_REFRESH_2026-07-28.md`](docs/GPU_INVENTORY_REFRESH_2026-07-28.md).
 
-Hardware capabilities have a 90-day review cadence; changing market rates remain in the weekly price inventory. Unknown or undisclosed fields are `null`, not estimates. Vendor peak figures are useful ceilings, not measured application throughput. Query one chip or screen candidates without duplicating hardware research:
+Hardware capabilities have a weekly review cadence; changing market rates use the three-day price inventory. Unknown or undisclosed fields are `null`, not estimates. Vendor peak figures are useful ceilings, not measured application throughput. Query one chip or screen candidates without duplicating hardware research:
 
 ```bash
 PYTHONPATH=research/factory/src python3 -m grad_research accelerators --accelerator nvidia-l40s
@@ -130,6 +149,7 @@ Create an external config containing the repository, lab directory, models, cade
   "max_parallel_researchers": 5,
   "spend_cap_usd": 100.0,
   "spend_cap_starts_at": "2026-07-17T21:59:00Z",
+  "quiescent_spend_floor_usd": 0.0,
   "supervisor_every_cycles": 6,
   "routes": {
     "director": {"model": "gpt-5.6-sol", "reasoning_effort": "high"},
@@ -144,14 +164,14 @@ Create an external config containing the repository, lab directory, models, cade
 }
 ```
 
-Run one cycle or continuously:
+Run one synchronous diagnostic cycle or the continuous event-driven service:
 
 ```bash
 PYTHONPATH=research/factory/src python3 -m grad_research.lab_harness --config <config> --once
 PYTHONPATH=research/factory/src python3 -m grad_research.lab_harness --config <config>
 ```
 
-When `spend_cap_usd` and `spend_cap_starts_at` are configured, the harness creates `runtime/spend_cap.json` and reserves each paid project's full `authorized_spend_usd` before scheduling it. Reservations are conservative and durable: completion does not silently restore authority, and changing the cap or start timestamp requires an explicit new ledger rather than a config edit. Projects without a reservation are prompted and scheduled for zero-cost work only; projects that would overcommit the cap are deferred.
+When `spend_cap_usd` and `spend_cap_starts_at` are configured, the harness creates `runtime/spend_cap.json` and reserves each paid project's full `authorized_spend_usd` before scheduling it. Reservations are conservative and durable. A terminal project settles its recorded cumulative `actual_spend_usd`, releases the unused reservation, and leaves the actual spend counted against the fixed campaign cap. Changing the cap or start timestamp still requires an explicit new ledger rather than a config edit. Projects without a reservation are prompted and scheduled for zero-cost work only; projects that would overcommit the remaining cap are deferred. `quiescent_spend_floor_usd` is an opt-in lab-specific minimum executable reservation: when the portfolio and GPU inventory are empty, durable observations are unchanged, and available authority is below this floor, fallback director turns are deferred while periodic supervisors continue. The default is `0`, which preserves aggressive empty-portfolio replenishment.
 
 The systemd unit is `systemd/gradiated-research-lab@.service`. See `SUPERVISOR.md` for installation and cutover.
 

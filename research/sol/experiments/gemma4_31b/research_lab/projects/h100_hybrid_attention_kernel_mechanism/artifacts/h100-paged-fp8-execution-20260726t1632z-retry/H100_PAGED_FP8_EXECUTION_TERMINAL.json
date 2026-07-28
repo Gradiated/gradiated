@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "type": "h100_paged_fp8_execution_terminal",
+  "pass": false,
+  "result": "integration_error",
+  "started_at_utc": "2026-07-26T16:34:18.389928Z",
+  "completed_at_utc": "2026-07-26T16:34:35.957022Z",
+  "identity_contract": "/home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m/H100_PAGED_FP8_EXECUTION_READY.json",
+  "identity_contract_sha256": "95a7bb7aeb8e493b7f09247c10c752067f3c4628f8a198c9800498cd57d4de65",
+  "provider_create_allowed": false,
+  "scientific_sample_consumed": false,
+  "recovery_worker_terminal": {
+    "completed_at_utc": "2026-07-26T16:34:35.957022Z",
+    "error": {
+      "captured_at_utc": "2026-07-26T16:34:35.955164Z",
+      "command": [
+        "/usr/bin/python3",
+        "/home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m/paged_fp8_execution.py",
+        "pair-worker",
+        "--case",
+        "local1024",
+        "--concurrency",
+        "8",
+        "--output",
+        "/home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m/artifacts/h100-paged-fp8-h100-paged-fp8-e00mkpyvykfak0bg1m/local1024-c8.primitive.timing.json",
+        "--seed",
+        "17",
+        "--image-digest",
+        "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79"
+      ],
+      "message": "primitive pair-worker returned nonzero",
+      "returncode": 1,
+      "schema_version": 1,
+      "stderr": "",
+      "stdout": "INFO 07-26 16:34:35 [cache.py:227] Using fp8 data type to store kv cache. It reduces the GPU memory footprint and boosts the performance. Meanwhile, it may cause accuracy drop without a proper scaling factor.\n",
+      "timing_artifact": "/home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m/artifacts/h100-paged-fp8-h100-paged-fp8-e00mkpyvykfak0bg1m/local1024-c8.primitive.timing.json",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m/paged_fp8_execution.py\", line 921, in worker\n    result = timed_pair(runtime, case, args.concurrency, args.seed)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m/paged_fp8_execution.py\", line 498, in timed_pair\n    arm: prepare_arm(runtime, case, concurrency, arm, tensors)\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m/paged_fp8_execution.py\", line 344, in prepare_arm\n    config, layer, builder, trace = construct_registered_layer(\n                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m/paged_fp8_execution.py\", line 230, in construct_registered_layer\n    layer = runtime.Attention(\n            ^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/dist-packages/vllm/model_executor/layers/attention/attention.py\", line 391, in __init__\n    self.query_quant = QuantFP8(\n                       ^^^^^^^^^\n  File \"/usr/local/lib/python3.12/dist-packages/vllm/model_executor/layers/quantization/input_quant_fp8.py\", line 60, in __init__\n    super().__init__(compile_native=compile_native)\n  File \"/usr/local/lib/python3.12/dist-packages/vllm/model_executor/custom_op.py\", line 133, in __init__\n    self._forward_method = self.dispatch_forward(compile_native=compile_native)\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/dist-packages/vllm/model_executor/custom_op.py\", line 185, in dispatch_forward\n    enabled = self._enforce_enable or self.enabled()\n                                      ^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/dist-packages/vllm/model_executor/custom_op.py\", line 289, in enabled\n    return (CustomOp.default_on() or enabled) and not disabled\n            ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/dist-packages/vllm/model_executor/custom_op.py\", line 302, in default_on\n    assert count_none + count_all == 1\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+      "type": "primitive_pair_worker_capture"
+    },
+    "identity_contract": "/home/glmrunner/h100_hybrid_attention_kernel_mechanism/h100-paged-fp8-e00mkpyvykfak0bg1m/H100_PAGED_FP8_EXECUTION_READY.json",
+    "identity_contract_sha256": "95a7bb7aeb8e493b7f09247c10c752067f3c4628f8a198c9800498cd57d4de65",
+    "pass": false,
+    "provider_create_allowed": false,
+    "result": "integration_error",
+    "schema_version": 1,
+    "scientific_sample_consumed": false,
+    "scope": {
+      "case": "local1024",
+      "concurrency": 8
+    },
+    "started_at_utc": "2026-07-26T16:34:18.389928Z",
+    "type": "h100_paged_fp8_recovery_terminal"
+  }
+}

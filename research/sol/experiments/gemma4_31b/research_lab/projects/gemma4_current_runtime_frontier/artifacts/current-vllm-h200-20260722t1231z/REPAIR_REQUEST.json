@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "request": "reuse_resident_checkpoint_and_correct_nested_terminal_retrieval",
+  "scope": "pre-science transfer/working-directory/retrieval repair only; same current-vLLM FP8-E5M2 c32 arm",
+  "timestamp_utc": "2026-07-22T13:30:00Z"
+}

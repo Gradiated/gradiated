@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T17:34:17Z",
+  "project": "gemma4_h200_dflash_endpoint",
+  "decision": "measure_the_request_indexed_relay_repair_before_grouped_lm_head_reuse",
+  "classification": "source_complete_dflash_repair_ready_for_one_cycle_oracle",
+  "predecessor": {
+    "project": "gemma4_h200_ngram_fixed_m384_executor_rewrite",
+    "terminal": "../gemma4_h200_ngram_fixed_m384_executor_rewrite/MIXED_LOCAL_M384_TERMINAL.json",
+    "requirement": "Do not claim or mutate the H200 until the predecessor terminal is durable and its claim is released."
+  },
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "accelerator": "nvidia-h200-sxm",
+    "hourly_cost_usd": 2.45,
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "watchdog_deadline_utc": "2026-07-25T22:00:00Z",
+    "release_deadline_utc": "2026-07-25T20:15:00Z"
+  },
+  "immutable_inputs": {
+    "target": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime": "SGLang 588d1f7bc9424201f89957e145f9d5af633a3eb8",
+    "runtime_binding": {
+      "path": "DRAFT_RUNTIME_BINDING.json",
+      "sha256": "f9845ea6b80a39ba99486842d15e64eabc84713a63daf16470453b395c13c16e"
+    },
+    "prior_director_binding": {
+      "path": "DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+      "sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5"
+    },
+    "resident_contents": {
+      "path": "H200_DFLASH_ADAPTER_FINAL_CONTENTS.json",
+      "sha256": "b09af6016935a2372a49371a84b3427abde54edae1b03eb4d550ec79432bec83",
+      "requirement": "Verify the retained target, draft, source, image, caches, and resident manifest in place; do not restage immutable bytes that already match."
+    }
+  },
+  "repair_packet": {
+    "offline_result": {
+      "path": "OFFLINE_DFLASH_REPAIR_RESULT.json",
+      "sha256": "6f5c24ea6eeed136a060bb9c5787aeb4bfb8458833546f3f55e53d591e93692f"
+    },
+    "localization": {
+      "path": "artifacts/offline-first-divergence-20260725/DFLASH_FIRST_DIVERGENCE_LOCALIZATION.json",
+      "sha256": "16088208bb9f724d2e8d7a17189563c602d20a1db4b3777784ce365fb3302120"
+    },
+    "patch": {
+      "path": "DFLASH_REQUEST_INDEXED_RELAY_REPAIR.patch",
+      "sha256": "f3bf201d733ae5ea944b16225b99571796b96a1852af1d655f77168007d88ede",
+      "scope": "One behavior line plus its explanatory comment; set DFlashDraftInputV2.direct_carry_valid to false."
+    },
+    "oracle": {
+      "path": "dflash_cycle_oracle.py",
+      "sha256": "7cfb2fdf2c8e2fa27aea216948fdab4a8c59bd062546248acb6022fee465eb63"
+    },
+    "controller": {
+      "path": "artifacts/offline-first-divergence-20260725/DFLASH_C32_DEPTH_CONTROLLER.json",
+      "sha256": "59bf6066ed3fe8124c023debbc8733b75ecd0a514c4c90c70909e1ab0d11828d",
+      "derivation": "derive_dflash_depth_controller.py",
+      "derivation_sha256": "6ff47fc30d01bb04f3d8c5c1165137771ce73108092ae02ad510fb068f363e1a"
+    }
+  },
+  "execution_contract": {
+    "first_and_required_measurement": "Apply the bound patch to the exact runtime and run exactly one fresh oracle request. Persist draft tokens, verifier top-1 logits and IDs, accepted prefix, bonus token, KV write positions and locations, committed length before and after, next-cycle seed and length, and the same-state ordinary AR token.",
+    "quality_gate": "dflash_cycle_oracle.py must pass every captured cycle and prove same-state ordinary-AR equality.",
+    "failure_terminal": "If the one-request oracle fails, persist DFLASH_CYCLE_ORACLE_TERMINAL.json with the first divergent field, stop all processes, and release the bench. Do not run a four-request diagnostic, c32 measurement, or endpoint pair.",
+    "conditional_measurement": "Only after the oracle passes, measure DFlash-specific c32 draft and verifier time at depths 4, 8, 12, and 16 and feed those measured costs to the bound controller.",
+    "success_terminal": "Persist DFLASH_CYCLE_ORACLE_TERMINAL.json with oracle evidence, depth costs, and the controller decision, then stop all processes and release the bench.",
+    "forbidden": [
+      "Do not replay the consumed four-request producer.",
+      "Do not infer quality from the semantically invalid historical acceptance histogram.",
+      "Do not run a matched endpoint pair in this phase.",
+      "Do not apply another scientific repair."
+    ]
+  },
+  "budgets": {
+    "maximum_new_spend_usd": 4.0,
+    "maximum_claimed_h200_minutes": 97,
+    "maximum_new_storage_gib": 4,
+    "absolute_release_deadline_utc": "2026-07-25T20:15:00Z"
+  },
+  "successor": {
+    "project": "gemma4_h200_ngram_persistent_grouped_lm_head",
+    "requirement": "Release the warm H200 by the absolute deadline so the already-reserved grouped LM-head experiment retains a 90-minute window before its 21:45Z release boundary."
+  }
+}

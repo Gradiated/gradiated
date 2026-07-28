@@ -1,0 +1,31 @@
+{
+  "artifacts": "MLP endpoint-only and ring ownership-repair terminals retained project-locally",
+  "caches": "FP8, QKV, deferred-local-KV, CUDA graph, Triton, and compiled extension caches retained",
+  "checkpoint": "Exact resident checkpoint unchanged and available read-only",
+  "image": "Pinned SGLang v0.5.13 digest 6113665 retained",
+  "maintenance": {
+    "action": "removed terminal-project container gemma-ring-candidate",
+    "observed_gpu_process": "sglang::scheduler",
+    "observed_gpu_process_memory_mib": 122058,
+    "post_cleanup_compute_processes": 0,
+    "post_cleanup_gpu_memory_used_mib": 0,
+    "post_cleanup_gpu_utilization_percent": 0,
+    "reason": "The unconsumed width-16384 endpoint could not load while a terminal ring server occupied HBM."
+  },
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "prior_results": {
+    "attention": "component_reject",
+    "block_paged_cache": "component_numerical_or_semantic_reject",
+    "device_graph": "full_body_host_intervention_required",
+    "e5m2_local_fa3": "direct_e5m2_fa3_unsupported",
+    "local_int4": "component_reject",
+    "local_window512": "numerical_negative",
+    "mixed_kv": "endpoint_regression",
+    "mixed_kv_local_fa3": "component_insufficient_bound",
+    "mtp": "current_stacked_assistant_path_incompatible",
+    "ring_cache": "semantic_discriminator_first_extend_to_decode_transition"
+  },
+  "project": "gemma4_h200_mlp_width16384_codesign",
+  "runtime": "Resident FP8+QKV stack ready for the unchanged width-16384 endpoint-only arm",
+  "server_state": "No GPU compute processes; 0 MiB used and 0% utilization. Exited width and async diagnostic containers remain without GPU state."
+}

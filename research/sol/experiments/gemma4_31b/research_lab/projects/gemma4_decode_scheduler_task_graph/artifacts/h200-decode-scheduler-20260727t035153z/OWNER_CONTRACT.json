@@ -1,0 +1,45 @@
+{
+  "binding_sha256": "807d18d46269e5dc92753d0bf1494a8f829eb0b99513c36260c65aff391e7ef0",
+  "checks": {
+    "detached_owner_tool": true,
+    "exact_command": true,
+    "hash:DECODE_SCHEDULER_TASK_GRAPH_OFFLINE_TERMINAL.json": true,
+    "hash:decode_scheduler_task_graph.py": true,
+    "hash:exact_h200_consumer.py": true,
+    "hash:install_decode_scheduler_task_graph.py": true,
+    "no_checkpoint": true,
+    "one_component_invocation": true,
+    "pinned_image": true,
+    "repair_handshake_tool": true,
+    "request_hash": true
+  },
+  "deadline_utc": "2026-07-27T04:04:30Z",
+  "exact_command": "PYTHONPATH=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/exact_h200_consumer.py --output /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/artifacts/h200_exact_consumer/TERMINAL.json --sglang-python /sgl-workspace/sglang/python --expected-candidate-sha256 e5ee42dee9793df30ebe62683231da65efd9e8398fbaf935c026af35c3369708 --warmups 3 --iterations 15",
+  "packet_members": [
+    {
+      "bytes": 5630,
+      "path": "decode_scheduler_task_graph.py",
+      "sha256": "e5ee42dee9793df30ebe62683231da65efd9e8398fbaf935c026af35c3369708"
+    },
+    {
+      "bytes": 4877,
+      "path": "install_decode_scheduler_task_graph.py",
+      "sha256": "6c1cb505a2d9a18de28fc1dbcd11dc0d70959c905cad6654d50544c0bca2ffc4"
+    },
+    {
+      "bytes": 11559,
+      "path": "exact_h200_consumer.py",
+      "sha256": "e85f2d192eacb6543d1107862416032d7ff8bfbb8a014562e8caf038979391a4"
+    },
+    {
+      "bytes": 12894,
+      "path": "DECODE_SCHEDULER_TASK_GRAPH_OFFLINE_TERMINAL.json",
+      "sha256": "13cd63fa2937ea1fdd3af741a63ea18c5517bdb0d922a7df786e0d0d8fbafd83"
+    },
+    {
+      "bytes": 2332,
+      "path": "DIRECTOR_DECODE_SCHEDULER_H200_COMPONENT_REQUEST_20260727T0323Z.json",
+      "sha256": "da42cc28ba30452e42de0cb87907780efc8a86b493a44c68ab71a8706f9bc800"
+    }
+  ]
+}

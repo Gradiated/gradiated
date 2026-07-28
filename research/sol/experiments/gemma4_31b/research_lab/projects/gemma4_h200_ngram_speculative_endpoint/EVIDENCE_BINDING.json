@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "classification": "native_ngram_speculation_without_assistant_model",
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+  },
+  "runtime": {
+    "release": "sglang v0.5.13",
+    "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+  },
+  "workload": {
+    "requests": 32,
+    "concurrency": 32,
+    "prompt_tokens_per_request": 4214,
+    "completion_tokens_per_request": 358,
+    "fresh_prompt_tokens_total": 117728,
+    "cached_prompt_tokens_total": 17120
+  },
+  "authoritative_artifacts": {
+    "input_manifest": "../gemma4_h200_decode_sync_graph_elimination/INPUT_MANIFEST.json",
+    "input_manifest_sha256": "e945ee245642cf84cc730bd877f731660a772778b24770b8387d7f92fa0cb432",
+    "current_control_terminal": "../sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/mtp-endpoint-pair-20260723t0603z/retrieved/control/TERMINAL.json",
+    "current_control_terminal_sha256": "a6e69ac9534ae433fc45d3b5d3ea241fe63321d33423cdd52d17128d8072d278",
+    "pinned_spec_info_source": "../sglang_v0512_h200_gemma4_mtp_endpoint/inputs/accepted_depth/runtime_source/sglang_srt_speculative_spec_info.py",
+    "pinned_spec_info_source_sha256": "3a178975feaf6c8e6c6ea555859b0adbf9817223024b6967da5f74a50153adda",
+    "pinned_scheduler_source": "../sglang_v0512_h200_gemma4_mtp_endpoint/inputs/accepted_depth/runtime_source/sglang_srt_managers_scheduler.py",
+    "pinned_scheduler_source_sha256": "3a26deea85f43d61c27b94013288ad95d6ee75111fe40134893541777c9c8cd4"
+  },
+  "current_control": {
+    "batch_seconds": 21.578427489002934,
+    "service_seconds_per_request": 0.6743258590313417,
+    "complete_requests": 32
+  },
+  "economic_ceiling_seconds_per_request": 0.6381105231,
+  "minimum_endpoint_reduction_fraction": 0.05370598716674514,
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g"
+}

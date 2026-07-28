@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "classification": "pinned_gemma4_runtime_aux_forward_boundary",
+  "observed": {
+    "science_started": true,
+    "completed_requests": 32,
+    "observer_error": "RuntimeError:aux_tap_contract",
+    "rows_persisted": 0
+  },
+  "source_path": [
+    {
+      "file": "sglang/srt/models/gemma4_causal.py",
+      "lines": "1154-1160",
+      "fact": "Gemma4ForCausalLM.forward supplies auxiliary states to LogitsProcessor only while capture_aux_hidden_states is true."
+    },
+    {
+      "file": "sglang/srt/models/gemma4_causal.py",
+      "lines": "1400-1409",
+      "fact": "The pinned implementation sets capture_aux_hidden_states and layers_to_capture at the model runtime boundary for its own layer-capture API."
+    },
+    {
+      "file": "sglang/srt/models/gemma4_causal.py",
+      "lines": "979-1024",
+      "fact": "When layers_to_capture is populated, Gemma4Model returns the requested auxiliary states with the final hidden state."
+    }
+  ],
+  "localized_defect": "The bootstrap set capture flags only in __init__; the observed logits boundary still had no auxiliary states, so a later runtime transition reset or replaced those flags before request forwards.",
+  "repair": "Set the same pinned capture flags immediately before every Gemma4ForCausalLM.forward call. This is a hook lifecycle change only; the workload, split, model weights, capture layers, training, holdout, and endpoint closure are unchanged."
+}

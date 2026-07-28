@@ -1,0 +1,45 @@
+{
+  "id": "h100-v0515-adaptive-depth-component-e00gbzwff2ty4wznzj",
+  "provider": "nebius",
+  "accelerator": "nvidia-h100-sxm",
+  "hourly_cost_usd": 2.95,
+  "resource": {
+    "instance_id": "computeinstance-e00gbzwff2ty4wznzj",
+    "instance_name": "gemma4-h100-adaptive-depth-component-20260725t1345z",
+    "disk_id": "computedisk-e00yf0ya37hnnrxhk3",
+    "disk_name": "gemma4-h100-adaptive-depth-component-20260725t1345z-boot",
+    "public_ipv4": "89.169.124.46",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "ssh_ed25519_fingerprint": "SHA256:B2WGdX81Hi6uIpZ8DS1H9ycSe4xOb+18F9THcbAgKjs"
+  },
+  "contents": {
+    "schema_version": 1,
+    "project": "gemma4_h100_v0515_ngram_acceptance_adaptive_depth",
+    "result": "registered_identity_verified_h100_for_bound_checkpoint_free_adaptive_depth_component",
+    "model": "Gemma 4 31B exact v0.5.15 NGRAM geometry; no checkpoint",
+    "checkpoint": "Forbidden and unnecessary. Use exact-geometry synthetic paged KV and native NGRAM producers.",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6; guest identity is verified, image and component source are not yet staged.",
+    "caches": "Fresh 100-GiB guest; assume no image, CUDA, source, or compilation cache.",
+    "candidate": "dual_exact_depth_producers_ragged_prior_result_carrier_dynamic_eager_metadata with depth-12 graph admission and depth-6 eager fallback.",
+    "component": "Batch-7 depth-12 and batch-8 depth-6 exact native producer and target-verify consumer, at least 200 alternating repetitions and one short trace.",
+    "contents_artifact": "gemma4_h100_v0515_ngram_acceptance_adaptive_depth/H100_ADAPTIVE_DEPTH_COMPONENT_CONTENTS.json",
+    "contents_artifact_sha256": "3199e65d3934518c70d4c3e7de34006f3936a9a13c1aefe22dd13a733404d398",
+    "director_binding": "gemma4_h100_v0515_ngram_acceptance_adaptive_depth/DIRECTOR_H100_COMPONENT_BINDING.json",
+    "director_binding_sha256": "eabe3263d34e0220a197e9ac1dd17fa0eb6951809bc4bcb65d347b8f585abe09",
+    "filesystem": "Fresh 100-GiB network-SSD boot disk; at most 20 GiB may be used and no checkpoint may be staged.",
+    "server_state": "Provider reports RUNNING and strict SSH passed. No experiment image, source, server, or CUDA component has been started.",
+    "ssh_identity": "Use only /root/.config/nebius/glm-campaign/ssh_ed25519 with the current registered host, glmrunner user, and known-hosts namespace.",
+    "next": "Priority-8490 may verify the binding, claim once, integrate and run only the checkpoint-free exact component, persist typed artifacts, and release by 2026-07-25T15:45:00Z."
+  },
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T16:00:00Z",
+    "watchdog": {
+      "unit": "gemma4-h100-adaptive-depth-component-20260725t1600-watchdog.service",
+      "unit_manager": "user",
+      "main_pid": 759441,
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-adaptive-depth-component-20260725t1600-watchdog.service"
+    }
+  }
+}

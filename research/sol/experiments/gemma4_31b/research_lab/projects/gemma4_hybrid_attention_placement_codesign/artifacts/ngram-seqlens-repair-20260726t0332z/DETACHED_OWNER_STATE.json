@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/ngram_readmission_controller.py"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign",
+  "launched_at_utc": "2026-07-26T03:33:21.322100Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/ngram-seqlens-repair-20260726t0332z/controller.log",
+  "pid": 1511577,
+  "start_ticks": 115281872,
+  "unit_manager": "pid"
+}

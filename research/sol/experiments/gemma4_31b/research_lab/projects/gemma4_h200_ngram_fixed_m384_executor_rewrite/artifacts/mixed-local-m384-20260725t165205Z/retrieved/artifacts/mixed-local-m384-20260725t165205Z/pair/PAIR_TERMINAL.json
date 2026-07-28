@@ -1,0 +1,35 @@
+{
+  "decision_guard": {
+    "candidate_dispatch_rows": [
+      {
+        "batch_size": 32,
+        "block_m": 8,
+        "candidate": "mixed_local_only_m384",
+        "max_len_extend": 12,
+        "q_rows": 384,
+        "subtype": "local_m8_qk256_v256"
+      },
+      {
+        "batch_size": 32,
+        "block_m": 32,
+        "candidate": "mixed_local_only_m384",
+        "max_len_extend": 12,
+        "q_rows": 384,
+        "subtype": "global_stock_m32_qk512_v512"
+      }
+    ],
+    "complete_32_candidate": true,
+    "complete_32_control": true,
+    "kind": "exact_c32_24_token_target_decision_guard",
+    "mixed_dispatch_match": true,
+    "pass": false,
+    "request_hashes_match": true,
+    "schema_version": 1,
+    "semantics_match": false,
+    "server_stable": true
+  },
+  "endpoint_executed": false,
+  "kind": "matched_profiler_off_exact_c32_pair",
+  "schema_version": 1,
+  "valid": false
+}

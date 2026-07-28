@@ -1,0 +1,45 @@
+{
+  "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "provider": "nebius",
+  "accelerator": "nvidia-h200-sxm",
+  "hourly_cost_usd": 2.45,
+  "resource": {
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "instance_name": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "disk_name": "gemma4-dflash-h200-adapter-20260725t1512z-boot",
+    "public_ipv4": "89.169.109.132",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g"
+  },
+  "contents": {
+    "schema_version": 1,
+    "project": "gemma4_h200_dflash_endpoint",
+    "result": "fresh_h200_registered_for_exact_dflash_materialization_and_adapter_consumer",
+    "contents_artifact": "gemma4_h200_dflash_endpoint/H200_DFLASH_ADAPTER_FRESH_BENCH_CONTENTS.json",
+    "contents_artifact_sha256": "2fdb5d82e34e382ff023d5bf27f39ad929540af8255b02bd43d01a50b3ce763e",
+    "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; not yet staged on this fresh disk",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1; not yet staged on this fresh disk",
+    "checkpoint": "Fresh 250-GiB boot disk. One exact target/draft materialization is authorized because the prior checkpoint-bearing disk was deleted.",
+    "image": "Nebius ubuntu24.04-cuda13.0 base; bound DFlash image and adapter overlay are not yet materialized.",
+    "runtime": "SGLang 588d1f7bc9424201f89957e145f9d5af633a3eb8 is bound but not yet materialized.",
+    "caches": "Fresh disk; no model, source, image, or CUDA cache is resident yet.",
+    "filesystem": "250-GiB network SSD boot disk.",
+    "server_state": "Strict SSH and H200 identity passed; no container, server, checkpoint, runtime, or scientific invocation is resident.",
+    "candidate": "TP=1 tied-head adapter and four-request adapted DFlash diagnostic; conditional matched c32 pair only after its gate.",
+    "next": "Priority-8460 execution claims once, stages and hashes only the exact bound target, draft, runtime, and base image, persists a resident manifest, then proceeds directly to the adapted diagnostic and conditional c32 pair. Release by 21:45Z.",
+    "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint."
+  },
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T22:00:00Z",
+    "watchdog": {
+      "unit": "gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "unit_manager": "user",
+      "main_pid": 828601,
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service"
+    }
+  }
+}

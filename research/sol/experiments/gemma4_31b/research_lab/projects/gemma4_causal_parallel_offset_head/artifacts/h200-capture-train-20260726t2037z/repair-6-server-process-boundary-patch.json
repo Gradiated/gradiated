@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "repair_id": "repair-6",
+  "classification": "server_only_sitecustomize_observer_repair",
+  "source_evidence": "repair-6-server-process-boundary-evidence.json",
+  "mutable_files": {
+    "capture_bootstrap/sitecustomize.py": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/capture_bootstrap/sitecustomize.py",
+      "sha256": "deb0b2a838c3710e1316b4797d07c6848224ce797053885d6aed7c1166adde55"
+    }
+  },
+  "retry": {
+    "scope": "fresh_capture_only_with_server_process_observer_install",
+    "capture_stage_consumed": false,
+    "training_or_holdout_started": false,
+    "endpoint_pairs": 0
+  }
+}

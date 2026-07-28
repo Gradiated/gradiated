@@ -1,5 +1,36 @@
 # Gemma 4 hybrid-attention placement co-design
 
+## 2026-07-27 permanent 55-local/5-global endpoint readmission
+
+The settled exact H200 component is positive: replacing full attention at
+layers `[11,23,35,47,59]` with the nearest compatible local-attention weights
+reduced the weighted attention boundary by `20.334496%`, with finite,
+all-close local outputs and bit-exact global replay. The bound matched c32
+endpoint was never run; its only terminal is `unrun_claim_gate_closed`, with
+no claim, server, request, control, or candidate invocation.
+
+Readmit only that unconsumed permanent 55-local/5-global endpoint under
+`DIRECTOR_HYBRID_55L5G_CURRENT_WARM_READMISSION_20260727T0121Z.json`. First
+implement the two named current-bench runner/owner files offline. Do not claim
+until the exact cumulative `$8.50` reservation, a lifecycle extension, and a
+later director claim binding are durable. The old phase-selective
+TARGET_VERIFY consumer, its HTTP-500 requests, all completed components, and
+all DFlash work remain closed.
+
+## 2026-07-25 H200 component reopening
+
+The prior H200 continuation closed only because its claim-time predecessor gate
+expired; it consumed no science and all five bound hashes matched. DFlash has
+now completed its one authorized endpoint pair and released the retained H200.
+Reopen only the already-bound quality-unsafe 55-local/5-global execution proxy.
+
+Claim the named bench only under
+`DIRECTOR_HYBRID_55L5G_H200_COMPONENT_REOPENING.json`, run one matched
+profiler-off exact-c32 target-forward control/candidate component through the
+real pinned runtime, persist `HYBRID_55L5G_H200_EXECUTION_TERMINAL.json`, stop
+all experiment processes, and release. No endpoint, training, broad quality
+evaluation, deployability claim, or DFlash replay is authorized.
+
 ## Question
 
 Can a model-level change to the number or placement of full-attention versus
@@ -69,3 +100,115 @@ A viable candidate becomes a quality-unsafe execution proxy before any
 post-training spend. A negative result closes only hybrid layer placement and
 releases the deep slot to the campaign's next hardware-specific low-bit or
 sparse model intervention.
+
+## Director-bound H200 component continuation
+
+`PLACEMENT_SIMULATION_RESULT.json` selects the 55-local/5-global candidate with
+full attention at layers `[5,17,29,41,53]`. The next result is executional:
+materialize one explicit nearest-compatible-local attention weight-copy proxy
+for converted layers `[11,23,35,47,59]` and measure a single exact-c32
+target-forward control/candidate component through the real pinned runtime.
+
+The exact identities, claim gate, evidence, and budgets are bound in
+`DIRECTOR_HYBRID_55L5G_H200_COMPONENT_BINDING.json`. This proxy is explicitly
+quality-unsafe. It authorizes no endpoint, training, broad evaluation, or
+deployability claim. Claim only after DFlash releases and only when the bound
+time and lifecycle gates preserve the grouped LM-head window.
+
+## 2026-07-25 phase-selective deep continuation
+
+The permanent 55-local/5-global proxy produced a positive exact H200 component
+but exposes prefill, ordinary decode, and target verification to the same
+quality-unsafe intervention. Investigate one narrower mechanism: preserve the
+stock 50-local/10-global geometry for prefill and ordinary decode, and select
+the five converted attention modules only for speculative target-verification
+rows.
+
+Work offline under `DIRECTOR_PHASE_SELECTIVE_HYBRID_CONTINUATION.json`. Trace
+the pinned forward-batch modes, graph boundary, KV semantics, row ownership,
+Gemma layer geometry, and H200 consequences together. Return either a
+source-complete dispatcher with a measured-evidence-grounded phase cost model
+and cheapest later falsification, or typed `none`. Do not claim a GPU, run an
+endpoint, imply quality preservation, or reopen the completed permanent
+placement comparison.
+
+## 2026-07-25 exact H200 dual-cache component falsification
+
+`PHASE_SELECTIVE_HYBRID_RESULT.json` is source-complete and predicts only a
+`1.703–2.169%` whole-request reduction, so spend is limited to the cheapest
+causal discriminator rather than an endpoint. Under
+`DIRECTOR_PHASE_SELECTIVE_H200_COMPONENT_BINDING.json`, reuse the released
+retained H200 for one exact c32 dual-cache sequence: stock prefill and ordinary
+decode, one 384-row depth-12 TARGET_VERIFY replay, mirrored accepted-prefix
+move/free, and one post-accept stock decode against an eager dual-cache
+reference.
+
+This iteration is executional. Require every stock-path, row-ownership,
+cache-lifecycle, graph, and positive-net-timing gate in the binding. A
+nonpositive net result or any exactness failure closes this realization
+without an endpoint. Do not claim quality preservation, train, run endpoint
+requests, or mutate provider lifecycle.
+
+## 2026-07-25 full-model binding repair and conditional endpoint
+
+The first H200 attempt reached only a synthetic attention operator and is an
+`infrastructure_terminal`; it did not exercise the required full-model stock
+prefill, ordinary decode, target verification, or post-accept eager reference.
+Repair that integration boundary inside this project under
+`DIRECTOR_PHASE_SELECTIVE_FULL_MODEL_H200_BINDING.json`.
+
+Claim the retained H200 immediately, replace the synthetic adapter with the
+pinned full Gemma forward path, and replay only the unproven component gates.
+If and only if the full-model component is exact and net-positive, run the
+already-bound contemporaneous c32 stock/candidate endpoint pair in the same
+claim. The endpoint is a quality-unsafe execution proxy, not a deployable
+candidate. Preserve resident state, release by the binding deadline, and do
+not add another source, readiness, audit, or provider gate.
+
+## 2026-07-25 ownerless-terminal recovery and queue yield
+
+The vanished local owner stranded a completed remote
+`PHASE_SELECTIVE_FULL_MODEL_H200_COMPONENT_TERMINAL.json`. It is pre-science:
+the standalone `ModelRunner` allocated `138.71 GiB` of the `139.80-GiB` H200
+while constructing the pinned model, then failed on a `168-MiB` allocation
+before the phase adapter or any candidate CUDA invocation. The exact
+62.58-GB checkpoint remains intact and no remote worker or GPU process
+survived.
+
+Do not replay this deterministic near-capacity construction or hold the warm
+bench behind another integration repair. Under
+`DIRECTOR_FULL_MODEL_OOM_RECOVERY.json`, work without CUDA to bind an
+execution-equivalent single-model producer and the already-selected
+phase/dual-cache adapter, with an explicit peak-memory margin and typed source
+terminal. This is an operational continuation in the same project; the
+scientific hypothesis, converted layers, component gates, and conditional
+endpoint remain unchanged and unconsumed. A later director decision owns any
+GPU re-admission after the prepared certified-lazy and FP8 components.
+
+## 2026-07-26 corrected-allocator H200 component
+
+The graph-gap and persistent weight-stream arms have both released the retained
+H200, and the latter rejected only its exact Stream-K M32 schedule. The
+source-complete native-vector and batch-tree allocator repair is now the
+highest-value compatible warm-bench discriminator.
+
+Run exactly one corrected full-model TARGET_VERIFY component under
+`DIRECTOR_CORRECTED_ALLOCATOR_H200_COMPONENT_20260726T0604Z.json`. This is a
+materially new, source-hash-bound realization of the phase-selective 55-local/
+5-global proxy, not a replay of the consumed discovery invocation. Measure the
+stock and corrected candidate through target logits, accepted-prefix
+lifecycle, and post-accept stock decode. No endpoint, training, broad quality
+evaluation, or provider lifecycle change is authorized.
+
+## 2026-07-27 expired warm-bench rebind
+
+The selected warm H200 reached its lifecycle deadline before the new endpoint
+owner was usable. Its watchdog cleaned the exact instance and managed disk,
+provider absence was verified, and the inventory record was retired. Continue
+only the same project's localized offline owner repair under
+`DIRECTOR_HYBRID_55L5G_RETIRED_BENCH_REBIND_20260727T0139Z.json`.
+
+The scientific endpoint contract is unchanged. A future owner must resolve all
+connection, checkpoint, image, claim-generation, and lifecycle fields from a
+later live bench record; the retired bench identity and remote checkpoint path
+are historical evidence and are not launch authority.

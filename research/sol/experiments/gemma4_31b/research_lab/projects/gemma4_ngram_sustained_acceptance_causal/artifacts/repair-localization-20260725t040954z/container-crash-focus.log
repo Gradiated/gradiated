@@ -1,0 +1,100 @@
+[2026-07-25 04:10:32] The server is fired up and ready to roll!
+[2026-07-25 04:10:32] INFO:     Application startup complete.
+[2026-07-25 04:10:32] INFO:     Uvicorn running on http://0.0.0.0:30000 (Press CTRL+C to quit)
+/usr/local/lib/python3.12/dist-packages/fastapi/routing.py:120: FastAPIDeprecationWarning: ORJSONResponse is deprecated, FastAPI now serializes data directly to JSON bytes via Pydantic when a return type or response model is set, which is faster and doesn't need a custom response class. Read more in the FastAPI docs: https://fastapi.tiangolo.com/advanced/custom-response/#orjson-or-response-model and https://fastapi.tiangolo.com/tutorial/response-model/
+  response = await f(request)
+[2026-07-25 04:10:34] INFO:     127.0.0.1:47806 - "GET /v1/models HTTP/1.1" 200 OK
+[2026-07-25 04:10:35] INFO:     127.0.0.1:47810 - "GET /v1/models HTTP/1.1" 200 OK
+[2026-07-25 04:10:35] INFO:     127.0.0.1:47816 - "GET /v1/models HTTP/1.1" 200 OK
+[2026-07-25 04:10:35] INFO:     127.0.0.1:47828 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-25 04:10:35] INFO:     127.0.0.1:47838 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-25 04:10:35] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, full token usage: 0.01, swa token usage: 0.01, #running-req: 0, #queue-req: 0, #pending-token: 2166, cuda graph: False, input throughput (token/s): 592.89
+[2026-07-25 04:10:35] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, full token usage: 0.02, swa token usage: 0.02, #running-req: 0, #queue-req: 0, #pending-token: 118, cuda graph: False, input throughput (token/s): 8980.02
+[2026-07-25 04:10:35] Prefill batch, #new-seq: 1, #new-token: 118, #cached-token: 0, full token usage: 0.02, swa token usage: 0.01, #running-req: 0, #queue-req: 0, #pending-token: 0, cuda graph: False, input throughput (token/s): 2993.46
+[2026-07-25 04:10:36] INFO:     127.0.0.1:47870 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-25 04:10:36] INFO:     127.0.0.1:47888 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-25 04:10:36] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 535, full token usage: 0.03, swa token usage: 0.02, #running-req: 1, #queue-req: 0, #pending-token: 1631, cuda graph: False, input throughput (token/s): 2068.49
+[2026-07-25 04:10:37] Prefill batch, #new-seq: 2, #new-token: 2048, #cached-token: 535, full token usage: 0.03, swa token usage: 0.02, #running-req: 1, #queue-req: 0, #pending-token: 3262, cuda graph: False, input throughput (token/s): 8649.29
+[2026-07-25 04:10:37] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, full token usage: 0.04, swa token usage: 0.03, #running-req: 2, #queue-req: 0, #pending-token: 1214, cuda graph: False, input throughput (token/s): 9811.38
+[2026-07-25 04:10:37] INFO:     127.0.0.1:47906 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-25 04:10:37] Prefill batch, #new-seq: 1, #new-token: 1214, #cached-token: 0, full token usage: 0.05, swa token usage: 0.03, #running-req: 2, #queue-req: 0, #pending-token: 0, cuda graph: False, input throughput (token/s): 7872.88
+[2026-07-25 04:10:37] Scheduler hit an exception: Traceback (most recent call last):
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler.py", line 4062, in run_scheduler_process
+    scheduler.run_event_loop()
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler.py", line 1418, in run_event_loop
+    dispatch_event_loop(self)
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler.py", line 3929, in dispatch_event_loop
+    scheduler.event_loop_normal()
+  File "/usr/local/lib/python3.12/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler.py", line 1436, in event_loop_normal
+    result = self.run_batch(batch)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler.py", line 3110, in run_batch
+    batch_result = self.model_worker.forward_batch_generation(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/sitecustomize.py", line 139, in patched_forward
+    result=ORIG_FORWARD(self,*a,**kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_worker.py", line 266, in forward_batch_generation
+    self._prepare_for_speculative_decoding(batch)
+  File "/sgl-workspace/sglang/python/sglang/srt/speculative/ngram_worker.py", line 205, in _prepare_for_speculative_decoding
+    req_drafts, mask = self._prepare_draft_tokens(batch)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/sitecustomize.py", line 99, in patched_prepare
+    mt,mm,depth=merge(lt,lm,gt[i*n:(i+1)*n],gm[i*n*n:(i+1)*n*n],n)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/sitecustomize.py", line 59, in merge
+    if len(order)!=n: raise RuntimeError(f"request_local_tree_underfilled:{len(order)}")
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: request_local_tree_underfilled:5
+
+[2026-07-25 04:10:37] SIGQUIT received. signum=None, frame=None. It usually means one child failed.
+[2026-07-25 04:10:37] Sleeping 5 seconds before crash diagnostics to let GPU activity settle.
+[rank0]:[W725 04:10:38.859897639 ProcessGroupNCCL.cpp:1575] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[2026-07-25 04:10:42] No live scheduler processes found; skipping py-spy and CUDA coredump.
+[2026-07-25 04:10:42] kill_process_tree called: parent_pid=1, include_parent=True, pid=1
+[2026-07-25 04:10:42] ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/locks.py", line 212, in wait
+    await fut
+asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/tokenizer_manager.py", line 1403, in _wait_one_response
+    await asyncio.wait_for(
+  File "/usr/lib/python3.12/asyncio/tasks.py", line 519, in wait_for
+    async with timeouts.timeout(timeout):
+  File "/usr/lib/python3.12/asyncio/timeouts.py", line 115, in __aexit__
+    raise TimeoutError from exc_val
+TimeoutError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/uvicorn/protocols/http/h11_impl.py", line 415, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/uvicorn/middleware/proxy_headers.py", line 62, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/fastapi/applications.py", line 1159, in __call__
+    await super().__call__(scope, receive, send)
+  File "/usr/local/lib/python3.12/dist-packages/starlette/applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/usr/local/lib/python3.12/dist-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+--
+  File "/usr/local/lib/python3.12/dist-packages/fastapi/routing.py", line 328, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/entrypoints/http_server.py", line 755, in generate_request
+    ret = await _global_state.tokenizer_manager.generate_request(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/sgl-workspace/sglang/python/sglang/srt/managers/tokenizer_manager.py", line 619, in generate_request

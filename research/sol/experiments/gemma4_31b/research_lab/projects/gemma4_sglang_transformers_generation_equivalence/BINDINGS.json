@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "weights": "bfloat16"
+  },
+  "checkpoint": {
+    "files": 8,
+    "total_bytes": 62578655208,
+    "terminal_sha256": "5f0765fa37f308e21d665571a92c29ba1998b22b5ee67d1edbfac103dafec481"
+  },
+  "runtime": {
+    "image": "docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a",
+    "image_platform": "linux/amd64",
+    "sglang_release": "v0.5.12",
+    "sglang_source_commit": "127b9e3283f7c2a43234b852ff5c9f1796d53624",
+    "tensor_parallel": 1
+  },
+  "frozen_quality_inputs": {
+    "source_project": "../sglang_v0512_h200_safe_code_contract_quality",
+    "bindings_sha256": "d44070dcded10d57f494c514c847092f1bf236a7d1e320fd66552d6ab8dd2618",
+    "suite_manifest_sha256": "f1daaef0628fa73d397a126859524ac863d135963fa0d321d813ecb8a91633af",
+    "suite_sha256": "f5dad95132f372b3b986e7c86cf42476266b2a48098d82259bf6a7ab43adb56f",
+    "control_capture_sha256": "ceb48eb840ac2f7f5256e261759b7540beb6f52182fc47ded8865860b99b5341",
+    "candidate_capture_sha256": "5a6ae9c745264b0c63235efbaaca512ad99b6e7325673854839fb6f29146f4b8",
+    "reference_sentinel_sha256": "1ea051720ecf9094a3aa0879e6fa781a6a835061886c27cf835b6b94c3f89003",
+    "terminal_sha256": "72b015851418e83dae04b064103cdad98738bbff9dea3ab67a11d4684bafb3f3",
+    "adapter_sha256": "f7fde6c4a5bf90fb63fd8bea77ce9a73f58bab78adb88306ff066e802b54e6e5",
+    "strict_scorer_sha256": "080e105e5a43640b3b8d9a91caf872e8491db6524cda1189950f29161e2c41af",
+    "primary_case": "heldout_ordering",
+    "control_cases": [
+      "python",
+      "heldout_aggregation",
+      "heldout_indexing",
+      "heldout_branching"
+    ]
+  },
+  "performance_context": {
+    "terminal_sha256": "d69661f113c13abb9cf1702288ecb4496ee19fa69d808e15f8d83676f6801741",
+    "complete_requests": 32,
+    "service_seconds_per_request": 0.3633031778124973,
+    "strict_service_ceiling": 0.47201182295214134
+  },
+  "placement": {
+    "provider": "nebius",
+    "accelerator": "nvidia-h200-sxm",
+    "platform": "gpu-h200-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "disk_gib": 250,
+    "provider_create_owner": "director"
+  }
+}

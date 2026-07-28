@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_verify_launch_pipeline/endpoint_candidate_only_repair_owner.sh"
+  ],
+  "cwd": "/root/workspace",
+  "launched_at_utc": "2026-07-25T14:57:43.073238Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_verify_launch_pipeline/artifacts/candidate-only-repair-owner.log",
+  "pid": 814600,
+  "start_ticks": 110748047,
+  "unit_manager": "pid"
+}

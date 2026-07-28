@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "type": "director_h200_ready_repair",
+  "generation": 2,
+  "project": "gemma4_causal_parallel_offset_head",
+  "decision": "Reject repaired READY generation 2 before provider creation and require the owner to preserve and retrieve each paid stage under one continuous claim.",
+  "reservation": {
+    "authorized_usd": 14.0,
+    "durable": true,
+    "reserved_at": "2026-07-26T19:49:01.745530Z",
+    "reservation_clears_spend_gate_only": true
+  },
+  "rejected_ready": {
+    "path": "H200_CAPTURE_TRAIN_READY.json",
+    "sha256": "52d0d980557a95e7292002b45e8f2214de259174730e119bbebada078494d5c4",
+    "owner_path": "run_h200_capture_train_owner.py",
+    "owner_sha256": "d5a04e12fe2afaee9025cea81492c84e7ec8b53dc5e17df45aec3650b14c84fd",
+    "hash_bindings_match": true,
+    "fixed_from_generation_1": [
+      "direct pinned SGLang entrypoint",
+      "matching exact-runner stage and invocation path",
+      "positive server-health gate",
+      "in-container pre-request science marker"
+    ],
+    "classification": "paid_multistage_owner_incomplete"
+  },
+  "observed_blockers": [
+    {
+      "classification": "capture_not_retrieved_before_training",
+      "evidence": "The remote script proceeds directly from capture file-existence tests into training. No controller-local capture terminal or manifest is retrieved before the later consumer starts, despite the READY claim."
+    },
+    {
+      "classification": "final_artifacts_not_retrieved",
+      "evidence": "The owner never copies CAPTURE_TERMINAL.json, chunks.jsonl, head_checkpoint.pt, or HOLDOUT_RESULT.json to the controller; it writes a local success terminal solely from remote return code."
+    },
+    {
+      "classification": "post_capture_failure_leaves_ownerless_claim",
+      "evidence": "After any science marker is observed, the exception path raises immediately, stops the heartbeat in finally, writes no decision-bearing or repair terminal, and does not release. This leaves the claimed bench without a durable owner."
+    },
+    {
+      "classification": "repair_request_has_no_executable_success_path",
+      "evidence": "The packet and hashes are built once before the generation loop. repair_wait consumes REPAIR_REQUEST.json but neither validates its bound changes nor rebuilds the packet or command graph, so every retry restages the same bytes."
+    }
+  ],
+  "repair_contract": {
+    "profile": "execution",
+    "provider_create_allowed": false,
+    "gpu_claim_allowed": false,
+    "scientific_samples_consumed": 0,
+    "preserve": [
+      "all immutable scientific bindings and hashes",
+      "the exact checkpoint, image, c32 workload, 4096/512 split, 16.054-token gate, and single capture/train/holdout cycle",
+      "the corrected server entrypoint, staged exact-runner path, health gate, and pre-request science marker",
+      "zero endpoint-pair authority"
+    ],
+    "required_changes": [
+      "Split capture and training into separately supervised stages.",
+      "After capture completes, retrieve and validate its compact terminal and manifest on the controller before training; preserve the remote content-addressed tap chunks.",
+      "If capture submission state is unknown, retrieve the marker, driver output, server log, and capture terminal before deciding whether any operation may resume.",
+      "If capture is complete and training or holdout consumption fails, keep the owner and heartbeat live, expose a fresh repair generation, and resume only the training/holdout consumer from the preserved capture.",
+      "Retrieve and validate HOLDOUT_RESULT.json plus the trained-head content identity before writing a local successful OWNER_TERMINAL.json or releasing.",
+      "Make a repair request executable: validate its hash-bound mutable files, rebuild the packet and command graph inside the corresponding generation, and record the predecessor repair ID.",
+      "Never stop the heartbeat or leave the claim ownerless without a decision-bearing terminal, unsafe/unreachable guest evidence, or absolute-deadline handoff.",
+      "Atomically replace H200_CAPTURE_TRAIN_READY.json with the corrected owner sha256 and this director-repair sha256."
+    ],
+    "next_ready_path": "H200_CAPTURE_TRAIN_READY.json",
+    "owner_path": "run_h200_capture_train_owner.py"
+  },
+  "portfolio": {
+    "causal_head": "active at 9790/execution and provider-ineligible pending corrected READY",
+    "packed_accuracy_redesign": "active independently at 9775/deep/$0 with no GPU eligibility"
+  }
+}

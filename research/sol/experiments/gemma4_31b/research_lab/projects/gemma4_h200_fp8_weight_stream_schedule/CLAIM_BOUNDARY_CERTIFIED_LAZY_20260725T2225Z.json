@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "classification": "typed_pool_availability_boundary",
+  "observed_via": "single required launch read of research_lab/runtime/gpus.json",
+  "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "requested_project": "gemma4_h200_fp8_weight_stream_schedule",
+  "observed_status": "claimed",
+  "observed_claim": {
+    "project": "gemma4_certified_lazy_vocab_head",
+    "claimed_at": "2026-07-25T22:25:09.553202Z",
+    "lease_until_utc": "2026-07-25T23:25:09.553202Z",
+    "stale": false
+  },
+  "candidate_cuda_invocation_started": false,
+  "scientific_sample_consumed": false,
+  "actual_project_provider_exposure_usd": 0.0,
+  "disposition": "return_without_polling_or_claiming"
+}

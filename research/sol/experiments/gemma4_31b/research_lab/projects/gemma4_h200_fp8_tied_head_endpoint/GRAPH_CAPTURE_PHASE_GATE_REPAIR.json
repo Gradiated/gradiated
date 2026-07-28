@@ -1,0 +1,69 @@
+{
+  "authorized_change": "Replace only the false stream_capturing=true filter in the topology consumer with the already-measured capture-phase and replay topology evidence.",
+  "candidate_science": {
+    "component_replayed": false,
+    "endpoint_request_accepted": false,
+    "endpoint_science_started": false,
+    "semantic_smoke_completed": true
+  },
+  "evidence": {
+    "final_terminal": {
+      "path": "iterations/c32-topology-settled-resume-20260723t2110z/artifacts/FINAL_TERMINAL.json",
+      "sha256": "5e9e028f4c43ad83776972b8257f50b535d039b4122f80e64fe682f4537a2669"
+    },
+    "head_trace": {
+      "path": "iterations/c32-topology-settled-resume-20260723t2110z/artifacts/attempt1/retrieved/graph-boundary/head.jsonl",
+      "sha256": "a4837a65814eae067aeb78033f992302c5b44d27248e582a06caece329803812"
+    },
+    "semantic_smoke": {
+      "path": "iterations/c32-topology-settled-resume-20260723t2110z/artifacts/attempt1/retrieved/SEMANTIC_SMOKE.json",
+      "sha256": "304a03fec198753c48c30a89af52cb25c694567c287697fa656d00f78e078cd0"
+    },
+    "state": {
+      "path": "iterations/c32-topology-settled-resume-20260723t2110z/artifacts/attempt1/retrieved/graph-boundary/STATE.json",
+      "sha256": "bfd4f1993ae44c9c0a0eda0e984e039af38d17c6f6090b100b807cf2e20bb131"
+    }
+  },
+  "forbidden": [
+    "Require stream_capturing=true from the Python hook.",
+    "Reload or restart the resident server.",
+    "Replay the component or semantic smoke.",
+    "Change the E4M3 representation, scale, kernel, embedding, logits, sampler, ring, workload, or control.",
+    "Start the static-c32 project before this endpoint terminalizes."
+  ],
+  "required_gate": {
+    "bf16_head_fallback_count": 0,
+    "candidate_head_count_lower_bound": 25,
+    "candidate_symbol": "sglang.srt.layers.quantization.fp8_utils.apply_fp8_linear",
+    "head_trace_required_m": [
+      1,
+      2,
+      4,
+      8,
+      12,
+      16,
+      24,
+      32
+    ],
+    "replay_output_type": "LogitsProcessorOutput",
+    "required_capture_batch_sizes": [
+      1,
+      2,
+      4,
+      8,
+      12,
+      16,
+      24,
+      32
+    ],
+    "semantic_smoke_pass": true
+  },
+  "resident_server": {
+    "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g",
+    "container": "gemma-fp8-tied-head-topology-settled",
+    "gpu_memory_used_mib": 122176,
+    "health": "GET /v1/models succeeded",
+    "port": 30001
+  },
+  "schema_version": 1
+}

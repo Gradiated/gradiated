@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/project/streaming_accuracy_component_runner.py", line 447, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/project/streaming_accuracy_component_runner.py", line 384, in main
+    evaluate(
+  File "/project/streaming_accuracy_component_runner.py", line 190, in evaluate
+    torch.cuda.synchronize()
+  File "/usr/local/lib/python3.12/dist-packages/torch/cuda/__init__.py", line 1108, in synchronize
+    return torch._C._cuda_synchronize()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: unspecified launch failure
+Search for `cudaErrorLaunchFailure' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+

@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-27T01:14:00Z",
+  "project": "gemma4_exact_block_bound_vocab_head",
+  "decision": "freeze_attempt_1_and_recover_terminal_without_replay",
+  "researcher_profile": "execution",
+  "claim": {
+    "bench_id": "h200-causal-head-e00b9qw8d6qd7wrjj1",
+    "claimed_at_utc": "2026-07-27T01:10:22.676483Z",
+    "owner_pid": 2236177,
+    "owner_start_ticks": 123063995,
+    "owner_state": "/root/workspace/artifacts/h200-exact-block-bound-20260727t0100z/OWNER.json",
+    "absolute_deadline_utc": "2026-07-27T01:25:22.676483Z"
+  },
+  "completed_attempt": {
+    "generation": 1,
+    "remote_output_root": "/home/glmrunner/exact-block-bound-vocab-head/a963b4ea1bdb5d0a/attempt-1/output",
+    "local_worker_stdout": "artifacts/h200-exact-block-bound-20260727t0100z/attempt-1.worker.stdout",
+    "local_worker_stdout_sha256": "ceb5a2515ca52b28a741f7f24fa18d57bd2df501fa1b48ecffca7cd56565683d",
+    "worker_exit": 0,
+    "compact_stdout_result": {
+      "candidate_median_ms": 9.943840026855469,
+      "dense_median_ms": 0.8601439893245697,
+      "exact": false,
+      "pruned_block_fraction": 0.008221944419346983,
+      "decision": "close_exact_block_bound_mechanism"
+    },
+    "retrieval_failure": "scp permission denied for the root-owned terminal and arm markers",
+    "science_replay_allowed": false
+  },
+  "source_hashes": {
+    "scorer": "9bb9b28cc7b25d30d7ee884685660005cae71fe552aa7938d7f53cb568d0235a",
+    "owner": "77a3d87ce87771730eaa7dcd8f4b45771fb5122090f93fcc14ba9863d44af1b8",
+    "capture": "ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54",
+    "tied_weight": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+  },
+  "recovery": {
+    "deadline_utc": "2026-07-27T01:22:00Z",
+    "allowed_remote_mutation": "Use sudo only to copy or change ownership/mode of the existing attempt-1 output files into a glmrunner-readable retrieval directory under the same attempt root.",
+    "required_files": [
+      "EXACT_BLOCK_BOUND_VOCAB_HEAD_TERMINAL.json",
+      "science_started.json",
+      "arm-markers/dense_first_call.json",
+      "arm-markers/candidate_first_call.json"
+    ],
+    "required_local_outputs": [
+      "artifacts/h200-exact-block-bound-20260727t0100z/EXACT_BLOCK_BOUND_VOCAB_HEAD_TERMINAL.json",
+      "artifacts/h200-exact-block-bound-20260727t0100z/REPAIR_TERMINAL.json"
+    ],
+    "validation": [
+      "Validate the retrieved terminal through the existing exact terminal contract and bind direct hashes for every retrieved file.",
+      "Require generation 1, worker exit 0, complete output consumption, frozen source/capture/weight identities, and the original claim timestamp.",
+      "Reconcile claim seconds and actual spend from claimed_at through release."
+    ],
+    "owner_disposition": "Keep PID 2236177 live until canonical terminal and REPAIR_TERMINAL.json are atomic. Then terminate that exact PID/start-ticks owner and release with --expected-claimed-at 2026-07-27T01:10:22.676483Z.",
+    "repair_request_allowed": false,
+    "docker_allowed": false,
+    "cuda_allowed": false,
+    "scorer_execution_allowed": false
+  },
+  "release": {
+    "deadline_utc": "2026-07-27T01:25:22.676483Z",
+    "available_if": "Canonical terminal is valid and remote GPU process inspection is empty.",
+    "maintenance_if": "Guest state is unsafe or output recovery cannot finish by the absolute claim deadline.",
+    "provider_cleanup_allowed": false
+  }
+}

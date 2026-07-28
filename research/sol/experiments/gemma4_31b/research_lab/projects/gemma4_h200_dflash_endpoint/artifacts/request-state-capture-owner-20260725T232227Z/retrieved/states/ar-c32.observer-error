@@ -1,0 +1,10 @@
+{"message": "multiple request markers in one request segment: {13, 31}", "phase": "tp_worker.py", "type": "ValueError"}
+{"message": "slot 6 rebound from request 13 to 7", "phase": "tp_worker.py", "type": "ValueError"}
+{"message": "multiple request markers in one request segment: {17, 30}", "phase": "tp_worker.py", "type": "ValueError"}
+{"message": "slot 15 rebound from request 16 to 9", "phase": "tp_worker.py", "type": "ValueError"}
+{"message": "multiple request markers in one request segment: {10, 15}", "phase": "tp_worker.py", "type": "ValueError"}
+{"message": "multiple request markers in one request segment: {28, 30}", "phase": "tp_worker.py", "type": "ValueError"}
+{"message": "multiple request markers in one request segment: {1, 20}", "phase": "tp_worker.py", "type": "ValueError"}
+{"message": "multiple request markers in one request segment: {9, 7}", "phase": "tp_worker.py", "type": "ValueError"}
+{"message": "multiple request markers in one request segment: {18, 29, 6}", "phase": "tp_worker.py", "type": "ValueError"}
+{"message": "slot 19 rebound from request 15 to 10", "phase": "tp_worker.py", "type": "ValueError"}

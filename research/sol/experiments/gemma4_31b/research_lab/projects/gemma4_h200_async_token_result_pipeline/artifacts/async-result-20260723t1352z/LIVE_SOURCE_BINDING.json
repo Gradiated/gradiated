@@ -1,0 +1,55 @@
+{
+  "checks": {
+    "async_cpu_copy_present": true,
+    "copy_event_present": true,
+    "decode_preparation_present": true,
+    "device_relay_present": true,
+    "result_tolist_present": true
+  },
+  "files": {
+    "batch_result_processor": {
+      "bytes": 38394,
+      "module": "sglang.srt.managers.scheduler_components.batch_result_processor",
+      "runtime_path": "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler_components/batch_result_processor.py",
+      "sha256": "9c764afffb106e966fde110851de73bb6a3d0f2415343a574a255e91f86851de",
+      "snapshot": "/work/live_sources/batch_result_processor-batch_result_processor.py"
+    },
+    "generation_result": {
+      "bytes": 11904,
+      "module": "sglang.srt.managers.utils",
+      "runtime_path": "/sgl-workspace/sglang/python/sglang/srt/managers/utils.py",
+      "sha256": "b4b36fb9f649fc6306cf0e94ff364ee9c639e31eb7ee6f0a7c66b8e3a0a2d08a",
+      "snapshot": "/work/live_sources/generation_result-utils.py"
+    },
+    "model_runner": {
+      "bytes": 156397,
+      "module": "sglang.srt.model_executor.model_runner",
+      "runtime_path": "/sgl-workspace/sglang/python/sglang/srt/model_executor/model_runner.py",
+      "sha256": "f4dad073eb9f89afd4cda0439b97dee63f8de131d0ed10078b817dba1f978f59",
+      "snapshot": "/work/live_sources/model_runner-model_runner.py"
+    },
+    "sampler": {
+      "bytes": 32466,
+      "module": "sglang.srt.layers.sampler",
+      "runtime_path": "/sgl-workspace/sglang/python/sglang/srt/layers/sampler.py",
+      "sha256": "85541951e1cf50d10c54978178e403ff9d4aa6f223e629ea91965735ba882a8f",
+      "snapshot": "/work/live_sources/sampler-sampler.py"
+    },
+    "schedule_batch": {
+      "bytes": 117509,
+      "module": "sglang.srt.managers.schedule_batch",
+      "runtime_path": "/sgl-workspace/sglang/python/sglang/srt/managers/schedule_batch.py",
+      "sha256": "eea77dac02f593da24e953f0a0ea03237f2874d0ef27522044e8fd6397fcb874",
+      "snapshot": "/work/live_sources/schedule_batch-schedule_batch.py"
+    },
+    "scheduler": {
+      "bytes": 173876,
+      "module": "sglang.srt.managers.scheduler",
+      "runtime_path": "/sgl-workspace/sglang/python/sglang/srt/managers/scheduler.py",
+      "sha256": "3a26deea85f43d61c27b94013288ad95d6ee75111fe40134893541777c9c8cd4",
+      "snapshot": "/work/live_sources/scheduler-scheduler.py"
+    }
+  },
+  "pass": true,
+  "schema_version": 1
+}

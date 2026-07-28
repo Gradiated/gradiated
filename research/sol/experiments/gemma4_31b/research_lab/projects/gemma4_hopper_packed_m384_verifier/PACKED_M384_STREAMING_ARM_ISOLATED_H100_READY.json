@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "type": "packed_m384_streaming_arm_isolated_h100_ready",
+  "authorization": {"path": "DIRECTOR_HOPPER_PACKED_STREAMING_ARM_ISOLATED_RETRY_20260726T2210Z.json", "sha256": "63a976e6e06e80c9a19a82e76ff5f0264e3889caa72762ac151d1d84597d2a4e"},
+  "owner": {"path": "run_streaming_h100_arm_isolated_owner.py", "sha256": "19715dec83d0284260b3e6ec2184630932aea1319e16ad5afb1b9df926578021"},
+  "runner": {"path": "arm_isolated_accuracy_component_runner.py", "sha256": "10059a87ff8272064ac356da8ce03efa8b8ef8d5aa863eca6bb6b471495b2781"},
+  "input_manifest": {"path": "STREAMING_H100_ARM_ISOLATED_INPUT_MANIFEST.json", "sha256": "6d4507f3c9a6ede3431a3bbddb3195ab47c31709c319142ea73e57bd3ed30223"},
+  "packet_archive_sha256": "16497ddd00d2844490967d594584ce89671c1aca6838b895f154b46bb6791372",
+  "bench_id": "h100-packed-streaming-e00nycjajm7wvs1zkd",
+  "claim_before_utc": "2026-07-26T22:38:00Z",
+  "deadline_utc": "2026-07-26T22:59:10Z",
+  "protocol": "one arm-isolated stock-A/stock-B/candidate attempt; stop at first fault; only then correctness and 25 timing repetitions; V2 and endpoint closed"
+}

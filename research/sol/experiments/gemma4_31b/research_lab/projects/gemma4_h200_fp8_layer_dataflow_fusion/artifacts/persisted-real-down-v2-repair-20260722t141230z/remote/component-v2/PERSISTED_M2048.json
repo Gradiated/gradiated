@@ -1,0 +1,21 @@
+{
+  "path": "PERSISTED_M2048.pt",
+  "q_shape": [
+    2048,
+    21504
+  ],
+  "q_stride": [
+    21504,
+    1
+  ],
+  "scale_shape": [
+    2048,
+    1
+  ],
+  "scale_stride": [
+    1,
+    1
+  ],
+  "sha256": "1b18fcaaf44b766599df04a7eceb041070281aa457f9bec6b29e9636b4990db3",
+  "tokens": 2048
+}

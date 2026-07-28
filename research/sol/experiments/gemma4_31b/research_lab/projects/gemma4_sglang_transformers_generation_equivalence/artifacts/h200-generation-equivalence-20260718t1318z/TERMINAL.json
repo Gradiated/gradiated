@@ -1,0 +1,14 @@
+{
+  "classification": "gemma4_sglang_transformers_generation_equivalence_resource_terminal",
+  "branch_decision": "typed_direct_transformers_colocation_oom_preserve_ready_sglang",
+  "pass": false,
+  "reason": "Direct BF16 Transformers allocation failed with 157.62 MiB free while the retained BF16 SGLang server was resident; 222.00 MiB was required for the next allocation.",
+  "frozen_request_schema": "input_ids",
+  "runner_sha256": "cfd4d0bd7f35be1d521be4ad475a182a03b610dcf60144842a89b1f6b2386e29",
+  "diagnostic_sha256": "4c81174d3987f766c41ad185edc1f26730e2ce62f2c39ba8f5ddbc7603d93bca",
+  "repaired_consumer_sha256": "3d45ef531f54cd673ea49edd99311ed8a25593c4ce40471ac657539f928455c7",
+  "retained_server_models_sha256": "f2d6e5121bf30917217e0dbaa7eb003d99db0e4bdfbbb9f1822a4cb08ffda711",
+  "server_state": "ready_and_retained",
+  "provider_spend_usd": null,
+  "bench_release_state": "ready_requested_without_teardown"
+}

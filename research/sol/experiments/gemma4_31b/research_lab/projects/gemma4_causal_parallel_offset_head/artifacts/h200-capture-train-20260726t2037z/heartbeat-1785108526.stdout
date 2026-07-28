@@ -1,0 +1,53 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-26T20:41:17.874349Z",
+    "heartbeat_at": "2026-07-26T23:28:46.537076Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-27T00:28:46.537076Z",
+    "project": "gemma4_causal_parallel_offset_head",
+    "stale": false
+  },
+  "contents": {
+    "artifacts": "projects/gemma4_causal_parallel_offset_head/{H200_CAPTURE_TRAIN_READY.json,DIRECTOR_CAUSAL_HEAD_H200_REGISTERED_READMISSION_20260726T2037Z.json}",
+    "caches": "Fresh provider disk; preserve checkpoint, image, captures, trained head, and build caches for same-project repair and compatible follow-up.",
+    "checkpoint": "Cold 250-GiB disk. The exact eight-file checkpoint is controller-resident and manifest-verified; the retained owner will resumably stage it before capture.",
+    "director_binding": "gemma4_causal_parallel_offset_head/DIRECTOR_CAUSAL_HEAD_H200_REGISTERED_READMISSION_20260726T2037Z.json",
+    "image": "Pinned docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6 is not yet resident and will be pulled by the owner.",
+    "model": "google/gemma-4-31B-it revision b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Sole claim by gemma4_causal_parallel_offset_head through run_h200_capture_train_owner.py. Stage the exact checkpoint, run one capture/train/holdout cycle, retain the claim across recoverable repairs, and release by the lifecycle deadline.",
+    "project": "gemma4_causal_parallel_offset_head",
+    "runtime": "Cold Nebius Ubuntu 24.04 CUDA 13 H200; strict SSH and NVIDIA H200 143771-MiB telemetry passed. SGLang capture/train runtime is not yet launched.",
+    "schema_version": 1,
+    "scientific_terminal": "one capture/train/request-disjoint holdout cycle remains unconsumed; endpoint pairs remain closed",
+    "server_state": "No model server, container, claim, or scientific invocation has started."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.4597222,
+  "id": "h200-causal-head-e00b9qw8d6qd7wrjj1",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-27T01:32:34.490529Z",
+    "provider_started_at_utc": "2026-07-26T20:32:34.490529Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-causal-head-h200-20260726t2032z-watchdog.service",
+      "main_pid": 2052617,
+      "unit": "gemma4-causal-head-h200-20260726t2032z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-26T20:38:14.858439Z",
+  "resource": {
+    "disk_id": "computedisk-e00y3ezqfpp4fdnz7h",
+    "disk_name": "gemma4-causal-head-h200-20260726t2032z-boot",
+    "instance_id": "computeinstance-e00b9qw8d6qd7wrjj1",
+    "instance_name": "gemma4-causal-head-h200-20260726t2032z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.112.211",
+    "ssh_ed25519_fingerprint": "SHA256:VmKxKpmKi3uGZuSVw4dM6G/p6vG0xKfk2IiQkxZrFE0",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-26T23:28:46.537076Z"
+}

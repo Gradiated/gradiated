@@ -1,0 +1,8 @@
+{
+  "candidate_sample_consumed": false,
+  "director_recovery_binding": "gemma4_upstream_ngram_runtime_rebase/DIRECTOR_RECOVERY_BINDING.json",
+  "next": "Priority-8450 may claim for one bounded recovery owner: remove the verified legacy port-30000 container and exited v0.5.15 container, launch the bound official v0.5.15 image once, and run only the unconsumed 171-request discriminator before its conditional endpoint gate.",
+  "project": "gemma4_upstream_ngram_runtime_rebase",
+  "result": "available_for_one_bound_v0515_startup_conflict_recovery",
+  "server_state": "Director audit found legacy v0.5.13 gemma4-ngram-tail-overlap running on port 30000 and bound v0.5.15 container exited. One unavoidable restart is authorized by DIRECTOR_RECOVERY_BINDING.json."
+}

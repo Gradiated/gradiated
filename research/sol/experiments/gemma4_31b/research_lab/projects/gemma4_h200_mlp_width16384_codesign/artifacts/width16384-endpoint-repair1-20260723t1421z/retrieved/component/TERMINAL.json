@@ -1,0 +1,129 @@
+{
+  "activation_consumer": "sglang.srt.layers.activation.GeluAndMul",
+  "classification": "component_complete",
+  "complete_outputs_consumed": true,
+  "geometry": {
+    "candidate_down": [
+      16384,
+      5376
+    ],
+    "candidate_gate_up": [
+      5376,
+      32768
+    ],
+    "candidate_intermediate": 16384,
+    "control_down": [
+      21504,
+      5376
+    ],
+    "control_gate_up": [
+      5376,
+      43008
+    ],
+    "control_intermediate": 21504,
+    "hidden": 5376
+  },
+  "hardware": "NVIDIA H200",
+  "pass": true,
+  "rows": [
+    {
+      "candidate": {
+        "maximum_ms": 0.11430399864912033,
+        "median_ms": 0.1043199971318245,
+        "minimum_ms": 0.10227199643850327,
+        "p90_ms": 0.10896000266075134
+      },
+      "candidate_output_consumed_sum_squares": 202123.0625,
+      "candidate_output_finite": true,
+      "consumer_chain": "per_token_fp8 -> fp8_scaled_mm(gate_up) -> GeluAndMul(tanh) -> per_token_fp8 -> fp8_scaled_mm(down)",
+      "control": {
+        "maximum_ms": 0.13699199259281158,
+        "median_ms": 0.12548799812793732,
+        "minimum_ms": 0.12265600264072418,
+        "p90_ms": 0.1297920048236847
+      },
+      "m": 32,
+      "reduction_fraction": 0.16868546244981653
+    },
+    {
+      "candidate": {
+        "maximum_ms": 0.12831999361515045,
+        "median_ms": 0.1199519969522953,
+        "minimum_ms": 0.11740799993276596,
+        "p90_ms": 0.1228799968957901
+      },
+      "candidate_output_consumed_sum_squares": 764470.25,
+      "candidate_output_finite": true,
+      "consumer_chain": "per_token_fp8 -> fp8_scaled_mm(gate_up) -> GeluAndMul(tanh) -> per_token_fp8 -> fp8_scaled_mm(down)",
+      "control": {
+        "maximum_ms": 0.15654399991035461,
+        "median_ms": 0.15033599734306335,
+        "minimum_ms": 0.14655999839305878,
+        "p90_ms": 0.1539520025253296
+      },
+      "m": 118,
+      "reduction_fraction": 0.20210728586469184
+    },
+    {
+      "candidate": {
+        "maximum_ms": 0.7820479869842529,
+        "median_ms": 0.7264640033245087,
+        "minimum_ms": 0.6915519833564758,
+        "p90_ms": 0.7376000285148621
+      },
+      "candidate_output_consumed_sum_squares": 9058102.0,
+      "candidate_output_finite": true,
+      "consumer_chain": "per_token_fp8 -> fp8_scaled_mm(gate_up) -> GeluAndMul(tanh) -> per_token_fp8 -> fp8_scaled_mm(down)",
+      "control": {
+        "maximum_ms": 1.0283520221710205,
+        "median_ms": 0.9790720045566559,
+        "minimum_ms": 0.9401599764823914,
+        "p90_ms": 1.0135999917984009
+      },
+      "m": 1409,
+      "reduction_fraction": 0.25800758274825086
+    },
+    {
+      "candidate": {
+        "maximum_ms": 0.83433598279953,
+        "median_ms": 0.8225440084934235,
+        "minimum_ms": 0.8075839877128601,
+        "p90_ms": 0.8324159979820251
+      },
+      "candidate_output_consumed_sum_squares": 10930975.0,
+      "candidate_output_finite": true,
+      "consumer_chain": "per_token_fp8 -> fp8_scaled_mm(gate_up) -> GeluAndMul(tanh) -> per_token_fp8 -> fp8_scaled_mm(down)",
+      "control": {
+        "maximum_ms": 1.0722559690475464,
+        "median_ms": 1.0537440180778503,
+        "minimum_ms": 1.0307519435882568,
+        "p90_ms": 1.064479947090149
+      },
+      "m": 1631,
+      "reduction_fraction": 0.21940813482022148
+    },
+    {
+      "candidate": {
+        "maximum_ms": 0.982367992401123,
+        "median_ms": 0.9574079811573029,
+        "minimum_ms": 0.9496960043907166,
+        "p90_ms": 0.9774399995803833
+      },
+      "candidate_output_consumed_sum_squares": 14027350.0,
+      "candidate_output_finite": true,
+      "consumer_chain": "per_token_fp8 -> fp8_scaled_mm(gate_up) -> GeluAndMul(tanh) -> per_token_fp8 -> fp8_scaled_mm(down)",
+      "control": {
+        "maximum_ms": 1.2312639951705933,
+        "median_ms": 1.2182719707489014,
+        "minimum_ms": 1.1891520023345947,
+        "p90_ms": 1.2278079986572266
+      },
+      "m": 2048,
+      "reduction_fraction": 0.2141262344164736
+    }
+  ],
+  "runtime_consumer": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm",
+  "schema_version": 1,
+  "selection_sha256": "185dbc56e46ea942667f9be820cc617a50a1262c3bf71a976c9506474b9b3df3",
+  "status": "terminal"
+}

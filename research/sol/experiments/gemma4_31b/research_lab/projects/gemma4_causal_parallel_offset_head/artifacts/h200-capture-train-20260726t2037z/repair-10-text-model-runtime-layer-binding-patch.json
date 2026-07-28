@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "repair_id": "repair-10",
+  "classification": "text_model_runtime_layer_capture_repair",
+  "source_evidence": "repair-10-text-model-runtime-layer-binding-evidence.json",
+  "mutable_files": {
+    "capture_offset_taps.py": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/capture_offset_taps.py",
+      "sha256": "19b073ec550f349cb796d487ac02545da586bba9fc325a71b8df023a0d89389f"
+    }
+  },
+  "retry": {
+    "scope": "fresh_capture_only_with_text_model_runtime_layer_binding",
+    "capture_stage_consumed": false,
+    "training_or_holdout_started": false,
+    "endpoint_pairs": 0
+  }
+}

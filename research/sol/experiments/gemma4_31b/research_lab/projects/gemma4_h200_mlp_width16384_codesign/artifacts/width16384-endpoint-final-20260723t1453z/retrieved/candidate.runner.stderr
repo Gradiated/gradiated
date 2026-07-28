@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/work/input/fp8_qkv_paired_runner.py", line 19, in <module>
+    BASE = os.environ.get("SGLANG_ENDPOINT_BASE", "http://127.0.0.1:30000")
+           ^^
+NameError: name 'os' is not defined. Did you forget to import 'os'?

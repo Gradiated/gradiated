@@ -1,0 +1,20 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/l40s_staged_e5m2_owner.py",
+    "--bench",
+    "l40s-dual-kv4-sm89-computeinstance-e00nczqf2p0x2y51wt",
+    "--artifact-root",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/staged-e5m2-component-20260728t0939z",
+    "--deadline-seconds",
+    "360",
+    "--release-by-utc",
+    "2026-07-28T09:53:30Z"
+  ],
+  "cwd": null,
+  "launched_at_utc": "2026-07-28T09:43:01.948056Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/staged-e5m2-owner-20260728t0939z/OWNER.log",
+  "pid": 2784667,
+  "start_ticks": 134779935,
+  "unit_manager": "pid"
+}

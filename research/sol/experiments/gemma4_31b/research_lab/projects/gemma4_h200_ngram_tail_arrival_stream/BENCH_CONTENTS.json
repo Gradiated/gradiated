@@ -1,0 +1,11 @@
+{
+  "artifacts": "artifacts/streamed-tail-20260725t023925z",
+  "candidate_sample_consumed": true,
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "gpu_processes": "present or inspection uncertain",
+  "project": "gemma4_h200_ngram_tail_arrival_stream",
+  "remote_inspection": "{\"Status\":\"running\",\"Running\":true,\"Paused\":false,\"Restarting\":false,\"OOMKilled\":false,\"Dead\":false,\"Pid\":27082,\"ExitCode\":0,\"Error\":\"\",\"StartedAt\":\"2026-07-25T02:04:34.987110083Z\",\"FinishedAt\":\"0001-01-01T00:00:00Z\"}\n27211, 124154\n",
+  "result": "measured_ngram_streamed_tail",
+  "runtime": "Pinned SGLang v0.5.13 FP8, page-1 E5M2 KV, native depth-12 NGRAM.",
+  "server_state": "Healthy resident SGLang container retained without removal; director disposition required before incompatible reuse."
+}

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "classification": "invalid_interrupted_control_server_exit_after_one_authorized_repair",
+  "evidence_label": "invalid_attempt_not_scientific_result",
+  "workload_indices": [62000, 62790],
+  "request_count": 791,
+  "control": {
+    "submitted": 791,
+    "completed": 128,
+    "failed_or_uncompleted": 663,
+    "last_completed_fresh_index": 62127,
+    "first_failed_fresh_index": 62128,
+    "raw_responses_complete": false,
+    "science_consumed": false,
+    "raw_requests_sha256": "209861d7cc2e3a9169ae2a317b690f4474cd861f9eaba2ff79f28dbe5249d430"
+  },
+  "candidate": {
+    "started": false,
+    "requests_submitted": 0,
+    "science_consumed": false
+  },
+  "server_boundary": {
+    "failure": "same stock fp8_scaled_mm RuntimeError: Error Internal/SIGQUIT boundary",
+    "server_health_lost": true,
+    "server_stopped_and_removed": true,
+    "server_log_sha256": "410ce3467a3e666e57ee4d70f87e6705c296d5a9218037dc71ac84f306493eaf"
+  },
+  "repair_scope_consumed": "one localized control retry with max_workers=32 and finite-safe observer source",
+  "conclusion": "A second control retry is not authorized; no complete control exists and candidate must not run.",
+  "claim_retained_for_director_repair": true,
+  "endpoint_or_economic_claim": false
+}

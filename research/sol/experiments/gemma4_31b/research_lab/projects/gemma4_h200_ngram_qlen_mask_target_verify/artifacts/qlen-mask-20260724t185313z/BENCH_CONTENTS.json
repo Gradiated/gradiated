@@ -1,0 +1,8 @@
+{
+  "artifacts": "artifacts/qlen-mask-20260724t185313z",
+  "error": "FileExistsError(17, 'File exists')",
+  "project": "gemma4_h200_ngram_qlen_mask_target_verify",
+  "result": "typed_boundary",
+  "schema_version": 1,
+  "server_state": "Director inspection required after compact retrieval attempt."
+}

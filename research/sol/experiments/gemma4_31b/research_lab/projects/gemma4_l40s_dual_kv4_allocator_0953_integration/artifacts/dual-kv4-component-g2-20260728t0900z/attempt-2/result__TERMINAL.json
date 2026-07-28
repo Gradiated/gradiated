@@ -1,0 +1,105 @@
+{
+  "arms": {
+    "global": {
+      "arm": "global",
+      "baseline_complete_ms": {
+        "max": 0.847552,
+        "mean": 0.8133095483870968,
+        "median": 0.820986,
+        "min": 0.782399,
+        "p05": 0.7855110000000001,
+        "p95": 0.838722
+      },
+      "candidate_complete_ms": {
+        "max": 32.529552,
+        "mean": 32.35851161290322,
+        "median": 32.308154,
+        "min": 32.201933,
+        "p05": 32.207092,
+        "p95": 32.5165135
+      },
+      "error": {
+        "cosine": 0.03525497019290924,
+        "finite": true,
+        "max_abs": 0.1142578125,
+        "relative_l2": 0.9993787407875061
+      },
+      "margin_ms": {
+        "max": -31.372376000000003,
+        "mean": -31.54520206451613,
+        "median": -31.460602,
+        "min": -31.733667000000004,
+        "p05": -31.717357,
+        "p95": -31.373150999999996
+      },
+      "promotion_margin_positive": false
+    },
+    "local": {
+      "arm": "local",
+      "baseline_complete_ms": {
+        "max": 0.347465,
+        "mean": 0.3249380322580645,
+        "median": 0.328408,
+        "min": 0.302888,
+        "p05": 0.3049555,
+        "p95": 0.344526
+      },
+      "candidate_complete_ms": {
+        "max": 3.804423,
+        "mean": 3.7896973548387094,
+        "median": 3.796181,
+        "min": 3.736239,
+        "p05": 3.7431805,
+        "p95": 3.801311
+      },
+      "error": {
+        "cosine": 0.988783061504364,
+        "finite": true,
+        "max_abs": 0.0556640625,
+        "relative_l2": 0.15092532336711884
+      },
+      "margin_ms": {
+        "max": -3.4055479999999996,
+        "mean": -3.4647593225806452,
+        "median": -3.463978,
+        "min": -3.4978320000000003,
+        "p05": -3.494314,
+        "p95": -3.422528
+      },
+      "promotion_margin_positive": false
+    }
+  },
+  "classification": "complete_producer_consumer_nonpositive",
+  "compiler_resources": {
+    "global/dual_kv4_global_sm89.so": {
+      "resource_text": "\nFatbin elf code:\n================\narch = sm_89\ncode version = [1,8]\nhost = linux\ncompile_size = 64bit\n\nResource usage:\n Common:\n  GLOBAL:28 CONSTANT[4]:224\n Function _ZN58_GLOBAL__N__5611a87c_25_global_tiered_kv4_cuda_cu_82ed2c9933mixed_tier_paged_attention_kernelIN3c108BFloat16EEEvPKT_PKhS7_S7_S7_PKiS9_S9_S9_PKlPS3_llllllif:\n  REG:37 STACK:0 SHARED:2056 LOCAL:0 CONSTANT[0]:496 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__5611a87c_25_global_tiered_kv4_cuda_cu_82ed2c9933mixed_tier_paged_attention_kernelIN3c104HalfEEEvPKT_PKhS7_S7_S7_PKiS9_S9_S9_PKlPS3_llllllif:\n  REG:37 STACK:0 SHARED:2056 LOCAL:0 CONSTANT[0]:496 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__5611a87c_25_global_tiered_kv4_cuda_cu_82ed2c9933mixed_tier_paged_attention_kernelIfEEvPKT_PKhS5_S5_S5_PKiS7_S7_S7_PKlPS1_llllllif:\n  REG:37 STACK:0 SHARED:2056 LOCAL:0 CONSTANT[0]:496 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__5611a87c_25_global_tiered_kv4_cuda_cu_82ed2c9933mixed_tier_paged_attention_kernelIdEEvPKT_PKhS5_S5_S5_PKiS7_S7_S7_PKlPS1_llllllif:\n  REG:37 STACK:0 SHARED:2056 LOCAL:0 CONSTANT[2]:8 CONSTANT[0]:496 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__5611a87c_25_global_tiered_kv4_cuda_cu_82ed2c9915pack_old_kernelIfLb1EEEvPKT_PKlPKiS7_PKhPhlllll:\n  REG:36 STACK:0 SHARED:7208 LOCAL:0 CONSTANT[0]:440 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__5611a87c_25_global_tiered_kv4_cuda_cu_82ed2c9915pack_old_kernelIN3c108BFloat16ELb0EEEvPKT_PKlPKiS9_PKhPhlllll:\n  REG:36 STACK:0 SHARED:7208 LOCAL:0 CONSTANT[0]:440 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__5611a87c_25_global_tiered_kv4_cuda_cu_82ed2c9915pack_old_kernelIN3c104HalfELb0EEEvPKT_PKlPKiS9_PKhPhlllll:\n  REG:36 STACK:0 SHARED:7208 LOCAL:0 CONSTANT[0]:440 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__5611a87c_25_global_tiered_kv4_cuda_cu_82ed2c9915pack_old_kernelIfLb0EEEvPKT_PKlPKiS7_PKhPhlllll:\n  REG:36 STACK:0 SHARED:7208 LOCAL:0 CONSTANT[0]:440 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__5611a87c_25_global_tiered_kv4_cuda_cu_82ed2c9915pack_old_kernelIdLb0EEEvPKT_PKlPKiS7_PKhPhlllll:\n  REG:36 STACK:0 SHARED:7208 LOCAL:0 CONSTANT[2]:8 CONSTANT[0]:440 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__5611a87c_25_global_tiered_kv4_cuda_cu_82ed2c9919store_recent_kernelIN3c108BFloat16EEEvPKT_PKlPKiPhllll:\n  REG:20 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:416 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__5611a87c_25_global_tiered_kv4_cuda_cu_82ed2c9919store_recent_kernelIN3c104HalfEEEvPKT_PKlPKiPhllll:\n  REG:20 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:416 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__5611a87c_25_global_tiered_kv4_cuda_cu_82ed2c9919store_recent_kernelIfEEvPKT_PKlPKiPhllll:\n  REG:20 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:416 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__5611a87c_25_global_tiered_kv4_cuda_cu_82ed2c9919store_recent_kernelIdEEvPKT_PKlPKiPhllll:\n  REG:20 STACK:0 SHARED:0 LOCAL:0 CONSTANT[2]:8 CONSTANT[0]:416 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "returncode": 0,
+      "sha256": "0eff59b11eabbfde49a9c5d5c9d5c2ceec715e516df810357637403d87519f18",
+      "stderr": ""
+    },
+    "local/dual_kv4_local_sm89.so": {
+      "resource_text": "\nFatbin elf code:\n================\narch = sm_89\ncode version = [1,8]\nhost = linux\ncompile_size = 64bit\n\nResource usage:\n Common:\n  GLOBAL:28 CONSTANT[4]:224\n Function _ZN58_GLOBAL__N__675db27f_25_local_kv4_outlier_cuda_cu_bb56899422paged_attention_kernelIN3c108BFloat16EEEvPKT_PKhS7_PKiS9_PKlPS3_llllifb:\n  REG:37 STACK:0 SHARED:1036 LOCAL:0 CONSTANT[0]:449 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__675db27f_25_local_kv4_outlier_cuda_cu_bb56899422paged_attention_kernelIN3c104HalfEEEvPKT_PKhS7_PKiS9_PKlPS3_llllifb:\n  REG:38 STACK:0 SHARED:1036 LOCAL:0 CONSTANT[0]:449 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__675db27f_25_local_kv4_outlier_cuda_cu_bb56899422paged_attention_kernelIfEEvPKT_PKhS5_PKiS7_PKlPS1_llllifb:\n  REG:38 STACK:0 SHARED:1036 LOCAL:0 CONSTANT[0]:449 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__675db27f_25_local_kv4_outlier_cuda_cu_bb56899422paged_attention_kernelIdEEvPKT_PKhS5_PKiS7_PKlPS1_llllifb:\n  REG:38 STACK:0 SHARED:1036 LOCAL:0 CONSTANT[2]:8 CONSTANT[0]:449 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__675db27f_25_local_kv4_outlier_cuda_cu_bb56899411pack_kernelIN3c108BFloat16EEEvPKT_PKlPhlll:\n  REG:28 STACK:0 SHARED:2576 LOCAL:0 CONSTANT[0]:400 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__675db27f_25_local_kv4_outlier_cuda_cu_bb56899411pack_kernelIN3c104HalfEEEvPKT_PKlPhlll:\n  REG:28 STACK:0 SHARED:2576 LOCAL:0 CONSTANT[0]:400 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__675db27f_25_local_kv4_outlier_cuda_cu_bb56899411pack_kernelIfEEvPKT_PKlPhlll:\n  REG:28 STACK:0 SHARED:2576 LOCAL:0 CONSTANT[0]:400 TEXTURE:0 SURFACE:0 SAMPLER:0\n Function _ZN58_GLOBAL__N__675db27f_25_local_kv4_outlier_cuda_cu_bb56899411pack_kernelIdEEvPKT_PKlPhlll:\n  REG:28 STACK:0 SHARED:2576 LOCAL:0 CONSTANT[2]:8 CONSTANT[0]:400 TEXTURE:0 SURFACE:0 SAMPLER:0\n",
+      "returncode": 0,
+      "sha256": "89b4ed5d3dd40eb374e0e005fce4a246736a6f18c5119763222c7fac08d908c5",
+      "stderr": ""
+    }
+  },
+  "complete_request_inequality_terms": {
+    "global_s_per_request": "0.111875 * measured_global_margin_ms",
+    "integration_overhead": "not measured here; no endpoint claim",
+    "local_s_per_request": "0.559375 * measured_local_margin_ms",
+    "price_normalized_boundary_s_per_request": 1.4776251501079425
+  },
+  "fixed_contract": {
+    "c32": 32,
+    "decode_steps": 358,
+    "global_layers": 10,
+    "local_layers": 50,
+    "page_size": 1,
+    "repeats": 31,
+    "warmups": 5
+  },
+  "kind": "l40s_dual_kv4_sm89_component",
+  "sample_consumed": true,
+  "schema_version": 1
+}

@@ -1,0 +1,58 @@
+{
+  "bench": {
+    "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+    "watchdog_deadline_utc": "2026-07-25T01:00:00Z",
+    "watchdog_unit": "gemma4-ngram-verifier-h200-20260725t0100-watchdog.service"
+  },
+  "closed_two_stage": {
+    "arm_terminal": {
+      "path": "../gemma4_h200_ngram_two_stage_target_verify/artifacts/two-stage-target-20260724t222658z/snapshots/c6c7d82415b4d5009f796f975e685712e40e28e26c735258de7d20ef7f0c43eb/out/prefix-through-870/ARM_TERMINAL.json",
+      "sha256": "5705dfaaf3f48907de9655712d032b8f43dd91ecce7e471ef59180c8997ebc0b"
+    },
+    "binding": {
+      "path": "../gemma4_h200_ngram_two_stage_target_verify/DIRECTOR_BINDING.json",
+      "sha256": "62388e97cf1f1e4d882a60cb1d79b18193cfcb66360c6eda695b0b4cae6e959c"
+    },
+    "final_terminal": {
+      "path": "../gemma4_h200_ngram_two_stage_target_verify/artifacts/two-stage-target-20260724t222658z/snapshots/c6c7d82415b4d5009f796f975e685712e40e28e26c735258de7d20ef7f0c43eb/out/FINAL_TERMINAL.json",
+      "sha256": "ec60c4aa7eb807213e19c78a7619107c78cf6e5b8306b7ead17a0d30b0ac5eaa"
+    }
+  },
+  "identities": {
+    "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint",
+    "checkpoint_manifest": {
+      "path": "../gemma4_h200_ngram_torch_reserved_staircase/packet/inputs/CHECKPOINT_MANIFEST.json",
+      "sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "installed_consumer_sources": {
+      "path": "../gemma4_h200_ngram_adaptive_draft_depth/artifacts/adaptive-depth-20260724t215325z/snapshots/d47b1a65ad05b1a1db595b3a1786acaa4be1a87d7c9eeac1cb17d73748f8d7da/installed-consumer-sources.tar.gz",
+      "sha256": "a9f58ef78cc089747460dff368c8acd0ec26813f75b7ef974ec34a3aa77c0bd6"
+    },
+    "model": "google/gemma-4-31B-it",
+    "request_rate_per_second": 1.439656551,
+    "requests": 1036,
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+  },
+  "intervention": {
+    "high_load_action": "ordinary_greedy_target_decode",
+    "high_load_min_running_requests": 8,
+    "low_load_action": "unchanged_depth_12_ngram",
+    "threshold_sweep": false
+  },
+  "sparse_baseline": {
+    "final_terminal": {
+      "path": "../gemma4_h200_ngram_sparse_penalty_verify/artifacts/sparse-penalty-20260724t210733z/snapshots/dbf551f5217d992283c601dbbb77a6615fb0f9e9d36ad58d7593674efc374e8d/out/FINAL_TERMINAL.json",
+      "sha256": "084d861fa82f918d7d60816a20fb3cbcc2f744c6865530b886c52dc883dc9b21"
+    },
+    "patch_state": {
+      "path": "../gemma4_h200_ngram_sparse_penalty_verify/artifacts/sparse-penalty-20260724t210733z/snapshots/dbf551f5217d992283c601dbbb77a6615fb0f9e9d36ad58d7593674efc374e8d/out/PATCH_STATE.json",
+      "sha256": "1f565495e804ccffd7ddec6f9513cda4081aaa6872ebf7fc1d291cc5cddad9ec"
+    },
+    "requests_comparator": {
+      "path": "../gemma4_h200_ngram_sparse_penalty_verify/artifacts/sparse-penalty-20260724t210733z/snapshots/dbf551f5217d992283c601dbbb77a6615fb0f9e9d36ad58d7593674efc374e8d/out/requests.jsonl",
+      "sha256": "12f9c7807c6f46cc8258b7c5cdae6ab529e2fb3bd9c82298296f8616ab42a253"
+    }
+  },
+  "schema_version": 1
+}

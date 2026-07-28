@@ -1,0 +1,47 @@
+{
+  "files": [
+    {
+      "bytes": 604160,
+      "path": "/home/glmrunner/gemma4-ngram-qlen-mask-observer-v3/FROZEN_PACKET.repair-v2.tar",
+      "reused": false,
+      "sha256": "977d5b5cf7b7d8bdb317beaa2ab67d0b69bcb1e61b499545e8d5a5d0db3a57be"
+    },
+    {
+      "bytes": 28314,
+      "path": "/home/glmrunner/gemma4-ngram-qlen-mask-observer-v3/repair-v2-control-reference.tar.gz",
+      "reused": false,
+      "sha256": "39db2ed169c9ecede649ab07e994fd824a1934f6600df3cc64d7b29875d3bccf"
+    },
+    {
+      "bytes": 4775,
+      "path": "/home/glmrunner/gemma4-ngram-qlen-mask-observer-v3/observer_v3_component.py",
+      "reused": false,
+      "sha256": "da6e0f299b48a71ab200baf2c1039a07836ecee57d872b22cab112b3ff0967a0"
+    },
+    {
+      "bytes": 2912,
+      "path": "/home/glmrunner/gemma4-ngram-qlen-mask-observer-v3/observer_v3_remote_experiment.py",
+      "reused": false,
+      "sha256": "cc8c11791c5d596533a824340e59221d396e03f3c29564cc48bdacd5862c4003"
+    },
+    {
+      "bytes": 7045,
+      "path": "/home/glmrunner/gemma4-ngram-qlen-mask-observer-v3/candidate_endpoint_once.py",
+      "reused": false,
+      "sha256": "55ee0ad3eacd9587b61828b9a9a91c6495f371be1d52280332aaa1fc6d55156b"
+    },
+    {
+      "bytes": 8730,
+      "path": "/home/glmrunner/gemma4-ngram-qlen-mask-observer-v3/repair-v2-component-persisted.json",
+      "reused": false,
+      "sha256": "a922eff5a3df017ecb549210feff5fc11fd8b6b15979a79c2793cad805a099b2"
+    },
+    {
+      "bytes": 4780,
+      "path": "/home/glmrunner/gemma4-ngram-qlen-mask-observer-v3/detached-owner",
+      "reused": false,
+      "sha256": "a2c7b59af7de411cf465288d106b75a940fa3668461b98b6a74dfa1c4973a456"
+    }
+  ],
+  "remote_root": "/home/glmrunner/gemma4-ngram-qlen-mask-observer-v3"
+}

@@ -45,6 +45,7 @@ sudo docker run -d --name "$container" --gpus all --ipc=host --network host -v "
   -e PYTHONPATH="/work/input:/sgl-workspace/sglang/python" \
   -e QKV_STACK_ARM=candidate -e QKV_EPILOGUE_AUDIT=/work/artifacts/qkv.jsonl \
   -e FP8_STACK_MODULE_AUDIT=/work/artifacts/modules.jsonl -e FP8_STACK_CONSUMER_AUDIT=/work/artifacts/consumers.jsonl \
+  -e FP8_MODULE_AUDIT=/work/artifacts/modules.jsonl -e FP8_CONSUMER_AUDIT=/work/artifacts/consumers.jsonl \
   -e FP8_RUNTIME_AUDIT=/work/artifacts/runtime.json -e SGLANG_FP8_IGNORED_LAYERS=model.vision_tower,model.embed_vision \
   "$image" python3 /work/input/proven_v0513_endpoint_entrypoint.py \
   --model-path /work/checkpoint --tokenizer-path /work/checkpoint --served-model-name google/gemma-4-31B-it \

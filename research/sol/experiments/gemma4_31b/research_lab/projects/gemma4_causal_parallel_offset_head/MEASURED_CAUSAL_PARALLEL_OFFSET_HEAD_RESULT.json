@@ -1,0 +1,29 @@
+{
+  "artifacts": {
+    "capture_stage_sha256": "795f6051c2c0c7660ad79c67c9ff40b60d9aef6888c5e3f67f6e288b6637334b",
+    "capture_terminal_sha256": "ce11daa117c1d5766d34c37d64c0959180a14eb5b0f43419a079cd98514f618e",
+    "chunks_manifest_sha256": "f3e8120e0ec55606552274c8b058f239ece9e1f06498e6a9f1b5c6a9c2fb9f9f",
+    "head_checkpoint_sha256": "2945432594c77a248a6877eee83b23ececa95192718cf66cc6bf700b64938c34",
+    "holdout_result_sha256": "c26e5f4e5b6b9b9280faf4b8796f6eacd6dde5ab9a0c7b3a50812b4b277f54a8",
+    "owner_terminal": "artifacts/h200-capture-train-20260726t2037z/OWNER_TERMINAL.json"
+  },
+  "classification": "measured_causal_parallel_offset_head_negative",
+  "cost": {
+    "authorized_spend_usd": 14.0,
+    "conservative_provider_exposure_usd": 12.298611,
+    "cost_model_sha256": "4ee31dd7c0f6d407e1e61b148b7d41e54f8bda674e7b953d905d8a816a00ab72"
+  },
+  "decision": "reject_current_causal_parallel_offset_head",
+  "endpoint_pairs_run": 0,
+  "evidence": "measured",
+  "holdout": {
+    "examples": 512,
+    "mean_accepted_target_tokens": {"4": 1.001953125, "8": 1.001953125, "12": 1.001953125, "16": 1.001953125},
+    "required_mean_accepted_target_tokens": 16.054,
+    "request_disjoint": true,
+    "split_sha256": "2386521bbff340bba2569bb6c0328edcc84e22f308b52c0a0191cfd7123400ee"
+  },
+  "reason": "The trained causal offset head accepted approximately one target token at every evaluated depth, far below the preregistered 16.054-token gate. The recovered capture had 90 chunks, 11,544 mapped rows, and 32 request mappings; this is a measured mechanism result, not a capture or consumer defect.",
+  "schema_version": 1,
+  "training": {"examples": 4096, "loss_first": 12.869711875915527, "loss_last": 0.003275076625868678}
+}

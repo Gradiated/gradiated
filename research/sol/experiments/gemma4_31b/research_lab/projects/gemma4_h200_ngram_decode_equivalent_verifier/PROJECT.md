@@ -83,3 +83,20 @@ tokens, 32/32 complete c32 requests, and candidate service time
 Do not replay unchanged NGRAM, sweep proposal parameters, canonicalize output,
 change grammar/tool routing, run broad quality, or interact with the retired
 L40S.
+
+## Director measurement correction and continuation
+
+`DIRECTOR_TRACE_AGGREGATION_CORRECTION.json` supersedes only the prior
+discriminator decision. The trace hook persisted every scheduler delta, but
+the terminal treated each request's final delta as its whole sequence. After
+concatenating all deltas per request, all four control/candidate sequences,
+normalized responses, finish reasons, accounting, and request identities are
+exact; c32-row-00 contains 358 repeated token IDs on both arms. The 54 defined
+native-shadow comparisons are also argmax-exact and the candidate audit proves
+execution.
+
+Do not replay the consumed discriminator. Correct only cumulative trace
+aggregation, then run the previously unconsumed ten-row exact token/tool suite
+and matched c32 pair with the unchanged intervention and original gates. This
+reactivation has renewed cumulative `$18` authority, at most 6.25 additional
+claimed H200 hours, and must release by `16:45Z`.

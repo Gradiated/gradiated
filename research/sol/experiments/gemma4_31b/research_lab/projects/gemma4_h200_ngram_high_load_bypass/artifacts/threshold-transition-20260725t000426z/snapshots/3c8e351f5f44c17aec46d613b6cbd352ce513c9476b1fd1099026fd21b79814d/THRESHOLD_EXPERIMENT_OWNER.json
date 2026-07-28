@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "remote_threshold_component.py"
+  ],
+  "cwd": "/home/glmrunner/gemma4-h200-ngram-high-load-bypass",
+  "launched_at_utc": "2026-07-25T00:04:34.748296Z",
+  "log": "/home/glmrunner/gemma4-h200-ngram-high-load-bypass/THRESHOLD_EXPERIMENT_OWNER.log",
+  "pid": 206226,
+  "start_ticks": 5258546,
+  "unit_manager": "pid"
+}

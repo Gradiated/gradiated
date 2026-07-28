@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "bound_at_utc": "2026-07-24T16:05:43Z",
+  "classification": "ngram_triton_target_verify_qlen_mask",
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "layers": 60,
+    "attention": "50 sliding-window-1024 layers and 10 full-attention layers",
+    "query_heads": 32,
+    "kv_heads": 16,
+    "head_dim": 256
+  },
+  "runtime": {
+    "release": "sglang v0.5.13",
+    "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "launch_sha256": "8349853a7eac9e73211f5d3081c834c05f78e0fd292ddbe5acb921b1824a523d",
+    "prefill_attention_backend": "triton",
+    "decode_attention_backend": "triton",
+    "kv_cache_dtype": "fp8_e5m2",
+    "page_size": 1,
+    "max_running_requests": 32,
+    "chunked_prefill_size": 2048,
+    "draft_tokens_per_request": 12
+  },
+  "checkpoint": {
+    "resident_path": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint",
+    "total_bytes": 62578655208,
+    "manifest_path": "../gemma4_h200_ngram_decode_equivalent_verifier/CHECKPOINT_MANIFEST.json",
+    "manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6"
+  },
+  "source": {
+    "ngram_worker": {
+      "path": "../gemma4_h200_ngram_tree_verify_attention/inputs/source/ngram_worker.py",
+      "sha256": "27721b777cae08657ec9854ec0137a0db50afd49d84809503312fa43e399b554"
+    },
+    "ngram_info": {
+      "path": "../gemma4_h200_ngram_tree_verify_attention/inputs/source/ngram_info.py",
+      "sha256": "ffa88c663e1893c306710ac801da0693d8248ebcfd1a5bc705c157f90657af1c"
+    },
+    "triton_backend": {
+      "path": "../gemma4_h200_ngram_tree_verify_attention/inputs/source/triton_backend.v0.5.13.py",
+      "sha256": "7bc3ae9ef1be59ec07734df442c077a07fb54c28007747f53a552bb81e8e8e2d"
+    },
+    "extend_attention": {
+      "path": "../gemma4_h200_ngram_tree_verify_attention/inputs/source/extend_attention.v0.5.13.py",
+      "sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1"
+    }
+  },
+  "evidence": {
+    "quality_terminal": {
+      "path": "../gemma4_h200_ngram_decode_equivalent_production_validation/artifacts/quality-final-20260724t1304z/TERMINAL.json",
+      "sha256": "b4e52f2471444db7386979029932f528cbf988660a1db1af0ba98d3c3b33cbe7",
+      "result": "AR and NGRAM both GPQA 55/198 and TauBench 10/165; paired 3-point non-inferiority passed"
+    },
+    "wave_terminal": {
+      "path": "../gemma4_h200_ngram_wave_batching_sustainable/artifacts/wave-adoption-20260724t155535z/retrieved/out/FINAL_TERMINAL.json",
+      "sha256": "54ebd37d48d2bc4508aaf3ecc89c08ddf8bc6731719b7443b356cee0939a4f63"
+    },
+    "wave_rows": {
+      "path": "../gemma4_h200_ngram_wave_batching_sustainable/artifacts/wave-adoption-20260724t155535z/retrieved/out/waves.jsonl",
+      "sha256": "5b35ed99e44c0c9526d945eb1ebc51722488fd7bcdd56f31305e6296472b4fe1"
+    },
+    "wave_requests": {
+      "path": "../gemma4_h200_ngram_wave_batching_sustainable/artifacts/wave-adoption-20260724t155535z/retrieved/out/requests.jsonl",
+      "sha256": "d42ca5c7e641e783798adb9c6a9ba3e0439415060599570b9ce784afb5bee748"
+    },
+    "tree_attention_trace": {
+      "attention_fraction": 0.6265755123882897,
+      "launches": 900,
+      "trace_attention_microseconds": 1488205.758,
+      "closed_variants": [
+        "BLOCK_M=16",
+        "BLOCK_M=32"
+      ]
+    }
+  },
+  "candidate_contract": {
+    "full_mask_booleans_at_representative_c32": 1622784,
+    "qlen_mask_booleans_at_c32": 4608,
+    "representation_reduction_ratio": 352.1666666666667,
+    "intervention": "Preserve the official 12x12 tree mask and change only NGRAMWorker full-prefix materialization plus Triton target-verify mask indptr/buffer and suffix addressing.",
+    "falsifier": "Incorrect sliding/full exact component, non-positive whole-request bound, endpoint token/usage/finish mismatch after observer localization, or non-positive fresh c32 pair."
+  }
+}
+

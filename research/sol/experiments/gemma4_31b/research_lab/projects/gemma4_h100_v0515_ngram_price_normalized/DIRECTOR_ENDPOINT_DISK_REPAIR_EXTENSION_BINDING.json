@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "decision": "extend_same_project_disk_repair_after_external_agent_transport_outage",
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "bench_id": "h100-v0515-endpoint-e00jjdbxgvxwbzbfsr",
+  "prior_binding": "DIRECTOR_ENDPOINT_DISK_REPAIR_BINDING.json",
+  "prior_binding_sha256": "a1d5a9e8546b4c258e5a6d7bc1e1c3dba4930082099a6a8770d676c38fe42257",
+  "resident_contents": "H100_ENDPOINT_DISK_REPAIR_CONTENTS.json",
+  "resident_contents_sha256": "76e6c486698256f98639536a7ccfef838b755199a3093309cf1e5b7758de4a98",
+  "external_failure_evidence": {
+    "observed_utc": "2026-07-25T09:38:05Z/2026-07-25T09:46:07Z",
+    "latest_stderr": "runtime/traces/20260725T094518Z-1784972718679934613-researcher-gemma4_h100_v0515_ngram_price_normalized.stderr.log",
+    "latest_stderr_sha256": "6ede0d0491ca083d2c797d0d150a6c073a297d38e9020f0f4c4e04f41d498403",
+    "latest_trace": "runtime/traces/20260725T094518Z-1784972718679934613-researcher-gemma4_h100_v0515_ngram_price_normalized.jsonl",
+    "latest_trace_sha256": "72aae2cfdca0e1f10635b1c9681cc037ed6c956df38d51553e6bf2dead022d32",
+    "classification": "external_codex_transport_unavailable_before_researcher_turn",
+    "error": "HTTP 503 biscuit_baker_service_me_circuit_open",
+    "bench_claimed": false,
+    "project_mutated": false,
+    "scientific_invocation_started": false
+  },
+  "unchanged_scientific_contract": {
+    "endpoint": "Run only the sole unconsumed 791-request endpoint exactly once after every original disk, image, checkpoint, packet, runtime, and server gate passes.",
+    "forbidden": [
+      "provider mutation by the researcher",
+      "checkpoint deletion or mutation",
+      "replaying the consumed 171-request discriminator",
+      "changing the image, model, runtime, workload, or scientific contract",
+      "marking endpoint consumption before the first endpoint request is submitted"
+    ]
+  },
+  "budgets": {
+    "authorized_spend_usd": 12.5,
+    "current_actual_spend_usd": 5.2078602563,
+    "repair_release_deadline_utc": "2026-07-25T10:45:00Z",
+    "watchdog_deadline_utc": "2026-07-25T10:50:00Z",
+    "watchdog_extension_maximum_usd_at_2_95_per_hour": 1.7208333333
+  },
+  "terminal_contract": {
+    "success": "Persist the endpoint terminal, request-level quality/economic artifacts, exact identities, consumption markers, and release the bench.",
+    "failure": "Persist a typed terminal distinguishing pre-science disk/server failure from endpoint submission, record endpoint_sample_consumed from per-request evidence, and release the bench."
+  }
+}

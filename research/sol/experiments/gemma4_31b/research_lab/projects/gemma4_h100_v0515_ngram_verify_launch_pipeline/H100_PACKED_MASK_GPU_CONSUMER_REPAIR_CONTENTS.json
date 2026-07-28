@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+  "result": "claimed_for_bound_gpu_consumer_replacement_owner",
+  "contents_artifact": "gemma4_h100_v0515_ngram_verify_launch_pipeline/H100_PACKED_MASK_GPU_CONSUMER_REPAIR_CONTENTS.json",
+  "director_binding": "gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_GPU_CONSUMER_REPAIR_BINDING.json",
+  "director_binding_sha256": "9d4d9432ae10556f95d22e3ac866f0bd6bf81f353ef8f1e3a2562b917726d6ee",
+  "inert_owner_audit": "gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_ENDPOINT_INERT_OWNER_AUDIT.json",
+  "inert_owner_audit_sha256": "645a6a259aa3faf38bb28ab5a7ebb1c13fe09a35893fb792c0db3f274e022ea0",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "checkpoint": "The exact immutable eight-file 59-GiB checkpoint remains resident and hash-verified; do not restage.",
+  "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with the exact project-local candidate source resident.",
+  "workload": "The fresh 791-request workload at indices 61000..61790 is constructed and unconsumed; verify its hash and novelty before use without reconstructing it.",
+  "candidate": "single_packed_cpu_full_mask_staging; unchanged.",
+  "server_state": "No scientific server or arm was launched by the inert owner. The replacement owner must cross directly into the bound server and endpoint consumer.",
+  "next": "Priority-8500 may retain the existing claim, verify the GPU-consumer-repair binding and resident hashes, launch one bounded replacement owner, and run only the bound stock/candidate endpoint pair. Persist typed repair artifacts and release by 2026-07-25T17:30:00Z.",
+  "ssh_identity": "Read the current host, glmrunner user, and known-hosts namespace from runtime/gpus.json and use /root/.config/nebius/glm-campaign/ssh_ed25519."
+}

@@ -1,0 +1,9 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/h100_execution_owner.py",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/h100_execution_owner.py",
+  "ready_sha256": "d859c1f89dfad23ac5eb6c4e9e85abc04bf10d35401d3b6463c8484282fcf3a3",
+  "requested_at_utc": "2026-07-25T07:14:01.073027Z",
+  "retry_scope": "Retry only the unstarted 171-request discriminator using the already staged and verified packet/checkpoint and healthy container gemma4-h100-v0515; no endpoint unless original gates pass.",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

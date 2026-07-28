@@ -1,0 +1,18 @@
+{
+  "classification": "training_consumer_complete_prefill_group_repair",
+  "diagnostic": "The pairwise offset-zero selector encountered multiple early nonmatches before the unique final-prompt row. Group all rows first, then select exactly one hash-derived prompt-tail match and reject every other ambiguity.",
+  "execution_check": {
+    "artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/artifacts/h200-capture-train-20260726t2037z/repair-18-load-capture-check.json",
+    "sha256": "a09df905e34d55dd307fa620dcccbc189f2ed85fcd2a6d8f2801754e91aeb40b",
+    "result": "11488 capture keys from 90 retained chunks"
+  },
+  "mutable_files": {
+    "train_and_evaluate.py": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/train_and_evaluate.py",
+      "sha256": "2e7d7d0bdd2503e8df9ed00e4827fe46107c1d7aa1e38186d84fbf2f3caa9fcd"
+    }
+  },
+  "repair_id": "repair-18",
+  "retry_scope": "training_holdout_consumer_only_with_complete_prefill_group_selection",
+  "schema_version": 1
+}

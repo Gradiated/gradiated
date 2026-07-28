@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "type": "director_h200_ready_repair",
+  "generation": 3,
+  "issued_at_utc": "2026-07-26T20:20:00Z",
+  "project": "gemma4_causal_parallel_offset_head",
+  "decision": "Reject repair-2 READY before provider creation because its owner cannot populate the empty cold bench with the bound checkpoint.",
+  "reservation": {
+    "authorized_usd": 14.0,
+    "durable": true,
+    "reserved_at": "2026-07-26T19:49:01.745530Z",
+    "reservation_clears_spend_gate_only": true
+  },
+  "rejected_ready": {
+    "path": "H200_CAPTURE_TRAIN_READY.json",
+    "sha256": "8436716b15785247fc637796033007792bcc224376f881c00b115cff12c12ec1",
+    "owner_path": "run_h200_capture_train_owner.py",
+    "owner_sha256": "ceede7e73c373d1222585c20f0681e079c3eb91d321838cf423c4861400c22ae",
+    "classification": "cold_checkpoint_stage_missing"
+  },
+  "evidence": {
+    "gpu_inventory": "empty",
+    "provider_resources_created": false,
+    "owner_behavior": "The owner transfers and unpacks only the small source packet. It accepts a remote --checkpoint path, then the capture script immediately sha256s model-00001-of-00002.safetensors there; no checkpoint manifest reconciliation, transfer, atomic finalization, or resumable stage exists.",
+    "admission_requirement": "DIRECTOR_CAUSAL_HEAD_H200_ADMISSION_20260726T1945Z.json requires staging the exact checkpoint on the new H200 lifecycle."
+  },
+  "repair_contract": {
+    "profile": "execution",
+    "provider_create_allowed": false,
+    "gpu_claim_allowed": false,
+    "scientific_samples_consumed": 0,
+    "preserve": [
+      "all immutable scientific bindings and hashes",
+      "the exact checkpoint, image, c32 workload, 4096/512 split, 16.054-token gate, and single capture/train/holdout cycle",
+      "repair-2 multistage capture preservation, later-consumer resume, holdout/head retrieval, and mutable repair-packet rebuild",
+      "zero endpoint-pair authority"
+    ],
+    "required_changes": [
+      "Bind the authoritative controller-local immutable checkpoint manifest and source directory.",
+      "Inside the same durable owner and only after claiming the director-assigned cold H200, reconcile remote size and hash state, transfer only missing or mismatched checkpoint files to temporary names, verify them, and atomically finalize the exact remote checkpoint.",
+      "Persist a controller-local checkpoint-stage terminal with source manifest identity, remote file identities, and the final remote path before capture starts.",
+      "Make checkpoint staging resumable under the live repair handshake without deleting matched immutable files or releasing the claim.",
+      "Keep the repair-2 capture, training, holdout, retrieval, heartbeat, and scientific-submission contracts unchanged.",
+      "Atomically replace H200_CAPTURE_TRAIN_READY.json with the corrected owner sha256 and this repair-3 binding."
+    ],
+    "next_ready_path": "H200_CAPTURE_TRAIN_READY.json",
+    "owner_path": "run_h200_capture_train_owner.py"
+  },
+  "portfolio": {
+    "causal_head": "active at 9790/execution and provider-ineligible pending corrected cold-stage READY",
+    "packed_streaming_accuracy": "active independently at 9775/deep/$0 with no GPU eligibility"
+  }
+}

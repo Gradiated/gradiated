@@ -1,0 +1,21 @@
+{
+  "command": [
+    "ssh",
+    "-i",
+    "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "-o",
+    "BatchMode=yes",
+    "-o",
+    "StrictHostKeyChecking=yes",
+    "-o",
+    "UserKnownHostsFile=/root/.config/nebius/glm-campaign/known_hosts",
+    "glmrunner@89.169.103.97",
+    "true"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_adaptive_depth6_cuda_graph",
+  "launched_at_utc": "2026-07-25T16:46:39.953110Z",
+  "log": "/root/workspace/artifacts/stock-assert-localization/ssh-test.log",
+  "pid": 911489,
+  "start_ticks": 111401735,
+  "unit_manager": "pid"
+}

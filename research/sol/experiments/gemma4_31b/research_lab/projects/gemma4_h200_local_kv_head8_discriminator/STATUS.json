@@ -1,18 +1,18 @@
 {
-  "status": "blocked",
+  "status": "terminal",
   "priority": 620,
-  "researcher_profile": "deep",
-  "summary": "The phase-two schedule and immutable checkpoint were bound, but the retained 100-GiB H200 boot disk has only 50,650,841,088 free bytes, so the 62,578,655,208-byte checkpoint cannot be staged; no scientific invocation or candidate arm was consumed.",
-  "next_action": "Director storage disposition: provide at least 66,500,000,000 free bytes on a lab-owned filesystem attached to the retained H200 (about 15.85 GB more than observed), mark the maintenance bench ready, then resume this exact frozen owner and gated sequence without changing the schedule.",
+  "researcher_profile": "execution",
+  "summary": "The local-KV8 conversion is scientifically closed: the one producer passed both fidelity gates, but the repaired exact consumer produced repetitive gibberish on all 3/3 coherence prompts, so retrieval and c32 were not invoked. The requested read-only overlay recovery then resumed from 585,953,280 bytes and completed the exact 2,202,022,184-byte SHA-256-verified local overlay without claiming the H200.",
+  "next_action": "Terminal: director cleanup may drain and retire the retained H200; do not reopen this local-KV8 architecture line.",
   "provider_mutation": "forbidden_researcher_uses_and_releases_retained_director_bench",
   "authorized_spend_usd": 18.0,
-  "provider_spend_usd": 1.04,
-  "provider_compute_spend_usd": 1.0253846259077774,
-  "provider_spend_basis": "Prior conservative charge was $1.03. The phase-two staging preflight claimed the retained bench for 1.775414 seconds, adding $0.001213 at $2.46/hour; cumulative spend is rounded upward to $1.04 including the separately unmetered retained disk.",
-  "remaining_reserved_usd": 16.96,
+  "provider_spend_usd": 3.30,
+  "provider_compute_spend_usd": 3.289898475257594,
+  "provider_spend_basis": "Prior exact project compute exposure was $3.2101861652. Consumer SPEND.json records 116.652160 claimed seconds and $0.0797123101 at $2.46/hour; cumulative project compute is $3.2898984753 and the conservative charge is rounded upward to $3.30 including separately unmetered retained-disk pennies.",
+  "remaining_reserved_usd": 14.70,
   "active_session": null,
   "bench_id": "h200-local-kv8-e00tnyt66qqx2n7qqg",
-  "bench_state": "maintenance_insufficient_boot_disk_checkpoint_not_staged_no_server",
+  "bench_state": "retired_cleanup_verified_zero_provider_resources_overlay_verified_local",
   "claim_deadline_utc": "2026-07-19T16:45:00Z",
   "lifecycle_deadline_utc": "2026-07-19T17:15:00Z",
   "required_saving_seconds_per_request": 0.0181651588906249,
@@ -64,6 +64,7 @@
     ]
   },
   "director_bench_spec": "artifacts/director-bench/BENCH_SPEC.json",
+  "storage_resize": "artifacts/director-bench/STORAGE_RESIZE.json",
   "phase2": {
     "classification": "bounded_gqa_conversion_and_conditional_endpoint_admitted",
     "checkpoint_identity": "../gemma4_h200_attention_endpoint_integration/IDENTITIES.json",
@@ -95,7 +96,16 @@
       "scientific_started": false,
       "candidate_invocations": 0,
       "bench_release_condition": "maintenance"
+    },
+    "overlay_retrieval": {
+      "terminal": "artifacts/local-kv8-overlay-retrieval-20260719t1507z/RETRIEVAL_TERMINAL.json",
+      "pass": true,
+      "bytes_before": 585953280,
+      "bytes_after": 2202022184,
+      "sha256": "e29faa6768d22aa6cae56bb15253d02f6af0aca2abdd6d4f0092a436cea05780",
+      "local_overlay": "artifacts/local-kv8-conversion-20260719t1402z/overlay.safetensors",
+      "gpu_claimed": false
     }
   },
-  "last_result_classification": "phase2_typed_external_lab_storage_capacity_preinvocation"
+  "last_result_classification": "local_kv8_coherence_negative_zero_of_three_with_overlay_retrieval_pass"
 }

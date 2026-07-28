@@ -1,0 +1,61 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": null,
+  "contents": {
+    "artifacts": "artifacts/tail-overlap-20260725t020427z",
+    "caches": "Image, checkpoint, CUDA graph, JIT, tokenizer, and runtime caches retained.",
+    "candidate": "The final-tail overlap scheduling trajectory is unconsumed.",
+    "candidate_sample_consumed": false,
+    "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+    "component_result": "exact_positive_threshold_component_but_full_trajectory_reject",
+    "component_science_consumed": true,
+    "conditional_gate": "Retain only on normalized 1,036/1,036 semantic equality, zero failures, bounded transient queueing, final queue zero, stable full waves, and at most $0.14/M.",
+    "error": null,
+    "expected_first_arms": "Exactly one candidate-only 1,036-request trajectory with the final c12 submitted at its planned arrival while wave 31 remains active.",
+    "full_result": "full_trajectory_reject",
+    "full_science_consumed": true,
+    "gpu_processes": "present or inspection uncertain",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "metrics_guard_scientific_invocation_started": false,
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Claim only for priority-8300 gemma4_h200_ngram_tail_overlap and release by 02:20Z under the verified 02:30Z watchdog.",
+    "project": "gemma4_h200_ngram_tail_overlap",
+    "remote_inspection": "{\"Status\":\"running\",\"Running\":true,\"Paused\":false,\"Restarting\":false,\"OOMKilled\":false,\"Dead\":false,\"Pid\":27082,\"ExitCode\":0,\"Error\":\"\",\"StartedAt\":\"2026-07-25T02:04:34.987110083Z\",\"FinishedAt\":\"0001-01-01T00:00:00Z\"}\n27211, 122796\n",
+    "remote_state": {
+      "owner_live": false,
+      "scientific_terminal_present": false
+    },
+    "repair_scope": "No source repair is admitted. Change only final-tail submission scheduling; do not apply the rejected frontier source stack.",
+    "residual_bottleneck": "The source stack was economically flat, while the final c12 tail missed its planned release by 9.134835639 seconds because of a client-side whole-wave barrier.",
+    "result": "recoverable_or_typed_remote_failure",
+    "runtime": "Pinned SGLang v0.5.13 FP8, page-1 E5M2 KV, native depth-12 NGRAM.",
+    "schema_version": 1,
+    "scientific_invocation_started": false,
+    "server_state": "Recoverable attempt retained for in-place director/researcher inspection; do not cold-restart.",
+    "suffix_result": "exact_suffix",
+    "suffix_science_consumed": true
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T02:30:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-ngram-verifier-h200-20260725t0230-watchdog.service",
+      "main_pid": 250024,
+      "unit": "gemma4-ngram-verifier-h200-20260725t0230-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-24T09:29:46.678511Z",
+  "resource": {
+    "disk_id": "computedisk-e00yvdxaa48q0t115t",
+    "disk_name": "gemma4-ngram-verifier-h200-20260724t0927z-boot",
+    "instance_id": "computeinstance-e00kcm9nfhwt7e7gbc",
+    "instance_name": "gemma4-ngram-verifier-h200-20260724t0927z"
+  },
+  "status": "maintenance",
+  "updated_at": "2026-07-25T02:06:09.933882Z"
+}

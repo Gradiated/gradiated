@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "model": "google/gemma-4-31B-it revision b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "checkpoint": "Cold bench; exact 62,546,338,248-byte checkpoint is bound for hash-aware staging to /home/glmrunner/hybrid-55l5g/checkpoint inside the retained claim.",
+  "image": "Pinned docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6; pull is retained-claim setup.",
+  "runtime": "Verified Ubuntu 24.04 CUDA 13 guest, NVIDIA H200 driver 580.159.04 and 143771 MiB; no live server or GPU process.",
+  "caches": "No checkpoint or image cache verified.",
+  "artifacts": "projects/gemma4_hybrid_attention_placement_codesign/{DIRECTOR_HYBRID_55L5G_EXTENDED_H200_CLAIM_20260727T0218Z.json,H200_55L5G_REPLACEMENT_LIFECYCLE_20260727T0310Z.json,HYBRID_55L5G_H200_EXECUTION_TERMINAL.json}",
+  "director_binding": "gemma4_hybrid_attention_placement_codesign/DIRECTOR_HYBRID_55L5G_EXTENDED_H200_CLAIM_20260727T0218Z.json",
+  "scientific_terminal": "The positive attention component is consumed; exactly one matched stock/candidate exact-c32 endpoint pair remains unconsumed.",
+  "server_state": "No server, worker, claim, or scientific invocation exists.",
+  "next": "Sole claimant is gemma4_hybrid_attention_placement_codesign. Implement only run_h200_55l5g_endpoint_runtime.py, launch the exact detached owner by 02:24Z, retain the claim through setup/repair, run one matched endpoint pair, and release by 03:05Z."
+}

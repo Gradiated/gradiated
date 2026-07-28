@@ -99,24 +99,57 @@ OLD = '''        qkv, _ = self.qkv_proj(hidden_states)
 NEW = '''        qkv, _ = self.qkv_proj(hidden_states)
         use_fused_kv = False
         if self.is_kv_shared_layer:
-            raise RuntimeError("QKV epilogue candidate excludes KV-shared layers")
-        from qkv_epilogue_discriminator import qkv_norm_rope_inplace
+            import json
+            import os
+            from pathlib import Path
 
-        qkv_norm_rope_inplace(
-            qkv,
-            self.q_norm.weight.data,
-            self.k_norm.weight.data,
-            positions,
-            self.rotary_emb.cos_sin_cache,
-            self.num_heads,
-            self.num_kv_heads,
-            self.head_dim,
-            self.q_norm.eps,
-        )
-        q, k, v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)
-        q = q.unflatten(-1, (self.num_heads, self.head_dim))
-        k = k.unflatten(-1, (self.num_kv_heads, self.head_dim))
-        v = v.unflatten(-1, (self.num_kv_heads, self.head_dim))
+            audit_path = os.environ.get("QKV_EPILOGUE_AUDIT")
+            if audit_path:
+                with Path(audit_path).open("a") as audit:
+                    audit.write(json.dumps({
+                        "dispatch": "stock_qkv_kv_shared_assistant",
+                        "layer_id": self.layer_id,
+                        "is_kv_shared_layer": True,
+                    }, sort_keys=True) + "\\n")
+            q, _, _ = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)
+            q = q.unflatten(-1, (self.num_heads, self.head_dim))
+            q = self.q_norm(q)
+            q = q.flatten(-2, -1)
+            dummy_k = torch.zeros_like(q[:, : self.kv_size])
+            q, _ = self.rotary_emb(positions, q, dummy_k)
+            q = q.unflatten(-1, (self.num_heads, self.head_dim))
+            k = None
+            v = None
+        else:
+            import json
+            import os
+            from pathlib import Path
+            from qkv_epilogue_discriminator import qkv_norm_rope_inplace
+
+            audit_path = os.environ.get("QKV_EPILOGUE_AUDIT")
+            if audit_path:
+                with Path(audit_path).open("a") as audit:
+                    audit.write(json.dumps({
+                        "candidate_symbol": "_qkv_norm_rope_inplace_kernel",
+                        "dispatch": "fused_qkv_target",
+                        "layer_id": self.layer_id,
+                        "is_kv_shared_layer": False,
+                    }, sort_keys=True) + "\\n")
+            qkv_norm_rope_inplace(
+                qkv,
+                self.q_norm.weight.data,
+                self.k_norm.weight.data,
+                positions,
+                self.rotary_emb.cos_sin_cache,
+                self.num_heads,
+                self.num_kv_heads,
+                self.head_dim,
+                self.q_norm.eps,
+            )
+            q, k, v = qkv.split([self.q_size, self.kv_size, self.kv_size], dim=-1)
+            q = q.unflatten(-1, (self.num_heads, self.head_dim))
+            k = k.unflatten(-1, (self.num_kv_heads, self.head_dim))
+            v = v.unflatten(-1, (self.num_kv_heads, self.head_dim))
 '''
 
 

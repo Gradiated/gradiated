@@ -1,0 +1,44 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": null,
+  "contents": {
+    "artifacts": "artifacts/qlen-mask-20260724t165142z",
+    "caches": "Image, checkpoint, CUDA graph, JIT, tokenizer, and runtime caches retained.",
+    "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+    "conditional_gate": "Full attention is exact and consumed. Run only the corrected sliding observer; on exact positive evidence, run only the unconsumed repair-v2 candidate endpoint against the persisted 0.6049806232813353 s/request control.",
+    "error": "RuntimeError('typed_staging_boundary:extract')",
+    "expected_first_arms": "One corrected stock-layout sliding exact component, then conditionally one candidate-only c32 endpoint. No control or full-attention replay.",
+    "gpu_processes": "none",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_h200_ngram_qlen_mask_target_verify",
+    "residual_bottleneck": "The repair-v2 sliding control used global 4226-key mask rows with a unified local consumer that indexed 1036-key rows; exactness of the unchanged QLEN candidate remains unmeasured against a correctly window-sliced control.",
+    "result": "nonpositive_or_invalid",
+    "runtime": "Pinned SGLang v0.5.13 image and compilation caches retained; accelerator unoccupied.",
+    "schema_version": 1,
+    "server_state": "Component/endpoint containers removed; accelerator unoccupied."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "idle_since": "2026-07-24T16:54:39.865466Z",
+  "lifecycle": {
+    "deadline_utc": "2026-07-24T19:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-ngram-verifier-h200-20260724t1900-watchdog.service",
+      "main_pid": 4190394,
+      "unit": "gemma4-ngram-verifier-h200-20260724t1900-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-24T09:29:46.678511Z",
+  "resource": {
+    "disk_id": "computedisk-e00yvdxaa48q0t115t",
+    "disk_name": "gemma4-ngram-verifier-h200-20260724t0927z-boot",
+    "instance_id": "computeinstance-e00kcm9nfhwt7e7gbc",
+    "instance_name": "gemma4-ngram-verifier-h200-20260724t0927z"
+  },
+  "status": "available",
+  "updated_at": "2026-07-24T16:54:39.865466Z"
+}

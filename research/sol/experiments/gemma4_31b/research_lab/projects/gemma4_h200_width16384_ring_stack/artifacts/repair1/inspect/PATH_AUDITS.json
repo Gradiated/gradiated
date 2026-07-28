@@ -1,0 +1,13 @@
+{
+  "pass": true,
+  "ring": {
+    "global_paged_e5m2_unchanged_by_construction": true,
+    "pass": true,
+    "server_construction_reservation_seen": true
+  },
+  "width": {
+    "layers": 60,
+    "pass": true,
+    "rows": 180
+  }
+}

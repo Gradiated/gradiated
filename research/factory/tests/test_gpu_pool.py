@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import io
 import json
 import tempfile
 import threading
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 
-from grad_research.gpu_pool import GpuPool, GpuPoolError
+from grad_research.gpu_pool import GpuPool, GpuPoolError, main as gpu_pool_main
 
 
 def bench_spec() -> dict:
@@ -38,6 +40,174 @@ def bench_spec() -> dict:
 
 
 class GpuPoolTests(unittest.TestCase):
+    def test_rejects_runtime_inventory_directory_as_lab_root(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            runtime = lab / "runtime"
+            runtime.mkdir()
+            inventory = runtime / "gpus.json"
+            inventory.write_text(
+                json.dumps({"schema_version": 1, "updated_at": "", "benches": {}})
+            )
+
+            with self.assertRaisesRegex(GpuPoolError, "pass the lab root"):
+                GpuPool(runtime)
+
+            self.assertFalse((runtime / "runtime").exists())
+
+    def test_rejects_inventory_file_as_lab_root(self):
+        with tempfile.TemporaryDirectory() as directory:
+            inventory = Path(directory) / "gpus.json"
+            inventory.write_text(
+                json.dumps({"schema_version": 1, "updated_at": "", "benches": {}})
+            )
+
+            with self.assertRaisesRegex(GpuPoolError, "pass the lab root"):
+                GpuPool(inventory)
+
+    def test_cli_can_register_a_nonclaimable_maintenance_bench(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            spec_path = lab / "bench.json"
+            spec_path.write_text(json.dumps(bench_spec()))
+            stdout = io.StringIO()
+
+            with redirect_stdout(stdout):
+                result = gpu_pool_main(
+                    [
+                        "--lab",
+                        str(lab),
+                        "register",
+                        "--spec",
+                        str(spec_path),
+                        "--condition",
+                        "maintenance",
+                    ]
+                )
+
+            self.assertEqual(0, result)
+            bench = json.loads(stdout.getvalue())
+            self.assertEqual("maintenance", bench["status"])
+            self.assertIsNone(bench["idle_since"])
+            with self.assertRaisesRegex(GpuPoolError, "no available GPU bench"):
+                GpuPool(lab).claim("mtp", bench_id="gemma-h200-1")
+
+    def test_cli_show_reads_one_bench_from_keyed_inventory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            GpuPool(lab).register(bench_spec())
+            stdout = io.StringIO()
+
+            with redirect_stdout(stdout):
+                result = gpu_pool_main(
+                    [
+                        "--lab",
+                        str(lab),
+                        "show",
+                        "--bench",
+                        "gemma-h200-1",
+                    ]
+                )
+
+            self.assertEqual(0, result)
+            bench = json.loads(stdout.getvalue())
+            self.assertEqual("gemma-h200-1", bench["id"])
+            self.assertEqual("available", bench["status"])
+
+    def test_cli_accepts_inline_contents_object(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            pool = GpuPool(lab)
+            pool.register(bench_spec())
+            pool.claim("mtp", bench_id="gemma-h200-1")
+
+            with redirect_stdout(io.StringIO()):
+                result = gpu_pool_main(
+                    [
+                        "--lab",
+                        str(lab),
+                        "update",
+                        "--project",
+                        "mtp",
+                        "--contents",
+                        '{"server":"running","notes":"inline update"}',
+                    ]
+                )
+
+            self.assertEqual(0, result)
+            bench = GpuPool(lab).snapshot()["benches"][0]
+            self.assertEqual("running", bench["contents"]["server"])
+            self.assertEqual("inline update", bench["contents"]["notes"])
+
+    def test_cli_heartbeat_and_release_accept_claim_bench_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            pool = GpuPool(lab)
+            pool.register(bench_spec())
+            pool.claim("mtp", bench_id="gemma-h200-1")
+
+            with redirect_stdout(io.StringIO()):
+                gpu_pool_main(
+                    [
+                        "--lab",
+                        str(lab),
+                        "heartbeat",
+                        "--project",
+                        "mtp",
+                        "--bench",
+                        "gemma-h200-1",
+                    ]
+                )
+                gpu_pool_main(
+                    [
+                        "--lab",
+                        str(lab),
+                        "release",
+                        "--project",
+                        "mtp",
+                        "--bench",
+                        "gemma-h200-1",
+                        "--condition",
+                        "ready",
+                    ]
+                )
+
+            bench = GpuPool(lab).snapshot()["benches"][0]
+            self.assertEqual("available", bench["status"])
+            self.assertIsNone(bench["claim"])
+
+    def test_claim_bench_identity_rejects_a_mismatch(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            pool = GpuPool(lab)
+            pool.register(bench_spec())
+            pool.claim("mtp", bench_id="gemma-h200-1")
+
+            with self.assertRaisesRegex(GpuPoolError, "owns gemma-h200-1"):
+                pool.heartbeat("mtp", bench_id="other-bench")
+
+    def test_release_can_compare_the_claim_generation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            current = ["2026-07-18T11:00:00Z"]
+            pool = GpuPool(lab, now=lambda: current[0])
+            pool.register(bench_spec())
+            first = pool.claim("mtp", bench_id="gemma-h200-1")
+            first_claimed_at = first["claim"]["claimed_at"]
+            pool.release("mtp", expected_claimed_at=first_claimed_at)
+            current[0] = "2026-07-18T11:01:00Z"
+            second = pool.claim("mtp", bench_id="gemma-h200-1")
+
+            with self.assertRaisesRegex(
+                GpuPoolError, "GPU claim generation changed"
+            ):
+                pool.release("mtp", expected_claimed_at=first_claimed_at)
+
+            self.assertEqual(
+                second["claim"]["claimed_at"],
+                pool.snapshot()["benches"][0]["claim"]["claimed_at"],
+            )
+
     def test_researchers_claim_exclusively_and_release_preserves_resident_state(self):
         with tempfile.TemporaryDirectory() as directory:
             lab = Path(directory)
@@ -173,16 +343,62 @@ class GpuPoolTests(unittest.TestCase):
     def test_draining_claim_finishes_without_becoming_available(self):
         with tempfile.TemporaryDirectory() as directory:
             lab = Path(directory)
-            pool = GpuPool(lab)
-            pool.register(bench_spec())
+            current = ["2026-07-18T11:00:00Z"]
+            spec = bench_spec()
+            spec["lifecycle"]["provider_started_at_utc"] = (
+                "2026-07-18T10:55:00Z"
+            )
+            pool = GpuPool(lab, now=lambda: current[0])
+            pool.register(spec)
             pool.claim("mtp", bench_id="gemma-h200-1")
 
             draining = pool.drain("gemma-h200-1")
             self.assertTrue(draining["drain_after_release"])
             released = pool.release("mtp")
             self.assertEqual("draining", released["status"])
+            current[0] = "2026-07-18T12:00:00Z"
             retired = pool.retire("gemma-h200-1", cleanup_verified=True)
             self.assertEqual("retired", retired["status"])
+            self.assertEqual(
+                "provider_start_to_cleanup_verification",
+                retired["provider_exposure"]["basis"],
+            )
+            self.assertEqual(3900.0, retired["provider_exposure"]["seconds"])
+            self.assertAlmostEqual(
+                3900.0 * 2.65 / 3600.0,
+                retired["provider_exposure"]["cost_usd"],
+            )
+            self.assertTrue(
+                retired["provider_exposure"]["covers_pre_registration"]
+            )
+            event = json.loads(
+                (lab / "runtime" / "gpu_events.jsonl").read_text().splitlines()[-1]
+            )
+            self.assertEqual(
+                retired["provider_exposure"], event["provider_exposure"]
+            )
+
+    def test_retire_labels_registration_based_exposure_as_partial(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            current = ["2026-07-18T11:00:00Z"]
+            pool = GpuPool(lab, now=lambda: current[0])
+            pool.register(bench_spec())
+            current[0] = "2026-07-18T12:00:00Z"
+
+            retired = pool.retire("gemma-h200-1", cleanup_verified=True)
+
+            self.assertEqual(
+                "inventory_registration_to_cleanup_verification_partial",
+                retired["provider_exposure"]["basis"],
+            )
+            self.assertEqual(3600.0, retired["provider_exposure"]["seconds"])
+            self.assertAlmostEqual(
+                2.65, retired["provider_exposure"]["cost_usd"]
+            )
+            self.assertFalse(
+                retired["provider_exposure"]["covers_pre_registration"]
+            )
 
     def test_release_after_lifecycle_deadline_fences_bench_for_director(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -206,6 +422,47 @@ class GpuPoolTests(unittest.TestCase):
             self.assertTrue(event["lifecycle_deadline_passed"])
             with self.assertRaisesRegex(GpuPoolError, "deadline has passed"):
                 pool.ready("gemma-h200-1")
+
+    def test_snapshot_fences_bench_released_before_lifecycle_deadline(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            current = ["2026-07-18T11:00:00Z"]
+            spec = bench_spec()
+            spec["lifecycle"]["deadline_utc"] = "2026-07-18T11:05:00Z"
+            pool = GpuPool(lab, now=lambda: current[0])
+            pool.register(spec)
+            pool.claim("mtp", bench_id="gemma-h200-1")
+            pool.release("mtp")
+            self.assertEqual("available", pool.snapshot()["benches"][0]["status"])
+
+            current[0] = "2026-07-18T11:06:00Z"
+            expired = pool.snapshot()["benches"][0]
+
+            self.assertEqual("draining", expired["status"])
+            self.assertIsNone(expired["idle_since"])
+            event = json.loads(
+                (lab / "runtime" / "gpu_events.jsonl").read_text().splitlines()[-1]
+            )
+            self.assertEqual("bench_lifecycle_expired", event["event"])
+            self.assertEqual("gemma-h200-1", event["bench_id"])
+
+    def test_ready_preserves_continuous_available_idle_time(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            current = ["2026-07-18T11:00:00Z"]
+            pool = GpuPool(lab, now=lambda: current[0])
+            pool.register(bench_spec())
+            original_idle_since = pool.show("gemma-h200-1")["idle_since"]
+            current[0] = "2026-07-18T11:10:00Z"
+
+            refreshed = pool.ready(
+                "gemma-h200-1", contents={"notes": "successor selected"}
+            )
+
+            self.assertEqual("available", refreshed["status"])
+            self.assertEqual(original_idle_since, refreshed["idle_since"])
+            self.assertEqual("successor selected", refreshed["contents"]["notes"])
+            self.assertEqual(current[0], refreshed["updated_at"])
 
     def test_inventory_and_events_are_durable_json(self):
         with tempfile.TemporaryDirectory() as directory:

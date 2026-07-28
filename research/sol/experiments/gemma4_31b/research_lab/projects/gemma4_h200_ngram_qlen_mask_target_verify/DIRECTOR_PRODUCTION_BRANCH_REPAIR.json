@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "decision": "production_two_stage_branch_repair",
+  "project": "gemma4_h200_ngram_qlen_mask_target_verify",
+  "priority": 7520,
+  "researcher_profile": "execution",
+  "authorized_cumulative_spend_usd": 6.0,
+  "deadline_utc": "2026-07-24T19:50:00Z",
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "bindings": {
+    "ring_live_suffix_terminal": {
+      "path": "../gemma4_h200_ngram_contiguous_swa_ring_stack/artifacts/live-suffix-repair-20260724t1820z/FINAL_TERMINAL.json",
+      "sha256": "e8cd922d8437a877c2dbef0ae45ec93ff8eeb1e996f0a201fae3611abfc3b5f5"
+    },
+    "observer_v3_terminal": {
+      "path": "artifacts/qlen-mask-20260724t165142z/retrieved/artifacts/FINAL_TERMINAL.json",
+      "sha256": "a5f5515c6be4abfb7f65659d139f9e822d0527f6bd2006911d94698465b6c7c3"
+    },
+    "invalid_candidate_launch": {
+      "path": "artifacts/qlen-mask-20260724t165142z/retrieved/artifacts/pair/candidate-launch.json",
+      "sha256": "52f0cceb05d76d95a4281c67357debf51bc943a1ace54846f71903c6ae854f29"
+    },
+    "candidate_extend_attention_sha256": "68149643e3579b24804df9b98b048b1076be5b9e98b03363bd423510ae1ec6e7",
+    "candidate_triton_backend_sha256": "2b8185bd7d39ff571bc1f1d4f83352cd95c6ea596fd15f8299a6ef1f5da109fc",
+    "candidate_ngram_worker_sha256": "eb514b8d67ac663cc4c94cf7c20a01bd09c886335bb7d8b18afd7e20c962be93",
+    "persisted_control_seconds_per_request": 0.6049806232813353,
+    "observer_v3_positive_whole_request_bound_fraction": 0.06559340011369605
+  },
+  "causal_correction": {
+    "fact": "The hash-bound candidate endpoint launch omitted --enable-deterministic-inference. TritonAttnBackend.forward_extend therefore selected the normal two-stage extend_attention_fwd branch, while observer-v3 established exactness only for _forward_extend_unified.",
+    "consequence": "The zero candidate-path audit and semantic mismatch do not measure the exact observer-v3 mechanism on the branch exercised by the endpoint.",
+    "forbidden_shortcut": "Do not add --enable-deterministic-inference or otherwise change the stock runtime settings to force the already-proven unified branch."
+  },
+  "scope": {
+    "first": "Stop the retained ring-stack server, preserve its terminal, and freeze one QLEN repair for the stock normal two-stage target-verification branch.",
+    "component": "At the first real c32 NGRAM Q12 target-verification call, prove that the production branch is extend_attention_fwd, capture its real prefix, suffix, mask, indptr, page-1 E5M2 KV, and layer geometry, and compare the full-prefix stock mask with the QLEN-only candidate on that same call.",
+    "component_gate": "Require production-path audit rows, exact output and first-logit equivalence under the existing oracle, exact token accounting, and a positive measured whole-request bound. Reuse observer-v3 full/unified evidence only as historical evidence, not as this branch gate.",
+    "conditional_endpoint": "Only after the production-branch component passes may one candidate-only c32 endpoint run against the persisted 0.6049806232813353 s/request control. Require nonzero branch audit rows, 32/32 completion, exact emitted token IDs, normalized text, finish reasons and usage, stable server state, lower service time, and no p95 regression.",
+    "repair_handshake": "Keep one durable outer owner and use the shared repair handshake for an ordinary staging, import, audit, or retrieval defect without releasing the claim."
+  },
+  "lifecycle": {
+    "watchdog_deadline_utc": "2026-07-24T20:00:00Z",
+    "binding": "DIRECTOR_2000_LIFECYCLE.json",
+    "reason": "The durable reservation arrived at 18:34Z, leaving insufficient protected time for the branch-matched component and conditional endpoint."
+  },
+  "forbidden": [
+    "control replay",
+    "observer-v3 unified component replay",
+    "ring-stack component or endpoint replay",
+    "quality replay",
+    "wave replay",
+    "10K or rolling replay",
+    "deterministic-inference setting change",
+    "backend, tile, mask-form, NGRAM-setting, concurrency, or scheduler sweep",
+    "provider creation or mutation"
+  ]
+}

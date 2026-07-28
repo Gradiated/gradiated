@@ -64,8 +64,9 @@ def main() -> None:
         ),
         "hypothesis": {
             "causal_change": (
-                "Dispatch only H200 batch-32, 384-row, max-extend-12, head-dim "
-                "256/512 target verification from stock BLOCK_M 64/32 to BLOCK_M 8."
+                "Dispatch only H200 batch-32, 384-row, max-extend-12 sliding-window "
+                "head-dim 256 target verification from stock BLOCK_M 64 to BLOCK_M 8; "
+                "retain stock BLOCK_M 32 for global head-dim 512."
             ),
             "prediction": (
                 "Fewer padded query rows and less live accumulator state lower warm "
@@ -77,7 +78,7 @@ def main() -> None:
                 "page-1 paged KV indices and FP8 E5M2 values",
                 "BF16 query/output contract",
                 "request ownership, positions, and cache accounting",
-                "stock fallback for every non-M384 geometry",
+                "stock global geometry and stock fallback for every other shape",
             ],
         },
         "shape": {

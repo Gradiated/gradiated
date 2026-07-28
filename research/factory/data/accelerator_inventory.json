@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "reviewed_at_utc": "2026-07-15T15:45:00Z",
-  "review_interval_days": 90,
+  "reviewed_at_utc": "2026-07-28T10:20:00Z",
+  "review_interval_days": 7,
   "scope": {
     "decision": "Select commercially obtainable accelerators whose architecture, software, topology, and economics make them plausible model-specific co-design targets.",
     "inclusion_rule": "Popular or strategically relevant AI accelerators with public cloud, specialist cloud, OEM platform, or single-cloud access and enough official technical detail to guide an experiment.",
@@ -47,7 +47,12 @@
     "google_tpu_v5e": {"title": "Google Cloud TPU v5e architecture", "url": "https://cloud.google.com/tpu/docs/v5e", "retrieved_at_utc": "2026-07-15T15:45:00Z", "evidence_type": "official_documentation"},
     "google_tpu_v6e": {"title": "Google Cloud TPU v6e architecture", "url": "https://cloud.google.com/tpu/docs/v6e", "retrieved_at_utc": "2026-07-15T15:45:00Z", "evidence_type": "official_documentation"},
     "aws_inferentia2": {"title": "AWS Inferentia2 architecture", "url": "https://aws.amazon.com/blogs/machine-learning/aws-inferentia2-builds-on-aws-inferentia1-by-delivering-4x-higher-throughput-and-10x-lower-latency/", "retrieved_at_utc": "2026-07-15T15:45:00Z", "evidence_type": "vendor_reported"},
-    "aws_trainium2": {"title": "Amazon EC2 Trn2 instances", "url": "https://aws.amazon.com/ec2/instance-types/trn2/", "retrieved_at_utc": "2026-07-15T15:45:00Z", "evidence_type": "vendor_reported"}
+    "aws_trainium2": {"title": "Amazon EC2 Trn2 instances", "url": "https://aws.amazon.com/ec2/instance-types/trn2/", "retrieved_at_utc": "2026-07-15T15:45:00Z", "evidence_type": "vendor_reported"},
+    "nvidia_rubin_arch": {"title": "Inside NVIDIA Rubin GPU Architecture", "url": "https://developer.nvidia.com/blog/inside-nvidia-rubin-gpu-architecture-powering-the-era-of-agentic-ai/", "retrieved_at_utc": "2026-07-28T10:20:00Z", "evidence_type": "official_documentation"},
+    "amd_cdna5": {"title": "AMD CDNA 5 architecture", "url": "https://www.amd.com/en/technologies/cdna.html", "retrieved_at_utc": "2026-07-28T10:20:00Z", "evidence_type": "official_documentation"},
+    "amd_mi455x": {"title": "AMD Instinct MI455X specifications", "url": "https://www.amd.com/en/products/accelerators/instinct/mi400/mi455x.html", "retrieved_at_utc": "2026-07-28T10:20:00Z", "evidence_type": "vendor_reported"},
+    "google_tpu7x": {"title": "Google Cloud TPU7x (Ironwood) architecture", "url": "https://docs.cloud.google.com/tpu/docs/tpu7x", "retrieved_at_utc": "2026-07-28T10:20:00Z", "evidence_type": "official_documentation"},
+    "aws_trainium3": {"title": "Amazon EC2 Trn3 UltraServers", "url": "https://aws.amazon.com/ec2/instance-types/trn3/", "retrieved_at_utc": "2026-07-28T10:20:00Z", "evidence_type": "vendor_reported"}
   },
   "architecture_profiles": {
     "nvidia-sm70": {
@@ -114,6 +119,14 @@
       "co_design_levers": ["FP4/FP8", "GDDR7 bandwidth", "96 GB single-GPU fit", "99 KiB block ceiling"],
       "source_ids": ["nvidia_blackwell_tuning"]
     },
+    "nvidia-rubin": {
+      "vendor": "NVIDIA", "family": "Rubin", "programming_target": "Rubin CUDA target (public target identifier not yet documented)", "subgroup_width": null,
+      "max_subgroups_per_unit": null, "max_blocks_per_unit": null, "register_file_per_unit_kib": null,
+      "local_memory_per_unit_kib": null, "max_local_memory_per_block_kib": null, "combined_l1_local_kib": null,
+      "matrix_generation": "Rubin Tensor Core with third-generation Transformer Engine", "architecture_features": ["nvfp4", "three_bit_lut_weights", "enhanced_tma_inline_descriptors", "activation_sparsity", "adaptive_compression", "fine_grained_dependent_kernel_triggering", "nvlink6", "mig"],
+      "co_design_levers": ["3-bit LUT weight representations", "inline TMA descriptors for MoE experts", "sparse attention intermediates", "tile-level producer-consumer overlap", "NVLink-fused communication", "22 TB/s HBM utilization"],
+      "source_ids": ["nvidia_rubin_arch"]
+    },
     "amd-cdna1": {
       "vendor": "AMD", "family": "CDNA", "programming_target": "gfx908", "subgroup_width": 64,
       "max_subgroups_per_unit": null, "max_blocks_per_unit": null, "register_file_per_unit_kib": null,
@@ -145,6 +158,14 @@
       "matrix_generation": "Matrix Core CDNA4", "architecture_features": ["mxfp4", "mxfp6", "mxfp8", "ocp_fp8", "structured_sparsity", "eight_xcd", "256_mb_infinity_cache", "gpu_partitioning"],
       "co_design_levers": ["MX-format-aware model changes", "larger LDS tiles", "XCD locality", "8 TB/s HBM", "ROCm/AITER specialization"],
       "source_ids": ["amd_rocm_specs"]
+    },
+    "amd-cdna5": {
+      "vendor": "AMD", "family": "CDNA5", "programming_target": "ROCm CDNA5 (public gfx target not yet documented)", "subgroup_width": 32,
+      "max_subgroups_per_unit": null, "max_blocks_per_unit": null, "register_file_per_unit_kib": null,
+      "local_memory_per_unit_kib": null, "max_local_memory_per_block_kib": null, "combined_l1_local_kib": null,
+      "matrix_generation": "Enhanced Matrix Core CDNA5", "architecture_features": ["wave32", "mxfp4", "mxfp6", "mxfp8", "block_scale_16_32", "tensor_data_mover", "l2_multicast", "split_named_barriers", "wgp_clustering"],
+      "co_design_levers": ["Wave32 occupancy", "direct asynchronous global-to-LDS movement", "L2 multicast across WGPs", "clustered matrix operations", "fractional block scaling", "23.3 TB/s HBM utilization"],
+      "source_ids": ["amd_cdna5"]
     },
     "intel-gaudi2": {
       "vendor": "Intel", "family": "Gaudi2", "programming_target": "SynapseAI Gaudi2", "subgroup_width": null,
@@ -178,6 +199,14 @@
       "co_design_levers": ["MXU-aligned shapes", "XLA fusion", "SparseCore-friendly embeddings", "2D-torus partitioning"],
       "source_ids": ["google_tpu_v6e"]
     },
+    "google-tpu7x": {
+      "vendor": "Google", "family": "TPU7x Ironwood", "programming_target": "XLA TPU7x / Pallas", "subgroup_width": null,
+      "max_subgroups_per_unit": null, "max_blocks_per_unit": null, "register_file_per_unit_kib": null,
+      "local_memory_per_unit_kib": null, "max_local_memory_per_block_kib": null, "combined_l1_local_kib": null,
+      "matrix_generation": "2 TensorCores plus 4 SparseCores", "architecture_features": ["dual_chiplet", "vector_memory", "sparsecore", "3d_torus_ici", "pallas_custom_kernels"],
+      "co_design_levers": ["chiplet-local sharding", "VMEM-sized Pallas tiles", "MXU-aligned shapes", "SparseCore-friendly embeddings", "3D-torus partitioning"],
+      "source_ids": ["google_tpu7x"]
+    },
     "aws-neuroncore-v2": {
       "vendor": "AWS", "family": "NeuronCore-v2", "programming_target": "AWS Neuron Inferentia2", "subgroup_width": null,
       "max_subgroups_per_unit": null, "max_blocks_per_unit": null, "register_file_per_unit_kib": null,
@@ -193,6 +222,14 @@
       "matrix_generation": "8 NeuronCore per chip", "architecture_features": ["cfp8", "16_to_4_sparsity", "nki", "neuronlink", "dedicated_collectives"],
       "co_design_levers": ["NKI kernels", "16:4 model sparsity", "NeuronLink topology", "compiler-friendly static geometry"],
       "source_ids": ["aws_trainium2"]
+    },
+    "aws-neuroncore-v4": {
+      "vendor": "AWS", "family": "Trainium3", "programming_target": "AWS Neuron Trainium3", "subgroup_width": null,
+      "max_subgroups_per_unit": null, "max_blocks_per_unit": null, "register_file_per_unit_kib": null,
+      "local_memory_per_unit_kib": null, "max_local_memory_per_block_kib": null, "combined_l1_local_kib": null,
+      "matrix_generation": "Trainium3 Tensor Engine", "architecture_features": ["mxfp8", "mxfp4", "nki", "neuronswitch_v1", "neuronlink_v4", "dedicated_collectives"],
+      "co_design_levers": ["NKI kernels", "MXFP4/MXFP8 model formats", "NeuronSwitch all-to-all placement", "compiler-friendly static geometry", "expert-parallel layouts"],
+      "source_ids": ["aws_trainium3"]
     }
   },
   "accelerators": [
@@ -246,7 +283,7 @@
       "availability": {"class": "specialist_cloud", "access_model": "secondary and specialist clouds plus owned cards", "typical_node_gpus": [1, 2, 4, 8]},
       "software": {"primary": "CUDA", "serving": ["TensorRT-LLM", "vLLM", "SGLang"], "maturity": "broad"},
       "co_design_notes": ["Often inexpensive 48 GB placement", "Lower bandwidth and no FP8 reward compact weights and active-state reduction"],
-      "price_inventory_id": null, "source_ids": ["nvidia_a40", "nvidia_ampere_tuning"]
+      "price_inventory_id": "nvidia-a40", "source_ids": ["nvidia_a40", "nvidia_ampere_tuning"]
     },
     {
       "id": "nvidia-a30", "vendor": "NVIDIA", "model": "A30", "architecture_profile_id": "nvidia-sm80",
@@ -272,7 +309,7 @@
       "availability": {"class": "broad_cloud", "access_model": "major public clouds", "typical_node_gpus": [1, 2, 4, 8]},
       "software": {"primary": "CUDA", "serving": ["TensorRT-LLM", "vLLM", "SGLang"], "maturity": "broad"},
       "co_design_notes": ["Excellent power envelope", "24 GB and 300 GB/s make model fit, FP8 and cache locality decisive"],
-      "price_inventory_id": null, "source_ids": ["nvidia_l4", "nvidia_ada_tuning"]
+      "price_inventory_id": "nvidia-l4", "source_ids": ["nvidia_l4", "nvidia_ada_tuning"]
     },
     {
       "id": "nvidia-l40s", "vendor": "NVIDIA", "model": "L40S", "architecture_profile_id": "nvidia-sm89",
@@ -298,7 +335,7 @@
       "availability": {"class": "specialist_cloud", "access_model": "workstation and specialist cloud market", "typical_node_gpus": [1, 2, 4]},
       "software": {"primary": "CUDA", "serving": ["TensorRT-LLM", "vLLM", "SGLang"], "maturity": "broad"},
       "co_design_notes": ["L40S-like silicon with active cooling and lower power", "Verify provider cooling and sustained clocks"],
-      "price_inventory_id": null, "source_ids": ["nvidia_rtx6000ada", "nvidia_ada_tuning"]
+      "price_inventory_id": "nvidia-rtx-6000-ada", "source_ids": ["nvidia_rtx6000ada", "nvidia_ada_tuning"]
     },
     {
       "id": "nvidia-rtx-4090", "vendor": "NVIDIA", "model": "GeForce RTX 4090", "architecture_profile_id": "nvidia-sm89",
@@ -311,7 +348,7 @@
       "availability": {"class": "specialist_cloud", "access_model": "consumer ownership and specialist GPU clouds", "typical_node_gpus": [1, 2, 4, 8]},
       "software": {"primary": "CUDA", "serving": ["TensorRT-LLM", "vLLM", "SGLang"], "maturity": "broad_non_datacenter"},
       "co_design_notes": ["Potentially low capital cost but 24 GB, no ECC, no MIG, and no NVLink", "Strong single-card FP8 and L2-aware target"],
-      "price_inventory_id": null, "source_ids": ["nvidia_rtx4090", "nvidia_ada_tuning"]
+      "price_inventory_id": "nvidia-rtx-4090", "source_ids": ["nvidia_rtx4090", "nvidia_ada_tuning"]
     },
     {
       "id": "nvidia-rtx-5090", "vendor": "NVIDIA", "model": "GeForce RTX 5090", "architecture_profile_id": "nvidia-sm120",
@@ -324,7 +361,7 @@
       "availability": {"class": "specialist_cloud", "access_model": "consumer ownership and specialist GPU clouds", "typical_node_gpus": [1, 2, 4, 8]},
       "software": {"primary": "CUDA", "serving": ["TensorRT-LLM", "vLLM", "SGLang"], "maturity": "current_non_datacenter"},
       "co_design_notes": ["Cheap high-bandwidth FP4 candidate when 32 GB is sufficient", "No ECC, MIG, or NVLink; power and cooling constrain dense hosting"],
-      "price_inventory_id": null, "source_ids": ["nvidia_rtx5090", "nvidia_blackwell_tuning"]
+      "price_inventory_id": "nvidia-rtx-5090", "source_ids": ["nvidia_rtx5090", "nvidia_blackwell_tuning"]
     },
     {
       "id": "nvidia-a100-80gb-pcie", "vendor": "NVIDIA", "model": "A100 80GB PCIe", "architecture_profile_id": "nvidia-sm80",
@@ -337,7 +374,7 @@
       "availability": {"class": "broad_cloud", "access_model": "major and secondary clouds", "typical_node_gpus": [1, 2, 4, 8]},
       "software": {"primary": "CUDA", "serving": ["TensorRT-LLM", "vLLM", "SGLang"], "maturity": "very_broad"},
       "co_design_notes": ["Mature HBM target without FP8", "163 KiB blocks permit tiles impossible on Ada"],
-      "price_inventory_id": null, "source_ids": ["nvidia_a100", "nvidia_ampere_tuning"]
+      "price_inventory_id": "nvidia-a100-80gb-pcie", "source_ids": ["nvidia_a100", "nvidia_ampere_tuning"]
     },
     {
       "id": "nvidia-a100-80gb-sxm", "vendor": "NVIDIA", "model": "A100 80GB SXM", "architecture_profile_id": "nvidia-sm80",
@@ -350,7 +387,7 @@
       "availability": {"class": "broad_cloud", "access_model": "major and specialist multi-GPU clouds", "typical_node_gpus": [4, 8]},
       "software": {"primary": "CUDA", "serving": ["TensorRT-LLM", "vLLM", "SGLang"], "maturity": "very_broad"},
       "co_design_notes": ["Prefer for topology-sensitive multi-GPU work over PCIe variant", "No native FP8"],
-      "price_inventory_id": null, "source_ids": ["nvidia_a100", "nvidia_ampere_tuning"]
+      "price_inventory_id": "nvidia-a100-80gb-sxm", "source_ids": ["nvidia_a100", "nvidia_ampere_tuning"]
     },
     {
       "id": "nvidia-h100-pcie", "vendor": "NVIDIA", "model": "H100 PCIe 80GB", "architecture_profile_id": "nvidia-sm90",
@@ -363,7 +400,7 @@
       "availability": {"class": "broad_cloud", "access_model": "major and specialist clouds", "typical_node_gpus": [1, 2, 4, 8]},
       "software": {"primary": "CUDA", "serving": ["TensorRT-LLM", "vLLM", "SGLang"], "maturity": "very_broad"},
       "co_design_notes": ["Do not transfer SXM bandwidth or NVLink expectations", "TMA and FP8 remain available"],
-      "price_inventory_id": null, "source_ids": ["nvidia_h100", "nvidia_hopper_tuning"]
+      "price_inventory_id": "nvidia-h100-pcie", "source_ids": ["nvidia_h100", "nvidia_hopper_tuning"]
     },
     {
       "id": "nvidia-h100-sxm", "vendor": "NVIDIA", "model": "H100 SXM", "architecture_profile_id": "nvidia-sm90",
@@ -428,7 +465,20 @@
       "availability": {"class": "specialist_cloud", "access_model": "new flagship cloud and OEM systems", "typical_node_gpus": [8, 72]},
       "software": {"primary": "CUDA", "serving": ["TensorRT-LLM", "vLLM", "SGLang"], "maturity": "emerging"},
       "co_design_notes": ["288 GB fit and attention acceleration are distinct from B200", "High power demands utilization, batching, and rack-level economics"],
-      "price_inventory_id": null, "source_ids": ["nvidia_b300", "nvidia_blackwell_tuning"]
+      "price_inventory_id": "nvidia-b300-sxm", "source_ids": ["nvidia_b300", "nvidia_blackwell_tuning"]
+    },
+    {
+      "id": "nvidia-rubin", "vendor": "NVIDIA", "model": "Rubin GPU", "architecture_profile_id": "nvidia-rubin",
+      "execution": {"compute_units": 224, "compute_unit_name": "SM", "matrix_units": 896, "matrix_unit_name": "Tensor Core"},
+      "memory": {"capacity_gb": 288, "type": "HBM4", "bandwidth_gb_s": 22000, "ecc": true},
+      "cache": {"last_level_mb": null, "on_die_sram_mb": null},
+      "numeric_formats": ["fp64", "fp32", "bf16", "fp16", "nvfp8", "nvfp6", "nvfp4", "three_bit_lut"], "peak_math": {"nvfp4_inference_tflops": 50000},
+      "interconnect": {"host": "PCIe Gen6 x16 up to 256 GB/s; NVLink-C2C 1.8 TB/s with Vera", "peer": "NVLink 6: 3.6 TB/s per GPU", "topology": "two compute dies per package; Vera Rubin NVL72"},
+      "partitioning": "MIG", "power_w": null,
+      "availability": {"class": "platform_cloud", "access_model": "production ramp and selected H2 2026 cloud/OEM deployments; no lab capacity verified", "typical_node_gpus": [72]},
+      "software": {"primary": "CUDA", "serving": ["TensorRT-LLM", "vLLM", "SGLang"], "maturity": "pre_broad_availability"},
+      "co_design_notes": ["A first-class future inference target: 22 TB/s HBM and 3-bit LUT weights materially change decode economics", "Do not transfer Blackwell kernels without measuring new TMA, sparsity, and dependent-launch behavior"],
+      "price_inventory_id": null, "source_ids": ["nvidia_rubin_arch"]
     },
     {
       "id": "nvidia-rtx-pro-6000-blackwell-server", "vendor": "NVIDIA", "model": "RTX PRO 6000 Blackwell Server Edition", "architecture_profile_id": "nvidia-sm120",
@@ -441,7 +491,7 @@
       "availability": {"class": "specialist_cloud", "access_model": "OEM servers and emerging specialist clouds", "typical_node_gpus": [1, 2, 4, 8]},
       "software": {"primary": "CUDA", "serving": ["TensorRT-LLM", "vLLM", "SGLang"], "maturity": "emerging"},
       "co_design_notes": ["Potentially strong 96 GB single-GPU inference target", "GDDR7 and SM120 differ materially from B200 SM100"],
-      "price_inventory_id": null, "source_ids": ["nvidia_rtxpro6000bw", "nvidia_blackwell_tuning"]
+      "price_inventory_id": "nvidia-rtx-pro-6000-blackwell-server", "source_ids": ["nvidia_rtxpro6000bw", "nvidia_blackwell_tuning"]
     },
     {
       "id": "amd-mi100", "vendor": "AMD", "model": "Instinct MI100", "architecture_profile_id": "amd-cdna1",
@@ -548,6 +598,19 @@
       "price_inventory_id": "amd-mi355x", "source_ids": ["amd_mi355x", "amd_rocm_specs"]
     },
     {
+      "id": "amd-mi455x", "vendor": "AMD", "model": "Instinct MI455X", "architecture_profile_id": "amd-cdna5",
+      "execution": {"compute_units": 256, "compute_unit_name": "WGP across eight XCDs", "matrix_units": null, "matrix_unit_name": "Matrix Core"},
+      "memory": {"capacity_gb": 432, "type": "HBM4", "bandwidth_gb_s": 23300, "ecc": true},
+      "cache": {"last_level_mb": 192, "on_die_sram_mb": null},
+      "numeric_formats": ["fp64", "fp32", "bf16", "fp16", "fp8", "mxfp8", "mxfp6", "mxfp4", "int8"], "peak_math": {"bf16_tflops": 5000, "fp16_tflops": 5000, "fp8_tflops": 20100, "mxfp4_tflops": 40300, "int8_tops": 5000},
+      "interconnect": {"host": "PCIe Gen6-compatible EAM I/O", "peer": "UALoE 3.6 TB/s scale-up; UALink 600 GB/s scale-out", "topology": "72-GPU AMD Helios rack-scale system"},
+      "partitioning": "SR-IOV", "power_w": null,
+      "availability": {"class": "platform_cloud", "access_model": "new Helios rack-scale deployments; no lab capacity or public rental price verified", "typical_node_gpus": [72]},
+      "software": {"primary": "ROCm", "serving": ["vLLM", "SGLang", "Triton", "AITER"], "maturity": "pre_broad_availability"},
+      "co_design_notes": ["Wave32, L2 multicast, and direct global-to-LDS movement are major departures from CDNA4 kernel assumptions", "432 GB HBM4 may reduce tensor parallelism and communication for large-model inference"],
+      "price_inventory_id": null, "source_ids": ["amd_mi455x", "amd_cdna5"]
+    },
+    {
       "id": "intel-gaudi2", "vendor": "Intel", "model": "Gaudi2", "architecture_profile_id": "intel-gaudi2",
       "execution": {"compute_units": 24, "compute_unit_name": "TPC", "matrix_units": 2, "matrix_unit_name": "MME"},
       "memory": {"capacity_gb": 96, "type": "HBM2e", "bandwidth_gb_s": 2450, "ecc": true},
@@ -600,6 +663,19 @@
       "price_inventory_id": null, "source_ids": ["google_tpu_v6e"]
     },
     {
+      "id": "google-tpu7x", "vendor": "Google", "model": "Cloud TPU7x Ironwood", "architecture_profile_id": "google-tpu7x",
+      "execution": {"compute_units": 2, "compute_unit_name": "TensorCore", "matrix_units": null, "matrix_unit_name": "MXU", "sparse_cores": 4},
+      "memory": {"capacity_gb": 192, "type": "HBM", "bandwidth_gb_s": 7380, "ecc": null},
+      "cache": {"last_level_mb": null, "on_die_sram_mb": null},
+      "numeric_formats": ["bf16", "fp8"], "peak_math": {"bf16_tflops": 2307, "fp8_tflops": 4614},
+      "interconnect": {"host": "four-chip TPU VM over PCIe", "peer": "1.2 TB/s bidirectional ICI per chip", "topology": "dual-chiplet chip; 3D torus up to 9,216 chips"},
+      "partitioning": "four-chip minimum VM; common slices from 4 to 9,216 chips", "power_w": null,
+      "availability": {"class": "single_cloud", "access_model": "Google Cloud Compute Engine or GKE reservations", "typical_node_gpus": [4, 8, 16, 64]},
+      "software": {"primary": "XLA", "serving": ["JAX", "PyTorch/XLA", "Pallas"], "maturity": "new_platform_specific"},
+      "co_design_notes": ["Each physical chip exposes two chiplets with separate 96 GB memory spaces", "Decode work should measure VMEM-constrained Pallas tiles and chiplet-local sharding"],
+      "price_inventory_id": null, "source_ids": ["google_tpu7x"]
+    },
+    {
       "id": "aws-inferentia2", "vendor": "AWS", "model": "Inferentia2", "architecture_profile_id": "aws-neuroncore-v2",
       "execution": {"compute_units": 2, "compute_unit_name": "NeuronCore-v2", "matrix_units": 2, "matrix_unit_name": "Tensor Engine"},
       "memory": {"capacity_gb": 32, "type": "HBM", "bandwidth_gb_s": 820, "ecc": null},
@@ -624,6 +700,19 @@
       "software": {"primary": "AWS Neuron", "serving": ["Transformers NeuronX", "vLLM Neuron", "NKI"], "maturity": "emerging"},
       "co_design_notes": ["NKI and 16:4 sparsity create real co-design access", "Treat compiler and NeuronLink geometry as part of the model"],
       "price_inventory_id": null, "source_ids": ["aws_trainium2"]
+    },
+    {
+      "id": "aws-trainium3", "vendor": "AWS", "model": "Trainium3", "architecture_profile_id": "aws-neuroncore-v4",
+      "execution": {"compute_units": null, "compute_unit_name": "NeuronCore", "matrix_units": null, "matrix_unit_name": "Tensor Engine"},
+      "memory": {"capacity_gb": 144, "type": "HBM3e", "bandwidth_gb_s": 4900, "ecc": null},
+      "cache": {"last_level_mb": null, "on_die_sram_mb": null},
+      "numeric_formats": ["fp32", "bf16", "mxfp8", "mxfp4"], "peak_math": {"mxfp8_tflops": 2520},
+      "interconnect": {"host": "AWS Nitro host", "peer": "NeuronLink v4 / NeuronSwitch v1: 2 TB/s per chip", "topology": "up to 144 chips per Trn3 UltraServer"},
+      "partitioning": "chip and NeuronCore-level compiler placement", "power_w": null,
+      "availability": {"class": "single_cloud", "access_model": "AWS EC2 Trn3 UltraServers", "typical_node_gpus": [144]},
+      "software": {"primary": "AWS Neuron", "serving": ["PyTorch", "JAX", "vLLM Neuron", "NKI", "Neuron Explorer"], "maturity": "new_platform_specific"},
+      "co_design_notes": ["NKI exposes low-level instruction, memory, and scheduling control", "MXFP4 plus 144 GB HBM3e and all-to-all NeuronSwitch make expert-parallel co-design a high-value target"],
+      "price_inventory_id": null, "source_ids": ["aws_trainium3"]
     }
   ]
 }

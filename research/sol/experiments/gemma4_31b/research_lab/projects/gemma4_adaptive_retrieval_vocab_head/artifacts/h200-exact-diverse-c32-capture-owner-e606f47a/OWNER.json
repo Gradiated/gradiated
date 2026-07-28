@@ -1,0 +1,18 @@
+{
+  "command": [
+    "python3",
+    "run_h200_exact_diverse_capture_owner.py",
+    "--admission",
+    "DIRECTOR_EXACT_DIVERSE_C32_CAPTURE_OWNER_ADMISSION_20260726T2340Z.json",
+    "--claim-authority",
+    "DIRECTOR_EXACT_DIVERSE_C32_WARM_H200_CLAIM_20260726T2352Z.json",
+    "--output-dir",
+    "artifacts/h200-exact-diverse-c32-capture-owner-e606f47a"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head",
+  "launched_at_utc": "2026-07-26T23:59:05.317690Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head/artifacts/h200-exact-diverse-c32-capture-owner-e606f47a/OWNER.log",
+  "pid": 2199890,
+  "start_ticks": 122636272,
+  "unit_manager": "pid"
+}

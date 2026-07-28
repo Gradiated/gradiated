@@ -1,0 +1,44 @@
+{
+  "authorized_change": {
+    "call_sites": "Pass LOGICAL_RING_TOKENS=1024 and PHYSICAL_RING_TOKENS=2048 explicitly at every launch of the three affected kernels.",
+    "file": "mirrored_ring_kv.py",
+    "kernel_signatures": "Add LOGICAL_RING_TOKENS: tl.constexpr and PHYSICAL_RING_TOKENS: tl.constexpr parameters to _store_mirrored_ring_kv_kernel, _store_mirrored_ring_bytes_kernel, and _restore_mirrored_ring_prefix_kernel.",
+    "scope": "Compile-time constant plumbing only. Preserve every index expression, tensor layout, mask, dtype, scale convention, launch grid, block size, warp count, and stage count."
+  },
+  "decision": "repair_in_place_before_scientific_invocation",
+  "evidence": {
+    "candidate_cuda_invocation_started": false,
+    "candidate_scientific_invocation_started": false,
+    "component_compact_sha256": "40d40f6810fe6f22b194ea2741a41fbd37f1df7c03d26c2ae4b30c78f95d8ff6",
+    "failure": "Triton CompilationError NameError: LOGICAL_RING_TOKENS is a non-constexpr global referenced from a @triton.jit kernel",
+    "mirrored_ring_kv_pre_repair_sha256": "8e3cf497393fa09d99e042dc58e4c2c7846b9279b5e94ee2cd30d0a1b102a547",
+    "remote_terminal_sha256": "5e08b3bcab2d1ae936677573f403bf5db7d88cc5f4df11cc10e74b2730f396ed",
+    "smoke_stderr_sha256": "b5434f2cbe36ade3c112deb045fc47e1519e8ff1be507f4be84c35ef608538c8"
+  },
+  "forbidden": [
+    "Setting TRITON_ALLOW_NON_CONSTEXPR_GLOBALS",
+    "Changing logical or physical ring sizes",
+    "Changing the mirrored-write decomposition, FA3 consumer, extension, component geometry, numerical gates, endpoint comparator, or workload",
+    "Tuning BLOCK, num_warps, num_stages, launch grids, or any kernel operation",
+    "Replaying the split-ring FA3 rejection or starting the conditional endpoint before a positive complete actual-consumer component"
+  ],
+  "post_repair_sequence": [
+    "Rebuild GPU_INPUT_MANIFEST.json and verify every immutable input, with only mirrored_ring_kv.py changing.",
+    "Atomically emit REPAIR_REQUEST.json for the retained owner before the existing repair deadline.",
+    "Run the existing one-call smoke in the retained claim.",
+    "If smoke passes, run the one frozen producer-plus-consumer component and its existing correctness, mirrored-half, boundary, reuse, and timing gates.",
+    "Run the one exact c32 endpoint only if the complete component bound is credibly positive."
+  ],
+  "preserve": {
+    "active_owner": "gemma4-mirrored-ring-e5m2-owner.service",
+    "bench": "h200-sync-linear-e00vhh6h29fj68x91g",
+    "checkpoint": "/home/glmrunner/gemma4-async-result-pipeline/checkpoint",
+    "component_baseline": "exact E5M2 contiguous-ring Triton producer plus actual local consumer",
+    "component_candidate": "doubled mirrored E5M2 producer writes plus one contiguous local FA3 call",
+    "global_layers": "ten head-dim-512 paged E5M2 Triton layers unchanged",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "local_geometry": "50 local layers, 16 KV heads, head dim 256, 1024 logical tokens, 2048 mirrored physical tokens",
+    "qualified_endpoint_comparator_seconds_per_request": 0.6556567115001144
+  },
+  "schema_version": 1
+}

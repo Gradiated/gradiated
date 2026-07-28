@@ -1,0 +1,16 @@
+{
+  "all_non_mlp_paths_untouched_by_width_patch": true,
+  "candidate_shapes": [
+    "[16384, 5376]",
+    "[5376, 16384]"
+  ],
+  "layers": 60,
+  "pass": true,
+  "projections": [
+    "down_proj",
+    "gate_proj",
+    "up_proj"
+  ],
+  "rows": 180,
+  "schema_version": 1
+}

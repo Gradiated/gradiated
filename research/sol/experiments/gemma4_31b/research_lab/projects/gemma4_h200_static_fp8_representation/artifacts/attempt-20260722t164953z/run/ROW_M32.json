@@ -1,0 +1,73 @@
+{
+  "candidate": {
+    "activation_saturation_fraction": 1.4532180330206756e-06,
+    "allocation": {
+      "baseline_bytes": 385062912,
+      "incremental_peak_bytes": 1720320,
+      "peak_bytes": 386783232
+    },
+    "component_timing": {
+      "max_ms": 0.07427199929952621,
+      "median_ms": 0.06176000088453293,
+      "min_ms": 0.059776000678539276,
+      "p90_ms": 0.0711359977722168
+    },
+    "cosine_similarity_vs_bf16": 0.9992814064025879,
+    "kernel_names": [
+      "Memcpy DtoH (Device -> Pinned)",
+      "Memset (Device)",
+      "static_fp8_quant_kernel",
+      "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<float, at::native::MeanOps<float, float, float, float>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::MeanOps<float, float, float, float>, unsigned int, float, 4, 4>)",
+      "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::AbsFunctor<float>, std::array<char*, 2ul> >(int, at::native::AbsFunctor<float>, std::array<char*, 2ul>)",
+      "void cutlass::device_kernel<cutlass_3x_gemm_sm90_fp8<cutlass::float_e4m3_t, cutlass::bfloat16_t, c3x::ScaledEpilogue, cute::tuple<cute::C<64>, cute::C<32>, cute::C<256> >, cute::tuple<cute::C<1>, cute::C<1>, cute::C<1> >, cutlass::gemm::KernelTmaWarpSpecializedFP8FastAccum, cutlass::epilogue::TmaWarpSpecialized, true>::GemmKernel>(cutlass_3x_gemm_sm90_fp8<cutlass::float_e4m3_t, cutlass::bfloat16_t, c3x::ScaledEpilogue, cute::tuple<cute::C<64>, cute::C<32>, cute::C<256> >, cute::tuple<cute::C<1>, cute::C<1>, cute::C<1> >, cutlass::gemm::KernelTmaWarpSpecializedFP8FastAccum, cutlass::epilogue::TmaWarpSpecialized, true>::GemmKernel::Params)"
+    ],
+    "quantization_timing": {
+      "max_ms": 0.03136000037193298,
+      "median_ms": 0.02239999920129776,
+      "min_ms": 0.020735999569296837,
+      "p90_ms": 0.025631999596953392
+    },
+    "relative_l2_error_vs_bf16": 0.03791562095284462,
+    "representation": "static_per_tensor_activation_fp8_static_per_channel_weight_fp8"
+  },
+  "control": {
+    "allocation": {
+      "baseline_bytes": 385062912,
+      "incremental_peak_bytes": 1720320,
+      "peak_bytes": 386783232
+    },
+    "component_timing": {
+      "max_ms": 0.24128000438213348,
+      "median_ms": 0.051231998950242996,
+      "min_ms": 0.049855999648571014,
+      "p90_ms": 0.05459199845790863
+    },
+    "kernel_names": [
+      "Memcpy DtoH (Device -> Pinned)",
+      "Memset (Device)",
+      "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<float, at::native::MeanOps<float, float, float, float>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::MeanOps<float, float, float, float>, unsigned int, float, 4, 4>)",
+      "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)",
+      "void at::native::vectorized_elementwise_kernel<4, at::native::AbsFunctor<float>, std::array<char*, 2ul> >(int, at::native::AbsFunctor<float>, std::array<char*, 2ul>)",
+      "void cutlass::device_kernel<cutlass_3x_gemm_sm90_fp8<cutlass::float_e4m3_t, cutlass::bfloat16_t, c3x::ScaledEpilogue, cute::tuple<cute::C<64>, cute::C<32>, cute::C<256> >, cute::tuple<cute::C<1>, cute::C<1>, cute::C<1> >, cutlass::gemm::KernelTmaWarpSpecializedFP8FastAccum, cutlass::epilogue::TmaWarpSpecialized, true>::GemmKernel>(cutlass_3x_gemm_sm90_fp8<cutlass::float_e4m3_t, cutlass::bfloat16_t, c3x::ScaledEpilogue, cute::tuple<cute::C<64>, cute::C<32>, cute::C<256> >, cute::tuple<cute::C<1>, cute::C<1>, cute::C<1> >, cutlass::gemm::KernelTmaWarpSpecializedFP8FastAccum, cutlass::epilogue::TmaWarpSpecialized, true>::GemmKernel::Params)",
+      "void per_token_quant_fp8_small_batch_kernel<__nv_bfloat16, __nv_fp8_e4m3, 16>(__nv_bfloat16 const*, __nv_fp8_e4m3*, float*, long, long)"
+    ],
+    "quantization_timing": {
+      "max_ms": 0.028384000062942505,
+      "median_ms": 0.015552000142633915,
+      "min_ms": 0.0144640002399683,
+      "p90_ms": 0.017152000218629837
+    },
+    "relative_l2_error_vs_bf16": 0.0377349928021431,
+    "representation": "dynamic_per_token_activation_fp8_static_per_channel_weight_fp8"
+  },
+  "numerical_pass": false,
+  "output_checksum": 0.9297974109649658,
+  "shape": [
+    32,
+    21504,
+    5376
+  ],
+  "speedup_fraction": -0.2054966066132775,
+  "tokens": 32
+}

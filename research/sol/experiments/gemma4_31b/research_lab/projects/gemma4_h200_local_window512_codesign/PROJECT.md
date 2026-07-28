@@ -20,19 +20,19 @@ This is a quality-unsafe performance proxy, not a production candidate. It may p
 - RoPE positions, token order, cache dtype/layout, sampling, request identities, and output length;
 - dynamic FP8, fused QKV, deferred-local-KV, producer-fused metadata, and dense penalizer additions.
 
-No window sweep, head reduction, layer deletion, quantization change, attention-kernel redesign, or MTP/speculation combination is allowed.
+No window sweep, head reduction, layer deletion, quantization change, attention-kernel redesign, or MTP combination is allowed. Native n-gram may be present only as the exact frozen, quality-qualified frontier comparator defined by the director; its contract may not change.
 
 ## Experiment
 
 Prepare offline behind the higher-priority native n-gram lane. First bind the config-to-runtime-to-kernel flow and prove that the candidate affects exactly the 50 local layers while leaving global layers unchanged. Derive a call-weighted physical bound from the measured 15.312% local-attention fraction and exact 512/1,024 span change.
 
-After the `$14.00` reservation is durable and the n-gram lane releases the retained bench, claim `h200-sync-linear-e00vhh6h29fj68x91g` only if the watchdog leaves enough time. Run one exact component/path check at the real decode and extend shapes. Require numerical agreement with a 512-window reference, candidate-path events from all and only local layers, unchanged output shapes, and no fallback to a 1,024-token consumer.
+After the `$14.00` reservation is durable and the n-gram production-validation lane releases the retained bench, claim `h200-sync-linear-e00vhh6h29fj68x91g` only if the watchdog leaves enough time. Run one exact component/path check at the real decode and extend shapes. Require numerical agreement with a 512-window reference, candidate-path events from all and only local layers, unchanged output shapes, and no fallback to a 1,024-token consumer.
 
-Run exactly one profiler-off c32 control/candidate pair only if the conservative physical bound reaches 5% or can reach `0.6381105231 s/request`. Require 32/32 finite, nonempty, length-correct responses, exact fresh/cache accounting, and three cheap coherence prompts sufficient to reject obvious breakage. Do not run broad quality in this project.
+If native n-gram passes validation, treat its persisted `0.5967508053 s/request` terminal as the immutable comparator, preserve the frozen n-gram contract in the candidate, and run only one profiler-off n-gram-plus-window512 candidate after the component/path gate; do not replay the n-gram control. If n-gram fails validation, use the original non-speculative scope and contemporaneous control. In either branch, first label the prior `6.5623%` bound as historical and derive a scope-matched physical bound; run the endpoint only if it reaches 5% or materially improves the selected qualified frontier. Require 32/32 finite, nonempty, length-correct responses, exact fresh/cache accounting, and three cheap coherence prompts sufficient to reject obvious breakage. Do not run broad quality in this project.
 
 ## Resources and limits
 
-- Bench: retained `h200-sync-linear-e00vhh6h29fj68x91g`, sequentially after native n-gram.
+- Bench: retained `h200-sync-linear-e00vhh6h29fj68x91g`, sequentially after native n-gram production validation.
 - Spend: `$14.00`.
 - Compute: at most 90 claimed H200 minutes.
 - Wall clock: at most three hours from first researcher start.

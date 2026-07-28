@@ -1,0 +1,10 @@
+{
+  "artifacts": "Paired raw captures, tool traces, feature/NLL results, and terminal retrieved project-locally.",
+  "caches": "SGLang FP8 and CUDA graph caches retained.",
+  "checkpoint": "Exact immutable eight-file checkpoint retained at /home/glmrunner/gemma-kernel-frontier/checkpoint.",
+  "image": "SGLang v0.5.13 image docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6.",
+  "model": "google/gemma-4-31B-it",
+  "project": "gemma4_h200_v0513_fp8_production_validation",
+  "runtime": "Paired BF16/FP8 production quality terminal: owner_failure.",
+  "server_state": "No quality server retained; checkpoint/image/caches retained."
+}

@@ -1,0 +1,79 @@
+{
+  "bench": {
+    "accelerator": "nvidia-l40s",
+    "disk_id": "computedisk-e00wjqwz8zdc3ph7sr",
+    "id": "l40s-dual-kv4-sm89-computeinstance-e00nczqf2p0x2y51wt",
+    "instance_id": "computeinstance-e00nczqf2p0x2y51wt",
+    "provider": "nebius",
+    "public_ipv4": "89.169.103.129",
+    "ssh_ed25519_fingerprint": "SHA256:UW5mNwCUjX/BtvrgnUjnYFMongYlwJCZx8XRdV/aj/Y",
+    "ssh_user": "glmrunner"
+  },
+  "decision": "identity_verified_live_component_binding",
+  "fixed_science": {
+    "accelerator": "one NVIDIA L40S SM89",
+    "c32": 32,
+    "decode_steps": 358,
+    "global": "D512 recent-1024 E5M2 / old group-64 KV4 O8",
+    "global_layers": 10,
+    "local": "D256 group-64 KV4 O4",
+    "local_layers": 50,
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "page_size": 1,
+    "runtime_commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+  },
+  "identity_verification": {
+    "compute_capability": "8.9",
+    "compute_process_count": 0,
+    "driver_version": "580.159.04",
+    "gpu_count": 1,
+    "gpu_memory_mib": 46068,
+    "gpu_name": "NVIDIA L40S",
+    "hostname": "gemma4-dual-kv4-sm89-20260728t083202z",
+    "memory_used_mib": 0,
+    "provider_disk_state": "READY",
+    "provider_instance_state": "RUNNING",
+    "strict_host_key_checking": true,
+    "utilization_gpu_percent": 0,
+    "verified_at_utc": "2026-07-28T08:36:00Z"
+  },
+  "lifecycle": {
+    "claim_start_by_utc": "2026-07-28T08:42:00Z",
+    "deadline_utc": "2026-07-28T10:02:02.551113Z",
+    "owner_deadline_seconds": 4500,
+    "provider_started_at_utc": "2026-07-28T08:32:02.551113Z",
+    "release_by_utc": "2026-07-28T09:57:30Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dual-kv4-sm89-20260728t083202z-watchdog.service",
+      "main_pid": 2728448,
+      "unit": "gemma4-dual-kv4-sm89-20260728t083202z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "owner": {
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/dual-kv4-component-20260728t0837z",
+    "exact_detached_command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/dual-kv4-owner-20260728t0837z/OWNER.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/dual-kv4-owner-20260728t0837z/OWNER.log -- python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/l40s_dual_kv4_owner.py --bench l40s-dual-kv4-sm89-computeinstance-e00nczqf2p0x2y51wt --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/dual-kv4-component-20260728t0837z --deadline-seconds 4500",
+    "owner_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/l40s_dual_kv4_owner.py",
+    "owner_sha256": "ffe206f9cfb931dfcef0fa3cf241842d8782aed4bc02935f7635eb39938081f2",
+    "repair_disposition": "Retain the continuous claim across ordinary pre-science compile, API, launcher, transfer, retrieval, container, and runtime-constructor repairs while the closest measured repair plus terminal and release margin fits the unchanged absolute deadline.",
+    "runner_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/sm89_dual_kv4_runner.py",
+    "runner_sha256": "2c82f6457a3e74d48c1883a58d57b23af22ca04fe2e2245ac24268a47546498f",
+    "unit_manager": "pid"
+  },
+  "project": "gemma4_l40s_dual_kv4_allocator_0953_integration",
+  "readiness": {
+    "component_ready": "L40S_DUAL_KV4_SM89_COMPONENT_READY.json",
+    "component_ready_sha256": "c998b9e979dc143148c1ff1879cc6d9ade6783f16e2d218d5a92cab7f191366a",
+    "packet_manifest": "L40S_DUAL_KV4_SM89_PACKET_MANIFEST.json",
+    "packet_manifest_sha256": "2f2e4f4bd1f0a178c77bf17a7834dad5f3920eaa63820982b4afa2e28182e5bb"
+  },
+  "schema_version": 1,
+  "scientific_state": {
+    "candidate_sample_consumed": false,
+    "checkpoint_required": false,
+    "cuda_invocation_occurred": false,
+    "endpoint_authorized": false,
+    "model_server_authorized": false
+  }
+}

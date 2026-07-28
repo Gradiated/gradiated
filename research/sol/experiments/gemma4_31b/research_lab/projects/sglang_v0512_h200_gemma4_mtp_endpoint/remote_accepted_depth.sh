@@ -135,7 +135,15 @@ residual=[json.loads(x) for x in (p/'residual.jsonl').read_text().splitlines() i
 target=lambda row:any(key in str(row.get('prefix','')) for key in ('language_model','model.layers'))
 assert sum(target(row) for row in modules) >= 240
 assert any(target(row) for row in consumers)
-assert qkv and all(row.get('candidate_symbol')=='_qkv_norm_rope_inplace_kernel' for row in qkv)
+target_qkv=[row for row in qkv if row.get('dispatch')=='fused_qkv_target']
+assistant_qkv=[row for row in qkv if row.get('dispatch')=='stock_qkv_kv_shared_assistant']
+kernel_qkv=[row for row in qkv if 'candidate_symbol' in row]
+assert target_qkv and kernel_qkv
+assert all(row.get('is_kv_shared_layer') is False for row in target_qkv)
+if p.name != 'control-audit':
+    assert assistant_qkv
+    assert all(row.get('is_kv_shared_layer') is True for row in assistant_qkv)
+assert all(row.get('candidate_symbol')=='_qkv_norm_rope_inplace_kernel' for row in kernel_qkv)
 assert any(row.get('candidate_path')=='TritonAttnBackend.forward_extend.local_fp8_deferred_cache_commit' for row in residual)
 assert any(row.get('candidate_path')=='ScheduleBatch.prepare_for_decode.pinned_async_penalty_tokens' for row in residual)
 assert any(row.get('candidate_path')=='BatchedMinNewTokensPenalizer.host_required_dense_add' for row in residual)
@@ -163,11 +171,12 @@ PY
 }
 
 sudo docker rm -f mtp-depth-control mtp-depth-candidate >/dev/null 2>&1 || true
+if [[ "${PAIR_ONLY:-0}" != 1 ]]; then
 start_server diagnostic mtp-depth-diagnostic /work/artifacts/diagnostic-audit/accepted-depth.jsonl 1 \
   --speculative-algorithm NEXTN --speculative-draft-model-path /work/assistant \
   --speculative-num-steps 1 --speculative-eagle-topk 1 --speculative-num-draft-tokens 2
 smoke diagnostic
-: >"$artifacts/diagnostic-audit/accepted-depth.jsonl"
+sudo truncate -s 0 "$artifacts/diagnostic-audit/accepted-depth.jsonl"
 state diagnostic_science_started
 sudo docker exec mtp-depth-diagnostic python3 /work/input/accepted_depth_diagnostic.py \
   --audit /work/artifacts/diagnostic-audit/accepted-depth.jsonl \
@@ -193,21 +202,36 @@ PY
   atomic_terminal scientific_terminal accepted_depth_below_bound
   exit 0
 fi
+fi
 
-sudo docker rm -f mtp-depth-diagnostic >/dev/null 2>&1 || true
-start_server control mtp-depth-control "" 0
-smoke control
-run_exact control mtp-depth-control stacked_control_c32
-validate_stack control yes
-sudo docker rm -f mtp-depth-control >/dev/null 2>&1 || true
+if [[ "${CANDIDATE_ONLY:-0}" != 1 ]]; then
+  sudo docker rm -f mtp-depth-diagnostic >/dev/null 2>&1 || true
+  start_server control mtp-depth-control "" 0
+  smoke control
+  run_exact control mtp-depth-control stacked_control_c32
+  validate_stack control yes
+  sudo docker rm -f mtp-depth-control >/dev/null 2>&1 || true
+fi
 
 start_server mtp mtp-depth-candidate /work/artifacts/mtp-audit/accepted-depth.jsonl 0 \
   --speculative-algorithm NEXTN --speculative-draft-model-path /work/assistant \
   --speculative-num-steps 1 --speculative-eagle-topk 1 --speculative-num-draft-tokens 2
 smoke mtp
-: >"$artifacts/mtp-audit/accepted-depth.jsonl"
+sudo truncate -s 0 "$artifacts/mtp-audit/accepted-depth.jsonl"
 run_exact mtp mtp-depth-candidate stacked_mtp_c32
 validate_stack mtp yes
+
+if [[ "${CANDIDATE_ONLY:-0}" == 1 ]]; then
+  python3 - "$artifacts/mtp/TERMINAL.json" "$artifacts/FINAL_TERMINAL.json" <<'PY'
+import json,os,pathlib,sys
+mtp=json.load(open(sys.argv[1])); out=pathlib.Path(sys.argv[2])
+x={'schema_version':1,'status':'terminal','classification':'mtp_candidate_terminal_persisted','pass':mtp.get('pass') is True,'endpoint_pair_run':False,'candidate_only':True,'mtp':mtp}
+q=out.with_suffix('.part');q.write_text(json.dumps(x,indent=2,sort_keys=True)+'\n');os.replace(q,out)
+assert x['pass']
+PY
+  atomic_terminal scientific_terminal mtp_candidate_terminal_persisted
+  exit 0
+fi
 
 python3 - "$artifacts/control/TERMINAL.json" "$artifacts/mtp/TERMINAL.json" \
   "$artifacts/control.smoke.json" "$artifacts/mtp.smoke.json" \

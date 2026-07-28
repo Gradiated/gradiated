@@ -1,0 +1,10 @@
+{
+  "absolute_repair_deadline_utc": "2026-07-25T20:15:00Z",
+  "created_at_utc": "2026-07-25T18:05:51.189123Z",
+  "diagnostic": "Healthy DFlash server returned HTTP 404 to optional /metrics before runner submitted any request; remote REMOTE_TERMINAL.json proves science_started marker but no oracle rows or CUDA request.",
+  "failure_kind": "pre_request_metrics_404",
+  "repair_deadline_epoch": 1785010500.0,
+  "retry_scope": "Archive zero-request /work/request root, install only the metrics-tolerant runner, and invoke one fresh oracle request against the existing healthy gemma4-dflash container; do not reload the server or replay setup.",
+  "schema_version": 1,
+  "state": "repair_ready"
+}

@@ -1,89 +1,57 @@
 {
   "active_session": null,
-  "actual_spend_usd": 0.0,
-  "allocation_limit": 0,
-  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.5253161735694445,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 1.5,
   "bench_need": {
-    "accelerator": null,
-    "minimum_remaining_lifecycle_minutes_at_claim": null,
+    "accelerator": "nvidia-h200-sxm",
+    "minimum_remaining_lifecycle_minutes_at_claim": 48,
     "preferred_bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
-    "purpose": "No claim in this phase. Implement and prove a graph-safe buffer-direct candidate offline while the hybrid-placement component owns the direct GPU lane."
+    "purpose": "One exact profiler-off matched c32 stock/candidate endpoint pair for the promoted graph-safe grouped LM head."
   },
   "claim_gate": {
     "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
-    "claim_allowed_now": false,
-    "observed_at_utc": "2026-07-25T19:56:23Z",
-    "predecessor_state": "mixed_m384_complete_dflash_oracle_passed_hybrid_claim_gate_closed_dflash_depth_owner_reclaimed",
-    "predecessors": [
-      "gemma4_h200_dflash_endpoint",
-      "gemma4_hybrid_attention_placement_codesign"
-    ],
-    "reason": "This continuation is offline-only. A later director decision must authorize any graph-safe candidate GPU discriminator.",
-    "reservation": "none_offline_continuation"
+    "claim_allowed_now": true,
+    "claim_not_after_utc": "2026-07-25T21:12:00Z",
+    "maximum_claim_minutes": 35,
+    "observed_at_utc": "2026-07-25T20:56:50Z",
+    "predecessor_state": "graph_safe_component_correct_faster_bench_available",
+    "release_not_after_utc": "2026-07-25T21:47:00Z",
+    "reservation": "exact_1_50_usd_required_before_claim"
   },
-  "compute_budget": "No GPU claim or new provider spend in this continuation.",
-  "continuation_binding": {
-    "path": "DIRECTOR_GRAPH_SAFE_BUFFER_CONTINUATION.json",
-    "sha256": "aa73f28f5ffa8bde2adcc330c56ad0322dcbc006e9e7646afc3437d90d4e4133"
+  "compute_budget": "At most 35 claimed H200 minutes at $2.45/hour; maximum $1.4291666667 metered claim cost under the $1.50 authorization.",
+  "current_binding": {
+    "path": "DIRECTOR_GROUPED_HEAD_GRAPH_SAFE_ENDPOINT_BINDING.json",
+    "sha256": "c3623d563a389413e6176a6aaf342520a8e4536225bbeb255e8839843e21ae34"
   },
-  "decision": "graph_safe_buffer_direct_candidate_ready_gpu_unmeasured",
-  "director_binding": {
-    "path": "DIRECTOR_BINDING.json",
-    "sha256": "150c2227624c42783aa5728ed107604db317aef504368b74b9730e01f99e1fec"
-  },
+  "decision": "quality_or_observer_reject",
+  "historical_actual_spend_usd": 0.32843762330555554,
   "id": "gemma4_h200_ngram_persistent_grouped_lm_head",
   "implementation": {
     "candidate": "grouped_lm_head.py",
     "candidate_sha256": "184635396953ccc1cf0c5674e7e573228ef1b5829649b6b9c30e39f3bb6fed5e",
-    "conditional_endpoint": "endpoint_pair.py",
-    "conditional_endpoint_sha256": "e7ba62b4ad41791c53fd7939fc3aad9af6967b1fc8ae212cf077fbfc773e128f",
-    "counter_probe": "counter_probe.py",
-    "counter_probe_sha256": "94934b23d8b38d71220f98c39a7c204fe167aaf88a7911a5aa9090f5e0215878",
-    "durable_owner": "run_bench_owner.py",
-    "durable_owner_sha256": "ff0d90a17bc885eeb10c0c44d4037afeae9f4862433d0e6e433cf2163bb67bf2",
-    "graph_safe_buffer_discriminator": "graph_safe_buffer_discriminator.py",
-    "graph_safe_buffer_discriminator_sha256": "6e69153ae6333b2ef009c78ab892e84ee6a98a2ec8e580eebf896190a8a07867",
-    "graph_safe_buffer_fixture_result": "artifacts/GROUPED_LM_HEAD_GRAPH_SAFE_BUFFER_FIXTURE.json",
-    "graph_safe_buffer_fixture_result_sha256": "da82f4edfe8a9f90552347fb53b3034af2c2651347a55bb8f3a80fe5bddfe7e2",
-    "offline_validation": "The deterministic source-execution fixture passes 14/14 checks while capture is marked active and the exact live buffer is present. It invokes grouped_get_logits_buffer_direct once, never invokes stock fallback, and preserves buffer identity/pointer/dtype/shape/stride/lifetime, request-depth ownership, the BF16-to-FP32 boundary, softcap placement, target IDs, and accepted prefixes. This is not CUDA execution.",
-    "oracle": "exact_consumer_component.py",
-    "oracle_sha256": "1333a9a1502a80bd8fe7429f33822fa348a11a1965f4c5f626928b2ba8d340d9",
-    "repair_fixture": "live_contract_fixture.py",
-    "repair_fixture_sha256": "9c13967c070ca8fa0ee1d558e8ef0a2f535400dd6e319bf39193e435578bcf06",
-    "repair_fixture_result": "artifacts/GROUPED_LM_HEAD_GRAPH_SAFE_BUFFER_FIXTURE.json",
-    "repair_fixture_result_sha256": "da82f4edfe8a9f90552347fb53b3034af2c2651347a55bb8f3a80fe5bddfe7e2",
-    "remote_experiment": "remote_experiment.py",
-    "remote_experiment_sha256": "ddc7135b37d31de8636034bc3a5640ce9c44491fc4ef8d39f65e31348ce9bd1b",
-    "sm90_compile_result": "artifacts/SM90_COMPILE_RESULT.json",
-    "sm90_compile_result_sha256": "e9591109b7f954d3af5bfa8bc211afe23201f45d14e954c2e3d363d3db4fda84"
+    "endpoint_outer": "endpoint_pair.py",
+    "endpoint_outer_sha256": "e7ba62b4ad41791c53fd7939fc3aad9af6967b1fc8ae212cf077fbfc773e128f",
+    "exact_runner": "inputs/bound/exact_runner.py",
+    "exact_runner_sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
   },
-  "next_action": "This zero-spend continuation is terminal. Only after a new director authorization and atomic H200 claim, materialize the exact weight bytes content-addressed under this project and run graph_safe_buffer_discriminator.py once. It must prove actual captured stock/candidate replay, live-buffer identity and layout, zero numerical error, exact downstream decisions, replay determinism, and profiler-off timings. Do not replay either historical endpoint arm.",
-  "offline_evidence": {
-    "all_director_hashes_match": true,
-    "artifact": "OFFLINE_CAUSAL_MODEL.json",
-    "ideal_reuse_compute_floor_us_per_step": 1093.8168353633148,
-    "measured_lm_head_profile_window_fraction": 0.05248713500841422,
-    "observed_us_per_step": 8310.959599999998,
-    "sequential_hbm_floor_us_per_step": 7089.233920000001,
-    "sha256": "4e329c3c616ead0acbcc501705d44f25a397d0a7f5ace6e56738432a34b324b5"
+  "next_action": "Reserve exactly $1.50, atomically claim the named retained H200 by 21:12Z, integrate the promoted graph-safe buffer-direct source into the pinned endpoint path, and run one profiler-off qualified stock/candidate endpoint pair. Require 32/32 complete requests per arm and exact target/emitted-token equivalence. Persist the typed terminal, stop experiment processes, release by 21:47Z, and preserve resident state.",
+  "priority": 8560,
+  "promoting_terminal": {
+    "candidate_median_ms": 4.182975769042969,
+    "classification": "correct_faster",
+    "component_reduction_fraction": 0.5453840839114625,
+    "conservative_whole_request_reduction_fraction": 0.028625648043701244,
+    "control_median_ms": 9.201120376586914,
+    "path": "GROUPED_LM_HEAD_H200_GRAPH_REPLAY_TERMINAL.json",
+    "sha256": "d6ce199adc0debcc5e10380e71b219009858c160efc60be56c81d571f240bda1"
   },
-  "priority": 8510,
-  "provider_mutation": "forbidden_offline_localization_phase",
-  "researcher_profile": "deep",
+  "provider_mutation": "forbidden_reuse_registered_bench_only",
+  "researcher_profile": "execution",
   "schema_version": 1,
-  "status": "terminal",
-  "storage_budget": "At most 6 GiB new artifacts; reuse checkpoint and image bytes in place.",
-  "summary": "The graph-safe repair writes BF16-rounded grouped results directly into the exact FP32 live logits buffer, removes the temporary/copy boundary, and preserves the unchanged in-place softcap. Its deterministic captured+buffered fixture invokes the candidate rather than fallback and passes all 14 object/layout/order/downstream checks. Actual CUDA-graph replay is the first remaining irreducible field and is bound to a runnable later H200 discriminator.",
-  "terminal_artifact": "GROUPED_LM_HEAD_GRAPH_SAFE_BUFFER_TERMINAL.json",
-  "terminal_sha256": "b37e7d3a348786ac9a6f006e98959f899cb895c0206e3d7c6f754a346dc22da2",
-  "localization_terminal": {
-    "path": "GROUPED_LM_HEAD_ACCEPTANCE_DIVERGENCE_TERMINAL.json",
-    "sha256": "cfa96f0c631c20303414136e94bb53e6b79b4c0adb78e75fa1b9acaa93d7dda8"
-  },
-  "wall_clock_budget": "Offline continuation by 2026-07-25T21:30:00Z; no GPU lifecycle action.",
-  "historical_actual_spend_usd": 0.26219713119444443,
-  "historical_terminal": {
-    "path": "PERSISTENT_GROUPED_LM_HEAD_TERMINAL.json",
-    "sha256": "808449b449cef0f800c6340996ee0bb204e8eed1ecf990f12805064684f130b2"
-  }
+  "status": "complete",
+  "storage_budget": "At most 3 GiB new non-checkpoint artifacts; reuse resident checkpoint, image, compiler, and CUDA caches.",
+  "summary": "One matched graph-safe endpoint pair completed: quality_or_observer_reject.",
+  "terminal_artifact": "GROUPED_LM_HEAD_GRAPH_SAFE_ENDPOINT_TERMINAL.json",
+  "wall_clock_budget": "Claim by 2026-07-25T21:12:00Z, at most 35 claimed minutes, and release by 2026-07-25T21:47:00Z."
 }

@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T11:32:00Z",
+  "decision": "retain_staged_h100_and_correct_only_the_endpoint_owner_ssh_key_identity",
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "failed_attempt": {
+    "artifact_root": "artifacts/h100-endpoint-200g-r2-descriptor-repair-20260725t1118z",
+    "terminal": "artifacts/h100-endpoint-200g-r2-descriptor-repair-20260725t1118z/TERMINAL.json",
+    "terminal_sha256": "ff1808d7228487905c209c27c1517dee66dc74e4d3e2fce683deceadf56a4632",
+    "remote_preflight_stderr": "artifacts/h100-endpoint-200g-r2-descriptor-repair-20260725t1118z/REMOTE_PREFLIGHT.stderr",
+    "remote_preflight_stderr_sha256": "cfb34a07fe6c0f3a87e7d9079583579deed03fbb8db56fe8d52c60db334e4465",
+    "owner_state": "artifacts/h100-endpoint-200g-r2-descriptor-repair-20260725t1118z/OWNER_STATE.json",
+    "owner_state_sha256": "6a6c86cb1ef6a214701f99e131d3aae845beb17ec55a8cbc63a2d97f581a5aba",
+    "classification": "typed_external_or_recoverable_failure",
+    "error": "remote_preflight_failed",
+    "candidate_sample_consumed": false,
+    "endpoint_sample_consumed": false
+  },
+  "diagnosis": {
+    "failure_boundary": "The owner was launched with nonexistent /root/.ssh/id_ed25519, so SSH failed before remote preflight.",
+    "known_good_identity": "All prior successful owners for this project used /root/.config/nebius/glm-campaign/ssh_ed25519; that file exists with mode 0600.",
+    "parser_state": "The exact raw digest-pinned manifest was captured and the unified fail-closed parser plus fixtures passed before the owner launch.",
+    "resident_state": "The exact eight-file checkpoint, packet, and candidate remain resident and were previously hash-verified. No evidence indicates provider, disk, checkpoint, or server damage.",
+    "scientific_boundary": "No server, CUDA workload, candidate request, or endpoint request ran. The sole 791-request endpoint remains unconsumed."
+  },
+  "source_bindings": {
+    "descriptor_repair_binding": "DIRECTOR_R2_MANIFEST_DESCRIPTOR_REPAIR_BINDING.json",
+    "descriptor_repair_binding_sha256": "60f69bbab97ec8592fc01e66380220da51483e61f51fd67b69e85ae4a2a85bce",
+    "raw_manifest": "artifacts/h100-endpoint-200g-r2-descriptor-repair-20260725t1118z/RAW_MANIFEST_INSPECT_VERBOSE.json",
+    "raw_manifest_sha256": "cd28dded6bba7706069dfb46a9a019fb12d89716ac8929be86f6d3aba13afecd",
+    "manifest_parser": "manifest_size.py",
+    "manifest_parser_sha256": "e09274adc776522f6cdb96017d1173f49e2226a274a5d3a3a65870129fcee9bf",
+    "owner": "h100_execution_owner.py",
+    "owner_sha256": "9175593858edddf9faba30b9e0518ed4bb133f452e9b7d77901bb68ffe1aa7f3",
+    "fleet_economics_interpretation": "DIRECTOR_FLEET_ECONOMICS_INTERPRETATION.json",
+    "fleet_economics_interpretation_sha256": "d5638a5c422e891e2b177a3698cdafb177c3458a0180f8e9bedba7f3d3d84075"
+  },
+  "bench": {
+    "id": "h100-v0515-endpoint-200g-r2-e00yfnrrfczsdjevms",
+    "required_status": "available_with_no_claim",
+    "accelerator": "nvidia-h100-sxm",
+    "instance_id": "computeinstance-e00yfnrrfczsdjevms",
+    "disk_id": "computedisk-e00cjpqvtz8x59514m",
+    "public_ipv4": "89.169.124.194",
+    "ssh_user": "glmrunner",
+    "ssh_private_key": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "watchdog_unit": "gemma4-h100-v0515-endpoint-20260725t1230-watchdog.service",
+    "watchdog_deadline_utc": "2026-07-25T12:30:00Z"
+  },
+  "correction_contract": {
+    "claim": "Atomically claim the retained bench once using its current runtime/gpus.json connection identity.",
+    "launch_identity": "Launch h100_execution_owner.py with --key /root/.config/nebius/glm-campaign/ssh_ed25519. Fail closed if that exact file is absent, not mode 0600, or SSH preflight fails.",
+    "reuse_repairs": "Reuse the already-captured raw manifest and already-passing parser fixtures; do not redo or weaken the descriptor repair.",
+    "resident_reuse": "Use --reuse-staged only after re-hashing the complete canonical remote checkpoint, packet, and candidate. Do not restage or delete valid canonical files.",
+    "workload": "After every original image-space, pinned-image, runtime, checkpoint, packet, and server gate passes, run only the sole unconsumed 791-request endpoint and preserve the bound pooled/discrete telemetry.",
+    "release_deadline_utc": "2026-07-25T12:25:00Z"
+  },
+  "prohibitions": [
+    "Do not replay the consumed 171-request discriminator.",
+    "Do not change the image, model, runtime, checkpoint, packet, workload, or economics interpretation.",
+    "Do not create, resize, stop, delete, or otherwise mutate the provider resource.",
+    "Do not restage or delete canonical remote checkpoint, packet, or candidate files whose bound size and SHA-256 pass.",
+    "Do not mark endpoint consumption before the first endpoint request is submitted."
+  ],
+  "terminal_contract": {
+    "artifact_root_prefix": "artifacts/h100-endpoint-200g-r2-ssh-identity-correction-",
+    "expected_terminal": "TERMINAL.json",
+    "typed_pre_science_failure_if_any_gate_fails": true,
+    "endpoint_sample_consumed_only_after_first_endpoint_request": true,
+    "release_bench": true
+  },
+  "budgets": {
+    "cumulative_authorized_spend_usd": 15.5,
+    "conservative_actual_spend_usd_before_correction": 9.75,
+    "provider_rate_usd_per_hour": 2.95,
+    "release_deadline_utc": "2026-07-25T12:25:00Z",
+    "watchdog_deadline_utc": "2026-07-25T12:30:00Z",
+    "local_storage": "At most 16 MiB new launch and terminal metadata; reuse all resident and parser artifacts."
+  }
+}

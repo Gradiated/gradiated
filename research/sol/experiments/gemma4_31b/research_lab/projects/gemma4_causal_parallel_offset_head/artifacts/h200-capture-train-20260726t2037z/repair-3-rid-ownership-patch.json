@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "repair_id": "repair-3",
+  "classification": "explicit_request_id_ownership_repair",
+  "diagnostic": "Pinned SGLang OpenAI protocol exposes optional rid, but the immutable workload omitted it. Normalized prefill IDs omit the marker even after cached-span scanning, so request ownership remains zero. This patch binds each unchanged request to causal-offset-XX and maps only that stable runtime ID.",
+  "mutable_files": {
+    "capture_offset_taps.py": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/capture_offset_taps.py",
+      "sha256": "acab05055fc47701ab874ea4e27da0d0b1dacf107003655d1fccb565cef972c5"
+    },
+    "exact_runner.py": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/inputs/exact_runner.py",
+      "sha256": "093ba9d22f26fceff685415ed0abd48e5d8992931a6eea7c1613aae26046b1a9"
+    }
+  },
+  "retry": {
+    "scope": "fresh_capture_only_with_explicit_pinned_request_ids",
+    "capture_stage_consumed": false,
+    "training_or_holdout_started": false,
+    "endpoint_pairs": 0
+  }
+}

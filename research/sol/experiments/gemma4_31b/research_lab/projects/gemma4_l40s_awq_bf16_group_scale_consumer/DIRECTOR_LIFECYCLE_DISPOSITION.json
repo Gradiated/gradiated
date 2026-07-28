@@ -1,0 +1,19 @@
+{
+  "bench_id": "l40s-qserve-e00a74kcbps8v00fk4",
+  "cleanup_verified": true,
+  "disk_absent": true,
+  "disk_id": "computedisk-e00svftc564m2pcp68",
+  "instance_absent": true,
+  "instance_id": "computeinstance-e00a74kcbps8v00fk4",
+  "inventory_retired": true,
+  "pre_cleanup": {
+    "compute_processes": 0,
+    "gpu_memory_used_mib": 0,
+    "gpu_utilization_percent": 0
+  },
+  "schema_version": 1,
+  "watchdogs_inactive": [
+    "gemma4-awq-exact-l40s-20260724t1400-watchdog.service",
+    "gemma4-l40s-retire-20260724t1405-watchdog.service"
+  ]
+}

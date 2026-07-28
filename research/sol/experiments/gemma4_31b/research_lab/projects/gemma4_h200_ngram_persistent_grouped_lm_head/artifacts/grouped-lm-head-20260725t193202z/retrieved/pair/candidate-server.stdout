@@ -1,0 +1,53 @@
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.0.1
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+[2026-07-25 19:37:46] INFO:     127.0.0.1:34000 - "GET /v1/models HTTP/1.1" 200 OK
+[2026-07-25 19:37:53] INFO:     127.0.0.1:34016 - "GET /v1/models HTTP/1.1" 200 OK
+[2026-07-25 19:37:53] INFO:     127.0.0.1:34032 - "POST /flush_cache HTTP/1.1" 200 OK
+[2026-07-25 19:37:56] INFO:     127.0.0.1:34034 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:37:56] INFO:     127.0.0.1:51406 - "GET /metrics HTTP/1.1" 200 OK
+[2026-07-25 19:37:57] INFO:     127.0.0.1:51466 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:37:57] INFO:     127.0.0.1:51426 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:37:58] INFO:     127.0.0.1:51500 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:37:58] INFO:     127.0.0.1:51420 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:37:58] INFO:     127.0.0.1:51550 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:37:59] INFO:     127.0.0.1:51450 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:37:59] INFO:     127.0.0.1:51474 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:00] INFO:     127.0.0.1:51490 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:00] INFO:     127.0.0.1:51516 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:00] INFO:     127.0.0.1:51422 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:01] INFO:     127.0.0.1:51434 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:01] INFO:     127.0.0.1:51532 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:02] INFO:     127.0.0.1:51464 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:02] INFO:     127.0.0.1:51452 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:02] INFO:     127.0.0.1:51528 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:03] INFO:     127.0.0.1:51508 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:03] INFO:     127.0.0.1:51534 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:04] INFO:     127.0.0.1:51564 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:04] INFO:     127.0.0.1:51566 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:04] INFO:     127.0.0.1:51582 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:05] INFO:     127.0.0.1:51594 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:05] INFO:     127.0.0.1:51608 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:06] INFO:     127.0.0.1:51614 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:06] INFO:     127.0.0.1:51620 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:06] INFO:     127.0.0.1:51622 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:07] INFO:     127.0.0.1:51630 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:07] INFO:     127.0.0.1:51640 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:08] INFO:     127.0.0.1:51656 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:08] INFO:     127.0.0.1:51658 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:08] INFO:     127.0.0.1:51674 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:09] INFO:     127.0.0.1:51684 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:09] INFO:     127.0.0.1:51694 - "POST /v1/completions HTTP/1.1" 200 OK
+[2026-07-25 19:38:19] INFO:     127.0.0.1:58138 - "GET /metrics HTTP/1.1" 200 OK

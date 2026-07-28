@@ -1,0 +1,50 @@
+{
+  "at_utc": "2026-07-25T05:58:51Z",
+  "authorized_recovery": {
+    "discriminator_patch": {
+      "file": "remote_runtime_discriminator.py",
+      "postimage_sha256": "b92eca8695531cb2234e304d556b5ef8f3d4feb5b411e2123056229f2e58b56e",
+      "preimage_sha256": "513ce600c7918cc08b9a02bdf9e02edeb5c66a7957a74b73517bc96ad413d333",
+      "replacement_count": 1,
+      "replacement_new": "[\"sudo\", \"docker\", \"inspect\", CONTAINER]",
+      "replacement_old": "[\"docker\", \"inspect\", CONTAINER]"
+    },
+    "steps": [
+      "atomically claim h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+      "mechanically reverify DIRECTOR_EXECUTION_BINDING.json, REPAIR_PATCH.json, and this binding",
+      "confirm gemma4-ngram-tail-overlap is the legacy v0.5.13 digest and owns port 30000 while gemma4-ngram-upstream-v0515 is exited",
+      "remove only gemma4-ngram-tail-overlap and the exited gemma4-ngram-upstream-v0515 containers",
+      "launch exactly the bound official v0.5.15 image and original launch arguments once",
+      "run only the unconsumed requests-0-through-170 discriminator with the repaired consumer",
+      "keep the recovery owner's claim heartbeat active and use repair-handshake wait --root ARTIFACT_ROOT instead of returning if another repair-ready boundary appears",
+      "admit the 791-request endpoint only if every original PROJECT.md gate passes"
+    ]
+  },
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "candidate_sample_consumed": false,
+  "classification": "newly_proved_startup_port_conflict_requires_one_unavoidable_restart",
+  "forbidden": [
+    "replay any settled arm",
+    "change the official v0.5.15 image, checkpoint, launch arguments, workload, or scientific gates",
+    "return merely because REPAIR_READY.json exists before a repair request, scientific terminal, or absolute repair deadline",
+    "launch a chained replacement owner after this bounded recovery owner exits",
+    "reload solely to re-prove an already valid activation result"
+  ],
+  "observed_remote_state": {
+    "legacy_container": {
+      "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+      "name": "gemma4-ngram-tail-overlap",
+      "port_30000_owner_pid": 65042,
+      "status": "running"
+    },
+    "v0515_container": {
+      "exit_code": 0,
+      "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+      "name": "gemma4-ngram-upstream-v0515",
+      "status": "exited"
+    }
+  },
+  "project": "gemma4_upstream_ngram_runtime_rebase",
+  "repair_patch_sha256": "87b1497161034a2d298325670cf8f277a042ab72a356ee034d3285c7bdd787c2",
+  "schema_version": 1
+}

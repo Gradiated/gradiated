@@ -1,0 +1,9 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/dflash_endpoint_runner.py",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/dflash_endpoint_runner.py",
+  "ready_sha256": "94ef2fa181d7bdfbe68fac2ad64f332c772384f37dfbcd2f03caee11d0ec4b03",
+  "requested_at_utc": "2026-07-25T18:05:51.229243Z",
+  "retry_scope": "archive_zero_request_root_then_retry_oracle_consumer_only",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

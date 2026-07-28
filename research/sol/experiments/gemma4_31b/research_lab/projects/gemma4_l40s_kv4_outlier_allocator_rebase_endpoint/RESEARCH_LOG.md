@@ -14,3 +14,11 @@ occurred; actual spend remains `$0.00`.
 
 Next: director creates and identity-binds one L40S, then starts the owner via
 the shared `detached-owner --unit-manager pid` mechanism.
+
+## 2026-07-27T06:07Z — live binding pre-claim boundary
+
+Action: created the authorized eight-file project-local hardlink checkpoint snapshot and launched the exact detached owner twice. Both attempts were pre-claim and unconsumed.
+
+Evidence: first failed because the owner omitted the accelerator selector; second failed because its bare model selector did not match the revision-qualified inventory contents. `OWNER_ERROR.json` artifacts are retained. The pool now reports the bench draining with `claim: null`.
+
+Next: director must inspect/reactivate or replace the draining bench; the c32 arm remains unconsumed.

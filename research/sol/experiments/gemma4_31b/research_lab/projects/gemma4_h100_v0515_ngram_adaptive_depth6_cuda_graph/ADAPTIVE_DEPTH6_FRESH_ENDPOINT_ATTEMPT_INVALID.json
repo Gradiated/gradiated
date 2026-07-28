@@ -1,0 +1,9 @@
+{
+  "claim_retained_for_repair": true,
+  "classification": "invalid_or_incomplete_controller_attempt",
+  "created_at_utc": "2026-07-25T16:05:36Z",
+  "error": "RuntimeError('ssh_failed:1:ive_depth6_fresh_endpoint/fresh_endpoint_driver.py\", line 203, in <genexpr>\\n    (output / \"telemetry.jsonl\").write_bytes(b\"\".join(compact(row, True) + b\"\\\\n\" for row in telemetry))\\n                                                      ^^^^^^^^^^^^^^^^^^\\n  File \"/home/glmrunner/adaptive_depth6_fresh_endpoint/fresh_endpoint_driver.py\", line 26, in compact\\n    return json.dumps(value, separators=(\",\", \":\"), sort_keys=sort, allow_nan=False).encode()\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \"/usr/lib/python3.12/json/__init__.py\", line 238, in dumps\\n    **kw).encode(obj)\\n          ^^^^^^^^^^^\\n  File \"/usr/lib/python3.12/json/encoder.py\", line 200, in encode\\n    chunks = self.iterencode(o, _one_shot=True)\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \"/usr/lib/python3.12/json/encoder.py\", line 258, in iterencode\\n    return _iterencode(o, 0)\\n           ^^^^^^^^^^^^^^^^^\\nValueError: Out of range float values are not JSON compliant: nan\\n')",
+  "provider_or_gpu_spend_usd": 0.9410644286374252,
+  "schema_version": 1,
+  "science_started": false
+}

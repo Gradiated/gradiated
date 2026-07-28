@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h100_v0515_ngram_semantic_divergence",
+  "result": "available_for_bound_final_fresh_sentinel_response_link",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "checkpoint": "The exact immutable endpoint checkpoint remains resident; re-hash and reuse it without restaging.",
+  "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+  "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6 with stock native NGRAM depth 12 and the passing row-sliced observer.",
+  "caches": "Preserve the resident image, CUDA caches, canonical checkpoint and packet, packed-mask component evidence, and both typed-invalid sentinel artifacts.",
+  "candidate": "Response-link-only repair: establish an explicit bijection from bound client label to internal SGLang rid and select current labels dynamically. No semantic producer, verifier, acceptance, KV, scheduler, response serialization, model, or sampling change.",
+  "endpoint": "Indices 0..1035 and 60000..60003 are consumed and forbidden. Only fresh indices 60004 and 60005 may be submitted.",
+  "prior_result": {
+    "path": "gemma4_h100_v0515_ngram_semantic_divergence/SENTINEL_AA_OBSERVER_REPAIR_RESULT.json",
+    "sha256": "0e12ca0b8a1433cc94ce93b5f60de657fe0dba342405c9857782544f7452b34c",
+    "classification": "typed_invalid",
+    "usable_observation": "All 128 target/accept/KV/scheduler invariant rows pass, instrumentation errors are empty, all four responses have 358 tokens, and sentinel A is exact across isolated and co-batched execution.",
+    "invalid_reason": "All 128 serialized-response links are null because local client labels were never correlated with SGLang internal rids."
+  },
+  "director_binding": "gemma4_h100_v0515_ngram_semantic_divergence/DIRECTOR_SENTINEL_AA_RESPONSE_LINK_BINDING.json",
+  "director_binding_sha256": "8bb02f0c6cdd23a7ebcf2f0b12e92881a1ec36f7272b54c28b6472f3110980cd",
+  "filesystem": "The resident checkpoint and image fit; this repair adds at most 1 GiB of project-local traces.",
+  "server_state": "Director lifecycle inspection at 2026-07-25T13:03:46Z found no NVIDIA compute process, SGLang serving process, listener on ports 30000, 8000, or 8001, or running container.",
+  "ssh_identity": "Read host, glmrunner user, and known-hosts namespace from the current runtime/gpus.json record; use /root/.config/nebius/glm-campaign/ssh_ed25519.",
+  "next": "Priority-8490 may verify the response-link binding and every hash, prove the correlation fixtures, claim once, and run only fresh indices 60004 and 60005. Persist SENTINEL_AA_RESPONSE_LINK_RESULT.json and its typed terminal, cleanly release by 2026-07-25T13:20:00Z, and do not open another sentinel after this terminal.",
+  "packed_mask": "The independent measured packed-mask endpoint lane remains out of scope and must not be integrated or inspected."
+}

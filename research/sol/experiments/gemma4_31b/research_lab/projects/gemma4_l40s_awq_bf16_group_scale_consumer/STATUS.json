@@ -2,9 +2,11 @@
   "active_session": null,
   "actual_spend_usd": 0.024948443867448687,
   "authorized_spend_usd": 8.0,
-  "classification": "candidate_consumed_control_api_failure_after_controller_release",
-  "compute_budget": "At most 6 local CPU-hours and 1.5 L40S GPU-hours.",
-  "next_action": "Typed boundary: do not replay the fixed candidate. The M=1 candidate CUDA chain executed, then the unstarted control hit fp8_scaled_mm column-major API incompatibility; the outer controller incorrectly released the required uninterrupted claim to maintenance after its retrieval-pack error. Director disposition is required before any new project action.",
+  "candidate_arm_consumed": true,
+  "bench_retired": true,
+  "classification": "inconclusive_candidate_consumed_without_persisted_row",
+  "compute_budget": "Closed after the single admitted candidate invocation.",
+  "next_action": "Closed. Do not replay the candidate, repair only the comparator, or create a support successor. Preserve the compile and invocation evidence.",
   "offline_evidence": {
     "classification": "exact_awq_qserve_compute_layout",
     "pass": true,
@@ -15,19 +17,22 @@
     "calibration": false,
     "requantization": false
   },
-  "packet": {
-    "path": "EXACT_CONSUMER_PACKET.tar.gz",
-    "sha256": "e3bc8fe9fef4efcca329fa82eb475cef086238ba012cee3e233171b583c49061",
-    "data_path": "EXACT_CONSUMER_DATA.tar.gz",
-    "data_sha256": "a98b0ca99d8e4f2d335dffb546931f072dc17d269d3d1b46723ac9eb17254753",
-    "manifest_path": "EXACT_CONSUMER_GPU_INPUT_MANIFEST.json",
-    "manifest_sha256": "d314db7affe5bca4e6ccf37da826b898a3e08533a0edfbdc8158a9f68edd0060",
-    "deterministic_rebuild_verified": true
+  "result": {
+    "artifact_root": "artifacts/exact-awq-consumer-20260724t0829z",
+    "candidate_cuda_started": true,
+    "completed_candidate_rows": 0,
+    "control_science_started": false,
+    "compile_registers": 127,
+    "compile_spills": 0,
+    "control_failure": "sgl_kernel.fp8_scaled_mm required column-major mat_b",
+    "outer_failure": "typed_retrieval_boundary:remote_pack_failed",
+    "scientific_result": false
   },
+  "lifecycle_disposition": "DIRECTOR_LIFECYCLE_DISPOSITION.json",
   "priority": 6295,
   "researcher_profile": "execution",
-  "status": "blocked",
-  "storage_budget": "At most 4 GiB new project artifacts; consume existing AWQ checkpoint, image, and caches read-only without duplication.",
-  "summary": "Immutable packet/data staging passed and SM89 compilation completed (candidate dense kernel: 127 registers, zero spills). The first M=1 candidate CUDA chain executed, but no row persisted because the FP8 control failed immediately on its required column-major mat_b layout. Remote invocation evidence was retrieved after the controller's retrieval-pack fault; the controller had already released the bench to maintenance, so the same uninterrupted-claim repair exception is unavailable.",
-  "wall_clock_budget": "Complete the bounded owner by 2026-07-24T13:45:00Z; director lifecycle deadline is 2026-07-24T14:00:00Z."
+  "status": "terminal",
+  "storage_budget": "Retain only compact compile, invocation, and retrieval evidence.",
+  "summary": "The fixed AWQ candidate compiled at 127 registers with zero spills and began its first M=1 CUDA chain, but no candidate row persisted. The unstarted FP8 control then failed its column-major mat_b API contract, and the owner released after a retrieval-pack fault. With no candidate output, a control-only repair cannot produce a valid comparison; the consumed candidate closes inconclusively after $0.0249484439.",
+  "wall_clock_budget": "Closed at director disposition on 2026-07-24."
 }

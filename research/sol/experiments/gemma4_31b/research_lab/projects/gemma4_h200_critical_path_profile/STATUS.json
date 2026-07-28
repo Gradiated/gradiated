@@ -1,11 +1,27 @@
 {
   "active_session": null,
   "authorized_spend_usd": 2.25,
-  "next_action": "Closed measured profile: reclassify the old 0.363303 s/request c32 artifact as a fully cache-read lower bound. If the director continues this line, run exact-distinct c48/c64 to test further decode weight-stream amortization, then admit FP8 weight-GEMM work only if batching saturates.",
-  "priority": 500,
-  "provider_spend_usd": 0.40721594761666674,
-  "researcher_profile": "deep",
-  "status": "complete",
-  "summary": "Exact cache-flushed c16/c32 profile passed: decode is largest but nearly tied with prefill; warmed output scaling assigns 49.8% of c16 batch wall to decode, and the prior economic comparator is a fully cache-read lower bound.",
-  "terminal_artifact": "PROFILE_SUMMARY.json"
+  "bench_id": "h200-kernel-frontier-e00pfvrckjvwn7bhet",
+  "budgets": {
+    "additional_h200_compute_minutes": 23.039247751235962,
+    "additional_provider_spend_usd": 1.554609157148997,
+    "additional_wall_clock_minutes": 45,
+    "retained_artifacts_gib": 3
+  },
+  "execution_controller": {
+    "starting_runner_sha256": "be4baf081267ca230db1357ed30ff2fe0ab947732ba5fe06396db5706c189a56",
+    "workload": "same-session exact-distinct c32/c48/c64 at 4214 fresh prompt plus 358 output tokens/request",
+    "weights": "bfloat16",
+    "kv_cache": "fp8_e5m2",
+    "dynamic_chunking": true,
+    "chunked_prefill_size": 2048
+  },
+  "next_action": "Terminal batching discriminator: do not replay or tune c48/c64. Use the valid same-session saturation miss to choose the next decode weight/linear intervention.",
+  "priority": 700,
+  "provider_spend_usd": 0.6926067904676697,
+  "researcher_profile": "execution",
+  "status": "completed",
+  "summary": "Terminal negative saturation result: same-session exact-distinct BF16/FP8-E5M2 c32/c48/c64 all passed outputs and accounting, but c48 was 9.489% slower and c64 1.087% slower in service seconds/request than c32. Batching is saturated at c32 for this workload; preserve the healthy c64 server and move to decode weight/linear work.",
+  "terminal_artifact": "artifacts/h200-saturation-20260720t0037z/TERMINAL.json",
+  "terminal_artifact_sha256": "88d1d6499656274cf05d00f9610425f3b7bf35b8f00161b4bfc43a0484a1ac07"
 }

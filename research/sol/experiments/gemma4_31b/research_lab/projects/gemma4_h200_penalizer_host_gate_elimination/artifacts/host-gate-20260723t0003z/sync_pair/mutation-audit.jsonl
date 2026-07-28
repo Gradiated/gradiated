@@ -1,0 +1,1 @@
+{"active_count": 2, "batch_size": 3, "candidate_path": "BatchedMinNewTokensPenalizer.host_required_dense_add", "host_counter": true, "no_device_scalar_read": true, "phase": "runtime_invocation"}

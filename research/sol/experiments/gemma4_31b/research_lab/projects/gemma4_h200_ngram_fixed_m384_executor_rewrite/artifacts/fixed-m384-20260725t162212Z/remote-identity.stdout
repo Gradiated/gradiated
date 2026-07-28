@@ -1,0 +1,4 @@
+gemma4-dflash-h200-adapter-20260725t1512z
+NVIDIA H200, GPU-b050b5ca-f174-04c8-3f99-02e940bc364f
+Filesystem        1B-blocks         Used    Available Use% Mounted on
+/dev/vda1      258906374144 131934298112 126955298816  51% /

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "attempted_at_utc": "2026-07-25T14:38:38Z",
+  "classification": "recoverable_guest_docker_authorization_launcher_defect_pre_science",
+  "owner": {
+    "path": "PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_REPAIR_OWNER.json",
+    "pid": 796284,
+    "start_ticks": 110633619,
+    "state": "exited_before_workload_producer"
+  },
+  "diagnostic": {
+    "path": "artifacts/workload-schema-repair-20260725t1436z/remote.log",
+    "sha256": "d0527b91b88a4736c47893d33c0242b10f32454ed6cacf1081bc07594358dfc5",
+    "stdout_stderr": "permission denied while trying to connect to the docker API at unix:///var/run/docker.sock"
+  },
+  "causal_amendment": "Use sudo docker consistently for image inspection/pull, image module-path inspection, server launch, logs, and removal; preserve the retained checkpoint, packet, runtime source, and claim.",
+  "workload_completion_marker_exists": false,
+  "candidate_cuda_started": false,
+  "scientific_request_submitted": false,
+  "stock_arm_consumed": false,
+  "candidate_arm_consumed": false,
+  "science_consumed": false,
+  "next": "Do not launch another detached owner in this turn. Retain the claim for deliberate in-place recovery with the exact sudo-docker amendment."
+}

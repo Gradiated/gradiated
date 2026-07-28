@@ -1,0 +1,120 @@
+{
+  "block_size": 4,
+  "crosses_bonus_decision": true,
+  "crosses_nonempty_accepted_prefix": true,
+  "crosses_subsequent_cycle": true,
+  "crosses_zero_accept_reject": true,
+  "cycles": [
+    {
+      "accepted_draft_count": 0,
+      "accepted_prefix": [],
+      "bonus_token": 23304,
+      "committed_output_tokens_after": 1,
+      "committed_output_tokens_before": 0,
+      "cycle_index": 1,
+      "emitted_tokens": [
+        23304
+      ],
+      "output_end": 2,
+      "output_start": 1,
+      "pass": true,
+      "pending_output_tokens_after": 2,
+      "pending_seed": 759,
+      "retained_emitted_tokens": [
+        23304
+      ],
+      "synthetic_draft_block": [
+        759,
+        23305,
+        760,
+        23305
+      ],
+      "target_top1": [
+        23304,
+        759,
+        23304,
+        759
+      ]
+    },
+    {
+      "accepted_draft_count": 1,
+      "accepted_prefix": [
+        23304
+      ],
+      "bonus_token": 759,
+      "committed_output_tokens_after": 12,
+      "committed_output_tokens_before": 10,
+      "cycle_index": 11,
+      "emitted_tokens": [
+        23304,
+        759
+      ],
+      "output_end": 13,
+      "output_start": 11,
+      "pass": true,
+      "pending_output_tokens_after": 13,
+      "pending_seed": 759,
+      "retained_emitted_tokens": [
+        23304,
+        759
+      ],
+      "synthetic_draft_block": [
+        759,
+        23304,
+        760,
+        23305
+      ],
+      "target_top1": [
+        23304,
+        759,
+        23304,
+        759
+      ]
+    },
+    {
+      "accepted_draft_count": 1,
+      "accepted_prefix": [
+        23304
+      ],
+      "bonus_token": 759,
+      "committed_output_tokens_after": 14,
+      "committed_output_tokens_before": 12,
+      "cycle_index": 12,
+      "emitted_tokens": [
+        23304,
+        759
+      ],
+      "output_end": 15,
+      "output_start": 13,
+      "pass": true,
+      "pending_output_tokens_after": 15,
+      "pending_seed": 759,
+      "retained_emitted_tokens": [
+        23304,
+        759
+      ],
+      "synthetic_draft_block": [
+        759,
+        23304,
+        760,
+        23305
+      ],
+      "target_top1": [
+        23304,
+        759,
+        23304,
+        759
+      ]
+    }
+  ],
+  "evidence_label": "measured_boundaries_with_synthetic_draft_proposals",
+  "pass": true,
+  "request_index": 0,
+  "request_sha256": "0036fcd2713e3590a5eb236a86cfbb1ddd7bb4429ed2fd25a645ffa9da61a9ea",
+  "schema_version": 1,
+  "selected_cycle_indices": [
+    1,
+    11,
+    12
+  ]
+}

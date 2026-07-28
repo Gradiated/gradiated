@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "repair_id": "endpoint-1785089476",
+  "classification": "cuda_graph_exact_shape_incompatibility_before_candidate_request",
+  "scientific_sample": false,
+  "candidate_cuda_or_science_started": false,
+  "control_producer": {
+    "path": "artifacts/endpoint/endpoint-repair2-artifacts.tar.gz:artifacts/CONTROL_PRODUCER_STAGE.json",
+    "persisted": true,
+    "valid_for_endpoint_comparator": false,
+    "reason": "SGLang SSE rows omit token_ids, leaving returned_token_ids=0 despite complete 358-token completions; raw SSE is preserved."
+  },
+  "candidate_failure": {
+    "stage": "candidate CUDA-graph initialization before request submission",
+    "error": "packed_m384_exact_shape_required",
+    "meaning": "The hash-bound packed endpoint rejects a graph-capture attention call before the admitted exact c32 candidate arm; this violates the project's CUDA-graph-compatible fixed-production-shape requirement."
+  },
+  "repair_action": {
+    "image_pull": "artifacts/endpoint/repair-image-pull.stdout",
+    "image_pull_sha256": "26ac6cf9fc357afe65011848806c106873002a58f97c79128f76c7ccfbaa943d",
+    "zero_request_root_archived": "remote artifacts.pre-repair-1785089862",
+    "outer_command": "unchanged bound endpoint_pair.py command",
+    "stdout_stderr": "artifacts/endpoint/repair-endpoint-pair.stderr",
+    "stdout_stderr_sha256": "0757d64ba7406ad984a7f994289c91e9a2d8e50b13b4dd4eda4818c133ffd400",
+    "candidate_log": "artifacts/endpoint/candidate.docker.stdout",
+    "candidate_log_sha256": "b7221fb009281dae2bd5321a3a051dfa3028c5c228ef173061940deeb9a33367",
+    "compact_artifacts": "artifacts/endpoint/endpoint-repair2-artifacts.tar.gz",
+    "compact_artifacts_sha256": "8391ac82b788fc311797fe0b61f5369f70897a7d1424ca2cdfb94db50101afd5"
+  },
+  "disposition": "Do not replay control. The bound candidate source cannot be altered without changing the admitted endpoint identity; preserve the staged checkpoint, image, raw control producer, and candidate graph-failure evidence."
+}

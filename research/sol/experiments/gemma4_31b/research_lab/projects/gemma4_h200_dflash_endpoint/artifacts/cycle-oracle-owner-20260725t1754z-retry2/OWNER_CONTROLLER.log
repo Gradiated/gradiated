@@ -1,0 +1,61 @@
+DFLASH_REQUEST_INDEXED_RELAY_REPAIR.patch: OK
+dflash_cycle_oracle.py: OK
+dflash_endpoint_runner.py: OK
+cycle_oracle_sitecustomize.py: OK
+remote_cycle_oracle.sh: OK
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 30000 after 0 ms: Couldn't connect to server
+Traceback (most recent call last):
+  File "/project/dflash_endpoint_runner.py", line 108, in <module>
+    if __name__ == "__main__": raise SystemExit(main())
+                                                ^^^^^^
+  File "/project/dflash_endpoint_runner.py", line 97, in main
+    before = urllib.request.urlopen(args.base + "/metrics", timeout=30).read(); (root / "metrics-before.prom").write_bytes(before)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 521, in open
+    response = meth(req, response)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 630, in http_response
+    response = self.parent.error(
+               ^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 559, in error
+    return self._call_chain(*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 639, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 404: Not Found
+scp: download /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/oracle/: not a regular file
+scp: download /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/overlay/: not a regular file
+scp: download /home/glmrunner/gemma4-dflash/work/dflash-cycle-oracle/request/: not a regular file

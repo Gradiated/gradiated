@@ -1,0 +1,31 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "contents": {
+    "caches": "None; newly created retained development bench.",
+    "checkpoint": "Exact bound 8-file, 62578655208-byte checkpoint is available locally but not yet staged on the bench.",
+    "image": "docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a; bound but not yet pulled.",
+    "model": "google/gemma-4-31B-it",
+    "project": "gemma4_sglang_transformers_generation_equivalence",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.12 at source commit 127b9e3283f7c2a43234b852ff5c9f1796d53624 plus direct Transformers in the same immutable image; not yet started.",
+    "server_state": "No consumer is running; provider create completed and the bench awaits a researcher claim."
+  },
+  "hourly_cost_usd": 2.46,
+  "id": "h200-generation-equivalence-e00ms57nn1c4k1cx0k",
+  "lifecycle": {
+    "deadline_utc": "2026-07-18T15:45:42.393928Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-generation-equivalence-h200-20260718t131542z-watchdog.service",
+      "main_pid": "2445112",
+      "unit": "gemma-generation-equivalence-h200-20260718t131542z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "resource": {
+    "disk_id": "computedisk-e00z6arpjjmr7vpetr",
+    "disk_name": "gemma-generation-equivalence-h200-20260718t131542z-boot",
+    "instance_id": "computeinstance-e00ms57nn1c4k1cx0k",
+    "instance_name": "gemma-generation-equivalence-h200-20260718t131542z"
+  }
+}

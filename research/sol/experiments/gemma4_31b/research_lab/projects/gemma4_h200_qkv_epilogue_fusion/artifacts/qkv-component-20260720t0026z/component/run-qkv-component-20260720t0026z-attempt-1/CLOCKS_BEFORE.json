@@ -1,0 +1,10 @@
+{
+  "command": [
+    "nvidia-smi",
+    "--query-gpu=name,uuid,clocks.sm,clocks.mem,power.draw,temperature.gpu",
+    "--format=csv,noheader,nounits"
+  ],
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "NVIDIA H200, GPU-1e9b3baf-f012-df47-6725-902c04e9a2f0, 345, 3201, 75.35, 29"
+}

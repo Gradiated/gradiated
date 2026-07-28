@@ -98,3 +98,75 @@ terminal.
 - Storage: at most 4 GiB of new durable artifacts.
 - Provider spend: `$0.00`.
 - Provider mutation and GPU claims: forbidden.
+
+## Director iteration 2 — exact-shape MI355X falsifier
+
+The source discriminator above is complete and remains immutable evidence.
+New campaign authority activates its one predeclared target-hardware
+falsifier; do not rerun or rewrite `MI355X_FP8_RUNTIME_SCREEN.json`.
+
+### Scientific contract
+
+- Hardware: one MI355X/gfx950 TP1 bench registered by the director.
+- Runtime identities: vLLM
+  `0164022c907014a27e81c514cd4dff6091904c2b` and AITER
+  `6c48c5fa0e7c299adcf1987c8f4817720ceab311`.
+- Baseline: pinned per-tensor online-E4M3
+  `ROCmFP8ScaledMMLinearKernel -> torch._scaled_mm`, AITER
+  flash/unified FP8-KV attention, and the BF16 tied head.
+- Exact arms: every transformer linear at M32 and M384; sliding
+  head256/GQA2/window1024 and global head512/GQA8/context4571 attention at
+  M32 and M384; and BF16 `[32,5376] x [5376,262144]` tied head including
+  twelve independent semantic calls per target cycle.
+- Numerical gate: finite outputs; relative-L2 at most `0.02` and cosine at
+  least `0.995` for FP8 linears/attention; argmax identity for head fixtures;
+  no fallback.
+- Timing: compile/autotune first, then warm profiler-off p50/p95 with
+  compilation excluded and every output consumed. Collect only compiler
+  resources and counters needed to test the bound bandwidth, prefill/M384
+  tensor-use, and global-attention spill hypotheses.
+- Whole-request gate: measured component aggregate at most
+  `0.545847226968745 s/request`, plus the preserved
+  `0.07930187499999997` launch/service reserve, for at most
+  `0.625149101968745 s/request`.
+
+Use `$kernel-research`. Create the mutable project-local entrypoint
+`run_mi355x_exact_shape_falsifier.py`; its command is:
+
+```bash
+python3 run_mi355x_exact_shape_falsifier.py \
+  --screen MI355X_FP8_RUNTIME_SCREEN.json \
+  --output MI355X_EXACT_SHAPE_FALSIFIER.json
+```
+
+The entrypoint must verify the pinned source commits, read the current
+registered bench identity, implement only ordinary API/layout adapters needed
+to reach the unchanged consumers, persist a `science_started` marker before
+the first decision-bearing GPU call, and emit raw per-shape timings,
+numerical metrics, candidate-path proof, compiler resources, charged
+aggregation, and terminal classification. Pre-science compile/API defects are
+repairable inside the same claim; scientific identities and gates are not.
+
+`MI355X_EXACT_SHAPE_FALSIFIER.json` is exactly one of:
+
+- `measured_mi355x_candidate` when every consumer, numerical, no-fallback, and
+  whole-request gate passes; or
+- typed `none` when a valid exact-shape measurement fails a bound.
+
+Missing hardware/source, setup failure, or an ordinary pre-science adapter
+defect is operationally recoverable rather than typed `none`.
+
+### Iteration-2 budgets and lifecycle
+
+- Authorized provider spend: `$0.9833333333333333`.
+- Provider exposure: at most 20 minutes at `$2.95/hour`, including
+  provisioning, bootstrap, experiment, retrieval, and verified cleanup.
+- GPU science: one exact-shape suite; no checkpoint transfer or endpoint run.
+- Storage: at most 8 GiB of new source, build cache, and artifacts; no model
+  checkpoint.
+- Wall clock after claim: at most 16 minutes, leaving at least four minutes
+  for retrieval and cleanup.
+- The researcher may claim only the director-registered MI355X bench and may
+  never create, delete, or retire provider resources.
+- Do not apply the PTPC bridge, tied-K/V reuse, batching, compression, or any
+  other survivor. This is the unstacked baseline falsifier.

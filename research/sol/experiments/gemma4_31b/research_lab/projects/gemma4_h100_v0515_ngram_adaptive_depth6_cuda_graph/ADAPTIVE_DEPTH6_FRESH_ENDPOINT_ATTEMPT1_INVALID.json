@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "classification": "invalid_interrupted_control_server_exit",
+  "evidence_label": "invalid_attempt_not_scientific_result",
+  "workload_indices": [62000, 62790],
+  "request_count": 791,
+  "control": {
+    "submitted": 791,
+    "completed": 128,
+    "failed_or_uncompleted": 663,
+    "last_completed_fresh_index": 62127,
+    "first_failed_fresh_index": 62128,
+    "raw_responses_complete": false,
+    "science_consumed": false
+  },
+  "candidate": {
+    "started": false,
+    "requests_submitted": 0,
+    "science_consumed": false
+  },
+  "server_boundary": {
+    "failure": "fp8_scaled_mm RuntimeError: Error Internal",
+    "signal": "SIGQUIT",
+    "health_lost": true,
+    "server_stopped_and_removed": true
+  },
+  "observer_defect": "telemetry JSON persistence rejected non-finite metric NaN after raw request rows were written",
+  "repair": "localized supervision repair: finite-safe telemetry encoding and client concurrency cap 32; frozen workload reused, no checkpoint restage",
+  "artifacts": {
+    "raw_requests_path": "artifacts/fresh-endpoint/retrieved-control/arm_control/requests.jsonl",
+    "raw_requests_sha256": "bfd05014859cc629241fc0548eb2a2192c1a73c8dd6b496ff0bbb1cf7bf3e2f4",
+    "server_log_path": "artifacts/fresh-endpoint/retrieved-control/server_control.log",
+    "server_log_sha256": "e3cc5d99f02abf5d2bc4247cffedbf1bebc63f4a05a85f2d5926e8b222ad447a",
+    "workload_sha256": "5ab280c171326db1c454e924b3db2e06ba47db09f3775dcc427d625b50f6f300"
+  },
+  "claim_retained_for_one_repair": true,
+  "endpoint_or_economic_claim": false
+}

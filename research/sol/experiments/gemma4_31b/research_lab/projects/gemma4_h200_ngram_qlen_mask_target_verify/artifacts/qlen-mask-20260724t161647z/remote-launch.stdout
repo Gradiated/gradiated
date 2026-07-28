@@ -1,0 +1,1 @@
+{"command": ["python3", "project/remote_experiment.py"], "cwd": "/home/glmrunner/gemma4-ngram-qlen-mask", "launched_at_utc": "2026-07-24T16:16:54.504224Z", "live": true, "log": "/home/glmrunner/gemma4-ngram-qlen-mask/OWNER.log", "pid": 76011, "start_ticks": 2452522, "unit_manager": "remote-shell"}

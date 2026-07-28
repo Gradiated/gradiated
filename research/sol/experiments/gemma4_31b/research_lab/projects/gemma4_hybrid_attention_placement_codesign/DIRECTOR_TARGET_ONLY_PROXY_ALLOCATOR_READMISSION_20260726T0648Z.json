@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "created_at_utc": "2026-07-26T06:48:00Z",
+  "updated_at_utc": "2026-07-26T06:53:00Z",
+  "decision": "claim_patch_and_measure_target_only_proxy_allocator_component",
+  "scientific_contract_changed": false,
+  "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/target-only-proxy-allocator-readmission-20260726t0648z",
+  "deadline_utc": "2026-07-26T07:24:00Z",
+  "claim_not_after_utc": "2026-07-26T06:57:00Z",
+  "bench": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "bench_connection_identity": {
+    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "public_ipv4": "89.169.109.132",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g"
+  },
+  "source_sha256": "25240c4d6f30ef033819910d25b58f8951523a00015d4420591d63764a550151",
+  "owner_entrypoint": {
+    "path": "target_only_proxy_allocator_component_owner.py",
+    "sha256": "bd99b2fc5c9353c7efcece4b969ea6fc3ec504897815242b6cb03b81d70e42a8",
+    "command": "python3 target_only_proxy_allocator_component_owner.py"
+  },
+  "component_runner": {
+    "path": "target_only_proxy_allocator_component_runner.py",
+    "sha256": "1ac3ca9eb5c81d53f5ce6093942ce84a646892b5aaf28a409b9d6daa9e93366e",
+    "command": "python3 target_only_proxy_allocator_component_runner.py",
+    "mutable_after_retained_claim": true
+  },
+  "launch": {
+    "project_relative_owner_entrypoint": "target_only_proxy_allocator_component_owner.py",
+    "owner_command": "python3 target_only_proxy_allocator_component_owner.py",
+    "single_start_command": "PYTHONPATH=/root/workspace/research/factory/src /root/workspace/research/factory/tools/detached-owner start --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/target-only-proxy-allocator-readmission-20260726t0648z/DETACHED_OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/target-only-proxy-allocator-readmission-20260726t0648z/owner.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign -- env PYTHONPATH=/root/workspace/research/factory/src HYBRID_TARGET_ONLY_READMISSION_BINDING=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/DIRECTOR_TARGET_ONLY_PROXY_ALLOCATOR_READMISSION_20260726T0648Z.json python3 target_only_proxy_allocator_component_owner.py",
+    "durable_state": "artifacts/target-only-proxy-allocator-readmission-20260726t0648z/DETACHED_OWNER_STATE.json",
+    "durable_log": "artifacts/target-only-proxy-allocator-readmission-20260726t0648z/owner.log"
+  },
+  "remote_workspace": "/home/glmrunner/hybrid-target-only-proxy-allocator-20260726t0648z",
+  "runtime_name": "phase-selective-readmission",
+  "ssh_identity_path": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+  "server_launch_command": "set -eu; echo retained_claim_component_program_patch_required >&2; exit 86",
+  "readiness_command": "set -eu; exit 86",
+  "target_verify_command": "set -eu; exit 86",
+  "runtime_cleanup_command": "ssh -i /root/.config/nebius/glm-campaign/ssh_ed25519 -o UserKnownHostsFile=/root/.config/nebius/glm-campaign/known_hosts -o StrictHostKeyChecking=yes -o ConnectTimeout=20 glmrunner@89.169.109.132 'sudo -n docker logs phase-selective-readmission > /home/glmrunner/hybrid-target-only-proxy-allocator-20260726t0648z/artifact/server_raw.log 2>&1 || true; sudo -n docker rm -f phase-selective-readmission >/dev/null 2>&1 || true'",
+  "retained_claim_bootstrap": {
+    "purpose": "The first runner invocation stages the hash-bound sources, exits at server_launch_command before model load or science, and causes the outer owner to persist retained_repair while keeping the claim. This is the one localized implementation window required by the supervisor contract.",
+    "expected_first_outcome": "server_launch_failed",
+    "scientific_component_consumed": false,
+    "candidate_cuda_invocation_started": false,
+    "runtime_started": false,
+    "provider_contact_expected": true,
+    "repair_signal": "After the repaired runner and its source manifest are durable, atomically replace REPAIR_REQUEST.json with a fresh request referring to this binding and the new runner sha256. The already-running outer owner consumes it and continues directly into the real component."
+  },
+  "mutable_retained_claim_repair": {
+    "destination": "target_only_proxy_allocator_component_runner.py",
+    "reason": "The offline fake transport writes correctness_bearing_stock_candidate_result and target_logit_consumer fields that the live forward_batch_activation_component.py producer does not emit. The current real retrieval also places the copied artifact directory one level below the path inspected by result_from_retrieval. Those are localized producer/consumer and retrieval joins, not scientific results.",
+    "required_changes_before_repair_signal": [
+      "Consume the exact live producer records from forward_batch_dual_cache.json and forward-batch-activation-c32/{INVOCATION,TERMINAL}.json through the unchanged full-model component contract in DIRECTOR_PHASE_SELECTIVE_FULL_MODEL_H200_BINDING.json; do not accept the synthetic fixture-only fields as live evidence.",
+      "Stage every source actually used by that consumer and persist their sha256 manifest before the scientific request.",
+      "Use component_program.server_launch_command, component_program.readiness_command, and component_program.target_verify_command only after the repaired live evidence join is installed.",
+      "Make retrieval and result construction agree on the actual copied directory layout, and infer science_started, scientific_component_consumed, and candidate_cuda_invocation_started only from persisted live records.",
+      "Do not add claim, heartbeat, release, runtime removal, provider teardown, or another researcher wait to the component runner.",
+      "If the repair needs one replacement experiment container, the outer claim may retain it and the component may start it once; all cleanup remains with the outer owner."
+    ],
+    "no_new_director_gate": true,
+    "continue_same_owner_into_science": true
+  },
+  "component_program": {
+    "server_launch_command": "set -eu; test -d /home/glmrunner/phase-selective-full-model-v2/checkpoint; sudo -n docker run -d --name phase-selective-readmission --gpus all -p 30000:30000 -v /home/glmrunner/hybrid-target-only-proxy-allocator-20260726t0648z:/work -v /home/glmrunner/phase-selective-full-model-v2/checkpoint:/models/target:ro -w /work -e PYTHONPATH=/work/source gemma4-dflash-sglang:588d1f7bc942 python3 -m sglang.launch_server --model-path /models/target --tokenizer-path /models/target --revision b9ea41a2887d8607f594846523f94c6cc75ac8a4 --dtype bfloat16 --tp-size 1 --attention-backend triton --host 0.0.0.0 --port 30000 --context-length 5000 --max-running-requests 32 --mem-fraction-static 0.85 --speculative-algorithm NGRAM --speculative-num-steps 12 --speculative-num-draft-tokens 12 --skip-server-warmup",
+    "readiness_command": "set -eu; i=0; while [ \"$i\" -lt 100 ]; do out=$(set +e; cat /home/glmrunner/hybrid-target-only-proxy-allocator-20260726t0648z/artifact/adapter_attach.json 2>/dev/null; cat /home/glmrunner/hybrid-target-only-proxy-allocator-20260726t0648z/artifact/forward_batch_dual_cache.json 2>/dev/null; sudo -n docker inspect -f '{{.State.Running}}' phase-selective-readmission 2>/dev/null; sudo -n docker logs --tail 700 phase-selective-readmission 2>&1 | grep -F 'The server is fired up and ready to roll!' | tail -1); printf '%s\\n' \"$out\"; if printf '%s\\n' \"$out\" | grep -Fq '\"attached\": true' && printf '%s\\n' \"$out\" | grep -Fq 'true' && printf '%s\\n' \"$out\" | grep -Fq 'ready to roll'; then exit 0; fi; i=$((i+1)); sleep 3; done; exit 1",
+    "target_verify_command": "set +e; sudo -n docker exec phase-selective-readmission python3 /work/source/forward_batch_activation_component.py; rc=$?; sudo -n docker logs phase-selective-readmission > /home/glmrunner/hybrid-target-only-proxy-allocator-20260726t0648z/artifact/server_raw.log 2>&1; cat /home/glmrunner/hybrid-target-only-proxy-allocator-20260726t0648z/artifact/forward_batch_dual_cache.json 2>/dev/null; cat /home/glmrunner/hybrid-target-only-proxy-allocator-20260726t0648z/artifact/forward-batch-activation-c32/INVOCATION.json 2>/dev/null; cat /home/glmrunner/hybrid-target-only-proxy-allocator-20260726t0648z/artifact/forward-batch-activation-c32/TERMINAL.json 2>/dev/null; exit $rc",
+    "checkpoint": {
+      "model": "google/gemma-4-31B-it",
+      "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+      "remote_path": "/home/glmrunner/phase-selective-full-model-v2/checkpoint"
+    },
+    "runtime_image": "gemma4-dflash-sglang:588d1f7bc942",
+    "scientific_binding": {
+      "path": "DIRECTOR_PHASE_SELECTIVE_FULL_MODEL_H200_BINDING.json",
+      "sha256": "f09e4188f4b997fe3a0fc4b2fd6303616c043b6c360d500c8d80b0ac4ad800dc"
+    },
+    "scientific_phase": "TARGET_VERIFY only",
+    "endpoint_authorized": false
+  },
+  "decision_basis": {
+    "allocator_repair_terminal": {
+      "path": "TARGET_ONLY_PROXY_ALLOCATOR_REPAIR_TERMINAL.json",
+      "sha256": "f28761263291c8e7c932308035fdc4c75feef99148e0123f1ffd97ca5849dfd7",
+      "scientific_component_consumed": false
+    },
+    "component_command_seam_terminal": {
+      "path": "TARGET_ONLY_COMPONENT_COMMAND_SEAM_TERMINAL.json",
+      "sha256": "ff0a71044f868889b9ca356f26eec15dd5776dc177c88799035a48825a9cea6b",
+      "classification": "offline_repair_terminal",
+      "scientific_component_consumed": false,
+      "gpu_claimed": false,
+      "provider_contacted": false
+    },
+    "closest_same_lineage_claim": {
+      "claim_started_at_utc": "2026-07-26T06:14:42Z",
+      "claim_released_at_utc": "2026-07-26T06:17:57.392750Z",
+      "duration_seconds": 195.39275,
+      "result": "proxy_allocator_exhausted_during_stock_extend_before_target_verify"
+    }
+  },
+  "budgets": {
+    "maximum_claim_wall_seconds": 1860,
+    "provider_rate_usd_per_hour": 2.45,
+    "maximum_incremental_provider_spend_usd": 1.2658333333,
+    "project_authorized_spend_usd": 6.75,
+    "project_prior_actual_spend_usd": 5.1319714144,
+    "maximum_project_total_spend_usd": 6.3978047477,
+    "storage_gib": 2,
+    "terminal_and_release_margin_seconds": 360
+  },
+  "quality_gate": {
+    "decision_bearing_component": "A complete live full-model TARGET_VERIFY result through the pinned target-logit consumer with exact stock boundary, cache ownership, graph, finite output, and positive-net timing evidence.",
+    "synthetic_fixture_is_not_scientific_evidence": true,
+    "endpoint_authorized": false
+  },
+  "stop_rules": [
+    "Do not change the model, checkpoint bytes, five converted layers, target-only allocator, native slot vectors, accepted-prefix ownership, workload, or scientific decision rule.",
+    "Do not submit the scientific component until the live producer/consumer join and actual retrieval layout are implemented and their source manifest is durable inside the retained claim.",
+    "Do not treat the activation-only terminal or synthetic fixture fields as a decision-bearing component result.",
+    "After a semantic, cache-ownership, graph, nonfinite, or nonpositive-net component result, persist the terminal and let the outer owner clean and release; do not run the endpoint.",
+    "On an ordinary pre-science integration defect, retain the claim and repair in place while the closest restart plus the six-minute terminal/release margin still fits 2026-07-26T07:24:00Z.",
+    "At the absolute deadline, the outer owner must remove phase-selective-readmission and release the bench before the 2026-07-26T07:30:00Z watchdog."
+  ],
+  "provider_lifecycle_mutation": "none; reuse the registered available warm H200 bench"
+}

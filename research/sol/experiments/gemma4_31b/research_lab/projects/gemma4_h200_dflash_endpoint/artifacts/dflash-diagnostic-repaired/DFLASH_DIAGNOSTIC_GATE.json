@@ -1,0 +1,27 @@
+{
+  "accept_len_event_count": 2,
+  "accepted_draft_tokens": 9.54,
+  "candidate_raw_token_ids_present": true,
+  "candidate_text_sha256": [
+    "2b762fc3a54e0db322333fca2dacbe2a982e0c0f4b3f3d35574de900f6effdf5",
+    "5153eabb35181d050476cf5dc88e636e857d5cac679241d3a70c44fd451e0d21",
+    "df133e7d4d8398cf4e0c05e65d607208140c08da9ea7d993487b276ee64863e4",
+    "d07855d2d12dc098b6f68145e9db85f00be4a94dcea4d0ee973c43dba1e88e88"
+  ],
+  "classification": "diagnostic_quality_or_integration_reject",
+  "complete_requests": 4,
+  "consumed_ar_text_sha256": [
+    "2b762fc3a54e0db322333fca2dacbe2a982e0c0f4b3f3d35574de900f6effdf5",
+    "4ff1c78866d85b4b5eff9316d370c638f5600763de0617877bcbdbd037a17a79",
+    "2a111eace2166617dd207854b2d7148d84a41de0b08e37073424a560e8558d8d",
+    "d07855d2d12dc098b6f68145e9db85f00be4a94dcea4d0ee973c43dba1e88e88"
+  ],
+  "draft_runner_initialized": true,
+  "mean_accepted_drafts_per_verification": 4.77,
+  "pass": false,
+  "prior_ar_decoded_text_equal": false,
+  "request_verification_count": 2,
+  "schema_version": 1,
+  "terminal_pass": true,
+  "verify_event_count": 0
+}

@@ -1,0 +1,31 @@
+{
+  "accelerator": "nvidia-h100-sxm",
+  "contents": {
+    "artifacts": "Staging gate and replacement lifecycle are durable.",
+    "caches": "Cold.",
+    "checkpoint": "Cold replacement; verified parallel resumable staging is ready.",
+    "image": "Pinned SGLang v0.5.13 image not yet pulled.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_h100_v0513_fp8_qkv_endpoint",
+    "runtime": "One-off replacement H100 for the unconsumed FP8+QKV c32 arm.",
+    "server_state": "No server started."
+  },
+  "hourly_cost_usd": 2.15,
+  "id": "h100-v0513-fp8qkv-r2-e00nmpn5czcb44jqm1",
+  "lifecycle": {
+    "deadline_utc": "2026-07-20T14:09:17Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-r2-watchdog.service",
+      "main_pid": 3099664,
+      "unit": "gemma4-h100-r2-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "resource": {
+    "disk_id": "computedisk-e00rd32znm10exgyy3",
+    "disk_name": "gemma4-v0513-fp8qkv-h100-r2-202607201148-boot",
+    "instance_id": "computeinstance-e00nmpn5czcb44jqm1",
+    "instance_name": "gemma4-v0513-fp8qkv-h100-r2-202607201148"
+  }
+}

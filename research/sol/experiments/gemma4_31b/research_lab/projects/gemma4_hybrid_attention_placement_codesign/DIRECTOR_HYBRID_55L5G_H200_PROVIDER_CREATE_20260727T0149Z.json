@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-27T01:49:55.411237Z",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "decision": "create_and_register_cold_h200_maintenance_identity_verification_pending",
+  "reservation": {
+    "authorized_usd": 8.5,
+    "prior_actual_usd": 6.3140021221,
+    "maximum_remaining_usd": 2.1859978779
+  },
+  "lifecycle": {
+    "provider_started_at_utc": "2026-07-27T01:49:55.411237Z",
+    "deadline_utc": "2026-07-27T02:39:55.411237Z",
+    "maximum_seconds": 3000,
+    "hourly_cost_usd": 2.4597222,
+    "maximum_compute_cost_usd": 2.0497685,
+    "watchdog": {
+      "unit": "gemma4-hybrid-55l5g-h200-20260727t0149z-watchdog.service",
+      "unit_manager": "user",
+      "main_pid": 2258131,
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-hybrid-55l5g-h200-20260727t0149z-watchdog.service"
+    }
+  },
+  "provider_resource": {
+    "provider": "nebius",
+    "accelerator": "nvidia-h200-sxm",
+    "instance_id": "computeinstance-e00dam5825ffjyxd8b",
+    "instance_name": "gemma4-hybrid-55l5g-h200-20260727t0149z",
+    "disk_id": "computedisk-e00syfz2dr5znq5kg7",
+    "disk_name": "gemma4-hybrid-55l5g-h200-20260727t0149z-boot",
+    "public_ipv4": "89.169.120.201",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "provider_state_at_create": "RUNNING"
+  },
+  "create_evidence": {
+    "returncode": 0,
+    "reconciled_nonzero_exit": false,
+    "stdout_sha256": "705e0692561810a58ac78db03030ccb509a0d2722c7c6c926c96f09c8538cba5",
+    "stderr_sha256": "200db49601748b144915efef751b533b3230cf8705ad3ae941fa308f817cfd88"
+  },
+  "identity_gate": {
+    "strict_ssh_probe_attempted": true,
+    "strict_ssh_probe_result": "pass",
+    "ssh_ed25519_fingerprint": "SHA256:JHbxua8r+igrDIicuOb66wRcTXJqdjqvcFWehGv5eN8",
+    "gpu_telemetry_verified": true,
+    "gpu_name": "NVIDIA H200",
+    "gpu_uuid": "GPU-c83b9102-d2ad-c61d-6cdb-a89ce2dc8507",
+    "driver_version": "580.159.04",
+    "memory_mib": 143771,
+    "registered_in_gpu_pool": true,
+    "bench_id": "h200-hybrid-55l5g-e00dam5825ffjyxd8b",
+    "registered_at_utc": "2026-07-27T01:58:16.373890Z",
+    "registered_condition": "ready_after_identity_verification",
+    "claim_allowed": false
+  },
+  "next_director_action": [
+    "The exact RUNNING instance and READY attached disk were reconciled once before maintenance registration.",
+    "Strict SSH, ED25519 identity, and NVIDIA H200 telemetry passed; the registered bench is available and unclaimed.",
+    "Wait for the exact cumulative $10.00 reservation requested by DIRECTOR_HYBRID_55L5G_LIFECYCLE_EXTENSION_REQUEST_20260727T0208Z.json.",
+    "Only after that reservation, replace the watchdog through 2026-07-27T03:10:00Z and issue the exact claim binding with the mutable runtime destination and detached-owner launch command."
+  ],
+  "forbidden": [
+    "Do not claim or run the endpoint before strict SSH identity and inventory registration pass.",
+    "Do not extend this lifecycle beyond the cumulative project ceiling.",
+    "Do not replay the settled component, phase-selective HTTP-500 consumer, DFlash, or any prior endpoint."
+  ]
+}

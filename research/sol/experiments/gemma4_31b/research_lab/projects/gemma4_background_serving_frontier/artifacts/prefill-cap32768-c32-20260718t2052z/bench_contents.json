@@ -1,0 +1,10 @@
+{
+  "artifacts": "projects/gemma4_background_serving_frontier/artifacts/prefill-cap32768-c32-20260718t2052z/ contains the typed preflight terminal and raw identity, metric, flush, and server diagnostics; terminal SHA-256 a8685eed0382c80ff9740c808411bcd25db45a9f7469b3b3a580bc9482d3624b.",
+  "caches": "The 32,768-cap server was explicitly flushed (HTTP 200) before its preflight owner stopped; flush again before any exact-mix consumer.",
+  "checkpoint": "Exact eight-file BF16 checkpoint remains at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
+  "image": "Pinned SGLang v0.5.12 image sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a remains resident.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_background_serving_frontier",
+  "runtime": "Healthy unpatched canonical c32 stock server gemma-prefill-cap32768-c32: TP1 BF16 / FP8-E5M2 KV, dynamic chunking 2048, fused QK/RoPE, Triton prefill/decode, page size 1, continuous steps 1, stream interval 1, max prefill tokens 32768, pool 170792.",
+  "server_state": "No exact-mix workload was dispatched: preflight capacity-guard regex failed despite sufficient numeric pool. Keep server for reuse; no OOM or retractions observed."
+}

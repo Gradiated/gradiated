@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "repair_id": "repair-14",
+  "classification": "terminal_layer_capture_index_repair",
+  "source_evidence": "repair-14-terminal-layer-index-evidence.json",
+  "mutable_files": {
+    "capture_offset_taps.py": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/capture_offset_taps.py",
+      "sha256": "e990a8072cd68420216b275857b540b39988f12a9d6db8ce586eb56816b84c45"
+    }
+  },
+  "retry": {
+    "scope": "fresh_capture_only_with_terminal_layer_index_repair",
+    "capture_stage_consumed": false,
+    "training_or_holdout_started": false,
+    "endpoint_pairs": 0
+  }
+}

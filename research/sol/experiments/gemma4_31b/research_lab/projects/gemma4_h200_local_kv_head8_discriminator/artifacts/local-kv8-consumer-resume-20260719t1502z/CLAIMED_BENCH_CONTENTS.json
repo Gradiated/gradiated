@@ -1,0 +1,11 @@
+{
+  "project": "gemma4_h200_local_kv_head8_discriminator",
+  "model": "google/gemma-4-31B-it local-KV8 with global-KV4",
+  "checkpoint": "Exact immutable eight-file checkpoint remains staged under /home/glmrunner/gemma-local-kv8/checkpoint.",
+  "image": "Pinned SGLang v0.5.12 image remains resident at the bound digest.",
+  "runtime": "Consumer-only resume is loading the one completed 24-update producer overlay after the mixed global-KV4/local-KV8 config-guard repair.",
+  "caches": "Pinned image plus conversion/server compilation caches retained.",
+  "server_state": "Patched converted candidate is in server startup; frozen coherence, retrieval, and c32 gates follow on readiness.",
+  "artifacts": "Producer fidelity terminal is local; consumer terminal is being written under artifacts/local-kv8-consumer-resume-20260719t1502z.",
+  "export": "Remote 2,202,022,184-byte overlay SHA-256 e29faa6768d22aa6cae56bb15253d02f6af0aca2abdd6d4f0092a436cea05780 is consumed in place; bulk local retrieval deferred."
+}

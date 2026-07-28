@@ -1,0 +1,15 @@
+{
+  "command": [
+    "env",
+    "PYTHONPATH=/root/workspace/research/factory/src",
+    "HYBRID_TARGET_ONLY_READMISSION_BINDING=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/DIRECTOR_TARGET_ONLY_PROXY_ALLOCATOR_READMISSION_20260726T0648Z.json",
+    "python3",
+    "target_only_proxy_allocator_component_owner.py"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign",
+  "launched_at_utc": "2026-07-26T06:55:05.729209Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/target-only-proxy-allocator-readmission-20260726t0648z/owner.log",
+  "pid": 1631873,
+  "start_ticks": 116492313,
+  "unit_manager": "remote-shell"
+}

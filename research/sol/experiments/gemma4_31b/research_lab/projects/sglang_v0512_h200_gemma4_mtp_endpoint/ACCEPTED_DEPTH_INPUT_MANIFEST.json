@@ -93,9 +93,9 @@
       "sha256": "36cbe46f651b31e1ac304e176787059e796cca0b8c2d35da3d7b97b220e486c9"
     },
     {
-      "bytes": 12741,
+      "bytes": 13945,
       "path": "remote_accepted_depth.sh",
-      "sha256": "30f23fbe4f60126c1a6ae394d9ec418e188ee2d2aef9f46211e0a8d1bde4763b"
+      "sha256": "182fe9f653ca49d89fd8a9f69ad3d39c9bd793e805a35b02cde1fd06987a59c0"
     }
   ],
   "schema_version": 1,
@@ -118,9 +118,9 @@
       "sha256": "2779aae2c51c63ef3119edff9b57e39f09576975ec6e15fb66928e6069405c2a"
     },
     {
-      "bytes": 6370,
+      "bytes": 7860,
       "path": "inputs/accepted_depth/stack/install_endpoint_patch.py",
-      "sha256": "71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588"
+      "sha256": "b020fbb114d390e8bc10ce0c3c6145d7535b70f7a07d8dcd3ece2a208727d117"
     },
     {
       "bytes": 2929,

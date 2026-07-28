@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 6.684380368998973,
+  "ended_monotonic_s": 56159.667129494,
+  "error": null,
+  "first_token_monotonic_s": 56152.982749125,
+  "index": 14,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": "aphone",
+      "token_ids": [
+        60629
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    60629,
+    60629,
+    60629,
+    60629,
+    60629,
+    60629,
+    60629,
+    60629,
+    60629,
+    60629,
+    60629,
+    60629,
+    60629,
+    60629,
+    60629,
+    60629
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "bb0d775dbbc2fa4cfb94c10d4096fb1c4379bc207efe18e5fa6b2ca024745675",
+  "request_sha256": "134618a8605503818fccf5eb7f89fc76a4d811e50c574c403f3bd91d37a8b73f",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 56146.42590391,
+  "text": "aphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphone",
+  "ttft_seconds": 6.556845215003705,
+  "wall_seconds": 13.241225584002677
+}

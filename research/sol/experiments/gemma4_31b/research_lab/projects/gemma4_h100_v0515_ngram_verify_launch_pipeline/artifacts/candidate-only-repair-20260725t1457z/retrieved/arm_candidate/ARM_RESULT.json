@@ -1,0 +1,12 @@
+{
+  "arm": "candidate",
+  "elapsed_seconds": 571.7436951020009,
+  "failures": [],
+  "release_drift_bounded": true,
+  "request_rows_sha256": "0c5d3f21f5b16cf228508fe5f55302789a3f6cd9980df6767969dc614a0f4e46",
+  "rows": 791,
+  "service_seconds_per_request": 0.7228112453881174,
+  "telemetry_samples": 1124,
+  "telemetry_sha256": "28c6010c6f0e263fb9eb265e7aff4379e3d0f0e8e4fda27e773fd3eb9381d3de",
+  "total_tokens": 3616452
+}

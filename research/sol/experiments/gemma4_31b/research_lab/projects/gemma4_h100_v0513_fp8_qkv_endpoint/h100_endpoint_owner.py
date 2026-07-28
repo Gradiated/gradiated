@@ -80,6 +80,7 @@ def main():
    request=ns.artifact_root/"REPAIR_REQUEST.json"
    while time.time()<repair_deadline and not request.is_file(): time.sleep(5)
    if request.is_file() and json.loads(request.read_text()).get("retry") is True:
+    request.replace(ns.artifact_root/"REPAIR_REQUEST.consumed.json")
     retry_timeout=max(60,int(ns.absolute_deadline_epoch-time.time()-300))
     retry=run_ssh(ip,KEY,f"timeout --signal=TERM {retry_timeout} bash {REMOTE}/input/remote_h100_qkv_endpoint.sh",timeout=retry_timeout+30)
     (ns.artifact_root/"remote-worker-retry.stdout").write_text(retry.stdout); (ns.artifact_root/"remote-worker-retry.stderr").write_text(retry.stderr)
@@ -106,6 +107,7 @@ def main():
    request=ns.artifact_root/"REPAIR_REQUEST.json"
    while time.time()<repair_deadline and not request.is_file(): time.sleep(5)
    if request.is_file() and json.loads(request.read_text()).get("retry") is True:
+    request.replace(ns.artifact_root/"REPAIR_REQUEST.consumed.json")
     os.execv(sys.executable,[sys.executable,str(pathlib.Path(__file__).resolve()),"--resume-preinvocation-repair","--artifact-root",str(ns.artifact_root),"--absolute-deadline-epoch",str(ns.absolute_deadline_epoch)])
   terminal={"schema_version":1,"status":"terminal","classification":"owner_failure","pass":False,"error":{"type":type(e).__name__,"message":str(e)},"provider_exposure_seconds":time.time()-started if claimed else 0}; terminal["provider_spend_usd"]=terminal["provider_exposure_seconds"]*rate/3600; atomic(ns.artifact_root/"TERMINAL.json",terminal); emit("outer_error",error=terminal["error"]); return 1
  finally:

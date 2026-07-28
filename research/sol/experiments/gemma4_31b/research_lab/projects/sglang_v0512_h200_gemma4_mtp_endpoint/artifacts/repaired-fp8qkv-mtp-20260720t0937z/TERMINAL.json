@@ -1,0 +1,13 @@
+{
+  "classification": "owner_failure",
+  "error": {
+    "message": "typed_remote_boundary:immutable_checkpoint_identity_changed",
+    "type": "RuntimeError"
+  },
+  "pass": false,
+  "project_cumulative_spend_usd": 2.759059343167146,
+  "provider_exposure_seconds": 2.582770586013794,
+  "provider_spend_usd": 0.0017648932337760925,
+  "schema_version": 1,
+  "status": "terminal"
+}

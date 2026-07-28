@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "classification": "recoverable_pre_science_staging_observer_defect",
+  "diagnostic": "resident manifest hashing traversed root-owned Hugging Face .cache metadata and stopped with Permission denied before remote_tied_head_adapter.sh; exact target, draft, pinned source, and base image are resident",
+  "diagnostic_path": "artifacts/REPAIR_DIAGNOSTIC_REMOTE.txt",
+  "diagnostic_sha256": "312abc31d0926c00b55c84927957158a77ee759aa162f585922f7a45d8ff2df6",
+  "retry_scope": "exclude only .cache metadata from the resident file manifest, preserve and reuse already materialized target/draft/source/image, then continue directly to remote_tied_head_adapter.sh",
+  "claim_retained": true,
+  "repair_deadline_utc": "2026-07-25T21:45:00Z"
+}

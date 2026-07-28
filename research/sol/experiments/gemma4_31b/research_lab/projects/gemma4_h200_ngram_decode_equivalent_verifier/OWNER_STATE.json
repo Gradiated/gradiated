@@ -1,6 +1,4 @@
 {
-  "artifact_root": "artifacts/h200-verifier-20260724t100216Z",
-  "completed_at_utc": "2026-07-24T10:07:05.720070Z",
-  "phase": "complete",
-  "scientific_terminal": "decode_equivalent_discriminator_reject"
+  "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/artifacts/h200-verifier-20260724t103131Z",
+  "phase": "retrieval"
 }

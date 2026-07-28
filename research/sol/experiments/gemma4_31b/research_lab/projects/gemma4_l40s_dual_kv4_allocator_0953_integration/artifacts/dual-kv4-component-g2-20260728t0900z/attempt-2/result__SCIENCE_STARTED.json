@@ -1,0 +1,9 @@
+{
+  "compute_capability": [
+    8,
+    9
+  ],
+  "device": "NVIDIA L40S",
+  "science_started": true,
+  "seed": 20260728
+}

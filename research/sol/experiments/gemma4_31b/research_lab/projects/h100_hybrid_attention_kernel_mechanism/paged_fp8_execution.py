@@ -13,6 +13,7 @@ import statistics
 import subprocess
 import sys
 import time
+import traceback
 from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
@@ -68,11 +69,9 @@ class ExactModelConfig:
     kv_heads: int
     head_dim: int
     dtype: Any
-    model: str = "google/gemma-4-31B-it"
-    head_dtype: Any = None
+    is_hybrid: bool = True
     is_mm_prefix_lm: bool = False
     use_mla: bool = False
-    is_hybrid: bool = True
     max_model_len: int = 4571
 
     def get_num_attention_heads(self, parallel_config: Any) -> int:
@@ -176,13 +175,46 @@ def make_vllm_config(runtime: Runtime, case: Any, arm: str) -> Any:
         enable_prefix_caching=False,
         calculate_kv_scales=False,
     )
-    config = runtime.VllmConfig(model_config=None, cache_config=cache_config)
-    config.model_config = ExactModelConfig(
+    exact_geometry = ExactModelConfig(
         q_heads=case.q_heads,
         kv_heads=case.kv_heads,
         head_dim=case.head_dim,
         dtype=runtime.torch.bfloat16,
     )
+    # VllmConfig is a pinned Pydantic dataclass.  Its ordinary constructor
+    # invokes __post_init__, which in turn validates/downloads a complete
+    # ModelConfig.  The registered-Attention source consumes only the fields
+    # below, so construct the declared config object without running that
+    # producer-side lifecycle and attach the exact consumer contract directly.
+    try:
+        from vllm.config import AttentionConfig, CompilationConfig, ParallelConfig
+
+        parallel_config = ParallelConfig()
+        compilation_config = CompilationConfig()
+        # The pinned CustomOp.default_on() contract requires exactly one
+        # explicit mode.  This is a consumer-only runtime setting; it does
+        # not alter geometry, cache dtype, or the numerical gates.
+        compilation_config.custom_ops = ["all"]
+        attention_config = AttentionConfig()
+    except ImportError:
+        # CPU-mocked construction tests intentionally do not install vLLM.
+        parallel_config = SimpleNamespace(
+            tensor_parallel_size=1,
+            decode_context_parallel_size=1,
+            prefill_context_parallel_size=1,
+        )
+        compilation_config = SimpleNamespace(static_forward_context={})
+        attention_config = SimpleNamespace(use_non_causal=False)
+
+    config = object.__new__(runtime.VllmConfig)
+    for name, value in {
+        "model_config": exact_geometry,
+        "cache_config": cache_config,
+        "parallel_config": parallel_config,
+        "compilation_config": compilation_config,
+        "attention_config": attention_config,
+    }.items():
+        object.__setattr__(config, name, value)
     return config
 
 
@@ -293,6 +325,17 @@ def _tensor_geometry(runtime: Runtime, case: Any, concurrency: int, seed: int) -
     return {"query": query, "key": key, "value": value}
 
 
+def ensure_cuda_kv_scales(runtime: Runtime, layer: Any) -> None:
+    torch = runtime.torch
+    for name in ("_k_scale", "_v_scale"):
+        scale = getattr(layer, name, None)
+        if scale is None or not hasattr(scale, "to"):
+            scale = torch.ones((), dtype=torch.float32, device="cuda")
+        elif getattr(getattr(scale, "device", None), "type", None) != "cuda":
+            scale = scale.to("cuda")
+        setattr(layer, name, scale)
+
+
 def prepare_arm(
     runtime: Runtime,
     case: Any,
@@ -327,6 +370,7 @@ def prepare_arm(
     layer.kv_cache = torch.empty(
         cache_shape, dtype=layer.kv_cache_torch_dtype, device="cuda"
     )
+    ensure_cuda_kv_scales(runtime, layer)
     common, metadata = native_decode_metadata(
         runtime, builder, case, concurrency, table, last_slots
     )
@@ -777,6 +821,99 @@ def orchestrate(args: argparse.Namespace) -> int:
         return 1
 
 
+def recovery_worker(args: argparse.Namespace) -> int:
+    output = args.output.resolve()
+    result = {
+        "schema_version": 1,
+        "type": "h100_paged_fp8_recovery_terminal",
+        "pass": False,
+        "result": "integration_error",
+        "started_at_utc": utc_now(),
+        "identity_contract": str(args.readiness.resolve()),
+        "identity_contract_sha256": sha256_file(args.readiness.resolve()),
+        "provider_create_allowed": False,
+        "scientific_sample_consumed": False,
+        "scope": {"case": "local1024", "concurrency": 8},
+    }
+    try:
+        readiness = json.loads(args.readiness.read_text())
+        script = Path(__file__).resolve()
+        if readiness["source"]["files"]["paged_fp8_execution.py"] != sha256_file(script):
+            raise RuntimeError("program hash differs from readiness terminal")
+        runtime = load_runtime()
+        ensure_h100(runtime)
+        identity = source_identity(runtime, args.image_digest)
+        primitive_output = output.parent / "local1024-c8.primitive.timing.json"
+        primitive_command = worker_command(
+            script, "pair-worker", "local1024", 8, primitive_output, args.seed, args.image_digest
+        )
+        primitive = subprocess.run(
+            primitive_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+        primitive_timing = {}
+        if primitive_output.exists():
+            try:
+                primitive_timing = json.loads(primitive_output.read_text())
+            except Exception as exc:
+                primitive_timing = {
+                    "error": {"type": type(exc).__name__, "message": str(exc)}
+                }
+        primitive_capture = {
+            "schema_version": 1,
+            "type": "primitive_pair_worker_capture",
+            "command": primitive_command,
+            "returncode": primitive.returncode,
+            "stdout": primitive.stdout,
+            "stderr": primitive.stderr,
+            "traceback": primitive_timing.get("error", {}).get("traceback", ""),
+            "timing_artifact": str(primitive_output),
+            "captured_at_utc": utc_now(),
+        }
+        atomic_json(output.parent / "primitive-pair-worker.capture.json", primitive_capture)
+        if primitive.returncode != 0:
+            result["error"] = {
+                "type": "PrimitivePairWorkerError",
+                "message": "primitive pair-worker returned nonzero",
+                **primitive_capture,
+            }
+            result["completed_at_utc"] = utc_now()
+            atomic_json(output, result)
+            return 1
+        row = primitive_timing
+        row["timing_artifact_sha256"] = sha256_file(primitive_output)
+        row["counters"] = {
+            arm: capture_counters(
+                script, "local1024", 8, arm, output.parent, args.seed, args.image_digest
+            )
+            for arm in ("bf16", "fp8_e4m3")
+        }
+        atomic_json(primitive_output, row)
+        evaluated = evaluate_rows([row])[0]
+        result.update(
+            {
+                "pass": evaluated["pass"],
+                "result": "recovery_row_complete" if evaluated["pass"] else "recovery_row_reject",
+                "identity": identity,
+                "row": evaluated,
+                "scientific_sample_consumed": True,
+                "completed_at_utc": utc_now(),
+            }
+        )
+    except Exception as exc:
+        result["error"] = {
+            "type": type(exc).__name__,
+            "message": str(exc),
+            "traceback": traceback.format_exc(),
+        }
+        result["completed_at_utc"] = utc_now()
+    atomic_json(output, result)
+    return 0 if result["pass"] else 1
+
+
 def worker(args: argparse.Namespace) -> int:
     result = {"pass": False, "started_at_utc": utc_now()}
     try:
@@ -799,7 +936,11 @@ def worker(args: argparse.Namespace) -> int:
             )
             return 0
     except Exception as exc:
-        result["error"] = {"type": type(exc).__name__, "message": str(exc)}
+        result["error"] = {
+            "type": type(exc).__name__,
+            "message": str(exc),
+            "traceback": traceback.format_exc(),
+        }
     atomic_json(args.output, result)
     return 0 if result.get("pass") else 1
 
@@ -813,6 +954,12 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--absolute-deadline-utc", required=True)
     run.add_argument("--image-digest", default=EXPECTED_IMAGE)
     run.add_argument("--seed", type=int, default=17)
+    recovery = subparsers.add_parser("recovery-worker")
+    recovery.add_argument("--output", type=Path, required=True)
+    recovery.add_argument("--readiness", type=Path, required=True)
+    recovery.add_argument("--absolute-deadline-utc", required=True)
+    recovery.add_argument("--image-digest", default=EXPECTED_IMAGE)
+    recovery.add_argument("--seed", type=int, default=17)
     for name in ("pair-worker", "counter-worker"):
         worker_parser = subparsers.add_parser(name)
         worker_parser.add_argument("--case", choices=tuple(CASES), required=True)
@@ -831,7 +978,11 @@ def parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = parser().parse_args()
-    return orchestrate(args) if args.mode == "run" else worker(args)
+    if args.mode == "run":
+        return orchestrate(args)
+    if args.mode == "recovery-worker":
+        return recovery_worker(args)
+    return worker(args)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,11 @@
+{
+  "artifact_root": "artifacts/repair-localization-20260725t040954z",
+  "at_utc": "2026-07-25T04:10:47.989824+00:00",
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "deadline_utc": "2026-07-25T04:20:00Z",
+  "diagnostic": {
+    "candidate_science_consumed": false,
+    "classification": "recoverable_repair_attempt",
+    "error": "RuntimeError('recoverable_remote_stage:{\"candidate_science_consumed\": false, \"classification\": \"recoverable_or_typed_remote_failure\", \"error\": \"RuntimeError(\\'metrics_unavailable_after_retries\\')\"}')"
+  }
+}

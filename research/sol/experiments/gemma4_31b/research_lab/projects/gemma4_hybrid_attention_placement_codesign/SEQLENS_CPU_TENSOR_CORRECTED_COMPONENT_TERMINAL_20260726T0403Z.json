@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "classification": "infrastructure_terminal",
+  "decision": "tensor_contract_passed_proxy_allocator_overlap_prevented_target_verify",
+  "binding": "DIRECTOR_SEQLENS_CPU_TENSOR_CONTRACT_READMISSION_20260726T0355Z.json",
+  "source": {
+    "forward_batch_dual_cache_driver_sha256": "af5abbd821b24484ee653ec9372e0c68b84d879924aa40621bcb0edc3b97192a",
+    "contract": "artifacts/seq-lens-cpu-tensor-contract-20260726t0359z/SEQ_LENS_CPU_CONTRACT.json",
+    "contract_sha256": "0b8f212df1c97b2d281c08fc5698be929a5aacf999312e6057a335d5583aca21"
+  },
+  "readiness": {"cuda_graph_complete": true, "server_ready": true, "live_container": true, "tcp_listener": true},
+  "failure": {
+    "kind": "proxy_allocator_overlap_before_target_verify",
+    "exception": "RuntimeError: proxy allocator did not return a distinct logical slot vector",
+    "callsite": "forward_batch_dual_cache_driver.py:164 ProductionDualCache.allocate",
+    "raw_retrieval": "artifacts/ngram-seqlens-cpu-tensor-20260726t0401z/retrieved.stdout.log",
+    "raw_retrieval_sha256": "162a35d6213b528dc1bc122ccaf1dde0739658e3a554f884a87751af722e120e"
+  },
+  "scientific_component_consumed": false,
+  "science_started": false,
+  "candidate_cuda_invocation_started": false,
+  "exact_c32_started": false,
+  "claim": {
+    "bench": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "claimed_at_utc": "2026-07-26T04:00:53.982271Z",
+    "released_at_utc": "2026-07-26T04:03:28.496863Z",
+    "hourly_cost_usd": 2.45,
+    "conservative_incremental_cost_usd": 0.13,
+    "conservative_cumulative_project_cost_usd": 4.97
+  },
+  "next_action": "New director admission is required before repairing the allocator-return representation/distinctness boundary; exact-c32 remains closed."
+}

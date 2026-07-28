@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_qlen_mask_target_verify/run_bench_owner.py"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_qlen_mask_target_verify",
+  "launched_at_utc": "2026-07-24T19:10:51.027351Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_qlen_mask_target_verify/artifacts/qlen-mask-20260724t1911z-real-c32/controller-owner.log",
+  "pid": 58011,
+  "start_ticks": 103626843,
+  "unit_manager": "pid"
+}

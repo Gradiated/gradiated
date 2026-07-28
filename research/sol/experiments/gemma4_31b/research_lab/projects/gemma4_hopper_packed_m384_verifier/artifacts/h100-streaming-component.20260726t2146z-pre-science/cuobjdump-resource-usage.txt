@@ -1,0 +1,36 @@
+
+Fatbin ptx code:
+================
+arch = sm_90
+code version = [8,8]
+host = linux
+compile_size = 64bit
+compressed
+identifier = /project/packed_m384_streaming_cluster.cu
+ptxasOptions =  --generate-line-info 
+
+Fatbin elf code:
+================
+arch = sm_90a
+code version = [1,7]
+host = linux
+compile_size = 64bit
+identifier = /project/packed_m384_streaming_cluster.cu
+
+Resource usage:
+ Common:
+  GLOBAL:28 CONSTANT[4]:224
+ Function _ZN65_GLOBAL__N__bdeeecfa_32_packed_m384_streaming_cluster_cu_30691d6d36packed_m384_streaming_cluster_kernelILi512ELi4ELi4214ELi2ELb0EEEvPK13__nv_bfloat16S3_S3_PS1_PK13__nv_fp8_e4m3S7_PKiS9_S9_PKbS9_fff:
+  REG:96 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:628 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN65_GLOBAL__N__bdeeecfa_32_packed_m384_streaming_cluster_cu_30691d6d36packed_m384_streaming_cluster_kernelILi256ELi16ELi1024ELi1ELb1EEEvPK13__nv_bfloat16S3_S3_PS1_PK13__nv_fp8_e4m3S7_PKiS9_S9_PKbS9_fff:
+  REG:96 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:628 TEXTURE:0 SURFACE:0 SAMPLER:0
+
+Fatbin ptx code:
+================
+arch = sm_90a
+code version = [8,8]
+host = linux
+compile_size = 64bit
+compressed
+identifier = /project/packed_m384_streaming_cluster.cu
+ptxasOptions =  --generate-line-info 

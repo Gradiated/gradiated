@@ -1,0 +1,53 @@
+{
+  "classification": "exact_shape_oracle",
+  "consumer": {
+    "call_count": 1,
+    "elapsed_ms_single_observed_call": 8.416973000294092,
+    "output_dtype": "torch.bfloat16",
+    "required_symbol": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm"
+  },
+  "numeric": {
+    "cosine_similarity": 0.999297022819519,
+    "finite": true,
+    "maximum_absolute": 0.002593994140625,
+    "nontrivial": true,
+    "normalized_rmse": 0.0374952523368058,
+    "pass": true,
+    "tolerance": {
+      "minimum_cosine_similarity": 0.99,
+      "normalized_rmse": 0.08
+    }
+  },
+  "pass": true,
+  "producer": {
+    "method": "sglang.srt.layers.quantization.fp8.Fp8LinearMethod",
+    "serialized": false,
+    "source_sha256": "2164102004837af5ea082f3fd8c451c49ca84487f56501e3f4f9525c41e06fa8",
+    "weight_dtype": "torch.float8_e4m3fn",
+    "weight_scale_dtype": "torch.float32",
+    "weight_scale_shape": [
+      1,
+      43008
+    ],
+    "weight_shape": [
+      5376,
+      43008
+    ]
+  },
+  "runtime": {
+    "capability": [
+      9,
+      0
+    ],
+    "cuda": "13.0",
+    "gpu": "NVIDIA H200",
+    "torch": "2.11.0+cu130"
+  },
+  "schema_version": 1,
+  "shape": {
+    "family": "fused_gate_up",
+    "k": 5376,
+    "m": 32,
+    "n": 43008
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "type": "h100_controller_complete",
+  "returncode": 1,
+  "terminal": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_hybrid_attention_kernel_mechanism/artifacts/h100-paged-fp8-execution-20260726t0724z/H100_PAGED_FP8_EXECUTION_TERMINAL.json",
+  "finished_monotonic": 1167772.678779446
+}

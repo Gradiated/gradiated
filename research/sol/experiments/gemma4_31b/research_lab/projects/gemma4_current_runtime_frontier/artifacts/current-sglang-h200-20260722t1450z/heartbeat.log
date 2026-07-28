@@ -1,0 +1,1981 @@
+usage: gpu_pool.py [-h] --lab LAB
+                   {list,register,claim,heartbeat,update,release,drain,reclaim,ready,replace-watchdog,retire} ...
+gpu_pool.py: error: project does not own a GPU bench: gemma4_current_runtime_frontier
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T14:53:20.036846Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T15:53:20.036846Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T14:53:20.036846Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T14:56:35.845687Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T15:56:35.845687Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T14:56:35.845687Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T14:57:20.909771Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T15:57:20.909771Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T14:57:20.909771Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T14:58:05.965029Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T15:58:05.965029Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T14:58:05.965029Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T14:58:51.018600Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T15:58:51.018600Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T14:58:51.018600Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T14:59:36.065398Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T15:59:36.065398Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T14:59:36.065398Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:00:21.114014Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:00:21.114014Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:00:21.114014Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:01:06.168814Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:01:06.168814Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:01:06.168814Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:01:51.222643Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:01:51.222643Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:01:51.222643Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:02:36.277803Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:02:36.277803Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:02:36.277803Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:03:21.326706Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:03:21.326706Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:03:21.326706Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:04:06.378636Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:04:06.378636Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:04:06.378636Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:04:51.427460Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:04:51.427460Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:04:51.427460Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:05:36.478833Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:05:36.478833Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:05:36.478833Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:06:21.536392Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:06:21.536392Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:06:21.536392Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:07:06.592508Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:07:06.592508Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:07:06.592508Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:07:51.650843Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:07:51.650843Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:07:51.650843Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:08:36.702445Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:08:36.702445Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:08:36.702445Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:09:21.751239Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:09:21.751239Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:09:21.751239Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:10:06.811092Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:10:06.811092Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:10:06.811092Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:10:51.867268Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:10:51.867268Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:10:51.867268Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:11:36.916484Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:11:36.916484Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:11:36.916484Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:12:21.967923Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:12:21.967923Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:12:21.967923Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:13:07.019552Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:13:07.019552Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:13:07.019552Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:13:52.070651Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:13:52.070651Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:13:52.070651Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:14:37.116785Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:14:37.116785Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:14:37.116785Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:15:22.165928Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:15:22.165928Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:15:22.165928Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:16:07.221074Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:16:07.221074Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:16:07.221074Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:16:52.271140Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:16:52.271140Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:16:52.271140Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:17:37.332636Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:17:37.332636Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:17:37.332636Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:18:22.389123Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:18:22.389123Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:18:22.389123Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:24:51.872766Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:24:51.872766Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:24:51.872766Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:25:36.923204Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:25:36.923204Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:25:36.923204Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:26:21.971778Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:26:21.971778Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:26:21.971778Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:27:07.030253Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:27:07.030253Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:27:07.030253Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:27:52.082303Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:27:52.082303Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:27:52.082303Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:28:37.130809Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:28:37.130809Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:28:37.130809Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:29:22.182107Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:29:22.182107Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:29:22.182107Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:30:07.237195Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:30:07.237195Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:30:07.237195Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:30:52.290144Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:30:52.290144Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:30:52.290144Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:31:37.344540Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:31:37.344540Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:31:37.344540Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:32:22.396345Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:32:22.396345Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:32:22.396345Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:33:07.455619Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:33:07.455619Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:33:07.455619Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:33:52.509816Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:33:52.509816Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:33:52.509816Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:34:37.562223Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:34:37.562223Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:34:37.562223Z"
+}
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-22T14:53:19.924560Z",
+    "heartbeat_at": "2026-07-22T15:35:22.616462Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-22T16:35:22.616462Z",
+    "project": "gemma4_current_runtime_frontier",
+    "stale": false
+  },
+  "contents": {
+    "caches": "Cold; retain checkpoint, container images, Triton/CUTLASS compilation, and CUDA graph caches across compatible claims.",
+    "checkpoint": "Cold 250-GiB bench; exact content-addressed project-local checkpoint snapshots are bound but not staged.",
+    "image": "Cold; current SGLang and pinned v0.5.13 image identities must be bound by their claiming projects before pull.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "shared: gemma4_current_runtime_frontier then gemma4_h200_partitioned_global_attention; static FP8 may use remaining warm time after durable reservation",
+    "runtime": "Shared mutable H200 environment for current-SGLang endpoint discovery followed by one true multi-stage global-attention component and conditional retained-stack endpoint.",
+    "server_state": "No server; provider allocation only."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-continuity-e00hzj9a8khp0fevy5",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-22T18:12:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "main_pid": 3338074,
+      "unit": "gemma4-continuity-h200-20260722t1443-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-22T14:46:16.479894Z",
+  "resource": {
+    "disk_id": "computedisk-e00kw1vv5ytx76hxcp",
+    "disk_name": "gemma4-continuity-h200-20260722t1443-boot",
+    "instance_id": "computeinstance-e00hzj9a8khp0fevy5",
+    "instance_name": "gemma4-continuity-h200-20260722t1443"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-22T15:35:22.616462Z"
+}

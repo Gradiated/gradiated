@@ -1,0 +1,5 @@
+{
+  "conditional_pair_started": true,
+  "discriminator_replayed": false,
+  "trace_aggregation": "concatenate_every_scheduler_to_detokenizer_delta_per_rid"
+}

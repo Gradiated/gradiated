@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 0.3771697560005123,
+  "ended_monotonic_s": 56159.665450925,
+  "error": null,
+  "first_token_monotonic_s": 56159.288281169,
+  "index": 17,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": " Art",
+      "token_ids": [
+        4585
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    4585,
+    4585,
+    4585,
+    4585,
+    4585,
+    4585,
+    4585,
+    4585,
+    4585,
+    4585,
+    4585,
+    4585,
+    4585,
+    4585,
+    4585,
+    4585
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "0473839628f7c355f85ea9c7c17288453436d42b82ffb1b1f0b94d392c09ab46",
+  "request_sha256": "d31b621c0b470e30fc58f24e6eac6e3ac57f3dd9627935339bd60f6a2f11e756",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 56146.436128833,
+  "text": " Art Art Art Art Art Art Art Art Art Art Art Art Art Art Art Art",
+  "ttft_seconds": 12.8521523360032,
+  "wall_seconds": 13.229322092003713
+}

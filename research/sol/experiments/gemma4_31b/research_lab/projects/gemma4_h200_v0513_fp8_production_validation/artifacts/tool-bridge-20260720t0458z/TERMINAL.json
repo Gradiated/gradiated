@@ -1,0 +1,736 @@
+{
+  "arms": {
+    "bf16": {
+      "parser_mode": "native_gemma4_with_schema_rescore_v1",
+      "parser_sha256": "45ab8607bb7bc3ace674efb229720a112125107f6c870f789e34684f01025e9b",
+      "sentinels": [
+        {
+          "check": {
+            "expected": [
+              [
+                "lookup_user",
+                {
+                  "user_id": "demo_user"
+                }
+              ]
+            ],
+            "finish_reason": "tool_calls",
+            "observed": [
+              [
+                "lookup_user",
+                {
+                  "user_id": "demo_user"
+                }
+              ]
+            ],
+            "pass": false,
+            "raw_sha256": "b78da8ebf655d0fb2ef8608a7d1fc3b7aa2aa3542d84563ec4a14249dff61a67",
+            "usage": {
+              "completion_tokens": 41,
+              "prompt_tokens": 127,
+              "prompt_tokens_details": null,
+              "reasoning_tokens": 0,
+              "total_tokens": 168
+            }
+          },
+          "kind": "single",
+          "normalized": {
+            "choices": [
+              {
+                "finish_reason": "tool_calls",
+                "index": 0,
+                "logprobs": null,
+                "matched_stop": null,
+                "message": {
+                  "content": "",
+                  "reasoning_content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"user_id\": \"demo_user\"}",
+                        "name": "lookup_user"
+                      },
+                      "id": "call_2c634bb830a44d0ab06b3bc0",
+                      "index": 0,
+                      "type": "function"
+                    }
+                  ]
+                }
+              }
+            ],
+            "created": 1784523509,
+            "id": "3a73f36a0c124a73bfa4831fadeec98d",
+            "metadata": {
+              "weight_version": "default"
+            },
+            "model": "google/gemma-4-31B-it",
+            "object": "chat.completion",
+            "usage": {
+              "completion_tokens": 41,
+              "prompt_tokens": 127,
+              "prompt_tokens_details": null,
+              "reasoning_tokens": 0,
+              "total_tokens": 168
+            }
+          },
+          "request": {
+            "max_tokens": 128,
+            "messages": [
+              {
+                "content": "Call lookup_user for user_id demo_user.",
+                "role": "user"
+              }
+            ],
+            "model": "google/gemma-4-31B-it",
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "function": {
+                  "description": "Look up a user by id.",
+                  "name": "lookup_user",
+                  "parameters": {
+                    "properties": {
+                      "user_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "user_id"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Get details for a user.",
+                  "name": "get_user_details",
+                  "parameters": {
+                    "properties": {
+                      "user_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "user_id"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          },
+          "response": {
+            "choices": [
+              {
+                "finish_reason": "tool_calls",
+                "index": 0,
+                "logprobs": null,
+                "matched_stop": null,
+                "message": {
+                  "content": "",
+                  "reasoning_content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"user_id\": \"demo_user\"}",
+                        "name": "lookup_user"
+                      },
+                      "id": "call_2c634bb830a44d0ab06b3bc0",
+                      "index": 0,
+                      "type": "function"
+                    }
+                  ]
+                }
+              }
+            ],
+            "created": 1784523509,
+            "id": "3a73f36a0c124a73bfa4831fadeec98d",
+            "metadata": {
+              "weight_version": "default"
+            },
+            "model": "google/gemma-4-31B-it",
+            "object": "chat.completion",
+            "usage": {
+              "completion_tokens": 41,
+              "prompt_tokens": 127,
+              "prompt_tokens_details": null,
+              "reasoning_tokens": 0,
+              "total_tokens": 168
+            }
+          }
+        },
+        {
+          "check": {
+            "expected": [
+              [
+                "lookup_user",
+                {
+                  "user_id": "demo_user"
+                }
+              ],
+              [
+                "get_user_details",
+                {
+                  "user_id": "demo_user"
+                }
+              ]
+            ],
+            "finish_reason": "tool_calls",
+            "observed": [
+              [
+                "lookup_user",
+                {
+                  "user_id": "demo_user"
+                }
+              ],
+              [
+                "get_user_details",
+                {
+                  "user_id": "demo_user"
+                }
+              ]
+            ],
+            "pass": false,
+            "raw_sha256": "e4b5d39d747b33b6880b32af2b24429bfca64ec0da7deaa3d1fc0e4754a57feb",
+            "usage": {
+              "completion_tokens": 80,
+              "prompt_tokens": 149,
+              "prompt_tokens_details": null,
+              "reasoning_tokens": 0,
+              "total_tokens": 229
+            }
+          },
+          "kind": "multi",
+          "normalized": {
+            "choices": [
+              {
+                "finish_reason": "tool_calls",
+                "index": 0,
+                "logprobs": null,
+                "matched_stop": null,
+                "message": {
+                  "content": "",
+                  "reasoning_content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"user_id\": \"demo_user\"}",
+                        "name": "lookup_user"
+                      },
+                      "id": "call_3da12950dcc345448147e25a",
+                      "index": 0,
+                      "type": "function"
+                    },
+                    {
+                      "function": {
+                        "arguments": "{\"user_id\": \"demo_user\"}",
+                        "name": "get_user_details"
+                      },
+                      "id": "call_79e46cf349184449a76893ce",
+                      "index": 1,
+                      "type": "function"
+                    }
+                  ]
+                }
+              }
+            ],
+            "created": 1784523510,
+            "id": "2beb17e2063a46d7b43780d55ba27e29",
+            "metadata": {
+              "weight_version": "default"
+            },
+            "model": "google/gemma-4-31B-it",
+            "object": "chat.completion",
+            "usage": {
+              "completion_tokens": 80,
+              "prompt_tokens": 149,
+              "prompt_tokens_details": null,
+              "reasoning_tokens": 0,
+              "total_tokens": 229
+            }
+          },
+          "request": {
+            "max_tokens": 128,
+            "messages": [
+              {
+                "content": "Call lookup_user for user_id demo_user, then call get_user_details for user_id demo_user. Use both tools in that order.",
+                "role": "user"
+              }
+            ],
+            "model": "google/gemma-4-31B-it",
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "function": {
+                  "description": "Look up a user by id.",
+                  "name": "lookup_user",
+                  "parameters": {
+                    "properties": {
+                      "user_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "user_id"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Get details for a user.",
+                  "name": "get_user_details",
+                  "parameters": {
+                    "properties": {
+                      "user_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "user_id"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          },
+          "response": {
+            "choices": [
+              {
+                "finish_reason": "tool_calls",
+                "index": 0,
+                "logprobs": null,
+                "matched_stop": null,
+                "message": {
+                  "content": "",
+                  "reasoning_content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"user_id\": \"demo_user\"}",
+                        "name": "lookup_user"
+                      },
+                      "id": "call_3da12950dcc345448147e25a",
+                      "index": 0,
+                      "type": "function"
+                    },
+                    {
+                      "function": {
+                        "arguments": "{\"user_id\": \"demo_user\"}",
+                        "name": "get_user_details"
+                      },
+                      "id": "call_79e46cf349184449a76893ce",
+                      "index": 1,
+                      "type": "function"
+                    }
+                  ]
+                }
+              }
+            ],
+            "created": 1784523510,
+            "id": "2beb17e2063a46d7b43780d55ba27e29",
+            "metadata": {
+              "weight_version": "default"
+            },
+            "model": "google/gemma-4-31B-it",
+            "object": "chat.completion",
+            "usage": {
+              "completion_tokens": 80,
+              "prompt_tokens": 149,
+              "prompt_tokens_details": null,
+              "reasoning_tokens": 0,
+              "total_tokens": 229
+            }
+          }
+        }
+      ]
+    },
+    "fp8": {
+      "parser_mode": "native_gemma4_with_schema_rescore_v1",
+      "parser_sha256": "45ab8607bb7bc3ace674efb229720a112125107f6c870f789e34684f01025e9b",
+      "sentinels": [
+        {
+          "check": {
+            "expected": [
+              [
+                "lookup_user",
+                {
+                  "user_id": "demo_user"
+                }
+              ]
+            ],
+            "finish_reason": "tool_calls",
+            "observed": [
+              [
+                "lookup_user",
+                {
+                  "user_id": "demo_user"
+                }
+              ]
+            ],
+            "pass": false,
+            "raw_sha256": "c7d9fb77476da45e917df2d6c41ead117fca4c20c10c0992ab20a6e868eacc15",
+            "usage": {
+              "completion_tokens": 41,
+              "prompt_tokens": 127,
+              "prompt_tokens_details": null,
+              "reasoning_tokens": 0,
+              "total_tokens": 168
+            }
+          },
+          "kind": "single",
+          "normalized": {
+            "choices": [
+              {
+                "finish_reason": "tool_calls",
+                "index": 0,
+                "logprobs": null,
+                "matched_stop": null,
+                "message": {
+                  "content": "",
+                  "reasoning_content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"user_id\": \"demo_user\"}",
+                        "name": "lookup_user"
+                      },
+                      "id": "call_1bfe1825449b47eea3b26f71",
+                      "index": 0,
+                      "type": "function"
+                    }
+                  ]
+                }
+              }
+            ],
+            "created": 1784523599,
+            "id": "ea1a53bd9f774f6f821616cb03d2fd8d",
+            "metadata": {
+              "weight_version": "default"
+            },
+            "model": "google/gemma-4-31B-it",
+            "object": "chat.completion",
+            "usage": {
+              "completion_tokens": 41,
+              "prompt_tokens": 127,
+              "prompt_tokens_details": null,
+              "reasoning_tokens": 0,
+              "total_tokens": 168
+            }
+          },
+          "request": {
+            "max_tokens": 128,
+            "messages": [
+              {
+                "content": "Call lookup_user for user_id demo_user.",
+                "role": "user"
+              }
+            ],
+            "model": "google/gemma-4-31B-it",
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "function": {
+                  "description": "Look up a user by id.",
+                  "name": "lookup_user",
+                  "parameters": {
+                    "properties": {
+                      "user_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "user_id"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Get details for a user.",
+                  "name": "get_user_details",
+                  "parameters": {
+                    "properties": {
+                      "user_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "user_id"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          },
+          "response": {
+            "choices": [
+              {
+                "finish_reason": "tool_calls",
+                "index": 0,
+                "logprobs": null,
+                "matched_stop": null,
+                "message": {
+                  "content": "",
+                  "reasoning_content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"user_id\": \"demo_user\"}",
+                        "name": "lookup_user"
+                      },
+                      "id": "call_1bfe1825449b47eea3b26f71",
+                      "index": 0,
+                      "type": "function"
+                    }
+                  ]
+                }
+              }
+            ],
+            "created": 1784523599,
+            "id": "ea1a53bd9f774f6f821616cb03d2fd8d",
+            "metadata": {
+              "weight_version": "default"
+            },
+            "model": "google/gemma-4-31B-it",
+            "object": "chat.completion",
+            "usage": {
+              "completion_tokens": 41,
+              "prompt_tokens": 127,
+              "prompt_tokens_details": null,
+              "reasoning_tokens": 0,
+              "total_tokens": 168
+            }
+          }
+        },
+        {
+          "check": {
+            "expected": [
+              [
+                "lookup_user",
+                {
+                  "user_id": "demo_user"
+                }
+              ],
+              [
+                "get_user_details",
+                {
+                  "user_id": "demo_user"
+                }
+              ]
+            ],
+            "finish_reason": "tool_calls",
+            "observed": [
+              [
+                "lookup_user",
+                {
+                  "user_id": "demo_user"
+                }
+              ],
+              [
+                "get_user_details",
+                {
+                  "user_id": "demo_user"
+                }
+              ]
+            ],
+            "pass": false,
+            "raw_sha256": "55cfc617e6cf04bfe19a226ce2ebecaaed1a35dcf0e45b32d69c59df966e71e1",
+            "usage": {
+              "completion_tokens": 80,
+              "prompt_tokens": 149,
+              "prompt_tokens_details": null,
+              "reasoning_tokens": 0,
+              "total_tokens": 229
+            }
+          },
+          "kind": "multi",
+          "normalized": {
+            "choices": [
+              {
+                "finish_reason": "tool_calls",
+                "index": 0,
+                "logprobs": null,
+                "matched_stop": null,
+                "message": {
+                  "content": "",
+                  "reasoning_content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"user_id\": \"demo_user\"}",
+                        "name": "lookup_user"
+                      },
+                      "id": "call_f4cf9b848ff74b23b3654361",
+                      "index": 0,
+                      "type": "function"
+                    },
+                    {
+                      "function": {
+                        "arguments": "{\"user_id\": \"demo_user\"}",
+                        "name": "get_user_details"
+                      },
+                      "id": "call_d9724d22b3c14a0c9c1eacf9",
+                      "index": 1,
+                      "type": "function"
+                    }
+                  ]
+                }
+              }
+            ],
+            "created": 1784523600,
+            "id": "52f7ecdccd954bf8b8e8423ff3d83ec0",
+            "metadata": {
+              "weight_version": "default"
+            },
+            "model": "google/gemma-4-31B-it",
+            "object": "chat.completion",
+            "usage": {
+              "completion_tokens": 80,
+              "prompt_tokens": 149,
+              "prompt_tokens_details": null,
+              "reasoning_tokens": 0,
+              "total_tokens": 229
+            }
+          },
+          "request": {
+            "max_tokens": 128,
+            "messages": [
+              {
+                "content": "Call lookup_user for user_id demo_user, then call get_user_details for user_id demo_user. Use both tools in that order.",
+                "role": "user"
+              }
+            ],
+            "model": "google/gemma-4-31B-it",
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "function": {
+                  "description": "Look up a user by id.",
+                  "name": "lookup_user",
+                  "parameters": {
+                    "properties": {
+                      "user_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "user_id"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Get details for a user.",
+                  "name": "get_user_details",
+                  "parameters": {
+                    "properties": {
+                      "user_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "user_id"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          },
+          "response": {
+            "choices": [
+              {
+                "finish_reason": "tool_calls",
+                "index": 0,
+                "logprobs": null,
+                "matched_stop": null,
+                "message": {
+                  "content": "",
+                  "reasoning_content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{\"user_id\": \"demo_user\"}",
+                        "name": "lookup_user"
+                      },
+                      "id": "call_f4cf9b848ff74b23b3654361",
+                      "index": 0,
+                      "type": "function"
+                    },
+                    {
+                      "function": {
+                        "arguments": "{\"user_id\": \"demo_user\"}",
+                        "name": "get_user_details"
+                      },
+                      "id": "call_d9724d22b3c14a0c9c1eacf9",
+                      "index": 1,
+                      "type": "function"
+                    }
+                  ]
+                }
+              }
+            ],
+            "created": 1784523600,
+            "id": "52f7ecdccd954bf8b8e8423ff3d83ec0",
+            "metadata": {
+              "weight_version": "default"
+            },
+            "model": "google/gemma-4-31B-it",
+            "object": "chat.completion",
+            "usage": {
+              "completion_tokens": 80,
+              "prompt_tokens": 149,
+              "prompt_tokens_details": null,
+              "reasoning_tokens": 0,
+              "total_tokens": 229
+            }
+          }
+        }
+      ]
+    }
+  },
+  "checkpoint_schema_sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df",
+  "gate_pass": false,
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "image_probe": {
+    "native_choices_inspected": true,
+    "returncode": 0,
+    "stderr_sha256": "df046b6e928f301766bb127c6846d5d66b379fc00d10eec4e055a15ab0c12fe5",
+    "stdout_sha256": "0f77720a82ebccb4abbca90638d2e028a08c57cef5310e51a0db016551206585"
+  },
+  "parser_byte_identical": true,
+  "parser_mode": "native_gemma4_with_schema_rescore_v1",
+  "parser_sha256": "45ab8607bb7bc3ace674efb229720a112125107f6c870f789e34684f01025e9b",
+  "project_cumulative_spend_usd": 1.8970470812150417,
+  "provider_exposure_seconds": 209.48735189437866,
+  "provider_spend_usd": 0.14314969046115875,
+  "schema_version": 1
+}

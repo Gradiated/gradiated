@@ -1,0 +1,46 @@
+{
+  "admission": {
+    "component_gate_seconds_per_request": 0.04597286970625021,
+    "component_gpu": "nvidia-h200-sxm",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a"
+  },
+  "files": [
+    {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_epilogue_fusion/qkv_epilogue_discriminator.py",
+      "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d",
+      "size_bytes": 26612
+    },
+    {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_epilogue_fusion/prepare_qkv_epilogue.py",
+      "sha256": "3c7d17dd0c42fe78cd81328284227915d12587f4cecae5d57bf26709dd7313b3",
+      "size_bytes": 12673
+    },
+    {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_epilogue_fusion/remote_component.sh",
+      "sha256": "699364734f12bad8074b368e704378fd941e6121ba4b4161e678cfe5e215e15b",
+      "size_bytes": 1814
+    },
+    {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_epilogue_fusion/install_endpoint_patch.py",
+      "sha256": "1cf547c1b736bdeffe279355b984049fadee492f1d443c9d82073e09b8722aaa",
+      "size_bytes": 5668
+    },
+    {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_epilogue_fusion/remote_endpoint.sh",
+      "sha256": "73cdcd0f611875f6c364093d160c3d9a59333edb06c1f507354564b13b4b42d3",
+      "size_bytes": 5084
+    },
+    {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_epilogue_fusion/run_outer.py",
+      "sha256": "2c0eece0f13768e1182e6b9997546c37707ba7b72e81ab8c01b03e50f216bcb4",
+      "size_bytes": 18497
+    },
+    {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_epilogue_fusion/inputs/exact_mix_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+      "size_bytes": 9494
+    }
+  ],
+  "schema_version": 1
+}

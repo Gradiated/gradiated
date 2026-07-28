@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "refreshed_at_utc": "2026-07-22T21:42:00Z",
-  "refresh_interval_days": 7,
+  "refreshed_at_utc": "2026-07-28T10:20:00Z",
+  "refresh_interval_days": 3,
   "production_pricing_policy": {
     "capacity_type": "committed_non_preemptible",
     "term_months": [12, 24],
@@ -19,12 +19,33 @@
       "evidence_type": "vendor_reported",
       "notes": "Current page lists L40S (AMD CPU) $0.74 preemptible/$1.55 on-demand, H100 $2.15/$3.85, H200 $2.45/$4.50, and B200 $3.95/$7.15 per GPU-hour; it advertises up to 35% off on-demand for large multi-month commitments."
     },
+    "nebius_compute_2026_07_28": {
+      "title": "Nebius Compute pricing",
+      "url": "https://docs.nebius.com/compute/resources/pricing",
+      "retrieved_at_utc": "2026-07-28T10:20:00Z",
+      "evidence_type": "vendor_reported",
+      "notes": "Current prices effective June 1, 2026: B300 $4.30 preemptible/$7.85 on-demand; B200 $3.95/$7.15; H200 $2.45/$4.50; H100 $2.15/$3.85; RTX PRO 6000 $0.95/$1.80; L40S GPU $0.65/$1.35 per GPU-hour. Earlier rates shown on the page are historical and must not be selected."
+    },
+    "runpod_public_2026_07_28": {
+      "title": "RunPod GPU Cloud pricing",
+      "url": "https://www.runpod.io/pricing",
+      "retrieved_at_utc": "2026-07-28T10:20:00Z",
+      "evidence_type": "vendor_reported",
+      "notes": "Current public Pod rates used as on-demand market references: B300 $7.39, B200 $5.89, H200 $4.39, H100 PCIe $2.89, H100 SXM $2.99, A100 PCIe $1.39, A100 SXM $1.49, L40S $0.99, RTX PRO 6000 $1.99, RTX 6000 Ada $0.84, A40 $0.44, RTX 5090 $0.99, L4 $0.39, and RTX 4090 $0.69 per GPU-hour. Reserved cluster prices require a quote."
+    },
+    "gcore_live_2026_07_28": {
+      "title": "Gcore authenticated bare-metal inventory",
+      "repository_path": "research/factory/docs/GCORE.md",
+      "retrieved_at_utc": "2026-07-28T10:00:28Z",
+      "evidence_type": "vendor_reported",
+      "notes": "Authenticated read-only snapshot. One 8x H100 on-demand node was catalog-reported in Sines-2 at EUR 21.816/hour; all other discovered L40S, A100, H100, and H200 flavors reported zero capacity. This project still reported a zero one-server H100 quota, so the capacity is not currently allocatable without a quota change."
+    },
     "tensorwave_mi355x_market_2026_07_22": {
       "title": "TensorWave MI355X current market listing",
       "url": "https://gpus.io/en/gpus/mi355x",
-      "retrieved_at_utc": "2026-07-22T21:42:00Z",
+      "retrieved_at_utc": "2026-07-28T10:20:00Z",
       "evidence_type": "independent_market_listing",
-      "notes": "Current one-provider listing reports TensorWave MI355X at $2.95/GPU-hour on demand; it is not a committed-capacity quote."
+      "notes": "Current one-provider listing reports TensorWave MI355X at $2.95/GPU-hour on demand, updated within the prior 19 hours; it is not a committed-capacity quote."
     },
     "tensorwave_access_2026_07_22": {
       "title": "TensorWave MI355X access request",
@@ -60,10 +81,11 @@
       "planning_basis": "Moderate 12-24 month commitment between Nebius's maximum advertised committed discount and a smaller ordinary commitment discount.",
       "experimental_reference_rates": [
         {"usd_per_gpu_hour": 0.8581222, "capacity_type": "measured_preemptible_vm_plus_disk", "source_id": "glm47_l40s_measured_2026_07_15"},
-        {"usd_per_gpu_hour": 0.74, "capacity_type": "public_preemptible_from", "source_id": "nebius_public_2026_07_22"},
-        {"usd_per_gpu_hour": 1.55, "capacity_type": "public_on_demand_from", "source_id": "nebius_public_2026_07_22"}
+        {"usd_per_gpu_hour": 0.65, "capacity_type": "public_preemptible_gpu_only", "source_id": "nebius_compute_2026_07_28"},
+        {"usd_per_gpu_hour": 1.35, "capacity_type": "public_on_demand_gpu_only", "source_id": "nebius_compute_2026_07_28"},
+        {"usd_per_gpu_hour": 0.99, "capacity_type": "runpod_public_pod", "source_id": "runpod_public_2026_07_28"}
       ],
-      "source_ids": ["nebius_public_2026_07_22", "glm47_l40s_measured_2026_07_15"]
+      "source_ids": ["nebius_compute_2026_07_28", "runpod_public_2026_07_28", "gcore_live_2026_07_28", "glm47_l40s_measured_2026_07_15"]
     },
     {
       "id": "nvidia-h100-sxm",
@@ -75,10 +97,11 @@
       "planning_evidence_type": "derived",
       "planning_basis": "Moderate 12-24 month commitment around 27% below Nebius on-demand, inside its advertised commitment envelope and above preemptible.",
       "experimental_reference_rates": [
-        {"usd_per_gpu_hour": 2.15, "capacity_type": "public_preemptible", "source_id": "nebius_public_2026_07_22"},
-        {"usd_per_gpu_hour": 3.85, "capacity_type": "public_on_demand", "source_id": "nebius_public_2026_07_22"}
+        {"usd_per_gpu_hour": 2.15, "capacity_type": "public_preemptible", "source_id": "nebius_compute_2026_07_28"},
+        {"usd_per_gpu_hour": 3.85, "capacity_type": "public_on_demand", "source_id": "nebius_compute_2026_07_28"},
+        {"usd_per_gpu_hour": 2.99, "capacity_type": "runpod_public_pod", "source_id": "runpod_public_2026_07_28"}
       ],
-      "source_ids": ["nebius_public_2026_07_22"]
+      "source_ids": ["nebius_compute_2026_07_28", "runpod_public_2026_07_28", "gcore_live_2026_07_28"]
     },
     {
       "id": "nvidia-h200-sxm",
@@ -90,10 +113,11 @@
       "planning_evidence_type": "derived",
       "planning_basis": "Moderate 12-24 month commitment around 28% below Nebius on-demand, above the maximum advertised-discount floor and public preemptible.",
       "experimental_reference_rates": [
-        {"usd_per_gpu_hour": 2.45, "capacity_type": "public_preemptible", "source_id": "nebius_public_2026_07_22"},
-        {"usd_per_gpu_hour": 4.5, "capacity_type": "public_on_demand", "source_id": "nebius_public_2026_07_22"}
+        {"usd_per_gpu_hour": 2.45, "capacity_type": "public_preemptible", "source_id": "nebius_compute_2026_07_28"},
+        {"usd_per_gpu_hour": 4.5, "capacity_type": "public_on_demand", "source_id": "nebius_compute_2026_07_28"},
+        {"usd_per_gpu_hour": 4.39, "capacity_type": "runpod_public_pod", "source_id": "runpod_public_2026_07_28"}
       ],
-      "source_ids": ["nebius_public_2026_07_22"]
+      "source_ids": ["nebius_compute_2026_07_28", "runpod_public_2026_07_28", "gcore_live_2026_07_28"]
     },
     {
       "id": "nvidia-b200-sxm",
@@ -103,12 +127,164 @@
       "production_planning_usd_per_gpu_hour": 5.15,
       "production_evidence_range_usd_per_gpu_hour": [4.6475, 5.72],
       "planning_evidence_type": "derived",
-      "planning_basis": "Moderate 12-24 month commitment around 28% below Nebius on-demand, above the maximum advertised-discount floor and public preemptible.",
+      "planning_basis": "Conservative 12-24 month commitment estimate below the current $7.15 Nebius on-demand rate, above its advertised maximum-discount floor and public preemptible rate.",
       "experimental_reference_rates": [
-        {"usd_per_gpu_hour": 3.95, "capacity_type": "public_preemptible", "source_id": "nebius_public_2026_07_22"},
-        {"usd_per_gpu_hour": 7.15, "capacity_type": "public_on_demand", "source_id": "nebius_public_2026_07_22"}
+        {"usd_per_gpu_hour": 3.95, "capacity_type": "public_preemptible_compute", "source_id": "nebius_compute_2026_07_28"},
+        {"usd_per_gpu_hour": 7.15, "capacity_type": "public_on_demand_compute", "source_id": "nebius_compute_2026_07_28"},
+        {"usd_per_gpu_hour": 5.89, "capacity_type": "runpod_public_pod", "source_id": "runpod_public_2026_07_28"}
       ],
-      "source_ids": ["nebius_public_2026_07_22"]
+      "provider_regional_rates": [
+        {"provider": "nebius", "region": "us-central1", "platform": "gpu-b200-sxm", "capacity_type": "preemptible", "usd_per_gpu_hour": 3.95, "source_id": "nebius_compute_2026_07_28"},
+        {"provider": "nebius", "region": "us-central1", "platform": "gpu-b200-sxm", "capacity_type": "on-demand", "usd_per_gpu_hour": 7.15, "source_id": "nebius_compute_2026_07_28"},
+        {"provider": "nebius", "region": "me-west1", "platform": "gpu-b200-sxm-a", "capacity_type": "preemptible", "usd_per_gpu_hour": 3.95, "source_id": "nebius_compute_2026_07_28"},
+        {"provider": "nebius", "region": "me-west1", "platform": "gpu-b200-sxm-a", "capacity_type": "on-demand", "usd_per_gpu_hour": 7.15, "source_id": "nebius_compute_2026_07_28"}
+      ],
+      "source_ids": ["nebius_compute_2026_07_28", "runpod_public_2026_07_28"]
+    },
+    {
+      "id": "nvidia-b300-sxm",
+      "vendor": "NVIDIA",
+      "model": "B300 Blackwell Ultra SXM",
+      "default_node_gpus": 8,
+      "production_planning_usd_per_gpu_hour": 5.8,
+      "production_evidence_range_usd_per_gpu_hour": [5.2, 6.4],
+      "planning_evidence_type": "derived",
+      "planning_basis": "Moderate 12-24 month estimate below current Nebius and RunPod on-demand rates, above Nebius preemptible and without assuming a hyperscale floor.",
+      "experimental_reference_rates": [
+        {"usd_per_gpu_hour": 4.3, "capacity_type": "nebius_public_preemptible", "source_id": "nebius_compute_2026_07_28"},
+        {"usd_per_gpu_hour": 7.85, "capacity_type": "nebius_public_on_demand", "source_id": "nebius_compute_2026_07_28"},
+        {"usd_per_gpu_hour": 7.39, "capacity_type": "runpod_public_pod", "source_id": "runpod_public_2026_07_28"}
+      ],
+      "source_ids": ["nebius_compute_2026_07_28", "runpod_public_2026_07_28"]
+    },
+    {
+      "id": "nvidia-rtx-pro-6000-blackwell-server",
+      "vendor": "NVIDIA",
+      "model": "RTX PRO 6000 Blackwell Server Edition",
+      "default_node_gpus": 1,
+      "production_planning_usd_per_gpu_hour": 1.55,
+      "production_evidence_range_usd_per_gpu_hour": [1.4, 1.75],
+      "planning_evidence_type": "derived",
+      "planning_basis": "Moderate-term estimate below current Nebius and RunPod on-demand rates and above Nebius preemptible; an actual reserved quote should replace it.",
+      "experimental_reference_rates": [
+        {"usd_per_gpu_hour": 0.95, "capacity_type": "nebius_public_preemptible", "source_id": "nebius_compute_2026_07_28"},
+        {"usd_per_gpu_hour": 1.8, "capacity_type": "nebius_public_on_demand", "source_id": "nebius_compute_2026_07_28"},
+        {"usd_per_gpu_hour": 1.99, "capacity_type": "runpod_public_pod", "source_id": "runpod_public_2026_07_28"}
+      ],
+      "source_ids": ["nebius_compute_2026_07_28", "runpod_public_2026_07_28"]
+    },
+    {
+      "id": "nvidia-h100-pcie",
+      "vendor": "NVIDIA",
+      "model": "H100 PCIe",
+      "default_node_gpus": 1,
+      "production_planning_usd_per_gpu_hour": 2.5,
+      "production_evidence_range_usd_per_gpu_hour": [2.3, 2.75],
+      "planning_evidence_type": "derived",
+      "planning_basis": "Moderate-term estimate below RunPod's current public Pod rate; reserved pricing is quote-only.",
+      "experimental_reference_rates": [
+        {"usd_per_gpu_hour": 2.89, "capacity_type": "runpod_public_pod", "source_id": "runpod_public_2026_07_28"}
+      ],
+      "source_ids": ["runpod_public_2026_07_28"]
+    },
+    {
+      "id": "nvidia-a100-80gb-pcie",
+      "vendor": "NVIDIA",
+      "model": "A100 80GB PCIe",
+      "default_node_gpus": 1,
+      "production_planning_usd_per_gpu_hour": 1.2,
+      "production_evidence_range_usd_per_gpu_hour": [1.05, 1.35],
+      "planning_evidence_type": "derived",
+      "planning_basis": "Moderate-term estimate below RunPod's current public Pod rate; reserved pricing is quote-only.",
+      "experimental_reference_rates": [
+        {"usd_per_gpu_hour": 1.39, "capacity_type": "runpod_public_pod", "source_id": "runpod_public_2026_07_28"}
+      ],
+      "source_ids": ["runpod_public_2026_07_28", "gcore_live_2026_07_28"]
+    },
+    {
+      "id": "nvidia-a100-80gb-sxm",
+      "vendor": "NVIDIA",
+      "model": "A100 80GB SXM",
+      "default_node_gpus": 8,
+      "production_planning_usd_per_gpu_hour": 1.3,
+      "production_evidence_range_usd_per_gpu_hour": [1.15, 1.45],
+      "planning_evidence_type": "derived",
+      "planning_basis": "Moderate-term estimate below RunPod's current public Pod and cluster rates; reserved pricing is quote-only.",
+      "experimental_reference_rates": [
+        {"usd_per_gpu_hour": 1.49, "capacity_type": "runpod_public_pod", "source_id": "runpod_public_2026_07_28"},
+        {"usd_per_gpu_hour": 1.79, "capacity_type": "runpod_public_cluster", "source_id": "runpod_public_2026_07_28"}
+      ],
+      "source_ids": ["runpod_public_2026_07_28", "gcore_live_2026_07_28"]
+    },
+    {
+      "id": "nvidia-l4",
+      "vendor": "NVIDIA",
+      "model": "L4",
+      "default_node_gpus": 1,
+      "production_planning_usd_per_gpu_hour": 0.34,
+      "production_evidence_range_usd_per_gpu_hour": [0.3, 0.38],
+      "planning_evidence_type": "derived",
+      "planning_basis": "Moderate-term estimate below RunPod's current public Pod rate; reserved pricing is quote-only.",
+      "experimental_reference_rates": [
+        {"usd_per_gpu_hour": 0.39, "capacity_type": "runpod_public_pod", "source_id": "runpod_public_2026_07_28"}
+      ],
+      "source_ids": ["runpod_public_2026_07_28"]
+    },
+    {
+      "id": "nvidia-a40",
+      "vendor": "NVIDIA",
+      "model": "A40",
+      "default_node_gpus": 1,
+      "production_planning_usd_per_gpu_hour": 0.38,
+      "production_evidence_range_usd_per_gpu_hour": [0.33, 0.43],
+      "planning_evidence_type": "derived",
+      "planning_basis": "Moderate-term estimate below RunPod's current public Pod rate; reserved pricing is quote-only.",
+      "experimental_reference_rates": [
+        {"usd_per_gpu_hour": 0.44, "capacity_type": "runpod_public_pod", "source_id": "runpod_public_2026_07_28"}
+      ],
+      "source_ids": ["runpod_public_2026_07_28"]
+    },
+    {
+      "id": "nvidia-rtx-6000-ada",
+      "vendor": "NVIDIA",
+      "model": "RTX 6000 Ada",
+      "default_node_gpus": 1,
+      "production_planning_usd_per_gpu_hour": 0.73,
+      "production_evidence_range_usd_per_gpu_hour": [0.65, 0.82],
+      "planning_evidence_type": "derived",
+      "planning_basis": "Moderate-term estimate below RunPod's current public Pod rate; reserved pricing is quote-only.",
+      "experimental_reference_rates": [
+        {"usd_per_gpu_hour": 0.84, "capacity_type": "runpod_public_pod", "source_id": "runpod_public_2026_07_28"}
+      ],
+      "source_ids": ["runpod_public_2026_07_28"]
+    },
+    {
+      "id": "nvidia-rtx-4090",
+      "vendor": "NVIDIA",
+      "model": "RTX 4090",
+      "default_node_gpus": 1,
+      "production_planning_usd_per_gpu_hour": 0.6,
+      "production_evidence_range_usd_per_gpu_hour": [0.53, 0.67],
+      "planning_evidence_type": "derived",
+      "planning_basis": "Moderate-term estimate below RunPod's current community-style public Pod rate; operational reliability must be modeled separately.",
+      "experimental_reference_rates": [
+        {"usd_per_gpu_hour": 0.69, "capacity_type": "runpod_public_pod", "source_id": "runpod_public_2026_07_28"}
+      ],
+      "source_ids": ["runpod_public_2026_07_28"]
+    },
+    {
+      "id": "nvidia-rtx-5090",
+      "vendor": "NVIDIA",
+      "model": "RTX 5090",
+      "default_node_gpus": 1,
+      "production_planning_usd_per_gpu_hour": 0.86,
+      "production_evidence_range_usd_per_gpu_hour": [0.76, 0.96],
+      "planning_evidence_type": "derived",
+      "planning_basis": "Moderate-term estimate below RunPod's current community-style public Pod rate; operational reliability must be modeled separately.",
+      "experimental_reference_rates": [
+        {"usd_per_gpu_hour": 0.99, "capacity_type": "runpod_public_pod", "source_id": "runpod_public_2026_07_28"}
+      ],
+      "source_ids": ["runpod_public_2026_07_28"]
     },
     {
       "id": "amd-mi355x",

@@ -1,0 +1,342 @@
+#!/usr/bin/env python3
+
+import argparse
+import datetime
+import fcntl
+import hashlib
+import json
+import os
+import pathlib
+import re
+import sys
+import tempfile
+import time
+
+
+def utc_now() -> str:
+    return datetime.datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z")
+
+
+def parse_deadline(value: str) -> datetime.datetime:
+    try:
+        deadline = datetime.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (AttributeError, ValueError) as error:
+        raise argparse.ArgumentTypeError("deadline must be RFC3339") from error
+    if deadline.tzinfo is None:
+        raise argparse.ArgumentTypeError("deadline must include a timezone")
+    return deadline.astimezone(datetime.UTC)
+
+
+def parse_repair_id(value: str) -> str:
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", value):
+        raise argparse.ArgumentTypeError(
+            "repair id must be 1-128 ASCII letters, digits, dots, underscores, or hyphens"
+        )
+    return value
+
+
+def canonical_bytes(value: dict[str, object]) -> bytes:
+    return (json.dumps(value, indent=2, sort_keys=True) + "\n").encode()
+
+
+def digest(value: dict[str, object]) -> str:
+    return hashlib.sha256(canonical_bytes(value)).hexdigest()
+
+
+def atomic_write(path: pathlib.Path, value: dict[str, object]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        "wb", dir=path.parent, prefix=f".{path.name}.", delete=False
+    ) as handle:
+        handle.write(canonical_bytes(value))
+        temporary = pathlib.Path(handle.name)
+    os.replace(temporary, path)
+
+
+def load(path: pathlib.Path) -> dict[str, object]:
+    value = json.loads(path.read_text())
+    if not isinstance(value, dict):
+        raise ValueError(f"{path} must contain a JSON object")
+    return value
+
+
+def paths(
+    root: str, repair_id: str | None
+) -> tuple[pathlib.Path, pathlib.Path, pathlib.Path, pathlib.Path]:
+    base = pathlib.Path(root).resolve()
+    directory = (
+        base if repair_id is None else base / ".repair-handshakes" / repair_id
+    )
+    return (
+        base,
+        directory,
+        directory / "REPAIR_READY.json",
+        directory / "REPAIR_REQUEST.json",
+    )
+
+
+def fail(message: str, code: int = 2) -> int:
+    print(json.dumps({"error": message}, sort_keys=True), file=sys.stderr)
+    return code
+
+
+def under_root_lock(action):
+    def run(args: argparse.Namespace) -> int:
+        _, root, _, _ = paths(args.root, args.repair_id)
+        root.mkdir(parents=True, exist_ok=True)
+        with (root / ".repair-handshake.lock").open("a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            return action(args)
+
+    return run
+
+
+def ready(args: argparse.Namespace) -> int:
+    base, root, ready_path, request_path = paths(args.root, args.repair_id)
+    terminal_path = base / "TERMINAL.json"
+    if request_path.exists():
+        return fail("repair_request_already_exists")
+    if terminal_path.exists():
+        return fail("terminal_already_exists")
+    if args.deadline <= datetime.datetime.now(datetime.UTC):
+        return fail("repair_deadline_passed")
+
+    value: dict[str, object] = {
+        "schema_version": 1,
+        "state": "repair_ready",
+        "created_at_utc": utc_now(),
+        "absolute_repair_deadline_utc": args.deadline.isoformat().replace(
+            "+00:00", "Z"
+        ),
+        "repair_deadline_epoch": args.deadline.timestamp(),
+        "failure_kind": args.failure_kind,
+        "diagnostic": args.diagnostic,
+        "retry_scope": args.retry_scope,
+    }
+    if args.repair_id is not None:
+        value["repair_id"] = args.repair_id
+    if ready_path.exists():
+        existing = load(ready_path)
+        stable_fields = (
+            "absolute_repair_deadline_utc",
+            "failure_kind",
+            "diagnostic",
+            "retry_scope",
+            "repair_id",
+        )
+        if all(existing.get(field) == value.get(field) for field in stable_fields):
+            print(
+                json.dumps(
+                    {
+                        "state": "repair_ready",
+                        "ready_path": str(ready_path),
+                        "handshake_root": str(root),
+                        "ready_sha256": digest(existing),
+                        "idempotent": True,
+                    },
+                    sort_keys=True,
+                )
+            )
+            return 0
+        return fail("different_repair_ready_already_exists")
+
+    atomic_write(ready_path, value)
+    print(
+        json.dumps(
+            {
+                "state": "repair_ready",
+                "ready_path": str(ready_path),
+                "handshake_root": str(root),
+                "ready_sha256": digest(value),
+                "idempotent": False,
+            },
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+def request(args: argparse.Namespace) -> int:
+    _, _, ready_path, request_path = paths(args.root, args.repair_id)
+    if not ready_path.exists():
+        return fail("repair_ready_missing")
+    if request_path.exists():
+        return fail("repair_request_already_exists")
+    ready_value = load(ready_path)
+    try:
+        deadline = datetime.datetime.fromtimestamp(
+            float(ready_value["repair_deadline_epoch"]), datetime.UTC
+        )
+    except (KeyError, TypeError, ValueError) as error:
+        return fail(f"invalid_repair_ready_deadline:{error}")
+    if deadline <= datetime.datetime.now(datetime.UTC):
+        return fail("repair_deadline_passed")
+
+    value: dict[str, object] = {
+        "schema_version": 1,
+        "state": "repair_requested",
+        "requested_at_utc": utc_now(),
+        "ready_sha256": digest(ready_value),
+        "retry_scope": args.retry_scope or ready_value.get("retry_scope"),
+        "patch_artifact": args.patch_artifact,
+        # Older durable owners used packet_path before the shared helper
+        # standardized on patch_artifact. Keep the alias identical so those
+        # owners can consume a repair without dropping the warm GPU claim.
+        "packet_path": args.patch_artifact,
+    }
+    if args.repair_id is not None:
+        value["repair_id"] = args.repair_id
+    atomic_write(request_path, value)
+    print(
+        json.dumps(
+            {
+                "state": "repair_requested",
+                "request_path": str(request_path),
+                "ready_sha256": value["ready_sha256"],
+            },
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+def status(args: argparse.Namespace) -> int:
+    base, _, ready_path, request_path = paths(args.root, args.repair_id)
+    if (base / "TERMINAL.json").exists():
+        print(json.dumps({"state": "terminal"}, sort_keys=True))
+        return 0
+    if not ready_path.exists():
+        print(json.dumps({"state": "absent"}, sort_keys=True))
+        return 3
+    ready_value = load(ready_path)
+    try:
+        deadline_epoch = float(ready_value["repair_deadline_epoch"])
+    except (KeyError, TypeError, ValueError):
+        return fail("invalid_repair_ready_deadline")
+    ready_sha256 = digest(ready_value)
+    result: dict[str, object] = {
+        "state": "waiting",
+        "ready_path": str(ready_path),
+        "ready_sha256": ready_sha256,
+        "repair_deadline_epoch": deadline_epoch,
+    }
+    if request_path.exists():
+        request_value = load(request_path)
+        if request_value.get("ready_sha256") != ready_sha256:
+            return fail("repair_request_binding_mismatch")
+        result.update(
+            {
+                "state": "requested",
+                "request_path": str(request_path),
+                "request": request_value,
+            }
+        )
+    elif deadline_epoch <= datetime.datetime.now(datetime.UTC).timestamp():
+        result["state"] = "expired"
+    print(json.dumps(result, sort_keys=True))
+    return 0 if result["state"] == "requested" else 3
+
+
+def wait(args: argparse.Namespace) -> int:
+    base, root, ready_path, request_path = paths(args.root, args.repair_id)
+    lock_path = root / ".repair-handshake.lock"
+    while True:
+        with lock_path.open("a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            if (base / "TERMINAL.json").exists():
+                print(json.dumps({"state": "terminal"}, sort_keys=True))
+                return 0
+            if not ready_path.exists():
+                return fail("repair_ready_missing", 3)
+            ready_value = load(ready_path)
+            try:
+                deadline_epoch = float(ready_value["repair_deadline_epoch"])
+            except (KeyError, TypeError, ValueError):
+                return fail("invalid_repair_ready_deadline")
+            if (
+                args.deadline is not None
+                and abs(args.deadline.timestamp() - deadline_epoch) > 1e-6
+            ):
+                return fail("repair_wait_deadline_mismatch")
+            ready_sha256 = digest(ready_value)
+            if request_path.exists():
+                request_value = load(request_path)
+                if request_value.get("ready_sha256") != ready_sha256:
+                    return fail("repair_request_binding_mismatch")
+                print(
+                    json.dumps(
+                        {
+                            "state": "requested",
+                            "request_path": str(request_path),
+                            "request": request_value,
+                            "ready_sha256": ready_sha256,
+                        },
+                        sort_keys=True,
+                    )
+                )
+                return 0
+            remaining = deadline_epoch - datetime.datetime.now(
+                datetime.UTC
+            ).timestamp()
+            if remaining <= 0:
+                print(
+                    json.dumps(
+                        {
+                            "state": "expired",
+                            "ready_path": str(ready_path),
+                            "ready_sha256": ready_sha256,
+                            "repair_deadline_epoch": deadline_epoch,
+                        },
+                        sort_keys=True,
+                    )
+                )
+                return 3
+        time.sleep(min(args.poll_seconds, remaining))
+
+
+def parser() -> argparse.ArgumentParser:
+    root = argparse.ArgumentParser(
+        description=(
+            "Atomically coordinate one bounded in-place repair while an outer "
+            "owner keeps the GPU claim and heartbeat."
+        )
+    )
+    commands = root.add_subparsers(dest="action", required=True)
+
+    mark_ready = commands.add_parser("ready")
+    mark_ready.add_argument("--root", required=True)
+    mark_ready.add_argument("--repair-id", type=parse_repair_id)
+    mark_ready.add_argument("--deadline", required=True, type=parse_deadline)
+    mark_ready.add_argument("--failure-kind", required=True)
+    mark_ready.add_argument("--diagnostic", required=True)
+    mark_ready.add_argument("--retry-scope", required=True)
+    mark_ready.set_defaults(run=under_root_lock(ready))
+
+    ask = commands.add_parser("request")
+    ask.add_argument("--root", required=True)
+    ask.add_argument("--repair-id", type=parse_repair_id)
+    ask.add_argument("--patch-artifact")
+    ask.add_argument("--retry-scope")
+    ask.set_defaults(run=under_root_lock(request))
+
+    inspect = commands.add_parser("status")
+    inspect.add_argument("--root", required=True)
+    inspect.add_argument("--repair-id", type=parse_repair_id)
+    inspect.set_defaults(run=under_root_lock(status))
+
+    block = commands.add_parser("wait")
+    block.add_argument("--root", required=True)
+    block.add_argument("--repair-id", type=parse_repair_id)
+    block.add_argument("--deadline", type=parse_deadline)
+    block.add_argument("--poll-seconds", type=float, default=1.0)
+    block.set_defaults(run=wait)
+    return root
+
+
+def main() -> int:
+    args = parser().parse_args()
+    return args.run(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

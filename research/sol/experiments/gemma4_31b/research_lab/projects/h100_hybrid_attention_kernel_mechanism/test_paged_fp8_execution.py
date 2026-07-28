@@ -234,6 +234,8 @@ class NativeConstructionTests(unittest.TestCase):
         )
         self.assertTrue(trace["pass"])
         self.assertTrue(trace["config_context_entered"])
+        self.assertFalse(config.model_config.is_mm_prefix_lm)
+        self.assertFalse(config.model_config.use_mla)
         self.assertIs(
             config.compilation_config.static_forward_context["registered.global"],
             layer,

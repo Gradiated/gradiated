@@ -1,0 +1,10 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/artifacts/h200-capture-train-20260726t2037z/repair-6-server-process-boundary-patch.json",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/artifacts/h200-capture-train-20260726t2037z/repair-6-server-process-boundary-patch.json",
+  "ready_sha256": "88407edc998924c81b42a18fff5f4ff02a866877cf740ff0cb8c3d7a706c6de7",
+  "repair_id": "repair-6",
+  "requested_at_utc": "2026-07-26T22:01:23.554087Z",
+  "retry_scope": "fresh_capture_only_with_server_process_observer_install",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

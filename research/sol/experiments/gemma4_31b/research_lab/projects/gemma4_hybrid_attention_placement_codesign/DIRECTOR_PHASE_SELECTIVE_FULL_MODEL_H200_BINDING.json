@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T21:26:38Z",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "decision": "repair_the_unproven_full_model_binding_in_place_then_conditionally_measure_one_c32_endpoint_pair",
+  "hypothesis": "The source-complete phase-selective dual-cache mechanism can execute through the pinned full Gemma forward path with exact stock pre-verification and post-accept reference behavior, preserve mirrored cache ownership, retain positive net target-cycle timing, and expose a measurable quality-unsafe c32 endpoint cost reduction.",
+  "identity_assertion": {
+    "method": "Mechanically extracted from the named content-addressed authoritative inputs before activation.",
+    "model_id": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest": {
+      "path": "../gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/CHECKPOINT_MANIFEST.json",
+      "sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6"
+    },
+    "checkpoint_config": {
+      "path": "../gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/config.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    "checkpoint_index": {
+      "path": "../gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/model.safetensors.index.json",
+      "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+    },
+    "runtime_binding": {
+      "path": "../gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/INTERVENTION_BINDING.json",
+      "sha256": "1402d564f149af0af193579e006c31dec3518e6208ae1a339eea9bdb16db9af8",
+      "release": "SGLang v0.5.13",
+      "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+      "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+    },
+    "workload": {
+      "concurrency": 32,
+      "prompt_tokens_per_request": 4214,
+      "output_tokens_per_request": 358,
+      "draft_depth": 12,
+      "target_verify_rows": 384,
+      "qualified_denominator_seconds_per_request": 0.625149101968745,
+      "campaign_target_seconds_per_request": 0.500119281574996
+    }
+  },
+  "settled_inputs": {
+    "source_result": {
+      "path": "PHASE_SELECTIVE_HYBRID_RESULT.json",
+      "sha256": "125f2411ea951e2958d373910713829a13e0a571e469738412772d38d62a0cca",
+      "classification": "source_complete_candidate",
+      "predicted_net_reduction_fraction_range": [
+        0.017025959017991726,
+        0.021687770126251484
+      ]
+    },
+    "dispatcher": {
+      "path": "phase_dispatcher.py",
+      "sha256": "acfab5f1439aa5fc0a316f40133452de998b57f72f8d85e1217b06c4d2adf1c2"
+    },
+    "invalid_attempt": {
+      "path": "PHASE_SELECTIVE_HYBRID_H200_COMPONENT_TERMINAL.json",
+      "sha256": "a32e56409c8814de61d4a9a686ecddaf77034ecaf206614a6d51c54e31a8e671",
+      "classification": "infrastructure_terminal",
+      "reusable_evidence": "The synthetic attention-only adapter may be reused for launcher and cache-ledger mechanics, but its timing is not campaign evidence and none of the unproven full-model gates are settled."
+    }
+  },
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "accelerator": "nvidia-h200-sxm",
+    "hourly_cost_usd": 2.45,
+    "claim_not_after_utc": "2026-07-25T23:15:00Z",
+    "maximum_claim_minutes": 120,
+    "release_not_after_utc": "2026-07-26T01:15:00Z",
+    "lifecycle_deadline_utc": "2026-07-26T01:30:00Z",
+    "reuse_contract": "Claim the registered available bench atomically and read its current connection identity from runtime/gpus.json. Reuse its resident exact checkpoint, pinned image/source, compiler, and CUDA caches. Do not provision, recreate, drain, or mutate provider lifecycle."
+  },
+  "execution": {
+    "profile": "execution",
+    "first_action": "Claim the named bench and replace only the attention-only synthetic adapter boundary with a pinned full Gemma forward adapter in the retained mutable environment; do not add another offline readiness gate.",
+    "component_sequence": [
+      "Run pinned full-model stock prefill and ordinary decode with the real checkpoint and production row ownership.",
+      "Populate both stock-global and proxy-local shadow KV banks at converted layers 11, 23, 35, 47, and 59.",
+      "Replay one captured 384-row depth-12 TARGET_VERIFY graph through the full layer stack.",
+      "Mirror one deterministic accepted-index move/free pattern across both banks.",
+      "Run the next stock full-model decode and compare against an eager dual-cache full-model reference.",
+      "Measure gross target-cycle time and every shadow projection, write, move, dispatch, and synchronization cost with profiler-off CUDA events."
+    ],
+    "conditional_endpoint": "Only if every component exactness, ownership, graph, and positive-net gate passes, run one contemporaneous exact-c32 stock/candidate endpoint pair using the bound 32 x 4,214 x 358 workload. Preserve raw request rows, failures, usage and cache accounting, timing, token IDs, finish reasons, and a cheap coherence sanity check. This is a quality-unsafe performance proxy; token equality is not expected and deployability is forbidden.",
+    "repair_policy": "Ordinary import, path, container, source-binding, graph-capture, telemetry, and adapter defects are recoverable within the same claim. Preserve settled inputs and rerun only incomplete producer steps. Do not replay a completed valid component or endpoint arm."
+  },
+  "required_component_gates": [
+    "The full-model stock control uses the pinned checkpoint, runtime image, exact c32 row geometry, and production forward symbols.",
+    "Stock prefill and pre-verification ordinary decode are exact to the pinned full-model control.",
+    "All 384 logical TARGET_VERIFY rows use the proxy only at converted layers; padded rows allocate and write no cache slot.",
+    "Stock and proxy banks undergo identical allocation, write, accepted-index move, and rejected-row free operations.",
+    "The post-accept stock full-model decode is finite and exact against an eager full-model dual-cache reference.",
+    "CUDA-graph replay neither recaptures nor introduces host synchronization.",
+    "Gross target-cycle saving minus all shadow maintenance and dispatch costs is positive."
+  ],
+  "budgets": {
+    "authorized_spend_usd": 5.0,
+    "compute": "At most 120 claimed H200 minutes at $2.45/hour; maximum fresh claim exposure is $4.90.",
+    "wall_clock": "Claim by 2026-07-25T23:15:00Z and release by 2026-07-26T01:15:00Z under the verified 01:30Z watchdog.",
+    "storage": "At most 5 GiB of new non-checkpoint artifacts.",
+    "provider_mutation": "forbidden"
+  },
+  "stop_rules": [
+    "Return a typed semantic_or_cache_reject, graph_contract_reject, or exact_nonpositive_net_component if a scientific component gate fails.",
+    "Return infrastructure_terminal only when the full-model component remains scientifically unconsumed at the hard release deadline; do not convert missing evidence into a negative physical bound.",
+    "Do not run the endpoint unless the full-model component is exact and net-positive.",
+    "Do not claim quality preservation or deployability, train, alter checkpoint values, replay permanent 55-local/5-global placement, or weaken cache and reference gates."
+  ],
+  "artifact_contract": {
+    "terminal": "PHASE_SELECTIVE_FULL_MODEL_H200_COMPONENT_TERMINAL.json",
+    "conditional_endpoint_terminal": "PHASE_SELECTIVE_FULL_MODEL_H200_ENDPOINT_TERMINAL.json",
+    "required_classification": "exact_positive_net_component | exact_nonpositive_net_component | semantic_or_cache_reject | graph_contract_reject | infrastructure_terminal",
+    "cleanup": "Stop all project processes and release the bench ready with resident reusable state preserved by 2026-07-26T01:15:00Z."
+  }
+}

@@ -68,7 +68,7 @@ def main() -> None:
         "q_extend.shape[0] == 384",
         "q_extend.shape[1] == 32",
         "k_extend.shape[1] == 16",
-        "BLOCK_M = 16",
+        "BLOCK_M = 32",
         "custom_mask is not None",
     )
     if not any(
@@ -98,13 +98,13 @@ def main() -> None:
         raise RuntimeError("checkpoint_snapshot_mutable")
     packet = {
         "schema_version": 1,
-        "kind": "gemma4_h200_ngram_fixed_tree_block_m16_sm90_packet",
+        "kind": "gemma4_h200_ngram_fixed_tree_block_m32_sm90_packet",
         "scientific_question": (
-            "Does a 16-row query tile replace the stock 64-row tile only for "
+            "Does a 32-row query tile replace the stock 64-row tile only for "
             "exact c32 NGRAM target verification and reduce attention plus endpoint time?"
         ),
         "hypothesis": {
-            "causal_change": "BLOCK_M 64 to 16 for the exact 384x32x256 custom-mask call",
+            "causal_change": "BLOCK_M 64 to 32 for the exact 384x32x256 custom-mask call",
             "unchanged": [
                 "BLOCK_N=64",
                 "launch count and grid",

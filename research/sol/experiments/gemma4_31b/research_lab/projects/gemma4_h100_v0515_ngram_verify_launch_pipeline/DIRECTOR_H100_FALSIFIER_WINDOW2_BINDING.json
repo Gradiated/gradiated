@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T12:22:00Z",
+  "decision": "rerun_unchanged_packed_mask_falsifier_after_pre_science_deadline_failure",
+  "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+  "question": "Does single packed pinned-CPU full-mask staging preserve the exact depth-12 target-verify consumer state while reducing preparation operations and preparation-plus-consumer time on H100?",
+  "why_now": "The first admitted H100 window was scientifically unconsumed: it found and stopped only the released endpoint scheduler that retained 74.8 GiB, verified the H100 at 4 MiB afterward, and then correctly refused to start either arm inside the expired release fence. The warm exact-runtime bench is now clean and the unchanged pair is the highest-information use of its retained lifecycle.",
+  "prior_attempt": {
+    "binding": {
+      "path": "DIRECTOR_H100_FALSIFIER_BINDING.json",
+      "sha256": "c579f42e4b10847c1567c8204373e7189833a77e427302ebc273ea580e9971ae"
+    },
+    "result": {
+      "path": "H100_FALSIFIER_RESULT.json",
+      "sha256": "296a3ca55c0e0e13e7e6291b56322c0652275e79827b7cb8e243fe4057473ba7"
+    },
+    "terminal": {
+      "path": "H100_FALSIFIER_TERMINAL.json",
+      "sha256": "3f7283cadaf0af316a280c0ba41dad13bc4861d6f802fc14a0a04e8dc6350123",
+      "classification": "invalid_pre_science_deadline_fence",
+      "candidate_sample_consumed": false,
+      "scientific_terminal": false,
+      "settled_spend_usd": 0.13
+    }
+  },
+  "bench": {
+    "id": "h100-v0515-endpoint-200g-r2-e00yfnrrfczsdjevms",
+    "accelerator": "nvidia-h100-sxm",
+    "provider": "nebius",
+    "hourly_cost_usd": 2.95,
+    "lifecycle_deadline_utc": "2026-07-25T13:00:00Z",
+    "release_deadline_utc": "2026-07-25T12:50:00Z",
+    "connection_identity_source": "runtime/gpus.json",
+    "instance_id": "computeinstance-e00yfnrrfczsdjevms",
+    "disk_id": "computedisk-e00cjpqvtz8x59514m",
+    "public_ipv4": "89.169.124.194",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "ssh_identity": "/root/.config/nebius/glm-campaign/ssh_ed25519"
+  },
+  "runtime_identity": {
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "model_geometry": "Gemma 4 31B hybrid local/global attention with native NGRAM depth 12",
+    "checkpoint_required": false
+  },
+  "experiment_contract": {
+    "implementation": "Reuse the already prepared project-local immutable source copy and implement only the source-complete single_packed_cpu_full_mask_staging candidate specified by the original binding.",
+    "preflight": "Verify every bound hash, current runtime/gpus.json connection identity, no inference server, and no process owning material GPU memory. The prior cleanup left the H100 at 4 MiB; any new owner is a typed invalid result, not authority to kill unrelated work.",
+    "single_case": "Fresh process, depth 12, live batch 32 with mixed sequence lengths spanning short, 1023, 1024, 1025, and long rows plus the next CUDA-graph bucket's padded rows.",
+    "exact_consumer": "Run stock and candidate preparation through NgramVerifyInput, Triton target-verify metadata, one Gemma-shape sliding layer, and one global layer extend_attention_fwd using deterministic synthetic BF16 Q/K/V and KV cache.",
+    "correctness": "Require byte-identical custom_mask, positions, retrieve_index, next, sibling, mask_indptr, and KV indices; require bit-identical attention outputs; require all-True padded rows and no row crossing its mask_indptr.",
+    "timing": "After capacity warmup, run at least 200 alternating stock/candidate repetitions with CUDA events and synchronization only after the unchanged consumer. Report median and p90 preparation-plus-consumer time.",
+    "trace": "Capture one shortest Nsight Systems trace over the preparation range and count CUDA kernels, H2Ds, allocator calls, graph replays, and host synchronizations.",
+    "terminal": "Persist H100_FALSIFIER_WINDOW2_RESULT.json and H100_FALSIFIER_WINDOW2_TERMINAL.json with typed pass, reject, or invalid classification and measured versus analytical labels.",
+    "promotion": "This component cannot authorize an endpoint replay or production promotion. The consumed endpoint's semantic divergence remains a production blocker."
+  },
+  "budgets": {
+    "authorized_spend_usd": 1.75,
+    "h100_compute_seconds": 1200,
+    "wall_clock_seconds": 1500,
+    "release_deadline_utc": "2026-07-25T12:50:00Z",
+    "storage": "At most 512 MiB project-local artifacts, including one short Nsight Systems trace."
+  },
+  "prohibitions": [
+    "Do not create, delete, resize, reboot, or otherwise mutate the provider resource.",
+    "Do not replay the consumed 171-request discriminator or the consumed 791-request endpoint.",
+    "Do not start an inference server or load the checkpoint.",
+    "Do not modify canonical resident checkpoint, packet, candidate, image, or source files.",
+    "Do not broaden into tuning, endpoint integration, semantic-divergence repair, or another source/readiness iteration.",
+    "Do not claim production eligibility: the measured endpoint normalized semantics are not exact."
+  ]
+}

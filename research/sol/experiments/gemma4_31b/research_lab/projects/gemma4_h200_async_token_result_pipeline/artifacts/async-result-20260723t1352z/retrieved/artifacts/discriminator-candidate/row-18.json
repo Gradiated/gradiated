@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 0.7238506659996347,
+  "ended_monotonic_s": 56159.662551753,
+  "error": null,
+  "first_token_monotonic_s": 56158.938701087,
+  "index": 18,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": "Stake",
+      "token_ids": [
+        233149
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    233149,
+    233149,
+    233149,
+    233149,
+    233149,
+    233149,
+    233149,
+    233149,
+    233149,
+    233149,
+    233149,
+    233149,
+    233149,
+    233149,
+    233149,
+    233149
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "5bf600be7dc09a63d185ea0b6e7a1f1471b7195559e3c932d28bcfb115bfe455",
+  "request_sha256": "f9f2e1f96ce67aecfb5ded0eee69014b3371ae70f1bf014c4c8221992befaed1",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 56146.433141298,
+  "text": "StakeStakeStakeStakeStakeStakeStakeStakeStakeStakeStakeStakeStakeStakeStakeStake",
+  "ttft_seconds": 12.505559788995015,
+  "wall_seconds": 13.22941045499465
+}

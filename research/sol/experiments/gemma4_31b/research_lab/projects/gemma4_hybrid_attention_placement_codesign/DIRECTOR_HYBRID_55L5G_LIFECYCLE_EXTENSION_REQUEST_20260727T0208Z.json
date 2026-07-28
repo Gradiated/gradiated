@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-27T02:08:00Z",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "decision": "request_exact_reservation_before_watchdog_extension_and_claim",
+  "bench": {
+    "id": "h200-hybrid-55l5g-e00dam5825ffjyxd8b",
+    "status": "available",
+    "claim": null,
+    "instance_id": "computeinstance-e00dam5825ffjyxd8b",
+    "disk_id": "computedisk-e00syfz2dr5znq5kg7",
+    "public_ipv4": "89.169.120.201",
+    "ssh_ed25519_fingerprint": "SHA256:JHbxua8r+igrDIicuOb66wRcTXJqdjqvcFWehGv5eN8",
+    "gpu": "NVIDIA H200",
+    "driver": "580.159.04",
+    "memory_mib": 143771,
+    "current_deadline_utc": "2026-07-27T02:39:55.411237Z"
+  },
+  "feasibility": {
+    "current_window_rejected": "The remaining approximately 32 minutes cannot safely fit the measured greater-than-20-minute cold checkpoint stage, image/runtime preparation, matched stock/candidate endpoint pair, terminal persistence, and release.",
+    "requested_deadline_utc": "2026-07-27T03:10:00Z",
+    "provider_started_at_utc": "2026-07-27T01:49:55.411237Z",
+    "maximum_total_provider_seconds": 4804.588763,
+    "hourly_cost_usd": 2.4597222,
+    "maximum_total_provider_cost_usd": 3.2827649006,
+    "prior_actual_project_spend_usd": 6.3140021221,
+    "maximum_cumulative_project_spend_usd": 9.5967670227
+  },
+  "reservation": {
+    "requested_cumulative_authorized_usd": 10.0,
+    "durable_in_current_spend_snapshot": false,
+    "claim_allowed": false,
+    "provider_extension_allowed": false
+  },
+  "next_director_action": [
+    "After the exact $10.00 reservation is durable, start and verify a replacement cleanup watchdog through 2026-07-27T03:10:00Z.",
+    "Atomically replace the inventory lifecycle, then stop and verify the old watchdog.",
+    "Persist the exact live-bench claim binding and reactivate execution only when checkpoint staging, the endpoint pair, terminal persistence, and release fit."
+  ],
+  "scientific_contract": {
+    "candidate_source_sha256": "33d6bec04ab04e006b5e96d95dce56444edb59c519f242a0b6690a5f6e5bcfed",
+    "owner_sha256": "3979c14ee6ff2e0bc8d3a67a711ccb729018fcbc87ceae33c93cc494242d74f4",
+    "pair_sha256": "02aaabd93c8d3a9e9e5da683608ad47a4cd19929430a0770ad387bae807b0eb3",
+    "endpoint_science_consumed": false,
+    "quality_label": "quality_unsafe_non_deployable_proxy"
+  },
+  "forbidden": [
+    "Do not claim before the exact reservation and verified lifecycle replacement are durable.",
+    "Do not replay the settled component, phase-selective HTTP-500 consumer, DFlash, or any historical endpoint.",
+    "Do not perform another offline command-seam or full-path rehearsal."
+  ]
+}

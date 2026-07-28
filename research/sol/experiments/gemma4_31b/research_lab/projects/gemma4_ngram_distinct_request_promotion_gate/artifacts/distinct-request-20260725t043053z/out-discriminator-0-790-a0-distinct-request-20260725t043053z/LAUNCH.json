@@ -1,0 +1,8 @@
+{
+  "container": "gemma4-ngram-tail-overlap",
+  "docker_reload": true,
+  "docker_removal": false,
+  "docker_run": false,
+  "overlay": "distinct_request_support_two_write_promotion",
+  "reused_healthy_resident_server": true
+}

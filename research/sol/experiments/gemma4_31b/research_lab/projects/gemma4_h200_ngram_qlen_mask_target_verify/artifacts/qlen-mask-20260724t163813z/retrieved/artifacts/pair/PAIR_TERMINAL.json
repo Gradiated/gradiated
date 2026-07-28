@@ -1,0 +1,18 @@
+{
+  "candidate_output_tokens_per_second": 447.2215770188163,
+  "candidate_p95_completion_seconds": 25.03978081400055,
+  "candidate_path_rows": 0,
+  "candidate_seconds_per_request": 0.8004980492811455,
+  "complete_32_candidate": true,
+  "complete_32_control": true,
+  "control_output_tokens_per_second": 591.7544896863889,
+  "control_p95_completion_seconds": 19.2572022380009,
+  "control_seconds_per_request": 0.6049806232813353,
+  "kind": "matched_profiler_off_exact_c32_pair",
+  "p95_delta_fraction": 0.30028134432678333,
+  "schema_version": 1,
+  "semantics_match": false,
+  "server_stable": true,
+  "service_time_delta_fraction": 0.3231796498528323,
+  "valid": false
+}

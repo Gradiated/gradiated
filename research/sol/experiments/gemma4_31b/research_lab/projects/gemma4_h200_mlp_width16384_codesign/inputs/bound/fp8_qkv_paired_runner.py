@@ -8,6 +8,7 @@ import concurrent.futures
 import hashlib
 import json
 import math
+import os
 import pathlib
 import statistics
 import subprocess
@@ -16,7 +17,7 @@ import time
 import urllib.request
 
 
-BASE = "http://127.0.0.1:30000"
+BASE = os.environ.get("SGLANG_ENDPOINT_BASE", "http://127.0.0.1:30000")
 MODEL = "google/gemma-4-31B-it"
 PROMPT_TOKENS = 4214
 OUTPUT_TOKENS = 358

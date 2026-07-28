@@ -1,0 +1,8 @@
+{
+  "actual_spend_usd": 0.9055,
+  "classification": "sentinel_exact_equivalence_class",
+  "historical_request_277": "unresolved_and_not_replayed",
+  "provider_or_gpu_used": false,
+  "result_sha256": "5a9b658ea188d249f063b3f892209d507fa864820b92cdda3862ccd665fb3943",
+  "schema_version": 1
+}

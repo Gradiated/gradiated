@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-27T00:34:14Z",
+  "project": "gemma4_adaptive_retrieval_vocab_head",
+  "decision": "admit_diverse_capture_retrieval_falsifier",
+  "researcher_profile": "execution",
+  "question": "Does the existing request-adaptive tied-vocabulary retrieval geometry preserve the exact dense-head top-1 across the recovered diverse c32 verifier capture while scoring at most 8192 of 262144 vocabulary rows and retaining a credible advantage over the 4.183 ms dense component?",
+  "hypothesis": "The prior 256-coordinate, 8192-candidate geometry will generalize beyond the degenerate historical row and preserve every exact top-1 across all 1536 recovered hidden rows.",
+  "inputs": {
+    "capture_terminal": "artifacts/h200-exact-diverse-c32-capture-owner-e606f47a/EXACT_CAPTURE_TERMINAL.json",
+    "capture_terminal_sha256": "fc7297d3bf51e9118e0cf5bde4eec7c2bd22dc2d07a6608c3b19f8b55d55a9bc",
+    "hidden_states": "artifacts/h200-exact-diverse-c32-capture-owner-e606f47a/hidden_states.pt",
+    "hidden_states_sha256": "ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54",
+    "capture_rows": 1536,
+    "hidden_width": 5376,
+    "unique_request_ids": 32,
+    "unique_hidden_rows": 1536,
+    "tied_weight": "../exact_h200_vllm_baseline_shared_runner/artifacts/corrected-transfer-view/model-00001-of-00002.safetensors",
+    "tied_weight_key": "model.language_model.embed_tokens.weight",
+    "tied_weight_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+    "prior_consumer": "adaptive_retrieval_vocab_offline.py",
+    "prior_consumer_sha256": "fd04d8bdb7341f98492b5252d5049da5c6e26953c667701b667012cec451205d",
+    "prior_terminal": "ADAPTIVE_RETRIEVAL_VOCAB_OFFLINE_TERMINAL.json",
+    "prior_terminal_sha256": "29644d701a38606f6a8f9230da753b2ecdccd969093ca80af75dfd9d6c3e54dd"
+  },
+  "scope": {
+    "required": [
+      "Adapt the existing consumer in this project to the recovered payload schema and 1536-row geometry without changing the tied-weight retrieval hypothesis.",
+      "Compute the dense reference top-1 in bounded row batches, then measure the prior W8A8 and weight-variance coordinate candidate curves with exact candidate rescoring.",
+      "Report aggregate and per-request exact top-1 recall, minimum candidate rows, index bytes, lower-bound HBM bytes, arithmetic work, routing allowance, and the strongest 4.183 ms dense comparator.",
+      "Persist ADAPTIVE_RETRIEVAL_DIVERSE_C32_OFFLINE_TERMINAL.json atomically with direct hashes of the consumer, capture terminal, hidden payload, tied weight, and prior terminal."
+    ],
+    "forbidden": [
+      "gpu_claim",
+      "provider_or_ssh_use",
+      "endpoint_or_request",
+      "capture_or_producer_replay",
+      "checkpoint_mutation",
+      "quality_or_endpoint_claim"
+    ]
+  },
+  "quality_gate": {
+    "capture_contract": "1536 finite BF16 rows at width 5376, 32 request identities, and 1536 unique hidden rows",
+    "continue_to_h200_consumer_only_if": [
+      "exact top-1 recall is 1.0 globally and for every request",
+      "minimum candidate rows are at most 8192 for a native geometry",
+      "the conservative analytical component bound including routing is below 0.004183 seconds"
+    ],
+    "otherwise": "Close this retrieval representation as a diverse-capture negative; do not spend the remaining H200 allowance."
+  },
+  "budgets": {
+    "wall_clock_deadline_utc": "2026-07-27T00:55:00Z",
+    "cpu_threads_max": 16,
+    "memory_gib_max": 32,
+    "additional_storage_gib_max": 1,
+    "gpu_minutes": 0,
+    "additional_spend_usd": 0.0
+  },
+  "bench_disposition": {
+    "bench": "h200-causal-head-e00b9qw8d6qd7wrjj1",
+    "state": "retain_maintenance_pending_offline_gate",
+    "reason": "The producer environment and verified checkpoint are warm, but no GPU claimant is admitted until the diverse retrieval terminal passes. Reuse remains within the measured cold-setup break-even window.",
+    "next_lifecycle_decision": "If the offline gate passes in time, admit one bounded same-project H200 consumer within remaining authority; otherwise drain and clean the bench."
+  },
+  "artifact_contract": {
+    "terminal": "ADAPTIVE_RETRIEVAL_DIVERSE_C32_OFFLINE_TERMINAL.json",
+    "terminal_required": true
+  }
+}

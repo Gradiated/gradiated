@@ -1,0 +1,7 @@
+{
+  "classification": "integration_failure",
+  "message": "rm -rf \"$artifacts/component\"",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-22T14:11:13.155389Z"
+}

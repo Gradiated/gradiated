@@ -1,0 +1,22 @@
+{
+  "accepted_draft_count": 2,
+  "accepted_prefix": [201, 202],
+  "ar_cycle_tokens": [201, 202, 203],
+  "block_size": 4,
+  "bonus_token": 203,
+  "commit_length": 3,
+  "committed_kv_write_locations": [4000, 4001, 4002],
+  "committed_length_after": 43,
+  "committed_length_before": 40,
+  "cycle_index": 0,
+  "draft_tokens": [101, 201, 202, 999],
+  "emitted_tokens": [201, 202, 203],
+  "kv_write_locations": [4000, 4001, 4002, 4003],
+  "kv_write_positions": [40, 41, 42, 43],
+  "next_ar_token": 203,
+  "next_cycle_committed_length": 43,
+  "next_cycle_seed": 203,
+  "request_id": "fixture-pass",
+  "verifier_top1_ids": [201, 202, 203, 204],
+  "verifier_top1_logits": [17.0, 16.0, 15.0, 14.0]
+}

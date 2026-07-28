@@ -1,0 +1,10 @@
+{
+  "claimed_seconds": 1.55710768699646,
+  "classification": "endpoint_owner_failure",
+  "current_claim_cost_usd": 0.0010640235861142477,
+  "provider_cost_usd": 0.0010640235861142477,
+  "reason": "resident checkpoint manifest mismatch",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-23T16:19:41.379537Z"
+}

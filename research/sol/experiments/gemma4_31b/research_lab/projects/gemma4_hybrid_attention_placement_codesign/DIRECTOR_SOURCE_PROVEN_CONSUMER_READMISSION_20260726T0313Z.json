@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-26T03:13:00Z",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "decision": "readmit_the_unconsumed_component_only_after_source_proving_the_exact_pinned_runtime_consumer",
+  "classification": "same_project_source_proven_pre_science_readmission",
+  "researcher_profile": "execution",
+  "scientific_contract": {
+    "disposition": "unchanged",
+    "scientific_binding": {
+      "path": "DIRECTOR_PHASE_SELECTIVE_FULL_MODEL_H200_BINDING.json",
+      "sha256": "f09e4188f4b997fe3a0fc4b2fd6303616c043b6c360d500c8d80b0ac4ad800dc"
+    },
+    "hypothesis": "The implemented phase-selective stock/proxy KV consumer can execute through the pinned full Gemma target-verification path, remain exact at stock boundaries, and retain positive net target-cycle savings after all shadow maintenance costs.",
+    "workload_and_quality_gates": "Use the exact workload, exactness gates, cache-lifecycle gates, economic denominator, and conditional endpoint gate from the scientific binding without amendment."
+  },
+  "decision_evidence": {
+    "expired_terminal": {
+      "path": "artifacts/ngram-readmission-20260726t0218z-r4-cached-restart/R5_REPAIR_DEADLINE_TERMINAL_20260726T0307Z.json",
+      "classification": "typed_repair_deadline_boundary",
+      "science_started": false,
+      "candidate_cuda_invocation_started": false,
+      "scientific_component_consumed": false,
+      "exact_c32_started": false
+    },
+    "failure_sequence": [
+      "The r4 launch reached the pinned production consumer and showed that prepare_for_verify was not its ABI.",
+      "The r5 launch completed model load and CUDA graphs, then showed that class-level NgramVerifyInput.verify was not its ABI.",
+      "Both failures occurred before candidate CUDA or any scientific sample."
+    ],
+    "material_change": "Do not infer or stage another method name. Before claiming the GPU, resolve the exact callable and argument ownership from the pinned runtime source reached by forward_batch_generation, then execute that same binding in a CPU/import-level callsite probe. A typed proof is the only admission to a server restart.",
+    "bench_safety": "At 03:12Z a strict SSH reconciliation found sudo docker ps empty, the nvidia-smi compute-app query empty, and localhost:30000 health refused.",
+    "why_continue": "The scientific component remains wholly unconsumed, the exact checkpoint and build caches are warm, and the source-proven pre-claim gate prevents a third expensive guessed-ABI load."
+  },
+  "preclaim_gate": {
+    "deadline_utc": "2026-07-26T03:20:00Z",
+    "required_artifact": "PINNED_RUNTIME_VERIFICATION_CONSUMER_PROOF.json",
+    "requirements": [
+      "Name and hash the exact pinned source files and runtime revision used by forward_batch_generation.",
+      "Record the concrete callable, receiver or owner, argument construction, return contract, and invocation location; do not rely on a class-level attribute guess.",
+      "Run a bounded CPU/import-level probe through that exact callsite or a faithful minimal construction and persist pass/fail plus traceback.",
+      "If proof fails, emit a typed preclaim terminal and do not claim the H200."
+    ]
+  },
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "accelerator": "nvidia-h200-sxm",
+    "hourly_cost_usd": 2.45,
+    "claim_not_after_utc": "2026-07-26T03:20:00Z",
+    "release_not_after_utc": "2026-07-26T03:55:00Z",
+    "lifecycle_deadline_utc": "2026-07-26T04:00:00Z",
+    "watchdog_unit": "gemma4-hybrid-source-proven-readmission-20260726t0400-watchdog.service",
+    "reuse_contract": "After the typed preclaim proof passes, atomically claim only the named ready bench and reuse its exact checkpoint, pinned image/source, and CUDA/compiler caches."
+  },
+  "execution": {
+    "first_action": "Produce the source-bound preclaim proof without a GPU claim.",
+    "server_replacement": "After proof passes, one cached target-model server launch is authorized. Observe the child process concurrently with HTTP readiness and terminalize a fatal child exit immediately.",
+    "component": "Run only the still-unconsumed full-model dual-cache component comparator and persist its typed terminal.",
+    "conditional_endpoint": "Run the already-bound exact-c32 stock/candidate pair only if every component exactness, cache-lifecycle, CUDA-graph, and positive-net gate passes.",
+    "repair_limit": "No further guessed-ABI or server repair is authorized in this itinerary. A mismatch after the source proof is a typed terminal."
+  },
+  "budgets": {
+    "authorized_spend_usd": 6.75,
+    "actual_spend_before_readmission_usd": 4.35,
+    "maximum_added_provider_exposure_usd": 1.84,
+    "compute": "At most 35 claimed H200 minutes at $2.45/hour after the preclaim proof passes.",
+    "wall_clock": "Preclaim proof by 03:20Z, release by 03:55Z, and provider cleanup watchdog at 04:00Z.",
+    "storage_gib": 5.0,
+    "provider_mutation": "forbidden to the researcher"
+  },
+  "stop_rules": [
+    "Do not claim before PINNED_RUNTIME_VERIFICATION_CONSUMER_PROOF.json passes.",
+    "Do not replay r5, infer another consumer ABI, or launch more than one server.",
+    "Do not consume more than the one incomplete component and its conditional exact-c32 pair.",
+    "Do not run exact-c32 unless the component is exact and net-positive.",
+    "Stop project processes and release the bench by 2026-07-26T03:55:00Z.",
+    "Do not train, alter checkpoint values, weaken stock-boundary gates, replay completed placement evidence, or claim quality preservation or deployability."
+  ],
+  "artifact_contract": {
+    "preclaim_proof": "PINNED_RUNTIME_VERIFICATION_CONSUMER_PROOF.json",
+    "preclaim_terminal": "PINNED_RUNTIME_VERIFICATION_CONSUMER_PRECLAIM_TERMINAL.json",
+    "component_terminal": "PHASE_SELECTIVE_FULL_MODEL_H200_COMPONENT_TERMINAL.json",
+    "conditional_endpoint_terminal": "PHASE_SELECTIVE_FULL_MODEL_H200_ENDPOINT_TERMINAL.json",
+    "cleanup": "Stop project processes and release with reusable state preserved."
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "negative": [
+    {
+      "error": "layer[0].size:invalid_size",
+      "name": "missing_size",
+      "pass": true
+    },
+    {
+      "error": "layer[0].size:invalid_size",
+      "name": "malformed_numeric_size",
+      "pass": true
+    },
+    {
+      "error": "descriptor:duplicate_digest_size_conflict",
+      "name": "duplicate_descriptor",
+      "pass": true
+    },
+    {
+      "error": "ref:digest_mismatch",
+      "name": "digest_mismatched_ref",
+      "pass": true
+    },
+    {
+      "error": "manifest:missing",
+      "name": "missing_schema",
+      "pass": true
+    }
+  ],
+  "observed_registry_schema": {
+    "compressed_bytes": 18969730141,
+    "path": "artifacts/h100-endpoint-200g-r2-descriptor-repair-20260725t1118z/RAW_MANIFEST_INSPECT_VERBOSE.json",
+    "sha256": "cd28dded6bba7706069dfb46a9a019fb12d89716ac8929be86f6d3aba13afecd"
+  },
+  "pass": true,
+  "positive": {
+    "compressed_bytes_first": 600,
+    "compressed_bytes_second": 600,
+    "deterministic": true,
+    "expected_manifest_digest": "sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "fixture": "artifacts/manifest-size-repair-20260725t1005z/positive.json",
+    "fixture_sha256": "f4f329a3ab6eca4cc141a9927cf50ffa0fd22927ac18d76a937a42566f6da735",
+    "sufficient_space_fixture": true
+  },
+  "schema_version": 1
+}

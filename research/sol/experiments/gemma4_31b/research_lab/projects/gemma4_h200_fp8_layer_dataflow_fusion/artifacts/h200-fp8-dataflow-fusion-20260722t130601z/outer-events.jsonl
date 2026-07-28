@@ -1,0 +1,71 @@
+{"epoch": 1784725698.2646132, "event": "claimed", "lease": 6640, "result": {"accelerator": "nvidia-h200-sxm", "claim": {"claimed_at": "2026-07-22T13:05:49.994236Z", "heartbeat_at": "2026-07-22T13:07:53.926350Z", "lease_seconds": 3600, "lease_until_utc": "2026-07-22T14:07:53.926350Z", "project": "gemma4_h200_fp8_layer_dataflow_fusion", "stale": false}, "contents": {"attention_claim_cost_usd": 0.233852, "attention_result": "component_reject", "caches": "Retain Docker image, CUDA extension, Triton/CUTLASS, and graph caches.", "checkpoint": "Project-local immutable 62.58-GB checkpoint is being hash-reconciled before staging.", "claim_reconciliation": "Foreign owner inactive; local pre-invocation failures and direct guest absence proof recorded by the priority project.", "image": "Pinned SGLang v0.5.13 digest 6113665 is retained/pulling as needed.", "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4", "owner_unit": "gemma4-fp8-dataflow-fusion-20260722t130601z.service", "project": "gemma4_h200_fp8_layer_dataflow_fusion", "runtime": "Exact M=32/M=2048 GELU(tanh)+mul-to-FP8 component, then conditional FP8+QKV+deferred-local-KV c32 pair.", "server_state": "No endpoint server until component-positive promotion."}, "drain_after_release": false, "hourly_cost_usd": 2.46, "id": "h200-residual-kernel-e00fpjxk4ww2g49apd", "idle_since": null, "lifecycle": {"deadline_utc": "2026-07-22T18:09:02Z", "watchdog": {"control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-residual-kernel-h200-20260722t1224-watchdog.service", "main_pid": 3281515, "unit": "gemma4-residual-kernel-h200-20260722t1224-watchdog.service", "unit_manager": "user"}}, "provider": "nebius", "registered_at": "2026-07-22T12:27:05.302102Z", "resource": {"disk_id": "computedisk-e00nt4vk8nf3kgzy01", "disk_name": "gemma4-residual-kernel-h200-20260722t1224-boot", "instance_id": "computeinstance-e00fpjxk4ww2g49apd", "instance_name": "gemma4-residual-kernel-h200-20260722t1224"}, "status": "claimed", "updated_at": "2026-07-22T13:07:53.926350Z"}}
+{"bytes": 4621, "epoch": 1784725702.0029917, "event": "input_staged", "name": "config.json", "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"}
+{"bytes": 32169626, "epoch": 1784725704.4989958, "event": "input_staged", "name": "tokenizer.json", "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"}
+{"bytes": 2095, "epoch": 1784725706.5719826, "event": "input_staged", "name": "tokenizer_config.json", "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"}
+{"bytes": 18683, "epoch": 1784725708.411967, "event": "input_staged", "name": "chat_template.jinja", "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"}
+{"bytes": 1689, "epoch": 1784725710.2537925, "event": "input_staged", "name": "processor_config.json", "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"}
+{"bytes": 120246, "epoch": 1784725712.1925807, "event": "input_staged", "name": "model.safetensors.index.json", "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"}
+{"epoch": 1784725743.3198755, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784725788.369873, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784725833.4254093, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784725878.4728363, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784725923.5211694, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784725968.5663662, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726013.6153955, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726058.6651268, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726103.7154572, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726148.7732882, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726193.820652, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726238.8677688, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726283.9160984, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726328.9681332, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726374.0293388, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726419.077624, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726464.1335075, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726509.1814787, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726554.2390223, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726599.2910135, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726644.3451703, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726689.3940675, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726734.4407635, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726779.4863563, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726824.5397298, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726869.5900726, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726914.637769, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784726959.6815903, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727004.7473938, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727049.8008184, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727094.866884, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727139.921467, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727184.9666789, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727230.014824, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727275.0731585, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727320.117892, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727365.16306, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727410.2107306, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"bytes": 49784788364, "epoch": 1784727449.9459188, "event": "input_staged", "name": "model-00001-of-00002.safetensors", "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"}
+{"epoch": 1784727455.258438, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727500.3068502, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727545.3559449, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727590.4064252, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727635.4536674, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727680.5084033, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"bytes": 12761549884, "epoch": 1784727694.547904, "event": "input_staged", "name": "model-00002-of-00002.safetensors", "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"}
+{"bytes": 6062, "epoch": 1784727696.2645044, "event": "input_staged", "name": "proven_v0513_endpoint_entrypoint.py", "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc"}
+{"bytes": 9494, "epoch": 1784727698.040422, "event": "input_staged", "name": "fp8_qkv_paired_runner.py", "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"}
+{"bytes": 6370, "epoch": 1784727699.7970047, "event": "input_staged", "name": "install_endpoint_patch.py", "sha256": "71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588"}
+{"bytes": 26612, "epoch": 1784727701.7214205, "event": "input_staged", "name": "qkv_epilogue_discriminator.py", "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"}
+{"bytes": 2084, "epoch": 1784727704.0482996, "event": "input_staged", "name": "residual_sitecustomize.py", "sha256": "76c26c124c1b1af52da0f46a991c4a3e54732db67b4968e1f16f39eb5b432065"}
+{"bytes": 4606, "epoch": 1784727705.976842, "event": "input_staged", "name": "attention_intervention.py", "sha256": "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8"}
+{"bytes": 9378, "epoch": 1784727707.692259, "event": "input_staged", "name": "component_benchmark.py", "sha256": "a129325b1047145aa070a8e257de8703869fcd6bdba86694f82a3a2c67d32e46"}
+{"bytes": 4017, "epoch": 1784727710.0404446, "event": "input_staged", "name": "fused_gelu_quant.cu", "sha256": "e475ffcf86b3d29f7779352d9a5967f62e31ec56a8997e08f8ea6fabc10b71b2"}
+{"bytes": 1122, "epoch": 1784727712.0831127, "event": "input_staged", "name": "fused_gelu_quant.py", "sha256": "073cc4b84eaf19299dd13951585811762c4d76e61844a1f36038e6a0756f3aab"}
+{"bytes": 3535, "epoch": 1784727713.8593466, "event": "input_staged", "name": "fusion_patch.py", "sha256": "e6f49dca6b768e4bb65c5d11837c045ff74158305d6be26dfde6ed5559bee27b"}
+{"bytes": 311, "epoch": 1784727715.7113333, "event": "input_staged", "name": "sitecustomize.py", "sha256": "a84880cb603f2eab96cfdd085dbd94d2a5ef10f201622f2971355479c2c15c98"}
+{"bytes": 9896, "epoch": 1784727717.4773962, "event": "input_staged", "name": "remote_fusion_stack.sh", "sha256": "dd4bf44b7b2f867859236383b10eb3d7e3c7a63cf4d37d67f461add85d082adf"}
+{"bytes": 17340, "epoch": 1784727719.1850379, "event": "input_staged", "name": "run_bench_owner.py", "sha256": "ef5c4eaf404e376d4b07fd9e3ea7bd4b884802ae5b3b8c1fd6ac08b821c2cb59"}
+{"bytes": 10060, "epoch": 1784727720.9898763, "event": "input_staged", "name": "GPU_INPUT_MANIFEST.json", "sha256": "c0d9c54eb8fbc5cea15255a4d18727ffc3c4663124f4b724d054f03daf788390"}
+{"checkpoint_bytes": 62578655208, "epoch": 1784727720.9899647, "event": "immutable_staging_complete"}
+{"epoch": 1784727725.5598774, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727770.6100495, "event": "heartbeat", "returncode": 0, "stderr": ""}
+{"epoch": 1784727783.7122517, "event": "worker_returned", "returncode": 1}

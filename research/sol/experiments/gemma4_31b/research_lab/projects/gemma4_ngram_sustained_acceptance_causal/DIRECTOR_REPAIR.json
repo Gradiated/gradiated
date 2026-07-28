@@ -1,0 +1,53 @@
+{
+  "admitted_at_utc": "2026-07-25T03:41:30Z",
+  "amended_at_utc": "2026-07-25T04:18:24Z",
+  "binding_sha256": "fd68c3056580004900825658b03ad4c2df45baa7b82a681d80dea55f6b532722",
+  "classification": "invalid_candidate_path_semantic_and_activation_localization",
+  "evidence": {
+    "candidate_elapsed_seconds": 732.4464497909994,
+    "candidate_planning_cost_usd_per_million_total_tokens": 0.1396017174972092,
+    "candidate_queue_peak": 9,
+    "candidate_requests_complete": 1036,
+    "candidate_semantic_matches": 1035,
+    "discriminator_activation_proved": true,
+    "discriminator_candidate_requests_sent": 0,
+    "discriminator_failure": "The first /metrics snapshot raised RemoteDisconnected before request release.",
+    "discriminator_overlay_sha256": "f23e796f37860556c0e3449593a583bdcfb7a64be32719b95d7a61aae94ded7a",
+    "discriminator_retrieved_archive_sha256": "fd1e2460f0f4788bf3ac50849dd9539cd4b440ef40a504b9da63d4021d63cc00",
+    "first_divergence_output_token_index": 26,
+    "first_divergence_request": 790,
+    "first_divergence_request_sha256": "c13359033c8ec03477049c7ad4f262b3b67c939c2ba9438e39a55c9bfb3adb6a",
+    "overlay_state": null,
+    "overlay_trace_rows": 0,
+    "requests_sha256": "8f338155658a042258c36d3c197bd35e28ce3b2863052817d302cd8d5d77fb91",
+    "terminal_sha256": "b2210d3110e681f63a2d7837729ad10832ffe72d2104a06d87f4c985e5f59152"
+  },
+  "interpretation": "The cost, reliability, queue, and release gates passed, but the endpoint is not a valid causal or retention result. Target-verified speculation diverged once. The repaired overlay is now positively activated at its bound hash, but the first discriminator stopped before request release on a transient metrics read; its exact copied archive also exposed a retrieval return-code false-negative. This is routine pre-request integration evidence, not mechanism evidence.",
+  "project": "gemma4_ngram_sustained_acceptance_causal",
+  "repair_scope": {
+    "allowed": [
+      "Retrieve and bind any retained /work/out/OVERLAY_STATE.json and request-local-ngram.jsonl from the running container before reload.",
+      "Make overlay activation and trace retrieval fail closed at the actual container path.",
+      "After positive activation, require bounded readiness and retry/backoff for the first /metrics snapshot before releasing any request.",
+      "For retrieval, accept an already-copied archive only when its SHA-256 exactly matches the digest produced remotely; otherwise retry once and fail closed.",
+      "Instrument the first target-verification divergence for request 790, including draft tokens, ancestry mask, accepted indices, request ownership, and request-local/global corpus updates.",
+      "Repair only the localized request ownership, tree-mask ancestry, accepted-token mapping, cleanup, or telemetry-path defect.",
+      "Run the smallest candidate-only discriminator needed to reproduce the sustained-load state through request 790.",
+      "Only after exact semantics and positive activation proof, run one repaired candidate-only 1,036-request full-arrival endpoint."
+    ],
+    "forbidden": [
+      "Replay a control, threshold-8 bypass, scheduler arm, or any settled source arm.",
+      "Change native depth 12, target verification, workload bytes, global BFS fallback, model, checkpoint, image, runtime, comparator, or decision gates.",
+      "Use the invalid endpoint as evidence that request_local_verified_trunk was active or production-eligible."
+    ]
+  },
+  "resources": {
+    "authorized_spend_usd_total": 3.0,
+    "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+    "project_release_deadline_utc": "2026-07-25T05:03:00Z",
+    "storage_limit_gib": 6,
+    "watchdog_deadline_utc": "2026-07-25T06:15:00Z"
+  },
+  "schema_version": 1,
+  "source_overlay_sha256": "f23e796f37860556c0e3449593a583bdcfb7a64be32719b95d7a61aae94ded7a"
+}

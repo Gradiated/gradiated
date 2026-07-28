@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_tail_overlap/run_owner.py", line 90, in <module>
+    if __name__=='__main__': main()
+                             ~~~~^^
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_tail_overlap/run_owner.py", line 36, in main
+    if c.returncode: raise RuntimeError('typed_pool_boundary:claim:'+c.stderr[-500:])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: typed_pool_boundary:claim:usage: gpu_pool.py [-h] --lab LAB
+                   {list,register,claim,heartbeat,update,release,drain,reclaim,ready,replace-watchdog,retire} ...
+gpu_pool.py: error: no available GPU bench matches this project
+

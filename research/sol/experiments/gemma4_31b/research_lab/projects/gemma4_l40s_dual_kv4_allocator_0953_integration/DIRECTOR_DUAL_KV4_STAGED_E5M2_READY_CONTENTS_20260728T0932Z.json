@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_l40s_dual_kv4_allocator_0953_integration",
+  "artifacts": "projects/gemma4_l40s_dual_kv4_allocator_0953_integration/{L40S_DUAL_KV4_STAGED_E5M2_SM89_READY.json,DIRECTOR_DUAL_KV4_STAGED_E5M2_LIVE_BINDING_20260728T0932Z.json}",
+  "model": "No checkpoint; exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 c32 local-D256/global-D512 decode geometry only.",
+  "checkpoint": "none",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "runtime": "Strict ED25519 identity verified on the unchanged guest; one NVIDIA L40S SM89, driver 580.159.04.",
+  "state": "ready only for the hash-bound staged-KV4-to-E5M2 stock-consumer owner",
+  "result": "predecessor fused-consumer sample consumed negative; staged stock-consumer sample remains unconsumed",
+  "scientific_terminal": "One materially different paired c32 staged-E5M2 stock-consumer component remains unconsumed.",
+  "next": "Sole claimant gemma4_l40s_dual_kv4_allocator_0953_integration must launch DIRECTOR_DUAL_KV4_STAGED_E5M2_LIVE_BINDING_20260728T0932Z.json by 2026-07-28T09:35:00Z and release by 2026-07-28T09:53:30Z.",
+  "caches": "Resident immutable image, predecessor packet and diagnostics, and compiled predecessor extensions retained; no checkpoint or model server."
+}

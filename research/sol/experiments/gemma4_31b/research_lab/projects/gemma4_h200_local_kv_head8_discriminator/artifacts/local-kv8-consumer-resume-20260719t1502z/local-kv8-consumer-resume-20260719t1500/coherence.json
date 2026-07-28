@@ -1,0 +1,27 @@
+{
+  "pass": false,
+  "rows": [
+    {
+      "label": "instruction",
+      "prompt": "Reply with exactly: READY",
+      "raw_response": "{\"id\":\"36f598ab17c1472e85d7376cebd5c0b1\",\"object\":\"chat.completion\",\"created\":1784473505,\"model\":\"google/gemma-4-31B-it\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\" lsake- llsure lyy l lls// aka l l l l// l l l l l l l l l l l\",\"reasoning_content\":null,\"tool_calls\":null},\"logprobs\":null,\"finish_reason\":\"length\",\"matched_stop\":null}],\"usage\":{\"prompt_tokens\":18,\"total_tokens\":50,\"completion_tokens\":32,\"prompt_tokens_details\":null,\"reasoning_tokens\":0},\"metadata\":{\"weight_version\":\"default\"}}",
+      "rule_pass": false,
+      "text": " lsake- llsure lyy l lls// aka l l l l// l l l l l l l l l l l"
+    },
+    {
+      "label": "arithmetic",
+      "prompt": "What is 2+2? Reply with only the number.",
+      "raw_response": "{\"id\":\"63fc58ef20e44cb288c97ba20083553d\",\"object\":\"chat.completion\",\"created\":1784473506,\"model\":\"google/gemma-4-31B-it\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\" luffyveveveveveveveveveyn'//ke laar a's\\\"\\\"rlu l lkeveveveveve\",\"reasoning_content\":null,\"tool_calls\":null},\"logprobs\":null,\"finish_reason\":\"length\",\"matched_stop\":null}],\"usage\":{\"prompt_tokens\":26,\"total_tokens\":58,\"completion_tokens\":32,\"prompt_tokens_details\":null,\"reasoning_tokens\":0},\"metadata\":{\"weight_version\":\"default\"}}",
+      "rule_pass": false,
+      "text": " luffyveveveveveveveveveyn'//ke laar a's\"\"rlu l lkeveveveveve"
+    },
+    {
+      "label": "structured",
+      "prompt": "Return only a JSON object with key \"status\" and string value \"ok\".",
+      "raw_response": "{\"id\":\"0f2acbf3b9a74b06a1d16747989051e5\",\"object\":\"chat.completion\",\"created\":1784473506,\"model\":\"google/gemma-4-31B-it\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"sestechsakesuvs. a a\\\" and\\\" ls's\\\" and\\\"s\\\" a\\\"s\\\" a\\\"s\\\" a\",\"reasoning_content\":null,\"tool_calls\":null},\"logprobs\":null,\"finish_reason\":\"length\",\"matched_stop\":null}],\"usage\":{\"prompt_tokens\":29,\"total_tokens\":61,\"completion_tokens\":32,\"prompt_tokens_details\":null,\"reasoning_tokens\":0},\"metadata\":{\"weight_version\":\"default\"}}",
+      "rule_pass": false,
+      "text": "sestechsakesuvs. a a\" and\" ls's\" and\"s\" a\"s\" a\"s\" a"
+    }
+  ],
+  "schema_version": 1
+}

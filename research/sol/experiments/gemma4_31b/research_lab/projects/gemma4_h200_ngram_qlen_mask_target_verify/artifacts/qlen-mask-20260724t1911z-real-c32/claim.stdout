@@ -1,0 +1,53 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-24T19:10:51.100767Z",
+    "heartbeat_at": "2026-07-24T19:10:51.100767Z",
+    "lease_seconds": 300,
+    "lease_until_utc": "2026-07-24T19:15:51.100767Z",
+    "project": "gemma4_h200_ngram_qlen_mask_target_verify",
+    "stale": false
+  },
+  "contents": {
+    "artifacts": "The invalid CUDA-graph dummy capture is retained under artifacts/qlen-mask-20260724t185313z; corrected frozen packet SHA-256 is 80a0a8b3878a10c600ba48678dd091f25758385389b148caf5c022bb1b5ae0ce.",
+    "caches": "Image, checkpoint, CUDA graph, JIT, tokenizer, and runtime caches retained.",
+    "candidate": "M384-only CUTLASS 1x2x1 cluster extension retained under /home/glmrunner/gemma4-h200-ngram-m384-cluster.",
+    "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+    "conditional_gate": "Reject CUDA-graph setup rows with mask stride below 4000; require the real approximately 4214-token c32/Q12 production call, nonzero two-stage rows, exact output/first-logit semantics, and a positive bound before the endpoint.",
+    "error": null,
+    "expected_first_arms": "Run corrected frozen packet 80a0a8b3878a10c600ba48678dd091f25758385389b148caf5c022bb1b5ae0ce once for the real c32/Q12 component, then conditionally one candidate-only c32 endpoint. No control, dummy capture, or prior component replay.",
+    "gpu_processes": "none",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Claim only for priority-7540 corrected QLEN real-call component and release by 19:50Z under the verified 20:00Z watchdog.",
+    "project": "gemma4_h200_ngram_qlen_mask_target_verify",
+    "residual_bottleneck": "The first hook captured CUDA-graph dummy geometry with row stride 13 and one KV index per request. The corrected packet rejects dummy rows and disables CUDA graph only for the component trigger.",
+    "result": "corrected_real_two_stage_component_ready",
+    "runtime": "Pinned SGLang v0.5.13 FP8 plus FP8-E5M2 page-1 KV and NGRAM; checkpoint, image, CUDA graph, JIT, tokenizer, and runtime caches retained.",
+    "schema_version": 1,
+    "server_state": "Director inspection found the remote owner dead, no container, no GPU compute process, and the accelerator unoccupied."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-24T20:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-ngram-verifier-h200-20260724t2000-watchdog.service",
+      "main_pid": 36681,
+      "unit": "gemma4-ngram-verifier-h200-20260724t2000-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-24T09:29:46.678511Z",
+  "resource": {
+    "disk_id": "computedisk-e00yvdxaa48q0t115t",
+    "disk_name": "gemma4-ngram-verifier-h200-20260724t0927z-boot",
+    "instance_id": "computeinstance-e00kcm9nfhwt7e7gbc",
+    "instance_name": "gemma4-ngram-verifier-h200-20260724t0927z"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-24T19:10:51.100767Z"
+}

@@ -1,0 +1,64 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-25T19:31:35.306538Z",
+    "heartbeat_at": "2026-07-25T19:31:35.306538Z",
+    "lease_seconds": 3600,
+    "lease_until_utc": "2026-07-25T20:31:35.306538Z",
+    "project": "gemma4_h200_ngram_persistent_grouped_lm_head",
+    "stale": false
+  },
+  "contents": {
+    "actual_spend_usd": 2.9737686855138894,
+    "artifacts": "Local DFLASH_CYCLE_ORACLE_TERMINAL.json passes all 112 cycles; 1,304 depth-4/8/12/16 CUDA-event rows are retrieved under the DFlash project. All four /generate request terminals are invalid for endpoint claims (zero complete requests, JSONDecodeError).",
+    "c32_pair_started": false,
+    "caches": "Fresh disk; preserve all exact model, source, image, and CUDA caches after staging.",
+    "candidate": "Priority-8480 production-shaped grouped/persistent LM-head component; matched c32 endpoint pair remains conditional on exact IDs, decisions, replay, and a positive component bound.",
+    "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+    "contents_artifact": "gemma4_h200_dflash_endpoint/H200_DFLASH_ADAPTER_PRIORITY_8490_CONTENTS.json",
+    "contents_artifact_sha256": "45c806b49f93d1220bb42e8025054f4314cbc78a3aa6f9bf305e4e008f3ae121",
+    "director_binding": "gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json",
+    "director_binding_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+    "draft": "Exact z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1 bytes and caches remain on disk from the completed DFlash run.",
+    "filesystem": "250-GiB network SSD boot disk.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 bytes remain resident on the registered disk.",
+    "next": "Priority 8480 grouped LM-head may claim now under its existing $5 reservation, run exact_consumer_component.py first, conditionally run one c32 endpoint pair, persist PERSISTENT_GROUPED_LM_HEAD_TERMINAL.json, and release by 21:45Z.",
+    "priority": 8480,
+    "priority_reason": "The DFlash oracle is durable and its cost-validity work is offline; hybrid closed without a claim. Grouped LM-head is the next prepared direct H200 discriminator.",
+    "project": "gemma4_h200_ngram_persistent_grouped_lm_head",
+    "result": "dflash_oracle_pass_depth_cuda_events_retrieved_endpoint_consumer_invalid",
+    "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
+    "schema_version": 1,
+    "server_state": "No active DFlash container. Exact checkpoint, target/draft bytes, image, source tree, and CUDA caches remain warm on disk for immediate compatible reuse.",
+    "ssh_identity": "Use /root/.config/nebius/glm-campaign/ssh_ed25519 with the registered host, glmrunner user, known-hosts namespace, and verified ED25519 fingerprint.",
+    "terminal": "gemma4_h200_dflash_endpoint/DFLASH_CYCLE_ORACLE_TERMINAL.json"
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.45,
+  "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T22:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "main_pid": 828601,
+      "unit": "gemma4-dflash-h200-adapter-20260725t2200-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-25T15:16:31.474656Z",
+  "resource": {
+    "disk_id": "computedisk-e00dryj6tbensjs413",
+    "disk_name": "gemma4-dflash-h200-adapter-20260725t1512z-boot",
+    "instance_id": "computeinstance-e00vyqp7gxsr34wrtz",
+    "instance_name": "gemma4-dflash-h200-adapter-20260725t1512z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.109.132",
+    "ssh_ed25519_fingerprint": "SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g",
+    "ssh_user": "glmrunner"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-25T19:31:35.306538Z"
+}

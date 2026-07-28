@@ -1,0 +1,33 @@
+{
+  "bench": "h100-v0515-endpoint-e00jjdbxgvxwbzbfsr",
+  "candidate_sample_consumed": false,
+  "classification": "typed_external_or_recoverable_failure",
+  "endpoint_sample_consumed": false,
+  "error": "RuntimeError('disk_repair_failed')",
+  "finished_at": "2026-07-25T09:58:41.288916Z",
+  "heartbeat_events": [
+    {
+      "at": "2026-07-25T09:55:56.091159Z",
+      "kind": "heartbeat",
+      "returncode": 0
+    },
+    {
+      "at": "2026-07-25T09:56:41.177197Z",
+      "kind": "heartbeat",
+      "returncode": 0
+    },
+    {
+      "at": "2026-07-25T09:57:26.275779Z",
+      "kind": "heartbeat",
+      "returncode": 0
+    },
+    {
+      "at": "2026-07-25T09:58:11.416301Z",
+      "kind": "heartbeat",
+      "returncode": 0
+    }
+  ],
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "schema_version": 1,
+  "started_at": "2026-07-25T09:55:11.034438Z"
+}

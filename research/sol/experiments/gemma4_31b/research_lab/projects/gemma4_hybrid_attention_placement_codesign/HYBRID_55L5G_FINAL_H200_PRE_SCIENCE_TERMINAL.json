@@ -1,0 +1,44 @@
+{
+  "bench": {
+    "bench_id": "h200-hybrid-55l5g-e00dam5825ffjyxd8b",
+    "cleanup_verified_at_utc": "2026-07-27T03:18:42Z",
+    "disk_id": "computedisk-e00syfz2dr5znq5kg7",
+    "instance_id": "computeinstance-e00dam5825ffjyxd8b",
+    "inventory_retired_at_utc": "2026-07-27T03:18:53.017113Z",
+    "provider_objects_absent": true,
+    "provider_start_utc": "2026-07-27T01:49:55.411237Z",
+    "verified_exposure_seconds": 5337.605876,
+    "verified_provider_cost_usd": 3.646952130013235
+  },
+  "classification": "pre_science_model_root_integration_terminal_budget_exhausted",
+  "created_at_utc": "2026-07-27T03:18:53Z",
+  "endpoint_contract": {
+    "candidate_requests_submitted": 0,
+    "maximum_valid_pair_invocations": 1,
+    "pair_consumed": false,
+    "stock_requests_submitted": 0
+  },
+  "failure": {
+    "candidate_arm_started": false,
+    "cuda_allocation_started": false,
+    "detail": "The resident /models/target contained the two exact safetensor shards but not the pinned model configuration and tokenizer inputs. SGLang rejected the stock model root because config.json supplied no recognized model_type. The readiness loop then reached its upper bound after the container had already exited.",
+    "endpoint_request_started": false,
+    "stock_container_started": true,
+    "stock_model_load_started": false,
+    "type": "missing_model_configuration_and_tokenizer_inputs_plus_non_liveness_aware_readiness"
+  },
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "replay_fence": {
+    "dflash_closed": true,
+    "phase_selective_http_500_consumer_closed": true,
+    "prior_endpoints_closed": true,
+    "settled_attention_component_closed": true
+  },
+  "schema_version": 1,
+  "spend": {
+    "authorized_cumulative_usd": 10.0,
+    "prior_actual_usd": 6.3140021221,
+    "verified_cumulative_actual_usd": 9.960954252113235
+  },
+  "terminal": true
+}

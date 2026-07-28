@@ -302,17 +302,29 @@ def pull_image(
     deadline: float,
 ) -> None:
     image = shlex.quote(IMAGE)
+    identity_script = f"""set -euo pipefail
+sudo -n docker image inspect {image} --format '{{{{json .RepoDigests}}}}' |
+  grep -F 'sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6'
+revision=$(sudo -n docker image inspect {image} --format '{{{{index .Config.Labels "org.opencontainers.image.revision"}}}}')
+test "$revision" = {RUNTIME_COMMIT}
+"""
+    probe_timeout = min(60, remaining(deadline, 180))
+    if probe_timeout <= 0:
+        raise RuntimeError("insufficient_time_for_runtime_image_identity_probe")
+    resident = remote(access, identity_script, probe_timeout)
+    if resident.returncode == 0:
+        return
+    pull_timeout = min(600, remaining(deadline, 300))
+    if pull_timeout < 60:
+        raise RuntimeError("insufficient_time_for_runtime_image_pull")
     result = remote(
         access,
         f"""set -euo pipefail
 mkdir -p {shlex.quote(remote_root)}/cache/torch_extensions {shlex.quote(remote_root)}/home
 sudo -n docker pull {image}
-sudo -n docker image inspect {image} --format '{{{{json .RepoDigests}}}}' |
-  grep -F 'sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6'
-revision=$(sudo -n docker image inspect {image} --format '{{{{index .Config.Labels "org.opencontainers.image.revision"}}}}')
-test "$revision" = {RUNTIME_COMMIT}
+{identity_script}
 """,
-        min(600, remaining(deadline, 300)),
+        pull_timeout,
     )
     if result.returncode:
         raise RuntimeError(

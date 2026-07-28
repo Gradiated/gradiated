@@ -1,0 +1,16 @@
+DISK_REPAIR_BEGIN
+Filesystem     1024-blocks     Used Available Capacity Mounted on
+/dev/vda1        100476656 78675948  21784324      79% /
+/dev/vda1        100476656 78675948  21784324      79% /
+Total reclaimed space: 0B
+Total reclaimed space: 0B
+Total:	0B
+DISK_REPAIR_AFTER_CLEANUP
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          0         0         0B        0B
+Containers      0         0         0B        0B
+Local Volumes   0         0         0B        0B
+Build Cache     0         0         0B        0B
+Filesystem     1024-blocks     Used Available Capacity Mounted on
+/dev/vda1        100476656 78675968  21784304      79% /
+/dev/vda1        100476656 78675968  21784304      79% /

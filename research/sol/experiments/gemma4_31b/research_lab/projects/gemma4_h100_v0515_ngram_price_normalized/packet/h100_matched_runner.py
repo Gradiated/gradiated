@@ -167,6 +167,38 @@ def inspect_container(launch):
     return identity
 
 
+def parse_h100_fit_log(text):
+    patterns = {
+        "full_pool_tokens": r"full_layer_tokens=(\d+)",
+        "swa_pool_tokens": r"swa_layer_tokens=(\d+)",
+        "post_graph_available_gib": (
+            r"Capture (?:target verify )?CUDA graph end\..*avail mem=([0-9.]+) GB"
+        ),
+        "weight_gib": r"Load weight end\..*mem usage=([0-9.]+) GB",
+        "graph_gib": (
+            r"Capture (?:target verify )?CUDA graph end\..*mem usage=([0-9.]+) GB"
+        ),
+    }
+    fit = {}
+    for key, pattern in patterns.items():
+        match = re.search(pattern, text)
+        if match is None:
+            raise RuntimeError("fit_log_field_missing:" + key)
+        fit[key] = float(match.group(1))
+    fit["full_pool_tokens"] = int(fit["full_pool_tokens"])
+    fit["swa_pool_tokens"] = int(fit["swa_pool_tokens"])
+    fit["gates"] = {
+        "full_pool_tokens": fit["full_pool_tokens"] >= MIN_FULL_POOL_TOKENS,
+        "swa_pool_tokens": fit["swa_pool_tokens"] >= MIN_SWA_POOL_TOKENS,
+        "post_graph_available_gib": (
+            fit["post_graph_available_gib"] >= MIN_POST_GRAPH_AVAILABLE_GIB
+        ),
+    }
+    if not all(fit["gates"].values()):
+        raise RuntimeError("h100_fit_gate_failed:" + repr(fit))
+    return fit
+
+
 def inspect_h100_fit():
     gpu = subprocess.run(
         [
@@ -201,32 +233,8 @@ def inspect_h100_fit():
     if logs.returncode:
         raise RuntimeError("container_logs_failed:" + logs.stderr[-1000:])
     text = logs.stdout + "\n" + logs.stderr
-    patterns = {
-        "full_pool_tokens": r"full_layer_tokens=(\d+)",
-        "swa_pool_tokens": r"swa_layer_tokens=(\d+)",
-        "post_graph_available_gib": (
-            r"Capture cuda graph end\..*avail mem=([0-9.]+) GB"
-        ),
-        "weight_gib": r"Load weight end\..*mem usage=([0-9.]+) GB",
-        "graph_gib": r"Capture cuda graph end\..*mem usage=([0-9.]+) GB",
-    }
-    fit = {"gpu_name": name, "gpu_memory_mib": int(memory_mib)}
-    for key, pattern in patterns.items():
-        match = re.search(pattern, text)
-        if match is None:
-            raise RuntimeError("fit_log_field_missing:" + key)
-        fit[key] = float(match.group(1))
-    fit["full_pool_tokens"] = int(fit["full_pool_tokens"])
-    fit["swa_pool_tokens"] = int(fit["swa_pool_tokens"])
-    fit["gates"] = {
-        "full_pool_tokens": fit["full_pool_tokens"] >= MIN_FULL_POOL_TOKENS,
-        "swa_pool_tokens": fit["swa_pool_tokens"] >= MIN_SWA_POOL_TOKENS,
-        "post_graph_available_gib": (
-            fit["post_graph_available_gib"] >= MIN_POST_GRAPH_AVAILABLE_GIB
-        ),
-    }
-    if not all(fit["gates"].values()):
-        raise RuntimeError("h100_fit_gate_failed:" + repr(fit))
+    fit = parse_h100_fit_log(text)
+    fit = {"gpu_name": name, "gpu_memory_mib": int(memory_mib), **fit}
     return fit
 
 

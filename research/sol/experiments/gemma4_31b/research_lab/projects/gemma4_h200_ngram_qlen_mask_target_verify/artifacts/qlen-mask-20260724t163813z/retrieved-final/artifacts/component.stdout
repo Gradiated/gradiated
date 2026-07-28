@@ -1,0 +1,312 @@
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.0.1
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+{
+  "component_pass": false,
+  "correct": false,
+  "identity": {
+    "candidate_sha256": "68149643e3579b24804df9b98b048b1076be5b9e98b03363bd423510ae1ec6e7",
+    "control_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
+    "installed_control_source": "/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/extend_attention.py",
+    "torch": "2.11.0+cu130",
+    "triton": "3.6.0"
+  },
+  "kind": "exact_c32_ngram_tree_verify_attention_component",
+  "launch_grid_per_layer": {
+    "candidate": [
+      32,
+      32,
+      1
+    ],
+    "control": [
+      32,
+      32,
+      1
+    ]
+  },
+  "launches_per_verify_step": {
+    "candidate": 60,
+    "control": 60
+  },
+  "mask_preparation": {
+    "allocations_per_step_candidate": 1,
+    "allocations_per_step_control": 65,
+    "candidate": {
+      "maximum_ms": 0.1064319983124733,
+      "median_ms": 0.02239999920129776,
+      "minimum_ms": 0.021247999742627144,
+      "p90_ms": 0.029279999434947968,
+      "samples_ms": [
+        0.1064319983124733,
+        0.04371200129389763,
+        0.024447999894618988,
+        0.0225600004196167,
+        0.02284800074994564,
+        0.023231999948620796,
+        0.0226879995316267,
+        0.02316799946129322,
+        0.02454400062561035,
+        0.029279999434947968,
+        0.02316799946129322,
+        0.022175999358296394,
+        0.02239999920129776,
+        0.022175999358296394,
+        0.02239999920129776,
+        0.022336000576615334,
+        0.02147199958562851,
+        0.02179200015962124,
+        0.021727999672293663,
+        0.021568000316619873,
+        0.021247999742627144,
+        0.021727999672293663,
+        0.021344000473618507,
+        0.021856000646948814,
+        0.022143999114632607
+      ]
+    },
+    "candidate_booleans": 4608,
+    "candidate_bytes": 4608,
+    "control": {
+      "maximum_ms": 0.6696320176124573,
+      "median_ms": 0.4959999918937683,
+      "minimum_ms": 0.4679040014743805,
+      "p90_ms": 0.5502719879150391,
+      "samples_ms": [
+        0.6696320176124573,
+        0.5529279708862305,
+        0.5502719879150391,
+        0.535647988319397,
+        0.5062400102615356,
+        0.5142719745635986,
+        0.5046399831771851,
+        0.49219200015068054,
+        0.47887998819351196,
+        0.4959999918937683,
+        0.5136319994926453,
+        0.5311679840087891,
+        0.49750399589538574,
+        0.516864001750946,
+        0.5040959715843201,
+        0.49532800912857056,
+        0.46857601404190063,
+        0.4923839867115021,
+        0.47407999634742737,
+        0.47936001420021057,
+        0.4716159999370575,
+        0.4790079891681671,
+        0.4679040014743805,
+        0.4792959988117218,
+        0.47571200132369995
+      ]
+    },
+    "control_booleans": 1622784,
+    "control_bytes": 1622784
+  },
+  "physical": {
+    "block_n": 64,
+    "candidate_block_m": 64,
+    "causal_change": "full-prefix mask representation to QLEN-only suffix mask",
+    "compulsory_kv_bytes_change": 0,
+    "control_block_m": 64,
+    "live_accumulator_elements_candidate": 16384,
+    "live_accumulator_elements_control": 16384,
+    "new_sync_boundaries": 0,
+    "useful_query_lane_fraction_candidate": 0.1875,
+    "useful_query_lane_fraction_control": 0.1875
+  },
+  "positive_whole_request_bound_fraction": 0.06618954897292531,
+  "rows": [
+    {
+      "candidate": {
+        "maximum_ms": 1.3825600147247314,
+        "median_ms": 1.3733760118484497,
+        "minimum_ms": 1.3660800457000732,
+        "p90_ms": 1.3803839683532715,
+        "samples_ms": [
+          1.38099205493927,
+          1.3803839683532715,
+          1.3791359663009644,
+          1.3732800483703613,
+          1.3758399486541748,
+          1.3704639673233032,
+          1.3825600147247314,
+          1.3745280504226685,
+          1.3754559755325317,
+          1.3759039640426636,
+          1.3703680038452148,
+          1.3660800457000732,
+          1.3710399866104126,
+          1.3729599714279175,
+          1.3763200044631958,
+          1.3711040019989014,
+          1.3720639944076538,
+          1.375872015953064,
+          1.3733760118484497,
+          1.3708479404449463,
+          1.3754559755325317,
+          1.3765439987182617,
+          1.370303988456726,
+          1.3725440502166748,
+          1.3714879751205444
+        ]
+      },
+      "control": {
+        "maximum_ms": 1.4810880422592163,
+        "median_ms": 1.4601279497146606,
+        "minimum_ms": 1.453279972076416,
+        "p90_ms": 1.4691519737243652,
+        "samples_ms": [
+          1.4810880422592163,
+          1.4625279903411865,
+          1.4648319482803345,
+          1.4618240594863892,
+          1.4691519737243652,
+          1.4597439765930176,
+          1.4600000381469727,
+          1.457792043685913,
+          1.469920039176941,
+          1.458400011062622,
+          1.453279972076416,
+          1.4605120420455933,
+          1.4618240594863892,
+          1.4534080028533936,
+          1.456928014755249,
+          1.4601279497146606,
+          1.4562560319900513,
+          1.4587839841842651,
+          1.4679679870605469,
+          1.4606080055236816,
+          1.4588799476623535,
+          1.4635839462280273,
+          1.4567680358886719,
+          1.4641599655151367,
+          1.457152009010315
+        ]
+      },
+      "latency_reduction_fraction": 0.05941392867876005,
+      "layer_type": "sliding_window_1024",
+      "oracle": {
+        "all_finite": true,
+        "allclose_atol_0_005_rtol_0_005": false,
+        "candidate_output_l1": 128122.125,
+        "control_output_l1": 127706.34375,
+        "max_abs_error": 0.139404296875,
+        "mean_abs_error": 0.0035801713820546865,
+        "relative_l2": 0.10284336656332016
+      },
+      "original_sequence_tokens": 4214,
+      "prefix_tokens_consumed": 1024,
+      "window_offset": 3190
+    },
+    {
+      "candidate": {
+        "maximum_ms": 5.0032958984375,
+        "median_ms": 4.988480091094971,
+        "minimum_ms": 4.9785919189453125,
+        "p90_ms": 5.001376152038574,
+        "samples_ms": [
+          5.001567840576172,
+          4.995071887969971,
+          4.992512226104736,
+          4.986752033233643,
+          4.979584217071533,
+          4.987071990966797,
+          5.001376152038574,
+          4.988351821899414,
+          4.9832000732421875,
+          4.985119819641113,
+          4.982656002044678,
+          4.998528003692627,
+          4.9785919189453125,
+          5.0032958984375,
+          4.986911773681641,
+          4.985727787017822,
+          4.990784168243408,
+          4.997568130493164,
+          4.984767913818359,
+          4.9931840896606445,
+          4.988480091094971,
+          4.98367977142334,
+          4.994944095611572,
+          4.994175910949707,
+          4.989727973937988
+        ]
+      },
+      "control": {
+        "maximum_ms": 5.582272052764893,
+        "median_ms": 5.555424213409424,
+        "minimum_ms": 5.543456077575684,
+        "p90_ms": 5.566080093383789,
+        "samples_ms": [
+          5.582272052764893,
+          5.5497918128967285,
+          5.557248115539551,
+          5.558815956115723,
+          5.5504961013793945,
+          5.553952217102051,
+          5.544991970062256,
+          5.548351764678955,
+          5.553696155548096,
+          5.555359840393066,
+          5.558847904205322,
+          5.562751770019531,
+          5.546527862548828,
+          5.5497918128967285,
+          5.556191921234131,
+          5.5471038818359375,
+          5.555424213409424,
+          5.559296131134033,
+          5.562016010284424,
+          5.5511040687561035,
+          5.5669121742248535,
+          5.557888031005859,
+          5.543456077575684,
+          5.563072204589844,
+          5.566080093383789
+        ]
+      },
+      "latency_reduction_fraction": 0.10205235469615259,
+      "layer_type": "full_attention",
+      "oracle": {
+        "all_finite": true,
+        "allclose_atol_0_005_rtol_0_005": true,
+        "candidate_output_l1": 63222.69921875,
+        "control_output_l1": 63222.69921875,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "relative_l2": 0.0
+      },
+      "original_sequence_tokens": 4214,
+      "prefix_tokens_consumed": 4214,
+      "window_offset": 0
+    }
+  ],
+  "schema_version": 1,
+  "shape": {
+    "activation_dtype": "torch.bfloat16",
+    "batch": 32,
+    "candidate_tree_mask": "same adversarial branching suffix 12x12",
+    "control_tree_mask": "adversarial_branching_12x(4214+12)",
+    "draft_tokens_per_request": 12,
+    "head_dim": 256,
+    "kv_dtype": "torch.float8_e5m2",
+    "kv_heads": 16,
+    "page_size": 1,
+    "query_heads": 32,
+    "query_positions": 384
+  },
+  "trace_attention_fraction": 0.6265755123882897,
+  "weighted_target_verify_reduction_fraction": 0.08120960022420798
+}

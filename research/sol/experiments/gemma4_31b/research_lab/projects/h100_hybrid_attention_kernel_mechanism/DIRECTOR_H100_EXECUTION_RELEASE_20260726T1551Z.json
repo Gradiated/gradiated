@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "type": "director_h100_execution_release",
+  "issued_at_utc": "2026-07-26T15:51:15Z",
+  "project": "h100_hybrid_attention_kernel_mechanism",
+  "decision": "replacement_watchdog_and_current_record_controller_durable_release_one_execution",
+  "reservation": {
+    "authorized_usd": 6.0,
+    "reserved_at": "2026-07-26T15:45:39.018235Z",
+    "durable": true
+  },
+  "bench": {
+    "id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+    "accelerator": "nvidia-h100-sxm",
+    "instance_id": "computeinstance-e00mkpyvykfak0bg1m",
+    "provider_state_verified": "RUNNING",
+    "public_ipv4_verified": "89.169.109.0",
+    "ssh_ed25519_fingerprint": "SHA256:QmMzoOOoCH6C4OBDN/EWgbVtH3QpZpjAvfoanqLUqoE",
+    "status_at_release": "available",
+    "claim_at_release": null
+  },
+  "lifecycle": {
+    "provider_started_at_utc": "2026-07-26T15:37:01.095093Z",
+    "deadline_utc": "2026-07-26T17:37:01.095093Z",
+    "replacement_lifecycle": "H100_PAGED_FP8_REPLACEMENT_LIFECYCLE_20260726T1549Z.json",
+    "replacement_lifecycle_sha256": "eb9fdb35c26da39635693f4b77c25e6a211996762c34ce3a2147849742558742",
+    "replacement_watchdog_unit": "gemma4-h100-paged-fp8-20260726t1737-watchdog.service",
+    "replacement_watchdog_main_pid": 1868819,
+    "replacement_watchdog_verified_active": true,
+    "predecessor_watchdog_unit": "gemma4-h100-paged-fp8-20260726t1636-watchdog.service",
+    "predecessor_watchdog_verified_inactive": true,
+    "unprotected_interval": false
+  },
+  "controller": {
+    "binding": "H100_CURRENT_RECORD_CONTROLLER_BINDING.json",
+    "binding_sha256": "c7af892879f2daa0bc225bc93241f86c953b50b77710bedad41a3fca2aedb64d",
+    "path": "run_h100_controller.py",
+    "sha256": "31f258a53efd1e2c11823d35b6ee251f30844b13aba6591c052ba5c256cda900",
+    "reads_connection_after_atomic_claim": true,
+    "retired_constants_removed": true,
+    "scientific_inputs_and_gates_unchanged": true
+  },
+  "execution": {
+    "claim_allowed": true,
+    "submission_count": 1,
+    "claim_budget_minutes": 50,
+    "release_before_utc": "2026-07-26T17:32:01.095093Z",
+    "terminal": "H100_PAGED_FP8_EXECUTION_TERMINAL.json",
+    "scientific_sample_consumed_before_release": false
+  },
+  "provider_create_or_delete": false
+}

@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_inmemory_fp8_endpoint/run_outer.py", line 365, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_inmemory_fp8_endpoint/run_outer.py", line 188, in main
+    args.artifact_root.mkdir(parents=True, exist_ok=False)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/pathlib/_local.py", line 724, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileExistsError: [Errno 17] File exists: 'artifacts/exact-container-fp8-c32-20260720t0129z'

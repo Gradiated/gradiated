@@ -1,0 +1,7 @@
+{
+  "classification": "integration_failure",
+  "message": "remote exit 2",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-22T15:35:28.954972+00:00"
+}

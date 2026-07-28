@@ -1,0 +1,9 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_v0515_demand_multiplexing_sustainable/remote_stock_worker.sh",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_v0515_demand_multiplexing_sustainable/remote_stock_worker.sh",
+  "ready_sha256": "70f53058f9bc0684415628c0bce818ed11953a33be6f0d0b065371874ed7559c",
+  "requested_at_utc": "2026-07-25T08:09:51.003672Z",
+  "retry_scope": "packet-layout repair only; same bound packet and stock server launch",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

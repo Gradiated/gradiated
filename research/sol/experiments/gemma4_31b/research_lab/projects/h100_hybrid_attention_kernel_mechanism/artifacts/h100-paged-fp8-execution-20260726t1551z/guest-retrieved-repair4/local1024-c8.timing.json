@@ -1,0 +1,46 @@
+{
+  "error": {
+    "message": "'ExactModelConfig' object has no attribute 'use_mla'",
+    "type": "AttributeError"
+  },
+  "identity": {
+    "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "pass": true,
+    "signatures": {
+      "metadata_builder_build": null,
+      "metadata_builder_init": null,
+      "set_current_vllm_config": "(vllm_config: vllm.config.vllm.VllmConfig, check_compile=False, prefix: str | None = None)",
+      "unified_attention_with_output": "(query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, output: torch.Tensor, layer_name: str, output_scale: torch.Tensor | None = None, output_block_scale: torch.Tensor | None = None, kv_cache_dummy_dep: torch.Tensor | None = None) -> None",
+      "unified_kv_cache_update": "(key: torch.Tensor, value: torch.Tensor, layer_name: str) -> torch.Tensor"
+    },
+    "source_files": {
+      "vllm/config/vllm.py": {
+        "path": "/usr/local/lib/python3.12/dist-packages/vllm/config/vllm.py",
+        "sha256": "58aebc9654b3d62c9707be62df47ac43254b52218d9ea38c43d3026485ff9e01"
+      },
+      "vllm/forward_context.py": {
+        "path": "/usr/local/lib/python3.12/dist-packages/vllm/forward_context.py",
+        "sha256": "b3927fa778b1522c45b8a85e32be745c73ac5002a72d6b245f6d0cc028ddf57f"
+      },
+      "vllm/model_executor/layers/attention/attention.py": {
+        "path": "/usr/local/lib/python3.12/dist-packages/vllm/model_executor/layers/attention/attention.py",
+        "sha256": "2e45ac35100a1396bd03f9fe8d7f3e4dd41f3dc0a78b3bc7e5e118b536a0fe3c"
+      },
+      "vllm/v1/attention/backend.py": {
+        "path": "/usr/local/lib/python3.12/dist-packages/vllm/v1/attention/backend.py",
+        "sha256": "2ac9b29dcc36ae643162f6e28f502081073cd97a6844e7d19fff2c10ee0d6810"
+      },
+      "vllm/v1/attention/backends/flash_attn.py": {
+        "path": "/usr/local/lib/python3.12/dist-packages/vllm/v1/attention/backends/flash_attn.py",
+        "sha256": "38ae47c9eb4e6ab774ef4397015f45a2d05001f8b220a2347be86e57bbf54aa7"
+      },
+      "vllm/v1/attention/backends/triton_attn.py": {
+        "path": "/usr/local/lib/python3.12/dist-packages/vllm/v1/attention/backends/triton_attn.py",
+        "sha256": "0881156d666e81642879a943dc14fda1186060bc24676280497428a8e3c079a3"
+      }
+    },
+    "vllm_version": "0.19.1.dev6+g6d4a8e6d2"
+  },
+  "pass": false,
+  "started_at_utc": "2026-07-26T16:07:29.403661Z"
+}

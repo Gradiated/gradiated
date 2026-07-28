@@ -1,0 +1,88 @@
+{
+  "director_binding_sha256": "5fe29cf10a5c2c5590a542e6aa2d8fefb97d6026857770a14b03a4a5105c9701",
+  "files": [
+    {
+      "bytes": 4266,
+      "path": "DIRECTOR_EXACT_REQUEST_STATE_CAPTURE.json",
+      "sha256": "73e6dc96c8ebc781457aa87acc41cc92efb7d3268bb5d19af4cffa6874de9b2e"
+    },
+    {
+      "bytes": 4418,
+      "path": "DIRECTOR_EXACT_REQUEST_STATE_CAPTURE_REBINDING.json",
+      "sha256": "5fe29cf10a5c2c5590a542e6aa2d8fefb97d6026857770a14b03a4a5105c9701"
+    },
+    {
+      "bytes": 811,
+      "path": "EXPECTED_INSTALLED_SOURCE.sha256",
+      "sha256": "c853073615874c5b82c66bce935b2951f0e55c5e11e2af22c9050847ced676cc"
+    },
+    {
+      "bytes": 7826,
+      "path": "dflash_endpoint_runner.py",
+      "sha256": "65f4dd8378f84662c6ce83f1094a19dc14658bb11d3c8ff269576bd499e342c4"
+    },
+    {
+      "bytes": 5709,
+      "path": "remote_request_state_capture.sh",
+      "sha256": "1f5522028f77db13983849e3faa905c4459c2ac5595a9cb37e2cdf9640c16add"
+    },
+    {
+      "bytes": 13036,
+      "path": "request_state_capture_sitecustomize.py",
+      "sha256": "6e1de9b1f65d3ab06fc1627f8c58b7193d2ba2cdf6dbc09c6079bdd3016c830b"
+    },
+    {
+      "bytes": 4407,
+      "path": "request_state_observer.py",
+      "sha256": "be572d389b19026ef438235a9396e52357b2a06143e9df3050a74e2867b8df2a"
+    },
+    {
+      "bytes": 9684,
+      "path": "summarize_request_state_capture.py",
+      "sha256": "0fc600dad1ae33de58e82f270c1883ed077a1534547b7f6bfec401095e4ea73e"
+    },
+    {
+      "bytes": 8437,
+      "path": "test_request_state_observer.py",
+      "sha256": "98ae85ed64eea36c3840e830f4134baf67520b21b2326c8f31bd59ebe4e8b7af"
+    },
+    {
+      "bytes": 16375,
+      "path": "inputs/bound/dflash_info_v2.py",
+      "sha256": "b17ff6a703e46173c415d649d47e8ff9f8b7b436f9eec8e1f67d55ef1b3908e6"
+    },
+    {
+      "bytes": 29116,
+      "path": "inputs/bound/dflash_worker_v2.py",
+      "sha256": "8fbddb39f4b33b4ac55b1919bc58fa846acb60892886199251d3592a5223050f"
+    },
+    {
+      "bytes": 61591,
+      "path": "inputs/bound/forward_batch_info.py",
+      "sha256": "c977296f3b90be69fff5312f2b3af7699a17b20af24614b139f69888e5776516"
+    },
+    {
+      "bytes": 95820,
+      "path": "inputs/bound/memory_pool.py",
+      "sha256": "37f9915a2945c7bb389212eed65eb770cb9e3fa6976d0778b6831d2ac29d7bdd"
+    },
+    {
+      "bytes": 10559,
+      "path": "inputs/bound/swa_memory_pool.py",
+      "sha256": "36830cdb84cc344ffb7bac9ff30ba9a41b488d67893a5015ecbba584e95a9858"
+    },
+    {
+      "bytes": 22003,
+      "path": "inputs/bound/tp_worker.py",
+      "sha256": "f2e00ea7d53b7250231d44b9d52415c6f6b5f936b0e7c6af4a13f5aff6c1e509"
+    },
+    {
+      "bytes": 1491,
+      "path": "PACKET.sha256",
+      "sha256": "55d968d80c48fa10b103fb8b84ac8579fda5b422b75556276674891febd7d1a4"
+    }
+  ],
+  "project": "gemma4_h200_dflash_endpoint",
+  "schema_version": 1,
+  "superseded_measurement_contract_sha256": "73e6dc96c8ebc781457aa87acc41cc92efb7d3268bb5d19af4cffa6874de9b2e"
+}

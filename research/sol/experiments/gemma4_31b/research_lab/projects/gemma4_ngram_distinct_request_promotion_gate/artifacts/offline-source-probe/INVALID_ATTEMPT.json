@@ -1,0 +1,8 @@
+{
+  "amendment": "Correct only the capacity-2 assertion to test promotion of the retained suffix after FIFO eviction.",
+  "candidate_sample_consumed": false,
+  "classification": "invalid_offline_probe_assertion",
+  "diagnostic": "The probe expected suffix [2] to remain after inserting [3] and then re-inserting evicted suffix [1], but deterministic FIFO had correctly evicted [2].",
+  "scientific_result_persisted": false,
+  "stage": "bounded_probation_assertion"
+}

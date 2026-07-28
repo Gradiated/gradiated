@@ -1,0 +1,110 @@
+{
+  "classification": "preserved_evidence_insufficient_for_unique_source_level_fault_localization",
+  "component_replay_permitted": false,
+  "cuda_invocation_performed_by_localization": false,
+  "endpoint_action_performed": false,
+  "evidence_sha256": {
+    ".repair-handshakes/streaming-h100-1785101786874608286/cluster_dim_compat.h": "fb97d465b883b589e2110c1ad46b2b8d23792d46cecd04fd13dd0f8f2bdc3ca1",
+    "DIRECTOR_HOPPER_PACKED_STREAMING_LAUNCH_FAILURE_LOCALIZATION_20260726T2157Z.json": "06e019027131fc901e3649768ef45649e659f22846ecd3fc0902e6f76d8b5449",
+    "STREAMING_H100_COMPONENT_INPUT_MANIFEST.json": "618ce17579ca30632c11926e4f5738bffc90c4de30d316df800ff6decf2c320a",
+    "accuracy_redesign_component_runner.py": "95e904aa1d196ec230d4be62c2e9a7bae83931f399592cd21a9adb978b7ef637",
+    "artifacts/h100-streaming-component/INVOCATION_STATE.json": "6e130027858719e15f96b88c7f39cff2a42b0428972f18b481d092be894714bf",
+    "artifacts/h100-streaming-component/RUNTIME_INCOMPATIBILITY.json": "e7dc8374e8e10ff113e02d244bca66d2c7ebe001dfdb8e606e8674f236e6bed5",
+    "artifacts/h100-streaming-component/build/build.ninja": "7c4f5a47b08bbc96bcab142eb0d1eee2625e6ccf1cc08bc17f656497ab7d22b0",
+    "artifacts/h100-streaming-component/build/packed_m384_streaming_2262a4a20e94.so": "9eff840f5ef0ac277b08ba9f7e599b95aa6f058a0315a1ab8cef0088389133f0",
+    "artifacts/h100-streaming-component/build/packed_m384_streaming_cluster.cuda.o": "e1c89012cbe506ad12b25944fedd7bfa945ee8477b509e3c54c11a7847de594f",
+    "artifacts/h100-streaming-component/cuobjdump-resource-usage.txt": "60e618d2125e9402010862053b218302a6f57332c68ec88677b695a95cf75d5a",
+    "artifacts/h100-streaming-component/stderr.log": "7a9837fae99c705420c782ea35fc3efb3125e3de3a5b9dc1c6e97c9673a51bff",
+    "artifacts/h100-streaming-component/stdout.log": "ab9d857927e8aee78e4aedf7408cbbb62cffc68fd5f548723cd6b61aa1d94117",
+    "packed_m384_streaming_cluster.cu": "2262a4a20e9438671f795eeb8aad7f5db9cbe65ae446a94758e3d4c1cce78656",
+    "streaming_accuracy_component_runner.py": "c79612b4bd03fa14bcff5aa14cf1e59582aaa9531f1d388ca6e0d2f1edb58cb0"
+  },
+  "first_invalid_invariant": null,
+  "later_retry_gate": "requires a later director binding; the minimal discriminator is arm-isolated completion evidence before any corrected candidate retry",
+  "localization_limit": {
+    "inference": "the local candidate remains suspect because it is the first new kernel in evaluation order, but the immutable evidence does not prove that it, rather than either preceding stock call, produced the asynchronous fault",
+    "missing_decisive_evidence": [
+      "per-arm completion markers or synchronizations",
+      "device fault program counter or failing source line",
+      "a typed CUDA fault class more specific than unspecified launch failure"
+    ],
+    "reason": "the only CUDA error is asynchronous and reported at the shared post-control/post-candidate synchronization boundary"
+  },
+  "performance_interpretation_permitted": false,
+  "preserved_attempt": {
+    "candidate_cuda_invocation_started": true,
+    "classification": "candidate_cuda_launch_failure_after_submission",
+    "runner_first_evaluation_geometry": "local_d256",
+    "synchronization_boundary": "two stock calls and one candidate call share the first torch.cuda.synchronize boundary"
+  },
+  "recorded_at_utc": "2026-07-26T22:06:01.956763Z",
+  "schema_version": 1,
+  "scientific_result": false,
+  "source_invariant_results": {
+    "cluster_contract": "generated local grid 1024 is divisible by cluster size 1; the unreached global grid 2048 is divisible by cluster size 2",
+    "frozen_bounds": "all derived maxima equal numel_minus_one and are in bounds",
+    "global_d512_unreached": {
+      "batch": 32,
+      "cluster_size": 2,
+      "compiled_registers_per_thread": 96,
+      "compiled_stack_bytes_per_thread": 0,
+      "compiled_static_shared_bytes_per_cta": 1024,
+      "dynamic_shared_bytes_per_cta": 64656,
+      "grid_ctas": 2048,
+      "grid_is_cluster_divisible": true,
+      "head_dim": 512,
+      "kv_heads": 4,
+      "pointer_bounds": {
+        "custom_mask_max_element": 1622783,
+        "custom_mask_numel": 1622784,
+        "extend_kv_max_element": 786431,
+        "extend_kv_numel": 786432,
+        "kv_indices_max_element": 134847,
+        "kv_indices_numel": 134848,
+        "paged_cache_max_element": 276168703,
+        "paged_cache_numel": 276168704,
+        "q_and_output_max_element": 6291455,
+        "q_and_output_numel": 6291456
+      },
+      "prefix_tiles": 66,
+      "prefix_tokens_per_sequence": 4214,
+      "query_heads": 32,
+      "query_rows": 384,
+      "threads_per_cta": 256,
+      "total_shared_bytes_per_cta": 65680
+    },
+    "launch_capacity": "compiled SM90a metadata shows 96 registers/thread, 0 stack bytes, and 1024 static shared bytes; generated dynamic shared memory is 42128 bytes for the first local arm",
+    "local_d256": {
+      "batch": 32,
+      "cluster_size": 1,
+      "compiled_registers_per_thread": 96,
+      "compiled_stack_bytes_per_thread": 0,
+      "compiled_static_shared_bytes_per_cta": 1024,
+      "dynamic_shared_bytes_per_cta": 42128,
+      "grid_ctas": 1024,
+      "grid_is_cluster_divisible": true,
+      "head_dim": 256,
+      "kv_heads": 16,
+      "pointer_bounds": {
+        "custom_mask_max_element": 1622783,
+        "custom_mask_numel": 1622784,
+        "extend_kv_max_element": 1572863,
+        "extend_kv_numel": 1572864,
+        "kv_indices_max_element": 32767,
+        "kv_indices_numel": 32768,
+        "paged_cache_max_element": 552337407,
+        "paged_cache_numel": 552337408,
+        "q_and_output_max_element": 3145727,
+        "q_and_output_numel": 3145728
+      },
+      "prefix_tiles": 16,
+      "prefix_tokens_per_sequence": 1024,
+      "query_heads": 32,
+      "query_rows": 384,
+      "threads_per_cta": 256,
+      "total_shared_bytes_per_cta": 43152
+    }
+  },
+  "type": "packed_m384_streaming_launch_localization_terminal",
+  "v2_replay_performed": false
+}

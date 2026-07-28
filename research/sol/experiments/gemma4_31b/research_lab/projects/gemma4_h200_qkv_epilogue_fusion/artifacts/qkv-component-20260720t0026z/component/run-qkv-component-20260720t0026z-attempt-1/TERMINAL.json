@@ -1,0 +1,12 @@
+{
+  "candidate_invocations": 1,
+  "component_pass": false,
+  "conditional_bf16_c32_endpoint_required": false,
+  "conservative_saving_seconds_per_request": 0.019215718856250005,
+  "pass": false,
+  "required_saving_seconds_per_request": 0.04597286970625021,
+  "schema_version": 1,
+  "scientific_terminal": true,
+  "stage": "component",
+  "terminal": "component_negative"
+}

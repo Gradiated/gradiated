@@ -1,0 +1,33 @@
+{
+  "files": [
+    {
+      "bytes": 2686,
+      "path": "runner.stdout",
+      "sha256": "3ba02825bf3d358ccf5b7e4f5fcd3fdc5e9f99e6fe0ebdba8a325a701187f331"
+    },
+    {
+      "bytes": 1564,
+      "path": "runner.stderr",
+      "sha256": "9989fcb6c816730ba4d26579d3a5e3b2d6e4175d3cbad7da666bf9199c3b5868"
+    },
+    {
+      "bytes": 2,
+      "path": "runner.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "bytes": 29,
+      "path": "LAUNCH_ATTEMPTED.json",
+      "sha256": "95cfc1ba0c5daf1766a9e9a4efe3ebc0cd6ef37796afe16ea89fc8aa992947ad"
+    },
+    {
+      "bytes": 121,
+      "path": "result/SCIENCE_STARTED.json",
+      "sha256": "44bde642eff7b91ba9bae7571316827a62c9c6820fbb7bec4711644ab426de64"
+    }
+  ],
+  "raw_present": true,
+  "schema_version": 1,
+  "science_started": true,
+  "terminal_present": false
+}

@@ -1,0 +1,11 @@
+{
+  "candidate_cuda_invocation_started": true,
+  "candidate_scientific_invocation_started": true,
+  "classification": "component_complete",
+  "component_exit_code": 0,
+  "component_terminal_recorded": true,
+  "profile_exit_code": 99,
+  "schema_version": 1,
+  "smoke_exit_code": 0,
+  "timestamp_utc": "2026-07-23T17:49:52.737275Z"
+}

@@ -95,3 +95,38 @@ priority-6200, then use the retained L40S only after that predecessor releases.
 The paid result is one complete-output correctness/timing component and the
 minimum counters needed to explain it. No endpoint or quality claim is
 authorized.
+
+## 2026-07-24 continuation — repair prelaunch Triton indexing
+
+The first paid attempt did not consume the scientific arm. Triton rejected
+SSA tensor indexing in `_pack_affine_kv4` before the producer completed, a
+candidate kernel launched, or any complete-output correctness or timing row
+existed. At director review the wall clock was `07:04Z`, before the recorded
+`08:15Z` project deadline, and the retained L40S plus its `08:30:59Z`
+watchdog were healthy.
+
+Follow `KV4_TRITON_POINTER_REPAIR.json`. Change only the producer loads to use
+even/odd pointer arithmetic with masked `tl.load`; preserve every scientific
+dimension and gate. Freeze one newly hashed packet, start one bounded owner,
+and run the unchanged component once on
+`l40s-qserve-e00a74kcbps8v00fk4`, followed only by the fixed counters. No
+endpoint, checkpoint consumer, sweep, new resource, or second scientific
+replay is authorized.
+
+## 2026-07-24 continuation — retrieve resident result before replay
+
+The pointer-only owner reached the remote worker, but its compact-evidence
+fallback attempted to archive `compact.tar.gz` into itself. The outer owner
+then released the L40S to maintenance without retrieving the resident worker
+result. This is an owner-side retrieval boundary, not KV4 evidence. The
+corrected command builds `compact.tar.gz.part` from existing files while
+excluding both archive names, then renames atomically.
+
+Use the same immutable packet
+`45472047380028df34f8d702c3101dab326154bdfb919bfb835c12ff7761de8f`.
+One replacement bounded owner may claim the retained L40S and must retrieve
+the existing remote output before any CUDA invocation. A resident
+`COMPONENT_TERMINAL.json` is authoritative and forbids replay. Only a proved
+pre-science integration boundary permits an in-claim repair and one
+continuation before `08:15Z`; fixed counters remain conditional on a passing
+component terminal.

@@ -1,0 +1,9 @@
+{
+  "deadline_utc": "2026-07-25T18:00:00Z",
+  "watchdog": {
+    "unit": "gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service",
+    "unit_manager": "user",
+    "main_pid": 730607,
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-packed-endpoint-20260725t1800-watchdog.service"
+  }
+}

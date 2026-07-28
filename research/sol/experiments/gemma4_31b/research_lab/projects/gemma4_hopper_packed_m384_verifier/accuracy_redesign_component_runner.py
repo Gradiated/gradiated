@@ -102,7 +102,7 @@ def fixture(*, seed: int, head_dim: int, kv_heads: int, prefix: int):
         dtype=torch.bfloat16,
     ).to(torch.float8_e4m3fn)
     pages = torch.randperm(
-        total_pages, device="cuda", dtype=torch.int64
+        total_pages, device="cuda", dtype=torch.int32
     ).view(BATCH, GLOBAL_PREFIX)[:, -prefix:].contiguous()
     qo_indptr = torch.arange(
         0, (BATCH + 1) * DRAFT, DRAFT, device="cuda", dtype=torch.int32

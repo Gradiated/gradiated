@@ -1,0 +1,14 @@
+{
+  "caches": "Checkpoint, digest-pinned image, official v0.5.15 server, CUDA graph, tokenizer, and runtime caches are retained.",
+  "candidate": "Official unmodified SGLang v0.5.15 H100 171-request discriminator and strictly conditional endpoint remain unconsumed.",
+  "candidate_sample_consumed": false,
+  "checkpoint": "/home/glmrunner/gemma4-h100-v0515-ngram-price-normalized/checkpoint remains staged; repair-4 failed in the verifier source before reading it.",
+  "director_binding": "gemma4_h100_v0515_ngram_price_normalized/DIRECTOR_REPAIR5_BINDING.json",
+  "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "next": "Priority-8470 may repair and fixture-test only the remote-hash-script indentation locally, then claim this bench and run the unconsumed 171-request discriminator once before 2026-07-25T07:55:00Z. Endpoint remains strictly conditional.",
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "result": "available_for_bound_h100_remote_hash_source_repair",
+  "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6.",
+  "server_state": "Repair-4 stopped before server reuse or CUDA because the generated remote checkpoint verifier had one accidentally indented raise statement. Retained server state remains reusable after the local fixture gate."
+}

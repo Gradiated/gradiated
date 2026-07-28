@@ -1,0 +1,6 @@
+{
+  "at_utc": "2026-07-25T22:42:49.906195+00:00",
+  "candidate_cuda_invocation_started": true,
+  "reason": "immediately before docker component invocation",
+  "rows": 32
+}

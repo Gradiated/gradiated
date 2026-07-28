@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 10.679611045001366,
+  "ended_monotonic_s": 55697.639721781,
+  "error": null,
+  "first_token_monotonic_s": 55686.960110736,
+  "index": 27,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": "cznym",
+      "token_ids": [
+        166134
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    166134,
+    166134,
+    166134,
+    166134,
+    166134,
+    166134,
+    166134,
+    166134,
+    166134,
+    166134,
+    166134,
+    166134,
+    166134,
+    166134,
+    166134,
+    166134
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "f301c56bf96c8b56d59485ea81500e19682180a15af34e5d26c62d00cd17894b",
+  "request_sha256": "2d0fa6019b69cf319dcdb0d5223cae71f4339fd1f7e195952e0de2dddf5568b7",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 55684.403437043,
+  "text": "cznymcznymcznymcznymcznymcznymcznymcznymcznymcznymcznymcznymcznymcznymcznymcznym",
+  "ttft_seconds": 2.5566736929977196,
+  "wall_seconds": 13.236284737999085
+}

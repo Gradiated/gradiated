@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "requested_by": "researcher",
+  "reason": "continue the admitted candidate-only action after preserving an invalid observer attempt",
+  "accepted_operation": "retry only the invalidated observer operation under the same claimed bench/session",
+  "ar_replay": false,
+  "candidate_arm": "dflash-depth4-c32"
+}

@@ -1,0 +1,8 @@
+{
+  "admission_sha256": "a963b4ea1bdb5d0ab75791e0e81fd60c962fbb6d054e96c6b8f19c6d44ae79a8",
+  "checkpoint_transfer_bytes": 0,
+  "claim_authority_sha256": "7a3ce353428f8809df688897fa760562e15d6898ef5a4e89ce2b62e4622be550",
+  "deadline_utc": "2026-07-27T01:25:22.623962Z",
+  "owner_sha256": "77a3d87ce87771730eaa7dcd8f4b45771fb5122090f93fcc14ba9863d44af1b8",
+  "scorer_sha256": "cf70feae59b8a1104670b90826696ae173087e6ef71b6691204fc203f251be68"
+}

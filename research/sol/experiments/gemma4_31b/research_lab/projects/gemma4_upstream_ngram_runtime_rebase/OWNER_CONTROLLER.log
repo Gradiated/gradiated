@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/run_v0515_outer.py", line 87, in <module>
+    if __name__=='__main__': main()
+                             ~~~~^^
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/run_v0515_outer.py", line 59, in main
+    a=P/'artifacts'/('v0515-discriminator-'+dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dt%H%M%Sz')); a.mkdir(parents=True,exist_ok=False); started=time.time(); h=host(); stop=threading.Event()
+                                                                                                                                                                       ~~~~^^
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/run_v0515_outer.py", line 19, in host
+    inv=json.loads((LAB/'runtime/gpus.json').read_text()); b=next(x for x in inv['benches'] if x['id']==BENCH); sys.path.insert(0,str(NEBIUS)); from placement_control import extract_public_ipv4,get_instance
+                                                             ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/run_v0515_outer.py", line 19, in <genexpr>
+    inv=json.loads((LAB/'runtime/gpus.json').read_text()); b=next(x for x in inv['benches'] if x['id']==BENCH); sys.path.insert(0,str(NEBIUS)); from placement_control import extract_public_ipv4,get_instance
+                                                                                               ~^^^^^^
+TypeError: string indices must be integers, not 'str'

@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 4.257129529003578,
+  "ended_monotonic_s": 56159.664468344,
+  "error": null,
+  "first_token_monotonic_s": 56155.407338815,
+  "index": 13,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": "\u92f3",
+      "token_ids": [
+        246524
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    246524,
+    246524,
+    246524,
+    246524,
+    246524,
+    246524,
+    246524,
+    246524,
+    246524,
+    246524,
+    246524,
+    246524,
+    246524,
+    246524,
+    246524,
+    246524
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "f47886a8cbf6f5e0870c0646f265b41e7759e263cc08d201f659135cef8ec103",
+  "request_sha256": "9148179ea080384a479422508c779010f15f3694b6ac30952a2587fa4382cb47",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 56146.428523187,
+  "text": "\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3",
+  "ttft_seconds": 8.978815627997392,
+  "wall_seconds": 13.23594515700097
+}

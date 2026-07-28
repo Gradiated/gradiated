@@ -1,0 +1,50 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "claim": {
+    "claimed_at": "2026-07-24T15:55:35.295242Z",
+    "heartbeat_at": "2026-07-24T15:55:35.295242Z",
+    "lease_seconds": 300,
+    "lease_until_utc": "2026-07-24T16:00:35.295242Z",
+    "project": "gemma4_h200_ngram_wave_batching_sustainable",
+    "stale": false
+  },
+  "contents": {
+    "artifacts": "Active remote root /home/glmrunner/gemma4-ngram-wave-admission; local artifact root artifacts/wave-admission-20260724t152911z.",
+    "caches": "Checkpoint, image, CUDA graph, JIT, tokenizer, and runtime caches remain resident on the 250-GiB disk.",
+    "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+    "conditional_gate": "Consumed: ten-row token/tool suite and matched c32 pair completed; no candidate replay is allowed.",
+    "expected_first_arms": "No new scientific arm. Atomically retrieve an existing terminal if present; otherwise adopt the live remote worker, heartbeat the claim, retrieve on completion, clean the server, and release.",
+    "gpu_processes": "Candidate server process PID 58735 occupied approximately 128608 MiB at terminal retrieval.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_h200_ngram_wave_batching_sustainable",
+    "residual_bottleneck": "The 1.439656551 request/s stream remained unqueued through roughly 700 requests, then latency rose sharply and client queue reached 8.148 seconds. Investigate NGRAM state/corpus aging before treating the finite-run $0.139109/M result as sustainable.",
+    "result": "Recoverable outer-controller loss with the sole scientific trajectory still live.",
+    "runtime": "Pinned SGLang v0.5.13 FP8 plus FP8-E5M2 KV and NGRAM; immutable wave packet is already executing remotely.",
+    "schema_version": 1,
+    "server_state": "Remote detached wave worker was live in wave_admission_primary at 2026-07-24T15:43:43Z. The foreground claim controller is dead; a durable local PID-managed outer owner must adopt and retrieve without replay."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.46,
+  "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "idle_since": null,
+  "lifecycle": {
+    "deadline_utc": "2026-07-24T17:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-ngram-verifier-h200-20260724t1700-watchdog.service",
+      "main_pid": 4051134,
+      "unit": "gemma4-ngram-verifier-h200-20260724t1700-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "registered_at": "2026-07-24T09:29:46.678511Z",
+  "resource": {
+    "disk_id": "computedisk-e00yvdxaa48q0t115t",
+    "disk_name": "gemma4-ngram-verifier-h200-20260724t0927z-boot",
+    "instance_id": "computeinstance-e00kcm9nfhwt7e7gbc",
+    "instance_name": "gemma4-ngram-verifier-h200-20260724t0927z"
+  },
+  "status": "claimed",
+  "updated_at": "2026-07-24T15:55:35.295242Z"
+}

@@ -1,0 +1,34 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 1.1825442107836406,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 6.0,
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "compute_budget": "One retained H200 under cumulative $6 authority; at most 75 additional claimed GPU-minutes through the 19:50Z release deadline.",
+  "next_action": "Hash-check FROZEN_PACKET.production-two-stage.tar at SHA-256 80a0a8b3878a10c600ba48678dd091f25758385389b148caf5c022bb1b5ae0ce, claim the director-verified available H200 with a fresh controller-host PID-managed outer owner, use fresh glmrunner-owned remote and local artifact roots, and run the corrected first-real-c32/Q12 component once. Use shared research/factory/tools/artifact-snapshot for every diagnostic, repair, and terminal retrieval. The hook must reject mask row strides below 4000 and CUDA graph is disabled only for the component trigger. Only an exact positive real-call result admits the candidate-only endpoint against persisted 0.6049806232813353 s/request. No scientific arm has been consumed.",
+  "prior_terminal": {
+    "classification": "endpoint_integration_invalid_candidate_path_unproven",
+    "current_attempt_provider_spend_usd": 0.12110736185709635,
+    "endpoint_candidate_path_rows": 0,
+    "endpoint_semantics_match": false,
+    "endpoint_service_time_delta_fraction": 0.3369395640009498,
+    "observer_component_exact": true,
+    "observer_component_positive_whole_request_bound_fraction": 0.06559340011369605,
+    "path": "artifacts/qlen-mask-20260724t165142z/retrieved/artifacts/FINAL_TERMINAL.json",
+    "prior_provider_spend_usd": 0.22899955971240998
+  },
+  "priority": 7540,
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "researcher_profile": "execution",
+  "reservation_gate": "Before claim, hash-check the director packets and freeze the researcher-implemented stock-two-stage consumer plus captured-call component. The absence of a pre-supplied runner is not a gate. No provider creation, deterministic-setting change, mask/backend/tile sweep, or scientific replay is permitted.",
+  "status": "complete",
+  "storage_budget": "At most 10 GiB of additional project-local artifacts.",
+  "summary": "Two-stage QLEN terminal: nonpositive_or_invalid.",
+  "terminal": {
+    "classification": "scientific_terminal",
+    "current_attempt_provider_spend_usd": 0.571835541164875,
+    "path": "artifacts/qlen-mask-20260724t1911z-real-c32/snapshots/d9d644c840aa4fea4834e0be8d3408dde26305afd3af042b19ffc58e5f0d401e/artifacts/FINAL_TERMINAL.json",
+    "prior_provider_spend_usd": 0.6107086696187656
+  },
+  "wall_clock_budget": "Complete and release by 2026-07-24T19:50:00Z, leaving ten minutes before the verified 20:00Z lifecycle watchdog."
+}

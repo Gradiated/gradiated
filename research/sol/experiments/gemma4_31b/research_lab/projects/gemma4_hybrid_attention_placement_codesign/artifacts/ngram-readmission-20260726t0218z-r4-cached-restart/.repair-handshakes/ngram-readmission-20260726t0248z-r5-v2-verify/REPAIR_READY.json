@@ -1,0 +1,11 @@
+{
+  "absolute_repair_deadline_utc": "2026-07-26T03:05:00Z",
+  "created_at_utc": "2026-07-26T02:59:00.366697Z",
+  "diagnostic": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/ngram-readmission-20260726t0218z-r4-cached-restart/server_raw.stdout.log",
+  "failure_kind": "integration",
+  "repair_deadline_epoch": 1785035100.0,
+  "repair_id": "ngram-readmission-20260726t0248z-r5-v2-verify",
+  "retry_scope": "repair only the repaired NGRAM server/consumer boundary under this unchanged claim",
+  "schema_version": 1,
+  "state": "repair_ready"
+}

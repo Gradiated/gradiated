@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "retry": true,
+  "reason": "ordinary pre-capture input-path defect repaired",
+  "scientific_arm_replay": false,
+  "frozen_scope_unchanged": true,
+  "patched_file": "production_quality_remote.py"
+}

@@ -1,0 +1,45 @@
+
+==========
+== CUDA ==
+==========
+
+CUDA Version 13.0.1
+
+Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+
+A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+
+==PROF== Connected to process 94 (/usr/bin/python3.12)
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "depth_interleaved_grouped_lm_head": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "nvjet_sm90_tst_512x32_64x3_2x1_v_bz_TNT": 0%....50%....100% - 1 pass
+==PROF== Profiling "depth_interleaved_grouped_lm_head": 0%....50%....100% - 1 pass
+58.994140625
+==PROF== Disconnected from process 94
+==PROF== Report: /work/artifacts/counters/grouped-lm-head.ncu-rep

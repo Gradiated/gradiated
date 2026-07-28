@@ -1,0 +1,10 @@
+{
+  "owner_terminal": {
+    "classification": "consumer_failure",
+    "message": "container_identity_mismatch",
+    "schema_version": 1,
+    "status": "terminal",
+    "timestamp_utc": "2026-07-20T01:33:16.701168Z"
+  },
+  "repair_deadline_epoch": 1784511797.365737
+}

@@ -1,0 +1,28 @@
+Traceback (most recent call last):
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_adaptive_depth6_cuda_graph/run_fresh_endpoint_controller.py", line 154, in <module>
+    main()
+    ~~~~^^
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_adaptive_depth6_cuda_graph/run_fresh_endpoint_controller.py", line 109, in main
+    ssh(f"FRESH_ENDPOINT_ROOT={REMOTE_ROOT} python3 {REMOTE_ROOT}/fresh_endpoint_driver.py arm --arm control", timeout=3600)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_adaptive_depth6_cuda_graph/run_fresh_endpoint_controller.py", line 54, in ssh
+    raise RuntimeError(f"ssh_failed:{result.returncode}:{result.stderr[-1000:]}")
+RuntimeError: ssh_failed:1:2) as executor:
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/glmrunner/adaptive_depth6_fresh_endpoint/fresh_endpoint_driver.py", line 203, in <genexpr>
+    with concurrent.futures.ThreadPoolExecutor(max_workers=32) as executor:
+                                                  ^^^^^^^^^^^^^^^^^^
+  File "/home/glmrunner/adaptive_depth6_fresh_endpoint/fresh_endpoint_driver.py", line 26, in compact
+    def json_safe(value: object) -> object:
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+ValueError: Out of range float values are not JSON compliant: nan
+

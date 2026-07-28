@@ -5,7 +5,7 @@
   "authorized_spend_usd": 3.0,
   "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
   "compute_budget": "One retained H200 claim for one candidate-only fixed 1,036-request trajectory.",
-  "next_action": "Closed: the sole candidate-only 1,036-request native depth-12 NGRAM c32-wave frontier stack is consumed and rejected. Replay no arm.",
+  "next_action": "Closed economically: the sole candidate-only 1,036-request native depth-12 NGRAM c32-wave frontier stack is consumed. It improved elapsed time by only 0.239959425 seconds (0.032640%) versus the frozen wave control and remained above $0.14/M. The raw HTTP-envelope comparator is invalid because it also failed all rows of the unchanged control; do not treat it as semantic evidence and replay no arm.",
   "priority": 8200,
   "provider_mutation": "forbidden_researcher_director_registered_bench_only",
   "researcher_profile": "execution",
@@ -18,11 +18,11 @@
   "reservation_gate": "Do not claim until the $3 reservation is durable and every path/hash in DIRECTOR_BINDING.json matches. Run no GPU arm if any identity differs.",
   "status": "complete",
   "storage_budget": "At most 6 GiB of new project-local artifacts.",
-  "summary": "Sole candidate trajectory completed but rejected: frozen raw-response semantic comparator failed and planning cost was $0.140076104/M, above the $0.14/M gate; H200 released ready.",
+  "summary": "Sole candidate trajectory completed and closes the source stack economically: $0.140076104/M, only 0.032640% faster than the frozen control and still above $0.14/M. The all-row raw-envelope mismatch is an invalid observer, not semantic evidence. H200 released ready.",
   "terminal": {
     "artifact_root": "artifacts/wave-frontier-20260725t014040z",
     "candidate_science_consumed": true,
-    "classification": "measured_ngram_wave_frontier_stack_reject",
+    "classification": "measured_ngram_wave_frontier_stack_economic_reject_observer_invalid",
     "decision": {
       "all_complete": true,
       "exact_request_semantics": true,

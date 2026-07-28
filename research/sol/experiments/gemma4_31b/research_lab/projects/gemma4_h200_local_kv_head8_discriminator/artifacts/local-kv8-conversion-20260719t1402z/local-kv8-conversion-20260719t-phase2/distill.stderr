@@ -1,0 +1,12 @@
+/usr/local/lib/python3.12/dist-packages/torchao/quantization/quant_api.py:1731: SyntaxWarning: invalid escape sequence '\.'
+  """Configuration class for applying different quantization configs to modules or parameters based on their fully qualified names (FQNs).
+Loading weights:   0%|          | 0/1188 [00:00<?, ?it/s]Loading weights:  81%|████████▏ | 966/1188 [00:00<00:00, 9640.01it/s]Loading weights: 100%|██████████| 1188/1188 [00:00<00:00, 9752.34it/s]
+Loading weights:   0%|          | 0/1188 [00:00<?, ?it/s]Loading weights:  86%|████████▌ | 1019/1188 [00:00<00:00, 10181.20it/s]Loading weights: 100%|██████████| 1188/1188 [00:00<00:00, 10260.20it/s]
+[transformers] [1mGemma4ForConditionalGeneration LOAD REPORT[0m from: /work/checkpoint
+Key                                                          | Status   |                                                                                               
+-------------------------------------------------------------+----------+-----------------------------------------------------------------------------------------------
+model.language_model.layers.{0...58}.self_attn.v_proj.weight | MISMATCH | Reinit due to size mismatch - ckpt: torch.Size([4096, 5376]) vs model:torch.Size([2048, 5376])
+model.language_model.layers.{0...58}.self_attn.k_proj.weight | MISMATCH | Reinit due to size mismatch - ckpt: torch.Size([4096, 5376]) vs model:torch.Size([2048, 5376])
+
+Notes:
+- MISMATCH:	ckpt weights were loaded, but they did not match the original empty weight shapes.

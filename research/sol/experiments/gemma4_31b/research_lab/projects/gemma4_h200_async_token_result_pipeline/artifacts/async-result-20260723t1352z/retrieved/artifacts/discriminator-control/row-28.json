@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 1.8122067650037934,
+  "ended_monotonic_s": 55697.641170909,
+  "error": null,
+  "first_token_monotonic_s": 55695.828964144,
+  "index": 28,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": " covenants",
+      "token_ids": [
+        147343
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    147343,
+    147343,
+    147343,
+    147343,
+    147343,
+    147343,
+    147343,
+    147343,
+    147343,
+    147343,
+    147343,
+    147343,
+    147343,
+    147343,
+    147343,
+    147343
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "1fa8501712a09f5e7ec83b9caff1ec6fd085b61a5fefd4e7e5de6056f27bf39f",
+  "request_sha256": "35ed5318932b2f3fa375ee86e6c129d24e9f7fe7e4b5d0b21444cbfa55590c60",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 55684.411451869,
+  "text": " covenants covenants covenants covenants covenants covenants covenants covenants covenants covenants covenants covenants covenants covenants covenants covenants",
+  "ttft_seconds": 11.417512275002082,
+  "wall_seconds": 13.229719040005875
+}

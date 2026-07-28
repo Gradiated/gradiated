@@ -1,0 +1,6 @@
+{
+  "diagnostic": "The custom endpoint entrypoint exited before serving; the existing remote worker remains claimed and has not begun candidate science.",
+  "repair": "Replace only candidate server installation with the pinned standard SGLang module on isolated port 30001; preserve selection, bound, workload, and all decision gates.",
+  "requested_utc": "2026-07-23T14:24:00Z",
+  "schema_version": 1
+}

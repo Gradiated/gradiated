@@ -1,0 +1,7 @@
+{
+  "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/ngram-target-runtime-20260726t0149z",
+  "deadline_utc": "2026-07-26T02:18:00Z",
+  "failure": "preload_or_server_health_missing",
+  "phase": "infrastructure_terminal",
+  "science_started": false
+}

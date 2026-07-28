@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_persistent_grouped_lm_head/graph_safe_buffer_owner.py"
+  ],
+  "cwd": "/root/workspace",
+  "launched_at_utc": "2026-07-25T20:46:53.547306Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_persistent_grouped_lm_head/artifacts/graph-safe-buffer-owner-final.log",
+  "pid": 1195308,
+  "start_ticks": 112843095,
+  "unit_manager": "pid"
+}

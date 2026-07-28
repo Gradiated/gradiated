@@ -1,0 +1,39 @@
+Traceback (most recent call last):
+  File "/home/glmrunner/gemma4-request-local-verified-trunk/remote_request_local_endpoint.py", line 136, in <module>
+    try: main()
+         ^^^^^^
+  File "/home/glmrunner/gemma4-request-local-verified-trunk/remote_request_local_endpoint.py", line 116, in main
+    snapshot = metric_snapshot()[0]
+               ^^^^^^^^^^^^^^^^^
+  File "/home/glmrunner/gemma4-request-local-verified-trunk/remote_request_local_endpoint.py", line 23, in metric_snapshot
+    raw = get("http://127.0.0.1:30000/metrics").decode(); values = {}
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/glmrunner/gemma4-request-local-verified-trunk/remote_request_local_endpoint.py", line 20, in get
+    def get(url, timeout=10): return urllib.request.urlopen(url, timeout=timeout).read()
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 515, in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1373, in http_open
+    return self.do_open(http.client.HTTPConnection, req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1348, in do_open
+    r = h.getresponse()
+        ^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 1448, in getresponse
+    response.begin()
+  File "/usr/lib/python3.12/http/client.py", line 336, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 305, in _read_status
+    raise RemoteDisconnected("Remote end closed connection without"
+http.client.RemoteDisconnected: Remote end closed connection without response

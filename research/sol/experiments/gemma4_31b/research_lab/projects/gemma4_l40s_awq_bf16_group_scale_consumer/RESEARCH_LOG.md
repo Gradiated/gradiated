@@ -70,6 +70,23 @@
   after a correct positive component. No calibration, requantization, tile,
   representation, or schedule sweep is authorized.
 
+## 2026-07-24 — consumed candidate closes inconclusively
+
+- The candidate compiled at 127 registers with zero spills and began the first
+  M=1 CUDA chain, but no candidate row persisted. The FP8 control never began:
+  `sgl_kernel.fp8_scaled_mm` rejected its non-column-major `mat_b`.
+- The owner then failed while packing an archive inside its own source
+  directory and released the claim. A later retrieval recovered the compile
+  and invocation evidence, but not a candidate output. A control-only repair
+  therefore cannot produce a valid comparison without replaying the consumed
+  candidate.
+- Close this project without a performance inference after
+  `$0.024948443867448687`. No compatible L40S successor remains. Director
+  cleanup verified zero compute processes, zero MiB, and zero utilization,
+  deleted and verified absent instance `computeinstance-e00a74kcbps8v00fk4`
+  and disk `computedisk-e00svftc564m2pcp68`, stopped the cleanup watchdogs,
+  and retired the pool record.
+
 ## 2026-07-24 — consumed candidate; control API and controller boundary
 
 - Action (measured): atomically claimed the admitted L40S, verified and

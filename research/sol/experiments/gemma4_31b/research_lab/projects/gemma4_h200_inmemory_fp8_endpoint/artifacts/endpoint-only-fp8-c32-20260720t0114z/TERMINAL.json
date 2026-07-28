@@ -1,0 +1,13 @@
+{
+  "classification": "consumer_failure",
+  "owner_terminal": {
+    "classification": "consumer_failure",
+    "message": "queue_not_idle",
+    "schema_version": 1,
+    "status": "terminal",
+    "timestamp_utc": "2026-07-20T01:18:29.786950Z"
+  },
+  "pass": false,
+  "schema_version": 1,
+  "status": "terminal"
+}

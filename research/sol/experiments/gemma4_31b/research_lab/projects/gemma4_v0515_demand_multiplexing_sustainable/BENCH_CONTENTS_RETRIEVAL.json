@@ -1,0 +1,9 @@
+{
+  "project": "gemma4_v0515_demand_multiplexing_sustainable",
+  "result": "typed_incomplete_remote_runner_manifest_boundary",
+  "candidate_sample_consumed": true,
+  "conditional_endpoint_sample_consumed": false,
+  "artifacts": "artifacts/stock-retrieval-20260725t083312z",
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "server_state": "Official stock v0.5.15 container 60f39554b5b75b0c9f0f577b4705eeba1c8bbf3d326db3e7f032851470e91233 remains running on port 30000 and occupies the accelerator; release to maintenance for director disposition."
+}

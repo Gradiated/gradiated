@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "created_at_utc": "2026-07-26T06:29:00Z",
+  "decision": "make_future_owner_repair_retention_and_terminal_release_structurally_disjoint",
+  "scientific_question_changed": false,
+  "amends": {
+    "path": "DIRECTOR_TARGET_ONLY_PROXY_ALLOCATOR_REPAIR_20260726T0623Z.json",
+    "sha256": "b3e6415d0863fea37b3700aec7cfb6eaff3c7e11702a83f65372568c6d150d84"
+  },
+  "premise": {
+    "latest_execution_terminal": "CORRECTED_ALLOCATOR_H200_COMPONENT_TERMINAL.json",
+    "latest_execution_terminal_sha256": "fb8c99993c2781d704b890104587537d57a7ea76b9346b6e7c35defee30d7f44",
+    "candidate_cuda_invocation_started": false,
+    "scientific_component_consumed": false,
+    "observed_controller_defect": "The prior owner routed every outcome through one finish helper that removed the experiment container and released the bench. A recoverable pre-science allocator exception therefore discarded the continuous claim instead of preserving the warm repair boundary."
+  },
+  "allocator_repair_contract": {
+    "unchanged_from_amended_binding": true,
+    "required_source_behavior": "Allocate and own the proxy logical-slot vector lazily for TARGET_VERIFY only; stock EXTEND, prefill, ordinary decode, model load, and CUDA-graph setup allocate no proxy vector or proxy bank.",
+    "required_allocator_tests": [
+      "A stock EXTEND fixture proves zero proxy allocation and leaves allocator capacity unchanged.",
+      "A TARGET_VERIFY fixture allocates exactly its logical rows from the live batch-tree allocator and proves disjoint stock/proxy vectors.",
+      "Accepted and rejected TARGET_VERIFY rows move/free exactly once and ordinary post-accept decode remains stock.",
+      "The prior 8,192-slot exhaustion geometry is reproduced before the repair and passes after it."
+    ]
+  },
+  "future_owner_contract": {
+    "entrypoint_destination": "target_only_proxy_allocator_component_owner.py",
+    "single_start_command": "python3 target_only_proxy_allocator_component_owner.py",
+    "required_control_flow": {
+      "recoverable_retained_repair": [
+        "For an unconsumed, unclassified, or ordinary recoverable pre-science failure, persist a typed diagnostic and keep the bench claim.",
+        "If the server remains healthy, keep it and its resident checkpoint and caches.",
+        "If a process-start repair is required, prepare and hash-bind the replacement source first, then stop and replace only the experiment server or container under the same claim.",
+        "Heartbeat the claim and emit the existing repair-handshake ready state; do not invoke gpu_pool release."
+      ],
+      "terminal_cleanup_and_release": [
+        "Cleanup and release are allowed only after an interpretable component or scientific result, an unsafe or unreachable guest, or the absolute lifecycle/release deadline.",
+        "The cleanup path must be explicitly selected from decision-bearing evidence and must persist its disposition before stopping the runtime or releasing the claim."
+      ]
+    },
+    "prohibited_structure": [
+      "No generic finish, finally, trap, or shared outcome helper may both handle recoverable outcomes and remove the runtime or release the bench.",
+      "No recoverable, unconsumed, or unclassified default branch may run docker rm/stop or gpu_pool release."
+    ],
+    "required_owner_tests": [
+      "A recoverable pre-science failure fixture proves zero runtime-removal calls and zero gpu_pool release calls while persisting repair-ready state.",
+      "An unclassified failure fixture defaults to the same retained-repair path.",
+      "A decision-bearing terminal fixture proves cleanup and release occur only after the disposition is persisted.",
+      "An absolute-deadline fixture proves cleanup and release remain available as the safety backstop."
+    ]
+  },
+  "terminal_contract": {
+    "path": "TARGET_ONLY_PROXY_ALLOCATOR_REPAIR_TERMINAL.json",
+    "required_fields": [
+      "classification",
+      "allocator_source_sha256",
+      "owner_source_sha256",
+      "allocator_tests",
+      "owner_disposition_tests",
+      "recoverable_path_runtime_removal_calls",
+      "recoverable_path_gpu_pool_release_calls",
+      "future_entrypoint",
+      "future_start_command",
+      "gpu_claimed",
+      "provider_contacted",
+      "additional_provider_spend_usd"
+    ],
+    "pass_conditions": [
+      "All four allocator tests and all four owner-disposition tests pass.",
+      "recoverable_path_runtime_removal_calls equals 0.",
+      "recoverable_path_gpu_pool_release_calls equals 0.",
+      "future_entrypoint equals target_only_proxy_allocator_component_owner.py.",
+      "future_start_command equals python3 target_only_proxy_allocator_component_owner.py.",
+      "gpu_claimed and provider_contacted are false and additional_provider_spend_usd is 0."
+    ]
+  },
+  "execution": {
+    "researcher_profile": "execution",
+    "gpu_claim_allowed": false,
+    "provider_mutation_allowed": false,
+    "paid_requests_allowed": false,
+    "wall_clock_minutes": 35,
+    "additional_spend_usd": 0.0,
+    "storage_limit_gib": 1
+  },
+  "readmission_gate": "No claim clock opens until this amended terminal contract passes and a later director verifies the exact owner entrypoint, available bench, remaining reservation, and lifecycle window."
+}

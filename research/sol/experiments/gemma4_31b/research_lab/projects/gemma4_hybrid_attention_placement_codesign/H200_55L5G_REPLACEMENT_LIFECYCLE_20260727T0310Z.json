@@ -1,0 +1,10 @@
+{
+  "provider_started_at_utc": "2026-07-27T01:49:55.411237Z",
+  "deadline_utc": "2026-07-27T03:10:00Z",
+  "watchdog": {
+    "unit": "gemma4-hybrid-55l5g-h200-20260727t0310z-watchdog.service",
+    "unit_manager": "user",
+    "main_pid": 2269561,
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-hybrid-55l5g-h200-20260727t0310z-watchdog.service"
+  }
+}

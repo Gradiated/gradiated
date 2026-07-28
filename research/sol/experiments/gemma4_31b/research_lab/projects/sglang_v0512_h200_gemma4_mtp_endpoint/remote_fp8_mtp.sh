@@ -2,6 +2,7 @@
 set -Eeuo pipefail
 
 root=/home/glmrunner/gemma-kernel-frontier
+checkpoint=/home/glmrunner/gemma4-h200-v0513-fp8-qkv-residual-profile/checkpoint
 input="$root/mtp-input"
 assistant="$root/mtp-assistant"
 artifacts="$root/artifacts/fp8-mtp-v0513"
@@ -61,14 +62,19 @@ base_args=(
 start_server() {
   local arm=$1 container=$2; shift 2
   local audit="$artifacts/$arm-audit"
+  local no_copy=false
+  [[ "$arm" == "mtp" ]] && no_copy=true
   mkdir -p "$audit"
   sudo docker rm -f "$container" >/dev/null 2>&1 || true
   state "${arm}_cuda_started"
-  sudo docker run -d --name "$container" --gpus all --ipc=host --network host -v "$root:/work" \
+  sudo docker run -d --name "$container" --gpus all --ipc=host --network host -v "$root:/work" -v "$checkpoint:/work/checkpoint:ro" \
+    -e PYTHONPATH="/work/mtp-input:/sgl-workspace/sglang/python" \
+    -e QKV_STACK_ARM=candidate \
     -e FP8_MODULE_AUDIT="/work/artifacts/fp8-mtp-v0513/$arm-audit/modules.jsonl" \
     -e FP8_CONSUMER_AUDIT="/work/artifacts/fp8-mtp-v0513/$arm-audit/consumers.jsonl" \
     -e FP8_RUNTIME_AUDIT="/work/artifacts/fp8-mtp-v0513/$arm-audit/runtime.json" \
     -e SGLANG_FP8_IGNORED_LAYERS=model.vision_tower,model.embed_vision \
+    -e SGLANG_EAGER_INPUT_NO_COPY="$no_copy" \
     "$image" python3 /work/mtp-input/endpoint_entrypoint_v0513.py "${base_args[@]}" "$@" \
     >"$artifacts/$arm.container-id"
   local ready=0
@@ -78,6 +84,28 @@ start_server() {
   done
   sudo docker logs "$container" >"$artifacts/$arm.server-start.log" 2>&1 || true
   [[ "$ready" -eq 1 ]] || fail "$arm.server_not_ready"
+  if [[ "$arm" == "mtp" ]]; then
+    python3 - "$artifacts/$arm.repair-diagnostic.json" <<'PY' || fail mtp_repair_diagnostic_failed
+import json, pathlib, sys, urllib.request
+body = {
+    "model": "google/gemma-4-31B-it",
+    "messages": [{"role": "user", "content": "Reply with exactly: READY"}],
+    "temperature": 0, "seed": 20260718, "max_tokens": 32,
+}
+request = urllib.request.Request(
+    "http://127.0.0.1:30000/v1/chat/completions",
+    json.dumps(body).encode(), {"Content-Type": "application/json"},
+)
+with urllib.request.urlopen(request, timeout=180) as response:
+    raw = response.read()
+item = json.loads(raw)
+text = item["choices"][0]["message"]["content"].strip()
+result = {"pass": text == "READY", "prompt_registry_tokens": 18, "response": text,
+          "response_bytes": len(raw), "repair": "SGLANG_EAGER_INPUT_NO_COPY"}
+pathlib.Path(sys.argv[1]).write_text(json.dumps(result, indent=2) + "\n")
+assert result["pass"]
+PY
+  fi
 }
 
 run_arm() {
@@ -121,11 +149,16 @@ diag_equal=[a['output_token_ids_sha256']==b['output_token_ids_sha256'] for a,b i
 row_equal=[a['output_token_ids_sha256']==b['output_token_ids_sha256'] for a,b in zip(c['rows'],m['rows'])]
 target_modules=[json.loads(x) for x in pathlib.Path(out.parent/'mtp-audit/modules.jsonl').read_text().splitlines() if x]
 consumers=[json.loads(x) for x in pathlib.Path(out.parent/'mtp-audit/consumers.jsonl').read_text().splitlines() if x]
+qkv=[json.loads(x) for x in pathlib.Path(out.parent/'mtp-audit/qkv.jsonl').read_text().splitlines() if x]
 target_fp8=any('language_model' in str(x.get('prefix')) or str(x.get('prefix','')).startswith('model.layers') for x in target_modules)
 target_consumer=any('language_model' in str(x.get('prefix')) or str(x.get('prefix','')).startswith('model.layers') for x in consumers)
 telemetry=m['speculation']; valid=all(diag_equal) and all(row_equal) and target_fp8 and target_consumer and telemetry.get('pass') is True
-classification='frontier_pass' if valid and candidate<=0.7145910375209391 else ('stable_positive' if valid and reduction>0 else 'mtp_negative')
-v={'schema_version':1,'status':'terminal','classification':classification,'pass':valid and reduction>0,'control':c,'mtp':m,'control_service_seconds_per_request':control,'mtp_service_seconds_per_request':candidate,'reduction_fraction':reduction,'frontier_ceiling_seconds_per_request':0.7145910375209391,'frontier_pass':valid and candidate<=0.7145910375209391,'promotion_pass':valid and reduction>=0.04537074092551777,'diagnostic_output_ids_equal':all(diag_equal),'exact_output_ids_equal':all(row_equal),'target_fp8_module_proven':target_fp8,'target_fp8_consumer_proven':target_consumer,'speculation':telemetry}
+repair=json.load(open(out.parent/'mtp.repair-diagnostic.json'))
+target_qkv=bool(qkv) and all(x.get('candidate_symbol')=='_qkv_norm_rope_inplace_kernel' for x in qkv)
+rows_valid=all(x.get('complete_requests')==32 and len(x.get('rows',[]))==32 and x.get('cache',{}).get('cached_prompt_tokens_delta')==17120 and x.get('cache',{}).get('uncached_prompt_tokens_delta')==117728 for x in (c,m))
+valid=valid and repair.get('pass') is True and target_qkv and rows_valid
+classification='frontier_pass' if valid and candidate<=0.6381105231 else ('promotion_pass' if valid and reduction>=0.05 else 'mtp_negative')
+v={'schema_version':1,'status':'terminal','classification':classification,'pass':valid and (candidate<=0.6381105231 or reduction>=0.05),'control':c,'mtp':m,'control_service_seconds_per_request':control,'mtp_service_seconds_per_request':candidate,'reduction_fraction':reduction,'frontier_ceiling_seconds_per_request':0.6381105231,'frontier_pass':valid and candidate<=0.6381105231,'promotion_pass':valid and reduction>=0.05,'diagnostic_output_ids_equal':all(diag_equal),'exact_output_ids_equal':all(row_equal),'target_fp8_module_proven':target_fp8,'target_fp8_consumer_proven':target_consumer,'target_qkv_epilogue_proven':target_qkv,'repair_diagnostic':repair,'rows_valid':rows_valid,'speculation':telemetry}
 tmp.write_text(json.dumps(v,indent=2,sort_keys=True)+'\n'); os.replace(tmp,out)
 PY
 atomic_json "$artifacts/WORKER_TERMINAL.json" completed paired_scientific_terminal_persisted

@@ -1,0 +1,125 @@
+{
+  "analytical_mechanism": {
+    "bandwidth_scenarios_tb_per_second": {
+      "1.0": {
+        "byte_only_seconds_per_request": 0.01289453568,
+        "residual_microseconds_required_per_eliminated_launch": 42.61299069404214
+      },
+      "2.0": {
+        "byte_only_seconds_per_request": 0.00644726784,
+        "residual_microseconds_required_per_eliminated_launch": 50.918649747182236
+      },
+      "3.0": {
+        "byte_only_seconds_per_request": 0.00429817856,
+        "residual_microseconds_required_per_eliminated_launch": 53.6872027648956
+      },
+      "4.8": {
+        "byte_only_seconds_per_request": 0.0026863616,
+        "residual_microseconds_required_per_eliminated_launch": 55.76361752818063
+      }
+    },
+    "eliminated_intermediate_bytes_per_batch": 412625141760,
+    "eliminated_launches_per_batch": 24840,
+    "evidence_type": "analytical",
+    "global_eliminated_intermediate_bytes_per_token_layer": 73728,
+    "interpretation": "Traffic removal alone does not clear the gate at any listed bandwidth. Promotion therefore requires the head-granular candidate to recover tens of microseconds per eliminated token-granular launch through higher decode occupancy as well as one-pass traffic.",
+    "local_eliminated_intermediate_bytes_per_token_layer": 49152,
+    "required_batch_saving_seconds": 1.4711318306000067
+  },
+  "bound_evidence": {
+    "checkpoint_config": {
+      "actual_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "expected_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "pass": true,
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_h200_matched_endpoint_falsifier/artifacts/checkpoint-owner-20260717T072831Z/checkpoint/config.json"
+    },
+    "comparator": {
+      "actual_sha256": "1a7e778eff080bf2eec27da939ea85a894ea9884036bdebd562af371405e78c3",
+      "expected_sha256": "1a7e778eff080bf2eec27da939ea85a894ea9884036bdebd562af371405e78c3",
+      "pass": true,
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fused_qk_norm_rope_endpoint/artifacts/fused-qk-norm-rope-c32-canonical-20260718t1817z/TERMINAL.json"
+    },
+    "profile_summary": {
+      "actual_sha256": "1979d50e96571982fe43d71071b34e3cad47602f2fd8dc0b94e722dd4043c779",
+      "expected_sha256": "1979d50e96571982fe43d71071b34e3cad47602f2fd8dc0b94e722dd4043c779",
+      "pass": true,
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_critical_path_profile/PROFILE_SUMMARY.json"
+    }
+  },
+  "geometry": {
+    "global": {
+      "head_dim": 512,
+      "kv_heads": 4,
+      "layers": 10,
+      "qkv_width": 20480,
+      "rotary_fraction": 0.25
+    },
+    "hidden_size": 5376,
+    "layers": 60,
+    "local": {
+      "head_dim": 256,
+      "kv_heads": 16,
+      "layers": 50,
+      "qkv_width": 16384,
+      "rotary_fraction": 1.0
+    },
+    "query_heads": 32
+  },
+  "kind": "gemma4_qkv_epilogue_offline_preparation",
+  "oracle_rows": [
+    {
+      "head_dim": 256,
+      "maximum_absolute_error": 0.0,
+      "name": "local",
+      "pass": true,
+      "rope_angles_per_half": 128,
+      "rows": [
+        {
+          "kind": "q",
+          "maximum_absolute_error": 0.0
+        },
+        {
+          "kind": "k",
+          "maximum_absolute_error": 0.0
+        },
+        {
+          "kind": "v",
+          "maximum_absolute_error": 0.0
+        }
+      ]
+    },
+    {
+      "head_dim": 512,
+      "maximum_absolute_error": 0.0,
+      "name": "global_partial",
+      "pass": true,
+      "rope_angles_per_half": 64,
+      "rows": [
+        {
+          "kind": "q",
+          "maximum_absolute_error": 0.0
+        },
+        {
+          "kind": "k",
+          "maximum_absolute_error": 0.0
+        },
+        {
+          "kind": "v",
+          "maximum_absolute_error": 0.0
+        }
+      ]
+    }
+  ],
+  "pass": true,
+  "pinned_source_rows": {},
+  "schema_version": 1,
+  "scientific_terminal": false,
+  "source_audit": {
+    "kernel_allocation_tokens": [],
+    "kernel_store_statements": 2,
+    "pass": true,
+    "program_sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d",
+    "wrapper_candidate_launches": 1
+  },
+  "source_commit": "127b9e3283f7c2a43234b852ff5c9f1796d53624"
+}

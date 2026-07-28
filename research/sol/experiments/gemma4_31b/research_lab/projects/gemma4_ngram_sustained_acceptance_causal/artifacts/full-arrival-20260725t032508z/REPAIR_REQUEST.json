@@ -1,0 +1,9 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_sustained_acceptance_causal/request_local_owner.py",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_sustained_acceptance_causal/request_local_owner.py",
+  "ready_sha256": "c5982d8fc1371d7524fa970070bc09b9a56a39eb7a4cfb3f62731463f28bba1a",
+  "requested_at_utc": "2026-07-25T03:26:13.283433Z",
+  "retry_scope": "sudo-only launch repair",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

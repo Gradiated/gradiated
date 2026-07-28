@@ -1,30 +1,36 @@
 {
   "schema_version": 1,
   "id": "h100_hybrid_attention_kernel_mechanism",
-  "status": "complete",
-  "priority": 8680,
-  "researcher_profile": "deep",
+  "status": "paused",
+  "priority": 9790,
+  "researcher_profile": "execution",
   "allocation_limit": 1,
-  "authorized_spend_usd": 0.0,
-  "actual_spend_usd": 0.0,
+  "authorized_spend_usd": 9.0,
+  "actual_spend_usd": 5.771031118574266,
   "active_session": null,
   "hypothesis": "A fresh execution-equivalent pinned-vLLM program can expose the actual H100 BF16-versus-E4M3 paged-KV mechanism while preserving matched full-context geometry, semantic oracles, fail-closed counters, and the 5% whole-request discriminator.",
-  "decision": "source_complete_start_ready_pending_director_h100_admission",
-  "next_action": "Director may review H100_PAGED_FP8_EXECUTION_READY.json and, only in a later decision, admit one H100 run. GPU claims and provider creation remain forbidden by this terminal.",
-  "summary": "Published a fresh execution-equivalent registered-Attention program with native KV-cache spec and CommonAttentionMetadata construction, deterministic full-context BF16/E4M3 arms, paired timing, independent oracle, NVTX-scoped fail-closed counters, atomic sentinel, conditional c8/c16/c32 sweep, and exact 50/10-layer by 358-step economic aggregation. All 17 narrow CPU-mocked/static tests pass. No provider was queried or mutated and no GPU sample was consumed.",
-  "provider_mutation": "forbidden",
+  "decision": "typed_observer_boundary_ncu_absent_after_primitive_pair_success",
+  "next_action": "Remain paused and GPU-ineligible. The primitive pair-worker completed local1024-c8 with full command/output/traceback capture and valid numerical oracles, but the pinned image and guest have no ncu binary, so the required counter-gated row is incomplete. Await a director decision; do not replay the pair row or create provider resources.",
+  "summary": "Recovery captured and repaired two ordinary integration defects in-claim. The sole unstarted local1024-c8 pair-worker then completed, but required NCU counters were unavailable in the pinned image and guest PATH; no complete decision-bearing scientific sample was consumed. Bench released to maintenance with evidence preserved.",
+  "provider_mutation": "director_atomically_replaced_cleanup_watchdog_and_marked_registered_h100_ready",
+  "reservation_gate": "Satisfied: the full $6.00 reservation is durable and the replacement watchdog protects the cumulative lifecycle through 2026-07-26T17:37:01.095093Z.",
   "bench_need": {
     "accelerator": "nvidia-h100-sxm",
     "claim_allowed": false,
     "provider_create_allowed": false,
-    "claim_gate": "future_director_review_of_H100_PAGED_FP8_EXECUTION_READY.json"
+    "reason": "The exact $9.00 cumulative reservation is not durable and the protected warm H100 is assigned next to the fully bound packed-M384 verifier."
   },
-  "compute_budget": "At most 4 local CPU-hours; zero accelerator seconds.",
-  "storage_budget": "At most 1 GiB of new project-local source, fixtures, tests, and terminal artifacts.",
-  "wall_clock_budget": "90 researcher minutes.",
+  "compute_budget": "At most 1,800 H100 GPU-seconds in one claim; no checkpoint or endpoint work.",
+  "storage_budget": "At most 100 GiB on one director-created boot disk; retain only source, image/compiler caches, and decision artifacts.",
+  "wall_clock_budget": "At most 120 cumulative provider minutes from 2026-07-26T15:37:01.095093Z and at most 50 claimed minutes, with release at least five minutes before the replacement watchdog.",
   "current_binding": {
-    "path": "DIRECTOR_EXECUTION_EQUIVALENT_READMISSION_20260726.json",
-    "issued_at_utc": "2026-07-26T04:57:00Z"
+    "path": "DIRECTOR_H100_PRIMITIVE_TRACEBACK_RECOVERY_20260726T1626Z.json",
+    "issued_at_utc": "2026-07-26T16:26:49Z"
+  },
+  "spend_reconciliation": {
+    "artifact": "DIRECTOR_H100_SPEND_RECONCILIATION_20260726T0843Z.json",
+    "additional_settled_spend_usd": 2.8484111772825984,
+    "campaign_available_usd_after": 0.2203939745231516
   },
   "prior_terminal": {
     "path": "MECHANISM.json",
@@ -41,15 +47,17 @@
     "provider_spend_usd": 0.0
   },
   "terminal_artifact": {
-    "path": "H100_PAGED_FP8_EXECUTION_READY.json",
-    "sha256": "b26a26d28c6062b3bca58c8ae201f4471b1cfeeef82875576819e35a79fad379",
-    "result": "source_complete_start_ready",
-    "pass": true,
-    "generated_at_utc": "2026-07-26T05:11:07.220231Z"
+    "path": "artifacts/h100-paged-fp8-execution-20260726t1632z-retry2/H100_PAGED_FP8_EXECUTION_TERMINAL.json",
+    "sha256": "3db93743d65d8348ca56881c166b7bc568829930af86e968b78fc9374cb16486",
+    "result": "integration_error",
+    "pass": false,
+    "generated_at_utc": "2026-07-26T16:36:27.689240Z",
+    "scientific_sample_consumed": false
   },
   "source_readiness": {
     "fresh_execution_program": "paged_fp8_execution.py",
-    "program_sha256": "fdafc7a2d20abddc4a82a6c7e34c98de9f7a75e7ecccfeab2152485613cc1918",
+    "program_sha256": "0b29906dbf474a3b437176d0a032a99ee4647157aa53837e5c7942fbc5bf5a1b",
+    "readiness_sha256": "2df7cc410318b062b283b62b8015c9c27d03f0ab62b86b3c8adb8ca427095674",
     "contract_sha256": "bc993832a5e5079bd0f7715b96af28ec1cec26dc5f63aaf07cd3f1303d2695d6",
     "tests": 17,
     "tests_pass": true,
@@ -57,8 +65,55 @@
     "provider_create_allowed": false,
     "gpu_claim_allowed": false
   },
-  "completed_at_utc": "2026-07-26T05:11:07.220231Z",
+  "controller_binding": {
+    "path": "H100_CURRENT_RECORD_CONTROLLER_BINDING.json",
+    "sha256": "c7af892879f2daa0bc225bc93241f86c953b50b77710bedad41a3fca2aedb64d",
+    "controller": "run_h100_controller.py",
+    "controller_sha256": "712bdeaf05bafe0424144ac325ad724695455ee8b9c3d14181b160adef71f344",
+    "bench_id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+    "typed_result": "current_record_binding_ready",
+    "provider_contacted": false,
+    "provider_mutated": false,
+    "bench_claimed": true,
+    "cuda_invoked": false
+  },
   "scientific_sample_consumed": false,
   "gpu_scientific_sample_consumed": false,
-  "gpu_claimed": false
+  "gpu_claimed": false,
+  "last_observation": {
+    "observed_at_utc": "2026-07-26T16:37:27.622198Z",
+    "classification": "typed_ncu_observer_boundary_after_primitive_pair_success",
+    "readmission_hash_verification": {
+      "binding": "DIRECTOR_H100_READMISSION_20260726T1531Z.json",
+      "binding_sha256": "6db57ce4696e377cb937dac52a08d90d3eb26231e74d9f91b260a6baa55ffdf9",
+      "offline_repair_sha256": "071f64c8250a06605073ff9b4bf444f0a34dd7a17e1b0c27e80e5275e689e237",
+      "readiness_sha256": "3df9df1887fdd0106bcebbe58bebc206bfd7df3cc7e197fff1740830099de93f",
+      "program_sha256": "116bbfed88bf18ada2a503bf5626d0cea0577eb4efc0c508a769eaafb7820b8b",
+      "contract_sha256": "bc993832a5e5079bd0f7715b96af28ec1cec26dc5f63aaf07cd3f1303d2695d6",
+      "pass": true
+    },
+    "reservation": {
+      "authorized_usd": 6.0,
+      "reserved_at": "2026-07-26T15:45:39.018235Z",
+      "durable_evidence": "The supplied spend snapshot durably reserves the full $6.00 cumulative project authority."
+    },
+    "bench_requirement": {
+      "accelerator": "nvidia-h100-sxm",
+      "registered_compatible_benches_found": 1,
+      "authenticated_platform_available": true,
+      "claim_attempted": false,
+      "provider_mutation": true,
+      "instance_id": "computeinstance-e00mkpyvykfak0bg1m",
+      "public_ipv4": "89.169.109.0",
+      "watchdog_unit": "gemma4-h100-paged-fp8-20260726t1737-watchdog.service",
+      "watchdog_active": true,
+      "strict_ssh_probe_passed": true,
+      "ssh_ed25519_fingerprint": "SHA256:QmMzoOOoCH6C4OBDN/EWgbVtH3QpZpjAvfoanqLUqoE",
+      "bench_id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+      "bench_status": "available"
+    },
+    "live_pool_snapshot": "Exact H100 is registered, available, unclaimed, identity-verified, and protected by the replacement watchdog through 2026-07-26T17:37:01.095093Z; the predecessor watchdog is inactive.",
+    "next_owner": "Execution researcher claims through the repaired controller and runs the single unchanged component immediately.",
+    "required_action": "Run the bound controller once with absolute deadline 2026-07-26T17:32:01.095093Z and persist the typed terminal; do not mutate provider lifecycle."
+  }
 }

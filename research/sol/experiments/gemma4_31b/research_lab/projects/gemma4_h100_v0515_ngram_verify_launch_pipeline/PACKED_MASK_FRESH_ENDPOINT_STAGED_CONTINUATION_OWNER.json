@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_verify_launch_pipeline/staged_continuation_owner.sh"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_verify_launch_pipeline",
+  "launched_at_utc": "2026-07-25T14:02:37.323840Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_verify_launch_pipeline/PACKED_MASK_FRESH_ENDPOINT_STAGED_CONTINUATION_OWNER.log",
+  "pid": 773066,
+  "start_ticks": 110417472,
+  "unit_manager": "pid"
+}

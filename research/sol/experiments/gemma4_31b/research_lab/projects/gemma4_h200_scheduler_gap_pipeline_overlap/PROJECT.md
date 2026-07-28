@@ -45,3 +45,11 @@ Keep this scientific question in the same project. In one retained claim, first 
 If the observed source already implements the overlap, invalidates the 358-gap causal chain, or admits no single equivalent source-bound intervention, close this mechanism without an endpoint run. Do not reuse or relabel the prior pair or trace, replay continuous-decode steps, sweep flags, change workload geometry, or introduce a second scheduler candidate. The iteration contract is `ITERATION2_SOURCE_REBIND.json`.
 
 Iteration 2 has `$12.00` authorization and must not claim the retained bench until that reservation is durable.
+
+## Iteration 2 candidate-injection repair
+
+Iteration 2 successfully rebound the 358-gap mechanism to the observed live source, but its candidate-labeled endpoint did not instantiate the scheduler intervention. SGLang multiprocess startup reran the non-idempotent retained predecessor installer before scheduler installation. The control and candidate audits are byte-identical at SHA256 `93312a0ba2895ed972a18901a2a444817f4eab9e5ee6e1a5d18e976f07382afc`, and neither includes `Scheduler.run_batch.observed_source_schedule_stream_forward_penalty_snapshot`. Therefore the raw `0.674524976→0.674440688 s/request` delta is control-equivalent noise, not scheduler evidence, and the candidate arm is unconsumed.
+
+Keep the same project and frozen scientific intervention. After the `$6.00` repair reservation is durable, use the retained H200 to change only worker-local installer ordering/idempotency and add non-semantic installation-complete proof. Do not change the observed-source intervention implementation SHA256 `3b5aa497985a400c16189db8359a458d981adff66d8465c26a92ed54394414e6`, checkpoint, runtime image, workload, stacked predecessor, comparator, or decision gates.
+
+Once the actual serving worker proves successful installation before requests, rerun only the invalidated candidate endpoint in a fresh artifact namespace against the retained valid control `0.6745249759062517 s/request`. Require 32/32 exact accounting and the runtime scheduler-path event, then collect one minimum candidate trace. Do not replay control or repair after any partial or ambiguous candidate execution. The bounded contract is `ITERATION2_CANDIDATE_INJECTION_REPAIR.json`.

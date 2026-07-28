@@ -126,7 +126,7 @@ def wait_server():
 
 def inspect_container(launch):
     result = subprocess.run(
-        ["docker", "inspect", CONTAINER],
+        ["sudo", "docker", "inspect", CONTAINER],
         text=True,
         capture_output=True,
         check=False,

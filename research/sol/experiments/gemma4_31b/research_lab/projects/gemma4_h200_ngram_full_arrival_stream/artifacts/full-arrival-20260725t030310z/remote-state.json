@@ -1,0 +1,5 @@
+{
+  "stdout": "{\"command\": [\"env\", \"FULL_ARRIVAL_ROOT=/home/glmrunner/gemma4-ngram-full-arrival-stream\", \"python3\", \"remote_full_arrival.py\"], \"cwd\": \"/home/glmrunner/gemma4-ngram-full-arrival-stream\", \"launched_at_utc\": \"2026-07-25T03:03:17.296082Z\", \"live\": false, \"log\": \"/home/glmrunner/gemma4-ngram-full-arrival-stream/OWNER.log\", \"pid\": 37679, \"start_ticks\": 960199, \"unit_manager\": \"remote-shell\"}\nFINAL\n",
+  "stderr": "",
+  "at_utc": "2026-07-25T03:16:04.397891+00:00"
+}

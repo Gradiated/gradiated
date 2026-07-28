@@ -1,0 +1,19 @@
+{
+  "candidate": {
+    "maximum_ms": 0.11430399864912033,
+    "median_ms": 0.1043199971318245,
+    "minimum_ms": 0.10227199643850327,
+    "p90_ms": 0.10896000266075134
+  },
+  "candidate_output_consumed_sum_squares": 202123.0625,
+  "candidate_output_finite": true,
+  "consumer_chain": "per_token_fp8 -> fp8_scaled_mm(gate_up) -> GeluAndMul(tanh) -> per_token_fp8 -> fp8_scaled_mm(down)",
+  "control": {
+    "maximum_ms": 0.13699199259281158,
+    "median_ms": 0.12548799812793732,
+    "minimum_ms": 0.12265600264072418,
+    "p90_ms": 0.1297920048236847
+  },
+  "m": 32,
+  "reduction_fraction": 0.16868546244981653
+}

@@ -1,0 +1,43 @@
+{
+  "accelerator": "nvidia-h100-sxm",
+  "contents": {
+    "schema_version": 1,
+    "project": "gemma4_h100_v0515_ngram_price_normalized",
+    "result": "registered_empty_200gib_h100_replacement_for_bound_endpoint",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint": "The exact immutable checkpoint is project-local and ready for manifest-bound staging; no checkpoint is assumed resident on this fresh replacement.",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6; not yet loaded.",
+    "caches": "Fresh 200-GiB boot geometry; no model, image, tokenizer, CUDA, or workload cache is assumed resident.",
+    "server_state": "Replacement provider instance exists with exactly one active cleanup watchdog. Guest readiness, exact staging, pinned-image inspection, server load, endpoint execution, and artifact retrieval remain delegated.",
+    "candidate": "The valid 171-request discriminator is consumed and forbidden to replay. Only the sole 791-request endpoint remains unconsumed.",
+    "director_binding": "gemma4_h100_v0515_ngram_price_normalized/DIRECTOR_200GIB_ENDPOINT_REPLACEMENT_BINDING.json",
+    "director_binding_sha256": "784a0141704007596fc05b566f75918d91d5b72d35e890f1c6d99e9e01465764",
+    "contents_artifact": "gemma4_h100_v0515_ngram_price_normalized/H100_200GIB_R2_CONTENTS.json",
+    "contents_artifact_sha256": "c97c4dba255189b9030658524b7107951a5221fc571601245db55d3435e6caec",
+    "boot_disk_gib": 200,
+    "boot_disk_semantics": "Director-selected risk-reduction geometry; not a measured minimum.",
+    "next": "Priority-8490 may claim once, verify the replacement binding and current identity, stage the exact checkpoint and packet, prove pinned-image space with the repaired parser, and run only the sole 791-request endpoint. Persist a typed terminal and release by 2026-07-25T12:25:00Z."
+  },
+  "hourly_cost_usd": 2.95,
+  "id": "h100-v0515-endpoint-200g-r2-e00yfnrrfczsdjevms",
+  "lifecycle": {
+    "deadline_utc": "2026-07-25T12:30:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-v0515-endpoint-20260725t1230-watchdog.service",
+      "main_pid": 634670,
+      "unit": "gemma4-h100-v0515-endpoint-20260725t1230-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "resource": {
+    "disk_id": "computedisk-e00cjpqvtz8x59514m",
+    "disk_name": "gemma4-h100-v0515-endpoint-200g-20260725t1026z-boot",
+    "instance_id": "computeinstance-e00yfnrrfczsdjevms",
+    "instance_name": "gemma4-h100-v0515-endpoint-200g-20260725t1026z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.124.194",
+    "ssh_user": "glmrunner"
+  }
+}

@@ -55,34 +55,34 @@
   },
   "files": [
     {
-      "bytes": 14946,
+      "bytes": 17689,
       "mode": "0o444",
       "path": "exact_consumer_oracle.py",
-      "sha256": "7a8722084244263232f1159af533aa5a276bf786d7099c543e347d508e29bb61"
+      "sha256": "7ae05e279b0f501a5751105be0e6175a6fc1bb908d2227d3fedead37df4e2ce3"
     },
     {
-      "bytes": 9856,
+      "bytes": 12225,
       "mode": "0o444",
       "path": "endpoint_pair.py",
-      "sha256": "777894b1e344737b1348d9fec6b330439ef0ccb2db355e27ab32f728b3d5d413"
+      "sha256": "ae7eefaf3ec8eae0935426dd753c5bd65bd093e853f25664a42458664ccdd23c"
     },
     {
-      "bytes": 9098,
+      "bytes": 9827,
       "mode": "0o444",
       "path": "remote_experiment.py",
-      "sha256": "a0cde6f7e2218d1834a4d3010cb383a204bc667a91d511c219ec62b37ee9e58e"
+      "sha256": "bc6aeacdc210a8b67a15823153760c8086dccd0de39dcdeeb32e7eb0e4ba3750"
     },
     {
-      "bytes": 35385,
+      "bytes": 35741,
       "mode": "0o444",
       "path": "intervention/extend_attention_fixed_m384.py",
-      "sha256": "3086f691c3574900a24907c1273fb9dc1cdf5191e8e217e7b98fe36f3b394877"
+      "sha256": "33d6bec04ab04e006b5e96d95dce56444edb59c519f242a0b6690a5f6e5bcfed"
     },
     {
-      "bytes": 9494,
+      "bytes": 9609,
       "mode": "0o444",
       "path": "inputs/harness/exact_runner.py",
-      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+      "sha256": "e0db801cd2c500456791e4134cb9ec6749760fc8668e7e5fa780dbccaf99547a"
     },
     {
       "bytes": 6179,
@@ -128,7 +128,7 @@
     }
   ],
   "hypothesis": {
-    "causal_change": "Dispatch only H200 batch-32, 384-row, max-extend-12, head-dim 256/512 target verification from stock BLOCK_M 64/32 to BLOCK_M 8.",
+    "causal_change": "Dispatch only H200 batch-32, 384-row, max-extend-12 sliding-window head-dim 256 target verification from stock BLOCK_M 64 to BLOCK_M 8; retain stock BLOCK_M 32 for global head-dim 512.",
     "prediction": "Fewer padded query rows and less live accumulator state lower warm attention time despite doubling query-block grid depth.",
     "unchanged": [
       "BLOCK_N=64",
@@ -136,7 +136,7 @@
       "page-1 paged KV indices and FP8 E5M2 values",
       "BF16 query/output contract",
       "request ownership, positions, and cache accounting",
-      "stock fallback for every non-M384 geometry"
+      "stock global geometry and stock fallback for every other shape"
     ]
   },
   "kind": "gemma4_h200_fixed_m384_q12_attention_executor_packet",

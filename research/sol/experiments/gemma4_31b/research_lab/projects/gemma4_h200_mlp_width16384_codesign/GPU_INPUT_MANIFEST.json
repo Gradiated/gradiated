@@ -7,9 +7,9 @@
       "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_epilogue_fusion/proven_v0513_endpoint_entrypoint.py"
     },
     {
-      "bytes": 9494,
+      "bytes": 9544,
       "path": "inputs/bound/fp8_qkv_paired_runner.py",
-      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+      "sha256": "0fffaf68d13bdda39bb36cedc5a1e15b63acbdef52d642feb9f3cb9ec3432f0a",
       "source_provenance": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_epilogue_fusion/fp8_qkv_paired_runner.py"
     },
     {
@@ -117,19 +117,19 @@
       "sha256": "2ef1945a05f5f1e8ad977ecf5e21fa63749efd546d9a5a4726547fe6ccb2647c"
     },
     {
-      "bytes": 4594,
+      "bytes": 7193,
       "path": "sitecustomize.py",
-      "sha256": "83484dcbef6d2902ce34b2feca58bab44b9055ce4d507aecf5fdf3b8762730e6"
+      "sha256": "ea0327ceefcca4c99594aa74afb886fdfe742f657012a09f6cd62e3b7f198695"
     },
     {
-      "bytes": 10707,
+      "bytes": 9708,
       "path": "remote_width16384.sh",
-      "sha256": "ed114a20f3b901b53e8c3b89c487908c422603d1e2f06589ae3e7615f99e784e"
+      "sha256": "d556d8e15754999bc2019f7b3d018736439f6f3fbb76ddc5a62dbea5ff2a7c7a"
     },
     {
-      "bytes": 15396,
+      "bytes": 15216,
       "path": "run_bench_owner.py",
-      "sha256": "5b1162ec94a6a0a57eefac2086a4f176b4b49fffa047ad9171282f808bb1dcd4"
+      "sha256": "a24e46cbe413553f438077576d853f4c2654644081a0a7ea346cad2c6b5340ae"
     }
   ],
   "runtime": {
@@ -137,6 +137,12 @@
     "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
   },
   "schema_version": 1,
+  "settled_bound": {
+    "bytes": 858,
+    "path": "artifacts/width16384-component-repair2-20260723t1224z/retrieved/BOUND.json",
+    "sha256": "8127a1a6e89887662580b5fe552c1f6bc9cf5eeff4b28141a4c894fbbb6e6dc1",
+    "source_provenance": "settled exact-shape component result and trace-derived whole-request bound; endpoint iteration must not replay it"
+  },
   "selection": {
     "bytes": 14267689,
     "path": "inputs/selection/JOINT_NORM_SELECTION.json",

@@ -35,6 +35,88 @@ def atomic(path: pathlib.Path, value: object) -> None:
     temp.replace(path)
 
 
+def archive_existing_output(root: pathlib.Path) -> None:
+    if not root.exists():
+        return
+    archive = root.with_name(f"{root.name}.archived-{time.time_ns()}")
+    root.replace(archive)
+    files = [
+        {
+            "path": str(path.relative_to(archive)),
+            "bytes": path.stat().st_size,
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        }
+        for path in sorted(archive.rglob("*"))
+        if path.is_file()
+    ]
+    atomic(
+        root.parent / "REQUEST_OUTPUT_ARCHIVE.json",
+        {"classification": "archived_prior_exclusive_request_output", "archive": str(archive), "files": files},
+    )
+
+
+def recover_complete_capture(root: pathlib.Path, concurrency: int) -> bool:
+    capture_root = root.parent
+    manifest = capture_root / "chunks.jsonl"
+    request_terminal = root / "TERMINAL.json"
+    terminal = capture_root / "CAPTURE_TERMINAL.json"
+    if not manifest.is_file() or not request_terminal.is_file() or terminal.exists():
+        return False
+    try:
+        request = json.loads(request_terminal.read_text())
+    except (OSError, json.JSONDecodeError):
+        return False
+    if request.get("pass") is not True or request.get("complete_requests") != concurrency:
+        return False
+    try:
+        manifest_rows = [json.loads(line) for line in manifest.read_text().splitlines() if line.strip()]
+    except (OSError, json.JSONDecodeError):
+        return False
+    if not manifest_rows:
+        return False
+    import torch
+
+    row_count = 0
+    request_indices: set[int] = set()
+    for entry in manifest_rows:
+        chunk_name = entry.get("chunk")
+        expected_rows = entry.get("rows")
+        expected_sha = entry.get("sha256")
+        if not isinstance(chunk_name, str) or pathlib.Path(chunk_name).name != chunk_name:
+            raise RuntimeError("capture_recovery_invalid_chunk_name")
+        chunk = capture_root / chunk_name
+        if not chunk.is_file() or hashlib.sha256(chunk.read_bytes()).hexdigest() != expected_sha:
+            raise RuntimeError("capture_recovery_chunk_hash_mismatch")
+        payload = torch.load(chunk, map_location="cpu")
+        rows = payload.get("rows") if isinstance(payload, dict) else None
+        if not isinstance(rows, list) or len(rows) != expected_rows:
+            raise RuntimeError("capture_recovery_chunk_rows_mismatch")
+        for row in rows:
+            index = row.get("request_index") if isinstance(row, dict) else None
+            rid = row.get("rid") if isinstance(row, dict) else None
+            if not isinstance(index, int) or not 0 <= index < concurrency or rid != f"causal-offset-{index:02d}":
+                raise RuntimeError("capture_recovery_request_mapping_invalid")
+            request_indices.add(index)
+        row_count += len(rows)
+    if row_count == 0 or request_indices != set(range(concurrency)):
+        raise RuntimeError("capture_recovery_request_mapping_incomplete")
+    atomic(
+        terminal,
+        {
+            "schema_version": 1,
+            "classification": "one_pass_target_tap_capture_recovered",
+            "pass": True,
+            "rows": row_count,
+            "request_mapping_count": len(request_indices),
+            "chunks": len(manifest_rows),
+            "manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
+            "request_terminal_sha256": hashlib.sha256(request_terminal.read_bytes()).hexdigest(),
+            "recovered_unix_s": time.time(),
+        },
+    )
+    return True
+
+
 def tokens(label: str, count: int) -> list[int]:
     result: list[int] = []
     index = 0
@@ -143,13 +225,16 @@ def main() -> int:
     args = parser.parse_args()
     concurrency = args.concurrency
     root = args.output
+    if recover_complete_capture(root, concurrency):
+        return 0
+    archive_existing_output(root)
     root.mkdir(parents=True, exist_ok=False)
     prefix = tokens("common-prefix", COMMON_TOKENS)
     bodies = []
     for index in range(concurrency):
         suffix = tokens(f"suffix-{index}", PROMPT_TOKENS - COMMON_TOKENS)
         suffix[0] = 200000 + index
-        bodies.append({"model": MODEL, "prompt": prefix + suffix, "max_tokens": OUTPUT_TOKENS, "min_tokens": OUTPUT_TOKENS, "ignore_eos": True, "temperature": 0, "seed": 20260718, "stream": True, "stream_options": {"include_usage": True}, "return_token_ids": True, "add_special_tokens": False})
+        bodies.append({"model": MODEL, "prompt": prefix + suffix, "rid": f"causal-offset-{index:02d}", "max_tokens": OUTPUT_TOKENS, "min_tokens": OUTPUT_TOKENS, "ignore_eos": True, "temperature": 0, "seed": 20260718, "stream": True, "stream_options": {"include_usage": True}, "return_token_ids": True, "add_special_tokens": False})
     atomic(root / "WORKLOAD.json", {"prompt_tokens": PROMPT_TOKENS, "output_tokens": OUTPUT_TOKENS, "concurrency": concurrency, "shared_prefix_tokens": COMMON_TOKENS, "intended_shared_prefix_fraction": COMMON_TOKENS / PROMPT_TOKENS, "request_sha256": [hashlib.sha256(canonical(x)).hexdigest() for x in bodies]})
     get("/v1/models")
     try:
@@ -158,7 +243,7 @@ def main() -> int:
         (root / "flush_cache.error").write_text(repr(exc) + "\n")
     warmup_suffix = tokens("warmup-suffix", PROMPT_TOKENS - COMMON_TOKENS)
     warmup_suffix[0] = 199999
-    warmup = dict(bodies[0]); warmup.update({"prompt": prefix + warmup_suffix, "max_tokens": 1, "min_tokens": 1, "stream": False})
+    warmup = dict(bodies[0]); warmup.pop("rid", None); warmup.update({"prompt": prefix + warmup_suffix, "max_tokens": 1, "min_tokens": 1, "stream": False})
     with post(warmup) as response:
         (root / "warmup.json").write_bytes(response.read())
     before = get("/metrics"); (root / "metrics-before.prom").write_bytes(before)

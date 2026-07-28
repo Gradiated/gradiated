@@ -15,7 +15,7 @@ import time
 
 
 PROJECT_NAME = "sglang_v0512_h200_gemma4_mtp_endpoint"
-BENCH = "h200-kernel-frontier-e00pfvrckjvwn7bhet"
+BENCH = "h200-v0513-fp8qkv-e00t4pa49nhc2g7jwe"
 LAB = pathlib.Path("/root/workspace/research/sol/experiments/gemma4_31b/research_lab")
 PROJECT = LAB / "projects" / PROJECT_NAME
 FACTORY = pathlib.Path("/root/workspace/research/factory/src")
@@ -23,9 +23,10 @@ NEBIUS_TOOLS = pathlib.Path("/root/workspace/research/sol/experiments/glm47flash
 SSH_KEY = pathlib.Path("/root/.config/nebius/glm-campaign/ssh_ed25519")
 KNOWN_HOSTS = pathlib.Path("/root/.config/nebius/glm-campaign/known_hosts")
 REMOTE = "/home/glmrunner/gemma-kernel-frontier"
+CHECKPOINT_REMOTE = "/home/glmrunner/gemma4-h200-v0513-fp8-qkv-residual-profile/checkpoint"
 RATE = 2.46
-PRIOR_SPEND = 2.31
-SPEND_CEILING = 3.75
+PRIOR_SPEND = 2.75729444993337
+SPEND_CEILING = 6.50
 
 
 def run(command: list[str], **kwargs) -> subprocess.CompletedProcess:
@@ -111,7 +112,7 @@ def main() -> int:
         raise RuntimeError("local_support_terminal_not_passing")
     inventory = json.loads((LAB / "runtime/gpus.json").read_text())
     bench = inventory["benches"][BENCH]
-    if bench["status"] != "available" or bench.get("claim") is not None:
+    if bench.get("claim") is not None and bench["claim"].get("project") != PROJECT_NAME:
         raise RuntimeError("cross_project_dependency:bench_not_released")
     maximum_seconds = int((SPEND_CEILING - PRIOR_SPEND) * 3600 / RATE) - 45
     if maximum_seconds < 600:
@@ -180,7 +181,7 @@ def main() -> int:
         checkpoint = run_ssh(
             ip,
             SSH_KEY,
-            f"set -e; cd {REMOTE}/checkpoint; for x in {checkpoint_checks}; do n=${{x%%:*}}; b=${{x#*:}}; test -r \"$n\"; test \"$(stat -c%s -- \"$n\")\" = \"$b\"; done",
+            f"set -e; cd {CHECKPOINT_REMOTE}; for x in {checkpoint_checks}; do n=${{x%%:*}}; b=${{x#*:}}; test -r \"$n\"; test \"$(stat -c%s -- \"$n\")\" = \"$b\"; done",
             timeout=90,
         )
         if checkpoint.returncode:
@@ -191,6 +192,9 @@ def main() -> int:
             (PROJECT / "paired_endpoint_runner.py", f"{REMOTE}/mtp-input"),
             (PROJECT / "endpoint_entrypoint_v0513.py", f"{REMOTE}/mtp-input"),
             (PROJECT / "remote_fp8_mtp.sh", f"{REMOTE}/mtp-input"),
+            (PROJECT / "sitecustomize.py", f"{REMOTE}/mtp-input"),
+            (PROJECT / "install_endpoint_patch.py", f"{REMOTE}/mtp-input"),
+            (PROJECT / "qkv_epilogue_discriminator.py", f"{REMOTE}/mtp-input"),
             (PROJECT / "GPU_INPUT_MANIFEST.json", f"{REMOTE}/mtp-input"),
         ]
         stage.extend((PROJECT / "artifacts/assistant" / name, f"{REMOTE}/mtp-assistant") for name in manifest["assistant"]["files"])

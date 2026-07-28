@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-25T13:00:00Z",
+  "project": "gemma4_h100_v0515_ngram_verify_launch_pipeline",
+  "decision": "integrate_packed_mask_and_measure_fresh_stock_candidate_endpoint_pair",
+  "question": "Does single_packed_cpu_full_mask_staging preserve contemporaneous stock semantics and reduce service time and sustainable cost on a fresh 791-request H100 v0.5.15 native-NGRAM endpoint?",
+  "component_evidence": {
+    "source_result": {
+      "path": "LAUNCH_PIPELINE_RESULT.json",
+      "sha256": "59deee1570718783537f7ded86d44f2d15d50e7ed0cb93478934659e324bbbf1"
+    },
+    "h100_result": {
+      "path": "H100_FALSIFIER_WINDOW2_RESULT.json",
+      "sha256": "54bf8992e8d5dca4c35ed96142b73a60e16f339752cd0d9cfd867f0c1ad6584e",
+      "classification": "measured_component_pass"
+    },
+    "h100_terminal": {
+      "path": "H100_FALSIFIER_WINDOW2_TERMINAL.json",
+      "sha256": "79d52edeb37b8d67d6516be4314fe5078d98b78982b0179131d93b25ea99566e",
+      "actual_spend_usd": 0.27
+    },
+    "measured_effect": "The exact target-verify preparation plus sliding/global attention consumer was byte- and bit-identical, while median time fell from 4.714352 ms to 4.079776 ms over 200 alternating repetitions."
+  },
+  "authoritative_endpoint_inputs": {
+    "packet_manifest": {
+      "path": "../gemma4_h100_v0515_ngram_price_normalized/PACKET_MANIFEST.json",
+      "sha256": "8127631191fe1afc47e718502ff61980b1e51adb8ac43c2f28e140ff506173bd"
+    },
+    "historical_endpoint_binding": {
+      "path": "../gemma4_h100_v0515_ngram_price_normalized/DIRECTOR_R2_SSH_IDENTITY_CORRECTION_BINDING.json",
+      "sha256": "cbdbdc00bf92c232fc3aaa5bd1ffc97c62ef2bdb28c13ea22535eee5c91c40b5"
+    },
+    "historical_endpoint_terminal": {
+      "path": "../gemma4_h100_v0515_ngram_price_normalized/artifacts/h100-endpoint-200g-r2-ssh-identity-correction-20260725t1140z/TERMINAL.json",
+      "sha256": "31b093640b65eb4f45a65462cfc34ef833f239c1da73bc68d73eba0fd5c68927"
+    },
+    "request_trace": {
+      "path": "../gemma4_h100_v0515_ngram_price_normalized/packet/candidate-v0.5.15/inputs/requests.jsonl",
+      "sha256": "10e7edacaa194fd0f43b3a3c38f7d91cec0ceba22df8e08e3b5897b174346135"
+    },
+    "matched_runner": {
+      "path": "../gemma4_h100_v0515_ngram_price_normalized/packet/h100_matched_runner.py",
+      "sha256": "56bcd0aff2e85533f360e0fd58af87edc0bfcc79c1b0f16ed164587f964fabc4"
+    }
+  },
+  "runtime_identity": {
+    "model": "google/gemma-4-31B-it",
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "algorithm": "native NGRAM depth 12",
+    "server_geometry": "Exact historical endpoint launch geometry, including dynamic FP8, fused QK norm/RoPE, FP8-E5M2 KV, c32, dynamic chunking 2048, Triton hybrid attention, page size 1, and one continuous decode step."
+  },
+  "candidate_scope": {
+    "name": "single_packed_cpu_full_mask_staging",
+    "allowed_change": "Implement only the source-complete worker-owned pinned-CPU pack, geometrically growable CUDA bool staging buffer, one non-blocking H2D, and live custom-mask slice described in LAUNCH_PIPELINE_RESULT.json.",
+    "unchanged": "NGRAM corpus proposal, draft tokens, tree reconstruction, positions, retrieve indices, graph padding, attention metadata and math, sampling, acceptance, KV ownership, scheduler settlement, response serialization, checkpoint, image, runtime flags, and workload geometry.",
+    "pre_endpoint_gate": "Run the existing CPU oracle plus the exact component correctness fixture against the integrated project-local source. Fail closed before checkpoint load if any producer, mask, metadata, padded row, or attention output differs."
+  },
+  "fresh_workload": {
+    "requests": 791,
+    "source_rows": "Use the first 791 arrival/length rows from the bound request trace, preserving arrival offsets and exact prompt/output lengths.",
+    "content_addressing": "Before either server launch, derive and persist one immutable fresh workload by applying the matched runner's deterministic single-token template mutation with synthetic indices 61000 through 61790, one per row. Persist every request body and prompt SHA-256.",
+    "novelty_gate": "Fail closed unless all 791 prompt hashes differ from every locally available consumed constructed-request hash and every synthetic index is outside 0..1035, 60000..60003.",
+    "reuse_within_pair": "The same frozen fresh workload is intentionally consumed once by stock and once by candidate as the preregistered contemporaneous A/B pair. No request may be submitted outside those two arms.",
+    "sampling": "Greedy temperature 0 with the bound prompt/output geometry and ignore_eos behavior."
+  },
+  "measurement": {
+    "arms": [
+      "Fresh stock native-NGRAM endpoint control.",
+      "Fresh packed-mask candidate endpoint."
+    ],
+    "order": "Run stock then candidate, restarting only the experiment server between arms and preserving the same checkpoint, image, runtime flags, arrivals, and request bodies.",
+    "required_telemetry": "For each arm persist service seconds/request, TTFT, prompt/decode throughput, queue peak/final, failures, total tokens, GPU utilization/power/memory, planning and 90%-utilization sustainable cost, verify-step count per request, acceptance-length histogram, and complete normalized outputs keyed by request SHA-256.",
+    "correctness": "Candidate normalized outputs must equal the contemporaneous stock outputs for every fresh request. Report the first divergent request/token and retain raw rows if not exact.",
+    "economic_target": "Report candidate versus stock delta and the $0.14/M total-token target using the frozen $2.80/GPU-hour planning rate and 90% sustainable utilization. Do not substitute the $2.95 experiment rate for planning economics.",
+    "decision": "Retain the integration if it is semantically exact and reproducibly lowers endpoint service time without failures or queue regression. Production eligibility remains separately gated by campaign quality and the historical evidence discontinuity."
+  },
+  "bench": {
+    "id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+    "provider": "nebius",
+    "accelerator": "nvidia-h100-sxm",
+    "hourly_cost_usd": 2.95,
+    "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+    "instance_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z",
+    "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+    "disk_name": "gemma4-h100-v0515-packed-endpoint-200g-20260725t1258z-boot",
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "ssh_identity": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "connection_identity_source": "runtime/gpus.json",
+    "boot_disk_gib": 200,
+    "lifecycle_deadline_utc": "2026-07-25T18:00:00Z",
+    "release_deadline_utc": "2026-07-25T17:30:00Z"
+  },
+  "budgets": {
+    "authorized_spend_usd": 16.0,
+    "wall_clock_seconds": 16200,
+    "h100_compute_seconds": 16200,
+    "storage": "At most 90 GiB checkpoint plus image/runtime caches and 5 GiB project-local endpoint artifacts.",
+    "release_deadline_utc": "2026-07-25T17:30:00Z"
+  },
+  "durable_owner": "After binding and local fixture verification, atomically claim the registered bench and launch one bounded durable owner for guest readiness, checkpoint/packet staging, exact image/server setup, both preregistered arms, artifact retrieval, spend accounting, server cleanup, and release.",
+  "cleanup": "Stop the experiment server, verify no material GPU owner or serving listener, and release by 17:30Z. The director watchdog deletes the provider instance and boot disk at 18:00Z.",
+  "prohibitions": [
+    "Do not submit historical indices 0..1035 or sentinel indices 60000..60003.",
+    "Do not replay the historical 171-request discriminator or 791-request endpoint.",
+    "Do not weaken the fresh-workload novelty or candidate-versus-stock semantic gates.",
+    "Do not change the model, checkpoint, image, runtime commit, NGRAM depth, server geometry, or arrivals between arms.",
+    "Do not create, resize, reboot, delete, or otherwise mutate provider resources.",
+    "Do not claim a direct delta to the historical endpoint or that this pair resolves historical request 277."
+  ]
+}

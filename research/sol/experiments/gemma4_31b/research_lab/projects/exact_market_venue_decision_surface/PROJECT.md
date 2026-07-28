@@ -29,3 +29,25 @@ This is market and venue evidence, not a paid experiment. It must finish indepen
 - Compute: at most 3 local CPU-hours; no CUDA.
 - Storage: 1 GiB.
 - Network: bounded public/read-only research; no checkpoint or image download.
+
+## 2026-07-25 frontier eligibility and resilience iteration
+
+The dated market refresh found new nominal CoreWeave and OpenInference rows
+near `$0.119/M` for the exact model ID, below the cache-specified Venice row
+and Artificial Analysis methodology view. Test whether that nominal price can
+serve as the campaign's sole authoritative commercial hurdle using only the
+frozen byte-hashed captures.
+
+Extract the rows' listed feature coverage and missing revision, throughput,
+latency, quality, and capacity evidence. Build deterministic break-even
+failure/retry sensitivities against the nominal, cache-specified,
+methodology-matched, continuous-H100, and discrete-H100 comparators. Published
+uptime is metadata, not a request-failure distribution: separate a labeled
+independent-retry sensitivity from correlated-outage bounds and do not promote
+missing evidence.
+
+Persist `FRONTIER_ELIGIBILITY_20260725.json` and
+`ELIGIBILITY_DECISION_20260725.md` under the binding in
+`DIRECTOR_FRONTIER_ELIGIBILITY_20260725.json`. This is a zero-cost CPU-only
+iteration and must not refresh prices, issue inference calls, or touch the
+live H100.

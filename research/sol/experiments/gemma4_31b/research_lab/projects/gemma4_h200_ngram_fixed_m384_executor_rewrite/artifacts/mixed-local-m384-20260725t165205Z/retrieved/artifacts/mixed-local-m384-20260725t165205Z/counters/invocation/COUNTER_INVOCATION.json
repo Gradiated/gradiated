@@ -1,0 +1,10 @@
+{
+  "complete": true,
+  "launch_order": [
+    "control_local",
+    "control_full",
+    "candidate_local",
+    "candidate_full"
+  ],
+  "schema_version": 1
+}

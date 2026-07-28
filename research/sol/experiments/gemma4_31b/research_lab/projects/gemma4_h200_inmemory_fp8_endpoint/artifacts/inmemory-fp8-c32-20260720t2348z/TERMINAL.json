@@ -1,0 +1,13 @@
+{
+  "classification": "consumer_failure",
+  "owner_terminal": {
+    "classification": "consumer_failure",
+    "message": "server_not_ready",
+    "schema_version": 1,
+    "status": "terminal",
+    "timestamp_utc": "2026-07-20T00:05:34.252238Z"
+  },
+  "pass": false,
+  "schema_version": 1,
+  "status": "terminal"
+}

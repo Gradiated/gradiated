@@ -1,0 +1,30 @@
+{
+  "bench_release_state": "not_claimed_pool_empty",
+  "case_ids": [
+    "heldout_ordering",
+    "python",
+    "heldout_aggregation",
+    "heldout_indexing",
+    "heldout_branching"
+  ],
+  "classification": "gemma4_sglang_transformers_generation_equivalence_precreate_terminal",
+  "frozen_bindings": {
+    "adapter": true,
+    "candidate_capture": true,
+    "control_capture": true,
+    "reference_sentinel": true,
+    "source_bindings": true,
+    "strict_scorer": true,
+    "suite": true,
+    "suite_manifest": true,
+    "terminal": true
+  },
+  "local_validation_sha256": "c04750b4ca55f5a18fd4b08c6ee6b7686ec42a4ba79c2a6b0f95397cbbb76b65",
+  "next_execution": "Run generate on one claimed nvidia-h200-sxm bench with the exact image/checkpoint; preserve raw token IDs and scorer output.",
+  "pass": true,
+  "provider_create_authority": "director_only",
+  "provider_spend_usd": 0.0,
+  "runner_sha256": "80d8b2180bdcae68c16aabf21eef64bbf72b0933964d52ccfc54457b87e800d0",
+  "suite_sha256": "f5dad95132f372b3b986e7c86cf42476266b2a48098d82259bf6a7ab43adb56f",
+  "typed_terminal": "ready_for_director_bench_request"
+}

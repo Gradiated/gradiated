@@ -1,0 +1,61 @@
+{
+  "candidate_science_consumed": true,
+  "decision": {
+    "all_complete": true,
+    "exact_request_semantics": true,
+    "exact_response_semantics": false,
+    "exact_usage": true,
+    "failures_zero": true,
+    "final_upstream_backlog_zero": false,
+    "no_release_miss": false,
+    "planning_cost_at_or_below_target": false
+  },
+  "identity": {
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "launch_sha256": "8349853a7eac9e73211f5d3081c834c05f78e0fd292ddbe5acb921b1824a523d",
+    "model": "google/gemma-4-31B-it",
+    "request_rows_sha256": "10e7edacaa194fd0f43b3a3c38f7d91cec0ceba22df8e08e3b5897b174346135",
+    "trace_sha256": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68"
+  },
+  "primary": {
+    "completion_seconds": {
+      "max": 39.20874694789131,
+      "mean": 28.30025358781124,
+      "p95": 38.46796873614812
+    },
+    "elapsed_seconds": 735.1753677209999,
+    "failures": [],
+    "final_upstream_backlog_seconds": 16.253900456943256,
+    "full_waves": 32,
+    "gpu_samples": 362,
+    "metrics_after": {
+      "sglang:kv_available_tokens": 48338.0,
+      "sglang:kv_used_tokens": 45835.0,
+      "sglang:num_queue_reqs": 0.0,
+      "sglang:num_running_reqs": 12.0,
+      "sglang:spec_accept_length": 11.82857142857143,
+      "sglang:spec_accept_rate": 0.9844155844155844,
+      "sglang:swa_available_tokens": 1479.0,
+      "sglang:swa_used_tokens": 23922.0,
+      "sglang:token_usage": 0.19
+    },
+    "metrics_before": {
+      "sglang:kv_available_tokens": 243327.0,
+      "sglang:kv_used_tokens": 4214.0,
+      "sglang:num_queue_reqs": 0.0,
+      "sglang:num_running_reqs": 0.0,
+      "sglang:spec_accept_length": 0.0,
+      "sglang:spec_accept_rate": 0.0,
+      "sglang:swa_available_tokens": 193818.0,
+      "sglang:swa_used_tokens": 2166.0,
+      "sglang:token_usage": 0.02
+    },
+    "planning_cost_usd_per_million_total_tokens": 0.14012183965773806,
+    "requests": 1036,
+    "tail_requests": 12,
+    "total_tokens": 4736592,
+    "waves": 33
+  },
+  "result": "measured_ngram_wave_admission",
+  "retain_wave_admission": false
+}

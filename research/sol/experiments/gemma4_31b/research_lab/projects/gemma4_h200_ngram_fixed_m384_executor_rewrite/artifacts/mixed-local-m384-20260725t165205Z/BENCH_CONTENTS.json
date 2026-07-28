@@ -1,0 +1,10 @@
+{
+  "actual_spend_usd": 2.9737686855138894,
+  "artifacts": "artifacts/mixed-local-m384-20260725t165205Z",
+  "checkpoint": "Exact 62,578,655,208-byte project-local snapshot is hash-verified at /home/glmrunner/gemma4-fixed-m384-executor/checkpoint.",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "project": "gemma4_h200_ngram_fixed_m384_executor_rewrite",
+  "result": "nonpositive_or_invalid",
+  "runtime": "Pinned SGLang v0.5.13; mixed local-only M384 attention component, counters, decision guard, and conditional endpoint complete.",
+  "server_state": "No experiment server or worker remains; image, checkpoint, Triton cache, and artifacts retained."
+}

@@ -1,0 +1,18 @@
+{
+  "artifacts": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_static_c32_multitoken_decode_engine/artifacts/static-c32-supergraph-20260723t2111z",
+  "compatible_successor": "gemma4_h200_static_c32_multitoken_decode_engine",
+  "maintenance": {
+    "action": "removed completed tied-head endpoint server for incompatible supergraph successor",
+    "after_compute_processes": 0,
+    "after_gpu_memory_used_mib": 0,
+    "after_gpu_utilization_percent": 0,
+    "before_container": "gemma-fp8-tied-head-topology-settled",
+    "before_container_state": "running",
+    "before_gpu_process": "sglang::scheduler",
+    "before_gpu_process_memory_mib": 123054,
+    "container_after": "absent"
+  },
+  "project": "gemma4_h200_static_c32_multitoken_decode_engine",
+  "runtime": "Static-c32 dependency-supergraph recovery archive and pinned runtime caches retained.",
+  "server_state": "No accelerator-resident server or compute process; checkpoint, pinned image, and compiled caches retained."
+}

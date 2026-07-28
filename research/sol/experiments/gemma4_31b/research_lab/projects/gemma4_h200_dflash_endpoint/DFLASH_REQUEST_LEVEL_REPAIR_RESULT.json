@@ -1,0 +1,524 @@
+{
+  "analysis_pass": true,
+  "cache_accounting": {
+    "aggregate_equal": true,
+    "candidate_total_cached_tokens": 15515,
+    "candidate_zero_cache_request_indices": [
+      12,
+      21,
+      23
+    ],
+    "classification": "prompt_prefix_cache_ownership_shift_not_decode_kv_trace",
+    "control_total_cached_tokens": 15515,
+    "control_zero_cache_request_indices": [
+      10,
+      15,
+      30
+    ],
+    "interpretation": "The per-request equality gate remains failed.  Both arms report the same aggregate 15,515 cached prompt tokens (29 x 535), but the three zero-hit request indices rotate.  cached_tokens is response metadata for prompt-prefix reuse; it is not an observation of DFlash decode KV contents or kv_committed_len.",
+    "per_request_equal": false
+  },
+  "classification": "invariant_level_falsification",
+  "deterministic_multicycle_fixture": {
+    "pass": true,
+    "path": "artifacts/request-cycle-replay-20260725/REQUEST_CYCLE_REPLAY_FIXTURE.json",
+    "selected_cycle_indices": [
+      1,
+      11,
+      12
+    ],
+    "sha256": "8dae7cf4a156766083953f7d47377d8c4a95c8a3faac04f92f27aebd380b217b"
+  },
+  "divergence_summary": {
+    "all": [
+      {
+        "all_prior_emitted_tokens_equal_ar": true,
+        "cycle_emission_length": 1,
+        "cycle_expected_ar_tokens": [
+          4602
+        ],
+        "cycle_index": 0,
+        "cycle_kind": "prefill",
+        "cycle_observed_tokens": [
+          2791
+        ],
+        "cycle_output_end": 1,
+        "cycle_output_start": 0,
+        "emission_role": "prefill_target_token",
+        "expected_ar_token": 4602,
+        "observed_dflash_token": 2791,
+        "offset_within_cycle": 0,
+        "output_index": 0,
+        "pending_seed": null,
+        "pending_seed_equals_ar": null,
+        "request_index": 2,
+        "request_sha256": "7ba40610fed2d6d6f7b9186097bc7b9b9dfa2b8a1c0405b714383dd15fe577d7"
+      },
+      {
+        "all_prior_emitted_tokens_equal_ar": true,
+        "cycle_emission_length": 1,
+        "cycle_expected_ar_tokens": [
+          248754
+        ],
+        "cycle_index": 20,
+        "cycle_kind": "verify",
+        "cycle_observed_tokens": [
+          391
+        ],
+        "cycle_output_end": 64,
+        "cycle_output_start": 63,
+        "emission_role": "bonus_token",
+        "expected_ar_token": 248754,
+        "observed_dflash_token": 391,
+        "offset_within_cycle": 0,
+        "output_index": 63,
+        "pending_seed": 11571,
+        "pending_seed_equals_ar": true,
+        "request_index": 6,
+        "request_sha256": "aaa0eaa9d987f69914b764061c02e9a8ef4e5fa8009541397309c2e62e99aaf6"
+      },
+      {
+        "all_prior_emitted_tokens_equal_ar": true,
+        "cycle_emission_length": 2,
+        "cycle_expected_ar_tokens": [
+          759,
+          236798
+        ],
+        "cycle_index": 63,
+        "cycle_kind": "verify",
+        "cycle_observed_tokens": [
+          759,
+          537
+        ],
+        "cycle_output_end": 79,
+        "cycle_output_start": 77,
+        "emission_role": "bonus_token",
+        "expected_ar_token": 236798,
+        "observed_dflash_token": 537,
+        "offset_within_cycle": 1,
+        "output_index": 78,
+        "pending_seed": 759,
+        "pending_seed_equals_ar": true,
+        "request_index": 7,
+        "request_sha256": "098e29bea46081ca829b9a85f0177ea17250345229b559cadc90e02fba0209c3"
+      },
+      {
+        "all_prior_emitted_tokens_equal_ar": true,
+        "cycle_emission_length": 2,
+        "cycle_expected_ar_tokens": [
+          133659,
+          133659
+        ],
+        "cycle_index": 46,
+        "cycle_kind": "verify",
+        "cycle_observed_tokens": [
+          133659,
+          236814
+        ],
+        "cycle_output_end": 132,
+        "cycle_output_start": 130,
+        "emission_role": "bonus_token",
+        "expected_ar_token": 133659,
+        "observed_dflash_token": 236814,
+        "offset_within_cycle": 1,
+        "output_index": 131,
+        "pending_seed": 133659,
+        "pending_seed_equals_ar": true,
+        "request_index": 15,
+        "request_sha256": "ea7cbd19c37f9bb7323f7ad391da997cc1be3074a982ce2c0d169098ce37a7c5"
+      },
+      {
+        "all_prior_emitted_tokens_equal_ar": true,
+        "cycle_emission_length": 4,
+        "cycle_expected_ar_tokens": [
+          759,
+          537,
+          3814,
+          759
+        ],
+        "cycle_index": 56,
+        "cycle_kind": "verify",
+        "cycle_observed_tokens": [
+          759,
+          759,
+          759,
+          759
+        ],
+        "cycle_output_end": 112,
+        "cycle_output_start": 108,
+        "emission_role": "accepted_draft_prefix",
+        "expected_ar_token": 537,
+        "observed_dflash_token": 759,
+        "offset_within_cycle": 1,
+        "output_index": 109,
+        "pending_seed": 759,
+        "pending_seed_equals_ar": true,
+        "request_index": 17,
+        "request_sha256": "520a1c10332dd580fba46065365cece6d07aff67eb77b7cec1739f51e5696e8f"
+      },
+      {
+        "all_prior_emitted_tokens_equal_ar": true,
+        "cycle_emission_length": 1,
+        "cycle_expected_ar_tokens": [
+          5419
+        ],
+        "cycle_index": 9,
+        "cycle_kind": "verify",
+        "cycle_observed_tokens": [
+          781
+        ],
+        "cycle_output_end": 10,
+        "cycle_output_start": 9,
+        "emission_role": "bonus_token",
+        "expected_ar_token": 5419,
+        "observed_dflash_token": 781,
+        "offset_within_cycle": 0,
+        "output_index": 9,
+        "pending_seed": 537,
+        "pending_seed_equals_ar": true,
+        "request_index": 21,
+        "request_sha256": "9a60e77950308874f030d44f50b3e7692a2309fa98d6c479fa61bcbfdfc7a419"
+      },
+      {
+        "all_prior_emitted_tokens_equal_ar": true,
+        "cycle_emission_length": 4,
+        "cycle_expected_ar_tokens": [
+          88062,
+          236814,
+          537,
+          537
+        ],
+        "cycle_index": 23,
+        "cycle_kind": "verify",
+        "cycle_observed_tokens": [
+          88062,
+          88062,
+          88062,
+          88062
+        ],
+        "cycle_output_end": 65,
+        "cycle_output_start": 61,
+        "emission_role": "accepted_draft_prefix",
+        "expected_ar_token": 236814,
+        "observed_dflash_token": 88062,
+        "offset_within_cycle": 1,
+        "output_index": 62,
+        "pending_seed": 88062,
+        "pending_seed_equals_ar": true,
+        "request_index": 23,
+        "request_sha256": "aefe86773eaa3c6b8a5a6626b19ba39f85ca0351ffa4277880d84e04e50b06eb"
+      },
+      {
+        "all_prior_emitted_tokens_equal_ar": true,
+        "cycle_emission_length": 2,
+        "cycle_expected_ar_tokens": [
+          108062,
+          108062
+        ],
+        "cycle_index": 116,
+        "cycle_kind": "verify",
+        "cycle_observed_tokens": [
+          108062,
+          67027
+        ],
+        "cycle_output_end": 335,
+        "cycle_output_start": 333,
+        "emission_role": "bonus_token",
+        "expected_ar_token": 108062,
+        "observed_dflash_token": 67027,
+        "offset_within_cycle": 1,
+        "output_index": 334,
+        "pending_seed": 108062,
+        "pending_seed_equals_ar": true,
+        "request_index": 24,
+        "request_sha256": "a013124700d88beaa89fcfe23af3794ec67f7210ba2bf4fd603c8a6e9f848695"
+      },
+      {
+        "all_prior_emitted_tokens_equal_ar": true,
+        "cycle_emission_length": 1,
+        "cycle_expected_ar_tokens": [
+          3496
+        ],
+        "cycle_index": 1,
+        "cycle_kind": "verify",
+        "cycle_observed_tokens": [
+          759
+        ],
+        "cycle_output_end": 2,
+        "cycle_output_start": 1,
+        "emission_role": "bonus_token",
+        "expected_ar_token": 3496,
+        "observed_dflash_token": 759,
+        "offset_within_cycle": 0,
+        "output_index": 1,
+        "pending_seed": 236814,
+        "pending_seed_equals_ar": true,
+        "request_index": 25,
+        "request_sha256": "ee2edfa7a9ff571b0268966f506c4cb868868ab880ac87c2684b055d48a0e150"
+      },
+      {
+        "all_prior_emitted_tokens_equal_ar": true,
+        "cycle_emission_length": 1,
+        "cycle_expected_ar_tokens": [
+          537
+        ],
+        "cycle_index": 0,
+        "cycle_kind": "prefill",
+        "cycle_observed_tokens": [
+          166134
+        ],
+        "cycle_output_end": 1,
+        "cycle_output_start": 0,
+        "emission_role": "prefill_target_token",
+        "expected_ar_token": 537,
+        "observed_dflash_token": 166134,
+        "offset_within_cycle": 0,
+        "output_index": 0,
+        "pending_seed": null,
+        "pending_seed_equals_ar": null,
+        "request_index": 27,
+        "request_sha256": "25463443fe62499ef718c6eecb74868ae12851c366d8bf3a84eaec87f8e7ef4c"
+      },
+      {
+        "all_prior_emitted_tokens_equal_ar": true,
+        "cycle_emission_length": 1,
+        "cycle_expected_ar_tokens": [
+          147343
+        ],
+        "cycle_index": 0,
+        "cycle_kind": "prefill",
+        "cycle_observed_tokens": [
+          223853
+        ],
+        "cycle_output_end": 1,
+        "cycle_output_start": 0,
+        "emission_role": "prefill_target_token",
+        "expected_ar_token": 147343,
+        "observed_dflash_token": 223853,
+        "offset_within_cycle": 0,
+        "output_index": 0,
+        "pending_seed": null,
+        "pending_seed_equals_ar": null,
+        "request_index": 28,
+        "request_sha256": "5922e9e3c3613fff0298c8b59ac7330954fda008d44bd57b1d5bdf788ce8a8e0"
+      },
+      {
+        "all_prior_emitted_tokens_equal_ar": true,
+        "cycle_emission_length": 1,
+        "cycle_expected_ar_tokens": [
+          130166
+        ],
+        "cycle_index": 10,
+        "cycle_kind": "verify",
+        "cycle_observed_tokens": [
+          237377
+        ],
+        "cycle_output_end": 20,
+        "cycle_output_start": 19,
+        "emission_role": "bonus_token",
+        "expected_ar_token": 130166,
+        "observed_dflash_token": 237377,
+        "offset_within_cycle": 0,
+        "output_index": 19,
+        "pending_seed": 130166,
+        "pending_seed_equals_ar": true,
+        "request_index": 30,
+        "request_sha256": "6225a3f24365716295b8f2f2635a28910d67a558cd489ef37f700db621d46eb2"
+      }
+    ],
+    "divergent_request_count": 12,
+    "divergent_request_indices": [
+      2,
+      6,
+      7,
+      15,
+      17,
+      21,
+      23,
+      24,
+      25,
+      27,
+      28,
+      30
+    ],
+    "earliest_verify_cycle_ordinal": {
+      "all_prior_emitted_tokens_equal_ar": true,
+      "cycle_emission_length": 1,
+      "cycle_expected_ar_tokens": [
+        3496
+      ],
+      "cycle_index": 1,
+      "cycle_kind": "verify",
+      "cycle_observed_tokens": [
+        759
+      ],
+      "cycle_output_end": 2,
+      "cycle_output_start": 1,
+      "emission_role": "bonus_token",
+      "expected_ar_token": 3496,
+      "observed_dflash_token": 759,
+      "offset_within_cycle": 0,
+      "output_index": 1,
+      "pending_seed": 236814,
+      "pending_seed_equals_ar": true,
+      "request_index": 25,
+      "request_sha256": "ee2edfa7a9ff571b0268966f506c4cb868868ab880ac87c2684b055d48a0e150"
+    },
+    "prefill_divergent_request_indices": [
+      2,
+      27,
+      28
+    ],
+    "request_order_first_divergence": {
+      "all_prior_emitted_tokens_equal_ar": true,
+      "cycle_emission_length": 1,
+      "cycle_expected_ar_tokens": [
+        4602
+      ],
+      "cycle_index": 0,
+      "cycle_kind": "prefill",
+      "cycle_observed_tokens": [
+        2791
+      ],
+      "cycle_output_end": 1,
+      "cycle_output_start": 0,
+      "emission_role": "prefill_target_token",
+      "expected_ar_token": 4602,
+      "observed_dflash_token": 2791,
+      "offset_within_cycle": 0,
+      "output_index": 0,
+      "pending_seed": null,
+      "pending_seed_equals_ar": null,
+      "request_index": 2,
+      "request_sha256": "7ba40610fed2d6d6f7b9186097bc7b9b9dfa2b8a1c0405b714383dd15fe577d7"
+    }
+  },
+  "evidence_labels": {
+    "cache_interpretation": "measured_plus_observer_contract",
+    "cycle_boundaries": "derived_from_measured_cumulative_sse",
+    "fixture_draft_proposals": "synthetic",
+    "request_rows_and_streams": "measured_retained_producer",
+    "worker_roles_and_state_equations": "pinned_source"
+  },
+  "inputs": {
+    "candidate_server_log": {
+      "incremental_streaming_output": false,
+      "path": "artifacts/depth4-endpoint-owner-20260725t1950z/retrieved/dflash.server.log",
+      "sha256": "c19f8f5f1372cba812c6dbf95149efe2f3bb6a946ed2905fd8cafd05c3f40a3c",
+      "speculative_num_draft_tokens": 4,
+      "stream_interval": 1
+    },
+    "endpoint_runner": {
+      "path": "artifacts/depth4-endpoint-owner-20260725t1950z/packet/dflash_endpoint_runner.py",
+      "required_line_numbers": {
+        "\"stream\": True": 115,
+        "ids = [int(value) for value in item[\"output_ids\"]]": 75,
+        "if \"output_ids\" in item:": 74
+      },
+      "sha256": "65f4dd8378f84662c6ce83f1094a19dc14658bb11d3c8ff269576bd499e342c4"
+    },
+    "pinned_info": {
+      "path": "artifacts/cycle-oracle-prep-20260725/dflash_info_v2.py",
+      "required_line_numbers": {
+        "direct_carry_valid: bool = True": 59,
+        "self.direct_carry_valid = False": 296
+      },
+      "sha256": "b17ff6a703e46173c415d649d47e8ff9f8b7b436f9eec8e1f67d55ef1b3908e6"
+    },
+    "pinned_worker": {
+      "path": "artifacts/cycle-oracle-prep-20260725/dflash_worker_v2.py",
+      "required_line_numbers": {
+        "accept_lens=commit_lens,": 673,
+        "batch_output = self.target_worker.forward_batch_generation(": 205,
+        "next_token_ids=out_tokens.reshape(-1),": 672,
+        "verified_id=bonus,": 662,
+        "verified_id=next_token_ids,": 262
+      },
+      "sha256": "8fbddb39f4b33b4ac55b1919bc58fa846acb60892886199251d3592a5223050f"
+    },
+    "prior_repair_patch": {
+      "path": "DFLASH_REQUEST_INDEXED_RELAY_REPAIR.patch",
+      "sha256": "f3bf201d733ae5ea944b16225b99571796b96a1852af1d655f77168007d88ede"
+    },
+    "raw_root": "artifacts/depth4-endpoint-owner-20260725t1950z/retrieved/results",
+    "terminal": {
+      "path": "DFLASH_DEPTH4_ENDPOINT_TERMINAL.json",
+      "sha256": "02a59aae4d6bc30c531b1765f70783ccdd7b622f277ff071073b59144c975015"
+    }
+  },
+  "observer_integrity": {
+    "all_32_request_hashes_match_between_arms": true,
+    "all_64_final_sse_frames_match_terminal_rows": true,
+    "candidate_frame_counts": {
+      "0": 118,
+      "1": 105,
+      "10": 156,
+      "11": 207,
+      "12": 97,
+      "13": 104,
+      "14": 101,
+      "15": 109,
+      "16": 98,
+      "17": 145,
+      "18": 98,
+      "19": 107,
+      "2": 136,
+      "20": 99,
+      "21": 134,
+      "22": 95,
+      "23": 110,
+      "24": 123,
+      "25": 154,
+      "26": 101,
+      "27": 126,
+      "28": 101,
+      "29": 158,
+      "3": 98,
+      "30": 106,
+      "31": 96,
+      "4": 112,
+      "5": 95,
+      "6": 128,
+      "7": 145,
+      "8": 93,
+      "9": 163
+    },
+    "control_frames_are_one_token_each": true
+  },
+  "repair_disposition": {
+    "prior_patch": "rejected_as_sufficient_exact_repair",
+    "reason": "Forcing FutureMap request-indexed relay repairs the synthetic reorder fixture, but the pinned filter/merge path already disables direct carry after reorder and three measured failures occur in prefill before any relay.  The retained evidence therefore falsifies the relay-only hypothesis and cannot support that patch as an exact fix.",
+    "smallest_exact_repair_proven": null
+  },
+  "request_indexed_relay_fixture": {
+    "direct_positional_misroutes_after_reorder": true,
+    "direct_positional_values": [
+      759,
+      537
+    ],
+    "evidence_label": "synthetic_source_contract",
+    "next_order": [
+      202,
+      101
+    ],
+    "pinned_filter_merge_invalidates_direct_carry": true,
+    "published_by_request_index": {
+      "101": 759,
+      "202": 537
+    },
+    "request_indexed_relay_pass": true,
+    "request_indexed_values": [
+      537,
+      759
+    ]
+  },
+  "schema_version": 1,
+  "semantic_equivalence": false,
+  "state_localization": {
+    "actual_wall_clock_first_divergence_order_is_unavailable": "SSE frames have no per-frame timestamps; request/cycle ordering is reported deterministically by request index and cycle ordinal.",
+    "first_verify_boundary": "Request 25 has the same prefill token as AR, then differs in verify cycle 1 with a one-token emission.  With zero accepted drafts this token is the target bonus.  The visible pending seed equals AR, so the first target-verify result or its prefill-to-verify sequence/KV state is already non-equivalent.",
+    "later_cycle_boundary": "Every later first difference is reconstructed at an exact emission boundary and classified as accepted-prefix or bonus output.  The retained producer did not persist verifier logits, verified_id, KV locations, or committed-length tensors, so it cannot distinguish a wrong target-verify result from wrong hidden KV/length state.",
+    "prefill_boundary": "Requests 2, 27, and 28 differ at output token zero.  The pinned DFlash prefill path returns target_worker.next_token_ids directly, before verify acceptance, bonus settlement, KV commit advancement, or next-cycle relay."
+  },
+  "terminal_decision": "The endpoint's lossless target-semantics invariant is falsified at or before DFlash target prefill, and independently at the first verify transition.  No source-complete exact repair is justified from the retained state."
+}

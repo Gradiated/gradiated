@@ -1,0 +1,6 @@
+{"attached": true, "converted_layers": [11, 23, 35, 47, 59], "forward_batch_driver": {"boundary": "ModelRunner.forward(ForwardBatch)", "converted_layers": [11, 23, 35, 47, 59], "installed": true, "ngram_dual_cache": "deferred_to_first_production_forward_batch", "one_resident_target_model": true}, "one_resident_target_model": true}
+{"boundary": "ModelRunner.forward(ForwardBatch)", "converted_layers": [11, 23, 35, 47, 59], "installed": true, "ngram_dual_cache": "deferred_to_first_production_forward_batch", "one_resident_target_model": true, "science_started": false}
+CONTAINER_RUNNING=true
+[2026-07-26 04:02:55] Capture cuda graph end. Time elapsed: 35.04 s. mem usage=1.14 GB. avail mem=19.64 GB.
+[2026-07-26 04:03:02] The server is fired up and ready to roll!
+TCP_LISTENER=True

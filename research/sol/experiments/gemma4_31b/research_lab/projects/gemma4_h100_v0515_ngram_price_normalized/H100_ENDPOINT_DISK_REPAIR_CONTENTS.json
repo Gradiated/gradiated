@@ -1,0 +1,14 @@
+{
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "checkpoint": "The exact immutable checkpoint is staged and must not be deleted or mutated.",
+  "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+  "runtime": "Official SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6.",
+  "caches": "The pinned image pull is incomplete after Docker exhausted the boot disk; only failed-pull state, stopped containers, and expendable caches may be reclaimed.",
+  "server_state": "No server started and no endpoint request was submitted. The failure is typed pre-science: no space left on device during the pinned image pull.",
+  "candidate": "The valid 171-request discriminator is consumed and forbidden to replay. The sole 791-request endpoint remains unconsumed.",
+  "director_binding": "gemma4_h100_v0515_ngram_price_normalized/DIRECTOR_ENDPOINT_DISK_REPAIR_BINDING.json",
+  "director_binding_sha256": "a1d5a9e8546b4c258e5a6d7bc1e1c3dba4930082099a6a8770d676c38fe42257",
+  "result": "available_for_bound_endpoint_disk_repair",
+  "next": "Priority-8490 may claim once, reclaim only expendable failed-pull/cache state, prove sufficient space for the exact pinned image, and run only the sole unconsumed endpoint if every original identity/server gate passes. Otherwise persist a typed pre-science terminal and release by 2026-07-25T10:10:00Z."
+}

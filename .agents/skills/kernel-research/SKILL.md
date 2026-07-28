@@ -27,6 +27,8 @@ Use the actual producer and consumer in a fresh process. Compare against a high-
 
 Make the first tiny target-GPU call the discovery smoke test. Repair ordinary compile, API, layout, or integration defects in the retained session and continue. Do not construct a long readiness ladder before CUDA execution, and do not time a candidate whose output has not reached the real consumer.
 
+When a bounded or one-shot program invokes multiple CUDA arms, make fault attribution execution-equivalent before the timed sweep: synchronize after each arm's first untimed call and persist a compact completion marker tied to that arm. Keep these diagnostic synchronizations outside reported timing. A single synchronization after several asynchronous stock and candidate launches cannot identify the failing arm and must not be used to classify the candidate.
+
 ## Implement and measure
 
 Choose tile, warp, stage, launch, memory, and work-partition candidates from the physical model. Constrain tuning to architecturally legal configurations and representative production shapes. Treat prefill and decode as separate keys when their geometry differs.

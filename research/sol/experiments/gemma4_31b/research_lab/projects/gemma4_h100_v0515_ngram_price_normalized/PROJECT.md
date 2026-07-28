@@ -35,11 +35,15 @@ price inventories plus official v0.5.15 source/image evidence:
 4. return one execution-ready matched H100 packet with a smallest
    activation/fit discriminator and conditional endpoint, or typed `none`.
 
-This phase has `$0` provider authority. Do not claim a GPU, create a provider
-resource, pull an image on a paid guest, or transfer a checkpoint. A later
-paid extension remains in this project and requires separate director
-authorization. Do not perform a runtime, representation, flag, or hardware
-sweep.
+The offline phase nominated one exact packet and is complete. The director
+authorizes a paid extension under `DIRECTOR_EXECUTION_BINDING.json`. First
+materialize and hash-verify the manifest-bound checkpoint under the expanded
+project storage contract and emit `PRECREATE_TERMINAL.json`. Do not create or
+claim a provider resource before both that terminal and the durable `$5`
+reservation exist. Provider creation remains director-owned. After a
+registered H100 bench exists, execute only the packet's 171-request
+discriminator and its strictly conditional fresh-container endpoint. Do not
+perform a runtime, representation, flag, or hardware sweep.
 
 ## Decision gate and budget
 
@@ -49,9 +53,29 @@ plausible without transferring H200 throughput as evidence. Bind the exact
 checkpoint, image, requests, semantics, price source, launcher, provider need,
 deadline, and first scientific arm.
 
-- Provider/GPU spend: `$0`.
-- Wall clock: 60 minutes.
-- Local compute: at most 1 CPU-hour.
-- Storage: at most 2 GiB; no model weights or container layers.
-- Required artifacts: concise causal fit/hurdle analysis, one immutable
-  execution packet or typed `none`, `RESEARCH_LOG.md`, and `STATUS.json`.
+- Provider/GPU spend: at most `$5`, only after durable reservation.
+- GPU claim: at most 45 H100 minutes.
+- Pre-create wall clock: at most 90 minutes under one durable local owner.
+- Local compute: at most 2 CPU-hours.
+- Storage: at most 70 GiB project-local, including the immutable checkpoint.
+- Required additional artifacts: `PRECREATE_TERMINAL.json`, one measured
+  discriminator, and a conditional endpoint or typed boundary.
+
+## Director endpoint recovery
+
+Repair 5 produced the valid canonical discriminator: 171/171 requests,
+normalized semantics, native depth-12 activation, zero failures, queue peak
+14, final queue zero, and `0.7073339939 s/request`. At the campaign's
+`$2.80/hour` H100 planning rate this is approximately `$0.133700/M` total
+tokens at 90% utilization, below the `$0.14/M` target.
+
+The conditional endpoint then lost SSH when the lifecycle watchdog deleted
+the provider resource. That is an invalid external-cleanup attempt, not an
+endpoint sample or scientific rejection. Preserve the discriminator and never
+replay it.
+
+`DIRECTOR_ENDPOINT_RECOVERY_BINDING.json` admits one replacement H100 after
+the cumulative `$9.00` project reservation is durable. Use one bounded durable
+owner for exact checkpoint and packet staging, server startup, the unconsumed
+791-request endpoint, retrieval, and release. Allow at most 70 additional H100
+minutes, release by `09:10Z`, and protect the bench through `09:15Z`.

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "candidate": "current_sglang_dynamic_fp8e4m3_kv_fp8e5m2_c32",
+  "source": {
+    "commit": "2813cb6d9a5b6e8fb02435647917e6f1652d7940",
+    "image": "docker.io/lmsysorg/sglang:dev-gemma4@sha256:380cc6c6654b479c464177aa684aca520d6bd6e9833b23eba1df2f8396f63427"
+  },
+  "authoritative_retained_stack": {
+    "bindings": "../gemma4_h200_v0513_fp8_qkv_residual_profile/BINDINGS.json",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "weights": "dynamic in-memory fp8_e4m3 linears from the exact BF16 checkpoint",
+    "kv_cache": "fp8_e5m2",
+    "tp_size": 1,
+    "dynamic_chunking": true,
+    "chunked_prefill_size": 2048
+  },
+  "runner": {
+    "path": "inputs/current-sglang/exact_c32_runner.py",
+    "source_sha256": "df65b1e49c941c27a975ecb1f2d34041a0e63695c2e3515cf950406204f614f3",
+    "modification": "arm generalization and non-streaming warmup stream_options removal"
+  },
+  "workload": {"requests": 32, "concurrency": 32, "prompt_tokens": 4214, "completion_tokens": 358, "cached_prompt_tokens_total": 17120, "fresh_prompt_tokens_total": 117728}
+}

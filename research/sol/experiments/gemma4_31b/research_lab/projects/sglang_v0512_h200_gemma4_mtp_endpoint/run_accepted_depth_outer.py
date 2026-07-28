@@ -28,9 +28,9 @@ REMOTE_CHECKPOINT = (
     "/home/glmrunner/gemma4-h200-flashinfer-metadata-scalar-elimination/checkpoint"
 )
 BENCH = "h200-sync-linear-e00vhh6h29fj68x91g"
-PRIOR_SPEND = 2.877536599679788
-AUTHORIZED_SPEND = 12.0
-MAX_CLAIM_SECONDS = 90 * 60
+PRIOR_SPEND = 3.71321962596505
+AUTHORIZED_SPEND = 8.0
+MAX_CLAIM_SECONDS = 45 * 60
 RETRIEVAL_RESERVE_SECONDS = 10 * 60
 
 
@@ -116,6 +116,8 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifact-root", type=pathlib.Path, required=True)
     parser.add_argument("--absolute-deadline-epoch", type=int, required=True)
+    parser.add_argument("--pair-only", action="store_true")
+    parser.add_argument("--candidate-only", action="store_true")
     args = parser.parse_args()
     args.artifact_root.mkdir(parents=True, exist_ok=False)
     events = args.artifact_root / "outer-events.jsonl"
@@ -372,7 +374,7 @@ def main() -> int:
         worker = run_ssh(
             ip,
             KEY,
-            f"timeout --signal=TERM {worker_timeout} bash {REMOTE}/input/remote_accepted_depth.sh",
+            f"timeout --signal=TERM {worker_timeout} env PAIR_ONLY={'1' if args.pair_only else '0'} CANDIDATE_ONLY={'1' if args.candidate_only else '0'} bash {REMOTE}/input/remote_accepted_depth.sh",
             timeout=worker_timeout + 30,
         )
         (args.artifact_root / "remote-worker.stdout").write_text(worker.stdout)

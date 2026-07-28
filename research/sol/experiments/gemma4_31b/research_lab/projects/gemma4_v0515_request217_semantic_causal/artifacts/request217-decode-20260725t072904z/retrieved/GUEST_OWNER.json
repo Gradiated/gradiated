@@ -1,0 +1,15 @@
+{
+  "command": [
+    "env",
+    "REQUEST217_ROOT=/home/glmrunner/gemma4-v0515-request217-semantic-causal",
+    "REQUEST217_OUT=/home/glmrunner/gemma4-v0515-request217-semantic-causal/out",
+    "REQUEST217_CONTAINER=gemma4-v0515-request217-decode",
+    "./remote_request217_worker.sh"
+  ],
+  "cwd": "/home/glmrunner/gemma4-v0515-request217-semantic-causal",
+  "launched_at_utc": "2026-07-25T07:29:10.791386Z",
+  "log": "/home/glmrunner/gemma4-v0515-request217-semantic-causal/GUEST_OWNER.log",
+  "pid": 79952,
+  "start_ticks": 2555549,
+  "unit_manager": "remote-shell"
+}

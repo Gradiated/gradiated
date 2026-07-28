@@ -77,7 +77,12 @@ def main() -> int:
     manifest = json.loads((PROJECT / "GPU_INPUT_MANIFEST.json").read_text())
     if manifest.get("pass") is not True:
         raise RuntimeError("project local input manifest invalid")
-    for row in [manifest["selection"], manifest["component"], manifest["down_component"], *manifest["bound_inputs"], *manifest["programs"]]:
+    for row in [
+        manifest["selection"],
+        manifest["settled_bound"],
+        *manifest["bound_inputs"],
+        *manifest["programs"],
+    ]:
         path = PROJECT / row["path"]
         if not path.is_file() or path.stat().st_size != row["bytes"] or sha256(path) != row["sha256"]:
             raise RuntimeError(f"project local snapshot invalid:{row['path']}")
@@ -186,12 +191,10 @@ def main() -> int:
             emit("input_staged", name=source.name, bytes=source.stat().st_size, sha256=expected)
 
         staged = [
-            (PROJECT / "mlp_component.py", f"{REMOTE}/input/mlp_component.py"),
             (PROJECT / "sitecustomize.py", f"{REMOTE}/input/sitecustomize.py"),
             (PROJECT / "remote_width16384.sh", f"{REMOTE}/input/remote_width16384.sh"),
             (PROJECT / manifest["selection"]["path"], f"{REMOTE}/input/JOINT_NORM_SELECTION.json"),
-            (PROJECT / manifest["component"]["path"], f"{REMOTE}/input/layer0-rms-qkv-gate-up.safetensors"),
-            (PROJECT / manifest["down_component"]["path"], f"{REMOTE}/input/layer0-down.safetensors"),
+            (PROJECT / manifest["settled_bound"]["path"], f"{REMOTE}/input/SETTLED_BOUND.json"),
         ]
         staged.extend(
             (PROJECT / row["path"], f"{REMOTE}/input/{pathlib.Path(row['path']).name}")

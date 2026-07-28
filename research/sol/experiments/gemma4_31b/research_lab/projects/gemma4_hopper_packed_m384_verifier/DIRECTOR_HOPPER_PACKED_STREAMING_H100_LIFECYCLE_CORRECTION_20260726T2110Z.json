@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "type": "director_hopper_packed_streaming_h100_lifecycle_correction",
+  "issued_at_utc": "2026-07-26T21:10:35Z",
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "classification": "attempted_shorter_lifecycle_rejected_by_registered_pool_monotonicity",
+  "scientific_contract_changed": false,
+  "bench_id": "h100-packed-streaming-e00nycjajm7wvs1zkd",
+  "provider_resource": {
+    "instance_id": "computeinstance-e00nycjajm7wvs1zkd",
+    "disk_id": "computedisk-e00gg625gfev4bsmfb",
+    "provider_started_at_utc": "2026-07-26T20:59:09.720125Z"
+  },
+  "budget": {
+    "authorized_usd": 7.0,
+    "prior_actual_spend_usd": 2.716333,
+    "remaining_authority_usd": 4.283667,
+    "hourly_cost_usd": 2.9597222,
+    "old_deadline_utc": "2026-07-26T22:59:09.720125Z",
+    "old_maximum_lifecycle_exposure_usd": 5.9194444,
+    "new_deadline_utc": "2026-07-26T22:20:00Z",
+    "new_lifecycle_seconds": 4850.279875,
+    "new_maximum_lifecycle_exposure_usd": 3.9876336172918676,
+    "cumulative_maximum_project_spend_usd": 6.703966617291868,
+    "remaining_margin_usd": 0.29603338270813184
+  },
+  "watchdog_replacement_attempt": {
+    "new_lifecycle": "H100_PACKED_STREAMING_LIFECYCLE_2220.json",
+    "new_unit": "gemma4-packed-streaming-h100-20260726t2220-watchdog.service",
+    "new_main_pid": 2075108,
+    "new_control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-packed-streaming-h100-20260726t2220-watchdog.service",
+    "new_watchdog_verified_active_before_inventory_replace": true,
+    "gpu_pool_replace_watchdog_accepted": false,
+    "gpu_pool_error": "replacement lifecycle deadline must be later than the current deadline",
+    "inventory_changed": false,
+    "old_unit": "gemma4-packed-streaming-h100-20260726t2059z-watchdog.service",
+    "old_main_pid": 2067994,
+    "old_unit_stopped_after_rejected_replace": true,
+    "temporary_earlier_watchdog_remained_active_during_recovery": true
+  },
+  "disposition": "Superseded by a tool-supported one-second lifecycle extension and cumulative project authorization increase to $9.00.",
+  "science": {
+    "new_component_cycles_remaining": 1,
+    "v2_component_replay_allowed": false,
+    "endpoint_allowed": false,
+    "gpu_invocation_performed": false
+  }
+}

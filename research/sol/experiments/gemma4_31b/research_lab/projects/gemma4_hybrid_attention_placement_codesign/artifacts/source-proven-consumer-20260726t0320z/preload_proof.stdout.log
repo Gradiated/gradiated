@@ -1,0 +1,3 @@
+{"attached": true, "converted_layers": [11, 23, 35, 47, 59], "forward_batch_driver": {"boundary": "ModelRunner.forward(ForwardBatch)", "converted_layers": [11, 23, 35, 47, 59], "installed": true, "ngram_dual_cache": "deferred_to_first_production_forward_batch", "one_resident_target_model": true}, "one_resident_target_model": true}
+{"cache_policy": "production_dual_allocator_shadow_write_accept_move_reject_free", "cache_slots": 1, "captured_rows": 1, "converted_layers": [11, 23, 35, 47, 59], "first_target_consumer": "NGRAMWorker.forward_batch_generation", "logical_rows": 1, "mode": "EXTEND", "observed_monotonic_s": 43727.902571147, "science_started": false, "target_verify": false}
+false

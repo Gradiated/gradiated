@@ -1,0 +1,34 @@
+{
+  "authority": {
+    "authorized_spend_usd": 5.0,
+    "gpu_claim_minutes_max": 45,
+    "provider_create_gate": "durable $5 reservation plus PRECREATE_TERMINAL.json with every checkpoint file verified",
+    "provider_mutation": "director_only"
+  },
+  "files": {
+    "H100_EXECUTION_PACKET.json": "584f7a26d13b78eb2fe65bafaf276d48f590de65ebc37583bc6a7441a979276a",
+    "H100_FIT_HURDLE.json": "0d33de436f1519ae712d3e3caca88923106c8601eab3b16f101757cd0999fead",
+    "PACKET_MANIFEST.json": "6bcc848dfc3d44d9248bcb79e62fdcb2eeed5cb56a6be8bb45d4dfcff3c26cd7",
+    "packet/CHECKPOINT_MANIFEST.json": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6"
+  },
+  "identity": {
+    "accelerator": "nvidia-h100-sxm",
+    "checkpoint": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "requests_sha256": "10e7edacaa194fd0f43b3a3c38f7d91cec0ceba22df8e08e3b5897b174346135",
+    "runtime_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "semantic_rows_sha256": "630d05bd860d1dd22c3e35ba2d8f792afc5051f0c68e0a74a9deda8140a02b36"
+  },
+  "precreate": {
+    "artifact": "PRECREATE_TERMINAL.json",
+    "checkpoint_destination": "inputs/checkpoint",
+    "required": [
+      "materialize every CHECKPOINT_MANIFEST.json file under the project storage contract",
+      "verify every byte count and SHA-256",
+      "verify all 20 PACKET_MANIFEST.json entries",
+      "record the exact future H100 launcher inputs without creating or claiming a provider resource"
+    ]
+  },
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "schema_version": 1
+}

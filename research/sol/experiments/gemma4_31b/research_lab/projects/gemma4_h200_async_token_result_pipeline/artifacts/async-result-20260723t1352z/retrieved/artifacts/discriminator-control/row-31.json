@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 7.344987775002664,
+  "ended_monotonic_s": 55697.6371596,
+  "error": null,
+  "first_token_monotonic_s": 55690.292171825,
+  "index": 31,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": " existence",
+      "token_ids": [
+        10664
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    10664,
+    10664,
+    10664,
+    10664,
+    10664,
+    10664,
+    10664,
+    10664,
+    10664,
+    10664,
+    10664,
+    10664,
+    10664,
+    10664,
+    10664,
+    10664
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "1d4139029b49b029eecf111b0e17518ca0db386e9b42c559784636d95463782d",
+  "request_sha256": "c278f1e70ba53b330e536399f6e1657a8512d106ae24907991076bc96e383641",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 55684.399723046,
+  "text": " existence existence existence existence existence existence existence existence existence existence existence existence existence existence existence existence",
+  "ttft_seconds": 5.892448778999096,
+  "wall_seconds": 13.23743655400176
+}

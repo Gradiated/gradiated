@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "type": "director_provider_spend_reconciliation",
+  "generated_at_utc": "2026-07-26T08:43:23.724837Z",
+  "project": "h100_hybrid_attention_kernel_mechanism",
+  "decision": "conservatively_reconcile_prior_undercharge_and_unreserved_replacement_lifecycle",
+  "prior_lifecycle": {
+    "evidence_type": "conservative_derived",
+    "provider_exposure_usd": 2.35354,
+    "previously_settled_usd": 1.0,
+    "reconciliation_delta_usd": 1.35354,
+    "basis": "Supervisor reconstruction from the protected provider lifecycle beginning approximately 2026-07-26T07:15:05Z through verified retirement, charged at $2.95/GPU-hour."
+  },
+  "unreserved_replacement_lifecycle": {
+    "evidence_type": "measured_from_director_provider_timestamps",
+    "provider_started_at_utc": "2026-07-26T08:12:59.475265Z",
+    "cleanup_verified_at_utc": "2026-07-26T08:43:23.724837Z",
+    "provider_exposure_seconds": 1824.249572277069,
+    "hourly_cost_usd": 2.95,
+    "provider_exposure_usd": 1.4948711772825984,
+    "reservation_present": false,
+    "scientific_sample_consumed": false
+  },
+  "ledger_correction": {
+    "settled_spend_usd_before": 296.93119484819425,
+    "additional_settled_spend_usd": 2.8484111772825984,
+    "settled_spend_usd_after": 299.77960602547685,
+    "cap_usd": 300.0,
+    "available_usd_after": 0.2203939745231516
+  },
+  "cleanup": {
+    "instance_id": "computeinstance-e00s5pkzna5fw6tars",
+    "disk_id": "computedisk-e00zeakhrr60ddfcdx",
+    "provider_instances_after": [],
+    "provider_disks_after": [],
+    "watchdog_unit": "gemma4-h100-paged-fp8-20260726t0907-watchdog.service",
+    "watchdog_stopped_after_verified_cleanup": true
+  },
+  "interpretation": "The campaign no longer has enough paid authority for an H100, B200, or MI355X falsifier. The source-ready H100 arm remains unconsumed and may reopen only after new authority and a durable exact-project reservation exist before provider creation."
+}

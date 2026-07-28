@@ -1,0 +1,19 @@
+{
+  "phase": "stock_server_load",
+  "science_started": false
+}
+Traceback (most recent call last):
+  File "/home/glmrunner/gemma4-ngram-wave-admission/remote_wave_admission.py", line 111, in <module>
+    try: main()
+         ^^^^^^
+  File "/home/glmrunner/gemma4-ngram-wave-admission/remote_wave_admission.py", line 75, in main
+    checks = json.loads((INPUT/'SHA256SUMS.json').read_text())
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/glmrunner/gemma4-ngram-wave-admission/inputs/SHA256SUMS.json'
+{"command": ["python3", "remote_wave_admission.py"], "cwd": "/home/glmrunner/gemma4-ngram-wave-admission", "launched_at_utc": "2026-07-24T15:30:23.719235Z", "live": true, "log": "/home/glmrunner/gemma4-ngram-wave-admission/OWNER.log", "pid": 65985, "start_ticks": 2173443, "unit_manager": "remote-shell"}

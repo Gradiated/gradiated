@@ -1,0 +1,111 @@
+{
+  "endpoint_or_economic_claim": false,
+  "endpoint_requests_submitted": 0,
+  "evidence_label": "project_local_endpoint_lifecycle_cpu_state_fixtures",
+  "binding": {
+    "path": "DIRECTOR_ADAPTIVE_DEPTH_ENDPOINT_INTEGRATION_BINDING.json",
+    "sha256": "6168e592905625e593e759785e316ade538baa6c9de883c0855d6ad50c7c2a69",
+    "all_bound_hashes_match": true
+  },
+  "source_manifest": {
+    "path": "ADAPTIVE_DEPTH_ENDPOINT_INTEGRATION_SOURCE_MANIFEST.json",
+    "sha256": "1eebff421da4299a51a2e82861571cc4da3c0f3a248653955d1b374f25a4f0e5",
+    "immutable_project_local_snapshot": true
+  },
+  "cpu_fixture_artifact": {
+    "path": "ADAPTIVE_DEPTH_CPU_FIXTURES.json",
+    "sha256": "0813744f923512caa9f040052ed1ef5d1d57d81eda594ce7872a0a28f318ab3e"
+  },
+  "fixtures": [
+    {
+      "depths": [
+        12,
+        12,
+        6,
+        12
+      ],
+      "name": "threshold_1_7_8_7",
+      "result": "pass"
+    },
+    {
+      "batch_size": 23,
+      "depth": 6,
+      "name": "eight_and_above",
+      "result": "pass",
+      "target_rows": 138
+    },
+    {
+      "name": "permutation",
+      "order": [
+        7,
+        0,
+        6,
+        1,
+        5,
+        2,
+        4,
+        3
+      ],
+      "result": "pass"
+    },
+    {
+      "name": "cancellation_completion",
+      "result": "pass"
+    },
+    {
+      "empty_accept_lens": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "name": "empty_and_partial_match_bonus_only",
+      "result": "pass"
+    },
+    {
+      "generation": 0,
+      "name": "reused_slot",
+      "result": "pass"
+    },
+    {
+      "cases": [
+        {
+          "error": "empty_running_batch",
+          "name": "empty_batch",
+          "result": "fail_closed"
+        },
+        {
+          "error": "duplicate_request_id",
+          "name": "duplicate_ids",
+          "result": "fail_closed"
+        },
+        {
+          "error": "settlement_owner_unknown",
+          "name": "unknown_completion",
+          "result": "fail_closed"
+        },
+        {
+          "error": "reused_live_request_slot",
+          "name": "live_slot_reuse",
+          "result": "fail_closed"
+        }
+      ],
+      "name": "fail_closed",
+      "result": "pass"
+    }
+  ],
+  "frozen_rule": {
+    "batches_1_through_7": 12,
+    "batches_8_plus": 6,
+    "fallback_depth": 6,
+    "graph_depth": 12
+  },
+  "provider_gpu_seconds": 0,
+  "result": "endpoint_ready_offline",
+  "schema_version": 1,
+  "source_tree": "inputs/candidate-v0.5.15/source/python/sglang"
+}

@@ -1,0 +1,13 @@
+#cloud-config
+users:
+  - name: glmrunner
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB1OIKAzxtHuq5qL4KISq59cpcN0/YNb0dnV/+z0nJjl glm-nebius-campaign
+ssh_pwauth: false
+disable_root: true
+package_update: false
+runcmd:
+  - [sh, -c, 'date -u +%FT%TZ > /var/tmp/glm-cloud-init-ready']

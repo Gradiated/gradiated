@@ -1,0 +1,8 @@
+{
+  "candidate_import": "qkv_epilogue_discriminator.qkv_norm_rope_inplace",
+  "original_sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+  "pass": true,
+  "patched_sha256": "350b5e3e023d8689677b3211037ea60bcb7a397841ad33e598074de5db6a2e31",
+  "schema_version": 1,
+  "source": "/tmp/gemma4_v0513.py"
+}

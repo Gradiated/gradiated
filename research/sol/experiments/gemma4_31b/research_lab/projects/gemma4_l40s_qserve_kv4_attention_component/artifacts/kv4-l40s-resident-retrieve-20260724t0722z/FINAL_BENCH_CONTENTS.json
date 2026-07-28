@@ -1,0 +1,7 @@
+{
+  "artifacts": "artifacts/kv4-l40s-resident-retrieve-20260724t0722z",
+  "classification": "typed_outer_or_counter_boundary",
+  "diagnostic": "RuntimeError:typed_repair_boundary:repair_not_applied_by_deadline",
+  "project": "gemma4_l40s_qserve_kv4_attention_component",
+  "server_state": "Compact evidence retrieved when available; director disposition required."
+}

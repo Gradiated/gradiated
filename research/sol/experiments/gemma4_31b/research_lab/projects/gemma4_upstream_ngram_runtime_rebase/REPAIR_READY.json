@@ -1,0 +1,8 @@
+{
+  "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/artifacts/v0515-discriminator-20260725t054742z",
+  "at_utc": "2026-07-25T05:54:47.118030Z",
+  "claim_retained": true,
+  "diagnostic": "Remote worker ended without a scientific terminal; compact terminal and logs retrieved.",
+  "repair_deadline_utc": "2026-07-25T06:55:00Z",
+  "retry_scope": "only invalidated setup or consumer operation"
+}

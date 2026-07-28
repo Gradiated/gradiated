@@ -1,0 +1,5 @@
+{
+  "repair": "Relax only the exact-container inspect assertion to accept Docker's standard NVIDIA entrypoint while retaining the proven container name, pinned image digest, /work mount, and bound FP8 command; no scientific request began.",
+  "retry": true,
+  "schema_version": 1
+}

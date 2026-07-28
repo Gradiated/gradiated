@@ -64,6 +64,31 @@ cheap executable comparison against a scope-matched single-stream control.
 Otherwise return typed `none` and identify which workload, semantics, queue,
 or representativeness invariant blocks multiplexing.
 
+## Director reopening — official stock v0.5.15 path
+
+The original typed-none result closed multiplexing only on the semantically
+rejected native-NGRAM endpoint. The independently verified request-217 causal
+terminal now proves that decode-attention mode did not change the active
+Triton target-verification path and returns no further exact NGRAM repair.
+
+Reopen this same scientific question for one materially distinct execution:
+disable NGRAM and every speculative mode, retain the official v0.5.15 image,
+runtime commit, exact checkpoint, request bytes, semantic rows, and validated
+two-stream geometry, and compare the bound 139-request stock single-stream
+control with the disjoint two-stream candidate. This is demand pooling, not a
+semantic repair or NGRAM replay.
+
+The candidate must preserve normalized semantics, request bytes, within-stream
+order, release timing, zero failures, peak queue at most 30, and final queue
+zero while producing a service-time improvement larger than measured timing
+noise. Only then may the owner run the existing 759-request two-stream
+endpoint. Accept only at no more than `$0.14` per million total tokens. The
+complete execution contract is `DIRECTOR_STOCK_MULTIPLEX_BINDING.json`.
+
+Reuse retained H200
+`h200-ngram-verifier-e00kcm9nfhwt7e7gbc`; release it by `08:25Z`. Never replay
+the consumed 791-request NGRAM endpoint or request-217 discriminator.
+
 ## Budget and artifacts
 
 - Provider/GPU spend: `$0`; no GPU claim.
@@ -73,3 +98,6 @@ or representativeness invariant blocks multiplexing.
 - Required artifacts: verified binding, exact arrival/economic derivation,
   scheduler/corpus causal map, one execution packet or typed `none`,
   `RESEARCH_LOG.md`, and updated `STATUS.json`.
+
+The reopening adds at most 30 H200 minutes, 45 wall minutes, `$4.00` cumulative
+project authority, and 3 GiB of additional project-local artifacts.

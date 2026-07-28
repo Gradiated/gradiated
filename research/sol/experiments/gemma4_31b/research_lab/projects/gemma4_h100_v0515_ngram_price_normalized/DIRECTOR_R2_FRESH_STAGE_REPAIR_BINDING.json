@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-07-25T10:38:00Z",
+  "decision": "retain_maintenance_bench_and_relaunch_endpoint_owner_with_fresh_atomic_staging",
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "failed_attempt": {
+    "artifact_root": "artifacts/h100-endpoint-200g-r2-20260725t1034z",
+    "terminal": "artifacts/h100-endpoint-200g-r2-20260725t1034z/TERMINAL.json",
+    "terminal_sha256": "c0869582d37544f012053603d450f7c469a62314ec0a76e83230cbff43c31d65",
+    "local_audit": "artifacts/h100-endpoint-200g-r2-20260725t1034z/LOCAL_AUDIT.json",
+    "local_audit_sha256": "09294a3afc77274ba7b6a43414fe998b978e5c04482f1ed7af859671b8d604b3",
+    "remote_checkpoint_hash_stderr": "artifacts/h100-endpoint-200g-r2-20260725t1034z/REMOTE_CHECKPOINT_HASH.stderr",
+    "remote_checkpoint_hash_stderr_sha256": "9478d9c8749d51fefd3223b028beab0f3e3e3afa4fe4306a9fd6a5fd10cf136d",
+    "classification": "typed_external_or_recoverable_failure",
+    "candidate_sample_consumed": false,
+    "endpoint_sample_consumed": false,
+    "server_started": false,
+    "workload_started": false
+  },
+  "diagnosis": {
+    "local_checkpoint_audit": "passed all eight manifest-bound files",
+    "remote_preflight": "H100 identity, Docker, and 193-GiB filesystem passed; 177 GiB was free",
+    "failure": "The owner was launched with --reuse-staged on a bench registered as empty. It therefore hashed the absent canonical checkpoint instead of staging inputs/checkpoint into an atomic staging directory.",
+    "first_missing_file": "chat_template.jinja",
+    "physical_disk_fit": "not_falsified",
+    "scientific_intervention": "not_falsified"
+  },
+  "source_bindings": {
+    "owner": "h100_execution_owner.py",
+    "owner_sha256": "145f286f942cb62b1b6c00ddacafc05e921280ffd4ce57356aa685137bc3d222",
+    "checkpoint_manifest": "packet/CHECKPOINT_MANIFEST.json",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "packet_manifest": "PACKET_MANIFEST.json",
+    "packet_manifest_sha256": "8127631191fe1afc47e718502ff61980b1e51adb8ac43c2f28e140ff506173bd",
+    "replacement_binding": "DIRECTOR_200GIB_ENDPOINT_REPLACEMENT_BINDING.json",
+    "replacement_binding_sha256": "784a0141704007596fc05b566f75918d91d5b72d35e890f1c6d99e9e01465764",
+    "fleet_economics_interpretation": "DIRECTOR_FLEET_ECONOMICS_INTERPRETATION.json",
+    "fleet_economics_interpretation_sha256": "d5638a5c422e891e2b177a3698cdafb177c3458a0180f8e9bedba7f3d3d84075"
+  },
+  "immutable_identities": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.15 commit f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "checkpoint_files": 8,
+    "checkpoint_total_bytes": 62578655208
+  },
+  "bench": {
+    "id": "h100-v0515-endpoint-200g-r2-e00yfnrrfczsdjevms",
+    "required_status": "maintenance_or_available_with_no_claim",
+    "accelerator": "nvidia-h100-sxm",
+    "boot_disk_gib": 200,
+    "instance_id": "computeinstance-e00yfnrrfczsdjevms",
+    "disk_id": "computedisk-e00cjpqvtz8x59514m",
+    "public_ipv4": "89.169.124.194",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "watchdog_unit": "gemma4-h100-v0515-endpoint-20260725t1230-watchdog.service",
+    "watchdog_deadline_utc": "2026-07-25T12:30:00Z"
+  },
+  "repair_contract": {
+    "claim": "Atomically claim the same registered bench once using its current runtime/gpus.json identity.",
+    "launcher": "Use the bound h100_execution_owner.py in endpoint-only mode with --stage-packet and without --reuse-staged.",
+    "staging": "Remove or replace only incomplete .checkpoint.staging, .candidate.staging, and .packet.staging state as needed. Stream the exact project-local checkpoint and pinned candidate into staging directories, hash every manifest entry, then atomically publish canonical directories.",
+    "preservation": "Preserve any canonical immutable file only when its size and SHA-256 match the bound manifest. Do not treat missing canonical files as a negative disk bound.",
+    "server": "After exact checkpoint, packet, candidate, repaired image-size, image, and server gates pass, start only the exact official server.",
+    "workload": "Run only the sole unconsumed 791-request endpoint and retain the already-bound pooled/discrete telemetry.",
+    "release_deadline_utc": "2026-07-25T12:25:00Z"
+  },
+  "prohibitions": [
+    "Do not use --reuse-staged until the complete canonical checkpoint and candidate have passed the bound remote hash audit.",
+    "Do not replay the consumed 171-request discriminator.",
+    "Do not create, resize, stop, delete, or otherwise mutate the provider resource.",
+    "Do not launch a second owner while a matching owner is live.",
+    "Do not weaken checkpoint, image, runtime, packet, server, or endpoint identity gates."
+  ],
+  "terminal_contract": {
+    "expected_terminal": "TERMINAL.json under a new artifact root",
+    "typed_pre_science_failure_if_any_gate_fails": true,
+    "candidate_sample_consumed_before_endpoint": false,
+    "endpoint_sample_consumed_only_after_first_endpoint_request": true,
+    "release_bench": true
+  }
+}

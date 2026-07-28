@@ -1,0 +1,3 @@
+{
+  "error": "TimeoutExpired(['ssh', '-i', '/root/.config/nebius/glm-campaign/ssh_ed25519', '-o', 'BatchMode=yes', '-o', 'ServerAliveInterval=20', '-o', 'ServerAliveCountMax=3', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'UserKnownHostsFile=/root/.config/nebius/glm-campaign/known_hosts', 'glmrunner@89.169.99.101', 'cd /home/glmrunner/gemma4-stock-multiplex; test -f out/FINAL_TERMINAL.json && echo FINAL || true; cat out/INVOCATION_STATE.json 2>/dev/null || true'], 90)"
+}

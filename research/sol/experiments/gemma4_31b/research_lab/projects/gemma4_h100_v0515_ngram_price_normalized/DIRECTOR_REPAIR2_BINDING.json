@@ -1,0 +1,35 @@
+{
+  "authority": {
+    "authorized_spend_usd": 5.0,
+    "bench": "h100-v0515-ngram-e00mfea030cdngg54z",
+    "claim_deadline_utc": "2026-07-25T07:35:00Z",
+    "provider_mutation": "forbidden",
+    "reservation": "existing durable project reservation"
+  },
+  "decision": "authorize_one_in_project_packet_staging_consumer_repair",
+  "failure": {
+    "candidate_sample_consumed": false,
+    "classification": "typed_external_or_recoverable_failure",
+    "error": "FileNotFoundError(2, 'No such file or directory')",
+    "missing_remote_runner": "/home/glmrunner/gemma4-h100-v0515-ngram-price-normalized/packet/h100_matched_runner.py",
+    "terminal": "artifacts/h100-discriminator-20260725t0625z/repair-1/retry/TERMINAL.json",
+    "terminal_sha256": "5805ded6db16cd8fa1eddd429e0ce423cf75942570d360c76465431f7e1ce5f3"
+  },
+  "files": {
+    "PACKET_MANIFEST.json": "6bcc848dfc3d44d9248bcb79e62fdcb2eeed5cb56a6be8bb45d4dfcff3c26cd7",
+    "packet/candidate-v0.5.15/inputs/ngram-launch.json": "8349853a7eac9e73211f5d3081c834c05f78e0fd292ddbe5acb921b1824a523d",
+    "packet/h100_matched_runner.py": "789d2c4a34114009febabaf393d1a6e75dd1ffeb05acd1dbe82338db12355e8d"
+  },
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "repair": {
+    "container_identity": "gemma4-h100-v0515",
+    "discriminator": "Stage and hash-verify the complete immutable packet tree, then run only the unconsumed 171-request discriminator with UPSTREAM_REBASE_CONTAINER=gemma4-h100-v0515.",
+    "endpoint": "Only if every original discriminator gate passes, run the original fresh-container 791-request endpoint with the same explicit container identity.",
+    "resident_server": "Reuse the running exact container after a bounded health wait. If it is absent or exited before science, one restart with the already-bound official launch is allowed.",
+    "replay_prohibited": [
+      "any complete 171-request discriminator",
+      "any 791-request endpoint"
+    ]
+  },
+  "schema_version": 1
+}

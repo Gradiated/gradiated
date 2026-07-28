@@ -31,6 +31,11 @@
     "seconds_per_request": 0.6556567115001144,
     "sha256": "74bdb22c4bc217299d920bd53a49557403e3a838ba3c98df903ac119e4c4c64c"
   },
+  "settled_graph_topology": {
+    "classification": "e4m3_head_inside_captured_model_forward",
+    "path": "iterations/c32-topology-settled-resume-20260723t2110z/BINDING_REHASH.json",
+    "sha256": "dae45c632a29e13679b6c5be92ceaf4b00ae14c55948323d3a1391867d29ffde"
+  },
   "runtime": {
     "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
     "target_consumer": "ParallelLMHead_to_logits_processor_to_sampling"

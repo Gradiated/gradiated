@@ -1,0 +1,42 @@
+{
+  "binding_sha256": "82c91cf2ae5c3993ecac31a37fddc59684a8df83fef2b84fa322912d5bde9e70",
+  "files": [
+    {
+      "bytes": 963,
+      "path": "STOCK_LAUNCH.json",
+      "sha256": "c334fb50c7bf8af5a4bc58152803af3ee8a34f7b60e5e22051507bc1453644b3"
+    },
+    {
+      "bytes": 298335,
+      "path": "geometry.jsonl",
+      "sha256": "7533570482b4d3559c2c70ac62b34b0cc4f6b23d447d358addf1aa599f1357b4"
+    },
+    {
+      "bytes": 3159811,
+      "path": "inputs/TRACE_PACKET.json",
+      "sha256": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68"
+    },
+    {
+      "bytes": 3126546,
+      "path": "inputs/exact_semantic_rows.jsonl",
+      "sha256": "630d05bd860d1dd22c3e35ba2d8f792afc5051f0c68e0a74a9deda8140a02b36"
+    },
+    {
+      "bytes": 506544,
+      "path": "inputs/requests.jsonl",
+      "sha256": "10e7edacaa194fd0f43b3a3c38f7d91cec0ceba22df8e08e3b5897b174346135"
+    },
+    {
+      "bytes": 14831,
+      "path": "multiplex_runner.py",
+      "sha256": "ac06209a82080ebeb5ba9b821322b485fdb3625bea38ca3550e534471b6c1ca9"
+    },
+    {
+      "bytes": 4572,
+      "path": "stock_multiplex_runner.py",
+      "sha256": "ea128e9863e3a0f9c8ebb8f5c90343821adb6d28508e90036dfc2b0a8b969f1d"
+    }
+  ],
+  "schema_version": 1,
+  "stock_no_speculation": true
+}

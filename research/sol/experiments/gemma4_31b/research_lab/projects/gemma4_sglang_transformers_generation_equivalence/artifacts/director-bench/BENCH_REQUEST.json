@@ -1,0 +1,15 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "classification": "director_bench_request",
+  "disk_gib": 250,
+  "image": "docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a",
+  "max_provider_minutes": 70,
+  "max_wall_minutes": 90,
+  "project": "gemma4_sglang_transformers_generation_equivalence",
+  "provider_create_owner": "director",
+  "requested_state": "available_shared_bench",
+  "researcher_must_not_create_provider": true,
+  "spend_cap_usd": 3.25,
+  "terminal_sha256": "cfacfe4face877aee54d90bb5a540f71da773a2fea1e8ca0ade16e4cdbc6c94a",
+  "typed_precreate_terminal": "artifacts/precreate-terminal/TERMINAL.json"
+}

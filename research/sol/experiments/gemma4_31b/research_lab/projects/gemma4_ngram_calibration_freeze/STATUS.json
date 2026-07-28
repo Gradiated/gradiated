@@ -1,0 +1,43 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.41528041304193514,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 3.0,
+  "bench_id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "candidate_sample_consumed": true,
+  "compute_budget": "At most 1 local CPU-hour and 35 H200 claimed minutes total, including setup and failures.",
+  "next_action": "No further run. Preserve the consumed discriminator and do not admit or replay the conditional endpoint.",
+  "priority": 8475,
+  "provider_mutation": "forbidden_researcher_director_registered_bench_only",
+  "researcher_profile": "execution",
+  "reservation": {
+    "authorized_usd": 3.0,
+    "reserved_at": "2026-07-25T05:20:38.260371Z",
+    "updated_at": "2026-07-25T05:20:38.260375Z"
+  },
+  "status": "completed",
+  "storage_budget": "At most 5 GiB project-local.",
+  "summary": "Calibrated immutable corpus retained long trunks, zero queue, and $0.10553298850106702/M, but diverged once at request 790; reject this candidate and do not run its endpoint.",
+  "terminal": {
+    "artifact_root": "artifacts/calibration-freeze-20260725t052521z",
+    "conditional_endpoint_admitted": false,
+    "decision": {
+      "all_complete": true,
+      "failures_zero": true,
+      "final_server_queue_zero": true,
+      "max_server_queue_at_most_30": true,
+      "normalized_semantics_exact": false,
+      "planning_cost_at_or_below_target": true,
+      "positive_activation_identity": true,
+      "post_calibration_writes_zero": true,
+      "stable_release_timing": true,
+      "unaffected_long_trunks": true
+    },
+    "director_interpretation": {
+      "activation_observer_correction": "The overlay increments writes_after_freeze before returning without ORIGINAL_UPDATE; 7874 is the number of suppressed update calls, not corpus writes. The source and transition prove zero post-freeze writes.",
+      "first_semantic_divergence_request": 790,
+      "result": "valid_discriminator_reject"
+    }
+  },
+  "wall_clock_budget": "55 minutes; release by the earlier of 35 claimed minutes or 2026-07-25T06:00:00Z."
+}

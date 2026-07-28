@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "type": "director_h100_execution_readmission",
+  "issued_at_utc": "2026-07-26T15:31:06Z",
+  "project": "h100_hybrid_attention_kernel_mechanism",
+  "decision": "reactivate_repaired_unconsumed_exact_shape_h100_component_after_durable_reservation",
+  "reason": "The reserved MI355X falsifier is locally ready but cannot be provisioned: the repository has no authenticated TensorWave controller or credential namespace, and the authenticated Nebius project exposes no MI355X or B200 platform. The existing H100 arm is materially different, scientifically unconsumed, repaired in place, and directly allocatable on the authenticated Nebius nvidia-h100-sxm platform.",
+  "scientific_contract": {
+    "hypothesis": "On H100 SXM, E4M3 full-context paged KV can reduce the pinned native registered-Attention consumer enough to contribute at least 5% whole-request service reduction for Gemma 4's exact 50-local/10-global by 358-step workload without violating the BF16 semantic oracle.",
+    "unchanged_from": "DIRECTOR_H100_EXECUTION_ADMISSION_20260726T0706Z.json",
+    "performance_gate": "Promote only if the exact 50-local/10-global by 358-step aggregation predicts at least 5% whole-request service reduction and remains economically competitive at the H100 planning hurdle of 1.8249 completed requests/s.",
+    "quality_gate": "Both arms use the same native registered-Attention producer/consumer and full-context geometry; finite/nonzero outputs and every preregistered cosine, NRMSE, construction, identity, and counter gate must pass."
+  },
+  "bindings": [
+    {
+      "path": "H100_OFFLINE_VLLM_CONFIG_CONSUMER_CONTRACT_REPAIR.json",
+      "sha256": "071f64c8250a06605073ff9b4bf444f0a34dd7a17e1b0c27e80e5275e689e237",
+      "required_disposition": "typed_offline_repair_complete_await_director"
+    },
+    {
+      "path": "H100_PAGED_FP8_EXECUTION_READY.json",
+      "sha256": "3df9df1887fdd0106bcebbe58bebc206bfd7df3cc7e197fff1740830099de93f"
+    },
+    {
+      "path": "paged_fp8_execution.py",
+      "sha256": "116bbfed88bf18ada2a503bf5626d0cea0577eb4efc0c508a769eaafb7820b8b"
+    },
+    {
+      "path": "paged_fp8_contract.py",
+      "sha256": "bc993832a5e5079bd0f7715b96af28ec1cec26dc5f63aaf07cd3f1303d2695d6"
+    }
+  ],
+  "budgets": {
+    "authorized_spend_usd": 3.25,
+    "provider_lifecycle_minutes": 60,
+    "claimed_minutes": 50,
+    "gpu_seconds": 1800,
+    "new_storage_gib": 100,
+    "allocation_limit": 1
+  },
+  "provider_gate": "The current spend snapshot contains no h100_hybrid_attention_kernel_mechanism reservation. Do not create a provider resource in this decision. After the harness durably reserves the full $3.25, the director may create and register exactly one preemptible nvidia-h100-sxm bench with an absolute watchdog no later than 60 provider minutes after creation.",
+  "artifact_contract": {
+    "terminal": "H100_PAGED_FP8_EXECUTION_TERMINAL.json",
+    "allowed_results": [
+      "component_positive",
+      "component_negative",
+      "identity_or_correctness_rejected",
+      "provider_or_runtime_boundary_before_science"
+    ]
+  }
+}

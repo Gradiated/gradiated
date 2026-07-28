@@ -1,0 +1,8 @@
+{
+  "control_cuda_started": true,
+  "control_science_started": true,
+  "diagnostic_cuda_started": true,
+  "diagnostic_science_started": true,
+  "mtp_cuda_started": true,
+  "mtp_science_started": true
+}

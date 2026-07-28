@@ -1,0 +1,8 @@
+{
+  "classification": "ordinary_integration_or_consumer_defect",
+  "component_persisted": false,
+  "error": "PermissionError(13, 'Permission denied')",
+  "repair_deadline_utc": "2026-07-24T19:40:00Z",
+  "retry_scope": "component_harness_only",
+  "schema_version": 1
+}

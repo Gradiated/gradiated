@@ -21,14 +21,15 @@ def transfer(ip: str, root: str, source: pathlib.Path, row: dict, artifacts: pat
     if matched.returncode==0: return {"name":name,"status":"already_matched","bytes":row["bytes"],"sha256":expected,"seconds":0.0}
     started=time.monotonic()
     batch=artifacts/f".{name}.sftp"
-    batch.write_text(f"put -a {shlex.quote(str(source))} {shlex.quote(partial)}\n")
+    partial_exists=ssh(ip,f"test -f {shlex.quote(partial)}",60).returncode==0
+    batch.write_text(f"put {'-a ' if partial_exists else ''}{shlex.quote(str(source))} {shlex.quote(partial)}\n")
     result=subprocess.run(["sftp","-b",str(batch),"-i",str(KEY),"-o","BatchMode=yes","-o","StrictHostKeyChecking=accept-new","-o",f"UserKnownHostsFile={KNOWN}",f"glmrunner@{ip}"],text=True,capture_output=True,timeout=7200)
     (artifacts/f"{name}.sftp.stdout").write_text(result.stdout); (artifacts/f"{name}.sftp.stderr").write_text(result.stderr)
     seconds=time.monotonic()-started
     if result.returncode: raise RuntimeError(f"typed_transfer_boundary:sftp_failed:{name}:{result.stderr[-1000:]}")
     finalize=ssh(ip,f"test \"$(stat -c%s {shlex.quote(partial)})\" = {row['bytes']} && test \"$(sha256sum {shlex.quote(partial)}|awk '{{print $1}}')\" = {expected} && chmod 0444 {shlex.quote(partial)} && mv -f {shlex.quote(partial)} {shlex.quote(final)}",1800)
     if finalize.returncode: raise RuntimeError(f"typed_transfer_boundary:remote_hash_or_finalize_failed:{name}:{finalize.stderr[-1000:]}")
-    return {"name":name,"status":"transferred","bytes":row["bytes"],"sha256":expected,"seconds":seconds,"bytes_per_second":row["bytes"]/seconds if seconds else None}
+    return {"name":name,"status":"resumed" if partial_exists else "transferred","bytes":row["bytes"],"sha256":expected,"seconds":seconds,"bytes_per_second":row["bytes"]/seconds if seconds else None}
 def main() -> int:
     p=argparse.ArgumentParser(); p.add_argument("--ip",required=True); p.add_argument("--remote-root",required=True); p.add_argument("--artifact-root",type=pathlib.Path,required=True); a=p.parse_args()
     binding=json.loads((PROJECT/"CHECKPOINT_SOURCE_BINDING.json").read_text()); manifest=json.loads((PROJECT/binding["manifest"]).read_text()); source=pathlib.Path(binding["source_root"])

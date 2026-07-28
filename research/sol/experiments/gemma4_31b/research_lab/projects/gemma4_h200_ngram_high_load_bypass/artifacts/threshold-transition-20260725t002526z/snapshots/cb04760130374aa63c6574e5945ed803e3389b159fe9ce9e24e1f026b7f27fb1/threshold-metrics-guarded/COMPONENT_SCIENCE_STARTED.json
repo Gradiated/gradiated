@@ -1,0 +1,5 @@
+{
+  "candidate_cuda_expected": true,
+  "requests": 8,
+  "threshold": 8
+}

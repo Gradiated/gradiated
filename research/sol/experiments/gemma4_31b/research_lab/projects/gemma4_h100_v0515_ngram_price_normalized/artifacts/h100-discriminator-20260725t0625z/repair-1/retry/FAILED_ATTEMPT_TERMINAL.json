@@ -1,0 +1,152 @@
+{
+  "bench": "h100-v0515-ngram-e00mfea030cdngg54z",
+  "candidate_sample_consumed": false,
+  "classification": "typed_external_or_recoverable_failure",
+  "error": "RuntimeError('server_start_failed')",
+  "finished_at": "2026-07-25T06:50:10.251233Z",
+  "heartbeat_events": [
+    {
+      "at": "2026-07-25T06:29:11.601351Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:29:56.650406Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:30:41.696305Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:31:26.753794Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:32:11.818150Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:32:56.870854Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:33:41.914326Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:34:26.957411Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:35:12.003952Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:35:57.052365Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:36:42.096544Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:37:27.144563Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:38:12.189118Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:38:57.237428Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:39:42.280779Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:40:27.335733Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:41:12.396072Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:41:57.438943Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:42:42.483462Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:43:27.528616Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:44:12.575259Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:44:57.620665Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:45:42.667836Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:46:27.710442Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:47:12.757033Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:47:57.804010Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:48:42.849715Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    },
+    {
+      "at": "2026-07-25T06:49:27.895301Z",
+      "kind": "heartbeat",
+      "returncode": 2
+    }
+  ],
+  "project": "gemma4_h100_v0515_ngram_price_normalized",
+  "schema_version": 1,
+  "started_at": "2026-07-25T06:28:26.551568Z"
+}

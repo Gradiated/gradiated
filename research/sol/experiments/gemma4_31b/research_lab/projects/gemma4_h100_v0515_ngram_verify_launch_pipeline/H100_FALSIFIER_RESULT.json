@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "classification": "invalid_pre_science",
+  "evidence_label": "measured_environment_and_operational",
+  "decision": "no_candidate_sample_consumed",
+  "binding_sha256": "c579f42e4b10847c1567c8204373e7189833a77e427302ebc273ea580e9971ae",
+  "bench": "h100-v0515-endpoint-200g-r2-e00yfnrrfczsdjevms",
+  "claimed_at_utc": "2026-07-25T12:14:43.437562Z",
+  "recorded_at_utc": "2026-07-25T12:16:39Z",
+  "environment": {
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "pinned_image_cuda_smoke": "passed: torch 2.11.0+cu129, CUDA available"
+  },
+  "invalid_cause": "released endpoint scheduler PID 8947 retained 74814 MiB despite terminal/released inventory state; it was stopped under the explicit leftover-endpoint allowance. The remaining release fence did not safely admit the required fresh project-local copy, exact target-verify pair, 200 alternating repetitions, trace, retrieval, and release.",
+  "science_started": false,
+  "candidate_cuda_submitted": false,
+  "stock_sample_consumed": false,
+  "candidate_sample_consumed": false,
+  "no_endpoint_replayed": true,
+  "artifacts": {
+    "remote_observation": "scheduler PID 8947 / parent 8740; after SIGTERM GPU memory was 4 MiB"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/full_model_readmission_owner.py"
+  ],
+  "cwd": "/root/workspace",
+  "launched_at_utc": "2026-07-26T00:33:20.387015Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/full-model-readmission-20260726t0029z/controller-retry2.log",
+  "pid": 1392187,
+  "start_ticks": 114201779,
+  "unit_manager": "pid"
+}

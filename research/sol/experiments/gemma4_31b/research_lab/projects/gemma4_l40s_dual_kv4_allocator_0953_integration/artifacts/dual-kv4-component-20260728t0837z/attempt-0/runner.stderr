@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "/work/state/packet/sm89_dual_kv4_runner.py", line 249, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/work/state/packet/sm89_dual_kv4_runner.py", line 233, in main
+    local_ext, global_ext, build = load_extensions(root)
+                                   ^^^^^^^^^^^^^^^^^^^^^
+  File "/work/state/packet/sm89_dual_kv4_runner.py", line 81, in load_extensions
+    local = load(
+            ^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/utils/cpp_extension.py", line 1818, in load
+    return _jit_compile(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/utils/cpp_extension.py", line 2235, in _jit_compile
+    if baton.try_acquire():
+       ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/utils/file_baton.py", line 35, in try_acquire
+    self.fd = os.open(self.lock_file_path, os.O_CREAT | os.O_EXCL)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/work/state/packet/torch_extensions/local/lock'

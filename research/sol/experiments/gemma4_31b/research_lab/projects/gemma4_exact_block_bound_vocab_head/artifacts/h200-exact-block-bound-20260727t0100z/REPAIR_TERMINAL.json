@@ -1,0 +1,44 @@
+{
+  "actual_spend_usd": 0.407134204483,
+  "actual_spend_usd_at_adoption": 0.392414339288088,
+  "adopted_at_utc": "2026-07-27T01:19:57.006227Z",
+  "attempt_generation": 1,
+  "canonical_terminal_sha256": "fd4ab52c69748acac23bc9dd0594458e5f871b6bbceaec91aabf7b93679140c7",
+  "claim_released_at_utc": "2026-07-27T01:20:18.549926Z",
+  "claim_seconds": 595.873443,
+  "claim_seconds_at_adoption": 574.329744,
+  "claimed_at_utc": "2026-07-27T01:10:22.676483Z",
+  "classification": "post_science_permission_recovery_terminal_adopted",
+  "owner_terminated": {
+    "pid": 2236177,
+    "start_ticks": 123063995
+  },
+  "release_condition": "ready",
+  "remote_mutation": "chmod only the four existing attempt-1 terminal/marker files and traversal directories for retrieval",
+  "retrieved": {
+    "candidate_first_call": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_exact_block_bound_vocab_head/artifacts/h200-exact-block-bound-20260727t0100z/attempt-1.arm-markers-candidate_first_call.json",
+      "sha256": "ad1ed6243ea081e7d97d9e7bf7443870a40e1ea693c6c7fb4a35354451f1de93"
+    },
+    "dense_first_call": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_exact_block_bound_vocab_head/artifacts/h200-exact-block-bound-20260727t0100z/attempt-1.arm-markers-dense_first_call.json",
+      "sha256": "ad1ed6243ea081e7d97d9e7bf7443870a40e1ea693c6c7fb4a35354451f1de93"
+    },
+    "science_started": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_exact_block_bound_vocab_head/artifacts/h200-exact-block-bound-20260727t0100z/attempt-1.science_started.json",
+      "sha256": "15fa0637515c0333d070a22896d24d39afad956bfae8354c3a98b608b697bbb3"
+    },
+    "terminal": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_exact_block_bound_vocab_head/artifacts/h200-exact-block-bound-20260727t0100z/attempt-1.EXACT_BLOCK_BOUND_VOCAB_HEAD_TERMINAL.json",
+      "sha256": "17ff0975f3d91cc1b1033ca0c418b18b8574ce4ea85ba3170497522e3cd82083"
+    },
+    "worker_stdout": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_exact_block_bound_vocab_head/artifacts/h200-exact-block-bound-20260727t0100z/attempt-1.worker.stdout",
+      "sha256": "ceb5a2515ca52b28a741f7f24fa18d57bd2df501fa1b48ecffca7cd56565683d"
+    }
+  },
+  "schema_version": 1,
+  "science_replayed": false,
+  "validated_contract": true,
+  "worker_exit": 0
+}

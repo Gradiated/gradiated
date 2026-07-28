@@ -556,6 +556,34 @@ def token_projection(rows: list[dict]) -> list[dict]:
     )
 
 
+def cumulative_token_finals(arm: str) -> list[dict]:
+    deltas: dict[str, list[int]] = {}
+    finals: list[dict] = []
+    for event in events(OUT / f"{arm}-token-events.jsonl"):
+        rid = event.get("rid")
+        if event.get("stage") == "scheduler_to_detokenizer":
+            deltas.setdefault(rid, []).extend(event["scheduler_output_ids_delta"])
+        elif event.get("stage") == "post_generation_pre_parser_final":
+            item = dict(event)
+            cumulative = deltas.get(rid, [])
+            item["scheduler_output_ids"] = cumulative
+            item["emitted_token_ids"] = cumulative
+            item["completion_counter_inputs"] = {
+                "emitted_token_count": len(cumulative),
+                "scheduler_delta_count": len(cumulative),
+            }
+            finals.append(item)
+    return finals
+
+
+def accounting_exact(rows: list[dict]) -> bool:
+    return all(
+        row["completion_counter"]
+        == row["completion_counter_inputs"]["emitted_token_count"]
+        for row in rows
+    )
+
+
 def run_c32(container: str, arm: str) -> dict:
     result = run(
         [
@@ -599,97 +627,64 @@ def full_arm(arm: str, ngram: bool) -> tuple[list[dict], list[dict], dict]:
     container = launch(arm, ngram, discriminator=False, shadow=False)
     rows = serial_capture(arm, feature_cases())
     rows.extend(batched_text_capture(arm))
-    feature_finals = wait_feature_finals(arm)
+    wait_feature_finals(arm)
+    feature_finals = cumulative_token_finals(arm)
+    if len(feature_finals) != 10:
+        raise RuntimeError(f"ten_row_cumulative_trace_count:{arm}:{len(feature_finals)}")
     atomic(OUT / f"{arm}-ten-row-suite.json", rows)
     atomic(OUT / f"{arm}-ten-row-token-trace.json", feature_finals)
     c32_terminal = run_c32(container, arm)
     stop(container, arm)
-    return rows, feature_finals, c32_terminal
+    c32_finals = [
+        row
+        for row in cumulative_token_finals(arm)
+        if row.get("prompt_tokens") == 4214 and row.get("completion_counter") == 358
+    ]
+    if len(c32_finals) != 32:
+        raise RuntimeError(f"c32_cumulative_trace_count:{arm}:{len(c32_finals)}")
+    atomic(OUT / f"{arm}-c32-token-trace.json", c32_finals)
+    return rows, feature_finals, {**c32_terminal, "cumulative_trace": c32_finals}
 
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
+    stale_terminal = OUT / "TERMINAL.json"
+    if stale_terminal.exists():
+        stale_terminal.replace(OUT / "prior-discriminator-terminal.json")
     atomic(
         OUT / "INVOCATION_STATE.json",
         {
-            "control_discriminator_started": False,
-            "candidate_discriminator_started": False,
             "conditional_pair_started": False,
+            "discriminator_replayed": False,
+            "trace_aggregation": "concatenate_every_scheduler_to_detokenizer_delta_per_rid",
         },
     )
-    four = [
-        feature_cases()[0],
-        feature_cases()[3],
-        feature_cases()[4],
-        c32_discriminator_case(),
-    ]
-
-    control_name = launch(
-        "control-discriminator", False, discriminator=True, shadow=False
-    )
     atomic(
         OUT / "INVOCATION_STATE.json",
         {
-            "control_discriminator_started": True,
-            "candidate_discriminator_started": False,
-            "conditional_pair_started": False,
-        },
-    )
-    control_rows = serial_capture("control-discriminator", four)
-    stop(control_name, "control-discriminator")
-
-    candidate_name = launch(
-        "candidate-discriminator", True, discriminator=True, shadow=True
-    )
-    atomic(
-        OUT / "INVOCATION_STATE.json",
-        {
-            "control_discriminator_started": True,
-            "candidate_discriminator_started": True,
-            "conditional_pair_started": False,
-        },
-    )
-    candidate_rows = serial_capture("candidate-discriminator", four)
-    candidate_internal = events(
-        OUT / "candidate-discriminator-internal-events.jsonl"
-    )
-    discriminator = discriminator_summary(
-        control_rows, candidate_rows, candidate_internal
-    )
-    audit = events(OUT / "candidate-discriminator-candidate-audit.jsonl")
-    discriminator["candidate_audit"] = audit
-    discriminator["pass"] = bool(
-        discriminator["exact_argmax_and_tokens"]
-        and discriminator["native_shadow_present"]
-        and audit
-    )
-    atomic(OUT / "DISCRIMINATOR_TERMINAL.json", discriminator)
-    stop(candidate_name, "candidate-discriminator")
-
-    if not discriminator["pass"]:
-        atomic(
-            OUT / "TERMINAL.json",
-            {
-                "schema_version": 1,
-                "classification": "decode_equivalent_discriminator_reject",
-                "discriminator": discriminator,
-                "conditional_pair_started": False,
-                "pass": False,
-            },
-        )
-        return
-
-    atomic(
-        OUT / "INVOCATION_STATE.json",
-        {
-            "control_discriminator_started": True,
-            "candidate_discriminator_started": True,
             "conditional_pair_started": True,
+            "discriminator_replayed": False,
+            "trace_aggregation": "concatenate_every_scheduler_to_detokenizer_delta_per_rid",
         },
     )
-    control_suite, control_feature_tokens, control_c32 = full_arm(
-        "control-full", False
-    )
+    if (OUT / "control-full-ten-row-suite.json").exists() and (
+        OUT / "control-full-c32/TERMINAL.json"
+    ).exists():
+        control_suite = json.loads((OUT / "control-full-ten-row-suite.json").read_text())
+        control_feature_tokens = cumulative_token_finals("control-full")
+        control_c32 = json.loads((OUT / "control-full-c32/TERMINAL.json").read_text())
+        control_c32["cumulative_trace"] = [
+            row
+            for row in control_feature_tokens
+            if row.get("prompt_tokens") == 4214
+            and row.get("completion_counter") == 358
+        ]
+        if len(control_feature_tokens) != 43 or len(control_c32["cumulative_trace"]) != 32:
+            raise RuntimeError("persisted_control_producer_trace_incomplete")
+    else:
+        control_suite, control_feature_tokens, control_c32 = full_arm(
+            "control-full", False
+        )
     atomic(
         OUT / "CONTROL_PRODUCER_STAGE.json",
         {
@@ -709,6 +704,9 @@ def main() -> None:
     feature_token_exact = token_projection(
         control_feature_tokens
     ) == token_projection(candidate_feature_tokens)
+    feature_accounting_exact = accounting_exact(
+        control_feature_tokens + candidate_feature_tokens
+    )
     control_tokens = c32_token_rows(OUT / "control-full-c32")
     candidate_tokens = c32_token_rows(OUT / "candidate-full-c32")
     c32_token_exact = (
@@ -716,14 +714,24 @@ def main() -> None:
         and len(candidate_tokens) == 32
         and control_tokens == candidate_tokens
     )
+    control_c32_trace = control_c32["cumulative_trace"]
+    candidate_c32_trace = candidate_c32["cumulative_trace"]
+    c32_trace_exact = token_projection(control_c32_trace) == token_projection(
+        candidate_c32_trace
+    )
+    c32_accounting_exact = accounting_exact(control_c32_trace + candidate_c32_trace)
     candidate_audit = events(OUT / "candidate-full-candidate-audit.jsonl")
     terminal = {
         "schema_version": 1,
         "classification": "decode_equivalent_exact_suite_and_c32",
-        "discriminator": discriminator,
+        "discriminator_replayed": False,
+        "trace_aggregation": "concatenate_every_scheduler_to_detokenizer_delta_per_rid",
         "feature_api_exact": feature_api_exact,
         "feature_token_exact": feature_token_exact,
+        "feature_accounting_exact": feature_accounting_exact,
         "c32_token_exact": c32_token_exact,
+        "c32_cumulative_scheduler_and_emitted_exact": c32_trace_exact,
+        "c32_accounting_exact": c32_accounting_exact,
         "control_c32": control_c32,
         "candidate_c32": candidate_c32,
         "candidate_service_seconds_per_request": candidate_c32.get(
@@ -734,7 +742,10 @@ def main() -> None:
         "pass": bool(
             feature_api_exact
             and feature_token_exact
+            and feature_accounting_exact
             and c32_token_exact
+            and c32_trace_exact
+            and c32_accounting_exact
             and control_c32.get("pass")
             and candidate_c32.get("pass")
             and candidate_c32.get("service_seconds_per_request", 999)

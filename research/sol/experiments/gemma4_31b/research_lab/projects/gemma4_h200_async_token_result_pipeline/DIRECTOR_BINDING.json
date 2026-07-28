@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "stack_binding": {
+    "path": "../gemma4_h200_v0513_fp8_qkv_residual_profile/BINDINGS.json",
+    "sha256": "cebc435c4eb1e5716c4aa9bd854785a3e7cac4b0665c96ea6a44040b3e96fb62"
+  },
+  "control": {
+    "path": "../sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/mtp-candidate-repair-20260723t0658z/retrieved/control/TERMINAL.json",
+    "sha256": "a6e69ac9534ae433fc45d3b5d3ea241fe63321d33423cdd52d17128d8072d278",
+    "service_seconds_per_request": 0.6743258590313417
+  },
+  "current_trace": {
+    "path": "../gemma4_h200_residual_h2d_sync_residency/artifacts/residual-h2d-current-frontier-20260723t0403z/TERMINAL.json",
+    "sha256": "bdbba172f8c9c2feae44382313b877823e9ebd1bac6d96eb78a58867c46d689b",
+    "synchronization_fraction": 0.34609603268993366,
+    "scheduler_gap_fraction": 0.0571791539740094,
+    "launch_fraction": 0.012106357595038841
+  },
+  "source_chain": {
+    "path": "../gemma4_h200_device_conditional_decode_graph/OFFLINE_SOURCE_BINDING.json",
+    "sha256": "2f725cb71b6819ef1ce8e6002e174ca1ff7e9b475b8a83b26f81efc7c96e6540"
+  },
+  "full_body_falsifier": {
+    "path": "../gemma4_h200_device_conditional_decode_graph/artifacts/repair-20260723t1258z/TERMINAL.json",
+    "sha256": "388f25b700b8897ecaf0b425f263f914b0c37a2ea050189289a3e458c37c019a",
+    "classification": "full_body_host_intervention_required"
+  },
+  "workload_runner": {
+    "path": "../gemma4_h200_device_conditional_decode_graph/inputs/current_stack/fp8_qkv_paired_runner.py",
+    "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+    "temperature": 0,
+    "seed": 20260718,
+    "ignore_eos": true,
+    "stream": true
+  },
+  "candidate_change": {
+    "ring_slots": 2,
+    "d2h_destination": "preallocated_pinned_host_token_ids",
+    "d2h_copy": "asynchronous_side_stream_with_event",
+    "next_decode_token_source": "device_sample_output",
+    "host_consumes": "prior_completed_slot",
+    "one_token_scheduling": true,
+    "token_emission_batched_or_delayed": false,
+    "conditional_graph": false,
+    "continuous_decode_steps_changed": false,
+    "graph_launch_count_changed": false,
+    "all_model_kernels_sampling_semantics_and_workload_fields": "immutable"
+  },
+  "bench_id": "h200-sync-linear-e00vhh6h29fj68x91g"
+}

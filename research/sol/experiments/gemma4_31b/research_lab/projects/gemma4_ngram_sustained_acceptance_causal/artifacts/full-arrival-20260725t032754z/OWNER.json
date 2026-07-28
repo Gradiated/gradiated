@@ -1,0 +1,14 @@
+{
+  "command": [
+    "env",
+    "REQUEST_LOCAL_ROOT=/home/glmrunner/gemma4-request-local-verified-trunk",
+    "python3",
+    "remote_request_local_endpoint.py"
+  ],
+  "cwd": "/home/glmrunner/gemma4-request-local-verified-trunk",
+  "launched_at_utc": "2026-07-25T03:28:02.496284Z",
+  "log": "/home/glmrunner/gemma4-request-local-verified-trunk/OWNER.log",
+  "pid": 43592,
+  "start_ticks": 1108719,
+  "unit_manager": "remote-shell"
+}

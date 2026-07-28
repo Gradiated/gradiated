@@ -1,0 +1,11 @@
+{
+  "error": {
+    "message": "[Errno 2] No such file or directory: '/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0513_fp8_qkv_endpoint/artifacts/h100-c32-fp8-qkv-r2-20260720t1150z/retrieved/exact-c32/TERMINAL.json'",
+    "type": "FileNotFoundError"
+  },
+  "invocation_state": {
+    "candidate_cuda_started": true,
+    "candidate_science_started": false
+  },
+  "repair_deadline_epoch": 1784555657
+}

@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "decision": "promote_source_complete_phase_dispatcher_to_one_exact_h200_component_falsification",
+  "hypothesis": "At exact c32 depth-12 target verification, restricting the five 55-local/5-global proxy layers to TARGET_VERIFY and maintaining mirrored stock/proxy KV banks can preserve the stock path before verification and after accepted-prefix cache movement while retaining a positive net target-cycle saving.",
+  "source_result": {
+    "path": "PHASE_SELECTIVE_HYBRID_RESULT.json",
+    "sha256": "125f2411ea951e2958d373910713829a13e0a571e469738412772d38d62a0cca",
+    "classification": "source_complete_candidate",
+    "predicted_net_reduction_fraction_range": [
+      0.017025959017991726,
+      0.021687770126251484
+    ],
+    "extra_shadow_kv_bytes": 1342177280
+  },
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "accelerator": "nvidia-h200-sxm",
+    "hourly_cost_usd": 2.45,
+    "claim_not_after_utc": "2026-07-25T21:18:00Z",
+    "minimum_remaining_lifecycle_minutes_at_claim": 42,
+    "maximum_claim_minutes": 34,
+    "release_not_after_utc": "2026-07-25T21:52:00Z",
+    "lifecycle_deadline_utc": "2026-07-25T22:00:00Z",
+    "reuse_contract": "Reuse the registered resident exact checkpoint, pinned SGLang image and source, compiler and CUDA caches. Do not provision, recreate, drain, or otherwise mutate provider lifecycle."
+  },
+  "scope": {
+    "workload": "One exact c32, 4,214-token prefill followed by one ordinary stock decode row, one 384-row depth-12 TARGET_VERIFY replay, one synthetic accepted-index move/free pattern mirrored across both KV banks, and one post-accept stock-operator decode.",
+    "converted_layers": [
+      11,
+      23,
+      35,
+      47,
+      59
+    ],
+    "full_attention_layers": [
+      5,
+      17,
+      29,
+      41,
+      53
+    ],
+    "endpoint_requests": 0,
+    "training": false,
+    "provider_mutation": false
+  },
+  "quality_gate": [
+    "Stock prefill and the pre-verification ordinary decode are bit-exact to the pinned control.",
+    "All 384 logical TARGET_VERIFY rows use the proxy only at converted layers; padded rows allocate and write no cache slot.",
+    "Stock and proxy cache banks undergo identical allocation, write, accepted-index move, and rejected-row free operations.",
+    "The post-accept stock-operator decode is finite and exact against an eager dual-cache reference.",
+    "CUDA-graph replay does not recapture or introduce host synchronization.",
+    "Measured gross target-cycle saving minus shadow-KV projection, write, move, and dispatch costs is positive."
+  ],
+  "measurement": {
+    "timing": "Profiler-off CUDA events with warmup and repeated control/candidate samples; report median, p95, dispersion, and repetitions.",
+    "telemetry": [
+      "forward mode, graph batch, logical and padded rows",
+      "layer-11 stock/proxy attention-output maximum and relative error",
+      "accepted indices and both cache locations before and after move/free",
+      "pre-verification and post-accept stock logits versus their exact references",
+      "gross target-cycle time, every shadow-maintenance cost, and net time"
+    ],
+    "economic_reference_seconds_per_request": 0.625149101968745,
+    "campaign_target_seconds_per_request": 0.500119281574996
+  },
+  "stop_rules": [
+    "Stop before timing if any stock-path, row-ownership, cache-lifecycle, or graph gate fails.",
+    "Return a typed negative terminal if net component saving is nonpositive; do not repair by weakening exactness or omitting shadow maintenance.",
+    "Do not run an endpoint, reopen permanent 55-local/5-global placement, or claim quality preservation or deployability."
+  ],
+  "budgets": {
+    "authorized_spend_usd": 1.5,
+    "compute": "At most 34 claimed H200 minutes at $2.45/hour.",
+    "wall_clock": "Claim no later than 2026-07-25T21:18:00Z and release no later than 2026-07-25T21:52:00Z.",
+    "storage": "At most 3 GiB of new non-checkpoint artifacts."
+  },
+  "artifact_contract": {
+    "terminal": "PHASE_SELECTIVE_HYBRID_H200_COMPONENT_TERMINAL.json",
+    "required_classification": "exact_positive_net_component | exact_nonpositive_net_component | semantic_or_cache_reject | graph_contract_reject | claim_gate_expired | infrastructure_terminal",
+    "cleanup": "Stop all project processes and release the bench ready with resident reusable state preserved."
+  }
+}

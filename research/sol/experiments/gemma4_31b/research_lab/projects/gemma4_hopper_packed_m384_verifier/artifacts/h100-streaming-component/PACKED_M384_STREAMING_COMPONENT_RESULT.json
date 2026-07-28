@@ -1,0 +1,16 @@
+{
+  "classification": "invalid_attempt_shared_synchronization_ambiguity",
+  "component_replay_performed": false,
+  "correctness_interpretation_permitted": false,
+  "cuda_invocation_performed_by_constructor": false,
+  "endpoint_action_performed": false,
+  "performance_interpretation_permitted": false,
+  "reason": "stock A, stock B, and candidate shared the only asynchronous completion boundary; preserved evidence cannot assign the CUDA fault to an arm",
+  "result": "invalid_attempt_shared_synchronization_ambiguity",
+  "schema_version": 1,
+  "scientific_result": false,
+  "source_localization": "artifacts/h100-streaming-component/PACKED_M384_STREAMING_LAUNCH_LOCALIZATION_TERMINAL.json",
+  "source_localization_sha256": "cbebfdcc5e7c95342bd5619031dce5bf0cac025568c5593bc6aa1813e4369033",
+  "type": "packed_m384_streaming_component_result",
+  "v2_replay_performed": false
+}

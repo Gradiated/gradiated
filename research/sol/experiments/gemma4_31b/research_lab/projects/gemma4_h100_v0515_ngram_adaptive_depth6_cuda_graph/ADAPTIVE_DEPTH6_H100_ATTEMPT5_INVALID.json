@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "classification": "invalid_post_measurement_result_serialization",
+  "created_at_utc": "2026-07-25T15:36:00Z",
+  "stage": "completed_component_measurement_result_persistence",
+  "exit_code": 1,
+  "science_started": true,
+  "candidate_cuda_invocation_started": true,
+  "measurement_loop_completed": true,
+  "samples_per_arm_completed_in_memory": 200,
+  "trace_written": true,
+  "cause": "torch.cuda.get_device_properties().uuid returned non-JSON-serializable _CUuuid",
+  "diagnostic": "TypeError: Object of type _CUuuid is not JSON serializable",
+  "decision": "invalid_observer_no_result_persisted",
+  "repair": "Stringify GPU UUID before JSON serialization and rerun the invalidated persistence path; retry is continuation, not an additional independent sample",
+  "provider_or_gpu_spend_usd": 0.0
+}

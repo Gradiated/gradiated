@@ -1,0 +1,27 @@
+{
+  "activation_proved": false,
+  "artifacts": "gemma4_ngram_calibration_freeze/artifacts/calibration-freeze-20260725t052521z and gemma4_upstream_ngram_runtime_rebase/artifacts/candidate-v0.5.15",
+  "calibration_freeze_result": {
+    "actual_post_freeze_writes": 0,
+    "accepted_median": 11,
+    "accepted_p10": 11,
+    "failures": 0,
+    "first_semantic_divergence_request": 790,
+    "planning_cost_usd_per_million_total_tokens": 0.10553298850106702,
+    "queue_final": 0,
+    "queue_peak": 0,
+    "result": "valid_discriminator_reject"
+  },
+  "candidate": "Calibration-freeze is consumed and rejected; official unmodified SGLang v0.5.15 requests-0-through-170 discriminator and its conditional 791-request endpoint are unconsumed.",
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "conditional_full_endpoint_consumed": false,
+  "expected_first_arms": "Priority-8450 may claim after mechanically verifying DIRECTOR_EXECUTION_BINDING.json, replace only the runtime image with bound official v0.5.15, and run requests 0-170 once. Its 791-request endpoint is strictly conditional.",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "next": "Claim only for priority-8450 gemma4_upstream_ngram_runtime_rebase after its $3 reservation is durable; release by the earlier of 45 claimed minutes or 2026-07-25T07:00:00Z.",
+  "project": "gemma4_upstream_ngram_runtime_rebase",
+  "result": "warm_h200_ready_for_upstream_v0515_discriminator",
+  "runtime": "Pinned v0.5.13 FP8 server currently loaded; next owner replaces it with digest-pinned official v0.5.15 CUDA 12.9.",
+  "schema_version": 1,
+  "server_state": "Healthy calibration-freeze-patched server remains loaded. The next owner must claim before replacing it with the bound official v0.5.15 image."
+}

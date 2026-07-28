@@ -151,3 +151,23 @@ offline admission evidence only; the exact c32 producer remains unconsumed.
 authority and a compatible released H200, then must stage this packet and the
 separately verified checkpoint inside one durable claim owner and execute the
 single eager capture without running retrieval.
+
+## 2026-07-27T00:24:21Z — Producer completed; compact-path repair retained
+
+**Action/Evidence.** The retained owner’s repair diagnostic named compact
+terminal retrieval, but direct same-claim retrieval proved a completed,
+interpretable producer: `c32/TERMINAL.json` has `pass: true` and 32 complete
+requests, `science_started.json` is present, all 32 raw SSE responses are
+durable, and the healthy server remains running. Retrieved compact evidence
+is `compact-evidence-repaired.tar` SHA-256
+`2aaf188879cdd510aa5b449b5ab9b92a9df3169fddc99484afd7e26b994d5759`.
+After compact evidence, the immutable 16,600,643-byte hidden payload was
+retrieved once; its SHA-256 is
+`ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54`.
+
+**Interpretation.** The c32 producer is consumed and must not be replayed.
+The repair is confined to artifact terminal adoption/validation. The live
+owner’s current retry entrypoint exits after observing a repair request rather
+than dispatching that scope, so no request was sent: doing so would stop its
+heartbeat and create the prohibited ownerless claim. The controller remains
+live and the claim retained pending an executable same-claim repair dispatch.

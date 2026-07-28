@@ -1,0 +1,12 @@
+{
+  "classification": "owner_failure",
+  "error": {
+    "message": "string indices must be integers, not 'str'",
+    "type": "TypeError"
+  },
+  "pass": false,
+  "provider_exposure_seconds": 0,
+  "provider_spend_usd": 0.0,
+  "schema_version": 1,
+  "scientific_invocation_started": false
+}

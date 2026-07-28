@@ -1,0 +1,10 @@
+{
+  "artifacts": "The pre-SSH owner_failure terminal and content-bound local preparation are retained project-locally; no endpoint artifact exists yet.",
+  "caches": "None yet.",
+  "checkpoint": "Not staged; exact immutable eight-file checkpoint remains project-local.",
+  "image": "Not pulled; pinned SGLang v0.5.12 digest is bound in the project contract.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_h200_inmemory_fp8_endpoint then gemma4_h200_qkv_epilogue_fusion",
+  "runtime": "Exact instance is RUNNING with READY 250-GiB disk and 240,951,705,600 bytes free; read-only reconciliation found no project workspace or remote mutation.",
+  "server_state": "No container or server."
+}

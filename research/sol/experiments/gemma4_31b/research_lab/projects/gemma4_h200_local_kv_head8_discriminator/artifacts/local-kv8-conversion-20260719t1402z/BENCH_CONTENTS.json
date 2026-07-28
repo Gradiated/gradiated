@@ -1,0 +1,11 @@
+{
+  "artifacts": "Retrieved under projects/gemma4_h200_local_kv_head8_discriminator/artifacts/local-kv8-conversion-20260719t1402z/ when terminal retrieval completed.",
+  "caches": "Pinned image plus conversion/server compilation caches retained.",
+  "checkpoint": "Exact immutable eight-file 62,578,655,208-byte checkpoint staged under /home/glmrunner/gemma-local-kv8/checkpoint and retained.",
+  "export": "Content-addressed 100-tensor local K/V overlay retained remotely and retrieved project-locally when fidelity completed.",
+  "image": "Pinned SGLang v0.5.12 image remains resident at the bound digest.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 exact local-attention 16-to-8 KV conversion",
+  "project": "gemma4_h200_local_kv_head8_discriminator",
+  "runtime": "One frozen adjacent-pair-mean local-KV8 schedule reached terminal: startup_failure",
+  "server_state": "Converted candidate server retained if startup was reached; otherwise no server."
+}

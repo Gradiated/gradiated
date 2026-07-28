@@ -45,6 +45,11 @@ def sha256(path: pathlib.Path) -> str:
     return digest.hexdigest()
 
 
+def container_artifact_path(path: pathlib.Path) -> str:
+    """Translate a host artifact path through the root bind mount."""
+    return str(pathlib.PurePosixPath("/work") / path.relative_to(ROOT))
+
+
 def wait_model() -> None:
     deadline = time.monotonic() + 1200
     while time.monotonic() < deadline:
@@ -87,15 +92,15 @@ def launch(arm: str, candidate: bool) -> str:
         "-e",
         "DECODE_EQ_SHADOW_BASELINE=0",
         "-e",
-        f"DECODE_EQ_AUDIT=/work/artifacts/pair/{arm}-decode-audit.jsonl",
+        f"DECODE_EQ_AUDIT={container_artifact_path(OUT / f'{arm}-decode-audit.jsonl')}",
         "-e",
-        f"FP8_MODULE_AUDIT=/work/artifacts/pair/{arm}-fp8-modules.jsonl",
+        f"FP8_MODULE_AUDIT={container_artifact_path(OUT / f'{arm}-fp8-modules.jsonl')}",
         "-e",
-        f"FP8_CONSUMER_AUDIT=/work/artifacts/pair/{arm}-fp8-consumers.jsonl",
+        f"FP8_CONSUMER_AUDIT={container_artifact_path(OUT / f'{arm}-fp8-consumers.jsonl')}",
         "-e",
-        f"FP8_RUNTIME_AUDIT=/work/artifacts/pair/{arm}-fp8-runtime.json",
+        f"FP8_RUNTIME_AUDIT={container_artifact_path(OUT / f'{arm}-fp8-runtime.json')}",
         "-e",
-        f"FIXED_M384_AUDIT=/work/artifacts/pair/{arm}-fixed-m384-audit.jsonl",
+        f"FIXED_M384_AUDIT={container_artifact_path(OUT / f'{arm}-fixed-m384-audit.jsonl')}",
     ]
     if candidate:
         command += [
@@ -163,7 +168,7 @@ def percentile95(values: list[float]) -> float:
     return ordered[math.ceil(0.95 * len(ordered)) - 1]
 
 
-def arm(arm_name: str, candidate: bool) -> dict:
+def arm(arm_name: str, candidate: bool, output_tokens: int) -> dict:
     container = launch(arm_name, candidate)
     atomic(
         OUT / "INVOCATION_STATE.json",
@@ -185,11 +190,13 @@ def arm(arm_name: str, candidate: bool) -> dict:
             "python3",
             "/work/input/exact_runner.py",
             "--output",
-            f"/work/artifacts/pair/{arm_name}",
+            container_artifact_path(output),
             "--arm",
             arm_name,
             "--concurrency",
             "32",
+            "--output-tokens",
+            str(output_tokens),
         ],
         timeout=2400,
     )
@@ -222,6 +229,13 @@ def arm(arm_name: str, candidate: bool) -> dict:
     return summary
 
 
+def dispatch_rows(arm_name: str) -> list[dict]:
+    path = OUT / f"{arm_name}-fixed-m384-audit.jsonl"
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     candidate_source = PROJECT / "intervention/extend_attention_fixed_m384.py"
@@ -241,8 +255,62 @@ def main() -> int:
             "fixed_baseline": "decode_equivalent_lm_head@4d99a94e",
         },
     )
-    control = arm("control", False)
-    candidate = arm("candidate", True)
+    guard_control = arm("guard-control", False, 24)
+    guard_candidate = arm("guard-candidate", True, 24)
+    guard_dispatch = dispatch_rows("guard-candidate")
+    guard_semantics_match = (
+        guard_control["semantic_rows"] == guard_candidate["semantic_rows"]
+        and guard_control["request_sha256"] == guard_candidate["request_sha256"]
+    )
+    guard_dispatch_match = {
+        (row.get("subtype"), row.get("block_m")) for row in guard_dispatch
+    } == {
+        ("local_m8_qk256_v256", 8),
+        ("global_stock_m32_qk512_v512", 32),
+    }
+    guard = {
+        "schema_version": 1,
+        "kind": "exact_c32_24_token_target_decision_guard",
+        "complete_32_control": guard_control["terminal"]["complete_requests"] == 32,
+        "complete_32_candidate": guard_candidate["terminal"]["complete_requests"] == 32,
+        "semantics_match": guard_semantics_match,
+        "request_hashes_match": (
+            guard_control["request_sha256"] == guard_candidate["request_sha256"]
+        ),
+        "mixed_dispatch_match": guard_dispatch_match,
+        "candidate_dispatch_rows": guard_dispatch,
+        "server_stable": (
+            guard_control["server_healthy_after"]
+            and guard_candidate["server_healthy_after"]
+        ),
+    }
+    guard["pass"] = all(
+        guard[key]
+        for key in (
+            "complete_32_control",
+            "complete_32_candidate",
+            "semantics_match",
+            "request_hashes_match",
+            "mixed_dispatch_match",
+            "server_stable",
+        )
+    )
+    atomic(OUT / "TARGET_DECISION_GUARD_TERMINAL.json", guard)
+    if not guard["pass"]:
+        atomic(
+            OUT / "PAIR_TERMINAL.json",
+            {
+                "schema_version": 1,
+                "kind": "matched_profiler_off_exact_c32_pair",
+                "decision_guard": guard,
+                "endpoint_executed": False,
+                "valid": False,
+            },
+        )
+        return 75
+
+    control = arm("control", False, 358)
+    candidate = arm("candidate", True, 358)
     semantics_match = (
         control["semantic_rows"] == candidate["semantic_rows"]
         and control["request_sha256"] == candidate["request_sha256"]
@@ -252,6 +320,8 @@ def main() -> int:
     terminal = {
         "schema_version": 1,
         "kind": "matched_profiler_off_exact_c32_pair",
+        "decision_guard": guard,
+        "endpoint_executed": True,
         "complete_32_control": control["terminal"]["complete_requests"] == 32,
         "complete_32_candidate": candidate["terminal"]["complete_requests"] == 32,
         "semantics_match": semantics_match,
@@ -274,20 +344,21 @@ def main() -> int:
         "candidate_output_tokens_per_second": candidate["terminal"][
             "output_tokens_per_second"
         ],
-        "candidate_path_rows": sum(
-            1
-            for line in (OUT / "candidate-fixed-m384-audit.jsonl").read_text().splitlines()
-            if line.strip()
-        )
-        if (OUT / "candidate-fixed-m384-audit.jsonl").exists()
-        else 0,
+        "candidate_dispatch_rows": dispatch_rows("candidate"),
     }
     terminal["valid"] = (
         terminal["complete_32_control"]
         and terminal["complete_32_candidate"]
         and terminal["semantics_match"]
         and terminal["server_stable"]
-        and terminal["candidate_path_rows"] > 0
+        and {
+            (row.get("subtype"), row.get("block_m"))
+            for row in terminal["candidate_dispatch_rows"]
+        }
+        == {
+            ("local_m8_qk256_v256", 8),
+            ("global_stock_m32_qk512_v512", 32),
+        }
     )
     atomic(OUT / "PAIR_TERMINAL.json", terminal)
     return 0 if terminal["valid"] else 75

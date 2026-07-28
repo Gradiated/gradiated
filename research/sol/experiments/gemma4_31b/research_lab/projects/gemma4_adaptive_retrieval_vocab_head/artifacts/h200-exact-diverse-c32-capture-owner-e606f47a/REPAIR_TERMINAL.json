@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "repair_id": "capture-repair-1785111669116539429",
+  "classification": "retrieval_and_terminal_naming_defect_after_complete_producer_recovered",
+  "producer_consumed": true,
+  "retry_scope": "capture_terminal_adoption_only",
+  "science_started": true,
+  "complete_requests": 32,
+  "capture_terminal": "EXACT_CAPTURE_TERMINAL.json",
+  "compact_bundle_sha256": "2aaf188879cdd510aa5b449b5ab9b92a9df3169fddc99484afd7e26b994d5759",
+  "hidden_states_sha256": "ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54",
+  "disposition": "owner_may_exit_then_release_original_claim",
+  "actual_spend_usd": 1.592
+}

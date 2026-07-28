@@ -1,0 +1,9 @@
+{
+  "artifacts": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/artifacts/endpoint",
+  "candidate_cuda_started": false,
+  "checkpoint": "Project-local immutable endpoint checkpoint staged and verified at /home/glmrunner/gemma4_hopper_packed_m384_endpoint/checkpoint.",
+  "image": "Pinned SGLang v0.5.13 image pulled/retained when endpoint launch passed.",
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "result": "repair_deadline_or_handoff",
+  "server_state": "Candidate container retained if ENDPOINT_TERMINAL.json exists; maintenance disposition required."
+}

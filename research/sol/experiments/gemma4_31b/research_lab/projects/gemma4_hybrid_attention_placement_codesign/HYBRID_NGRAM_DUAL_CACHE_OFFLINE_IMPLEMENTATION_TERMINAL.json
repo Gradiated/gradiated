@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-26T01:25:51Z",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "classification": "actual_consumer_implementation_ready",
+  "decision": "The zero-GPU repair replaces the prior observation-only hook with an in-process NGRAM dual-cache consumer. Pause pending the required DFlash terminal, bench release, and fresh director admission before target-runtime execution.",
+  "scientific_component_consumed": false,
+  "candidate_cuda_invocation_started": false,
+  "endpoint_pair_started": false,
+  "gpu_claimed": false,
+  "provider_mutation": false,
+  "actual_spend_usd": 1.61,
+  "incremental_spend_usd": 0.0,
+  "predecessor": {
+    "path": "PHASE_SELECTIVE_FULL_MODEL_H200_COMPONENT_TERMINAL.json",
+    "sha256": "bddf9e10ea75c4fc07acab26c536360b0ff3bf8665fcc249b6a065c17c16c109",
+    "classification": "infrastructure_terminal",
+    "unconsumed_reason": "num_token_non_padded was None on the first NGRAM forward; int(None) terminated the scheduler before TARGET_VERIFY."
+  },
+  "implementation": {
+    "forward_batch_geometry": "num_token_non_padded_cpu, then optional tensor scalar, then input_ids/out_cache_loc; ordinary setup with None never raises",
+    "producer": "sglang.srt.speculative.ngram_info.NgramVerifyInput.prepare_for_verify",
+    "first_target_verification_consumer": "sglang.srt.speculative.ngram_worker.NGramWorker.forward_batch_generation",
+    "acceptance_lifecycle_consumer": "sglang.srt.speculative.ngram_info.NgramVerifyInput.verify calling _free_cache",
+    "attention_consumer": "Gemma converted-layer RadixAttention.forward",
+    "target_verify_behavior": "allocates distinct proxy-local logical slots; converted layers write/read their proxy-primary path and call the stock pool writer for a shadow KV write",
+    "ordinary_behavior": "stock remains primary; converted layers allocate and write a proxy-local shadow",
+    "lifecycle": [
+      "scheduler-owned stock allocation",
+      "production allocator proxy allocation",
+      "opposite-bank set_kv_buffer shadow write",
+      "accepted proxy slot preservation for request reuse",
+      "rejected proxy slot allocator.free"
+    ],
+    "padding": "Only logical rows receive proxy slots; padded rows are cache-inert."
+  },
+  "evidence": {
+    "measured": {
+      "local_tests": "15 passed",
+      "devex_check": "passed",
+      "gpu_minutes": 0,
+      "paid_requests": 0
+    },
+    "source_contract": {
+      "forward_batch_info": "ForwardBatch has num_token_non_padded_cpu, optional num_token_non_padded, out_cache_loc, and padded_static_len.",
+      "ngram_info": "prepare_for_verify allocates stock out_cache_loc; _free_cache frees rejected stock slots and moves accepted slots.",
+      "ngram_worker": "NGramWorker.forward_batch_generation invokes target_worker.forward_batch_generation for TARGET_VERIFY.",
+      "triton_backend": "TritonAttnBackend writes with token_to_kv_pool.set_kv_buffer(layer, forward_batch.out_cache_loc, k, v)."
+    }
+  },
+  "tests": [
+    "test_forward_batch_dual_cache_driver.py: None-valued setup geometry, target slot guard, production-symbol allocation/write/first-consumer/accepted-reuse/rejected-free, stock-primary proxy shadow, source bindings",
+    "test_phase_dispatcher.py",
+    "test_full_model_memory_adapter.py"
+  ],
+  "changed_executable_inputs": {
+    "forward_batch_dual_cache_driver.py": "29ab0e946c26428144aaefa1c200b75c0111af87bf117b5504a03f845f453d65",
+    "test_forward_batch_dual_cache_driver.py": "f0c94da7c29b61cfe069c12e1a0d806e3fde47e4aa9f007de7555dafbf728b65",
+    "phase_selective_full_model_remote.py": "a3a7902da4d07816e964ac3b5f85af767b8c67ce7f070ac911373f7219a6dda7",
+    "full_model_memory_adapter.py": "fff8ca016a0e3c5e85669f1848b536ffa89b6f26f9fe5da8c4da755ba7ca9d54"
+  },
+  "remaining_target_runtime_work": "Under a fresh director admission only, import this driver in the pinned SGLang image, verify its allocator and pool API against the retained source, and consume one exact target-verification component comparator. No quality, latency, or endpoint result exists yet.",
+  "next_gate": [
+    "DFLASH_REQUEST25_BOUNDARY_PROBE_H200_RETRY1_TERMINAL.json",
+    "bench release",
+    "fresh director admission"
+  ],
+  "status_after_terminal": "paused"
+}

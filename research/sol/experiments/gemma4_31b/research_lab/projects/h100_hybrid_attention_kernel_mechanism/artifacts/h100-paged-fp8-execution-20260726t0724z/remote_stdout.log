@@ -1,0 +1,1 @@
+INFO 07-26 07:42:32 [scheduler.py:238] Chunked prefill is enabled with max_num_batched_tokens=2048.

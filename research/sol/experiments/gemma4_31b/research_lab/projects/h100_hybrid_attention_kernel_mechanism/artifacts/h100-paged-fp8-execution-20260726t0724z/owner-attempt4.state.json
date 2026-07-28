@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_hybrid_attention_kernel_mechanism/run_h100_controller.py",
+    "--project-root",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_hybrid_attention_kernel_mechanism",
+    "--output-root",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_hybrid_attention_kernel_mechanism/artifacts/h100-paged-fp8-execution-20260726t0724z",
+    "--deadline",
+    "2026-07-26T08:04:14Z"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_hybrid_attention_kernel_mechanism",
+  "launched_at_utc": "2026-07-26T07:42:14.585498Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_hybrid_attention_kernel_mechanism/artifacts/h100-paged-fp8-execution-20260726t0724z/owner-attempt4.log",
+  "pid": 1661172,
+  "start_ticks": 116775198,
+  "unit_manager": "pid"
+}

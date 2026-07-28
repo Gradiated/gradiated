@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_sustained_acceptance_causal/request_local_repair_owner.py"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_sustained_acceptance_causal",
+  "launched_at_utc": "2026-07-25T04:09:54.163092Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_sustained_acceptance_causal/artifacts/controller/REPAIR_OWNER_RETRY4.log",
+  "pid": 339510,
+  "start_ticks": 106861156,
+  "unit_manager": "pid"
+}

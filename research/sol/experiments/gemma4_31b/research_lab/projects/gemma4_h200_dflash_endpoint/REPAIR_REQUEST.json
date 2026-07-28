@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "repair_ready_path": "REPAIR_READY.json",
+  "repair_ready_sha256": "d4fb6f70eb645db0babf32239a4ff2eb61e30facb01710b1525fbf0c8feaf5f5",
+  "classification": "recoverable_diagnostic_parser_done_frame_defect",
+  "diagnostic": "dflash_endpoint_runner.py parses data: [DONE] as JSON after four complete 358-token SSE streams; raw output_ids are present in persisted SSE",
+  "retry_scope": "reparse the persisted dflash-diagnostic response SSE and reconstruct request/terminal observer rows; do not submit requests, restart the DFlash server, or replay the diagnostic",
+  "producer_archive": "artifacts/dflash-diagnostic-repair.tar.gz",
+  "producer_archive_sha256": "771722712bfbc5505c9448efcb03896b1ca6d62b23deef3dccd708b996baf5f5",
+  "absolute_deadline_utc": "2026-07-25T21:45:00Z"
+}

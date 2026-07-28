@@ -1,0 +1,10 @@
+{
+  "classification": "owner_failure",
+  "error": {
+    "message": "typed_transfer_boundary:scp_failed:: dest open \"/home/glmrunner/gemma-kernel-frontier/checkpoint/chat_template.jinja\": Permission denied\nscp: failed to upload file /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_inmemory_fp8_endpoint/inputs/checkpoint/chat_template.jinja to /home/glmrunner/gemma-kernel-frontier/checkpoint/\nscp: dest open \"/home/glmrunner/gemma-kernel-frontier/checkpoint/config.json\": Permission denied\nscp: failed to upload file /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_inmemory_fp8_endpoint/inputs/checkpoint/config.json to /home/glmrunner/gemma-kernel-frontier/checkpoint/\nscp: dest open \"/home/glmrunner/gemma-kernel-frontier/checkpoint/model-00001-of-00002.safetensors\": Permission denied\nscp: failed to upload file /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_inmemory_fp8_endpoint/inputs/checkpoint/model-00001-of-00002.safetensors to /home/glmrunner/gemma-kernel-frontier/checkpoint/\n",
+    "type": "RuntimeError"
+  },
+  "pass": false,
+  "schema_version": 1,
+  "status": "terminal"
+}

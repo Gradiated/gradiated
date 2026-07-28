@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "bound_at_utc": "2026-07-25T20:13:00Z",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "amends": {
+    "path": "DIRECTOR_HYBRID_55L5G_H200_COMPONENT_REOPENING.json",
+    "sha256": "acf1f0102746286dc935c3a94c5a6abb8af5096945dec5c0be7cd72b51e43930"
+  },
+  "reason": {
+    "classification": "pre_agent_launch_transport_failure",
+    "failure": "OSError: [Errno 7] Argument list too long: 'codex'",
+    "science_consumed": false,
+    "gpu_claimed": false,
+    "repair": "CodexAgentRunner now passes the unchanged prompt through stdin using the CLI prompt sentinel.",
+    "repair_verification": "All 58 lab-harness tests, Python compilation, and scoped diff checks passed in the 2026-07-25T20:08Z supervisor handoff."
+  },
+  "claim_gate": {
+    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "claim_not_after_utc": "2026-07-25T20:25:00Z",
+    "minimum_remaining_lifecycle_minutes_at_claim": 90,
+    "required_state": "available_unfenced_with_retained_exact_checkpoint_image_source_and_caches"
+  },
+  "budget": {
+    "authorized_spend_usd": 2.0,
+    "maximum_claimed_h200_minutes": 35,
+    "release_by_utc": "2026-07-25T21:00:00Z",
+    "storage_gib": 4
+  },
+  "scientific_contract": {
+    "change": "none",
+    "candidate": "exactly the five-layer nearest-compatible-local weight-copy 55-local/5-global proxy",
+    "measurement": "one matched profiler-off exact-c32 target-forward control/candidate component through the pinned real runtime",
+    "expected_terminal": "HYBRID_55L5G_H200_EXECUTION_TERMINAL.json"
+  },
+  "forbidden": [
+    "endpoint execution",
+    "training or broad quality evaluation",
+    "deployability or quality claims",
+    "DFlash oracle, sweep, or endpoint replay",
+    "modifying predecessor checkpoint bytes",
+    "provider creation or teardown"
+  ]
+}

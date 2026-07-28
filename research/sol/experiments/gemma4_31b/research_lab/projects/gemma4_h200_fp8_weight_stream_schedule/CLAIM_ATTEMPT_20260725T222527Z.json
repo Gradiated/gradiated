@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "attempted_at_utc": "2026-07-25T22:25:27Z",
+  "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+  "project": "gemma4_h200_fp8_weight_stream_schedule",
+  "classification": "typed_pool_availability_boundary",
+  "pool_error": "no available GPU bench matches this project",
+  "live_inventory_observed_at_utc": "2026-07-25T22:26Z",
+  "live_claim": {
+    "project": "gemma4_certified_lazy_vocab_head",
+    "claimed_at": "2026-07-25T22:25:09.553202Z",
+    "lease_until_utc": "2026-07-25T23:25:09.553202Z"
+  },
+  "candidate_cuda_invocation_started": false,
+  "scientific_sample_consumed": false,
+  "provider_exposure_usd": 0.0,
+  "owner_state": "artifacts/owner/H200_COMPONENT_OWNER.json",
+  "raw_claim_stdout": "artifacts/h200-component-20260725t222527z/claim.stdout",
+  "raw_claim_stderr": "artifacts/h200-component-20260725t222527z/claim.stderr"
+}

@@ -30,7 +30,10 @@
     "current_runtime_support.py": "b6a0990508f19fe88eb57fb95f0746fa90d6353e251a575139fc3252bfd84f85",
     "endpoint_entrypoint_v0513.py": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc",
     "paired_endpoint_runner.py": "df65b1e49c941c27a975ecb1f2d34041a0e63695c2e3515cf950406204f614f3",
-    "remote_fp8_mtp.sh": "2b37a3c598714bbe4d7baa01a5fa31c5d4660392fcf94d3e43fcdabb9736a435"
+    "remote_fp8_mtp.sh": "c14cd8114198a08fa2875390abdceba01ffc59147251f5d5977206e2a1b43618",
+    "sitecustomize.py": "0e738fd1327e1e64566f99fe16e8641b9c7c4b5f81069efa5b3fdcc23eaf4be7",
+    "install_endpoint_patch.py": "71498993e844295a313d71620661361304203a26bb8a876d8da02d49f7fe7588",
+    "qkv_epilogue_discriminator.py": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"
   },
   "workload": {
     "seed": "gemma4-background-exact-mix-c32-20260718",

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "model": "google/gemma-4-31B-it revision b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "checkpoint": "Cold exact checkpoint bound for hash-aware staging to /home/glmrunner/hybrid-55l5g/checkpoint inside the retained claim.",
+  "image": "Pinned docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6.",
+  "runtime": "Verified H200 guest; corrected launch has disjoint detached-owner state and exclusive owner artifact roots.",
+  "caches": "No checkpoint or image cache verified.",
+  "artifacts": "projects/gemma4_hybrid_attention_placement_codesign/{DIRECTOR_HYBRID_55L5G_OWNER_LAYOUT_REPAIR_20260727T0225Z.json,run_h200_55l5g_endpoint_runtime.py}",
+  "director_binding": "gemma4_hybrid_attention_placement_codesign/DIRECTOR_HYBRID_55L5G_OWNER_LAYOUT_REPAIR_20260727T0225Z.json",
+  "scientific_terminal": "The failed launch did not claim or start science; exactly one matched stock/candidate c32 pair remains unconsumed.",
+  "server_state": "No server, worker, claim, or GPU process.",
+  "next": "Sole claimant is gemma4_hybrid_attention_placement_codesign under the 02:25Z layout-repair binding; launch by 02:28Z and release by 03:05Z."
+}

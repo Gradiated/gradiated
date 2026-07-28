@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "model": "google/gemma-4-31B-it revision b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "checkpoint": "Exact 62,546,338,248-byte two-shard checkpoint is hash-verified and resident at /home/glmrunner/hybrid-55l5g/checkpoint.",
+  "image": "Pinned docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6 is resident.",
+  "runtime": "Verified H200 guest. The first adoption owner failed closed before SSH because the director binding mistyped the durable STAGING.json digest; no server, CUDA, or endpoint request ran.",
+  "caches": "Preserve the verified checkpoint, pinned image, STAGING.json, and CANDIDATE_INSTALL.json; do not repeat staging.",
+  "server_state": "No live server, worker, or GPU process.",
+  "scientific_terminal": "Exactly one matched stock/candidate exact-c32 endpoint pair remains unconsumed.",
+  "director_binding": "gemma4_hybrid_attention_placement_codesign/DIRECTOR_HYBRID_55L5G_RETAINED_CLAIM_HASH_REPAIR_20260727T0303Z.json",
+  "artifacts": "projects/gemma4_hybrid_attention_placement_codesign/artifacts/h200-55l5g-extended-20260727t0218z/{STAGING.json,CANDIDATE_INSTALL.json}",
+  "next": "Adopt original claim generation 2026-07-27T02:27:43.881452Z without reclaiming; bind the corrected STAGING.json digest, restore heartbeat by 03:07:30Z, run one pair, and release by 03:18:30Z."
+}

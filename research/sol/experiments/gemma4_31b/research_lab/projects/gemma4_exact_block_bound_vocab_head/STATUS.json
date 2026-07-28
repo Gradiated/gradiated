@@ -1,0 +1,87 @@
+{
+  "accelerator_requirement": "Use only available bench h200-causal-head-e00b9qw8d6qd7wrjj1 under DIRECTOR_EXACT_BLOCK_BOUND_H200_CLAIM_20260727T0100Z.json; reuse resident checkpoint and capture without retransmission.",
+  "active_session": null,
+  "actual_spend_usd": 0.407134204483,
+  "allocation_limit": 1,
+  "artifact_contract": {
+    "expected_terminal": "EXACT_BLOCK_BOUND_VOCAB_HEAD_TERMINAL.json",
+    "required_fields": [
+      "source_hashes",
+      "geometry",
+      "exact_top1_match",
+      "dense_timing",
+      "candidate_timing",
+      "evaluated_row_fraction",
+      "pruned_block_fraction",
+      "index_bytes",
+      "execution",
+      "spend",
+      "decision"
+    ]
+  },
+  "authorized_spend_usd": 2.0,
+  "bench_need": {
+    "bench_id": "h200-causal-head-e00b9qw8d6qd7wrjj1",
+    "claim_allowed": true,
+    "claim_not_after_utc": "2026-07-27T01:10:00Z",
+    "provider_create_allowed": false,
+    "reason": "The exact $2.00 reservation is durable and the compatible warm H200 is available with zero occupants. Implement the named source, then launch the bound owner directly."
+  },
+  "claim_accounting": {
+    "actual_spend_usd": 0.407134204483,
+    "bench_id": "h200-causal-head-e00b9qw8d6qd7wrjj1",
+    "checkpoint_bytes_transferred": 0,
+    "claim_seconds": 595.873443,
+    "claimed_at_utc": "2026-07-27T01:10:22.676483Z",
+    "hourly_cost_usd": 2.4597222,
+    "released_at_utc": "2026-07-27T01:20:18.549926Z"
+  },
+  "closed_at": "2026-07-27T01:20:18.549926Z",
+  "compute_budget": {
+    "future_h200_claim_minutes_max": 15,
+    "future_scientific_invocations_max": 1,
+    "local_implementation_minutes_max": 25
+  },
+  "decision": "close_exact_block_bound_mechanism",
+  "director_admission_artifact": "DIRECTOR_EXACT_BLOCK_BOUND_VOCAB_HEAD_ADMISSION_20260727T0055Z.json",
+  "director_admission_created_at_utc": "2026-07-27T00:55:18Z",
+  "director_claim_artifact": "DIRECTOR_EXACT_BLOCK_BOUND_H200_CLAIM_20260727T0100Z.json",
+  "director_claim_created_at_utc": "2026-07-27T01:00:32Z",
+  "director_terminal_recovery_artifact": "DIRECTOR_EXACT_BLOCK_BOUND_TERMINAL_RECOVERY_20260727T0114Z.json",
+  "director_terminal_recovery_created_at_utc": "2026-07-27T01:14:00Z",
+  "hypothesis": "Rigorous blockwise inner-product upper bounds can certify the exact Gemma tied-head top-1 while evaluating enough fewer weight rows to beat the measured dense H200 component.",
+  "next_action": "No further work in this mechanism; retain the recovered terminal as a typed negative.",
+  "performance_claim_authorized": false,
+  "priority": 9785,
+  "quality_claim_authorized": false,
+  "repair_terminal_artifact": "artifacts/h200-exact-block-bound-20260727t0100z/REPAIR_TERMINAL.json",
+  "repair_terminal_sha256": "235ec270d9ad8d11c8325a3860999d47dcde9097ac90af054f38b11661588705",
+  "researcher_profile": "execution",
+  "result": "attempt_1_terminal_recovered_and_valid_negative",
+  "scheduler_admission": {
+    "admitted": true,
+    "gpu_claim_allowed": true,
+    "provider_creation_allowed": false,
+    "reason": "Admitted for one direct exact-consumer H200 discovery/component claim under DIRECTOR_EXACT_BLOCK_BOUND_H200_CLAIM_20260727T0100Z.json."
+  },
+  "schema_version": 1,
+  "scientific_sample_consumed": true,
+  "status": "closed",
+  "stop_rules": [
+    "Do not replay the consumed diverse capture or approximate coordinate scorer.",
+    "Do not claim a GPU before the exact reservation and later director claim authority are durable.",
+    "Do not promote any candidate without identical dense top-1 IDs for every row and request.",
+    "Do not open an endpoint in the first component claim.",
+    "A correct but slower complete candidate closes this block-bound mechanism; ordinary integration failures remain repairable within the bound claim."
+  ],
+  "storage_budget": {
+    "additional_gib_max": 4
+  },
+  "summary": "The one consumed exact block-bound component invocation was recovered without replay after a post-science permission defect. It certified skipped blocks but failed exact top-1 identity and was 9.943840 ms versus 0.860144 ms dense; close this mechanism.",
+  "terminal_artifact": "artifacts/h200-exact-block-bound-20260727t0100z/EXACT_BLOCK_BOUND_VOCAB_HEAD_TERMINAL.json",
+  "terminal_sha256": "fd4ab52c69748acac23bc9dd0594458e5f871b6bbceaec91aabf7b93679140c7",
+  "wall_clock_budget": {
+    "implementation_deadline_utc": "2026-07-27T01:20:00Z",
+    "provider_lifecycle_deadline_utc": "2026-07-27T01:32:34.490529Z"
+  }
+}

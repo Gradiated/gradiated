@@ -1,0 +1,11 @@
+{
+  "absolute_repair_deadline_utc": "2026-07-28T10:07:30.155734Z",
+  "created_at_utc": "2026-07-28T10:04:11.709420Z",
+  "diagnostic": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/staged-e5m2-component-rootuid-20260728t0957z/attempt-0/RETRIEVAL.json",
+  "failure_kind": "ordinary_compile_api_consumer_or_retrieval_defect",
+  "repair_deadline_epoch": 1785233250.155734,
+  "repair_id": "staged-g1",
+  "retry_scope": "staged_consumer_or_retrieval_only",
+  "schema_version": 1,
+  "state": "repair_ready"
+}

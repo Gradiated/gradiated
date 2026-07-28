@@ -1,0 +1,25 @@
+{
+  "actual_spend_usd": 0.2827,
+  "bench": "h100-v0515-endpoint-200g-r2-e00yfnrrfczsdjevms",
+  "candidate_science_consumed": true,
+  "classification": "typed_invalid",
+  "finished_at": "2026-07-25T12:45:45.004885Z",
+  "heartbeat_events": [
+    {
+      "at": "2026-07-25T12:44:23.084631Z",
+      "returncode": 0
+    },
+    {
+      "at": "2026-07-25T12:45:03.137539Z",
+      "returncode": 0
+    },
+    {
+      "at": "2026-07-25T12:45:43.183240Z",
+      "returncode": 0
+    }
+  ],
+  "project": "gemma4_h100_v0515_ngram_semantic_divergence",
+  "result_sha256": "8170696f67186457050044a46f3043cb142835c48813ca8b1347b6364a1028fb",
+  "schema_version": 1,
+  "started_at": "2026-07-25T12:43:43.036682Z"
+}

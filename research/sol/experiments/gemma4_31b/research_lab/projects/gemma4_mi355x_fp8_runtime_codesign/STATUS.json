@@ -2,35 +2,41 @@
   "active_session": null,
   "actual_spend_usd": 0.0,
   "allocation_limit": 1,
-  "authorized_spend_usd": 0.0,
+  "authorized_spend_usd": 0.9833333333333333,
   "bench_need": {
+    "accelerator": "MI355X/gfx950 TP1",
     "claim_allowed": false,
-    "reason": "The scheduled zero-spend source and physical-cost discriminator is complete. Any later MI355X exact-shape falsifier requires a new director authorization and compatible shared bench."
+    "provider_create_allowed": false,
+    "reason": "The exact reservation and runner are durable, but the only current MI355X listing is TensorWave white-glove access and this environment has no authenticated TensorWave CLI, credential namespace, or provider controller. The authenticated Nebius project exposes no MI355X platform."
   },
-  "compute_budget": "12 local CPU-hours; zero accelerator compute",
-  "decision": "preserve_source_complete_mi355x_candidate_for_one_later_exact_shape_falsifier",
+  "compute_budget": "At most 20 provider minutes end-to-end, including provisioning and verified cleanup; at most 16 minutes after researcher claim.",
+  "decision": "pause_bound_mi355x_falsifier_on_authenticated_provider_access_boundary",
   "last_completed_at": "2026-07-26T07:57:11Z",
   "last_result_classification": "source_complete_mi355x_candidate",
-  "next_action": "Director only: if spend and a compatible shared MI355X bench are later authorized, run the artifact's single 20-minute exact-shape falsifier. Until then, do not claim a GPU, contact a provider, replay this completed source screen, or infer measured throughput.",
-  "priority": 8760,
-  "provider_mutation": "forbidden",
+  "next_action": "Remain paused without provider contact or mutation. Preserve the exact reservation, hash-bound runner, input manifest, and unstacked gates. Reopen only when an authenticated MI355X/gfx950 TP1 controller and allocatable rate are durably available; then the director creates and registers one compatible bench before any researcher claim.",
+  "priority": 9800,
+  "provider_mutation": "director_blocked_no_authenticated_mi355x_controller_no_resource_created",
   "researcher_profile": "execution",
+    "reservation_gate": "Satisfied: runtime/spend_cap.json reserves exactly $0.9833333333333333 for this project at 2026-07-26T15:25:28.201888Z. A director-created, registered MI355X/gfx950 TP1 bench remains required before claim.",
   "source_terminal": {
     "artifact": "MI355X_FP8_RUNTIME_SCREEN.json",
     "artifact_sha256": "e1bad18d0d2e0d3e281c3502a3b4a25108d0841ac2da85e5fd0fadebe99cc500",
     "base_hurdle_seconds_per_request": 0.625149101968745,
-    "base_margin_seconds_per_request": 0.025054008757464774,
     "calculator": "run_mi355x_runtime_screen.py",
-    "calculator_sha256": "2b3898c7a54e3daa5ea38d133a9ef8a838e78c528288a6f28c796212918d132a",
     "classification": "source_complete_mi355x_candidate",
-    "gpu_claimed": false,
-    "provider_contacted": false,
     "screen_seconds_per_request": 0.6000950932112802,
     "source_bindings": "SOURCE_BINDINGS.json",
     "source_bindings_sha256": "c7f08b334a36e88009b273535dcbddb64c2c3307dfc7d7cd5a1ee946a04dd1bd"
   },
-  "status": "complete",
-  "storage_budget": "4 GiB durable project artifacts",
-  "summary": "Pinned current vLLM and AITER source binds exact Gemma 4 transformer FP8 linears to ROCm torch._scaled_mm, hybrid attention to AITER flash/unified attention, and the tied head to BF16 unquantized GEMM. The conservative zero-L2 analytical screen is 0.6000950932112802 s/request, clearing the $2.60/hour hurdle by 0.025054008757464774 seconds but not the $2.75 or $2.95 sensitivities. This is executable source evidence, not MI355X measurement or deployability evidence.",
-  "wall_clock_budget_minutes": 180
+  "status": "paused",
+  "storage_budget": "At most 8 GiB of new project-local source, build cache, and artifacts; no checkpoint.",
+  "summary": "The project-local runner, input manifest, and exact $0.9833333333333333 reservation are durable, but no authenticated provider path can allocate MI355X/gfx950. No instance, disk, or bench was created. Preserve this scientifically ready arm without substituting hardware.",
+    "bound_runner": {
+        "artifact": "run_mi355x_exact_shape_falsifier.py",
+        "artifact_sha256": "82c9c3285e5ce7553e2440d3a4820cebfdedef12051f95d125061a1713d191d0",
+        "input_manifest": "GPU_INPUT_MANIFEST.json",
+        "screen_sha256": "e1bad18d0d2e0d3e281c3502a3b4a25108d0841ac2da85e5fd0fadebe99cc500",
+        "validation": "python3 -m py_compile and --help passed locally; target-GPU imports and consumers remain the first retained-session execution-equivalent smoke test."
+    },
+  "wall_clock_budget": "At most 16 minutes after claim plus at least four minutes reserved for retrieval and cleanup."
 }

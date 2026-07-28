@@ -1,0 +1,8 @@
+{
+  "artifacts": "artifacts/v0515-discriminator-20260725t060739z",
+  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
+  "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+  "project": "gemma4_upstream_ngram_runtime_rebase",
+  "result": "measured_upstream_runtime_activation_semantic_discriminator",
+  "server_state": "Official v0.5.15 native-NGRAM server gemma4-ngram-upstream-v0515 remains loaded on port 30000; requires compatible successor or director disposition."
+}

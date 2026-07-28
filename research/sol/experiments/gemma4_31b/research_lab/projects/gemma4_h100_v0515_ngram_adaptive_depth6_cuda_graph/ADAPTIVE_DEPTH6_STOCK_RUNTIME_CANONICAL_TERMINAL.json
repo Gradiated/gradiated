@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "status": "terminal",
+  "classification": "stock_runtime_integration_failure_after_guard",
+  "evidence_label": "typed_stock_runtime_integration_boundary_not_endpoint_science",
+  "project": "gemma4_h100_v0515_ngram_adaptive_depth6_cuda_graph",
+  "created_at_utc": "2026-07-25T17:20:34Z",
+  "binding_verification": {
+    "ssh_reconciliation_sha256": "cb61411f72457dc7e4a2f69fde389e006a1ed767f572985ca623b074998dbf8e",
+    "localization_binding_sha256": "ee05c56f9d760e01fd82da20184379284ff065a45a0670ef765628bf48a2f38e",
+    "fresh_endpoint_binding_sha256": "6be55eb131e75fa56a734394a37c4b412dbefe611226c928855454e5163d157d",
+    "dead_server_repair_binding_sha256": "784c25259f191fdfd7ce56f03f940c53483e7d9d59da730e9c1bf5f40ee96781"
+  },
+  "localization": {
+    "diagnostic_request": 62128,
+    "diagnostic_sha256": "dcbe85c2b6c24987a8b51a977f5a966a8cedcde2440e85c011a98ec399bb4fac",
+    "stock_aa_guard_sha256": "d17c6bdaebd88f5cc315bc3c1092c991fe9b191f8976bd1b95072896deaa4534",
+    "guard_indices": [62127, 62128, 62129],
+    "guard_passed": true,
+    "repair": "--triton-attention-num-kv-splits 1",
+    "candidate_started": false
+  },
+  "fresh_control_attempt": {
+    "workload_indices": [63000, 63790],
+    "request_count": 791,
+    "workload_sha256": "1ca8296c4199e4748814e7e13afc1755523bcba958a1d596a4a9ab64ad13ad37",
+    "launch_repair_applied": true,
+    "arm_result_sha256": "20b4dd5be3cb0baa31b541cebf29f795a15505e8e0475859174aaa2b3e750b78",
+    "requests_sha256": "1b45d748a4469c702abcd67efbaff681a8107f4dc8d48c967287a8d1c1e8cd41",
+    "telemetry_sha256": "2892751ba14dc461e670e597ad496126d25f47c91ae888d558bff5511731b1fe",
+    "server_log_sha256": "bfe2f9a607dc089980acc0870237eaa2781ece91806e5198ca85f30f4a61e06e",
+    "completed": 0,
+    "failures": 791,
+    "first_failure_index": 63000,
+    "first_failure": "HTTP 500 followed by CUDA device-side assert: vectorized_gather_kernel index out of bounds",
+    "candidate_started": false,
+    "decision_bearing": false
+  },
+  "prior_invalid_attempts_preserved": true,
+  "prior_791_request_workloads_replayed": false,
+  "checkpoint_re_staged": false,
+  "endpoint_or_economic_claim": false,
+  "server_state": "stopped_and_remote_container_absent",
+  "actual_spend_usd": 2.2,
+  "release_deadline_utc": "2026-07-25T17:40:00Z",
+  "next": "Director attention required for the stock FP8/Triton index assertion; preserve warm checkpoint, image, source, and caches. No endpoint rerun is admitted by this terminal."
+}

@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "type": "director_hopper_packed_streaming_h100_ready_repair",
+  "issued_at_utc": "2026-07-26T20:51:20Z",
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "decision": "Reject only the retained-owner repair control flow in READY generation 1 before H100 creation. Preserve the exact scientific packet, reservation, candidate, control, geometry, gates, and sole unconsumed component cycle.",
+  "rejected_ready": {
+    "path": "PACKED_M384_STREAMING_H100_COMPONENT_READY.json",
+    "sha256": "14d179bf4c065d7aefe3f3d73f60caf3f30a1939a630ba89401b8b5374964d68",
+    "owner": "run_streaming_h100_component_owner.py",
+    "owner_sha256": "7ac55b0a3ac3f8ec6035b32f9a8902ddb011dcdd0197141f852cc2870aec02f4",
+    "input_manifest": "STREAMING_H100_COMPONENT_INPUT_MANIFEST.json",
+    "input_manifest_sha256": "5189f2beab6cd7def9fa6d7ee3a1e8297c5076f6a533b949814246f8ad595583"
+  },
+  "classification": "precreate_retained_repair_owner_has_no_executable_resume_path",
+  "evidence": [
+    "retain_for_repair writes a repair-ready generation and waits, but never reads, verifies, or applies REPAIR_REQUEST.json",
+    "after the wait returns, main exits through finally and stops its heartbeat without rerunning the invalidated stage or handing off to a replacement owner",
+    "the same generic recoverable path labels missing results before or after candidate CUDA start as preserving an unconsumed component cycle, although INVOCATION_STATE.json distinguishes pre_science from science_started",
+    "creating an H100 from this generation could therefore leave a paid claim ownerless or silently authorize replay after an ambiguous scientific invocation"
+  ],
+  "immutable_science_preserved": {
+    "admission": "DIRECTOR_HOPPER_PACKED_STREAMING_H100_ADMISSION_20260726T2042Z.json",
+    "admission_sha256": "b23d80e326bbf0789104e887d5afa1753789ba56fc5b92da6c1a920499c3847d",
+    "candidate": "packed_m384_streaming_cluster.cu",
+    "candidate_sha256": "2262a4a20e9438671f795eeb8aad7f5db9cbe65ae446a94758e3d4c1cce78656",
+    "runner": "streaming_accuracy_component_runner.py",
+    "runner_sha256": "c79612b4bd03fa14bcff5aa14cf1e59582aaa9531f1d388ca6e0d2f1edb58cb0",
+    "control": "inputs/source/extend_attention.py",
+    "control_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
+    "input_manifest_sha256": "5189f2beab6cd7def9fa6d7ee3a1e8297c5076f6a533b949814246f8ad595583",
+    "reservation_usd": 7.0,
+    "candidate_component_cycles_remaining": 1,
+    "v2_component_replay_allowed": false,
+    "v2_endpoint_replay_allowed": false,
+    "endpoint_pairs_remaining": 0
+  },
+  "required_correction": {
+    "owner": "run_streaming_h100_component_owner.py",
+    "ready": "PACKED_M384_STREAMING_H100_COMPONENT_READY.json",
+    "requirements": [
+      "make each repair generation verify and consume its hash-bound request, rebuild only the mutable packet or invocation bytes named by that request, and resume the invalidated stage under the same live heartbeat",
+      "loop through fresh repair IDs while localized recoverable defects remain safe and inside the absolute deadline, or explicitly hand off to a replacement owner only after a verified request without creating an ownerless claim",
+      "retrieve and inspect INVOCATION_STATE.json before selecting repair scope: pre_science may resume the unsubmitted cycle, while science_started must preserve raw evidence and may repair only retrieval or offline result construction unless submission state proves no candidate sample was consumed",
+      "write a scientific terminal only for decision-bearing evidence; a recoverable diagnostic must not be indistinguishable from a terminal that authorizes release",
+      "preserve the cold manifest staging, strict inventory-derived SSH identity, sudo Docker path, result retrieval, and release-after-decision-bearing-evidence behavior already present"
+    ],
+    "atomic_ready_replacement_required": true
+  },
+  "provider_create_allowed_now": false,
+  "gpu_claim_allowed_now": false,
+  "scientific_samples_consumed": 0
+}

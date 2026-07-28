@@ -1,0 +1,7 @@
+{
+  "classification": "integration_failure",
+  "message": "component_worker_failed_without_terminal",
+  "schema_version": 1,
+  "status": "terminal",
+  "timestamp_utc": "2026-07-22T13:43:03.603861Z"
+}

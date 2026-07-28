@@ -1,0 +1,64 @@
+{
+  "cache_ledger": {
+    "captured_rows": 384,
+    "logical_rows": 384,
+    "padded_rows": 0,
+    "proxy": {
+      "allocated": 384,
+      "freed": 378,
+      "moved": 6,
+      "written": 384
+    },
+    "stock": {
+      "allocated": 384,
+      "freed": 378,
+      "moved": 6,
+      "written": 384
+    }
+  },
+  "classification": "infrastructure_terminal",
+  "cleanup": {
+    "project_worker_exiting": true
+  },
+  "gates": {
+    "candidate_finite": true,
+    "cuda_graph_no_recapture": true,
+    "cuda_graph_replay_bitwise": true,
+    "eager_stock_reference_exact": true,
+    "mirrored_cache_lifecycle": true,
+    "row_ownership_exact": true,
+    "stock_path_finite": true
+  },
+  "binding_acceptance": {
+    "exact_stock_prefill_and_ordinary_decode_exercised": false,
+    "post_accept_stock_decode_against_eager_dual_cache_reference_exercised": false,
+    "accepted": false,
+    "reason": "The narrow adapter exercised the pinned SGLang attention operator and synthetic dual-cache ledger, but did not bind a full Gemma model forward. It therefore cannot establish the binding's required stock prefill/ordinary-decode or post-accept full-model gates."
+  },
+  "operator": "/sgl-workspace/sglang/python/sglang/srt/layers/attention/triton_ops/extend_attention.py",
+  "positive_net_timing": true,
+  "schema_version": 1,
+  "scope": {
+    "batch": 32,
+    "converted_layers": [
+      11,
+      23,
+      35,
+      47,
+      59
+    ],
+    "depth": 12,
+    "prefix_tokens": 4214,
+    "target_rows": 384
+  },
+  "timing_ms": {
+    "control_median": 3.3042880296707153,
+    "control_p95": 3.315392017364502,
+    "net_median": 1.9460160145536065,
+    "proxy_graph_median": 1.341040015220642,
+    "proxy_p95": 1.3490560054779053,
+    "repetitions": 30,
+    "shadow_p95": 0.024064000695943832,
+    "shadow_write_move_dispatch_median": 0.017231999896466732
+  }
+}

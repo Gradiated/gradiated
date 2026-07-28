@@ -1,0 +1,19 @@
+{
+  "api": "/generate",
+  "concurrency": 4,
+  "input_ids_sha256": [
+    "af05c499639fd94dd43c723dfb8d4d9dacd4e5051e1220314fb57dd7cdceded3",
+    "2e7657c8daddaf77acbda214a96f8fb3fffc010626be491fba04fb7d17b61063",
+    "3f857f2b856690ba64b197e441f35a4cfa73bc12a7b43b93b7fa96111e7464a1",
+    "0f1141316f689aef960a087be7148bf3a801da070a1278cbe5f9e68574015a36"
+  ],
+  "output_tokens": 358,
+  "prompt_tokens": 4214,
+  "request_sha256": [
+    "0036fcd2713e3590a5eb236a86cfbb1ddd7bb4429ed2fd25a645ffa9da61a9ea",
+    "51459874facc34ea228433f7efc221bf72a3d47b4c60c4db57bed858d541ea54",
+    "7ba40610fed2d6d6f7b9186097bc7b9b9dfa2b8a1c0405b714383dd15fe577d7",
+    "47bde78188a37007c481f3d2a669f981919112ac7997636205cfd853e0d2ace8"
+  ],
+  "shared_prefix_tokens": 535
+}

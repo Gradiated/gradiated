@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "distinct_request_owner.py"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_distinct_request_promotion_gate",
+  "launched_at_utc": "2026-07-25T04:30:53.033538Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_distinct_request_promotion_gate/artifacts/controller/OWNER.log",
+  "pid": 352585,
+  "start_ticks": 106987043,
+  "unit_manager": "pid"
+}

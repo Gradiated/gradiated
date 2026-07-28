@@ -1,0 +1,10 @@
+{
+  "artifacts": "Saturation terminal retrieved at /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_critical_path_profile/artifacts/h200-saturation-20260720t0037z.",
+  "caches": "Triton and CUDA-graph compilation caches retained.",
+  "checkpoint": "Exact immutable checkpoint retained at /home/glmrunner/gemma-kernel-frontier/checkpoint.",
+  "image": "Pinned SGLang v0.5.12 image retained.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_h200_critical_path_profile",
+  "runtime": "Same-session exact-distinct c32/c48/c64 saturation terminal.",
+  "server_state": "Healthy c64 BF16/FP8-E5M2 server retained when final arm completed."
+}

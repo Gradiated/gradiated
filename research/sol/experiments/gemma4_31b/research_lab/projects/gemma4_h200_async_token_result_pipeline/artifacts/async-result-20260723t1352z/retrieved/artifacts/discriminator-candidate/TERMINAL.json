@@ -1,0 +1,5641 @@
+{
+  "arm": "candidate",
+  "batch_seconds": 13.267277756000112,
+  "cache": {
+    "cached_prompt_tokens_delta": 17120.0,
+    "prompt_tokens_delta": 134848.0,
+    "uncached_prompt_tokens_delta": 117728.0
+  },
+  "complete_requests": 32,
+  "concurrency": 32,
+  "ended_monotonic_s": 56159.682650845,
+  "kind": "gemma4_async_result_16_token_discriminator",
+  "output_tokens": 16,
+  "pass": true,
+  "phases": {
+    "decode": {
+      "max": 12.654804094003339,
+      "mean": 6.443348036000316,
+      "median": 6.471754467998835
+    },
+    "end_to_end": {
+      "max": 13.242274124000687,
+      "mean": 13.234496798437704,
+      "median": 13.233615979501337
+    },
+    "ttft": {
+      "max": 12.8521523360032,
+      "mean": 6.791148762437388,
+      "median": 6.768212180500996
+    }
+  },
+  "rows": [
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 12.244685748002667,
+      "ended_monotonic_s": 56159.672200704,
+      "error": null,
+      "first_token_monotonic_s": 56147.427514956,
+      "index": 0,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "Conclusions",
+          "token_ids": [
+            71125
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        71125,
+        71125,
+        71125,
+        71125,
+        71125,
+        71125,
+        71125,
+        71125,
+        71125,
+        71125,
+        71125,
+        71125,
+        71125,
+        71125,
+        71125,
+        71125
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "ee165dd8c7ae62c69b7fa2b6725efe5d5f93f60a00af0195150aad8657c885c1",
+      "request_sha256": "d6cd1143573f3e2cff03ffe86127dc9c2084d6f22cccd6011cad6e441099b815",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.430619004,
+      "text": "ConclusionsConclusionsConclusionsConclusionsConclusionsConclusionsConclusionsConclusionsConclusionsConclusionsConclusionsConclusionsConclusionsConclusionsConclusionsConclusions",
+      "ttft_seconds": 0.9968959519974305,
+      "wall_seconds": 13.241581700000097
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 9.110153330002504,
+      "ended_monotonic_s": 56159.661254182,
+      "error": null,
+      "first_token_monotonic_s": 56150.551100852,
+      "index": 1,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " hasher",
+          "token_ids": [
+            130904
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " hasher",
+          "token_ids": [
+            130904
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " hasher",
+          "token_ids": [
+            130904
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " hasher",
+          "token_ids": [
+            130904
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " hasher",
+          "token_ids": [
+            130904
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " hasher",
+          "token_ids": [
+            130904
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " hasher",
+          "token_ids": [
+            130904
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " hasher",
+          "token_ids": [
+            130904
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " hasher",
+          "token_ids": [
+            130904
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " hasher",
+          "token_ids": [
+            130904
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " hasher",
+          "token_ids": [
+            130904
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \ud558",
+          "token_ids": [
+            7534
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\uc11c",
+          "token_ids": [
+            237372
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \ud558",
+          "token_ids": [
+            7534
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\uc11c",
+          "token_ids": [
+            237372
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " \ud558",
+          "token_ids": [
+            7534
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        130904,
+        130904,
+        130904,
+        130904,
+        130904,
+        130904,
+        130904,
+        130904,
+        130904,
+        130904,
+        130904,
+        7534,
+        237372,
+        7534,
+        237372,
+        7534
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "d6e83b38061e7618c868b10204b87f10d463e2555da0c68986c45ba2de070dc1",
+      "request_sha256": "deb1780ed364fc197378a0e1930ffd15553df896c0c5c57620a159f3d3d6c083",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.423538496,
+      "text": " hasher hasher hasher hasher hasher hasher hasher hasher hasher hasher hasher \ud558\uc11c \ud558\uc11c \ud558",
+      "ttft_seconds": 4.127562355999544,
+      "wall_seconds": 13.237715686002048
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 7.810245205997489,
+      "ended_monotonic_s": 56159.659374643,
+      "error": null,
+      "first_token_monotonic_s": 56151.849129437,
+      "index": 2,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "On",
+          "token_ids": [
+            2791
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "C",
+          "token_ids": [
+            236780
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        2791,
+        2791,
+        2791,
+        2791,
+        2791,
+        2791,
+        2791,
+        2791,
+        2791,
+        2791,
+        2791,
+        2791,
+        2791,
+        2791,
+        2791,
+        236780
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "93be3c43e2d8b4931cfa1b844cc7ec7d3645f2a6b300e4de4cbe728b3d8788dc",
+      "request_sha256": "d7ef4bbb9812ff0572aaf0e79d9fac38368d813b76bc5a8463d41a85df6df096",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.427792705,
+      "text": "OnOnOnOnOnOnOnOnOnOnOnOnOnOnOnC",
+      "ttft_seconds": 5.42133673200442,
+      "wall_seconds": 13.23158193800191
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 4.684813712003233,
+      "ended_monotonic_s": 56159.669490556,
+      "error": null,
+      "first_token_monotonic_s": 56154.984676844,
+      "index": 3,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " walking",
+          "token_ids": [
+            9378
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        9378,
+        9378,
+        9378,
+        9378,
+        9378,
+        9378,
+        9378,
+        9378,
+        9378,
+        9378,
+        9378,
+        9378,
+        9378,
+        9378,
+        9378,
+        9378
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "660aeb4000c5c735e4e677b637926f86dd71039cd8d99c3bbc9b50bbd83e8933",
+      "request_sha256": "53f0b0f8065db472b0e2e2d17badb4e4e2b561bff624ddc367bbc61142cca464",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.432790688,
+      "text": " walking walking walking walking walking walking walking walking walking walking walking walking walking walking walking walking",
+      "ttft_seconds": 8.551886155997636,
+      "wall_seconds": 13.23669986800087
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 7.338953789003426,
+      "ended_monotonic_s": 56159.660838802,
+      "error": null,
+      "first_token_monotonic_s": 56152.321885013,
+      "index": 4,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "gn",
+          "token_ids": [
+            5440
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "vn",
+          "token_ids": [
+            27698
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        5440,
+        27698,
+        27698,
+        27698,
+        27698,
+        27698,
+        27698,
+        27698,
+        27698,
+        27698,
+        27698,
+        27698,
+        27698,
+        27698,
+        27698,
+        27698
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "4050be69cda919e78088428d38e20231b31d314bb958d638170303a57fc7778e",
+      "request_sha256": "78fda25dc7a0bff86bbca9bc5df67e83ebe17322a977fde76074a1e4f5aab507",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.424358868,
+      "text": "gnvnvnvnvnvnvnvnvnvnvnvnvnvnvnvn",
+      "ttft_seconds": 5.897526145003212,
+      "wall_seconds": 13.236479934006638
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 3.336378334002802,
+      "ended_monotonic_s": 56159.665186054,
+      "error": null,
+      "first_token_monotonic_s": 56156.32880772,
+      "index": 5,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " pleinement",
+          "token_ids": [
+            208229
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        208229,
+        208229,
+        208229,
+        208229,
+        208229,
+        208229,
+        208229,
+        208229,
+        208229,
+        208229,
+        208229,
+        208229,
+        208229,
+        208229,
+        208229,
+        208229
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "312ace89d161272f7b7f8810982167e39af506b2adf2abb4025966b10465501a",
+      "request_sha256": "eabf456b70be0960e86f34e75ea73852c994bde3591a993d28bb6f6d502685e3",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.434027382,
+      "text": " pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement",
+      "ttft_seconds": 9.894780337999691,
+      "wall_seconds": 13.231158672002493
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 3.809676551994926,
+      "ended_monotonic_s": 56159.664815002,
+      "error": null,
+      "first_token_monotonic_s": 56155.85513845,
+      "index": 6,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "\u0457",
+          "token_ids": [
+            237468
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        237468,
+        237468,
+        237468,
+        237468,
+        237468,
+        237468,
+        237468,
+        237468,
+        237468,
+        237468,
+        237468,
+        237468,
+        237468,
+        237468,
+        237468,
+        237468
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "f75bb95a6c20968b530b021b8b9af1567af64c05b00fe7b851bd8cb94f28668e",
+      "request_sha256": "a370a84f501ef00f5ab62c34900d84d989e96a7435011a71011076c7f06a4d7a",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.423967494,
+      "text": "\u0457\u0457\u0457\u0457\u0457\u0457\u0457\u0457\u0457\u0457\u0457\u0457\u0457\u0457\u0457\u0457",
+      "ttft_seconds": 9.431170955998823,
+      "wall_seconds": 13.240847507993749
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 9.337469589001557,
+      "ended_monotonic_s": 56159.66096431,
+      "error": null,
+      "first_token_monotonic_s": 56150.323494721,
+      "index": 7,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "6eff559be311cbeee61910fbdcc75aa20f0feae63fff997b5f69fee600c6bc1d",
+      "request_sha256": "f5d3b61565321b6247ca3ab01d3729cfbaf67cf3e9ce59b84b434bf4332f9f22",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.42473842,
+      "text": " l l l l l l l l l l l l l l l l",
+      "ttft_seconds": 3.898756301001413,
+      "wall_seconds": 13.23622589000297
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 1.1080096709993086,
+      "ended_monotonic_s": 56159.667026303,
+      "error": null,
+      "first_token_monotonic_s": 56158.559016632,
+      "index": 8,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " remodeling",
+          "token_ids": [
+            65390
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        65390,
+        65390,
+        65390,
+        65390,
+        65390,
+        65390,
+        65390,
+        65390,
+        65390,
+        65390,
+        65390,
+        65390,
+        65390,
+        65390,
+        65390,
+        65390
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "6b2c8c66a7781df542f0574f3736ba1321b225a414e30a1ef5216f6e38ae9d35",
+      "request_sha256": "123c4baecf4d0661704f6e4ac6142f7ae58926089afcf3c1001060398e61471e",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.4309948,
+      "text": " remodeling remodeling remodeling remodeling remodeling remodeling remodeling remodeling remodeling remodeling remodeling remodeling remodeling remodeling remodeling remodeling",
+      "ttft_seconds": 12.12802183200256,
+      "wall_seconds": 13.236031503001868
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 3.1100498640007572,
+      "ended_monotonic_s": 56159.664355011,
+      "error": null,
+      "first_token_monotonic_s": 56156.554305147,
+      "index": 9,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        759,
+        759,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "76088659612c56d764f16372bfc7aeda493b36c7e0adab1c145f4bd9d8491ff9",
+      "request_sha256": "7620c2f6d4e481fe93d941b48a94ed8b8dc70b511204eeb6c4ddfc9f6a3b3a4a",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.431356268,
+      "text": " la la l l l l l l l l l l l l l l",
+      "ttft_seconds": 10.122948878997704,
+      "wall_seconds": 13.232998742998461
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 9.807558902997698,
+      "ended_monotonic_s": 56159.661156227,
+      "error": null,
+      "first_token_monotonic_s": 56149.853597324,
+      "index": 10,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "\u984d",
+          "token_ids": [
+            240017
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        240017,
+        240017,
+        240017,
+        240017,
+        240017,
+        240017,
+        240017,
+        240017,
+        240017,
+        240017,
+        240017,
+        240017,
+        240017,
+        240017,
+        240017,
+        240017
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "b05734272d8a2ccbc3d7d546a644fba107830d8d0a0d9eb96e88a88494f5bc75",
+      "request_sha256": "c2c38bf7b6c750898210560e63c79c7b7412b5f6e5a34894d6cc26ace7667ec8",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.42813953,
+      "text": "\u984d\u984d\u984d\u984d\u984d\u984d\u984d\u984d\u984d\u984d\u984d\u984d\u984d\u984d\u984d\u984d",
+      "ttft_seconds": 3.4254577940009767,
+      "wall_seconds": 13.233016696998675
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 11.101044025999727,
+      "ended_monotonic_s": 56159.661017697,
+      "error": null,
+      "first_token_monotonic_s": 56148.559973671,
+      "index": 11,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "\ubbfc",
+          "token_ids": [
+            239217
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        239217,
+        239217,
+        239217,
+        239217,
+        239217,
+        239217,
+        239217,
+        239217,
+        239217,
+        239217,
+        239217,
+        239217,
+        239217,
+        239217,
+        239217,
+        239217
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "28aa61b36269fd84ee685fa15e0c038232c83c0a56f3453736b7b753331b98f3",
+      "request_sha256": "96faad6c0c4cc50994f7a9c8deeb475421f78aac7c90206757b949427361202b",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.425497389,
+      "text": "\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc\ubbfc",
+      "ttft_seconds": 2.1344762820008327,
+      "wall_seconds": 13.23552030800056
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 10.246382020995952,
+      "ended_monotonic_s": 56159.661074956,
+      "error": null,
+      "first_token_monotonic_s": 56149.414692935,
+      "index": 12,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " l",
+          "token_ids": [
+            537
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537,
+        537
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "9e7268ae62c74d4772b567666a7b887f00e2201fefee4d85f53aec01feefb1e8",
+      "request_sha256": "68a169d1fdf31275bae4938a9f9fd1d75812e170f696b413615a430f5ed6802c",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.425110932,
+      "text": " l l l l l l l l l l l l l l l l",
+      "ttft_seconds": 2.9895820029996685,
+      "wall_seconds": 13.23596402399562
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 4.257129529003578,
+      "ended_monotonic_s": 56159.664468344,
+      "error": null,
+      "first_token_monotonic_s": 56155.407338815,
+      "index": 13,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "\u92f3",
+          "token_ids": [
+            246524
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        246524,
+        246524,
+        246524,
+        246524,
+        246524,
+        246524,
+        246524,
+        246524,
+        246524,
+        246524,
+        246524,
+        246524,
+        246524,
+        246524,
+        246524,
+        246524
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "f47886a8cbf6f5e0870c0646f265b41e7759e263cc08d201f659135cef8ec103",
+      "request_sha256": "9148179ea080384a479422508c779010f15f3694b6ac30952a2587fa4382cb47",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.428523187,
+      "text": "\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3\u92f3",
+      "ttft_seconds": 8.978815627997392,
+      "wall_seconds": 13.23594515700097
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 6.684380368998973,
+      "ended_monotonic_s": 56159.667129494,
+      "error": null,
+      "first_token_monotonic_s": 56152.982749125,
+      "index": 14,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "aphone",
+          "token_ids": [
+            60629
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        60629,
+        60629,
+        60629,
+        60629,
+        60629,
+        60629,
+        60629,
+        60629,
+        60629,
+        60629,
+        60629,
+        60629,
+        60629,
+        60629,
+        60629,
+        60629
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "bb0d775dbbc2fa4cfb94c10d4096fb1c4379bc207efe18e5fa6b2ca024745675",
+      "request_sha256": "134618a8605503818fccf5eb7f89fc76a4d811e50c574c403f3bd91d37a8b73f",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.42590391,
+      "text": "aphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphoneaphone",
+      "ttft_seconds": 6.556845215003705,
+      "wall_seconds": 13.241225584002677
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 8.676752824001596,
+      "ended_monotonic_s": 56159.66058786,
+      "error": null,
+      "first_token_monotonic_s": 56150.983835036,
+      "index": 15,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " \u0634\u0645\u0627\u0644",
+          "token_ids": [
+            80467
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        80467,
+        80467,
+        80467,
+        80467,
+        80467,
+        80467,
+        80467,
+        80467,
+        80467,
+        80467,
+        80467,
+        80467,
+        80467,
+        80467,
+        80467,
+        80467
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "845e87f819ab3b24844f28f217618e4f73e199c1a86eb19f0e2af8bc291ad637",
+      "request_sha256": "f1a4c86292bf25f22273bcd29ee8ece4c93985dfb9df93db81f3e93b0e6c4ad3",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.431716734,
+      "text": " \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644 \u0634\u0645\u0627\u0644",
+      "ttft_seconds": 4.552118302002782,
+      "wall_seconds": 13.228871126004378
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 11.795977294001204,
+      "ended_monotonic_s": 56159.660650583,
+      "error": null,
+      "first_token_monotonic_s": 56147.864673289,
+      "index": 16,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " narrated",
+          "token_ids": [
+            132317
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        132317,
+        132317,
+        132317,
+        132317,
+        132317,
+        132317,
+        132317,
+        132317,
+        132317,
+        132317,
+        132317,
+        132317,
+        132317,
+        132317,
+        132317,
+        132317
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "86d7284e4ab7f64720756b1a8472b4393bb9060d17c75ea827cfda4575a01fd6",
+      "request_sha256": "0c012ef546fd7a0d98a4be10d17ca080d4031b6761c4a1b22f9c11445b39d499",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.428865606,
+      "text": " narrated narrated narrated narrated narrated narrated narrated narrated narrated narrated narrated narrated narrated narrated narrated narrated",
+      "ttft_seconds": 1.4358076829958009,
+      "wall_seconds": 13.231784976997005
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 0.3771697560005123,
+      "ended_monotonic_s": 56159.665450925,
+      "error": null,
+      "first_token_monotonic_s": 56159.288281169,
+      "index": 17,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " Art",
+          "token_ids": [
+            4585
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        4585,
+        4585,
+        4585,
+        4585,
+        4585,
+        4585,
+        4585,
+        4585,
+        4585,
+        4585,
+        4585,
+        4585,
+        4585,
+        4585,
+        4585,
+        4585
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "0473839628f7c355f85ea9c7c17288453436d42b82ffb1b1f0b94d392c09ab46",
+      "request_sha256": "d31b621c0b470e30fc58f24e6eac6e3ac57f3dd9627935339bd60f6a2f11e756",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.436128833,
+      "text": " Art Art Art Art Art Art Art Art Art Art Art Art Art Art Art Art",
+      "ttft_seconds": 12.8521523360032,
+      "wall_seconds": 13.229322092003713
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 0.7238506659996347,
+      "ended_monotonic_s": 56159.662551753,
+      "error": null,
+      "first_token_monotonic_s": 56158.938701087,
+      "index": 18,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "Stake",
+          "token_ids": [
+            233149
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        233149,
+        233149,
+        233149,
+        233149,
+        233149,
+        233149,
+        233149,
+        233149,
+        233149,
+        233149,
+        233149,
+        233149,
+        233149,
+        233149,
+        233149,
+        233149
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "5bf600be7dc09a63d185ea0b6e7a1f1471b7195559e3c932d28bcfb115bfe455",
+      "request_sha256": "f9f2e1f96ce67aecfb5ded0eee69014b3371ae70f1bf014c4c8221992befaed1",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.433141298,
+      "text": "StakeStakeStakeStakeStakeStakeStakeStakeStakeStakeStakeStakeStakeStakeStakeStake",
+      "ttft_seconds": 12.505559788995015,
+      "wall_seconds": 13.22941045499465
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 2.683798931997444,
+      "ended_monotonic_s": 56159.669165203,
+      "error": null,
+      "first_token_monotonic_s": 56156.985366271,
+      "index": 19,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "conce",
+          "token_ids": [
+            188836
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "1",
+          "token_ids": [
+            236770
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        188836,
+        236770,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "702697138913c5d4b4bd02078d19416a439cc7423e0f7b28b1b9c86fc5f05692",
+      "request_sha256": "3076db80db37ca86f3d894f3302e459662716bde51b49b0419e6c830d321b526",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.42922764,
+      "text": "conce1 la la la la la la la la la la la la la la",
+      "ttft_seconds": 10.556138631000067,
+      "wall_seconds": 13.239937562997511
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 6.259128566998697,
+      "ended_monotonic_s": 56159.664975265,
+      "error": null,
+      "first_token_monotonic_s": 56153.405846698,
+      "index": 20,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " cones",
+          "token_ids": [
+            55816
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        55816,
+        55816,
+        55816,
+        55816,
+        55816,
+        55816,
+        55816,
+        55816,
+        55816,
+        55816,
+        55816,
+        55816,
+        55816,
+        55816,
+        55816,
+        55816
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "2a9cd0fb3c6ec1cd9b50cf50eb84299864eeae8416f9ce5600f655f10ac1ef89",
+      "request_sha256": "d7e48a6902ca5edbb52e4f976da315938102ccf9992fdddc765439cfedc03cde",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.426267552,
+      "text": " cones cones cones cones cones cones cones cones cones cones cones cones cones cones cones cones",
+      "ttft_seconds": 6.9795791459982865,
+      "wall_seconds": 13.238707712996984
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 5.814214979996905,
+      "ended_monotonic_s": 56159.665119175,
+      "error": null,
+      "first_token_monotonic_s": 56153.850904195,
+      "index": 21,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "Ar",
+          "token_ids": [
+            2023
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        2023,
+        2023,
+        2023,
+        2023,
+        2023,
+        2023,
+        2023,
+        2023,
+        2023,
+        2023,
+        2023,
+        2023,
+        2023,
+        2023,
+        2023,
+        2023
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "6d281597699f00237fc75b89057b6ff0aeda3fd44ba93183cd086844f09dc6a9",
+      "request_sha256": "e4a9185348e1ca4e56be2ce502248982ba0e0f044e7538ca3a2e2c6ca53d0de5",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.427414994,
+      "text": "ArArArArArArArArArArArArArArArAr",
+      "ttft_seconds": 7.423489200999029,
+      "wall_seconds": 13.237704180995934
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 2.256849808996776,
+      "ended_monotonic_s": 56159.66377052,
+      "error": null,
+      "first_token_monotonic_s": 56157.406920711,
+      "index": 22,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "\u611f\u53d7\u5230",
+          "token_ids": [
+            135651
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        135651,
+        135651,
+        135651,
+        135651,
+        135651,
+        135651,
+        135651,
+        135651,
+        135651,
+        135651,
+        135651,
+        135651,
+        135651,
+        135651,
+        135651,
+        135651
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "edd438bbe0226859b7ed4beb3c50153e852040b3e2d6bd867afc1296fd3afb68",
+      "request_sha256": "18abae1a772b8e17a21a75efb9fc897ef8b857376b994bd2fb13ee2bfd586c5c",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.429555771,
+      "text": "\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230\u611f\u53d7\u5230",
+      "ttft_seconds": 10.97736494000128,
+      "wall_seconds": 13.234214748998056
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 8.253670971003885,
+      "ended_monotonic_s": 56159.660902217,
+      "error": null,
+      "first_token_monotonic_s": 56151.407231246,
+      "index": 23,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "Parm",
+          "token_ids": [
+            223541
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        223541,
+        223541,
+        223541,
+        223541,
+        223541,
+        223541,
+        223541,
+        223541,
+        223541,
+        223541,
+        223541,
+        223541,
+        223541,
+        223541,
+        223541,
+        223541
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "c5a927b1da7586f9e7f2e982c1a55bb5bf5cf80fee3cc3037e1def1f63b99525",
+      "request_sha256": "edc73adac992872c3aa7a2dae568ad61871a521c3120c20845ad918d5d49eb52",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.432119469,
+      "text": "ParmParmParmParmParmParmParmParmParmParmParmParmParmParmParmParm",
+      "ttft_seconds": 4.975111776999256,
+      "wall_seconds": 13.228782748003141
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 10.670877399999881,
+      "ended_monotonic_s": 56159.66053416,
+      "error": null,
+      "first_token_monotonic_s": 56148.98965676,
+      "index": 24,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " \u062f\u0644\u0648\u0642\u062a\u064a",
+          "token_ids": [
+            108062
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        108062,
+        108062,
+        108062,
+        108062,
+        108062,
+        108062,
+        108062,
+        108062,
+        108062,
+        108062,
+        108062,
+        108062,
+        108062,
+        108062,
+        108062,
+        108062
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "11d04d8e851d512ea8c5667b4f1728dada697d21f807d33310b2b9159aabf587",
+      "request_sha256": "401f66afdcc2d25b7e42c179bba1745288ed1acd5c3a9bcbec3139703f96f372",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.42988216,
+      "text": " \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a \u062f\u0644\u0648\u0642\u062a\u064a",
+      "ttft_seconds": 2.559774599998491,
+      "wall_seconds": 13.230651999998372
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 1.3327882480007247,
+      "ended_monotonic_s": 56159.664922695,
+      "error": null,
+      "first_token_monotonic_s": 56158.332134447,
+      "index": 25,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "ographers",
+          "token_ids": [
+            68203
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        68203,
+        68203,
+        68203,
+        68203,
+        68203,
+        68203,
+        68203,
+        68203,
+        68203,
+        68203,
+        68203,
+        68203,
+        68203,
+        68203,
+        68203,
+        68203
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "c4262cf0e717c118ccc14f5b783238c64f457385bd50209ba12885268a16963b",
+      "request_sha256": "6feede27a00b1d7c83dde536304759b337a6ce8382244bb3ccb2dc305eb9afff",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.433487713,
+      "text": "ographersographersographersographersographersographersographersographersographersographersographersographersographersographersographersographers",
+      "ttft_seconds": 11.898646734000067,
+      "wall_seconds": 13.231434982000792
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 7.108819847999257,
+      "ended_monotonic_s": 56159.658889319,
+      "error": null,
+      "first_token_monotonic_s": 56152.550069471,
+      "index": 26,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " Candles",
+          "token_ids": [
+            201859
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        201859,
+        201859,
+        201859,
+        201859,
+        201859,
+        201859,
+        201859,
+        201859,
+        201859,
+        201859,
+        201859,
+        201859,
+        201859,
+        201859,
+        201859,
+        201859
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "8ef1e5c009039f18cf9543801c4bc1bee8989bfe5b6d42143d93e6c22084d1de",
+      "request_sha256": "81323dd2ba27d329b217e1737f7f7bbdc439532542447dca2cebdfd2f8c5200d",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.427039456,
+      "text": " Candles Candles Candles Candles Candles Candles Candles Candles Candles Candles Candles Candles Candles Candles Candles Candles",
+      "ttft_seconds": 6.123030014998221,
+      "wall_seconds": 13.231849862997478
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 5.341714499001682,
+      "ended_monotonic_s": 56159.665079149,
+      "error": null,
+      "first_token_monotonic_s": 56154.32336465,
+      "index": 27,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "cznym",
+          "token_ids": [
+            166134
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        166134,
+        166134,
+        166134,
+        166134,
+        166134,
+        166134,
+        166134,
+        166134,
+        166134,
+        166134,
+        166134,
+        166134,
+        166134,
+        166134,
+        166134,
+        166134
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "b43e4a5a804153c5962b8f9dd41886ed2b9c67bdf47a87ce2f776c8574719c10",
+      "request_sha256": "2d0fa6019b69cf319dcdb0d5223cae71f4339fd1f7e195952e0de2dddf5568b7",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.432442124,
+      "text": "cznymcznymcznymcznymcznymcznymcznymcznymcznymcznymcznymcznymcznymcznymcznymcznym",
+      "ttft_seconds": 7.8909225259994855,
+      "wall_seconds": 13.232637025001168
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 12.654804094003339,
+      "ended_monotonic_s": 56159.660066746,
+      "error": null,
+      "first_token_monotonic_s": 56147.005262652,
+      "index": 28,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": "ons",
+          "token_ids": [
+            1190
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        1190,
+        1190,
+        1190,
+        1190,
+        1190,
+        1190,
+        1190,
+        1190,
+        1190,
+        1190,
+        1190,
+        1190,
+        1190,
+        1190,
+        1190,
+        1190
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "085e0adb21a91e48057d174b6ca57acd816f24d9156ebd08fa6c62aa98e1c784",
+      "request_sha256": "35ed5318932b2f3fa375ee86e6c129d24e9f7fe7e4b5d0b21444cbfa55590c60",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.430273188,
+      "text": "onsonsonsonsonsonsonsonsonsonsonsonsonsonsonsons",
+      "ttft_seconds": 0.5749894639957347,
+      "wall_seconds": 13.229793557999074
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 11.326821507005661,
+      "ended_monotonic_s": 56159.659656556,
+      "error": null,
+      "first_token_monotonic_s": 56148.332835049,
+      "index": 29,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " la",
+          "token_ids": [
+            759
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759,
+        759
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "9a6e86db8a92541bcc6ed5703da31604f0c13844e980783022f8969123b1926d",
+      "request_sha256": "78600b3649fc655f3b6ce340c5df5521a1a12e47175a57514750fb7b23f48c47",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.426639346,
+      "text": " la la la la la la la la la la la la la la la la",
+      "ttft_seconds": 1.9061957029989571,
+      "wall_seconds": 13.233017210004618
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 1.8078602899986436,
+      "ended_monotonic_s": 56159.665026613,
+      "error": null,
+      "first_token_monotonic_s": 56157.857166323,
+      "index": 30,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " peristiwa",
+          "token_ids": [
+            130166
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        130166,
+        130166,
+        130166,
+        130166,
+        130166,
+        130166,
+        130166,
+        130166,
+        130166,
+        130166,
+        130166,
+        130166,
+        130166,
+        130166,
+        130166,
+        130166
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "d7038ca62692ef67dfa467bfba371e560d8e0182e23b09734654a452d6b8d85a",
+      "request_sha256": "8e005d17671eab076259ced81699d485a55aa8b8487dd12fc291de594ae7f195",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.434516641,
+      "text": " peristiwa peristiwa peristiwa peristiwa peristiwa peristiwa peristiwa peristiwa peristiwa peristiwa peristiwa peristiwa peristiwa peristiwa peristiwa peristiwa",
+      "ttft_seconds": 11.422649682004703,
+      "wall_seconds": 13.230509972003347
+    },
+    {
+      "completion_tokens": 16,
+      "decode_seconds": 5.1151068239996675,
+      "ended_monotonic_s": 56159.665393425,
+      "error": null,
+      "first_token_monotonic_s": 56154.550286601,
+      "index": 31,
+      "normalized_events": [
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": "length",
+          "text": " existence",
+          "token_ids": [
+            10664
+          ],
+          "usage": null
+        },
+        {
+          "finish_reason": null,
+          "text": "",
+          "token_ids": [],
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 4214,
+            "reasoning_tokens": 0,
+            "total_tokens": 4230
+          }
+        }
+      ],
+      "output_ids": [
+        10664,
+        10664,
+        10664,
+        10664,
+        10664,
+        10664,
+        10664,
+        10664,
+        10664,
+        10664,
+        10664,
+        10664,
+        10664,
+        10664,
+        10664,
+        10664
+      ],
+      "prompt_tokens": 4214,
+      "raw_response_sha256": "3f67369c455e27539aab42194afeb396ff333b540c34bea981f0b82bef04ac15",
+      "request_sha256": "c278f1e70ba53b330e536399f6e1657a8512d106ae24907991076bc96e383641",
+      "returned_token_ids": 16,
+      "started_monotonic_s": 56146.423119301,
+      "text": " existence existence existence existence existence existence existence existence existence existence existence existence existence existence existence existence",
+      "ttft_seconds": 8.12716730000102,
+      "wall_seconds": 13.242274124000687
+    }
+  ],
+  "schema_version": 1,
+  "serialized_token_recovery": {
+    "all_nonempty_events_map_to_one_token": true,
+    "method": "checkpoint_tokenizer_per_stream_event"
+  },
+  "service_seconds_per_request": 0.4146024298750035,
+  "started_monotonic_s": 56146.415373089
+}

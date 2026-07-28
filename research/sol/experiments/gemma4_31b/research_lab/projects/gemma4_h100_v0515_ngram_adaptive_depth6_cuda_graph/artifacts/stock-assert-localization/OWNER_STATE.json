@@ -1,0 +1,13 @@
+{
+  "command": [
+    "bash",
+    "-lc",
+    "PYTHONPATH=/root/workspace/research/factory/src python3 run_stock_assert_localization.py"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_adaptive_depth6_cuda_graph",
+  "launched_at_utc": "2026-07-25T16:35:26.244180Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_adaptive_depth6_cuda_graph/artifacts/stock-assert-localization/owner.log",
+  "pid": 901990,
+  "start_ticks": 111334364,
+  "unit_manager": "pid"
+}

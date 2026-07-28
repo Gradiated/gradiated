@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-24T10:42:46Z",
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_bytes": 62578655208
+  },
+  "runtime": {
+    "name": "SGLang v0.5.13",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "candidate_launch": {
+      "path": "../gemma4_h200_ngram_decode_equivalent_verifier/artifacts/h200-verifier-20260724t103131Z/retrieved/artifacts/candidate-full-launch.json",
+      "sha256": "7de2ef335f8d42deb7c36eca0153b2a06fd168a3fd74812c1618217348905970"
+    },
+    "candidate_terminal": {
+      "path": "../gemma4_h200_ngram_decode_equivalent_verifier/artifacts/h200-verifier-20260724t103131Z/retrieved/artifacts/TERMINAL.json",
+      "sha256": "ccb15cd9ef5d85ce0791bf3aab417fd5d976e3bda7b5f78c13a6039e90d72e71"
+    },
+    "exact_workload_runner": {
+      "path": "../gemma4_h200_ngram_decode_equivalent_verifier/inputs/bound/exact_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    }
+  },
+  "quality_inputs": {
+    "source_manifest": {
+      "path": "../gemma4_h200_v0513_fp8_production_validation/artifacts/offline-bind-20260720/BINDING_MANIFEST.json",
+      "sha256": "71c6dc976b1fba8b2873e3bcfb274c8678e50d16cbb690fa33e377cd0240731f"
+    },
+    "gpqa_diamond_requests": {
+      "path": "../gemma4_h200_v0513_fp8_production_validation/assets/requests/gpqa_diamond_requests.jsonl",
+      "rows": 198,
+      "sha256": "f46b29c81cbf84fc53f37829e12dff2313ff34946c97e98adc1050574710988d"
+    },
+    "taubench_requests": {
+      "path": "../gemma4_h200_v0513_fp8_production_validation/assets/requests/taubench_requests.jsonl",
+      "rows": 165,
+      "sha256": "7f3e61e28c18dfd1c95b8516be29072eb9a09bdb736ffbb5312c24c57ef49cfc"
+    },
+    "capture_and_scorer": {
+      "path": "../gemma4_h200_v0513_fp8_production_validation/production_quality_remote.py",
+      "sha256": "6e5f76db1a123dbcb868732097f471a5c4eaea9d50180d5f587292c0f1d0c5f6"
+    },
+    "outer_owner_reference": {
+      "path": "../gemma4_h200_v0513_fp8_production_validation/run_production_quality_outer.py",
+      "sha256": "d9e7b63938df622f749cd3cd01e87c59951937fed2e1c97ae908f8981cf02e80"
+    },
+    "tool_bridge_bindings": {
+      "path": "../gemma4_h200_v0513_fp8_production_validation/tool_bridge_bindings.json",
+      "sha256": "f3e7a02572337f746a165908049a130ac8e159043174693e712ce665849eac2a"
+    },
+    "tool_bridge_worker": {
+      "path": "../gemma4_h200_v0513_fp8_production_validation/tool_bridge_worker.py",
+      "sha256": "45ab8607bb7bc3ace674efb229720a112125107f6c870f789e34684f01025e9b"
+    },
+    "tool_bridge_finalizer": {
+      "path": "../gemma4_h200_v0513_fp8_production_validation/finalize_tool_bridge.py",
+      "sha256": "d346b8eb1036a7af3cbd8b612b72faee544cdfc9d6f7eb1ba112ecb718714a23"
+    },
+    "tool_bridge_outer_reference": {
+      "path": "../gemma4_h200_v0513_fp8_production_validation/run_tool_bridge_outer.py",
+      "sha256": "e8b1658a77bdca5ae5781cf2e32802ac789b69b69e0cd79d1fd6f26caa247364"
+    }
+  },
+  "bench": {
+    "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+    "accelerator": "nvidia-h200-sxm",
+    "deadline_utc": "2026-07-24T17:00:00Z",
+    "hourly_cost_usd": 2.46
+  },
+  "forbidden": [
+    "transfer historical quality scores to this candidate",
+    "change NGRAM settings or decode-equivalent intervention",
+    "canonicalize candidate JSON before scoring",
+    "replay the consumed discriminator or matched c32 pair",
+    "run concurrent control and candidate servers"
+  ]
+}
+

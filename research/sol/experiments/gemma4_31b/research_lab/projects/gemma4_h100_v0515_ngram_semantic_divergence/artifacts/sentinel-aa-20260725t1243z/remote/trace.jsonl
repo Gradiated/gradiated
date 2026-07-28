@@ -1,0 +1,225 @@
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4215, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4217, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4220, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4225, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4233, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4245, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4257, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4269, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4281, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4293, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4305, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4317, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4329, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4341, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4353, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4365, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4377, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4389, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4401, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4413, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4425, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4437, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4449, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4461, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4473, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4485, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4497, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4509, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4521, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4533, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4545, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4557, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4569, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4581, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4581, "rid": "2d2d6dfb4ef64a60b0e11fbba2d4c439", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4226, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4238, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4250, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4262, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4274, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4286, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4298, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4310, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4322, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4334, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4346, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4358, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4370, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4382, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4394, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4406, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4418, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4430, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4442, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4454, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4466, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4478, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4490, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4502, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4514, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4526, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4538, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4550, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4562, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4574, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4574, "rid": "72caa854d7a345ba93707fb1cb85c672", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4226, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4226, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4238, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4238, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4250, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4250, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4262, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4262, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4274, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4274, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4286, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4286, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4298, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4298, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4310, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4310, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4322, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4322, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4334, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4334, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4346, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4346, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4358, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4358, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4370, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4370, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4382, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4382, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4394, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4394, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4406, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4406, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4418, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4418, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4430, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4430, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4442, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4442, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4454, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4454, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4466, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4466, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4478, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4478, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4490, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4490, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4502, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4502, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4514, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4514, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4526, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4526, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4538, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4538, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4550, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4550, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4562, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4562, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"event": "instrumentation_error", "where": "worker", "error": "TypeError(\"'int' object is not iterable\")"}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4574, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4574, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 0, "event": "scheduler_emit", "kv_committed_len_after": 4574, "rid": "e4d1923455044438aff03afb613a6b62", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}
+{"batch_row": 1, "event": "scheduler_emit", "kv_committed_len_after": 4574, "rid": "2597c281510e44a6bc05836e9ef52d2f", "scheduler_emitted_tokens": [51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935, 51935]}

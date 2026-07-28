@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_v0515_demand_multiplexing_sustainable/stock_retrieval_owner.py"
+  ],
+  "cwd": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_v0515_demand_multiplexing_sustainable",
+  "launched_at_utc": "2026-07-25T08:58:39.726189Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_v0515_demand_multiplexing_sustainable/artifacts/stock-multiplex-packet-id-repair-20260725t084123z/retrieval-repair-owner.log",
+  "pid": 572761,
+  "start_ticks": 108593712,
+  "unit_manager": "pid"
+}

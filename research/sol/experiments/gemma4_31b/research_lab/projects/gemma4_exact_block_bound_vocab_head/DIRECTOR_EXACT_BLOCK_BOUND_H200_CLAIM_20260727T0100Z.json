@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-27T01:00:32Z",
+  "project": "gemma4_exact_block_bound_vocab_head",
+  "decision": "open_warm_h200_implementation_and_component_claim",
+  "researcher_profile": "deep",
+  "required_skill": "$kernel-research",
+  "admission": {
+    "path": "DIRECTOR_EXACT_BLOCK_BOUND_VOCAB_HEAD_ADMISSION_20260727T0055Z.json",
+    "sha256": "a963b4ea1bdb5d0ab75791e0e81fd60c962fbb6d054e96c6b8f19c6d44ae79a8"
+  },
+  "reservation": {
+    "authorized_usd": 2.0,
+    "reserved_at_utc": "2026-07-27T00:58:52.008292Z",
+    "actual_spend_before_claim_usd": 0.0
+  },
+  "bench": {
+    "id": "h200-causal-head-e00b9qw8d6qd7wrjj1",
+    "accelerator": "nvidia-h200-sxm",
+    "hourly_cost_usd": 2.4597222,
+    "status_required_at_claim": "available",
+    "lifecycle_deadline_utc": "2026-07-27T01:32:34.490529Z",
+    "resident_checkpoint": "/home/glmrunner/causal-offset-head/checkpoint",
+    "resident_checkpoint_manifest_digest": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "server_state": "No live model server or GPU process; stopped capture container retained for provenance."
+  },
+  "immutable_inputs": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "capture_terminal": "../gemma4_adaptive_retrieval_vocab_head/artifacts/h200-exact-diverse-c32-capture-owner-e606f47a/EXACT_CAPTURE_TERMINAL.json",
+    "capture_terminal_sha256": "fc7297d3bf51e9118e0cf5bde4eec7c2bd22dc2d07a6608c3b19f8b55d55a9bc",
+    "hidden_states": "../gemma4_adaptive_retrieval_vocab_head/artifacts/h200-exact-diverse-c32-capture-owner-e606f47a/hidden_states.pt",
+    "hidden_states_sha256": "ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54",
+    "capture_rows": 1536,
+    "hidden_width": 5376,
+    "unique_request_ids": 32,
+    "tied_weight_key": "model.language_model.embed_tokens.weight",
+    "tied_weight_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+    "dense_top1_ids_sha256": "27d7de2f664f46b7b743abccc751287414820d3e55175c870b8fdda2f2538816",
+    "dense_comparator_seconds": 0.004182975769042969
+  },
+  "mutable_implementation": {
+    "scorer_destination": "exact_block_bound_vocab_head.py",
+    "owner_destination": "run_h200_exact_block_bound_owner.py",
+    "required_owner_cli": [
+      "--authority",
+      "DIRECTOR_EXACT_BLOCK_BOUND_H200_CLAIM_20260727T0100Z.json",
+      "--output-dir",
+      "artifacts/h200-exact-block-bound-20260727t0100z"
+    ],
+    "required_behavior": [
+      "Atomically claim the named bench and preserve the original claimed_at through any repair.",
+      "Heartbeat from a controller-local durable owner and use current inventory SSH identity.",
+      "Reuse the resident checkpoint and pinned image without checkpoint rehash or retransmission.",
+      "Stage only the scorer plus the frozen capture inputs.",
+      "Run a tiny real CUDA discovery call, then continue directly into the single complete component invocation when it passes.",
+      "Persist per-arm completion markers outside reported timing, retrieve the typed terminal, and release only after decision-bearing evidence or the absolute deadline.",
+      "Expose a hash-bound repair handshake and retain the claim for pre-science CUDA, source, path, layout, import, or retrieval defects."
+    ]
+  },
+  "launch": {
+    "claim_not_after_utc": "2026-07-27T01:10:00Z",
+    "artifact_root": "artifacts/h200-exact-block-bound-20260727t0100z",
+    "entrypoint": "run_h200_exact_block_bound_owner.py",
+    "owner_command": [
+      "python3",
+      "run_h200_exact_block_bound_owner.py",
+      "--authority",
+      "DIRECTOR_EXACT_BLOCK_BOUND_H200_CLAIM_20260727T0100Z.json",
+      "--output-dir",
+      "artifacts/h200-exact-block-bound-20260727t0100z"
+    ],
+    "detached_owner_command": "research/factory/tools/detached-owner start --unit-manager pid --state artifacts/h200-exact-block-bound-20260727t0100z/OWNER.json --log artifacts/h200-exact-block-bound-20260727t0100z/OWNER.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_exact_block_bound_vocab_head -- python3 run_h200_exact_block_bound_owner.py --authority DIRECTOR_EXACT_BLOCK_BOUND_H200_CLAIM_20260727T0100Z.json --output-dir artifacts/h200-exact-block-bound-20260727t0100z",
+    "expected_terminal": "EXACT_BLOCK_BOUND_VOCAB_HEAD_TERMINAL.json"
+  },
+  "budgets": {
+    "authorized_project_usd": 2.0,
+    "claim_minutes_max": 15,
+    "maximum_claim_exposure_usd": 0.61493055,
+    "owner_deadline": "min(claimed_at plus 15 minutes, 2026-07-27T01:27:00Z)",
+    "release_deadline_utc": "2026-07-27T01:29:00Z",
+    "scientific_invocations_max": 1,
+    "additional_storage_gib_max": 4
+  },
+  "scientific_contract": {
+    "mechanism": "Exact blockwise or hierarchical maximum-inner-product search with rigorous upper-bound certification and exact rescoring.",
+    "baseline": "Strongest dense tied-head CUDA top-1 on the same complete capture.",
+    "correctness": "Identical dense top-1 IDs for all 1536 rows and 32 requests, finite scores, complete output consumption, and proof that every skipped block was bounded below the current exact best.",
+    "timing": "Warm profiler-off distributions excluding index construction and compilation, but including bound evaluation, traversal, and exact rescoring. Report index construction and amortization separately.",
+    "positive": "Complete candidate warm latency is lower than 0.004182975769042969 seconds with a credible resident-index path.",
+    "negative": "A correct complete candidate that prunes too little or is not faster closes only this block-bound mechanism.",
+    "endpoint_allowed": false,
+    "capture_replay_allowed": false,
+    "approximate_coordinate_scorer_allowed": false,
+    "checkpoint_retransmission_allowed": false
+  },
+  "repair_and_release": {
+    "pre_science": "Retain the original claim and repair mutable implementation boundaries while the closest corrected retry plus terminal and release fits the absolute deadline.",
+    "post_science": "Do not replay the complete invocation. Construct or retrieve the terminal from immutable raw artifacts when only serialization or retrieval fails.",
+    "release": "Release available after a decision-bearing terminal and zero GPU occupants; release maintenance with exact state only for unsafe/unreachable guest or absolute deadline."
+  }
+}

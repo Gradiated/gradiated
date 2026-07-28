@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "type": "director_hopper_packed_streaming_fixture_dtype_repair",
+  "issued_at_utc": "2026-07-26T21:46:12Z",
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "decision": "The compiled component rejected manifest-bound kv_indices at a host-side int64 guard before any candidate kernel launch. Rebind only the fixture index dtype to int32 and its dependent manifest/request hashes, then resume the still-unsubmitted component cycle under the same owner and H100 claim.",
+  "bench_id": "h100-packed-streaming-e00nycjajm7wvs1zkd",
+  "claimed_at": "2026-07-26T21:18:39.254129Z",
+  "owner_pid": 2081506,
+  "owner_start_ticks": 121673671,
+  "deadline_utc": "2026-07-26T22:59:10Z",
+  "evidence": {
+    "recoverable_diagnostic": {
+      "path": "STREAMING_H100_COMPONENT_RECOVERABLE_DIAGNOSTIC.json",
+      "sha256": "17a274dc7e5b96177f8cc6ce80f435f0d027f856dbee3b1b9349ced2ccb05b71",
+      "classification": "pre_science_host_dtype_guard",
+      "candidate_cuda_invocation_started": false
+    },
+    "repair_ready": {
+      "path": ".repair-handshakes/streaming-h100-1785102152052403190/REPAIR_READY.json",
+      "sha256": "95599a2079c266220b1d94205ad73f121c8623f0046ee09debf8ad4b462d9c54",
+      "repair_id": "streaming-h100-1785102152052403190"
+    },
+    "current_fixture_producer": {
+      "path": "accuracy_redesign_component_runner.py",
+      "sha256": "b0365c01713583f1a707151019d738172a9bab17899fb917a9cfbb5210a0eb0e"
+    },
+    "current_input_manifest": {
+      "path": "STREAMING_H100_COMPONENT_INPUT_MANIFEST.json",
+      "sha256": "5189f2beab6cd7def9fa6d7ee3a1e8297c5076f6a533b949814246f8ad595583"
+    }
+  },
+  "authorized_repair": {
+    "source_change": "In fixture(), change only torch.randperm(total_pages, device=\"cuda\", dtype=torch.int64) to dtype=torch.int32.",
+    "dependent_rebinding": [
+      "atomically regenerate STREAMING_H100_COMPONENT_INPUT_MANIFEST.json with the corrected fixture-producer size and SHA-256",
+      "hash-bind this director repair, the corrected fixture producer, and the corrected input manifest in the current repair request",
+      "resume only run_unsubmitted_cycle under repair ID streaming-h100-1785102152052403190"
+    ],
+    "preserve_exactly": [
+      "packed_m384_streaming_cluster.cu and source SHA-256 2262a4a20e9438671f795eeb8aad7f5db9cbe65ae446a94758e3d4c1cce78656",
+      "streaming_accuracy_component_runner.py",
+      "inputs/source/extend_attention.py",
+      "seed, repetitions, exact local d256/window-1024 and global d512 geometry",
+      "stock-versus-streaming oracle, timing boundary, and output gates",
+      "owner PID, claim generation, provider lifecycle, watchdog, and deadline"
+    ]
+  },
+  "scientific_state": {
+    "new_component_cycles_consumed": 0,
+    "new_component_cycles_remaining": 1,
+    "v2_component_replay_allowed": false,
+    "endpoint_replay_allowed": false,
+    "endpoint_pairs_remaining": 0
+  },
+  "same_owner_repair_allowed": true,
+  "gpu_claim_allowed_now": true,
+  "researcher_profile": "execution"
+}

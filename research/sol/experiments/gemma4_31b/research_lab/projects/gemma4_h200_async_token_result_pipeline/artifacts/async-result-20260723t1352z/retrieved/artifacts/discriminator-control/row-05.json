@@ -1,0 +1,175 @@
+{
+  "completion_tokens": 16,
+  "decode_seconds": 11.333111410000129,
+  "ended_monotonic_s": 55697.637070933,
+  "error": null,
+  "first_token_monotonic_s": 55686.303959523,
+  "index": 5,
+  "normalized_events": [
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": "length",
+      "text": " pleinement",
+      "token_ids": [
+        208229
+      ],
+      "usage": null
+    },
+    {
+      "finish_reason": null,
+      "text": "",
+      "token_ids": [],
+      "usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4214,
+        "reasoning_tokens": 0,
+        "total_tokens": 4230
+      }
+    }
+  ],
+  "output_ids": [
+    208229,
+    208229,
+    208229,
+    208229,
+    208229,
+    208229,
+    208229,
+    208229,
+    208229,
+    208229,
+    208229,
+    208229,
+    208229,
+    208229,
+    208229,
+    208229
+  ],
+  "prompt_tokens": 4214,
+  "raw_response_sha256": "da327b514e830ac427fc88a11ed1c640944cc86c8a71e3d2919124a3b452b668",
+  "request_sha256": "eabf456b70be0960e86f34e75ea73852c994bde3591a993d28bb6f6d502685e3",
+  "returned_token_ids": 16,
+  "started_monotonic_s": 55684.401705423,
+  "text": " pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement pleinement",
+  "ttft_seconds": 1.9022541000013007,
+  "wall_seconds": 13.23536551000143
+}

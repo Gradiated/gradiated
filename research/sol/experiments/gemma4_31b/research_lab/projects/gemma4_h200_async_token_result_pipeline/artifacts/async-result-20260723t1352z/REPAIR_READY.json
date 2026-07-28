@@ -1,0 +1,21 @@
+{
+  "absolute_repair_deadline_epoch": 1784818196,
+  "attempt": 1,
+  "classification": "pre_candidate_integration_failure",
+  "invocation_state": {
+    "candidate_cuda_started": false,
+    "candidate_scientific_started": false,
+    "conditional_c32_started": false,
+    "control_scientific_started": true,
+    "owner_started": true,
+    "server_started": true,
+    "updated_epoch": 1784814961.0113633
+  },
+  "schema_version": 1,
+  "worker_returncode": 1,
+  "worker_terminal": {
+    "classification": "integration_failure:discriminator_control",
+    "schema_version": 1,
+    "status": "terminal"
+  }
+}

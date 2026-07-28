@@ -29,11 +29,11 @@ Use the available retained checkpoint read-only and prepare behind the higher-pr
 
 First measure the actual FP8 consumers at production M=32 and the observed prefill M values for packed gate/up and down, including all outputs and existing scale conventions. Prove the exact candidate shapes, 60-layer route, finite output, and unchanged non-MLP paths. Derive a scope-matched endpoint bound from the current trace rather than multiplying the entire FP8 boundary blindly.
 
-If the measured conservative whole-request reduction is at least 3%, launch exactly one profiler-off c32 candidate against the persisted control. Run three cheap coherence discriminators before timing, but treat their failure as quality evidence rather than a performance falsifier: a finite, mechanically correct candidate may still run the frozen throughput workload as an explicitly unsafe proxy. Require 32/32 completed rows and exact token/cache accounting for a performance result.
+If the measured conservative whole-request reduction is positive, launch exactly one profiler-off c32 candidate against the persisted control. Run three cheap coherence discriminators before timing, but treat their failure as quality evidence rather than a performance falsifier: a finite, mechanically correct candidate may still run the frozen throughput workload as an explicitly unsafe proxy. Require 32/32 completed rows and exact token/cache accounting for a performance result.
 
 ## Decision and stop rules
 
-A measured candidate at or below `0.6381105231 s/request` nominates one later structured recovery/distillation project; it does not authorize deployment. A smaller positive result remains model-hardware evidence but does not justify recovery by itself. Close on load/repack incompatibility after one ordinary repair, non-finite execution, wrong channel/scale routing, component regression, bound below 3%, invalid accounting, or endpoint regression.
+A measured candidate at or below `0.6381105231 s/request` nominates one later structured recovery/distillation project; it does not authorize deployment. A smaller positive result remains model-hardware evidence and should be retained for stacking. Close on load/repack incompatibility after one ordinary repair, non-finite execution, wrong channel/scale routing, a non-positive component bound, invalid accounting, or endpoint regression.
 
 Do not change hidden size, depth, attention, KV, precision, width, selection rule, runtime flags, workload, or add a second candidate. Do not train, distill, broadly evaluate quality, or claim production equivalence in this project.
 

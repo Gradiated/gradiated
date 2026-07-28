@@ -1,0 +1,14 @@
+{
+  "artifacts": "projects/gemma4_h200_dflash_endpoint/artifacts/dflash-h200-20260723t2343z",
+  "caches": "Pinned SGLang source/image layers plus exact target and DFlash draft downloads retained; no server or compute process remains.",
+  "checkpoint": "Exact target and DFlash draft revisions are fully staged and retained on the 250-GiB disk.",
+  "compatible_successor": "gemma4_h200_dflash_endpoint",
+  "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+  "expected_first_arms": "After the source-bound Gemma capture hook is ready, run only the four-request DFlash acceptance/verification diagnostic; the autoregressive diagnostic is consumed. Run one matched c32 pair only on a passing candidate diagnostic.",
+  "image": "gemma4-dflash-sglang:588d1f7bc942, repaired dependency layer image sha256:602485488f59919fee0e57a08ab631a3f2a141b99ef85853075d265a57889333",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "project": "gemma4_h200_dflash_endpoint",
+  "result": "typed_upstream_target_runtime_incompatibility; same-project source integration admitted",
+  "runtime": "SGLang 588d1f7bc9424201f89957e145f9d5af633a3eb8 with one pending source-bound Gemma capture-hook continuation.",
+  "server_state": "No server retained and final remote check is 0 MiB GPU; exact source, image, target, and draft state remain warm."
+}

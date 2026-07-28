@@ -1,0 +1,31 @@
+[1/2] /usr/local/cuda/bin/nvcc --generate-dependencies-with-compile --dependency-output packed_m384_streaming_cluster.cuda.o.d -I/usr/local/lib/python3.12/dist-packages/nvidia/cublas/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cuda_cupti/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cuda_runtime/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cudnn/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cufft/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cufile/include -I/usr/local/lib/python3.12/dist-packages/nvidia/curand/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cusolver/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cusparse/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cusparselt/include -I/usr/local/lib/python3.12/dist-packages/nvidia/nccl/include -I/usr/local/lib/python3.12/dist-packages/nvidia/nvjitlink/include -I/usr/local/lib/python3.12/dist-packages/nvidia/nvshmem/include -I/usr/local/lib/python3.12/dist-packages/nvidia/nvtx/include -DTORCH_EXTENSION_NAME=packed_m384_streaming_2262a4a20e94 -DTORCH_API_INCLUDE_EXTENSION_H -isystem /usr/local/lib/python3.12/dist-packages/torch/include -isystem /usr/local/lib/python3.12/dist-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options '-fPIC' -O3 -lineinfo -arch=sm_90a -std=c++17 -c /project/packed_m384_streaming_cluster.cu -o packed_m384_streaming_cluster.cuda.o 
+FAILED: [code=2] packed_m384_streaming_cluster.cuda.o 
+/usr/local/cuda/bin/nvcc --generate-dependencies-with-compile --dependency-output packed_m384_streaming_cluster.cuda.o.d -I/usr/local/lib/python3.12/dist-packages/nvidia/cublas/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cuda_cupti/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cuda_runtime/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cudnn/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cufft/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cufile/include -I/usr/local/lib/python3.12/dist-packages/nvidia/curand/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cusolver/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cusparse/include -I/usr/local/lib/python3.12/dist-packages/nvidia/cusparselt/include -I/usr/local/lib/python3.12/dist-packages/nvidia/nccl/include -I/usr/local/lib/python3.12/dist-packages/nvidia/nvjitlink/include -I/usr/local/lib/python3.12/dist-packages/nvidia/nvshmem/include -I/usr/local/lib/python3.12/dist-packages/nvidia/nvtx/include -DTORCH_EXTENSION_NAME=packed_m384_streaming_2262a4a20e94 -DTORCH_API_INCLUDE_EXTENSION_H -isystem /usr/local/lib/python3.12/dist-packages/torch/include -isystem /usr/local/lib/python3.12/dist-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options '-fPIC' -O3 -lineinfo -arch=sm_90a -std=c++17 -c /project/packed_m384_streaming_cluster.cu -o packed_m384_streaming_cluster.cuda.o 
+/project/packed_m384_streaming_cluster.cu(86): error: identifier "CUDART_INF_F" is undefined
+      running_max_stage[threadIdx.x] = -CUDART_INF_F;
+                                        ^
+
+/project/packed_m384_streaming_cluster.cu(142): error: identifier "CUDART_INF_F" is undefined
+          float score = -CUDART_INF_F;
+                         ^
+
+/project/packed_m384_streaming_cluster.cu(161): error: identifier "CUDART_INF_F" is undefined
+          float tile_max = -CUDART_INF_F;
+                            ^
+
+/project/packed_m384_streaming_cluster.cu(223): error: identifier "CUDART_INF_F" is undefined
+        float score = -CUDART_INF_F;
+                       ^
+
+/project/packed_m384_streaming_cluster.cu(243): error: identifier "CUDART_INF_F" is undefined
+        float tile_max = -CUDART_INF_F;
+                          ^
+
+/project/packed_m384_streaming_cluster.cu(347): warning #349-D: no operator "=" matches these operands
+    attribute.val.clusterDim = dim3(ClusterSize, 1, 1);
+                             ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+5 errors detected in the compilation of "/project/packed_m384_streaming_cluster.cu".
+ninja: build stopped: subcommand failed.

@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "type": "director_h100_primitive_traceback_recovery",
+  "project": "h100_hybrid_attention_kernel_mechanism",
+  "issued_at_utc": "2026-07-26T16:26:49Z",
+  "result": "primitive_traceback_capture_then_unstarted_row_recovery_authorized",
+  "pass": true,
+  "bench": {
+    "id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+    "accelerator": "nvidia-h100-sxm",
+    "observed_status": "maintenance",
+    "observed_claim": null,
+    "lifecycle_deadline_utc": "2026-07-26T17:37:01.095093Z",
+    "researcher_release_deadline_utc": "2026-07-26T17:32:01.095093Z",
+    "watchdog_active": true
+  },
+  "repair7": {
+    "owner_state": "artifacts/h100-paged-fp8-execution-20260726t1551z/controller-owner-repair7.state.json",
+    "owner_state_sha256": "d77a2ec8fd166fe7d6356c201b2c407ccbb2e85f5c3a0dd7c88b30da77785170",
+    "canonical_terminal": "artifacts/h100-paged-fp8-execution-20260726t1551z/H100_PAGED_FP8_EXECUTION_TERMINAL.json",
+    "canonical_terminal_sha256": "a4a7946329ed67cd740c9b600e635ed84950cad83e571a8641af884bf7d17ede",
+    "recovery_terminal_sha256": "ff78f79fc1a948ec3351c1afe743e4e7633eeea20ea780503826cfc945083b3f",
+    "result": "integration_error",
+    "scientific_sample_consumed": false,
+    "primitive_stderr_captured": false,
+    "decision_bearing_row_persisted": false,
+    "owner_alive": false
+  },
+  "claim_contract": {
+    "sole_claimant": "h100_hybrid_attention_kernel_mechanism",
+    "claim_command": "PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/sol/experiments/gemma4_31b/research_lab claim --project h100_hybrid_attention_kernel_mechanism --bench h100-paged-fp8-e00mkpyvykfak0bg1m --lease-seconds 3600",
+    "first_mutation": "Before launching the recovery worker, amend paged_fp8_execution.py and/or run_h100_controller.py so the primitive pair-worker stdout, stderr, return code, command, and full traceback are atomically persisted and retrieved.",
+    "repair_scope": "Only primitive worker diagnostic capture and the concrete mutable runtime/API/consumer defect revealed by that capture may change.",
+    "continuation": "Hash-bind the causal patch inside the claim. If no science marker or decision-bearing row exists, run only local1024 concurrency 8 and continue directly through recoverable integration defects while time fits.",
+    "full_replay_forbidden": true,
+    "second_decision_bearing_sample_forbidden": true,
+    "provider_mutation_allowed": false,
+    "retain_claim_on_recoverable_pre_science_error": true
+  },
+  "immutable_science": {
+    "geometry_unchanged": true,
+    "arms": [
+      "bf16",
+      "fp8_e4m3"
+    ],
+    "numerical_gates_unchanged": true,
+    "counter_gates_unchanged": true,
+    "whole_request_discriminator_percent": 5,
+    "maximum_decision_bearing_submission_count": 1
+  },
+  "feasibility": {
+    "evaluated_at_utc": "2026-07-26T16:26:49Z",
+    "minutes_to_researcher_release_deadline": 65.2,
+    "repair7_elapsed_seconds": 17.287,
+    "resident_image": true,
+    "terminal_and_release_margin_minutes": 5,
+    "fits": true
+  }
+}

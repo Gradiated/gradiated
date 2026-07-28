@@ -56,27 +56,27 @@
   "files": [
     {
       "bytes": 13263,
-      "mode": "0o644",
+      "mode": "0o444",
       "path": "component_benchmark.py",
-      "sha256": "2799367f20689c5fff2d19e3c174a38a90188cc557342eb751dae9c9551f63e0"
+      "sha256": "251df17f9a2b6d879612fcddbbd207a7418b0398822d488060849b4439a2d23e"
     },
     {
       "bytes": 9867,
-      "mode": "0o644",
+      "mode": "0o444",
       "path": "endpoint_pair.py",
       "sha256": "eed82b0823d1707d113c529f67715c0718303653b0d7f3abed27fef22aecfe16"
     },
     {
       "bytes": 9030,
-      "mode": "0o644",
+      "mode": "0o444",
       "path": "remote_experiment.py",
       "sha256": "9ee6d6c34a1f379d3907db7c016f8af6bbd0e59e548fab82d334f21eda9bd6c3"
     },
     {
       "bytes": 35413,
-      "mode": "0o644",
+      "mode": "0o444",
       "path": "inputs/bound/candidate_extend_attention.py",
-      "sha256": "eb5fb7ab20b13b28005463beaa2c85ee534408ae16587cdc52fac3e9380ab98e"
+      "sha256": "fa8d7939b4bd26b86a8a30ff24c0986e2ad054773eefdda87b9b27d734e23531"
     },
     {
       "bytes": 9494,
@@ -86,13 +86,13 @@
     },
     {
       "bytes": 6179,
-      "mode": "0o644",
+      "mode": "0o444",
       "path": "inputs/bound/endpoint_entrypoint.py",
       "sha256": "cb82df3a9e3772390b628de6bacbe0131645ff12c2264200858c14b7c738d1b2"
     },
     {
       "bytes": 5043,
-      "mode": "0o644",
+      "mode": "0o444",
       "path": "inputs/bound/decode_equivalent_lm_head.py",
       "sha256": "4d99a94e97d0ef01fbfdaa9f7a25742f07f9fb4236d93d07900626f5ff9b53f9"
     },
@@ -134,7 +134,7 @@
     }
   ],
   "hypothesis": {
-    "causal_change": "BLOCK_M 64 to 16 for the exact 384x32x256 custom-mask call",
+    "causal_change": "BLOCK_M 64 to 32 for the exact 384x32x256 custom-mask call",
     "prediction": "Lower registers/shared memory and kernel time with unchanged compulsory KV bytes, no new synchronization, and exact output agreement.",
     "unchanged": [
       "BLOCK_N=64",
@@ -145,7 +145,7 @@
       "50 local and 10 full layer routing"
     ]
   },
-  "kind": "gemma4_h200_ngram_fixed_tree_block_m16_sm90_packet",
+  "kind": "gemma4_h200_ngram_fixed_tree_block_m32_sm90_packet",
   "offline_construction_pass": true,
   "runtime": {
     "control_source_sha256": "1b52992bac37ae170524025654814541f3280edd41fcd80b4d77e655f94ffff1",
@@ -153,7 +153,7 @@
     "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2"
   },
   "schema_version": 1,
-  "scientific_question": "Does a 16-row query tile replace the stock 64-row tile only for exact c32 NGRAM target verification and reduce attention plus endpoint time?",
+  "scientific_question": "Does a 32-row query tile replace the stock 64-row tile only for exact c32 NGRAM target verification and reduce attention plus endpoint time?",
   "shape": {
     "activation_output_dtype": "bfloat16",
     "batch": 32,

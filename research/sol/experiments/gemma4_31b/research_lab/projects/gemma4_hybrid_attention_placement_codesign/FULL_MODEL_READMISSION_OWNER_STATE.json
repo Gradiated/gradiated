@@ -1,0 +1,8 @@
+{
+  "adapter_proof": "{\"attached\": true, \"converted_layers\": [11, 23, 35, 47, 59], \"one_resident_target_model\": true}\ntrue",
+  "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/full-model-readmission-20260726t0029z",
+  "deadline_utc": "2026-07-26T01:15:00Z",
+  "next": "repair handshake: implement only bound production ForwardBatch dual-cache component driver",
+  "phase": "adapter_attached_driver_required",
+  "remote": "/home/glmrunner/phase-selective-full-model-readmission-20260726"
+}

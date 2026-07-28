@@ -1,0 +1,127 @@
+TERMINAL
+{
+  "candidate_workload_started": true,
+  "exit_code": 72,
+  "science_started": true,
+  "stage": "dflash_diagnostic"
+}
+GATE
+cat: /home/glmrunner/gemma4-dflash/work/tied-head-adapter/DFLASH_DIAGNOSTIC_GATE.json: No such file or directory
+RESULTS
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/TERMINAL.json 698688
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/WORKLOAD.json 755
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/metrics-after.prom 63467
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/metrics-before.prom 15385
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/request-00.json 160183
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/request-01.json 116484
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/request-02.json 126396
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/request-03.json 96674
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/response-00.sse 140881
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/response-00.txt 35426
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/response-01.sse 157840
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/response-01.txt 67501
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/response-02.sse 110537
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/response-02.txt 25126
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/response-03.sse 144295
+/home/glmrunner/gemma4-dflash/work/tied-head-adapter/results/dflash-diagnostic/response-03.txt 76728
+DIAGNOSTIC_TAIL
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537,
+    537
+  ],
+  "ttft_seconds": 5.560810874999788,
+  "wall_seconds": 10.82831013499981
+}

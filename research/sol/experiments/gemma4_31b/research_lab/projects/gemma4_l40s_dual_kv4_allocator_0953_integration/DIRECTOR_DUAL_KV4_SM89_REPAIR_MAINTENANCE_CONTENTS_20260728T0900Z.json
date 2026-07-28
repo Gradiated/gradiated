@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_l40s_dual_kv4_allocator_0953_integration",
+  "artifacts": "projects/gemma4_l40s_dual_kv4_allocator_0953_integration/{L40S_DUAL_KV4_SM89_COMPONENT_READY.json,DIRECTOR_DUAL_KV4_SM89_LIVE_BINDING_20260728T0837Z.json,DIRECTOR_DUAL_KV4_SM89_REPAIR_OWNER_BINDING_20260728T0900Z.json}",
+  "model": "No checkpoint; exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 c32 local-D256/global-D512 decode geometry only.",
+  "checkpoint": "none",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "runtime": "Strict ED25519 identity previously verified on this unchanged guest; one NVIDIA L40S SM89, driver 580.159.04.",
+  "state": "maintenance; predecessor image, packet, invalid attempts, diagnostics, and extension cache retained",
+  "result": "attempts 0 and 1 are invalid pre-science compile failures; no arm marker, interpretable terminal, or consumed sample",
+  "scientific_terminal": "One unchanged checkpoint-free paired c32 dual-KV component remains unconsumed.",
+  "next": "Remain non-claimable until L40S_DUAL_KV4_SM89_REPAIR_OWNER_READY.json hash-binds the continuous-claim replacement owner required by DIRECTOR_DUAL_KV4_SM89_REPAIR_OWNER_BINDING_20260728T0900Z.json. Do not reuse the released one-repair owner.",
+  "caches": "Resident immutable image and predecessor remote packet are retained; extension build state is non-scientific and may be repaired."
+}

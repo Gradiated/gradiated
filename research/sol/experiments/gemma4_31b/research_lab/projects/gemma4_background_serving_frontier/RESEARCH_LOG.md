@@ -13,3 +13,66 @@ Interpretation: c32 occupancy is the strongest stock scheduling interaction and 
 Next: close this bounded scheduling screen. Do not spend the retained H200 on c16/c32 replay. Reopen only with a new exact-mix endpoint capture that retains phase and power telemetry; the first matched arm should be stock c32 versus c32 chunked/async prefill, not another occupancy sweep.
 
 Evidence labels: endpoint/token/latency fields are measured; component timings are measured; cache correction and service curve are derived optimistic bounds; queue telemetry is synthetic deterministic simulation; the interaction ranking is inferred. Project provider spend is $0 and no GPU bench was claimed or mutated.
+
+## 2026-07-18 — exact-mix stock versus dynamic chunked prefill c32
+
+Action: claimed warm H200 `h200-attention-endpoint-e00vbbb709tzxscaan`, retained its checkpoint/image/workspace/watchdog, stopped only the patched candidate container, and ran unpatched stock followed by pinned SGLang v0.5.12 `--enable-dynamic-chunking --chunked-prefill-size 2048`. Both used TP1 BF16 weights, FP8-E5M2 KV, c32, identical deterministic 4,214-token ID prompts with a 535-token shared prefix, fixed graph geometry, and 358-token output gate. The initial owner persisted a valid stock arm then exited on a local response-token-ID parsing assertion; a repair owner resumed only at the candidate arm.
+
+Evidence (measured): each arm completed 32/32 requests, every response was nonempty and finite, and every usage record reported 4,214 prompt / 358 completion tokens. Metrics deltas were exact and matched across arms: 134,848 prompt, 17,120 cached, and 117,728 fresh tokens, or 12.695776% cache reads and 3,679 fresh tokens/request. Stock batch wall was 31.036426 s (0.969888 s/request; 1.031047 req/s; 369.115 output tok/s); dynamic chunking was 29.779425 s (0.930607 s/request; 1.074567 req/s; 384.695 output tok/s), a 4.050% service reduction. Mean TTFT/decode were 10.724/20.278 s stock and 9.437/20.308 s candidate. Raw Prometheus, GPU utilization/memory/power samples, SSE terminals, per-request rows, and server terminals are in `artifacts/exact-mix-c32-20260718t1729z/{stock,dynamic_chunked}.tar.gz`.
+
+Interpretation: the supported 2,048-token dynamic-chunked configuration produces usable background completion but misses the pre-registered 5% service-time improvement by 0.95 percentage points. Terminal classification is negative; it is not a promotion or a claim about another chunk size. Approximate claimed-use metered exposure is 9.5 minutes at $2.46/hour, $0.39, within the $1.50 reservation.
+
+## 2026-07-18 — stock c48 exact-mix saturation falsifier
+
+Action: froze c32 stock terminal `6508e309…f65d0f` at 0.969888308813 s/request and its 0.921393893372 s/request promotion ceiling. On the same warm H200, stopped only the dynamic-chunked container, then launched the unpatched pinned image with TP1 BF16 / FP8-E5M2 KV, `max-running-requests=48`, dynamic chunking disabled, and CUDA graph coverage through batch 48. Ran one deterministic 48-request 4,214/358-token shared-prefix workload and retrieved raw SSE/request rows, Prometheus, GPU memory/utilization/power samples, and server output.
+
+Evidence (measured): all 48 requests completed with nonempty finite text and reported 4,214 prompt / 358 completion tokens. However, server logs record repeated `KV cache pool is full. Retract requests` during the batch. c48 took 52.742162 s, 1.098795048 s/request (0.910088 req/s), 13.29% slower than c32 and 19.25% above the 5% promotion ceiling. Mean TTFT/decode were 17.212/23.701 s. The retained metrics delta is 202,272 prompt, 24,610 cached, 177,662 fresh tokens (12.1668% realized after retractions); therefore the fixed construction ran, but c48 capacity pressure prevented the target cache realization. Artifact: `artifacts/stock-c48-20260718t1743z/TERMINAL.json`, SHA-256 `764853d4…b8e27e`.
+
+Interpretation: c48 saturation is terminally negative for this resident stock geometry. The extra queue/retraction work dominates any batching benefit; do not run c64 or repeat this c48 arm. Claimed-use exposure across the c32 and c48 work is conservatively recorded as $0.58, within the $1.50 cap.
+
+## 2026-07-18 — delegate one mixed-prefill/decode endpoint discriminator
+
+The separate continuous-decode-steps=4 arm passed every identity, output, and cache gate but regressed canonical service time by 1.25068%; do not tune it. Its GPU samples averaged 96.418% utilization, so further scheduler-admission batching lacks a utilization mechanism.
+
+Pinned SGLang instead exposes mixed chunked prefill to combine prefill and decode in a batch while the retained 2,048-token chunking path is active. This is the next distinct serving-system hypothesis. Run one candidate on the released H200, keep continuous decode steps at 1 and every canonical model/runtime/workload identity fixed, and change only `--enable-mixed-chunk`. Require exact cache/output gates and compare to the frozen fused baseline. This is an execution iteration within the existing project's aggregate `$1.50` authorization; no tuning, repair, comparator replay, or lifecycle mutation is admitted.
+
+## 2026-07-18 — mixed chunked prefill/decode c32 exact-mix terminal
+
+Action: claimed the retained warm H200, stopped only the retained continuous-decode-steps=4 container, and launched the pinned resident stock image/checkpoint once with the canonical c32 identity and only `--enable-mixed-chunk` added. The resolved arguments prove BF16 weights, FP8-E5M2 KV, dynamic chunking 2,048, fused QK/RoPE, Triton prefill/decode, page size 1, continuous decode steps 1, CUDA graph max BS 32, and `enable_mixed_chunk=True`. Preflight had zero running and queued requests; cache flush returned HTTP 200. The bound runner `143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7` ran exactly once.
+
+Evidence (measured): all 32 rows have exactly 4,214 prompt and 358 completion tokens plus nonempty finite text. Metrics report exactly 17,120 cached and 117,728 fresh prompt tokens (12.695776%). The candidate took 86.385917 s batch wall, or 2.699559915 s/request, versus frozen terminal `1a7e778e…405e78c3` at 0.919457394 s/request: a -193.604% service reduction (2.936× slower), far above the 0.873484524 promotion ceiling. Mean TTFT/decode/E2E were 29.138/56.495/85.632 s. GPU samples averaged 98.92% utilization and 457.71 W, with 124,792 MiB peak memory. Raw request/SSE rows, Prometheus snapshots, GPU samples, server arguments/logs, and flush proof are retained in `artifacts/mixed-chunk-c32-20260718t2004z/`; outer terminal SHA-256 `178c5c4f…4937cf8`.
+
+Interpretation: terminal negative. Mixing chunked prefill and decode at this canonical exact-mix geometry destroys complete-request service time despite valid outputs and exact cache accounting. Do not tune, replay, or promote this route. The durable owner’s final local aggregation path lookup missed an already-retrieved outer server-log location; the terminal above was assembled only from the completed one-time runner artifacts, without a retry. Conservatively cumulative claimed-use is $0.92, within the $1.50 authority.
+
+## 2026-07-18 — director reactivation for prefill batch capacity
+
+- Measured bottleneck: the canonical c32 endpoint spends about `9.43` seconds before first token while consuming 117,728 fresh prompt tokens; it resolves `max_prefill_tokens=16384`, a 170,792-token KV pool, and 20.70 GiB available GPU memory.
+- Hypothesis: one doubling to `max_prefill_tokens=32768` increases prompt-batch packing and GEMM realization while preserving dynamic chunking at 2,048 and every model/runtime/request identity.
+- Scope: one candidate-only exact c32 consumer against frozen terminal SHA-256 `1a7e778eff080bf2eec27da939ea85a894ea9884036bdebd562af371405e78c3`; restore canonical stream interval 1 and change only the prefill batch-token ceiling. OOM, retractions, or insufficient token capacity are typed negatives, not a smaller-cap trigger.
+- Gates: 32/32 exact 4,214/358 outputs, exact request identities, 17,120 cached / 117,728 fresh prompt tokens, token pool at least 146,304, and service below `0.9194573941250042` to retain or at most `0.8734845244187539` to promote.
+- Budget: aggregate project authorization `$2.75` with `$0.92` already recorded; this arm adds at most 32 wall minutes, 25 H200 compute minutes, 3 GiB temporary storage, and `$1.30` provider exposure, ending by `21:20Z`.
+- Artifact contract: immutable runner snapshot before claim, resolved runtime/token-pool identity, idle and HTTP-200 flush proof, raw rows/SSE, request hashes, prefill/phase/cache counters, GPU telemetry, typed terminal, retrieved artifacts, and bench release without teardown.
+
+## 2026-07-18 — 32,768 max-prefill-token c32 preflight terminal
+
+Action: before claiming, materialized an immutable project-local runner snapshot `inputs/exact_mix_runner-143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7.py`, verified its required SHA-256, and transferred only those bound bytes. Claimed the warm H200, stopped only `gemma-stream-interval8-c32`, and launched the pinned stock image/checkpoint with the canonical c32 runtime, stream interval restored to 1, and only `max_prefill_tokens=32768` changed.
+
+Evidence (measured): server resolution proves BF16/FP8-E5M2, dynamic chunking 2,048, fused QK/RoPE, Triton prefill/decode, page size 1, continuous steps 1, mixed chunk disabled, KV splits 8, FlashInfer sampling, CUDA graph BS 32, stream interval 1, and max prefill 32,768. Startup reports `max_total_num_tokens=170792`, above the 146,304 requirement. Preflight metrics have zero running and queued requests; `/flush_cache` returned HTTP 200. No OOM or retraction appears in the retrieved server diagnostic.
+
+Interpretation: terminal execution failure before workload dispatch, not a performance result. The launcher’s lexical pool guard did not match `170792` even though the numeric capacity satisfies the threshold, so its `set -e` preflight exited before the immutable runner was invoked (zero invocations). The one-run/no-repair contract forbids correcting and rerunning it. Raw identity, flush, metrics, and server diagnostics are in `artifacts/prefill-cap32768-c32-20260718t2052z/`; terminal SHA-256 `a8685eed…2d3624b`. Conservatively cumulative claimed-use is $1.17, within the $2.75 authority.
+
+## 2026-07-18 — director admits one consumer-only guard correction
+
+- Classification correction: the prior terminal is an operational pre-invocation failure, not a scientific negative. It proves `max_total_num_tokens=170792`, all candidate identities, zero running/queued requests, HTTP-200 flush, no OOM/retractions, and zero runner invocations.
+- Repair: keep the already-loaded candidate server and immutable runner; replace only the faulty lexical pool regex with integer extraction and the required numeric comparison `pool >= 146304`, then re-prove identity/idle/flush and perform the first exact workload invocation.
+- Scope: no container restart, model reload, comparator replay, alternate cap, source patch, or companion intervention. Original output, cache, telemetry, service, retention, and promotion gates remain binding.
+- Budget: cumulative spend is `$1.17`; add at most 20 wall minutes, 10 H200 compute minutes, 3 GiB temporary artifacts, and `$0.75` provider exposure within the existing `$2.75` authority, ending by `21:20Z`.
+- Terminal: retrieve raw rows/SSE, server/runner identity, metrics, GPU telemetry, capacity/retraction proof, and one typed performance terminal; release without teardown.
+
+## 2026-07-18 — 32,768 max-prefill-token c32 consumer terminal
+
+Action: claimed the H200 and reused the already-loaded `gemma-prefill-cap32768-c32` server without restart or reload. The project-local immutable runner and remote bound copy both matched SHA-256 `143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7`. Numeric parsing confirmed the 170,792-token pool exceeds 146,304; all frozen runtime identities, zero running/queued requests, and a fresh HTTP-200 cache flush passed. The immutable exact-mix runner then executed exactly once.
+
+Evidence (measured): all 32 requests were valid, finite, nonempty, and exactly 4,214/358 tokens. Counters are exact: 17,120 cached and 117,728 fresh prompt tokens (12.695776% cached). The 32,768 cap took 29.822571 s batch wall, 0.931955340 s/request, versus the frozen 0.919457394 s/request control: a -1.35927% reduction (slower). Mean TTFT/decode/E2E were 9.457/20.332/29.788 s. No retractions occurred; GPU samples averaged 97.37% utilization and 611.05 W, with 123,234 MiB peak memory. Raw rows/SSE, cache/phase/queue metrics, GPU samples, server and runner identity, capacity proof, and flush proof are in `artifacts/prefill-cap32768-consumer-c32-20260718t2101z/`; terminal SHA-256 `eb1f4785…2741fb3`.
+
+Interpretation: terminal negative. Raising only the prefill batch-token ceiling to 32,768 does not improve the exact c32 background workload and misses both the retain and 5% promotion gates. Do not tune or replay this cap. Cumulative conservative exposure is $1.30, within the $2.75 authority.

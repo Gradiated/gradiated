@@ -1,0 +1,8 @@
+{
+  "attempt": false,
+  "final": true,
+  "owner_live": false,
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "{\"command\": [\"python3\", \"remote_candidate.py\"], \"cwd\": \"/home/glmrunner/gemma4-h200-ngram-swa-pressure\", \"launched_at_utc\": \"2026-07-24T19:41:24.234114Z\", \"live\": false, \"log\": \"/home/glmrunner/gemma4-h200-ngram-swa-pressure/OWNER.log\", \"pid\": 127550, \"start_ticks\": 3679494, \"unit_manager\": \"remote-shell\"}\nFINAL_PRESENT\n{\n  \"phase\": \"candidate_primary_open_loop\",\n  \"scheduled\": 1036,\n  \"science_started\": true\n}\n"
+}

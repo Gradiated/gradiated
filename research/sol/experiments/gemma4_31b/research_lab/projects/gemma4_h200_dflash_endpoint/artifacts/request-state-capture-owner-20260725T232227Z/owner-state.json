@@ -1,0 +1,16 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/run_request_state_capture_owner.py",
+    "--output",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/request-state-capture-owner-20260725T232227Z",
+    "--deadline",
+    "2026-07-26T00:06:27Z"
+  ],
+  "cwd": "/root/workspace",
+  "launched_at_utc": "2026-07-25T23:22:27.350176Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/request-state-capture-owner-20260725T232227Z/owner.log",
+  "pid": 1336204,
+  "start_ticks": 113776475,
+  "unit_manager": "pid"
+}

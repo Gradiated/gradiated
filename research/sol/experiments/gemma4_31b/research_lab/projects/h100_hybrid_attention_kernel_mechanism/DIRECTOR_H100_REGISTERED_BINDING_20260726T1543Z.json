@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "type": "director_h100_registered_binding",
+  "issued_at_utc": "2026-07-26T15:43:50.329366Z",
+  "project": "h100_hybrid_attention_kernel_mechanism",
+  "decision": "strict_identity_verified_bench_registered_controller_must_consume_current_record",
+  "provider_resource": {
+    "instance_id": "computeinstance-e00mkpyvykfak0bg1m",
+    "disk_id": "computedisk-e00ky3jvm7m53gqwda",
+    "provider_state": "RUNNING",
+    "public_ipv4": "89.169.109.0",
+    "accelerator_observed": "NVIDIA H100 80GB HBM3",
+    "strict_batchmode_ssh_passed": true,
+    "ssh_ed25519_fingerprint": "SHA256:QmMzoOOoCH6C4OBDN/EWgbVtH3QpZpjAvfoanqLUqoE",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts"
+  },
+  "bench": {
+    "id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+    "registered_once_at_utc": "2026-07-26T15:43:50.329366Z",
+    "spec": "H100_PAGED_FP8_BENCH_SPEC_20260726T1542Z.json",
+    "spec_sha256": "7e2be67cdccb962f4394e74901cd964d3e234637da3f1779f00cd2a0530e7a27",
+    "status": "available",
+    "claim": null
+  },
+  "lifecycle": {
+    "provider_started_at_utc": "2026-07-26T15:37:01.095093Z",
+    "deadline_utc": "2026-07-26T16:37:01.095093Z",
+    "watchdog_unit": "gemma4-h100-paged-fp8-20260726t1636-watchdog.service",
+    "watchdog_main_pid": 1863567,
+    "watchdog_active_at_binding": true
+  },
+  "execution_blocker": {
+    "classification": "stale_retired_bench_connection_constants_in_project_controller",
+    "evidence": "run_h100_controller.py still names h100-paged-fp8-e00vpenjwp83n0nxmr and 89.169.123.239 instead of reading the current registered bench resource.",
+    "required_repair": "Within this same project, update the controller to read the current bench ID, public IPv4, SSH user, known-hosts namespace, and fingerprint from runtime/gpus.json after claim. Bind one exact project-relative start command and preserve every scientific input and gate.",
+    "claim_allowed": false
+  },
+  "spend": {
+    "current_snapshot_reservation": null,
+    "renewed_authorized_usd": 6.0,
+    "basis": "At most 120 cumulative provider minutes from 2026-07-26T15:37:01.095093Z at $2.95/H100-hour plus the 100-GiB disk, covering controller repair, image setup, the unchanged component, terminal persistence, and cleanup.",
+    "extension_gate": "Do not extend the watchdog or claim until the full $6.00 reservation is durable."
+  },
+  "researcher_action": "Remain GPU-ineligible. Repair only the stale bench/connection binding in run_h100_controller.py, prove it rejects a retired or fingerprint-mismatched record, bind the single start command, and return without a claim or remote action.",
+  "next_director_action": "After the controller repair and full $6.00 reservation are durable, replace the watchdog for a cumulative two-hour lifecycle, verify the replacement, stop the old watchdog, make the bench ready, and reactivate immediate execution."
+}

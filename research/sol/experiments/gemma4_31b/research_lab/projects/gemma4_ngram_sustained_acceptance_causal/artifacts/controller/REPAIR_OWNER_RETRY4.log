@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_sustained_acceptance_causal/request_local_repair_owner.py", line 295, in <module>
+    main()
+    ~~~~^^
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_sustained_acceptance_causal/request_local_repair_owner.py", line 222, in main
+    discriminator, discriminator_out = launch_stage(ip, artifact, "discriminator-0-790", 791)
+                                       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_sustained_acceptance_causal/request_local_repair_owner.py", line 149, in launch_stage
+    raise RuntimeError("recoverable_remote_stage:" + json.dumps(diagnostic, sort_keys=True))
+RuntimeError: recoverable_remote_stage:{"candidate_science_consumed": false, "classification": "recoverable_or_typed_remote_failure", "error": "RuntimeError('metrics_unavailable_after_retries')"}

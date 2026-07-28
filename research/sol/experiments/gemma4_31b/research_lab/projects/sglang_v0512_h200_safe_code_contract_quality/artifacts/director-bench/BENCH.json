@@ -1,0 +1,31 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "contents": {
+    "caches": "None; newly created retained development bench.",
+    "checkpoint": "Exact bound 8-file, 62578655208-byte checkpoint is available locally but not yet staged on the bench.",
+    "image": "docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a; bound but not yet pulled.",
+    "model": "google/gemma-4-31B-it",
+    "project": "sglang_v0512_h200_safe_code_contract_quality",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.12 at source commit 127b9e3283f7c2a43234b852ff5c9f1796d53624; not yet started.",
+    "server_state": "No server; provider create completed and the bench awaits a researcher claim."
+  },
+  "hourly_cost_usd": 2.46,
+  "id": "h200-safe-code-e00b98a5fh80nwj2jj",
+  "lifecycle": {
+    "deadline_utc": "2026-07-18T13:38:48.709829Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-safe-code-h200-20260718t121348z-watchdog.service",
+      "main_pid": "2421065",
+      "unit": "gemma-safe-code-h200-20260718t121348z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "resource": {
+    "disk_id": "computedisk-e00hy5j34p0ktssb7v",
+    "disk_name": "gemma-safe-code-h200-20260718t121348z-boot",
+    "instance_id": "computeinstance-e00b98a5fh80nwj2jj",
+    "instance_name": "gemma-safe-code-h200-20260718t121348z"
+  }
+}

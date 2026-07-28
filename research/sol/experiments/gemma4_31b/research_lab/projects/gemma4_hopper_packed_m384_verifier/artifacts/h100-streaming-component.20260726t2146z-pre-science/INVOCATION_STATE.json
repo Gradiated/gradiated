@@ -1,0 +1,14 @@
+{
+  "candidate_cuda_invocation_started": false,
+  "phase": "pre_science",
+  "reclassification": {
+    "candidate_cuda_invocation_started": false,
+    "classification": "pre_science_host_dtype_guard",
+    "reason": "extension rejected manifest-bound fixture kv_indices=int64 before any kernel launch",
+    "schema_version": 1,
+    "stderr_sha256": "ebd04ba427e3d90bd4013ba9dc29dc08c685c7e4c4de28e059644cc128ebc481",
+    "stdout_sha256": "ab9d857927e8aee78e4aedf7408cbbb62cffc68fd5f548723cd6b61aa1d94117"
+  },
+  "reclassified_from": "science_started",
+  "schema_version": 1
+}

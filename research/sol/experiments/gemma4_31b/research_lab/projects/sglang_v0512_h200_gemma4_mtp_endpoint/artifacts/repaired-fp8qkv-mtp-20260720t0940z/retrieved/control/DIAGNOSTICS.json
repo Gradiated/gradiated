@@ -1,0 +1,26 @@
+[
+  {
+    "label": "instruction",
+    "output_token_ids": [],
+    "output_token_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "request_sha256": "6333a955ccdff7b3ebcfc70997ae9cdc07f86b1402fc27494525bb9bd6735f33",
+    "response_sha256": "86f7450856cb719ca8fb21535ba564e15b588ebe57adcc914d6e9a8d016b4f08",
+    "text": "READY"
+  },
+  {
+    "label": "arithmetic",
+    "output_token_ids": [],
+    "output_token_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "request_sha256": "6d7861801ac5e21dace972056d616009b30e2ad3b9c6def44fb4e67b4b832bbc",
+    "response_sha256": "b656cf496095659e54f3e34d4a2310e44c4a37a0a143836eb4f75be943f80427",
+    "text": "4"
+  },
+  {
+    "label": "structured",
+    "output_token_ids": [],
+    "output_token_ids_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "request_sha256": "c89e9b99b0abafec941bd505e417dc9a6ce85756550f948a9400a7c01965ac76",
+    "response_sha256": "9bbe2631122f4226bcf06dadd3f1a7674fe6822e96f1946ce0a06e011d9675a5",
+    "text": "```json\n{\n  \"status\": \"ok\"\n}\n```"
+  }
+]

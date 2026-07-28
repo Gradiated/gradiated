@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "inspected_at_utc": "2026-07-25T13:56:28Z",
+  "bench_id": "h100-v0515-packed-endpoint-200g-e00y7ay83sma59j0hz",
+  "instance_id": "computeinstance-e00y7ay83sma59j0hz",
+  "disk_id": "computedisk-e00akg7bscxwvgq2jp",
+  "connection_identity": {
+    "public_ipv4": "89.169.103.97",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "strict_host_key_checking": true
+  },
+  "inspection": {
+    "nvidia_compute_processes": [],
+    "serving_processes": [],
+    "listeners_on_ports_30000_8000_8001": [],
+    "running_containers": []
+  },
+  "retained_state": {
+    "checkpoint_stage_verified": {
+      "pass": true,
+      "files": 8,
+      "size": "59G"
+    },
+    "packet_size": "9.2M",
+    "runtime_source_size": "760K",
+    "staging_completed_at_utc": "2026-07-25T13:48:56Z"
+  },
+  "result": "clean_staged_bench_safe_for_in_place_scientific_continuation"
+}

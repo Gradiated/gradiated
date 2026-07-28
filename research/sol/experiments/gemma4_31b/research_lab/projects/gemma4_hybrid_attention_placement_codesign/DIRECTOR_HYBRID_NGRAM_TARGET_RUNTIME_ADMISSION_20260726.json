@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-26T01:45:00Z",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "decision": "admit_the_implemented_ngram_dual_cache_consumer_as_the_sole_warm_h200_claimant",
+  "researcher_profile": "execution",
+  "hypothesis": "The implemented phase-selective stock/proxy KV consumer can execute through the pinned full Gemma target-verification path, remain exact at stock boundaries, and retain positive net target-cycle savings after all shadow maintenance costs.",
+  "identity_assertion": {
+    "method": "Mechanically re-used from the hash-bound authoritative scientific binding and verified executable inputs; no digest was hand-transcribed from provider state.",
+    "scientific_binding": {
+      "path": "DIRECTOR_PHASE_SELECTIVE_FULL_MODEL_H200_BINDING.json",
+      "sha256": "f09e4188f4b997fe3a0fc4b2fd6303616c043b6c360d500c8d80b0ac4ad800dc"
+    },
+    "model_id": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "runtime_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "workload": {
+      "concurrency": 32,
+      "prompt_tokens_per_request": 4214,
+      "output_tokens_per_request": 358,
+      "draft_depth": 12,
+      "target_verify_rows": 384,
+      "qualified_denominator_seconds_per_request": 0.625149101968745,
+      "campaign_target_seconds_per_request": 0.500119281574996
+    }
+  },
+  "admission_evidence": {
+    "implementation_terminal": {
+      "path": "HYBRID_NGRAM_DUAL_CACHE_OFFLINE_IMPLEMENTATION_TERMINAL.json",
+      "sha256": "4fd67e23763197624c1bc045719cbe851f9a8ce2975658ad568c44b82da813a0",
+      "classification": "actual_consumer_implementation_ready",
+      "scientific_component_consumed": false
+    },
+    "executable_inputs": {
+      "forward_batch_dual_cache_driver.py": "29ab0e946c26428144aaefa1c200b75c0111af87bf117b5504a03f845f453d65",
+      "phase_selective_full_model_remote.py": "a3a7902da4d07816e964ac3b5f85af767b8c67ce7f070ac911373f7219a6dda7",
+      "full_model_memory_adapter.py": "fff8ca016a0e3c5e85669f1848b536ffa89b6f26f9fe5da8c4da755ba7ca9d54"
+    },
+    "dflash_predecessor": {
+      "path": "../gemma4_h200_dflash_endpoint/artifacts/request25-duplicate-safe-owner-20260726T0135Z/DFLASH_REQUEST25_BOUNDARY_PROBE_H200_RETRY2_TERMINAL.json",
+      "sha256": "137aac69530c52c58fa5ed16f2ff9c4f92b96e889fd6da274260dfbefbeb7fd9",
+      "classification": "infrastructure_terminal_after_one_submission",
+      "bench_released": true
+    }
+  },
+  "bench": {
+    "id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "accelerator": "nvidia-h200-sxm",
+    "hourly_cost_usd": 2.45,
+    "claim_not_after_utc": "2026-07-26T01:52:00Z",
+    "maximum_claim_minutes": 28,
+    "release_not_after_utc": "2026-07-26T02:20:00Z",
+    "lifecycle_deadline_utc": "2026-07-26T02:25:00Z",
+    "reuse_contract": "Atomically claim the named available bench and read its current connection identity from runtime/gpus.json. Reuse the resident exact checkpoint, pinned image/source, and CUDA/compiler caches. Do not create, recreate, drain, or mutate provider lifecycle."
+  },
+  "execution": {
+    "profile": "execution",
+    "first_action": "Claim immediately and import the implemented driver in the pinned target runtime; the exact-runtime call is the integration check, so add no new offline readiness or audit gate.",
+    "component_contract": "Run the still-unconsumed full-model component sequence and exactness gates from DIRECTOR_PHASE_SELECTIVE_FULL_MODEL_H200_BINDING.json with one resident target model and the hash-bound production dual-cache driver.",
+    "repair_policy": "Ordinary import, path, process-start, source-binding, graph-capture, telemetry, allocator, or pool-API defects are recoverable inside the retained claim before a valid scientific component. Preserve settled inputs and rerun only incomplete producers.",
+    "conditional_endpoint": "Only after an exact positive-net component, run the already-bound contemporaneous exact-c32 stock/candidate endpoint pair. Preserve raw rows, token/cache accounting, failures, timing, and coherence sanity evidence."
+  },
+  "quality_gate": {
+    "required": [
+      "Stock prefill and ordinary decode remain exact to the pinned full-model control.",
+      "All 384 logical TARGET_VERIFY rows use proxy-local KV only at converted layers while padded rows remain cache-inert.",
+      "Stock and proxy banks have matched allocation, shadow write, accepted-index retention, rejected-row free, and request-reuse semantics.",
+      "Post-accept stock decode is finite and exact to the bound same-model reference.",
+      "Gross target-cycle saving minus every shadow, dispatch, move, and synchronization cost is positive."
+    ],
+    "quality_label": "quality-unsafe execution proxy; no deployment or benchmark-quality claim"
+  },
+  "budgets": {
+    "authorized_spend_usd": 5.0,
+    "maximum_fresh_claim_exposure_usd": 1.1433333333333333,
+    "compute": "At most 28 claimed H200 minutes at $2.45/hour.",
+    "wall_clock": "Claim by 2026-07-26T01:52:00Z and release by 2026-07-26T02:20:00Z under the verified 02:25Z watchdog.",
+    "storage_gib": 5.0,
+    "provider_mutation": "forbidden"
+  },
+  "stop_rules": [
+    "Return a typed semantic_or_cache_reject, graph_contract_reject, or exact_nonpositive_net_component when a scientific component gate fails.",
+    "Return infrastructure_terminal only if the component remains scientifically unconsumed at the release deadline; do not convert missing evidence into a negative physical bound.",
+    "Do not run the endpoint unless the component is exact and net-positive.",
+    "Do not claim quality preservation or deployability, train, alter checkpoint values, replay the completed permanent placement comparison, or weaken the stock-boundary gates."
+  ],
+  "artifact_contract": {
+    "terminal": "PHASE_SELECTIVE_FULL_MODEL_H200_COMPONENT_TERMINAL.json",
+    "conditional_endpoint_terminal": "PHASE_SELECTIVE_FULL_MODEL_H200_ENDPOINT_TERMINAL.json",
+    "cleanup": "Stop project processes and release the bench available with reusable resident state preserved by 2026-07-26T02:20:00Z."
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "at_utc": "2026-07-26T22:22:49.499761Z",
+  "packet": "/home/glmrunner/gemma4_hopper_packed_m384_verifier-arm-isolated/packet-6d4507f3c9a6ede3431a3bbddb3195ab47c31709c319142ea73e57bd3ed30223",
+  "phase": "runner_launch_attempted",
+  "remote": "/home/glmrunner/gemma4_hopper_packed_m384_verifier-arm-isolated"
+}

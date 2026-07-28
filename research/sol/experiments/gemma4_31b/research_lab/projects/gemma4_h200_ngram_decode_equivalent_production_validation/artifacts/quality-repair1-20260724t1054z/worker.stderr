@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/home/glmrunner/gemma4-ngram-production-quality/packet/remote_quality_capture.py", line 99, in <module>
+    if __name__=="__main__": main()
+                             ^^^^^^
+  File "/home/glmrunner/gemma4-ngram-production-quality/packet/remote_quality_capture.py", line 92, in main
+    atomic(OUT/"INVOCATION_STATE.json", {"control_science_started":False,"candidate_science_started":False}); control=capture_arm("control",gpqa,tau); zero=empty(); atomic(OUT/"ZERO_HBM_AFTER_CONTROL.json",zero)
+                                                                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/glmrunner/gemma4-ngram-production-quality/packet/remote_quality_capture.py", line 78, in capture_arm
+    body,expected=gpqa_body(row); response,raw,elapsed=post(body); text=(((response.get("choices")or[{}])[0].get("message")or{}).get("content")or"").strip().upper(); match=re.search(r"\b([ABCD])\b",text)
+                  ^^^^^^^^^^^^^^
+  File "/home/glmrunner/gemma4-ngram-production-quality/packet/remote_quality_capture.py", line 64, in gpqa_body
+    return {"model":MODEL,"messages":[{"role":"user","content":prompt}],"temperature":0,"seed":20260718,"max_tokens":8}, letters[choices.index(row["expected_answer"])]
+                                                                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: 'The ones related to the circulation of the electric field and the divergence of the magnetic field.' is not in list

@@ -1,0 +1,22 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "authenticated_experiment_route": false,
+  "authorized_spend_usd": 0.0,
+  "best_current_public_committed_rate_usd_per_gpu_hour": 0.78,
+  "best_current_public_on_demand_rate_usd_per_gpu_hour": 0.84,
+  "candidate_sample_consumed": false,
+  "commercial_surface_source_complete": true,
+  "decision": "preserve_production_lead_no_experiment_route",
+  "execution_surface_source_complete": false,
+  "gpu_execution_required": false,
+  "id": "gemma4_rtx6000ada_price_normalized_placement",
+  "next_action": "Director handoff: preserve RunPod Secure Cloud and Verda as production leads. Do not mutate a provider. If a later director supplies authenticated full-card stock and positive spend authority, bind exact usable bytes, ECC/device exposure, driver/container compatibility, sustained clocks, rate, and region; then run matched RTX components followed by one c32 endpoint only if their margins pass.",
+  "priority": 9770,
+  "researcher_profile": "deep",
+  "status": "complete",
+  "summary": "Current direct sources close the missing RTX 6000 Ada rate join: RunPod Secure lists a dedicated 48-GB/10-vCPU/167-GB Pod at $0.84/hour, and Verda lists 10-CPU/60-GB instances at $1.04 on-demand, $0.364 spot, and a derived $0.78/hour for two years. The raw fixed-objective hurdle is P_rtx*T_rtx <= 1.625387665118737; burden-adjusted venue rows are durable. Preserve the production lead but admit no experiment: current stock, exact usable bytes, driver, sustained clocks, availability burden, and matched RTX throughput remain unmeasured, and no route is authorized.",
+  "terminal": "RTX6000ADA_PRICE_NORMALIZED_PLACEMENT_TERMINAL.json",
+  "terminal_sha256": "6d9f2aa359013856a2c6f63bda9113992c1ce0847da75489529905bd83176e3e",
+  "updated_at_utc": "2026-07-28T08:28:21Z"
+}

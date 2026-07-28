@@ -1,0 +1,627 @@
+{
+  "access_and_experiment_route": {
+    "archived_account_evidence": "A July 17 RunPod read-only snapshot exists, but it showed zero Pods and no valid GPU inventory result; it is stale, not RTX-specific, and not authority.",
+    "authenticated_route_exists_for_this_project": false,
+    "configured_controller_found": false,
+    "future_route_if_authorized": "A later director may bind one current Secure Cloud or Verda full-card instance, current stock/rate, spend reservation, immutable image/runner, and durable owner; this terminal does not request or authorize that mutation.",
+    "lab_bench_available": false,
+    "why_no_route_is_named": "The project explicitly forbids provider APIs, credentials, accounts, purchases, reservations, SSH, and endpoints, and the current shared GPU inventory is empty. Public deploy links are market evidence, not experimental authority."
+  },
+  "claim_test": {
+    "falsification_rule": "Reject a venue if no current direct rate/access join exists, the full-device or runtime contract is incompatible, or a matched endpoint exceeds its burden-adjusted service-time hurdle. Do not infer RTX throughput from L40S or specifications.",
+    "hypothesis": "At least one current full-card RTX 6000 Ada venue has a transparent production rate and runtime surface whose later matched endpoint could clear the fixed price-normalized hurdle.",
+    "result": "Current direct listings make the placement economically plausible, but no venue has a permitted authenticated route and public sources do not prove exact usable bytes, current regional stock, host driver, sustained clocks, or endpoint throughput."
+  },
+  "current_venue_surface": {
+    "commercial_surface_source_complete": true,
+    "execution_surface_source_complete": false,
+    "incomplete_or_noncurrent_venues": [
+      {
+        "rate": "$0.71/GPU-hour",
+        "reason": "Current direct listing lacks a CPU/RAM/storage/network/region/driver/custom-container join and permits equivalent-or-better substitution.",
+        "venue": "QuantaCloud"
+      },
+      {
+        "rate": "$0.67/hour on-demand and $0.29/hour spot as of 2026-05-02",
+        "reason": "The provider warns the rate may have changed and its current July catalog does not list RTX 6000 Ada.",
+        "venue": "Spheron"
+      },
+      {
+        "reason": "Marketplace/aggregator rows are not a stable full-device production bundle and were excluded from the base case.",
+        "venue": "Vast.ai and price aggregators"
+      }
+    ],
+    "source_complete_current_venues": [
+      {
+        "availability": "Secure Cloud uses T3/T4 data centers; Community Cloud uses vetted peer providers; no exact RTX SLA or public stock count",
+        "billing_minimum": "per-second charges but at least one hour of prepaid balance is required to deploy",
+        "bundle": "10 vCPUs, 167 GB RAM; storage separate",
+        "custom_runtime": "custom NVIDIA container image/start command supported; nested Docker is not, so the pinned image must be the Pod container",
+        "device": "dedicated physical GPU while running; 48 GB GDDR6 ECC advertised",
+        "missing_authenticated_checks": [
+          "current RTX stock and exact region",
+          "nvidia-smi memory.total >= 48305799168 bytes",
+          "ECC enabled and no vGPU/MIG carveout",
+          "host driver satisfies the pinned image",
+          "sustained clocks, power limit, and thermal behavior"
+        ],
+        "network": "no ingress/egress fee; public TCP/HTTP and SSH depend on template; global private networking is 100 Mbps",
+        "rates": {
+          "community_on_demand_usd_per_gpu_hour": 0.74,
+          "secure_on_demand_usd_per_gpu_hour": 0.84,
+          "spot": "not published for this Pod SKU",
+          "three_or_six_month_savings_plan": "available in principle; exact RTX 6000 Ada rate not public",
+          "twelve_or_twenty_four_month_committed": "not publicly listed for this SKU"
+        },
+        "regions": "31-region product claim and multi-continent NVIDIA Pod locations; exact current RTX stock is console-only",
+        "sku": "one RTX 6000 Ada Pod",
+        "storage": "$0.10/GB-month running local container or volume disk; $0.07/GB-month network volume under 1 TB",
+        "venue": "RunPod"
+      },
+      {
+        "availability": "spot may be evicted without warning; public page gives no exact RTX SLA or stock count",
+        "billing_minimum": "on-demand uses refundable prepaid ten-minute increments; long terms are paid up front",
+        "bundle": "10 CPUs, 60 GB RAM; storage separate",
+        "custom_runtime": "Ubuntu/Jupyter images, SSH, startup scripts, and an Ubuntu 24.04 CUDA 13 open-docker image are documented",
+        "device": "dedicated GPU instance advertised; exact pass-through mode and usable bytes are not public",
+        "missing_authenticated_checks": [
+          "current RTX stock and exact Helsinki site",
+          "nvidia-smi memory.total >= 48305799168 bytes",
+          "ECC enabled and no vGPU/MIG carveout",
+          "host driver and NVIDIA container runtime satisfy the pinned image",
+          "sustained clocks, power limit, and thermal behavior",
+          "whether 60 GB host RAM is sufficient for this exact runtime load path"
+        ],
+        "network": "SSH-capable VM; no public RTX-specific network bundle or egress join found",
+        "rates": {
+          "on_demand_usd_per_gpu_hour": 1.04,
+          "one_year_committed_derived_usd_per_gpu_hour": 0.9568,
+          "spot_preemptible_usd_per_gpu_hour": 0.364,
+          "two_year_committed_derived_usd_per_gpu_hour": 0.78
+        },
+        "regions": "FIN-01, FIN-02, FIN-03 in Helsinki; exact current RTX stock is console/CLI-only",
+        "sku": "1x RTX 6000 Ada 48GB GPU instance",
+        "storage": "$0.20/GiB-month NVMe or shared NVMe",
+        "venue": "Verda"
+      }
+    ]
+  },
+  "decision": "preserve_production_lead_no_experiment_route",
+  "evidence_type": "source_backed_and_derived_no_gpu_measurement",
+  "generated_at_utc": "2026-07-28T08:28:21Z",
+  "hardware_and_runtime_requirements": {
+    "exact_fail_closed_launch_requirements": [
+      "One exclusive, unsliced RTX 6000 Ada whose guest reports at least 48,305,799,168 usable bytes; the public 48 GB label is not byte proof.",
+      "ECC enabled, no MIG/vGPU memory carveout, and no competing compute process.",
+      "Host NVIDIA driver compatible with the digest-pinned SGLang image and NVIDIA compute/utility device exposure.",
+      "CUDA Toolkit 11.8 or newer for native sm_89 cubins; compile both project-local custom extensions for sm_89.",
+      "Preserve E5M2 and packed INT4 producer/consumer semantics through the exact fixed dual-KV runner; format capability is not execution proof.",
+      "Run the component correctness/resource/timing pairs first, then one exact c32 endpoint only after both margins satisfy the bound.",
+      "Record nvidia-smi identity, memory.total, ECC, clocks, power limit, thermals, driver, CUDA, container digest, compiler resources, and matched endpoint telemetry."
+    ],
+    "transfer_boundary": "The shared 142-SM/96-MiB-L2/sm_89 class, higher listed bandwidth, and lower power are priors only. No L40S latency, throughput, compiled-resource, quality, or sustained-clock value transfers.",
+    "vendor_reported_hardware": {
+      "advertised_memory": "48 GB GDDR6 ECC",
+      "board_power_w": 300,
+      "compute_capability": "8.9 / sm_89",
+      "enabled_sms": 142,
+      "format_capability": [
+        "FP8",
+        "FP16",
+        "BF16",
+        "TF32",
+        "INT8",
+        "INT4"
+      ],
+      "gpu": "NVIDIA RTX 6000 Ada Generation AD102",
+      "l2_kib": 98304,
+      "memory_bandwidth_gb_s": 960,
+      "pcie": "Gen4 x16",
+      "thermal_solution": "active"
+    }
+  },
+  "identities": {
+    "direct_bindings": {
+      "accelerator_inventory": {
+        "path": "/root/workspace/research/factory/data/accelerator_inventory.json",
+        "sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8"
+      },
+      "archived_runpod_control_plane_snapshot": {
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_market_venue_decision_surface/artifacts/runpod-readonly-snapshot.json",
+        "scope": "2026-07-17 diagnostic only; no current stock or project authority",
+        "sha256": "ed141e1e53a2994288ca59c8619e321ad9c647e77b964064b63732a3dc1b43f0"
+      },
+      "campaign": {
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/CAMPAIGN.md",
+        "sha256": "46526acaa3da49c2fe5e9e085570a7a92fc65a450c204ed64e55a70acf66f4f7"
+      },
+      "l40s_component_ready_current_dependency_check": {
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/L40S_DUAL_KV4_SM89_COMPONENT_READY.json",
+        "scope": "L40S-only offline readiness; no RTX execution or throughput transfer",
+        "sha256": "c998b9e979dc143148c1ff1879cc6d9ade6783f16e2d218d5a92cab7f191366a"
+      },
+      "l40s_dual_kv_offline_terminal": {
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/L40S_DUAL_KV4_ALLOCATOR_0953_OFFLINE_TERMINAL.json",
+        "sha256": "e98777580a46ef458e1ea704ceea6fc827030150fe4efa8e67ef380e99fd0090"
+      },
+      "price_inventory": {
+        "h200_planning_usd_per_hour": 3.25,
+        "l40s_planning_usd_per_hour": 1.1,
+        "path": "/root/workspace/research/factory/data/gpu_prices.json",
+        "rtx6000ada_join_present": false,
+        "sha256": "a6762a032a128e80a5ab655819c9d989949951f1b55032b746b285ed46c9366f"
+      },
+      "source_capture": {
+        "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtx6000ada_price_normalized_placement/evidence/RTX6000ADA_VENUE_SOURCE_CAPTURE_2026-07-28.json",
+        "sha256": "60568e8823e652822b22084e7ef0221bf2731ef4d625fab63049af8a6d181ab0"
+      }
+    },
+    "model": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "representation": {
+      "global": "D512 recent-1024 E5M2 plus old group-64 KV4 and O8",
+      "global_layers": 10,
+      "local": "D256 group-64 KV4 plus O4",
+      "local_layers": 50,
+      "mem_fraction_static": 0.953,
+      "page_size": 1
+    },
+    "runtime": {
+      "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+      "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+    },
+    "workload": {
+      "cache_prompt_fraction": 0.127,
+      "concurrency": 32,
+      "mode": "text-only non-reasoning campaign mix",
+      "output_tokens": 358,
+      "prompt_tokens": 4214,
+      "total_tokens": 4572
+    }
+  },
+  "kind": "rtx6000ada_price_normalized_placement_terminal",
+  "matched_rtx_measurement_exists": false,
+  "next_action": "Director: keep this as a production lead, not an active paid route. If authenticated full-card stock and positive spend authority are later supplied, bind exact usable memory/driver/container facts, run matched RTX components, then one c32 endpoint; otherwise make no provider mutation.",
+  "pass": true,
+  "placement_promoted": false,
+  "price_normalized_gate": {
+    "derived_gpu_only_target_usd_per_million_total_tokens": 0.109725034909,
+    "fixed_h200_target_seconds_per_request": 0.500119281574996,
+    "fixed_qualified_h200_seconds_per_request": 0.625149101968745,
+    "fixed_utilization": 0.9,
+    "h200_planning_usd_per_hour": 3.25,
+    "planning_sensitivity": {
+      "availability_factor": "A_venue >= 1 remains unknown until a matching capacity/SLA and failure trace exist",
+      "combined_burden_excluding_availability": 1.2253395,
+      "evidence_label": "derived sensitivity, not measured venue overhead",
+      "failure_reload": 1.03,
+      "interpretation": "The A=1 all-in rows are optimistic lower-bound hurdles. Community and spot capacity cannot support a sustainable production claim from price alone.",
+      "non_gpu": 1.05,
+      "replica_headroom": 1.1,
+      "standardized_storage": "100 GB/GiB at each provider's published running persistent-storage rate, divided by 730 hours/month",
+      "storage_orchestration": 1.03
+    },
+    "price_time_budget_usd_seconds_per_request_hour": 1.625387665119,
+    "symbolic": {
+      "burden_adjusted_max_compute_rate": "P_rtx,max = 1.625387665118737 / (T_rtx * 1.2253395 * A_venue) - S_hourly",
+      "equal_cost_ratio_vs_l40s": "T_rtx / T_l40s_measured <= 1.10 / P_rtx when both use the same burden factors",
+      "l40s_campaign_hurdle": "T_l40s <= 1.625387665118737 / 1.10 = 1.4776251501079427 seconds/request",
+      "max_rtx_compute_rate": "P_rtx,max(T_rtx) = 1.625387665118737 / T_rtx",
+      "max_rtx_service_time": "T_rtx,max(P_rtx) = 1.625387665118737 / P_rtx",
+      "raw_90pct_gate": "P_rtx * T_rtx <= 3.25 * 0.500119281574996 = 1.625387665118737",
+      "required_ratio_to_later_l40s_endpoint": "T_rtx / T_l40s_measured <= (1.625387665118737 / P_rtx) / T_l40s_measured"
+    },
+    "venue_hurdles": [
+      {
+        "all_in_required_ratio_to_later_measured_l40s_endpoint": "1.759960010834 / (A_venue * T_l40s_measured_s_per_request)",
+        "capacity_type": "on_demand_community_dedicated_while_running",
+        "compute_usd_per_gpu_hour": 0.74,
+        "current_rate": true,
+        "lower_bound_all_in_max_seconds_per_request_at_availability_factor_1": 1.759960010834,
+        "production_disposition": "supplementary_only: peer-provider availability and host consistency are not a sustainable production base",
+        "raw_90pct_gpu_only_max_seconds_per_request": 2.196469817728,
+        "raw_required_ratio_to_later_measured_l40s_endpoint": "2.196469817728 / T_l40s_measured_s_per_request",
+        "raw_required_rtx_to_l40s_service_time_ratio_for_equal_compute_cost": 1.486486486486,
+        "standardized_100gb_storage_usd_per_hour": 0.013698630137,
+        "storage_adjusted_90pct_max_seconds_per_request": 2.156548519696,
+        "venue": "RunPod Community Cloud"
+      },
+      {
+        "all_in_required_ratio_to_later_measured_l40s_endpoint": "1.553802949232 / (A_venue * T_l40s_measured_s_per_request)",
+        "capacity_type": "on_demand_nonpreemptible",
+        "compute_usd_per_gpu_hour": 0.84,
+        "current_rate": true,
+        "lower_bound_all_in_max_seconds_per_request_at_availability_factor_1": 1.553802949232,
+        "production_disposition": "production_lead: exact current per-region stock, usable bytes, driver, clocks, and SLA remain authenticated checks",
+        "raw_90pct_gpu_only_max_seconds_per_request": 1.934985315618,
+        "raw_required_ratio_to_later_measured_l40s_endpoint": "1.934985315618 / T_l40s_measured_s_per_request",
+        "raw_required_rtx_to_l40s_service_time_ratio_for_equal_compute_cost": 1.309523809524,
+        "standardized_100gb_storage_usd_per_hour": 0.013698630137,
+        "storage_adjusted_90pct_max_seconds_per_request": 1.90393612891,
+        "venue": "RunPod Secure Cloud"
+      },
+      {
+        "all_in_required_ratio_to_later_measured_l40s_endpoint": "3.38908721112 / (A_venue * T_l40s_measured_s_per_request)",
+        "capacity_type": "spot_preemptible",
+        "compute_usd_per_gpu_hour": 0.364,
+        "current_rate": true,
+        "lower_bound_all_in_max_seconds_per_request_at_availability_factor_1": 3.38908721112,
+        "production_disposition": "supplementary_only: provider may evict without warning",
+        "raw_90pct_gpu_only_max_seconds_per_request": 4.465350728348,
+        "raw_required_ratio_to_later_measured_l40s_endpoint": "4.465350728348 / T_l40s_measured_s_per_request",
+        "raw_required_rtx_to_l40s_service_time_ratio_for_equal_compute_cost": 3.021978021978,
+        "standardized_100gb_storage_usd_per_hour": 0.027397260274,
+        "storage_adjusted_90pct_max_seconds_per_request": 4.15278242873,
+        "venue": "Verda"
+      },
+      {
+        "all_in_required_ratio_to_later_measured_l40s_endpoint": "1.242723303338 / (A_venue * T_l40s_measured_s_per_request)",
+        "capacity_type": "on_demand_nonpreemptible",
+        "compute_usd_per_gpu_hour": 1.04,
+        "current_rate": true,
+        "lower_bound_all_in_max_seconds_per_request_at_availability_factor_1": 1.242723303338,
+        "production_disposition": "production_lead: exact current stock, usable bytes, driver, sustained clocks, and SLA remain authenticated checks",
+        "raw_90pct_gpu_only_max_seconds_per_request": 1.562872754922,
+        "raw_required_ratio_to_later_measured_l40s_endpoint": "1.562872754922 / T_l40s_measured_s_per_request",
+        "raw_required_rtx_to_l40s_service_time_ratio_for_equal_compute_cost": 1.057692307692,
+        "standardized_100gb_storage_usd_per_hour": 0.027397260274,
+        "storage_adjusted_90pct_max_seconds_per_request": 1.522757951151,
+        "venue": "Verda"
+      },
+      {
+        "all_in_required_ratio_to_later_measured_l40s_endpoint": "1.347778034753 / (A_venue * T_l40s_measured_s_per_request)",
+        "capacity_type": "one_year_committed_nonpreemptible_derived_8pct_discount",
+        "compute_usd_per_gpu_hour": 0.9568,
+        "current_rate": true,
+        "lower_bound_all_in_max_seconds_per_request_at_availability_factor_1": 1.347778034753,
+        "production_disposition": "production_lead: public self-service committed rate; capacity and exact runtime checks remain open",
+        "raw_90pct_gpu_only_max_seconds_per_request": 1.698774733611,
+        "raw_required_ratio_to_later_measured_l40s_endpoint": "1.698774733611 / T_l40s_measured_s_per_request",
+        "raw_required_rtx_to_l40s_service_time_ratio_for_equal_compute_cost": 1.149665551839,
+        "standardized_100gb_storage_usd_per_hour": 0.027397260274,
+        "storage_adjusted_90pct_max_seconds_per_request": 1.651485663216,
+        "venue": "Verda"
+      },
+      {
+        "all_in_required_ratio_to_later_measured_l40s_endpoint": "1.642908038617 / (A_venue * T_l40s_measured_s_per_request)",
+        "capacity_type": "two_year_committed_nonpreemptible_derived_25pct_discount",
+        "compute_usd_per_gpu_hour": 0.78,
+        "current_rate": true,
+        "lower_bound_all_in_max_seconds_per_request_at_availability_factor_1": 1.642908038617,
+        "production_disposition": "headline_committed_lead: public self-service rate; up-front term, capacity, runtime, and SLA checks remain open",
+        "raw_90pct_gpu_only_max_seconds_per_request": 2.083830339896,
+        "raw_required_ratio_to_later_measured_l40s_endpoint": "2.083830339896 / T_l40s_measured_s_per_request",
+        "raw_required_rtx_to_l40s_service_time_ratio_for_equal_compute_cost": 1.410256410256,
+        "standardized_100gb_storage_usd_per_hour": 0.027397260274,
+        "storage_adjusted_90pct_max_seconds_per_request": 2.013120114585,
+        "venue": "Verda"
+      },
+      {
+        "all_in_required_ratio_to_later_measured_l40s_endpoint": "unknown",
+        "capacity_type": "on_demand_hourly",
+        "compute_usd_per_gpu_hour": 0.71,
+        "current_rate": true,
+        "lower_bound_all_in_max_seconds_per_request_at_availability_factor_1": "unknown",
+        "production_disposition": "incomplete_surface: no public CPU/RAM/storage/network/region/driver/custom-container join",
+        "raw_90pct_gpu_only_max_seconds_per_request": 2.289278401576,
+        "raw_required_ratio_to_later_measured_l40s_endpoint": "2.289278401576 / T_l40s_measured_s_per_request",
+        "raw_required_rtx_to_l40s_service_time_ratio_for_equal_compute_cost": 1.549295774648,
+        "standardized_100gb_storage_usd_per_hour": "unknown",
+        "venue": "QuantaCloud"
+      }
+    ],
+    "workload_total_tokens_per_request": 4572
+  },
+  "project": "gemma4_rtx6000ada_price_normalized_placement",
+  "question": "Can a commercially obtainable single RTX 6000 Ada run the exact Gemma 4 31B dual-KV path at a sustainable cost at least 20% below the fixed qualified H200 result?",
+  "result": {
+    "best_current_public_12_24_month_candidate": "Verda two-year self-service at a derived $0.78/GPU-hour",
+    "best_current_public_on_demand_candidate": "RunPod Secure Cloud at $0.84/GPU-hour",
+    "commercial_rate_join_closed": true,
+    "decision_reason": "Preserve the placement as a production lead because current direct rates and dedicated access exist; do not admit an experiment because this project has no permitted authenticated route and critical device/runtime/stock facts require an authenticated instance.",
+    "production_conclusion": "Both rates leave a wide symbolic service-time envelope, but no sustainable cost claim exists until a matched RTX endpoint measures service time and actual burden/availability."
+  },
+  "schema_version": 1,
+  "scope": {
+    "candidate_sample_consumed": false,
+    "credentials_used": false,
+    "endpoint_called": false,
+    "gpu_or_cuda_used": false,
+    "provider_account_or_console_used": false,
+    "provider_api_used": false,
+    "provider_spend_usd": 0.0,
+    "purchase_reservation_or_terms_accepted": false,
+    "sales_contacted": false,
+    "ssh_used": false,
+    "throughput_inferred": false
+  },
+  "source_table": [
+    {
+      "claims": [
+        "RTX 6000 Ada is listed with 48 GB GDDR6 ECC.",
+        "Community Cloud is listed at $0.74/GPU-hour and Secure Cloud at $0.84/GPU-hour.",
+        "The page describes 31 regions and distinguishes community from secure capacity."
+      ],
+      "evidence_type": "direct_provider_reported",
+      "id": "runpod_rtx6000ada_2026_07_28",
+      "publisher": "RunPod",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "live page retrieved 2026-07-28",
+      "title": "RTX 6000 Ada GPU Rental | Specs and Pricing",
+      "url": "https://www.runpod.io/gpu-models/rtx-6000-ada"
+    },
+    {
+      "claims": [
+        "The RTX 6000 Ada Pod row lists 48 GB VRAM, 167 GB RAM, 10 vCPUs, and $0.84/hour.",
+        "Pods are described as dedicated GPU instances."
+      ],
+      "evidence_type": "direct_provider_reported",
+      "id": "runpod_pricing_2026_07_27",
+      "publisher": "RunPod",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "updated 2026-07-27",
+      "title": "GPU Cloud Pricing",
+      "url": "https://www.runpod.io/pricing"
+    },
+    {
+      "claims": [
+        "A Pod is a dedicated GPU or CPU instance for containerized AI/ML workloads."
+      ],
+      "evidence_type": "direct_provider_documentation",
+      "id": "runpod_pod_concepts_2026_07_28",
+      "publisher": "RunPod",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "current documentation retrieved 2026-07-28",
+      "title": "RunPod concepts",
+      "url": "https://docs.runpod.io/get-started/concepts"
+    },
+    {
+      "claims": [
+        "While a Pod is running, its assigned physical GPU is exclusively reserved for that user.",
+        "Stopping releases the physical GPU and restart availability is not guaranteed."
+      ],
+      "evidence_type": "direct_provider_documentation",
+      "id": "runpod_exclusive_gpu_2026_07_28",
+      "publisher": "RunPod",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "current documentation retrieved 2026-07-28",
+      "title": "Zero GPU Pods on restart",
+      "url": "https://docs.runpod.io/pods/troubleshooting/zero-gpus"
+    },
+    {
+      "claims": [
+        "Secure Cloud operates in T3/T4 data centers; Community Cloud uses vetted peer-to-peer providers.",
+        "Pods accept custom containers from compatible registries and expose SSH or web-terminal access.",
+        "Docker Compose and nested Docker are not supported because RunPod runs the selected container."
+      ],
+      "evidence_type": "direct_provider_documentation",
+      "id": "runpod_pods_overview_2026_07_28",
+      "publisher": "RunPod",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "current documentation retrieved 2026-07-28",
+      "title": "Pods overview",
+      "url": "https://docs.runpod.io/pods/overview"
+    },
+    {
+      "claims": [
+        "A custom Pod template can select a custom container image and start command for NVIDIA CUDA workloads."
+      ],
+      "evidence_type": "direct_provider_documentation",
+      "id": "runpod_templates_2026_07_28",
+      "publisher": "RunPod",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "current documentation retrieved 2026-07-28",
+      "title": "Manage Pod templates",
+      "url": "https://docs.runpod.io/pods/templates/manage-templates"
+    },
+    {
+      "claims": [
+        "Compute and local storage are billed per second with no data-transfer fee.",
+        "A new Pod requires a prepaid balance covering at least one hour.",
+        "Running container and volume disks cost $0.10/GB-month; network volumes under 1 TB cost $0.07/GB-month."
+      ],
+      "evidence_type": "direct_provider_documentation",
+      "id": "runpod_billing_2026_07_28",
+      "publisher": "RunPod",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "current documentation retrieved 2026-07-28",
+      "title": "Billing overview",
+      "url": "https://docs.runpod.io/accounts-billing/billing"
+    },
+    {
+      "claims": [
+        "On-demand Pods have no term and cannot be displaced by other users.",
+        "Savings plans are prepaid three- or six-month commitments, but the public documentation does not publish an RTX 6000 Ada plan rate."
+      ],
+      "evidence_type": "direct_provider_documentation",
+      "id": "runpod_savings_2026_07_28",
+      "publisher": "RunPod",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "current documentation retrieved 2026-07-28",
+      "title": "Pod pricing",
+      "url": "https://docs.runpod.io/pods/pricing"
+    },
+    {
+      "claims": [
+        "RunPod documents NVIDIA Pod locations in North America, Europe, Iceland, and Australia.",
+        "The public page does not bind RTX 6000 Ada stock to a particular current region."
+      ],
+      "evidence_type": "direct_provider_documentation",
+      "id": "runpod_regions_2026_07_28",
+      "publisher": "RunPod",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "current documentation retrieved 2026-07-28",
+      "title": "Global networking",
+      "url": "https://docs.runpod.io/pods/networking"
+    },
+    {
+      "claims": [
+        "One RTX 6000 Ada instance is listed with 48 GB VRAM, 10 CPUs, 60 GB RAM, $1.04/hour on-demand, and $0.364/hour spot.",
+        "One-year self-service reservation is 8% below on-demand and two-year reservation is 25% below on-demand.",
+        "NVMe and shared NVMe storage cost $0.20/GiB-month."
+      ],
+      "evidence_type": "direct_provider_reported",
+      "id": "verda_pricing_2026_07_28",
+      "publisher": "Verda",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "live page retrieved 2026-07-28",
+      "title": "Full-stack AI cloud pricing",
+      "url": "https://verda.com/pricing"
+    },
+    {
+      "claims": [
+        "Verda supports GPU VM creation with a location, OS image, SSH key, volumes, and an Ubuntu CUDA 13.0 open-docker image.",
+        "Public documentation directs users to an authenticated availability command for location-specific stock."
+      ],
+      "evidence_type": "direct_provider_documentation",
+      "id": "verda_instances_2026_06_02",
+      "publisher": "Verda",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "2026-06-02",
+      "title": "Verda CLI instances",
+      "url": "https://docs.verda.com/cli/instances/"
+    },
+    {
+      "claims": [
+        "On-demand billing uses refundable prepaid ten-minute increments; spot may be evicted without warning.",
+        "Long-term rentals are paid up front.",
+        "The console exposes model/location availability, Ubuntu or Jupyter images, storage, SSH keys, and startup scripts."
+      ],
+      "evidence_type": "direct_provider_documentation",
+      "id": "verda_setup_2026_05_15",
+      "publisher": "Verda",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "2026-05-15",
+      "title": "Set up a CPU or GPU instance",
+      "url": "https://docs.verda.com/cpu-and-gpu-instances/set-up-a-gpu-instance/"
+    },
+    {
+      "claims": [
+        "Verda lists FIN-01, FIN-02, and FIN-03 in Helsinki, Finland.",
+        "The location page reports PUE values of 1.2, 1.3, and 1.2 but no RTX-specific sustained-clock or power-limit guarantee."
+      ],
+      "evidence_type": "direct_provider_documentation",
+      "id": "verda_locations_2026_07_28",
+      "publisher": "Verda",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "current documentation retrieved 2026-07-28",
+      "title": "Locations and Sustainability",
+      "url": "https://docs.verda.com/welcome-to-verda/locations-and-sustainability/"
+    },
+    {
+      "claims": [
+        "RTX 6000 Ada is listed at 48 GB, up to four per node, and $0.71/GPU-hour.",
+        "The listing says hourly billing with no commitment and that QuantaCloud may substitute equivalent or better hardware.",
+        "The public listing does not bind CPU, RAM, storage, network, region, exact device assignment, driver, or custom-container access."
+      ],
+      "evidence_type": "direct_provider_reported",
+      "id": "quantacloud_2026_07_28",
+      "publisher": "QuantaCloud",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "live page retrieved 2026-07-28",
+      "title": "QuantaCloud",
+      "url": "https://quantacloud.net/"
+    },
+    {
+      "claims": [
+        "The dated page reports $0.67/hour on-demand and $0.29/hour spot, bare-metal root SSH, per-minute billing, and no contract minimum.",
+        "The page explicitly warns that the May 2 prices may have changed.",
+        "Spheron's current catalog retrieved on July 28 does not list RTX 6000 Ada, so the dated rate is excluded from current venue hurdles."
+      ],
+      "evidence_type": "direct_provider_dated",
+      "id": "spheron_rtx6000ada_2026_05_02",
+      "publisher": "Spheron",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "rate basis 2026-05-02",
+      "title": "NVIDIA RTX 6000 Ada Generation: Specs, AI Performance, and Cloud Pricing Guide",
+      "url": "https://www.spheron.network/blog/nvidia-rtx-6000-ada-generation-guide/"
+    },
+    {
+      "claims": [
+        "The card has 48 GB GDDR6 ECC, 960 GB/s bandwidth, PCIe Gen4 x16, 300 W total board power, and an active thermal solution.",
+        "The card has 18,176 CUDA cores and 568 fourth-generation Tensor Cores."
+      ],
+      "evidence_type": "vendor_reported",
+      "id": "nvidia_rtx6000ada_datasheet_2023_02",
+      "publisher": "NVIDIA",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "2023-02",
+      "title": "NVIDIA RTX 6000 Ada Generation datasheet",
+      "url": "https://www.nvidia.com/content/dam/en-zz/Solutions/design-visualization/rtx-6000/proviz-print-rtx6000-datasheet-web-2504660.pdf"
+    },
+    {
+      "claims": [
+        "RTX 6000 Ada uses AD102 with 142 enabled SMs and 98,304 KiB L2.",
+        "The architecture supports FP8, FP16, BF16, TF32, INT8, and INT4 Tensor Core formats.",
+        "Peak-format specifications are capability evidence only, not Gemma throughput evidence."
+      ],
+      "evidence_type": "vendor_reported",
+      "id": "nvidia_ada_whitepaper_v1_1",
+      "publisher": "NVIDIA",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "revision 1.1",
+      "title": "NVIDIA Ada Lovelace Professional GPU Architecture",
+      "url": "https://images.nvidia.com/aem-dam/en-zz/Solutions/technologies/NVIDIA-ADA-GPU-PROVIZ-Architecture-Whitepaper_1.1.pdf"
+    },
+    {
+      "claims": [
+        "Ada has compute capability 8.9.",
+        "CUDA Toolkit 11.8 is the first toolkit that can emit native sm_89 cubins."
+      ],
+      "evidence_type": "vendor_documentation",
+      "id": "nvidia_ada_compat_cuda_12_8_2",
+      "publisher": "NVIDIA",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "CUDA 12.8.2 archive",
+      "title": "NVIDIA Ada GPU Architecture Compatibility Guide for CUDA Applications",
+      "url": "https://docs.nvidia.com/cuda/archive/12.8.2/ada-compatibility-guide/index.html"
+    },
+    {
+      "claims": [
+        "CUDA exposes the E5M2 FP8 datatype and device conversion operators."
+      ],
+      "evidence_type": "vendor_documentation",
+      "id": "nvidia_cuda_e5m2_12_0",
+      "publisher": "NVIDIA",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "CUDA 12.0.0",
+      "title": "CUDA Math API: __nv_fp8_e5m2",
+      "url": "https://docs.nvidia.com/cuda/archive/12.0.0/cuda-math-api/struct____nv__fp8__e5m2.html"
+    },
+    {
+      "claims": [
+        "The NVIDIA runtime exposes selected GPUs and compute/utility driver capabilities to a CUDA container.",
+        "A CUDA image can enforce minimum CUDA/driver/architecture constraints; a host driver incompatible with the image prevents container startup."
+      ],
+      "evidence_type": "vendor_documentation",
+      "id": "nvidia_container_toolkit_2026_07_28",
+      "publisher": "NVIDIA",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "latest documentation retrieved 2026-07-28",
+      "title": "NVIDIA Container Toolkit: specialized configurations with Docker",
+      "url": "https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/docker-specialized.html"
+    },
+    {
+      "claims": [
+        "The archived authenticated read showed zero Pods.",
+        "Its attempted GPU inventory path was invalid and established no RTX 6000 Ada availability.",
+        "It is not current stock evidence or authorization for this project."
+      ],
+      "evidence_type": "measured_archived_control_plane_diagnostic",
+      "id": "runpod_archived_account_snapshot_2026_07_17",
+      "repository_path": "../exact_market_venue_decision_surface/artifacts/runpod-readonly-snapshot.json",
+      "retrieved_at_utc": "2026-07-28T08:28:21Z",
+      "revision_or_publication_date": "2026-07-17",
+      "title": "Existing campaign RunPod read-only snapshot"
+    }
+  ],
+  "uncertainty_and_competing_explanations": [
+    "RunPod and Verda public SKU pages do not prove current per-region stock.",
+    "Advertised 48 GB does not prove the exact guest-visible usable byte count required by the fixed 0.953 ledger.",
+    "No source guarantees RTX-specific sustained clocks, power limit, or thermal behavior.",
+    "Verda's 60 GB host RAM may or may not suffice for the exact load path; RunPod's 167 GB is more conservative, but neither was measured.",
+    "A cheaper workstation GPU may suffer a runtime, clock, virtualization, host, or availability penalty large enough to consume the price advantage.",
+    "Conversely, the RTX may match or outperform the L40S on this workload, but bandwidth and shared silicon cannot establish that.",
+    "Availability factor A_venue is unbounded by public SKU pages; therefore all A=1 burden-adjusted rows are optimistic sensitivities."
+  ]
+}

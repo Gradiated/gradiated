@@ -1425,6 +1425,84 @@ class SimpleLabHarnessTests(unittest.TestCase):
 
             self.assertEqual(project, repair_root)
 
+    def test_pending_durable_repair_ignores_ready_older_than_replacement_owner(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            artifacts = project / "artifacts" / "run"
+            repair_root = artifacts / ".repair-handshakes" / "failed-owner"
+            repair_root.mkdir(parents=True)
+            created_at = datetime.now(timezone.utc)
+            (repair_root / "REPAIR_READY.json").write_text(
+                json.dumps(
+                    {
+                        "created_at_utc": created_at.isoformat(),
+                        "repair_deadline_epoch": time.time() + 600,
+                        "repair_id": "failed-owner",
+                    }
+                )
+            )
+            owner_state = artifacts / "OWNER_STATE_REPAIR.json"
+            owner_state.write_text(
+                json.dumps(
+                    {
+                        "launched_at_utc": (
+                            created_at + timedelta(seconds=1)
+                        ).isoformat()
+                    }
+                )
+            )
+
+            pending_root = LabHarness._pending_durable_repair(
+                project,
+                {
+                    "artifact_root": "artifacts/run",
+                    "unit": str(owner_state),
+                    "unit_manager": "pid",
+                    "repair_id": "replacement-owner",
+                },
+            )
+
+            self.assertIsNone(pending_root)
+
+    def test_pending_durable_repair_keeps_ready_newer_than_replacement_owner(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            artifacts = project / "artifacts" / "run"
+            repair_root = artifacts / ".repair-handshakes" / "new-failure"
+            repair_root.mkdir(parents=True)
+            created_at = datetime.now(timezone.utc)
+            (repair_root / "REPAIR_READY.json").write_text(
+                json.dumps(
+                    {
+                        "created_at_utc": created_at.isoformat(),
+                        "repair_deadline_epoch": time.time() + 600,
+                        "repair_id": "new-failure",
+                    }
+                )
+            )
+            owner_state = artifacts / "OWNER_STATE_REPAIR.json"
+            owner_state.write_text(
+                json.dumps(
+                    {
+                        "launched_at_utc": (
+                            created_at - timedelta(seconds=1)
+                        ).isoformat()
+                    }
+                )
+            )
+
+            pending_root = LabHarness._pending_durable_repair(
+                project,
+                {
+                    "artifact_root": "artifacts/run",
+                    "unit": str(owner_state),
+                    "unit_manager": "pid",
+                    "repair_id": "replacement-owner",
+                },
+            )
+
+            self.assertEqual(repair_root, pending_root)
+
     def test_pending_durable_repair_falls_back_to_project_root(self):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)

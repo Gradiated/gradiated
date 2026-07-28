@@ -1163,6 +1163,44 @@ Shared tools:
             return False
 
     @staticmethod
+    def _repair_ready_consumed_by_replacement_owner(
+        project: Path,
+        active_session: dict[str, Any],
+        repair: dict[str, Any],
+    ) -> bool:
+        ready_sha256 = canonical_json_sha256(repair)
+        if active_session.get("repair_ready_sha256") == ready_sha256:
+            return True
+        if (
+            active_session.get("unit_manager") != "pid"
+            or not active_session.get("repair_id")
+        ):
+            return False
+        unit = active_session.get("unit")
+        created_at = repair.get("created_at_utc")
+        if not isinstance(unit, str) or not unit or not isinstance(created_at, str):
+            return False
+        state_path = Path(unit)
+        if not state_path.is_absolute():
+            state_path = project / state_path
+        try:
+            owner_state = json.loads(state_path.read_text())
+            launched_at = owner_state["launched_at_utc"]
+            if not isinstance(launched_at, str):
+                return False
+            return datetime.fromisoformat(
+                launched_at.replace("Z", "+00:00")
+            ) >= datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+        except (
+            OSError,
+            KeyError,
+            TypeError,
+            ValueError,
+            json.JSONDecodeError,
+        ):
+            return False
+
+    @staticmethod
     def _pending_durable_repair(project: Path, active_session: object) -> Path | None:
         if not isinstance(active_session, dict):
             return None
@@ -1190,6 +1228,10 @@ Shared tools:
                     continue
                 try:
                     repair = json.loads(ready.read_text())
+                    if LabHarness._repair_ready_consumed_by_replacement_owner(
+                        project, active_session, repair
+                    ):
+                        continue
                     request_path = ready.with_name("REPAIR_REQUEST.json")
                     if request_path.is_file():
                         request = json.loads(request_path.read_text())

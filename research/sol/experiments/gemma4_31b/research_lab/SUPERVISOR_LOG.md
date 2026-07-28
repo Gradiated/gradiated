@@ -6906,3 +6906,93 @@ existed, so the active experiment was not disrupted. Expected effect: future
 same-claim integration repairs begin tens to hundreds of seconds earlier,
 leaving the researcher more of the bounded owner window to patch and rerun
 against resident images instead of expiring into reclaim or cold setup.
+
+## 2026-07-28T10:56Z — fence ownerless B200 endpoint claim after in-place repair
+
+**GPU safety audit.** One grouped authenticated Nebius listing for the sole
+configured live project returned one RUNNING instance
+`computeinstance-i00hfh66qbsqy4mx7x` with its READY disk
+`computedisk-i00svcmxdjhpm7bkez`, exactly matching the only non-retired
+inventory bench
+`b200-nvfp4-endpoint-computeinstance-i00hfh66qbsqy4mx7x`; there were no
+provider-only or inventory-only resources. The recorded controller-host user
+watchdog
+`gemma4-b200-nvfp4-endpoint-20260728t1050z-watchdog.service` is
+active/running as PID `2964618` in its exact recorded control group through
+`2026-07-28T12:31:59.335947Z`. The claim heartbeat was fresh at
+`10:55:02.378175Z`, and no deadline had passed.
+
+The researcher correctly retained the mutable claim after the first
+pre-science staging failure, patched the transfer scope, and launched repair
+owner PID `2970327` with start ticks `135211973`. That owner again exited at
+the `stage_project_snapshot` boundary after approximately 20 seconds. The
+researcher observed it during the brief live interval, recorded it in
+`STATUS.json.active_session`, and then completed its turn; at `10:56:03Z`
+the PID was absent while both the active session and claimed inventory still
+named it. This is now an objective owner-loss condition rather than a live
+repair handoff. Marked the registered bench `drain_after_release=true`; no
+claim reclaim, provider cleanup, or inventory retirement was performed.
+Exact director disposition IDs are instance
+`computeinstance-i00hfh66qbsqy4mx7x` and disk
+`computedisk-i00svcmxdjhpm7bkez` in project
+`project-i00hfrkjpr00wmz2kzj3qm`.
+
+**Objective evidence and expected effect.** The campaign bottleneck remains
+the complete exact-checkpoint B200 BF16-control versus native-NVFP4 c32
+endpoint, not component support or project supply. Both owners stopped before
+CUDA or a scientific sample at the snapshot/transfer boundary; no teardown or
+cold provider restart occurred, and the second attempt reused the same remote
+root and claim. The drain fence prevents this ownerless claim from silently
+returning to the shared pool after release while preserving the running bench
+for the director to choose either an immediate same-claim staging repair or
+cleanup using the exact IDs above. No shared skill, tool, or harness change
+was made: the existing same-claim repair path behaved as intended, and
+changing it while this experiment is still recoverable would add process
+rather than advance the endpoint measurement.
+
+## 2026-07-28T11:05Z — suppress stale repair wakes during the live B200 transfer
+
+**GPU safety audit.** One grouped authenticated Nebius listing for the sole
+configured project returned RUNNING instance
+`computeinstance-i00hfh66qbsqy4mx7x` and READY attached disk
+`computedisk-i00svcmxdjhpm7bkez`, exactly matching the only non-retired
+inventory bench; there were no provider-only or inventory-only resources.
+The controller-host user watchdog
+`gemma4-b200-nvfp4-endpoint-20260728t1050z-watchdog.service` is
+active/running as PID `2964618` in its recorded control group through
+`12:31:59.335947Z`. Repair-2 owner PID `2973170` is live with exact recorded
+start ticks `135234099`, the claim heartbeated at `11:01:43.927467Z`, and no
+deadline has passed. The prior drain fence remains set; no lifecycle,
+provider, claim, or project mutation was made.
+
+**Objective and timing evidence.** The direct campaign bottleneck remains the
+complete exact-checkpoint B200 BF16-control versus native-NVFP4 endpoint.
+Repair-2 added only the bound `ssh -n` fix and reused the original claim,
+remote root, and partial staging state. It began at `10:58:43.588448Z` and is
+actively transferring the first immutable 49.8-GB shard; a researcher
+snapshot measured 4,962,262,560 remote bytes at approximately `11:01:47Z`.
+No CUDA, conversion, server, control, candidate, or scientific sample has
+started, but there has also been no teardown or cold restart.
+
+The coordination loop was repeatedly treating the old
+`b200-nvfp4-20260728T105522Z/REPAIR_READY.json` as pending after the
+hash-bound replacement owner had already launched. It woke the researcher at
+`10:59:27.671631Z` and again at `11:01:16.928358Z`; the resulting
+44.756-second and 32.082-second turns only confirmed the healthy transfer,
+then emitted `researcher_no_progress` and additional director wakes. This did
+not interrupt the owner, but it spent agent and director cycles on a consumed
+integration generation rather than the endpoint result.
+
+**Process change and expected effect.** Narrowly changed
+`research/factory/src/grad_research/lab_harness.py` so a ready generation is
+not pending when an explicitly identified PID-managed repair owner was
+launched after that ready marker. A ready marker created after the current
+repair owner still wakes immediately, and the normal in-place outer-owner
+handshake remains unchanged. Added both ordering regressions; all 71 harness
+tests, Python compilation, repository DevEx validation, and diff checks pass.
+The live metadata now resolves to no pending stale repair while PID `2973170`
+continues unchanged. The running harness will defer source reload until the
+durable owner exits. Expected effect: long checkpoint transfers and model
+loads proceed without repeated status-only researcher/director turns, while a
+genuinely new integration failure still receives the fast same-claim repair
+dispatch.

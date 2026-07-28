@@ -14,6 +14,8 @@ from pathlib import Path
 PROJECT = Path(__file__).resolve().parent
 MECHANISM = PROJECT.parent / "b200_exact_gemma_kernel_economic_mechanism/MECHANISM.json"
 OUT = PROJECT / "artifacts/PRECREATE_VENUE_IDENTITY.json"
+PLACEMENT = Path("/root/workspace/research/factory/tools/lab-nebius-placement")
+GPU_PRICES = Path("/root/workspace/research/factory/data/gpu_prices.json")
 
 
 def sha(path: Path) -> str:
@@ -21,16 +23,34 @@ def sha(path: Path) -> str:
 
 
 def main() -> int:
-    cli = "/root/.nebius/bin/nebius"
-    proc = subprocess.run([cli, "compute", "platform", "list", "--format", "json"], capture_output=True, timeout=60)
+    proc = subprocess.run(
+        [
+            str(PLACEMENT),
+            "--profile",
+            "glm-campaign",
+            "--accelerator",
+            "b200",
+            "--gpu-count",
+            "1",
+            "--allocation",
+            "auto",
+        ],
+        capture_output=True,
+        timeout=60,
+    )
     try:
-        platforms = json.loads(proc.stdout)
+        placement = json.loads(proc.stdout)
     except Exception:
-        platforms = {}
-    names = [x.get("metadata", {}).get("name") for x in platforms.get("items", [])]
-    b200 = [x for x in platforms.get("items", []) if "b200" in json.dumps(x).lower()]
+        placement = {}
+    b200 = placement.get("ranked_candidates", [])
+
+    price_inventory = json.loads(GPU_PRICES.read_text())
+    b200_price = next(
+        row for row in price_inventory["accelerators"] if row["id"] == "nvidia-b200-sxm"
+    )
+    spot_rate = placement.get("choice", {}).get("estimated_compute_usd_per_gpu_hour")
     runpod = {"configured": bool(os.environ.get("RUNPOD_API_KEY")), "http_status": None}
-    if os.environ.get("RUNPOD_API_KEY"):
+    if not b200 and os.environ.get("RUNPOD_API_KEY"):
         query = "query GpuTypes { gpuTypes { id displayName memoryInGb lowestPrice(input: {gpuCount: 1, secureCloud: true}) { stockStatus uninterruptablePrice minimumBidPrice } } }"
         request = urllib.request.Request("https://api.runpod.io/graphql", data=json.dumps({"query": query}).encode(), headers={"Authorization": "Bearer " + os.environ["RUNPOD_API_KEY"], "Content-Type": "application/json"}, method="POST")
         try:
@@ -52,15 +72,36 @@ def main() -> int:
         "upstream_digest_bound_by_mechanism": any(row.get("path") == "benchmarks/kernels/benchmark_nvfp4_gemm.py" and row.get("sha256") == "667f935dceac3acba4bfd808b8c02ac7bcf5d525f2c044ee78cd291da5b1b80d" for row in mechanism["source_trace"]["files"]),
         "image_identity": identities.get("runtime_image") == "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
         "commit_identity": identities.get("runtime_vllm_commit") == "6d4a8e6d204a9b2827544003b26321fff62923da",
-        "full_b200_venue_and_actual_rate": bool(b200) or bool(runpod.get("b200_offers")) or gcore_has_b200,
+        "full_b200_venue_and_bound_rate": (
+            bool(placement.get("choice"))
+            and placement["choice"].get("allocation_type") == "preemptible"
+            and isinstance(spot_rate, (int, float))
+            and spot_rate > 0
+        )
+        or bool(runpod.get("b200_offers"))
+        or gcore_has_b200,
     }
     value = {
         "schema_version": 1,
-        "classification": "authenticated_b200_venue_unavailable" if not checks["full_b200_venue_and_actual_rate"] else "b200_venue_bound",
+        "classification": (
+            "authenticated_b200_venue_unavailable"
+            if not checks["full_b200_venue_and_bound_rate"]
+            else "b200_venue_bound"
+        ),
         "pass": all(checks.values()),
         "checks": checks,
         "mechanical_identities": {"mechanism_sha256": sha(MECHANISM), "upstream_sha256": "667f935dceac3acba4bfd808b8c02ac7bcf5d525f2c044ee78cd291da5b1b80d", "runtime_image": identities.get("runtime_image"), "vllm_commit": identities.get("runtime_vllm_commit")},
-        "venues": {"nebius": {"command_returncode": proc.returncode, "project_platform_names": names, "b200_platforms": b200}, "runpod": runpod, "gcore_cached_inventory_has_b200": gcore_has_b200},
+        "venues": {
+            "nebius": {
+                "command_returncode": proc.returncode,
+                "placement": placement,
+                "bound_public_preemptible_usd_per_gpu_hour": spot_rate,
+                "price_inventory_id": b200_price["id"],
+                "price_evidence_source_ids": b200_price["source_ids"],
+            },
+            "runpod": runpod,
+            "gcore_cached_inventory_has_b200": gcore_has_b200,
+        },
         "provider_create_performed": False,
         "provider_spend_usd": 0.0,
     }

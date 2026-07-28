@@ -1,0 +1,3 @@
+{"handshake_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/b200_nvfp4_exact_shape_direct_falsifier/artifacts/b200-nvfp4-20260728t0952z/.repair-handshakes/b200-nvfp4-20260728t0952z", "idempotent": false, "ready_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/b200_nvfp4_exact_shape_direct_falsifier/artifacts/b200-nvfp4-20260728t0952z/.repair-handshakes/b200-nvfp4-20260728t0952z/REPAIR_READY.json", "ready_sha256": "eac011d32a5c786cbf9afb9b0a840614471750bca207f318b0f6c6175a0b5c77", "state": "repair_ready"}
+usage: repair-handshake [-h] {ready,request,status,wait} ...
+repair-handshake: error: unrecognized arguments: --deadline 2026-07-28T10:08:30Z

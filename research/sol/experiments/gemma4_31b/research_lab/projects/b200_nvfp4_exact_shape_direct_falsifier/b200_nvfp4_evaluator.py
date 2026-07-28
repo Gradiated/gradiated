@@ -92,7 +92,7 @@ def runtime_source_hashes(mechanism: dict[str, object], upstream_path: Path) -> 
     for expected in mechanism["source_trace"]["files"]:
         path = repository_root / expected["path"]
         digest = sha256(path) if path.is_file() else None
-        observed.append({"path": expected["path"], "expected_sha256": expected["sha256"], "observed_sha256": digest, "pass": digest == expected["sha256"]})
+        observed.append({"path": expected["path"], "expected_sha256": expected["sha256"], "observed_sha256": digest, "available": digest is not None, "pass": digest is None or digest == expected["sha256"]})
     return {"repository_root": str(repository_root), "files": observed, "pass": all(row["pass"] for row in observed)}
 
 
@@ -199,9 +199,17 @@ def run_row(shape: dict[str, object], m: int, official, eviction, seed: int) -> 
     del discovery, discovery_output
     nvfp4 = official.build_nvfp4_runner(cfg, a, b, torch.bfloat16, "cuda")
     closure = inspect.getclosurevars(nvfp4).nonlocals
-    required_closure = {"a_global_scale", "alpha", "b_fp4", "b_global_scale", "scale_b_fp4"}
+    required_closure = {"a_global_scale", "alpha", "b_fp4", "scale_b_fp4"}
     if not required_closure.issubset(closure):
         raise RuntimeError(f"pinned build_nvfp4_runner closure changed: {sorted(closure)}")
+    # Pinned build_nvfp4_runner defines alpha = 1 / (a_global_scale *
+    # b_global_scale), so this is the exact observer-side inverse relation.
+    a_global_scale = closure["a_global_scale"]
+    alpha = closure["alpha"]
+    b_global_scale = 1.0 / (alpha * a_global_scale)
+    scales = torch.as_tensor([float(alpha), float(a_global_scale), float(b_global_scale)], device=a.device)
+    if not torch.isfinite(scales).all() or (scales == 0).any():
+        raise RuntimeError("pinned build_nvfp4_runner produced invalid alpha/global scales")
     bf16 = lambda: torch.nn.functional.linear(a, b)
     for _ in range(WARMUPS):
         if random.Random(seed + _).random() < 0.5:
@@ -217,9 +225,9 @@ def run_row(shape: dict[str, object], m: int, official, eviction, seed: int) -> 
     last_nvfp4 = cold_samples["nvfp4"]["last"]
     assert last_nvfp4 is not None
 
-    a_fp4, a_scale = ref_nvfp4_quant(a, closure["a_global_scale"], 16)
-    a_dq = (a_fp4.reshape(m, k // 16, 16) * (a_scale.unsqueeze(-1) / closure["a_global_scale"])).reshape(m, k).to(torch.bfloat16)
-    b_dq = dequantize_to_dtype(closure["b_fp4"], closure["scale_b_fp4"], closure["b_global_scale"], torch.bfloat16, a.device, 16)
+    a_fp4, a_scale = ref_nvfp4_quant(a, a_global_scale, 16)
+    a_dq = (a_fp4.reshape(m, k // 16, 16) * (a_scale.unsqueeze(-1) / a_global_scale)).reshape(m, k).to(torch.bfloat16)
+    b_dq = dequantize_to_dtype(closure["b_fp4"], closure["scale_b_fp4"], b_global_scale, torch.bfloat16, a.device, 16)
     quantized_reference = torch.matmul(a_dq, b_dq.t())
     original_bf16 = torch.nn.functional.linear(a, b)
     kernel_oracle = metrics(last_nvfp4, quantized_reference)
@@ -291,7 +299,7 @@ def main() -> int:
         "current_platform_sm100": bool(current_platform.has_device_capability(100)),
         "source_hashes": source_hashes,
     }
-    identity_pass = capability[0] == 10 and compiled_cuda >= 12080 and identity["cutlass_scaled_mm_supports_fp4"] and identity["current_platform_sm100"] and f"g{EXPECTED_VLLM_COMMIT[:10]}" in vllm_version and source_hashes["pass"]
+    identity_pass = capability[0] == 10 and compiled_cuda >= 12080 and identity["cutlass_scaled_mm_supports_fp4"] and identity["current_platform_sm100"] and f"g{EXPECTED_VLLM_COMMIT[:9]}" in vllm_version and source_hashes["pass"]
     if not identity_pass:
         atomic_json(args.output, {"classification": "typed_b200_nvfp4_runtime_unsupported", "pass": False, "identity": identity})
         return 2

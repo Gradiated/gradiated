@@ -1,0 +1,2 @@
+WARNING: FBGEMM providers are enabled but fbgemm_gpu is not installed. These providers will be skipped. Please install fbgemm_gpu with: 'pip install fbgemm-gpu-genai' to run them.
+WARNING: FBGEMM providers are enabled but fbgemm_gpu is not installed. These providers will be skipped. Please install fbgemm_gpu with: 'pip install fbgemm-gpu-genai' to run them.

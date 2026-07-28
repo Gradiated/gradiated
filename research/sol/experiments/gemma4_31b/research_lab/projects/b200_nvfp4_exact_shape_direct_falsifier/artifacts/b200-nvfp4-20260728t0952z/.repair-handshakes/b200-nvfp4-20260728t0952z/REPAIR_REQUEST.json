@@ -1,0 +1,10 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/b200_nvfp4_exact_shape_direct_falsifier/b200_nvfp4_outer.sh",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/b200_nvfp4_exact_shape_direct_falsifier/b200_nvfp4_outer.sh",
+  "ready_sha256": "eac011d32a5c786cbf9afb9b0a840614471750bca207f318b0f6c6175a0b5c77",
+  "repair_id": "b200-nvfp4-20260728t0952z",
+  "requested_at_utc": "2026-07-28T10:05:15.301088Z",
+  "retry_scope": "pre-science container UID and ENTRYPOINT repair; run the unchanged staged evaluator once",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

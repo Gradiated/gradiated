@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "project": "b200_nvfp4_exact_shape_direct_falsifier",
+  "model": "No checkpoint; exact Gemma 4 geometry for the staged sentinel and fixed 24-row NVFP4 evaluator only.",
+  "checkpoint": "None required or authorized for the checkpoint-free exact-shape evaluator.",
+  "image": "Pinned docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79 is resident.",
+  "runtime": "Strict ED25519 identity; one NVIDIA B200 SM100; CUDA 12.9; vLLM 0.19.1.dev6+g6d4a8e6d2; current-platform SM100 and CUTLASS FP4 support verified.",
+  "caches": "Resident pinned image and exact staged evaluator inputs; no checkpoint or model server.",
+  "server_state": "No endpoint. Prior repair-g2 reached only the pre-science source-audit gate; no NVFP4 scientific submission.",
+  "artifacts": "projects/b200_nvfp4_exact_shape_direct_falsifier/{DIRECTOR_B200_NVFP4_SOURCE_AUDIT_REPAIR_BINDING_20260728T1008Z.json,artifacts/b200-nvfp4-20260728t0952z/repair-g2/direct-retrieval/artifacts/SENTINEL.json}",
+  "scientific_terminal": "One unchanged checkpoint-free staged sentinel plus exact 24-row B200 NVFP4 evaluator remains unconsumed.",
+  "next": "The sole claimant must consume DIRECTOR_B200_NVFP4_SOURCE_AUDIT_REPAIR_BINDING_20260728T1008Z.json, atomically claim by 2026-07-28T10:21:00Z, replace only the inspection-only source gate and owner, and release by 2026-07-28T10:32:30Z.",
+  "state": "available only for the bound source-audit repair under watchdog through 2026-07-28T10:35:00Z"
+}

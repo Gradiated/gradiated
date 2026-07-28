@@ -1,0 +1,11 @@
+{
+  "deadline_utc": "2026-07-28T10:25:00Z",
+  "provider_started_at_utc": "2026-07-28T09:45:38.516142Z",
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-b200-nvfp4-20260728t1007z-watchdog.service",
+    "deadline_epoch": 1785234300.0,
+    "main_pid": 2823346,
+    "unit": "gemma4-b200-nvfp4-20260728t1007z-watchdog.service",
+    "unit_manager": "user"
+  }
+}

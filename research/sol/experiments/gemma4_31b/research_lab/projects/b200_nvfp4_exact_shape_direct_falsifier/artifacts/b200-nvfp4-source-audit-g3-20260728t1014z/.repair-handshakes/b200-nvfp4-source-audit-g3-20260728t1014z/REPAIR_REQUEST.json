@@ -1,0 +1,10 @@
+{
+  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/b200_nvfp4_exact_shape_direct_falsifier/b200_nvfp4_evaluator.py",
+  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/b200_nvfp4_exact_shape_direct_falsifier/b200_nvfp4_evaluator.py",
+  "ready_sha256": "5c5c44115d79113191462fc3ddd4bd1726de45e89974df3ed4194ed1d3aae748",
+  "repair_id": "b200-nvfp4-source-audit-g3-20260728t1014z",
+  "requested_at_utc": "2026-07-28T10:17:56.638280Z",
+  "retry_scope": "pre-science commit-version prefix repair; execute the one unchanged evaluator sample",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

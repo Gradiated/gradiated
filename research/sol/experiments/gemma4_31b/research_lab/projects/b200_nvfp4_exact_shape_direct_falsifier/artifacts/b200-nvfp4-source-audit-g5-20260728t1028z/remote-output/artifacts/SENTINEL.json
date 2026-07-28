@@ -1,0 +1,186 @@
+{
+  "classification": "b200_nvfp4_sentinel_pass",
+  "identity": {
+    "compiled_cuda": 12090,
+    "compute_capability": [
+      10,
+      0
+    ],
+    "current_platform_sm100": true,
+    "cutlass_scaled_mm_supports_fp4": true,
+    "device_name": "NVIDIA B200",
+    "expected_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "expected_vllm_commit": "6d4a8e6d204a9b2827544003b26321fff62923da",
+    "mechanism_sha256": "0ced5b18806b14f6fd0070f00c52640af5e9764886fed46752da43028f8b1119",
+    "observed_vllm_version": "0.19.1.dev6+g6d4a8e6d2",
+    "runtime_cuda": "12.9",
+    "source_hashes": {
+      "files": [
+        {
+          "available": false,
+          "expected_sha256": "02d183b951b410801c51e76720603248102e9643711022db9a5415c932e0ec8a",
+          "observed_sha256": null,
+          "pass": true,
+          "path": "vllm/model_executor/layers/quantization/compressed_tensors/schemes/compressed_tensors_w4a4_nvfp4.py"
+        },
+        {
+          "available": false,
+          "expected_sha256": "ab81bb72b86b8deec2892f89660cb5465039a325c03411a68bac4329cb53d196",
+          "observed_sha256": null,
+          "pass": true,
+          "path": "vllm/model_executor/layers/quantization/utils/nvfp4_utils.py"
+        },
+        {
+          "available": false,
+          "expected_sha256": "8990c0c4de5dadbb2d1ff57f02d6a7f9133df29bb9070179ada3363461b40093",
+          "observed_sha256": null,
+          "pass": true,
+          "path": "vllm/_custom_ops.py"
+        },
+        {
+          "available": false,
+          "expected_sha256": "ceb6b8f3fedbcb17cbcf074cb88d6e3b4c16f6f736976f82bce7377d803cc17e",
+          "observed_sha256": null,
+          "pass": true,
+          "path": "csrc/quantization/fp4/nvfp4_scaled_mm_entry.cu"
+        },
+        {
+          "available": false,
+          "expected_sha256": "079ef2689cc17caf2d3ecb28d67013e3a484dcf66cf17220c1676696d4f6744c",
+          "observed_sha256": null,
+          "pass": true,
+          "path": "csrc/quantization/fp4/nvfp4_scaled_mm_kernels.cu"
+        },
+        {
+          "available": false,
+          "expected_sha256": "ac5a5858d980d430f8239dfa6f45341608c1e330550d2a4de9ca5e95d8ecb2fc",
+          "observed_sha256": null,
+          "pass": true,
+          "path": "vllm/model_executor/layers/quantization/utils/nvfp4_emulation_utils.py"
+        },
+        {
+          "available": true,
+          "expected_sha256": "667f935dceac3acba4bfd808b8c02ac7bcf5d525f2c044ee78cd291da5b1b80d",
+          "observed_sha256": "667f935dceac3acba4bfd808b8c02ac7bcf5d525f2c044ee78cd291da5b1b80d",
+          "pass": true,
+          "path": "benchmarks/kernels/benchmark_nvfp4_gemm.py"
+        }
+      ],
+      "pass": true,
+      "repository_root": "/vllm-workspace"
+    },
+    "upstream_benchmark_sha256": "667f935dceac3acba4bfd808b8c02ac7bcf5d525f2c044ee78cd291da5b1b80d"
+  },
+  "pass": true,
+  "rows": [
+    {
+      "actual_call_chain": {
+        "discovery_call_counts": {
+          "cutlass_scaled_fp4_mm": 1,
+          "scaled_fp4_quant": 2
+        },
+        "pass": true,
+        "required": [
+          "scaled_fp4_quant",
+          "cutlass_scaled_fp4_mm"
+        ]
+      },
+      "allocator": {
+        "max_allocated_bytes": 2657842176,
+        "max_reserved_bytes": 2780823552
+      },
+      "cold": {
+        "bf16": {
+          "all_timed_outputs_consumed": true,
+          "cuda_event_ms": {
+            "max": 0.08761599659919739,
+            "min": 0.05571199953556061,
+            "p50": 0.06268800050020218,
+            "p95": 0.07859520129859443
+          },
+          "repetitions": 50,
+          "synchronized_wall_ms": {
+            "max": 0.101043,
+            "min": 0.068723,
+            "p50": 0.076901,
+            "p95": 0.09330669999999998
+          },
+          "timed_output_checksum": 1197567.08984375
+        },
+        "nvfp4": {
+          "all_timed_outputs_consumed": true,
+          "cuda_event_ms": {
+            "max": 0.12399999797344208,
+            "min": 0.055135998874902725,
+            "p50": 0.06531200185418129,
+            "p95": 0.08468479961156841
+          },
+          "repetitions": 50,
+          "synchronized_wall_ms": {
+            "max": 0.149435,
+            "min": 0.067972,
+            "p50": 0.0785885,
+            "p95": 0.10001829999999996
+          },
+          "timed_output_checksum": 1085815.33203125
+        }
+      },
+      "k": 5376,
+      "kernel_oracle": {
+        "cosine": 0.9999675750732422,
+        "finite": true,
+        "nontrivial": true,
+        "normalized_rmse": 0.008058476255078337,
+        "pass": true
+      },
+      "m": 8,
+      "multiplicity": 50,
+      "n": 16384,
+      "name": "sliding_qkv",
+      "pass": true,
+      "representation_oracle": {
+        "cosine": 0.9910932183265686,
+        "finite": true,
+        "nontrivial": true,
+        "normalized_rmse": 0.13347066999599835,
+        "pass": true
+      },
+      "warm": {
+        "bf16": {
+          "all_timed_outputs_consumed": true,
+          "cuda_event_ms": {
+            "max": 0.09772799909114838,
+            "min": 0.04604800045490265,
+            "p50": 0.0516160000115633,
+            "p95": 0.06653439775109289
+          },
+          "repetitions": 50,
+          "synchronized_wall_ms": {
+            "max": 0.125692,
+            "min": 0.059464,
+            "p50": 0.06567200000000001,
+            "p95": 0.0810572
+          },
+          "timed_output_checksum": 1197567.08984375
+        },
+        "nvfp4": {
+          "all_timed_outputs_consumed": true,
+          "cuda_event_ms": {
+            "max": 0.09567999839782715,
+            "min": 0.052000001072883606,
+            "p50": 0.061535999178886414,
+            "p95": 0.07275839857757091
+          },
+          "repetitions": 50,
+          "synchronized_wall_ms": {
+            "max": 0.112673,
+            "min": 0.066021,
+            "p50": 0.07570299999999999,
+            "p95": 0.09113569999999999
+          },
+          "timed_output_checksum": 1085815.33203125
+        }
+      }
+    }
+  ]
+}

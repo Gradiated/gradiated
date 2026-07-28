@@ -1,0 +1,11 @@
+{
+  "absolute_repair_deadline_utc": "2026-07-28T10:22:30Z",
+  "created_at_utc": "2026-07-28T10:16:55.297904Z",
+  "diagnostic": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/b200_nvfp4_exact_shape_direct_falsifier/artifacts/b200-nvfp4-source-audit-g3-20260728t1014z/outer_failure.txt",
+  "failure_kind": "integration",
+  "repair_deadline_epoch": 1785234150.0,
+  "repair_id": "b200-nvfp4-source-audit-g3-20260728t1014z",
+  "retry_scope": "retrieve diagnostics, patch only the failed pre-science or consumer boundary, then replace owner under the existing claim",
+  "schema_version": 1,
+  "state": "repair_ready"
+}

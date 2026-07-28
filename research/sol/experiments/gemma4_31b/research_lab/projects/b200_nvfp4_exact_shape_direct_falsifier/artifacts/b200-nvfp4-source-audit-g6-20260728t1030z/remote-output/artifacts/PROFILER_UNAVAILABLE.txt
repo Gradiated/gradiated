@@ -1,0 +1,1 @@
+ncu unavailable in pinned image; decisive exact-consumer sweep completed without optional profiler counters

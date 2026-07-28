@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/input/b200_nvfp4_evaluator.py", line 329, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/input/b200_nvfp4_evaluator.py", line 311, in main
+    row = run_row(shape, m, official, eviction, 1701 + len(rows))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/input/b200_nvfp4_evaluator.py", line 204, in run_row
+    raise RuntimeError(f"pinned build_nvfp4_runner closure changed: {sorted(closure)}")
+RuntimeError: pinned build_nvfp4_runner closure changed: ['a', 'a_global_scale', 'alpha', 'b_fp4', 'dtype', 'scale_b_fp4']

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/bin/bash",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/b200_nvfp4_exact_shape_direct_falsifier/b200_nvfp4_outer.sh"
+  ],
+  "cwd": null,
+  "launched_at_utc": "2026-07-28T10:17:56.674026Z",
+  "log": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/b200_nvfp4_exact_shape_direct_falsifier/artifacts/b200-nvfp4-source-audit-g4-20260728t1018z/OWNER.log",
+  "pid": 2836406,
+  "start_ticks": 134989407,
+  "unit_manager": "pid"
+}

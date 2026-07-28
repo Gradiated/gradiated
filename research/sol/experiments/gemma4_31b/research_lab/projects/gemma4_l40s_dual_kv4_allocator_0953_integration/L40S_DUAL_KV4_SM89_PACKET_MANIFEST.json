@@ -1,0 +1,56 @@
+{
+  "files": [
+    {
+      "bytes": 11868,
+      "path": "sm89_dual_kv4_runner.py",
+      "sha256": "2c82f6457a3e74d48c1883a58d57b23af22ca04fe2e2245ac24268a47546498f"
+    },
+    {
+      "bytes": 13319,
+      "path": "l40s_dual_kv4_owner.py",
+      "sha256": "ffe206f9cfb931dfcef0fa3cf241842d8782aed4bc02935f7635eb39938081f2"
+    },
+    {
+      "bytes": 608,
+      "path": "local_kv4_outlier_bindings.cpp",
+      "sha256": "903ccfd27fb74e21d498aa5c98ce7c179f20e315c4963ab3be1162983aaaebd6"
+    },
+    {
+      "bytes": 12761,
+      "path": "local_kv4_outlier_cuda.cu",
+      "sha256": "6d8a84bd5ef5a1fbacbd95a99e1aa7c180b8d39e590ee1fd657d2da51e4e3944"
+    },
+    {
+      "bytes": 1267,
+      "path": "global_tiered_kv4_bindings.cpp",
+      "sha256": "7c4ae8539de2126bcc872520215504c1c7b0534765a19e191dbf2b233930e0cd"
+    },
+    {
+      "bytes": 19200,
+      "path": "global_tiered_kv4_cuda.cu",
+      "sha256": "42609740a2fe06033bbb56854a1e710da9897d59be5e696f4367f0cc8f36897b"
+    },
+    {
+      "bytes": 4621,
+      "path": "packet/MODEL_CONFIG.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    {
+      "bytes": 2491,
+      "path": "packet/WORKLOAD.json",
+      "sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
+    }
+  ],
+  "fixed_contract": {
+    "accelerator": "NVIDIA L40S SM89",
+    "c32": 32,
+    "decode_steps": 358,
+    "global_layers": 10,
+    "local_layers": 50,
+    "page_size": 1,
+    "repeats": 31,
+    "warmups": 5
+  },
+  "kind": "checkpoint_free_sm89_dual_kv4_packet",
+  "schema_version": 1
+}

@@ -1,0 +1,26 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "authorized_spend_usd": 0.0,
+  "candidate_sample_consumed": false,
+  "classification": "typed_none_fixed_c48_static_capacity_negative",
+  "decision": "close_fixed_c48_saturation_only",
+  "gpu_execution_required": false,
+  "id": "gemma4_l40s_dual_kv4_c48_saturation",
+  "gpu_used": false,
+  "later_measurement": {
+    "reason": "The candidate-favorable c48 static lower bound is 49075971484 bytes, 3040544877 bytes above the immutable 0.953 static limit and 770172316 bytes above physical HBM before the dynamic reserve.",
+    "type": "none"
+  },
+  "next_action": "None. Preserve the typed-none terminal and do not launch fixed c48; this closes only fixed-c48 saturation, not dual-KV c32 or alternative capacity geometries.",
+  "priority": 9770,
+  "provider_interaction": false,
+  "researcher_profile": "deep",
+  "status": "complete",
+  "summary": "Typed none: exact c48 dual-KV static state needs 49.076..50.043 GB, so even its favorable lower bound exceeds the 46.035 GB static limit by 3.041 GB and physical HBM by 0.770 GB before dynamic runtime ownership. Generic pinned SGLang has a c48 scheduler/graph path, but memory closes the fixed geometry without GPU execution.",
+  "terminal": {
+    "path": "L40S_DUAL_KV4_C48_SATURATION_OFFLINE_TERMINAL.json",
+    "sha256": "9f55a511e3945a74c3ad1b984cce85e7721bb35d32914973c0ba7f765ca04e19"
+  },
+  "updated_at_utc": "2026-07-28T08:53:00Z"
+}

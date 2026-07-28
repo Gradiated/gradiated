@@ -1,0 +1,168 @@
+{
+  "classification": "localized_first_target_token_divergence_with_exact_fail_closed_correction",
+  "decision": "reject_captured_dflash_transition_and_current_depth4_route",
+  "economic_hurdle": {
+    "charged_depth16_head_and_verifier": {
+      "head_ms_per_verification_call": 6.077301025390625,
+      "perfect_depth16_head_budget_ms": 16.38077483585764,
+      "required_accepted_target_tokens_per_cuda_event_second": 1226.9588247543961,
+      "required_draft_prefix_fraction_of_depth16": 0.9408749999999999,
+      "required_mean_accepted_draft_tokens": 15.053999999999998,
+      "required_mean_accepted_target_tokens": 16.054,
+      "threshold_head_budget_ms": 6.077878585872152,
+      "verifier_ms_per_request_verification": 7.0070826361503995
+    },
+    "interpretation": "Depths 4, 8, and 12 cannot reach the 20% target even with a free drafter and the optimistic D12 verifier. A charged D16 route needs 15.054 accepted drafts (16.054 target tokens) per verification.",
+    "measured_current_dflash": {
+      "accepted_target_tokens_per_cuda_event_second": 521.9159530781905,
+      "depth": 4,
+      "fraction_of_required_depth16_fom": 0.42537364950503853,
+      "mean_accepted_target_tokens": 3.006315789473684,
+      "paired_endpoint_improvement_fraction": 0.011349460841934111,
+      "passes_accepted_depth_hurdle": false,
+      "passes_verification_cost_hurdle": false
+    },
+    "optimistic_zero_draft_cost": {
+      "configured_depths": [
+        {
+          "can_clear_with_zero_draft_cost_and_d12_verifier": false,
+          "depth": 4,
+          "maximum_accepted_target_tokens": 5
+        },
+        {
+          "can_clear_with_zero_draft_cost_and_d12_verifier": false,
+          "depth": 8,
+          "maximum_accepted_target_tokens": 9
+        },
+        {
+          "can_clear_with_zero_draft_cost_and_d12_verifier": false,
+          "depth": 12,
+          "maximum_accepted_target_tokens": 13
+        },
+        {
+          "can_clear_with_zero_draft_cost_and_d12_verifier": true,
+          "depth": 16,
+          "maximum_accepted_target_tokens": 17
+        }
+      ],
+      "minimum_integer_draft_depth": 13,
+      "required_mean_accepted_draft_tokens": 12.572569638684858,
+      "required_mean_accepted_target_tokens": 13.572569638684858
+    },
+    "qualified_baseline_seconds_per_request": 0.625149101968745,
+    "required_whole_request_reduction_fraction": 0.19999999999999996,
+    "target_seconds_per_request": 0.500119281574996
+  },
+  "gpu_used": false,
+  "input_integrity": {
+    "candidate_states": {
+      "path": "../gemma4_h200_dflash_endpoint/artifacts/candidate-only-owner-20260726t001857Z/retrieved/states/dflash-depth4-c32.jsonl",
+      "sha256": "b00e778bc03e218bb98d97817831438b304ae64ca21d4e945be22209ce68f694"
+    },
+    "cost_model": {
+      "path": "../gemma4_causal_parallel_offset_head/COST_MODEL.json",
+      "sha256": "4ee31dd7c0f6d407e1e61b148b7d41e54f8bda674e7b953d905d8a816a00ab72"
+    },
+    "ordinary_terminal": {
+      "path": "../gemma4_h200_dflash_endpoint/artifacts/request-state-capture-owner-20260725T232227Z/retrieved-final/results/ar-c32/TERMINAL.json",
+      "sha256": "45b8120b452452b3ffcdc5282138e984140aa96b5802eef3d3ce66603a141af4"
+    },
+    "parallel_frontier": {
+      "path": "../gemma4_causal_parallel_offset_head/inputs/evidence/PARALLEL_DRAFT_FRONTIER.json",
+      "sha256": "59e35a96d00f370ad7eb6eb9721195a939265091f47094cff9947b62577c4f8b"
+    },
+    "worker_source": {
+      "path": "../gemma4_h200_dflash_endpoint/inputs/bound/dflash_worker_v2.py",
+      "sha256": "8fbddb39f4b33b4ac55b1919bc58fa846acb60892886199251d3592a5223050f"
+    }
+  },
+  "new_scientific_sample_consumed": false,
+  "provider_spend_usd": 0.0,
+  "request_25": {
+    "captured_kv_content_sha256": "919ebdc8397adad8360900fbe00ece99d0a9fa2126c19d55469633d7f30b557d",
+    "first_localized_divergence": {
+      "expected_ordinary_token": 3496,
+      "kv_commit_geometry_at_boundary": "matching_seed_only_commit",
+      "kv_content_status": "candidate hash persisted; ordinary same-state hash absent",
+      "observed_verifier_token": 759,
+      "output_index": 1,
+      "phase": "target_verifier_token_before_acceptance"
+    },
+    "kv_content_equivalence_claimed": false,
+    "ordinary_kv_content_sha256": null,
+    "request_id": "077dff09d0bc4ec1ad3af6ec056651b2",
+    "request_index": 25,
+    "request_sha256": "ee2edfa7a9ff571b0268966f506c4cb868868ab880ac87c2684b055d48a0e150",
+    "smallest_executable_corrective_change": {
+      "change": "Before accepting or committing speculative-only rows, compare the first verifier target against the same-state ordinary target. On mismatch, discard speculative-only writes, commit only the pending seed, emit the ordinary token, and carry it as next seed.",
+      "performance_interpretation": "This fail-closed guard needs ordinary target authority and is a correctness discriminator, not a speedup. A performant repair must make the request-owned verifier state itself reproduce 3496.",
+      "preserves_target_semantics": true
+    },
+    "transition": {
+      "accepted_draft_count": 0,
+      "accepted_prefix": [],
+      "bonus_token": 759,
+      "commit_length": 1,
+      "committed_kv_write_locations": [
+        71603
+      ],
+      "committed_length_after": 4215,
+      "committed_length_before": 4214,
+      "emitted_tokens": [
+        759
+      ],
+      "exact_transition": false,
+      "fail_closed_correction": {
+        "accepted_draft_count": 0,
+        "action": "discard_speculative_only_writes_and_use_ordinary_target",
+        "commit_length": 1,
+        "committed_kv_write_locations": [
+          71603
+        ],
+        "committed_length_after": 4215,
+        "emitted_tokens": [
+          3496
+        ],
+        "exact_against_ordinary_one_step": true,
+        "next_pending_seed": 3496
+      },
+      "first_emitted_difference_index": 0,
+      "first_verifier_difference_index": 0,
+      "kv_commit_geometry_exact": true,
+      "next_pending_seed": 759,
+      "ordinary_tokens": [
+        3496,
+        3496,
+        3496,
+        3496
+      ],
+      "pending_seed": 236814,
+      "proposal_tokens": [
+        174501,
+        74443,
+        104105
+      ],
+      "target_token_exact": false,
+      "verifier_top1": [
+        759,
+        236814,
+        236761,
+        87096
+      ]
+    }
+  },
+  "schema_version": 1,
+  "source_grounding": {
+    "semantics": "The verifier writes the pending seed and draft rows, derives greedy target IDs, commits seed plus accepted drafts, advances sequence length by that commit count, and relays the target bonus.",
+    "worker_line_numbers": {
+      "bonus_relay": 662,
+      "commit_length": 558,
+      "kv_commit_consumer": 673,
+      "sequence_advance": 638,
+      "target_argmax": 567,
+      "target_forward": 528,
+      "verify_cache_assignment": 503
+    }
+  },
+  "terminal_interpretation": "The executable discriminator localizes the retained failure before acceptance and KV-length advancement: verifier target 759 differs from ordinary target 3496. Seed-only KV commit geometry matches, but KV content equivalence is unobserved. The exact fail-closed correction works, while the measured depth-4 route misses both accepted-depth and verification-efficiency hurdles."
+}

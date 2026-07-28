@@ -1,0 +1,39 @@
+{
+  "status": "active",
+  "priority": 9970,
+  "researcher_profile": "execution",
+  "summary": "The durable $8.00 reservation protects a fresh maintenance-registered B200. The native-NVFP4 endpoint packet is now implemented and hash-bound: it stages a verified project-local BF16 snapshot, produces symmetric float4 tensor-group-16 W4A4 compressed-tensors bytes once, then runs separate same-B200 BF16-control and NVFP4 c32 endpoints. No endpoint or quality claim exists.",
+  "next_action": "Await director verification of b200-nvfp4-endpoint-computeinstance-i00hfh66qbsqy4mx7x and a change from maintenance to claimable ready. Then use the shared detached-owner as controller-local PID owner, atomically claim only that B200, stage immutable project-local source bytes, run the hash-bound control and candidate sequence, and retain the claim for ordinary repair. Do not SSH or claim while inventory says maintenance.",
+  "provider_mutation": "director_only_after_harness_reservation",
+  "authorized_spend_usd": 8.0,
+  "wall_clock_budget_minutes": 180,
+  "provider_exposure_budget_minutes": 90,
+  "compute_budget": "1.5 B200 GPU-hours plus 3 local CPU-hours",
+  "storage_budget": "one checkpoint-bearing disk up to 300 GiB; 10 GiB retained artifacts",
+  "active_session": null,
+  "bound_bench": "b200-nvfp4-endpoint-computeinstance-i00hfh66qbsqy4mx7x",
+  "provider_started_at_utc": "2026-07-28T10:41:59.335947Z",
+  "provider_watchdog_deadline_utc": "2026-07-28T12:11:59.335947Z",
+  "bench_spec_artifact": "DIRECTOR_B200_NVFP4_ENDPOINT_BENCH_SPEC_20260728T1041Z.json",
+  "actual_provider_exposure_seconds": 0,
+  "actual_spend_usd": 0.0,
+  "terminal_artifact": null,
+  "packet": {
+    "path": "artifacts/native-nvfp4-endpoint-packet-v1",
+    "manifest_sha256": "707b20f442ade965a9970d3338d8b608946cf4e3168fa7257111963b38f0b116",
+    "implementation_sha256": "5790b4dc6b2d8de6d919010ea25039d258c86193d9114f7e6f24b75b8f58a299",
+    "identities_sha256": "744bd01b5fd06f03a178f7c56083914dd74a66a3becc9932e154d179c52bcefc",
+    "entrypoint": "stage_project_snapshot.py --root <project-remote-root>; convert_native_nvfp4.py --source <project-root>/bf16-source --output <project-root>/nvfp4-checkpoint --calibration <immutable-calibration>; run_endpoint.sh <project-remote-root> control; run_endpoint.sh <project-remote-root> candidate"
+  },
+  "reservation_observed": {
+    "bench_id": "b200-nvfp4-endpoint-computeinstance-i00hfh66qbsqy4mx7x",
+    "instance_id": "computeinstance-i00hfh66qbsqy4mx7x",
+    "disk_id": "computedisk-i00svcmxdjhpm7bkez",
+    "inventory_status": "maintenance",
+    "observed_at_utc": "2026-07-28T10:42:45.609124Z",
+    "claim_permitted": false,
+    "need": "director verification of provider/SSH/idle-SM100 identity and explicit ready state"
+  },
+  "predecessor_terminal": "../b200_nvfp4_exact_shape_direct_falsifier/artifacts/b200-nvfp4-source-audit-g6-20260728t1030z/TERMINAL.json",
+  "predecessor_terminal_sha256": "0838a2262bffd0d2e800bbdd0cf857c28115ae0fc6e9677b50433c7a9ff8ecb1"
+}

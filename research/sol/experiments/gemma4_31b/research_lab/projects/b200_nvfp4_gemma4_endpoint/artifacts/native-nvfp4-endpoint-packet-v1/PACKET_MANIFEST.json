@@ -1,0 +1,15 @@
+{
+  "conversion_entrypoint": "convert_native_nvfp4.py --source <project-root>/bf16-source --output <project-root>/nvfp4-checkpoint --calibration <immutable-calibration>",
+  "entrypoint": "stage_project_snapshot.py --root <project-remote-root>; convert_native_nvfp4.py --source <project-root>/bf16-source --output <project-root>/nvfp4-checkpoint --calibration <immutable-calibration>; run_endpoint.sh <project-remote-root> control; run_endpoint.sh <project-remote-root> candidate",
+  "files": {
+    "IDENTITIES.json": "744bd01b5fd06f03a178f7c56083914dd74a66a3becc9932e154d179c52bcefc",
+    "PACKET_MANIFEST.json": "da2f0090fa4ea31314b85c88499764ff2a7ea0e725a792eb6da6c02aa61a780a",
+    "convert_native_nvfp4.py": "971e04116d492779345a5ecc96ba79111575fb2e731ceb200465dd04d0550673",
+    "endpoint_driver.py": "6c173f8fb43c2eeb161111c6b64eecb552be4d767417ed1adced6c55afdd5965",
+    "run_endpoint.sh": "bf600dc28b941d91294deb13b8935b6a20a72ddc693db0c466a7182c5a14da6d",
+    "stage_project_snapshot.py": "487e263f6a0f79a2250b4d4e360dd50dadbcee6b5af835cf79abe76788a17a08",
+    "wait_server.py": "337c1ab33549508201a0ea387ecb743bb4b27d4c74851abbc5b2e46447f7f938"
+  },
+  "packet_version": 1,
+  "unsupported_only_if": "pinned vLLM source rejects the stated symmetric float4 tensor-group-16 W4A4 semantic contract"
+}

@@ -1,0 +1,100 @@
+{
+  "checkpoint": {
+    "files": [
+      {
+        "bytes": 4621,
+        "path": "config.json",
+        "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+      },
+      {
+        "bytes": 32169626,
+        "path": "tokenizer.json",
+        "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+      },
+      {
+        "bytes": 2095,
+        "path": "tokenizer_config.json",
+        "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"
+      },
+      {
+        "bytes": 18683,
+        "path": "chat_template.jinja",
+        "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"
+      },
+      {
+        "bytes": 1689,
+        "path": "processor_config.json",
+        "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"
+      },
+      {
+        "bytes": 120246,
+        "path": "model.safetensors.index.json",
+        "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+      },
+      {
+        "bytes": 49784788364,
+        "path": "model-00001-of-00002.safetensors",
+        "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+      },
+      {
+        "bytes": 12761549884,
+        "path": "model-00002-of-00002.safetensors",
+        "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"
+      }
+    ],
+    "model": "google/gemma-4-31B-it",
+    "remote_materialization": "copy to <project-root>/bf16-source, verify every SHA-256, atomically rename; do not consume the shared path",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "source_bytes": 62578655208,
+    "source_manifest_sha256": "e9da34db5ed8e7dce27e242088733cbf09ad489de451f8634b4afbe671a8f8b1"
+  },
+  "control": {
+    "command_delta": "replace --quantization compressed-tensors model path with verified project-local BF16 source path; preserve image, c32 bodies, cache, limits and telemetry",
+    "name": "same-session same-B200 BF16 vLLM",
+    "reason": "strongest scope-matched control"
+  },
+  "lifecycle_request": {
+    "absolute_owner_minutes": 90,
+    "accelerator": "nvidia-b200-sxm",
+    "converter_minutes": 35,
+    "provider_mutation": "director_only",
+    "retrieval_minutes": 15,
+    "server_and_pair_minutes": 40,
+    "spend_ceiling_usd": 8.0,
+    "status": "awaiting durable reservation and inventory bench"
+  },
+  "runtime": {
+    "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "predecessor_terminal_sha256": "0838a2262bffd0d2e800bbdd0cf857c28115ae0fc6e9677b50433c7a9ff8ecb1",
+    "required_consumers": [
+      "scaled_fp4_quant",
+      "cutlass_scaled_fp4_mm"
+    ],
+    "vllm_commit": "6d4a8e6d204a9b2827544003b26321fff62923da"
+  },
+  "semantic_contract": "symmetric float4 tensor-group size 16 for both weights and input activations; vLLM must select CompressedTensorsW4A4Fp4, and endpoint timing must not materialize BF16 linear weights",
+  "storage_estimate": {
+    "basis": "31B linear payload at 0.5625 B/parameter plus BF16 tied head/vision/projector, safetensor metadata, and retained source",
+    "bf16_source_gib": 58.28,
+    "conversion_scratch_gib_estimate": 95,
+    "disk_request_gib": 300,
+    "native_nvfp4_output_gib_estimate": [
+      20.0,
+      28.0
+    ]
+  },
+  "tokenizer": {
+    "chat_template_sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+    "tokenizer_config_sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df",
+    "tokenizer_json_sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+  },
+  "workload": {
+    "completion_tokens": 358,
+    "concurrency": 32,
+    "ignore_eos": true,
+    "mode": "text-only non-reasoning",
+    "prompt_tokens": 4214,
+    "shared_prefix_tokens": 535,
+    "temperature": 0
+  }
+}

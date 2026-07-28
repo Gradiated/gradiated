@@ -78,6 +78,8 @@ def load_extensions(root: Path):
 
     build = root / "torch_extensions"
     build.mkdir(exist_ok=True)
+    (build / "local").mkdir(exist_ok=True)
+    (build / "global").mkdir(exist_ok=True)
     local = load(
         name="dual_kv4_local_sm89",
         sources=[str(root / "local_kv4_outlier_bindings.cpp"), str(root / "local_kv4_outlier_cuda.cu")],

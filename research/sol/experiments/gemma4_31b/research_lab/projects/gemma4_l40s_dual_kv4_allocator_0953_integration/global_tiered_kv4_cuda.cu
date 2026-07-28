@@ -67,7 +67,7 @@ __device__ __forceinline__ float decode_old_channel(const uint8_t* row,
   const uint8_t nibble = (channel & 1) ? byte >> 4 : byte & 0xf;
   const __nv_bfloat16* scales =
       reinterpret_cast<const __nv_bfloat16*>(row + kScaleOffset);
-  float value = static_cast<float>(scales[channel / kGroupSize]) *
+  float value = __bfloat162float(scales[channel / kGroupSize]) *
                 signed_nibble(nibble);
   const uint16_t* indices =
       reinterpret_cast<const uint16_t*>(row + kIndexOffset);
@@ -187,7 +187,7 @@ __global__ void pack_old_kernel(
   }
   __syncthreads();
 
-  const float scale = static_cast<float>(scales[channel / kGroupSize]);
+  const float scale = __bfloat162float(scales[channel / kGroupSize]);
   int code = scale == 0.0f ? 0 : __float2int_rn(values[channel] / scale);
   code = max(-7, min(7, code));
   quantized[channel] = static_cast<int8_t>(code);
@@ -262,7 +262,7 @@ __global__ void mixed_tier_paged_attention_kernel(
   __shared__ float reduction[kHeadDim];
   __shared__ float update[3];
   float accumulator = 0.0f;
-  float running_max = -CUDART_INF_F;
+  float running_max = -INFINITY;
   float running_sum = 0.0f;
   const int kv_start = kv_indptr[request];
   const int kv_stop = kv_indptr[request + 1];

@@ -1,0 +1,64 @@
+{
+  "claim_gate": {
+    "condition": "A later director must observe the ready artifact, verify its direct hashes and remaining restart plus release window, then mark this exact bench ready and bind a collision-free start time.",
+    "provider_create_forbidden": true,
+    "state": "maintenance_until_replacement_owner_ready"
+  },
+  "classification": "offline_ready_continuous_claim_replacement_owner",
+  "direct_hashes": {
+    "binding": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/DIRECTOR_DUAL_KV4_SM89_REPAIR_OWNER_BINDING_20260728T0900Z.json",
+      "sha256": "87b0bf8eb91da0a7b1edfba162e04c5e2297b4b6335b137649dcd6ec614d548b"
+    },
+    "global_cuda": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/global_tiered_kv4_cuda.cu",
+      "sha256": "274f3f15fbd1495b8260d37a396fc569a67a0386da0201743b4af0b61fffb65a"
+    },
+    "local_cuda": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/local_kv4_outlier_cuda.cu",
+      "sha256": "cbe1e30cc0629e122819be5452c4e18b6d9e4abfcd46d1665f9de8af69e2bbfb"
+    },
+    "owner": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/l40s_dual_kv4_repair_owner.py",
+      "sha256": "dc977a1efeaf494e73f72fbdfe07f80b5ccfe80a06f7fc1f0e6ae301c493e935"
+    },
+    "prepared_g2_repair": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/dual-kv4-component-20260728t0837z/REPAIR_PATCH_g2_PREPARED.json",
+      "sha256": "4aa4ac1ed7f81c04ad93ac13c12c081a2bf33df950d0b4fcb4de696f1f057f31"
+    },
+    "runner": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/sm89_dual_kv4_runner.py",
+      "sha256": "acaa5ef2117a6f35ed987427d9cb820a5c9a8e08f0fc602c0f6cc922bb0b3b58"
+    }
+  },
+  "exact_later_command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/dual-kv4-owner-g2-20260728t0900z/OWNER.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/dual-kv4-owner-g2-20260728t0900z/OWNER.log -- python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/l40s_dual_kv4_repair_owner.py --bench l40s-dual-kv4-sm89-computeinstance-e00nczqf2p0x2y51wt --predecessor-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/dual-kv4-component-20260728t0837z --prepared-repair /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/dual-kv4-component-20260728t0837z/REPAIR_PATCH_g2_PREPARED.json --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/dual-kv4-component-g2-20260728t0900z --deadline-seconds 2700",
+  "fixed_science": {
+    "global": "10 D512 recent-1024 E5M2 plus old group-64 KV4 and eight E5M2 residual outliers",
+    "local": "50 D256 group-64 KV4 plus four E5M2 residual outliers",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "submission_limit": "one still-unconsumed paired component sample",
+    "workload": "c32, 358 decode steps, page size one"
+  },
+  "focused_mocked_checks": {
+    "predecessor": "attempts 0/1 are only read and never used as an output root",
+    "release_generation": "release_allowed permits only scientific terminal, unsafe/unreachable guest, or absolute deadline; ordinary compile and missing-terminal paths retain the claim",
+    "repair_generation": "fresh gN identifiers reject reuse"
+  },
+  "kind": "l40s_dual_kv4_sm89_repair_owner_ready",
+  "owner_contract": {
+    "claim": "one atomic claim; every release passes --expected-claimed-at from that claim",
+    "prohibited": [
+      "checkpoint",
+      "model server",
+      "endpoint",
+      "parameter sweep",
+      "provider create"
+    ],
+    "repair": "each recoverable attempt publishes a fresh repair-handshake gN and waits while heartbeat continues",
+    "retry": "attempts begin at 2 and only stage hash-bound g2 runner/CUDA files into the predecessor remote packet"
+  },
+  "pass": true,
+  "schema_version": 1
+}

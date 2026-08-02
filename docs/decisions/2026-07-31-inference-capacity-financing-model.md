@@ -8,15 +8,23 @@ Workbook: [Google Sheet](https://docs.google.com/spreadsheets/d/1Ix7kRD90UAdT9nW
 
 Use a rent-first operating posture until four inputs are measured for the exact
 top-ten model set: quarterly OpenRouter tokens, provider capture, total
-tokens/second/GPU, and current cheapest blended customer price. The workbook is
-decision-ready structurally but not numerically decision-ready: its OpenRouter
-history is empty because the key disclosed in chat must be rotated and must not
-be copied into the repository or another tool call.
+tokens/second/GPU, and current cheapest blended customer price. The workbook now
+contains a measured 12-month OpenRouter ranking import (2025-07-01 through
+2026-06-30) aggregated to 120 monthly rows and normalized to model families so
+dated aliases do not create false growth. The revenue values are still a
+planning proxy: current `/models` prices are applied retrospectively with a 75%
+prompt / 25% completion mix, and the open-weight classification is a publisher
+family heuristic pending license review. Forecast QoQ growth is visibly capped
+at 25% in the base control surface; uncapped historical growth remains visible
+for review.
 
-The base scenario currently reports a synthetic `$5.88M` equity requirement.
-That amount is only fourteen quarters of `$350k` fixed overhead plus 20%
-contingency; it is not a hardware recommendation and must not be used for a
-fundraise until history, price, and throughput inputs are loaded.
+The base scenario currently reports approximately `$5.33B` of indicative equity
+need, `$2.67B` of hardware capex, and `$1.49B` of operating subsidy through
+2029-Q4. These are scenario outputs driven mainly by the synthetic 500 total
+tokens/second/GPU throughput assumption, 10% provider capture, 25% quarterly
+growth, 60% owned-capacity share, and 3% undercut. They are not a hardware
+recommendation or fundraising advice until throughput, price, topology, and
+commercial quotes are measured.
 
 ## Question, hypothesis, and falsification
 
@@ -47,7 +55,8 @@ Included:
 - four historical quarters and quarterly forecast through 2029-Q4;
 - top ten open-source models ranked by loaded historical gross inference spend;
 - model-specific growth, capture, GPU, throughput, and price inputs;
-- L40S, H100 SXM, H200 SXM, B200 SXM, and GB200 NVL72 planning alternatives;
+- L4, RTX PRO 6000 Blackwell, L40S, A100 PCIe/SXM, H100 PCIe/SXM, H200 SXM,
+  B200 SXM, B300 SXM, GB200 NVL72, and GB300 NVL72 planning alternatives;
 - whole-system purchases, rack equivalents, power, rent cost, owned operating
   cost, capex, customer revenue, operating subsidy, and cash requirement;
 - rent-first, base, and aggressive scenarios.
@@ -77,9 +86,10 @@ Key equations:
 - `operating subsidy = max(0, infrastructure cash cost - provider revenue)`
 - `indicative raise = peak cumulative cash deficit + working-capital reserve + contingency - starting cash`
 
-The `Scenarios` tab is the primary control surface. Blue cells are inputs. The
-`Checks` tab is the stop gate. `DATA REQUIRED` is an expected state until
-OpenRouter history is loaded.
+The `Scenarios` tab is the primary control surface. Light-cream cells with blue
+text are editable inputs; formulas remain unfilled. The `Checks` tab is the stop
+gate. `DATA REQUIRED` is replaced by `PASS` after the history import, while
+license, price-proxy, and throughput review remain human actions.
 
 ## Evidence table
 
@@ -116,12 +126,18 @@ reverse that result at low scale.
 
 ## Verification
 
-Measured on 2026-07-31 after batch writes:
+Measured on 2026-08-02 after the history import and formatting pass:
 
 - fourteen workbook tabs present;
+- 18,564 daily ranking rows fetched and 120 monthly history rows loaded;
+- ten open-weight candidate models selected for the model driver table;
+- twelve NVIDIA platform rows available for buy/rent and rack sensitivity;
 - all extended structural checks pass;
 - formula-error scan across the new tabs: `0` errors;
-- history-dependent check: `DATA REQUIRED`;
+- history-dependent check: `PASS`;
+- representative editable ranges have light-cream fill and blue text;
+- dates, percentages, token counts, GPU counts, power, prices, and cash outputs
+  use explicit finance formats with dash-for-zero and red-parentheses negatives;
 - browser visual inspection was attempted, but no connected browser was
   available; formatting and values were verified through the Sheets API/MCP.
 
@@ -136,7 +152,8 @@ git diff --check
 
 1. Rotate the OpenRouter key disclosed in chat.
 2. Set the replacement only in a local secret environment as
-   `OPENROUTER_API_KEY`; do not paste it into chat or commit it.
+   `OPENROUTER_API_KEY`; do not paste it into chat or commit it. The current
+   1Password desktop bridge must be restarted before a fresh import can run.
 3. Import four complete quarters of daily rankings and current model prices.
 4. Confirm open-source license classification for the top ten rows.
 5. Benchmark each selected model on its exact quantization, context mix,
@@ -145,4 +162,3 @@ git diff --check
 6. Obtain written rental, server, colocation, network, power, support, lead-time,
    deposit, and equipment-finance quotes before choosing the buy scenario or
    using the funding output.
-

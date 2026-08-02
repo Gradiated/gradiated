@@ -15,7 +15,7 @@ The shared Google Sheet links OpenRouter inference demand through 2029 to model-
 - last updated: 2026-07-31T22:09:25+00:00
 - scope: docs/decisions/2026-07-31-inference-capacity-financing-model.md
 - excluded paths:
-- dependencies: OpenRouter historical rankings API (blocked pending rotated key); Google Sheets MCP; repository GPU inventory
+- dependencies: OpenRouter historical rankings API; Google Sheets MCP; repository GPU inventory
 
 ## Contract
 
@@ -37,9 +37,9 @@ The shared Google Sheet links OpenRouter inference demand through 2029 to model-
 ## Result
 
 - status: done
-- verification: Google Sheets readback found 0 formula errors; all extended structural checks PASS; history-dependent output is explicitly DATA REQUIRED; `python3 tools/devex/check.py` and `git diff --check` pass.
+- verification: Google Sheets readback found 0 formula errors; all extended structural checks PASS; history-dependent output is PASS after the 120-row import; editable inputs have light-cream fill and blue text; finance number formats are applied across model outputs.
 - changed paths: docs/decisions/2026-07-31-inference-capacity-financing-model.md; tasks/done/2026-07-31-inference-capacity-financing-model.md; shared Google Sheet tabs Scenarios, Model Drivers, Demand Forecast, Hardware Economics, Capacity Detail, Capacity Plan, Pricing & Subsidy, Funding & Dashboard, Checks, Sources.
-- limitations or blocked paths: OpenRouter history import is blocked until the user rotates the key disclosed in chat and sets a replacement locally; no connected browser was available for visual inspection; GitHub Project metadata was unavailable because the current token lacks project scope.
+- limitations or blocked paths: current prices are a retrospective proxy, open-weight labels need license review, throughput is synthetic until per-model serving benchmarks exist, and no connected browser was available for visual inspection. A fresh OpenRouter refresh is temporarily unavailable while the 1Password desktop bridge is offline; GitHub Project metadata was unavailable because the current token lacks project scope.
 - commit: this task's completion commit on main (see git history for this packet)
 - next action: rotate the OpenRouter key, load four complete quarters of rankings/current prices, confirm open-source classification, benchmark per-model throughput, then replace planning prices with written hardware/cloud/colo quotes.
 - released: 2026-07-31T22:27:18+00:00

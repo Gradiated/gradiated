@@ -29,9 +29,9 @@ commercial quotes are measured.
 ## Question, hypothesis, and falsification
 
 Question: how much OpenRouter inference could the company capture through 2029,
-what NVIDIA systems and racks would serve it, when is buying cheaper than
-renting, what price subsidy makes the company cheapest, and what cash must be
-raised?
+what NVIDIA or AMD systems and racks would serve it, when is buying cheaper than
+renting or signing a long-term contract, what price subsidy makes the company
+cheapest, and what cash must be raised?
 
 Hypothesis: a quarterly, model-specific demand-to-capacity bridge can expose the
 few inputs that dominate the answer and keep business, infrastructure, and
@@ -57,6 +57,8 @@ Included:
 - model-specific growth, capture, GPU, throughput, and price inputs;
 - L4, RTX PRO 6000 Blackwell, L40S, A100 PCIe/SXM, H100 PCIe/SXM, H200 SXM,
   B200 SXM, B300 SXM, GB200 NVL72, and GB300 NVL72 planning alternatives;
+- AMD MI300X, MI325X, MI350X, and MI355X planning alternatives, including a
+  visible long-term rental discount, contract term, and owning-advantage spread;
 - whole-system purchases, rack equivalents, power, rent cost, owned operating
   cost, capex, customer revenue, operating subsidy, and cash requirement;
 - rent-first, base, and aggressive scenarios.
@@ -69,6 +71,8 @@ Not included:
 - exact prefill/decode separation, latency SLOs, batching distributions, KV
   cache behavior, redundancy topology, deposits, tax, depreciation, or working
   capital beyond the simple reserve;
+- AMD ROCm porting, kernel maturity, model-specific performance, and supply
+  availability are not yet modeled as separate commercial risk adjustments;
 - an investment recommendation, valuation, or fundraising advice.
 
 ## Workbook contract
@@ -106,6 +110,12 @@ license, price-proxy, and throughput review remain human actions.
 | A DGX B200 planning example uses 14.3 kW peak/system and up to four systems/rack | [NVIDIA facility guide](https://docs.nvidia.com/dgx-pdf/nvidia-dgx-superpod-data-center-best-practices-with-dgx-b200.pdf) | Official documentation | Requires a matching high-power facility design. |
 | A GB200 NVL72 rack full-load example is about 120 kW | [NVIDIA Mission Control FAQ](https://docs.nvidia.com/mission-control/docs/systems-administration-guide/2.1.0/prs/faq.html) | Official documentation | Example, not a guaranteed site draw. |
 | GB200 NVL72 purchase price midpoint is `$3.1M` | [Tom's Hardware report](https://www.tomshardware.com/tech-industry/artificial-intelligence/price-of-nvidias-vera-rubin-nvl72-racks-skyrockets-to-as-much-as-usd8-8-million-apiece-but-server-makers-margins-will-be-tight-nvidia-is-moving-closer-to-shipping-entire-full-scale-systems) | Secondary reported estimate | Replace with a written quote; source range was `$2.8M-$3.4M`. |
+| AMD MI300X is 192 GB HBM3 at 750 W | [AMD MI300X specifications](https://www.amd.com/en/products/accelerators/instinct/mi300/mi300x.html) | Vendor-reported | 8-GPU system power and purchase price are planning estimates. |
+| AMD MI325X is 256 GB HBM3E at 1,000 W | [AMD MI325X platform datasheet](https://www.amd.com/content/dam/amd/en/documents/instinct-tech-docs/product-briefs/instinct-mi325x-platform-datasheet.pdf) | Vendor-reported | 8-GPU system power and purchase price are planning estimates. |
+| AMD MI350X is 288 GB HBM3E at 1,000 W | [AMD MI350X specifications](https://www.amd.com/en/products/accelerators/instinct/mi350/mi350x.html) | Vendor-reported | Air-cooled platform topology and purchase price need quotes. |
+| AMD MI355X is 288 GB HBM3E at 1,400 W | [AMD MI355X specifications](https://www.amd.com/en/products/accelerators/instinct/mi350/mi355x.html) | Vendor-reported | Liquid-cooled/rack-scale topology and purchase price need quotes. |
+| AMD MI300X 8-GPU server range is `$240k-$300k` | [GPU server pricing guide](https://www.gpu.fm/blog/gpu-server-pricing-guide-2026) | Secondary market range | `$270k` midpoint used; replace with an OEM quote. |
+| Long-term AMD rental references exist below on-demand rates | [MI325X listings](https://gpu-hunt.com/gpu/AMD%20Instinct%20MI325X), [MI355X contract reference](https://infohub.delltechnologies.com/zh-cn/p/multi-agent-risk-analysis-compliance-monitoring/) | Market observations | Provider, term, geography, availability, and support differ; not quotes. |
 | Default model throughput is 500 total tokens/s/GPU | Workbook `Model Drivers` | Synthetic | Placeholder only; never transfer across model, quantization, context, or SLO. |
 
 ## Interpretation
@@ -124,6 +134,14 @@ after utilization is sustained and the exact workload fits the platform. Whole
 system rounding, new-provider ramp, lead time, redundancy, and financing can
 reverse that result at low scale.
 
+The AMD rows use a 20% base-case discount to the on-demand proxy and a 36-month
+term input. At the selected 65% utilization, the resulting owned versus term
+rental spreads are approximately: MI300X `$2.18` owned versus `$2.00` term,
+MI325X `$2.86` versus `$2.20`, MI350X `$3.25` versus `$2.20`, and MI355X `$4.04`
+versus `$2.40` per GPU-hour. The negative owning-advantage values mean the
+illustrative term contract is cheaper under the current assumptions; these are
+not quotes and should be replaced per platform with signed offers.
+
 ## Verification
 
 Measured on 2026-08-02 after the history import and formatting pass:
@@ -131,7 +149,9 @@ Measured on 2026-08-02 after the history import and formatting pass:
 - fourteen workbook tabs present;
 - 18,564 daily ranking rows fetched and 120 monthly history rows loaded;
 - ten open-weight candidate models selected for the model driver table;
-- twelve NVIDIA platform rows available for buy/rent and rack sensitivity;
+- sixteen NVIDIA/AMD platform rows available for buy/rent and rack sensitivity;
+- long-term rental discount, contract term, and owning-advantage columns are
+  visible in `Hardware Economics`;
 - all extended structural checks pass;
 - formula-error scan across the new tabs: `0` errors;
 - history-dependent check: `PASS`;
